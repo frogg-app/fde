@@ -22,15 +22,21 @@ Done items move to CHANGELOG.md.
 
 ## Install story (replaces `npm install -g @getpaseo/cli`)
 
-- [ ] **`curl -fsSL https://frogg.de/install.sh | bash`** for remote hosts. Ships a
+- [x] **`curl -fsSL https://frogg.de/install.sh | bash`** for remote hosts. Ships a
       self-contained daemon bundle (pinned Node 22 runtime + built daemon + CLI) into
       `~/.local/share/fde`, links `fde` and `paseo` into `~/.local/bin`, and installs a
       systemd user service (or launchd agent on macOS). No npm on the host.
-- [ ] **Docker image** `froggapp/fde` from `deploy/docker`, versioned tags per the org
+      (`deploy/install.sh`, `deploy/uninstall.sh`; bundle builder
+      `scripts/release/build-daemon-bundle.mjs`; see `docs/install.md`.)
+- [x] **Docker image** `froggapp/fde` from `deploy/docker`, versioned tags per the org
       rules, daemon listening on `0.0.0.0:6767` with the web UI enabled.
+      (`deploy/install-docker.sh`, `scripts/release/build-docker.sh`.)
 - [ ] Release pipeline builds the daemon bundle per platform (linux-x64, linux-arm64,
-      darwin-arm64, darwin-x64) and attaches it to the GitHub release the installer reads.
-- [ ] Hosting for `frogg.de/install.sh` (deployment handled later).
+      darwin-arm64, darwin-x64) and attaches it plus `.sha256` sidecars to the GitHub
+      release the installer reads; pushes the Docker image tags.
+- [ ] Hosting for `frogg.de/install.sh`, `uninstall.sh`, `install-docker.sh` (redirects
+      to the raw files in the repo are enough).
+- [ ] Desktop app: SSH deploy using `FDE_BUNDLE_FILE` (scp bundle, run `deploy/install.sh`).
 
 ## Next
 

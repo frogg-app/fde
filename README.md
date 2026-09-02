@@ -36,6 +36,23 @@ docs/        Internal engineering docs (source of truth)
 scripts/     dev/, release/, ci/ helpers
 ```
 
+## Getting started
+
+Install the desktop app from the releases page, then put the daemon on the
+machine where your code and agent CLIs live. No Node or npm needed on the host:
+
+```bash
+# native install: versioned bundle in ~/.local/share/fde + systemd/launchd service
+curl -fsSL https://frogg.de/install.sh | bash
+
+# or run it in Docker: froggapp/fde with the state in ~/.fde, port 6767
+curl -fsSL https://frogg.de/install-docker.sh | bash
+```
+
+Both scripts are non-interactive and safe to re-run for upgrades. See
+[docs/install.md](docs/install.md) for the environment overrides and
+[docs/docker.md](docs/docker.md) for the image.
+
 ## Docs
 
 | Doc                                            | What it covers                                                   |
@@ -44,6 +61,7 @@ scripts/     dev/, release/, ci/ helpers
 | [docs/development.md](docs/development.md)     | Day-to-day development of the daemon and web UI                  |
 | [docs/desktop-shell.md](docs/desktop-shell.md) | Tauri shell design: bridge contract, commands, plans             |
 | [docs/building.md](docs/building.md)           | Building the desktop app on Linux and cross-building for Windows |
+| [docs/install.md](docs/install.md)             | Installing the daemon on remote hosts: bundle, installer, Docker |
 
 ## Status
 
