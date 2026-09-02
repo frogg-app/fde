@@ -46,7 +46,15 @@ export function gradleArgsFor({ abi, variant, serial, workers }) {
     args.push(`-PreactNativeArchitectures=${abi}`);
   }
   if (serial) {
-    args.push("--max-workers=1", "-Dorg.gradle.parallel=false");
+    // Small-machine mode: one worker and heaps well below the 4 GB that
+    // expo-gradle-jvmargs writes into gradle.properties (-D on the command line
+    // wins), so an 8 GB host is not OOM-killed during the native build.
+    args.push(
+      "--max-workers=1",
+      "-Dorg.gradle.parallel=false",
+      "-Dorg.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m",
+      "-Dkotlin.daemon.jvm.options=-Xmx1024m",
+    );
   } else if (workers) {
     args.push(`--max-workers=${workers}`);
   }

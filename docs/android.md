@@ -53,9 +53,11 @@ node scripts/release/build-android-apk.mjs --skip-deps --skip-prebuild --serial
 ```
 
 `--abi` accepts `arm64-v8a` (default, every phone since 2017), `armeabi-v7a`, `x86`,
-`x86_64` or `universal`. `--serial` (`--max-workers=1`, no parallel Gradle) or `--workers N` is for machines
-with less than ~16 GB of RAM: the release build compiles the native ABIs and runs the
-Hermes bundle in one Gradle invocation and can otherwise be killed with exit 137.
+`x86_64` or `universal`. `--serial` (one Gradle worker, 2 GB Gradle heap, 1 GB Kotlin daemon instead of the 4 GB
+`expo-gradle-jvmargs` default) is for machines with less than ~16 GB of RAM: the release
+build compiles the native ABIs and runs the Hermes bundle in one Gradle invocation and
+is otherwise OOM-killed ("Gradle build daemon disappeared", exit 137). `--workers N` only
+caps the worker count.
 `--skip-deps` / `--skip-prebuild` reuse the previous run's `dist/` and `android/`.
 
 No `google-services.json` is needed or used: the config only wires Firebase when

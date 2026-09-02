@@ -28,6 +28,8 @@ test("gradle args select the ABI and serial mode", () => {
     "--no-daemon",
     "--max-workers=1",
     "-Dorg.gradle.parallel=false",
+    "-Dorg.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m",
+    "-Dkotlin.daemon.jvm.options=-Xmx1024m",
   ]);
   assert.deepEqual(gradleArgsFor({ abi: "arm64-v8a", variant: "release", workers: 3 }), [
     "assembleRelease",
