@@ -113,7 +113,7 @@ Desktop packagers such as electron-builder pack `node_modules` by walking declar
 
 Upstream's packaged desktop smoke caught it, but only when a PR touched the `desktop` filter in `.github/ci-paths.yml`. Both offenders landed under `packages/highlight/**`, which maps to `sdk`.
 
-`packages/highlight/src/__tests__/dependency-closure.test.ts` replicates the packer's traversal statically and runs with the normal unit tests. It is scoped to `@getpaseo/highlight` on purpose: that tree is small and pure, so the check is exact. Running the same walk over `@getpaseo/server` produces dozens of false positives from optional dependencies loaded behind `try`/`catch`.
+`packages/highlight/src/__tests__/dependency-closure.test.ts` replicates the packer's traversal statically and runs with the normal unit tests. It is scoped to `@fde/highlight` on purpose: that tree is small and pure, so the check is exact. Running the same walk over `@fde/server` produces dozens of false positives from optional dependencies loaded behind `try`/`catch`.
 
 Prefer a `@lezer/*` grammar. When a language only ships inside an editor extension, vendor the grammar into `packages/highlight/src/<lang>/` — see `svelte/`, `nix/`, and `csharp/`.
 
@@ -137,7 +137,7 @@ Vitest picks up tests by suffix. The suffix tells the runner which category it b
 | `*.real.e2e.test.ts`  | E2E that hits a real provider (Claude/Codex/Copilot/OpenCode/Pi) — needs creds in `packages/server/.env.test` | `npm run test:integration:real` / `test:e2e:real`                                    |
 | `*.local.e2e.test.ts` | E2E that needs a local-only resource                                                                          | `npm run test:integration:local` / `test:e2e:local`                                  |
 
-Browser Playwright specs live in `apps/ui/e2e/browser/`. Harness code shared by both suites lives in `apps/ui/e2e/support/`; neither suite may place specs there. App Playwright specs that hit real providers use `*.real.spec.ts` and run through `npm run test:e2e:real --workspace=@getpaseo/app`; the default browser project ignores that suffix so CI does not need provider credentials.
+Browser Playwright specs live in `apps/ui/e2e/browser/`. Harness code shared by both suites lives in `apps/ui/e2e/support/`; neither suite may place specs there. App Playwright specs that hit real providers use `*.real.spec.ts` and run through `npm run test:e2e:real --workspace=@fde/app`; the default browser project ignores that suffix so CI does not need provider credentials.
 
 Live provider smoke tests belong in `*.real.e2e.test.ts`, not `*.test.ts`, even when guarded by environment variables. Default unit suites must use deterministic provider adapters/fakes so missing credits, auth outages, and upstream model drift do not block normal CI.
 

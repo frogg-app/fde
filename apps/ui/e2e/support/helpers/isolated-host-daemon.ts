@@ -112,7 +112,7 @@ export async function startIsolatedHostDaemon(
           "--no-audit",
           "--no-fund",
           "--no-package-lock",
-          `@getpaseo/server@${options.publishedVersion}`,
+          `@fde/server@${options.publishedVersion}`,
         ],
         { cwd: publishedPackageRoot, stdio: "ignore" },
       );
@@ -145,7 +145,7 @@ export async function startIsolatedHostDaemon(
     );
   }
   const serverDir = publishedPackageRoot
-    ? path.join(publishedPackageRoot, "node_modules", "@getpaseo", "server")
+    ? path.join(publishedPackageRoot, "node_modules", "@fde", "server")
     : path.resolve(__dirname, "../../../../../packages/server");
   const spawnDaemon = async (): Promise<ChildProcess> => {
     const spawnOptions: SpawnOptions = {

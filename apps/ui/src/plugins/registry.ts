@@ -1,6 +1,6 @@
 import { useMemo, useSyncExternalStore } from "react";
 import { QueryClient } from "@tanstack/react-query";
-import type { DaemonClient } from "@getpaseo/client/internal/daemon-client";
+import type { DaemonClient } from "@fde/client/internal/daemon-client";
 import { startPluginClientSide } from "./composer-pills/lifecycle";
 import { evaluatePluginClientBundle } from "./evaluate";
 import type { InstalledPlugin } from "./types";

@@ -5,11 +5,11 @@ import type {
   PluginLogEntry,
   PluginSourceStatusItem,
   PluginSourceUpdateItem,
-} from "@getpaseo/protocol/messages";
+} from "@fde/protocol/messages";
 import {
   formatPluginSourceReference,
   parsePluginSourceReference,
-} from "@getpaseo/protocol/plugin-source-reference";
+} from "@fde/protocol/plugin-source-reference";
 import type { CommandOptions, ListResult, OutputSchema, SingleResult } from "../../output/index.js";
 import { withOutput } from "../../output/index.js";
 import { addJsonAndDaemonHostOptions, addJsonOption } from "../../utils/command-options.js";

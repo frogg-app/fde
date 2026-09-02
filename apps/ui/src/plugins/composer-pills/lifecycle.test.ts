@@ -1,6 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
-import type { DaemonClient } from "@getpaseo/client/internal/daemon-client";
-import type { PluginClientContext, PluginComposerPillProps } from "@getpaseo/plugin";
+import type { DaemonClient } from "@fde/client/internal/daemon-client";
+import type { PluginClientContext, PluginComposerPillProps } from "@fde/plugin";
 import { afterEach, describe, expect, it } from "vitest";
 import type { InstalledPlugin } from "../types";
 import { startPluginClientSide } from "./lifecycle";

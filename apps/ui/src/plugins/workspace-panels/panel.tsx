@@ -3,8 +3,8 @@ import type {
   PluginHostProps,
   PluginTheme,
   PluginWorkspacePanelProps,
-} from "@getpaseo/plugin";
-import { PluginClientStateProvider } from "@getpaseo/plugin/host";
+} from "@fde/plugin";
+import { PluginClientStateProvider } from "@fde/plugin/host";
 import { CircleAlert } from "lucide-react-native";
 import { useMemo } from "react";
 import { Platform, Text, View } from "react-native";

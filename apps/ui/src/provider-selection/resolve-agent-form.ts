@@ -1,9 +1,9 @@
-import type { AgentProviderDefinition } from "@getpaseo/protocol/provider-manifest";
+import type { AgentProviderDefinition } from "@fde/protocol/provider-manifest";
 import type {
   AgentModelDefinition,
   AgentProvider,
   ProviderSnapshotEntry,
-} from "@getpaseo/protocol/agent-types";
+} from "@fde/protocol/agent-types";
 import {
   mergeProviderPreferences,
   type FormPreferences,

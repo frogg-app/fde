@@ -2,7 +2,8 @@ node_modules/
 dist/
 build/
 target/
-release/
+/release/
+apps/desktop/release/
 result
 .env
 .env.*

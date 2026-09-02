@@ -1,8 +1,8 @@
 import type pino from "pino";
 import { isAbsolute } from "node:path";
-import { getErrorMessage } from "@getpaseo/protocol/error-utils";
-import { getForgeDefinitionOrNeutral } from "@getpaseo/protocol/forge-manifest";
-import { validateBranchSlug } from "@getpaseo/protocol/branch-slug";
+import { getErrorMessage } from "@fde/protocol/error-utils";
+import { getForgeDefinitionOrNeutral } from "@fde/protocol/forge-manifest";
+import { validateBranchSlug } from "@fde/protocol/branch-slug";
 import type {
   BranchSuggestionsRequest,
   CheckoutCommitsListRequest,

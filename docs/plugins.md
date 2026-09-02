@@ -53,7 +53,7 @@ my-plugin/
   tsconfig.json
 ```
 
-The generated `package.json` installs `@getpaseo/plugin` and the other host modules as development
+The generated `package.json` installs `@fde/plugin` and the other host modules as development
 dependencies for local typechecking and tests. Paseo compiles TypeScript and TSX and supplies the
 runtime modules, so consumers do not install these packages when adding the plugin.
 
@@ -145,8 +145,8 @@ code lives behind filename boundaries:
 | `*.server.ts`  | Node APIs, filesystem and process access, credentials, and handlers. |
 | `*.shared.ts`  | Zod RPC contracts and plain values used by both runtimes.            |
 
-Shared files import contracts from `@getpaseo/plugin/server`. Client files import Paseo UI from
-`@getpaseo/plugin/react-native`. Its `Icon` resolves a Lucide name using the client's installed icon
+Shared files import contracts from `@fde/plugin/server`. Client files import Paseo UI from
+`@fde/plugin/react-native`. Its `Icon` resolves a Lucide name using the client's installed icon
 set; an unknown name renders nothing so it cannot break the plugin surface.
 Its controlled modal keeps presentation metadata on `<Modal title="…" icon={…}>` and body UI in
 `<Modal.Content>`.
@@ -154,11 +154,11 @@ Plugin UI runs on desktop and mobile across multiple themes: color every `Text` 
 `theme.colors.foreground` or `theme.colors.foregroundMuted`, and size layout from `layout.compact`.
 See `public-docs/plugins/reference.md`.
 
-| Module                          | Use it for                                               |
-| ------------------------------- | -------------------------------------------------------- |
-| `@getpaseo/plugin`              | contribution contracts and client data hooks             |
-| `@getpaseo/plugin/react-native` | Paseo React Native components and UI hooks               |
-| `@getpaseo/plugin/server`       | `defineRpc`, `defineAttachmentSource`, and handler types |
+| Module                     | Use it for                                               |
+| -------------------------- | -------------------------------------------------------- |
+| `@fde/plugin`              | contribution contracts and client data hooks             |
+| `@fde/plugin/react-native` | Paseo React Native components and UI hooks               |
+| `@fde/plugin/server`       | `defineRpc`, `defineAttachmentSource`, and handler types |
 
 The compiler removes client registrations and imports from the server entry point, and server
 registrations and imports from the client entry point. Importing a `*.server` module from a client
@@ -167,7 +167,7 @@ such as `StyleSheet.create` belong in `*.client.tsx`; placing them in `index.ts`
 server bundle.
 
 ```ts
-import type { PluginContext } from "@getpaseo/plugin";
+import type { PluginContext } from "@fde/plugin";
 import { Greeting } from "./greeting.client";
 import { createGreeting } from "./greeting.server";
 import { greetRpc } from "./greeting.shared";
@@ -343,7 +343,7 @@ search picker, drafts, selected pill, and submission. The plugin returns complet
 credentials and vendor API calls stay in the daemon handler.
 
 ```ts
-import type { PluginContext } from "@getpaseo/plugin";
+import type { PluginContext } from "@fde/plugin";
 import { search } from "./issues.server";
 import { issues, searchIssues } from "./issues.shared";
 

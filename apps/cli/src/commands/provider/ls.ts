@@ -1,7 +1,7 @@
 import type { Command } from "commander";
 import type { CommandOptions, ListResult, OutputSchema } from "../../output/index.js";
-import type { ProviderSnapshotEntry } from "@getpaseo/protocol/agent-types";
-import { AGENT_PROVIDER_DEFINITIONS } from "@getpaseo/protocol/provider-manifest";
+import type { ProviderSnapshotEntry } from "@fde/protocol/agent-types";
+import { AGENT_PROVIDER_DEFINITIONS } from "@fde/protocol/provider-manifest";
 import { tryConnectToDaemon } from "../../utils/client.js";
 
 export interface ProviderListItem {

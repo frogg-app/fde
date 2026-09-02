@@ -37,7 +37,7 @@ async function createWorkspaceJourney() {
   cleanupPaths.push(tempDir);
   const repoDir = path.join(tempDir, "repo");
   run(tempDir, ["init", "-b", "main", repoDir]);
-  run(repoDir, ["config", "user.email", "test@getpaseo.local"]);
+  run(repoDir, ["config", "user.email", "test@fde.local"]);
   run(repoDir, ["config", "user.name", "Paseo Test"]);
   writeFileSync(path.join(repoDir, "README.md"), "workspace journey\n");
   run(repoDir, ["add", "README.md"]);

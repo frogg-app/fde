@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { DaemonClient } from "@getpaseo/client/internal/daemon-client";
-import type { TerminalProfile } from "@getpaseo/protocol/messages";
-import { resolveTerminalProfileLaunch } from "@getpaseo/protocol/terminal-profiles";
+import type { DaemonClient } from "@fde/client/internal/daemon-client";
+import type { TerminalProfile } from "@fde/protocol/messages";
+import { resolveTerminalProfileLaunch } from "@fde/protocol/terminal-profiles";
 import type { WorkspaceDescriptor } from "@/stores/session-store";
 import { useTranslation } from "react-i18next";
 import { useReplicaQuery } from "@/data/query";

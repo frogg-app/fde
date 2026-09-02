@@ -26,8 +26,8 @@ import {
   type WSOutboundMessage,
   wrapSessionMessage,
 } from "./messages.js";
-import { asUint8Array, decodeBinaryFrame } from "@getpaseo/protocol/binary-frames/index";
-import type { TerminalActivity } from "@getpaseo/protocol/terminal-activity";
+import { asUint8Array, decodeBinaryFrame } from "@fde/protocol/binary-frames/index";
+import type { TerminalActivity } from "@fde/protocol/terminal-activity";
 import type { HostnamesConfig } from "./hostnames.js";
 import { isHostnameAllowed } from "./hostnames.js";
 import {
@@ -70,7 +70,7 @@ import {
 import {
   buildAgentAttentionNotificationPayload,
   findLatestPermissionRequest,
-} from "@getpaseo/protocol/agent-attention-notification";
+} from "@fde/protocol/agent-attention-notification";
 import { createGitHubService } from "../services/github-service.js";
 import type { ForgeService } from "../services/forge-service.js";
 import {
@@ -90,12 +90,12 @@ import {
   CLIENT_SHUTDOWN_RPC_REASON,
   normalizeClientRestartRpcReason,
 } from "./lifecycle-reasons.js";
-import { CLIENT_CAPS } from "@getpaseo/protocol/client-capabilities";
-import type { BrowserAutomationExecuteResponse } from "@getpaseo/protocol/browser-automation/rpc-schemas";
+import { CLIENT_CAPS } from "@fde/protocol/client-capabilities";
+import type { BrowserAutomationExecuteResponse } from "@fde/protocol/browser-automation/rpc-schemas";
 import {
   BrowserAutomationHostCapabilitySchema,
   type BrowserAutomationHostCapability,
-} from "@getpaseo/protocol/browser-automation/capabilities";
+} from "@fde/protocol/browser-automation/capabilities";
 import type { BrowserToolsBroker } from "./browser-tools/broker.js";
 import type { DaemonRuntimeConfig } from "./session/daemon/daemon-session.js";
 import { DirectorySyncService } from "./directory-sync/index.js";

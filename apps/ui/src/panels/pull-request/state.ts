@@ -1,4 +1,4 @@
-import type { CheckoutPrStatusResponse } from "@getpaseo/protocol/messages";
+import type { CheckoutPrStatusResponse } from "@fde/protocol/messages";
 
 type PullRequestStatus = CheckoutPrStatusResponse["payload"]["status"];
 

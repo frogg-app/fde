@@ -1,4 +1,4 @@
-import type { PluginClientStateSource } from "@getpaseo/plugin/host";
+import type { PluginClientStateSource } from "@fde/plugin/host";
 import type { CommandCenterContribution } from "@/command-center/contributions";
 import { getCommandCenterIcon } from "@/command-center/icon";
 import { resolvePluginIcon } from "../icons";

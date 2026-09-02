@@ -6,7 +6,7 @@ import type { PermissionResult, SDKMessage, SDKUserMessage } from "@anthropic-ai
 
 import { createTestLogger } from "../../../../test-utils/test-logger.js";
 import * as executableUtils from "../../../../executable-resolution/executable-resolution.js";
-import { buildAgentAttentionNotificationPayload } from "@getpaseo/protocol/agent-attention-notification";
+import { buildAgentAttentionNotificationPayload } from "@fde/protocol/agent-attention-notification";
 import {
   ClaudeAgentClient,
   convertClaudeHistoryEntry,

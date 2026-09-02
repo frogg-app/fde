@@ -1,6 +1,6 @@
-import type { AgentSnapshotPayload } from "@getpaseo/protocol/messages";
-import type { AgentPermissionRequest } from "@getpaseo/protocol/agent-types";
-import { getParentAgentIdFromLabels } from "@getpaseo/protocol/agent-labels";
+import type { AgentSnapshotPayload } from "@fde/protocol/messages";
+import type { AgentPermissionRequest } from "@fde/protocol/agent-types";
+import { getParentAgentIdFromLabels } from "@fde/protocol/agent-labels";
 import type { ActiveTurnIdentity } from "@/timeline/turn-liveness";
 import type { Agent } from "@/stores/session-store";
 

@@ -22,9 +22,9 @@ import type {
   SessionOutboundMessage,
   WorkspaceDescriptorPayload,
   WorkspaceCreateRequest,
-} from "@getpaseo/protocol/messages";
+} from "@fde/protocol/messages";
 import { DaemonClient } from "./daemon-client.js";
-import type { PluginTimelineItem } from "@getpaseo/protocol/agent-types";
+import type { PluginTimelineItem } from "@fde/protocol/agent-types";
 import type {
   FetchAgentsEntry,
   FetchAgentsOptions,

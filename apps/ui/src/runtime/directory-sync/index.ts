@@ -2,7 +2,7 @@ import type {
   DaemonClient,
   FetchAgentsEntry,
   FetchAgentsOptions,
-} from "@getpaseo/client/internal/daemon-client";
+} from "@fde/client/internal/daemon-client";
 import { fetchAgentTimelineOnce } from "@/timeline/fetch-agent-timeline-once";
 import {
   normalizeProjectDescriptor,

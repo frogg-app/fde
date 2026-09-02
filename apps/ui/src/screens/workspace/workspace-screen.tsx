@@ -1,6 +1,6 @@
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import type { JsonValue } from "@getpaseo/protocol/agent-types";
-import { getOpenAgentTabLabel } from "@getpaseo/protocol/agent-labels";
+import type { JsonValue } from "@fde/protocol/agent-types";
+import { getOpenAgentTabLabel } from "@fde/protocol/agent-labels";
 import {
   memo,
   useCallback,
@@ -191,7 +191,7 @@ import { getIsElectron, isNative, isWeb } from "@/constants/platform";
 import type { SurfaceBackdrop } from "@/styles/surface-backdrop";
 import { buildHostRootRoute, buildSettingsHostRoute } from "@/utils/host-routes";
 import { useWorkspaceTerminals } from "@/screens/workspace/terminals/use-workspace-terminals";
-import type { TerminalProfile } from "@getpaseo/protocol/messages";
+import type { TerminalProfile } from "@fde/protocol/messages";
 import {
   WorkspaceHeaderMenuDesktop,
   WorkspaceHeaderMenuMobile,

@@ -177,7 +177,7 @@ import type {
   FirstAgentContext,
   PluginSource,
   TerminalProfile,
-} from "@getpaseo/protocol/messages";
+} from "@fde/protocol/messages";
 import type {
   AgentProviderRuntimeSettingsMap,
   ProviderOverride,

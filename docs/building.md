@@ -24,7 +24,7 @@ npm run dev:desktop   # cargo tauri dev in apps/desktop; rebuilds bridge.js firs
 `cargo tauri dev` needs a display; on the headless VM, verify with tests and builds:
 
 ```sh
-npm run test --workspace=@frogg/desktop   # bridge.js bundle test + cargo test
+npm run test --workspace=@fde/desktop   # bridge.js bundle test + cargo test
 npm run typecheck                          # includes apps/desktop
 ```
 
@@ -38,6 +38,9 @@ The Tauri binary embeds `apps/ui/dist`, so export the UI first (never with
 | Linux (host)             | `npm run build:desktop` (or `cargo tauri build`) | `apps/desktop/src-tauri/target/release/bundle/{deb,rpm,appimage}`           |
 | Linux, one bundle        | `cargo tauri build --bundles deb`                | `.../release/bundle/deb/`                                                   |
 | Windows x64 (from Linux) | `npm run build:desktop:win`                      | `apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/` |
+
+The binary is named `fde` and bundle filenames follow the Tauri `productName` ("FDE"), e.g.
+`fde_<version>_amd64.deb` and `FDE_<version>_x64-setup.exe`.
 
 The Windows command expands to
 `cargo tauri build --runner cargo-xwin --target x86_64-pc-windows-msvc --bundles nsis`.

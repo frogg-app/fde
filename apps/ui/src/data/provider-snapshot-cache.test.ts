@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Buffer } from "buffer";
-import type { ProviderSnapshotEntry } from "@getpaseo/protocol/agent-types";
-import { compactProviderSnapshot } from "@getpaseo/protocol/provider-snapshot-codec";
+import type { ProviderSnapshotEntry } from "@fde/protocol/agent-types";
+import { compactProviderSnapshot } from "@fde/protocol/provider-snapshot-codec";
 import { z } from "zod";
 import { createProviderSnapshotCache, type ProviderSnapshotCache } from "./provider-snapshot-cache";
 

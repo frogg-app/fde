@@ -63,8 +63,8 @@ import { CODE_SURFACE_DATASET } from "@/styles/code-surface";
 import { inlineUnistylesStyle } from "@/styles/unistyles-inline-style";
 import { MarkdownRenderer, type MarkdownStyles } from "@/components/markdown/renderer";
 import type { TaskActivity, TodoEntry, UserMessageImageAttachment } from "@/types/stream";
-import type { AgentAttachment } from "@getpaseo/protocol/messages";
-import type { ToolCallDetail } from "@getpaseo/protocol/agent-types";
+import type { AgentAttachment } from "@fde/protocol/messages";
+import type { ToolCallDetail } from "@fde/protocol/agent-types";
 import { buildToolCallPresentation } from "@/tool-calls/presentation";
 import { resolveToolCallIcon } from "@/utils/tool-call-icon";
 import { getMarkdownListMarker, getMarkdownListSpacing } from "@/utils/markdown-list";
@@ -103,9 +103,9 @@ import {
   AttachmentThumbnail,
 } from "@/components/attachment-pill";
 import { AttachmentLightbox, type ImageLightboxSource } from "@/components/attachment-lightbox";
-import type { DaemonClient } from "@getpaseo/client/internal/daemon-client";
+import type { DaemonClient } from "@fde/client/internal/daemon-client";
 import { isWeb, isNative } from "@/constants/platform";
-import type { AgentCapabilityFlags } from "@getpaseo/protocol/agent-types";
+import type { AgentCapabilityFlags } from "@fde/protocol/agent-types";
 import { RewindMenu, type RewindMode } from "@/components/rewind/rewind-menu";
 import { useRewindAgentMutation } from "@/components/rewind/use-rewind-agent-mutation";
 import { AssistantForkMenu, type AssistantForkTarget } from "@/components/assistant-fork-menu";

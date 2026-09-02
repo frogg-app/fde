@@ -1,5 +1,5 @@
-import { PluginClientStateProvider } from "@getpaseo/plugin/host";
-import type { PluginHostProps, PluginTheme, PluginTimelineItemProps } from "@getpaseo/plugin";
+import { PluginClientStateProvider } from "@fde/plugin/host";
+import type { PluginHostProps, PluginTheme, PluginTimelineItemProps } from "@fde/plugin";
 import React, { type ComponentType, useMemo } from "react";
 import { Platform, Text } from "react-native";
 import { StyleSheet, withUnistyles } from "react-native-unistyles";

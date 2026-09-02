@@ -172,7 +172,7 @@ function createGitRepo(): { tempDir: string; repoDir: string } {
   const repoDir = path.join(tempDir, "repo");
   mkdirSync(repoDir, { recursive: true });
   execFileSync("git", ["init", "-b", "main"], { cwd: repoDir, stdio: "pipe" });
-  execFileSync("git", ["config", "user.email", "test@getpaseo.local"], {
+  execFileSync("git", ["config", "user.email", "test@fde.local"], {
     cwd: repoDir,
     stdio: "pipe",
   });

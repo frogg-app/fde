@@ -1,4 +1,4 @@
-import type { PluginPanelLocation, PluginWorkspacePanelContribution } from "@getpaseo/plugin";
+import type { PluginPanelLocation, PluginWorkspacePanelContribution } from "@fde/plugin";
 import type { PaneHost } from "@/panels/panel-manifest";
 import { panelSupportsHost } from "@/panels/panel-manifest";
 import type { PluginWorkspaceTabTarget, WorkspaceTabTarget } from "@/workspace-tabs/model";

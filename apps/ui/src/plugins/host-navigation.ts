@@ -1,4 +1,4 @@
-import type { PluginSurfaceProps } from "@getpaseo/plugin";
+import type { PluginSurfaceProps } from "@fde/plugin";
 import { useMemo } from "react";
 import { navigateToWorkspace } from "@/stores/navigation-active-workspace-store";
 import { navigateToAgent } from "@/utils/navigate-to-agent";

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { DaemonClient, FetchAgentsEntry } from "@getpaseo/client/internal/daemon-client";
-import type { AgentSnapshotPayload } from "@getpaseo/protocol/messages";
+import type { DaemonClient, FetchAgentsEntry } from "@fde/client/internal/daemon-client";
+import type { AgentSnapshotPayload } from "@fde/protocol/messages";
 import { useSessionStore } from "@/stores/session-store";
 import { AgentDirectoryReplica } from "./agent-replica";
 

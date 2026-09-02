@@ -11,14 +11,14 @@ interface CommandCall {
 
 const globalRoot = path.join(path.sep, "global", "lib");
 const globalNodeModules = path.join(globalRoot, "node_modules");
-const cliPackagePath = path.join(globalNodeModules, "@getpaseo", "cli");
+const cliPackagePath = path.join(globalNodeModules, "@fde", "cli");
 
 function npmGlobalPaseoCliJson(version: string, options?: { linked?: boolean }): string {
   return JSON.stringify({
     name: "lib",
     path: globalRoot,
     dependencies: {
-      "@getpaseo/cli": {
+      "@fde/cli": {
         version,
         path: cliPackagePath,
         link: options?.linked === true,
@@ -49,7 +49,7 @@ describe("DefaultNpmGlobalPaseoCli", () => {
     expect(calls).toEqual([
       {
         command: "npm",
-        args: ["-g", "ls", "@getpaseo/cli", "--json", "--depth=0", "--long"],
+        args: ["-g", "ls", "@fde/cli", "--json", "--depth=0", "--long"],
         timeout: 10_000,
         maxBuffer: 10 * 1024 * 1024,
       },
@@ -76,7 +76,7 @@ describe("DefaultNpmGlobalPaseoCli", () => {
     expect(calls).toEqual([
       {
         command: "npm",
-        args: ["install", "-g", "@getpaseo/cli@latest"],
+        args: ["install", "-g", "@fde/cli@latest"],
         timeout: 300_000,
         maxBuffer: 10 * 1024 * 1024,
       },
@@ -101,7 +101,7 @@ describe("DefaultNpmGlobalPaseoCli", () => {
     }));
 
     await expect(cli.inspect()).rejects.toThrow(
-      "@getpaseo/cli is not installed with npm -g on this host",
+      "@fde/cli is not installed with npm -g on this host",
     );
   });
 });

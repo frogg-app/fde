@@ -11,8 +11,8 @@ import type {
   PaseoConfigRaw,
   PaseoConfigRevision,
   ProjectConfigRpcError,
-} from "@getpaseo/protocol/messages";
-import type { DaemonClient } from "@getpaseo/client/internal/daemon-client";
+} from "@fde/protocol/messages";
+import type { DaemonClient } from "@fde/client/internal/daemon-client";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,

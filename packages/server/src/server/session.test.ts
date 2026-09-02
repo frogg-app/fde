@@ -9,15 +9,15 @@ import {
   assertPullRequestAutoMergeDisableReady,
   assertPullRequestAutoMergeEnableReady,
 } from "../services/github-service.js";
-import { PARENT_AGENT_ID_LABEL } from "@getpaseo/protocol/agent-labels";
-import { CLIENT_CAPS } from "@getpaseo/protocol/client-capabilities";
-import type { WorkspaceDescriptorPayload } from "@getpaseo/protocol/messages";
+import { PARENT_AGENT_ID_LABEL } from "@fde/protocol/agent-labels";
+import { CLIENT_CAPS } from "@fde/protocol/client-capabilities";
+import type { WorkspaceDescriptorPayload } from "@fde/protocol/messages";
 import {
   decodeFileTransferFrame,
   encodeFileTransferFrame,
   FileTransferOpcode,
   type FileTransferFrame,
-} from "@getpaseo/protocol/binary-frames/index";
+} from "@fde/protocol/binary-frames/index";
 import { Session } from "./session.js";
 import { OWNER_PERMISSIONS, type DaemonPermission } from "./authorization/index.js";
 import { DownloadTokenStore } from "./file-download/token-store.js";

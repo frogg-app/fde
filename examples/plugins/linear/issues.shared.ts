@@ -1,4 +1,4 @@
-import { defineAttachmentSource, defineRpc } from "@getpaseo/plugin/server";
+import { defineAttachmentSource, defineRpc } from "@fde/plugin/server";
 import { z } from "zod";
 
 const SearchPayloadSchema = z.object({

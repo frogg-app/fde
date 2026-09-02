@@ -1,4 +1,4 @@
-import type { PluginComposerPillContribution } from "@getpaseo/plugin";
+import type { PluginComposerPillContribution } from "@fde/plugin";
 import type { InstalledPlugin } from "../types";
 
 const CONTRIBUTION_ID = /^[a-z][a-z0-9-]*$/;

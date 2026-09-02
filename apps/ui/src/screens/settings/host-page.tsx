@@ -16,11 +16,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Alert, Pressable, Text, View } from "react-native";
 import { StyleSheet, useUnistyles, withUnistyles } from "react-native-unistyles";
-import type { TerminalProfile } from "@getpaseo/protocol/messages";
-import {
-  getTerminalProfileIcon,
-  DEFAULT_TERMINAL_PROFILES,
-} from "@getpaseo/protocol/terminal-profiles";
+import type { TerminalProfile } from "@fde/protocol/messages";
+import { getTerminalProfileIcon, DEFAULT_TERMINAL_PROFILES } from "@fde/protocol/terminal-profiles";
 import { AgentProfilesSection } from "@/agent-profiles";
 import { AgentSkillsSection } from "@/agent-skills";
 import { AdaptiveModalSheet, type SheetHeader } from "@/components/adaptive-modal-sheet";
@@ -1034,7 +1031,7 @@ function AutoArchiveMergedWorkspacesCard({ serverId }: { serverId: string }) {
         <View style={settingsStyles.rowContent}>
           <Text style={settingsStyles.rowTitle}>Archive merged PR workspaces</Text>
           <Text style={settingsStyles.rowHint}>
-            Automatically archive clean Paseo workspaces after their pull request is merged
+            Automatically archive clean FDE workspaces after their pull request is merged
           </Text>
         </View>
         <Switch

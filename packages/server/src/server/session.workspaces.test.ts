@@ -14,13 +14,13 @@ import { setImmediate as waitForImmediate } from "node:timers/promises";
 import { afterEach, expect, test, vi } from "vitest";
 import { z } from "zod";
 
-import { CLIENT_CAPS } from "@getpaseo/protocol/client-capabilities";
+import { CLIENT_CAPS } from "@fde/protocol/client-capabilities";
 import { createTestLogger } from "../test-utils/test-logger.js";
 import { Session } from "./session.js";
 import type { SessionOptions } from "./session.js";
 import { OWNER_PERMISSIONS } from "./authorization/index.js";
 import type { AgentUpdatesService } from "./session/agent-updates/agent-updates-service.js";
-import type { AgentSnapshotPayload, SessionOutboundMessage } from "@getpaseo/protocol/messages";
+import type { AgentSnapshotPayload, SessionOutboundMessage } from "@fde/protocol/messages";
 import type { TerminalManager } from "../terminal/terminal-manager.js";
 import { createTerminalManager } from "../terminal/terminal-manager.js";
 import { AgentManager, type AgentManagerEvent, type ManagedAgent } from "./agent/agent-manager.js";
@@ -1073,7 +1073,7 @@ test("create_agent_request launches from an exact subdirectory in a created work
     const child = path.join(parent, "packages", "app");
     mkdirSync(child, { recursive: true });
     execFileSync("git", ["init", "-b", "main"], { cwd: parent, stdio: "pipe" });
-    execFileSync("git", ["config", "user.email", "test@getpaseo.local"], {
+    execFileSync("git", ["config", "user.email", "test@fde.local"], {
       cwd: parent,
       stdio: "pipe",
     });
@@ -5567,7 +5567,7 @@ function createRecreateWorktreeRepo(): { tempDir: string; repoDir: string } {
   const tempDir = realpathSync(mkdtempSync(path.join(tmpdir(), "paseo-recreate-worktree-")));
   const repoDir = path.join(tempDir, "repo");
   execFileSync("git", ["init", "-b", "main", repoDir], { stdio: "pipe" });
-  execFileSync("git", ["config", "user.email", "test@getpaseo.local"], {
+  execFileSync("git", ["config", "user.email", "test@fde.local"], {
     cwd: repoDir,
     stdio: "pipe",
   });
@@ -5819,7 +5819,7 @@ test("archive_workspace_request archives a worktree-kind workspace and removes t
   const repoDir = path.join(tempDir, "repo");
   mkdirSync(repoDir, { recursive: true });
   execFileSync("git", ["init", "-b", "main"], { cwd: repoDir, stdio: "pipe" });
-  execFileSync("git", ["config", "user.email", "test@getpaseo.local"], {
+  execFileSync("git", ["config", "user.email", "test@fde.local"], {
     cwd: repoDir,
     stdio: "pipe",
   });
@@ -8767,7 +8767,7 @@ function createWorkspaceCreatePrRepo(): WorkspaceCreatePrRepoFixture {
   const prFileName = "pr-123.txt";
 
   execFileSync("git", ["init", "-b", "main", repoDir], { stdio: "pipe" });
-  execFileSync("git", ["config", "user.email", "test@getpaseo.local"], {
+  execFileSync("git", ["config", "user.email", "test@fde.local"], {
     cwd: repoDir,
     stdio: "pipe",
   });
@@ -9102,7 +9102,7 @@ test("workspace auto-name uses the backing root for a nested worktree", async ()
   const repoDir = path.join(tempDir, "repo");
   mkdirSync(repoDir);
   execFileSync("git", ["init", repoDir], { stdio: "pipe" });
-  execFileSync("git", ["config", "user.email", "test@getpaseo.local"], {
+  execFileSync("git", ["config", "user.email", "test@fde.local"], {
     cwd: repoDir,
     stdio: "pipe",
   });

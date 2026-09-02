@@ -1,7 +1,7 @@
 import type { Command } from "commander";
 import { homedir } from "node:os";
 import { basename, join, sep } from "node:path";
-import type { DaemonClient } from "@getpaseo/client/internal/daemon-client";
+import type { DaemonClient } from "@fde/client/internal/daemon-client";
 import { connectToDaemon, getDaemonHost } from "../../utils/client.js";
 import type { CommandOptions, ListResult, OutputSchema, CommandError } from "../../output/index.js";
 

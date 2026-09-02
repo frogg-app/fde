@@ -1,4 +1,4 @@
-import type { DaemonTransportFactory } from "@getpaseo/client/internal/daemon-client-transport-types";
+import type { DaemonTransportFactory } from "@fde/client/internal/daemon-client-transport-types";
 import type { PluginProcessMessage, PluginProcessRequest } from "./plugin-process-protocol.js";
 
 interface PluginProcessPort {

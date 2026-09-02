@@ -1,4 +1,4 @@
-import type { PluginTimelineTransformerContribution } from "@getpaseo/plugin";
+import type { PluginTimelineTransformerContribution } from "@fde/plugin";
 import { z } from "zod";
 
 const taskStatusSchema = z.enum(["pending", "in_progress", "completed"]);

@@ -1,4 +1,4 @@
-import type { DaemonClient } from "@getpaseo/client/internal/daemon-client";
+import type { DaemonClient } from "@fde/client/internal/daemon-client";
 import type { CommandError } from "../../output/index.js";
 import { connectToDaemon } from "../../utils/client.js";
 

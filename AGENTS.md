@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Frogg DE: a Tauri desktop client for AI coding agents, forked from Paseo v0.7.2.
+FDE (Frogg Development Environment): a Tauri desktop client for AI coding agents, forked from Paseo v0.7.2.
 The parent directory's `/home/frogg/projects/AGENTS.md` applies here too (git identity,
 versioning, Docker, file-length rules). The upstream Paseo source is kept read-only at
 `/home/frogg/projects/paseo` for reference; never edit it.

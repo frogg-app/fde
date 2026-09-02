@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { ComposerAttachment } from "@/attachments/types";
-import type { AgentProvider } from "@getpaseo/protocol/agent-types";
+import type { AgentProvider } from "@fde/protocol/agent-types";
 import type { WorkspaceDraftTabSetup } from "@/workspace-tabs/model";
 
 export interface PendingWorkspaceDraftSubmission {

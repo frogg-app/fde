@@ -85,7 +85,7 @@ mod tests {
     #[test]
     fn picks_first_link_from_args() {
         let args = vec![
-            "frogg-de".to_string(),
+            "fde".to_string(),
             "--flag".to_string(),
             "paseo://h/s/agent/a".to_string(),
         ];

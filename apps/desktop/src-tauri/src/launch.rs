@@ -110,7 +110,7 @@ pub fn receive_agent_deep_link<R: Runtime>(app: &AppHandle<R>, target: AgentDeep
     focus_main_window(app);
 }
 
-/// A second launch (`frogg-de /path/to/project`, or an OS handing us a
+/// A second launch (`fde /path/to/project`, or an OS handing us a
 /// `paseo://` link on Windows/Linux). Deep links in `argv` are forwarded to the
 /// deep-link plugin by the single-instance plugin, so only paths are handled here.
 pub fn handle_second_instance<R: Runtime>(app: &AppHandle<R>, argv: &[String]) {
@@ -158,7 +158,7 @@ mod tests {
     fn positional_directory_becomes_pending_project() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().to_string_lossy().to_string();
-        let state = LaunchState::from_argv(&args(&["frogg-de", &path]));
+        let state = LaunchState::from_argv(&args(&["fde", &path]));
         assert_eq!(state.take_pending_open_project().as_deref(), Some(path.as_str()));
         assert_eq!(state.take_pending_open_project(), None, "drained once");
     }
@@ -168,21 +168,21 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().to_string_lossy().to_string();
         assert_eq!(
-            parse_open_project_path(&args(&["frogg-de", "--open-project", &path])),
+            parse_open_project_path(&args(&["fde", "--open-project", &path])),
             Some(path)
         );
     }
 
     #[test]
     fn missing_or_relative_paths_are_ignored() {
-        assert_eq!(parse_open_project_path(&args(&["frogg-de", "relative/dir"])), None);
-        assert_eq!(parse_open_project_path(&args(&["frogg-de", "/definitely/missing/dir"])), None);
-        assert_eq!(parse_open_project_path(&args(&["frogg-de", "-psn_0_1"])), None);
+        assert_eq!(parse_open_project_path(&args(&["fde", "relative/dir"])), None);
+        assert_eq!(parse_open_project_path(&args(&["fde", "/definitely/missing/dir"])), None);
+        assert_eq!(parse_open_project_path(&args(&["fde", "-psn_0_1"])), None);
     }
 
     #[test]
     fn navigation_queues_until_ready_then_delivers_directly() {
-        let state = LaunchState::from_argv(&args(&["frogg-de", "paseo://h/srv/agent/ag"]));
+        let state = LaunchState::from_argv(&args(&["fde", "paseo://h/srv/agent/ag"]));
         let target = AgentDeepLinkTarget { server_id: "srv".into(), agent_id: "ag".into() };
         assert_eq!(state.window_ready(), Some(target.clone()));
         assert_eq!(state.window_ready(), None);

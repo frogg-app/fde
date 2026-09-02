@@ -5,9 +5,9 @@ import {
   defineRpc,
   type PluginHandlerContext,
   type PluginRpcContract,
-} from "@getpaseo/plugin/server";
-import { createPaseoApi, type PaseoApi } from "@getpaseo/client";
-import { DaemonClient } from "@getpaseo/client/internal/daemon-client";
+} from "@fde/plugin/server";
+import { createPaseoApi, type PaseoApi } from "@fde/client";
+import { DaemonClient } from "@fde/client/internal/daemon-client";
 import { createPluginDaemonTransportFactory } from "./daemon-transport.js";
 import { isPluginClientOnlySdkSpecifier, isPluginSdkSpecifier } from "./plugin-sdk-specifiers.js";
 import { createPluginClientId } from "./plugin-session-identity.js";

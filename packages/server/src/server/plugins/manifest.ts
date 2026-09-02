@@ -1,7 +1,7 @@
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { z } from "zod";
-import { PluginIdSchema } from "@getpaseo/protocol/messages";
+import { PluginIdSchema } from "@fde/protocol/messages";
 
 const MANIFEST_FILENAME = "paseo-plugin.json";
 const PluginBuildCommandSchema = z

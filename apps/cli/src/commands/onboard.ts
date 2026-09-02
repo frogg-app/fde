@@ -2,7 +2,7 @@ import { cancel, confirm, intro, isCancel, log, note, outro, spinner } from "@cl
 import { Command, Option } from "commander";
 import { writeFileSync } from "node:fs";
 import path from "node:path";
-import { loadPersistedConfig, type PersistedConfig } from "@getpaseo/server";
+import { loadPersistedConfig, type PersistedConfig } from "@fde/server";
 import {
   resolveLocalPaseoHome,
   resolveLocalDaemonState,

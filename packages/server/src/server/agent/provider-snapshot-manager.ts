@@ -33,14 +33,14 @@ import {
   shutdownAgentClients,
   type ProviderDefinition,
 } from "./provider-registry.js";
-import { BUILTIN_PROVIDER_IDS } from "@getpaseo/protocol/provider-manifest";
+import { BUILTIN_PROVIDER_IDS } from "@fde/protocol/provider-manifest";
 import { applyMutableProviderConfigToOverrides } from "../daemon-config-store.js";
 import {
   formatProviderDiagnostic,
   formatProviderDiagnosticError,
 } from "./providers/diagnostic-utils.js";
 import type { MutableDaemonConfig } from "../daemon-config-store.js";
-import type { HubExecutionAgentValidationIssue } from "@getpaseo/protocol/messages";
+import type { HubExecutionAgentValidationIssue } from "@fde/protocol/messages";
 import {
   type AgentConfigurationValidationInput,
   validateAgentConfigurationAgainstProvider,

@@ -19,8 +19,8 @@ type RuntimeCall = "inspect" | "installLatest";
 
 const globalRoot = "/global/lib";
 const globalNodeModules = `${globalRoot}/node_modules`;
-const cliPackagePath = `${globalNodeModules}/@getpaseo/cli`;
-const npmServerPackageRoot = `${cliPackagePath}/node_modules/@getpaseo/server`;
+const cliPackagePath = `${globalNodeModules}/@fde/cli`;
+const npmServerPackageRoot = `${cliPackagePath}/node_modules/@fde/server`;
 const sourceServerPackageRoot = "/repo/packages/server";
 
 function npmGlobalPaseoInstall(
@@ -137,13 +137,13 @@ describe("DaemonSelfUpdater", () => {
     const calls: RuntimeCall[] = [];
     const runtime = createRuntime({
       calls,
-      inspections: [new Error("@getpaseo/cli is not installed with npm -g on this host")],
+      inspections: [new Error("@fde/cli is not installed with npm -g on this host")],
     });
 
     const { result, phases } = await runUpdate({ runtime });
 
     expect(result.success).toBe(false);
-    expect(result.error).toBe("@getpaseo/cli is not installed with npm -g on this host");
+    expect(result.error).toBe("@fde/cli is not installed with npm -g on this host");
     expect(phases).toEqual(["starting"]);
     expect(calls).toEqual(["inspect"]);
   });
@@ -160,7 +160,7 @@ describe("DaemonSelfUpdater", () => {
     expect(result).toEqual({
       success: false,
       error:
-        "This daemon is not running from the npm global @getpaseo/cli install (global npm has 0.1.15, daemon is 0.1.96).",
+        "This daemon is not running from the npm global @fde/cli install (global npm has 0.1.15, daemon is 0.1.96).",
       newVersion: null,
     });
     expect(calls).toEqual(["inspect"]);
@@ -178,7 +178,7 @@ describe("DaemonSelfUpdater", () => {
 
     expect(result).toEqual({
       success: false,
-      error: "This daemon is not running from the npm global @getpaseo/cli install.",
+      error: "This daemon is not running from the npm global @fde/cli install.",
       newVersion: null,
     });
     expect(calls).toEqual(["inspect"]);
@@ -194,7 +194,7 @@ describe("DaemonSelfUpdater", () => {
     expect(result).toEqual({
       success: false,
       error:
-        "The global @getpaseo/cli install is linked; self-update only supports normal npm global installs.",
+        "The global @fde/cli install is linked; self-update only supports normal npm global installs.",
       newVersion: null,
     });
   });

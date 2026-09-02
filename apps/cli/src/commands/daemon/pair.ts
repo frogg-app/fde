@@ -6,7 +6,7 @@ import {
   getOrCreateServerId,
   loadConfig,
   resolvePaseoHome,
-} from "@getpaseo/server";
+} from "@fde/server";
 import { tryConnectToDaemon } from "../../utils/client.js";
 import { resolveLocalDaemonState } from "./local-daemon.js";
 import { addJsonOption } from "../../utils/command-options.js";

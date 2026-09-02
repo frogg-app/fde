@@ -4,7 +4,7 @@ import type {
   HubExecutionAgentCreateRequest,
   HubExecutionAgentValidateRequest,
   SessionOutboundMessage,
-} from "@getpaseo/protocol/messages";
+} from "@fde/protocol/messages";
 
 import type {
   HubExecutionAgents,

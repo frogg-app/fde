@@ -17,7 +17,7 @@ import { AgentStorage } from "./agent-storage.js";
 import { InMemoryAgentTimelineStore } from "./agent-timeline-store.js";
 import { toAgentPayload } from "./agent-projections.js";
 import { projectTimelineRows } from "./timeline-projection.js";
-import { getOpenAgentTabLabel, PARENT_AGENT_ID_LABEL } from "@getpaseo/protocol/agent-labels";
+import { getOpenAgentTabLabel, PARENT_AGENT_ID_LABEL } from "@fde/protocol/agent-labels";
 import { formatSystemNotificationPrompt, startAgentRun } from "./agent-prompt.js";
 import { ensureAgentLoaded, ensureUnarchivedAgentLoaded } from "./agent-loading.js";
 import type { StoredAgentRecord } from "./agent-storage.js";

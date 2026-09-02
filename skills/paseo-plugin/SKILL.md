@@ -78,7 +78,7 @@ Importing a `*.server` module from a client module, or a `*.client` module from 
 Default-export one contribution function. It must return cleanup, even when there is nothing to clean:
 
 ```tsx
-import type { PluginContext } from "@getpaseo/plugin";
+import type { PluginContext } from "@fde/plugin";
 
 export default function contribute(plugin: PluginContext) {
   // Register contributions here.
@@ -95,7 +95,7 @@ mobile, and Paseo has multiple themes. Every `Text` must take its color from `th
 Use `layout.compact` for padding and stacking. Unstyled text is black and fails in dark themes.
 
 ```tsx
-import { type PluginContext, type PluginWorkspacePanelProps, useWorkspace } from "@getpaseo/plugin";
+import { type PluginContext, type PluginWorkspacePanelProps, useWorkspace } from "@fde/plugin";
 import { useMemo } from "react";
 import { Text, View } from "react-native";
 
@@ -151,7 +151,7 @@ the active workspace or agent. Command callbacks receive the selected host's `pa
 Plugin surfaces use React Native primitives and work across desktop, browser, iOS, and Android. Register the surface before its sidebar item. Color text from `theme.colors` and pad from `layout.compact`.
 
 ```tsx
-import type { PluginContext, PluginSurfaceProps } from "@getpaseo/plugin";
+import type { PluginContext, PluginSurfaceProps } from "@fde/plugin";
 import { useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 
@@ -200,13 +200,13 @@ export default function contribute(plugin: PluginContext) {
 
 Icons are Lucide icon names. `theme` is a typed `PluginTheme` on every surface and panel. Primary text uses `theme.colors.foreground`; labels use `theme.colors.foregroundMuted`; the root view uses `theme.colors.surface0`. `layout.compact` is true on mobile and narrow windows. Paseo owns the route, header, host picker, close action, error boundary, and per-installation query client.
 
-Client code may import `react`, `react-native`, `@tanstack/react-query`, `zod`, `@getpaseo/plugin`, `@getpaseo/plugin/react-native`, and `@getpaseo/plugin/server`. Install dependencies locally for typechecking; Paseo supplies these runtime modules. JSX compiles with the automatic runtime, so no `React` import is needed for JSX.
+Client code may import `react`, `react-native`, `@tanstack/react-query`, `zod`, `@fde/plugin`, `@fde/plugin/react-native`, and `@fde/plugin/server`. Install dependencies locally for typechecking; Paseo supplies these runtime modules. JSX compiles with the automatic runtime, so no `React` import is needed for JSX.
 
-| Module                          | Use it for                                                               |
-| ------------------------------- | ------------------------------------------------------------------------ |
-| `@getpaseo/plugin`              | contribution contracts, `usePaseo`, `useRpc`, `useWorkspace`, `useAgent` |
-| `@getpaseo/plugin/react-native` | Paseo UI: `Icon`, `Modal`, `useToast`, `useRevealedText`                 |
-| `@getpaseo/plugin/server`       | `defineRpc`, `defineAttachmentSource`, handler types                     |
+| Module                     | Use it for                                                               |
+| -------------------------- | ------------------------------------------------------------------------ |
+| `@fde/plugin`              | contribution contracts, `usePaseo`, `useRpc`, `useWorkspace`, `useAgent` |
+| `@fde/plugin/react-native` | Paseo UI: `Icon`, `Modal`, `useToast`, `useRevealedText`                 |
+| `@fde/plugin/server`       | `defineRpc`, `defineAttachmentSource`, handler types                     |
 
 ## Choose the correct API
 
@@ -217,7 +217,7 @@ Use the existing Paseo SDK for normal Paseo operations. Use plugin RPC only for 
 `usePaseo()` borrows the selected host's current connection. Never create another client inside a surface.
 
 ```tsx
-import { usePaseo } from "@getpaseo/plugin";
+import { usePaseo } from "@fde/plugin";
 
 function PullRequestAction() {
   const paseo = usePaseo();
@@ -250,9 +250,9 @@ The API covers workspaces, agents, providers, and daemon config. It omits connec
 Define one Zod contract, register its subprocess handler, and call it with `useRpc()`:
 
 ```tsx
-import type { PluginContext } from "@getpaseo/plugin";
-import { useRpc } from "@getpaseo/plugin";
-import { defineRpc } from "@getpaseo/plugin/server";
+import type { PluginContext } from "@fde/plugin";
+import { useRpc } from "@fde/plugin";
+import { defineRpc } from "@fde/plugin/server";
 import { z } from "zod";
 
 const greeting = defineRpc({
@@ -304,8 +304,8 @@ daemon log. Never log credentials or other secrets.
 Define a search RPC and register a declarative source:
 
 ```tsx
-import type { PluginContext } from "@getpaseo/plugin";
-import { defineAttachmentSource, defineRpc } from "@getpaseo/plugin/server";
+import type { PluginContext } from "@fde/plugin";
+import { defineAttachmentSource, defineRpc } from "@fde/plugin/server";
 import { z } from "zod";
 
 const searchIssues = defineRpc({
@@ -419,7 +419,7 @@ plugin.addTimelineRenderer({
 });
 ```
 
-Transformers run while the render model is built, on fetched history and on every live update, so `phase` is `"streaming"` for a loading thought or running tool call. Identity comes from the source item, so a streaming item keeps its mounted component; set an output `id` when one source explodes into several items. Transformers must be synchronous and deterministic, `data` must be JSON, and a transformer that throws is logged and skipped. Use `useRevealedText(text, phase)` from `@getpaseo/plugin/react-native` to pace streaming text. `examples/plugins/inline-thinking` replaces the thinking row with inline text; `examples/plugins/timeline-items` replaces a Pi todo tool call with a task card.
+Transformers run while the render model is built, on fetched history and on every live update, so `phase` is `"streaming"` for a loading thought or running tool call. Identity comes from the source item, so a streaming item keeps its mounted component; set an output `id` when one source explodes into several items. Transformers must be synchronous and deterministic, `data` must be JSON, and a transformer that throws is logged and skipped. Use `useRevealedText(text, phase)` from `@fde/plugin/react-native` to pace streaming text. `examples/plugins/inline-thinking` replaces the thinking row with inline text; `examples/plugins/timeline-items` replaces a Pi todo tool call with a task card.
 
 ## Append a timeline row from the daemon
 

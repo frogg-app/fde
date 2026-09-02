@@ -1,10 +1,10 @@
 import type pino from "pino";
-import { getErrorMessage } from "@getpaseo/protocol/error-utils";
+import { getErrorMessage } from "@fde/protocol/error-utils";
 import {
   encodeFileTransferFrame,
   FileTransferOpcode,
   type FileTransferFrame,
-} from "@getpaseo/protocol/binary-frames/index";
+} from "@fde/protocol/binary-frames/index";
 import type {
   FileDownloadTokenRequest,
   FileEntryCreateRequest,

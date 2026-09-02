@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { AgentAttachment, ForgeSearchItem } from "@getpaseo/protocol/messages";
+import type { AgentAttachment, ForgeSearchItem } from "@fde/protocol/messages";
 import type {
   AttachmentMetadata,
   ComposerAttachment,

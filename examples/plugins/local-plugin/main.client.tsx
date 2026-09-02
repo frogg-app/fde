@@ -7,7 +7,7 @@ import {
   useAgent,
   useRpc,
   useWorkspace,
-} from "@getpaseo/plugin";
+} from "@fde/plugin";
 import { useCallback, useMemo } from "react";
 import { Pressable, Text, View } from "react-native";
 import { incrementRpc } from "./increment.shared";

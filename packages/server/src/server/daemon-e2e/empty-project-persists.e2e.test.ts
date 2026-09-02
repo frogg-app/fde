@@ -44,7 +44,7 @@ test("project.add creates a project without creating a workspace", async () => {
     cleanupPaths.add(paseoHomeRoot);
 
     execSync("git init -b main", { cwd: repoRoot, stdio: "pipe" });
-    execSync("git config user.email 'test@getpaseo.dev'", { cwd: repoRoot, stdio: "pipe" });
+    execSync("git config user.email 'test@fde.dev'", { cwd: repoRoot, stdio: "pipe" });
     execSync("git config user.name 'Paseo Test'", { cwd: repoRoot, stdio: "pipe" });
     writeFileSync(path.join(repoRoot, "README.md"), "# repo\n", "utf8");
     execSync("git add README.md", { cwd: repoRoot, stdio: "pipe" });
@@ -94,7 +94,7 @@ test("archiving the last workspace leaves the project parent with no workspaces"
     cleanupPaths.add(paseoHomeRoot);
 
     execSync("git init -b main", { cwd: repoRoot, stdio: "pipe" });
-    execSync("git config user.email 'test@getpaseo.dev'", { cwd: repoRoot, stdio: "pipe" });
+    execSync("git config user.email 'test@fde.dev'", { cwd: repoRoot, stdio: "pipe" });
     execSync("git config user.name 'Paseo Test'", { cwd: repoRoot, stdio: "pipe" });
     writeFileSync(path.join(repoRoot, "README.md"), "# repo\n", "utf8");
     execSync("git add README.md", { cwd: repoRoot, stdio: "pipe" });

@@ -1,8 +1,8 @@
 {
-  "name": "@frogg/desktop",
-  "version": "0.1.2",
+  "name": "@fde/desktop",
+  "version": "0.1.3",
   "private": true,
-  "description": "Frogg DE desktop shell (Tauri v2)",
+  "description": "FDE (Frogg Development Environment) desktop shell (Tauri v2)",
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {

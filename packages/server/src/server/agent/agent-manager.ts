@@ -1,19 +1,16 @@
 import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
 import { stat } from "node:fs/promises";
-import {
-  AGENT_LIFECYCLE_STATUSES,
-  type AgentLifecycleStatus,
-} from "@getpaseo/protocol/agent-lifecycle";
+import { AGENT_LIFECYCLE_STATUSES, type AgentLifecycleStatus } from "@fde/protocol/agent-lifecycle";
 import {
   getParentAgentIdFromLabels,
   hasOpenAgentTab,
   isDelegatedAgent,
   isOpenAgentTabLabel,
   PARENT_AGENT_ID_LABEL,
-} from "@getpaseo/protocol/agent-labels";
+} from "@fde/protocol/agent-labels";
 import type { Logger } from "pino";
-import type { ProviderOptions, ToolPolicy } from "@getpaseo/protocol/agent-types";
+import type { ProviderOptions, ToolPolicy } from "@fde/protocol/agent-types";
 import { z } from "zod";
 import type { TerminalManager } from "../../terminal/terminal-manager.js";
 

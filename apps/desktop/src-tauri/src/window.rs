@@ -4,7 +4,7 @@ use serde_json::json;
 use tauri::{App, WebviewUrl, WebviewWindowBuilder};
 
 pub const MAIN_WINDOW_LABEL: &str = "main";
-const WINDOW_TITLE: &str = "Frogg DE";
+const WINDOW_TITLE: &str = "FDE";
 
 const BRIDGE_SCRIPT: &str = include_str!("../bridge.js");
 

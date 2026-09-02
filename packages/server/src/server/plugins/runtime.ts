@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
 import type pino from "pino";
-import type { PluginLogEntry } from "@getpaseo/protocol/messages";
+import type { PluginLogEntry } from "@fde/protocol/messages";
 import { compilePlugin } from "./compiler.js";
 import { readPluginManifest } from "./manifest.js";
 import type { PluginProcessMessage, PluginProcessRequest } from "./plugin-process-protocol.js";

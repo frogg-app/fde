@@ -75,7 +75,7 @@ afterEach(async () => {
 describe("plugin author module externals", () => {
   // COMPAT(plugin-sdk-scope): plugins written against the unpublished @paseo/plugin name must
   // keep compiling. Drop that case with the specifiers in plugin-sdk-specifiers.ts.
-  it.each(["@getpaseo/plugin", "@paseo/plugin"])(
+  it.each(["@fde/plugin", "@paseo/plugin"])(
     "leaves %s/server external in both bundles",
     async (sdk) => {
       const directory = await mkdtemp(path.join(tmpdir(), "paseo-plugin-compiler-"));
@@ -201,7 +201,7 @@ export default function contribute(plugin) {
     const entryPath = path.join(directory, "index.tsx");
     await writeFile(
       entryPath,
-      `import type { PluginContext } from "@getpaseo/plugin";
+      `import type { PluginContext } from "@fde/plugin";
 
 export default function contribute(plugin: PluginContext) {
   plugin.addSurface("probe", () => {

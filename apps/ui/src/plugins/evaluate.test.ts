@@ -355,11 +355,11 @@ describe("evaluatePluginClientBundle", () => {
     ).toThrow("must return a cleanup function");
   });
 
-  it("provides the host Icon component through @getpaseo/plugin", () => {
+  it("provides the host Icon component through @fde/plugin", () => {
     const plugin = evaluatePluginClientBundle(
       "example",
       `(function(require) {
-        const { Icon } = require("@getpaseo/plugin");
+        const { Icon } = require("@fde/plugin");
         const module = { exports: {} };
         module.exports.default = function(plugin) {
           plugin.addSurface("main", function Surface() {
@@ -377,11 +377,11 @@ describe("evaluatePluginClientBundle", () => {
     expect(element).toMatchObject({ props: { size: 18, color: "#123456" } });
   });
 
-  it("provides Paseo UI through @getpaseo/plugin/react-native", () => {
+  it("provides Paseo UI through @fde/plugin/react-native", () => {
     const plugin = evaluatePluginClientBundle(
       "example",
       `(function(require) {
-        const { Icon, Modal, useToast } = require("@getpaseo/plugin/react-native");
+        const { Icon, Modal, useToast } = require("@fde/plugin/react-native");
         const module = { exports: {} };
         module.exports.default = function(plugin) {
           if (typeof Icon !== "function" || typeof Modal !== "function" || typeof Modal.Content !== "function" || typeof useToast !== "function") {
@@ -397,11 +397,11 @@ describe("evaluatePluginClientBundle", () => {
     expect(plugin.surfaces.map((surface) => surface.id)).toEqual(["main"]);
   });
 
-  it("resolves @getpaseo/plugin/server for shared RPC contracts", () => {
+  it("resolves @fde/plugin/server for shared RPC contracts", () => {
     const plugin = evaluatePluginClientBundle(
       "example",
       `(function(require) {
-        const { defineRpc, defineAttachmentSource } = require("@getpaseo/plugin/server");
+        const { defineRpc, defineAttachmentSource } = require("@fde/plugin/server");
         const search = defineRpc({ name: "issues.search", input: {}, output: {} });
         const module = { exports: {} };
         module.exports.default = function(plugin) {

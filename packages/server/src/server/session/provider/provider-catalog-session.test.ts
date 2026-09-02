@@ -13,7 +13,7 @@ import {
 } from "../../agent/provider-snapshot-manager.js";
 import type { ProviderSnapshotEntry } from "../../agent/agent-sdk-types.js";
 import type { ProviderUsageService } from "../../../services/quota-fetcher/service.js";
-import { expandProviderSnapshot } from "@getpaseo/protocol/provider-snapshot-codec";
+import { expandProviderSnapshot } from "@fde/protocol/provider-snapshot-codec";
 
 type SnapshotChangeHandler = (entries: ProviderSnapshotEntry[], cwd: string) => void;
 

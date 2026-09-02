@@ -1,6 +1,6 @@
 import { mkdir, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { PluginIdSchema } from "@getpaseo/protocol/messages";
+import { PluginIdSchema } from "@fde/protocol/messages";
 import { resolveCliVersion } from "../../version.js";
 
 const TSCONFIG = {
@@ -19,7 +19,7 @@ const TSCONFIG = {
   include: ["**/*.ts", "**/*.tsx"],
 };
 
-const ENTRY = `import type { PluginContext } from "@getpaseo/plugin";
+const ENTRY = `import type { PluginContext } from "@fde/plugin";
 import { MainSurface } from "./main.client";
 
 export default function contribute(plugin: PluginContext) {
@@ -28,7 +28,7 @@ export default function contribute(plugin: PluginContext) {
 }
 `;
 
-const CLIENT_SURFACE = `import type { PluginSurfaceProps } from "@getpaseo/plugin";
+const CLIENT_SURFACE = `import type { PluginSurfaceProps } from "@fde/plugin";
 import React, { useMemo } from "react";
 import { Text, View } from "react-native";
 
@@ -75,7 +75,7 @@ export async function scaffoldPluginDirectory(
     version: "0.0.0",
     scripts: { typecheck: "tsc --noEmit" },
     devDependencies: {
-      "@getpaseo/plugin": resolveCliVersion(),
+      "@fde/plugin": resolveCliVersion(),
       "@tanstack/react-query": "^5.90.11",
       "@types/react": "~19.2.0",
       react: "19.1.0",

@@ -1,4 +1,4 @@
-import type { SessionOutboundMessage } from "@getpaseo/protocol/messages";
+import type { SessionOutboundMessage } from "@fde/protocol/messages";
 import { normalizeWorkspaceDescriptor, type WorkspaceDescriptor } from "@/stores/session-store";
 import { shouldSuppressWorkspaceForLocalArchive } from "./session-workspace-upserts";
 

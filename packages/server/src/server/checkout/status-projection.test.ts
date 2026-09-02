@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import { CheckoutPrStatusSchema } from "@getpaseo/protocol/messages";
+import { CheckoutPrStatusSchema } from "@fde/protocol/messages";
 import type { WorkspaceGitRuntimeSnapshot } from "../workspace-git-service.js";
 import {
   buildCheckoutPrStatusPayloadFromSnapshot,

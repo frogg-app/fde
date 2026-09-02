@@ -1,7 +1,7 @@
 import type { z } from "zod";
-import { CLIENT_CAPS, type ClientCapability } from "@getpaseo/protocol/client-capabilities";
-import type { AgentAttentionNotificationPayload } from "@getpaseo/protocol/agent-attention-notification";
-import { parsePluginSourceReference } from "@getpaseo/protocol/plugin-source-reference";
+import { CLIENT_CAPS, type ClientCapability } from "@fde/protocol/client-capabilities";
+import type { AgentAttentionNotificationPayload } from "@fde/protocol/agent-attention-notification";
+import { parsePluginSourceReference } from "@fde/protocol/plugin-source-reference";
 import {
   AgentCreateFailedStatusPayloadSchema,
   AgentCreatedStatusPayloadSchema,
@@ -16,8 +16,8 @@ import {
   SessionInboundMessageSchema,
   type ActiveTurnBehavior,
   type ServerInfoStatusPayload,
-} from "@getpaseo/protocol/messages";
-import { validateWSOutboundMessage } from "@getpaseo/protocol/validation/ws-outbound";
+} from "@fde/protocol/messages";
+import { validateWSOutboundMessage } from "@fde/protocol/validation/ws-outbound";
 import type {
   AgentStreamEventPayload,
   AgentSnapshotPayload,
@@ -111,7 +111,7 @@ import type {
   AgentSkillSelection,
   AgentSkillsStatus,
   AgentSkillsSaveResult,
-} from "@getpaseo/protocol/messages";
+} from "@fde/protocol/messages";
 import type {
   AgentPermissionRequest,
   AgentPermissionResponse,
@@ -119,14 +119,14 @@ import type {
   AgentProviderNotice,
   AgentProvider,
   AgentSessionConfig,
-} from "@getpaseo/protocol/agent-types";
+} from "@fde/protocol/agent-types";
 import type {
   AgentConfigApply,
   MutableDaemonConfig,
   MutableDaemonConfigPatch,
-} from "@getpaseo/protocol/messages";
-import { isRelayClientWebSocketUrl } from "@getpaseo/protocol/daemon-endpoints";
-import { terminalSubscriptionKey } from "@getpaseo/protocol/terminal-subscription-key";
+} from "@fde/protocol/messages";
+import { isRelayClientWebSocketUrl } from "@fde/protocol/daemon-endpoints";
+import { terminalSubscriptionKey } from "@fde/protocol/terminal-subscription-key";
 import {
   asUint8Array,
   decodeFileTransferFrame,
@@ -135,7 +135,7 @@ import {
   FileTransferOpcode,
   TerminalStreamOpcode,
   type FileTransferFrame,
-} from "@getpaseo/protocol/binary-frames/index";
+} from "@fde/protocol/binary-frames/index";
 import {
   createRelayE2eeTransportFactory,
   createWebSocketTransportFactory,
@@ -157,7 +157,7 @@ import { TerminalStreamRouter, type TerminalStreamEvent } from "./terminal-strea
 import type {
   BrowserAutomationExecuteRequest,
   BrowserAutomationExecuteResponse,
-} from "@getpaseo/protocol/browser-automation/rpc-schemas";
+} from "@fde/protocol/browser-automation/rpc-schemas";
 
 export interface Logger {
   debug(obj: object, msg?: string): void;
@@ -2885,7 +2885,7 @@ export class DaemonClient {
 
   async appendAgentTimelineItem(
     agentId: string,
-    item: Omit<import("@getpaseo/protocol/agent-types").PluginTimelineItem, "pluginId">,
+    item: Omit<import("@fde/protocol/agent-types").PluginTimelineItem, "pluginId">,
   ): Promise<{ seq: number; epoch: string }> {
     const requestId = this.createRequestId();
     const payload = await this.sendCorrelatedSessionRequest({

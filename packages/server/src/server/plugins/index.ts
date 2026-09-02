@@ -8,8 +8,8 @@ import {
   type PluginSource,
   type PluginSourceStatusItem,
   type PluginSourceUpdateItem,
-} from "@getpaseo/protocol/messages";
-import { parsePluginSourceReference } from "@getpaseo/protocol/plugin-source-reference";
+} from "@fde/protocol/messages";
+import { parsePluginSourceReference } from "@fde/protocol/plugin-source-reference";
 import type { DaemonConfigStore } from "../daemon-config-store.js";
 import { type ManagedPluginCandidate, ManagedPluginSources } from "./managed-source.js";
 import { readPluginManifest } from "./manifest.js";

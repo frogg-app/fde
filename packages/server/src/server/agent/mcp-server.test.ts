@@ -20,7 +20,7 @@ import {
   AgentListItemPayloadSchema,
   AgentPermissionRequestPayloadSchema,
   AgentSnapshotPayloadSchema,
-} from "@getpaseo/protocol/messages";
+} from "@fde/protocol/messages";
 import {
   createPersistedProjectRecord,
   createPersistedWorkspaceRecord,
@@ -33,7 +33,7 @@ import type {
   CreateScheduleInput,
   StoredSchedule,
   UpdateScheduleInput,
-} from "@getpaseo/protocol/schedule/types";
+} from "@fde/protocol/schedule/types";
 import type { ScheduleService } from "../schedule/service.js";
 import type { WorkspaceGitService } from "../workspace-git-service.js";
 import {
@@ -51,8 +51,8 @@ import type { GeneratedWorkspaceName } from "../worktree-branch-name-generator.j
 import type { ForgeService } from "../../services/forge-service.js";
 import { areEquivalentPaths } from "../../utils/path.js";
 import type { TerminalManager } from "../../terminal/terminal-manager.js";
-import { PARENT_AGENT_ID_LABEL } from "@getpaseo/protocol/agent-labels";
-import { MutableDaemonConfigSchema, type AgentProfile } from "@getpaseo/protocol/messages";
+import { PARENT_AGENT_ID_LABEL } from "@fde/protocol/agent-labels";
+import { MutableDaemonConfigSchema, type AgentProfile } from "@fde/protocol/messages";
 import type { DaemonConfigStore } from "../daemon-config-store.js";
 import type { BrowserToolsBroker, BrowserToolsExecuteInput } from "../browser-tools/broker.js";
 import type { BrowserToolsResponsePayload } from "../browser-tools/errors.js";

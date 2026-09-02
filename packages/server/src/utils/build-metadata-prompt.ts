@@ -1,8 +1,5 @@
 import { readPaseoConfigJson } from "./paseo-config-file.js";
-import {
-  PaseoConfigSchema,
-  type PaseoMetadataGeneration,
-} from "@getpaseo/protocol/paseo-config-schema";
+import { PaseoConfigSchema, type PaseoMetadataGeneration } from "@fde/protocol/paseo-config-schema";
 
 export type MetadataConfigKey = "title" | "branchName" | "commitMessage" | "pullRequest";
 

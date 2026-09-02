@@ -6,7 +6,7 @@ import {
   type DaemonClientConfig,
   type ConnectionState,
   type FetchAgentsOptions,
-} from "@getpaseo/client/internal/daemon-client";
+} from "@fde/client/internal/daemon-client";
 import {
   connectionFromListen,
   createRemoteSshHostConnection,
@@ -26,7 +26,7 @@ import {
   shouldUseTlsForDefaultHostedRelay,
 } from "@/utils/daemon-endpoints";
 import { resolveAppVersion } from "@/utils/app-version";
-import { ConnectionOfferSchema, type ConnectionOffer } from "@getpaseo/protocol/connection-offer";
+import { ConnectionOfferSchema, type ConnectionOffer } from "@fde/protocol/connection-offer";
 import { shouldUseDesktopDaemon } from "@/desktop/daemon/desktop-daemon";
 import { isWeb } from "@/constants/platform";
 import { connectToDaemon } from "@/utils/test-daemon-connection";
@@ -43,8 +43,8 @@ import {
   createDesktopDaemonTransportFactory,
 } from "@/desktop/daemon/desktop-daemon-transport";
 import { getDesktopHost } from "@/desktop/host";
-import { CLIENT_CAPS } from "@getpaseo/protocol/client-capabilities";
-import { BROWSER_AUTOMATION_COMMAND_NAMES } from "@getpaseo/protocol/browser-automation/rpc-schemas";
+import { CLIENT_CAPS } from "@fde/protocol/client-capabilities";
+import { BROWSER_AUTOMATION_COMMAND_NAMES } from "@fde/protocol/browser-automation/rpc-schemas";
 import { useSessionStore } from "@/stores/session-store";
 import { useWorkspaceSetupStore } from "@/stores/workspace-setup-store";
 import { invalidateCheckoutGitQueriesForServer } from "@/git/query-keys";

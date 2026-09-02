@@ -501,7 +501,7 @@ export default function contribute(plugin: unknown) {
 import { platform } from "node:os";
 import { Text } from "react-native";
 import { z } from "zod";
-import { defineAttachmentSource, defineRpc } from "@getpaseo/plugin";
+import { defineAttachmentSource, defineRpc } from "@fde/plugin";
 
 const greetRpc = defineRpc({
   name: "greet",
@@ -599,7 +599,7 @@ export default function contribute(plugin: any) {
       ),
       writeFile(
         path.join(directory, "index.ts"),
-        `import type { PluginContext } from "@getpaseo/plugin";
+        `import type { PluginContext } from "@fde/plugin";
 import { Surface } from "./surface.client";
 import { inspectRpc } from "./inspect.shared";
 import { inspectHost } from "./inspect.server";
@@ -625,7 +625,7 @@ export function Surface() {
       ),
       writeFile(
         path.join(directory, "inspect.shared.ts"),
-        `import { defineRpc } from "@getpaseo/plugin/server";
+        `import { defineRpc } from "@fde/plugin/server";
 import { z } from "zod";
 
 export const inspectRpc = defineRpc({
@@ -671,7 +671,7 @@ export function inspectHost(_input: z.input<typeof inspectRpc.input>) {
       ),
       writeFile(
         path.join(directory, "index.ts"),
-        `import type { PluginContext } from "@getpaseo/plugin";
+        `import type { PluginContext } from "@fde/plugin";
 import { Surface } from "./surface.client";
 
 export default function contribute(plugin: PluginContext) {
@@ -711,7 +711,7 @@ export function Surface() { return readSecret(); }`,
       ),
       writeFile(
         path.join(directory, "index.ts"),
-        `import type { PluginContext } from "@getpaseo/plugin";
+        `import type { PluginContext } from "@fde/plugin";
 import { inspect } from "./inspect.server";
 import { inspectRpc } from "./inspect.shared";
 
@@ -723,7 +723,7 @@ export default function contribute(plugin: PluginContext) {
       ),
       writeFile(
         path.join(directory, "inspect.shared.ts"),
-        `import { defineRpc } from "@getpaseo/plugin";
+        `import { defineRpc } from "@fde/plugin";
 import { z } from "zod";
 export const inspectRpc = defineRpc({
   name: "inspect",
@@ -756,7 +756,7 @@ export function inspect() { void Surface; return {}; }`,
     const directory = await createPlugin(
       "invalid-output",
       `import { z } from "zod";
-import { defineRpc } from "@getpaseo/plugin";
+import { defineRpc } from "@fde/plugin";
 const brokenRpc = defineRpc({
   name: "broken",
   input: z.object({}),

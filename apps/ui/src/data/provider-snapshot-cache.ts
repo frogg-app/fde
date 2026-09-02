@@ -1,11 +1,11 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Buffer } from "buffer";
-import type { ProviderSnapshotEntry } from "@getpaseo/protocol/agent-types";
+import type { ProviderSnapshotEntry } from "@fde/protocol/agent-types";
 import {
   expandProviderSnapshot,
   type CompactProviderSnapshot,
-} from "@getpaseo/protocol/provider-snapshot-codec";
-import { CompactProviderSnapshotSchema } from "@getpaseo/protocol/messages";
+} from "@fde/protocol/provider-snapshot-codec";
+import { CompactProviderSnapshotSchema } from "@fde/protocol/messages";
 import { z } from "zod";
 
 const CACHE_VERSION = 1;

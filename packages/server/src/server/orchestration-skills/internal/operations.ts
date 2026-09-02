@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import type { AgentSkillSelection } from "@getpaseo/protocol/messages";
+import type { AgentSkillSelection } from "@fde/protocol/messages";
 import { listFilesRecursive, removeSkill, syncSkills } from "./sync.js";
 
 export type SkillsState = "not-installed" | "up-to-date" | "drift";

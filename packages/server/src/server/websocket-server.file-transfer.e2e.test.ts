@@ -3,10 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, expect, test } from "vitest";
 import { WebSocket, type RawData } from "ws";
-import {
-  decodeFileTransferFrame,
-  FileTransferOpcode,
-} from "@getpaseo/protocol/binary-frames/index";
+import { decodeFileTransferFrame, FileTransferOpcode } from "@fde/protocol/binary-frames/index";
 import { createTestPaseoDaemon, type TestPaseoDaemon } from "./test-utils/index.js";
 import { WSOutboundMessageSchema, type WSOutboundMessage } from "./messages.js";
 

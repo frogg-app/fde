@@ -18,7 +18,7 @@ function createGitRepoWithBranch(): { repoDir: string; tempRoot: string } {
   const tempRoot = mkdtempSync(path.join(tmpdir(), "workspace-create-worktree-source-"));
   const repoDir = path.join(tempRoot, "repo");
   execFileSync("git", ["init", "-b", "main", repoDir], { stdio: "pipe" });
-  execFileSync("git", ["config", "user.email", "test@getpaseo.local"], {
+  execFileSync("git", ["config", "user.email", "test@fde.local"], {
     cwd: repoDir,
     stdio: "pipe",
   });

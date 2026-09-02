@@ -6,7 +6,7 @@ import {
   loadPersistedConfig,
   savePersistedConfig,
   type PersistedConfig,
-} from "@getpaseo/server";
+} from "@fde/server";
 import type {
   CommandError,
   CommandOptions,

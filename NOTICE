@@ -1,10 +1,10 @@
-Frogg DE
+FDE (Frogg Development Environment)
 Copyright (c) 2026-present Frogg App
 
 This product is a fork of Paseo (https://github.com/getpaseo/paseo),
 Copyright (c) 2025-present Mohamed Boudra, licensed under the Apache License 2.0.
 
-Frogg DE forked from Paseo at commit 77aff0f4fbfc2e968c3ebcb266e87578709a4539
+FDE forked from Paseo at commit 77aff0f4fbfc2e968c3ebcb266e87578709a4539
 (v0.7.2, 2026-09-02). The daemon, protocol, client, relay, and UI packages
 originate from Paseo and retain their original license and copyright. The
 desktop shell was rewritten in Tauri for this fork.

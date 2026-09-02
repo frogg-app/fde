@@ -9,14 +9,14 @@ import { fileURLToPath } from "node:url";
 import { createExternalProcessEnv } from "../server/paseo-env.js";
 import { writePrivateFileAtomicSync } from "../server/private-files.js";
 import { findExecutable } from "../executable-resolution/executable-resolution.js";
-import type { TerminalCell, TerminalState } from "@getpaseo/protocol/messages";
-import { TerminalInputModeTracker } from "@getpaseo/protocol/terminal-input-mode";
+import type { TerminalCell, TerminalState } from "@fde/protocol/messages";
+import { TerminalInputModeTracker } from "@fde/protocol/terminal-input-mode";
 import { TerminalActivityTracker } from "./activity/terminal-activity-tracker.js";
-import type { TerminalActivity, TerminalActivityState } from "@getpaseo/protocol/terminal-activity";
+import type { TerminalActivity, TerminalActivityState } from "@fde/protocol/terminal-activity";
 
 const { Terminal } = xterm;
 const require = createRequire(import.meta.url);
-const PASEO_CLI_BIN_ENTRY = "@getpaseo/cli/bin/paseo";
+const PASEO_CLI_BIN_ENTRY = "@fde/cli/bin/paseo";
 let nodePtySpawnHelperChecked = false;
 const TERMINAL_TITLE_DEBOUNCE_MS = 150;
 const TERMINAL_EXIT_OUTPUT_LINE_LIMIT = 12;

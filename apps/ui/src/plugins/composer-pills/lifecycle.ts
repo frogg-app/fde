@@ -1,9 +1,5 @@
-import type {
-  PluginCleanup,
-  PluginClientContext,
-  PluginClientOpenPanelOptions,
-} from "@getpaseo/plugin";
-import type { DaemonClient } from "@getpaseo/client/internal/daemon-client";
+import type { PluginCleanup, PluginClientContext, PluginClientOpenPanelOptions } from "@fde/plugin";
+import type { DaemonClient } from "@fde/client/internal/daemon-client";
 import {
   createPluginAgentActionContext,
   createPluginCapabilities,

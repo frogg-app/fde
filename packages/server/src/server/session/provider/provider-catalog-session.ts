@@ -1,10 +1,10 @@
 import type pino from "pino";
 import { createHash } from "node:crypto";
-import { getErrorMessage } from "@getpaseo/protocol/error-utils";
+import { getErrorMessage } from "@fde/protocol/error-utils";
 import {
   compactProviderSnapshot,
   type CompactProviderSnapshot,
-} from "@getpaseo/protocol/provider-snapshot-codec";
+} from "@fde/protocol/provider-snapshot-codec";
 import type { SessionInboundMessage, SessionOutboundMessage } from "../../messages.js";
 import {
   isGlobalProviderSnapshotKey,

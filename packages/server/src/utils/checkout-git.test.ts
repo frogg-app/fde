@@ -14,7 +14,7 @@ import { join } from "path";
 import { win32 } from "node:path";
 import { tmpdir } from "os";
 import pino from "pino";
-import { base64EncryptedWireByteLength } from "@getpaseo/relay";
+import { base64EncryptedWireByteLength } from "@fde/relay";
 import {
   __resetCheckoutShortstatCacheForTests,
   __resetPullRequestStatusCacheForTests,

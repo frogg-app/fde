@@ -1,12 +1,12 @@
 import { QueryClient } from "@tanstack/react-query";
-import { createPaseoApi, type PaseoApi } from "@getpaseo/client";
-import { DaemonClient } from "@getpaseo/client/internal/daemon-client";
+import { createPaseoApi, type PaseoApi } from "@fde/client";
+import { DaemonClient } from "@fde/client/internal/daemon-client";
 import {
   defineRpc,
   type PluginAgentSnapshot,
   type PluginCommandCenterItemContribution,
   type PluginWorkspaceSnapshot,
-} from "@getpaseo/plugin";
+} from "@fde/plugin";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import type { InstalledPlugin } from "../types";

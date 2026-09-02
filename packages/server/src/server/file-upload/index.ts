@@ -1,8 +1,8 @@
 import { appendFile, mkdir, rm, writeFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 
-import { FileTransferOpcode, type FileTransferFrame } from "@getpaseo/protocol/binary-frames/index";
-import { getErrorMessage } from "@getpaseo/protocol/error-utils";
+import { FileTransferOpcode, type FileTransferFrame } from "@fde/protocol/binary-frames/index";
+import { getErrorMessage } from "@fde/protocol/error-utils";
 import type { FileUploadRequest, FileUploadResponse } from "../messages.js";
 
 interface FileUploadStoreOptions {

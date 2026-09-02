@@ -4,8 +4,8 @@ import type {
   JsonValue,
   ProviderOptions,
   ToolPolicy,
-} from "@getpaseo/protocol/agent-types";
-import type { AgentAttachment } from "@getpaseo/protocol/messages";
+} from "@fde/protocol/agent-types";
+import type { AgentAttachment } from "@fde/protocol/messages";
 import type { PaseoToolCatalog } from "./tools/types.js";
 
 export type { AgentProviderNotice, AgentTaskItem };

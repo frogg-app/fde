@@ -1,4 +1,4 @@
-// CLI exports for @getpaseo/server
+// CLI exports for @fde/server
 export { createPaseoDaemon, type PaseoDaemon, type PaseoDaemonConfig } from "./bootstrap.js";
 export { loadConfig, type CliConfigOverrides } from "./config.js";
 export { resolvePaseoHome } from "./paseo-home.js";
@@ -16,21 +16,21 @@ export {
   decodeOfferFragmentPayload,
   parseConnectionOfferFromUrl,
   type ConnectionOffer,
-} from "@getpaseo/protocol/connection-offer";
-export { buildRelayWebSocketUrl } from "@getpaseo/protocol/daemon-endpoints";
+} from "@fde/protocol/connection-offer";
+export { buildRelayWebSocketUrl } from "@fde/protocol/daemon-endpoints";
 export {
   buildDaemonWebSocketUrl,
   deriveLabelFromEndpoint,
   normalizeHostPort,
   parseConnectionUri,
   shouldUseTlsForDefaultHostedRelay,
-} from "@getpaseo/protocol/daemon-endpoints";
-export { PARENT_AGENT_ID_LABEL } from "@getpaseo/protocol/agent-labels";
+} from "@fde/protocol/daemon-endpoints";
+export { PARENT_AGENT_ID_LABEL } from "@fde/protocol/agent-labels";
 export {
   DirectTcpHostConnectionSchema,
   type DirectTcpHostConnection,
   type NormalizedDirectTcpHostConnection,
-} from "@getpaseo/protocol/host-connection-schema";
+} from "@fde/protocol/host-connection-schema";
 export {
   ensureLocalSpeechModels,
   listLocalSpeechModels,
@@ -61,7 +61,7 @@ export {
   AGENT_PROVIDER_DEFINITIONS,
   BUILTIN_PROVIDER_IDS,
   type AgentProviderDefinition,
-} from "@getpaseo/protocol/provider-manifest";
+} from "@fde/protocol/provider-manifest";
 
 // Agent SDK types for CLI commands
 export type {
@@ -95,4 +95,4 @@ export type {
   AgentSnapshotPayload,
   AgentStreamEventPayload,
   AgentStreamMessage,
-} from "@getpaseo/protocol/messages";
+} from "@fde/protocol/messages";

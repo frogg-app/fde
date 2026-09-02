@@ -13,7 +13,7 @@ import type {
   PluginTimelineTransformerContribution,
   PluginPanelLocation,
   PluginWorkspacePanelContribution,
-} from "@getpaseo/plugin";
+} from "@fde/plugin";
 
 export type EvaluatedPluginWorkspacePanelContribution = PluginWorkspacePanelContribution & {
   locations: readonly PluginPanelLocation[];

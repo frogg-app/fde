@@ -1,7 +1,7 @@
 import type { Ref } from "react";
 import type { ITheme } from "@xterm/xterm";
-import type { TerminalState } from "@getpaseo/protocol/messages";
-import type { TerminalInputModeState } from "@getpaseo/protocol/terminal-input-mode";
+import type { TerminalState } from "@fde/protocol/messages";
+import type { TerminalInputModeState } from "@fde/protocol/terminal-input-mode";
 import type { TerminalOutputData } from "../terminal/runtime/terminal-emulator-runtime";
 import type {
   TerminalLocalFileLinkSource,

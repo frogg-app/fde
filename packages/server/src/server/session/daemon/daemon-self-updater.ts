@@ -1,4 +1,4 @@
-import { getErrorMessage } from "@getpaseo/protocol/error-utils";
+import { getErrorMessage } from "@fde/protocol/error-utils";
 import {
   daemonInstallOriginRuntime,
   validateDaemonInstallOrigin,

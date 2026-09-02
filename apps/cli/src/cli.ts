@@ -52,7 +52,9 @@ export function createCli(): Command {
 
   program
     .name("paseo")
-    .description("Paseo CLI - control your AI coding agents from the command line")
+    .description(
+      "FDE (Frogg Development Environment) CLI - control your AI coding agents from the command line",
+    )
     .version(VERSION, "-v, --version", "output the version number")
     // Global output options
     .option("-o, --format <format>", "output format: table, json, yaml", "table")
@@ -75,7 +77,7 @@ export function createCli(): Command {
   addJsonAndDaemonHostOptions(
     program
       .command("clone")
-      .description("Clone a GitHub repo and register it as a Paseo workspace")
+      .description("Clone a GitHub repo and register it as an FDE workspace")
       .argument("<repo>", "GitHub repo in owner/repo format or a full git remote URL")
       .requiredOption("--dir <path>", "Parent directory to clone into (for example: ~/workspace)"),
   )
@@ -124,7 +126,7 @@ export function createCli(): Command {
       .command("status")
       .description('Show local daemon status (alias for "paseo daemon status")'),
   )
-    .option("--home <path>", "Paseo home directory (default: ~/.paseo)")
+    .option("--home <path>", "FDE home directory (default: ~/.paseo)")
     .action(withOutput(runDaemonStatusCommand));
 
   addJsonAndDaemonHostOptions(
@@ -136,7 +138,7 @@ export function createCli(): Command {
       .command("restart")
       .description('Restart local daemon (alias for "paseo daemon restart")'),
   )
-    .option("--home <path>", "Paseo home directory (default: ~/.paseo)")
+    .option("--home <path>", "FDE home directory (default: ~/.paseo)")
     .option("--timeout <seconds>", "Wait timeout before force step (default: 15)")
     .option("--force", "Send SIGKILL if graceful stop times out")
     .option(

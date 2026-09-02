@@ -1,5 +1,5 @@
-import { createPaseoApi, type PaseoApi } from "@getpaseo/client";
-import type { DaemonClient } from "@getpaseo/client/internal/daemon-client";
+import { createPaseoApi, type PaseoApi } from "@fde/client";
+import type { DaemonClient } from "@fde/client/internal/daemon-client";
 
 export interface PluginSurfaceRuntime {
   paseo: PaseoApi;

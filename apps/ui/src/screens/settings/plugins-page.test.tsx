@@ -5,8 +5,8 @@ import { i18n as testI18n } from "@/i18n/i18next";
 import React, { type ReactElement } from "react";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { DaemonClient } from "@getpaseo/client/internal/daemon-client";
-import type { PluginListItem, PluginLogEntry } from "@getpaseo/protocol/messages";
+import type { DaemonClient } from "@fde/client/internal/daemon-client";
+import type { PluginListItem, PluginLogEntry } from "@fde/protocol/messages";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { HostPluginsPage } from "./plugins-page";
 

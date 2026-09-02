@@ -3,7 +3,7 @@ import { mkdtemp, mkdir, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, it } from "vitest";
-import type { ProviderSnapshotEntry } from "@getpaseo/protocol/agent-types";
+import type { ProviderSnapshotEntry } from "@fde/protocol/agent-types";
 import type { HubCredentialStore, StoredHubCredential } from "./credentials.js";
 import type { HubDaemonClient, HubStatus } from "./daemon-client.js";
 import type { HubHttpClient } from "./hub-client/index.js";

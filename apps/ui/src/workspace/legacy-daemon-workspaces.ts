@@ -2,11 +2,11 @@ import type {
   DaemonClient,
   FetchAgentsEntry,
   FetchAgentsOptions,
-} from "@getpaseo/client/internal/daemon-client";
+} from "@fde/client/internal/daemon-client";
 import {
   deriveAgentStateBucket,
   getWorkspaceStateBucketPriority,
-} from "@getpaseo/protocol/agent-state-bucket";
+} from "@fde/protocol/agent-state-bucket";
 import type {
   Agent,
   DaemonServerInfo,

@@ -6,9 +6,9 @@ import { fileURLToPath } from "node:url";
 import { Terminal as HeadlessTerminal, type IBufferCell, type IBufferLine } from "@xterm/headless";
 import { expect, test } from "vitest";
 
-import type { TerminalCell, TerminalState } from "@getpaseo/protocol/messages";
-import { renderTerminalSnapshotToAnsi } from "@getpaseo/protocol/terminal-snapshot";
-import type { TerminalStreamEvent } from "@getpaseo/client/internal/terminal-stream-router";
+import type { TerminalCell, TerminalState } from "@fde/protocol/messages";
+import { renderTerminalSnapshotToAnsi } from "@fde/protocol/terminal-snapshot";
+import type { TerminalStreamEvent } from "@fde/client/internal/terminal-stream-router";
 import { DaemonClient } from "../test-utils/daemon-client.js";
 import { createTestPaseoDaemon } from "../test-utils/paseo-daemon.js";
 

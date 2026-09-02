@@ -2,9 +2,9 @@ import { resolve, dirname, basename } from "path";
 import { existsSync, realpathSync } from "fs";
 import { open as openFile, readFile, stat as statFile } from "fs/promises";
 import { TTLCache } from "@isaacs/ttlcache";
-import type { CheckoutCommit, CheckoutCommitFile } from "@getpaseo/protocol/messages";
-import { parseGitHubRemoteIdentity, parseGitRemoteLocation } from "@getpaseo/protocol/git-remote";
-import { maxBase64EncryptedPlaintextByteLength } from "@getpaseo/relay";
+import type { CheckoutCommit, CheckoutCommitFile } from "@fde/protocol/messages";
+import { parseGitHubRemoteIdentity, parseGitRemoteLocation } from "@fde/protocol/git-remote";
+import { maxBase64EncryptedPlaintextByteLength } from "@fde/relay";
 import type { Logger } from "pino";
 import type { ParsedDiffFile } from "../server/utils/diff-highlighter.js";
 import {

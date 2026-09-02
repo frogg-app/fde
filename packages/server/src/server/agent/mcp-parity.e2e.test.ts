@@ -11,7 +11,7 @@ import { AGENT_WAIT_TIMEOUT_MS } from "./mcp-shared.js";
 import { createTestPaseoDaemon, type TestPaseoDaemon } from "../test-utils/paseo-daemon.js";
 import { createTestAgentClients } from "../test-utils/fake-agent-client.js";
 import type { AgentClient, AgentProvider, AgentSessionConfig } from "./agent-sdk-types.js";
-import { PARENT_AGENT_ID_LABEL } from "@getpaseo/protocol/agent-labels";
+import { PARENT_AGENT_ID_LABEL } from "@fde/protocol/agent-labels";
 
 interface StructuredContent {
   [key: string]: unknown;

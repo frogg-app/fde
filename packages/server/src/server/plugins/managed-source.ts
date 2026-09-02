@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { mkdir, rename, rm } from "node:fs/promises";
 import path from "node:path";
 import { z } from "zod";
-import { PluginIdSchema, type PluginSourceStatusItem } from "@getpaseo/protocol/messages";
+import { PluginIdSchema, type PluginSourceStatusItem } from "@fde/protocol/messages";
 import { runGitCommand } from "../../utils/run-git-command.js";
 import { ensurePrivateDirectory, writePrivateFileAtomicSync } from "../private-files.js";
 import { readPluginManifest } from "./manifest.js";

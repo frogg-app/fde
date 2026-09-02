@@ -20,19 +20,19 @@ import {
   type TimelineResponsePayload,
   type ViewedTimelineOwner,
 } from "@/timeline/viewed-timeline-sync";
-import type { AgentAttachment, SessionOutboundMessage } from "@getpaseo/protocol/messages";
-import { parseServerInfoStatusPayload } from "@getpaseo/protocol/messages";
+import type { AgentAttachment, SessionOutboundMessage } from "@fde/protocol/messages";
+import { parseServerInfoStatusPayload } from "@fde/protocol/messages";
 import {
   buildAgentAttentionNotificationPayload,
   type AgentAttentionReason,
   type AgentAttentionNotificationPayload,
   type NotificationPermissionRequest,
-} from "@getpaseo/protocol/agent-attention-notification";
+} from "@fde/protocol/agent-attention-notification";
 
-import type { DaemonClient } from "@getpaseo/client/internal/daemon-client";
-import type { AgentSessionConfig } from "@getpaseo/protocol/agent-types";
-import type { GitSetupOptions } from "@getpaseo/protocol/messages";
-import type { AgentPermissionResponse } from "@getpaseo/protocol/agent-types";
+import type { DaemonClient } from "@fde/client/internal/daemon-client";
+import type { AgentSessionConfig } from "@fde/protocol/agent-types";
+import type { GitSetupOptions } from "@fde/protocol/messages";
+import type { AgentPermissionResponse } from "@fde/protocol/agent-types";
 import { getHostRuntimeStore, useHostRuntimeIsConnected } from "@/runtime/host-runtime";
 import { useVoiceAudioEngineOptional, useVoiceRuntimeOptional } from "@/contexts/voice-context";
 import type { AudioPlaybackSource } from "@/voice/audio-engine-types";

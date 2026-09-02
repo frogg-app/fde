@@ -43,7 +43,7 @@ describe("plugin scaffold", () => {
       version: "0.0.0",
       scripts: { typecheck: "tsc --noEmit" },
       devDependencies: {
-        "@getpaseo/plugin": cliPackageJson.version,
+        "@fde/plugin": cliPackageJson.version,
         "@tanstack/react-query": "^5.90.11",
         "@types/react": "~19.2.0",
         react: "19.1.0",
@@ -69,7 +69,7 @@ describe("plugin scaffold", () => {
     await Promise.all([
       writeFile(
         path.join(directory, "inspect.shared.ts"),
-        `import { defineRpc } from "@getpaseo/plugin/server";
+        `import { defineRpc } from "@fde/plugin/server";
 import { z } from "zod";
 
 export const inspect = defineRpc({
@@ -81,7 +81,7 @@ export const inspect = defineRpc({
       ),
       writeFile(
         path.join(directory, "inspect.server.ts"),
-        `import type { PluginHandlerContext } from "@getpaseo/plugin/server";
+        `import type { PluginHandlerContext } from "@fde/plugin/server";
 import type { output as ZodOutput } from "zod";
 import { inspect } from "./inspect.shared";
 
@@ -97,7 +97,7 @@ export async function inspectConfig(
         path.join(directory, "main.client.tsx"),
         `import React from "react";
 import { Text } from "react-native";
-import { Icon, Modal, useToast } from "@getpaseo/plugin/react-native";
+import { Icon, Modal, useToast } from "@fde/plugin/react-native";
 import {
   type PluginAgentPanelProps,
   type PluginClientContext,
@@ -106,7 +106,7 @@ import {
   useAgent,
   usePaseo,
   useWorkspace,
-} from "@getpaseo/plugin";
+} from "@fde/plugin";
 import { inspect } from "./inspect.shared";
 
 export function Surface({ navigation }: PluginSurfaceProps) {
@@ -156,7 +156,7 @@ export function contributeClient(client: PluginClientContext) {
       ),
       writeFile(
         path.join(directory, "index.ts"),
-        `import type { PluginContext } from "@getpaseo/plugin";
+        `import type { PluginContext } from "@fde/plugin";
 import { AgentPanel, contributeClient, Surface } from "./main.client";
 import { inspectConfig } from "./inspect.server";
 import { inspect } from "./inspect.shared";

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { WorkspaceDescriptorPayload } from "@getpaseo/protocol/messages";
+import type { WorkspaceDescriptorPayload } from "@fde/protocol/messages";
 import {
   normalizeProjectDescriptor,
   normalizeWorkspaceDescriptor,

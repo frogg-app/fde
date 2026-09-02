@@ -8,8 +8,8 @@ import type {
 import type { AgentManager, ManagedAgent } from "./agent-manager.js";
 import type { AgentStorage } from "./agent-storage.js";
 import { ensureAgentLoaded } from "./agent-loading.js";
-import { getParentAgentIdFromLabels } from "@getpaseo/protocol/agent-labels";
-import type { ActiveTurnBehavior } from "@getpaseo/protocol/messages";
+import { getParentAgentIdFromLabels } from "@fde/protocol/agent-labels";
+import type { ActiveTurnBehavior } from "@fde/protocol/messages";
 
 export type AgentUnarchiveController = Pick<AgentManager, "notifyAgentState" | "unarchiveSnapshot">;
 

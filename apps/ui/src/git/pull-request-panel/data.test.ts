@@ -3,7 +3,7 @@ import type {
   CheckoutPipelineJob,
   CheckoutPrStatusResponse,
   PullRequestTimelineResponse,
-} from "@getpaseo/protocol/messages";
+} from "@fde/protocol/messages";
 import {
   countGitlabPipelineJobs,
   isPipelineActiveStatus,

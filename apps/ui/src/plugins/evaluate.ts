@@ -22,8 +22,8 @@ import {
   useAgent,
   useWorkspace,
   useRpc,
-} from "@getpaseo/plugin";
-import { createPluginContext, type PluginRegistrationCollector } from "@getpaseo/plugin/host";
+} from "@fde/plugin";
+import { createPluginContext, type PluginRegistrationCollector } from "@fde/plugin/host";
 import type { EvaluatedPlugin } from "./types";
 import type { ComponentType } from "react";
 import { Icon, resolvePluginIcon } from "./icons";
@@ -277,7 +277,7 @@ export function evaluatePluginClientBundle(id: string, bundle: string): Evaluate
     if (name === "react") return React;
     if (name === "react/jsx-runtime") return ReactJsxRuntime;
     if (name === "react-native") return ReactNative;
-    if (name === "@getpaseo/plugin") {
+    if (name === "@fde/plugin") {
       return {
         defineAttachmentSource,
         defineRpc,
@@ -288,10 +288,10 @@ export function evaluatePluginClientBundle(id: string, bundle: string): Evaluate
         useRpc,
       };
     }
-    if (name === "@getpaseo/plugin/react-native" || name === "@paseo/plugin/react-native") {
+    if (name === "@fde/plugin/react-native" || name === "@paseo/plugin/react-native") {
       return pluginReactNativeRuntime;
     }
-    if (name === "@getpaseo/plugin/server") {
+    if (name === "@fde/plugin/server") {
       return { defineAttachmentSource, defineRpc };
     }
     if (name === "@tanstack/react-query") return ReactQuery;

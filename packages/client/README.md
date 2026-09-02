@@ -1,13 +1,13 @@
-# @getpaseo/client
+# @fde/client
 
 TypeScript SDK for building integrations on top of a Paseo daemon.
 
 ```bash
-npm install @getpaseo/client
+npm install @fde/client
 ```
 
 ```ts
-import { createPaseoClient } from "@getpaseo/client";
+import { createPaseoClient } from "@fde/client";
 
 const client = createPaseoClient({ url: "ws://127.0.0.1:6767/ws" });
 await client.connect();
@@ -24,7 +24,7 @@ console.log(result.lastMessage);
 await client.close();
 ```
 
-The public API is the package root. Imports under `@getpaseo/client/internal/*` are unsupported implementation details used by Paseo's own packages.
+The public API is the package root. Imports under `@fde/client/internal/*` are unsupported implementation details used by Paseo's own packages.
 
 Read the [SDK documentation](https://paseo.sh/docs/sdk) for agents, workspaces, provider discovery, events, recipes, and the API reference. Runnable TypeScript patterns also live in [`examples/`](./examples/README.md).
 
@@ -36,4 +36,4 @@ Use a WebSocket URL ending in `/ws`, such as `ws://127.0.0.1:6767/ws`. Pass `pas
 
 ## Stability
 
-The high-level API exported from `@getpaseo/client` is the supported SDK surface. The SDK and daemon remain protocol-compatible across versions, but newly added capabilities can require a newer daemon.
+The high-level API exported from `@fde/client` is the supported SDK surface. The SDK and daemon remain protocol-compatible across versions, but newly added capabilities can require a newer daemon.

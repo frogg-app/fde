@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { PaseoConfigRawSchema } from "@getpaseo/protocol/paseo-config-schema";
-import type { PaseoConfigRaw } from "@getpaseo/protocol/messages";
+import { PaseoConfigRawSchema } from "@fde/protocol/paseo-config-schema";
+import type { PaseoConfigRaw } from "@fde/protocol/messages";
 import { applyDraftToConfig, configToDraft, type ProjectConfigDraft } from "./project-config-form";
 
 function emptyDraft(): ProjectConfigDraft {

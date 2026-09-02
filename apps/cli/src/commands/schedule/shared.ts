@@ -12,7 +12,7 @@ import type {
 } from "./types.js";
 import { parseDuration } from "../../utils/duration.js";
 import { resolveProviderAndModel } from "../../utils/provider-model.js";
-import { everyMsToFiveFieldCron } from "@getpaseo/protocol/schedule/cadence";
+import { everyMsToFiveFieldCron } from "@fde/protocol/schedule/cadence";
 
 export interface ScheduleCommandOptions extends CommandOptions {
   host?: string;
