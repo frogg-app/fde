@@ -1316,6 +1316,19 @@ export const fr: TranslationResources = {
       openAdvancedSettings: "Ouvrir les paramètres avancés du démon",
       versionMismatch:
         "Les versions de l'application et du démon ne correspondent pas. Mettez à jour les deux vers la même version pour une meilleure expérience.",
+      bundle: {
+        title: "Daemon local",
+        installed: "Installé",
+        installedHint: "Version {{version}} dans {{path}}",
+        notInstalledHint:
+          "Téléchargez le bundle du daemon FDE ({{platform}}) pour exécuter des agents sur cette machine.",
+        install: "Installer le daemon local (~{{size}})",
+        installing: "Installation...",
+        phaseChecksum: "Récupération de la somme de contrôle...",
+        phaseDownload: "Téléchargement {{progress}}",
+        phaseExtract: "Vérification et extraction...",
+        installFailed: "Échec de l'installation : {{message}}",
+      },
       loadFailed: "Impossible de charger l'état du démon de bureau.",
     },
     updates: {
@@ -1525,6 +1538,18 @@ export const fr: TranslationResources = {
   onboarding: {
     title: "Bienvenue sur FDE",
     subtitle: "Connectez votre ordinateur pour commencer",
+    localDaemon: {
+      title: "Exécuter des agents sur cette machine",
+      description: "Installe le daemon FDE local (téléchargement d'environ 180 Mo).",
+      descriptionInstalled: "Démarre le daemon FDE local déjà installé.",
+      starting: "Démarrage du daemon local...",
+      failed: "Impossible de configurer le daemon local : {{message}}",
+      retry: "Réessayer",
+    },
+    remoteHost: {
+      title: "Utiliser un hôte distant",
+      description: "Connectez-vous à un daemon FDE sur une autre machine.",
+    },
     actions: {
       settings: "Paramètres",
     },

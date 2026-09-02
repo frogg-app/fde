@@ -1281,6 +1281,18 @@ export const ar: TranslationResources = {
       openAdvancedSettings: "افتح إعدادات البرنامج الخفي المتقدمة",
       versionMismatch:
         "إصدارا التطبيق والبرنامج الخفي غير متطابقين. قم بتحديث كلاهما إلى نفس الإصدار للحصول على أفضل تجربة.",
+      bundle: {
+        title: "الخادم المحلي",
+        installed: "مثبّت",
+        installedHint: "الإصدار {{version}} في {{path}}",
+        notInstalledHint: "نزّل حزمة خادم FDE ({{platform}}) لتشغيل الوكلاء على هذا الجهاز.",
+        install: "تثبيت الخادم المحلي (~{{size}})",
+        installing: "جارٍ التثبيت...",
+        phaseChecksum: "جارٍ جلب المجموع الاختباري...",
+        phaseDownload: "جارٍ التنزيل {{progress}}",
+        phaseExtract: "جارٍ التحقق والاستخراج...",
+        installFailed: "فشل التثبيت: {{message}}",
+      },
       loadFailed: "غير قادر على تحميل حالة البرنامج الخفي لسطح المكتب.",
     },
     updates: {
@@ -1476,6 +1488,18 @@ export const ar: TranslationResources = {
   onboarding: {
     title: "مرحبا بكم في FDE",
     subtitle: "قم بتوصيل جهاز الكمبيوتر الخاص بك للبدء",
+    localDaemon: {
+      title: "تشغيل الوكلاء على هذا الجهاز",
+      description: "يثبّت خادم FDE المحلي (تنزيل بحجم 180 ميغابايت تقريبًا).",
+      descriptionInstalled: "يشغّل خادم FDE المحلي المثبّت.",
+      starting: "جارٍ بدء الخادم المحلي...",
+      failed: "تعذّر إعداد الخادم المحلي: {{message}}",
+      retry: "حاول مرة أخرى",
+    },
+    remoteHost: {
+      title: "استخدام مضيف بعيد",
+      description: "الاتصال بخادم FDE على جهاز آخر.",
+    },
     actions: {
       settings: "إعدادات",
     },

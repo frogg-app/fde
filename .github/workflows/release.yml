@@ -268,10 +268,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # Every target cross-builds from Linux (the script only downloads
+          # binaries); macOS runners are kept for the darwin targets so the
+          # tarballs are packed with BSD tar like the install script expects.
           - { runner: ubuntu-latest, target: linux-x64 }
           - { runner: ubuntu-latest, target: linux-arm64 }
           - { runner: macos-latest, target: darwin-arm64 }
           - { runner: macos-latest, target: darwin-x64 }
+          - { runner: ubuntu-latest, target: win-x64 }
+          - { runner: ubuntu-latest, target: win-arm64 }
     steps:
       - uses: actions/checkout@v4
         with:
@@ -315,8 +320,10 @@ jobs:
         run: |
           flags=()
           if [ "$CLOBBER" = "true" ]; then flags+=(--clobber); fi
-          ls -l dist/bundles/fde-daemon-*.tar.gz*
-          gh release upload "$RELEASE_TAG" dist/bundles/fde-daemon-*.tar.gz dist/bundles/fde-daemon-*.tar.gz.sha256 "${flags[@]}"
+          # Linux/macOS targets produce .tar.gz, Windows targets .zip; each
+          # comes with its .sha256 sidecar and nothing else matches the glob.
+          ls -l dist/bundles/fde-daemon-*
+          gh release upload "$RELEASE_TAG" dist/bundles/fde-daemon-* "${flags[@]}"
 
   updater-manifest:
     name: updater latest.json

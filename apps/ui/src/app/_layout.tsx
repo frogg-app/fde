@@ -74,7 +74,10 @@ import {
 } from "@/navigation/host-runtime-bootstrap";
 import { registerWorkspaceRouteNavigationRef } from "@/navigation/workspace-route-navigation";
 import { ThemedStack } from "@/navigation/themed-stack";
-import { shouldUseDesktopDaemon } from "@/desktop/daemon/desktop-daemon";
+import {
+  isLocalDaemonBundleInstalled,
+  shouldUseDesktopDaemon,
+} from "@/desktop/daemon/desktop-daemon";
 import { AgentNavigationListener } from "@/desktop/agent-navigation";
 import { LegacyAgentSkillsMigration } from "@/agent-skills/legacy-migration";
 import { legacyFavoriteProfileMigration } from "@/agent-profiles/migration";
@@ -366,6 +369,11 @@ async function shouldStartBuiltInDaemon(): Promise<boolean> {
     return false;
   }
   if (hasConfiguredLocalDaemonOverride()) {
+    return false;
+  }
+  // A thin client (no bundle downloaded) never tries to start a daemon, so
+  // the setting only takes effect once "Run agents on this machine" installed one.
+  if (!(await isLocalDaemonBundleInstalled())) {
     return false;
   }
   const settings = await loadDesktopSettings();

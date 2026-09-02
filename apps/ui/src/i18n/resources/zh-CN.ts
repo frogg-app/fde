@@ -1269,6 +1269,18 @@ export const zhCN: TranslationResources = {
       advancedSettings: "高级设置",
       openAdvancedSettings: "打开 daemon 高级设置",
       versionMismatch: "App 和 daemon 版本不匹配。请将两者更新到相同版本，以获得最佳体验。",
+      bundle: {
+        title: "本地 daemon",
+        installed: "已安装",
+        installedHint: "版本 {{version}}，位于 {{path}}",
+        notInstalledHint: "下载 FDE daemon 包（{{platform}}）以在本机运行代理。",
+        install: "安装本地 daemon（约 {{size}}）",
+        installing: "正在安装...",
+        phaseChecksum: "正在获取校验和...",
+        phaseDownload: "正在下载 {{progress}}",
+        phaseExtract: "正在验证并解压...",
+        installFailed: "安装失败：{{message}}",
+      },
       loadFailed: "无法加载桌面 daemon 状态。",
     },
     updates: {
@@ -1460,6 +1472,18 @@ export const zhCN: TranslationResources = {
   onboarding: {
     title: "欢迎使用 FDE",
     subtitle: "连接你的电脑即可开始",
+    localDaemon: {
+      title: "在本机运行代理",
+      description: "安装本地 FDE daemon（下载约 180 MB）。",
+      descriptionInstalled: "启动已安装的本地 FDE daemon。",
+      starting: "正在启动本地 daemon...",
+      failed: "无法设置本地 daemon：{{message}}",
+      retry: "重试",
+    },
+    remoteHost: {
+      title: "使用远程主机",
+      description: "连接到另一台计算机上的 FDE daemon。",
+    },
     actions: {
       settings: "设置",
     },

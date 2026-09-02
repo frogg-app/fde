@@ -23,7 +23,7 @@ The Tauri CLI comes from `npx --yes @tauri-apps/cli@^2` (a prebuilt binary), so 
 
 ```
 meta ──┬── ui ── desktop (linux x86_64, windows x86_64, macos aarch64, macos x86_64) ── updater-manifest
-       ├── daemon-bundle (linux-x64, linux-arm64, darwin-arm64, darwin-x64)
+       ├── daemon-bundle (linux-x64, linux-arm64, darwin-arm64, darwin-x64, win-x64, win-arm64)
        └── docker
 ```
 
@@ -52,18 +52,19 @@ meta ──┬── ui ── desktop (linux x86_64, windows x86_64, macos aarc
 
 ### Release asset names
 
-| Asset                                       | Source                                                       |
-| ------------------------------------------- | ------------------------------------------------------------ |
-| `FDE-<ver>-amd64.deb`                       | Tauri deb (Linux x86_64)                                     |
-| `FDE-<ver>-x86_64.AppImage`                 | Tauri AppImage                                               |
-| `FDE-<ver>-x64-setup.exe`                   | Tauri NSIS installer (per-user, unsigned)                    |
-| `FDE-<ver>-x64-portable.exe`                | Bare `fde.exe` from the Windows build                        |
-| `FDE-<ver>-x64-portable.zip`                | `scripts/release/package-portable-win.mjs` (exe + README)    |
-| `FDE-<ver>-aarch64.dmg`, `-x86_64.dmg`      | Tauri DMG per architecture                                   |
-| `FDE-<ver>-<arch>.app.tar.gz` + `.sig`      | macOS updater bundle, only with a signing key                |
-| `*.sig`                                     | minisign signatures next to AppImage/NSIS, only with the key |
-| `latest.json`                               | Updater manifest, only with the key                          |
-| `fde-daemon-<ver>-<platform>-<arch>.tar.gz` | Daemon bundle + `.sha256`, read by `deploy/install.sh`       |
+| Asset                                       | Source                                                                                            |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `FDE-<ver>-amd64.deb`                       | Tauri deb (Linux x86_64)                                                                          |
+| `FDE-<ver>-x86_64.AppImage`                 | Tauri AppImage                                                                                    |
+| `FDE-<ver>-x64-setup.exe`                   | Tauri NSIS installer (per-user, unsigned)                                                         |
+| `FDE-<ver>-x64-portable.exe`                | Bare `fde.exe` from the Windows build                                                             |
+| `FDE-<ver>-x64-portable.zip`                | `scripts/release/package-portable-win.mjs` (exe + README)                                         |
+| `FDE-<ver>-aarch64.dmg`, `-x86_64.dmg`      | Tauri DMG per architecture                                                                        |
+| `FDE-<ver>-<arch>.app.tar.gz` + `.sig`      | macOS updater bundle, only with a signing key                                                     |
+| `*.sig`                                     | minisign signatures next to AppImage/NSIS, only with the key                                      |
+| `latest.json`                               | Updater manifest, only with the key                                                               |
+| `fde-daemon-<ver>-<platform>-<arch>.tar.gz` | Daemon bundle + `.sha256`, read by `deploy/install.sh` and the desktop app's local daemon install |
+| `fde-daemon-<ver>-win-<arch>.zip`           | Windows daemon bundle + `.sha256`, read by the desktop app's local daemon install                 |
 
 Tauri itself names bundles `FDE_<ver>_amd64.AppImage`, `FDE_<ver>_x64-setup.exe` and so
 on; the rename step is the only place that mapping lives, so change

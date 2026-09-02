@@ -1307,6 +1307,19 @@ export const ptBR: TranslationResources = {
       openAdvancedSettings: "Abrir configurações avançadas do daemon",
       versionMismatch:
         "As versões do app e do daemon não coincidem. Atualize ambos para a mesma versão para a melhor experiência.",
+      bundle: {
+        title: "Daemon local",
+        installed: "Instalado",
+        installedHint: "Versão {{version}} em {{path}}",
+        notInstalledHint:
+          "Baixe o pacote do daemon FDE ({{platform}}) para executar agentes nesta máquina.",
+        install: "Instalar daemon local (~{{size}})",
+        installing: "Instalando...",
+        phaseChecksum: "Obtendo a soma de verificação...",
+        phaseDownload: "Baixando {{progress}}",
+        phaseExtract: "Verificando e extraindo...",
+        installFailed: "Falha na instalação: {{message}}",
+      },
       loadFailed: "Não foi possível carregar o status do daemon desktop.",
     },
     updates: {
@@ -1507,6 +1520,18 @@ export const ptBR: TranslationResources = {
   onboarding: {
     title: "Bem-vindo ao FDE",
     subtitle: "Conecte seu computador para começar",
+    localDaemon: {
+      title: "Executar agentes nesta máquina",
+      description: "Instala o daemon FDE local (download de cerca de 180 MB).",
+      descriptionInstalled: "Inicia o daemon FDE local já instalado.",
+      starting: "Iniciando o daemon local...",
+      failed: "Não foi possível configurar o daemon local: {{message}}",
+      retry: "Tentar novamente",
+    },
+    remoteHost: {
+      title: "Usar um host remoto",
+      description: "Conecte-se a um daemon FDE em outra máquina.",
+    },
     actions: {
       settings: "Configurações",
     },

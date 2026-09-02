@@ -1294,6 +1294,19 @@ export const ja: TranslationResources = {
       openAdvancedSettings: "高度なデーモン設定を開く",
       versionMismatch:
         "アプリとデーモンのバージョンが一致しません。最良の体験のために両方を同じバージョンに更新してください。",
+      bundle: {
+        title: "ローカルデーモン",
+        installed: "インストール済み",
+        installedHint: "バージョン {{version}}（{{path}}）",
+        notInstalledHint:
+          "このマシンでエージェントを実行するには、FDE デーモンバンドル（{{platform}}）をダウンロードしてください。",
+        install: "ローカルデーモンをインストール（約{{size}}）",
+        installing: "インストール中...",
+        phaseChecksum: "チェックサムを取得中...",
+        phaseDownload: "ダウンロード中 {{progress}}",
+        phaseExtract: "検証と展開中...",
+        installFailed: "インストールに失敗しました: {{message}}",
+      },
       loadFailed: "デスクトップデーモンのステータスを読み込めません。",
     },
     updates: {
@@ -1492,6 +1505,18 @@ export const ja: TranslationResources = {
   onboarding: {
     title: "FDEへようこそ",
     subtitle: "始めるにはコンピューターに接続してください",
+    localDaemon: {
+      title: "このマシンでエージェントを実行",
+      description: "ローカルの FDE デーモンをインストールします（約 180 MB のダウンロード）。",
+      descriptionInstalled: "インストール済みのローカル FDE デーモンを起動します。",
+      starting: "ローカルデーモンを起動中...",
+      failed: "ローカルデーモンをセットアップできませんでした: {{message}}",
+      retry: "再試行",
+    },
+    remoteHost: {
+      title: "リモートホストを使用",
+      description: "別のマシン上の FDE デーモンに接続します。",
+    },
     actions: {
       settings: "設定",
     },

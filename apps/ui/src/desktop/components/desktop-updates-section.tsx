@@ -15,6 +15,8 @@ import { isVersionMismatch } from "@/desktop/updates/desktop-updates";
 import { getCliDaemonStatus, shouldUseDesktopDaemon } from "@/desktop/daemon/desktop-daemon";
 import { useBuiltInDaemonManagement } from "@/desktop/hooks/use-built-in-daemon-management";
 import { useDaemonStatus } from "@/desktop/hooks/use-daemon-status";
+import { useLocalDaemonBundle } from "@/desktop/hooks/use-local-daemon-bundle";
+import { LocalDaemonBundleCard } from "@/desktop/components/local-daemon-bundle-card";
 import { useDesktopSettings, type DesktopSettings } from "@/desktop/settings/desktop-settings";
 import { resolveAppVersion } from "@/utils/app-version";
 import { CODE_SURFACE_DATASET } from "@/styles/code-surface";
@@ -326,6 +328,18 @@ export function LocalDaemonSection() {
     [updateSettings],
   );
   const { data, isLoading, error: statusError, setStatus, refetch } = useDaemonStatus();
+  const {
+    bundle,
+    isLoading: isLoadingBundle,
+    error: bundleError,
+    progress: installProgress,
+    isInstalling,
+    installAndStart,
+  } = useLocalDaemonBundle({ onStarted: setStatus });
+  const isBundleInstalled = bundle?.installed === true;
+  const handleInstallBundle = useCallback(() => {
+    void installAndStart();
+  }, [installAndStart]);
 
   const daemonStatus = data?.status ?? null;
   const daemonLogs = data?.logs ?? null;
@@ -420,32 +434,42 @@ export function LocalDaemonSection() {
       trailing={advancedSettingsButton}
       testID="host-page-daemon-lifecycle-card"
     >
-      {isLoading || isLoadingSettings ? (
+      {isLoading || isLoadingSettings || isLoadingBundle ? (
         <View style={[settingsStyles.card, styles.loadingCard]}>
           <LoadingSpinner size="small" color={theme.colors.foregroundMuted} />
         </View>
       ) : (
         <>
-          <DaemonInfoCard
-            daemonStatusStateText={daemonStatusStateText}
-            daemonStatusDetailText={daemonStatusDetailText}
-            isDaemonManagementPaused={isDaemonManagementPaused}
-            copyIcon={copyIcon}
-            fileTextIcon={fileTextIcon}
-            activityIcon={activityIcon}
-            handleToggleDaemonManagement={handleToggleDaemonManagement}
-            isUpdatingDaemonManagement={isUpdatingDaemonManagement}
-            keepRunningAfterQuit={daemonSettings.keepRunningAfterQuit}
-            handleToggleKeepRunningAfterQuit={handleToggleKeepRunningAfterQuit}
-            isUpdatingKeepRunningAfterQuit={isUpdatingKeepRunningAfterQuit}
-            daemonLogs={daemonLogs}
-            handleCopyLogPath={handleCopyLogPath}
-            handleOpenLogs={handleOpenLogs}
-            handleRunCliStatus={handleRunCliStatus}
-            isLoadingCliStatus={isLoadingCliStatus}
+          <LocalDaemonBundleCard
+            bundle={bundle}
+            bundleError={bundleError}
+            progress={installProgress}
+            isInstalling={isInstalling}
+            onInstall={handleInstallBundle}
           />
 
-          {daemonVersionMismatch ? (
+          {isBundleInstalled ? (
+            <DaemonInfoCard
+              daemonStatusStateText={daemonStatusStateText}
+              daemonStatusDetailText={daemonStatusDetailText}
+              isDaemonManagementPaused={isDaemonManagementPaused}
+              copyIcon={copyIcon}
+              fileTextIcon={fileTextIcon}
+              activityIcon={activityIcon}
+              handleToggleDaemonManagement={handleToggleDaemonManagement}
+              isUpdatingDaemonManagement={isUpdatingDaemonManagement}
+              keepRunningAfterQuit={daemonSettings.keepRunningAfterQuit}
+              handleToggleKeepRunningAfterQuit={handleToggleKeepRunningAfterQuit}
+              isUpdatingKeepRunningAfterQuit={isUpdatingKeepRunningAfterQuit}
+              daemonLogs={daemonLogs}
+              handleCopyLogPath={handleCopyLogPath}
+              handleOpenLogs={handleOpenLogs}
+              handleRunCliStatus={handleRunCliStatus}
+              isLoadingCliStatus={isLoadingCliStatus}
+            />
+          ) : null}
+
+          {isBundleInstalled && daemonVersionMismatch ? (
             <View style={styles.warningCard}>
               <Text style={styles.warningText}>{t("desktop.daemon.versionMismatch")}</Text>
             </View>

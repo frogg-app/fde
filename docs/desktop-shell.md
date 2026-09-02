@@ -52,13 +52,14 @@ Implemented in Rust under `apps/desktop/src-tauri/src/commands/`:
   file (`desktop-settings.json`) in the app config dir, same document shape and coercion as
   Electron. `daemon.manageBuiltInDaemon` defaults to `false` until the sidecar exists.
 - `desktop_get_runtime_info`: `{appVersion, runningUnderARM64Translation:false}`.
-- `desktop_daemon_status`: `{status:"stopped", desktopManaged:false}` until the sidecar exists.
-  The rest of the daemon family answers in Electron's shapes with "not bundled" values:
-  `start_desktop_daemon`/`restart_desktop_daemon` fail with "Local daemon is not bundled in
-  this build yet; add a remote host instead.", `stop_desktop_daemon` returns the stopped
-  status, `desktop_daemon_logs` tails `$PASEO_HOME/daemon.log` if present,
-  `cli_daemon_status` is a short text, `get_local_daemon_version` is `{version:null,
-error:null}`, `run_local_daemon_update` is `{exitCode:1, stdout:"", stderr}`.
+- `local_daemon_bundle_status`, `install_local_daemon_bundle {version?}`: the sidecar bundle
+  store (see Local sidecar daemon below).
+- `desktop_daemon_status`, `start_desktop_daemon`, `stop_desktop_daemon {reason}`,
+  `restart_desktop_daemon`, `desktop_daemon_logs`, `cli_daemon_status`,
+  `get_local_daemon_version`, `run_local_daemon_update`: Electron's daemon family in
+  Electron's shapes, driven by the installed bundle's CLI (`src/sidecar/`). Without a bundle,
+  status carries `error: "Local daemon bundle is not installed"` and start fails with that
+  message, which is what makes the UI show Install instead of a running daemon.
 - `desktop_app_logs`: tail of `<app log dir>/fde.log`, written by the shell through the `log`
   crate (`src/app_log.rs`).
 - `get_cli_install_status` (`{installed:false}`), `install_cli` (error: ships with the
@@ -88,6 +89,7 @@ Everything else throws `Unknown desktop command`.
 | `remoteSsh`                    | 2         | Rust spawns the system `ssh -T -o BatchMode=yes … -W 127.0.0.1:<daemonPort> <host>` and runs the WebSocket client over its stdin/stdout (`src/transport/ssh.rs`) |
 | `directSocket` / `directPipe`  | 2         | Rust connects the unix socket / named pipe and runs the WebSocket client over it the same way                                                                    |
 | local sidecar                  | 3         | see below                                                                                                                                                        |
+| local sidecar                  | 3         | Rust downloads the daemon bundle and supervises it through its CLI; the webview then talks plain WebSocket to `127.0.0.1:<port>` (see below)                     |
 
 ### Transport sessions
 
@@ -238,15 +240,72 @@ parsers and the card's action logic.
 
 ## Local sidecar daemon (milestone 3)
 
-The daemon stays Node. The shell bundles a Node 22 binary and the built daemon
-(`packages/server/dist`, `apps/cli/dist`, pruned production `node_modules`) as Tauri
-resources, and spawns `node supervisor-entrypoint.js` with the same environment Electron
-used: `PASEO_DESKTOP_MANAGED=1`, `PASEO_WEB_UI_ENABLED=false`, `PASEO_NODE_ENV=production`,
-listen forced to `127.0.0.1:<port>`. Status and stop go through `paseo daemon status|stop --json`
-exactly as before, so the pid-lock contract in `packages/server/src/server/pid-lock.ts` and
-the launch contract test in `scripts/ci/daemon-launch-contract.test.mjs` still hold. Voice
-models are excluded (`ONNXRUNTIME_NODE_INSTALL=skip`) to keep the sidecar under 200 MB. The
-sidecar is an optional download, not part of the base installer.
+The daemon stays Node, but it is not part of the installer. The shell downloads the same
+**daemon bundle** `deploy/install.sh` uses (`fde-daemon-<version>-<platform>-<arch>.tar.gz`,
+`.zip` on Windows: a pinned Node 22 runtime, the built daemon and CLI, production
+`node_modules`; see `docs/install.md`) from the GitHub release matching the app version and
+supervises it the way Electron supervised its packaged daemon. Everything lives in
+`apps/desktop/src-tauri/src/sidecar/`:
+
+- **Bundle store** (`bundle.rs`): `<app data dir>/daemon/<version>/` per unpacked bundle and a
+  `current` text file naming the active one. A bundle counts as installed when its
+  `manifest.json` matches this platform/arch and `node/bin/node` (`node/node.exe`) plus
+  `daemon/apps/cli/dist/index.js` exist. `local_daemon_bundle_status` returns
+  `{installed, version?, platform, arch, path?, downloading?:{received,total}}`.
+- **Install** (`install.rs`, `download.rs`, `archive.rs`): `install_local_daemon_bundle
+{version?}` (default: the app version) fetches the archive and its `.sha256` from
+  `https://github.com/frogg-app/frogg-de/releases/download/v<version>/…` with reqwest
+  (rustls), verifies the digest, extracts into a staging directory (every entry path is checked:
+  no absolute paths, `..`, drive prefixes or links escaping the bundle), validates the layout,
+  renames it into place, flips `current`, prunes older versions. Progress is emitted as
+  `paseo:event:local-daemon-install-event` `{kind:"progress"|"done"|"error", received?, total?,
+detail?:"checksum"|"download"|"extract", version?}`. `FDE_DAEMON_BUNDLE_URL` overrides the
+  archive URL (a `file://` or http URL; the checksum is that URL plus `.sha256`) for testing.
+- **Lifecycle** (`lifecycle.rs`, `cli.rs`, `status.rs`): the shell never runs `bin/fde` itself;
+  it runs the bundle's Node on the CLI entrypoint (`node --disable-warning=DEP0040
+daemon/apps/cli/dist/index.js daemon …`), which avoids `cmd.exe` quoting on Windows and is
+  spawned with `CREATE_NO_WINDOW` there. The launchers stay for humans and are what the daemon
+  gets as `PASEO_CLI`. Start is `fde daemon start` with `PASEO_DESKTOP_MANAGED=1`,
+  `PASEO_WEB_UI_ENABLED=false`, `PASEO_NODE_ENV=production`, `PASEO_HOME` (`$PASEO_HOME` or
+  `~/.paseo`) and `PASEO_LISTEN=127.0.0.1:<port>` (`daemon.port` in desktop settings, default
+  6767); the CLI detaches the supervisor and applies its 1.2 s early-exit grace, then the shell
+  polls `fde daemon status --json` every 200 ms for up to 150 attempts (30 s) until the status is
+  running with a server id and listen address. Status is Electron's `DesktopDaemonStatus`
+  derived from the CLI payload exactly as `statusFromDaemonProbe` did. Stop is `fde daemon stop
+--json --timeout 5 --force --kill-timeout 5`. A running desktop-managed daemon whose version
+  differs from the installed bundle is restarted on start (`version_mismatch`), so an update of
+  the bundle takes effect; a daemon the user started themselves is left alone. Start and restart
+  require `daemon.manageBuiltInDaemon`, as in Electron.
+- **Quit**: on `RunEvent::Exit` the shell stops a desktop-managed daemon (pid file says
+  `desktopManaged`) through the same CLI stop unless `daemon.keepRunningAfterQuit` is set.
+- Every step is logged to `fde.log` (`sidecar: …` lines: bundle found or missing, download
+  size and digest, the exact argv and env of each launch, each poll, stop results).
+
+The UI side (`apps/ui/src/desktop/daemon/`, `hooks/use-local-daemon-bundle.ts`,
+`components/local-daemon-bundle-card.tsx`): the daemon settings section shows the bundle
+state and an "Install local daemon (~180 MB)" button with a progress bar; the existing
+start/stop/restart/logs controls and the management toggle appear once a bundle is installed.
+Installing enables `manageBuiltInDaemon` and starts the daemon, and startup auto-start
+(`_layout.tsx`) is gated on `local_daemon_bundle_status.installed`, so a thin client without a
+bundle never tries to start anything. The welcome screen on desktop with no hosts offers "Run
+agents on this machine" (install + start) next to "Use a remote host".
+
+The launch contract (`fde` CLI → `supervisor-entrypoint.js`) and the pid-lock contract in
+`packages/server/src/server/pid-lock.ts` are unchanged; the integration test in
+`src/sidecar/e2e.rs` installs the linux-x64 bundle from `dist/bundles` through a `file://`
+URL, starts it on `FDE_TEST_SIDECAR_PORT` (default 6799) with a scratch `PASEO_HOME`, checks
+the status and stops it (it skips when no bundle has been built). Voice models are excluded
+from the bundle (`ONNXRUNTIME_NODE_INSTALL=skip`).
+
+### Local daemon on Windows
+
+Reviewed by reading, not by running (the Windows build is cross-compiled). First things to
+verify on a real machine: that `node.exe` spawned with `CREATE_NO_WINDOW` and piped stdio
+runs the CLI without a console flash; that the supervisor the CLI detaches (Node `detached`
+plus `windowsHide` in `spawnProcess`) survives the CLI exiting; that `paseo.pid`,
+`daemon.log` and the listen address land under `%USERPROFILE%\.paseo`; and that the zip's
+`node_modules/@fde/*` directories resolve (`fde --version`, `fde daemon status --json` from
+`bin\fde.cmd`).
 
 ## Builds
 

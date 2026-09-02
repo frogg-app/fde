@@ -44,6 +44,7 @@ pub fn register_state(app: &App) -> tauri::Result<()> {
         }
     });
     app.manage(DeployManager::new(emit_deploy));
+    crate::sidecar::register(app)?;
     Ok(())
 }
 
@@ -62,14 +63,17 @@ pub async fn desktop_invoke(
             .migrate_legacy_renderer_settings(&args),
         "desktop_get_runtime_info" => Ok(runtime::runtime_info(&app)),
         "desktop_get_system_idle_time" => Ok(runtime::system_idle_time_ms()),
-        "desktop_daemon_status" => Ok(daemon::status(&app)),
-        "start_desktop_daemon" | "restart_desktop_daemon" => daemon::start_not_bundled(),
-        "stop_desktop_daemon" => Ok(daemon::stop(&app, &args)),
+        "local_daemon_bundle_status" => Ok(daemon::bundle_status(&app)),
+        "install_local_daemon_bundle" => daemon::install_bundle(&app, &args).await,
+        "desktop_daemon_status" => Ok(daemon::status(&app).await),
+        "start_desktop_daemon" => daemon::start(&app).await,
+        "restart_desktop_daemon" => daemon::restart(&app).await,
+        "stop_desktop_daemon" => daemon::stop(&app, &args).await,
         "desktop_daemon_logs" => daemon::logs(&app),
         "desktop_app_logs" => app_log::app_logs(&app),
-        "cli_daemon_status" => Ok(daemon::cli_status()),
-        "get_local_daemon_version" => Ok(daemon::local_version()),
-        "run_local_daemon_update" => Ok(daemon::run_update()),
+        "cli_daemon_status" => daemon::cli_status(&app).await,
+        "get_local_daemon_version" => Ok(daemon::local_version(&app).await),
+        "run_local_daemon_update" => Ok(daemon::run_update(&app).await),
         "get_cli_install_status" => Ok(integrations::cli_install_status()),
         "install_cli" => integrations::install_cli(),
         "read_legacy_skill_selection" => integrations::read_legacy_skill_selection(&app),
