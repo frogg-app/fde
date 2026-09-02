@@ -8,7 +8,9 @@ const rootDir = path.resolve(__dirname, "../..");
 const rootPackagePath = path.join(rootDir, "package.json");
 
 function usageAndExit(code = 0) {
-  process.stderr.write(`Usage: node scripts/release/push-current-release-tag.mjs [--branch <name>]\n`);
+  process.stderr.write(
+    `Usage: node scripts/release/push-current-release-tag.mjs [--branch <name>]\n`,
+  );
   process.exit(code);
 }
 

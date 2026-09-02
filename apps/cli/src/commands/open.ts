@@ -7,6 +7,8 @@ import { buildAgentDeepLink, type AgentDeepLinkTarget } from "@fde/protocol/agen
 function findDesktopApp(): string | null {
   if (process.platform === "darwin") {
     const candidates = [
+      "/Applications/FDE.app",
+      path.join(homedir(), "Applications", "FDE.app"),
       "/Applications/Paseo.app",
       path.join(homedir(), "Applications", "Paseo.app"),
     ];
@@ -22,6 +24,8 @@ function findDesktopApp(): string | null {
 
   if (process.platform === "linux") {
     const candidates = [
+      "/usr/bin/fde",
+      path.join(homedir(), "Applications", "FDE.AppImage"),
       "/usr/bin/Paseo",
       "/opt/Paseo/Paseo",
       path.join(homedir(), "Applications", "Paseo.AppImage"),
@@ -42,8 +46,12 @@ function findDesktopApp(): string | null {
       return null;
     }
 
-    const candidate = path.join(localAppData, "Programs", "Paseo", "Paseo.exe");
-    return existsSync(candidate) ? candidate : null;
+    const candidates = [
+      path.join(localAppData, "FDE", "FDE.exe"),
+      path.join(localAppData, "Programs", "FDE", "FDE.exe"),
+      path.join(localAppData, "Programs", "Paseo", "Paseo.exe"),
+    ];
+    return candidates.find((candidate) => existsSync(candidate)) ?? null;
   }
 
   return null;
@@ -70,13 +78,13 @@ function spawnDetached(command: string, args: string[]): void {
 
 function launchDesktop(args: string[]): void {
   if (process.env.PASEO_DESKTOP_CLI === "1") {
-    throw new Error("Cannot open Paseo Desktop while running in desktop CLI passthrough mode.");
+    throw new Error("Cannot open FDE Desktop while running in desktop CLI passthrough mode.");
   }
 
   const desktopApp = findDesktopApp();
   if (!desktopApp) {
     throw new Error(
-      "Paseo desktop app not found. Install it from https://github.com/getpaseo/paseo/releases",
+      "FDE desktop app not found. Install it from https://github.com/frogg-app/frogg-de/releases",
     );
   }
 

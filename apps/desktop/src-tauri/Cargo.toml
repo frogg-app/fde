@@ -1,6 +1,6 @@
 [package]
 name = "fde"
-version = "0.1.3"
+version = "0.1.4"
 description = "FDE (Frogg Development Environment) desktop shell"
 edition = "2021"
 license = "Apache-2.0"
@@ -32,6 +32,19 @@ tauri-plugin-updater = "2.11"
 tauri-plugin-window-state = "2.4"
 tauri-plugin-single-instance = { version = "2.4", features = ["deep-link"] }
 tauri-plugin-deep-link = "2.4"
+log = { version = "0.4", features = ["std"] }
+glob = "0.3"
+tokio = { version = "1", features = [
+  "rt-multi-thread",
+  "net",
+  "process",
+  "io-util",
+  "sync",
+  "time",
+  "macros",
+] }
+tokio-tungstenite = "0.30"
+futures-util = { version = "0.3", default-features = false, features = ["sink", "std"] }
 
 [dev-dependencies]
 tempfile = "3"

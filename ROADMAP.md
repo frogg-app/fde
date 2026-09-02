@@ -5,20 +5,9 @@ Done items move to CHANGELOG.md.
 
 ## Now
 
-- [ ] **Desktop command stubs.** Implement every `desktop_*` / daemon / CLI command the UI
-      invokes (`desktop_daemon_logs`, `desktop_app_logs`, `cli_daemon_status`,
-      `get_local_daemon_version`, `get_cli_install_status`, `install_cli`,
-      `run_local_daemon_update`, legacy skill selection, start/stop/restart daemon) so the
-      shell never throws "Unknown desktop command" on startup. Cause of the "unable to load
-      desktop daemon" toasts in 0.1.2.
-- [ ] **Milestone 2: Remote SSH from Rust.** Port Electron's SSH tunnel
-      (`ssh` subprocess proxied to a loopback WebSocket) and the
-      `open/send/close_local_daemon_transport` commands, so Remote SSH hosts work.
-- [ ] **SSH config host picker.** On the Remote SSH page, list `Host` entries from
-      `~/.ssh/config` (HostName, User, Port, IdentityFile resolved) as a one-click
-      alternative to typing `ssh://user@host`.
-- [ ] **Portable Windows zip** as a standard build artifact next to the NSIS installer.
 - [ ] **Rebrand follow-through.** Verify no user-facing "Paseo" remains except attribution.
+- [ ] **Windows named pipes** for `directPipe` hosts are wired but untested on a real
+      Windows daemon; verify once the sidecar exists.
 
 ## Install story (replaces `npm install -g @getpaseo/cli`)
 

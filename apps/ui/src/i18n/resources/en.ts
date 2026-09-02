@@ -1627,6 +1627,12 @@ export const en = {
     remoteSsh: {
       title: "Remote SSH",
       helper: "Connect to a FDE daemon running on the remote host.",
+      sshConfig: {
+        label: "From SSH config",
+        placeholder: "Choose a host",
+        searchPlaceholder: "Search hosts",
+        empty: "No hosts in ~/.ssh/config",
+      },
       fields: {
         target: "SSH host",
       },

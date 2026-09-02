@@ -1648,6 +1648,12 @@ export const ptBR: TranslationResources = {
     remoteSsh: {
       title: "SSH remoto",
       helper: "Conecte-se a um daemon FDE no host remoto.",
+      sshConfig: {
+        label: "Da configuração SSH",
+        placeholder: "Escolha um host",
+        searchPlaceholder: "Buscar hosts",
+        empty: "Nenhum host em ~/.ssh/config",
+      },
       fields: {
         target: "Host SSH",
       },

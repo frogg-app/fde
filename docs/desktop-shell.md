@@ -53,6 +53,22 @@ Implemented in Rust under `apps/desktop/src-tauri/src/commands/`:
   Electron. `daemon.manageBuiltInDaemon` defaults to `false` until the sidecar exists.
 - `desktop_get_runtime_info`: `{appVersion, runningUnderARM64Translation:false}`.
 - `desktop_daemon_status`: `{status:"stopped", desktopManaged:false}` until the sidecar exists.
+  The rest of the daemon family answers in Electron's shapes with "not bundled" values:
+  `start_desktop_daemon`/`restart_desktop_daemon` fail with "Local daemon is not bundled in
+  this build yet; add a remote host instead.", `stop_desktop_daemon` returns the stopped
+  status, `desktop_daemon_logs` tails `$PASEO_HOME/daemon.log` if present,
+  `cli_daemon_status` is a short text, `get_local_daemon_version` is `{version:null,
+error:null}`, `run_local_daemon_update` is `{exitCode:1, stdout:"", stderr}`.
+- `desktop_app_logs`: tail of `<app log dir>/fde.log`, written by the shell through the `log`
+  crate (`src/app_log.rs`).
+- `get_cli_install_status` (`{installed:false}`), `install_cli` (error: ships with the
+  sidecar), `read_legacy_skill_selection` / `delete_legacy_skill_selection`
+  (`skill-selection.json` in the app data dir, Electron's parsing rules).
+- `open_local_daemon_transport`, `send_local_daemon_transport_message`,
+  `close_local_daemon_transport`: see Daemon connections below (`src/transport/`).
+- `list_ssh_config_hosts`: concrete `Host` entries of `~/.ssh/config` (one level of
+  `Include`, wildcard patterns and `Match` blocks skipped) as
+  `[{alias, hostName?, user?, port?, identityFile?}]` for the Remote SSH page's picker.
 - `write_attachment_base64`, `write_attachment_bytes`, `copy_attachment_file`,
   `read_file_base64`, `delete_attachment_file`, `garbage_collect_attachment_files`: managed
   attachment storage in the app data dir. Same argument and return shapes as Electron.
@@ -70,6 +86,17 @@ Everything else throws `Unknown desktop command`.
 | `remoteSsh`                    | 2         | Rust spawns `ssh -L` to an ephemeral loopback port and answers the `open_local_daemon_transport` family of commands with that `ws://127.0.0.1:port/ws` URL |
 | `directSocket` / `directPipe`  | 2         | Rust bridges the unix socket / named pipe to a loopback WebSocket the same way                                                                             |
 | local sidecar                  | 3         | see below                                                                                                                                                  |
+
+### Transport sessions
+
+`src/transport/` is a port of Electron's `local-transport.ts`. `open_local_daemon_transport
+{sessionId, target}` registers a session and spawns a task; the task connects (30 s setup
+timeout), then emits `paseo:event:local-daemon-transport-event` payloads
+`{sessionId, kind:"open"|"message"|"close"|"error", text?, binaryBase64?, code?, reason?, error?}`
+exactly as Electron did. `send_local_daemon_transport_message {sessionId, text?|binaryBase64?}`
+awaits the write and fails while the session is still opening; `close_local_daemon_transport`
+removes the session first, so a closed session never emits again (the UI's
+`desktop-daemon-transport.ts` shim relies on that). Sessions are closed on app exit.
 
 ## Local sidecar daemon (milestone 3)
 

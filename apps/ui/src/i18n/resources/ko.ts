@@ -1626,6 +1626,12 @@ export const ko: TranslationResources = {
     remoteSsh: {
       title: "원격 SSH",
       helper: "원격 호스트에서 실행 중인 FDE 데몬에 연결합니다.",
+      sshConfig: {
+        label: "SSH 설정에서",
+        placeholder: "호스트 선택",
+        searchPlaceholder: "호스트 검색",
+        empty: "~/.ssh/config에 호스트가 없습니다",
+      },
       fields: {
         target: "SSH 호스트",
       },

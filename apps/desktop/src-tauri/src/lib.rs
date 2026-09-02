@@ -3,9 +3,12 @@
 //! See `docs/desktop-shell.md` for the design. The JS bridge injected into the
 //! page lives in `../bridge.js` (built from `../../src/bridge.ts`).
 
+mod app_log;
 mod commands;
 mod deep_link;
 mod launch;
+mod ssh_config;
+mod transport;
 mod window;
 
 use tauri::webview::PageLoadEvent;
@@ -23,7 +26,9 @@ pub fn run() {
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_window_state::Builder::default().build())
-        .manage(launch::LaunchState::from_argv(&std::env::args().collect::<Vec<_>>()))
+        .manage(launch::LaunchState::from_argv(
+            &std::env::args().collect::<Vec<_>>(),
+        ))
         .invoke_handler(tauri::generate_handler![
             commands::desktop_invoke,
             commands::get_pending_open_project,
@@ -35,11 +40,22 @@ pub fn run() {
             }
         })
         .setup(|app| {
+            if let Some(path) = app_log::log_file_path(app.handle()) {
+                if let Err(error) = app_log::FileLogger::install(&path) {
+                    eprintln!("FDE: could not open log file {}: {error}", path.display());
+                }
+            }
+            log::info!("FDE {} starting", app.package_info().version);
             commands::register_state(app)?;
             window::create_main_window(app)?;
             launch::register_deep_link_handler(app.handle())?;
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running FDE");
+        .build(tauri::generate_context!())
+        .expect("error while building FDE")
+        .run(|app, event| {
+            if let tauri::RunEvent::Exit = event {
+                app.state::<transport::TransportManager>().close_all();
+            }
+        });
 }

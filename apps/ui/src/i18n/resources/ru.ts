@@ -1645,6 +1645,12 @@ export const ru: TranslationResources = {
     remoteSsh: {
       title: "Удалённый SSH",
       helper: "Подключитесь к демону FDE на удалённом хосте.",
+      sshConfig: {
+        label: "Из конфигурации SSH",
+        placeholder: "Выберите хост",
+        searchPlaceholder: "Поиск хостов",
+        empty: "Нет хостов в ~/.ssh/config",
+      },
       fields: {
         target: "Хост SSH",
       },

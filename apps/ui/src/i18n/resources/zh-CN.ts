@@ -1599,6 +1599,12 @@ export const zhCN: TranslationResources = {
     remoteSsh: {
       title: "远程 SSH",
       helper: "连接到远程主机上运行的 FDE 守护进程。",
+      sshConfig: {
+        label: "来自 SSH 配置",
+        placeholder: "选择主机",
+        searchPlaceholder: "搜索主机",
+        empty: "~/.ssh/config 中没有主机",
+      },
       fields: {
         target: "SSH 主机",
       },

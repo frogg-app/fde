@@ -62,7 +62,9 @@ function parseArgs(argv) {
     }
   }
   if (!repo || !tag) {
-    throw new Error("Usage: node scripts/release/github-release.mjs --repo <owner/repo> --tag <tag>");
+    throw new Error(
+      "Usage: node scripts/release/github-release.mjs --repo <owner/repo> --tag <tag>",
+    );
   }
   return { cleanupDuplicates, repo, tag };
 }

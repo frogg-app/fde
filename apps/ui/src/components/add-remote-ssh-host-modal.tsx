@@ -5,6 +5,7 @@ import { StyleSheet, withUnistyles } from "react-native-unistyles";
 import { Terminal } from "lucide-react-native";
 import { parseSshTransportUri } from "@fde/protocol/ssh-transport";
 import type { HostProfile } from "@/types/host-connection";
+import { isElectronRuntime } from "@/desktop/host";
 import { useHostMutations, useHosts } from "@/runtime/host-runtime";
 import { Button } from "@/components/ui/button";
 import { Field, FormTextInput } from "@/components/ui/form-field";
@@ -12,6 +13,7 @@ import type { EditingTextInputHandle } from "@/components/ui/text-input";
 import { useIsCompactFormFactor } from "@/constants/layout";
 import { DaemonConnectionTestError } from "@/utils/test-daemon-connection";
 import { AdaptiveModalSheet, type SheetHeader } from "./adaptive-modal-sheet";
+import { SshConfigHostPicker } from "./ssh-config-host-picker";
 
 const FLEX_ONE_STYLE = { flex: 1 } as const;
 const ThemedTerminal = withUnistyles(Terminal);
@@ -55,6 +57,7 @@ export function AddRemoteSshHostModal({
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const header = useMemo<SheetHeader>(() => ({ title: t("pairing.remoteSsh.title") }), [t]);
+  const hasDesktopBridge = isElectronRuntime();
 
   const clear = useCallback(() => {
     targetRef.current = "";
@@ -117,6 +120,11 @@ export function AddRemoteSshHostModal({
     targetRef.current = value;
   }, []);
   const handleSubmit = useCallback(() => void handleSave(), [handleSave]);
+  const handleConfigHostSelect = useCallback((target: string) => {
+    targetRef.current = target;
+    inputRef.current?.replaceText(target);
+    setErrorMessage("");
+  }, []);
 
   return (
     <AdaptiveModalSheet
@@ -126,6 +134,13 @@ export function AddRemoteSshHostModal({
       testID="add-remote-ssh-host-modal"
     >
       <Text style={styles.helper}>{t("pairing.remoteSsh.helper")}</Text>
+      {hasDesktopBridge ? (
+        <SshConfigHostPicker
+          size={isCompact ? "md" : "sm"}
+          disabled={isSaving}
+          onSelect={handleConfigHostSelect}
+        />
+      ) : null}
       <Field
         label={t("pairing.remoteSsh.fields.target")}
         error={errorMessage}

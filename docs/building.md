@@ -33,19 +33,29 @@ npm run typecheck                          # includes apps/desktop
 The Tauri binary embeds `apps/ui/dist`, so export the UI first (never with
 `PASEO_WEB_PLATFORM=electron`). `npm run build:desktop` does both steps.
 
-| Target                   | Command                                          | Bundles land in                                                             |
-| ------------------------ | ------------------------------------------------ | --------------------------------------------------------------------------- |
-| Linux (host)             | `npm run build:desktop` (or `cargo tauri build`) | `apps/desktop/src-tauri/target/release/bundle/{deb,rpm,appimage}`           |
-| Linux, one bundle        | `cargo tauri build --bundles deb`                | `.../release/bundle/deb/`                                                   |
-| Windows x64 (from Linux) | `npm run build:desktop:win`                      | `apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/` |
+| Target                   | Command                                          | Bundles land in                                                                                        |
+| ------------------------ | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| Linux (host)             | `npm run build:desktop` (or `cargo tauri build`) | `apps/desktop/src-tauri/target/release/bundle/{deb,rpm,appimage}`                                      |
+| Linux, one bundle        | `cargo tauri build --bundles deb`                | `.../release/bundle/deb/`                                                                              |
+| Windows x64 (from Linux) | `npm run build:desktop:win`                      | `apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/` and `.../bundle/portable/` |
 
 The binary is named `fde` and bundle filenames follow the Tauri `productName` ("FDE"), e.g.
 `fde_<version>_amd64.deb` and `FDE_<version>_x64-setup.exe`.
 
 The Windows command expands to
-`cargo tauri build --runner cargo-xwin --target x86_64-pc-windows-msvc --bundles nsis`.
-The installer is unsigned; Tauri warns about that and continues. macOS bundles must be
-built on a Mac.
+`cargo tauri build --runner cargo-xwin --target x86_64-pc-windows-msvc --bundles nsis`
+followed by `npm run build:win:portable --workspace=@fde/desktop`. The installer is
+unsigned; Tauri warns about that and continues. macOS bundles must be built on a Mac.
+
+### Portable Windows zip
+
+`scripts/release/package-portable-win.mjs` (the `build:win:portable` step) takes the built
+`fde.exe` from `target/x86_64-pc-windows-msvc/release/` and writes
+`bundle/portable/FDE-<version>-x64-portable.zip`, containing
+`FDE-<version>-portable/FDE.exe` and a `README.txt` (no installer, WebView2 required,
+settings under `%APPDATA%\app.frogg.fde`, SmartScreen note). The zip is written with
+Node's `zlib`, no extra dependency. It can be re-run on its own after a Tauri Windows build;
+the version comes from the root `package.json`.
 
 ## Versioning
 

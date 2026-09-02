@@ -1617,6 +1617,12 @@ export const ar: TranslationResources = {
     remoteSsh: {
       title: "SSH عن بُعد",
       helper: "الاتصال بخادم FDE يعمل على المضيف البعيد.",
+      sshConfig: {
+        label: "من إعدادات SSH",
+        placeholder: "اختر مضيفًا",
+        searchPlaceholder: "البحث عن المضيفين",
+        empty: "لا توجد مضيفات في ~/.ssh/config",
+      },
       fields: {
         target: "مضيف SSH",
       },

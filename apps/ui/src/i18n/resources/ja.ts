@@ -1632,6 +1632,12 @@ export const ja: TranslationResources = {
     remoteSsh: {
       title: "リモート SSH",
       helper: "リモートホストで動作する FDE デーモンに接続します。",
+      sshConfig: {
+        label: "SSH 設定から",
+        placeholder: "ホストを選択",
+        searchPlaceholder: "ホストを検索",
+        empty: "~/.ssh/config にホストがありません",
+      },
       fields: {
         target: "SSH ホスト",
       },

@@ -1666,6 +1666,12 @@ export const fr: TranslationResources = {
     remoteSsh: {
       title: "SSH distant",
       helper: "Connectez-vous à un daemon FDE sur l’hôte distant.",
+      sshConfig: {
+        label: "Depuis la configuration SSH",
+        placeholder: "Choisir un hôte",
+        searchPlaceholder: "Rechercher des hôtes",
+        empty: "Aucun hôte dans ~/.ssh/config",
+      },
       fields: {
         target: "Hôte SSH",
       },
