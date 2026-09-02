@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 import { StyleSheet, withUnistyles } from "react-native-unistyles";
 import { Terminal } from "lucide-react-native";
+import type { SshTransportTarget } from "@fde/protocol/ssh-transport";
 import type { HostProfile } from "@/types/host-connection";
 import { isElectronRuntime } from "@/desktop/host";
 import { useHostMutations, useHosts } from "@/runtime/host-runtime";
@@ -12,7 +13,9 @@ import { SegmentedControl, type SegmentedControlOption } from "@/components/ui/s
 import type { EditingTextInputHandle } from "@/components/ui/text-input";
 import { useIsCompactFormFactor } from "@/constants/layout";
 import { DaemonConnectionTestError } from "@/utils/test-daemon-connection";
+import { SSH_DEPLOY_RECONNECT_GRACE_MS } from "@/desktop/ssh-deploy/ssh-deploy";
 import { AdaptiveModalSheet, type SheetHeader } from "./adaptive-modal-sheet";
+import { RemoteSshDeployOffer } from "./remote-ssh-deploy-offer";
 import {
   resolveRemoteSshTarget,
   type RemoteSshFormError,
@@ -76,6 +79,8 @@ export function AddRemoteSshHostModal({
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<RemoteSshFormError | null>(null);
   const [connectionError, setConnectionError] = useState("");
+  // The target of the last failed connect: the deploy offer probes it.
+  const [failedTarget, setFailedTarget] = useState<SshTransportTarget | null>(null);
 
   const header = useMemo<SheetHeader>(() => ({ title: t("pairing.remoteSsh.title") }), [t]);
   const size = isCompact ? "md" : "sm";
@@ -108,6 +113,7 @@ export function AddRemoteSshHostModal({
     setSelectedAlias(null);
     setFormError(null);
     setConnectionError("");
+    setFailedTarget(null);
   }, []);
 
   const handleClose = useCallback(() => {
@@ -152,6 +158,7 @@ export function AddRemoteSshHostModal({
       setIsSaving(true);
       setFormError(null);
       setConnectionError("");
+      setFailedTarget(null);
       result = await probeAndUpsertRemoteSshConnection(resolved.target);
     } catch (error) {
       setConnectionError(
@@ -159,6 +166,7 @@ export function AddRemoteSshHostModal({
           ? t("pairing.remoteSsh.errors.failedToConnect", { detail: error.message })
           : t("common.errors.unableToSave"),
       );
+      if (hasDesktopBridge) setFailedTarget(resolved.target);
       return;
     } finally {
       setIsSaving(false);
@@ -172,6 +180,7 @@ export function AddRemoteSshHostModal({
     });
   }, [
     clear,
+    hasDesktopBridge,
     hosts,
     isSaving,
     mode,
@@ -182,6 +191,10 @@ export function AddRemoteSshHostModal({
     t,
   ]);
   const handleSubmit = useCallback(() => void handleSave(), [handleSave]);
+  // The daemon was just installed: give it a moment to bind, then retry.
+  const handleDeployed = useCallback(() => {
+    setTimeout(() => void handleSave(), SSH_DEPLOY_RECONNECT_GRACE_MS);
+  }, [handleSave]);
   const handleManualTargetChange = useCallback((value: string) => {
     manualTargetRef.current = value;
   }, []);
@@ -259,6 +272,13 @@ export function AddRemoteSshHostModal({
         <Text style={styles.connectionError} testID="remote-ssh-connection-error">
           {connectionError}
         </Text>
+      ) : null}
+      {failedTarget ? (
+        <RemoteSshDeployOffer
+          target={failedTarget}
+          enabled={!isSaving}
+          onDeployed={handleDeployed}
+        />
       ) : null}
       <View style={styles.actions}>
         <Button

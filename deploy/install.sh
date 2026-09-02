@@ -16,6 +16,8 @@
 #   FDE_INSTALL_DIR   install root (default: ~/.local/share/fde)
 #   FDE_BIN_DIR       where fde/paseo are linked (default: ~/.local/bin)
 #   FDE_RELEASE_BASE  release download base (default: GitHub releases)
+#   FDE_BUNDLE_URL    download this exact bundle URL (plus its .sha256 sidecar)
+#                     instead of resolving one from FDE_RELEASE_BASE
 #   FDE_BUNDLE_FILE   install from a local bundle tarball instead of downloading
 #   FDE_NO_SERVICE=1  skip service installation
 #   FDE_LISTEN        daemon listen address for the service (default: 127.0.0.1:6767)
@@ -28,6 +30,7 @@ FDE_RELEASE_BASE="${FDE_RELEASE_BASE:-https://github.com/frogg-app/frogg-de/rele
 FDE_LISTEN="${FDE_LISTEN:-127.0.0.1:6767}"
 FDE_VERSION="${FDE_VERSION:-}"
 FDE_BUNDLE_FILE="${FDE_BUNDLE_FILE:-}"
+FDE_BUNDLE_URL="${FDE_BUNDLE_URL:-}"
 FDE_NO_SERVICE="${FDE_NO_SERVICE:-0}"
 FDE_HOME="${FDE_HOME:-}"
 
@@ -85,13 +88,19 @@ acquire_bundle() {
   fi
 
   need curl
-  [ -n "${FDE_VERSION}" ] || resolve_latest_version
-  name="fde-daemon-${FDE_VERSION}-${PLATFORM}-${ARCH}.tar.gz"
+  local url
+  if [ -n "${FDE_BUNDLE_URL}" ]; then
+    url="${FDE_BUNDLE_URL}"
+    name="${url##*/}"
+  else
+    [ -n "${FDE_VERSION}" ] || resolve_latest_version
+    name="fde-daemon-${FDE_VERSION}-${PLATFORM}-${ARCH}.tar.gz"
+    url="${FDE_RELEASE_BASE}/download/v${FDE_VERSION}/${name}"
+  fi
   BUNDLE_PATH="${WORK_DIR}/${name}"
   log "downloading ${name}"
-  curl -fsSL --retry 3 -o "${BUNDLE_PATH}" "${FDE_RELEASE_BASE}/download/v${FDE_VERSION}/${name}" ||
-    die "download failed: ${FDE_RELEASE_BASE}/download/v${FDE_VERSION}/${name}"
-  curl -fsSL --retry 3 -o "${BUNDLE_PATH}.sha256" "${FDE_RELEASE_BASE}/download/v${FDE_VERSION}/${name}.sha256" ||
+  curl -fsSL --retry 3 -o "${BUNDLE_PATH}" "${url}" || die "download failed: ${url}"
+  curl -fsSL --retry 3 -o "${BUNDLE_PATH}.sha256" "${url}.sha256" ||
     die "checksum download failed for ${name}"
   verify_bundle "${BUNDLE_PATH}" "${BUNDLE_PATH}.sha256"
 }

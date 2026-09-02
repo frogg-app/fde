@@ -2284,6 +2284,74 @@ export const ar: TranslationResources = {
         removeErrorMessage: "غير قادر على إزالة الاتصال",
         timeout: "نفذ الوقت",
       },
+      sshDeploy: {
+        title: "الخدمة على هذا المضيف",
+        info: "يثبّت خدمة FDE على مضيف SSH بالنصوص البرمجية نفسها المستخدمة في التثبيت اليدوي. يحمّل المضيف حزمة الإصدار بنفسه؛ ولا يقوم التطبيق سوى بتشغيل النص البرمجي عبر SSH.",
+        status: {
+          probing: "جارٍ الفحص...",
+          installed: "مثبّت {{version}}",
+          installedUnknown: "مثبّت",
+          container: "حاوية Docker",
+          notInstalled: "غير مثبّت",
+          unreachable: "تعذّر الوصول",
+        },
+        probe: {
+          platform: "المنصة",
+          unknown: "غير معروف",
+          service: {
+            systemd: "خدمة مستخدم systemd",
+            launchd: "وكيل launchd",
+            none: "لا يوجد مدير خدمات للمستخدم",
+          },
+          docker: {
+            label: "Docker",
+            available: "متاح",
+            container: "متاح، حاوية fde-daemon موجودة",
+            missing: "غير متاح",
+          },
+          curlMissing: "curl غير موجود على المضيف؛ يحتاجه التثبيت الأصلي لتنزيل الحزمة.",
+          noService: "بدون مدير خدمات للمستخدم لن تعاد الخدمة إلى العمل بعد إعادة التشغيل.",
+          installDir: "التثبيت الأصلي يوضع في {{home}}/.local/share/fde",
+          failed: "تعذّر فحص المضيف. {{detail}}",
+        },
+        method: {
+          label: "الطريقة",
+          native: "أصلي",
+          docker: "Docker",
+          dockerHint: "Docker غير متاح على هذا المضيف.",
+        },
+        fields: {
+          listen: "عنوان الاستماع",
+          listenHint:
+            "يتصل التطبيق عبر نفق SSH، لذا فإن عنوان loopback هو الصحيح. استخدم 0.0.0.0 فقط لإتاحة الخدمة على الشبكة.",
+          version: "الإصدار",
+          versionHint:
+            "الإصدار المراد تثبيته. الافتراضي هو إصدار هذا التطبيق؛ ويجب أن يتضمن الإصدار حزمة الخدمة لمنصة المضيف.",
+        },
+        actions: {
+          deploy: "نشر",
+          upgrade: "ترقية",
+          reinstall: "إعادة التثبيت",
+          uninstall: "إزالة",
+          cancel: "إلغاء",
+          refresh: "تحديث",
+        },
+        uninstall: {
+          title: "إزالة الخدمة؟",
+          message: "يوقف الخدمة ويزيل تثبيت FDE من {{host}}. تُحفظ حالة الخدمة (~/.paseo).",
+        },
+        log: {
+          running: "قيد التشغيل على {{host}}...",
+          done: "اكتمل.",
+          failed: "فشل. {{detail}}",
+          cancelled: "أُلغي.",
+        },
+        offer: {
+          title: "لم يُعثر على الخدمة على هذا المضيف",
+          message:
+            "SSH يعمل، لكن لا توجد خدمة FDE مثبّتة على {{host}}. هل تريد نشرها الآن؟ سيُعاد الاتصال عند انتهاء التثبيت.",
+        },
+      },
       pairDevices: {
         title: "إقران الأجهزة",
         rowTitle: "إقران جهاز",

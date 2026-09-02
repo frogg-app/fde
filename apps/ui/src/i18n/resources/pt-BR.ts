@@ -2320,6 +2320,77 @@ export const ptBR: TranslationResources = {
         removeErrorMessage: "Não foi possível remover a conexão",
         timeout: "Timeout",
       },
+      sshDeploy: {
+        title: "Daemon neste host",
+        info: "Instala o daemon do FDE no host SSH com os mesmos scripts da instalação manual. O próprio host baixa o pacote da versão; o app só executa o script via SSH.",
+        status: {
+          probing: "Verificando...",
+          installed: "Instalado {{version}}",
+          installedUnknown: "Instalado",
+          container: "Contêiner Docker",
+          notInstalled: "Não instalado",
+          unreachable: "Inacessível",
+        },
+        probe: {
+          platform: "Plataforma",
+          unknown: "Desconhecida",
+          service: {
+            systemd: "serviço de usuário systemd",
+            launchd: "agente launchd",
+            none: "sem gerenciador de serviços de usuário",
+          },
+          docker: {
+            label: "Docker",
+            available: "Disponível",
+            container: "Disponível, contêiner fde-daemon presente",
+            missing: "Não disponível",
+          },
+          curlMissing:
+            "O curl não está no host; a instalação nativa precisa dele para baixar o pacote.",
+          noService:
+            "Sem um gerenciador de serviços de usuário, o daemon não reiniciará após uma reinicialização.",
+          installDir: "Instalações nativas vão para {{home}}/.local/share/fde",
+          failed: "Não foi possível inspecionar o host. {{detail}}",
+        },
+        method: {
+          label: "Método",
+          native: "Nativo",
+          docker: "Docker",
+          dockerHint: "O Docker não está disponível neste host.",
+        },
+        fields: {
+          listen: "Endereço de escuta",
+          listenHint:
+            "O app se conecta pelo túnel SSH, então o loopback é o correto. Use 0.0.0.0 apenas para expor o daemon na rede.",
+          version: "Versão",
+          versionHint:
+            "Versão a instalar. Por padrão, a deste app; a versão precisa trazer um pacote do daemon para a plataforma do host.",
+        },
+        actions: {
+          deploy: "Implantar",
+          upgrade: "Atualizar",
+          reinstall: "Reinstalar",
+          uninstall: "Desinstalar",
+          cancel: "Cancelar",
+          refresh: "Atualizar estado",
+        },
+        uninstall: {
+          title: "Desinstalar o daemon?",
+          message:
+            "Para o serviço e remove a instalação do FDE de {{host}}. O estado do daemon (~/.paseo) é mantido.",
+        },
+        log: {
+          running: "Executando em {{host}}...",
+          done: "Concluído.",
+          failed: "Falhou. {{detail}}",
+          cancelled: "Cancelado.",
+        },
+        offer: {
+          title: "Daemon não encontrado neste host",
+          message:
+            "O SSH funciona, mas nenhum daemon do FDE está instalado em {{host}}. Implantar agora? A conexão será tentada novamente quando a instalação terminar.",
+        },
+      },
       pairDevices: {
         title: "Parear dispositivos",
         rowTitle: "Parear um dispositivo",

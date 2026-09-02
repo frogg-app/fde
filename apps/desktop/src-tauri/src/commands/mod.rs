@@ -15,6 +15,7 @@ use tauri::{App, AppHandle, Emitter, Manager, State};
 
 use crate::app_log;
 use crate::deep_link::AgentDeepLinkTarget;
+use crate::deploy::{self, DeployManager};
 use crate::launch::LaunchState;
 use crate::ssh_config;
 use crate::transport::{EventSink, TransportManager};
@@ -36,6 +37,13 @@ pub fn register_state(app: &App) -> tauri::Result<()> {
         }
     });
     app.manage(TransportManager::new(emit));
+    let handle = app.handle().clone();
+    let emit_deploy: EventSink = Arc::new(move |payload| {
+        if let Err(error) = handle.emit(deploy::DEPLOY_EVENT, payload) {
+            log::warn!("failed to emit deploy event: {error}");
+        }
+    });
+    app.manage(DeployManager::new(emit_deploy));
     Ok(())
 }
 
@@ -70,6 +78,12 @@ pub async fn desktop_invoke(
         "send_local_daemon_transport_message" => app.state::<TransportManager>().send(&args).await,
         "close_local_daemon_transport" => app.state::<TransportManager>().close(&args),
         "list_ssh_config_hosts" => ssh_config::list_ssh_config_hosts(&app),
+        "ssh_deploy_probe" => app.state::<DeployManager>().probe(&args).await,
+        "ssh_deploy_start" => app
+            .state::<DeployManager>()
+            .start(&args, &app.package_info().version.to_string()),
+        "ssh_deploy_uninstall" => app.state::<DeployManager>().uninstall(&args),
+        "ssh_deploy_cancel" => app.state::<DeployManager>().cancel(&args),
         "write_attachment_base64" => app
             .state::<attachments::AttachmentStore>()
             .write_base64(&args),

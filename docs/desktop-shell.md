@@ -69,6 +69,8 @@ error:null}`, `run_local_daemon_update` is `{exitCode:1, stdout:"", stderr}`.
 - `list_ssh_config_hosts`: concrete `Host` entries of `~/.ssh/config` (one level of
   `Include`, wildcard patterns and `Match` blocks skipped) as
   `[{alias, hostName?, user?, port?, identityFile?}]` for the Remote SSH page's picker.
+- `ssh_deploy_probe`, `ssh_deploy_start`, `ssh_deploy_uninstall`, `ssh_deploy_cancel`: see
+  SSH deploy below (`src/deploy/`).
 - `write_attachment_base64`, `write_attachment_bytes`, `copy_attachment_file`,
   `read_file_base64`, `delete_attachment_file`, `garbage_collect_attachment_files`: managed
   attachment storage in the app data dir. Same argument and return shapes as Electron.
@@ -79,13 +81,13 @@ Everything else throws `Unknown desktop command`.
 
 ## Daemon connections
 
-| Host connection kind           | Milestone | How                                                                                                                                                        |
-| ------------------------------ | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `directTcp` (`ws://host:port`) | 1         | plain WebSocket from the webview, no shell involvement                                                                                                     |
-| `relay` (E2EE)                 | 1         | plain WebSocket, no shell involvement                                                                                                                      |
-| `remoteSsh`                    | 2         | Rust spawns the system `ssh -T -o BatchMode=yes … -W 127.0.0.1:<daemonPort> <host>` and runs the WebSocket client over its stdin/stdout (`src/transport/ssh.rs`)   |
-| `directSocket` / `directPipe`  | 2         | Rust connects the unix socket / named pipe and runs the WebSocket client over it the same way                                                              |
-| local sidecar                  | 3         | see below                                                                                                                                                  |
+| Host connection kind           | Milestone | How                                                                                                                                                              |
+| ------------------------------ | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `directTcp` (`ws://host:port`) | 1         | plain WebSocket from the webview, no shell involvement                                                                                                           |
+| `relay` (E2EE)                 | 1         | plain WebSocket, no shell involvement                                                                                                                            |
+| `remoteSsh`                    | 2         | Rust spawns the system `ssh -T -o BatchMode=yes … -W 127.0.0.1:<daemonPort> <host>` and runs the WebSocket client over its stdin/stdout (`src/transport/ssh.rs`) |
+| `directSocket` / `directPipe`  | 2         | Rust connects the unix socket / named pipe and runs the WebSocket client over it the same way                                                                    |
+| local sidecar                  | 3         | see below                                                                                                                                                        |
 
 ### Transport sessions
 
@@ -174,8 +176,65 @@ first things to check on a real Windows 11 machine.
   relative `Include` patterns). The app runs as the interactive user, so `known_hosts` and
   identities are shared with the terminal as well.
 - **What the log says.** Look for `ssh: spawning ssh …`, then `ssh: spawned C:\…\ssh.exe
-  (pid …)` or `ssh: … not found`, then either `transport: websocket handshake … ok` or
+(pid …)` or `ssh: … not found`, then either `transport: websocket handshake … ok` or
   `ssh: exited with exit code: 255; stderr: …`.
+
+## SSH deploy
+
+"Daemon on this host" on a Remote SSH host's settings page (and, when a new Remote SSH host
+has no daemon, at the end of the Add host sheet) installs the daemon over the same `ssh` the
+tunnel uses. Rust side: `src/deploy/` (`args.rs` parsing and shell quoting, `probe.rs`,
+`job.rs`, `scripts.rs`, `ssh.rs`); UI side: `apps/ui/src/desktop/ssh-deploy/` and
+`apps/ui/src/components/ssh-deploy/`, gated on the desktop bridge.
+
+Commands (`desktop_invoke`):
+
+- `ssh_deploy_probe {host, sshPort?}` runs a POSIX `sh` snippet (`PROBE_SNIPPET` in
+  `probe.rs`; works on Linux and macOS) through `ssh -T -o BatchMode=yes -o ConnectTimeout=10
+[-p N] <host> 'sh -s'` and returns
+  `{os, arch, hasDocker, hasSystemdUser, hasCurl, hasFde:{installed, version?},
+hasDockerContainer, homeDir}`. `hasDocker` means `docker info` succeeds for that user, not
+  just that the binary exists. An installed daemon is `~/.local/share/fde/current/bin/fde`
+  (version from `manifest.json`) or an `fde` on `PATH`. The result is the last stdout line
+  prefixed `FDE_PROBE `, so login banners do not break parsing. 45 s timeout.
+- `ssh_deploy_start {host, sshPort?, method:"native"|"docker", version?, listen?, bundleUrl?}`
+  returns `{jobId}` at once and runs the job in the background. Native pipes the embedded
+  `deploy/install.sh` (`include_str!`, so the app ships exactly the repo's script) into
+  `ssh <host> "FDE_VERSION='…' FDE_LISTEN='…' FDE_RELEASE_BASE='https://github.com/frogg-app/frogg-de/releases' [FDE_BUNDLE_URL='…'] bash -s"`;
+  Docker pipes `deploy/install-docker.sh` with `FDE_VERSION`, `FDE_BIND` and `FDE_PORT`
+  derived from `listen`. Defaults: version = the app's own version, listen =
+  `127.0.0.1:6767`. Nothing is copied with scp: the script downloads
+  `fde-daemon-<version>-<platform>-<arch>.tar.gz` and its `.sha256` from the GitHub release
+  on the remote itself, so **the release tagged `v<version>` must carry that bundle** (or
+  `bundleUrl` must point at one plus a sidecar). The job emits
+  `paseo:event:ssh-deploy-event` payloads `{jobId, kind:"log"|"done"|"error", text?, stream?,
+detail?, cancelled?}`: one `log` per stdout/stderr line, then `done` on exit 0 or `error`
+  with ssh's stderr tail / exit code (`format_ssh_failure`).
+- `ssh_deploy_uninstall {host, sshPort?, method?}` pipes `deploy/uninstall.sh` (native) or a
+  small `docker rm -f fde-daemon` script (Docker); same event stream.
+- `ssh_deploy_cancel {jobId}` kills the ssh child; the job ends with `error` and
+  `cancelled: true`. Running jobs are cancelled on app exit.
+
+Security: the host string follows the transport's rules (no leading `-`, no whitespace);
+`version`, `listen` and `bundleUrl` are validated (`args.rs`) and every value on the remote
+command line is single-quoted (`shell_quote`), so nothing typed into the card can become an
+ssh option or a shell word. Every spawn, output line and exit status is logged to `fde.log`
+under `deploy:` / `deploy[<jobId>]`.
+
+UI: the card probes on mount, shows platform, service manager, Docker and the installed
+version, a Native/Docker segmented control (Docker disabled when absent), the listen address
+(loopback is right: the app reaches the daemon through the SSH tunnel) and the version, then
+Deploy / Upgrade / Reinstall / Uninstall with a monospace, auto-scrolling log and a Cancel
+button. On `done` it re-probes and calls `runProbeCycleNow(serverId)` so the host comes
+online without waiting for the next scheduled probe. In the Add host sheet, a failed connect
+triggers a probe; if ssh works and no daemon is found, the same card appears under "Daemon
+not found on this host" and a finished deploy retries the connection.
+
+Tests: `src/deploy/tests.rs` drives the probe and deploy jobs through a fake `ssh` script
+(`exec sh -c "$last_arg"` for the probe; an echo of the command line and stdin byte count
+for deploys), so the snippet, the env line and the full script transfer are checked without
+a network. `apps/ui/src/desktop/ssh-deploy/ssh-deploy.test.ts` covers the probe/event
+parsers and the card's action logic.
 
 ## Local sidecar daemon (milestone 3)
 

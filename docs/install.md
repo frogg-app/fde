@@ -53,6 +53,7 @@ service.
 | `FDE_INSTALL_DIR`  | `~/.local/share/fde`                             | Install root (`versions/`, `current`)                          |
 | `FDE_BIN_DIR`      | `~/.local/bin`                                   | Where `fde`/`paseo` are linked                                 |
 | `FDE_RELEASE_BASE` | `https://github.com/frogg-app/frogg-de/releases` | Release download base                                          |
+| `FDE_BUNDLE_URL`   | unset                                            | Download this exact tarball (+ `.sha256`) instead of a release |
 | `FDE_BUNDLE_FILE`  | unset                                            | Install this local tarball instead of downloading              |
 | `FDE_NO_SERVICE`   | `0`                                              | `1` skips the systemd/launchd service                          |
 | `FDE_LISTEN`       | `127.0.0.1:6767`                                 | Daemon listen address written into the service                 |
@@ -88,6 +89,7 @@ which is how you upgrade.
 | `FDE_IMAGE`     | `froggapp/fde:$FDE_VERSION` | Full image reference                               |
 | `FDE_HOME`      | `~/.fde`                    | Host directory mounted at `/home/fde/.paseo`       |
 | `FDE_PORT`      | `6767`                      | Host port published to the daemon                  |
+| `FDE_BIND`      | `0.0.0.0`                   | Host address the port is published on              |
 | `FDE_WORKSPACE` | unset                       | Host directory mounted at `/workspace`             |
 | `FDE_PASSWORD`  | unset                       | Sets `PASEO_PASSWORD` (do this on shared networks) |
 | `FDE_CONTAINER` | `fde-daemon`                | Container name                                     |
@@ -124,17 +126,22 @@ bundle small; everything else the daemon can do works.
 `scripts/release/smoke-daemon-bundle.sh <tarball> [port]` extracts a bundle to
 a temp dir, starts the daemon, checks the web UI answers, and stops it.
 
-## How the desktop app will deploy over SSH
+## Deploying from the desktop app
 
-The desktop app's remote-host setup reuses `deploy/install.sh` unchanged:
+A Remote SSH host's settings page has a **Daemon on this host** card that runs
+these same scripts over SSH: it probes the host (platform, Docker, systemd
+user session, an existing install), then pipes `deploy/install.sh` or
+`deploy/install-docker.sh` into `ssh <host> 'FDE_VERSION=… FDE_LISTEN=… bash -s'`
+and streams the output. Upgrade re-runs the installer with a newer version;
+Uninstall pipes `deploy/uninstall.sh`. When you add a Remote SSH host and the
+connection fails because no daemon is installed, the same card is offered in
+the Add host sheet.
 
-1. Download (or build) the bundle for the remote host's platform, or fetch it
-   on the host when it has internet access.
-2. `scp` the tarball and its `.sha256` sidecar to the host, e.g. into
-   `/tmp/fde-daemon-<v>-<platform>-<arch>.tar.gz`.
-3. `ssh host 'FDE_BUNDLE_FILE=/tmp/fde-daemon-... FDE_LISTEN=127.0.0.1:6767 bash -s' < deploy/install.sh`.
-4. Read the printed daemon URL, open an SSH tunnel to `FDE_LISTEN`, and pair.
-
-Because the installer is idempotent, the same command upgrades an existing
-host. `FDE_NO_SERVICE=1` is available for hosts where the app manages the
-daemon process itself.
+Nothing is copied to the host: the script downloads the bundle from the
+GitHub release itself (`FDE_RELEASE_BASE`, or an exact `FDE_BUNDLE_URL`), so
+the release tagged `v<version>` must carry
+`fde-daemon-<version>-<platform>-<arch>.tar.gz` and its `.sha256` for the
+host's platform. The version defaults to the app's own. The listen address
+defaults to `127.0.0.1:6767` because the app reaches the daemon through the
+SSH tunnel; for Docker it becomes `FDE_BIND`/`FDE_PORT`. See
+[desktop-shell.md](desktop-shell.md), "SSH deploy".

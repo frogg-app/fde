@@ -36,7 +36,11 @@ Done items move to CHANGELOG.md.
       release the installer reads; pushes the Docker image tags.
 - [ ] Hosting for `frogg.de/install.sh`, `uninstall.sh`, `install-docker.sh` (redirects
       to the raw files in the repo are enough).
-- [ ] Desktop app: SSH deploy using `FDE_BUNDLE_FILE` (scp bundle, run `deploy/install.sh`).
+- [x] Desktop app: SSH deploy. "Daemon on this host" card on Remote SSH hosts (and in the
+      Add host sheet) probes the host and pipes `deploy/install.sh` / `install-docker.sh` /
+      `uninstall.sh` into `ssh … bash -s`, streaming the output; the host downloads the
+      bundle from the release itself (`FDE_RELEASE_BASE` / `FDE_BUNDLE_URL`). See
+      docs/desktop-shell.md "SSH deploy".
 
 ## Next
 

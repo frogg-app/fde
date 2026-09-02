@@ -2304,6 +2304,77 @@ export const ja: TranslationResources = {
         removeErrorMessage: "接続を削除できません",
         timeout: "タイムアウト",
       },
+      sshDeploy: {
+        title: "このホストのデーモン",
+        info: "手動インストールと同じスクリプトで SSH ホストに FDE デーモンをインストールします。リリースバンドルはホスト自身がダウンロードし、アプリは SSH 経由でスクリプトを実行するだけです。",
+        status: {
+          probing: "確認中...",
+          installed: "インストール済み {{version}}",
+          installedUnknown: "インストール済み",
+          container: "Docker コンテナ",
+          notInstalled: "未インストール",
+          unreachable: "到達不能",
+        },
+        probe: {
+          platform: "プラットフォーム",
+          unknown: "不明",
+          service: {
+            systemd: "systemd ユーザーサービス",
+            launchd: "launchd エージェント",
+            none: "ユーザーサービスマネージャーなし",
+          },
+          docker: {
+            label: "Docker",
+            available: "利用可能",
+            container: "利用可能、fde-daemon コンテナあり",
+            missing: "利用不可",
+          },
+          curlMissing:
+            "ホストに curl がありません。ネイティブインストールはバンドルのダウンロードに curl が必要です。",
+          noService:
+            "ユーザーサービスマネージャーがないため、再起動後にデーモンは自動で起動しません。",
+          installDir: "ネイティブインストール先: {{home}}/.local/share/fde",
+          failed: "ホストを確認できませんでした。{{detail}}",
+        },
+        method: {
+          label: "方式",
+          native: "ネイティブ",
+          docker: "Docker",
+          dockerHint: "このホストでは Docker を利用できません。",
+        },
+        fields: {
+          listen: "待ち受けアドレス",
+          listenHint:
+            "アプリは SSH トンネル経由で接続するため、ループバックが適切です。0.0.0.0 はデーモンをネットワークに公開する場合のみ使用してください。",
+          version: "バージョン",
+          versionHint:
+            "インストールするリリース。既定はこのアプリのバージョンです。リリースにはホストのプラットフォーム用デーモンバンドルが必要です。",
+        },
+        actions: {
+          deploy: "デプロイ",
+          upgrade: "アップグレード",
+          reinstall: "再インストール",
+          uninstall: "アンインストール",
+          cancel: "キャンセル",
+          refresh: "再確認",
+        },
+        uninstall: {
+          title: "デーモンをアンインストールしますか？",
+          message:
+            "サービスを停止し、{{host}} から FDE のインストールを削除します。デーモンの状態 (~/.paseo) は保持されます。",
+        },
+        log: {
+          running: "{{host}} で実行中...",
+          done: "完了しました。",
+          failed: "失敗しました。{{detail}}",
+          cancelled: "キャンセルしました。",
+        },
+        offer: {
+          title: "このホストにデーモンが見つかりません",
+          message:
+            "SSH は動作していますが、{{host}} に FDE デーモンがインストールされていません。今すぐデプロイしますか？インストール完了後に接続を再試行します。",
+        },
+      },
       pairDevices: {
         title: "デバイスをペアリング",
         rowTitle: "デバイスをペアリング",

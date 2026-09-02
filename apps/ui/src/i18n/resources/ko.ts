@@ -2295,6 +2295,76 @@ export const ko: TranslationResources = {
         removeErrorMessage: "연결을 제거할 수 없습니다",
         timeout: "시간 초과",
       },
+      sshDeploy: {
+        title: "이 호스트의 데몬",
+        info: "수동 설치와 같은 스크립트로 SSH 호스트에 FDE 데몬을 설치합니다. 릴리스 번들은 호스트가 직접 내려받고, 앱은 SSH로 스크립트를 실행하기만 합니다.",
+        status: {
+          probing: "확인 중...",
+          installed: "설치됨 {{version}}",
+          installedUnknown: "설치됨",
+          container: "Docker 컨테이너",
+          notInstalled: "설치되지 않음",
+          unreachable: "연결할 수 없음",
+        },
+        probe: {
+          platform: "플랫폼",
+          unknown: "알 수 없음",
+          service: {
+            systemd: "systemd 사용자 서비스",
+            launchd: "launchd 에이전트",
+            none: "사용자 서비스 관리자 없음",
+          },
+          docker: {
+            label: "Docker",
+            available: "사용 가능",
+            container: "사용 가능, fde-daemon 컨테이너 있음",
+            missing: "사용 불가",
+          },
+          curlMissing:
+            "호스트에 curl이 없습니다. 네이티브 설치는 번들을 내려받는 데 curl이 필요합니다.",
+          noService: "사용자 서비스 관리자가 없으면 재부팅 후 데몬이 다시 시작되지 않습니다.",
+          installDir: "네이티브 설치 위치: {{home}}/.local/share/fde",
+          failed: "호스트를 확인할 수 없습니다. {{detail}}",
+        },
+        method: {
+          label: "방식",
+          native: "네이티브",
+          docker: "Docker",
+          dockerHint: "이 호스트에서는 Docker를 사용할 수 없습니다.",
+        },
+        fields: {
+          listen: "수신 주소",
+          listenHint:
+            "앱은 SSH 터널을 통해 연결하므로 루프백이 맞습니다. 0.0.0.0은 데몬을 네트워크에 노출할 때만 사용하세요.",
+          version: "버전",
+          versionHint:
+            "설치할 릴리스입니다. 기본값은 이 앱의 버전이며, 릴리스에 호스트 플랫폼용 데몬 번들이 있어야 합니다.",
+        },
+        actions: {
+          deploy: "배포",
+          upgrade: "업그레이드",
+          reinstall: "다시 설치",
+          uninstall: "제거",
+          cancel: "취소",
+          refresh: "새로고침",
+        },
+        uninstall: {
+          title: "데몬을 제거할까요?",
+          message:
+            "서비스를 중지하고 {{host}}에서 FDE 설치를 제거합니다. 데몬 상태(~/.paseo)는 유지됩니다.",
+        },
+        log: {
+          running: "{{host}}에서 실행 중...",
+          done: "완료되었습니다.",
+          failed: "실패했습니다. {{detail}}",
+          cancelled: "취소되었습니다.",
+        },
+        offer: {
+          title: "이 호스트에서 데몬을 찾을 수 없음",
+          message:
+            "SSH는 동작하지만 {{host}}에 FDE 데몬이 설치되어 있지 않습니다. 지금 배포할까요? 설치가 끝나면 연결을 다시 시도합니다.",
+        },
+      },
       pairDevices: {
         title: "기기 페어링",
         rowTitle: "기기 페어링",
