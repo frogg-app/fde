@@ -55,7 +55,16 @@ unsigned; Tauri warns about that and continues. macOS bundles must be built on a
 `FDE-<version>-portable/FDE.exe` and a `README.txt` (no installer, WebView2 required,
 settings under `%APPDATA%\app.frogg.fde`, SmartScreen note). The zip is written with
 Node's `zlib`, no extra dependency. It can be re-run on its own after a Tauri Windows build;
-the version comes from the root `package.json`.
+the version comes from the root `package.json`. A native Windows build (`cargo tauri build`
+on Windows, as the release workflow does) writes to `target/release` instead; pass
+`--release-dir apps/desktop/src-tauri/target/<triple>/release` or set
+`FDE_WINDOWS_RELEASE_DIR` to point the script there.
+
+## Continuous integration
+
+`.github/workflows/ci.yml` builds the Linux deb on every push and pull request, and
+`.github/workflows/release.yml` builds all platforms for a `vX.Y.Z` tag and renames the
+bundles to `FDE-<version>-...`. See [ci.md](ci.md).
 
 ## Versioning
 

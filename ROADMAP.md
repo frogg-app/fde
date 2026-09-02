@@ -19,6 +19,8 @@ Done items move to CHANGELOG.md.
       rules, daemon listening on `0.0.0.0:6767` with the web UI enabled.
 - [ ] Release pipeline builds the daemon bundle per platform (linux-x64, linux-arm64,
       darwin-arm64, darwin-x64) and attaches it to the GitHub release the installer reads.
+      The `daemon-bundle` job in `release.yml` is wired and activates once
+      `scripts/release/build-daemon-bundle.mjs` lands on `main`.
 - [ ] Hosting for `frogg.de/install.sh` (deployment handled later).
 
 ## Next
@@ -30,8 +32,11 @@ Done items move to CHANGELOG.md.
 - [ ] **Code signing** (Windows Authenticode, macOS notarisation) so SmartScreen and
       Gatekeeper stop blocking installs.
 - [ ] **Updater**: real signing key and `latest.json` endpoint for `tauri-plugin-updater`.
-- [ ] **CI**: GitHub Actions for typecheck/tests, and release builds for Windows (cross
-      from Linux), Linux, and macOS.
+- [x] **CI**: GitHub Actions for typecheck/tests, and release builds for Windows, Linux,
+      and macOS (`docs/ci.md`). Still manual: adding the `TAURI_SIGNING_*` and
+      `DOCKERHUB_*` secrets in repo settings, the version bump + tag that starts a
+      release, and code signing (no Apple/Windows certificates yet, so macOS is ad-hoc
+      signed and Windows is unsigned).
 - [ ] **Faster pre-commit hook**: per-workspace typecheck instead of the whole monorepo.
 - [ ] Tighten the webview CSP once the UI's connection origins are enumerated.
 - [ ] Notification click routing (Tauri notification plugin has no desktop click callback).

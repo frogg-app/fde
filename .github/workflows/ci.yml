@@ -1,0 +1,162 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  # CI never uses the CUDA execution provider; the onnxruntime-node postinstall
+  # download is large enough to make `npm ci` flaky.
+  ONNXRUNTIME_NODE_INSTALL: skip
+  CI: "true"
+
+jobs:
+  checks:
+    name: format, lint, typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: node scripts/ci/npm-retry.mjs ci
+
+      - name: Check formatting
+        run: npx oxfmt --check .
+
+      - name: Lint
+        run: npx oxlint .
+
+      - name: Script tests
+        run: npm run test:scripts
+
+      # Workspaces typecheck against each other's dist/ output, so the server stack
+      # (protocol, client, highlight, plugin, relay, server, cli) is built first.
+      - name: Build server stack
+        run: npm run build:server
+
+      - name: Typecheck
+        run: npm run typecheck
+
+  tests:
+    name: unit tests (libraries, ui, cli)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: node scripts/ci/npm-retry.mjs ci
+
+      - name: Install Playwright Chromium (ui browser project)
+        timeout-minutes: 10
+        run: npx playwright install --with-deps chromium
+
+      - name: Build library dependencies
+        run: npm run build:server-deps && npm run build --workspace=@fde/expo-two-way-audio
+
+      - name: Test protocol, client, highlight, relay, plugin
+        run: >-
+          npm run test
+          --workspace=@fde/protocol
+          --workspace=@fde/client
+          --workspace=@fde/highlight
+          --workspace=@fde/relay
+          --workspace=@fde/plugin
+
+      - name: Test cli (unit)
+        run: npm run test:unit --workspace=@fde/cli
+
+      - name: Test ui
+        run: npm run test --workspace=@fde/app
+
+  server-tests:
+    name: unit tests (server)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Worktree tests compare against origin/main.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: node scripts/ci/npm-retry.mjs ci
+
+      - name: Build server dependencies
+        run: npm run build:server-deps
+
+      - name: Test server (unit, no e2e)
+        run: npm run test:unit --workspace=@fde/server
+
+  desktop:
+    name: desktop (linux deb)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install Linux Tauri dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev libappindicator3-dev libayatana-appindicator3-dev \
+            librsvg2-dev patchelf build-essential curl wget file libssl-dev libgtk-3-dev
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
+
+      - name: Install dependencies
+        run: node scripts/ci/npm-retry.mjs ci
+
+      - name: Build web UI
+        run: npm run build:ui
+
+      - name: Desktop tests (bridge bundle + cargo test)
+        run: npm run test --workspace=@fde/desktop
+
+      # The npm-distributed Tauri CLI is a prebuilt binary, so this is much faster
+      # than `cargo install tauri-cli` and needs no extra cache.
+      - name: Build Linux deb
+        working-directory: apps/desktop
+        run: npx --yes @tauri-apps/cli@^2 build --bundles deb
+
+      - name: Upload deb
+        uses: actions/upload-artifact@v4
+        with:
+          name: fde-linux-deb
+          path: apps/desktop/src-tauri/target/release/bundle/deb/*.deb
+          retention-days: 7
+          if-no-files-found: error

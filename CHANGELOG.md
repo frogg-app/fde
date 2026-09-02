@@ -24,6 +24,18 @@
   with `ssh <alias>`) and **Manual** (the `ssh://user@host[:port][?daemonPort=]` field).
 - Integration test drives the SSH transport end to end with a fake `ssh` that bridges stdio to
   a local daemon, and covers the exit-with-stderr path.
+- GitHub Actions: `ci.yml` (format, lint, typecheck, unit tests, Linux deb build) on
+  every push and pull request; `release.yml` on `v*` tags builds Linux deb/AppImage,
+  Windows NSIS installer + portable exe/zip, macOS aarch64/x86_64 DMGs (ad-hoc signed),
+  daemon bundles, the updater `latest.json` (when a signing key is configured) and the
+  `froggapp/fde` Docker image (when Docker Hub credentials are configured). Release assets
+  are named `FDE-<version>-<arch>.<ext>`. See `docs/ci.md`.
+- `scripts/release/collect-desktop-bundles.mjs` renames Tauri bundles to the release asset
+  names; `scripts/release/build-updater-manifest.mjs` writes `latest.json` from `.sig`
+  files; `package-portable-win.mjs` accepts `--release-dir` / `FDE_WINDOWS_RELEASE_DIR`
+  for native Windows builds.
+- Dependabot (npm, cargo, actions; weekly, grouped) and a pull request template.
+- `bundle.macOS` config (minimum macOS 10.15, hardened runtime) in `tauri.conf.json`.
 
 ## 0.1.4
 
