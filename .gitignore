@@ -22,3 +22,8 @@ apps/desktop/src-tauri/bridge.js
 
 # Playwright output
 **/test-results/
+/release-assets/
+/ci-assets/
+*.keystore
+*.jks
+google-services*.json

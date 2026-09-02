@@ -2,9 +2,10 @@ name: Release
 
 # Builds and publishes a GitHub release for a `vX.Y.Z` tag: desktop bundles for
 # Linux, Windows and macOS, the daemon bundles the install script downloads, the
-# updater manifest (when a signing key is configured) and the Docker image (when
-# Docker Hub credentials are configured). docs/ci.md explains the flow, the asset
-# names and the secrets.
+# updater manifest (when a signing key is configured), the Android APK (release-signed
+# when a keystore secret is configured) and the Docker image (when Docker Hub
+# credentials are configured). docs/ci.md explains the flow, the asset names and the
+# secrets.
 
 on:
   push:
@@ -41,6 +42,7 @@ jobs:
       clobber: ${{ steps.release.outputs.clobber }}
       signing: ${{ steps.secrets.outputs.signing }}
       docker: ${{ steps.secrets.outputs.docker }}
+      android_signing: ${{ steps.secrets.outputs.android_signing }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -69,13 +71,17 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          FDE_ANDROID_KEYSTORE_BASE64: ${{ secrets.FDE_ANDROID_KEYSTORE_BASE64 }}
+          FDE_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.FDE_ANDROID_KEYSTORE_PASSWORD }}
         run: |
-          signing=false; docker=false
+          signing=false; docker=false; android_signing=false
           [ -n "$TAURI_SIGNING_PRIVATE_KEY" ] && signing=true
           [ -n "$DOCKERHUB_USERNAME" ] && [ -n "$DOCKERHUB_TOKEN" ] && docker=true
+          [ -n "$FDE_ANDROID_KEYSTORE_BASE64" ] && [ -n "$FDE_ANDROID_KEYSTORE_PASSWORD" ] && android_signing=true
           echo "signing=$signing" >> "$GITHUB_OUTPUT"
           echo "docker=$docker" >> "$GITHUB_OUTPUT"
-          echo "updater signing: $signing, docker push: $docker"
+          echo "android_signing=$android_signing" >> "$GITHUB_OUTPUT"
+          echo "updater signing: $signing, docker push: $docker, android release keystore: $android_signing"
 
       - name: Release notes from CHANGELOG.md
         env:
@@ -340,6 +346,79 @@ jobs:
             fi
             gh release upload "$RELEASE_TAG" "$f" "${flags[@]}"
           done
+          gh release upload "$RELEASE_TAG" dist/bundles/fde-daemon-* "${flags[@]}"
+
+  android:
+    name: android apk ${{ matrix.abi }}
+    needs: meta
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        abi: [arm64-v8a]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      # ubuntu-latest ships the Android SDK; this accepts the licenses so Gradle can
+      # fetch any platform/build-tools/NDK version React Native asks for.
+      - uses: android-actions/setup-android@v3
+        with:
+          log-accepted-android-sdk-licenses: false
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Install dependencies
+        run: node scripts/ci/npm-retry.mjs ci
+
+      # The keystore is a base64-encoded .jks/.keystore in a secret; without it the
+      # APK is debug-signed and named `-unsigned` (see docs/android.md).
+      - name: Prepare release keystore
+        if: needs.meta.outputs.android_signing == 'true'
+        env:
+          FDE_ANDROID_KEYSTORE_BASE64: ${{ secrets.FDE_ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          echo "$FDE_ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/fde-release.keystore"
+          echo "FDE_ANDROID_KEYSTORE=$RUNNER_TEMP/fde-release.keystore" >> "$GITHUB_ENV"
+
+      - name: Build release APK
+        env:
+          FDE_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.FDE_ANDROID_KEYSTORE_PASSWORD }}
+          FDE_ANDROID_KEY_ALIAS: ${{ secrets.FDE_ANDROID_KEY_ALIAS || 'fde' }}
+          FDE_ANDROID_KEY_PASSWORD: ${{ secrets.FDE_ANDROID_KEY_PASSWORD }}
+        run: >-
+          node scripts/release/build-android-apk.mjs
+          --abi ${{ matrix.abi }}
+          --out-dir release-assets
+
+      - name: Upload to GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CLOBBER: ${{ needs.meta.outputs.clobber }}
+        run: |
+          flags=()
+          if [ "$CLOBBER" = "true" ]; then flags+=(--clobber); fi
+          ls -l release-assets
+          gh release upload "$RELEASE_TAG" release-assets/FDE-*-android-*.apk "${flags[@]}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-assets-android-${{ matrix.abi }}
+          path: release-assets
+          retention-days: 7
+
   updater-manifest:
     name: updater latest.json
     needs: [meta, desktop]
@@ -353,6 +432,8 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
+          # The android job also uploads release-assets-android-*; the manifest
+          # script only looks at desktop bundles and their .sig files.
           pattern: release-assets-*
           path: release-assets
           merge-multiple: true

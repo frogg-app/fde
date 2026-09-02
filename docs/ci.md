@@ -5,14 +5,16 @@ cache, `scripts/ci/npm-retry.mjs ci` for installs, and `ONNXRUNTIME_NODE_INSTALL
 
 ## `ci.yml`: every push to `main` and every pull request
 
-| Job            | Runner | What it does                                                                                                                                                                     |
-| -------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `checks`       | ubuntu | `oxfmt --check .`, `oxlint .`, `npm run test:scripts`, then `npm run build:server` and `npm run typecheck` (workspaces typecheck against each other's `dist/`).                  |
-| `tests`        | ubuntu | Vitest for protocol, client, highlight, relay, plugin; cli unit tests; ui tests (installs Playwright Chromium for the `browser` project).                                        |
-| `server-tests` | ubuntu | `npm run test:unit --workspace=@fde/server` (excludes `*.e2e.test.ts`).                                                                                                          |
-| `desktop`      | ubuntu | Rust stable + Linux Tauri deps + `Swatinem/rust-cache`, `npm run build:ui`, `npm run test --workspace=@fde/desktop` (bridge bundle, node tests, `cargo test`), then a deb build. |
+| Job            | Runner | What it does                                                                                                                                                                                                                                                                         |
+| -------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `checks`       | ubuntu | `oxfmt --check .`, `oxlint .`, `npm run test:scripts`, then `npm run build:server` and `npm run typecheck` (workspaces typecheck against each other's `dist/`).                                                                                                                      |
+| `tests`        | ubuntu | Vitest for protocol, client, highlight, relay, plugin; cli unit tests; ui tests (installs Playwright Chromium for the `browser` project).                                                                                                                                            |
+| `server-tests` | ubuntu | `npm run test:unit --workspace=@fde/server` (excludes `*.e2e.test.ts`).                                                                                                                                                                                                              |
+| `desktop`      | ubuntu | Rust stable + Linux Tauri deps + `Swatinem/rust-cache`, `npm run build:ui`, `npm run test --workspace=@fde/desktop` (bridge bundle, node tests, `cargo test`), then a deb build.                                                                                                     |
+| `android`      | ubuntu | Only when `apps/ui/**`, `packages/expo-two-way-audio/**`, the build script or the lockfile changed (`dorny/paths-filter`; always on pushes to `main`): Java 21 + Android SDK, `expo prebuild` + `gradlew assembleDebug` via `scripts/release/build-android-apk.mjs --variant debug`. |
 
-The deb is kept as a workflow artifact (`fde-linux-deb`) for 7 days. Concurrent runs on the
+The deb (`fde-linux-deb`) and debug APK (`fde-android-debug-apk`) are kept as workflow
+artifacts for 7 days. Concurrent runs on the
 same pull request cancel the older one. Each job has a 25-30 minute timeout; if the
 `desktop` job trends past that, the Rust cache is the first thing to check.
 
@@ -24,6 +26,7 @@ The Tauri CLI comes from `npx --yes @tauri-apps/cli@^2` (a prebuilt binary), so 
 ```
 meta ──┬── ui ── desktop (linux x86_64, windows x86_64, macos aarch64, macos x86_64) ── updater-manifest
        ├── daemon-bundle (linux-x64, linux-arm64, darwin-arm64, darwin-x64, win-x64, win-arm64)
+       ├── android (arm64-v8a apk)
        └── docker
 ```
 
@@ -42,6 +45,11 @@ meta ──┬── ui ── desktop (linux x86_64, windows x86_64, macos aarc
   and uploads the tarball plus its `.sha256`. Until
   `scripts/release/build-daemon-bundle.mjs` is on the tagged commit the job logs a notice
   and does nothing.
+- **android** runs `scripts/release/build-android-apk.mjs --abi arm64-v8a` on
+  `ubuntu-latest` (Temurin 21, the runner's Android SDK with licenses accepted by
+  `android-actions/setup-android`, Gradle cache) and uploads the APK. With the
+  `FDE_ANDROID_KEYSTORE_*` secrets the APK is release-signed; without them it is
+  debug-signed and named `-unsigned`. See [android.md](android.md).
 - **updater-manifest** runs only when `TAURI_SIGNING_PRIVATE_KEY` is set: it collects the
   `.sig` files from all desktop jobs and uploads `latest.json`, which
   `plugins.updater.endpoints` in `tauri.conf.json` points at.
@@ -65,6 +73,7 @@ meta ──┬── ui ── desktop (linux x86_64, windows x86_64, macos aarc
 | `latest.json`                               | Updater manifest, only with the key                                                               |
 | `fde-daemon-<ver>-<platform>-<arch>.tar.gz` | Daemon bundle + `.sha256`, read by `deploy/install.sh` and the desktop app's local daemon install |
 | `fde-daemon-<ver>-win-<arch>.zip`           | Windows daemon bundle + `.sha256`, read by the desktop app's local daemon install                 |
+| `FDE-<ver>-android-arm64-v8a.apk`           | Android APK (`-unsigned.apk` when no release keystore secret is configured)                       |
 
 Tauri itself names bundles `FDE_<ver>_amd64.AppImage`, `FDE_<ver>_x64-setup.exe` and so
 on; the rename step is the only place that mapping lives, so change
@@ -90,6 +99,10 @@ the related steps are skipped.
 | `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | desktop          | Password of that key (empty string if the key has none).                                                                                                              |
 | `DOCKERHUB_USERNAME`                 | docker           | Docker Hub account with push rights on `froggapp/fde`.                                                                                                                |
 | `DOCKERHUB_TOKEN`                    | docker           | Access token for that account.                                                                                                                                        |
+| `FDE_ANDROID_KEYSTORE_BASE64`        | android          | `base64 -w0` of the release keystore (`keytool -genkeypair`, see docs/android.md). Without it the APK is debug-signed and named `-unsigned`.                          |
+| `FDE_ANDROID_KEYSTORE_PASSWORD`      | android          | Store password. Required together with the keystore.                                                                                                                  |
+| `FDE_ANDROID_KEY_ALIAS`              | android          | Key alias (defaults to `fde`).                                                                                                                                        |
+| `FDE_ANDROID_KEY_PASSWORD`           | android          | Key password (defaults to the store password).                                                                                                                        |
 
 Later, for code signing (roadmap): `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`,
 `APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID` for a Developer ID

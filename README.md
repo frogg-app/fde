@@ -38,8 +38,10 @@ scripts/     dev/, release/, ci/ helpers
 
 ## Getting started
 
-Install the desktop app from the releases page, then put the daemon on the
-machine where your code and agent CLIs live. No Node or npm needed on the host:
+Install the desktop app from the releases page (Linux deb/AppImage, Windows installer or
+portable exe, macOS dmg) or the Android APK (`FDE-<version>-android-arm64-v8a.apk`,
+sideload; see [docs/android.md](docs/android.md)), then put the daemon on the machine
+where your code and agent CLIs live. No Node or npm needed on the host:
 
 ```bash
 # native install: versioned bundle in ~/.local/share/fde + systemd/launchd service
@@ -55,13 +57,13 @@ Both scripts are non-interactive and safe to re-run for upgrades. See
 
 ## Docs
 
-| Doc                                            | What it covers                                                   |
-| ---------------------------------------------- | ---------------------------------------------------------------- |
-| [docs/architecture.md](docs/architecture.md)   | System overview: daemon, clients, protocol                       |
-| [docs/development.md](docs/development.md)     | Day-to-day development of the daemon and web UI                  |
-| [docs/desktop-shell.md](docs/desktop-shell.md) | Tauri shell design: bridge contract, commands, plans             |
-| [docs/building.md](docs/building.md)           | Building the desktop app on Linux and cross-building for Windows |
-| [docs/install.md](docs/install.md)             | Installing the daemon on remote hosts: bundle, installer, Docker |
+| Doc                                            | What it covers                                                    |
+| ---------------------------------------------- | ----------------------------------------------------------------- |
+| [docs/architecture.md](docs/architecture.md)   | System overview: daemon, clients, protocol                        |
+| [docs/development.md](docs/development.md)     | Day-to-day development of the daemon and web UI                   |
+| [docs/desktop-shell.md](docs/desktop-shell.md) | Tauri shell design: bridge contract, commands, plans              |
+| [docs/building.md](docs/building.md)           | Building the desktop app on Linux and cross-building for Windows  |
+| [docs/install.md](docs/install.md)             | Installing the daemon on remote hosts: bundle, installer, Docker  |
 | [docs/ci.md](docs/ci.md)                       | GitHub Actions: CI checks, release builds, secrets, cutting a tag |
 
 ## Status
