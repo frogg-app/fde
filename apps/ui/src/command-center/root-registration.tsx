@@ -280,7 +280,7 @@ export function CommandCenterRootActions() {
         run: () => setShortcutsDialogOpen(true),
         presentation: {
           kind: "action",
-          title: t("sidebar.help.shortcuts"),
+          title: t("shell.commandCenter.keyboardShortcuts"),
           sectionTitle: t("shell.commandCenter.actions"),
           icon: KeyboardIcon,
           shortcutKeys:

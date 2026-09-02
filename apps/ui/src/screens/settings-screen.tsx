@@ -118,6 +118,7 @@ import ProjectsScreen from "@/screens/projects-screen";
 import ProjectSettingsScreen from "@/screens/project-settings-screen";
 import { SETTINGS_DESKTOP_SIDEBAR_WIDTH, useIsCompactFormFactor } from "@/constants/layout";
 import { useLocalDaemonServerId } from "@/hooks/use-is-local-daemon";
+import { useKeyboardShortcutsAvailable } from "@/keyboard/availability";
 import {
   type EnableBuiltInDaemonOption,
   useEnableBuiltInDaemonOption,
@@ -142,6 +143,7 @@ interface SidebarSectionItem {
   icon: ComponentType<{ size: number; color: string }>;
   desktopOnly?: boolean;
   webOnly?: boolean;
+  requiresKeyboardShortcuts?: boolean;
 }
 
 const SIDEBAR_SECTION_ITEMS: SidebarSectionItem[] = [
@@ -154,7 +156,12 @@ const SIDEBAR_SECTION_ITEMS: SidebarSectionItem[] = [
     desktopOnly: true,
   },
   { id: "editor", labelKey: "settings.sections.editor", icon: Code2, webOnly: true },
-  { id: "shortcuts", labelKey: "settings.sections.shortcuts", icon: Keyboard, desktopOnly: true },
+  {
+    id: "shortcuts",
+    labelKey: "settings.sections.shortcuts",
+    icon: Keyboard,
+    requiresKeyboardShortcuts: true,
+  },
   {
     id: "integrations",
     labelKey: "settings.sections.integrations",
@@ -1049,8 +1056,12 @@ function SettingsSidebar({
   const hasHosts = sortedHosts.length > 0;
   const enableBuiltInDaemonOption = useEnableBuiltInDaemonOption();
   const isDesktopApp = isElectronRuntime();
+  const shortcutsAvailable = useKeyboardShortcutsAvailable();
   const items = SIDEBAR_SECTION_ITEMS.filter(
-    (item) => (!item.desktopOnly || isDesktopApp) && (!item.webOnly || isWeb),
+    (item) =>
+      (!item.desktopOnly || isDesktopApp) &&
+      (!item.webOnly || isWeb) &&
+      (!item.requiresKeyboardShortcuts || shortcutsAvailable),
   );
   const insets = useSafeAreaInsets();
   const isDesktop = layout === "desktop";
@@ -1197,6 +1208,7 @@ export default function SettingsScreen({ view, openAddHostIntent = null }: Setti
   const appVersion = resolveAppVersion();
   const appVersionText = formatVersionWithPrefix(appVersion);
   const isCompactLayout = useIsCompactFormFactor();
+  const shortcutsAvailable = useKeyboardShortcutsAvailable();
   const insets = useSafeAreaInsets();
   const insetBottomStyle = useMemo(() => ({ paddingBottom: insets.bottom }), [insets.bottom]);
   const hosts = useHosts();
@@ -1485,7 +1497,7 @@ export default function SettingsScreen({ view, openAddHostIntent = null }: Setti
           case "editor":
             return isWeb ? <EditorSection /> : null;
           case "shortcuts":
-            return isDesktopApp ? <KeyboardShortcutsSection /> : null;
+            return shortcutsAvailable ? <KeyboardShortcutsSection /> : null;
           case "integrations":
             return isDesktopApp ? <IntegrationsSection /> : null;
           case "notifications":
