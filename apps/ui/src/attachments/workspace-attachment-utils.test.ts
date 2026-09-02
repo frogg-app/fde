@@ -32,7 +32,7 @@ describe("workspace attachment utilities", () => {
         kind: "issue",
         number: 12,
         title: "Bug",
-        url: "https://github.com/getpaseo/paseo/issues/12",
+        url: "https://github.com/frogg-app/frogg-de/issues/12",
         state: "open",
         body: "Bug report",
         labels: [],

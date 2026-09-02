@@ -12,7 +12,7 @@ describe("parseForgeRef", () => {
     [
       "GitHub issue",
       "https://github.com/getpaseo/paseo.git",
-      "https://github.com/getpaseo/paseo/issues/456",
+      "https://github.com/frogg-app/frogg-de/issues/456",
       { kind: "issue", number: 456 },
     ],
     [

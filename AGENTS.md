@@ -32,6 +32,6 @@ versioning, Docker, file-length rules). The upstream Paseo source is kept read-o
 
 ## Commit hook
 
-`lefthook` runs format, lint, and the full root typecheck on every commit. The typecheck
-takes several minutes on this VM. Run `npm run typecheck` yourself, then commit with
-`--no-verify` if the hook would otherwise time out.
+`lefthook` runs format and lint on staged files and typechecks only the workspaces that
+contain staged sources (`scripts/ci/typecheck-staged.mjs`). Run the full `npm run typecheck`
+before merging branches; CI runs it on every push.
