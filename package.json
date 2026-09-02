@@ -22,7 +22,7 @@
     "dev:ui": "npm run dev:app",
     "dev:desktop": "npm run dev --workspace=@fde/desktop",
     "postinstall": "node scripts/ci/postinstall-patches.mjs",
-    "prepare": "lefthook install --force",
+    "prepare": "node scripts/ci/prepare.mjs",
     "build": "npm run build --workspaces --if-present",
     "build:highlight": "npm run build --workspace=@fde/highlight",
     "build:highlight:clean": "npm run build:clean --workspace=@fde/highlight",
