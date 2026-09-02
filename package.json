@@ -79,7 +79,8 @@
     "release:push": "node scripts/release/push-current-release-tag.mjs",
     "release:patch": "npm run release:check && npm run version:all:patch && npm run release:push",
     "release:minor": "npm run release:check && npm run version:all:minor && npm run release:push",
-    "release:major": "npm run release:check && npm run version:all:major && npm run release:push"
+    "release:major": "npm run release:check && npm run version:all:major && npm run release:push",
+    "build:daemon-bundle": "node scripts/release/build-daemon-bundle.mjs"
   },
   "devDependencies": {
     "@types/ws": "^8.5.14",
