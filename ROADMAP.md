@@ -59,3 +59,29 @@ Done items move to CHANGELOG.md.
 
 - [ ] Mobile apps (the Expo UI still builds for iOS/Android; scripts under `scripts/mobile`).
 - [ ] macOS builds and DMG packaging.
+
+## Notes and assumptions (autonomous run, 2026-09-02)
+
+Blocked on the owner:
+
+- **Updater signing.** The permission classifier on this VM blocks both `cargo tauri signer generate`
+  and `gh secret set`. To enable signed updates: run `cargo tauri signer generate -w ~/.tauri/fde.key`,
+  put the public key in `apps/desktop/src-tauri/tauri.conf.json` under `plugins.updater.pubkey`, and
+  add `TAURI_SIGNING_PRIVATE_KEY` / `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` repo secrets. Until then the
+  release workflow skips `latest.json` and in-app updates report "not configured".
+- **Docker Hub in CI.** Add `DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN` secrets; until then images are
+  pushed manually from this VM (logged in as `froggapp`).
+- **Code signing certificates** (Windows Authenticode, Apple Developer ID) for SmartScreen/Gatekeeper.
+- **Hosting `frogg.de/install.sh`**: a redirect to
+  `https://raw.githubusercontent.com/frogg-app/frogg-de/main/deploy/install.sh` (and
+  `install-docker.sh`, `uninstall.sh`) is enough.
+
+Assumptions made:
+
+- Wire-level names stay Paseo (`PASEO_*`, `~/.paseo`, `paseo://`) for daemon compatibility.
+- Release assets use dashed names `FDE-<version>-<arch>.<ext>`; Windows also ships the bare
+  portable exe because SmartScreen blocks the unsigned installer more aggressively.
+- macOS builds only happen in GitHub Actions (this VM cannot build them); they are ad-hoc signed.
+- Playwright e2e specs (~30) that asserted the old full-screen settings route still need
+  re-baselining against the settings modal; unit tests and typecheck are the gate for now.
+- The daemon bundle keeps `npm` so remote hosts can `npm install -g` agent CLIs without Node.
