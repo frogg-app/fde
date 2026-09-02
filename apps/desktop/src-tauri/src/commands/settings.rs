@@ -54,7 +54,10 @@ impl Default for DesktopSettings {
             notifications: NotificationSettings { play_sound: true },
             // Electron defaulted to `true`; there is no sidecar daemon until
             // milestone 3, so the shell must not try to manage one.
-            daemon: DaemonSettings { manage_built_in_daemon: false, keep_running_after_quit: false },
+            daemon: DaemonSettings {
+                manage_built_in_daemon: false,
+                keep_running_after_quit: false,
+            },
         }
     }
 }
@@ -125,7 +128,10 @@ fn has_legacy_renderer_owned_field(patch: &SettingsPatch) -> bool {
 
 pub fn merge(current: &DesktopSettings, patch: &SettingsPatch) -> DesktopSettings {
     DesktopSettings {
-        release_channel: patch.release_channel.clone().unwrap_or_else(|| current.release_channel.clone()),
+        release_channel: patch
+            .release_channel
+            .clone()
+            .unwrap_or_else(|| current.release_channel.clone()),
         notifications: NotificationSettings {
             play_sound: patch.play_sound.unwrap_or(current.notifications.play_sound),
         },
@@ -167,7 +173,11 @@ pub fn coerce_document(input: &Value) -> SettingsDocument {
         migrations.daemon_stop_on_quit_default_applied = true;
     }
 
-    SettingsDocument { version: defaults.version, settings, migrations }
+    SettingsDocument {
+        version: defaults.version,
+        settings,
+        migrations,
+    }
 }
 
 pub struct SettingsStore {
@@ -177,7 +187,10 @@ pub struct SettingsStore {
 
 impl SettingsStore {
     pub fn new(dir: PathBuf) -> Self {
-        Self { dir, lock: Mutex::new(()) }
+        Self {
+            dir,
+            lock: Mutex::new(()),
+        }
     }
 
     fn file_path(&self) -> PathBuf {
@@ -187,7 +200,9 @@ impl SettingsStore {
     fn persist(&self, document: &SettingsDocument) -> Result<(), String> {
         fs::create_dir_all(&self.dir).map_err(|e| e.to_string())?;
         let target = self.file_path();
-        let temp = self.dir.join(format!("{FILENAME}.tmp.{}", std::process::id()));
+        let temp = self
+            .dir
+            .join(format!("{FILENAME}.tmp.{}", std::process::id()));
         let body = serde_json::to_string_pretty(document).map_err(|e| e.to_string())?;
         fs::write(&temp, format!("{body}\n")).map_err(|e| e.to_string())?;
         fs::rename(&temp, &target).map_err(|e| e.to_string())
@@ -225,7 +240,9 @@ impl SettingsStore {
         let document = SettingsDocument {
             settings: next.clone(),
             migrations: Migrations {
-                legacy_renderer_settings_imported: current.migrations.legacy_renderer_settings_imported
+                legacy_renderer_settings_imported: current
+                    .migrations
+                    .legacy_renderer_settings_imported
                     || has_legacy_renderer_owned_field(&coerced),
                 ..current.migrations
             },
@@ -251,7 +268,10 @@ impl SettingsStore {
         let next = merge(&current.settings, &coerce_legacy_patch(legacy));
         let document = SettingsDocument {
             settings: next.clone(),
-            migrations: Migrations { legacy_renderer_settings_imported: true, ..current.migrations },
+            migrations: Migrations {
+                legacy_renderer_settings_imported: true,
+                ..current.migrations
+            },
             ..current
         };
         self.persist(&document)?;
@@ -283,7 +303,8 @@ mod tests {
         assert_eq!(settings["notifications"]["playSound"], true);
         assert_eq!(settings["daemon"]["manageBuiltInDaemon"], false);
         assert!(store.file_path().exists());
-        let raw: Value = serde_json::from_str(&fs::read_to_string(store.file_path()).unwrap()).unwrap();
+        let raw: Value =
+            serde_json::from_str(&fs::read_to_string(store.file_path()).unwrap()).unwrap();
         assert_eq!(raw["version"], 1);
         assert_eq!(raw["migrations"]["daemonStopOnQuitDefaultApplied"], true);
     }
@@ -299,15 +320,24 @@ mod tests {
                 "unknown": true
             }))
             .unwrap();
-        assert_eq!(patched["releaseChannel"], "stable", "invalid channel ignored");
+        assert_eq!(
+            patched["releaseChannel"], "stable",
+            "invalid channel ignored"
+        );
         assert_eq!(patched["notifications"]["playSound"], false);
         assert_eq!(patched["daemon"]["manageBuiltInDaemon"], true);
-        assert_eq!(patched["daemon"]["keepRunningAfterQuit"], false, "non-boolean ignored");
+        assert_eq!(
+            patched["daemon"]["keepRunningAfterQuit"], false,
+            "non-boolean ignored"
+        );
         assert!(patched.get("unknown").is_none());
 
         let again = store.patch(&json!({ "releaseChannel": "beta" })).unwrap();
         assert_eq!(again["releaseChannel"], "beta");
-        assert_eq!(again["notifications"]["playSound"], false, "earlier patch preserved");
+        assert_eq!(
+            again["notifications"]["playSound"], false,
+            "earlier patch preserved"
+        );
         assert_eq!(again["daemon"]["manageBuiltInDaemon"], true);
         assert_eq!(store.get().unwrap(), again, "persisted");
     }
@@ -323,29 +353,40 @@ mod tests {
     #[test]
     fn patch_marks_legacy_renderer_fields_as_imported() {
         let (_dir, store) = store();
-        store.patch(&json!({ "notifications": { "playSound": false } })).unwrap();
-        let raw: Value = serde_json::from_str(&fs::read_to_string(store.file_path()).unwrap()).unwrap();
+        store
+            .patch(&json!({ "notifications": { "playSound": false } }))
+            .unwrap();
+        let raw: Value =
+            serde_json::from_str(&fs::read_to_string(store.file_path()).unwrap()).unwrap();
         assert_eq!(raw["migrations"]["legacyRendererSettingsImported"], false);
 
         store.patch(&json!({ "releaseChannel": "beta" })).unwrap();
-        let raw: Value = serde_json::from_str(&fs::read_to_string(store.file_path()).unwrap()).unwrap();
+        let raw: Value =
+            serde_json::from_str(&fs::read_to_string(store.file_path()).unwrap()).unwrap();
         assert_eq!(raw["migrations"]["legacyRendererSettingsImported"], true);
 
         let migrated = store
             .migrate_legacy_renderer_settings(&json!({ "releaseChannel": "stable" }))
             .unwrap();
-        assert_eq!(migrated["releaseChannel"], "beta", "legacy import skipped once imported");
+        assert_eq!(
+            migrated["releaseChannel"], "beta",
+            "legacy import skipped once imported"
+        );
     }
 
     #[test]
     fn migrate_legacy_imports_flat_settings_once() {
         let (_dir, store) = store();
         let migrated = store
-            .migrate_legacy_renderer_settings(&json!({ "releaseChannel": "beta", "manageBuiltInDaemon": true }))
+            .migrate_legacy_renderer_settings(
+                &json!({ "releaseChannel": "beta", "manageBuiltInDaemon": true }),
+            )
             .unwrap();
         assert_eq!(migrated["releaseChannel"], "beta");
         assert_eq!(migrated["daemon"]["manageBuiltInDaemon"], true);
-        let second = store.migrate_legacy_renderer_settings(&json!({ "releaseChannel": "stable" })).unwrap();
+        let second = store
+            .migrate_legacy_renderer_settings(&json!({ "releaseChannel": "stable" }))
+            .unwrap();
         assert_eq!(second["releaseChannel"], "beta");
     }
 
@@ -373,7 +414,9 @@ mod tests {
         fs::create_dir_all(&store.dir).unwrap();
         fs::write(store.file_path(), "{not json").unwrap();
         assert!(store.get().is_err());
-        let migrated = store.migrate_legacy_renderer_settings(&Value::Null).unwrap();
+        let migrated = store
+            .migrate_legacy_renderer_settings(&Value::Null)
+            .unwrap();
         assert_eq!(migrated["releaseChannel"], "stable");
         assert!(store.get().is_ok());
     }

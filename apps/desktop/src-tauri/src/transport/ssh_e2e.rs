@@ -107,7 +107,9 @@ fn remote_ssh_over_stdio_round_trips_and_reports_ssh_failures() {
         eprintln!("skipping: socat not installed");
         return;
     }
-    let _env = ENV_LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+    let _env = ENV_LOCK
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
     let dir = tempfile::tempdir().unwrap();
     install_fake_ssh(dir.path());
 
@@ -135,7 +137,10 @@ fn remote_ssh_over_stdio_round_trips_and_reports_ssh_failures() {
         let text = reply["text"].as_str().expect("text frame");
         let parsed: Value = serde_json::from_str(text).expect("daemon sends JSON");
         let payload = &parsed["message"]["payload"];
-        assert_eq!(payload["status"], "server_info", "daemon answered hello: {text}");
+        assert_eq!(
+            payload["status"], "server_info",
+            "daemon answered hello: {text}"
+        );
         assert!(payload["serverId"].as_str().is_some_and(|s| !s.is_empty()));
         assert!(started.elapsed() < Duration::from_secs(10));
         manager.close(&json!({ "sessionId": "ssh-ok" })).unwrap();
@@ -177,7 +182,9 @@ fn remote_ssh_over_stdio_round_trips_and_reports_ssh_failures() {
 /// A missing ssh executable is reported as such, not as a timeout.
 #[test]
 fn missing_ssh_executable_is_an_immediate_error() {
-    let _env = ENV_LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+    let _env = ENV_LOCK
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
     let previous = std::env::var_os(SSH_PROGRAM_ENV);
     std::env::set_var(SSH_PROGRAM_ENV, "/nonexistent/fde-ssh-missing");
     tauri::async_runtime::block_on(async {

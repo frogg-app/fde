@@ -91,7 +91,10 @@ mod tests {
         ];
         assert_eq!(
             parse_agent_deep_link_from_args(&args).unwrap(),
-            AgentDeepLinkTarget { server_id: "s".into(), agent_id: "a".into() }
+            AgentDeepLinkTarget {
+                server_id: "s".into(),
+                agent_id: "a".into()
+            }
         );
     }
 }

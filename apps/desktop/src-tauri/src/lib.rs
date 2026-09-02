@@ -6,6 +6,7 @@
 mod app_log;
 mod commands;
 mod deep_link;
+mod deploy;
 mod launch;
 mod ssh_config;
 mod transport;
@@ -56,6 +57,7 @@ pub fn run() {
         .run(|app, event| {
             if let tauri::RunEvent::Exit = event {
                 app.state::<transport::TransportManager>().close_all();
+                app.state::<deploy::DeployManager>().cancel_all();
             }
         });
 }

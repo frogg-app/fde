@@ -38,7 +38,11 @@ fn normalize_extension(value: Option<&Value>) -> Result<String, String> {
         Some(_) => return Err("Attachment extension must be a string.".into()),
     };
     let lowered = raw.trim().to_ascii_lowercase();
-    let extension = if lowered.starts_with('.') { lowered } else { format!(".{lowered}") };
+    let extension = if lowered.starts_with('.') {
+        lowered
+    } else {
+        format!(".{lowered}")
+    };
     let body = &extension[1..];
     if body.is_empty() || body.len() > 16 || !body.chars().all(|c| c.is_ascii_alphanumeric()) {
         return Err(format!("Invalid attachment extension: {raw}"));
@@ -51,7 +55,9 @@ fn resolve_lexically(input: &Path) -> PathBuf {
     let absolute = if input.is_absolute() {
         input.to_path_buf()
     } else {
-        std::env::current_dir().map(|cwd| cwd.join(input)).unwrap_or_else(|_| input.to_path_buf())
+        std::env::current_dir()
+            .map(|cwd| cwd.join(input))
+            .unwrap_or_else(|_| input.to_path_buf())
     };
     let mut resolved = PathBuf::new();
     for component in absolute.components() {
@@ -76,15 +82,20 @@ fn bytes_from_value(value: Option<&Value>) -> Result<Vec<u8>, String> {
     match value {
         Some(Value::Array(items)) => items
             .iter()
-            .map(|item| to_byte(item).ok_or_else(|| "Attachment byte payload is required.".to_string()))
+            .map(|item| {
+                to_byte(item).ok_or_else(|| "Attachment byte payload is required.".to_string())
+            })
             .collect(),
         // `JSON.stringify(new Uint8Array(...))` yields `{"0":..,"1":..}`.
         Some(Value::Object(map)) => {
             let mut indexed: Vec<(usize, u8)> = map
                 .iter()
                 .map(|(key, item)| {
-                    let index = key.parse::<usize>().map_err(|_| "Attachment byte payload is required.".to_string())?;
-                    let byte = to_byte(item).ok_or_else(|| "Attachment byte payload is required.".to_string())?;
+                    let index = key
+                        .parse::<usize>()
+                        .map_err(|_| "Attachment byte payload is required.".to_string())?;
+                    let byte = to_byte(item)
+                        .ok_or_else(|| "Attachment byte payload is required.".to_string())?;
                     Ok((index, byte))
                 })
                 .collect::<Result<_, String>>()?;
@@ -113,7 +124,10 @@ impl AttachmentStore {
     }
 
     fn resolve_managed_path(&self, value: Option<&Value>) -> Result<PathBuf, String> {
-        let raw = value.and_then(Value::as_str).map(str::trim).unwrap_or_default();
+        let raw = value
+            .and_then(Value::as_str)
+            .map(str::trim)
+            .unwrap_or_default();
         if raw.is_empty() {
             return Err("Attachment path is required.".into());
         }
@@ -126,11 +140,17 @@ impl AttachmentStore {
     }
 
     pub fn write_base64(&self, args: &Value) -> Result<Value, String> {
-        let base64 = args.get("base64").and_then(Value::as_str).map(str::trim).unwrap_or_default();
+        let base64 = args
+            .get("base64")
+            .and_then(Value::as_str)
+            .map(str::trim)
+            .unwrap_or_default();
         if base64.is_empty() {
             return Err("Attachment base64 payload is required.".into());
         }
-        let bytes = BASE64.decode(base64).map_err(|e| format!("Invalid base64 payload: {e}"))?;
+        let bytes = BASE64
+            .decode(base64)
+            .map_err(|e| format!("Invalid base64 payload: {e}"))?;
         let target = self.managed_path(args)?;
         fs::write(&target, bytes).map_err(|e| e.to_string())?;
         file_result(&target)
@@ -144,7 +164,11 @@ impl AttachmentStore {
     }
 
     pub fn copy_file(&self, args: &Value) -> Result<Value, String> {
-        let source = args.get("sourcePath").and_then(Value::as_str).map(str::trim).unwrap_or_default();
+        let source = args
+            .get("sourcePath")
+            .and_then(Value::as_str)
+            .map(str::trim)
+            .unwrap_or_default();
         if source.is_empty() {
             return Err("Attachment source path is required.".into());
         }
@@ -193,7 +217,10 @@ impl AttachmentStore {
                 continue;
             }
             let path = entry.path();
-            let stem = path.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_default();
+            let stem = path
+                .file_stem()
+                .map(|s| s.to_string_lossy().to_string())
+                .unwrap_or_default();
             if referenced.iter().any(|id| *id == stem) {
                 continue;
             }
@@ -225,23 +252,41 @@ mod tests {
         assert_eq!(result["byteSize"], 5);
         let read = store.read_base64(&json!({ "path": path })).unwrap();
         assert_eq!(read, Value::String(BASE64.encode(b"hello")));
-        assert_eq!(store.delete_file(&json!({ "path": path })).unwrap(), json!(true));
+        assert_eq!(
+            store.delete_file(&json!({ "path": path })).unwrap(),
+            json!(true)
+        );
         assert!(!Path::new(path).exists());
-        assert_eq!(store.delete_file(&json!({ "path": path })).unwrap(), json!(true), "delete is idempotent");
+        assert_eq!(
+            store.delete_file(&json!({ "path": path })).unwrap(),
+            json!(true),
+            "delete is idempotent"
+        );
     }
 
     #[test]
     fn writes_bytes_from_array_and_from_object_form() {
         let (_dir, store) = store();
-        let array = store.write_bytes(&json!({ "attachmentId": "a", "bytes": [1, 2, 3] })).unwrap();
+        let array = store
+            .write_bytes(&json!({ "attachmentId": "a", "bytes": [1, 2, 3] }))
+            .unwrap();
         assert_eq!(array["byteSize"], 3);
         assert!(array["path"].as_str().unwrap().ends_with("a.bin"));
         let object = store
-            .write_bytes(&json!({ "attachmentId": "b", "bytes": { "1": 9, "0": 8 }, "extension": ".jpg" }))
+            .write_bytes(
+                &json!({ "attachmentId": "b", "bytes": { "1": 9, "0": 8 }, "extension": ".jpg" }),
+            )
             .unwrap();
-        assert_eq!(fs::read(object["path"].as_str().unwrap()).unwrap(), vec![8, 9]);
-        assert!(store.write_bytes(&json!({ "attachmentId": "c", "bytes": "nope" })).is_err());
-        assert!(store.write_bytes(&json!({ "attachmentId": "c", "bytes": [300] })).is_err());
+        assert_eq!(
+            fs::read(object["path"].as_str().unwrap()).unwrap(),
+            vec![8, 9]
+        );
+        assert!(store
+            .write_bytes(&json!({ "attachmentId": "c", "bytes": "nope" }))
+            .is_err());
+        assert!(store
+            .write_bytes(&json!({ "attachmentId": "c", "bytes": [300] }))
+            .is_err());
     }
 
     #[test]
@@ -254,17 +299,25 @@ mod tests {
             assert!(error.contains("attachment id"), "{error}");
         }
         assert!(store.write_bytes(&json!({ "bytes": [1] })).is_err());
-        assert!(store.write_bytes(&json!({ "attachmentId": 5, "bytes": [1] })).is_err());
+        assert!(store
+            .write_bytes(&json!({ "attachmentId": 5, "bytes": [1] }))
+            .is_err());
     }
 
     #[test]
     fn rejects_bad_extensions() {
         let (_dir, store) = store();
         for bad in ["../png", "a.b", "png/", "abcdefghijklmnopq"] {
-            assert!(store.write_bytes(&json!({ "attachmentId": "a", "bytes": [1], "extension": bad })).is_err());
+            assert!(store
+                .write_bytes(&json!({ "attachmentId": "a", "bytes": [1], "extension": bad }))
+                .is_err());
         }
-        assert!(store.write_bytes(&json!({ "attachmentId": "a", "bytes": [1], "extension": 3 })).is_err());
-        let ok = store.write_bytes(&json!({ "attachmentId": "a", "bytes": [1], "extension": null })).unwrap();
+        assert!(store
+            .write_bytes(&json!({ "attachmentId": "a", "bytes": [1], "extension": 3 }))
+            .is_err());
+        let ok = store
+            .write_bytes(&json!({ "attachmentId": "a", "bytes": [1], "extension": null }))
+            .unwrap();
         assert!(ok["path"].as_str().unwrap().ends_with("a.bin"));
     }
 
@@ -276,10 +329,18 @@ mod tests {
         store.ensure_dir().unwrap();
 
         let escape = store.dir.join("..").join("secret.txt");
-        assert!(store.read_base64(&json!({ "path": escape.to_string_lossy() })).is_err());
-        assert!(store.read_base64(&json!({ "path": outside.to_string_lossy() })).is_err());
-        assert!(store.delete_file(&json!({ "path": outside.to_string_lossy() })).is_err());
-        assert!(store.delete_file(&json!({ "path": store.dir.to_string_lossy() })).is_err());
+        assert!(store
+            .read_base64(&json!({ "path": escape.to_string_lossy() }))
+            .is_err());
+        assert!(store
+            .read_base64(&json!({ "path": outside.to_string_lossy() }))
+            .is_err());
+        assert!(store
+            .delete_file(&json!({ "path": outside.to_string_lossy() }))
+            .is_err());
+        assert!(store
+            .delete_file(&json!({ "path": store.dir.to_string_lossy() }))
+            .is_err());
         assert!(store.read_base64(&json!({ "path": "" })).is_err());
         assert!(store.read_base64(&json!({})).is_err());
 
@@ -287,7 +348,9 @@ mod tests {
         let sibling = dir.path().join(format!("{DIRNAME}-other")).join("x.bin");
         fs::create_dir_all(sibling.parent().unwrap()).unwrap();
         fs::write(&sibling, b"x").unwrap();
-        assert!(store.read_base64(&json!({ "path": sibling.to_string_lossy() })).is_err());
+        assert!(store
+            .read_base64(&json!({ "path": sibling.to_string_lossy() }))
+            .is_err());
         assert!(outside.exists() && sibling.exists());
     }
 
@@ -301,17 +364,27 @@ mod tests {
             .unwrap();
         assert_eq!(result["byteSize"], 7);
         assert!(source.exists());
-        assert!(store.copy_file(&json!({ "attachmentId": "copied" })).is_err());
+        assert!(store
+            .copy_file(&json!({ "attachmentId": "copied" }))
+            .is_err());
     }
 
     #[test]
     fn garbage_collect_keeps_referenced_ids() {
         let (_dir, store) = store();
-        store.write_bytes(&json!({ "attachmentId": "keep", "bytes": [1], "extension": "png" })).unwrap();
-        store.write_bytes(&json!({ "attachmentId": "drop", "bytes": [1] })).unwrap();
-        store.write_bytes(&json!({ "attachmentId": "drop2", "bytes": [1], "extension": "jpg" })).unwrap();
+        store
+            .write_bytes(&json!({ "attachmentId": "keep", "bytes": [1], "extension": "png" }))
+            .unwrap();
+        store
+            .write_bytes(&json!({ "attachmentId": "drop", "bytes": [1] }))
+            .unwrap();
+        store
+            .write_bytes(&json!({ "attachmentId": "drop2", "bytes": [1], "extension": "jpg" }))
+            .unwrap();
         fs::create_dir_all(store.dir.join("subdir")).unwrap();
-        let deleted = store.garbage_collect(&json!({ "referencedIds": ["keep", "../keep", 5] })).unwrap();
+        let deleted = store
+            .garbage_collect(&json!({ "referencedIds": ["keep", "../keep", 5] }))
+            .unwrap();
         assert_eq!(deleted, json!(2));
         assert!(store.dir.join("keep.png").exists());
         assert!(!store.dir.join("drop.bin").exists());

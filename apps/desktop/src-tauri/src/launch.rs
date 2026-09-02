@@ -9,7 +9,9 @@ use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, Manager, Runtime};
 use tauri_plugin_deep_link::DeepLinkExt;
 
-use crate::deep_link::{parse_agent_deep_link, parse_agent_deep_link_from_args, AgentDeepLinkTarget};
+use crate::deep_link::{
+    parse_agent_deep_link, parse_agent_deep_link_from_args, AgentDeepLinkTarget,
+};
 use crate::window::MAIN_WINDOW_LABEL;
 
 const OPEN_PROJECT_FLAG: &str = "--open-project";
@@ -79,7 +81,11 @@ pub fn parse_open_project_path(args: &[String]) -> Option<String> {
     let effective: Vec<&String> = args
         .iter()
         .skip(1)
-        .filter(|arg| !IGNORED_ARG_PREFIXES.iter().any(|prefix| arg.starts_with(prefix)))
+        .filter(|arg| {
+            !IGNORED_ARG_PREFIXES
+                .iter()
+                .any(|prefix| arg.starts_with(prefix))
+        })
         .collect();
 
     if let Some(positional) = effective
@@ -89,7 +95,9 @@ pub fn parse_open_project_path(args: &[String]) -> Option<String> {
         return Some((*positional).clone());
     }
 
-    let flag_index = effective.iter().position(|arg| arg.as_str() == OPEN_PROJECT_FLAG)?;
+    let flag_index = effective
+        .iter()
+        .position(|arg| arg.as_str() == OPEN_PROJECT_FLAG)?;
     let flagged = effective.get(flag_index + 1)?;
     is_existing_absolute_directory(flagged).then(|| (*flagged).clone())
 }
@@ -120,7 +128,11 @@ pub fn handle_second_instance<R: Runtime>(app: &AppHandle<R>, argv: &[String]) {
     if let Some(path) = parse_open_project_path(argv) {
         let state = app.state::<LaunchState>();
         state.set_pending_open_project(Some(path.clone()));
-        let _ = app.emit_to(MAIN_WINDOW_LABEL, "paseo:event:open-project", serde_json::json!({ "path": path }));
+        let _ = app.emit_to(
+            MAIN_WINDOW_LABEL,
+            "paseo:event:open-project",
+            serde_json::json!({ "path": path }),
+        );
     }
     focus_main_window(app);
 }
@@ -159,7 +171,10 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().to_string_lossy().to_string();
         let state = LaunchState::from_argv(&args(&["fde", &path]));
-        assert_eq!(state.take_pending_open_project().as_deref(), Some(path.as_str()));
+        assert_eq!(
+            state.take_pending_open_project().as_deref(),
+            Some(path.as_str())
+        );
         assert_eq!(state.take_pending_open_project(), None, "drained once");
     }
 
@@ -175,15 +190,24 @@ mod tests {
 
     #[test]
     fn missing_or_relative_paths_are_ignored() {
-        assert_eq!(parse_open_project_path(&args(&["fde", "relative/dir"])), None);
-        assert_eq!(parse_open_project_path(&args(&["fde", "/definitely/missing/dir"])), None);
+        assert_eq!(
+            parse_open_project_path(&args(&["fde", "relative/dir"])),
+            None
+        );
+        assert_eq!(
+            parse_open_project_path(&args(&["fde", "/definitely/missing/dir"])),
+            None
+        );
         assert_eq!(parse_open_project_path(&args(&["fde", "-psn_0_1"])), None);
     }
 
     #[test]
     fn navigation_queues_until_ready_then_delivers_directly() {
         let state = LaunchState::from_argv(&args(&["fde", "paseo://h/srv/agent/ag"]));
-        let target = AgentDeepLinkTarget { server_id: "srv".into(), agent_id: "ag".into() };
+        let target = AgentDeepLinkTarget {
+            server_id: "srv".into(),
+            agent_id: "ag".into(),
+        };
         assert_eq!(state.window_ready(), Some(target.clone()));
         assert_eq!(state.window_ready(), None);
         assert_eq!(state.deliver_or_queue(target.clone()), Some(target.clone()));

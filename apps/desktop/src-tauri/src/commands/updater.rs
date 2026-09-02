@@ -13,7 +13,10 @@ fn is_configured<R: Runtime>(app: &AppHandle<R>) -> bool {
     let Some(config) = app.config().plugins.0.get("updater") else {
         return false;
     };
-    let pubkey = config.get("pubkey").and_then(Value::as_str).unwrap_or_default();
+    let pubkey = config
+        .get("pubkey")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
     let has_endpoints = config
         .get("endpoints")
         .and_then(Value::as_array)
@@ -33,7 +36,14 @@ fn current_version<R: Runtime>(app: &AppHandle<R>) -> String {
     app.package_info().version.to_string()
 }
 
-fn check_result(current: &str, latest: &str, body: Option<String>, date: Option<String>, has_update: bool, error: Option<String>) -> Value {
+fn check_result(
+    current: &str,
+    latest: &str,
+    body: Option<String>,
+    date: Option<String>,
+    has_update: bool,
+    error: Option<String>,
+) -> Value {
     json!({
         "hasUpdate": has_update,
         "readyToInstall": false,
@@ -63,7 +73,14 @@ pub async fn check<R: Runtime>(app: &AppHandle<R>, args: &Value) -> Result<Value
             None,
         )),
         Ok(None) => Ok(check_result(&current, &current, None, None, false, None)),
-        Err(error) => Ok(check_result(&current, &current, None, None, false, Some(error.to_string()))),
+        Err(error) => Ok(check_result(
+            &current,
+            &current,
+            None,
+            None,
+            false,
+            Some(error.to_string()),
+        )),
     }
 }
 
