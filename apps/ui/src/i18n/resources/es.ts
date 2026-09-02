@@ -60,6 +60,7 @@ export const es: TranslationResources = {
       searchingFiles: "Buscando archivos...",
       noMatches: "No hay coincidencias",
       actions: "Comportamiento",
+      keyboardShortcuts: "Atajos de teclado",
       files: "Archivos",
       workspaces: "Espacios de trabajo",
       agents: "Agentes",
@@ -1120,21 +1121,9 @@ export const es: TranslationResources = {
       settings: "Ajustes",
       closeSidebar: "Cerrar barra lateral",
     },
-    help: {
-      trigger: "Ayuda y soporte",
-      sectionHelp: "Ayuda",
-      diagnostics: "Ejecutar diagnóstico",
-      shortcuts: "Atajos de teclado",
-      reportIssue: "Informar de un problema",
-      discord: "Discord",
-      github: "Crear incidencia en GitHub",
-      whatsNew: "Novedades",
-      appName: "FDE",
-    },
     sections: {
       sessions: "Historial",
       search: "Buscar",
-      schedules: "Horarios",
     },
     worktreeSetup: {
       title: "Configurar secuencias de comandos del árbol de trabajo",
@@ -2110,6 +2099,7 @@ export const es: TranslationResources = {
       },
     },
     about: {
+      attribution: "Frogg Development Environment está basado en <paseo>Paseo</paseo>.",
       title: "Acerca de",
       appVersion: "Versión de la aplicación",
       thisDevice: "este dispositivo",

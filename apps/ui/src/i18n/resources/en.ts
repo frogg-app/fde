@@ -57,6 +57,7 @@ export const en = {
       searchingFiles: "Searching files...",
       noMatches: "No matches",
       actions: "Actions",
+      keyboardShortcuts: "Keyboard shortcuts",
       files: "Files",
       workspaces: "Workspaces",
       agents: "Agents",
@@ -1095,21 +1096,9 @@ export const en = {
       settings: "Settings",
       closeSidebar: "Close sidebar",
     },
-    help: {
-      trigger: "Help and support",
-      sectionHelp: "Help",
-      diagnostics: "Run diagnostics",
-      shortcuts: "Keyboard shortcuts",
-      reportIssue: "Report an issue",
-      discord: "Discord",
-      github: "Create GitHub issue",
-      whatsNew: "What's new",
-      appName: "FDE",
-    },
     sections: {
       sessions: "History",
       search: "Search",
-      schedules: "Schedules",
     },
     worktreeSetup: {
       title: "Set up worktree scripts",
@@ -2159,6 +2148,7 @@ export const en = {
       },
     },
     about: {
+      attribution: "Frogg Development Environment is based on <paseo>Paseo</paseo>.",
       title: "About",
       appVersion: "App version",
       thisDevice: "This device",

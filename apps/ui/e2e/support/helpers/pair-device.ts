@@ -75,7 +75,7 @@ export async function preparePairingHost(
   ]);
   await gotoAppShell(page);
   await openSettings(page);
-  await openSettingsHost(page, daemon.serverId);
+  await openSettingsHost(page);
   await expect(page.getByTestId("host-page-pair-device-row")).toHaveCount(0);
   await openSettingsHostSection(page, daemon.serverId, "pair-device");
   await expect(page.getByTestId("host-page-pair-device-row")).toBeVisible();

@@ -2,11 +2,7 @@ import { expect, type Page } from "@playwright/test";
 import { buildCreateAgentPreferences, buildSeededHost, TEST_HOST_LABEL } from "./daemon-registry";
 import { getServerId } from "./server-id";
 import { expectAppRoute } from "./route-assertions";
-import {
-  buildSettingsHostSectionRoute,
-  buildSettingsRoute,
-  buildSettingsSectionRoute,
-} from "@/utils/host-routes";
+import { buildSettingsHostSectionRoute, buildSettingsRoute } from "@/utils/host-routes";
 
 const DISABLE_DEFAULT_SEED_ONCE_KEY = "@paseo:e2e-disable-default-seed-once";
 const SEED_NONCE_KEY = "@paseo:e2e-seed-nonce";
@@ -49,14 +45,14 @@ export async function openSettingsSection(page: Page, section: SettingsSection):
   await expect(sidebar).toBeVisible();
 
   await sidebar.getByRole("button", { name: SECTION_LABELS[section], exact: true }).click();
-  await expectAppRoute(page, buildSettingsSectionRoute(section));
+  await expectSettingsHeader(page, SECTION_LABELS[section]);
 }
 
-export async function openSettingsHost(page: Page, serverId: string): Promise<void> {
+export async function openSettingsHost(page: Page): Promise<void> {
   // Host sections are now flat top-level rows under the Host group. Navigate by
   // clicking the Connections section row; the picker only matters when >1 host.
   await page.getByTestId("settings-host-section-connections").click();
-  await expectHostSettingsUrl(page, serverId);
+  await expectHostSettingsView(page);
   await expect(page.getByTestId("host-page-connections-card")).toBeVisible();
 }
 
@@ -66,7 +62,17 @@ export async function openSettingsHostSection(
   section: HostSection,
 ): Promise<void> {
   await page.getByTestId(`settings-host-section-${section}`).click();
-  await expectAppRoute(page, buildSettingsHostSectionRoute(serverId, section));
+  await expectHostSettingsSectionSelected(page, section);
+}
+
+export async function expectHostSettingsSectionSelected(
+  page: Page,
+  section: HostSection,
+): Promise<void> {
+  await expect(page.getByTestId(`settings-host-section-${section}`)).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
 }
 
 export async function expectSettingsHeader(page: Page, title: string): Promise<void> {
@@ -221,6 +227,17 @@ export async function clickSettingsBackToWorkspace(page: Page): Promise<void> {
   await page.getByTestId("settings-back-to-workspace").click();
 }
 
+/**
+ * Wide layouts show settings in a modal, so there is no host URL to assert on:
+ * the Connections row is selected beside the host picker instead.
+ */
+export async function expectHostSettingsView(page: Page): Promise<void> {
+  await expectHostSettingsSectionSelected(page, "connections");
+  await expect(page.getByTestId("settings-host-picker")).toBeVisible();
+  await expect(page.getByTestId("settings-detail-pane")).toBeVisible();
+}
+
+/** Compact layouts keep the full-screen settings routes, so the host URL is still the truth there. */
 export async function expectHostSettingsUrl(page: Page, serverId: string): Promise<void> {
   await expectAppRoute(page, buildSettingsHostSectionRoute(serverId, "connections"));
 }
@@ -228,12 +245,12 @@ export async function expectHostSettingsUrl(page: Page, serverId: string): Promi
 export async function verifyLegacyHostSettingsRedirect(page: Page): Promise<void> {
   const serverId = getServerId();
   await page.goto(`/h/${encodeURIComponent(serverId)}/settings`);
-  await expectHostSettingsUrl(page, serverId);
+  await expectHostSettingsView(page);
 }
 
 export async function openCompactSettingsHost(page: Page): Promise<void> {
   const serverId = getServerId();
-  await openSettingsHost(page, serverId);
+  await page.getByTestId("settings-host-section-connections").click();
   await expectHostSettingsUrl(page, serverId);
 }
 

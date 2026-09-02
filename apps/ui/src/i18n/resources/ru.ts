@@ -60,6 +60,7 @@ export const ru: TranslationResources = {
       searchingFiles: "Поиск файлов...",
       noMatches: "Нет совпадений",
       actions: "Действия",
+      keyboardShortcuts: "Сочетания клавиш",
       files: "Файлы",
       workspaces: "Рабочие пространства",
       agents: "Агенты",
@@ -1102,21 +1103,9 @@ export const ru: TranslationResources = {
       settings: "Настройки",
       closeSidebar: "Закрыть боковую панель",
     },
-    help: {
-      trigger: "Помощь и поддержка",
-      sectionHelp: "Помощь",
-      diagnostics: "Запустить диагностику",
-      shortcuts: "Сочетания клавиш",
-      reportIssue: "Сообщить о проблеме",
-      discord: "Discord",
-      github: "Создать issue на GitHub",
-      whatsNew: "Что нового",
-      appName: "FDE",
-    },
     sections: {
       sessions: "История",
       search: "Поиск",
-      schedules: "Расписания",
     },
     worktreeSetup: {
       title: "Настроить скрипты worktree",
@@ -2095,6 +2084,7 @@ export const ru: TranslationResources = {
       },
     },
     about: {
+      attribution: "Frogg Development Environment основан на <paseo>Paseo</paseo>.",
       title: "О приложении",
       appVersion: "Версия приложения",
       thisDevice: "Это устройство",

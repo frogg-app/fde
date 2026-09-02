@@ -22,12 +22,11 @@ import {
 
 test.describe("Settings host page", () => {
   test("connections section shows the seeded connection endpoint", async ({ page }) => {
-    const serverId = getServerId();
     const port = getE2EDaemonPort();
 
     await gotoAppShell(page);
     await openSettings(page);
-    await openSettingsHost(page, serverId);
+    await openSettingsHost(page);
 
     await expectSettingsHeader(page, "Connections");
     await expectHostConnectionsCard(page, port);
@@ -38,7 +37,7 @@ test.describe("Settings host page", () => {
 
     await gotoAppShell(page);
     await openSettings(page);
-    await openSettingsHost(page, serverId);
+    await openSettingsHost(page);
 
     await openHostSection(page, serverId, "agents");
     await expectSettingsHeader(page, "Agents");
@@ -50,7 +49,7 @@ test.describe("Settings host page", () => {
 
     await gotoAppShell(page);
     await openSettings(page);
-    await openSettingsHost(page, serverId);
+    await openSettingsHost(page);
 
     await expectHostProvidersCard(page, serverId);
     await expectSettingsHeader(page, "Providers");
@@ -61,7 +60,7 @@ test.describe("Settings host page", () => {
 
     await gotoAppShell(page);
     await openSettings(page);
-    await openSettingsHost(page, serverId);
+    await openSettingsHost(page);
 
     await openHostSection(page, serverId, "host");
     await expectSettingsHeader(page, "Overview");
@@ -76,7 +75,7 @@ test.describe("Settings host page", () => {
     await seedSavedSettingsHosts(page, [outdatedDaemon]);
     await page.reload();
     await openSettings(page);
-    await openSettingsHost(page, outdatedDaemon.serverId);
+    await openSettingsHost(page);
     await openHostSection(page, outdatedDaemon.serverId, "host");
 
     page.once("dialog", (dialog) => dialog.accept());
@@ -99,7 +98,7 @@ test.describe("Settings host page", () => {
 
     await gotoAppShell(page);
     await openSettings(page);
-    await openSettingsHost(page, serverId);
+    await openSettingsHost(page);
     await openHostSection(page, serverId, "host");
 
     await expectHostLabelDisplayed(page);
@@ -114,7 +113,7 @@ test.describe("Settings host page", () => {
 
     await gotoAppShell(page);
     await openSettings(page);
-    await openSettingsHost(page, serverId);
+    await openSettingsHost(page);
     await openHostSection(page, serverId, "host");
 
     // TODO: add a local-daemon fixture for positive daemon lifecycle coverage.

@@ -60,6 +60,7 @@ export const ja: TranslationResources = {
       searchingFiles: "ファイルを検索中...",
       noMatches: "一致なし",
       actions: "アクション",
+      keyboardShortcuts: "キーボードショートカット",
       files: "ファイル",
       workspaces: "ワークスペース",
       agents: "エージェント",
@@ -1098,21 +1099,9 @@ export const ja: TranslationResources = {
       settings: "設定",
       closeSidebar: "サイドバーを閉じる",
     },
-    help: {
-      trigger: "ヘルプとサポート",
-      sectionHelp: "ヘルプ",
-      diagnostics: "診断を実行",
-      shortcuts: "キーボードショートカット",
-      reportIssue: "問題を報告",
-      discord: "Discord",
-      github: "GitHub Issueを作成",
-      whatsNew: "新着情報",
-      appName: "FDE",
-    },
     sections: {
       sessions: "履歴",
       search: "検索",
-      schedules: "スケジュール",
     },
     worktreeSetup: {
       title: "ワークツリースクリプトを設定",
@@ -2077,6 +2066,7 @@ export const ja: TranslationResources = {
       },
     },
     about: {
+      attribution: "Frogg Development Environment は <paseo>Paseo</paseo> をベースにしています。",
       title: "アプリ情報",
       appVersion: "アプリバージョン",
       thisDevice: "このデバイス",

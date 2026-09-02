@@ -29,9 +29,9 @@ export interface HostFilterProps {
 }
 
 /**
- * The "All hosts / <host>" filter pill shared by the History and Schedules
- * screens: an anchored HostPicker with `includeAllHost`, hidden by the caller
- * when only one host exists. Copies the History layout exactly.
+ * The "All hosts / <host>" filter pill on the History screen: an anchored
+ * HostPicker with `includeAllHost`, hidden by the caller when only one host
+ * exists.
  */
 export function HostFilter({
   hosts,

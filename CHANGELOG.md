@@ -1,6 +1,9 @@
 # Changelog
 
-## 0.1.5
+## 0.1.6
+
+- Settings opens as a large modal on wide layouts (VS Code style); Help & Support menu removed, Keyboard shortcuts live in Settings; Schedules removed; Star/Sponsor/Community links removed; About credits Paseo.
+- Daemon install story: self-contained daemon bundle, `deploy/install.sh` (systemd/launchd service), `deploy/install-docker.sh`, Docker image built from the bundle. See docs/install.md.
 
 - Accent colour changed from green to the logo cyan/blue; success colours stay green.
 - Copy: "an FDE" everywhere (F.D.E.).

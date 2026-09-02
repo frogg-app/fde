@@ -60,6 +60,7 @@ export const zhCN: TranslationResources = {
       searchingFiles: "正在搜索文件...",
       noMatches: "没有匹配项",
       actions: "操作",
+      keyboardShortcuts: "键盘快捷键",
       files: "文件",
       workspaces: "工作区",
       agents: "Agents",
@@ -1078,21 +1079,9 @@ export const zhCN: TranslationResources = {
       settings: "设置",
       closeSidebar: "关闭侧边栏",
     },
-    help: {
-      trigger: "帮助与支持",
-      sectionHelp: "帮助",
-      diagnostics: "运行诊断",
-      shortcuts: "键盘快捷键",
-      reportIssue: "报告问题",
-      discord: "Discord",
-      github: "创建 GitHub Issue",
-      whatsNew: "新功能",
-      appName: "FDE",
-    },
     sections: {
       sessions: "历史",
       search: "搜索",
-      schedules: "计划",
     },
     worktreeSetup: {
       title: "设置 worktree scripts",
@@ -2036,6 +2025,7 @@ export const zhCN: TranslationResources = {
       },
     },
     about: {
+      attribution: "Frogg Development Environment 基于 <paseo>Paseo</paseo> 构建。",
       title: "关于",
       appVersion: "应用版本",
       thisDevice: "此设备",

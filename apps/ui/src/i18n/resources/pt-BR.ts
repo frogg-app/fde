@@ -60,6 +60,7 @@ export const ptBR: TranslationResources = {
       searchingFiles: "Pesquisando arquivos...",
       noMatches: "Nenhuma correspondência",
       actions: "Ações",
+      keyboardShortcuts: "Atalhos de teclado",
       files: "Arquivos",
       workspaces: "Espaços de trabalho",
       agents: "Agentes",
@@ -1111,21 +1112,9 @@ export const ptBR: TranslationResources = {
       settings: "Configurações",
       closeSidebar: "Fechar barra lateral",
     },
-    help: {
-      trigger: "Ajuda e suporte",
-      sectionHelp: "Ajuda",
-      diagnostics: "Executar diagnóstico",
-      shortcuts: "Atalhos de teclado",
-      reportIssue: "Relatar um problema",
-      discord: "Discord",
-      github: "Criar issue no GitHub",
-      whatsNew: "Novidades",
-      appName: "FDE",
-    },
     sections: {
       sessions: "Histórico",
       search: "Buscar",
-      schedules: "Agendamentos",
     },
     worktreeSetup: {
       title: "Configurar scripts de worktree",
@@ -2094,6 +2083,7 @@ export const ptBR: TranslationResources = {
       },
     },
     about: {
+      attribution: "O Frogg Development Environment é baseado no <paseo>Paseo</paseo>.",
       title: "Sobre",
       appVersion: "Versão do app",
       thisDevice: "Este dispositivo",

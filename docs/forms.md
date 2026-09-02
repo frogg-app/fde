@@ -1,10 +1,15 @@
 # Forms
 
-The paved road for building forms in the app. The schedule form is the golden
+The paved road for building forms in the app. The schedule form was the golden
 example; when building or fixing any form, copy its shape, not the shape of
 whatever screen you happen to be near.
 
-Golden example files:
+> The schedule form was removed from the product along with the Schedules
+> screen. The files below no longer exist in this repo; read them in the
+> upstream Paseo checkout at `/home/frogg/projects/paseo/apps/ui`. The agent
+> profile form (`apps/ui/src/agent-profiles/`) is the closest surviving example.
+
+Golden example files (upstream):
 
 - `apps/ui/src/schedules/schedule-form-model.ts` (+ `.test.ts`) — the model
 - `apps/ui/src/schedules/use-schedule-form-model.ts` — model lifetime adapter

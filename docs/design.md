@@ -155,6 +155,8 @@ The list+detail pattern is canonical and reused across surfaces. The settings sh
 
 The branching is one `useIsCompactFormFactor()` check at the top of the screen component. The list and the detail are the same components in both layouts; only the framing changes.
 
+Settings adds one more frame on wide layouts: the split view renders inside a large centred `<AdaptiveModalSheet>` (`apps/ui/src/settings-modal/host.tsx`) rather than as a route screen, the way VS Code presents its settings. The `/settings` routes stay the deep-link and navigation surface; on a wide layout they open the modal and step back off the route (`apps/ui/src/settings-modal/route-entry.tsx`), on compact they are the full-screen presentation. Hops between settings views go through `navigateSettings()` in `apps/ui/src/navigation/settings-navigation.ts` so no caller branches on presentation.
+
 The workspace screen (`apps/ui/src/screens/workspace/workspace-screen.tsx`) follows a different but parallel rule: tabs collapse on compact, panes split on desktop. The sidebar (`apps/ui/src/components/left-sidebar.tsx`) is overlaid on compact and pinned on desktop.
 
 On a narrow desktop route, app navigation yields to the rendered content topology when the remaining width cannot preserve its center target: Settings keeps its 320px list + 400px detail split, and a workspace Explorer keeps its current visible width plus a 400px center pane. That is a topology decision at the app container, not a second compact breakpoint. Temporary width clamps are render-only; widening restores the user's saved sidebar widths.

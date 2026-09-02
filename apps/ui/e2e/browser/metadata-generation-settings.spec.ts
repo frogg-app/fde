@@ -12,7 +12,7 @@ async function openMetadataGenerationSettings(page: Page) {
   const serverId = getServerId();
   await gotoAppShell(page);
   await openSettings(page);
-  await openSettingsHost(page, serverId);
+  await openSettingsHost(page);
   await openHostSection(page, serverId, "metadata");
   await expectSettingsHeader(page, "Metadata");
 }

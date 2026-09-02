@@ -141,7 +141,7 @@ export async function openAgentProfileSettings(page: Page): Promise<void> {
   const serverId = getServerId();
   await gotoAppShell(page);
   await openSettings(page);
-  await openSettingsHost(page, serverId);
+  await openSettingsHost(page);
   await page.getByRole("button", { name: "Agents", exact: true }).click();
   await expectAppRoute(page, buildSettingsHostSectionRoute(serverId, "agents"));
   await expect(page.getByTestId("agent-profiles-card")).toBeVisible({ timeout: 30_000 });

@@ -60,6 +60,7 @@ export const ar: TranslationResources = {
       searchingFiles: "جارٍ البحث في الملفات...",
       noMatches: "لا توجد مباريات",
       actions: "الإجراءات",
+      keyboardShortcuts: "اختصارات لوحة المفاتيح",
       files: "الملفات",
       workspaces: "مساحات العمل",
       agents: "الوكلاء",
@@ -1085,21 +1086,9 @@ export const ar: TranslationResources = {
       settings: "إعدادات",
       closeSidebar: "إغلاق الشريط الجانبي",
     },
-    help: {
-      trigger: "المساعدة والدعم",
-      sectionHelp: "المساعدة",
-      diagnostics: "تشغيل التشخيص",
-      shortcuts: "اختصارات لوحة المفاتيح",
-      reportIssue: "الإبلاغ عن مشكلة",
-      discord: "Discord",
-      github: "إنشاء مشكلة على GitHub",
-      whatsNew: "ما الجديد",
-      appName: "FDE",
-    },
     sections: {
       sessions: "السجل",
       search: "بحث",
-      schedules: "الجداول",
     },
     worktreeSetup: {
       title: "إعداد البرامج النصية لشجرة العمل",
@@ -2059,6 +2048,7 @@ export const ar: TranslationResources = {
       },
     },
     about: {
+      attribution: "Frogg Development Environment مبني على <paseo>Paseo</paseo>.",
       title: "عن",
       appVersion: "نسخة التطبيق",
       thisDevice: "هذا الجهاز",

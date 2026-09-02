@@ -21,6 +21,7 @@ function makeCtx(overrides: Partial<ShortcutRoutingContext> = {}): ShortcutRouti
     navigationActiveWorkspace: null,
     commandCenterOpen: false,
     shortcutsDialogOpen: false,
+    settingsModalOpen: false,
     ...overrides,
   };
 }
@@ -322,6 +323,15 @@ describe("routeKeyboardShortcut — message-input.action", () => {
 });
 
 describe("routeKeyboardShortcut — settings.toggle", () => {
+  it("closes the settings modal while it is open", () => {
+    expect(
+      routeKeyboardShortcut(
+        { action: "settings.toggle", payload: null },
+        makeCtx({ pathname: "/h/srv/workspace/ws-2", settingsModalOpen: true }),
+      ),
+    ).toEqual<ShortcutAction>({ kind: "settings-modal-close" });
+  });
+
   it("pushes to the settings root when not currently in settings", () => {
     expect(
       routeKeyboardShortcut(

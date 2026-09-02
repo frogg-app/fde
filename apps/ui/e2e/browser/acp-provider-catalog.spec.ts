@@ -29,7 +29,7 @@ test.describe("ACP provider catalog", () => {
     try {
       await gotoAppShell(page);
       await openSettings(page);
-      await openSettingsHost(page, getServerId());
+      await openSettingsHost(page);
       await openSettingsHostSection(page, getServerId(), "providers");
       await openAddProviderArea(page);
 

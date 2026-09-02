@@ -1,16 +1,7 @@
-import { Redirect } from "expo-router";
-import { useIsCompactFormFactor } from "@/constants/layout";
-import SettingsScreen from "@/screens/settings-screen";
-import { buildSettingsSectionRoute } from "@/utils/host-routes";
+import { SettingsRouteEntry } from "@/settings-modal/route-entry";
 
 const ROOT_VIEW = { kind: "root" as const };
 
 export default function SettingsIndexRoute() {
-  const isCompactLayout = useIsCompactFormFactor();
-
-  if (!isCompactLayout) {
-    return <Redirect href={buildSettingsSectionRoute("general")} />;
-  }
-
-  return <SettingsScreen view={ROOT_VIEW} />;
+  return <SettingsRouteEntry view={ROOT_VIEW} />;
 }

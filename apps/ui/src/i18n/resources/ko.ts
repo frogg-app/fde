@@ -60,6 +60,7 @@ export const ko: TranslationResources = {
       searchingFiles: "파일 검색 중...",
       noMatches: "일치 항목 없음",
       actions: "작업",
+      keyboardShortcuts: "키보드 단축키",
       files: "파일",
       workspaces: "워크스페이스",
       agents: "에이전트",
@@ -1093,21 +1094,9 @@ export const ko: TranslationResources = {
       settings: "설정",
       closeSidebar: "사이드바 닫기",
     },
-    help: {
-      trigger: "도움말 및 지원",
-      sectionHelp: "도움말",
-      diagnostics: "진단 실행",
-      shortcuts: "키보드 단축키",
-      reportIssue: "문제 신고",
-      discord: "Discord",
-      github: "GitHub 이슈 만들기",
-      whatsNew: "새로운 소식",
-      appName: "FDE",
-    },
     sections: {
       sessions: "기록",
       search: "검색",
-      schedules: "일정",
     },
     worktreeSetup: {
       title: "워크트리 스크립트 설정",
@@ -2071,6 +2060,7 @@ export const ko: TranslationResources = {
       },
     },
     about: {
+      attribution: "Frogg Development Environment는 <paseo>Paseo</paseo>를 기반으로 합니다.",
       title: "정보",
       appVersion: "앱 버전",
       thisDevice: "이 기기",

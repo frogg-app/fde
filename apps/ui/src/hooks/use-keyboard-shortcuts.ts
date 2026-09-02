@@ -34,6 +34,7 @@ import { getDesktopHost, isElectronRuntime } from "@/desktop/host";
 import { isImeComposingKeyboardEvent } from "@/utils/keyboard-ime";
 import { buildOpenProjectRoute } from "@/utils/host-routes";
 import { hasActiveWebOverlay } from "@/lib/overlay-root";
+import { useSettingsModalStore } from "@/settings-modal/store";
 import {
   type ActiveWorkspaceSelection,
   navigateToLastWorkspace,
@@ -217,6 +218,9 @@ export function useKeyboardShortcuts({
         case "shortcuts-dialog-toggle":
           useKeyboardShortcutsStore.getState().setShortcutsDialogOpen(action.nextOpen);
           return true;
+        case "settings-modal-close":
+          useSettingsModalStore.getState().close();
+          return true;
       }
     };
 
@@ -237,6 +241,7 @@ export function useKeyboardShortcuts({
             keyboardWorkspaceSelectionRef.current ?? activeWorkspaceSelection,
           commandCenterOpen: store.commandCenterOpen,
           shortcutsDialogOpen: store.shortcutsDialogOpen,
+          settingsModalOpen: useSettingsModalStore.getState().view !== null,
         },
       );
       const handled = performShortcutAction(
