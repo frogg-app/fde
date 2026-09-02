@@ -36,6 +36,7 @@ test("every executable daemon entrypoint enters the supervisor", async () => {
     nixPackage,
     nixModule,
     bundleBuilder,
+    dockerEntrypoint,
   ] = await Promise.all([
     readFile(join(repoRoot, "packages/server/package.json"), "utf8"),
     readFile(join(repoRoot, "apps/ui/e2e/support/helpers/isolated-host-daemon.ts"), "utf8"),
@@ -46,6 +47,10 @@ test("every executable daemon entrypoint enters the supervisor", async () => {
     readFile(join(repoRoot, "deploy/nix/package.nix"), "utf8"),
     readFile(join(repoRoot, "deploy/nix/module.nix"), "utf8"),
     readFile(join(repoRoot, "scripts/release/build-daemon-bundle.mjs"), "utf8"),
+    readFile(
+      join(repoRoot, "deploy/docker/base/rootfs/usr/local/bin/fde-docker-entrypoint"),
+      "utf8",
+    ),
   ]);
 
   const serverPackage = JSON.parse(serverPackageSource);
@@ -76,8 +81,10 @@ test("every executable daemon entrypoint enters the supervisor", async () => {
   assert.doesNotMatch(nixModule, /\bNODE_ENV\b\s*=/);
   assert.doesNotMatch(nixModule, /\bPASEO_NODE_ENV\b/);
 
-  // The daemon bundle launcher enters through the CLI, which starts the
-  // daemon via the supervisor entrypoint.
+  // The daemon bundle launcher and the Docker entrypoint enter through the
+  // CLI, which starts the daemon via the supervisor entrypoint.
   assert.match(bundleBuilder, /daemon\/apps\/cli\/dist\/index\.js/);
   assertNoDirectWorkerLaunch("daemon bundle launcher", bundleBuilder);
+  assert.match(dockerEntrypoint, /fde daemon start --foreground/);
+  assertNoDirectWorkerLaunch("Docker entrypoint", dockerEntrypoint);
 });

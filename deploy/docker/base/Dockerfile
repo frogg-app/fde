@@ -1,47 +1,60 @@
 # syntax=docker/dockerfile:1
+#
+# FDE daemon image. Stage 1 builds the self-contained daemon bundle for the
+# target platform (scripts/release/build-daemon-bundle.mjs); stage 2 unpacks
+# it into a slim Debian image. The bundle carries its own Node runtime, so the
+# runtime image needs no Node installation.
+#
+# Build with scripts/release/build-docker.sh, which reads the version from the
+# root package.json and applies the org tagging rules.
 
-ARG NODE_IMAGE=node:22-bookworm-slim
-FROM --platform=$BUILDPLATFORM ${NODE_IMAGE} AS source-pack
+ARG BUILD_NODE_IMAGE=node:22-bookworm-slim
+FROM --platform=$BUILDPLATFORM ${BUILD_NODE_IMAGE} AS bundle
 
-ARG PASEO_VERSION
+ARG FDE_VERSION
+ARG TARGETOS
+ARG TARGETARCH
 
 ENV ONNXRUNTIME_NODE_INSTALL=skip
 
-WORKDIR /tmp/paseo-src
+WORKDIR /src
 COPY . .
 
 RUN set -eux; \
-    if [ -n "${PASEO_VERSION:-}" ]; then \
-      test "$(node -p "require('./package.json').version")" = "${PASEO_VERSION}"; \
+    if [ -n "${FDE_VERSION:-}" ]; then \
+      test "$(node -p "require('./package.json').version")" = "${FDE_VERSION}"; \
     fi; \
     node -e 'const fs=require("node:fs"); const pkg=JSON.parse(fs.readFileSync("package.json","utf8")); delete pkg.scripts.prepare; fs.writeFileSync("package.json", `${JSON.stringify(pkg)}\n`);'; \
     npm ci
 
 RUN set -eux; \
-    mkdir -p /tmp/paseo-packs; \
-    npm pack --workspace=@fde/highlight --pack-destination /tmp/paseo-packs; \
-    npm pack --workspace=@fde/relay --pack-destination /tmp/paseo-packs; \
-    npm pack --workspace=@fde/protocol --pack-destination /tmp/paseo-packs; \
-    npm pack --workspace=@fde/client --pack-destination /tmp/paseo-packs; \
-    npm pack --workspace=@fde/plugin --pack-destination /tmp/paseo-packs; \
-    npm pack --workspace=@fde/server --pack-destination /tmp/paseo-packs; \
-    npm pack --workspace=@fde/cli --pack-destination /tmp/paseo-packs
+    npm run build:server; \
+    npm run build:daemon-web-ui; \
+    case "${TARGETARCH}" in \
+      amd64) arch=x64 ;; \
+      arm64) arch=arm64 ;; \
+      *) echo "unsupported TARGETARCH ${TARGETARCH}" >&2; exit 1 ;; \
+    esac; \
+    node scripts/release/build-daemon-bundle.mjs --target "${TARGETOS}-${arch}" --out-dir /bundles; \
+    mkdir -p /opt/fde; \
+    tar -xzf /bundles/fde-daemon-*.tar.gz --strip-components=1 -C /opt/fde; \
+    rm -rf /bundles
 
-FROM ${NODE_IMAGE}
+FROM debian:bookworm-slim
 
-ENV HOME=/home/paseo \
-    PASEO_HOME=/home/paseo/.paseo \
+ENV HOME=/home/fde \
+    PASEO_HOME=/home/fde/.paseo \
     PASEO_LISTEN=0.0.0.0:6767 \
     PASEO_WEB_UI_ENABLED=true \
     PASEO_LOG_FORMAT=json \
     PASEO_LOG_LEVEL=info \
-    CLAUDE_CONFIG_DIR=/home/paseo/.claude \
-    CODEX_HOME=/home/paseo/.codex \
-    XDG_CONFIG_HOME=/home/paseo/.config \
-    XDG_DATA_HOME=/home/paseo/.local/share \
-    XDG_STATE_HOME=/home/paseo/.local/state \
-    XDG_CACHE_HOME=/home/paseo/.cache \
-    ONNXRUNTIME_NODE_INSTALL=skip
+    CLAUDE_CONFIG_DIR=/home/fde/.claude \
+    CODEX_HOME=/home/fde/.codex \
+    XDG_CONFIG_HOME=/home/fde/.config \
+    XDG_DATA_HOME=/home/fde/.local/share \
+    XDG_STATE_HOME=/home/fde/.local/state \
+    XDG_CACHE_HOME=/home/fde/.cache \
+    PATH=/opt/fde/bin:/opt/fde/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 RUN set -eux; \
     apt-get update; \
@@ -57,29 +70,16 @@ RUN set -eux; \
       tini; \
     rm -rf /var/lib/apt/lists/*
 
-COPY --from=source-pack /tmp/paseo-packs /tmp/paseo-packs
+COPY --from=bundle /opt/fde /opt/fde
 RUN set -eux; \
-	npm install -g /tmp/paseo-packs/*.tgz; \
-    rm -rf /tmp/paseo-packs; \
-    npm cache clean --force; \
-    server_entry="$(npm root -g)/@fde/server/dist/scripts/supervisor-entrypoint.js"; \
-    test -f "$server_entry"; \
-    printf '%s\n' "$server_entry" > /etc/paseo-server-entry; \
-    node --check "$server_entry"
+    ln -s /opt/fde/bin/fde /usr/local/bin/fde; \
+    ln -s /opt/fde/bin/paseo /usr/local/bin/paseo; \
+    test -f /opt/fde/daemon/packages/server/dist/scripts/supervisor-entrypoint.js; \
+    /opt/fde/node/bin/node --version
 
 RUN set -eux; \
-    existing_group="$(getent group 1000 | cut -d: -f1 || true)"; \
-    if [ -n "$existing_group" ] && [ "$existing_group" != "paseo" ]; then \
-      groupmod --new-name paseo "$existing_group"; \
-    elif [ -z "$existing_group" ]; then \
-      groupadd --gid 1000 paseo; \
-    fi; \
-    existing_user="$(getent passwd 1000 | cut -d: -f1 || true)"; \
-    if [ -n "$existing_user" ] && [ "$existing_user" != "paseo" ]; then \
-      usermod --login paseo --gid paseo --home /home/paseo --shell /bin/bash "$existing_user"; \
-    elif [ -z "$existing_user" ]; then \
-      useradd --uid 1000 --gid paseo --create-home --home-dir /home/paseo --shell /bin/bash paseo; \
-    fi; \
+    groupadd --gid 1000 fde; \
+    useradd --uid 1000 --gid fde --create-home --home-dir /home/fde --shell /bin/bash fde; \
     mkdir -p \
       /workspace \
       "$PASEO_HOME" \
@@ -89,17 +89,17 @@ RUN set -eux; \
       "$XDG_DATA_HOME" \
       "$XDG_STATE_HOME" \
       "$XDG_CACHE_HOME"; \
-    chown -R paseo:paseo /home/paseo /workspace
+    chown -R fde:fde /home/fde /workspace
 
 COPY deploy/docker/base/rootfs/ /
-RUN chmod +x /usr/local/bin/paseo-docker-entrypoint
+RUN chmod +x /usr/local/bin/fde-docker-entrypoint
 
 WORKDIR /workspace
 
 EXPOSE 6767
-VOLUME ["/home/paseo"]
+VOLUME ["/home/fde/.paseo"]
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-  CMD node -e "const listen=process.env.PASEO_LISTEN||'0.0.0.0:6767'; const m=listen.match(/:(\\d+)$/); const port=m?Number(m[1]):6767; require('http').get({hostname:'127.0.0.1',port,path:'/api/health'},r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
+  CMD curl -fsS http://127.0.0.1:6767/api/health >/dev/null || exit 1
 
-ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/paseo-docker-entrypoint"]
+ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/fde-docker-entrypoint"]

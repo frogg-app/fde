@@ -17,17 +17,9 @@ import { run } from "./daemon-bundle-utils.mjs";
 export const DEFAULT_NODE_VERSION = "22.23.2";
 const NODE_DIST_BASE = process.env.FDE_NODE_DIST_BASE ?? "https://nodejs.org/dist";
 
-// Parts of the official tarball the daemon never uses at runtime.
-const TRIM_PATHS = [
-  "include",
-  "share",
-  "lib/node_modules",
-  "bin/npm",
-  "bin/npx",
-  "bin/corepack",
-  "CHANGELOG.md",
-  "README.md",
-];
+// Parts of the official tarball the daemon never uses at runtime. npm stays:
+// hosts without their own Node use it to install agent CLIs.
+const TRIM_PATHS = ["include", "share", "CHANGELOG.md", "README.md"];
 
 function nodeArchiveName(version, platform, arch) {
   return `node-v${version}-${platform}-${arch}.tar.gz`;
