@@ -1,6 +1,6 @@
 {
   "name": "@fde/plugin",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Paseo plugin SDK package",
   "files": [
     "dist",
@@ -44,8 +44,8 @@
     "use-sync-external-store": "^1.6.0"
   },
   "devDependencies": {
-    "@fde/client": "0.1.8",
-    "@fde/protocol": "0.1.8",
+    "@fde/client": "0.1.9",
+    "@fde/protocol": "0.1.9",
     "@tanstack/react-query": "^5.90.11",
     "@types/node": "^20.9.0",
     "@types/react": "~19.2.0",
@@ -55,8 +55,8 @@
     "zod": "^4.4.3"
   },
   "peerDependencies": {
-    "@fde/client": "0.1.8",
-    "@fde/protocol": "0.1.8",
+    "@fde/client": "0.1.9",
+    "@fde/protocol": "0.1.9",
     "react": "19.1.0",
     "zod": "^4.4.3"
   }
