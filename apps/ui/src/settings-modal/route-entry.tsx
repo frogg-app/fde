@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { router, useRootNavigationState } from "expo-router";
+import { router, useNavigationContainerRef } from "expo-router";
 import { useIsCompactFormFactor } from "@/constants/layout";
 import { leaveSettings, type SettingsView } from "@/navigation/settings-navigation";
 import SettingsScreen from "@/screens/settings-screen";
@@ -19,21 +19,32 @@ interface SettingsRouteEntryProps {
 export function SettingsRouteEntry({ view, openAddHostIntent = null }: SettingsRouteEntryProps) {
   const isCompactLayout = useIsCompactFormFactor();
   const openModal = useSettingsModalStore((state) => state.open);
-  // A cold start on a settings deep link runs this effect before the root
-  // navigator has mounted; navigating then throws. Wait for the router.
-  const routerReady = Boolean(useRootNavigationState()?.key);
+  const navigationRef = useNavigationContainerRef();
 
   useEffect(() => {
-    if (isCompactLayout || !routerReady) return;
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      // A cold start on a settings deep link has nothing to return to; land on
-      // the workspace the modal will float over.
-      leaveSettings();
-    }
-    openModal(view, openAddHostIntent);
-  }, [isCompactLayout, openAddHostIntent, openModal, routerReady, view]);
+    if (isCompactLayout) return;
+    let frame: number | null = null;
+    const openAndLeaveRoute = () => {
+      // A cold start on a settings deep link runs this effect before the
+      // navigation container is ready; navigating then throws. Poll until it is.
+      if (!navigationRef.isReady()) {
+        frame = requestAnimationFrame(openAndLeaveRoute);
+        return;
+      }
+      frame = null;
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        // Nothing to return to; land on the workspace the modal will float over.
+        leaveSettings();
+      }
+      openModal(view, openAddHostIntent);
+    };
+    openAndLeaveRoute();
+    return () => {
+      if (frame !== null) cancelAnimationFrame(frame);
+    };
+  }, [isCompactLayout, navigationRef, openAddHostIntent, openModal, view]);
 
   if (!isCompactLayout) {
     return null;
