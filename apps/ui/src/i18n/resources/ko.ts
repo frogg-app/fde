@@ -1288,6 +1288,19 @@ export const ko: TranslationResources = {
       openAdvancedSettings: "고급 데몬 설정 열기",
       versionMismatch:
         "앱과 데몬의 버전이 일치하지 않습니다. 최상의 경험을 위해 둘 다 동일한 버전으로 업데이트하세요.",
+      bundle: {
+        title: "로컬 데몬",
+        installed: "설치됨",
+        installedHint: "버전 {{version}} ({{path}})",
+        notInstalledHint:
+          "이 컴퓨터에서 에이전트를 실행하려면 FDE 데몬 번들({{platform}})을 다운로드하세요.",
+        install: "로컬 데몬 설치 (약 {{size}})",
+        installing: "설치 중...",
+        phaseChecksum: "체크섬 가져오는 중...",
+        phaseDownload: "다운로드 중 {{progress}}",
+        phaseExtract: "검증 및 압축 해제 중...",
+        installFailed: "설치 실패: {{message}}",
+      },
       loadFailed: "데스크톱 데몬 상태를 불러올 수 없습니다.",
     },
     updates: {
@@ -1487,6 +1500,18 @@ export const ko: TranslationResources = {
   onboarding: {
     title: "FDE에 오신 것을 환영합니다",
     subtitle: "시작하려면 컴퓨터를 연결하세요",
+    localDaemon: {
+      title: "이 컴퓨터에서 에이전트 실행",
+      description: "로컬 FDE 데몬을 설치합니다(약 180 MB 다운로드).",
+      descriptionInstalled: "설치된 로컬 FDE 데몬을 시작합니다.",
+      starting: "로컬 데몬 시작 중...",
+      failed: "로컬 데몬을 설정할 수 없습니다: {{message}}",
+      retry: "다시 시도",
+    },
+    remoteHost: {
+      title: "원격 호스트 사용",
+      description: "다른 컴퓨터의 FDE 데몬에 연결합니다.",
+    },
     actions: {
       settings: "설정",
     },

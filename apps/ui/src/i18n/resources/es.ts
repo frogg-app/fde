@@ -1316,6 +1316,19 @@ export const es: TranslationResources = {
       openAdvancedSettings: "Abrir configuración avanzada del demonio",
       versionMismatch:
         "Las versiones de la aplicación y del demonio no coinciden. Actualice ambos a la misma versión para obtener la mejor experiencia.",
+      bundle: {
+        title: "Daemon local",
+        installed: "Instalado",
+        installedHint: "Versión {{version}} en {{path}}",
+        notInstalledHint:
+          "Descarga el paquete del daemon de FDE ({{platform}}) para ejecutar agentes en esta máquina.",
+        install: "Instalar daemon local (~{{size}})",
+        installing: "Instalando...",
+        phaseChecksum: "Obteniendo la suma de verificación...",
+        phaseDownload: "Descargando {{progress}}",
+        phaseExtract: "Verificando y extrayendo...",
+        installFailed: "Error al instalar: {{message}}",
+      },
       loadFailed: "No se puede cargar el estado del demonio del escritorio.",
     },
     updates: {
@@ -1521,6 +1534,18 @@ export const es: TranslationResources = {
   onboarding: {
     title: "Bienvenido an FDE",
     subtitle: "Conecte su computadora para comenzar",
+    localDaemon: {
+      title: "Ejecutar agentes en esta máquina",
+      description: "Instala el daemon local de FDE (descarga de unos 180 MB).",
+      descriptionInstalled: "Inicia el daemon local de FDE ya instalado.",
+      starting: "Iniciando el daemon local...",
+      failed: "No se pudo configurar el daemon local: {{message}}",
+      retry: "Reintentar",
+    },
+    remoteHost: {
+      title: "Usar un host remoto",
+      description: "Conéctate a un daemon de FDE en otra máquina.",
+    },
     actions: {
       settings: "Ajustes",
     },

@@ -1299,6 +1299,19 @@ export const ru: TranslationResources = {
       openAdvancedSettings: "Открыть дополнительные настройки демона",
       versionMismatch:
         "Версии приложения и демона не совпадают. Обновите приложение и демон до одной версии, чтобы избежать проблем.",
+      bundle: {
+        title: "Локальный демон",
+        installed: "Установлен",
+        installedHint: "Версия {{version}} в {{path}}",
+        notInstalledHint:
+          "Скачайте пакет демона FDE ({{platform}}), чтобы запускать агентов на этом компьютере.",
+        install: "Установить локальный демон (~{{size}})",
+        installing: "Установка...",
+        phaseChecksum: "Получение контрольной суммы...",
+        phaseDownload: "Загрузка {{progress}}",
+        phaseExtract: "Проверка и распаковка...",
+        installFailed: "Ошибка установки: {{message}}",
+      },
       loadFailed: "Не удалось загрузить статус встроенного демона.",
     },
     updates: {
@@ -1504,6 +1517,18 @@ export const ru: TranslationResources = {
   onboarding: {
     title: "Добро пожаловать в FDE",
     subtitle: "Подключите компьютер, чтобы начать",
+    localDaemon: {
+      title: "Запускать агентов на этом компьютере",
+      description: "Устанавливает локальный демон FDE (загрузка около 180 МБ).",
+      descriptionInstalled: "Запускает установленный локальный демон FDE.",
+      starting: "Запуск локального демона...",
+      failed: "Не удалось настроить локальный демон: {{message}}",
+      retry: "Повторить",
+    },
+    remoteHost: {
+      title: "Использовать удалённый хост",
+      description: "Подключитесь к демону FDE на другом компьютере.",
+    },
     actions: {
       settings: "Настройки",
     },

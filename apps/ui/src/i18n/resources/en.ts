@@ -1291,6 +1291,19 @@ export const en = {
       openAdvancedSettings: "Open advanced daemon settings",
       versionMismatch:
         "App and daemon versions don't match. Update both to the same version for the best experience.",
+      bundle: {
+        title: "Local daemon",
+        installed: "Installed",
+        installedHint: "Version {{version}} at {{path}}",
+        notInstalledHint:
+          "Download the FDE daemon bundle ({{platform}}) to run agents on this machine.",
+        install: "Install local daemon (~{{size}})",
+        installing: "Installing...",
+        phaseChecksum: "Fetching checksum...",
+        phaseDownload: "Downloading {{progress}}",
+        phaseExtract: "Verifying and extracting...",
+        installFailed: "Install failed: {{message}}",
+      },
       loadFailed: "Unable to load desktop daemon status.",
     },
     updates: {
@@ -1487,6 +1500,18 @@ export const en = {
   onboarding: {
     title: "Welcome to FDE",
     subtitle: "Connect your computer to get started",
+    localDaemon: {
+      title: "Run agents on this machine",
+      description: "Installs the local FDE daemon (about 180 MB download).",
+      descriptionInstalled: "Starts the installed local FDE daemon.",
+      starting: "Starting the local daemon...",
+      failed: "Could not set up the local daemon: {{message}}",
+      retry: "Try again",
+    },
+    remoteHost: {
+      title: "Use a remote host",
+      description: "Connect to an FDE daemon on another machine.",
+    },
     actions: {
       settings: "Settings",
     },

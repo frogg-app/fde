@@ -2,6 +2,10 @@ import { getDesktopHost, isElectronRuntime } from "@/desktop/host";
 import { listenToDesktopEvent } from "@/desktop/electron/events";
 import { invokeDesktopCommand } from "@/desktop/electron/invoke";
 import type { AgentSkillSelection } from "@fde/protocol/messages";
+import {
+  parseLocalDaemonInstallEvent,
+  type LocalDaemonInstallEvent,
+} from "./local-daemon-install-progress";
 
 export type DesktopDaemonState = "starting" | "running" | "stopped" | "errored";
 export type DesktopDaemonStopReason =
@@ -216,6 +220,69 @@ export async function sendLocalTransportMessage(input: {
 
 export async function closeLocalTransportSession(sessionId: string): Promise<void> {
   await invokeDesktopCommand("close_local_daemon_transport", { sessionId });
+}
+
+// ---------------------------------------------------------------------------
+// Local daemon bundle (sidecar)
+// ---------------------------------------------------------------------------
+
+export interface LocalDaemonBundleStatus {
+  installed: boolean;
+  version: string | null;
+  platform: string;
+  arch: string;
+  path: string | null;
+  downloading: { received: number; total: number | null } | null;
+}
+
+function parseLocalDaemonBundleStatus(raw: unknown): LocalDaemonBundleStatus {
+  if (!isRecord(raw)) {
+    throw new Error("Unexpected local daemon bundle status response.");
+  }
+  const downloading = isRecord(raw.downloading) ? raw.downloading : null;
+  return {
+    installed: raw.installed === true,
+    version: toStringOrNull(raw.version),
+    platform: toStringOrNull(raw.platform) ?? "",
+    arch: toStringOrNull(raw.arch) ?? "",
+    path: toStringOrNull(raw.path),
+    downloading: downloading
+      ? {
+          received: toNumberOrNull(downloading.received) ?? 0,
+          total: toNumberOrNull(downloading.total),
+        }
+      : null,
+  };
+}
+
+export async function getLocalDaemonBundleStatus(): Promise<LocalDaemonBundleStatus> {
+  return parseLocalDaemonBundleStatus(await invokeDesktopCommand("local_daemon_bundle_status"));
+}
+
+/** Whether a bundle is installed; `false` on a shell without the command. */
+export async function isLocalDaemonBundleInstalled(): Promise<boolean> {
+  try {
+    return (await getLocalDaemonBundleStatus()).installed;
+  } catch {
+    return false;
+  }
+}
+
+export async function installLocalDaemonBundle(version?: string): Promise<LocalDaemonBundleStatus> {
+  return parseLocalDaemonBundleStatus(
+    await invokeDesktopCommand("install_local_daemon_bundle", version ? { version } : {}),
+  );
+}
+
+export async function listenToLocalDaemonInstallEvents(
+  handler: (event: LocalDaemonInstallEvent) => void,
+): Promise<LocalTransportEventUnlisten> {
+  if (typeof getDesktopHost()?.events?.on !== "function") {
+    throw new Error("Desktop events API is unavailable.");
+  }
+  return listenToDesktopEvent<unknown>("local-daemon-install-event", (payload) => {
+    handler(parseLocalDaemonInstallEvent(payload));
+  });
 }
 
 // ---------------------------------------------------------------------------

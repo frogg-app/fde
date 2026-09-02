@@ -2,12 +2,14 @@ import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 
 import { useTranslation } from "react-i18next";
 import { Pressable, Text, View, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
-import { StyleSheet, useUnistyles } from "react-native-unistyles";
+import { StyleSheet, useUnistyles, withUnistyles } from "react-native-unistyles";
 import {
   QrCode,
   Link2,
   ClipboardPaste,
   ExternalLink,
+  Laptop,
+  Server,
   Settings,
   Terminal,
 } from "lucide-react-native";
@@ -26,6 +28,11 @@ import { openExternalUrl } from "@/utils/open-external-url";
 import { isFdroidBuild } from "@/constants/build-profile";
 import { isWeb, isNative } from "@/constants/platform";
 import { isElectronRuntime } from "@/desktop/host";
+import { useLocalDaemonBundle } from "@/desktop/hooks/use-local-daemon-bundle";
+import {
+  InstallProgressBar,
+  describeInstallProgress,
+} from "@/desktop/components/local-daemon-bundle-card";
 
 interface WelcomeAction {
   key: "scan-qr" | "direct-connection" | "remote-ssh" | "paste-pairing-link";
@@ -121,6 +128,55 @@ const styles = StyleSheet.create((theme) => ({
     alignSelf: "center",
     marginTop: theme.spacing[6],
   },
+  modeCard: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: theme.spacing[4],
+    padding: theme.spacing[4],
+    borderRadius: theme.borderRadius.xl,
+    backgroundColor: theme.colors.surface2,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  modeCardPrimary: {
+    borderColor: theme.colors.accent,
+  },
+  modeCardText: {
+    flex: 1,
+    gap: 2,
+  },
+  modeCardTitle: {
+    color: theme.colors.foreground,
+    fontSize: theme.fontSize.base,
+    fontWeight: theme.fontWeight.medium,
+  },
+  modeCardDescription: {
+    color: theme.colors.foregroundMuted,
+    fontSize: theme.fontSize.sm,
+  },
+  localProgress: {
+    width: "100%",
+    gap: theme.spacing[2],
+  },
+  localProgressText: {
+    color: theme.colors.foregroundMuted,
+    fontSize: theme.fontSize.sm,
+    textAlign: "center",
+  },
+  localErrorText: {
+    color: theme.colors.palette.red[500],
+    fontSize: theme.fontSize.sm,
+    textAlign: "center",
+  },
+}));
+
+type WelcomeMode = "choose" | "remote" | "local";
+
+const ThemedLaptop = withUnistyles(Laptop, (theme) => ({ size: 22, color: theme.colors.accent }));
+const ThemedServer = withUnistyles(Server, (theme) => ({
+  size: 22,
+  color: theme.colors.foreground,
 }));
 
 function useAnyHostOnline(serverIds: string[]): string | null {
@@ -178,6 +234,11 @@ export function WelcomeScreen({ onHostAdded }: WelcomeScreenProps) {
   const [isPasteLinkOpen, setIsPasteLinkOpen] = useState(false);
   const hosts = useHosts();
   const anyOnlineServerId = useAnyHostOnline(hosts.map((h) => h.serverId));
+  // Desktop with no hosts: choose between a remote host and the local daemon
+  // (which downloads the daemon bundle). Everywhere else the remote actions
+  // show directly.
+  const offersLocalDaemon = isElectronRuntime() && hosts.length === 0;
+  const [mode, setMode] = useState<WelcomeMode>(offersLocalDaemon ? "choose" : "remote");
 
   useEffect(() => {
     if (!anyOnlineServerId) return;
@@ -187,6 +248,18 @@ export function WelcomeScreen({ onHostAdded }: WelcomeScreenProps) {
   const finishOnboarding = useCallback(() => {
     router.replace(buildOpenProjectRoute());
   }, [router]);
+
+  const {
+    bundle,
+    progress: installProgress,
+    isInstalling,
+    installAndStart,
+  } = useLocalDaemonBundle({ onStarted: finishOnboarding });
+  const handleChooseRemote = useCallback(() => setMode("remote"), []);
+  const handleChooseLocal = useCallback(() => {
+    setMode("local");
+    void installAndStart();
+  }, [installAndStart]);
 
   const handleOpenProjectSite = useCallback(() => {
     void openExternalUrl("https://github.com/frogg-app/frogg-de/releases");
@@ -299,9 +372,62 @@ export function WelcomeScreen({ onHostAdded }: WelcomeScreenProps) {
           </View>
 
           <View style={styles.actions}>
-            {actions.map((action) => (
-              <WelcomeActionButton key={action.key} action={action} />
-            ))}
+            {mode === "choose" ? (
+              <>
+                <WelcomeModeCard
+                  icon="local"
+                  title={t("onboarding.localDaemon.title")}
+                  description={
+                    bundle?.installed
+                      ? t("onboarding.localDaemon.descriptionInstalled")
+                      : t("onboarding.localDaemon.description")
+                  }
+                  primary
+                  testID="welcome-local-daemon"
+                  onPress={handleChooseLocal}
+                />
+                <WelcomeModeCard
+                  icon="remote"
+                  title={t("onboarding.remoteHost.title")}
+                  description={t("onboarding.remoteHost.description")}
+                  testID="welcome-remote-host"
+                  onPress={handleChooseRemote}
+                />
+              </>
+            ) : null}
+            {mode === "remote"
+              ? actions.map((action) => <WelcomeActionButton key={action.key} action={action} />)
+              : null}
+            {mode === "local" ? (
+              <View style={styles.localProgress} testID="welcome-local-daemon-progress">
+                {installProgress.status === "installing" ? (
+                  <>
+                    <InstallProgressBar progress={installProgress} />
+                    <Text style={styles.localProgressText}>
+                      {describeInstallProgress(installProgress, t)}
+                    </Text>
+                  </>
+                ) : null}
+                {isInstalling && installProgress.status !== "installing" ? (
+                  <Text style={styles.localProgressText}>
+                    {t("onboarding.localDaemon.starting")}
+                  </Text>
+                ) : null}
+                {installProgress.status === "error" ? (
+                  <>
+                    <Text style={styles.localErrorText}>
+                      {t("onboarding.localDaemon.failed", { message: installProgress.message })}
+                    </Text>
+                    <Button variant="outline" size="sm" onPress={handleChooseLocal}>
+                      {t("onboarding.localDaemon.retry")}
+                    </Button>
+                    <Button variant="ghost" size="sm" onPress={handleChooseRemote}>
+                      {t("onboarding.remoteHost.title")}
+                    </Button>
+                  </>
+                ) : null}
+              </View>
+            ) : null}
           </View>
 
           <Button
@@ -336,6 +462,38 @@ export function WelcomeScreen({ onHostAdded }: WelcomeScreenProps) {
         />
       </ScrollView>
     </View>
+  );
+}
+
+interface WelcomeModeCardProps {
+  icon: "local" | "remote";
+  title: string;
+  description: string;
+  primary?: boolean;
+  testID: string;
+  onPress: () => void;
+}
+
+function WelcomeModeCard({
+  icon,
+  title,
+  description,
+  primary,
+  testID,
+  onPress,
+}: WelcomeModeCardProps) {
+  const cardStyle = useMemo(
+    () => [styles.modeCard, primary ? styles.modeCardPrimary : null],
+    [primary],
+  );
+  return (
+    <Pressable style={cardStyle} onPress={onPress} testID={testID} accessibilityRole="button">
+      {icon === "local" ? <ThemedLaptop /> : <ThemedServer />}
+      <View style={styles.modeCardText}>
+        <Text style={styles.modeCardTitle}>{title}</Text>
+        <Text style={styles.modeCardDescription}>{description}</Text>
+      </View>
+    </Pressable>
   );
 }
 
