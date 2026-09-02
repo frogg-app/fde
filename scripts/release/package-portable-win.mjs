@@ -11,10 +11,17 @@ import { crc32, deflateRawSync } from "node:zlib";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = path.resolve(here, "../..");
-const WINDOWS_RELEASE_DIR = path.join(
-  REPO_ROOT,
-  "apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release",
-);
+// Default is the cargo-xwin cross-compile layout. A native Windows build (CI on
+// windows-latest) writes to target/release instead; point at it with
+// FDE_WINDOWS_RELEASE_DIR or `--release-dir <dir>`.
+const WINDOWS_RELEASE_DIR = resolveReleaseDir(process.env.FDE_WINDOWS_RELEASE_DIR);
+
+function resolveReleaseDir(override) {
+  if (override) {
+    return path.resolve(REPO_ROOT, override);
+  }
+  return path.join(REPO_ROOT, "apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release");
+}
 
 export function buildReadme(version) {
   return [
@@ -140,8 +147,9 @@ export function listZip(buffer) {
 
 export function packagePortableWindows({
   version,
-  exePath = path.join(WINDOWS_RELEASE_DIR, "fde.exe"),
-  outputDir = path.join(WINDOWS_RELEASE_DIR, "bundle/portable"),
+  releaseDir = WINDOWS_RELEASE_DIR,
+  exePath = path.join(releaseDir, "fde.exe"),
+  outputDir = path.join(releaseDir, "bundle/portable"),
 } = {}) {
   const resolvedVersion =
     version ?? JSON.parse(readFileSync(path.join(REPO_ROOT, "package.json"), "utf8")).version;
@@ -165,7 +173,10 @@ export function packagePortableWindows({
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
-    const result = packagePortableWindows();
+    const flagIndex = process.argv.indexOf("--release-dir");
+    const releaseDir =
+      flagIndex === -1 ? WINDOWS_RELEASE_DIR : resolveReleaseDir(process.argv[flagIndex + 1]);
+    const result = packagePortableWindows({ releaseDir });
     console.log(`Wrote ${result.zipPath} (${(result.byteSize / 1024 / 1024).toFixed(1)} MB)`);
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));

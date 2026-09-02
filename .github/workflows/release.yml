@@ -1,0 +1,418 @@
+name: Release
+
+# Builds and publishes a GitHub release for a `vX.Y.Z` tag: desktop bundles for
+# Linux, Windows and macOS, the daemon bundles the install script downloads, the
+# updater manifest (when a signing key is configured) and the Docker image (when
+# Docker Hub credentials are configured). docs/ci.md explains the flow, the asset
+# names and the secrets.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to build and publish (for example v0.1.5)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  ONNXRUNTIME_NODE_INSTALL: skip
+  CI: "true"
+  RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+
+jobs:
+  meta:
+    name: resolve version, create release
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      tag: ${{ env.RELEASE_TAG }}
+      version: ${{ steps.version.outputs.version }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+      clobber: ${{ steps.release.outputs.clobber }}
+      signing: ${{ steps.secrets.outputs.signing }}
+      docker: ${{ steps.secrets.outputs.docker }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+
+      - name: Resolve version from tag and package.json
+        id: version
+        run: |
+          version="${RELEASE_TAG#v}"
+          package_version="$(node -p "require('./package.json').version")"
+          if [ "$version" != "$package_version" ]; then
+            echo "::error::Tag $RELEASE_TAG does not match package.json version $package_version. Bump, sync, commit, then tag that commit."
+            exit 1
+          fi
+          prerelease=false
+          case "$version" in
+            0.*|*-*) prerelease=true ;;
+          esac
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
+
+      # Optional secrets are detected once here; jobs that need them read the flags.
+      - name: Detect optional secrets
+        id: secrets
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          signing=false; docker=false
+          [ -n "$TAURI_SIGNING_PRIVATE_KEY" ] && signing=true
+          [ -n "$DOCKERHUB_USERNAME" ] && [ -n "$DOCKERHUB_TOKEN" ] && docker=true
+          echo "signing=$signing" >> "$GITHUB_OUTPUT"
+          echo "docker=$docker" >> "$GITHUB_OUTPUT"
+          echo "updater signing: $signing, docker push: $docker"
+
+      - name: Release notes from CHANGELOG.md
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          awk -v v="$VERSION" '$0 ~ "^## "v"($| )" {p=1; next} /^## / {p=0} p' CHANGELOG.md \
+            | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' > notes.md
+          if [ ! -s notes.md ]; then
+            echo "No CHANGELOG.md entry for $VERSION. See CHANGELOG.md in the repository." > notes.md
+          fi
+          # The run id marker lets a re-run of this workflow run overwrite its own
+          # assets (--clobber) while a fresh run against an existing release cannot.
+          printf '\n\n<!-- fde-release-run-id: %s -->\n' "$GITHUB_RUN_ID" >> notes.md
+          cat notes.md
+
+      - name: Create GitHub release if missing
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          PRERELEASE: ${{ steps.version.outputs.prerelease }}
+        run: |
+          if gh release view "$RELEASE_TAG" --json body --jq .body > existing-body.txt 2>/dev/null; then
+            if grep -q "fde-release-run-id: $GITHUB_RUN_ID" existing-body.txt; then
+              echo "Release $RELEASE_TAG was created by this run; re-uploads may overwrite."
+              echo "clobber=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "::warning::Release $RELEASE_TAG already exists from another run; existing assets will not be overwritten."
+              echo "clobber=false" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            args=(--title "FDE $VERSION" --notes-file notes.md --verify-tag)
+            if [ "$PRERELEASE" = "true" ]; then args+=(--prerelease); fi
+            gh release create "$RELEASE_TAG" "${args[@]}"
+            echo "clobber=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-notes
+          path: notes.md
+          retention-days: 7
+
+  ui:
+    name: web ui export
+    needs: meta
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: node scripts/ci/npm-retry.mjs ci
+
+      - name: Export web UI
+        run: npm run build:ui
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ui-dist
+          path: apps/ui/dist
+          retention-days: 7
+          if-no-files-found: error
+
+  desktop:
+    name: desktop ${{ matrix.platform }} ${{ matrix.arch }}
+    needs: [meta, ui]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # ubuntu-22.04 on purpose: deb/AppImage link against the build host's glibc
+          # and webkit2gtk, so older is more portable.
+          - platform: linux
+            arch: x86_64
+            runner: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            bundles: deb,appimage
+          - platform: windows
+            arch: x86_64
+            runner: windows-latest
+            target: x86_64-pc-windows-msvc
+            bundles: nsis
+          - platform: macos
+            arch: aarch64
+            runner: macos-latest
+            target: aarch64-apple-darwin
+            bundles: dmg
+          - platform: macos
+            arch: x86_64
+            runner: macos-latest
+            target: x86_64-apple-darwin
+            bundles: dmg
+    env:
+      RELEASE_DIR: apps/desktop/src-tauri/target/${{ matrix.target }}/release
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install Linux Tauri dependencies
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev libappindicator3-dev libayatana-appindicator3-dev \
+            librsvg2-dev patchelf build-essential curl wget file libssl-dev libgtk-3-dev
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
+          key: ${{ matrix.target }}
+
+      - name: Install dependencies
+        run: node scripts/ci/npm-retry.mjs ci
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ui-dist
+          path: apps/ui/dist
+
+      - name: Build desktop bundles
+        working-directory: apps/desktop
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          # Ad-hoc signature: no Apple certificate yet, but the app must at least
+          # launch via right-click > Open. Replace with a Developer ID identity later.
+          APPLE_SIGNING_IDENTITY: "-"
+          SIGNING: ${{ needs.meta.outputs.signing }}
+        run: |
+          args=(build --target "${{ matrix.target }}" --bundles "${{ matrix.bundles }}")
+          if [ "$SIGNING" = "true" ]; then
+            echo '{"bundle":{"createUpdaterArtifacts":true}}' > "$RUNNER_TEMP/updater-config.json"
+            args+=(--config "$RUNNER_TEMP/updater-config.json")
+          fi
+          npx --yes @tauri-apps/cli@^2 "${args[@]}"
+
+      - name: Package portable Windows zip
+        if: matrix.platform == 'windows'
+        run: node scripts/release/package-portable-win.mjs --release-dir "$RELEASE_DIR"
+
+      - name: Collect release assets
+        run: >-
+          node scripts/release/collect-desktop-bundles.mjs
+          --platform ${{ matrix.platform }}
+          --arch ${{ matrix.arch }}
+          --version ${{ needs.meta.outputs.version }}
+          --release-dir "$RELEASE_DIR"
+          --out-dir release-assets
+
+      - name: Upload to GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CLOBBER: ${{ needs.meta.outputs.clobber }}
+        run: |
+          flags=()
+          if [ "$CLOBBER" = "true" ]; then flags+=(--clobber); fi
+          gh release upload "$RELEASE_TAG" release-assets/* "${flags[@]}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-assets-${{ matrix.platform }}-${{ matrix.arch }}
+          path: release-assets
+          retention-days: 7
+
+  daemon-bundle:
+    name: daemon bundle ${{ matrix.target }}
+    needs: meta
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { runner: ubuntu-latest, target: linux-x64 }
+          - { runner: ubuntu-latest, target: linux-arm64 }
+          - { runner: macos-latest, target: darwin-arm64 }
+          - { runner: macos-latest, target: darwin-x64 }
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+
+      # The bundle script lands with the install-script work; until it is on the
+      # tagged commit this job is a no-op rather than a failure.
+      - name: Check for bundle script
+        id: script
+        run: |
+          if [ -f scripts/release/build-daemon-bundle.mjs ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::scripts/release/build-daemon-bundle.mjs is not on $RELEASE_TAG; skipping daemon bundle."
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.script.outputs.present == 'true'
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        if: steps.script.outputs.present == 'true'
+        run: node scripts/ci/npm-retry.mjs ci
+
+      - name: Build daemon and its web UI
+        if: steps.script.outputs.present == 'true'
+        run: npm run build:server && npm run build:daemon-web-ui
+
+      - name: Build daemon bundle
+        if: steps.script.outputs.present == 'true'
+        run: npm run build:daemon-bundle -- --target ${{ matrix.target }} --out-dir dist/bundles
+
+      - name: Upload to GitHub release
+        if: steps.script.outputs.present == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CLOBBER: ${{ needs.meta.outputs.clobber }}
+        run: |
+          flags=()
+          if [ "$CLOBBER" = "true" ]; then flags+=(--clobber); fi
+          ls -l dist/bundles/fde-daemon-*.tar.gz*
+          gh release upload "$RELEASE_TAG" dist/bundles/fde-daemon-*.tar.gz dist/bundles/fde-daemon-*.tar.gz.sha256 "${flags[@]}"
+
+  updater-manifest:
+    name: updater latest.json
+    needs: [meta, desktop]
+    if: needs.meta.outputs.signing == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-assets-*
+          path: release-assets
+          merge-multiple: true
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-notes
+          path: notes
+
+      - name: Build latest.json
+        run: >-
+          node scripts/release/build-updater-manifest.mjs
+          --version ${{ needs.meta.outputs.version }}
+          --tag "$RELEASE_TAG"
+          --repo "$GITHUB_REPOSITORY"
+          --assets-dir release-assets
+          --notes-file notes/notes.md
+          --out latest.json
+
+      - name: Upload to GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CLOBBER: ${{ needs.meta.outputs.clobber }}
+        run: |
+          flags=()
+          if [ "$CLOBBER" = "true" ]; then flags+=(--clobber); fi
+          gh release upload "$RELEASE_TAG" latest.json "${flags[@]}"
+
+  docker:
+    name: docker image
+    needs: meta
+    if: needs.meta.outputs.docker == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      IMAGE: froggapp/fde
+      VERSION: ${{ needs.meta.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Exact version tags are immutable: if one exists, nothing is pushed. Fix a bad
+      # image by bumping the patch version and cutting a new release.
+      - name: Compute tags
+        id: tags
+        run: |
+          if docker manifest inspect "$IMAGE:$VERSION" > /dev/null 2>&1; then
+            echo "::warning::$IMAGE:$VERSION already exists on Docker Hub; skipping push."
+            echo "push=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          tags="$IMAGE:$VERSION"
+          case "$VERSION" in
+            *-*) ;; # pre-release versions never move the rolling tags
+            *)
+              major="${VERSION%%.*}"
+              minor="${VERSION%.*}"
+              tags="$tags,$IMAGE:$minor,$IMAGE:$major,$IMAGE:latest"
+              ;;
+          esac
+          echo "push=true" >> "$GITHUB_OUTPUT"
+          echo "tags=$tags" >> "$GITHUB_OUTPUT"
+          echo "Pushing: $tags"
+
+      - uses: docker/setup-buildx-action@v3
+        if: steps.tags.outputs.push == 'true'
+
+      - uses: docker/build-push-action@v6
+        if: steps.tags.outputs.push == 'true'
+        with:
+          context: .
+          file: deploy/docker/base/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.tags.outputs.tags }}
+          build-args: |
+            PASEO_VERSION=${{ env.VERSION }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
