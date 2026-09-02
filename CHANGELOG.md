@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.9
+
+- Android APK: `app.frogg.fde` identity, version code derived from the package version, `scripts/release/build-android-apk.mjs`, CI jobs, docs.
+- Playwright e2e re-baselined for the settings modal; fixed a cold deep-link into settings that could land on the wrong screen.
+- CI: lefthook removed from the dependency tree (macOS/Windows runners), conflicting apt package dropped, already-uploaded release assets are skipped on re-runs.
+
 ## 0.1.8
 
 - Local daemon sidecar (milestone 3). The desktop app can download the FDE daemon bundle for
