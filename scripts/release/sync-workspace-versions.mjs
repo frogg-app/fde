@@ -39,7 +39,7 @@ const touched = [];
 
 /** Rewrites `version = "..."` in the `[package]` table only. */
 export function syncCargoPackageVersion(manifest, version) {
-  const packageTable = /^\[package\][^\[]*/m;
+  const packageTable = /^\[package\][^[]*/m;
   return manifest.replace(packageTable, (table) =>
     table.replace(/^(version\s*=\s*")[^"]*(")/m, `$1${version}$2`),
   );

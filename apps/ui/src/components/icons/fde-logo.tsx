@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Image } from "react-native";
 
 const LOGO_SOURCE = require("../../../assets/images/icon.png");
@@ -9,12 +10,6 @@ interface FdeLogoProps {
 }
 
 export function FdeLogo({ size = 64 }: FdeLogoProps) {
-  return (
-    <Image
-      source={LOGO_SOURCE}
-      style={{ width: size, height: size }}
-      resizeMode="contain"
-      accessibilityLabel="FDE"
-    />
-  );
+  const style = useMemo(() => ({ width: size, height: size }), [size]);
+  return <Image source={LOGO_SOURCE} style={style} resizeMode="contain" accessibilityLabel="FDE" />;
 }
