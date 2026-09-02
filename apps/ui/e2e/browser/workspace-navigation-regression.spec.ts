@@ -34,7 +34,7 @@ import {
   workspaceDeckEntryLocator,
   expectWorkspaceDeckEntryCount,
 } from "../support/helpers/workspace-ui";
-import { clickSettingsBackToWorkspace } from "../support/helpers/settings";
+import { clickSettingsBackToWorkspace, expectSettingsModalOpen } from "../support/helpers/settings";
 import { getServerId } from "../support/helpers/server-id";
 import { expectAppRoute } from "../support/helpers/route-assertions";
 import { installDaemonWebSocketGate } from "../support/helpers/daemon-websocket-gate";
@@ -280,7 +280,7 @@ test.describe("Workspace navigation regression", () => {
     await expectWorkspaceHeaderAbsent(page);
     await expectWorkspaceTabsAbsent(page);
     await openSettings(page);
-    await expect(page).toHaveURL(/\/settings\/general$/);
+    await expectSettingsModalOpen(page);
   });
 
   test("cold workspace URL keeps sidebar workspace navigation functional", async ({ page }) => {

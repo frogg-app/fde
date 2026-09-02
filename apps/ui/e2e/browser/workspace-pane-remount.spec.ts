@@ -7,7 +7,11 @@ import { clickNewTerminal, terminalSurfaceLocator } from "../support/helpers/lau
 import { renameModalInput } from "../support/helpers/rename";
 import { seedWorkspace } from "../support/helpers/seed-client";
 import { getServerId } from "../support/helpers/server-id";
-import { clickSettingsBackToWorkspace, openCompactSettings } from "../support/helpers/settings";
+import {
+  clickSettingsBackToWorkspace,
+  expectSettingsModalOpen,
+  openCompactSettings,
+} from "../support/helpers/settings";
 import { openSettings } from "../support/helpers/app";
 import { runWorkspaceActionFromCommandCenter } from "../support/helpers/command-center-workspace-actions";
 import {
@@ -101,7 +105,7 @@ test.describe("Workspace pane mounting", () => {
 
         const settingsShortcut = await getSettingsShortcut(page);
         await page.keyboard.press(settingsShortcut);
-        await expect(page).toHaveURL(/\/settings\/general$/);
+        await expectSettingsModalOpen(page);
         await expect(renameInput).not.toBeVisible();
         await clickSettingsBackToWorkspace(page);
         await expectSameRenderedNode(originalComposer!, composer);

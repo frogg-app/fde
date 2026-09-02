@@ -33,6 +33,7 @@ import {
 import { gotoAppShell } from "../support/helpers/app";
 import { waitForSidebarHydration } from "../support/helpers/workspace-ui";
 import { getServerId } from "../support/helpers/server-id";
+import { expectHostSettingsSectionSelected } from "../support/helpers/settings";
 
 // ─── Shared state ──────────────────────────────────────────────────────────
 
@@ -258,7 +259,7 @@ test.describe("Tab creation", () => {
     await expect(editProfiles).toHaveAccessibleName("Edit profiles");
 
     await editProfiles.click();
-    await expect(page).toHaveURL(/\/settings\/hosts\/[^/]+\/terminals$/);
+    await expectHostSettingsSectionSelected(page, "terminals");
   });
 
   test("tab bar shows action buttons per pane", async ({ page }) => {
