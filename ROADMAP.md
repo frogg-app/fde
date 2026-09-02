@@ -16,6 +16,11 @@ Done items move to CHANGELOG.md.
       alternative to typing `ssh://user@host`.
 - [ ] **Portable Windows zip** as a standard build artifact next to the NSIS installer.
 - [ ] **Rebrand follow-through.** Verify no user-facing "Paseo" remains except attribution.
+- [x] **Android APK.** `apps/ui` builds as the Android app (`app.frogg.fde`, name "FDE",
+      version code derived from the root `package.json`); `scripts/release/build-android-apk.mjs`
+      builds it locally and in `release.yml`, which attaches `FDE-<version>-android-arm64-v8a.apk`
+      to the release (release-signed when the `FDE_ANDROID_KEYSTORE_*` secrets exist). See
+      docs/android.md. Manual: generate the release keystore and add the secrets.
 
 ## Install story (replaces `npm install -g @getpaseo/cli`)
 
@@ -62,7 +67,7 @@ Done items move to CHANGELOG.md.
 
 ## Later
 
-- [ ] Mobile apps (the Expo UI still builds for iOS/Android; scripts under `scripts/mobile`).
+- [ ] iOS app (the Expo UI still builds for iOS; scripts under `scripts/mobile`). Android is done, see "Now".
 - [ ] macOS builds and DMG packaging.
 
 ## Notes and assumptions (autonomous run, 2026-09-02)
