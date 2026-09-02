@@ -54,6 +54,10 @@
       },
       "ignore": ["android/**", "ios/**", ".expo/**", "dist/**", "scripts/reset-project.js"]
     },
+    "apps/desktop": {
+      "entry": ["src/bridge.ts", "test/**/*.mjs"],
+      "project": ["src/**/*.ts", "test/**/*.mjs"]
+    },
     "apps/cli": {
       "entry": ["src/index.ts", "bin/paseo", "src/**/*.test.{ts,tsx}", "tests/**/*.{ts,tsx}"],
       "project": ["src/**/*.{ts,tsx}", "tests/**/*.{ts,tsx}"]

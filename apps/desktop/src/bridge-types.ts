@@ -1,0 +1,88 @@
+// Local copy of the bridge contract from `apps/ui/src/desktop/host.ts`. That
+// file imports react-native, so the shell keeps a dependency-free mirror of the
+// members it implements. Keep the two in sync.
+
+export interface DialogAskOptions {
+  title?: string;
+  okLabel?: string;
+  cancelLabel?: string;
+  kind?: "info" | "warning" | "error";
+}
+
+export interface DialogOpenOptions {
+  title?: string;
+  defaultPath?: string;
+  directory?: boolean;
+  createDirectory?: boolean;
+  multiple?: boolean;
+  filters?: Array<{ name: string; extensions: string[] }>;
+}
+
+export interface DialogAskWithCheckboxOptions extends DialogAskOptions {
+  checkboxLabel: string;
+  checkboxChecked?: boolean;
+}
+
+export interface WindowChromeUpdate {
+  backgroundColor?: string;
+  trafficLightOffsetY?: number;
+}
+
+export type DragDropPayload =
+  | { type: "enter"; paths: string[] }
+  | { type: "over" }
+  | { type: "drop"; paths: string[] }
+  | { type: "leave" };
+
+export type Unlisten = () => void;
+
+export interface DesktopWindowBridge {
+  label?: string;
+  minimize?: () => Promise<void>;
+  close?: () => Promise<void>;
+  toggleMaximize?: () => Promise<void>;
+  isMaximized?: () => Promise<boolean>;
+  setFullscreen?: (fullscreen: boolean) => Promise<void>;
+  isFullscreen?: () => Promise<boolean>;
+  updateChrome?: (update: WindowChromeUpdate) => Promise<void>;
+  onResized?: <TEvent = unknown>(handler: (event: TEvent) => void) => Promise<Unlisten> | Unlisten;
+  setBadgeCount?: (count?: number) => Promise<void>;
+  onDragDropEvent?: <TEvent = unknown>(
+    handler: (event: TEvent) => void,
+  ) => Promise<Unlisten> | Unlisten;
+}
+
+export interface DesktopHostBridge {
+  platform?: string;
+  windowChromeMode?: string;
+  invoke?: (command: string, args?: Record<string, unknown>) => Promise<unknown>;
+  getPendingOpenProject?: () => Promise<string | null>;
+  agentNavigation?: { ready?: () => Promise<{ serverId: string; agentId: string } | null> };
+  events?: {
+    on?: (event: string, handler: (payload: unknown) => void) => Promise<Unlisten> | Unlisten;
+  };
+  window?: {
+    openNew?: (options?: { pendingOpenProjectPath?: string | null }) => Promise<void>;
+    getCurrentWindow?: () => DesktopWindowBridge;
+  };
+  dialog?: {
+    ask?: (message: string, options?: DialogAskOptions) => Promise<boolean>;
+    askWithCheckbox?: (
+      message: string,
+      options: DialogAskWithCheckboxOptions,
+    ) => Promise<{ confirmed: boolean; dontAskAgain: boolean }>;
+    open?: (options?: DialogOpenOptions) => Promise<string | string[] | null>;
+  };
+  notification?: {
+    isSupported?: () => Promise<boolean>;
+    sendNotification?: (
+      payload: string | { title: string; body?: string; data?: Record<string, unknown> },
+    ) => Promise<boolean>;
+  };
+  opener?: { openUrl?: (url: string) => Promise<void> };
+  webUtils?: { getPathForFile?: (file: File) => string };
+  // Not implemented in milestone 1; the UI hides those features when absent.
+  editor?: undefined;
+  menu?: undefined;
+  browser?: undefined;
+}

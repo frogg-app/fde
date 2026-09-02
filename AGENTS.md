@@ -29,3 +29,9 @@ versioning, Docker, file-length rules). The upstream Paseo source is kept read-o
 - This VM is headless and shared: no browser, bind to `0.0.0.0`, don't kill others' processes.
 - Windows builds of the Tauri shell are cross-compiled from Linux with `cargo-xwin`
   (target `x86_64-pc-windows-msvc`) and NSIS. See `docs/building.md`.
+
+## Commit hook
+
+`lefthook` runs format, lint, and the full root typecheck on every commit. The typecheck
+takes several minutes on this VM. Run `npm run typecheck` yourself, then commit with
+`--no-verify` if the hook would otherwise time out.
