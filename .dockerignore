@@ -38,3 +38,5 @@ apps/ui/android
 plan.*.log
 *.log
 CLAUDE.local.md
+**/target
+.claude
