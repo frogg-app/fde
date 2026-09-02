@@ -19,3 +19,6 @@ result
 apps/desktop/src-tauri/gen/schemas/
 apps/desktop/src-tauri/bridge.js
 .claude/worktrees/
+
+# Playwright output
+**/test-results/
