@@ -2259,6 +2259,74 @@ export const zhCN: TranslationResources = {
         removeErrorMessage: "无法移除连接",
         timeout: "超时",
       },
+      sshDeploy: {
+        title: "此主机上的守护进程",
+        info: "使用与手动安装相同的脚本在 SSH 主机上安装 FDE 守护进程。主机自行下载发布包，应用只通过 SSH 运行脚本。",
+        status: {
+          probing: "正在检查...",
+          installed: "已安装 {{version}}",
+          installedUnknown: "已安装",
+          container: "Docker 容器",
+          notInstalled: "未安装",
+          unreachable: "无法访问",
+        },
+        probe: {
+          platform: "平台",
+          unknown: "未知",
+          service: {
+            systemd: "systemd 用户服务",
+            launchd: "launchd 代理",
+            none: "无用户服务管理器",
+          },
+          docker: {
+            label: "Docker",
+            available: "可用",
+            container: "可用，存在 fde-daemon 容器",
+            missing: "不可用",
+          },
+          curlMissing: "主机上没有 curl；原生安装需要它来下载发布包。",
+          noService: "没有用户服务管理器，守护进程在重启后不会自动启动。",
+          installDir: "原生安装位置：{{home}}/.local/share/fde",
+          failed: "无法检查主机。{{detail}}",
+        },
+        method: {
+          label: "方式",
+          native: "原生",
+          docker: "Docker",
+          dockerHint: "此主机上没有可用的 Docker。",
+        },
+        fields: {
+          listen: "监听地址",
+          listenHint:
+            "应用通过 SSH 隧道连接，因此使用回环地址是正确的。仅在需要将守护进程暴露到网络时才使用 0.0.0.0。",
+          version: "版本",
+          versionHint:
+            "要安装的发布版本。默认为此应用的版本；该发布必须包含主机平台对应的守护进程包。",
+        },
+        actions: {
+          deploy: "部署",
+          upgrade: "升级",
+          reinstall: "重新安装",
+          uninstall: "卸载",
+          cancel: "取消",
+          refresh: "刷新",
+        },
+        uninstall: {
+          title: "卸载守护进程？",
+          message: "停止服务并从 {{host}} 移除 FDE 安装。守护进程状态 (~/.paseo) 会保留。",
+        },
+        log: {
+          running: "正在 {{host}} 上运行...",
+          done: "已完成。",
+          failed: "失败。{{detail}}",
+          cancelled: "已取消。",
+        },
+        offer: {
+          title: "未在此主机上找到守护进程",
+          message:
+            "SSH 可用，但 {{host}} 上没有安装 FDE 守护进程。现在部署吗？安装完成后会重新尝试连接。",
+        },
+      },
       pairDevices: {
         title: "配对设备",
         rowTitle: "配对设备",

@@ -2383,6 +2383,76 @@ export const en = {
         removeErrorMessage: "Unable to remove connection",
         timeout: "Timeout",
       },
+      sshDeploy: {
+        title: "Daemon on this host",
+        info: "Installs the FDE daemon on the SSH host with the same scripts as the manual install. The host downloads the release bundle itself; the app only runs the script over SSH.",
+        status: {
+          probing: "Checking...",
+          installed: "Installed {{version}}",
+          installedUnknown: "Installed",
+          container: "Docker container",
+          notInstalled: "Not installed",
+          unreachable: "Unreachable",
+        },
+        probe: {
+          platform: "Platform",
+          unknown: "Unknown",
+          service: {
+            systemd: "systemd user service",
+            launchd: "launchd agent",
+            none: "no user service manager",
+          },
+          docker: {
+            label: "Docker",
+            available: "Available",
+            container: "Available, fde-daemon container present",
+            missing: "Not available",
+          },
+          curlMissing:
+            "curl is missing on the host; the native install needs it to download the bundle.",
+          noService: "Without a user service manager the daemon will not restart after a reboot.",
+          installDir: "Native installs go to {{home}}/.local/share/fde",
+          failed: "Could not inspect the host. {{detail}}",
+        },
+        method: {
+          label: "Method",
+          native: "Native",
+          docker: "Docker",
+          dockerHint: "Docker is not available on this host.",
+        },
+        fields: {
+          listen: "Listen address",
+          listenHint:
+            "The app connects through the SSH tunnel, so loopback is right. Use 0.0.0.0 only to expose the daemon on the network.",
+          version: "Version",
+          versionHint:
+            "Release to install. Defaults to this app's version; the release must carry a daemon bundle for the host's platform.",
+        },
+        actions: {
+          deploy: "Deploy",
+          upgrade: "Upgrade",
+          reinstall: "Reinstall",
+          uninstall: "Uninstall",
+          cancel: "Cancel",
+          refresh: "Refresh",
+        },
+        uninstall: {
+          title: "Uninstall the daemon?",
+          message:
+            "Stops the service and removes the FDE install from {{host}}. Daemon state (~/.paseo) is kept.",
+        },
+        log: {
+          running: "Running on {{host}}...",
+          done: "Finished.",
+          failed: "Failed. {{detail}}",
+          cancelled: "Cancelled.",
+        },
+        offer: {
+          title: "Daemon not found on this host",
+          message:
+            "SSH works, but no FDE daemon is installed on {{host}}. Deploy it now? The connection is retried when the install finishes.",
+        },
+      },
       pairDevices: {
         title: "Pair devices",
         rowTitle: "Pair a device",

@@ -2341,6 +2341,77 @@ export const fr: TranslationResources = {
         removeErrorMessage: "Impossible de supprimer la connexion",
         timeout: "Temps mort",
       },
+      sshDeploy: {
+        title: "Daemon sur cet hôte",
+        info: "Installe le daemon FDE sur l'hôte SSH avec les mêmes scripts que l'installation manuelle. L'hôte télécharge lui-même le bundle de la version ; l'app ne fait qu'exécuter le script via SSH.",
+        status: {
+          probing: "Vérification...",
+          installed: "Installé {{version}}",
+          installedUnknown: "Installé",
+          container: "Conteneur Docker",
+          notInstalled: "Non installé",
+          unreachable: "Injoignable",
+        },
+        probe: {
+          platform: "Plateforme",
+          unknown: "Inconnue",
+          service: {
+            systemd: "service utilisateur systemd",
+            launchd: "agent launchd",
+            none: "aucun gestionnaire de services utilisateur",
+          },
+          docker: {
+            label: "Docker",
+            available: "Disponible",
+            container: "Disponible, conteneur fde-daemon présent",
+            missing: "Non disponible",
+          },
+          curlMissing:
+            "curl est absent de l'hôte ; l'installation native en a besoin pour télécharger le bundle.",
+          noService:
+            "Sans gestionnaire de services utilisateur, le daemon ne redémarrera pas après un redémarrage.",
+          installDir: "Les installations natives vont dans {{home}}/.local/share/fde",
+          failed: "Impossible d'inspecter l'hôte. {{detail}}",
+        },
+        method: {
+          label: "Méthode",
+          native: "Natif",
+          docker: "Docker",
+          dockerHint: "Docker n'est pas disponible sur cet hôte.",
+        },
+        fields: {
+          listen: "Adresse d'écoute",
+          listenHint:
+            "L'app se connecte via le tunnel SSH, le loopback est donc le bon choix. N'utilisez 0.0.0.0 que pour exposer le daemon sur le réseau.",
+          version: "Version",
+          versionHint:
+            "Version à installer. Par défaut, celle de cette app ; la version doit fournir un bundle du daemon pour la plateforme de l'hôte.",
+        },
+        actions: {
+          deploy: "Déployer",
+          upgrade: "Mettre à jour",
+          reinstall: "Réinstaller",
+          uninstall: "Désinstaller",
+          cancel: "Annuler",
+          refresh: "Actualiser",
+        },
+        uninstall: {
+          title: "Désinstaller le daemon ?",
+          message:
+            "Arrête le service et supprime l'installation FDE de {{host}}. L'état du daemon (~/.paseo) est conservé.",
+        },
+        log: {
+          running: "Exécution sur {{host}}...",
+          done: "Terminé.",
+          failed: "Échec. {{detail}}",
+          cancelled: "Annulé.",
+        },
+        offer: {
+          title: "Daemon introuvable sur cet hôte",
+          message:
+            "SSH fonctionne, mais aucun daemon FDE n'est installé sur {{host}}. Le déployer maintenant ? La connexion sera réessayée à la fin de l'installation.",
+        },
+      },
       pairDevices: {
         title: "Associer des appareils",
         rowTitle: "Associer un appareil",
