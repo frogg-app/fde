@@ -182,8 +182,12 @@ function createBridge(): DesktopHostBridge {
       ready: () => invoke<{ serverId: string; agentId: string } | null>("agent_navigation_ready"),
     },
     events: {
-      // The UI unwraps `{payload}` envelopes itself, so the Tauri event is passed as-is.
-      on: (event, handler) => listen(`paseo:event:${event}`, (tauriEvent) => handler(tauriEvent)),
+      // Electron's preload handed listeners the payload alone. Tauri's `listen`
+      // wraps it in `{event, id, payload}`; unwrap here so consumers that read
+      // fields straight off the payload (the local-daemon transport shim keys
+      // every event on `sessionId`) see the same shape on both shells.
+      on: (event, handler) =>
+        listen(`paseo:event:${event}`, (tauriEvent) => handler(tauriEvent.payload)),
     },
     window: createWindowBridge(),
     dialog: createDialogBridge(),

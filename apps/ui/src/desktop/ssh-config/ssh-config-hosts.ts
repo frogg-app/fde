@@ -1,3 +1,4 @@
+import { DEFAULT_SSH_DAEMON_PORT } from "@fde/protocol/ssh-transport";
 import { invokeDesktopCommand } from "@/desktop/electron/invoke";
 
 export interface SshConfigHost {
@@ -45,10 +46,16 @@ export function parseSshConfigHosts(raw: unknown): SshConfigHost[] {
 /**
  * The target the Remote SSH form submits for a config host. Only the alias is
  * used: `ssh` resolves user, host name, port and identity from the config
- * itself, and expanding them here would bypass it.
+ * itself, and expanding them here would bypass it. A daemon port other than
+ * the default rides along as `?daemonPort=`, so the default keeps the plain
+ * `ssh://<alias>` identity a host was first saved under.
  */
-export function buildSshConfigHostTarget(host: Pick<SshConfigHost, "alias">): string {
-  return `ssh://${host.alias}`;
+export function buildSshConfigHostTarget(
+  host: Pick<SshConfigHost, "alias">,
+  daemonPort: number = DEFAULT_SSH_DAEMON_PORT,
+): string {
+  const base = `ssh://${host.alias}`;
+  return daemonPort === DEFAULT_SSH_DAEMON_PORT ? base : `${base}?daemonPort=${daemonPort}`;
 }
 
 /** `user@hostName:port`, omitting whatever the config does not set. */

@@ -1645,14 +1645,18 @@ export const ru: TranslationResources = {
     remoteSsh: {
       title: "Удалённый SSH",
       helper: "Подключитесь к демону FDE на удалённом хосте.",
+      tabs: {
+        config: "Конфигурация SSH",
+        manual: "Вручную",
+      },
       sshConfig: {
-        label: "Из конфигурации SSH",
-        placeholder: "Выберите хост",
-        searchPlaceholder: "Поиск хостов",
         empty: "Нет хостов в ~/.ssh/config",
+        helperBefore: "Подключается командой ",
+        helperAfter: " с вашей конфигурацией SSH (ключи, пользователь, порт, jump-хосты).",
       },
       fields: {
         target: "Хост SSH",
+        daemonPort: "Порт демона",
       },
       actions: {
         cancel: "Отмена",
@@ -1661,6 +1665,8 @@ export const ru: TranslationResources = {
       },
       errors: {
         targetRequired: "Укажите хост SSH",
+        hostRequired: "Выберите хост из конфигурации SSH",
+        invalidDaemonPort: "Порт демона должен быть от 1 до 65535",
         invalidTarget: "Укажите корректный хост ssh://",
         failedToConnect: "Не удалось подключиться по SSH. {{detail}}",
       },

@@ -1,4 +1,5 @@
 import { getDesktopHost, isElectronRuntime } from "@/desktop/host";
+import { listenToDesktopEvent } from "@/desktop/electron/events";
 import { invokeDesktopCommand } from "@/desktop/electron/invoke";
 import type { AgentSkillSelection } from "@fde/protocol/messages";
 
@@ -174,11 +175,12 @@ export type LocalTransportEventHandler = (payload: LocalTransportEventPayload) =
 export async function listenToLocalTransportEvents(
   handler: LocalTransportEventHandler,
 ): Promise<LocalTransportEventUnlisten> {
-  const listen = getDesktopHost()?.events?.on;
-  if (typeof listen !== "function") {
+  if (typeof getDesktopHost()?.events?.on !== "function") {
     throw new Error("Desktop events API is unavailable.");
   }
-  const unlisten = await listen("local-daemon-transport-event", (payload: unknown) => {
+  // `listenToDesktopEvent` strips a `{payload}` envelope, so a shell that
+  // forwards its native event object still delivers the bare payload here.
+  return listenToDesktopEvent<unknown>("local-daemon-transport-event", (payload) => {
     if (!isRecord(payload)) {
       return;
     }
@@ -192,7 +194,6 @@ export async function listenToLocalTransportEvents(
       error: toStringOrNull(payload.error),
     });
   });
-  return typeof unlisten === "function" ? unlisten : () => {};
 }
 
 export async function openLocalTransportSession(

@@ -1617,14 +1617,18 @@ export const ar: TranslationResources = {
     remoteSsh: {
       title: "SSH عن بُعد",
       helper: "الاتصال بخادم FDE يعمل على المضيف البعيد.",
+      tabs: {
+        config: "إعدادات SSH",
+        manual: "يدوي",
+      },
       sshConfig: {
-        label: "من إعدادات SSH",
-        placeholder: "اختر مضيفًا",
-        searchPlaceholder: "البحث عن المضيفين",
         empty: "لا توجد مضيفات في ~/.ssh/config",
+        helperBefore: "يتصل باستخدام ",
+        helperAfter: " عبر إعدادات SSH لديك (المفاتيح والمستخدم والمنفذ ومضيفات القفز).",
       },
       fields: {
         target: "مضيف SSH",
+        daemonPort: "منفذ الخادم",
       },
       actions: {
         cancel: "إلغاء",
@@ -1633,6 +1637,8 @@ export const ar: TranslationResources = {
       },
       errors: {
         targetRequired: "مضيف SSH مطلوب",
+        hostRequired: "اختر مضيفًا من إعدادات SSH",
+        invalidDaemonPort: "يجب أن يكون منفذ الخادم بين 1 و65535",
         invalidTarget: "أدخل مضيف ssh:// صالحًا",
         failedToConnect: "تعذر الاتصال عبر SSH. {{detail}}",
       },

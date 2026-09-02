@@ -1632,14 +1632,18 @@ export const ja: TranslationResources = {
     remoteSsh: {
       title: "リモート SSH",
       helper: "リモートホストで動作する FDE デーモンに接続します。",
+      tabs: {
+        config: "SSH 設定",
+        manual: "手動",
+      },
       sshConfig: {
-        label: "SSH 設定から",
-        placeholder: "ホストを選択",
-        searchPlaceholder: "ホストを検索",
         empty: "~/.ssh/config にホストがありません",
+        helperBefore: "",
+        helperAfter: " で接続します。SSH 設定（鍵、ユーザー、ポート、踏み台ホスト）が使われます。",
       },
       fields: {
         target: "SSH ホスト",
+        daemonPort: "デーモンのポート",
       },
       actions: {
         cancel: "キャンセル",
@@ -1648,6 +1652,8 @@ export const ja: TranslationResources = {
       },
       errors: {
         targetRequired: "SSH ホストは必須です",
+        hostRequired: "SSH 設定からホストを選択してください",
+        invalidDaemonPort: "デーモンのポートは 1〜65535 の範囲で指定してください",
         invalidTarget: "有効な ssh:// ホストを入力してください",
         failedToConnect: "SSH で接続できません。{{detail}}",
       },

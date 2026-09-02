@@ -19,6 +19,11 @@ use super::ssh::SshProcess;
 use super::{lock, EventSink, Outgoing, Registry, SessionState};
 
 pub const SETUP_TIMEOUT: Duration = Duration::from_secs(30);
+/// Remote SSH gets a shorter window: ssh's own `ConnectTimeout=10` covers the
+/// TCP connect, and the webview's connect timer for SSH hosts (20 s in
+/// `test-daemon-connection.ts`) must fire *after* this one so the UI shows
+/// ssh's stderr rather than its generic "timed out" copy.
+pub const SSH_SETUP_TIMEOUT: Duration = Duration::from_secs(18);
 
 struct Endpoint {
     ws: WebSocketStream<BoxedStream>,
@@ -56,14 +61,20 @@ impl SessionTask {
 
     fn fail_opening(&self, message: String) {
         if self.dispose() {
+            log::warn!("transport {}: {message}", self.id);
             (self.emit)(error_event(&self.id, &message));
         }
     }
 
     pub(super) async fn run(self, mut outgoing: mpsc::UnboundedReceiver<Outgoing>) {
         let description = self.target.describe();
+        log::info!("transport {}: opening {description}", self.id);
+        let setup_timeout = match self.target {
+            TransportTarget::Ssh { .. } => SSH_SETUP_TIMEOUT,
+            _ => SETUP_TIMEOUT,
+        };
         let setup = tokio::select! {
-            result = tokio::time::timeout(SETUP_TIMEOUT, connect(&self.target)) => result,
+            result = tokio::time::timeout(setup_timeout, connect(&self.target)) => result,
             _ = self.cancel.notified() => return,
         };
         let mut endpoint = match setup {
@@ -73,10 +84,12 @@ impl SessionTask {
             }
             Err(_) => {
                 return self.fail_opening(format!(
-                    "Connection to {description} timed out during setup."
+                    "Connection to {description} timed out during setup ({} s).",
+                    setup_timeout.as_secs()
                 ))
             }
         };
+        log::info!("transport {}: open ({description})", self.id);
 
         let became_open = {
             let mut sessions = lock(&self.sessions);
@@ -109,6 +122,7 @@ impl SessionTask {
                             .map(|f| (u16::from(f.code), f.reason.to_string()))
                             .unwrap_or((1005, String::new()));
                         if self.dispose() {
+                            log::info!("transport {}: closed by peer ({code} {reason})", self.id);
                             (self.emit)(close_event(&self.id, code, &reason));
                         }
                         break;
@@ -129,6 +143,7 @@ impl SessionTask {
                             None => error.to_string(),
                         };
                         if self.dispose() {
+                            log::warn!("transport {}: read failed: {detail}", self.id);
                             (self.emit)(error_event(&self.id, &detail));
                             (self.emit)(close_event(&self.id, 1006, ""));
                         }
@@ -136,6 +151,7 @@ impl SessionTask {
                     }
                     None => {
                         if self.dispose() {
+                            log::info!("transport {}: stream ended", self.id);
                             (self.emit)(close_event(&self.id, 1006, ""));
                         }
                         break;
@@ -165,14 +181,24 @@ async fn connect(target: &TransportTarget) -> Result<Endpoint, String> {
                 SshProcess::spawn(host, *ssh_port, *daemon_port).map_err(|e| e.to_string())?;
             let port = daemon_port.unwrap_or(DEFAULT_SSH_DAEMON_PORT);
             let url = format!("ws://127.0.0.1:{port}{WS_ENDPOINT_PATH}");
-            match handshake(&url, Box::pin(stream)).await {
+            // ssh exiting (auth refused, forward failed, host unreachable)
+            // ends the attempt at once: its stderr is the error, not the
+            // handshake's view of a closed pipe.
+            let outcome = tokio::select! {
+                result = handshake(&url, Box::pin(stream)) => result,
+                exit = ssh.wait() => Err(match exit {
+                    Some(failure) => format!("ssh exited before the tunnel opened: {failure}"),
+                    None => "ssh exited before the tunnel opened".to_string(),
+                }),
+            };
+            match outcome {
                 Ok(ws) => Ok(Endpoint { ws, ssh: Some(ssh) }),
                 Err(error) => {
                     let detail = ssh.failure_detail().await;
                     ssh.kill().await;
                     Err(match detail {
-                        Some(failure) => format!("{error}: {failure}"),
-                        None => error,
+                        Some(failure) if !error.contains(&failure) => format!("{error}: {failure}"),
+                        _ => error,
                     })
                 }
             }
@@ -199,8 +225,16 @@ async fn connect(target: &TransportTarget) -> Result<Endpoint, String> {
 }
 
 async fn handshake(url: &str, stream: BoxedStream) -> Result<WebSocketStream<BoxedStream>, String> {
-    let (ws, _response) = tokio_tungstenite::client_async(url, stream)
+    log::info!("transport: websocket handshake to {url}");
+    let (ws, response) = tokio_tungstenite::client_async(url, stream)
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| {
+            log::warn!("transport: websocket handshake to {url} failed: {e}");
+            e.to_string()
+        })?;
+    log::info!(
+        "transport: websocket handshake to {url} ok (HTTP {})",
+        response.status()
+    );
     Ok(ws)
 }

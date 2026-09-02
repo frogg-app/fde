@@ -1626,14 +1626,18 @@ export const ko: TranslationResources = {
     remoteSsh: {
       title: "원격 SSH",
       helper: "원격 호스트에서 실행 중인 FDE 데몬에 연결합니다.",
+      tabs: {
+        config: "SSH 설정",
+        manual: "수동",
+      },
       sshConfig: {
-        label: "SSH 설정에서",
-        placeholder: "호스트 선택",
-        searchPlaceholder: "호스트 검색",
         empty: "~/.ssh/config에 호스트가 없습니다",
+        helperBefore: "",
+        helperAfter: " 명령으로 연결하며 SSH 설정(키, 사용자, 포트, 점프 호스트)을 사용합니다.",
       },
       fields: {
         target: "SSH 호스트",
+        daemonPort: "데몬 포트",
       },
       actions: {
         cancel: "취소",
@@ -1642,6 +1646,8 @@ export const ko: TranslationResources = {
       },
       errors: {
         targetRequired: "SSH 호스트가 필요합니다",
+        hostRequired: "SSH 설정에서 호스트를 선택하세요",
+        invalidDaemonPort: "데몬 포트는 1에서 65535 사이여야 합니다",
         invalidTarget: "유효한 ssh:// 호스트를 입력하세요",
         failedToConnect: "SSH로 연결할 수 없습니다. {{detail}}",
       },

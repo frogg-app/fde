@@ -133,3 +133,17 @@ test("platform falls back to the injected host info", () => {
   assert.equal(bridge.platform, "darwin");
   assert.equal(bridge.windowChromeMode, "native-mac");
 });
+
+test("events.on hands listeners the payload, not Tauri's event envelope", async () => {
+  const { bridge, listeners } = loadBridge({
+    platform: "win32",
+    windowChromeMode: "custom-windows",
+  });
+  const received = [];
+  await bridge.events.on("local-daemon-transport-event", (payload) => received.push(payload));
+  const listener = listeners.at(-1);
+  assert.equal(typeof listener, "function", "registers a Tauri callback");
+  const payload = { sessionId: "local-session-1", kind: "open" };
+  listener({ event: "paseo:event:local-daemon-transport-event", id: 42, payload });
+  assert.deepEqual(received, [payload]);
+});

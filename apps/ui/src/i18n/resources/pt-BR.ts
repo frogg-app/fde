@@ -1648,14 +1648,18 @@ export const ptBR: TranslationResources = {
     remoteSsh: {
       title: "SSH remoto",
       helper: "Conecte-se a um daemon FDE no host remoto.",
+      tabs: {
+        config: "Configuração SSH",
+        manual: "Manual",
+      },
       sshConfig: {
-        label: "Da configuração SSH",
-        placeholder: "Escolha um host",
-        searchPlaceholder: "Buscar hosts",
         empty: "Nenhum host em ~/.ssh/config",
+        helperBefore: "Conecta com ",
+        helperAfter: " usando sua configuração SSH (chaves, usuário, porta, hosts de salto).",
       },
       fields: {
         target: "Host SSH",
+        daemonPort: "Porta do daemon",
       },
       actions: {
         cancel: "Cancelar",
@@ -1664,6 +1668,8 @@ export const ptBR: TranslationResources = {
       },
       errors: {
         targetRequired: "O host SSH é obrigatório",
+        hostRequired: "Escolha um host da sua configuração SSH",
+        invalidDaemonPort: "A porta do daemon deve estar entre 1 e 65535",
         invalidTarget: "Insira um host ssh:// válido",
         failedToConnect: "Não foi possível conectar por SSH. {{detail}}",
       },

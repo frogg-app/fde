@@ -823,7 +823,7 @@ export const en = {
             "Update isn't available because this branch is already up to date with {{baseRef}}",
           mergePrNoGithub: "Merge PR isn't available right now because GitHub isn't connected",
           archiveNotWorktree:
-            "Archive isn't available here because this workspace was not created as a FDE worktree",
+            "Archive isn't available here because this workspace was not created as an FDE worktree",
           mergePrNoForge:
             "Merge {{noun}} isn't available right now because {{brand}} isn't connected",
           mergePrMissing: "Merge PR isn't available because there isn't a pull request yet",
@@ -1584,7 +1584,7 @@ export const en = {
     },
     direct: {
       title: "Direct connection",
-      helper: "Enter the address of a FDE server.",
+      helper: "Enter the address of an FDE server.",
       fields: {
         host: "Host",
         port: "Port",
@@ -1626,15 +1626,19 @@ export const en = {
     },
     remoteSsh: {
       title: "Remote SSH",
-      helper: "Connect to a FDE daemon running on the remote host.",
+      helper: "Connect to an FDE daemon running on the remote host.",
+      tabs: {
+        config: "SSH config",
+        manual: "Manual",
+      },
       sshConfig: {
-        label: "From SSH config",
-        placeholder: "Choose a host",
-        searchPlaceholder: "Search hosts",
         empty: "No hosts in ~/.ssh/config",
+        helperBefore: "Connects with ",
+        helperAfter: " using your SSH config (keys, user, port, jump hosts).",
       },
       fields: {
         target: "SSH host",
+        daemonPort: "Daemon port",
       },
       actions: {
         cancel: "Cancel",
@@ -1643,6 +1647,8 @@ export const en = {
       },
       errors: {
         targetRequired: "SSH host is required",
+        hostRequired: "Choose a host from your SSH config",
+        invalidDaemonPort: "Daemon port must be between 1 and 65535",
         invalidTarget: "Enter a valid ssh:// host",
         failedToConnect: "Unable to connect over SSH. {{detail}}",
       },

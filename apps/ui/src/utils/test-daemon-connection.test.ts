@@ -166,6 +166,8 @@ describe("test-daemon-connection connectToDaemon", () => {
     expect(probe.createdConfigs()[0]).toMatchObject({
       url: "paseo+desktop://ssh?host=deploy%40example.com",
       transportFactory,
+      // Above the shell's 18 s SSH setup window, so ssh's stderr wins over the timer.
+      connectTimeoutMs: 20_000,
     });
   });
 

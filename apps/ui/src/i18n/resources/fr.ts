@@ -1666,14 +1666,18 @@ export const fr: TranslationResources = {
     remoteSsh: {
       title: "SSH distant",
       helper: "Connectez-vous à un daemon FDE sur l’hôte distant.",
+      tabs: {
+        config: "Configuration SSH",
+        manual: "Manuel",
+      },
       sshConfig: {
-        label: "Depuis la configuration SSH",
-        placeholder: "Choisir un hôte",
-        searchPlaceholder: "Rechercher des hôtes",
         empty: "Aucun hôte dans ~/.ssh/config",
+        helperBefore: "Se connecte avec ",
+        helperAfter: " via votre configuration SSH (clés, utilisateur, port, hôtes de rebond).",
       },
       fields: {
         target: "Hôte SSH",
+        daemonPort: "Port du daemon",
       },
       actions: {
         cancel: "Annuler",
@@ -1682,6 +1686,8 @@ export const fr: TranslationResources = {
       },
       errors: {
         targetRequired: "L’hôte SSH est requis",
+        hostRequired: "Choisissez un hôte de votre configuration SSH",
+        invalidDaemonPort: "Le port du daemon doit être compris entre 1 et 65535",
         invalidTarget: "Saisissez un hôte ssh:// valide",
         failedToConnect: "Connexion SSH impossible. {{detail}}",
       },

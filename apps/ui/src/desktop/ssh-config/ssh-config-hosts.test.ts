@@ -8,6 +8,13 @@ import {
 describe("buildSshConfigHostTarget", () => {
   it("uses the alias alone so ssh resolves the rest from the config", () => {
     expect(buildSshConfigHostTarget({ alias: "build-box" })).toBe("ssh://build-box");
+    expect(buildSshConfigHostTarget({ alias: "build-box" }, 6767)).toBe("ssh://build-box");
+  });
+
+  it("appends a non-default daemon port", () => {
+    expect(buildSshConfigHostTarget({ alias: "build-box" }, 7000)).toBe(
+      "ssh://build-box?daemonPort=7000",
+    );
   });
 });
 

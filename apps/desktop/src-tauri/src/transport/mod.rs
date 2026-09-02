@@ -6,6 +6,8 @@
 pub mod session;
 pub mod socket;
 pub mod ssh;
+#[cfg(all(test, unix))]
+mod ssh_e2e;
 mod task;
 
 use std::collections::HashMap;

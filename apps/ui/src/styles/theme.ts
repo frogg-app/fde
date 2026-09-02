@@ -271,7 +271,7 @@ export function buildLightSemanticColors(tint: LightThemeConfig) {
 
     destructive: tint.destructive,
     destructiveForeground: tint.surface0,
-    success: tint.accent,
+    success: "#20744A",
     successForeground: tint.surface0,
 
     background: tint.surface0,
@@ -318,8 +318,8 @@ const lightSemanticColors = buildLightSemanticColors({
   foregroundExtraMuted: "#a1a1aa",
   border: "#e4e4e7",
   borderAccent: "#ececf1",
-  accent: "#20744A",
-  accentBright: "#239956",
+  accent: "#045B9D",
+  accentBright: "#0A78C9",
   accentForeground: "#ffffff",
   primary: "#18181b",
   primaryForeground: "#fafafa",
@@ -401,7 +401,7 @@ export function buildDarkSemanticColors(tint: DarkThemeConfig) {
 
     destructive: tint.destructive,
     destructiveForeground: "#ffffff",
-    success: tint.accent,
+    success: "#7ccba0",
     successForeground: "#ffffff",
 
     // Legacy aliases (for gradual migration)
@@ -453,8 +453,9 @@ const paseoDarkColors = buildDarkSemanticColors({
   foregroundExtraMuted: "#717574",
   border: "#252B2A",
   borderAccent: "#2F3534",
-  accent: "#20744A",
-  accentBright: "#7ccba0",
+  accent: "#25B5C8",
+  accentBright: "#7FD9E6",
+  accentForeground: "#07222b", // cyan accent is light — needs dark text
   destructive: "#c64f43", // warm red, hue ~7 — reads as red (not pink) against the green tint
   terminalBlack: "#141716",
   terminalBrightBlack: "#434645",
@@ -707,8 +708,9 @@ const pureBlackDarkColors = buildDarkSemanticColors({
   foregroundExtraMuted: "#71717a",
   border: "#1c1c1c",
   borderAccent: "#242424",
-  accent: "#20744A",
-  accentBright: "#7ccba0",
+  accent: "#25B5C8",
+  accentBright: "#7FD9E6",
+  accentForeground: "#07222b", // cyan accent is light — needs dark text
   destructive: "#c44a4a",
   terminalBlack: "#595959",
   terminalBrightBlack: "#8a8a8a",

@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.1.5
+
+- Accent colour changed from green to the logo cyan/blue; success colours stay green.
+- Copy: "an FDE" everywhere (F.D.E.).
+
+- Remote SSH connections work again. The Tauri bridge forwarded its whole event object to
+  `events.on` listeners instead of the payload (Electron passed the payload alone), so the
+  local-daemon transport shim never saw its `open` event and every SSH connect ended in
+  "Connection timed out". `bridge.ts` now unwraps the payload and the UI listener tolerates
+  either shape.
+- SSH failures are reported as ssh reports them: the Rust transport races the WebSocket
+  handshake against `ssh` exiting and emits an `error` event with ssh's stderr immediately
+  (`Permission denied (publickey).`, `Host key verification failed.`, `connect_to … failed`),
+  the SSH setup window is 18 s and the UI's connect timer 20 s so that message wins over the
+  generic timeout, and the Add host sheet shows it in full.
+- Every SSH transport step (argv, executable and pid, first bytes from the tunnel, handshake
+  result, exit status and stderr, events emitted) is logged to `fde.log`. `FDE_SSH=<path>`
+  pins the ssh executable; on Windows `%SystemRoot%\System32\OpenSSH\ssh.exe` is tried when
+  `ssh` is not on the app's `PATH`.
+- Add Remote SSH host is split into two tabs: **SSH config** (hosts from `~/.ssh/config` as a
+  list with `user@hostname:port` details, an optional daemon port, and a note that it connects
+  with `ssh <alias>`) and **Manual** (the `ssh://user@host[:port][?daemonPort=]` field).
+- Integration test drives the SSH transport end to end with a fake `ssh` that bridges stdio to
+  a local daemon, and covers the exit-with-stderr path.
+
 ## 0.1.4
 
 - Desktop shell answers every daemon, CLI, log, update and legacy-skill command the UI

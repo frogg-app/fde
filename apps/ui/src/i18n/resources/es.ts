@@ -1530,7 +1530,7 @@ export const es: TranslationResources = {
     },
   },
   onboarding: {
-    title: "Bienvenido a FDE",
+    title: "Bienvenido an FDE",
     subtitle: "Conecte su computadora para comenzar",
     actions: {
       settings: "Ajustes",
@@ -1662,14 +1662,18 @@ export const es: TranslationResources = {
     remoteSsh: {
       title: "SSH remoto",
       helper: "Conéctate a un daemon de FDE en el host remoto.",
+      tabs: {
+        config: "Configuración SSH",
+        manual: "Manual",
+      },
       sshConfig: {
-        label: "Desde la configuración SSH",
-        placeholder: "Elige un host",
-        searchPlaceholder: "Buscar hosts",
         empty: "No hay hosts en ~/.ssh/config",
+        helperBefore: "Se conecta con ",
+        helperAfter: " usando tu configuración SSH (claves, usuario, puerto, hosts de salto).",
       },
       fields: {
         target: "Host SSH",
+        daemonPort: "Puerto del daemon",
       },
       actions: {
         cancel: "Cancelar",
@@ -1678,6 +1682,8 @@ export const es: TranslationResources = {
       },
       errors: {
         targetRequired: "El host SSH es obligatorio",
+        hostRequired: "Elige un host de tu configuración SSH",
+        invalidDaemonPort: "El puerto del daemon debe estar entre 1 y 65535",
         invalidTarget: "Introduce un host ssh:// válido",
         failedToConnect: "No se pudo conectar por SSH. {{detail}}",
       },
@@ -1887,8 +1893,8 @@ export const es: TranslationResources = {
       other: "usó {{count}} herramientas adicionales",
     },
     paseoCalls: {
-      one: "llamó a FDE {{count}} vez",
-      other: "llamó a FDE {{count}} veces",
+      one: "llamó an FDE {{count}} vez",
+      other: "llamó an FDE {{count}} veces",
     },
     and: "y",
   },

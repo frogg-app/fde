@@ -37,6 +37,14 @@ const defaultDaemonConnectionDependencies: DaemonConnectionDependencies<DaemonCl
   createClient: (config) => new DaemonClient(config),
 };
 
+/**
+ * Remote SSH connect budget. The shell gives ssh `ConnectTimeout=10` and
+ * abandons setup after 18 s (`SSH_SETUP_TIMEOUT` in `src/transport/task.rs`),
+ * so both the client's connect timer and the probe deadline sit above that:
+ * ssh's own stderr must reach the UI before the generic "timed out" copy.
+ */
+export const REMOTE_SSH_CONNECT_TIMEOUT_MS = 20_000;
+
 function buildRemoteSshClientConfig(input: {
   connection: Extract<HostConnection, { type: "remoteSsh" }>;
   base: Omit<DaemonClientConfig, "url">;
@@ -49,6 +57,7 @@ function buildRemoteSshClientConfig(input: {
   return {
     ...input.base,
     transportFactory: input.desktopTransportFactory,
+    connectTimeoutMs: REMOTE_SSH_CONNECT_TIMEOUT_MS,
     url: input.buildDesktopTransportUrl({
       transportType: "ssh",
       host: input.connection.host,
@@ -265,7 +274,7 @@ interface ProbeOptions {
 function resolveTimeout(connection: HostConnection, options?: ProbeOptions): number {
   if (options?.timeoutMs) return options.timeoutMs;
   if (connection.type === "relay") return 10_000;
-  if (connection.type === "remoteSsh") return 15_000;
+  if (connection.type === "remoteSsh") return REMOTE_SSH_CONNECT_TIMEOUT_MS;
   return 6_000;
 }
 

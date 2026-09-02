@@ -1599,14 +1599,18 @@ export const zhCN: TranslationResources = {
     remoteSsh: {
       title: "远程 SSH",
       helper: "连接到远程主机上运行的 FDE 守护进程。",
+      tabs: {
+        config: "SSH 配置",
+        manual: "手动",
+      },
       sshConfig: {
-        label: "来自 SSH 配置",
-        placeholder: "选择主机",
-        searchPlaceholder: "搜索主机",
         empty: "~/.ssh/config 中没有主机",
+        helperBefore: "使用 ",
+        helperAfter: " 连接，并应用你的 SSH 配置（密钥、用户、端口、跳板机）。",
       },
       fields: {
         target: "SSH 主机",
+        daemonPort: "守护进程端口",
       },
       actions: {
         cancel: "取消",
@@ -1615,6 +1619,8 @@ export const zhCN: TranslationResources = {
       },
       errors: {
         targetRequired: "SSH 主机为必填项",
+        hostRequired: "请从 SSH 配置中选择一个主机",
+        invalidDaemonPort: "守护进程端口必须在 1 到 65535 之间",
         invalidTarget: "请输入有效的 ssh:// 主机",
         failedToConnect: "无法通过 SSH 连接。{{detail}}",
       },

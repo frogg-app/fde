@@ -3,6 +3,7 @@
 //! stdin/stdout become the byte stream the WebSocket client speaks over.
 
 use std::io;
+use std::path::PathBuf;
 use std::pin::Pin;
 use std::process::Stdio;
 use std::sync::{Arc, Mutex};
@@ -61,6 +62,68 @@ pub fn format_ssh_failure(stderr: &str, code: Option<i32>, signal: Option<i32>) 
     }
 }
 
+/// Environment variable that pins the ssh executable (diagnostics, tests).
+pub const SSH_PROGRAM_ENV: &str = "FDE_SSH";
+
+/// The ssh executables to try, in order: `$FDE_SSH` when set, else `ssh` on
+/// `PATH`, and on Windows the in-box OpenSSH client as a fallback for shells
+/// launched with a PATH that lacks `System32\OpenSSH` (Explorer, the
+/// installer's "run after install" step, a portable zip started from a
+/// launcher).
+pub fn ssh_program_candidates() -> Vec<PathBuf> {
+    if let Some(pinned) = std::env::var_os(SSH_PROGRAM_ENV).filter(|v| !v.is_empty()) {
+        return vec![PathBuf::from(pinned)];
+    }
+    let candidates = vec![PathBuf::from("ssh")];
+    #[cfg(windows)]
+    let candidates = {
+        let mut candidates = candidates;
+        if let Some(root) = std::env::var_os("SystemRoot").filter(|v| !v.is_empty()) {
+            candidates.push(
+                PathBuf::from(root)
+                    .join("System32")
+                    .join("OpenSSH")
+                    .join("ssh.exe"),
+            );
+        }
+        candidates
+    };
+    candidates
+}
+
+fn configure(command: &mut Command) {
+    command
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .kill_on_drop(true);
+    #[cfg(windows)]
+    {
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        command.creation_flags(CREATE_NO_WINDOW);
+    }
+}
+
+/// Spawns the first candidate that exists; a missing executable moves on to
+/// the next one, any other spawn error is final.
+fn spawn_first_available(args: &[String]) -> io::Result<(PathBuf, Child)> {
+    let mut last_error: Option<io::Error> = None;
+    for program in ssh_program_candidates() {
+        let mut command = Command::new(&program);
+        command.args(args);
+        configure(&mut command);
+        match command.spawn() {
+            Ok(child) => return Ok((program, child)),
+            Err(error) if error.kind() == io::ErrorKind::NotFound => {
+                log::warn!("ssh: {} not found", program.display());
+                last_error = Some(error);
+            }
+            Err(error) => return Err(error),
+        }
+    }
+    Err(last_error.unwrap_or_else(|| io::Error::new(io::ErrorKind::NotFound, "ssh not found")))
+}
+
 /// A running `ssh -W` process whose stderr is collected for error reporting.
 pub struct SshProcess {
     child: Child,
@@ -74,19 +137,17 @@ impl SshProcess {
         ssh_port: Option<u16>,
         daemon_port: Option<u16>,
     ) -> io::Result<(Self, SshStream)> {
-        let mut command = Command::new("ssh");
-        command
-            .args(build_ssh_args(host, ssh_port, daemon_port))
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .kill_on_drop(true);
-        #[cfg(windows)]
-        {
-            const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-            command.creation_flags(CREATE_NO_WINDOW);
-        }
-        let mut child = command.spawn()?;
+        let args = build_ssh_args(host, ssh_port, daemon_port);
+        log::info!("ssh: spawning ssh {}", args.join(" "));
+        let (program, mut child) = spawn_first_available(&args).map_err(|error| {
+            log::warn!("ssh: spawn failed for host {host}: {error}");
+            error
+        })?;
+        log::info!(
+            "ssh: spawned {} (pid {}) for host {host}",
+            program.display(),
+            child.id().map(|pid| pid.to_string()).unwrap_or_default()
+        );
         let stdin = child
             .stdin
             .take()
@@ -122,8 +183,30 @@ impl SshProcess {
                 stderr,
                 failure: None,
             },
-            SshStream { stdin, stdout },
+            SshStream {
+                stdin,
+                stdout,
+                logged_first_read: false,
+            },
         ))
+    }
+
+    /// Resolves once ssh exits, with the failure text (`format_ssh_failure`)
+    /// or `None` for a clean exit. Also records the failure for
+    /// `failure_detail`.
+    pub async fn wait(&mut self) -> Option<String> {
+        let status = self.child.wait().await.ok()?;
+        let stderr = self.stderr_text();
+        log::info!(
+            "ssh: exited with {status}; stderr: {}",
+            stderr.trim().replace('\n', " | ")
+        );
+        if status.success() {
+            return None;
+        }
+        let failure = format_ssh_failure(&stderr, status.code(), exit_signal(&status));
+        self.failure = Some(failure.clone());
+        Some(failure)
     }
 
     fn stderr_text(&self) -> String {
@@ -137,16 +220,7 @@ impl SshProcess {
     /// stderr holds. Waits briefly for ssh to exit so the message is complete.
     pub async fn failure_detail(&mut self) -> Option<String> {
         if self.failure.is_none() {
-            if let Ok(Ok(status)) = tokio::time::timeout(EXIT_GRACE, self.child.wait()).await {
-                if !status.success() {
-                    let signal = exit_signal(&status);
-                    self.failure = Some(format_ssh_failure(
-                        &self.stderr_text(),
-                        status.code(),
-                        signal,
-                    ));
-                }
-            }
+            let _ = tokio::time::timeout(EXIT_GRACE, self.wait()).await;
         }
         if let Some(failure) = &self.failure {
             return Some(failure.clone());
@@ -176,6 +250,7 @@ fn exit_signal(_status: &std::process::ExitStatus) -> Option<i32> {
 pub struct SshStream {
     stdin: ChildStdin,
     stdout: ChildStdout,
+    logged_first_read: bool,
 }
 
 impl AsyncRead for SshStream {
@@ -184,7 +259,26 @@ impl AsyncRead for SshStream {
         cx: &mut Context<'_>,
         buf: &mut ReadBuf<'_>,
     ) -> Poll<io::Result<()>> {
-        Pin::new(&mut self.stdout).poll_read(cx, buf)
+        let before = buf.filled().len();
+        let poll = Pin::new(&mut self.stdout).poll_read(cx, buf);
+        if !self.logged_first_read {
+            if let Poll::Ready(Ok(())) = &poll {
+                let received = &buf.filled()[before..];
+                if !received.is_empty() {
+                    self.logged_first_read = true;
+                    let preview: String = String::from_utf8_lossy(received)
+                        .chars()
+                        .take(64)
+                        .filter(|c| !c.is_control())
+                        .collect();
+                    log::info!(
+                        "ssh: first {} bytes from tunnel: {preview:?}",
+                        received.len()
+                    );
+                }
+            }
+        }
+        poll
     }
 }
 

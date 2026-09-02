@@ -83,20 +83,99 @@ Everything else throws `Unknown desktop command`.
 | ------------------------------ | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `directTcp` (`ws://host:port`) | 1         | plain WebSocket from the webview, no shell involvement                                                                                                     |
 | `relay` (E2EE)                 | 1         | plain WebSocket, no shell involvement                                                                                                                      |
-| `remoteSsh`                    | 2         | Rust spawns `ssh -L` to an ephemeral loopback port and answers the `open_local_daemon_transport` family of commands with that `ws://127.0.0.1:port/ws` URL |
-| `directSocket` / `directPipe`  | 2         | Rust bridges the unix socket / named pipe to a loopback WebSocket the same way                                                                             |
+| `remoteSsh`                    | 2         | Rust spawns the system `ssh -T -o BatchMode=yes … -W 127.0.0.1:<daemonPort> <host>` and runs the WebSocket client over its stdin/stdout (`src/transport/ssh.rs`)   |
+| `directSocket` / `directPipe`  | 2         | Rust connects the unix socket / named pipe and runs the WebSocket client over it the same way                                                              |
 | local sidecar                  | 3         | see below                                                                                                                                                  |
 
 ### Transport sessions
 
 `src/transport/` is a port of Electron's `local-transport.ts`. `open_local_daemon_transport
 {sessionId, target}` registers a session and spawns a task; the task connects (30 s setup
-timeout), then emits `paseo:event:local-daemon-transport-event` payloads
+timeout for sockets and pipes, 18 s for SSH), then emits
+`paseo:event:local-daemon-transport-event` payloads
 `{sessionId, kind:"open"|"message"|"close"|"error", text?, binaryBase64?, code?, reason?, error?}`
 exactly as Electron did. `send_local_daemon_transport_message {sessionId, text?|binaryBase64?}`
 awaits the write and fails while the session is still opening; `close_local_daemon_transport`
 removes the session first, so a closed session never emits again (the UI's
 `desktop-daemon-transport.ts` shim relies on that). Sessions are closed on app exit.
+
+**Event payloads cross the bridge bare.** Electron's preload handed `events.on` listeners the
+payload alone; Tauri's `listen` wraps it in `{event, id, payload}`. `bridge.ts` unwraps it, and
+the UI's `listenToDesktopEvent` strips a stray envelope defensively. Version 0.1.4 forwarded
+the Tauri event object as-is, so the transport shim (which keys every event on
+`payload.sessionId`) dropped everything, `open` never arrived, and every Remote SSH connect
+ended in the UI's generic "Connection timed out" — the bug behind the 0.1.5 fix.
+
+### Remote SSH: timing and errors
+
+The connect path has three timers, and their order is what puts ssh's own message on screen
+instead of a generic timeout:
+
+1. `ssh -o ConnectTimeout=10` bounds the TCP connect to the SSH server.
+2. The Rust task abandons setup after `SSH_SETUP_TIMEOUT` (18 s, `src/transport/task.rs`).
+   Before that, the WebSocket handshake races `ssh` exiting: an exit (auth refused, host key
+   rejected under `BatchMode`, `connect_to 127.0.0.1 port 6767: failed`) produces an `error`
+   event immediately with ssh's stderr as the detail.
+3. The webview's connect timer and probe deadline for SSH hosts are 20 s
+   (`REMOTE_SSH_CONNECT_TIMEOUT_MS` in `apps/ui/src/utils/test-daemon-connection.ts`), so a
+   transport `error` always lands first.
+
+Every step is logged at `info`/`warn` through the `log` crate into `fde.log` (see
+`desktop_app_logs`; on Windows `%LOCALAPPDATA%\app.frogg.fde\logs\fde.log`): the exact
+`ssh` argv, which executable was spawned (and its pid), the first bytes read back from the
+tunnel, handshake success (HTTP status) or failure, ssh's exit status with its stderr, and each
+event emitted to the webview. When a user reports "cannot connect", ask for that file.
+
+`FDE_SSH=<path>` pins the ssh executable (diagnostics, or a Git-for-Windows ssh with a
+different agent). The integration test in `src/transport/ssh_e2e.rs` drives the whole path
+with a fake `ssh` script that bridges stdio to a local daemon with `socat`; it needs a daemon
+on `127.0.0.1:$FDE_TEST_DAEMON_PORT` (default 6797) and skips otherwise.
+
+### Remote SSH on Windows
+
+What the Rust side does on Windows, and why. Reviewed by reading, not by running: this VM is
+Linux and the Windows build is cross-compiled, so treat the items marked _verify_ as the
+first things to check on a real Windows 11 machine.
+
+- **Finding `ssh.exe`.** `Command::new("ssh")` goes through `CreateProcessW`, which searches
+  the app directory, `System32`, `Windows` and then `PATH` — but not
+  `System32\OpenSSH`, where the in-box OpenSSH client lives. Windows adds that directory to
+  the machine `PATH` when the "OpenSSH Client" capability is installed, so a terminal finds
+  it; a GUI app launched from Explorer, the installer's "run after install" step, or a
+  portable zip started from a launcher inherits whatever `PATH` the parent had, which can be
+  stale (capability installed after login) or trimmed. `ssh_program_candidates()` therefore
+  tries `ssh`, then `%SystemRoot%\System32\OpenSSH\ssh.exe`, and `FDE_SSH` overrides both.
+  A "not found" on the first candidate is logged and the next is tried; any other spawn
+  error is final.
+- **`CREATE_NO_WINDOW`.** The release binary is `windows_subsystem = "windows"` (no console),
+  and the child is spawned with `CREATE_NO_WINDOW` so no console window flashes. Windows
+  OpenSSH does not need a console when stdin/stdout/stderr are pipes and `-T` disables the
+  pty request; its w32 compatibility layer does plain handle I/O. With `BatchMode=yes` it
+  never tries to open `CONIN$` for a prompt. _Verify_: `ProxyCommand` entries in the user's
+  config run through `cmd.exe`-style spawning inside ssh; `ProxyJump` (which re-invokes
+  `ssh.exe` itself) is the supported form. If a config relies on `ProxyCommand` and hangs,
+  that is the place to look.
+- **Pipes, not inherited consoles.** tokio's `Stdio::piped()` creates anonymous pipes whose
+  parent ends are non-inheritable; only the three child ends are passed in. The stream the
+  WebSocket client runs on is exactly stdin+stdout of that child, so nothing is in "console
+  mode" and no line-ending translation happens. _Verify_ once on hardware that a
+  `server_info` frame arrives (the "first bytes from tunnel" log line shows `HTTP/1.1 101`).
+- **Keys with passphrases and the agent.** `BatchMode=yes` means ssh will not prompt. A key
+  that needs a passphrase works in a terminal because the user types it there; from the app
+  it fails at once with `Permission denied (publickey)` unless the key is loaded in an agent.
+  On Windows that is the "OpenSSH Authentication Agent" service (disabled by default; `ssh-add`
+  after enabling it), or Git for Windows' agent with `FDE_SSH` pointed at its `ssh.exe`. The
+  stderr text now reaches the Add host sheet verbatim, so this case is self-explaining.
+  Likewise an unknown host key fails as `Host key verification failed.` — connect once from a
+  terminal to accept it.
+- **Which `~/.ssh/config`.** Windows OpenSSH reads `%USERPROFILE%\.ssh\config`. The picker's
+  `list_ssh_config_hosts` uses Tauri's `home_dir()`, which is `FOLDERID_Profile` =
+  `%USERPROFILE%` on Windows, so both sides read the same file (and the same directory for
+  relative `Include` patterns). The app runs as the interactive user, so `known_hosts` and
+  identities are shared with the terminal as well.
+- **What the log says.** Look for `ssh: spawning ssh …`, then `ssh: spawned C:\…\ssh.exe
+  (pid …)` or `ssh: … not found`, then either `transport: websocket handshake … ok` or
+  `ssh: exited with exit code: 255; stderr: …`.
 
 ## Local sidecar daemon (milestone 3)
 
