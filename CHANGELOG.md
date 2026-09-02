@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.7
+## 0.1.8
 
 - Local daemon sidecar (milestone 3). The desktop app can download the FDE daemon bundle for
   its platform from the GitHub release (`Install local daemon (~180 MB)` in the daemon settings,
