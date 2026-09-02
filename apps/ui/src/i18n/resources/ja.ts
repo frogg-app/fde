@@ -2055,6 +2055,7 @@ export const ja: TranslationResources = {
       },
     },
     about: {
+      attribution: "Frogg Development Environment は <paseo>Paseo</paseo> をベースにしています。",
       title: "アプリ情報",
       appVersion: "アプリバージョン",
       thisDevice: "このデバイス",

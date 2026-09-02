@@ -2037,6 +2037,7 @@ export const ar: TranslationResources = {
       },
     },
     about: {
+      attribution: "Frogg Development Environment مبني على <paseo>Paseo</paseo>.",
       title: "عن",
       appVersion: "نسخة التطبيق",
       thisDevice: "هذا الجهاز",

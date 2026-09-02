@@ -2072,6 +2072,7 @@ export const ptBR: TranslationResources = {
       },
     },
     about: {
+      attribution: "O Frogg Development Environment é baseado no <paseo>Paseo</paseo>.",
       title: "Sobre",
       appVersion: "Versão do app",
       thisDevice: "Este dispositivo",

@@ -2073,6 +2073,7 @@ export const ru: TranslationResources = {
       },
     },
     about: {
+      attribution: "Frogg Development Environment основан на <paseo>Paseo</paseo>.",
       title: "О приложении",
       appVersion: "Версия приложения",
       thisDevice: "Это устройство",

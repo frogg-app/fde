@@ -2137,6 +2137,7 @@ export const en = {
       },
     },
     about: {
+      attribution: "Frogg Development Environment is based on <paseo>Paseo</paseo>.",
       title: "About",
       appVersion: "App version",
       thisDevice: "This device",

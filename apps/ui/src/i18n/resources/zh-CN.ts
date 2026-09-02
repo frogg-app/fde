@@ -2014,6 +2014,7 @@ export const zhCN: TranslationResources = {
       },
     },
     about: {
+      attribution: "Frogg Development Environment 基于 <paseo>Paseo</paseo> 构建。",
       title: "关于",
       appVersion: "应用版本",
       thisDevice: "此设备",

@@ -2088,6 +2088,7 @@ export const es: TranslationResources = {
       },
     },
     about: {
+      attribution: "Frogg Development Environment está basado en <paseo>Paseo</paseo>.",
       title: "Acerca de",
       appVersion: "Versión de la aplicación",
       thisDevice: "este dispositivo",
