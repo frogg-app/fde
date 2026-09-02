@@ -80,7 +80,6 @@ import { KeyboardShortcutsSection } from "@/screens/settings/keyboard-shortcuts-
 import { EditorSection } from "@/screens/settings/editor-section";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { CommunityLinks } from "@/components/community-links";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { DesktopPermissionsSection } from "@/desktop/components/desktop-permissions-section";
@@ -615,9 +614,6 @@ function AboutSection({ appVersion, appVersionText, isDesktopApp }: AboutSection
         </View>
       </SettingsSection>
       <ConnectedHostsSection clientVersion={appVersion} />
-      <View style={styles.aboutCommunity}>
-        <CommunityLinks />
-      </View>
     </>
   );
 }
@@ -1692,9 +1688,6 @@ const styles = StyleSheet.create((theme) => ({
     color: theme.colors.palette.red[300],
     fontSize: theme.fontSize.sm,
     marginTop: theme.spacing[1],
-  },
-  aboutCommunity: {
-    marginTop: theme.spacing[4],
   },
   aboutUpdateActions: {
     flexDirection: "row",
