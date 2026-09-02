@@ -2,7 +2,10 @@ import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { SshDeployCard } from "@/components/ssh-deploy/ssh-deploy-card";
 import { isElectronRuntime } from "@/desktop/host";
-import type { SshDeployTarget } from "@/desktop/ssh-deploy/ssh-deploy";
+import {
+  SSH_DEPLOY_RECONNECT_GRACE_MS,
+  type SshDeployTarget,
+} from "@/desktop/ssh-deploy/ssh-deploy";
 import { useSshDeployProbe } from "@/desktop/ssh-deploy/use-ssh-deploy-probe";
 import { getHostRuntimeStore } from "@/runtime/host-runtime";
 import { SettingsSection } from "@/screens/settings/settings-section";
@@ -24,10 +27,12 @@ function HostSshDeployCard({
     [connection.host, connection.sshPort],
   );
   const { state, refresh } = useSshDeployProbe(target);
-  // A fresh daemon listens on the tunnel's port now; poke the runtime so the
-  // host goes online without waiting for the next scheduled probe.
+  // A fresh daemon listens on the tunnel's port shortly; poke the runtime so
+  // the host goes online without waiting for the next scheduled probe.
   const handleDeployed = useCallback(() => {
-    void getHostRuntimeStore().runProbeCycleNow(serverId);
+    setTimeout(() => {
+      void getHostRuntimeStore().runProbeCycleNow(serverId);
+    }, SSH_DEPLOY_RECONNECT_GRACE_MS);
   }, [serverId]);
 
   return (

@@ -13,6 +13,7 @@ import { SegmentedControl, type SegmentedControlOption } from "@/components/ui/s
 import type { EditingTextInputHandle } from "@/components/ui/text-input";
 import { useIsCompactFormFactor } from "@/constants/layout";
 import { DaemonConnectionTestError } from "@/utils/test-daemon-connection";
+import { SSH_DEPLOY_RECONNECT_GRACE_MS } from "@/desktop/ssh-deploy/ssh-deploy";
 import { AdaptiveModalSheet, type SheetHeader } from "./adaptive-modal-sheet";
 import { RemoteSshDeployOffer } from "./remote-ssh-deploy-offer";
 import {
@@ -190,6 +191,10 @@ export function AddRemoteSshHostModal({
     t,
   ]);
   const handleSubmit = useCallback(() => void handleSave(), [handleSave]);
+  // The daemon was just installed: give it a moment to bind, then retry.
+  const handleDeployed = useCallback(() => {
+    setTimeout(() => void handleSave(), SSH_DEPLOY_RECONNECT_GRACE_MS);
+  }, [handleSave]);
   const handleManualTargetChange = useCallback((value: string) => {
     manualTargetRef.current = value;
   }, []);
@@ -269,7 +274,11 @@ export function AddRemoteSshHostModal({
         </Text>
       ) : null}
       {failedTarget ? (
-        <RemoteSshDeployOffer target={failedTarget} enabled={!isSaving} onDeployed={handleSubmit} />
+        <RemoteSshDeployOffer
+          target={failedTarget}
+          enabled={!isSaving}
+          onDeployed={handleDeployed}
+        />
       ) : null}
       <View style={styles.actions}>
         <Button
