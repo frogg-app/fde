@@ -1,30 +1,27 @@
-# Paseo Docker Image
+# FDE Docker image
 
-This directory contains the official Paseo daemon image.
-
-The image runs the daemon headless and serves the bundled web UI from the same
-HTTP origin. Start it, then open the daemon URL in a browser.
+`froggapp/fde` runs the FDE daemon headless and serves the bundled web UI from
+the same HTTP origin. It is built from the self-contained daemon bundle, so it
+carries its own Node runtime on a `debian:bookworm-slim` base.
 
 ```bash
-docker run -d --name paseo \
-  -p 6767:6767 \
+curl -fsSL https://frogg.de/install-docker.sh | bash
+```
+
+or:
+
+```bash
+docker run -d --name fde-daemon --restart unless-stopped \
+  -p 0.0.0.0:6767:6767 \
   -e PASEO_PASSWORD=change-me \
-  -v "$PWD/paseo-home:/home/paseo" \
+  -v "$HOME/.fde:/home/fde/.paseo" \
   -v "$PWD:/workspace" \
-  ghcr.io/getpaseo/paseo:latest
+  froggapp/fde:0.1.6
 ```
 
-Then open `http://localhost:6767`.
+Then open `http://<host>:6767`.
 
-The base image intentionally does not bundle agent CLIs. Extend it with the
-agents you use:
-
-```Dockerfile
-FROM ghcr.io/getpaseo/paseo:latest
-
-USER root
-RUN npm install -g @openai/codex @anthropic-ai/claude-code
-```
-
-See [docs/docker.md](../../docs/docker.md) for Compose, reverse proxy, security,
-agent auth, and troubleshooting notes.
+Build locally with `scripts/release/build-docker.sh`. The image does not
+bundle agent CLIs; see `Dockerfile.agents.example` and
+[docs/docker.md](../../docs/docker.md) for Compose, reverse proxy, security,
+and troubleshooting notes.

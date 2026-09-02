@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# Container entrypoint for the FDE daemon image. Prepares the state
+# directories (chowning bind mounts on first run), then drops to the `fde`
+# user and starts the daemon in the foreground through the CLI.
+set -euo pipefail
+
+: "${HOME:=/home/fde}"
+: "${PASEO_HOME:=${HOME}/.paseo}"
+: "${PASEO_LISTEN:=0.0.0.0:6767}"
+: "${PASEO_WEB_UI_ENABLED:=true}"
+: "${PASEO_LOG_LEVEL:=info}"
+: "${PASEO_LOG_FORMAT:=json}"
+: "${CLAUDE_CONFIG_DIR:=${HOME}/.claude}"
+: "${CODEX_HOME:=${HOME}/.codex}"
+: "${XDG_CONFIG_HOME:=${HOME}/.config}"
+: "${XDG_DATA_HOME:=${HOME}/.local/share}"
+: "${XDG_STATE_HOME:=${HOME}/.local/state}"
+: "${XDG_CACHE_HOME:=${HOME}/.cache}"
+
+export HOME PASEO_HOME PASEO_LISTEN PASEO_WEB_UI_ENABLED PASEO_LOG_LEVEL PASEO_LOG_FORMAT
+export CLAUDE_CONFIG_DIR CODEX_HOME XDG_CONFIG_HOME XDG_DATA_HOME XDG_STATE_HOME XDG_CACHE_HOME
+
+ensure_dir() {
+  local dir="$1"
+  mkdir -p "$dir"
+  if [[ "$(id -u)" == "0" ]] && [[ "$(stat -c "%u" "$dir")" == "0" ]]; then
+    chown fde:fde "$dir"
+  fi
+}
+
+for dir in "$HOME" "$PASEO_HOME" "$CLAUDE_CONFIG_DIR" "$CODEX_HOME" \
+  "$XDG_CONFIG_HOME" "$XDG_DATA_HOME" "$XDG_STATE_HOME" "$XDG_CACHE_HOME" /workspace; do
+  ensure_dir "$dir"
+done
+
+if [[ "$#" -gt 0 ]]; then
+  if [[ "$(id -u)" == "0" ]]; then
+    exec gosu fde "$@"
+  fi
+  exec "$@"
+fi
+
+if [[ -z "${PASEO_PASSWORD:-}" ]]; then
+  {
+    echo "[fde] WARNING: PASEO_PASSWORD is not set."
+    echo "[fde] The daemon accepts unauthenticated control connections from any client that can reach it."
+    echo "[fde] Set PASEO_PASSWORD for any published port or network-reachable deployment."
+  } >&2
+fi
+
+echo "[fde] starting daemon on ${PASEO_LISTEN} with web UI ${PASEO_WEB_UI_ENABLED}"
+if [[ "$(id -u)" == "0" ]]; then
+  exec gosu fde fde daemon start --foreground
+fi
+exec fde daemon start --foreground

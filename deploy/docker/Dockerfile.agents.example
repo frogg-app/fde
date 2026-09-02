@@ -1,17 +1,18 @@
-# Example child image that adds agent CLIs to the official Paseo image.
+# Example child image that adds agent CLIs to the FDE daemon image.
 #
 # Build:
-#   docker build -f deploy/docker/Dockerfile.agents.example -t paseo-with-agents .
+#   docker build -f deploy/docker/Dockerfile.agents.example -t fde-with-agents .
 #
-# Then set `image: paseo-with-agents` in deploy/docker/docker-compose.example.yml.
+# Then set `image: fde-with-agents` in deploy/docker/docker-compose.example.yml.
 
-FROM ghcr.io/getpaseo/paseo:latest
+FROM froggapp/fde:0.1.6
 
+# The bundled Node runtime is on PATH, so npm -g works for Node-based agents.
 USER root
 RUN npm install -g \
   @anthropic-ai/claude-code \
   @openai/codex \
   opencode-ai
 
-# Leave the image user as root. The base entrypoint prepares mounted volumes,
-# then drops the daemon and launched agents to the non-root `paseo` user.
+# Leave the image user as root. The entrypoint prepares mounted volumes, then
+# drops the daemon and launched agents to the non-root `fde` user.
