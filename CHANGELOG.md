@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.7
+
+- Local daemon sidecar (milestone 3). The desktop app can download the FDE daemon bundle for
+  its platform from the GitHub release (`Install local daemon (~180 MB)` in the daemon settings,
+  or "Run agents on this machine" on the welcome screen), verify its checksum, unpack it into
+  the app data dir, and start/stop/restart it through the bundled CLI exactly as Electron
+  managed its packaged daemon (`PASEO_DESKTOP_MANAGED=1`, status polling, forced stop, stop on
+  quit unless "keep running after quit"). No Node on the machine is needed. Thin clients
+  without a bundle never try to start a daemon.
+- Daemon bundle targets `win-x64` and `win-arm64` (`fde-daemon-<v>-win-<arch>.zip`, no
+  symlinks, `bin/fde.cmd` launcher), cross-built from Linux and attached to releases.
+- `install_local_daemon_bundle` / `local_daemon_bundle_status` desktop commands and the
+  `local-daemon-install-event` progress event.
+
 ## 0.1.6
 
 - Settings opens as a large modal on wide layouts (VS Code style); Help & Support menu removed, Keyboard shortcuts live in Settings; Schedules removed; Star/Sponsor/Community links removed; About credits Paseo.

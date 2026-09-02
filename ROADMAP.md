@@ -5,12 +5,9 @@ Done items move to CHANGELOG.md.
 
 ## Now
 
-- [ ] **Desktop command stubs.** Implement every `desktop_*` / daemon / CLI command the UI
-      invokes (`desktop_daemon_logs`, `desktop_app_logs`, `cli_daemon_status`,
-      `get_local_daemon_version`, `get_cli_install_status`, `install_cli`,
-      `run_local_daemon_update`, legacy skill selection, start/stop/restart daemon) so the
-      shell never throws "Unknown desktop command" on startup. Cause of the "unable to load
-      desktop daemon" toasts in 0.1.2.
+- [x] **Desktop command stubs.** Every `desktop_*` / daemon / CLI command the UI invokes is
+      implemented; the daemon family is real since milestone 3 (`install_cli` still answers
+      "ships with the sidecar").
 - [ ] **Milestone 2: Remote SSH from Rust.** Port Electron's SSH tunnel
       (`ssh` subprocess proxied to a loopback WebSocket) and the
       `open/send/close_local_daemon_transport` commands, so Remote SSH hosts work.
@@ -31,17 +28,21 @@ Done items move to CHANGELOG.md.
 - [x] **Docker image** `froggapp/fde` from `deploy/docker`, versioned tags per the org
       rules, daemon listening on `0.0.0.0:6767` with the web UI enabled.
       (`deploy/install-docker.sh`, `scripts/release/build-docker.sh`.)
-- [ ] Release pipeline builds the daemon bundle per platform (linux-x64, linux-arm64,
-      darwin-arm64, darwin-x64) and attaches it plus `.sha256` sidecars to the GitHub
-      release the installer reads; pushes the Docker image tags.
+- [x] Release pipeline builds the daemon bundle per platform (linux-x64, linux-arm64,
+      darwin-arm64, darwin-x64, win-x64, win-arm64) and attaches it plus `.sha256` sidecars
+      to the GitHub release the installer and the desktop app read; pushes the Docker image
+      tags when Docker Hub secrets exist.
 - [ ] Hosting for `frogg.de/install.sh`, `uninstall.sh`, `install-docker.sh` (redirects
       to the raw files in the repo are enough).
 - [ ] Desktop app: SSH deploy using `FDE_BUNDLE_FILE` (scp bundle, run `deploy/install.sh`).
 
 ## Next
 
-- [ ] **Milestone 3: local daemon sidecar.** Optional download of the daemon bundle from
-      the desktop app for users who want to run agents on the same machine.
+- [x] **Milestone 3: local daemon sidecar.** Optional download of the daemon bundle from
+      the desktop app for users who want to run agents on the same machine
+      (`apps/desktop/src-tauri/src/sidecar/`, docs/desktop-shell.md). Not yet exercised on
+      a real Windows machine: the win-x64 zip and the `node.exe` launch path are verified
+      by inspection only.
 - [ ] **Milestone 4: browser automation** via Playwright driven from the daemon, replacing
       Electron's `<webview>` pane.
 - [ ] **Code signing** (Windows Authenticode, macOS notarisation) so SmartScreen and
