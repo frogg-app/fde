@@ -1,6 +1,6 @@
 {
   "name": "fde",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "private": true,
   "description": "FDE (Frogg Development Environment): Tauri desktop client for local and remote AI coding agents (fork of Paseo)",
   "license": "Apache-2.0",
@@ -39,6 +39,7 @@
     "build:server": "npm run build:server-deps && npm run build --workspace=@fde/server && npm run build --workspace=@fde/cli",
     "build:server:clean": "npm run build:server-deps:clean && npm run build:clean --workspace=@fde/server && npm run build:clean --workspace=@fde/cli",
     "build:daemon-web-ui": "node scripts/ci/build-daemon-web-ui.mjs",
+    "build:daemon-bundle": "node scripts/release/build-daemon-bundle.mjs",
     "build:app-deps": "npm run build:highlight && npm run build:client && npm run build:plugin && npm run build --workspace=@fde/expo-two-way-audio",
     "build:app-deps:clean": "npm run build:highlight:clean && npm run build:client:clean && npm run build:plugin:clean && npm run build --workspace=@fde/expo-two-way-audio",
     "build:ui": "npm run build:web --workspace=@fde/app",
