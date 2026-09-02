@@ -34,7 +34,7 @@ import { WORKSPACE_DECK_MAX_MOUNTED_WORKSPACES } from "@/screens/workspace/works
 import { delayBrowserAgentCreatedStatus } from "../support/helpers/new-workspace";
 import { installDaemonWebSocketGate } from "../support/helpers/daemon-websocket-gate";
 import { gotoAppShell, openSettings, selectModel } from "../support/helpers/app";
-import { expectSettingsModalOpen } from "../support/helpers/settings";
+import { clickSettingsBackToWorkspace, expectSettingsModalOpen } from "../support/helpers/settings";
 import { observeTimelineSubscriptions } from "../support/helpers/timeline-delivery";
 import {
   expectResumeOverflowFallsBackToOneTail,
@@ -1133,7 +1133,7 @@ test.describe("Agent message submission", () => {
     });
     try {
       await configureSteerInSettings(page);
-      await page.goBack();
+      await clickSettingsBackToWorkspace(page);
       await expectComposerVisible(page);
       await expectAgentReadyToInterrupt(page);
       const sendsBefore = gate.getClientRequestCount("send_agent_message_request");
@@ -1170,7 +1170,7 @@ test.describe("Agent message submission", () => {
     });
     try {
       await configureSteerInSettings(page);
-      await page.goBack();
+      await clickSettingsBackToWorkspace(page);
       await expectComposerVisible(page);
       await expectAgentReadyToInterrupt(page);
       gate.holdNextServerMessage("send_agent_message_response");
@@ -1198,7 +1198,7 @@ test.describe("Agent message submission", () => {
     });
     try {
       await configureInterruptInSettings(page);
-      await page.goBack();
+      await clickSettingsBackToWorkspace(page);
       await expectComposerVisible(page);
       await expectAgentReadyToInterrupt(page);
 
