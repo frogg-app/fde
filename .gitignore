@@ -19,3 +19,8 @@ result
 apps/desktop/src-tauri/gen/schemas/
 apps/desktop/src-tauri/bridge.js
 .claude/worktrees/
+/release-assets/
+/ci-assets/
+*.keystore
+*.jks
+google-services*.json

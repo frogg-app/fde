@@ -1,8 +1,12 @@
 const fs = require("node:fs");
 const path = require("node:path");
-const pkg = require("./package.json");
+// The root package.json is the version source of truth (synced into every workspace
+// by scripts/release/sync-workspace-versions.mjs); the Android versionCode and iOS
+// buildNumber are derived from it in native-release-version.js.
+const rootPkg = require("../../package.json");
 const withAndroidAsyncStorageSize = require("./plugins/with-android-async-storage-size");
 const withAndroidProfileable = require("./plugins/with-android-profileable");
+const withAndroidReleaseSigning = require("./plugins/with-android-release-signing");
 const withFdroidAutolinking = require("./plugins/with-fdroid-autolinking");
 const withPasteInput = require("./plugins/with-paste-input");
 const { getNativeReleaseVersion } = require("./native-release-version");
@@ -67,7 +71,7 @@ function resolveSecretFile(params) {
 const variants = {
   production: {
     name: "FDE",
-    packageId: "sh.paseo",
+    packageId: "app.frogg.fde",
     googleServicesFile: resolveSecretFile({
       envKey: "GOOGLE_SERVICES_FILE_PROD",
       fallbackRelativePath: "./.secrets/google-services.prod.json",
@@ -79,7 +83,7 @@ const variants = {
   },
   development: {
     name: "FDE Debug",
-    packageId: "sh.paseo.debug",
+    packageId: "app.frogg.fde.debug",
     googleServicesFile: resolveSecretFile({
       envKey: "GOOGLE_SERVICES_FILE_DEBUG",
       fallbackRelativePath: "./.secrets/google-services.debug.json",
@@ -92,12 +96,12 @@ const variants = {
 };
 
 const variant = variants[appVariant] ?? variants.production;
-const nativeReleaseVersion = getNativeReleaseVersion(pkg.version);
+const nativeReleaseVersion = getNativeReleaseVersion(rootPkg.version);
 
 export default {
   expo: {
     name: variant.name,
-    slug: "voice-mobile",
+    slug: "fde",
     version: nativeReleaseVersion.appVersion,
     orientation: "portrait",
     icon: "./assets/images/icon.png",
@@ -176,6 +180,7 @@ export default {
         },
       ],
       ...buildProfile.fdroidPlugins,
+      withAndroidReleaseSigning,
       ...(isProfileBuild ? [withAndroidProfileable] : []),
     ],
     experiments: {
@@ -187,10 +192,6 @@ export default {
       fdroidBuild: isFdroidBuild,
       profileBuild: isProfileBuild,
       router: {},
-      eas: {
-        projectId: "0e7f65ce-0367-46c8-a238-2b65963d235a",
-      },
     },
-    owner: "getpaseo",
   },
 };
