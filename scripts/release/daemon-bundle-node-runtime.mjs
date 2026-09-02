@@ -13,16 +13,37 @@ import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 
 import { run } from "./daemon-bundle-utils.mjs";
+import { extractZipStripped } from "./daemon-bundle-zip.mjs";
 
 export const DEFAULT_NODE_VERSION = "22.23.2";
 const NODE_DIST_BASE = process.env.FDE_NODE_DIST_BASE ?? "https://nodejs.org/dist";
 
-// Parts of the official tarball the daemon never uses at runtime. npm stays:
+// Parts of the official archives the daemon never uses at runtime. npm stays:
 // hosts without their own Node use it to install agent CLIs.
 const TRIM_PATHS = ["include", "share", "CHANGELOG.md", "README.md"];
+const WINDOWS_TRIM_PATHS = [
+  "CHANGELOG.md",
+  "README.md",
+  "corepack",
+  "corepack.cmd",
+  "install_tools.bat",
+  "nodevars.bat",
+  "node_etw_provider.man",
+  "node_modules/corepack",
+];
 
-function nodeArchiveName(version, platform, arch) {
-  return `node-v${version}-${platform}-${arch}.tar.gz`;
+// nodejs.org ships Windows as a zip with node.exe at the top level; every
+// other platform is a tarball with bin/node.
+export function nodeArchiveName(version, platform, arch) {
+  const extension = platform === "win" ? "zip" : "tar.gz";
+  return `node-v${version}-${platform}-${arch}.${extension}`;
+}
+
+/** Path of the Node executable inside an installed runtime directory. */
+export function nodeBinaryPath(runtimeDir, platform) {
+  return platform === "win"
+    ? path.join(runtimeDir, "node.exe")
+    : path.join(runtimeDir, "bin", "node");
 }
 
 async function sha256File(filePath) {
@@ -83,13 +104,18 @@ export async function fetchNodeRuntime({ version, platform, arch, cacheDir }) {
 }
 
 /** Unpacks the verified archive into `targetDir` and removes non-runtime files. */
-export async function installNodeRuntime(archivePath, targetDir) {
+export async function installNodeRuntime(archivePath, targetDir, platform) {
   await mkdir(targetDir, { recursive: true });
-  await run("tar", ["-xzf", archivePath, "--strip-components=1", "-C", targetDir]);
-  for (const relativePath of TRIM_PATHS) {
+  const isWindows = platform === "win";
+  if (isWindows) {
+    await extractZipStripped(archivePath, targetDir);
+  } else {
+    await run("tar", ["-xzf", archivePath, "--strip-components=1", "-C", targetDir]);
+  }
+  for (const relativePath of isWindows ? WINDOWS_TRIM_PATHS : TRIM_PATHS) {
     await rm(path.join(targetDir, relativePath), { recursive: true, force: true });
   }
-  const nodeBinary = path.join(targetDir, "bin", "node");
+  const nodeBinary = nodeBinaryPath(targetDir, platform);
   if (!existsSync(nodeBinary)) {
     throw new Error(`Node runtime unpack failed: ${nodeBinary} is missing`);
   }

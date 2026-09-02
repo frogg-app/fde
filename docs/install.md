@@ -102,9 +102,10 @@ and `PASEO_HOSTNAMES` are passed into the container when set. See
 `npm run build:daemon-bundle -- --target linux-x64` (after `npm run build:server`
 and `npm run build:daemon-web-ui`) writes
 `dist/bundles/fde-daemon-<version>-<platform>-<arch>.tar.gz` and a `.sha256`
-sidecar. Targets: `linux-x64`, `linux-arm64`, `darwin-x64`, `darwin-arm64`;
-cross-building from Linux works because the runtime is downloaded from
-nodejs.org and platform-specific npm packages are fetched for the target.
+sidecar. Targets: `linux-x64`, `linux-arm64`, `darwin-x64`, `darwin-arm64`,
+`win-x64`, `win-arm64`; cross-building from Linux works for all of them
+because the runtime is downloaded from nodejs.org and platform-specific npm
+packages are fetched for the target.
 
 Inside the tarball:
 
@@ -121,8 +122,43 @@ supervisor entrypoint, the same launch contract the Nix package and the Docker
 image follow. The sherpa-onnx local speech binaries are left out to keep the
 bundle small; everything else the daemon can do works.
 
+### Windows bundle
+
+Windows targets produce `fde-daemon-<v>-win-<arch>.zip` (plus `.sha256`)
+instead of a tarball. The zip is what the desktop app downloads for its local
+daemon on Windows (`install.sh` does not run there). Differences from the
+tarball:
+
+```
+fde-daemon-<v>-win-<arch>/
+  node/node.exe, node/npm.cmd, ...   official Windows runtime from node-v22-win-<arch>.zip
+  daemon/apps/cli/dist/index.js      the launch entry, as on the other platforms
+  daemon/node_modules/@fde/*         workspace libraries as real directories
+  bin/fde.cmd, bin/paseo.cmd         launchers: "%~dp0..\node\node.exe" ... index.js %*
+  manifest.json                      {"platform": "win", ...}
+```
+
+A zip cannot carry symlinks, so the builder replaces npm's workspace links
+(`node_modules/@fde/<name> -> ../../packages/<name>`) with the directories
+themselves, copies `apps/cli` into `node_modules/@fde/cli` so both paths
+resolve, and drops the `node_modules/.bin` link directories (nothing resolves
+bins through them at runtime). `node-pty` keeps only its `win32-<arch>`
+prebuild (conpty). The build machine needs no `zip` binary: archives are read
+and written with `fflate`. The zip has been inspected but not run on Windows
+yet; see `docs/desktop-shell.md` for what to verify first.
+
 `scripts/release/smoke-daemon-bundle.sh <tarball> [port]` extracts a bundle to
 a temp dir, starts the daemon, checks the web UI answers, and stops it.
+
+## The desktop app's local daemon
+
+The desktop app installs the same bundle for the machine it runs on into its
+app data directory (`daemon/<version>/`, `current` marker) when the user
+chooses "Run agents on this machine" or presses "Install local daemon" in the
+daemon settings, verifying the `.sha256` sidecar, and supervises it through
+the bundled CLI. `FDE_DAEMON_BUNDLE_URL` (a `file://` or http URL of the
+archive, with the checksum at the same URL plus `.sha256`) points it at a
+local build for testing. See `docs/desktop-shell.md`.
 
 ## How the desktop app will deploy over SSH
 
