@@ -7,6 +7,7 @@ mod app_log;
 mod commands;
 mod deep_link;
 mod launch;
+mod sidecar;
 mod ssh_config;
 mod transport;
 mod window;
@@ -56,6 +57,9 @@ pub fn run() {
         .run(|app, event| {
             if let tauri::RunEvent::Exit = event {
                 app.state::<transport::TransportManager>().close_all();
+                // Electron's quit lifecycle: stop a desktop-managed daemon
+                // unless the user asked to keep it running after quit.
+                sidecar::stop_on_exit(app);
             }
         });
 }

@@ -42,9 +42,16 @@ tokio = { version = "1", features = [
   "sync",
   "time",
   "macros",
+  "fs",
 ] }
 tokio-tungstenite = "0.30"
 futures-util = { version = "0.3", default-features = false, features = ["sink", "std"] }
+# Sidecar daemon bundle: download, verify, extract (src/sidecar/).
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "stream"] }
+sha2 = "0.10"
+flate2 = "1"
+tar = "0.4"
+zip = { version = "4", default-features = false, features = ["deflate"] }
 
 [dev-dependencies]
 tempfile = "3"
