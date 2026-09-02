@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { router, type Href } from "expo-router";
 import { useTranslation } from "react-i18next";
 import {
-  CalendarClock,
   CircleDashed,
   Folder,
   FolderPlus,
@@ -24,12 +23,7 @@ import { useKeyboardShortcutsStore } from "@/stores/keyboard-shortcuts-store";
 import { usePanelStore } from "@/stores/panel-store";
 import { useSidebarViewStore } from "@/stores/sidebar-view-store";
 import { clearCommandCenterFocusRestoreElement } from "@/utils/command-center-focus-restore";
-import {
-  buildOpenProjectRoute,
-  buildSchedulesRoute,
-  buildSessionsRoute,
-  buildSettingsRoute,
-} from "@/utils/host-routes";
+import { buildOpenProjectRoute, buildSessionsRoute, buildSettingsRoute } from "@/utils/host-routes";
 import { getShortcutOs } from "@/utils/shortcut-platform";
 import type { CommandCenterContribution, CommandCenterIconProps } from "./contributions";
 import { useCommandCenterActions } from "./provider";
@@ -40,9 +34,6 @@ const ThemedFolderPlus = withUnistyles(FolderPlus, (theme) => ({
   color: theme.colors.foregroundMuted,
 }));
 const ThemedHistory = withUnistyles(History, (theme) => ({
-  color: theme.colors.foregroundMuted,
-}));
-const ThemedCalendarClock = withUnistyles(CalendarClock, (theme) => ({
   color: theme.colors.foregroundMuted,
 }));
 const ThemedKeyboard = withUnistyles(Keyboard, (theme) => ({
@@ -76,10 +67,6 @@ function HistoryIcon({ size }: CommandCenterIconProps) {
   return <ThemedHistory size={size} strokeWidth={2.2} />;
 }
 
-function SchedulesIcon({ size }: CommandCenterIconProps) {
-  return <ThemedCalendarClock size={size} strokeWidth={2.2} />;
-}
-
 function KeyboardIcon({ size }: CommandCenterIconProps) {
   return <ThemedKeyboard size={size} strokeWidth={2.2} />;
 }
@@ -109,7 +96,6 @@ export function CommandCenterRootActions() {
   const settingsRoute = useMemo<Href>(() => buildSettingsRoute(), []);
   const homeRoute = useMemo<Href>(() => buildOpenProjectRoute(), []);
   const sessionsRoute = useMemo<Href>(() => buildSessionsRoute(), []);
-  const schedulesRoute = useMemo<Href>(() => buildSchedulesRoute(), []);
   const setShortcutsDialogOpen = useKeyboardShortcutsStore((state) => state.setShortcutsDialogOpen);
   // Narrow selector on purpose: a whole-store subscription would re-register every root action
   // each time host filters are reconciled.
@@ -199,24 +185,6 @@ export function CommandCenterRootActions() {
           title: t("sidebar.sections.sessions"),
           sectionTitle: t("shell.commandCenter.actions"),
           icon: HistoryIcon,
-        },
-      },
-      {
-        id: "schedules",
-        group: "actions",
-        groupRank: 0,
-        rank: 4,
-        keywords: ["schedules", "scheduled", "automation", "recurring"],
-        visibility: "always",
-        run: () => {
-          clearCommandCenterFocusRestoreElement();
-          router.push(schedulesRoute);
-        },
-        presentation: {
-          kind: "action",
-          title: t("sidebar.sections.schedules"),
-          sectionTitle: t("shell.commandCenter.actions"),
-          icon: SchedulesIcon,
         },
       },
       {
@@ -310,7 +278,6 @@ export function CommandCenterRootActions() {
     keyboardActionDispatcher,
     openAddProject,
     overrides,
-    schedulesRoute,
     sessionsRoute,
     setGroupMode,
     setShortcutsDialogOpen,

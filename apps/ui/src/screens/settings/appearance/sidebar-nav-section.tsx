@@ -2,15 +2,7 @@ import { useCallback, useMemo, type ReactElement } from "react";
 import { Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
-import {
-  ArrowDown,
-  ArrowUp,
-  CalendarClock,
-  History,
-  Plus,
-  Search,
-  type LucideIcon,
-} from "lucide-react-native";
+import { ArrowDown, ArrowUp, History, Plus, Search, type LucideIcon } from "lucide-react-native";
 import { StyleSheet, withUnistyles } from "react-native-unistyles";
 import { Button } from "@/components/ui/button";
 import { Shortcut } from "@/components/ui/shortcut";
@@ -40,7 +32,6 @@ const BUILTIN_ICONS: Record<BuiltinSidebarNavId, LucideIcon> = {
   "new-workspace": Plus,
   history: History,
   search: Search,
-  schedules: CalendarClock,
 };
 
 function NavIcon({ Icon, color = "" }: { Icon: LucideIcon; color?: string }) {
