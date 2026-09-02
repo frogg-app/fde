@@ -18,6 +18,7 @@ env:
   # download is large enough to make `npm ci` flaky.
   ONNXRUNTIME_NODE_INSTALL: skip
   CI: "true"
+  LEFTHOOK: "0"
 
 jobs:
   checks:

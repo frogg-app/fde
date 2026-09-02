@@ -26,6 +26,7 @@ defaults:
 env:
   ONNXRUNTIME_NODE_INSTALL: skip
   CI: "true"
+  LEFTHOOK: "0"
   RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
 
 jobs:
@@ -251,8 +252,15 @@ jobs:
         run: |
           flags=()
           if [ "$CLOBBER" = "true" ]; then flags+=(--clobber); fi
-          gh release upload "$RELEASE_TAG" release-assets/* "${flags[@]}"
-
+          existing=$(gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name')
+          for f in release-assets/*; do
+            n=$(basename "$f")
+            if [ "$CLOBBER" != "true" ] && grep -qx -- "$n" <<<"$existing"; then
+              echo "::warning::$n already on $RELEASE_TAG; skipping"
+              continue
+            fi
+            gh release upload "$RELEASE_TAG" "$f" "${flags[@]}"
+          done
       - uses: actions/upload-artifact@v4
         with:
           name: release-assets-${{ matrix.platform }}-${{ matrix.arch }}
@@ -323,8 +331,15 @@ jobs:
           # Linux/macOS targets produce .tar.gz, Windows targets .zip; each
           # comes with its .sha256 sidecar and nothing else matches the glob.
           ls -l dist/bundles/fde-daemon-*
-          gh release upload "$RELEASE_TAG" dist/bundles/fde-daemon-* "${flags[@]}"
-
+          existing=$(gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name')
+          for f in dist/bundles/fde-daemon-*; do
+            n=$(basename "$f")
+            if [ "$CLOBBER" != "true" ] && grep -qx -- "$n" <<<"$existing"; then
+              echo "::warning::$n already on $RELEASE_TAG; skipping"
+              continue
+            fi
+            gh release upload "$RELEASE_TAG" "$f" "${flags[@]}"
+          done
   updater-manifest:
     name: updater latest.json
     needs: [meta, desktop]
@@ -364,8 +379,15 @@ jobs:
         run: |
           flags=()
           if [ "$CLOBBER" = "true" ]; then flags+=(--clobber); fi
-          gh release upload "$RELEASE_TAG" latest.json "${flags[@]}"
-
+          existing=$(gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name')
+          for f in latest.json; do
+            n=$(basename "$f")
+            if [ "$CLOBBER" != "true" ] && grep -qx -- "$n" <<<"$existing"; then
+              echo "::warning::$n already on $RELEASE_TAG; skipping"
+              continue
+            fi
+            gh release upload "$RELEASE_TAG" "$f" "${flags[@]}"
+          done
   docker:
     name: docker image
     needs: meta
