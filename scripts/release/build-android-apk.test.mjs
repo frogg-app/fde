@@ -29,5 +29,11 @@ test("gradle args select the ABI and serial mode", () => {
     "--max-workers=1",
     "-Dorg.gradle.parallel=false",
   ]);
+  assert.deepEqual(gradleArgsFor({ abi: "arm64-v8a", variant: "release", workers: 3 }), [
+    "assembleRelease",
+    "--no-daemon",
+    "-PreactNativeArchitectures=arm64-v8a",
+    "--max-workers=3",
+  ]);
   assert.throws(() => gradleArgsFor({ abi: "mips", variant: "release" }), /Unknown ABI/);
 });

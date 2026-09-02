@@ -53,7 +53,7 @@ node scripts/release/build-android-apk.mjs --skip-deps --skip-prebuild --serial
 ```
 
 `--abi` accepts `arm64-v8a` (default, every phone since 2017), `armeabi-v7a`, `x86`,
-`x86_64` or `universal`. `--serial` (`--max-workers=1`, no parallel Gradle) is for machines
+`x86_64` or `universal`. `--serial` (`--max-workers=1`, no parallel Gradle) or `--workers N` is for machines
 with less than ~16 GB of RAM: the release build compiles the native ABIs and runs the
 Hermes bundle in one Gradle invocation and can otherwise be killed with exit 137.
 `--skip-deps` / `--skip-prebuild` reuse the previous run's `dist/` and `android/`.

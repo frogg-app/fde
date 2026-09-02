@@ -12,7 +12,7 @@
 //
 // Usage: node scripts/release/build-android-apk.mjs [--abi arm64-v8a|universal|...]
 //        [--variant release|debug] [--out-dir release-assets] [--skip-prebuild]
-//        [--skip-deps] [--serial]
+//        [--skip-deps] [--serial | --workers N]
 
 import { spawnSync } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync } from "node:fs";
@@ -36,7 +36,7 @@ export function apkAssetName({ version, abi, signed, variant = "release" }) {
 }
 
 /** Pure: Gradle arguments for an ABI; `universal` keeps the default (all four). */
-export function gradleArgsFor({ abi, variant, serial }) {
+export function gradleArgsFor({ abi, variant, serial, workers }) {
   const task = variant === "release" ? "assembleRelease" : "assembleDebug";
   const args = [task, "--no-daemon"];
   if (abi !== "universal") {
@@ -47,6 +47,8 @@ export function gradleArgsFor({ abi, variant, serial }) {
   }
   if (serial) {
     args.push("--max-workers=1", "-Dorg.gradle.parallel=false");
+  } else if (workers) {
+    args.push(`--max-workers=${workers}`);
   }
   return args;
 }
@@ -71,9 +73,14 @@ function main() {
       "skip-prebuild": { type: "boolean", default: false },
       "skip-deps": { type: "boolean", default: false },
       serial: { type: "boolean", default: false },
+      workers: { type: "string" },
     },
   });
   const { abi, variant, serial } = values;
+  const workers = values.workers ? Number(values.workers) : undefined;
+  if (values.workers && !(Number.isInteger(workers) && workers > 0)) {
+    throw new Error(`--workers must be a positive integer, got "${values.workers}"`);
+  }
   if (variant !== "release" && variant !== "debug") {
     throw new Error(`--variant must be release or debug, got "${variant}"`);
   }
@@ -113,7 +120,7 @@ function main() {
     run("npx", ["expo", "prebuild", "--platform", "android", "--clean"], { cwd: UI_DIR, env });
   }
   const gradlew = process.platform === "win32" ? "gradlew.bat" : "./gradlew";
-  run(gradlew, gradleArgsFor({ abi, variant, serial }), { cwd: ANDROID_DIR, env });
+  run(gradlew, gradleArgsFor({ abi, variant, serial, workers }), { cwd: ANDROID_DIR, env });
 
   const built = path.join(ANDROID_DIR, `app/build/outputs/apk/${variant}/app-${variant}.apk`);
   if (!existsSync(built)) throw new Error(`Gradle finished but ${built} is missing`);
