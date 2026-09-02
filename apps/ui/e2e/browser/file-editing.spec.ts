@@ -670,7 +670,9 @@ test.describe("CodeMirror workspace file editing", () => {
     await expect(toggle).toBeVisible();
     await toggle.click();
     await expect(toggle).toBeChecked();
-    await page.reload();
+    // The modal steps off the /settings route once open, so a plain reload
+    // would land on the workspace; re-open the deep link on a fresh load.
+    await page.goto("/settings/editor");
     await expect(page.getByRole("switch", { name: "Vim keybindings" })).toBeChecked();
 
     await workspace.navigateTo();

@@ -89,7 +89,12 @@ test("applies a contributed theme and falls back when its plugin is gone", async
     });
 
     await test.step("the selection survives a reload", async () => {
+      // The settings modal steps off the /settings route when it opens, so a
+      // reload lands on the workspace; reopen Appearance on the fresh load.
       await page.reload();
+      await page.goto("/settings");
+      await expect(page.getByTestId("settings-sidebar")).toBeVisible();
+      await openSettingsSection(page, "appearance");
       await expect(page.getByLabel("Theme: Catppuccin Mocha", { exact: true })).toBeVisible({
         timeout: 30_000,
       });

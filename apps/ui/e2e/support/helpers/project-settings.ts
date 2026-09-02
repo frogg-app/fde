@@ -5,8 +5,7 @@ import { expect, type Page } from "@playwright/test";
 import type { WebSocketRoute } from "@playwright/test";
 import { gotoAppShell, openSettings } from "./app";
 import { daemonWsRoutePattern } from "./daemon-port";
-import { getServerId } from "./server-id";
-import { buildProjectsSettingsRoute } from "@/utils/host-routes";
+import { expectHostSettingsSectionSelected } from "./settings";
 
 type WebSocketMessage = string | Buffer;
 
@@ -37,7 +36,7 @@ export async function openProjects(page: Page): Promise<void> {
   await gotoAppShell(page);
   await openSettings(page);
   await page.getByRole("button", { name: "Projects", exact: true }).click();
-  await expect(page).toHaveURL(buildProjectsSettingsRoute(getServerId()));
+  await expectHostSettingsSectionSelected(page, "projects");
 }
 
 export async function openProjectSettings(page: Page, projectName: string): Promise<void> {
@@ -53,16 +52,20 @@ export async function navigateToProjectSettings(page: Page, projectName: string)
 
 export async function returnToProjectsList(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Back to projects", exact: true }).click();
-  await expect(page).toHaveURL(buildProjectsSettingsRoute(getServerId()));
+  await expectHostSettingsSectionSelected(page, "projects");
 }
 
-export async function expectProjectSettingsHistoryRoundTrip(
+/**
+ * Settings on wide layouts is a modal, so a project detail is a modal view
+ * rather than a history entry: stepping back lands on the host's project list
+ * and the project can be reopened from there.
+ */
+export async function expectProjectSettingsReturnRoundTrip(
   page: Page,
   projectName: string,
 ): Promise<void> {
-  await page.goBack();
-  await expect(page).toHaveURL(buildProjectsSettingsRoute(getServerId()));
-  await page.goForward();
+  await returnToProjectsList(page);
+  await openProjectSettings(page, projectName);
   await expectProjectTitle(page, projectName);
 }
 
