@@ -117,6 +117,9 @@ function SidebarHostSectionButton({
     <Pressable
       accessibilityRole="button"
       accessibilityState={accessibilityState}
+      // React Native Web does not project `accessibilityState.selected` onto
+      // the DOM, so the selected row would have no aria-selected without this.
+      aria-selected={isSelected}
       onPress={handlePress}
       testID={`settings-host-section-${itemId}`}
       style={isSelected ? selectedSidebarItemStyle : sidebarItemStyle}
