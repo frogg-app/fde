@@ -4,8 +4,9 @@
 #   curl -fsSL https://frogg.de/install-docker.sh | bash
 #
 # Pulls the image, then (re)creates the `fde-daemon` container with the daemon
-# listening on 0.0.0.0:6767 inside the container, the web UI enabled, and the
-# daemon state on a host directory. Re-running upgrades in place: the existing
+# listening on 0.0.0.0:6767 inside the container, published on the host at
+# FDE_BIND:FDE_PORT, the web UI enabled, and the daemon state on a host
+# directory. Re-running upgrades in place: the existing
 # container is replaced, the state directory is kept.
 #
 # Environment overrides:
@@ -13,6 +14,8 @@
 #   FDE_IMAGE        full image reference (default: froggapp/fde:$FDE_VERSION)
 #   FDE_HOME         host directory for daemon state (default: ~/.fde)
 #   FDE_PORT         host port published to the daemon (default: 6767)
+#   FDE_BIND         host address the port is published on (default: 0.0.0.0;
+#                    127.0.0.1 keeps it reachable only through an SSH tunnel)
 #   FDE_WORKSPACE    host directory mounted at /workspace (default: none)
 #   FDE_PASSWORD     daemon password (recommended for network-reachable hosts)
 #   FDE_CONTAINER    container name (default: fde-daemon)
@@ -23,6 +26,7 @@ FDE_VERSION="${FDE_VERSION:-latest}"
 FDE_IMAGE="${FDE_IMAGE:-froggapp/fde:${FDE_VERSION}}"
 FDE_HOME="${FDE_HOME:-${HOME}/.fde}"
 FDE_PORT="${FDE_PORT:-6767}"
+FDE_BIND="${FDE_BIND:-0.0.0.0}"
 FDE_WORKSPACE="${FDE_WORKSPACE:-}"
 FDE_PASSWORD="${FDE_PASSWORD:-}"
 FDE_CONTAINER="${FDE_CONTAINER:-fde-daemon}"
@@ -50,7 +54,7 @@ run_args=(
   -d
   --name "${FDE_CONTAINER}"
   --restart unless-stopped
-  -p "0.0.0.0:${FDE_PORT}:6767"
+  -p "${FDE_BIND}:${FDE_PORT}:6767"
   -v "${FDE_HOME}:/home/fde/.paseo"
   -e PASEO_LISTEN=0.0.0.0:6767
   -e PASEO_WEB_UI_ENABLED=true
@@ -74,7 +78,9 @@ log "started ${FDE_CONTAINER} from ${FDE_IMAGE}"
 echo
 log "web UI: http://<this-host>:${FDE_PORT}/"
 log "state:  ${FDE_HOME}"
-if [ -z "${FDE_PASSWORD}" ]; then
+if [ "${FDE_BIND}" = "127.0.0.1" ] || [ "${FDE_BIND}" = "localhost" ]; then
+  log "the daemon port is bound to loopback; reach it through an SSH tunnel"
+elif [ -z "${FDE_PASSWORD}" ]; then
   log "no FDE_PASSWORD set: anyone who can reach port ${FDE_PORT} can control the daemon"
 fi
 log "pair a client:   docker exec ${FDE_CONTAINER} fde daemon pair"
