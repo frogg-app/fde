@@ -34,6 +34,7 @@ import { WORKSPACE_DECK_MAX_MOUNTED_WORKSPACES } from "@/screens/workspace/works
 import { delayBrowserAgentCreatedStatus } from "../support/helpers/new-workspace";
 import { installDaemonWebSocketGate } from "../support/helpers/daemon-websocket-gate";
 import { gotoAppShell, openSettings, selectModel } from "../support/helpers/app";
+import { clickSettingsBackToWorkspace, expectSettingsModalOpen } from "../support/helpers/settings";
 import { observeTimelineSubscriptions } from "../support/helpers/timeline-delivery";
 import {
   expectResumeOverflowFallsBackToOneTail,
@@ -300,7 +301,7 @@ async function retryRestoredSubmission(page: Page, prompt: string): Promise<void
 async function configureSteerInSettings(page: Page): Promise<void> {
   const modifier = process.platform === "darwin" ? "Meta" : "Control";
   await page.keyboard.press(`${modifier}+Comma`);
-  await expect(page).toHaveURL(/\/settings\/general$/);
+  await expectSettingsModalOpen(page);
   await selectSteerInSettings(page);
 }
 
@@ -312,7 +313,7 @@ async function selectSteerInSettings(page: Page): Promise<void> {
 async function configureInterruptInSettings(page: Page): Promise<void> {
   const modifier = process.platform === "darwin" ? "Meta" : "Control";
   await page.keyboard.press(`${modifier}+Comma`);
-  await expect(page).toHaveURL(/\/settings\/general$/);
+  await expectSettingsModalOpen(page);
   await selectSendBehaviorInSettings(page, "Interrupt", "interrupt");
 }
 
@@ -1132,7 +1133,7 @@ test.describe("Agent message submission", () => {
     });
     try {
       await configureSteerInSettings(page);
-      await page.goBack();
+      await clickSettingsBackToWorkspace(page);
       await expectComposerVisible(page);
       await expectAgentReadyToInterrupt(page);
       const sendsBefore = gate.getClientRequestCount("send_agent_message_request");
@@ -1169,7 +1170,7 @@ test.describe("Agent message submission", () => {
     });
     try {
       await configureSteerInSettings(page);
-      await page.goBack();
+      await clickSettingsBackToWorkspace(page);
       await expectComposerVisible(page);
       await expectAgentReadyToInterrupt(page);
       gate.holdNextServerMessage("send_agent_message_response");
@@ -1197,7 +1198,7 @@ test.describe("Agent message submission", () => {
     });
     try {
       await configureInterruptInSettings(page);
-      await page.goBack();
+      await clickSettingsBackToWorkspace(page);
       await expectComposerVisible(page);
       await expectAgentReadyToInterrupt(page);
 

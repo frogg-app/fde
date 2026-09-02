@@ -2,13 +2,14 @@ import { execFileSync } from "node:child_process";
 import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { type Locator, type Page } from "@playwright/test";
-import { buildHostWorkspaceRoute, buildSettingsSectionRoute } from "../../src/utils/host-routes";
+import { buildHostWorkspaceRoute } from "../../src/utils/host-routes";
 import { test, expect } from "../support/fixtures";
 import { daemonWsRoutePattern } from "../support/helpers/daemon-port";
 import { getServerId } from "../support/helpers/server-id";
 import { connectSeedClient } from "../support/helpers/seed-client";
 import { createTempGitRepo } from "../support/helpers/workspace";
 import { openChangesPanel, waitForWorkspaceTabsVisible } from "../support/helpers/workspace-tabs";
+import { expectSettingsModalOpen } from "../support/helpers/settings";
 
 interface DirtyWorkspace {
   id: string;
@@ -1697,7 +1698,7 @@ async function changeCodeTypographyFromSettings(
   typography: { fontSize: number; fontFamily: string },
 ): Promise<void> {
   await page.getByTestId("sidebar-settings").click();
-  await expect(page).toHaveURL(new RegExp(`${buildSettingsSectionRoute("general")}|/settings$`));
+  await expectSettingsModalOpen(page);
   await page.getByRole("button", { name: "Appearance" }).click();
   await page.getByLabel("Code font family").fill(typography.fontFamily);
   await page.getByLabel("Code font family").press("Enter");

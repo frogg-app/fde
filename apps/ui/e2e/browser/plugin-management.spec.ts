@@ -6,6 +6,8 @@ import { gotoAppShell, openSettings } from "../support/helpers/app";
 import { getServerId } from "../support/helpers/server-id";
 import { connectNewWorkspaceDaemonClient } from "../support/helpers/new-workspace";
 import {
+  clickSettingsBackToWorkspace,
+  expectSettingsClosed,
   expectSettingsHeader,
   openHostSection,
   openSettingsHost,
@@ -88,8 +90,8 @@ async function openContribution(page: Page, title: string, expectedBody: string)
 }
 
 async function leavePluginSettings(page: Page): Promise<void> {
-  await page.getByRole("button", { name: "Back", exact: true }).click();
-  await expect(page).not.toHaveURL(/\/settings\//);
+  await clickSettingsBackToWorkspace(page);
+  await expectSettingsClosed(page);
 }
 
 async function openContributionFromSettings(

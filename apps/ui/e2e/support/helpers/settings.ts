@@ -62,7 +62,20 @@ export async function openSettingsHostSection(
   section: HostSection,
 ): Promise<void> {
   await page.getByTestId(`settings-host-section-${section}`).click();
-  await expectHostSettingsSectionSelected(page, section);
+  if (await isSettingsModalPresented(page)) {
+    await expectHostSettingsSectionSelected(page, section);
+    return;
+  }
+  // Compact layouts push a full-screen detail route instead of selecting a row.
+  await expectAppRoute(page, buildSettingsHostSectionRoute(serverId, section));
+}
+
+/** Wide layouts present settings in a modal; compact layouts use the full-screen routes. */
+async function isSettingsModalPresented(page: Page): Promise<boolean> {
+  return page
+    .getByTestId("settings-modal")
+    .isVisible()
+    .catch(() => false);
 }
 
 export async function expectHostSettingsSectionSelected(
@@ -299,6 +312,21 @@ export async function expectGeneralContent(page: Page): Promise<void> {
 
 export async function expectAppearanceContent(page: Page): Promise<void> {
   await expect(page.getByText("Highlight theme", { exact: true }).first()).toBeVisible();
+}
+
+/**
+ * Wide layouts present settings in a modal that steps back off the `/settings`
+ * route, so "settings is open" means the modal is visible on a section, not a URL.
+ */
+export async function expectSettingsModalOpen(page: Page, title = "General"): Promise<void> {
+  await expect(page.getByTestId("settings-modal")).toBeVisible();
+  await expectSettingsHeader(page, title);
+}
+
+/** The modal unmounts when closed, and no `/settings` route is left behind. */
+export async function expectSettingsClosed(page: Page): Promise<void> {
+  await expect(page.locator('[data-testid="settings-modal"]:visible')).toHaveCount(0);
+  await expect(page).not.toHaveURL(/\/settings(\/|$)/);
 }
 
 export async function expectHostLabelDisplayed(page: Page): Promise<void> {

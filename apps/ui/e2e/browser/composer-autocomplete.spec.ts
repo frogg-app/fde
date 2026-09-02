@@ -9,6 +9,7 @@ import { expectWorkspaceTabVisible, openSessions } from "../support/helpers/arch
 import { daemonWsRoutePattern } from "../support/helpers/daemon-port";
 import { getServerId } from "../support/helpers/server-id";
 import { switchWorkspaceViaSidebar } from "../support/helpers/workspace-ui";
+import { expectSettingsModalOpen } from "../support/helpers/settings";
 
 const TEST_COMMANDS = [
   {
@@ -155,7 +156,7 @@ async function openAppWideNewWorkspace(page: Page): Promise<void> {
 
 async function openSettingsThenBackToWorkspace(page: Page): Promise<void> {
   await page.getByTestId("sidebar-settings").filter({ visible: true }).first().click();
-  await expect(page).toHaveURL(/\/settings\/general$/, { timeout: 30_000 });
+  await expectSettingsModalOpen(page);
   await page.getByTestId("settings-back-to-workspace").click();
   await page.waitForURL((url) => url.pathname.includes("/workspace/"), { timeout: 30_000 });
 }

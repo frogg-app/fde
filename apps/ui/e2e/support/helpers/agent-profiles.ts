@@ -1,11 +1,9 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 import type { AgentProfile } from "@fde/protocol/messages";
-import { buildSettingsHostSectionRoute } from "@/utils/host-routes";
 import { gotoAppShell, openSettings } from "./app";
 import { connectDaemonClient } from "./daemon-client-loader";
 import { getServerId } from "./server-id";
-import { expectAppRoute } from "./route-assertions";
-import { openSettingsHost } from "./settings";
+import { expectHostSettingsSectionSelected, openSettingsHost } from "./settings";
 
 // ─── Daemon-side seeding ───────────────────────────────────────────────────
 
@@ -138,12 +136,11 @@ export async function seedModelProvider(input: {
 
 /** Reach agent profiles through the same visible Settings path a person uses. */
 export async function openAgentProfileSettings(page: Page): Promise<void> {
-  const serverId = getServerId();
   await gotoAppShell(page);
   await openSettings(page);
   await openSettingsHost(page);
   await page.getByRole("button", { name: "Agents", exact: true }).click();
-  await expectAppRoute(page, buildSettingsHostSectionRoute(serverId, "agents"));
+  await expectHostSettingsSectionSelected(page, "agents");
   await expect(page.getByTestId("agent-profiles-card")).toBeVisible({ timeout: 30_000 });
 }
 

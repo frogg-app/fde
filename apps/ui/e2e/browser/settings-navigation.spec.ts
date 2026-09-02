@@ -9,37 +9,39 @@ import {
 import { gotoAppShell, openSettings } from "../support/helpers/app";
 import { getE2EDaemonPort } from "../support/helpers/daemon-port";
 import {
-  closeCompactSettings,
-  openSettingsSection,
-  expectSettingsHeader,
-  openAddHostFlow,
-  selectHostConnectionType,
-  toggleHostAdvanced,
-  openCompactSettings,
-  expectCompactSettingsList,
-  expectSettingsSidebarVisible,
-  expectSettingsSidebarHidden,
-  expectSettingsSidebarSections,
-  goBackInSettings,
-  expectSettingsBackButton,
   clickSettingsBackToWorkspace,
-  verifyLegacyHostSettingsRedirect,
-  openCompactSettingsHost,
+  closeCompactSettings,
+  expectAboutContent,
   expectAddHostMethodOptions,
-  fillDirectHostUri,
+  expectAppearanceContent,
+  expectCompactSettingsList,
+  expectDiagnosticsContent,
   expectDirectHostFormValues,
   expectDirectHostSslEnabled,
-  expectDirectHostUriValue,
   expectDirectHostUriHidden,
-  expectDiagnosticsContent,
-  expectAboutContent,
+  expectDirectHostUriValue,
   expectGeneralContent,
-  expectAppearanceContent,
-  seedSavedSettingsHosts,
-  selectSettingsHost,
+  expectSettingsBackButton,
+  expectSettingsClosed,
+  expectSettingsHeader,
   expectSettingsHostPickerLabel,
+  expectSettingsModalOpen,
+  expectSettingsSidebarHidden,
+  expectSettingsSidebarSections,
+  expectSettingsSidebarVisible,
+  fillDirectHostUri,
+  goBackInSettings,
+  openAddHostFlow,
+  openCompactSettings,
+  openCompactSettingsHost,
   openSettingsHostSection,
+  openSettingsSection,
   removeCurrentHostFromSettings,
+  seedSavedSettingsHosts,
+  selectHostConnectionType,
+  selectSettingsHost,
+  toggleHostAdvanced,
+  verifyLegacyHostSettingsRedirect,
 } from "../support/helpers/settings";
 import { getServerId } from "../support/helpers/server-id";
 import { expectAppRoute } from "../support/helpers/route-assertions";
@@ -53,7 +55,7 @@ async function openWorkspace(
 }
 
 test.describe("Settings sidebar navigation", () => {
-  test("clicking a sidebar section updates the URL and renders the section", async ({ page }) => {
+  test("clicking a sidebar section renders the section", async ({ page }) => {
     await gotoAppShell(page);
     await openSettings(page);
 
@@ -115,18 +117,18 @@ test.describe("Settings sidebar navigation", () => {
     await expectDirectHostUriHidden(page);
   });
 
-  test("sidebar shows a Back to workspace row that leaves /settings", async ({ page }) => {
+  test("the close button leaves settings", async ({ page }) => {
     await gotoAppShell(page);
     await openSettings(page);
     await clickSettingsBackToWorkspace(page);
-    await expect(page).not.toHaveURL(/\/settings(\/|$)/);
+    await expectSettingsClosed(page);
   });
 
   test("pressing Escape closes settings", async ({ page }) => {
     await gotoAppShell(page);
     await openSettings(page);
     await page.keyboard.press("Escape");
-    await expect(page).not.toHaveURL(/\/settings(\/|$)/);
+    await expectSettingsClosed(page);
   });
 
   test("Escape lets settings dropdowns and modals close before leaving settings", async ({
@@ -143,7 +145,7 @@ test.describe("Settings sidebar navigation", () => {
       await page.keyboard.press("Escape");
 
       await expect(page.getByRole("menuitem", { name: "System", exact: true })).toHaveCount(0);
-      await expect(page).toHaveURL(/\/settings(\/|$)/);
+      await expectSettingsModalOpen(page, "Appearance");
     });
 
     await test.step("a modal owns Escape", async () => {
@@ -153,7 +155,7 @@ test.describe("Settings sidebar navigation", () => {
       await page.keyboard.press("Escape");
 
       await expect(page.getByText("Add connection", { exact: true })).toHaveCount(0);
-      await expect(page).toHaveURL(/\/settings(\/|$)/);
+      await expectSettingsModalOpen(page, "Appearance");
     });
   });
 });
