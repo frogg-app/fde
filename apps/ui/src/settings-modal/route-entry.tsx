@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { router } from "expo-router";
+import { router, useRootNavigationState } from "expo-router";
 import { useIsCompactFormFactor } from "@/constants/layout";
 import { leaveSettings, type SettingsView } from "@/navigation/settings-navigation";
 import SettingsScreen from "@/screens/settings-screen";
@@ -19,9 +19,12 @@ interface SettingsRouteEntryProps {
 export function SettingsRouteEntry({ view, openAddHostIntent = null }: SettingsRouteEntryProps) {
   const isCompactLayout = useIsCompactFormFactor();
   const openModal = useSettingsModalStore((state) => state.open);
+  // A cold start on a settings deep link runs this effect before the root
+  // navigator has mounted; navigating then throws. Wait for the router.
+  const routerReady = Boolean(useRootNavigationState()?.key);
 
   useEffect(() => {
-    if (isCompactLayout) return;
+    if (isCompactLayout || !routerReady) return;
     if (router.canGoBack()) {
       router.back();
     } else {
@@ -30,7 +33,7 @@ export function SettingsRouteEntry({ view, openAddHostIntent = null }: SettingsR
       leaveSettings();
     }
     openModal(view, openAddHostIntent);
-  }, [isCompactLayout, openAddHostIntent, openModal, view]);
+  }, [isCompactLayout, openAddHostIntent, openModal, routerReady, view]);
 
   if (!isCompactLayout) {
     return null;
