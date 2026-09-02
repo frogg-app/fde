@@ -7,5 +7,7 @@ if (process.env.LEFTHOOK === "0" || process.env.CI === "true") {
   console.log("prepare: skipping lefthook install (LEFTHOOK=0 or CI)");
   process.exit(0);
 }
-const result = spawnSync("npx", ["lefthook", "install", "--force"], { stdio: "inherit" });
+const result = spawnSync("npx", ["--yes", "lefthook@2", "install", "--force"], {
+  stdio: "inherit",
+});
 process.exit(result.status ?? 0);
