@@ -4,7 +4,7 @@ import { useHostRuntimeBootstrapState } from "@/app/_layout";
 import { HostRouteBootstrapBoundary } from "@/components/host-route-bootstrap-boundary";
 import { useLocalDaemonServerIdState } from "@/hooks/use-is-local-daemon";
 import { useHosts } from "@/runtime/host-runtime";
-import SettingsScreen from "@/screens/settings-screen";
+import { SettingsRouteEntry } from "@/settings-modal/route-entry";
 import { StartupSplashScreen } from "@/screens/startup-splash-screen";
 import {
   buildSettingsHostSectionRoute,
@@ -50,5 +50,5 @@ export default function SettingsSectionRoute() {
     );
   }
 
-  return <SettingsScreen view={view} openAddHostIntent={openAddHostIntent} />;
+  return <SettingsRouteEntry view={view} openAddHostIntent={openAddHostIntent} />;
 }

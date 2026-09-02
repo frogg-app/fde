@@ -13,6 +13,7 @@ export interface ShortcutRoutingContext {
   navigationActiveWorkspace: SidebarShortcutWorkspaceTarget | null;
   commandCenterOpen: boolean;
   shortcutsDialogOpen: boolean;
+  settingsModalOpen: boolean;
 }
 
 export interface ShortcutRoutingInput {
@@ -33,7 +34,8 @@ export type ShortcutAction =
   | { kind: "open-project-picker" }
   | { kind: "callback"; name: ShortcutCallbackName }
   | { kind: "command-center-toggle"; nextOpen: boolean; scope?: "files" }
-  | { kind: "shortcuts-dialog-toggle"; nextOpen: boolean };
+  | { kind: "shortcuts-dialog-toggle"; nextOpen: boolean }
+  | { kind: "settings-modal-close" };
 
 const NONE: ShortcutAction = { kind: "none" };
 
@@ -162,6 +164,9 @@ function routeMessageInputAction(payload: KeyboardShortcutPayload): ShortcutActi
 }
 
 function routeSettingsToggle(ctx: ShortcutRoutingContext): ShortcutAction {
+  if (ctx.settingsModalOpen) {
+    return { kind: "settings-modal-close" };
+  }
   if (!ctx.pathname.startsWith("/settings")) {
     return { kind: "router-push", route: buildSettingsRoute() };
   }

@@ -284,11 +284,13 @@ export function SheetHeaderView({
   header,
   onClose,
   showCloseButton = true,
+  closeButtonTestID,
   testID,
 }: {
   header: SheetHeader;
   onClose: () => void;
   showCloseButton?: boolean;
+  closeButtonTestID?: string;
   testID?: string;
 }) {
   const { theme } = useUnistyles();
@@ -341,6 +343,7 @@ export function SheetHeaderView({
             accessibilityLabel={t("common.actions.close")}
             style={styles.closeButton}
             onPress={onClose}
+            testID={closeButtonTestID}
           >
             {({ pressed }) => (
               <X
@@ -445,6 +448,10 @@ export interface AdaptiveModalSheetProps {
   testID?: string;
   /** Override the max width of the desktop card. */
   desktopMaxWidth?: number;
+  /** Size intent for the desktop card, composed over the sheet's own card frame. */
+  desktopCardStyle?: StyleProp<ViewStyle>;
+  /** Test id for the header close button. */
+  closeButtonTestID?: string;
   scrollable?: boolean;
   presentation?: "push" | "replace";
   /** Layout intent for the sheet body, composed over the sheet's own content inset. */
@@ -466,6 +473,8 @@ export function AdaptiveModalSheet({
   snapPoints,
   testID,
   desktopMaxWidth,
+  desktopCardStyle,
+  closeButtonTestID,
   scrollable = true,
   presentation,
   contentStyle,
@@ -553,9 +562,13 @@ export function AdaptiveModalSheet({
     [],
   );
 
-  const desktopCardStyle = useMemo(
-    () => [styles.desktopCard, desktopMaxWidth != null && { maxWidth: desktopMaxWidth }],
-    [desktopMaxWidth],
+  const resolvedDesktopCardStyle = useMemo(
+    () => [
+      styles.desktopCard,
+      desktopMaxWidth != null && { maxWidth: desktopMaxWidth },
+      desktopCardStyle,
+    ],
+    [desktopCardStyle, desktopMaxWidth],
   );
   const desktopOverlayStyle = useMemo(
     () => [
@@ -619,7 +632,12 @@ export function AdaptiveModalSheet({
   if (isMobile) {
     const sheetContent = (
       <>
-        <SheetHeaderView header={header} onClose={onClose} testID={testID} />
+        <SheetHeaderView
+          header={header}
+          onClose={onClose}
+          closeButtonTestID={closeButtonTestID}
+          testID={testID}
+        />
         {scrollable ? (
           <BottomSheetScrollView
             style={sizeContentToCurrentSnapPoint ? styles.bottomSheetVisibleScroll : undefined}
@@ -664,7 +682,7 @@ export function AdaptiveModalSheet({
 
   const cardInner = (
     <OverlayLayerProvider layer={modalLayer}>
-      <SheetHeaderView header={header} onClose={onClose} />
+      <SheetHeaderView header={header} onClose={onClose} closeButtonTestID={closeButtonTestID} />
       {scrollable ? (
         <View style={styles.desktopScrollContainer}>
           <ScrollView
@@ -692,7 +710,7 @@ export function AdaptiveModalSheet({
       />
       <View
         ref={setWebOverlayScope}
-        style={desktopCardStyle}
+        style={resolvedDesktopCardStyle}
         role="dialog"
         aria-modal
         tabIndex={-1}

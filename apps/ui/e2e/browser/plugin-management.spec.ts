@@ -66,7 +66,7 @@ export default function contribute(plugin) {
 async function openPluginSettings(page: Page): Promise<void> {
   const serverId = getServerId();
   await openSettings(page);
-  await openSettingsHost(page, serverId);
+  await openSettingsHost(page);
   await openHostSection(page, serverId, "plugins");
   await expectSettingsHeader(page, "Plugins");
 }

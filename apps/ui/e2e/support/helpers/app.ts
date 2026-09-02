@@ -35,7 +35,7 @@ export const openSettings = async (page: Page) => {
   const settingsButton = page.locator('[data-testid="sidebar-settings"]:visible').first();
   await expect(settingsButton).toBeVisible();
   await settingsButton.click();
-  await expect(page).toHaveURL(/\/settings\/general$/);
+  await expect(page.getByTestId("settings-detail-header-title")).toHaveText("General");
 };
 
 export const setWorkingDirectory = async (page: Page, directory: string) => {
