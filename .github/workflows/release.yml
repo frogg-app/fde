@@ -42,7 +42,7 @@ jobs:
       signing: ${{ steps.secrets.outputs.signing }}
       docker: ${{ steps.secrets.outputs.docker }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.RELEASE_TAG }}
 
@@ -113,7 +113,7 @@ jobs:
             echo "clobber=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: release-notes
           path: notes.md
@@ -125,11 +125,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.RELEASE_TAG }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
@@ -140,7 +140,7 @@ jobs:
       - name: Export web UI
         run: npm run build:ui
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ui-dist
           path: apps/ui/dist
@@ -181,11 +181,11 @@ jobs:
     env:
       RELEASE_DIR: apps/desktop/src-tauri/target/${{ matrix.target }}/release
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.RELEASE_TAG }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
@@ -210,7 +210,7 @@ jobs:
       - name: Install dependencies
         run: node scripts/ci/npm-retry.mjs ci
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: ui-dist
           path: apps/ui/dist
@@ -261,7 +261,7 @@ jobs:
             fi
             gh release upload "$RELEASE_TAG" "$f" "${flags[@]}"
           done
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: release-assets-${{ matrix.platform }}-${{ matrix.arch }}
           path: release-assets
@@ -286,7 +286,7 @@ jobs:
           - { runner: ubuntu-latest, target: win-x64 }
           - { runner: ubuntu-latest, target: win-arm64 }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.RELEASE_TAG }}
 
@@ -302,7 +302,7 @@ jobs:
             echo "::notice::scripts/release/build-daemon-bundle.mjs is not on $RELEASE_TAG; skipping daemon bundle."
           fi
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         if: steps.script.outputs.present == 'true'
         with:
           node-version: "22"
@@ -347,17 +347,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.RELEASE_TAG }}
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: release-assets-*
           path: release-assets
           merge-multiple: true
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: release-notes
           path: notes
@@ -398,11 +398,11 @@ jobs:
       IMAGE: froggapp/fde
       VERSION: ${{ needs.meta.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.RELEASE_TAG }}
 
-      - uses: docker/login-action@v3
+      - uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -430,10 +430,10 @@ jobs:
           echo "tags=$tags" >> "$GITHUB_OUTPUT"
           echo "Pushing: $tags"
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v4
         if: steps.tags.outputs.push == 'true'
 
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@v7
         if: steps.tags.outputs.push == 'true'
         with:
           context: .
