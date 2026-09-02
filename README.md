@@ -38,12 +38,13 @@ scripts/     dev/, release/, ci/ helpers
 
 ## Docs
 
-| Doc                                            | What it covers                                                   |
-| ---------------------------------------------- | ---------------------------------------------------------------- |
-| [docs/architecture.md](docs/architecture.md)   | System overview: daemon, clients, protocol                       |
-| [docs/development.md](docs/development.md)     | Day-to-day development of the daemon and web UI                  |
-| [docs/desktop-shell.md](docs/desktop-shell.md) | Tauri shell design: bridge contract, commands, plans             |
-| [docs/building.md](docs/building.md)           | Building the desktop app on Linux and cross-building for Windows |
+| Doc                                            | What it covers                                                    |
+| ---------------------------------------------- | ----------------------------------------------------------------- |
+| [docs/architecture.md](docs/architecture.md)   | System overview: daemon, clients, protocol                        |
+| [docs/development.md](docs/development.md)     | Day-to-day development of the daemon and web UI                   |
+| [docs/desktop-shell.md](docs/desktop-shell.md) | Tauri shell design: bridge contract, commands, plans              |
+| [docs/building.md](docs/building.md)           | Building the desktop app on Linux and cross-building for Windows  |
+| [docs/ci.md](docs/ci.md)                       | GitHub Actions: CI checks, release builds, secrets, cutting a tag |
 
 ## Status
 
