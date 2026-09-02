@@ -20,7 +20,7 @@ versioning, Docker, file-length rules). The upstream Paseo source is kept read-o
 - `deploy/` holds Docker and Nix. `scripts/` is split into `dev/`, `release/`, `ci/`.
 - `docs/` is the source of truth for system knowledge. Read it before non-trivial work.
 - Version source of truth is the root `package.json`; `apps/desktop/src-tauri/tauri.conf.json`
-  and every workspace `package.json` are synced from it by `scripts/release/sync-versions.mjs`.
+  and every workspace `package.json` are synced from it by `scripts/release/sync-workspace-versions.mjs`.
 
 ## Working here
 
