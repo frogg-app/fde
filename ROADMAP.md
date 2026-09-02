@@ -71,6 +71,8 @@ Blocked on the owner:
   release workflow skips `latest.json` and in-app updates report "not configured".
 - **Docker Hub in CI.** Add `DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN` secrets; until then images are
   pushed manually from this VM (logged in as `froggapp`).
+- **Docker Hub visibility.** `froggapp/fde` was created public by the first push; the stored
+  access token cannot change visibility (403). Set it private in Docker Hub settings if wanted.
 - **Code signing certificates** (Windows Authenticode, Apple Developer ID) for SmartScreen/Gatekeeper.
 - **Hosting `frogg.de/install.sh`**: a redirect to
   `https://raw.githubusercontent.com/frogg-app/frogg-de/main/deploy/install.sh` (and
