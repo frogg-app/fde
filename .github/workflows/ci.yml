@@ -160,3 +160,61 @@ jobs:
           path: apps/desktop/src-tauri/target/release/bundle/deb/*.deb
           retention-days: 7
           if-no-files-found: error
+
+  android:
+    name: android (debug apk)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      # The Android build is the slowest job, so it only runs when something it
+      # depends on changed. Pushes to main always run it.
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            android:
+              - "apps/ui/**"
+              - "packages/expo-two-way-audio/**"
+              - "scripts/release/build-android-apk.mjs"
+              - "package.json"
+              - "package-lock.json"
+              - ".github/workflows/ci.yml"
+
+      - uses: actions/setup-node@v4
+        if: steps.changes.outputs.android == 'true' || github.event_name != 'pull_request'
+        with:
+          node-version: "22"
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        if: steps.changes.outputs.android == 'true' || github.event_name != 'pull_request'
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: android-actions/setup-android@v3
+        if: steps.changes.outputs.android == 'true' || github.event_name != 'pull_request'
+        with:
+          log-accepted-android-sdk-licenses: false
+
+      - uses: gradle/actions/setup-gradle@v4
+        if: steps.changes.outputs.android == 'true' || github.event_name != 'pull_request'
+
+      - name: Install dependencies
+        if: steps.changes.outputs.android == 'true' || github.event_name != 'pull_request'
+        run: node scripts/ci/npm-retry.mjs ci
+
+      # Debug variant: prebuild + assembleDebug, no JS bundle, no keystore.
+      - name: Prebuild and assemble debug APK
+        if: steps.changes.outputs.android == 'true' || github.event_name != 'pull_request'
+        run: node scripts/release/build-android-apk.mjs --variant debug --abi arm64-v8a --out-dir ci-assets
+
+      - uses: actions/upload-artifact@v4
+        if: steps.changes.outputs.android == 'true' || github.event_name != 'pull_request'
+        with:
+          name: fde-android-debug-apk
+          path: ci-assets/*.apk
+          retention-days: 7
+          if-no-files-found: error
