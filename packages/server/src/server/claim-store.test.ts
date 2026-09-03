@@ -57,7 +57,13 @@ describe("claim store", () => {
 
     store.mintPrincipal({ label: "second" });
     expect(store.read().principals.map((principal) => principal.label)).toEqual(["second"]);
-    expect(store.claimedAt()).not.toBe(claimedAt);
+    // Two mints inside the same millisecond share an ISO timestamp, so assert the claim moved
+    // forward rather than that the strings differ; the label assertion above proves the rewrite.
+    const reclaimedAt = store.claimedAt();
+    expect(reclaimedAt).not.toBeNull();
+    expect(Date.parse(reclaimedAt as string)).toBeGreaterThanOrEqual(
+      Date.parse(claimedAt as string),
+    );
   });
 
   test("rejects a corrupt principals file instead of treating it as unclaimed", () => {
