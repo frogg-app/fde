@@ -582,6 +582,10 @@ function resolveExpressTrustProxySetting(config: PaseoDaemonConfig): true | stri
   return config.trustedProxies ?? ["loopback"];
 }
 
+function resolveAutoUpdate(config: PaseoDaemonConfig): DaemonAutoUpdateConfig {
+  return config.autoUpdate ?? DEFAULT_AUTO_UPDATE_CONFIG;
+}
+
 function createInitialMutableDaemonConfig(config: PaseoDaemonConfig): MutableDaemonConfig {
   const providers = config.providerOverrides ?? {};
 
@@ -605,7 +609,7 @@ function createInitialMutableDaemonConfig(config: PaseoDaemonConfig): MutableDae
       providers: config.metadataGeneration?.providers ?? [],
     },
     autoArchiveAfterMerge: config.autoArchiveAfterMerge ?? false,
-    autoUpdate: config.autoUpdate ?? DEFAULT_AUTO_UPDATE_CONFIG,
+    autoUpdate: resolveAutoUpdate(config),
     enableTerminalAgentHooks: config.enableTerminalAgentHooks ?? false,
     appendSystemPrompt: config.appendSystemPrompt ?? "",
     pluginsEnabled: config.pluginsEnabled ?? false,
