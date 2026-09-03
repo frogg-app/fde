@@ -15,7 +15,7 @@ Done items move to CHANGELOG.md.
       `~/.ssh/config` (HostName, User, Port, IdentityFile resolved) as a one-click
       alternative to typing `ssh://user@host`.
 - [ ] **Portable Windows zip** as a standard build artifact next to the NSIS installer.
-- [ ] **Rebrand follow-through.** Verify no user-facing "Paseo" remains except attribution.
+- [x] **Rebrand follow-through.** No user-facing "Paseo" remains except the About attribution.
 - [x] **Android APK.** `apps/ui` builds as the Android app (`app.frogg.fde`, name "FDE",
       version code derived from the root `package.json`); `scripts/release/build-android-apk.mjs`
       builds it locally and in `release.yml`, which attaches `FDE-<version>-android-arm64-v8a.apk`
