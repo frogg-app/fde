@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.10
+
+- Daemon: removed the Paseo-era client version gates. FDE clients (version 0.1.x) were treated as
+  legacy Paseo clients, which hid every provider except Claude, Codex, and OpenCode and forced the
+  legacy workspace restore path. All providers are visible again.
+- Lockfile regenerated with every platform's optional binaries so macOS and Windows CI jobs install
+  cleanly.
+- Android APK (arm64-v8a) attached to releases; built locally for 0.1.8.
+
 ## 0.1.9
 
 - Android APK: `app.frogg.fde` identity, version code derived from the package version, `scripts/release/build-android-apk.mjs`, CI jobs, docs.

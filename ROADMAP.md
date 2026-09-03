@@ -83,6 +83,12 @@ Blocked on the owner:
   pushed manually from this VM (logged in as `froggapp`).
 - **Docker Hub visibility.** `froggapp/fde` was created public by the first push; the stored
   access token cannot change visibility (403). Set it private in Docker Hub settings if wanted.
+- **Android release keystore.** Generate one keystore and keep it forever (`docs/android.md`), then
+  add `FDE_ANDROID_KEYSTORE_BASE64`, `FDE_ANDROID_KEYSTORE_PASSWORD`, `FDE_ANDROID_KEY_ALIAS`,
+  `FDE_ANDROID_KEY_PASSWORD` secrets. The APK on v0.1.8 is signed with a throwaway local key.
+- **Swap file on the build VM.** An 8 GB `/swapfile.fde` was enabled (not in fstab, gone at
+  reboot) so Gradle/Hermes could finish on 9 GB RAM. Remove with
+  `sudo swapoff /swapfile.fde && sudo rm /swapfile.fde` if unwanted.
 - **Code signing certificates** (Windows Authenticode, Apple Developer ID) for SmartScreen/Gatekeeper.
 - **Hosting `frogg.de/install.sh`**: a redirect to
   `https://raw.githubusercontent.com/frogg-app/frogg-de/main/deploy/install.sh` (and
