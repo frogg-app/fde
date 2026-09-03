@@ -14,26 +14,32 @@ use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, ReadBuf};
 use tokio::process::{Child, ChildStdin, ChildStdout, Command};
 
 use super::session::DEFAULT_SSH_DAEMON_PORT;
+use super::ssh_auth::{self, classify_ssh_failure, SshFailure, SshPassword};
 
 const SSH_STDERR_LIMIT: usize = 8192;
 const EXIT_GRACE: Duration = Duration::from_millis(500);
 
-/// Parity with `buildSshTunnelArgs` + `buildSshArgs` in the Electron shell.
-pub fn build_ssh_args(host: &str, ssh_port: Option<u16>, daemon_port: Option<u16>) -> Vec<String> {
-    let mut args: Vec<String> = [
-        "-T",
-        "-o",
-        "BatchMode=yes",
-        "-o",
-        "ConnectTimeout=10",
-        "-o",
-        "ClearAllForwardings=yes",
-        "-o",
-        "ExitOnForwardFailure=yes",
-    ]
-    .iter()
-    .map(|arg| arg.to_string())
-    .collect();
+/// Parity with `buildSshTunnelArgs` + `buildSshArgs` in the Electron shell;
+/// `ssh_auth::auth_args` decides between `BatchMode` and a password prompt.
+pub fn build_ssh_args(
+    host: &str,
+    ssh_port: Option<u16>,
+    daemon_port: Option<u16>,
+    password: Option<&SshPassword>,
+) -> Vec<String> {
+    let mut args: Vec<String> = vec!["-T".to_string()];
+    args.extend(ssh_auth::auth_args(password));
+    args.extend(
+        [
+            "-o",
+            "ConnectTimeout=10",
+            "-o",
+            "ClearAllForwardings=yes",
+            "-o",
+            "ExitOnForwardFailure=yes",
+        ]
+        .map(String::from),
+    );
     if let Some(port) = ssh_port {
         args.push("-p".into());
         args.push(port.to_string());
@@ -106,12 +112,16 @@ fn configure(command: &mut Command) {
 
 /// Spawns the first candidate that exists; a missing executable moves on to
 /// the next one, any other spawn error is final.
-fn spawn_first_available(args: &[String]) -> io::Result<(PathBuf, Child)> {
+fn spawn_first_available(
+    args: &[String],
+    password: Option<&SshPassword>,
+) -> io::Result<(PathBuf, Child)> {
     let mut last_error: Option<io::Error> = None;
     for program in ssh_program_candidates() {
         let mut command = Command::new(&program);
         command.args(args);
         configure(&mut command);
+        ssh_auth::apply_password(&mut command, password)?;
         match command.spawn() {
             Ok(child) => return Ok((program, child)),
             Err(error) if error.kind() == io::ErrorKind::NotFound => {
@@ -129,6 +139,8 @@ pub struct SshProcess {
     child: Child,
     stderr: Arc<Mutex<String>>,
     failure: Option<String>,
+    failure_kind: Option<SshFailure>,
+    password_tried: bool,
 }
 
 impl SshProcess {
@@ -136,10 +148,19 @@ impl SshProcess {
         host: &str,
         ssh_port: Option<u16>,
         daemon_port: Option<u16>,
+        password: Option<&SshPassword>,
     ) -> io::Result<(Self, SshStream)> {
-        let args = build_ssh_args(host, ssh_port, daemon_port);
-        log::info!("ssh: spawning ssh {}", args.join(" "));
-        let (program, mut child) = spawn_first_available(&args).map_err(|error| {
+        let args = build_ssh_args(host, ssh_port, daemon_port, password);
+        log::info!(
+            "ssh: spawning ssh {}{}",
+            args.join(" "),
+            if password.is_some() {
+                " (password via askpass)"
+            } else {
+                ""
+            }
+        );
+        let (program, mut child) = spawn_first_available(&args, password).map_err(|error| {
             log::warn!("ssh: spawn failed for host {host}: {error}");
             error
         })?;
@@ -182,6 +203,8 @@ impl SshProcess {
                 child,
                 stderr,
                 failure: None,
+                failure_kind: None,
+                password_tried: password.is_some(),
             },
             SshStream {
                 stdin,
@@ -206,7 +229,16 @@ impl SshProcess {
         }
         let failure = format_ssh_failure(&stderr, status.code(), exit_signal(&status));
         self.failure = Some(failure.clone());
+        self.failure_kind = Some(classify_ssh_failure(&stderr));
         Some(failure)
+    }
+
+    /// The structured reading of the exit failure (`SshFailure::detail`),
+    /// once `wait` or `failure_detail` has seen ssh exit.
+    pub fn failure_detail_value(&self) -> Option<serde_json::Value> {
+        self.failure_kind
+            .as_ref()
+            .and_then(|kind| kind.detail(self.password_tried))
     }
 
     fn stderr_text(&self) -> String {
@@ -320,18 +352,44 @@ mod tests {
 
     #[test]
     fn host_only_matches_protocol_argv() {
-        let args = build_ssh_args("dev@example.com", None, None);
+        let args = build_ssh_args("dev@example.com", None, None, None);
         let mut expected: Vec<String> = COMMON.iter().map(|s| s.to_string()).collect();
-        expected.extend(["-W", "127.0.0.1:6767", "dev@example.com"].map(String::from));
+        expected.extend(["-W", "127.0.0.1:9999", "dev@example.com"].map(String::from));
         assert_eq!(args, expected);
     }
 
     #[test]
     fn host_with_ports_matches_protocol_argv() {
-        let args = build_ssh_args("build-box", Some(2222), Some(7000));
+        let args = build_ssh_args("build-box", Some(2222), Some(7000), None);
         let mut expected: Vec<String> = COMMON.iter().map(|s| s.to_string()).collect();
         expected.extend(["-p", "2222", "-W", "127.0.0.1:7000", "build-box"].map(String::from));
         assert_eq!(args, expected);
+    }
+
+    #[test]
+    fn password_drops_batch_mode_and_keeps_the_secret_out_of_argv() {
+        let password = SshPassword::new("hunter2".into());
+        let args = build_ssh_args("build-box", None, None, Some(&password));
+        assert_eq!(
+            args,
+            [
+                "-T",
+                "-o",
+                "NumberOfPasswordPrompts=1",
+                "-o",
+                "PreferredAuthentications=publickey,keyboard-interactive,password",
+                "-o",
+                "ConnectTimeout=10",
+                "-o",
+                "ClearAllForwardings=yes",
+                "-o",
+                "ExitOnForwardFailure=yes",
+                "-W",
+                "127.0.0.1:9999",
+                "build-box"
+            ]
+        );
+        assert!(!args.iter().any(|arg| arg.contains("hunter2")));
     }
 
     #[test]

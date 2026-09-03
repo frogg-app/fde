@@ -5,7 +5,9 @@
 
 use serde_json::Value;
 
-pub const DEFAULT_LISTEN: &str = "127.0.0.1:6767";
+use crate::transport::ssh_auth::{password_from_args, SshPassword};
+
+pub const DEFAULT_LISTEN: &str = "127.0.0.1:9999";
 pub const DEFAULT_RELEASE_BASE: &str = "https://github.com/frogg-app/frogg-de/releases";
 const MAX_VERSION_LEN: usize = 64;
 const MAX_URL_LEN: usize = 2048;
@@ -29,6 +31,9 @@ impl DeployMethod {
 pub struct SshTarget {
     pub host: String,
     pub ssh_port: Option<u16>,
+    /// Answers ssh's password prompt through the askpass helper
+    /// (`transport::ssh_auth`); absent means `BatchMode`.
+    pub ssh_password: Option<SshPassword>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -78,6 +83,7 @@ pub fn parse_ssh_target(args: &Value) -> Result<SshTarget, String> {
     Ok(SshTarget {
         host: validate_ssh_host(string_field(args, "host").unwrap_or_default())?,
         ssh_port: parse_port(args.get("sshPort"), "SSH port")?,
+        ssh_password: password_from_args(args),
     })
 }
 
@@ -175,7 +181,7 @@ pub fn env_assignments(pairs: &[(&str, &str)]) -> String {
 /// The remote command that reads the install script from stdin.
 pub fn build_install_command(request: &DeployRequest) -> String {
     let mut pairs: Vec<(&str, &str)> = vec![("FDE_VERSION", request.version.as_str())];
-    let (bind, port) = split_listen(&request.listen).unwrap_or(("127.0.0.1", 6767));
+    let (bind, port) = split_listen(&request.listen).unwrap_or(("127.0.0.1", 9999));
     let port = port.to_string();
     match request.method {
         DeployMethod::Native => {
@@ -203,10 +209,11 @@ mod tests {
             target: SshTarget {
                 host: "dev@box".into(),
                 ssh_port: None,
+                ssh_password: None,
             },
             method,
             version: "0.2.0".into(),
-            listen: "127.0.0.1:6767".into(),
+            listen: "127.0.0.1:9999".into(),
             bundle_url: None,
         }
     }
@@ -234,7 +241,7 @@ mod tests {
     fn builds_native_and_docker_commands() {
         assert_eq!(
             build_install_command(&request(DeployMethod::Native)),
-            "FDE_VERSION='0.2.0' FDE_LISTEN='127.0.0.1:6767' \
+            "FDE_VERSION='0.2.0' FDE_LISTEN='127.0.0.1:9999' \
              FDE_RELEASE_BASE='https://github.com/frogg-app/frogg-de/releases' bash -s"
         );
         let mut with_url = request(DeployMethod::Native);
@@ -264,7 +271,16 @@ mod tests {
         )
         .unwrap();
         assert_eq!(parsed.target.ssh_port, Some(2222));
+        assert_eq!(parsed.target.ssh_password, None);
         assert_eq!(parsed.method, DeployMethod::Docker);
+
+        let with_password =
+            parse_ssh_target(&json!({ "host": "box", "sshPassword": "hunter2" })).unwrap();
+        assert_eq!(
+            with_password.ssh_password.as_ref().map(SshPassword::expose),
+            Some("hunter2")
+        );
+        assert!(!format!("{with_password:?}").contains("hunter2"));
         assert_eq!(parsed.version, "1.2.3");
         assert_eq!(parsed.bundle_url.as_deref(), Some("https://x.y/z.tar.gz"));
 

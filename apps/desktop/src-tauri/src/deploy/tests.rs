@@ -208,3 +208,89 @@ fn cancel_kills_the_ssh_child() {
         );
     });
 }
+
+/// A password-only host: without a password ssh (in BatchMode) is refused
+/// with the server's method list; with one, the fake ssh asks the
+/// `SSH_ASKPASS` helper and proceeds only when it prints the expected
+/// password. The password itself must never appear on the command line.
+const FAKE_SSH_PASSWORD: &str = r#"#!/bin/sh
+cmd=""; batch=no
+for arg in "$@"; do
+  case "$arg" in
+    BatchMode=yes) batch=yes ;;
+    *hunter2*) echo "password leaked into argv" >&2; exit 99 ;;
+  esac
+  cmd="$arg"
+done
+if [ "$batch" = yes ] || [ -z "$SSH_ASKPASS" ] || [ "$SSH_ASKPASS_REQUIRE" != force ]; then
+  echo "me@box: Permission denied (publickey,password)." >&2
+  exit 255
+fi
+given=$("$SSH_ASKPASS" "me@box's password:")
+if [ "$given" != "hunter2" ]; then
+  echo "Permission denied, please try again." >&2
+  echo "me@box: Permission denied (publickey,password)." >&2
+  exit 255
+fi
+case "$cmd" in
+  *"bash -s"*) echo "CMD: $cmd"; cat >/dev/null; exit 0 ;;
+esac
+exec sh -c "$cmd"
+"#;
+
+#[test]
+fn password_host_authenticates_through_the_askpass_helper() {
+    let dir = tempfile::tempdir().unwrap();
+    let fake = install_fake_ssh(dir.path(), "ssh", FAKE_SSH_PASSWORD);
+    let (manager, mut events) = manager(fake);
+    tauri::async_runtime::block_on(async {
+        // No password: BatchMode, refused with the method list.
+        let error = manager.probe(&json!({ "host": "box" })).await.unwrap_err();
+        assert_eq!(error, "me@box: Permission denied (publickey,password).");
+
+        // Wrong password: refused after one prompt.
+        let error = manager
+            .probe(&json!({ "host": "box", "sshPassword": "nope" }))
+            .await
+            .unwrap_err();
+        assert!(
+            error.ends_with("Permission denied (publickey,password)."),
+            "{error}"
+        );
+
+        // Right password: the probe runs.
+        let report = manager
+            .probe(&json!({ "host": "box", "sshPassword": "hunter2" }))
+            .await
+            .unwrap();
+        assert_eq!(report["homeDir"], std::env::var("HOME").unwrap());
+
+        // A deploy job on the same host reports the structured failure
+        // without a password and finishes with one.
+        let job_id = manager.start(&json!({ "host": "box" }), "0.1.6").unwrap()["jobId"]
+            .as_str()
+            .unwrap()
+            .to_string();
+        let received = collect_until_final(&mut events, &job_id).await;
+        let last = received.last().unwrap();
+        assert_eq!(last["kind"], "error");
+        assert_eq!(
+            last["failure"],
+            json!({ "kind": "ssh-auth", "methods": ["publickey", "password"], "passwordTried": false })
+        );
+        let job_id = manager
+            .start(
+                &json!({ "host": "box", "sshPassword": "hunter2", "method": "docker" }),
+                "0.1.6",
+            )
+            .unwrap()["jobId"]
+            .as_str()
+            .unwrap()
+            .to_string();
+        let received = collect_until_final(&mut events, &job_id).await;
+        assert!(logs(&received)
+            .iter()
+            .any(|line| line.starts_with("CMD: FDE_VERSION='0.1.6' FDE_BIND=")));
+        assert_eq!(received.last().unwrap()["kind"], "done");
+    });
+}

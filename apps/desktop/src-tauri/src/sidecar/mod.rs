@@ -24,7 +24,7 @@ use bundle::BundleStore;
 pub use lifecycle::{LaunchConfig, NOT_INSTALLED};
 
 pub const INSTALL_EVENT: &str = "paseo:event:local-daemon-install-event";
-pub const DEFAULT_PORT: u16 = 6767;
+pub const DEFAULT_PORT: u16 = 9999;
 
 pub type EventSink = Arc<dyn Fn(Value) + Send + Sync>;
 
@@ -123,7 +123,7 @@ fn daemon_settings<R: Runtime>(app: &AppHandle<R>) -> Value {
 }
 
 /// Listen address for a managed daemon: loopback on the configured port
-/// (`daemon.port` in desktop settings when present, else 6767).
+/// (`daemon.port` in desktop settings when present, else 9999).
 pub fn launch_config<R: Runtime>(app: &AppHandle<R>) -> LaunchConfig {
     let daemon = daemon_settings(app);
     let port = daemon

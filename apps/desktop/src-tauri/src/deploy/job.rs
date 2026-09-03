@@ -10,6 +10,7 @@ use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::sync::{mpsc, Notify};
 
 use crate::transport::ssh::format_ssh_failure;
+use crate::transport::ssh_auth::classify_ssh_failure;
 use crate::transport::EventSink;
 
 use super::args::SshTarget;
@@ -144,13 +145,17 @@ pub async fn run_job(spec: JobSpec, sink: EventSink, cancel: Arc<Notify>) {
             emit(&sink, &job_id, "done", json!({ "text": "Finished" }));
         }
         Ok(status) => {
-            let detail = format_ssh_failure(
-                &stderr_tail.join("\n"),
-                status.code(),
-                ssh::exit_signal(&status),
-            );
+            let stderr = stderr_tail.join("\n");
+            let detail = format_ssh_failure(&stderr, status.code(), ssh::exit_signal(&status));
             log::warn!("deploy[{job_id}]: failed on {host}: {status}");
-            emit(&sink, &job_id, "error", json!({ "detail": detail }));
+            // `failure` mirrors the transport's structured error detail
+            // (`{kind:"ssh-auth", methods}`), so the card can ask for a password.
+            let failure = classify_ssh_failure(&stderr).detail(spec.target.ssh_password.is_some());
+            let mut payload = json!({ "detail": detail });
+            if let Some(failure) = failure {
+                payload["failure"] = failure;
+            }
+            emit(&sink, &job_id, "error", payload);
         }
         Err(error) => {
             emit(
