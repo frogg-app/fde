@@ -1787,7 +1787,7 @@ export const ru: TranslationResources = {
       label: "Ссылка на сопряжение",
       errors: {
         required: "Вставьте ссылку для сопряжения (…/pair#offer=…)",
-        missingOffer: "Ссылка должна содержать #offer=...",
+        missingOffer: "Это не ссылка для сопряжения FDE",
         emptyOffer: "Параметр #offer не содержит данных.",
         invalid: "Неверная ссылка для сопряжения",
         unableToPair: "Не удалось выполнить сопряжение с хостом",

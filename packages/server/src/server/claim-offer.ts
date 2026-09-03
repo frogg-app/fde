@@ -1,7 +1,7 @@
 import * as QRCode from "qrcode";
 
 import { ConnectionOfferV3Schema, type ConnectionOfferV3 } from "@fde/protocol/connection-offer";
-import { buildOfferEndpoints, encodeOfferToFragmentUrl } from "./connection-offer.js";
+import { buildOfferEndpoints, encodeOfferToPairingUrl } from "./connection-offer.js";
 import type { ClaimOfferStore } from "./claim-offer-store.js";
 import type { ListenTarget } from "./bootstrap.js";
 
@@ -58,7 +58,7 @@ export function buildDirectClaimOffer(
   });
   return {
     offer,
-    url: encodeOfferToFragmentUrl({ offer, appBaseUrl: source.appBaseUrl() }),
+    url: encodeOfferToPairingUrl({ offer, appBaseUrl: source.appBaseUrl() }),
     expiresAt: claim.expiresAt,
     endpoints: uniqueEndpoints,
   };

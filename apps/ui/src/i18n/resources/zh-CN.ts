@@ -1733,7 +1733,7 @@ export const zhCN: TranslationResources = {
       label: "配对链接",
       errors: {
         required: "请粘贴配对链接 (…/pair#offer=…)",
-        missingOffer: "链接必须包含 #offer=...",
+        missingOffer: "这不是 FDE 配对链接",
         emptyOffer: "Offer payload 为空",
         invalid: "无效的配对链接",
         unableToPair: "无法配对 host",

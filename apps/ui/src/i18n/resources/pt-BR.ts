@@ -1789,7 +1789,7 @@ export const ptBR: TranslationResources = {
       label: "Link de pareamento",
       errors: {
         required: "Cole um link de emparelhamento (…/pair#offer=…)",
-        missingOffer: "O link deve incluir #offer=...",
+        missingOffer: "Esse não é um link de pareamento do FDE",
         emptyOffer: "O payload da oferta está vazio",
         invalid: "Link de pareamento inválido",
         unableToPair: "Não foi possível parear host",

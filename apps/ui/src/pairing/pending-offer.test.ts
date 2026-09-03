@@ -11,10 +11,19 @@ describe("extractOfferLink", () => {
     expect(extractOfferLink("http://192.168.1.5:8081/?offer=abc#/welcome")).toBe("#offer=abc");
   });
 
+  it("accepts pair.frogg.app code links and the ?code= form", () => {
+    expect(extractOfferLink("https://pair.frogg.app/code/abc")).toBe("#offer=abc");
+    expect(extractOfferLink("https://pair.frogg.app/code/abc/")).toBe("#offer=abc");
+    expect(extractOfferLink("http://192.168.1.5:9999/code/abc")).toBe("#offer=abc");
+    expect(extractOfferLink("https://pair.frogg.app/pair?code=abc")).toBe("#offer=abc");
+  });
+
   it("returns null without an offer", () => {
     expect(extractOfferLink("https://frogg.app/pair")).toBeNull();
     expect(extractOfferLink("https://frogg.app/pair#offer=")).toBeNull();
     expect(extractOfferLink("http://localhost:8081/?other=1")).toBeNull();
+    expect(extractOfferLink("https://pair.frogg.app/code/")).toBeNull();
+    expect(extractOfferLink("https://pair.frogg.app/pair?code=")).toBeNull();
     expect(extractOfferLink(null)).toBeNull();
   });
 });

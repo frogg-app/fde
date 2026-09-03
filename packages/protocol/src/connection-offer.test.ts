@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   ConnectionOfferSchema,
   DEFAULT_PAIRING_BASE_URL,
-  buildOfferFragmentUrl,
+  buildPairingUrl,
+  extractPairingCode,
+  hasPairingCode,
   buildPairingDeepLink,
   decodeOfferFragmentPayload,
   encodeOfferFragmentPayload,
@@ -110,23 +112,23 @@ describe("pairing links", () => {
     claim: { token: "tok", expiresAt: "2026-09-03T00:00:00.000Z" },
   };
 
-  it("builds https links with the payload in the fragment", () => {
+  it("builds https links carrying the code in the path", () => {
     const encoded = encodeOfferFragmentPayload(offer);
     expect(encoded).toBe(encodeBase64UrlNoPadUtf8(JSON.stringify(offer)));
-    expect(buildOfferFragmentUrl(DEFAULT_PAIRING_BASE_URL, encoded)).toBe(
-      `https://frogg.app/pair#offer=${encoded}`,
+    expect(buildPairingUrl(DEFAULT_PAIRING_BASE_URL, encoded)).toBe(
+      `https://pair.frogg.app/code/${encoded}`,
     );
-    expect(buildOfferFragmentUrl("https://frogg.app/pair/", encoded)).toBe(
-      `https://frogg.app/pair#offer=${encoded}`,
+    expect(buildPairingUrl("https://pair.frogg.app/", encoded)).toBe(
+      `https://pair.frogg.app/code/${encoded}`,
     );
-    expect(buildOfferFragmentUrl("https://app.paseo.sh", encoded)).toBe(
-      `https://app.paseo.sh/#offer=${encoded}`,
+    expect(buildPairingUrl("https://pair.example.com/code", encoded)).toBe(
+      `https://pair.example.com/code/${encoded}`,
     );
   });
 
   it("derives the paseo://pair deep link and parses it back", () => {
     const encoded = encodeOfferFragmentPayload(offer);
-    const url = buildOfferFragmentUrl(DEFAULT_PAIRING_BASE_URL, encoded);
+    const url = buildPairingUrl(DEFAULT_PAIRING_BASE_URL, encoded);
     const deepLink = buildPairingDeepLink(url);
     expect(deepLink).toBe(`paseo://pair#offer=${encoded}`);
     expect(isPairingDeepLink(deepLink!)).toBe(true);
@@ -134,8 +136,24 @@ describe("pairing links", () => {
     expect(isPairingDeepLink("paseo://h/srv/agent/a")).toBe(false);
     expect(isPairingDeepLink("paseo://pair#offer=")).toBe(false);
     expect(parseAnyConnectionOfferFromUrl(deepLink!)).toEqual(offer);
-    expect(hasOfferFragment(url)).toBe(true);
-    expect(hasOfferFragment("https://frogg.app/pair")).toBe(false);
-    expect(buildPairingDeepLink("https://frogg.app/pair")).toBeNull();
+    expect(parseAnyConnectionOfferFromUrl(url)).toEqual(offer);
+    expect(hasPairingCode(url)).toBe(true);
+    expect(hasOfferFragment(deepLink!)).toBe(true);
+    expect(hasOfferFragment(url)).toBe(false);
+    expect(buildPairingDeepLink("https://pair.frogg.app/code/")).toBeNull();
+  });
+
+  it("keeps parsing the older #offer= and ?code= forms", () => {
+    const encoded = encodeOfferFragmentPayload(offer);
+    expect(parseAnyConnectionOfferFromUrl(`https://frogg.app/pair#offer=${encoded}`)).toEqual(offer);
+    expect(parseAnyConnectionOfferFromUrl(`https://pair.frogg.app/pair?code=${encoded}`)).toEqual(
+      offer,
+    );
+    expect(extractPairingCode(`https://pair.frogg.app/code/${encoded}`)).toBe(encoded);
+    expect(extractPairingCode(`http://192.168.1.5:9999/code/${encoded}/`)).toBe(encoded);
+    expect(extractPairingCode(`https://pair.frogg.app/pair?code=${encoded}#x`)).toBe(encoded);
+    expect(extractPairingCode("https://pair.frogg.app/code/")).toBeNull();
+    expect(extractPairingCode("https://pair.frogg.app/")).toBeNull();
+    expect(hasPairingCode("https://pair.frogg.app/pair")).toBe(false);
   });
 });

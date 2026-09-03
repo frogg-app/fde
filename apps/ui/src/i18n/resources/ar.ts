@@ -1756,7 +1756,7 @@ export const ar: TranslationResources = {
       label: "رابط الاقتران",
       errors: {
         required: "الصق رابط الاقتران (…/pair#offer=…)",
-        missingOffer: "يجب أن يتضمن الرابط #offer=...",
+        missingOffer: "هذا ليس رابط اقتران FDE",
         emptyOffer: "حمولة العرض فارغة",
         invalid: "رابط الاقتران غير صالح",
         unableToPair: "غير قادر على إقران المضيف",

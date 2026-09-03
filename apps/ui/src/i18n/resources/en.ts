@@ -1768,7 +1768,7 @@ export const en = {
       label: "Pairing link",
       errors: {
         required: "Paste a pairing link (…/pair#offer=…)",
-        missingOffer: "Link must include #offer=...",
+        missingOffer: "That is not an FDE pairing link",
         emptyOffer: "Offer payload is empty",
         invalid: "Invalid pairing link",
         unableToPair: "Unable to pair host",

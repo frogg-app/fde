@@ -1808,7 +1808,7 @@ export const fr: TranslationResources = {
       label: "Lien d'appariement",
       errors: {
         required: "Collez un lien d'appairage (…/pair#offer=…)",
-        missingOffer: "Le lien doit inclure#offer=...",
+        missingOffer: "Ce n'est pas un lien d'appairage FDE",
         emptyOffer: "La charge utile de l'offre est vide",
         invalid: "Lien d'association invalide",
         unableToPair: "Impossible de coupler l'hôte",

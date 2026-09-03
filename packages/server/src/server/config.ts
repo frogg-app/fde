@@ -550,7 +550,12 @@ function resolveStaticLoadConfigSettings(
     ]),
     trustedProxies: resolveTrustedProxiesConfig(env, persisted),
     trustLan: resolveTrustLanConfig(env, persisted),
-    appBaseUrl: env.PASEO_APP_BASE_URL ?? persisted.app?.baseUrl ?? DEFAULT_APP_BASE_URL,
+    appBaseUrl:
+      env.FDE_PAIRING_BASE_URL ??
+      env.PASEO_APP_BASE_URL ??
+      persisted.app?.pairingBaseUrl ??
+      persisted.app?.baseUrl ??
+      DEFAULT_APP_BASE_URL,
   };
 }
 
@@ -728,7 +733,9 @@ function resolveCoreDaemonOverridePaths(
   ) {
     paths.push("daemon.git.maxProcessConcurrency");
   }
-  if (env.PASEO_APP_BASE_URL !== undefined) paths.push("app.baseUrl");
+  if (env.FDE_PAIRING_BASE_URL !== undefined || env.PASEO_APP_BASE_URL !== undefined) {
+    paths.push("app.baseUrl", "app.pairingBaseUrl");
+  }
   if (env.PASEO_PASSWORD?.trim()) paths.push("daemon.auth.password");
   return paths;
 }

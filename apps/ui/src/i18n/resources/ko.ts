@@ -1768,7 +1768,7 @@ export const ko: TranslationResources = {
       label: "페어링 링크",
       errors: {
         required: "페어링 링크를 붙여넣으세요 (…/pair#offer=…)",
-        missingOffer: "링크에 #offer=...가 포함되어야 합니다",
+        missingOffer: "FDE 페어링 링크가 아닙니다",
         emptyOffer: "Offer 페이로드가 비어 있습니다",
         invalid: "잘못된 페어링 링크",
         unableToPair: "호스트를 페어링할 수 없습니다",
