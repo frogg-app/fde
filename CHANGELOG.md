@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.13
+
+- Repository moved to `github.com/frogg-app/fde`; update checks, install scripts, deploy defaults, and docs point at the new address.
+
 ## 0.1.12
 
 - Default daemon port is now 9999 (explicit 6767 still works). Installer, Docker image, docs, CLI, and the app defaults all follow.
