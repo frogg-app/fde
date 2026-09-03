@@ -133,6 +133,8 @@ import {
   parseServerIdFromPathname,
 } from "@/utils/host-routes";
 import { buildNotificationRoute, resolveNotificationTarget } from "@/utils/notification-routing";
+import { receiveSpokenAlertFromNotificationData } from "@/spoken-alerts/receive";
+import { VoiceReplySheet } from "@/components/voice-reply-sheet";
 import { navigateToAgent } from "@/utils/navigate-to-agent";
 import { PluginCatalogSync } from "@/plugins";
 import { OfferLinkListener } from "@/pairing/offer-link-listener";
@@ -165,6 +167,7 @@ function PushNotificationRouter() {
   const router = useRouter();
   const lastHandledIdRef = useRef<string | null>(null);
   const openNotification = useStableEvent((data: Record<string, unknown> | undefined) => {
+    receiveSpokenAlertFromNotificationData(data);
     const target = resolveNotificationTarget(data);
     const serverId = target.serverId;
     const workspaceId = target.workspaceId;
@@ -931,6 +934,7 @@ function RootAppTree() {
         <RootProviders>
           <RuntimeProviders>
             <AppShell />
+            <VoiceReplySheet />
           </RuntimeProviders>
         </RootProviders>
       </View>

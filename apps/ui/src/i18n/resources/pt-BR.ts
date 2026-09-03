@@ -1850,6 +1850,47 @@ export const ptBR: TranslationResources = {
       stop: "Parar voz em tempo real e interromper a resposta",
     },
   },
+  spokenAlerts: {
+    banner: {
+      play: "Reproduzir",
+      stop: "Parar",
+      replyByVoice: "Responder por voz",
+      dismiss: "Dispensar alerta",
+    },
+    toast: {
+      play: "Reproduzir",
+    },
+    errors: {
+      unavailable: "A reprodução de áudio não está disponível aqui.",
+      noAudio: "O host não tem áudio para este alerta.",
+      unsupportedFormat: "Este dispositivo não consegue reproduzir o formato de áudio do alerta.",
+      playbackFailed: "Não foi possível reproduzir o alerta.",
+    },
+    reply: {
+      title: "Responder por voz",
+      listening: "Ouvindo…",
+      transcribing: "Transcrevendo…",
+      done: "Concluir",
+      cancel: "Cancelar",
+      retry: "Tentar novamente",
+      send: "Enviar",
+      sendingIn: "Enviando em {{seconds}} s…",
+      sending: "Enviando…",
+      sent: "Enviado",
+      failed: "Não foi possível enviar a resposta.",
+      startFailed: "Não foi possível começar a ouvir.",
+      placeholder: "Sua resposta",
+      allow: "Permitir",
+      deny: "Negar",
+      sendAsMessage: "Enviar como mensagem",
+      willAllow: "Isso permitirá a solicitação.",
+      willDeny: "Isso negará a solicitação.",
+      ambiguous: "Não ficou claro se é sim ou não. Escolha o que fazer.",
+      permissionPrompt:
+        "O agente aguarda uma decisão de permissão. Diga sim ou não, ou dite uma resposta.",
+      keepListening: "Continuar ouvindo o próximo alerta",
+    },
+  },
   rewind: {
     tooltip: "Voltar para esta mensagem",
     warning: "Esta ação não pode ser desfeita",
@@ -2099,6 +2140,19 @@ export const ptBR: TranslationResources = {
       fallbackHint: "Se ele não estiver disponível, o FDE usa outro modelo disponível",
       docs: "Documentação",
       saveError: "Não foi possível atualizar a geração de metadados",
+    },
+    voiceAlerts: {
+      title: "Alertas de voz",
+      autoPlay: {
+        label: "Reproduzir alertas falados automaticamente",
+        description:
+          "Lê os alertas dos agentes ao chegarem enquanto um FDE está em primeiro plano.",
+      },
+      replyConfirm: {
+        label: "Confirmar respostas por voz",
+        description:
+          "Mostra a transcrição por dois segundos antes de enviar para que você possa editar ou cancelar.",
+      },
     },
     general: {
       title: "Geral",

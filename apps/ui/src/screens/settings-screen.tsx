@@ -38,6 +38,7 @@ import { Switch } from "@/components/ui/switch";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { DesktopPermissionsSection } from "@/desktop/components/desktop-permissions-section";
 import { DesktopNotificationsSection } from "@/desktop/components/desktop-notifications-section";
+import { VoiceAlertsSection } from "@/screens/settings/voice-alerts-section";
 import { BrowserDataSection } from "@/desktop/browser/settings/browser-data-section";
 import { IntegrationsSection } from "@/desktop/components/integrations-section";
 import { isElectronRuntime } from "@/desktop/host";
@@ -739,6 +740,7 @@ export default function SettingsScreen({ view, openAddHostIntent = null }: Setti
                   handleLanguageChange={handleLanguageChange}
                   handleTerminalScrollbackLinesChange={handleTerminalScrollbackLinesChange}
                 />
+                <VoiceAlertsSection />
                 {isDesktopApp ? <BrowserDataSection /> : null}
               </>
             );

@@ -1837,6 +1837,47 @@ export const ja: TranslationResources = {
       stop: "リアルタイム音声を停止してターンを中断",
     },
   },
+  spokenAlerts: {
+    banner: {
+      play: "再生",
+      stop: "停止",
+      replyByVoice: "音声で返信",
+      dismiss: "アラートを閉じる",
+    },
+    toast: {
+      play: "再生",
+    },
+    errors: {
+      unavailable: "ここでは音声を再生できません。",
+      noAudio: "このアラートの音声はホストにありません。",
+      unsupportedFormat: "このデバイスではアラートの音声形式を再生できません。",
+      playbackFailed: "アラートを再生できませんでした。",
+    },
+    reply: {
+      title: "音声で返信",
+      listening: "聞き取り中…",
+      transcribing: "文字起こし中…",
+      done: "完了",
+      cancel: "キャンセル",
+      retry: "再試行",
+      send: "送信",
+      sendingIn: "{{seconds}}秒後に送信…",
+      sending: "送信中…",
+      sent: "送信済み",
+      failed: "返信を送信できませんでした。",
+      startFailed: "聞き取りを開始できませんでした。",
+      placeholder: "返信内容",
+      allow: "許可",
+      deny: "拒否",
+      sendAsMessage: "メッセージとして送信",
+      willAllow: "このリクエストを許可します。",
+      willDeny: "このリクエストを拒否します。",
+      ambiguous: "はい／いいえのどちらか判断できません。操作を選んでください。",
+      permissionPrompt:
+        "エージェントが許可の判断を待っています。「はい」か「いいえ」と言うか、返信を口述してください。",
+      keepListening: "次のアラートも続けて聞き取る",
+    },
+  },
   rewind: {
     tooltip: "このメッセージに巻き戻す",
     warning: "この操作は元に戻せません",
@@ -2087,6 +2128,18 @@ export const ja: TranslationResources = {
       fallbackHint: "利用できない場合、FDE は別の利用可能なモデルを使用します",
       docs: "ドキュメント",
       saveError: "メタデータ生成を更新できません",
+    },
+    voiceAlerts: {
+      title: "音声アラート",
+      autoPlay: {
+        label: "音声アラートを自動再生",
+        description:
+          "FDE がフォアグラウンドにあるとき、エージェントのアラートを届き次第読み上げます。",
+      },
+      replyConfirm: {
+        label: "音声返信を確認する",
+        description: "送信前に文字起こしを 2 秒間表示し、編集やキャンセルができるようにします。",
+      },
     },
     general: {
       title: "一般",

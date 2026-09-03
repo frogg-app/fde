@@ -54,6 +54,7 @@ import { encodeImages } from "@/utils/encode-images";
 import { derivePendingPermissionKey } from "@/utils/agent-snapshots";
 import type { AttachmentMetadata } from "@/attachments/types";
 import { useToast } from "@/contexts/toast-context";
+import { useSpokenAlertArrival } from "@/spoken-alerts/use-spoken-alert-arrival";
 import { toErrorMessage } from "@/utils/error-messages";
 import { showProviderNoticeToast } from "@/utils/provider-notice-toast";
 import { applyCheckoutStatusUpdateFromEvent } from "@/git/checkout-status-cache";
@@ -252,6 +253,7 @@ function SessionProviderInternal({ children, serverId, client }: SessionProvider
   );
   const _sessionStateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const attentionNotifiedRef = useRef<Map<string, number>>(new Map());
+  const onSpokenAlertArrival = useSpokenAlertArrival({ serverId, client, toast });
   const appStateRef = useRef(AppState.currentState);
   const forcedTimelineTailReplacements = useRef(new Set<string>());
   const viewedTimelineSyncRef = useRef<ViewedTimelineOwner | null>(null);
@@ -303,11 +305,19 @@ function SessionProviderInternal({ children, serverId, client }: SessionProvider
       const appState = appStateRef.current;
       const session = useSessionStore.getState().sessions[serverId];
       const attentionFocusedAgentId = session?.focusedAgentId ?? null;
+      const isActivelyVisible = getIsAppActivelyVisible(appState);
+      const isAwayFromAgent = !isActivelyVisible || attentionFocusedAgentId !== params.agentId;
+      onSpokenAlertArrival({
+        agentId: params.agentId,
+        reason: params.reason,
+        timestamp: params.timestamp,
+        notification: params.notification,
+        appActivelyVisible: isActivelyVisible,
+        awayFromAgent: isAwayFromAgent,
+      });
       if (params.reason === "error") {
         return;
       }
-      const isActivelyVisible = getIsAppActivelyVisible(appState);
-      const isAwayFromAgent = !isActivelyVisible || attentionFocusedAgentId !== params.agentId;
       if (!isAwayFromAgent) {
         return;
       }
@@ -345,7 +355,7 @@ function SessionProviderInternal({ children, serverId, client }: SessionProvider
         data: notification.data,
       });
     },
-    [serverId],
+    [onSpokenAlertArrival, serverId],
   );
 
   useEffect(() => {
