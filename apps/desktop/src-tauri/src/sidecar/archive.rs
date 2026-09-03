@@ -2,6 +2,9 @@
 //! directory, dropping the archive's single top-level directory the way
 //! `tar --strip-components=1` does. Every entry path is checked before it
 //! touches the filesystem: no absolute paths, no `..`, no drive prefixes.
+//!
+//! [`extract_zip_preserving_paths`] is the exception: the Windows release zips
+//! are not sidecar bundles and keep their own layout (see its doc comment).
 
 use std::fs::{self, File};
 use std::io::{self, Read};
@@ -11,6 +14,27 @@ use std::path::{Component, Path, PathBuf};
 /// with the first component removed. `None` means "skip" (the top-level
 /// directory entry itself); `Err` means the archive is hostile.
 pub fn stripped_relative_path(entry: &str) -> Result<Option<PathBuf>, String> {
+    let parts = checked_parts(entry)?;
+    if parts.len() < 2 {
+        return Ok(None);
+    }
+    Ok(Some(parts[1..].iter().collect()))
+}
+
+/// Like [`stripped_relative_path`] but keeps the first component, so an entry at
+/// the archive root is a file to write rather than the directory to drop. `None`
+/// means "skip" (a bare directory entry).
+pub fn checked_relative_path(entry: &str) -> Result<Option<PathBuf>, String> {
+    let parts = checked_parts(entry)?;
+    if parts.is_empty() {
+        return Ok(None);
+    }
+    Ok(Some(parts.iter().collect()))
+}
+
+/// The entry's path components, rejecting anything that could escape the
+/// extraction root: absolute paths, `..`, drive prefixes.
+fn checked_parts(entry: &str) -> Result<Vec<std::ffi::OsString>, String> {
     let normalized = entry.replace('\\', "/");
     let mut parts = Vec::new();
     for component in Path::new(&normalized).components() {
@@ -33,10 +57,7 @@ pub fn stripped_relative_path(entry: &str) -> Result<Option<PathBuf>, String> {
     {
         return Err(format!("archive entry has a drive prefix: {entry}"));
     }
-    if parts.len() < 2 {
-        return Ok(None);
-    }
-    Ok(Some(parts[1..].iter().collect()))
+    Ok(parts)
 }
 
 fn extract_tar_gz(archive: &Path, destination: &Path) -> Result<(), String> {
@@ -88,13 +109,18 @@ fn extract_tar_gz(archive: &Path, destination: &Path) -> Result<(), String> {
     Ok(())
 }
 
-fn extract_zip(archive: &Path, destination: &Path) -> Result<(), String> {
+fn extract_zip(archive: &Path, destination: &Path, strip_top_level: bool) -> Result<(), String> {
     let file = File::open(archive).map_err(|e| format!("open {}: {e}", archive.display()))?;
     let mut zip = zip::ZipArchive::new(io::BufReader::new(file)).map_err(|e| e.to_string())?;
     for index in 0..zip.len() {
         let mut entry = zip.by_index(index).map_err(|e| e.to_string())?;
         let name = entry.name().to_string();
-        let Some(relative) = stripped_relative_path(&name)? else {
+        let relative = if strip_top_level {
+            stripped_relative_path(&name)?
+        } else {
+            checked_relative_path(&name)?
+        };
+        let Some(relative) = relative else {
             continue;
         };
         let target = destination.join(&relative);
@@ -118,12 +144,23 @@ pub fn extract_bundle(archive: &Path, destination: &Path) -> Result<(), String> 
     fs::create_dir_all(destination).map_err(|e| e.to_string())?;
     let name = archive.to_string_lossy();
     if name.ends_with(".zip") {
-        extract_zip(archive, destination)
+        extract_zip(archive, destination, true)
     } else if name.ends_with(".tar.gz") || name.ends_with(".tgz") {
         extract_tar_gz(archive, destination)
     } else {
         Err(format!("unsupported bundle archive: {name}"))
     }
+}
+
+/// Extracts a zip into `destination` keeping every entry path as the archive
+/// has it. The Windows release zips are not sidecar bundles: the installer zip
+/// holds `FDE-<v>-x64-setup.exe` at the root, because that is the only layout
+/// `tauri-plugin-updater` finds an installer in, so stripping the first
+/// component the way [`extract_bundle`] does would drop the file. Entry paths
+/// are checked exactly as strictly.
+pub fn extract_zip_preserving_paths(archive: &Path, destination: &Path) -> Result<(), String> {
+    fs::create_dir_all(destination).map_err(|e| e.to_string())?;
+    extract_zip(archive, destination, false)
 }
 
 /// Reads a whole file; used by tests and the checksum step.
@@ -167,6 +204,32 @@ pub(crate) mod tests {
             writer.write_all(data).unwrap();
         }
         writer.finish().unwrap();
+    }
+
+    #[test]
+    fn keeps_root_entries_when_paths_are_preserved() {
+        assert_eq!(
+            checked_relative_path("setup.exe").unwrap(),
+            Some(PathBuf::from("setup.exe"))
+        );
+        assert_eq!(
+            checked_relative_path("folder/setup.exe").unwrap(),
+            Some(PathBuf::from("folder/setup.exe"))
+        );
+        assert_eq!(checked_relative_path("./").unwrap(), None);
+        // A root-level file is dropped by the bundle rule, which is why the
+        // Windows zips use the preserving extractor.
+        assert_eq!(stripped_relative_path("setup.exe").unwrap(), None);
+        assert!(checked_relative_path("../escape.exe").is_err());
+        assert!(checked_relative_path("/abs.exe").is_err());
+        assert!(checked_relative_path("C:/drive.exe").is_err());
+
+        let dir = tempfile::tempdir().unwrap();
+        let archive = dir.path().join("setup.zip");
+        make_zip(&archive, &[("FDE-x64-setup.exe", b"MZ")]);
+        let out = dir.path().join("out");
+        extract_zip_preserving_paths(&archive, &out).unwrap();
+        assert_eq!(std::fs::read(out.join("FDE-x64-setup.exe")).unwrap(), b"MZ");
     }
 
     #[test]

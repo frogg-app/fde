@@ -142,7 +142,9 @@ pub fn installer_script(installer: &str, exe: &str, pid: u32) -> String {
 pub fn extract_exe_from_zip(archive: &std::path::Path) -> Result<std::path::PathBuf, String> {
     let destination = archive.with_extension("extracted");
     let _ = std::fs::remove_dir_all(&destination);
-    crate::sidecar::archive::extract_bundle(archive, &destination)?;
+    // Not the sidecar bundle layout: the installer zip keeps the setup exe at the
+    // root, so the top-level component must survive extraction.
+    crate::sidecar::archive::extract_zip_preserving_paths(archive, &destination)?;
     find_exe(&destination).ok_or_else(|| format!("no .exe found in {}", archive.display()))
 }
 
@@ -287,6 +289,37 @@ mod tests {
             "move /Y \"C:\\cache\\FDE-1.0.0-x64-portable.extracted\\FDE.exe\" \"D:\\Tools\\fde.exe\" || exit /b 1\r\n"
         ));
         assert!(script.ends_with("start \"\" \"D:\\Tools\\fde.exe\"\r\n"));
+    }
+
+    #[test]
+    fn finds_the_exe_in_both_windows_zip_layouts() {
+        use crate::sidecar::archive::tests::make_zip;
+
+        // The installer zip keeps the setup exe at the root (what
+        // tauri-plugin-updater looks for); the portable zip nests it in a folder.
+        let dir = tempfile::tempdir().unwrap();
+        let setup = dir.path().join("FDE-1.0.0-x64-setup.zip");
+        make_zip(&setup, &[("FDE-1.0.0-x64-setup.exe", b"MZ setup")]);
+        let found = extract_exe_from_zip(&setup).unwrap();
+        assert_eq!(found.file_name().unwrap(), "FDE-1.0.0-x64-setup.exe");
+        assert_eq!(std::fs::read(&found).unwrap(), b"MZ setup");
+
+        let portable = dir.path().join("FDE-1.0.0-x64-portable.zip");
+        make_zip(
+            &portable,
+            &[
+                ("FDE-1.0.0-portable/README.txt", b"read me"),
+                ("FDE-1.0.0-portable/FDE.exe", b"MZ portable"),
+            ],
+        );
+        let found = extract_exe_from_zip(&portable).unwrap();
+        assert_eq!(found.file_name().unwrap(), "FDE.exe");
+        assert_eq!(std::fs::read(&found).unwrap(), b"MZ portable");
+
+        let empty = dir.path().join("FDE-1.0.0-x64-setup-empty.zip");
+        make_zip(&empty, &[("notes.txt", b"no exe here")]);
+        let error = extract_exe_from_zip(&empty).unwrap_err();
+        assert!(error.contains("no .exe found"), "{error}");
     }
 
     #[test]

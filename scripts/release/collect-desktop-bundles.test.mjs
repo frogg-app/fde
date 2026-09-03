@@ -55,6 +55,24 @@ test("macos: arch comes from the caller; missing kinds are skipped", () => {
   ]);
 });
 
+test("older builds in the target dir do not make the rename ambiguous", () => {
+  const renames = planBundleRenames({
+    platform: "windows",
+    arch: "x86_64",
+    version: "0.1.18",
+    files: [
+      "bundle/portable/FDE-0.1.9-x64-portable.zip",
+      "bundle/portable/FDE-0.1.18-x64-portable.zip",
+      "bundle/nsis-zip/FDE-0.1.9-x64-setup.zip",
+      "bundle/nsis-zip/FDE-0.1.18-x64-setup.zip",
+    ],
+  });
+  assert.deepEqual(renames, [
+    { from: "bundle/nsis-zip/FDE-0.1.18-x64-setup.zip", to: "FDE-0.1.18-x64-setup.zip" },
+    { from: "bundle/portable/FDE-0.1.18-x64-portable.zip", to: "FDE-0.1.18-x64-portable.zip" },
+  ]);
+});
+
 test("ambiguous bundles and unknown platforms throw", () => {
   assert.throws(
     () =>

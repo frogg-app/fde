@@ -80,7 +80,7 @@ test("packageWindowsInstallerZip wraps the NSIS installer under its release name
   ]);
 });
 
-test("packageWindowsInstallerZip fails clearly on no or several installers", () => {
+test("packageWindowsInstallerZip picks this version, else demands exactly one", () => {
   const dir = mkdtempSync(path.join(tmpdir(), "fde-setup-"));
   const nsisDir = path.join(dir, "bundle/nsis");
   assert.throws(
@@ -90,8 +90,19 @@ test("packageWindowsInstallerZip fails clearly on no or several installers", () 
   mkdirSync(nsisDir, { recursive: true });
   writeFileSync(path.join(nsisDir, "FDE_1.2.3_x64-setup.exe"), "a");
   writeFileSync(path.join(nsisDir, "FDE_1.2.4_x64-setup.exe"), "b");
+  // A dev target dir keeps older builds around: the version being packaged wins.
+  const result = packageWindowsInstallerZip({
+    version: "1.2.3",
+    nsisDir,
+    outputDir: path.join(dir, "out"),
+  });
+  assert.equal(result.installerByteSize, 1);
+  assert.deepEqual(listZip(readFileSync(result.zipPath)), [
+    { name: "FDE-1.2.3-x64-setup.exe", size: 1 },
+  ]);
+  // Nothing matches the version being packaged and there is more than one left.
   assert.throws(
-    () => packageWindowsInstallerZip({ version: "1.2.3", nsisDir, outputDir: dir }),
+    () => packageWindowsInstallerZip({ version: "9.9.9", nsisDir, outputDir: dir }),
     /Several NSIS installers/,
   );
 });

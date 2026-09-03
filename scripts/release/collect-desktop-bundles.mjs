@@ -77,17 +77,22 @@ export function planBundleRenames({ platform, arch, version, files }) {
       }
       return rule.exact ? base === rule.exact : base.endsWith(rule.extension);
     });
-    if (matches.length > 1) {
-      throw new Error(`Several ${rule.dir} bundles match: ${matches.join(", ")}`);
-    }
     if (matches.length === 0) {
       continue;
     }
     const target = rule.name(version, arch);
-    renames.push({ from: matches[0], to: target });
-    const signable = SIGNED_EXTENSIONS.some((extension) => matches[0].endsWith(extension));
-    if (signable && files.includes(`${matches[0]}.sig`)) {
-      renames.push({ from: `${matches[0]}.sig`, to: `${target}.sig` });
+    // A dev checkout's target dir keeps every version ever built. When several
+    // bundles match, the one already carrying this release's name wins; anything
+    // else is genuinely ambiguous and the rename would be a guess.
+    const named = matches.filter((file) => path.posix.basename(file) === target);
+    const picked = named.length === 1 ? named[0] : matches.length === 1 ? matches[0] : null;
+    if (!picked) {
+      throw new Error(`Several ${rule.dir} bundles match: ${matches.join(", ")}`);
+    }
+    renames.push({ from: picked, to: target });
+    const signable = SIGNED_EXTENSIONS.some((extension) => picked.endsWith(extension));
+    if (signable && files.includes(`${picked}.sig`)) {
+      renames.push({ from: `${picked}.sig`, to: `${target}.sig` });
     }
   }
   return renames;

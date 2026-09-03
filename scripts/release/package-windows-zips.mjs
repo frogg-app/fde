@@ -199,10 +199,15 @@ export function packageWindowsInstallerZip({
   if (installers.length === 0) {
     throw new Error(`No NSIS installer found in ${nsisDir}. Run the Tauri Windows build first.`);
   }
-  if (installers.length > 1) {
-    throw new Error(`Several NSIS installers in ${nsisDir}: ${installers.join(", ")}`);
+  // A dev checkout's target dir keeps every version ever built, so prefer the one
+  // Tauri just wrote for this version (`FDE_<version>_x64-setup.exe`) and only
+  // fall back to "there must be exactly one" when the name does not match.
+  const forThisVersion = installers.filter((entry) => entry.includes(`_${resolvedVersion}_`));
+  const candidates = forThisVersion.length > 0 ? forThisVersion : installers;
+  if (candidates.length > 1) {
+    throw new Error(`Several NSIS installers in ${nsisDir}: ${candidates.join(", ")}`);
   }
-  const installerPath = path.join(nsisDir, installers[0]);
+  const installerPath = path.join(nsisDir, candidates[0]);
   const installer = readFileSync(installerPath);
   const entryName = `FDE-${resolvedVersion}-x64-setup.exe`;
   const zip = createZip([
