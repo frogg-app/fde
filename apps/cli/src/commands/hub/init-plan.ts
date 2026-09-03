@@ -39,7 +39,7 @@ export interface HubInitScaffold {
 }
 
 export function hubLoginResumeCommand(step: "connect" | "init", origin: string): string {
-  return step === "connect" ? `paseo hub connect ${origin}` : "paseo hub init";
+  return step === "connect" ? `fde hub connect ${origin}` : "fde hub init";
 }
 
 export function planHubInitOpening(input: {
@@ -151,7 +151,7 @@ function providerScaffold(
         environment,
         reply: "slack.reply",
       }),
-      testAction: "Mention `@Paseo have a look` in Slack.",
+      testAction: "Mention `@paseo have a look` in Slack.",
     };
   }
 
@@ -164,7 +164,7 @@ function providerScaffold(
       environment,
       reply: "discord.reply",
     }),
-    testAction: "Mention `@Paseo have a look` in Discord.",
+    testAction: "Mention `@paseo have a look` in Discord.",
   };
 }
 

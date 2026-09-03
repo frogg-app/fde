@@ -37,11 +37,19 @@ const DEFAULT_APP_BASE_URL = DEFAULT_PAIRING_BASE_URL;
  */
 const SUPERSEDED_APP_BASE_URLS = new Set(["https://frogg.app/pair", "https://app.paseo.sh"]);
 
+export function resolvePairingBaseUrl(app: {
+  pairingBaseUrl?: string;
+  baseUrl?: string;
+}): string | undefined {
+  for (const candidate of [app.pairingBaseUrl, app.baseUrl]) {
+    const trimmed = candidate?.trim().replace(/\/+$/, "");
+    if (trimmed && !SUPERSEDED_APP_BASE_URLS.has(trimmed)) return trimmed;
+  }
+  return undefined;
+}
+
 function resolvePersistedPairingBaseUrl(persisted: PersistedConfig): string | undefined {
-  const configured = persisted.app?.pairingBaseUrl ?? persisted.app?.baseUrl;
-  const trimmed = configured?.trim().replace(/\/+$/, "");
-  if (!trimmed || SUPERSEDED_APP_BASE_URLS.has(trimmed)) return undefined;
-  return trimmed;
+  return resolvePairingBaseUrl(persisted.app ?? {});
 }
 const DEFAULT_TRUSTED_PROXIES = ["loopback"];
 

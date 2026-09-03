@@ -150,11 +150,11 @@ async function resolveDaemonPairingOffer(
     const serverInfo = client.getLastServerInfoMessage();
     if (serverInfo?.serverId.trim() !== expectedServerId) {
       throw new Error(
-        "The reachable daemon belongs to a different Paseo home. Check --home or the daemon listen configuration.",
+        "The reachable daemon belongs to a different FDE home. Check --home or the daemon listen configuration.",
       );
     }
     if (serverInfo?.features?.daemonStatusRpc !== true) {
-      throw new Error("Update the Paseo daemon before pairing from this command.");
+      throw new Error("Update the FDE daemon before pairing from this command.");
     }
 
     let offer = await client.getDaemonPairingOffer({
@@ -162,7 +162,7 @@ async function resolveDaemonPairingOffer(
     });
     if (!offer.relayEnabled && enableRelay) {
       if (serverInfo.features.relayConfig !== true) {
-        throw new Error("Update the Paseo daemon before enabling relay from this command.");
+        throw new Error("Update the FDE daemon before enabling relay from this command.");
       }
       await client.patchDaemonConfig({ relay: { enabled: true } });
       offer = await client.getDaemonPairingOffer({
@@ -209,7 +209,7 @@ async function resolveDirectClaimOffer(listen: string): Promise<PairingOffer | n
 }
 
 export async function confirmRelayPairing(): Promise<boolean> {
-  log.message("Your connection is end-to-end encrypted. Paseo cannot read your code or messages.");
+  log.message("Your connection is end-to-end encrypted. FDE cannot read your code or messages.");
   log.message(`Learn how it works: ${RELAY_DOCS_URL}`);
   const answer = await confirm({
     message: "Enable relay to pair a device?",
@@ -282,12 +282,12 @@ function outputPairingResult(
           code: "RELAY_DISABLED",
           message:
             "Relay pairing is disabled for this daemon and no direct offer is available (is the daemon running on TCP?).",
-          action: "Run paseo daemon pair --relay --json to enable it explicitly.",
+          action: "Run fde daemon pair --relay --json to enable it explicitly.",
         })}\n`,
       );
     } else {
       output.writeStderr(`${chalk.red("Relay pairing is disabled for this daemon.")}\n`);
-      output.writeStderr(`${chalk.yellow("Run paseo daemon pair --relay to enable it.")}\n`);
+      output.writeStderr(`${chalk.yellow("Run fde daemon pair --relay to enable it.")}\n`);
     }
     output.setExitCode(1);
     return;

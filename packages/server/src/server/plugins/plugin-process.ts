@@ -162,7 +162,7 @@ process.on("message", (message: PluginProcessRequest) => {
   void registered.contract.input
     .parseAsync(message.input)
     .then((input) => {
-      if (!paseo) throw new Error("Plugin Paseo API is unavailable");
+      if (!paseo) throw new Error("Plugin FDE API is unavailable");
       return registered.handler(input, { paseo });
     })
     .then((output) => registered.contract.output.parseAsync(output))

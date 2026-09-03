@@ -22,7 +22,7 @@ function resolveHostnamesOption(hostnames: unknown, allowedHosts: unknown): stri
 }
 
 export function createDaemonCommand(): Command {
-  const daemon = new Command("daemon").description("Manage the Paseo daemon");
+  const daemon = new Command("daemon").description("Manage the FDE daemon");
 
   daemon.addCommand(startCommand());
   daemon.addCommand(pairCommand());
@@ -54,7 +54,7 @@ export function createDaemonCommand(): Command {
     .option("--relay", "Enable relay on restarted daemon")
     .option("--no-relay", "Disable relay on restarted daemon")
     .option("--no-mcp", "Disable Agent MCP on restarted daemon")
-    .option("--no-inject-mcp", "Disable auto-injecting the Paseo MCP into created agents")
+    .option("--no-inject-mcp", "Disable auto-injecting the FDE MCP into created agents")
     .option("--web-ui", "Enable the bundled daemon web UI on restarted daemon")
     .option("--no-web-ui", "Disable the bundled daemon web UI on restarted daemon")
     .option(

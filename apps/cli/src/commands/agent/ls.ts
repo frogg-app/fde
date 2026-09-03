@@ -111,9 +111,9 @@ function daemonConnectionFailure(host: string, cause: unknown): CommandError {
     code: "DAEMON_NOT_RUNNING",
     message: `Cannot reach the daemon at ${host}: ${reason}`,
     details: isSsh
-      ? "Start the Paseo daemon on the SSH host; SSH transport does not install or start it."
+      ? "Start the FDE daemon on the SSH host; SSH transport does not install or start it."
       : [
-          "Start a local daemon with: paseo daemon start",
+          "Start a local daemon with: fde daemon start",
           "To use another daemon, pass --host <host:port> or set PASEO_HOST.",
         ].join("\n"),
   };
@@ -176,10 +176,10 @@ export function buildAgentLsFetchOptions(
 
 /**
  * Agent ls command semantics:
- * - `paseo agent ls`    → active non-archived agents
- * - `paseo agent ls -g` → global non-archived agents
- * - `paseo agent ls -a` → active agents, including archived
- * - `paseo agent ls -ag` → global agents, including archived
+ * - `fde agent ls`    → active non-archived agents
+ * - `fde agent ls -g` → global non-archived agents
+ * - `fde agent ls -a` → active agents, including archived
+ * - `fde agent ls -ag` → global agents, including archived
  */
 export async function runLsCommand(
   options: AgentLsOptions,

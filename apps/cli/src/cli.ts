@@ -52,7 +52,7 @@ export function createCli(): Command {
   const program = new Command();
 
   program
-    .name("paseo")
+    .name("fde")
     .description(
       "FDE (Frogg Development Environment) CLI - control your AI coding agents from the command line",
     )
@@ -127,19 +127,19 @@ export function createCli(): Command {
   addJsonOption(
     program
       .command("status")
-      .description('Show local daemon status (alias for "paseo daemon status")'),
+      .description('Show local daemon status (alias for "fde daemon status")'),
   )
     .option("--home <path>", "FDE home directory (default: ~/.fde)")
     .action(withOutput(runDaemonStatusCommand));
 
   addJsonAndDaemonHostOptions(
-    program.command("reload").description('Reload daemon config (alias for "paseo daemon reload")'),
+    program.command("reload").description('Reload daemon config (alias for "fde daemon reload")'),
   ).action(withOutput(runDaemonReloadCommand));
 
   addJsonOption(
     program
       .command("restart")
-      .description('Restart local daemon (alias for "paseo daemon restart")'),
+      .description('Restart local daemon (alias for "fde daemon restart")'),
   )
     .option("--home <path>", "FDE home directory (default: ~/.fde)")
     .option("--timeout <seconds>", "Wait timeout before force step (default: 15)")

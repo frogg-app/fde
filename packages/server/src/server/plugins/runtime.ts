@@ -319,7 +319,7 @@ export class PluginRuntime {
     const entryPath = await resolveEntryPath(directory);
     const bundles = await compilePlugin(entryPath);
     const sessionHost = this.sessionHost;
-    if (!sessionHost) throw new Error("Plugin Paseo session host is not attached");
+    if (!sessionHost) throw new Error("Plugin FDE session host is not attached");
     const child = this.spawnChild();
     const outputCapture = new PluginOutputCapture(child, (stream, message) => {
       this.appendLog(pluginId, stream, message);

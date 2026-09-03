@@ -337,7 +337,7 @@ describe("DaemonSession", () => {
     );
     expect(pairingResponses[0]?.payload.relayEnabled).toBe(false);
     expect(pairingResponses[1]?.payload.relayEnabled).toBe(true);
-    expect(pairingResponses[1]?.payload.url).toContain("#offer=");
+    expect(pairingResponses[1]?.payload.url).toContain("/code/");
   });
 
   test("diagnostics includes a log tail and redacts connection secrets", async () => {
