@@ -20,12 +20,17 @@ export interface DesktopSettings {
     manageBuiltInDaemon: boolean;
     keepRunningAfterQuit: boolean;
   };
+  updates: {
+    /** Let the shell check GitHub releases every few hours while it runs. */
+    autoCheck: boolean;
+  };
 }
 
 export interface DesktopSettingsPatch {
   releaseChannel?: ReleaseChannel;
   notifications?: Partial<DesktopSettings["notifications"]>;
   daemon?: Partial<DesktopSettings["daemon"]>;
+  updates?: Partial<DesktopSettings["updates"]>;
 }
 
 export const DEFAULT_DESKTOP_SETTINGS: DesktopSettings = {
@@ -36,6 +41,9 @@ export const DEFAULT_DESKTOP_SETTINGS: DesktopSettings = {
   daemon: {
     manageBuiltInDaemon: true,
     keepRunningAfterQuit: false,
+  },
+  updates: {
+    autoCheck: true,
   },
 };
 
@@ -153,6 +161,7 @@ function parseDesktopSettings(raw: unknown): DesktopSettings {
   const record = isRecord(raw) ? raw : {};
   const notifications = isRecord(record.notifications) ? record.notifications : {};
   const daemon = isRecord(record.daemon) ? record.daemon : {};
+  const updates = isRecord(record.updates) ? record.updates : {};
 
   return {
     releaseChannel: record.releaseChannel === "beta" ? "beta" : "stable",
@@ -172,6 +181,12 @@ function parseDesktopSettings(raw: unknown): DesktopSettings {
           ? daemon.keepRunningAfterQuit
           : DEFAULT_DESKTOP_SETTINGS.daemon.keepRunningAfterQuit,
     },
+    updates: {
+      autoCheck:
+        typeof updates.autoCheck === "boolean"
+          ? updates.autoCheck
+          : DEFAULT_DESKTOP_SETTINGS.updates.autoCheck,
+    },
   };
 }
 
@@ -189,6 +204,10 @@ function mergeDesktopSettings(
       ...current.daemon,
       ...updates.daemon,
     },
+    updates: {
+      ...current.updates,
+      ...updates.updates,
+    },
   };
 }
 
@@ -197,6 +216,7 @@ function normalizePatch(updates: DesktopSettingsPatch): Record<string, unknown> 
     ...(updates.releaseChannel ? { releaseChannel: updates.releaseChannel } : {}),
     ...(updates.notifications ? { notifications: updates.notifications } : {}),
     ...(updates.daemon ? { daemon: updates.daemon } : {}),
+    ...(updates.updates ? { updates: updates.updates } : {}),
   };
 }
 

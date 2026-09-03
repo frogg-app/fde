@@ -7,6 +7,7 @@ import {
   SidebarCalloutDescriptionText,
 } from "@/components/sidebar-callout";
 import { useSidebarCallouts } from "@/contexts/sidebar-callout-context";
+import { useDesktopSettings } from "@/desktop/settings/desktop-settings";
 import {
   resolveUpdateCalloutDescriptor,
   type UpdateCalloutActionDescriptor,
@@ -41,6 +42,7 @@ export function UpdateCalloutSource() {
   const { t } = useTranslation();
   const callouts = useSidebarCallouts();
   const { theme } = useUnistyles();
+  const autoCheck = useDesktopSettings().settings.updates.autoCheck;
   const {
     isDesktopApp,
     status,
@@ -61,10 +63,15 @@ export function UpdateCalloutSource() {
   const retry = useStableEvent(() => {
     void checkForUpdates();
   });
+  // The shell runs its own 6-hourly check and announces results through
+  // `app-update-available` (handled inside useDesktopAppUpdater); this
+  // interval only re-reads the shell's cached answer, so it is cheap, and it
+  // stops when the user turns automatic checks off.
   useEffect(() => {
     if (!isDesktopApp) return;
 
     void checkForUpdates({ intent: "automatic", silent: true });
+    if (!autoCheck) return;
 
     intervalRef.current = setInterval(() => {
       void checkForUpdates({ intent: "automatic", silent: true });
@@ -75,7 +82,7 @@ export function UpdateCalloutSource() {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isDesktopApp, checkForUpdates]);
+  }, [autoCheck, isDesktopApp, checkForUpdates]);
 
   useEffect(() => {
     const descriptor = resolveUpdateCalloutDescriptor({

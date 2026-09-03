@@ -1,18 +1,12 @@
 import { useCallback, useMemo } from "react";
-import { Alert, Text, View } from "react-native";
-import { useFocusEffect } from "@react-navigation/native";
+import { Text, View } from "react-native";
 import { StyleSheet } from "react-native-unistyles";
 import { Trans, useTranslation } from "react-i18next";
-import type { TFunction } from "i18next";
 import { SettingsSection } from "@/screens/settings/settings-section";
-import { useSettings, type Settings as EffectiveSettings } from "@/hooks/use-settings";
 import { useHostRuntimeIsConnected, useHosts } from "@/runtime/host-runtime";
 import { useSessionStore } from "@/stores/session-store";
 import type { HostProfile } from "@/types/host-connection";
-import { confirmDialog } from "@/utils/confirm-dialog";
-import { Button } from "@/components/ui/button";
-import { SegmentedControl } from "@/components/ui/segmented-control";
-import { useDesktopAppUpdater } from "@/desktop/updates/use-desktop-app-updater";
+import { DesktopUpdatesSection } from "@/desktop/updates/desktop-updates-section";
 import { formatVersionWithPrefix } from "@/desktop/updates/desktop-updates";
 import { settingsStyles } from "@/styles/settings";
 import { openExternalUrl } from "@/utils/open-external-url";
@@ -38,9 +32,9 @@ export function AboutSection({ appVersion, appVersionText, isDesktopApp }: About
             </View>
             <Text style={styles.aboutValue}>{appVersionText}</Text>
           </View>
-          {isDesktopApp ? <DesktopAppUpdateRow /> : null}
         </View>
       </SettingsSection>
+      {isDesktopApp ? <DesktopUpdatesSection appVersion={appVersion} /> : null}
       <ConnectedHostsSection clientVersion={appVersion} />
       <Attribution />
     </>
@@ -148,151 +142,6 @@ function HostVersionRow({
   );
 }
 
-function getUpdateButtonLabel(
-  t: TFunction,
-  isInstalling: boolean,
-  latestVersion: string | null | undefined,
-): string {
-  if (isInstalling) return t("settings.about.updates.installing");
-  if (latestVersion) {
-    return t("settings.about.updates.updateTo", {
-      version: formatVersionWithPrefix(latestVersion),
-    });
-  }
-  return t("settings.about.updates.update");
-}
-
-function DesktopAppUpdateRow() {
-  const { t } = useTranslation();
-  const { settings, updateSettings } = useSettings();
-  const {
-    isDesktopApp,
-    statusText,
-    availableUpdate,
-    errorMessage,
-    isChecking,
-    isInstalling,
-    checkForUpdates,
-    installUpdate,
-  } = useDesktopAppUpdater();
-
-  useFocusEffect(
-    useCallback(() => {
-      if (!isDesktopApp) {
-        return undefined;
-      }
-      void checkForUpdates({ intent: "automatic", silent: true });
-      return undefined;
-    }, [checkForUpdates, isDesktopApp]),
-  );
-
-  const handleCheckForUpdates = useCallback(() => {
-    if (!isDesktopApp) {
-      return;
-    }
-    void checkForUpdates();
-  }, [checkForUpdates, isDesktopApp]);
-
-  const handleReleaseChannelChange = useCallback(
-    (releaseChannel: EffectiveSettings["releaseChannel"]) => {
-      void updateSettings({ releaseChannel });
-    },
-    [updateSettings],
-  );
-  const releaseChannelOptions = useMemo(
-    () => [
-      { value: "stable" as const, label: t("settings.about.releaseChannel.stable") },
-      { value: "beta" as const, label: t("settings.about.releaseChannel.beta") },
-    ],
-    [t],
-  );
-
-  const handleInstallUpdate = useCallback(() => {
-    if (!isDesktopApp) {
-      return;
-    }
-
-    void confirmDialog({
-      title: t("settings.about.updates.installTitle"),
-      message: t("settings.about.updates.installMessage"),
-      confirmLabel: t("settings.about.updates.installConfirm"),
-      cancelLabel: t("common.actions.cancel"),
-    })
-      .then((confirmed) => {
-        if (!confirmed) {
-          return;
-        }
-        void installUpdate();
-        return;
-      })
-      .catch((error) => {
-        console.error("[Settings] Failed to open app update confirmation", error);
-        Alert.alert(
-          t("settings.about.updates.alertTitle"),
-          t("settings.about.updates.alertMessage"),
-        );
-      });
-  }, [installUpdate, isDesktopApp, t]);
-
-  const isUpdateReady = availableUpdate?.readyToInstall === true;
-  const readyUpdateVersion = isUpdateReady ? availableUpdate?.latestVersion : null;
-
-  if (!isDesktopApp) {
-    return null;
-  }
-
-  return (
-    <>
-      <View style={[settingsStyles.row, settingsStyles.rowBorder]}>
-        <View style={settingsStyles.rowContent}>
-          <Text style={settingsStyles.rowTitle}>{t("settings.about.releaseChannel.label")}</Text>
-          <Text style={settingsStyles.rowHint}>
-            {t("settings.about.releaseChannel.description")}
-          </Text>
-        </View>
-        <SegmentedControl
-          size="sm"
-          value={settings.releaseChannel}
-          onValueChange={handleReleaseChannelChange}
-          options={releaseChannelOptions}
-        />
-      </View>
-      <View style={[settingsStyles.row, settingsStyles.rowBorder]}>
-        <View style={settingsStyles.rowContent}>
-          <Text style={settingsStyles.rowTitle}>{t("settings.about.updates.label")}</Text>
-          <Text style={settingsStyles.rowHint}>{statusText}</Text>
-          {readyUpdateVersion ? (
-            <Text style={settingsStyles.rowHint}>
-              {t("settings.about.updates.readyToInstall", {
-                version: formatVersionWithPrefix(readyUpdateVersion),
-              })}
-            </Text>
-          ) : null}
-          {errorMessage ? <Text style={styles.aboutErrorText}>{errorMessage}</Text> : null}
-        </View>
-        <View style={styles.aboutUpdateActions}>
-          <Button
-            variant="outline"
-            size="sm"
-            onPress={handleCheckForUpdates}
-            disabled={isChecking || isInstalling}
-          >
-            {isChecking ? t("settings.about.updates.checking") : t("settings.about.updates.check")}
-          </Button>
-          <Button
-            variant="default"
-            size="sm"
-            onPress={handleInstallUpdate}
-            disabled={isChecking || isInstalling || !isUpdateReady}
-          >
-            {getUpdateButtonLabel(t, isInstalling, readyUpdateVersion)}
-          </Button>
-        </View>
-      </View>
-    </>
-  );
-}
-
 const styles = StyleSheet.create((theme) => ({
   aboutValue: {
     color: theme.colors.foregroundMuted,
@@ -300,16 +149,6 @@ const styles = StyleSheet.create((theme) => ({
   },
   aboutVersionMismatch: {
     color: theme.colors.palette.amber[500],
-  },
-  aboutErrorText: {
-    color: theme.colors.palette.red[300],
-    fontSize: theme.fontSize.sm,
-    marginTop: theme.spacing[1],
-  },
-  aboutUpdateActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: theme.spacing[2],
   },
   attribution: {
     color: theme.colors.foregroundMuted,
