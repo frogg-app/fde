@@ -2752,10 +2752,12 @@ export const en = {
           notUpdatable: "This daemon cannot update itself",
           update: "Update daemon to {{version}}",
           confirmTitle: "Update {{name}} to {{version}}",
-          confirmMessage: "The daemon restarts into the new version; running agents are interrupted briefly. If the new version fails to start, the previous one is restored automatically.",
+          confirmMessage:
+            "The daemon restarts into the new version; running agents are interrupted briefly. If the new version fails to start, the previous one is restored automatically.",
           confirm: "Update",
           reconnecting: "Restarting the daemon and waiting for it to come back...",
-          unableToReconnect: "{{name}} did not come back online. Check self-update.log on the host.",
+          unableToReconnect:
+            "{{name}} did not come back online. Check self-update.log on the host.",
           startFailedTitle: "Update failed",
           logHint: "Details: {{installDir}}/self-update.log",
           phases: {

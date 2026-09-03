@@ -60,6 +60,16 @@ export function githubHeaders(token: string | null, userAgent: string): Record<s
   };
 }
 
+function statusHint(status: number): string {
+  if (status === 403 || status === 429) {
+    return " (GitHub rate limit; set FDE_GITHUB_TOKEN to raise it)";
+  }
+  if (status === 404) {
+    return " (repository or releases not found; FDE_GITHUB_TOKEN is needed for a private repository)";
+  }
+  return "";
+}
+
 export async function fetchReleases(
   source: ReleaseSource,
   userAgent: string,
@@ -75,13 +85,9 @@ export async function fetchReleases(
       signal: controller.signal,
     });
     if (!response.ok) {
-      const hint =
-        response.status === 403 || response.status === 429
-          ? " (GitHub rate limit; set FDE_GITHUB_TOKEN to raise it)"
-          : response.status === 404
-            ? " (repository or releases not found; FDE_GITHUB_TOKEN is needed for a private repository)"
-            : "";
-      throw new Error(`release check failed: HTTP ${response.status}${hint}`);
+      throw new Error(
+        `release check failed: HTTP ${response.status}${statusHint(response.status)}`,
+      );
     }
     const parsed = z.array(ReleaseSchema).safeParse(await response.json());
     if (!parsed.success) {

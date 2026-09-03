@@ -3,7 +3,13 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, test } from "vitest";
 import { applyUpdate } from "./apply.js";
-import { listInstalledVersions, readCurrentVersion, readLastUpdate, readPreviousVersion, setCurrentVersion } from "./layout.js";
+import {
+  listInstalledVersions,
+  readCurrentVersion,
+  readLastUpdate,
+  readPreviousVersion,
+  setCurrentVersion,
+} from "./layout.js";
 import { installFakeVersion } from "./layout.test.js";
 import type { ServiceManager } from "./service.js";
 import { waitForDaemonVersion } from "./verify.js";
@@ -54,11 +60,22 @@ describe("applyUpdate", () => {
     const log: string[] = [];
 
     const outcome = await applyUpdate(
-      { installDir, version: "0.1.14", previous: "0.1.13", httpBase: "http://127.0.0.1:1", verifyTimeoutMs: 3000 },
+      {
+        installDir,
+        version: "0.1.14",
+        previous: "0.1.13",
+        httpBase: "http://127.0.0.1:1",
+        verifyTimeoutMs: 3000,
+      },
       { service: fake.service, probe: fake.probe, log: (line) => log.push(line), sleep: immediate },
     );
 
-    expect(outcome).toMatchObject({ from: "0.1.13", to: "0.1.14", status: "applied", reason: null });
+    expect(outcome).toMatchObject({
+      from: "0.1.13",
+      to: "0.1.14",
+      status: "applied",
+      reason: null,
+    });
     expect(readCurrentVersion(installDir)).toBe("0.1.14");
     expect(readPreviousVersion(installDir)).toBe("0.1.13");
     expect(fake.restarts).toEqual(["0.1.14"]);
@@ -75,7 +92,13 @@ describe("applyUpdate", () => {
     const fake = fakeService(installDir, ["0.1.14"]);
 
     const outcome = await applyUpdate(
-      { installDir, version: "0.1.14", previous: "0.1.13", httpBase: "http://127.0.0.1:1", verifyTimeoutMs: 2000 },
+      {
+        installDir,
+        version: "0.1.14",
+        previous: "0.1.13",
+        httpBase: "http://127.0.0.1:1",
+        verifyTimeoutMs: 2000,
+      },
       { service: fake.service, probe: fake.probe, log: () => {}, sleep: immediate },
     );
 
@@ -83,7 +106,11 @@ describe("applyUpdate", () => {
     expect(outcome.reason).toMatch(/not running|timed out/);
     expect(readCurrentVersion(installDir)).toBe("0.1.13");
     expect(fake.restarts).toEqual(["0.1.14", "0.1.13"]);
-    expect(readLastUpdate(installDir)).toMatchObject({ from: "0.1.13", to: "0.1.14", status: "rolled_back" });
+    expect(readLastUpdate(installDir)).toMatchObject({
+      from: "0.1.13",
+      to: "0.1.14",
+      status: "rolled_back",
+    });
     // Both versions stay on disk: the failed one for inspection, previous for the next attempt.
     expect(listInstalledVersions(installDir)).toEqual(["0.1.14", "0.1.13"]);
   });
@@ -95,7 +122,13 @@ describe("applyUpdate", () => {
     setCurrentVersion(installDir, "0.1.13");
     const fake = fakeService(installDir, ["0.1.13", "0.1.14"]);
     const outcome = await applyUpdate(
-      { installDir, version: "0.1.14", previous: "0.1.13", httpBase: "http://127.0.0.1:1", verifyTimeoutMs: 1500 },
+      {
+        installDir,
+        version: "0.1.14",
+        previous: "0.1.13",
+        httpBase: "http://127.0.0.1:1",
+        verifyTimeoutMs: 1500,
+      },
       { service: fake.service, probe: fake.probe, log: () => {}, sleep: immediate },
     );
     expect(outcome.status).toBe("failed");
@@ -105,7 +138,13 @@ describe("applyUpdate", () => {
     installFakeVersion(lonely, "0.1.14");
     const lonelyFake = fakeService(lonely, ["0.1.14"]);
     const noPrevious = await applyUpdate(
-      { installDir: lonely, version: "0.1.14", previous: null, httpBase: "http://127.0.0.1:1", verifyTimeoutMs: 1500 },
+      {
+        installDir: lonely,
+        version: "0.1.14",
+        previous: null,
+        httpBase: "http://127.0.0.1:1",
+        verifyTimeoutMs: 1500,
+      },
       { service: lonelyFake.service, probe: lonelyFake.probe, log: () => {}, sleep: immediate },
     );
     expect(noPrevious.status).toBe("failed");
@@ -137,7 +176,15 @@ describe("waitForDaemonVersion", () => {
     };
     let clock = 0;
     const ok = await waitForDaemonVersion(
-      { httpBase: "http://x", expectedVersion: "0.1.14", timeoutMs: 90_000, sleep: async () => { clock += 1000; }, now: () => clock },
+      {
+        httpBase: "http://x",
+        expectedVersion: "0.1.14",
+        timeoutMs: 90_000,
+        sleep: async () => {
+          clock += 1000;
+        },
+        now: () => clock,
+      },
       probe,
     );
     expect(ok).toMatchObject({ ok: true });
@@ -149,10 +196,14 @@ describe("waitForDaemonVersion", () => {
         expectedVersion: "0.1.14",
         timeoutMs: 90_000,
         isRunning: async () => false,
-        sleep: async () => { clock += 1000; },
+        sleep: async () => {
+          clock += 1000;
+        },
         now: () => clock,
       },
-      async () => { throw new Error("ECONNREFUSED"); },
+      async () => {
+        throw new Error("ECONNREFUSED");
+      },
     );
     expect(dead).toMatchObject({ ok: false });
     expect((dead as { reason: string }).reason).toMatch(/not running/);

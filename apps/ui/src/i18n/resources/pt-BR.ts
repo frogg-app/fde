@@ -2690,10 +2690,12 @@ export const ptBR: TranslationResources = {
           notUpdatable: "Este daemon não consegue se atualizar sozinho",
           update: "Atualizar o daemon para {{version}}",
           confirmTitle: "Atualizar {{name}} para {{version}}",
-          confirmMessage: "O daemon reinicia com a nova versão; agentes em execução são interrompidos brevemente. Se a nova versão não iniciar, a anterior é restaurada automaticamente.",
+          confirmMessage:
+            "O daemon reinicia com a nova versão; agentes em execução são interrompidos brevemente. Se a nova versão não iniciar, a anterior é restaurada automaticamente.",
           confirm: "Atualizar",
           reconnecting: "Reiniciando o daemon e aguardando ele voltar...",
-          unableToReconnect: "{{name}} não voltou a ficar online. Verifique o self-update.log no host.",
+          unableToReconnect:
+            "{{name}} não voltou a ficar online. Verifique o self-update.log no host.",
           startFailedTitle: "Falha na atualização",
           logHint: "Detalhes: {{installDir}}/self-update.log",
           phases: {

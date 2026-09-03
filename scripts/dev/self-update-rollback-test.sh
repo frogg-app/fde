@@ -115,7 +115,7 @@ echo "  /api/identity reports ${base_version}"
 
 log "self-update to the broken ${broken_version}: expecting an automatic rollback"
 set +e
-"${fde}" daemon self-update --version "${broken_version}" --home "${home_dir}" --json --verify-timeout 30000 | tee "${work}/broken.jsonl" | sed 's/^/  /'
+"${fde}" daemon self-update --to "${broken_version}" --home "${home_dir}" --json --verify-timeout 30000 | tee "${work}/broken.jsonl" | sed 's/^/  /'
 broken_exit="${PIPESTATUS[0]}"
 set -e
 grep -q '"status":"rolled_back"' "${work}/broken.jsonl" || fail "expected rolled_back, exit ${broken_exit}"
@@ -127,7 +127,7 @@ echo "  last-update.json: $(tr -d '\n' < "${install_dir}/last-update.json")"
 [ -d "${install_dir}/versions/${broken_version}" ] || fail "the failed version should stay on disk for inspection"
 
 log "self-update to the good ${good_version}: expecting it to apply"
-"${fde}" daemon self-update --version "${good_version}" --home "${home_dir}" --json --verify-timeout 30000 | tee "${work}/good.jsonl" | sed 's/^/  /'
+"${fde}" daemon self-update --to "${good_version}" --home "${home_dir}" --json --verify-timeout 30000 | tee "${work}/good.jsonl" | sed 's/^/  /'
 grep -q '"status":"applied"' "${work}/good.jsonl" || fail "expected applied"
 [ "$(readlink "${install_dir}/current")" = "versions/${good_version}" ] || fail "current does not point at ${good_version}"
 [ "$(cat "${install_dir}/previous")" = "${base_version}" ] || fail "previous marker should be ${base_version}"
@@ -136,7 +136,7 @@ echo "  current -> $(readlink "${install_dir}/current"), previous = $(cat "${ins
 echo "  last-update.json: $(tr -d '\n' < "${install_dir}/last-update.json")"
 
 log "re-running the same update is a no-op"
-"${install_dir}/current/bin/fde" daemon self-update --version "${good_version}" --home "${home_dir}" --json | grep -q '"status":"up_to_date"' || fail "expected up_to_date on re-run"
+"${install_dir}/current/bin/fde" daemon self-update --to "${good_version}" --home "${home_dir}" --json | grep -q '"status":"up_to_date"' || fail "expected up_to_date on re-run"
 
 log "self-update.log:"
 sed 's/^/  /' "${install_dir}/self-update.log"

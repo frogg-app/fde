@@ -2610,7 +2610,8 @@ export const zhCN: TranslationResources = {
           notUpdatable: "此守护进程无法自我更新",
           update: "将守护进程更新到 {{version}}",
           confirmTitle: "将 {{name}} 更新到 {{version}}",
-          confirmMessage: "守护进程将重启到新版本，正在运行的代理会短暂中断。如果新版本无法启动，将自动恢复上一个版本。",
+          confirmMessage:
+            "守护进程将重启到新版本，正在运行的代理会短暂中断。如果新版本无法启动，将自动恢复上一个版本。",
           confirm: "更新",
           reconnecting: "正在重启守护进程并等待其恢复...",
           unableToReconnect: "{{name}} 没有重新上线。请查看主机上的 self-update.log。",

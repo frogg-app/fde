@@ -65,7 +65,8 @@ export function compareVersionStrings(a: string, b: string): number {
   if (pa && pb) return compareVersions(pa, pb);
   if (pa) return 1;
   if (pb) return -1;
-  return a < b ? -1 : a > b ? 1 : 0;
+  if (a === b) return 0;
+  return a < b ? -1 : 1;
 }
 
 export function isNewerVersion(candidate: string, current: string): boolean {

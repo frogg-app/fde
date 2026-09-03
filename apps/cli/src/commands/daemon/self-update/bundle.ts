@@ -1,6 +1,12 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { createReadStream, createWriteStream, existsSync, readFileSync, readdirSync } from "node:fs";
+import {
+  createReadStream,
+  createWriteStream,
+  existsSync,
+  readFileSync,
+  readdirSync,
+} from "node:fs";
 import { mkdir, rename, rm } from "node:fs/promises";
 import path from "node:path";
 import { Readable } from "node:stream";
@@ -32,15 +38,14 @@ export function detectBundleTarget(
   platform: NodeJS.Platform = process.platform,
   arch: string = process.arch,
 ): BundleTarget {
-  const bundlePlatform: BundlePlatform | null =
-    platform === "linux"
-      ? "linux"
-      : platform === "darwin"
-        ? "darwin"
-        : platform === "win32"
-          ? "win"
-          : null;
-  const bundleArch: BundleArch | null = arch === "x64" ? "x64" : arch === "arm64" ? "arm64" : null;
+  const platforms: Partial<Record<NodeJS.Platform, BundlePlatform>> = {
+    linux: "linux",
+    darwin: "darwin",
+    win32: "win",
+  };
+  const arches: Record<string, BundleArch | undefined> = { x64: "x64", arm64: "arm64" };
+  const bundlePlatform = platforms[platform];
+  const bundleArch = arches[arch];
   if (!bundlePlatform) throw new Error(`unsupported operating system: ${platform}`);
   if (!bundleArch) throw new Error(`unsupported architecture: ${arch}`);
   return { platform: bundlePlatform, arch: bundleArch };
@@ -77,7 +82,10 @@ export class ChecksumMismatchError extends Error {
   }
 }
 
-export async function verifyBundleChecksum(archivePath: string, sidecarPath: string): Promise<string> {
+export async function verifyBundleChecksum(
+  archivePath: string,
+  sidecarPath: string,
+): Promise<string> {
   const expected = parseChecksumSidecar(readFileSync(sidecarPath, "utf8"));
   const actual = await sha256File(archivePath);
   if (actual !== expected) throw new ChecksumMismatchError(archivePath, expected, actual);

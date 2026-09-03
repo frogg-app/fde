@@ -69,7 +69,10 @@ describe("downloadFile", () => {
     const destination = path.join(dir, "nested", "asset.bin");
     const body = Buffer.alloc(3000, 7);
     const fetchImpl = (async () =>
-      new Response(body, { status: 200, headers: { "content-length": String(body.length) } })) as unknown as typeof fetch;
+      new Response(body, {
+        status: 200,
+        headers: { "content-length": String(body.length) },
+      })) as unknown as typeof fetch;
     const progress: Array<[number, number | null]> = [];
     await downloadFile({
       url: "http://example/asset.bin",

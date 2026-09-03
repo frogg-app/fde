@@ -2708,7 +2708,8 @@ export const es: TranslationResources = {
           notUpdatable: "Este daemon no puede actualizarse a sí mismo",
           update: "Actualizar el daemon a {{version}}",
           confirmTitle: "Actualizar {{name}} a {{version}}",
-          confirmMessage: "El daemon se reinicia con la nueva versión; los agentes en ejecución se interrumpen brevemente. Si la nueva versión no arranca, se restaura la anterior automáticamente.",
+          confirmMessage:
+            "El daemon se reinicia con la nueva versión; los agentes en ejecución se interrumpen brevemente. Si la nueva versión no arranca, se restaura la anterior automáticamente.",
           confirm: "Actualizar",
           reconnecting: "Reiniciando el daemon y esperando a que vuelva...",
           unableToReconnect: "{{name}} no volvió a conectarse. Revisa self-update.log en el host.",

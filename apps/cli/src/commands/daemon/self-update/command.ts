@@ -9,7 +9,7 @@ import { runSelfUpdate, type SelfUpdateProgress, type SelfUpdateResult } from ".
 import { detectServiceManager } from "./service.js";
 
 interface SelfUpdateCommandOptions {
-  version?: string;
+  to?: string;
   channel?: string;
   check?: boolean;
   json?: boolean;
@@ -52,17 +52,29 @@ function printHuman(result: SelfUpdateResult): void {
       lines.push(chalk.yellow(`cannot self-update: ${result.reason}`));
       break;
     case "handoff":
-      lines.push(chalk.green(`update to ${result.targetVersion} handed off; see ${result.installDir}/self-update.log`));
+      lines.push(
+        chalk.green(
+          `update to ${result.targetVersion} handed off; see ${result.installDir}/self-update.log`,
+        ),
+      );
       break;
     case "applied":
-      lines.push(chalk.green(`daemon updated: ${result.currentVersion} -> ${result.targetVersion}`));
+      lines.push(
+        chalk.green(`daemon updated: ${result.currentVersion} -> ${result.targetVersion}`),
+      );
       break;
     case "rolled_back":
-      lines.push(chalk.yellow(`update to ${result.targetVersion} failed and was rolled back to ${result.currentVersion}`));
+      lines.push(
+        chalk.yellow(
+          `update to ${result.targetVersion} failed and was rolled back to ${result.currentVersion}`,
+        ),
+      );
       if (result.reason) lines.push(chalk.dim(result.reason));
       break;
     case "failed":
-      lines.push(chalk.red(`update to ${result.targetVersion} failed: ${result.reason ?? "unknown"}`));
+      lines.push(
+        chalk.red(`update to ${result.targetVersion} failed: ${result.reason ?? "unknown"}`),
+      );
       break;
   }
   console.log(lines.join("\n"));
@@ -91,7 +103,7 @@ async function runApply(options: SelfUpdateCommandOptions): Promise<number> {
     { service },
   );
   console.log(JSON.stringify(outcome));
-  return outcome.status === "applied" ? 0 : outcome.status === "rolled_back" ? 2 : 1;
+  return exitCodeFor(outcome.status);
 }
 
 export async function runSelfUpdateCommand(options: SelfUpdateCommandOptions): Promise<void> {
@@ -106,7 +118,7 @@ export async function runSelfUpdateCommand(options: SelfUpdateCommandOptions): P
     };
     const result = await runSelfUpdate(
       {
-        version: options.version,
+        version: options.to,
         channel: parseChannel(options.channel),
         check: options.check === true,
         wait: options.wait !== false,
@@ -135,20 +147,32 @@ export async function runSelfUpdateCommand(options: SelfUpdateCommandOptions): P
 }
 
 export function selfUpdateCommand(): Command {
-  return new Command("self-update")
-    .description("Update a versioned daemon install from GitHub releases, with automatic rollback")
-    .option("--version <version>", "Install this exact release instead of the newest one")
-    .option("--channel <channel>", "Release channel: stable (default) or beta")
-    .option("--check", "Only report whether an update is available")
-    .option("--json", "Output progress and the result as JSON lines")
-    .option("--no-wait", "Return after handing off to the supervisor instead of waiting for the outcome")
-    .option("--home <path>", "Paseo home directory (default: ~/.paseo)")
-    .option("--install-dir <dir>", "Install root (default: $FDE_INSTALL_DIR or ~/.local/share/fde)")
-    .option("--verify-timeout <ms>", "How long to wait for the restarted daemon (default: 90000)")
-    .addOption(new Option("--apply <version>").hideHelp())
-    .addOption(new Option("--previous <version>").hideHelp())
-    .addOption(new Option("--http-base <url>").hideHelp())
-    .action(async (options: SelfUpdateCommandOptions) => {
-      await runSelfUpdateCommand(options);
-    });
+  return (
+    new Command("self-update")
+      .description(
+        "Update a versioned daemon install from GitHub releases, with automatic rollback",
+      )
+      // `--version` is the root program's flag and commander accepts it anywhere,
+      // so the exact-release option is `--to`.
+      .option("--to <version>", "Install this exact release instead of the newest one")
+      .option("--channel <channel>", "Release channel: stable (default) or beta")
+      .option("--check", "Only report whether an update is available")
+      .option("--json", "Output progress and the result as JSON lines")
+      .option(
+        "--no-wait",
+        "Return after handing off to the supervisor instead of waiting for the outcome",
+      )
+      .option("--home <path>", "Paseo home directory (default: ~/.paseo)")
+      .option(
+        "--install-dir <dir>",
+        "Install root (default: $FDE_INSTALL_DIR or ~/.local/share/fde)",
+      )
+      .option("--verify-timeout <ms>", "How long to wait for the restarted daemon (default: 90000)")
+      .addOption(new Option("--apply <version>").hideHelp())
+      .addOption(new Option("--previous <version>").hideHelp())
+      .addOption(new Option("--http-base <url>").hideHelp())
+      .action(async (options: SelfUpdateCommandOptions) => {
+        await runSelfUpdateCommand(options);
+      })
+  );
 }

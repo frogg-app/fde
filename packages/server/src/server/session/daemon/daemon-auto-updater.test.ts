@@ -4,7 +4,11 @@ import type { DaemonAutoUpdateConfig, DaemonUpdateRun } from "@fde/protocol/mess
 import { DaemonAutoUpdater, isInQuietHours } from "./daemon-auto-updater.js";
 import type { CheckPayload, StartPayload } from "./daemon-update-service.js";
 
-function fakeService(input: { updatable?: boolean; latest?: string | null; error?: string | null }) {
+function fakeService(input: {
+  updatable?: boolean;
+  latest?: string | null;
+  error?: string | null;
+}) {
   const starts: { version?: string }[] = [];
   let run: DaemonUpdateRun | null = null;
   const service = {
@@ -30,7 +34,14 @@ function fakeService(input: { updatable?: boolean; latest?: string | null; error
     },
     async start(options: { version?: string }): Promise<StartPayload> {
       starts.push(options);
-      run = { runId: "r", from: "0.1.13", to: options.version ?? "?", phase: "check", message: null, at: "t" };
+      run = {
+        runId: "r",
+        from: "0.1.13",
+        to: options.version ?? "?",
+        phase: "check",
+        message: null,
+        at: "t",
+      };
       return { accepted: true, runId: "r", targetVersion: options.version ?? null, error: null };
     },
   };
@@ -45,7 +56,13 @@ function makeUpdater(input: {
 }) {
   return new DaemonAutoUpdater({
     service: input.service,
-    getConfig: () => ({ enabled: true, channel: "stable", checkIntervalHours: 24, quietHours: null, ...input.config }),
+    getConfig: () => ({
+      enabled: true,
+      channel: "stable",
+      checkIntervalHours: 24,
+      quietHours: null,
+      ...input.config,
+    }),
     hasRunningAgents: () => input.agentsRunning ?? false,
     logger: pino({ level: "silent" }),
     now: () => input.now ?? new Date(2026, 8, 3, 14, 0, 0),
@@ -67,7 +84,9 @@ describe("quiet hours", () => {
 describe("DaemonAutoUpdater.tick", () => {
   test("stays idle when disabled, not updatable, up to date, or inside quiet hours", async () => {
     const off = fakeService({ latest: "0.1.14" });
-    expect(await makeUpdater({ config: { enabled: false }, service: off.service }).tick()).toBe("disabled");
+    expect(await makeUpdater({ config: { enabled: false }, service: off.service }).tick()).toBe(
+      "disabled",
+    );
     const fixed = fakeService({ updatable: false, latest: "0.1.14" });
     expect(await makeUpdater({ config: {}, service: fixed.service }).tick()).toBe("not_updatable");
     const current = fakeService({ latest: null });
@@ -83,7 +102,9 @@ describe("DaemonAutoUpdater.tick", () => {
 
   test("defers while agents are running and starts the update once they are idle", async () => {
     const busy = fakeService({ latest: "0.1.14" });
-    expect(await makeUpdater({ config: {}, service: busy.service, agentsRunning: true }).tick()).toBe("busy");
+    expect(
+      await makeUpdater({ config: {}, service: busy.service, agentsRunning: true }).tick(),
+    ).toBe("busy");
     expect(busy.starts).toEqual([]);
 
     const idle = fakeService({ latest: "0.1.14" });

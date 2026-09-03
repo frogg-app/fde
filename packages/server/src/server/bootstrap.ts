@@ -238,7 +238,10 @@ import {
 } from "./hub/relationship-remote.js";
 import { DaemonExecutions } from "./hub/daemon-executions.js";
 import { PluginService } from "./plugins/index.js";
-import { DaemonAutoUpdater, DEFAULT_AUTO_UPDATE_CONFIG } from "./session/daemon/daemon-auto-updater.js";
+import {
+  DaemonAutoUpdater,
+  DEFAULT_AUTO_UPDATE_CONFIG,
+} from "./session/daemon/daemon-auto-updater.js";
 import { describeDaemonInstall } from "./session/daemon/daemon-update-install.js";
 import { DaemonUpdateService } from "./session/daemon/daemon-update-service.js";
 import type { DaemonAutoUpdateConfig } from "@fde/protocol/messages";

@@ -13,7 +13,10 @@ import { compareVersionStrings, isNewerVersion, parseVersion } from "./semver.js
 const target = { platform: "linux", arch: "x64" } as const;
 const assetName = (version: string) => bundleAssetName(version, target);
 
-function release(tag: string, options: { prerelease?: boolean; draft?: boolean; assets?: boolean } = {}) {
+function release(
+  tag: string,
+  options: { prerelease?: boolean; draft?: boolean; assets?: boolean } = {},
+) {
   const version = tag.replace(/^v/, "");
   const name = assetName(version);
   const assets =
@@ -59,25 +62,48 @@ describe("selectRelease", () => {
   ];
 
   test("picks the newest stable release above the current one that carries the asset", () => {
-    const picked = selectRelease({ releases, currentVersion: "0.1.12", channel: "stable", assetName });
+    const picked = selectRelease({
+      releases,
+      currentVersion: "0.1.12",
+      channel: "stable",
+      assetName,
+    });
     expect(picked?.version).toBe("0.1.13");
     expect(picked?.asset.name).toBe(assetName("0.1.13"));
     expect(picked?.checksumAsset?.name).toBe(`${assetName("0.1.13")}.sha256`);
   });
 
   test("beta channel accepts prereleases, sorted by version rather than API order", () => {
-    const picked = selectRelease({ releases, currentVersion: "0.1.12", channel: "beta", assetName });
+    const picked = selectRelease({
+      releases,
+      currentVersion: "0.1.12",
+      channel: "beta",
+      assetName,
+    });
     expect(picked?.version).toBe("0.2.0-beta.1");
   });
 
   test("returns null when nothing newer exists and honours an exact version", () => {
-    expect(selectRelease({ releases, currentVersion: "0.1.13", channel: "stable", assetName })).toBeNull();
     expect(
-      selectRelease({ releases, currentVersion: "0.1.13", channel: "stable", assetName, version: "v0.1.12" })
-        ?.version,
+      selectRelease({ releases, currentVersion: "0.1.13", channel: "stable", assetName }),
+    ).toBeNull();
+    expect(
+      selectRelease({
+        releases,
+        currentVersion: "0.1.13",
+        channel: "stable",
+        assetName,
+        version: "v0.1.12",
+      })?.version,
     ).toBe("0.1.12");
     expect(
-      selectRelease({ releases, currentVersion: "0.1.13", channel: "stable", assetName, version: "0.1.15" }),
+      selectRelease({
+        releases,
+        currentVersion: "0.1.13",
+        channel: "stable",
+        assetName,
+        version: "0.1.15",
+      }),
     ).toBeNull();
   });
 });
@@ -110,9 +136,9 @@ describe("release source", () => {
       Promise.resolve(new Response("", { status: 403 })) as unknown as ReturnType<typeof fetch>;
     await expect(fetchReleases(source, "FDE/1", limited)).rejects.toThrow(/rate limit/);
     const junk = () =>
-      Promise.resolve(new Response(JSON.stringify({ nope: 1 }), { status: 200 })) as unknown as ReturnType<
-        typeof fetch
-      >;
+      Promise.resolve(
+        new Response(JSON.stringify({ nope: 1 }), { status: 200 }),
+      ) as unknown as ReturnType<typeof fetch>;
     await expect(fetchReleases(source, "FDE/1", junk)).rejects.toThrow(/unexpected JSON/);
     const ok = (url: string | URL | Request) => {
       expect(String(url)).toContain("per_page=30");

@@ -111,17 +111,14 @@ export function createUnmanagedServiceManager(options: UnmanagedServiceOptions):
       // `daemon start` daemonizes and exits 0 once the child survives its
       // startup grace; a non-zero exit (or a launcher that cannot run at all)
       // is the broken-bundle signal the rollback path relies on.
-      const exit = await new Promise<{ code: number | null; error?: Error } | null>((resolve) => {
-        const timer = setTimeout(() => resolve(null), 4000);
-        child.once("error", (error) => {
-          clearTimeout(timer);
-          resolve({ code: null, error });
-        });
-        child.once("exit", (code) => {
-          clearTimeout(timer);
-          resolve({ code });
-        });
-      });
+      type Exit = { code: number | null; error?: Error } | null;
+      const exit = await Promise.race<Exit>([
+        new Promise<Exit>((resolve) => setTimeout(() => resolve(null), 4000).unref()),
+        new Promise<Exit>((resolve) =>
+          child.once("error", (error) => resolve({ code: null, error })),
+        ),
+        new Promise<Exit>((resolve) => child.once("exit", (code) => resolve({ code }))),
+      ]);
       child.unref();
       if (exit && exit.code !== 0) {
         throw new Error(
@@ -202,7 +199,9 @@ export function spawnDetachedSupervisor(input: {
       { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
     );
     if (result.status !== 0) {
-      throw new Error(`systemd-run failed: ${(result.stderr ?? result.error?.message ?? "").trim()}`);
+      throw new Error(
+        `systemd-run failed: ${(result.stderr ?? result.error?.message ?? "").trim()}`,
+      );
     }
     return { pid: null, via: "systemd-run" };
   }

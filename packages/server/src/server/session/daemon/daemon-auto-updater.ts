@@ -30,7 +30,10 @@ export interface DaemonAutoUpdaterOptions {
   clearTimer?: (timer: NodeJS.Timeout) => void;
 }
 
-export function isInQuietHours(now: Date, quietHours: [number, number] | null | undefined): boolean {
+export function isInQuietHours(
+  now: Date,
+  quietHours: [number, number] | null | undefined,
+): boolean {
   if (!quietHours) return false;
   const [start, end] = quietHours;
   if (start === end) return false;
@@ -76,16 +79,23 @@ export class DaemonAutoUpdater {
     const setTimer = this.options.setTimer ?? setTimeout;
     this.timer = setTimer(() => {
       this.timer = null;
-      void this.tick().then((outcome) => {
-        const config = this.options.getConfig() ?? DEFAULT_AUTO_UPDATE_CONFIG;
-        const next =
-          outcome === "busy" || outcome === "quiet_hours"
-            ? DEFER_WHILE_BUSY_MS
-            : Math.max(1, config.checkIntervalHours) * 3_600_000;
-        this.schedule(next);
-      });
+      void this.runScheduledTick();
     }, ms);
     this.timer.unref?.();
+  }
+
+  private async runScheduledTick(): Promise<void> {
+    let outcome: AutoUpdateTickOutcome = "check_failed";
+    try {
+      outcome = await this.tick();
+    } catch (error) {
+      this.options.logger.warn({ err: error }, "auto-update tick failed");
+    }
+    const config = this.options.getConfig() ?? DEFAULT_AUTO_UPDATE_CONFIG;
+    const deferred = outcome === "busy" || outcome === "quiet_hours";
+    this.schedule(
+      deferred ? DEFER_WHILE_BUSY_MS : Math.max(1, config.checkIntervalHours) * 3_600_000,
+    );
   }
 
   async tick(): Promise<AutoUpdateTickOutcome> {

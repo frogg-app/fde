@@ -2676,10 +2676,12 @@ export const ja: TranslationResources = {
           notUpdatable: "このデーモンは自己更新できません",
           update: "デーモンを {{version}} に更新",
           confirmTitle: "{{name}} を {{version}} に更新",
-          confirmMessage: "デーモンは新しいバージョンで再起動し、実行中のエージェントは一時的に中断されます。新しいバージョンが起動しない場合は、前のバージョンが自動的に復元されます。",
+          confirmMessage:
+            "デーモンは新しいバージョンで再起動し、実行中のエージェントは一時的に中断されます。新しいバージョンが起動しない場合は、前のバージョンが自動的に復元されます。",
           confirm: "更新",
           reconnecting: "デーモンを再起動して復帰を待っています...",
-          unableToReconnect: "{{name}} がオンラインに戻りませんでした。ホストの self-update.log を確認してください。",
+          unableToReconnect:
+            "{{name}} がオンラインに戻りませんでした。ホストの self-update.log を確認してください。",
           startFailedTitle: "更新に失敗しました",
           logHint: "詳細: {{installDir}}/self-update.log",
           phases: {

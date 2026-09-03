@@ -1,14 +1,14 @@
+import type { TFunction } from "i18next";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 import { StyleSheet } from "react-native-unistyles";
 import type {
   DaemonUpdateChannel,
-  DaemonUpdateCheckResponse,
   DaemonUpdateGetStatusResponse,
   DaemonUpdateRun,
 } from "@fde/protocol/messages";
-import { Alert as InlineAlert } from "@/components/ui/alert";
+import { Alert as InlineAlert, type AlertVariant } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useDaemonConfig } from "@/hooks/use-daemon-config";
@@ -23,6 +23,7 @@ import { settingsStyles } from "@/styles/settings";
 import type { HostProfile } from "@/types/host-connection";
 import { confirmDialog } from "@/utils/confirm-dialog";
 import { hasDaemonReconnectedAfter, type DaemonConnectionMarker } from "./daemon-reconnect";
+import { useDaemonUpdateCheck, type CheckState, type RunState } from "./host-daemon-update-state";
 
 /**
  * Daemon self-update for any host whose daemon is a versioned install:
@@ -31,26 +32,232 @@ import { hasDaemonReconnectedAfter, type DaemonConnectionMarker } from "./daemon
  * auto-update toggle and channel, stored in the daemon's config.json.
  */
 type StatusPayload = DaemonUpdateGetStatusResponse["payload"];
-type CheckPayload = DaemonUpdateCheckResponse["payload"];
-
-type CheckState =
-  | { kind: "idle" }
-  | { kind: "checking" }
-  | { kind: "checked"; result: CheckPayload }
-  | { kind: "error"; message: string };
-
-type RunState =
-  | { kind: "idle" }
-  | { kind: "starting" }
-  | { kind: "running"; run: DaemonUpdateRun }
-  | { kind: "reconnecting"; run: DaemonUpdateRun }
-  | { kind: "error"; message: string };
 
 const RECONNECT_TIMEOUT_MS = 4 * 60_000;
 const RECONNECT_POLL_MS = 1000;
+const KNOWN_PHASES = new Set(["check", "download", "verify", "install", "restart"]);
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function outcomeVariant(status: "applied" | "rolled_back" | "failed"): AlertVariant {
+  if (status === "applied") return "success";
+  if (status === "rolled_back") return "warning";
+  return "error";
+}
+
+function availableVersion(check: CheckState): string | null {
+  if (check.kind !== "checked" || !check.result.updateAvailable) return null;
+  return check.result.latestVersion;
+}
+
+function versionHint(status: StatusPayload | null, check: CheckState, t: TFunction): string {
+  if (!(status?.updatable ?? false)) {
+    return status?.reason ?? t("settings.host.daemon.selfUpdate.notUpdatable");
+  }
+  if (check.kind === "checking") return t("settings.host.daemon.selfUpdate.checking");
+  if (check.kind === "error") {
+    return t("settings.host.daemon.selfUpdate.checkFailed", { error: check.message });
+  }
+  if (check.kind === "checked") {
+    if (check.result.error) {
+      return t("settings.host.daemon.selfUpdate.checkFailed", { error: check.result.error });
+    }
+    const available = availableVersion(check);
+    return available
+      ? t("settings.host.daemon.selfUpdate.available", { version: available })
+      : t("settings.host.daemon.selfUpdate.upToDate");
+  }
+  return t("settings.host.daemon.selfUpdate.hint");
+}
+
+function runLabelFor(run: RunState, t: TFunction): string | null {
+  if (run.kind === "starting") return t("settings.host.daemon.selfUpdate.phases.check");
+  if (run.kind === "reconnecting") return t("settings.host.daemon.selfUpdate.reconnecting");
+  if (run.kind !== "running") return null;
+  if (KNOWN_PHASES.has(run.run.phase)) {
+    return t(`settings.host.daemon.selfUpdate.phases.${run.run.phase}`);
+  }
+  return run.run.message ?? run.run.phase;
+}
+
+function RunAlerts({
+  run,
+  runLabel,
+  status,
+}: {
+  run: RunState;
+  runLabel: string | null;
+  status: StatusPayload | null;
+}) {
+  const { t } = useTranslation();
+  const lastResult = status?.lastResult ?? null;
+  return (
+    <>
+      {run.kind === "error" ? (
+        <View style={styles.alert}>
+          <InlineAlert
+            variant="error"
+            title={t("settings.host.daemon.selfUpdate.startFailedTitle")}
+            description={run.message}
+            testID="host-page-daemon-update-error"
+          />
+        </View>
+      ) : null}
+      {runLabel && run.kind === "reconnecting" ? (
+        <View style={styles.alert}>
+          <InlineAlert variant="info" description={runLabel} />
+        </View>
+      ) : null}
+      {lastResult ? (
+        <View style={styles.alert}>
+          <InlineAlert
+            variant={outcomeVariant(lastResult.status)}
+            title={t(`settings.host.daemon.selfUpdate.outcome.${lastResult.status}`, {
+              from: lastResult.from ?? "?",
+              to: lastResult.to,
+            })}
+            description={[
+              lastResult.reason,
+              t("settings.host.daemon.selfUpdate.logHint", {
+                installDir: status?.installDir ?? "",
+              }),
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            testID="host-page-daemon-update-outcome"
+          />
+        </View>
+      ) : null}
+    </>
+  );
+}
+
+function VersionRow({
+  status,
+  check,
+  runLabel,
+  busy,
+  isConnected,
+  onCheck,
+  onUpdate,
+}: {
+  status: StatusPayload | null;
+  check: CheckState;
+  runLabel: string | null;
+  busy: boolean;
+  isConnected: boolean;
+  onCheck: () => void;
+  onUpdate: (version: string) => void;
+}) {
+  const { t } = useTranslation();
+  const updatable = status?.updatable ?? false;
+  const available = availableVersion(check);
+  const handleUpdate = useCallback(() => {
+    if (available) onUpdate(available);
+  }, [available, onUpdate]);
+  const hint = versionHint(status, check, t);
+
+  return (
+    <View style={[settingsStyles.row, settingsStyles.rowBorder]}>
+      <View style={settingsStyles.rowContent}>
+        <Text style={settingsStyles.rowTitle}>
+          {status?.currentVersion
+            ? t("settings.host.daemon.selfUpdate.versionLabel", { version: status.currentVersion })
+            : t("settings.host.daemon.selfUpdate.versionUnknown")}
+        </Text>
+        <Text style={settingsStyles.rowHint}>{hint}</Text>
+      </View>
+      {updatable && !available ? (
+        <Button
+          variant="outline"
+          size="sm"
+          onPress={onCheck}
+          disabled={!isConnected || busy || check.kind === "checking"}
+          testID="host-page-daemon-update-check"
+        >
+          {t("settings.host.daemon.selfUpdate.check")}
+        </Button>
+      ) : null}
+      {updatable && available ? (
+        <Button
+          variant="default"
+          size="sm"
+          onPress={handleUpdate}
+          disabled={!isConnected || busy}
+          testID="host-page-daemon-update-start"
+        >
+          {runLabel ?? t("settings.host.daemon.selfUpdate.update", { version: available })}
+        </Button>
+      ) : null}
+    </View>
+  );
+}
+
+function AutoUpdateRows({
+  enabled,
+  channel,
+  disabled,
+  onPatch,
+}: {
+  enabled: boolean;
+  channel: DaemonUpdateChannel;
+  disabled: boolean;
+  onPatch: (patch: { enabled?: boolean; channel?: DaemonUpdateChannel }) => void;
+}) {
+  const { t } = useTranslation();
+  const handleToggle = useCallback((next: boolean) => onPatch({ enabled: next }), [onPatch]);
+  const chooseStable = useCallback(() => onPatch({ channel: "stable" }), [onPatch]);
+  const chooseBeta = useCallback(() => onPatch({ channel: "beta" }), [onPatch]);
+  return (
+    <>
+      <View style={[settingsStyles.row, settingsStyles.rowBorder]}>
+        <View style={settingsStyles.rowContent}>
+          <Text style={settingsStyles.rowTitle}>
+            {t("settings.host.daemon.selfUpdate.autoUpdate.title")}
+          </Text>
+          <Text style={settingsStyles.rowHint}>
+            {t("settings.host.daemon.selfUpdate.autoUpdate.hint")}
+          </Text>
+        </View>
+        <Switch
+          value={enabled}
+          onValueChange={handleToggle}
+          disabled={disabled}
+          accessibilityLabel={t("settings.host.daemon.selfUpdate.autoUpdate.title")}
+          testID="host-page-daemon-auto-update-switch"
+        />
+      </View>
+      <View style={settingsStyles.row}>
+        <View style={settingsStyles.rowContent}>
+          <Text style={settingsStyles.rowTitle}>
+            {t("settings.host.daemon.selfUpdate.autoUpdate.channelLabel")}
+          </Text>
+        </View>
+        <View style={styles.channelRow}>
+          <Button
+            variant={channel === "stable" ? "default" : "outline"}
+            size="sm"
+            onPress={chooseStable}
+            disabled={disabled}
+            testID="host-page-daemon-update-channel-stable"
+          >
+            {t("settings.host.daemon.selfUpdate.autoUpdate.stable")}
+          </Button>
+          <Button
+            variant={channel === "beta" ? "default" : "outline"}
+            size="sm"
+            onPress={chooseBeta}
+            disabled={disabled}
+            testID="host-page-daemon-update-channel-beta"
+          >
+            {t("settings.host.daemon.selfUpdate.autoUpdate.beta")}
+          </Button>
+        </View>
+      </View>
+    </>
+  );
 }
 
 export function HostDaemonUpdateSection({ host }: { host: HostProfile }) {
@@ -65,9 +272,9 @@ export function HostDaemonUpdateSection({ host }: { host: HostProfile }) {
     (state) => state.sessions[host.serverId]?.serverInfo?.desktopManaged === true,
   );
   const [status, setStatus] = useState<StatusPayload | null>(null);
-  const [check, setCheck] = useState<CheckState>({ kind: "idle" });
   const [run, setRun] = useState<RunState>({ kind: "idle" });
   const mounted = useRef(true);
+  const channel: DaemonUpdateChannel = config?.autoUpdate?.channel ?? "stable";
 
   useEffect(() => {
     mounted.current = true;
@@ -92,6 +299,8 @@ export function HostDaemonUpdateSection({ host }: { host: HostProfile }) {
     void refreshStatus();
   }, [isConnected, refreshStatus]);
 
+  const { check, runCheck, resetCheck } = useDaemonUpdateCheck(daemonClient, channel, mounted);
+
   // Progress is broadcast to every session, so a run started elsewhere shows too.
   useEffect(() => {
     if (!daemonClient || !supported) return;
@@ -99,7 +308,10 @@ export function HostDaemonUpdateSection({ host }: { host: HostProfile }) {
       if (!mounted.current) return;
       const progress = message.payload;
       if (progress.phase === "failed") {
-        setRun({ kind: "error", message: progress.message ?? t("settings.host.daemon.selfUpdate.phases.failed") });
+        setRun({
+          kind: "error",
+          message: progress.message ?? t("settings.host.daemon.selfUpdate.phases.failed"),
+        });
         void refreshStatus();
         return;
       }
@@ -119,17 +331,20 @@ export function HostDaemonUpdateSection({ host }: { host: HostProfile }) {
           const next = await refreshStatus();
           if (next?.lastResult && next.lastResult.at > activeRun.at) {
             setRun({ kind: "idle" });
-            setCheck({ kind: "idle" });
+            resetCheck();
             return;
           }
         }
         await delay(RECONNECT_POLL_MS);
       }
       if (mounted.current) {
-        setRun({ kind: "error", message: t("settings.host.daemon.selfUpdate.unableToReconnect", { name: host.label }) });
+        setRun({
+          kind: "error",
+          message: t("settings.host.daemon.selfUpdate.unableToReconnect", { name: host.label }),
+        });
       }
     },
-    [host.label, host.serverId, refreshStatus, t],
+    [host.label, host.serverId, refreshStatus, resetCheck, t],
   );
 
   useEffect(() => {
@@ -140,21 +355,6 @@ export function HostDaemonUpdateSection({ host }: { host: HostProfile }) {
       : null;
     void waitForOutcome(marker, run.run);
   }, [host.serverId, run, waitForOutcome]);
-
-  const channel: DaemonUpdateChannel = config?.autoUpdate?.channel ?? "stable";
-
-  const handleCheck = useCallback(async () => {
-    if (!daemonClient) return;
-    setCheck({ kind: "checking" });
-    try {
-      const result = await daemonClient.checkDaemonUpdate({ channel });
-      if (mounted.current) setCheck({ kind: "checked", result });
-    } catch (error) {
-      if (mounted.current) {
-        setCheck({ kind: "error", message: error instanceof Error ? error.message : String(error) });
-      }
-    }
-  }, [channel, daemonClient]);
 
   const handleUpdate = useCallback(
     async (version: string) => {
@@ -171,7 +371,10 @@ export function HostDaemonUpdateSection({ host }: { host: HostProfile }) {
       try {
         const started = await daemonClient.startDaemonUpdate({ version, channel });
         if (!started.accepted) {
-          setRun({ kind: "error", message: started.error ?? t("settings.host.daemon.selfUpdate.phases.failed") });
+          setRun({
+            kind: "error",
+            message: started.error ?? t("settings.host.daemon.selfUpdate.phases.failed"),
+          });
         }
       } catch (error) {
         setRun({ kind: "error", message: error instanceof Error ? error.message : String(error) });
@@ -191,38 +394,8 @@ export function HostDaemonUpdateSection({ host }: { host: HostProfile }) {
 
   if (!supported || desktopManaged) return null;
 
-  const version = status?.currentVersion ?? null;
-  const updatable = status?.updatable ?? false;
-  const busy = run.kind === "starting" || run.kind === "running" || run.kind === "reconnecting";
-  const available =
-    check.kind === "checked" && check.result.updateAvailable ? check.result.latestVersion : null;
-  const lastResult = status?.lastResult ?? null;
-
-  const checkHint = (() => {
-    if (!updatable) return status?.reason ?? t("settings.host.daemon.selfUpdate.notUpdatable");
-    if (check.kind === "checking") return t("settings.host.daemon.selfUpdate.checking");
-    if (check.kind === "error") return t("settings.host.daemon.selfUpdate.checkFailed", { error: check.message });
-    if (check.kind === "checked") {
-      if (check.result.error) return t("settings.host.daemon.selfUpdate.checkFailed", { error: check.result.error });
-      return available
-        ? t("settings.host.daemon.selfUpdate.available", { version: available })
-        : t("settings.host.daemon.selfUpdate.upToDate");
-    }
-    return t("settings.host.daemon.selfUpdate.hint");
-  })();
-
-  const runLabel = (() => {
-    if (run.kind === "starting") return t("settings.host.daemon.selfUpdate.phases.check");
-    if (run.kind === "running") {
-      const phase = run.run.phase;
-      const known = ["check", "download", "verify", "install", "restart"];
-      return known.includes(phase)
-        ? t(`settings.host.daemon.selfUpdate.phases.${phase}`)
-        : (run.run.message ?? phase);
-    }
-    if (run.kind === "reconnecting") return t("settings.host.daemon.selfUpdate.reconnecting");
-    return null;
-  })();
+  const busy = run.kind !== "idle" && run.kind !== "error";
+  const runLabel = runLabelFor(run, t);
 
   return (
     <SettingsSection
@@ -231,117 +404,22 @@ export function HostDaemonUpdateSection({ host }: { host: HostProfile }) {
       testID="host-page-daemon-update"
     >
       <View style={settingsStyles.card}>
-        <View style={[settingsStyles.row, settingsStyles.rowBorder]}>
-          <View style={settingsStyles.rowContent}>
-            <Text style={settingsStyles.rowTitle}>
-              {version
-                ? t("settings.host.daemon.selfUpdate.versionLabel", { version })
-                : t("settings.host.daemon.selfUpdate.versionUnknown")}
-            </Text>
-            <Text style={settingsStyles.rowHint}>{checkHint}</Text>
-          </View>
-          {updatable && !available ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onPress={() => void handleCheck()}
-              disabled={!isConnected || busy || check.kind === "checking"}
-              testID="host-page-daemon-update-check"
-            >
-              {t("settings.host.daemon.selfUpdate.check")}
-            </Button>
-          ) : null}
-          {updatable && available ? (
-            <Button
-              variant="default"
-              size="sm"
-              onPress={() => void handleUpdate(available)}
-              disabled={!isConnected || busy}
-              testID="host-page-daemon-update-start"
-            >
-              {runLabel ?? t("settings.host.daemon.selfUpdate.update", { version: available })}
-            </Button>
-          ) : null}
-        </View>
-        {run.kind === "error" ? (
-          <View style={styles.alert}>
-            <InlineAlert
-              variant="error"
-              title={t("settings.host.daemon.selfUpdate.startFailedTitle")}
-              description={run.message}
-              testID="host-page-daemon-update-error"
-            />
-          </View>
-        ) : null}
-        {runLabel && run.kind !== "starting" && available === null ? (
-          <View style={styles.alert}>
-            <InlineAlert variant="info" description={runLabel} />
-          </View>
-        ) : null}
-        {lastResult ? (
-          <View style={styles.alert}>
-            <InlineAlert
-              variant={
-                lastResult.status === "applied"
-                  ? "success"
-                  : lastResult.status === "rolled_back"
-                    ? "warning"
-                    : "error"
-              }
-              title={t(`settings.host.daemon.selfUpdate.outcome.${lastResult.status}`, {
-                from: lastResult.from ?? "?",
-                to: lastResult.to,
-              })}
-              description={[
-                lastResult.reason,
-                t("settings.host.daemon.selfUpdate.logHint", {
-                  installDir: status?.installDir ?? "",
-                }),
-              ]
-                .filter(Boolean)
-                .join(" ")}
-              testID="host-page-daemon-update-outcome"
-            />
-          </View>
-        ) : null}
-        <View style={[settingsStyles.row, settingsStyles.rowBorder]}>
-          <View style={settingsStyles.rowContent}>
-            <Text style={settingsStyles.rowTitle}>
-              {t("settings.host.daemon.selfUpdate.autoUpdate.title")}
-            </Text>
-            <Text style={settingsStyles.rowHint}>
-              {t("settings.host.daemon.selfUpdate.autoUpdate.hint")}
-            </Text>
-          </View>
-          <Switch
-            value={config?.autoUpdate?.enabled === true}
-            onValueChange={(enabled) => handleAutoUpdatePatch({ enabled })}
-            disabled={!isConnected || !updatable}
-            accessibilityLabel={t("settings.host.daemon.selfUpdate.autoUpdate.title")}
-            testID="host-page-daemon-auto-update-switch"
-          />
-        </View>
-        <View style={settingsStyles.row}>
-          <View style={settingsStyles.rowContent}>
-            <Text style={settingsStyles.rowTitle}>
-              {t("settings.host.daemon.selfUpdate.autoUpdate.channelLabel")}
-            </Text>
-          </View>
-          <View style={styles.channelRow}>
-            {(["stable", "beta"] as const).map((option) => (
-              <Button
-                key={option}
-                variant={channel === option ? "default" : "outline"}
-                size="sm"
-                onPress={() => handleAutoUpdatePatch({ channel: option })}
-                disabled={!isConnected || busy}
-                testID={`host-page-daemon-update-channel-${option}`}
-              >
-                {t(`settings.host.daemon.selfUpdate.autoUpdate.${option}`)}
-              </Button>
-            ))}
-          </View>
-        </View>
+        <VersionRow
+          status={status}
+          check={check}
+          runLabel={runLabel}
+          busy={busy}
+          isConnected={isConnected}
+          onCheck={runCheck}
+          onUpdate={handleUpdate}
+        />
+        <RunAlerts run={run} runLabel={runLabel} status={status} />
+        <AutoUpdateRows
+          enabled={config?.autoUpdate?.enabled === true}
+          channel={channel}
+          disabled={!isConnected || !(status?.updatable ?? false) || busy}
+          onPatch={handleAutoUpdatePatch}
+        />
       </View>
     </SettingsSection>
   );

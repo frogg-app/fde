@@ -43,7 +43,10 @@ async function restartAndVerify(
   try {
     await deps.service.restart();
   } catch (error) {
-    return { ok: false, reason: `restart failed: ${error instanceof Error ? error.message : error}` };
+    return {
+      ok: false,
+      reason: `restart failed: ${error instanceof Error ? error.message : error}`,
+    };
   }
   if (!plan.httpBase) {
     log(`no TCP listen address to verify; assuming ${version} is up`);
@@ -66,13 +69,17 @@ export async function applyUpdate(plan: ApplyPlan, deps: ApplyDependencies): Pro
   const now = deps.now ?? (() => new Date());
   const finish = (record: ApplyOutcome): ApplyOutcome => {
     writeLastUpdate(plan.installDir, record);
-    log(`${record.status}: ${record.from ?? "?"} -> ${record.to}${record.reason ? ` (${record.reason})` : ""}`);
+    log(
+      `${record.status}: ${record.from ?? "?"} -> ${record.to}${record.reason ? ` (${record.reason})` : ""}`,
+    );
     return record;
   };
 
   const from = readCurrentVersion(plan.installDir);
   const previous = plan.previous ?? from;
-  log(`applying ${plan.version} (current ${from ?? "none"}, previous ${previous ?? "none"}, service ${deps.service.kind})`);
+  log(
+    `applying ${plan.version} (current ${from ?? "none"}, previous ${previous ?? "none"}, service ${deps.service.kind})`,
+  );
 
   try {
     if (from !== plan.version) {
@@ -94,7 +101,13 @@ export async function applyUpdate(plan: ApplyPlan, deps: ApplyDependencies): Pro
   if (verified.ok) {
     const removed = pruneVersions(plan.installDir, { protect: [plan.version, previous] });
     if (removed.length > 0) log(`pruned ${removed.join(", ")}`);
-    return finish({ from, to: plan.version, status: "applied", reason: null, at: now().toISOString() });
+    return finish({
+      from,
+      to: plan.version,
+      status: "applied",
+      reason: null,
+      at: now().toISOString(),
+    });
   }
 
   log(`update to ${plan.version} failed: ${verified.reason}`);

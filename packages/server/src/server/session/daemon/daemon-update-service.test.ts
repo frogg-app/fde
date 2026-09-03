@@ -135,7 +135,13 @@ describe("describeDaemonInstall", () => {
     expect(readLastUpdateResult(installDir)).toBeNull();
     writeFileSync(
       path.join(installDir, "last-update.json"),
-      JSON.stringify({ from: "0.1.13", to: "0.1.14", status: "rolled_back", reason: "boom", at: "t" }),
+      JSON.stringify({
+        from: "0.1.13",
+        to: "0.1.14",
+        status: "rolled_back",
+        reason: "boom",
+        at: "t",
+      }),
     );
     expect(readLastUpdateResult(installDir)).toEqual({
       from: "0.1.13",
@@ -225,8 +231,16 @@ describe("DaemonUpdateService", () => {
       .filter((msg) => msg.type === "daemon.update.run.progress")
       .map((msg) => (msg as { payload: { phase: string } }).payload.phase);
     expect(phases).toEqual(["check", "download", "verify", "install", "restart", "restart"]);
-    expect(service.status().run).toMatchObject({ runId: started.runId, to: "0.1.14", phase: "restart" });
-    expect(service.status()).toMatchObject({ updatable: true, currentVersion: "0.1.13", installDir });
+    expect(service.status().run).toMatchObject({
+      runId: started.runId,
+      to: "0.1.14",
+      phase: "restart",
+    });
+    expect(service.status()).toMatchObject({
+      updatable: true,
+      currentVersion: "0.1.13",
+      installDir,
+    });
   });
 
   test("a failed run clears the in-flight state and reports the reason", async () => {
@@ -246,7 +260,13 @@ describe("DaemonUpdateService", () => {
   test("a non-updatable install refuses to start", async () => {
     const installDir = makeDir();
     const service = new DaemonUpdateService({
-      install: { installDir, updatable: false, reason: "dev checkout", runningRoot: null, cliLauncher: null },
+      install: {
+        installDir,
+        updatable: false,
+        reason: "dev checkout",
+        runningRoot: null,
+        cliLauncher: null,
+      },
       daemonVersion: "0.1.13",
       paseoHome: installDir,
       listen: null,

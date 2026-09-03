@@ -123,7 +123,13 @@ async function resolveCandidate(
   if (options.version && source.releaseBaseOverridden) {
     const version = options.version.replace(/^v/, "");
     const url = releaseDownloadUrl(source.releaseBase, version, assetName(version));
-    return { version, archiveUrl: url, checksumUrl: `${url}.sha256`, headers: {}, releaseUrl: null };
+    return {
+      version,
+      archiveUrl: url,
+      checksumUrl: `${url}.sha256`,
+      headers: {},
+      releaseUrl: null,
+    };
   }
   const releases = await fetchReleases(source, userAgent, runtime.fetchImpl);
   const candidate = selectRelease({
@@ -162,7 +168,9 @@ async function resolveCandidate(
       : `${candidate.asset.browser_download_url}.sha256`,
     headers: {
       "user-agent": userAgent,
-      ...(useApi ? { accept: "application/octet-stream", authorization: `Bearer ${source.token}` } : {}),
+      ...(useApi
+        ? { accept: "application/octet-stream", authorization: `Bearer ${source.token}` }
+        : {}),
     },
     releaseUrl: candidate.release.html_url ?? null,
   };
@@ -189,7 +197,11 @@ async function installCandidate(
   const work = tempDir(installDir);
   const archivePath = path.join(work, bundleAssetName(candidate.version, target));
   const sidecarPath = `${archivePath}.sha256`;
-  runtime.emit({ event: "progress", phase: "download", message: `downloading ${candidate.archiveUrl}` });
+  runtime.emit({
+    event: "progress",
+    phase: "download",
+    message: `downloading ${candidate.archiveUrl}`,
+  });
   let lastReported = 0;
   await downloadFile({
     url: candidate.archiveUrl,
@@ -216,8 +228,15 @@ async function installCandidate(
   const digest = await verifyBundleChecksum(archivePath, sidecarPath);
   runtime.emit({ event: "progress", phase: "verify", message: `sha256 ${digest.slice(0, 12)} ok` });
 
-  runtime.emit({ event: "progress", phase: "install", message: `unpacking into ${versionRoot(installDir, candidate.version)}` });
-  const staging = path.join(versionsDir(installDir), `.staging.${candidate.version}.${process.pid}`);
+  runtime.emit({
+    event: "progress",
+    phase: "install",
+    message: `unpacking into ${versionRoot(installDir, candidate.version)}`,
+  });
+  const staging = path.join(
+    versionsDir(installDir),
+    `.staging.${candidate.version}.${process.pid}`,
+  );
   await extractBundle(archivePath, staging, target.platform);
   rmSync(versionRoot(installDir, candidate.version), { recursive: true, force: true });
   renameSync(staging, versionRoot(installDir, candidate.version));
@@ -243,6 +262,52 @@ async function waitForOutcome(
     await sleep(1000);
   }
   return null;
+}
+
+/** Spawns the detached `--apply` supervisor and reports the hand-off. */
+function handOffToSupervisor(
+  options: SelfUpdateOptions,
+  runtime: SelfUpdateRuntime,
+  installDir: string,
+  currentVersion: string,
+  targetVersion: string,
+): void {
+  const httpBase = resolveHttpBase(options, runtime.env);
+  const args = [
+    "daemon",
+    "self-update",
+    "--apply",
+    targetVersion,
+    "--previous",
+    currentVersion,
+    "--install-dir",
+    installDir,
+    ...(httpBase ? ["--http-base", httpBase] : []),
+    ...(options.home ? ["--home", options.home] : []),
+    ...(options.verifyTimeoutMs ? ["--verify-timeout", String(options.verifyTimeoutMs)] : []),
+  ];
+  appendSelfUpdateLog(
+    installDir,
+    `handing off to supervisor: ${currentVersion} -> ${targetVersion}`,
+  );
+  const spawned = spawnDetachedSupervisor({
+    execPath: runtime.execPath,
+    cliEntry: runtime.cliEntry,
+    args,
+    logPath: path.join(installDir, SELF_UPDATE_LOG_FILE),
+    env: runtime.env,
+  });
+  const pidNote = spawned.pid ? ` pid ${spawned.pid}` : "";
+  runtime.emit({
+    event: "progress",
+    phase: "restart",
+    message: `supervisor started (${spawned.via}${pidNote}); the daemon restarts into ${targetVersion}`,
+  });
+}
+
+function checkMessage(options: SelfUpdateOptions, apiUrl: string, currentVersion: string): string {
+  if (options.version) return `resolving v${options.version.replace(/^v/, "")}`;
+  return `checking ${apiUrl} for ${options.channel} releases above ${currentVersion}`;
 }
 
 export async function runSelfUpdate(
@@ -276,9 +341,7 @@ export async function runSelfUpdate(
   runtime.emit({
     event: "progress",
     phase: "check",
-    message: options.version
-      ? `resolving v${options.version.replace(/^v/, "")}`
-      : `checking ${source.apiUrl} for ${options.channel} releases above ${currentVersion}`,
+    message: checkMessage(options, source.apiUrl, currentVersion),
   });
   const candidate = await resolveCandidate(options, runtime, source, currentVersion, target);
   const upToDate = candidate === null || candidate.version === currentVersion;
@@ -300,41 +363,20 @@ export async function runSelfUpdate(
   const removed = pruneVersions(installDir, { protect: [currentVersion, candidate.version] });
   if (removed.length > 0) appendSelfUpdateLog(installDir, `pruned ${removed.join(", ")}`);
 
-  const httpBase = resolveHttpBase(options, runtime.env);
   const startedAt = new Date().toISOString();
-  const args = [
-    "daemon",
-    "self-update",
-    "--apply",
-    candidate.version,
-    "--previous",
-    currentVersion,
-    "--install-dir",
-    installDir,
-    ...(httpBase ? ["--http-base", httpBase] : []),
-    ...(options.home ? ["--home", options.home] : []),
-    ...(options.verifyTimeoutMs ? ["--verify-timeout", String(options.verifyTimeoutMs)] : []),
-  ];
-  appendSelfUpdateLog(installDir, `handing off to supervisor: ${currentVersion} -> ${candidate.version}`);
-  const spawned = spawnDetachedSupervisor({
-    execPath: runtime.execPath,
-    cliEntry: runtime.cliEntry,
-    args,
-    logPath: path.join(installDir, SELF_UPDATE_LOG_FILE),
-    env: runtime.env,
-  });
-  runtime.emit({
-    event: "progress",
-    phase: "restart",
-    message: `supervisor started (${spawned.via}${spawned.pid ? ` pid ${spawned.pid}` : ""}); the daemon restarts into ${candidate.version}`,
-  });
+  handOffToSupervisor(options, runtime, installDir, currentVersion, candidate.version);
   if (!options.wait) return { ...common, status: "handoff", reason: null };
 
   const sleep = runtime.sleep ?? ((ms) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
   const budget = (options.verifyTimeoutMs ?? DEFAULT_VERIFY_TIMEOUT_MS) * 2 + 60_000;
   const outcome = await waitForOutcome(installDir, startedAt, budget, sleep);
   if (!outcome) {
-    return { ...common, status: "failed", reason: "timed out waiting for the supervisor", lastUpdate: readLastUpdate(installDir) };
+    return {
+      ...common,
+      status: "failed",
+      reason: "timed out waiting for the supervisor",
+      lastUpdate: readLastUpdate(installDir),
+    };
   }
   return { ...common, status: outcome.status, reason: outcome.reason, lastUpdate: outcome };
 }

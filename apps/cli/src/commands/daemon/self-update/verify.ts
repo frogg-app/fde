@@ -34,7 +34,9 @@ function defaultSleep(ms: number): Promise<void> {
 
 export type DaemonProbe = (httpBase: string) => Promise<{ version: string; healthy: boolean }>;
 
-export async function probeDaemon(httpBase: string): Promise<{ version: string; healthy: boolean }> {
+export async function probeDaemon(
+  httpBase: string,
+): Promise<{ version: string; healthy: boolean }> {
   const identity = await daemonHttpJson<IdentityShape>({ base: httpBase, path: "/api/identity" });
   const health = await daemonHttpJson<HealthShape>({ base: httpBase, path: "/api/health" });
   return {

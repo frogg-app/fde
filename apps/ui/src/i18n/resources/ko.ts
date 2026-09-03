@@ -2663,10 +2663,12 @@ export const ko: TranslationResources = {
           notUpdatable: "이 데몬은 자체 업데이트할 수 없습니다",
           update: "데몬을 {{version}}(으)로 업데이트",
           confirmTitle: "{{name}}을(를) {{version}}(으)로 업데이트",
-          confirmMessage: "데몬이 새 버전으로 재시작되며 실행 중인 에이전트가 잠시 중단됩니다. 새 버전이 시작되지 않으면 이전 버전이 자동으로 복원됩니다.",
+          confirmMessage:
+            "데몬이 새 버전으로 재시작되며 실행 중인 에이전트가 잠시 중단됩니다. 새 버전이 시작되지 않으면 이전 버전이 자동으로 복원됩니다.",
           confirm: "업데이트",
           reconnecting: "데몬을 재시작하고 복귀를 기다리는 중...",
-          unableToReconnect: "{{name}}이(가) 다시 온라인 상태가 되지 않았습니다. 호스트의 self-update.log를 확인하세요.",
+          unableToReconnect:
+            "{{name}}이(가) 다시 온라인 상태가 되지 않았습니다. 호스트의 self-update.log를 확인하세요.",
           startFailedTitle: "업데이트 실패",
           logHint: "자세한 내용: {{installDir}}/self-update.log",
           phases: {

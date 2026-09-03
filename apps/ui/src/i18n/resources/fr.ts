@@ -2715,10 +2715,12 @@ export const fr: TranslationResources = {
           notUpdatable: "Ce daemon ne peut pas se mettre à jour lui-même",
           update: "Mettre à jour le daemon vers {{version}}",
           confirmTitle: "Mettre à jour {{name}} vers {{version}}",
-          confirmMessage: "Le daemon redémarre avec la nouvelle version ; les agents en cours sont brièvement interrompus. Si la nouvelle version ne démarre pas, la précédente est restaurée automatiquement.",
+          confirmMessage:
+            "Le daemon redémarre avec la nouvelle version ; les agents en cours sont brièvement interrompus. Si la nouvelle version ne démarre pas, la précédente est restaurée automatiquement.",
           confirm: "Mettre à jour",
           reconnecting: "Redémarrage du daemon, en attente de son retour...",
-          unableToReconnect: "{{name}} n'est pas revenu en ligne. Consultez self-update.log sur l'hôte.",
+          unableToReconnect:
+            "{{name}} n'est pas revenu en ligne. Consultez self-update.log sur l'hôte.",
           startFailedTitle: "Échec de la mise à jour",
           logHint: "Détails : {{installDir}}/self-update.log",
           phases: {

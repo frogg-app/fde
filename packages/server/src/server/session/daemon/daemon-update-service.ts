@@ -163,7 +163,9 @@ export class DaemonUpdateService {
     }
   }
 
-  async start(input: { version?: string; channel?: DaemonUpdateChannel } = {}): Promise<StartPayload> {
+  async start(
+    input: { version?: string; channel?: DaemonUpdateChannel } = {},
+  ): Promise<StartPayload> {
     if (!this.install.updatable || !this.install.cliLauncher) {
       return { accepted: false, runId: null, targetVersion: null, error: this.install.reason };
     }
@@ -189,7 +191,7 @@ export class DaemonUpdateService {
       "--no-wait",
       "--channel",
       input.channel ?? "stable",
-      ...(input.version ? ["--version", input.version] : []),
+      ...(input.version ? ["--to", input.version] : []),
     ];
     // Runs detached from the response: the CLI keeps reporting until it hands off.
     const completion = this.runCli(args, runId)
@@ -216,7 +218,9 @@ export class DaemonUpdateService {
     }
     const reason =
       result?.reason ??
-      (status === "up_to_date" ? `already on ${result?.currentVersion ?? this.daemonVersion}` : null);
+      (status === "up_to_date"
+        ? `already on ${result?.currentVersion ?? this.daemonVersion}`
+        : null);
     this.update("failed", reason ?? `self-update ended with ${status}`);
     this.run = null;
   }
