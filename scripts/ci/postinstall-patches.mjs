@@ -74,7 +74,8 @@ const localBin = join(
   ".bin",
   isWindows ? "patch-package.cmd" : "patch-package",
 );
-const cmd = existsSync(localBin) ? localBin : isWindows ? "patch-package.cmd" : "patch-package";
+const fallbackBin = isWindows ? "patch-package.cmd" : "patch-package";
+const cmd = existsSync(localBin) ? localBin : fallbackBin;
 
 let groupIndex = 0;
 for (const [cwd, files] of patchFilesByCwd) {

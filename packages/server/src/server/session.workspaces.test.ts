@@ -1,13 +1,5 @@
 import { execFileSync } from "node:child_process";
-import {
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  realpathSync,
-  rmSync,
-  statSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { setImmediate as waitForImmediate } from "node:timers/promises";
@@ -5562,22 +5554,6 @@ test("refresh_agent_request does not inspect an archived worktree branch", async
   expect(workspaces.get(workspaceId)?.archivedAt).toBe("2026-03-10T00:00:00.000Z");
   expect(findByType(emitted, "rpc_error")).toBeUndefined();
 });
-
-function createRecreateWorktreeRepo(): { tempDir: string; repoDir: string } {
-  const tempDir = realpathSync(mkdtempSync(path.join(tmpdir(), "paseo-recreate-worktree-")));
-  const repoDir = path.join(tempDir, "repo");
-  execFileSync("git", ["init", "-b", "main", repoDir], { stdio: "pipe" });
-  execFileSync("git", ["config", "user.email", "test@fde.local"], {
-    cwd: repoDir,
-    stdio: "pipe",
-  });
-  execFileSync("git", ["config", "user.name", "Paseo Test"], { cwd: repoDir, stdio: "pipe" });
-  execFileSync("git", ["config", "commit.gpgsign", "false"], { cwd: repoDir, stdio: "pipe" });
-  writeFileSync(path.join(repoDir, "README.md"), "main\n");
-  execFileSync("git", ["add", "README.md"], { cwd: repoDir, stdio: "pipe" });
-  execFileSync("git", ["commit", "-m", "initial"], { cwd: repoDir, stdio: "pipe" });
-  return { tempDir, repoDir };
-}
 
 test.skip("open_project_request collapses a git subdirectory onto the repo root workspace", async () => {
   const emitted: SessionOutboundMessage[] = [];

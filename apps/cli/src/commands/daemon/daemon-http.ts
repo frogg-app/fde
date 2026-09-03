@@ -16,7 +16,8 @@ export function resolveLoopbackHttpBase(listen: string): string | null {
   const rawHost = withoutScheme.slice(0, lastColon).replace(/^\[|\]$/g, "");
   const port = withoutScheme.slice(lastColon + 1);
   const wildcard = rawHost === "0.0.0.0" || rawHost === "::" || rawHost === "";
-  const hostForUrl = wildcard ? "127.0.0.1" : rawHost.includes(":") ? `[${rawHost}]` : rawHost;
+  const bracketedHost = rawHost.includes(":") ? `[${rawHost}]` : rawHost;
+  const hostForUrl = wildcard ? "127.0.0.1" : bracketedHost;
   return `http://${hostForUrl}:${port}`;
 }
 
