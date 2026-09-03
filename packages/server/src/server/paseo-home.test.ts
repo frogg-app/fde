@@ -144,3 +144,23 @@ describe("legacy home migration", () => {
     }
   });
 });
+
+describe("migration safety", () => {
+  test("leaves a legacy home alone while a daemon is running from it", () => {
+    const parent = mkdtempSync(path.join(tmpdir(), "fde-home-inuse-"));
+    try {
+      const legacy = path.join(parent, ".paseo");
+      mkdirSync(legacy, { recursive: true });
+      writeFileSync(path.join(legacy, "paseo.pid"), JSON.stringify({ pid: process.pid }));
+      vi.spyOn(os, "homedir").mockReturnValue(parent);
+      resetHomeMigrationStateForTests();
+
+      expect(resolveFdeHome({})).toBe(path.join(parent, ".fde"));
+      expect(existsSync(path.join(legacy, "paseo.pid"))).toBe(true);
+      expect(consumeHomeMigrationNotice()).toBeNull();
+    } finally {
+      vi.restoreAllMocks();
+      rmSync(parent, { recursive: true, force: true });
+    }
+  });
+});

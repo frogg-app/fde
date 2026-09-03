@@ -1,4 +1,4 @@
-import { cancel, confirm, intro, isCancel, log, note, outro, spinner } from "@clack/prompts";
+import { cancel, confirm, intro, isCancel, log, outro, spinner } from "@clack/prompts";
 import { Command, Option } from "commander";
 import { writeFileSync } from "node:fs";
 import path from "node:path";
@@ -12,7 +12,10 @@ import {
   tailDaemonLog,
   type DaemonStartOptions,
 } from "./daemon/local-daemon.js";
-import { tryConnectToDaemon } from "../utils/client.js";
+import { probeLocalDaemonReadiness, resolveAccessMode } from "./daemon/readiness.js";
+import { describeClaimStatus } from "./daemon/claim.js";
+import { configureAutostart } from "./onboard-autostart.js";
+import { describeReachability, printLines, printNextSteps, renderNote } from "./onboard-output.js";
 import { formatPairingInstructions } from "../output/pairing.js";
 import {
   confirmRelayPairing,
@@ -58,12 +61,6 @@ export function resolveNonInteractiveVoiceDefault(env: NodeJS.ProcessEnv): boole
 }
 
 class OnboardCancelledError extends Error {}
-
-const plainNoteFormat = (line: string): string => line;
-
-function renderNote(message: string, title: string): void {
-  note(message, title, { format: plainNoteFormat });
-}
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => {
@@ -188,36 +185,34 @@ function renderProgressLine(progress: DownloadProgress): string {
   return `Downloading speech model${modelSuffix}: ${progress.pct}%`;
 }
 
-type ProbeResult = { kind: "ready"; listen: string; host: string | null } | { kind: "pending" };
+type ProbeResult =
+  | { kind: "ready"; listen: string; host: string | null; pairingRequired: boolean }
+  | { kind: "pending" };
 
-async function probeDaemonReady(home: string, timeoutMs: number): Promise<ProbeResult> {
+/**
+ * Readiness is the public `GET /api/identity` answering with `product: "fde"`.
+ * A daemon that requires a password or pairing answers it too, so onboarding
+ * never waits out the full timeout against a daemon that is up and locked.
+ */
+async function probeDaemonReady(home: string | undefined, timeoutMs: number): Promise<ProbeResult> {
   const state = resolveLocalDaemonState({ home });
   const host = resolveTcpHostFromListen(state.listen);
-  const deadline = Date.now() + timeoutMs;
-  const remainingTimeoutMs = () => Math.max(1, deadline - Date.now());
-
-  if (state.running && host) {
-    const client = await tryConnectToDaemon({
-      host,
-      timeout: Math.min(remainingTimeoutMs(), READY_PROBE_TIMEOUT_MS),
-    });
-    if (client) {
-      try {
-        await client.fetchAgents({
-          timeout: Math.min(remainingTimeoutMs(), READY_PROBE_TIMEOUT_MS),
-        });
-        return { kind: "ready", listen: state.listen, host };
-      } catch {
-        // Daemon process is alive but not API-ready yet.
-      } finally {
-        await client.close().catch(() => {});
-      }
-    }
-  } else if (state.running && !host) {
-    return { kind: "ready", listen: state.listen, host: null };
+  if (state.running && !host) {
+    // No TCP endpoint to probe; a running PID is all the readiness there is.
+    return { kind: "ready", listen: state.listen, host: null, pairingRequired: false };
   }
 
-  return { kind: "pending" };
+  const readiness = await probeLocalDaemonReadiness(
+    home,
+    Math.max(1, Math.min(timeoutMs, READY_PROBE_TIMEOUT_MS)),
+  );
+  if (!readiness) return { kind: "pending" };
+  return {
+    kind: "ready",
+    listen: readiness.listen,
+    host: readiness.host,
+    pairingRequired: readiness.identity.pairingRequired,
+  };
 }
 
 interface ProgressState {
@@ -245,11 +240,17 @@ function announceProgress(
   return state;
 }
 
+export interface DaemonReadyState {
+  listen: string;
+  host: string | null;
+  pairingRequired: boolean;
+}
+
 async function waitForDaemonReady(args: {
   home: string;
   timeoutMs: number;
   onStatus?: (message: string) => void;
-}): Promise<{ listen: string; host: string | null }> {
+}): Promise<DaemonReadyState> {
   const deadline = Date.now() + args.timeoutMs;
   const createTimeoutError = () => {
     const recentLogs = tailDaemonLog(args.home, 60);
@@ -263,13 +264,13 @@ async function waitForDaemonReady(args: {
     );
   };
 
-  async function poll(state: ProgressState): Promise<{ listen: string; host: string | null }> {
+  async function poll(state: ProgressState): Promise<DaemonReadyState> {
     if (Date.now() >= deadline) {
       throw createTimeoutError();
     }
     const probe = await probeDaemonReady(args.home, Math.max(1, deadline - Date.now()));
     if (probe.kind === "ready") {
-      return { listen: probe.listen, host: probe.host };
+      return { listen: probe.listen, host: probe.host, pairingRequired: probe.pairingRequired };
     }
     const nextState = announceProgress(args.home, state, args.onStatus);
     if (Date.now() >= deadline) {
@@ -280,43 +281,6 @@ async function waitForDaemonReady(args: {
   }
 
   return poll({ lastStatus: "", lastPrintedAt: 0 });
-}
-
-function printNextSteps(pairingUrl: string | null, paseoHome: string, richUi: boolean): void {
-  const daemonLogPath = path.join(paseoHome, "daemon.log");
-  const nextStepsLines = [
-    pairingUrl
-      ? "1. Open FDE and scan the QR code above, or paste the pairing link."
-      : "1. Open FDE and connect to your daemon.",
-    "2. Pairing links open in the FDE desktop app directly (https://frogg.app/pair#offer=…).",
-    "3. Desktop app: https://github.com/frogg-app/fde/releases/latest",
-    "4. Docs: https://paseo.sh/docs",
-    '5. Example: paseo run --output-schema schema.json "extract fields"',
-  ];
-  const quickReferenceLines = [
-    "1. paseo --help",
-    "2. paseo ls",
-    '3. paseo run "your prompt"',
-    "4. paseo status",
-    `5. Daemon logs: ${daemonLogPath}`,
-  ];
-
-  if (!richUi) {
-    console.log("");
-    console.log("Next steps:");
-    for (const line of nextStepsLines) {
-      console.log(line);
-    }
-    console.log("");
-    console.log("CLI quick reference:");
-    for (const line of quickReferenceLines) {
-      console.log(line);
-    }
-    return;
-  }
-
-  renderNote(nextStepsLines.join("\n"), "Next steps");
-  renderNote(quickReferenceLines.join("\n"), "CLI quick reference");
 }
 
 export function onboardCommand(): Command {
@@ -409,7 +373,7 @@ async function waitForDaemonReadyWithUi(args: {
   home: string;
   timeoutMs: number;
   richUi: boolean;
-}): Promise<{ listen: string; host: string | null }> {
+}): Promise<DaemonReadyState> {
   const readySpinner = args.richUi ? spinner() : null;
   try {
     if (readySpinner) {
@@ -462,6 +426,8 @@ export async function runOnboard(options: OnboardOptions): Promise<void> {
   const paseoHome = resolveLocalPaseoHome(options.home);
   if (richUi) {
     renderNote(paseoHome, "FDE home");
+  } else {
+    console.log(`FDE home: ${paseoHome}`);
   }
 
   const voiceEnabled = await resolveAndPersistVoice(paseoHome, options);
@@ -472,11 +438,27 @@ export async function runOnboard(options: OnboardOptions): Promise<void> {
   );
 
   await ensureDaemonStarted(options, richUi);
-  await waitForDaemonReadyWithUi({
+  const ready = await waitForDaemonReadyWithUi({
     home: options.home ?? paseoHome,
     timeoutMs,
     richUi,
   });
+
+  await configureAutostart({ listen: ready.listen, home: options.home, richUi });
+
+  const claimStatus = await describeClaimStatus(options.home);
+  printLines(
+    describeReachability({
+      listen: ready.listen,
+      accessMode: resolveAccessMode({
+        passwordConfigured: claimStatus.passwordConfigured,
+        lanTrusted: claimStatus.lanTrusted,
+      }),
+      pairingRequired: ready.pairingRequired,
+    }),
+    "Reach this daemon",
+    richUi,
+  );
 
   if (options.relay === false) {
     log.message("Relay pairing skipped because --no-relay was provided.");

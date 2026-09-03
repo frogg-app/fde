@@ -1,13 +1,20 @@
 import { describe, expect, test, vi } from "vitest";
 
-import { runPairCommand, type PairCommandOutput, type PairingOffer } from "./pair.js";
+import {
+  pairingQrEnabled,
+  runPairCommand,
+  type PairCommandOutput,
+  type PairingOffer,
+} from "./pair.js";
 
 const disabledOffer: PairingOffer = { relayEnabled: false, url: null, qr: null };
 const enabledOffer: PairingOffer = {
   relayEnabled: true,
-  url: "https://app.paseo.sh/#offer=test",
+  url: "https://pair.frogg.app/code/test",
   qr: null,
 };
+
+const resolveAccessMode = async () => "lan_trusted" as const;
 
 interface RecordedPairCommandOutput extends PairCommandOutput {
   stdout: string[];
@@ -47,7 +54,14 @@ describe("daemon pair workflow", () => {
 
     await runPairCommand(
       {},
-      { resolveOffer, confirmRelay, printDirectGuidance, isInteractive: () => true, output },
+      {
+        resolveOffer,
+        resolveAccessMode,
+        confirmRelay,
+        printDirectGuidance,
+        isInteractive: () => true,
+        output,
+      },
     );
 
     expect(confirmRelay).toHaveBeenCalledOnce();
@@ -67,6 +81,7 @@ describe("daemon pair workflow", () => {
       {},
       {
         resolveOffer,
+        resolveAccessMode,
         confirmRelay: async () => true,
         printDirectGuidance: vi.fn(),
         isInteractive: () => true,
@@ -108,6 +123,7 @@ describe("daemon pair workflow", () => {
       { relay: true, json: true },
       {
         resolveOffer,
+        resolveAccessMode,
         confirmRelay,
         printDirectGuidance: vi.fn(),
         isInteractive: () => false,
@@ -128,6 +144,7 @@ describe("daemon pair workflow", () => {
           resolveOffer: async () => {
             throw new Error("Relay is controlled by a daemon launch override");
           },
+          resolveAccessMode,
           confirmRelay: vi.fn(),
           printDirectGuidance: vi.fn(),
           isInteractive: () => false,
@@ -135,5 +152,32 @@ describe("daemon pair workflow", () => {
         },
       ),
     ).rejects.toThrow("launch override");
+  });
+
+  test("prints the access mode alongside the pairing link", async () => {
+    const output = createRecordedOutput();
+
+    await runPairCommand(
+      {},
+      {
+        resolveOffer: async () => enabledOffer,
+        resolveAccessMode: async () => "password",
+        confirmRelay: vi.fn(),
+        printDirectGuidance: vi.fn(),
+        isInteractive: () => false,
+        output,
+      },
+    );
+
+    const stdout = output.stdout.join("");
+    expect(stdout).toContain("https://pair.frogg.app/code/test");
+    expect(stdout).toContain("Access: password set");
+  });
+
+  test("PASEO_PAIRING_QR=0 turns the terminal QR off", () => {
+    expect(pairingQrEnabled({})).toBe(true);
+    expect(pairingQrEnabled({ PASEO_PAIRING_QR: "1" })).toBe(true);
+    expect(pairingQrEnabled({ PASEO_PAIRING_QR: "0" })).toBe(false);
+    expect(pairingQrEnabled({ PASEO_PAIRING_QR: "off" })).toBe(false);
   });
 });

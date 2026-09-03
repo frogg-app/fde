@@ -32,6 +32,7 @@ import { addImportOptions, runImportCommand } from "./commands/agent/import.js";
 import { withOutput } from "./output/index.js";
 import { runCloneCommand } from "./commands/clone.js";
 import { onboardCommand } from "./commands/onboard.js";
+import { pairCommand } from "./commands/daemon/pair.js";
 import {
   addDaemonHostOption,
   addJsonAndDaemonHostOptions,
@@ -118,6 +119,8 @@ export function createCli(): Command {
 
   // Top-level local daemon shortcuts
   program.addCommand(onboardCommand());
+  // `fde pair` is the short form of `fde daemon pair`; both run the same code.
+  program.addCommand(pairCommand());
   program.addCommand(daemonStartCommand());
   program.addCommand(createHooksCommand());
 

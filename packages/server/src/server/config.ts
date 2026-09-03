@@ -30,6 +30,19 @@ import { resolveGitProcessPolicy } from "../utils/git-process-scheduler.js";
 const DEFAULT_PORT = 9999;
 const DEFAULT_RELAY_ENDPOINT = "relay.paseo.sh:443";
 const DEFAULT_APP_BASE_URL = DEFAULT_PAIRING_BASE_URL;
+/**
+ * Bases written into config.json by earlier releases as *their* default. A home
+ * carrying one of these is not expressing a preference, so the current default
+ * wins; anything else the owner typed is honoured.
+ */
+const SUPERSEDED_APP_BASE_URLS = new Set(["https://frogg.app/pair", "https://app.paseo.sh"]);
+
+function resolvePersistedPairingBaseUrl(persisted: PersistedConfig): string | undefined {
+  const configured = persisted.app?.pairingBaseUrl ?? persisted.app?.baseUrl;
+  const trimmed = configured?.trim().replace(/\/+$/, "");
+  if (!trimmed || SUPERSEDED_APP_BASE_URLS.has(trimmed)) return undefined;
+  return trimmed;
+}
 const DEFAULT_TRUSTED_PROXIES = ["loopback"];
 
 interface ResolveBundledWebUiDistDirInput {
@@ -553,8 +566,7 @@ function resolveStaticLoadConfigSettings(
     appBaseUrl:
       env.FDE_PAIRING_BASE_URL ??
       env.PASEO_APP_BASE_URL ??
-      persisted.app?.pairingBaseUrl ??
-      persisted.app?.baseUrl ??
+      resolvePersistedPairingBaseUrl(persisted) ??
       DEFAULT_APP_BASE_URL,
   };
 }

@@ -1,4 +1,4 @@
-import { cpSync, existsSync, renameSync } from "node:fs";
+import { cpSync, existsSync, readFileSync, renameSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { ensurePrivateDirectory } from "./private-files.js";
@@ -54,6 +54,32 @@ export function resolveConfiguredHome(env: NodeJS.ProcessEnv): string | undefine
 }
 
 /**
+ * A daemon still running out of the legacy home. Moving the directory out from
+ * under it would strand its pid file, logs, and agent state, so the migration
+ * waits until that daemon has stopped.
+ */
+function legacyHomeIsInUse(legacy: string): boolean {
+  try {
+    const parsed = JSON.parse(readFileSync(path.join(legacy, "paseo.pid"), "utf8")) as {
+      pid?: unknown;
+    };
+    if (typeof parsed.pid !== "number" || !Number.isInteger(parsed.pid) || parsed.pid <= 0) {
+      return false;
+    }
+    process.kill(parsed.pid, 0);
+    return true;
+  } catch (error) {
+    // EPERM means the process exists but belongs to someone else.
+    return (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      (error as { code?: unknown }).code === "EPERM"
+    );
+  }
+}
+
+/**
  * Moves `~/.paseo` to `~/.fde` when the new home does not exist yet. Runs at
  * most once per process and only for the default (unconfigured) home.
  */
@@ -61,6 +87,7 @@ function migrateLegacyHome(target: string, legacy: string): void {
   if (migrationAttempted) return;
   migrationAttempted = true;
   if (existsSync(target) || !existsSync(legacy)) return;
+  if (legacyHomeIsInUse(legacy)) return;
 
   try {
     renameSync(legacy, target);

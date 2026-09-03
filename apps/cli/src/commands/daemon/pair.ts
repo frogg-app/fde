@@ -13,6 +13,8 @@ import { resolveLocalDaemonState } from "./local-daemon.js";
 import { addJsonOption } from "../../utils/command-options.js";
 import { formatPairingInstructions } from "../../output/pairing.js";
 import { buildPairingDeepLink } from "@fde/protocol/connection-offer";
+import { describeClaimStatus } from "./claim.js";
+import { describeAccessMode, resolveAccessMode, type DaemonAccessMode } from "./readiness.js";
 
 interface PairOptions {
   home?: string;
@@ -22,6 +24,7 @@ interface PairOptions {
 
 export interface PairCommandDependencies {
   resolveOffer: typeof resolveLocalPairingOffer;
+  resolveAccessMode: (home?: string) => Promise<DaemonAccessMode>;
   confirmRelay: typeof confirmRelayPairing;
   printDirectGuidance: typeof printDirectConnectionGuidance;
   isInteractive: () => boolean;
@@ -74,8 +77,25 @@ function createProcessOutput(): PairCommandOutput {
   };
 }
 
+/** `PASEO_PAIRING_QR=0` suppresses the terminal QR (CI, logs, narrow terminals). */
+export function pairingQrEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  const raw = env.PASEO_PAIRING_QR?.trim().toLowerCase();
+  if (raw === undefined || raw === "") return true;
+  return !["0", "false", "no", "off"].includes(raw);
+}
+
+export async function resolveDaemonAccessMode(home?: string): Promise<DaemonAccessMode> {
+  const status = await describeClaimStatus(home);
+  return resolveAccessMode({
+    passwordConfigured: status.passwordConfigured,
+    lanTrusted: status.lanTrusted,
+  });
+}
+
 export function pairCommand(): Command {
-  return addJsonOption(new Command("pair").description("Print the daemon pairing QR code and link"))
+  return addJsonOption(
+    new Command("pair").description("Print a fresh pairing link, QR code, and app deep link"),
+  )
     .option("--home <path>", "FDE home directory (default: ~/.fde)")
     .option("--relay", "Enable relay without prompting")
     .action(async (_options: PairOptions, command: Command) => {
@@ -213,6 +233,7 @@ export async function runPairCommand(
   if (options.home) process.env.FDE_HOME = options.home;
   const dependencies: PairCommandDependencies = {
     resolveOffer: resolveLocalPairingOffer,
+    resolveAccessMode: resolveDaemonAccessMode,
     confirmRelay: confirmRelayPairing,
     printDirectGuidance: printDirectConnectionGuidance,
     isInteractive: () => Boolean(process.stdin.isTTY && process.stdout.isTTY),
@@ -240,13 +261,19 @@ export async function runPairCommand(
     dependencies.output.success("Relay enabled");
   }
 
-  outputPairingResult(pairing, options, dependencies.output);
+  outputPairingResult(
+    pairing,
+    options,
+    dependencies.output,
+    await dependencies.resolveAccessMode(options.home),
+  );
 }
 
 function outputPairingResult(
   pairing: PairingOffer,
   options: PairOptions,
   output: PairCommandOutput,
+  accessMode: DaemonAccessMode,
 ): void {
   if (!pairing.url) {
     if (options.json) {
@@ -272,6 +299,7 @@ function outputPairingResult(
       `${JSON.stringify(
         {
           relayEnabled: pairing.relayEnabled,
+          accessMode,
           mode: pairing.mode ?? (pairing.relayEnabled ? "relay" : "direct"),
           url: pairing.url,
           deepLink,
@@ -292,8 +320,10 @@ function outputPairingResult(
       qr: pairing.qr,
       columns: output.columns,
       deepLink,
+      qrDisabled: !pairingQrEnabled(),
     }),
   );
+  output.writeStdout(`${describeAccessMode(accessMode)}\n`);
   if (pairing.mode === "direct") {
     output.writeStdout(
       `${chalk.dim(`Direct LAN pairing: this daemon has not been claimed yet; the first device to pair becomes its owner. Single-use, expires ${pairing.expiresAt ?? "soon"}. Reachable at ${(pairing.endpoints ?? []).join(", ")}.`)}\n`,
