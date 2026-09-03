@@ -65,7 +65,7 @@ meta ──┬── ui ── desktop (linux x86_64, windows x86_64, macos aarc
 | `FDE-<ver>-amd64.deb`                       | Tauri deb (Linux x86_64)                                                                          |
 | `FDE-<ver>-x86_64.AppImage`                 | Tauri AppImage                                                                                    |
 | `FDE-<ver>-x64-setup.exe`                   | Tauri NSIS installer (per-user, unsigned)                                                         |
-| `FDE-<ver>-x64-portable.exe`                | Bare `fde.exe` from the Windows build                                                             |
+| `FDE-<ver>-x64-portable.zip`                | Bare `fde.exe` from the Windows build                                                             |
 | `FDE-<ver>-x64-portable.zip`                | `scripts/release/package-portable-win.mjs` (exe + README)                                         |
 | `FDE-<ver>-aarch64.dmg`, `-x86_64.dmg`      | Tauri DMG per architecture                                                                        |
 | `FDE-<ver>-<arch>.app.tar.gz` + `.sig`      | macOS updater bundle, only with a signing key                                                     |

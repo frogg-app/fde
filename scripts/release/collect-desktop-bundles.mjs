@@ -3,7 +3,7 @@
 // flat directory with the release asset names documented in docs/ci.md:
 //
 //   FDE-<version>-amd64.deb            FDE-<version>-x86_64.AppImage
-//   FDE-<version>-x64-setup.exe        FDE-<version>-x64-portable.exe
+//   FDE-<version>-x64-setup.exe        FDE-<version>-x64-portable.zip
 //   FDE-<version>-aarch64.dmg          FDE-<version>-x86_64.dmg
 //   FDE-<version>-<arch>.app.tar.gz    (macOS updater bundle)
 //
@@ -38,7 +38,6 @@ const BUNDLE_RULES = {
   ],
   windows: [
     { dir: "bundle/nsis", extension: "-setup.exe", name: (v) => `FDE-${v}-x64-setup.exe` },
-    { dir: ".", exact: "fde.exe", name: (v) => `FDE-${v}-x64-portable.exe` },
     { dir: "bundle/portable", extension: ".zip", name: (v) => `FDE-${v}-x64-portable.zip` },
   ],
   macos: [

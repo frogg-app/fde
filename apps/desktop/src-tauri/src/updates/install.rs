@@ -55,8 +55,11 @@ pub fn install(
             })
         }
         AssetKind::WindowsPortable => {
+            // The portable build ships as a zip (bare exes get blocked by Windows); pull the
+            // executable out next to the download and swap that in.
+            let new_exe = extract_portable_exe(downloaded)?;
             let script = portable_script(
-                &downloaded.to_string_lossy(),
+                &new_exe.to_string_lossy(),
                 &current_exe.to_string_lossy(),
                 pid,
             );
@@ -131,6 +134,33 @@ pub fn installer_script(installer: &str, exe: &str, pid: u32) -> String {
 }
 
 /// `cmd` batch script: wait for `pid` to exit, replace the exe, relaunch.
+
+/// Extracts the portable zip beside itself and returns the path of the executable inside it.
+pub fn extract_portable_exe(archive: &std::path::Path) -> Result<std::path::PathBuf, String> {
+    let destination = archive.with_extension("extracted");
+    let _ = std::fs::remove_dir_all(&destination);
+    crate::sidecar::archive::extract_bundle(archive, &destination)?;
+    find_exe(&destination).ok_or_else(|| format!("no .exe found in {}", archive.display()))
+}
+
+fn find_exe(dir: &std::path::Path) -> Option<std::path::PathBuf> {
+    let entries = std::fs::read_dir(dir).ok()?;
+    let mut nested = Vec::new();
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            nested.push(path);
+        } else if path
+            .extension()
+            .map(|ext| ext.eq_ignore_ascii_case("exe"))
+            .unwrap_or(false)
+        {
+            return Some(path);
+        }
+    }
+    nested.into_iter().find_map(|sub| find_exe(&sub))
+}
+
 pub fn portable_script(new_exe: &str, target_exe: &str, pid: u32) -> String {
     format!(
         "@echo off\r\n{}move /Y \"{new_exe}\" \"{target_exe}\" || exit /b 1\r\nstart \"\" \"{target_exe}\"\r\n",

@@ -269,14 +269,21 @@ mod tests {
         };
         assert_eq!(state.pairing_offer_ready(), Some(link.clone()));
         assert_eq!(state.pairing_offer_ready(), None, "drained once");
-        assert_eq!(state.deliver_or_queue_pairing(link.clone()), Some(link.clone()));
+        assert_eq!(
+            state.deliver_or_queue_pairing(link.clone()),
+            Some(link.clone())
+        );
         state.window_loading();
         assert_eq!(state.deliver_or_queue_pairing(link.clone()), None);
         let newer = PairingDeepLink {
             url: "paseo://pair#offer=newer".to_string(),
         };
         assert_eq!(state.deliver_or_queue_pairing(newer.clone()), None);
-        assert_eq!(state.pairing_offer_ready(), Some(newer), "latest offer wins");
+        assert_eq!(
+            state.pairing_offer_ready(),
+            Some(newer),
+            "latest offer wins"
+        );
     }
 
     #[test]

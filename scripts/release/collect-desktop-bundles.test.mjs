@@ -37,7 +37,7 @@ test("windows: installer, bare exe and portable zip", () => {
   });
   assert.deepEqual(
     renames.map((entry) => entry.to),
-    ["FDE-0.1.5-x64-setup.exe", "FDE-0.1.5-x64-portable.exe", "FDE-0.1.5-x64-portable.zip"],
+    ["FDE-0.1.5-x64-setup.exe", "FDE-0.1.5-x64-portable.zip"],
   );
 });
 
