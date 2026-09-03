@@ -1865,7 +1865,7 @@ export const ptBR: TranslationResources = {
     },
     errors: {
       unavailable: "A reprodução de áudio não está disponível aqui.",
-      noAudio: "O host não tem áudio para este alerta.",
+      noAudio: "O host ainda não tem áudio para este alerta. Tente novamente.",
       unsupportedFormat: "Este dispositivo não consegue reproduzir o formato de áudio do alerta.",
       playbackFailed: "Não foi possível reproduzir o alerta.",
     },

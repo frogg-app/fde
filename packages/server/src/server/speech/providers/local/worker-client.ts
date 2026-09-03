@@ -26,6 +26,12 @@ import type {
 import { bufferToWorkerBytes, workerBytesToBuffer } from "./worker-bytes.js";
 
 const DEFAULT_REQUEST_TIMEOUT_MS = 30000;
+/**
+ * Extra time the first request on a freshly spawned worker gets. Loading a sherpa-onnx model
+ * off disk can take most of a normal request budget on a busy machine, and the worker exits
+ * after `idleTtlMs`, so every quiet stretch is followed by another cold load.
+ */
+const DEFAULT_COLD_START_GRACE_MS = 60000;
 const DEFAULT_IDLE_TTL_MS = 5 * 60 * 1000;
 const DEFAULT_LOCAL_SAMPLE_RATE = 16000;
 const STDERR_TAIL_MAX_CHARS = 8000;
@@ -62,6 +68,7 @@ interface LocalSpeechWorkerClientOptions {
   config: LocalSpeechWorkerConfig;
   logger: pino.Logger;
   requestTimeoutMs?: number;
+  coldStartGraceMs?: number;
   idleTtlMs?: number;
   forkWorker?: () => LocalSpeechWorkerProcess;
 }
@@ -178,6 +185,7 @@ export class LocalSpeechWorkerClient {
   private readonly config: LocalSpeechWorkerConfig;
   private readonly logger: pino.Logger;
   private readonly requestTimeoutMs: number;
+  private readonly coldStartGraceMs: number;
   private readonly idleTtlMs: number;
   private readonly forkWorker: () => LocalSpeechWorkerProcess;
   private readonly pendingRequests = new Map<string, PendingRequest>();
@@ -187,6 +195,8 @@ export class LocalSpeechWorkerClient {
   private workerPid: number | null = null;
   private stderrTail = "";
   private stderrLineBuffer = "";
+  /** False until the current worker answers something, i.e. until its models are loaded. */
+  private workerWarm = false;
   private inFlightRequests = 0;
   private idleTimer: ReturnType<typeof setTimeout> | null = null;
   private readonly intentionalWorkerCloses = new WeakSet<LocalSpeechWorkerProcess>();
@@ -195,6 +205,7 @@ export class LocalSpeechWorkerClient {
     this.config = options.config;
     this.logger = options.logger.child({ component: "local-speech-worker-client" });
     this.requestTimeoutMs = options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
+    this.coldStartGraceMs = options.coldStartGraceMs ?? DEFAULT_COLD_START_GRACE_MS;
     this.idleTtlMs = options.idleTtlMs ?? DEFAULT_IDLE_TTL_MS;
     this.forkWorker = options.forkWorker ?? forkLocalSpeechWorker;
   }
@@ -315,6 +326,9 @@ export class LocalSpeechWorkerClient {
     const requestId = randomUUID();
     const message = { ...input, requestId } as LocalSpeechWorkerRequest;
     const requestSummary = summarizeWorkerRequest(message);
+    const timeoutMs = this.workerWarm
+      ? this.requestTimeoutMs
+      : this.requestTimeoutMs + this.coldStartGraceMs;
     this.inFlightRequests++;
     this.clearIdleTimer();
 
@@ -323,8 +337,8 @@ export class LocalSpeechWorkerClient {
         this.pendingRequests.delete(requestId);
         this.inFlightRequests = Math.max(0, this.inFlightRequests - 1);
         this.scheduleIdleShutdownIfReady();
-        reject(new Error(`Local speech worker request timed out: ${input.type}`));
-      }, this.requestTimeoutMs);
+        reject(new Error(`Local speech worker request timed out: ${input.type} (${timeoutMs}ms)`));
+      }, timeoutMs);
       this.pendingRequests.set(requestId, {
         resolve: (value) => resolve(value as T),
         reject,
@@ -358,6 +372,7 @@ export class LocalSpeechWorkerClient {
     const worker = this.forkWorker();
     this.worker = worker;
     this.workerPid = worker.pid ?? null;
+    this.workerWarm = false;
     this.stderrTail = "";
     this.stderrLineBuffer = "";
     this.logger.info(
@@ -396,6 +411,7 @@ export class LocalSpeechWorkerClient {
   }
 
   private handleWorkerMessage(message: LocalSpeechWorkerToParentMessage): void {
+    this.workerWarm = true;
     if (isResponse(message)) {
       const pending = this.pendingRequests.get(message.requestId);
       if (!pending) {

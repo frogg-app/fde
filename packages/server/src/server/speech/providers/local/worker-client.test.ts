@@ -3,7 +3,7 @@ import { once } from "node:events";
 import { fork, type ChildProcess } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import pino from "pino";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   LocalSpeechWorkerClient,
@@ -102,7 +102,7 @@ class PausedIpcWorker {
   }
 }
 
-function createClient(options?: { idleTtlMs?: number }) {
+function createClient(options?: { idleTtlMs?: number; coldStartGraceMs?: number }) {
   const workers: FakeLocalSpeechWorker[] = [];
   const client = new LocalSpeechWorkerClient({
     logger: pino({ level: "silent" }),
@@ -113,6 +113,7 @@ function createClient(options?: { idleTtlMs?: number }) {
       voiceTtsModel: "kokoro-en-v0_19",
     },
     requestTimeoutMs: 1000,
+    coldStartGraceMs: options?.coldStartGraceMs ?? 0,
     idleTtlMs: options?.idleTtlMs ?? 1000,
     forkWorker: () => {
       const worker = new FakeLocalSpeechWorker();
@@ -394,5 +395,25 @@ describe("LocalSpeechWorkerClient", () => {
       format: "pcm;rate=24000",
     });
     await second;
+  });
+});
+
+describe("cold start grace", () => {
+  it("gives the first request on a fresh worker longer than later ones", async () => {
+    const { client, workers } = createClient({ coldStartGraceMs: 10_000, idleTtlMs: 60_000 });
+
+    // The model load happens on the first request, so it outlives the normal 1s budget.
+    const cold = client.synthesizeSpeech("hello");
+    await vi.waitFor(() => expect(workers[0].sent).toHaveLength(1));
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    workers[0].respond(workers[0].sent[0], {
+      audio: bufferToWorkerBytes(Buffer.from("audio")),
+      format: "pcm;rate=24000",
+    });
+    await expect(cold).resolves.toMatchObject({ format: "pcm;rate=24000" });
+
+    // The worker has answered once, so the model is loaded and the normal budget applies.
+    const warm = client.synthesizeSpeech("hello again");
+    await expect(warm).rejects.toThrow(/timed out: tts\.synthesize \(1000ms\)/);
   });
 });

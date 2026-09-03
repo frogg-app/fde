@@ -1830,7 +1830,7 @@ export const ar: TranslationResources = {
     },
     errors: {
       unavailable: "تشغيل الصوت غير متاح هنا.",
-      noAudio: "لا يملك المضيف صوتًا لهذا التنبيه.",
+      noAudio: "لا يملك المضيف صوتًا لهذا التنبيه بعد. حاول مرة أخرى.",
       unsupportedFormat: "لا يستطيع هذا الجهاز تشغيل صيغة صوت التنبيه.",
       playbackFailed: "تعذّر تشغيل التنبيه.",
     },

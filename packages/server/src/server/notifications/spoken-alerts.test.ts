@@ -104,3 +104,44 @@ describe("createSpokenAlertService", () => {
     expect(await service.read("broken")).toBeNull();
   });
 });
+
+describe("failed synthesis", () => {
+  it("retries on read once the provider recovers", async () => {
+    let fail = true;
+    const working = createFakeTts();
+    const tts: TextToSpeechProvider = {
+      async synthesizeSpeech(text) {
+        if (fail) throw new Error("Local speech worker request timed out: tts.synthesize");
+        return working.synthesizeSpeech(text);
+      },
+    };
+    const service = createSpokenAlertService({
+      enabled: true,
+      resolveTts: () => tts,
+      cache: createTtsCache({ dir }),
+      logger,
+    });
+
+    expect(service.prepare({ id: "n9", text: "Agent finished." })).toBe(true);
+    expect(await service.read("n9")).toBeNull();
+
+    fail = false;
+    const entry = await service.read("n9");
+    expect(entry?.mimeType).toBe("audio/wav");
+    expect(working.calls).toEqual(["Agent finished."]);
+
+    // The retry result is cached, so later reads do not synthesise again.
+    expect(await service.read("n9")).toEqual(entry);
+    expect(working.calls).toEqual(["Agent finished."]);
+  });
+
+  it("stays null when there is nothing to retry", async () => {
+    const service = createSpokenAlertService({
+      enabled: true,
+      resolveTts: () => createFakeTts(),
+      cache: createTtsCache({ dir }),
+      logger,
+    });
+    expect(await service.read("unknown")).toBeNull();
+  });
+});

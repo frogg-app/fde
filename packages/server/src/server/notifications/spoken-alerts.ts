@@ -7,7 +7,13 @@ import { encodePcm16MonoWav, parsePcmRateFromFormat } from "../speech/audio.js";
 import type { TextToSpeechProvider } from "../speech/speech-provider.js";
 import type { TtsCache, TtsCacheEntry } from "./tts-cache.js";
 
-const SYNTHESIS_TIMEOUT_MS = 30_000;
+/**
+ * Generous on purpose: it has to cover a cold local TTS model load, which outlasts the
+ * client's own wait. A phone that gives up still gets the audio from the cache on the next tap.
+ */
+const SYNTHESIS_TIMEOUT_MS = 90_000;
+/** How many alert texts stay retryable after their first synthesis attempt failed. */
+const RETRY_TEXT_LIMIT = 64;
 const DEFAULT_PCM_RATE = 24_000;
 
 export interface SpokenAlertService {
@@ -18,6 +24,11 @@ export interface SpokenAlertService {
    * The notification goes out immediately; `read` waits for the audio to land.
    */
   prepare(params: { id: string; text: string }): boolean;
+  /**
+   * The audio for `id`, waiting on synthesis that is still running. A first attempt that
+   * failed (a cold local model blowing the timeout, say) is retried here, so a second tap
+   * on Play succeeds once the model is warm.
+   */
   read(id: string): Promise<TtsCacheEntry | null>;
 }
 
@@ -74,6 +85,18 @@ export function createSpokenAlertService(deps: SpokenAlertServiceDeps): SpokenAl
   const logger = deps.logger.child({ module: "spoken-alerts" });
   const timeoutMs = deps.synthesisTimeoutMs ?? SYNTHESIS_TIMEOUT_MS;
   const inFlight = new Map<string, Promise<TtsCacheEntry | null>>();
+  /** Texts of alerts whose synthesis failed, kept so `read` can try again. */
+  const retryable = new Map<string, string>();
+
+  function rememberForRetry(id: string, text: string): void {
+    retryable.delete(id);
+    retryable.set(id, text);
+    while (retryable.size > RETRY_TEXT_LIMIT) {
+      const oldest = retryable.keys().next();
+      if (oldest.done) break;
+      retryable.delete(oldest.value);
+    }
+  }
 
   function isAvailable(): boolean {
     return deps.enabled && deps.resolveTts() !== null;
@@ -89,6 +112,7 @@ export function createSpokenAlertService(deps: SpokenAlertServiceDeps): SpokenAl
       const audio = await withTimeout(collectStream(result.stream), timeoutMs, "Alert audio read");
       const entry = toCacheEntry(audio, result.format);
       await deps.cache.put(id, entry);
+      retryable.delete(id);
       logger.debug(
         { id, bytes: entry.bytes.length, mimeType: entry.mimeType },
         "Spoken alert cached",
@@ -96,6 +120,7 @@ export function createSpokenAlertService(deps: SpokenAlertServiceDeps): SpokenAl
       return entry;
     } catch (error) {
       logger.warn({ err: error, id }, "Spoken alert synthesis failed");
+      rememberForRetry(id, text);
       return null;
     } finally {
       inFlight.delete(id);
@@ -116,7 +141,15 @@ export function createSpokenAlertService(deps: SpokenAlertServiceDeps): SpokenAl
     async read(id) {
       const pending = inFlight.get(id);
       if (pending) return pending;
-      return deps.cache.get(id);
+      const cached = await deps.cache.get(id);
+      if (cached) return cached;
+      const text = retryable.get(id);
+      const tts = text && deps.enabled ? deps.resolveTts() : null;
+      if (!text || !tts) return null;
+      logger.debug({ id }, "Retrying spoken alert synthesis on read");
+      const retry = synthesize(id, text, tts);
+      inFlight.set(id, retry);
+      return retry;
     },
   };
 }

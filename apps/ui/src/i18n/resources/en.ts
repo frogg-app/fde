@@ -1843,7 +1843,7 @@ export const en = {
     },
     errors: {
       unavailable: "Audio playback isn't available here.",
-      noAudio: "The host has no audio for this alert.",
+      noAudio: "The host has no audio for this alert yet. Try again.",
       unsupportedFormat: "This device can't play the alert's audio format.",
       playbackFailed: "Couldn't play the alert.",
     },

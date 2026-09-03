@@ -1844,7 +1844,7 @@ export const ko: TranslationResources = {
     },
     errors: {
       unavailable: "여기서는 오디오를 재생할 수 없습니다.",
-      noAudio: "호스트에 이 알림의 오디오가 없습니다.",
+      noAudio: "호스트에 아직 이 알림의 오디오가 없습니다. 다시 시도해 주세요.",
       unsupportedFormat: "이 기기에서는 알림의 오디오 형식을 재생할 수 없습니다.",
       playbackFailed: "알림을 재생하지 못했습니다.",
     },

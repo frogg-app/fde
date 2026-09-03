@@ -1884,7 +1884,7 @@ export const fr: TranslationResources = {
     },
     errors: {
       unavailable: "La lecture audio n'est pas disponible ici.",
-      noAudio: "L'hôte n'a pas d'audio pour cette alerte.",
+      noAudio: "L'hôte n'a pas encore d'audio pour cette alerte. Réessayez.",
       unsupportedFormat: "Cet appareil ne peut pas lire le format audio de l'alerte.",
       playbackFailed: "Impossible de lire l'alerte.",
     },

@@ -1805,7 +1805,7 @@ export const zhCN: TranslationResources = {
     },
     errors: {
       unavailable: "此处无法播放音频。",
-      noAudio: "主机没有此提醒的音频。",
+      noAudio: "主机还没有此提醒的音频。请重试。",
       unsupportedFormat: "此设备无法播放该提醒的音频格式。",
       playbackFailed: "无法播放提醒。",
     },

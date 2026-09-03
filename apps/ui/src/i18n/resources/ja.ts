@@ -1852,7 +1852,7 @@ export const ja: TranslationResources = {
     },
     errors: {
       unavailable: "ここでは音声を再生できません。",
-      noAudio: "このアラートの音声はホストにありません。",
+      noAudio: "ホストにはまだこのアラートの音声がありません。もう一度お試しください。",
       unsupportedFormat: "このデバイスではアラートの音声形式を再生できません。",
       playbackFailed: "アラートを再生できませんでした。",
     },
