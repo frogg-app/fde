@@ -18,6 +18,8 @@ result
 .tmp/
 apps/desktop/src-tauri/gen/schemas/
 apps/desktop/src-tauri/bridge.js
+# Per-checkout dev state: paseo-home, iOS build caches, agent-device artifacts.
+/.dev/
 .claude/worktrees/
 
 # Playwright output
