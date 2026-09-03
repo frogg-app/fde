@@ -47,9 +47,14 @@ where your code and agent CLIs live. No Node or npm needed on the host:
 # native install: versioned bundle in ~/.local/share/fde + systemd/launchd service
 curl -fsSL https://frogg.app/install.sh | bash
 
-# or run it in Docker: froggapp/fde with the state in ~/.fde, port 6767
+# or run it in Docker: froggapp/fde with the state in ~/.fde, port 9999
 curl -fsSL https://frogg.app/install-docker.sh | bash
 ```
+
+Then pair: open `http://<host>:9999/` from another machine (or run `fde daemon pair`
+on the host) and scan the code from the FDE app. The first device to pair claims the
+daemon; after that every LAN client needs to pair or use a password. Voice
+(dictation and voice mode) is on out of the box; `PASEO_VOICE=0` turns it off.
 
 Both scripts are non-interactive and safe to re-run for upgrades. See
 [docs/install.md](docs/install.md) for the environment overrides and

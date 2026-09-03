@@ -575,8 +575,13 @@ export class HubRelationshipHarness {
     if (!address)
       throw new Error("No non-loopback IPv4 address is available for the external test");
     const target = this.daemon?.getListenTarget();
-    if (!target || target.type !== "tcp") throw new Error("Daemon did not bind TCP");
-    const socket = await this.openClaimedCliSocket(`ws://${address}:${target.port}/ws`);
+    if (!target || !this.daemon || target.type !== "tcp")
+      throw new Error("Daemon did not bind TCP");
+    // Beyond loopback the daemon requires a paired-device credential (access-policy.ts).
+    const paired = this.daemon.claimStore.mintPrincipal({ label: "external test client" });
+    const socket = await this.openClaimedCliSocket(`ws://${address}:${target.port}/ws`, {
+      protocols: [`paseo.bearer.${paired.credential}`],
+    });
     const messages = [
       {
         type: "hub.management.daemon.connect.request",
@@ -1472,9 +1477,10 @@ export class HubRelationshipHarness {
 
   private async openClaimedCliSocket(
     url: string,
-    options: { origin?: string } = {},
+    options: { origin?: string; protocols?: string[] } = {},
   ): Promise<WebSocket> {
-    const socket = new WebSocket(url, options);
+    const { protocols, ...socketOptions } = options;
+    const socket = new WebSocket(url, protocols, socketOptions);
     this.claimedCliSockets.add(socket);
     await new Promise<void>((resolve, reject) => {
       socket.once("open", resolve);

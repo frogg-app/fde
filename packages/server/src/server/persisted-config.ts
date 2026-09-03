@@ -324,6 +324,8 @@ export const PersistedConfigSchema = z
       .optional(),
     features: z
       .object({
+        // Umbrella switch for dictation + voice mode; `false` turns both off.
+        voice: z.object({ enabled: z.boolean().optional() }).strict().optional(),
         dictation: FeatureDictationSchema.optional(),
         voiceMode: FeatureVoiceModeSchema.optional(),
         webUi: FeatureWebUiSchema.optional(),
@@ -347,7 +349,7 @@ const CONFIG_FILENAME = "config.json";
 const DEFAULT_PERSISTED_CONFIG = PersistedConfigSchema.parse({
   version: 1,
   daemon: {
-    listen: "127.0.0.1:6767",
+    listen: "127.0.0.1:9999",
     cors: {
       allowedOrigins: ["https://app.paseo.sh"],
     },

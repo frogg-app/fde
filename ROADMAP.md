@@ -31,7 +31,7 @@ Done items move to CHANGELOG.md.
       (`deploy/install.sh`, `deploy/uninstall.sh`; bundle builder
       `scripts/release/build-daemon-bundle.mjs`; see `docs/install.md`.)
 - [x] **Docker image** `froggapp/fde` from `deploy/docker`, versioned tags per the org
-      rules, daemon listening on `0.0.0.0:6767` with the web UI enabled.
+      rules, daemon listening on `0.0.0.0:9999` with the web UI enabled.
       (`deploy/install-docker.sh`, `scripts/release/build-docker.sh`.)
 - [x] Release pipeline builds the daemon bundle per platform (linux-x64, linux-arm64,
       darwin-arm64, darwin-x64, win-x64, win-arm64) and attaches it plus `.sha256` sidecars
@@ -39,6 +39,23 @@ Done items move to CHANGELOG.md.
       tags when Docker Hub secrets exist.
 - [ ] Hosting for `frogg.app/install.sh`, `uninstall.sh`, `install-docker.sh` (redirects
       to the raw files in the repo are enough).
+- [x] **Default daemon port 9999** (server, CLI, installers, Docker, Nix, docs; an explicit
+      `6767` in `config.json` keeps working).
+- [x] **`GET /api/identity`**: unauthenticated `{ product, serverId, hostname, version, listen,
+    pairingRequired }` so LAN scanners and the app can list daemons before pairing.
+- [x] **First-run pairing gate.** An unclaimed daemon reached from beyond loopback serves the
+      "Claim this FDE daemon" page (QR + link, single-use expiring v3 direct offer) instead of
+      the app and answers 401 on API/WS; the first device that pairs mints a principal +
+      credential in `$PASEO_HOME/principals.json` and claims it. Loopback is never gated.
+      `fde daemon claim-status` / `reset-claim`; `fde daemon pair` prints the direct offer when
+      relay is off. See docs/permissions.md "Claimed state".
+- [ ] App side of the claim flow (apps/ui, apps/desktop): parse v3 offers, connect to a direct
+      endpoint, `POST /api/setup/claim`, store the credential as the host password, show
+      `/api/identity` results in an "Add host" LAN scan.
+- [x] **Voice on by default.** Bundles and the Docker image ship `sherpa-onnx-<platform>` for the
+      target; dictation/voice mode default on when the runtime is present, models download on
+      first use. Umbrella opt-out `PASEO_VOICE=0` / `features.voice.enabled=false`; the
+      fine-grained keys still work; onboarding defaults to enabled.
 - [x] Desktop app: SSH deploy. "Daemon on this host" card on Remote SSH hosts (and in the
       Add host sheet) probes the host and pipes `deploy/install.sh` / `install-docker.sh` /
       `uninstall.sh` into `ssh … bash -s`, streaming the output; the host downloads the

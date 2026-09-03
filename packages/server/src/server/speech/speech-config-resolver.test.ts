@@ -200,4 +200,72 @@ describe("resolveSpeechConfig", () => {
       enabled: false,
     });
   });
+
+  function enabledFlags(result: ReturnType<typeof resolveSpeechConfig>) {
+    return {
+      dictation: result.speech.providers.dictationStt.enabled,
+      voice: result.speech.providers.voiceStt.enabled,
+      hasLocalConfig: result.speech.local !== undefined,
+    };
+  }
+
+  test("voice defaults on only when the local speech runtime is available", () => {
+    const persisted = PersistedConfigSchema.parse({});
+    const env = {} as NodeJS.ProcessEnv;
+    const withRuntime = resolveSpeechConfig({
+      paseoHome: "/tmp/paseo-home",
+      env,
+      persisted,
+      localRuntimeAvailable: true,
+    });
+    const withoutRuntime = resolveSpeechConfig({
+      paseoHome: "/tmp/paseo-home",
+      env,
+      persisted,
+      localRuntimeAvailable: false,
+    });
+    expect(enabledFlags(withRuntime)).toEqual({
+      dictation: true,
+      voice: true,
+      hasLocalConfig: true,
+    });
+    expect(enabledFlags(withoutRuntime)).toEqual({
+      dictation: false,
+      voice: false,
+      hasLocalConfig: false,
+    });
+  });
+
+  test("the umbrella opt-out wins over fine-grained keys; umbrella on forces defaults on", () => {
+    const explicitOn = PersistedConfigSchema.parse({
+      features: { dictation: { enabled: true }, voiceMode: { enabled: true } },
+    });
+    const off = resolveSpeechConfig({
+      paseoHome: "/tmp/paseo-home",
+      env: { PASEO_VOICE: "0" } as NodeJS.ProcessEnv,
+      persisted: explicitOn,
+      localRuntimeAvailable: true,
+    });
+    expect(enabledFlags(off)).toEqual({ dictation: false, voice: false, hasLocalConfig: false });
+
+    const persistedOff = PersistedConfigSchema.parse({ features: { voice: { enabled: false } } });
+    expect(
+      enabledFlags(
+        resolveSpeechConfig({
+          paseoHome: "/tmp/paseo-home",
+          env: {} as NodeJS.ProcessEnv,
+          persisted: persistedOff,
+          localRuntimeAvailable: true,
+        }),
+      ),
+    ).toEqual({ dictation: false, voice: false, hasLocalConfig: false });
+
+    const forcedOn = resolveSpeechConfig({
+      paseoHome: "/tmp/paseo-home",
+      env: { PASEO_VOICE: "1", PASEO_VOICE_MODE_ENABLED: "0" } as NodeJS.ProcessEnv,
+      persisted: PersistedConfigSchema.parse({}),
+      localRuntimeAvailable: false,
+    });
+    expect(enabledFlags(forcedOn)).toEqual({ dictation: true, voice: false, hasLocalConfig: true });
+  });
 });

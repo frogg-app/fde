@@ -119,7 +119,7 @@ instead of a generic timeout:
 1. `ssh -o ConnectTimeout=10` bounds the TCP connect to the SSH server.
 2. The Rust task abandons setup after `SSH_SETUP_TIMEOUT` (18 s, `src/transport/task.rs`).
    Before that, the WebSocket handshake races `ssh` exiting: an exit (auth refused, host key
-   rejected under `BatchMode`, `connect_to 127.0.0.1 port 6767: failed`) produces an `error`
+   rejected under `BatchMode`, `connect_to 127.0.0.1 port 9999: failed`) produces an `error`
    event immediately with ssh's stderr as the detail.
 3. The webview's connect timer and probe deadline for SSH hosts are 20 s
    (`REMOTE_SSH_CONNECT_TIMEOUT_MS` in `apps/ui/src/utils/test-daemon-connection.ts`), so a
@@ -206,7 +206,7 @@ hasDockerContainer, homeDir}`. `hasDocker` means `docker info` succeeds for that
   `ssh <host> "FDE_VERSION='…' FDE_LISTEN='…' FDE_RELEASE_BASE='https://github.com/frogg-app/frogg-de/releases' [FDE_BUNDLE_URL='…'] bash -s"`;
   Docker pipes `deploy/install-docker.sh` with `FDE_VERSION`, `FDE_BIND` and `FDE_PORT`
   derived from `listen`. Defaults: version = the app's own version, listen =
-  `127.0.0.1:6767`. Nothing is copied with scp: the script downloads
+  `127.0.0.1:9999`. Nothing is copied with scp: the script downloads
   `fde-daemon-<version>-<platform>-<arch>.tar.gz` and its `.sha256` from the GitHub release
   on the remote itself, so **the release tagged `v<version>` must carry that bundle** (or
   `bundleUrl` must point at one plus a sidecar). The job emits
@@ -269,7 +269,7 @@ daemon/apps/cli/dist/index.js daemon …`), which avoids `cmd.exe` quoting on Wi
   gets as `PASEO_CLI`. Start is `fde daemon start` with `PASEO_DESKTOP_MANAGED=1`,
   `PASEO_WEB_UI_ENABLED=false`, `PASEO_NODE_ENV=production`, `PASEO_HOME` (`$PASEO_HOME` or
   `~/.paseo`) and `PASEO_LISTEN=127.0.0.1:<port>` (`daemon.port` in desktop settings, default
-  6767); the CLI detaches the supervisor and applies its 1.2 s early-exit grace, then the shell
+  9999); the CLI detaches the supervisor and applies its 1.2 s early-exit grace, then the shell
   polls `fde daemon status --json` every 200 ms for up to 150 attempts (30 s) until the status is
   running with a server id and listen address. Status is Electron's `DesktopDaemonStatus`
   derived from the CLI payload exactly as `statusFromDaemonProbe` did. Stop is `fde daemon stop

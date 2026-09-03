@@ -74,9 +74,10 @@ import {
 import { createGitHubService } from "../services/github-service.js";
 import type { ForgeService } from "../services/forge-service.js";
 import {
+  authorizeBearerSync,
   extractWsBearerProtocol,
   extractWsBearerToken,
-  isBearerTokenValid,
+  requestNeedsBearer,
   type DaemonAuthConfig,
 } from "./auth.js";
 import {
@@ -801,11 +802,11 @@ export class VoiceAssistantWebSocketServer {
     wsConfig: WebSocketServerConfig,
     auth: DaemonAuthConfig | undefined,
   ): WebSocketServer {
-    const password = auth?.password;
     const wss = new WebSocketServer({
       server,
       path: "/ws",
-      handleProtocols: (protocols) => selectWebSocketProtocol(protocols, password),
+      handleProtocols: (protocols, request) =>
+        selectWebSocketProtocol(protocols, requestNeedsBearer(auth, request)),
       verifyClient: ({ req }, callback) => {
         this.verifyWsUpgrade(
           req,
@@ -816,7 +817,7 @@ export class VoiceAssistantWebSocketServer {
       },
     });
     wss.on("connection", (ws, request) => {
-      void this.attachAuthenticatedSocket(ws, request, password);
+      void this.attachAuthenticatedSocket(ws, request, auth);
     });
     return wss;
   }
@@ -898,22 +899,26 @@ export class VoiceAssistantWebSocketServer {
   private async attachAuthenticatedSocket(
     ws: WebSocket,
     request: IncomingMessage,
-    password: string | undefined,
+    auth: DaemonAuthConfig | undefined,
   ): Promise<void> {
-    if (password) {
+    const protocol = extractWsBearerProtocol(request.headers["sec-websocket-protocol"]);
+    const token = extractWsBearerToken(protocol);
+    const decision = authorizeBearerSync(auth, request, token);
+    if (!decision.ok) {
       const requestMetadata = extractSocketRequestMetadata(request);
-      const protocol = extractWsBearerProtocol(request.headers["sec-websocket-protocol"]);
-      const token = extractWsBearerToken(protocol);
-      const isAuthorized = isBearerTokenValid({ password, token });
-      if (!isAuthorized) {
-        const reason = token === null ? "Password required" : "Incorrect password";
-        this.logger.warn(
-          { ...requestMetadata, hasToken: token !== null },
-          "Rejected WebSocket connection with invalid daemon password",
-        );
-        ws.close(WS_CLOSE_DAEMON_AUTH_FAILED, reason);
-        return;
-      }
+      // "Password required" / "Incorrect password" are stable strings the CLI classifies.
+      const reason =
+        decision.reason === "unclaimed"
+          ? "Pairing required"
+          : decision.reason === "missing_token"
+            ? "Password required"
+            : "Incorrect password";
+      this.logger.warn(
+        { ...requestMetadata, hasToken: token !== null, reason: decision.reason },
+        "Rejected WebSocket connection without valid daemon credentials",
+      );
+      ws.close(WS_CLOSE_DAEMON_AUTH_FAILED, reason);
+      return;
     }
 
     await this.attachSocket(ws, request);
@@ -2860,11 +2865,8 @@ export function isWebSocketSameOrigin(
   return isLoopbackAlias(originUrl.hostname) && isLoopbackAlias(requestAuthority.hostname);
 }
 
-function selectWebSocketProtocol(
-  protocols: Set<string>,
-  password: string | undefined,
-): string | false {
-  if (!password) {
+function selectWebSocketProtocol(protocols: Set<string>, needsBearer: boolean): string | false {
+  if (!needsBearer) {
     return protocols.values().next().value ?? false;
   }
 

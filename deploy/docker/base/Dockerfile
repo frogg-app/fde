@@ -44,7 +44,7 @@ FROM debian:bookworm-slim
 
 ENV HOME=/home/fde \
     PASEO_HOME=/home/fde/.paseo \
-    PASEO_LISTEN=0.0.0.0:6767 \
+    PASEO_LISTEN=0.0.0.0:9999 \
     PASEO_WEB_UI_ENABLED=true \
     PASEO_LOG_FORMAT=json \
     PASEO_LOG_LEVEL=info \
@@ -96,10 +96,10 @@ RUN chmod +x /usr/local/bin/fde-docker-entrypoint
 
 WORKDIR /workspace
 
-EXPOSE 6767
+EXPOSE 9999
 VOLUME ["/home/fde/.paseo"]
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-  CMD curl -fsS http://127.0.0.1:6767/api/health >/dev/null || exit 1
+  CMD curl -fsS http://127.0.0.1:9999/api/health >/dev/null || exit 1
 
 ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/fde-docker-entrypoint"]

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   ConnectionOfferSchema,
   decodeOfferFragmentPayload,
+  parseAnyConnectionOfferFromUrl,
   parseConnectionOfferFromUrl,
 } from "./connection-offer.js";
 
@@ -75,5 +76,21 @@ describe("connection offer", () => {
 
   it("returns null when the URL has no offer fragment", () => {
     expect(parseConnectionOfferFromUrl("https://app.paseo.sh/pair")).toBeNull();
+  });
+
+  it("parses direct claim (v3) offers and keeps relay optional", () => {
+    const offer = {
+      v: 3,
+      product: "fde",
+      serverId: "srv_abc",
+      hostname: "devbox",
+      daemonPublicKeyB64: "pubkey",
+      direct: { endpoints: ["192.168.1.10:9999", "localhost:9999"] },
+      claim: { token: "tok", expiresAt: "2026-09-03T00:00:00.000Z" },
+    };
+    const encoded = encodeBase64UrlNoPadUtf8(JSON.stringify(offer));
+
+    expect(parseAnyConnectionOfferFromUrl(`https://app.paseo.sh/#offer=${encoded}`)).toEqual(offer);
+    expect(() => parseConnectionOfferFromUrl(`https://app.paseo.sh/#offer=${encoded}`)).toThrow();
   });
 });

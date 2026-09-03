@@ -6,7 +6,7 @@ set -euo pipefail
 
 : "${HOME:=/home/fde}"
 : "${PASEO_HOME:=${HOME}/.paseo}"
-: "${PASEO_LISTEN:=0.0.0.0:6767}"
+: "${PASEO_LISTEN:=0.0.0.0:9999}"
 : "${PASEO_WEB_UI_ENABLED:=true}"
 : "${PASEO_LOG_LEVEL:=info}"
 : "${PASEO_LOG_FORMAT:=json}"
@@ -40,11 +40,12 @@ if [[ "$#" -gt 0 ]]; then
   exec "$@"
 fi
 
-if [[ -z "${PASEO_PASSWORD:-}" ]]; then
+if [[ -z "${PASEO_PASSWORD:-}" ]] && [[ ! -s "${PASEO_HOME}/principals.json" ]]; then
   {
-    echo "[fde] WARNING: PASEO_PASSWORD is not set."
-    echo "[fde] The daemon accepts unauthenticated control connections from any client that can reach it."
-    echo "[fde] Set PASEO_PASSWORD for any published port or network-reachable deployment."
+    echo "[fde] No password and no paired device yet: the daemon is unclaimed."
+    echo "[fde] Open http://<host>:${PASEO_LISTEN##*:}/ from another machine (or run 'fde daemon pair' here)"
+    echo "[fde] and pair from the FDE app; the first device to pair owns this daemon."
+    echo "[fde] Set PASEO_PASSWORD instead if you prefer a shared password."
   } >&2
 fi
 

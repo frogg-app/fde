@@ -41,6 +41,20 @@ type OnboardPersistedConfig = PersistedConfig & {
 
 const DEFAULT_READY_TIMEOUT_MS = 10 * 60 * 1000;
 const READY_PROBE_TIMEOUT_MS = 1200;
+/**
+ * Voice is on by default: the daemon bundle ships the local speech runtime and
+ * models download on first use. `--voice disable`, `PASEO_VOICE=0`, or
+ * `features.voice.enabled=false` opt out.
+ */
+export const DEFAULT_VOICE_ENABLED = true;
+
+/** Non-interactive runs honor the `PASEO_VOICE` umbrella switch, then the default. */
+export function resolveNonInteractiveVoiceDefault(env: NodeJS.ProcessEnv): boolean {
+  const raw = env.PASEO_VOICE?.trim().toLowerCase();
+  if (raw !== undefined && ["0", "false", "no", "off"].includes(raw)) return false;
+  if (raw !== undefined && ["1", "true", "yes", "on"].includes(raw)) return true;
+  return DEFAULT_VOICE_ENABLED;
+}
 
 class OnboardCancelledError extends Error {}
 
@@ -117,15 +131,19 @@ async function resolveVoiceSelection(mode: OnboardOptions["voice"]): Promise<boo
   }
 
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
-    log.message("Non-interactive terminal detected; voice setup defaults to disabled.");
-    return false;
+    const selected = resolveNonInteractiveVoiceDefault(process.env);
+    log.message(
+      `Non-interactive terminal detected; voice setup defaults to ${selected ? "enabled" : "disabled"}.`,
+    );
+    return selected;
   }
 
   const answer = await confirm({
-    message: "Enable voice features? (downloads local STT/TTS models in background)",
+    message:
+      "Enable voice features? (on by default; downloads local STT/TTS models in the background)",
     active: "Yes",
     inactive: "No",
-    initialValue: false,
+    initialValue: DEFAULT_VOICE_ENABLED,
   });
 
   if (isCancel(answer)) {
@@ -304,7 +322,7 @@ export function onboardCommand(): Command {
   return new Command("onboard")
     .description("Run first-time setup, start daemon, and print pairing instructions")
     .option("--listen <listen>", "Listen target (host:port, port, or unix socket path)")
-    .option("--port <port>", "Port to listen on (default: 6767)")
+    .option("--port <port>", "Port to listen on (default: 9999)")
     .option("--home <path>", "FDE home directory (default: ~/.paseo)")
     .option("--relay", "Enable relay connection without prompting")
     .option("--no-relay", "Disable relay connection")
@@ -315,7 +333,7 @@ export function onboardCommand(): Command {
     )
     .addOption(new Option("--allowed-hosts <hosts>").hideHelp())
     .option("--timeout <seconds>", "Max time to wait for daemon readiness (default: 600)")
-    .option("--voice <mode>", "Voice setup mode: ask, enable, disable", "ask")
+    .option("--voice <mode>", "Voice setup mode: ask, enable, disable (default: enabled)", "ask")
     .action(async (options: RawOnboardOptions) => {
       await runOnboard({
         ...options,
@@ -471,7 +489,9 @@ export async function runOnboard(options: OnboardOptions): Promise<void> {
     enableRelay: options.relay === true,
   });
 
-  if (!pairing.relayEnabled) {
+  // With relay off the daemon still hands out a direct (LAN) claim offer; only
+  // ask about relay when there is nothing to pair with at all.
+  if (!pairing.relayEnabled && !pairing.url) {
     const shouldEnable = richUi ? await confirmRelayPairing() : false;
     if (!shouldEnable) {
       printDirectConnectionGuidance();
@@ -481,6 +501,9 @@ export async function runOnboard(options: OnboardOptions): Promise<void> {
     }
     pairing = await resolveLocalPairingOffer({ paseoHome, enableRelay: true });
     log.success("Relay enabled");
+  }
+  if (pairing.mode === "direct") {
+    printDirectConnectionGuidance();
   }
 
   if (!pairing.url) {

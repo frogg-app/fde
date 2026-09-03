@@ -120,7 +120,7 @@ adb install -r release-assets/FDE-<version>-android-arm64-v8a.apk
 ```
 
 or copy the APK to the phone and open it (allow "install unknown apps" for the browser
-or file manager). On first launch add a host: a daemon URL (`ws://host:6767` or the
+or file manager). On first launch add a host: a daemon URL (`ws://host:9999` or the
 relay pairing link) or scan the pairing QR code with the camera. The app keeps
 `usesCleartextTraffic` so plain `http://`/`ws://` LAN daemons work.
 

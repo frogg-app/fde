@@ -1,6 +1,6 @@
 import { createPaseoClient } from "@fde/client";
 
-const client = createPaseoClient({ url: "ws://127.0.0.1:6767/ws" });
+const client = createPaseoClient({ url: "ws://127.0.0.1:9999/ws" });
 
 await client.connect();
 
