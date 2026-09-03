@@ -230,7 +230,9 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: apps/desktop/src-tauri
-          key: ${{ matrix.target }}
+          # A shared key (not `key:`) so a tag build restores the cache CI already warmed on
+          # main. Without it every release compiled the Tauri dependency tree from scratch.
+          shared-key: desktop-${{ matrix.target }}
 
       - name: Install dependencies
         run: node scripts/ci/npm-retry.mjs ci
@@ -438,7 +440,7 @@ jobs:
         run: >-
           node scripts/release/build-android-apk.mjs
           --abi ${{ matrix.abi }}
-          --serial
+          --workers 2
           --out-dir release-assets
 
       - name: Upload to GitHub release
