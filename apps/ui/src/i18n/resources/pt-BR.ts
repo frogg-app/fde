@@ -1609,11 +1609,11 @@ export const ptBR: TranslationResources = {
       },
       scanQr: {
         title: "Escanear QR code",
-        description: "Conexão relay criptografada.",
+        description: "Reivindique um novo daemon do FDE ou emparelhe pelo relay criptografado.",
       },
       pasteLink: {
         title: "Colar link de pareamento",
-        description: "Conexão relay criptografada.",
+        description: "Reivindique um novo daemon do FDE ou emparelhe pelo relay criptografado.",
       },
     },
     networkScan: {
@@ -1624,6 +1624,41 @@ export const ptBR: TranslationResources = {
       rescan: "Verificar de novo",
       connect: "Conectar",
       connecting: "Conectando…",
+      needsPairing: "Precisa emparelhar",
+      pairingHint:
+        "Obtenha um link de emparelhamento: execute `fde daemon pair` no host ou abra o endereço web dele, depois escaneie ou cole aqui.",
+    },
+    claim: {
+      title: "Emparelhar com um daemon do FDE",
+      thisDaemon: "este daemon do FDE",
+      claiming: "Emparelhando com {{host}}…",
+      explainer:
+        "Este daemon do FDE ainda não foi reivindicado. Emparelhar torna este dispositivo o primeiro proprietário dele.",
+      successTitle: "Emparelhado",
+      successBody:
+        "Este dispositivo agora é o primeiro proprietário de {{host}}. Outros dispositivos precisam de um novo link de emparelhamento.",
+      successRelayBody: "{{host}} foi adicionado pelo relay criptografado.",
+      noPendingOffer:
+        "Abra um link de emparelhamento (https://frogg.app/pair#offer=…) ou cole um em Adicionar conexão.",
+      newLinkHint:
+        "Códigos de emparelhamento são de uso único e expiram em dez minutos. Obtenha um novo: execute `fde daemon pair` no host ou recarregue o endereço web dele.",
+      triedEndpoints: "Tentado:",
+      manualEndpointHelper:
+        "Se o daemon estiver acessível em outro endereço (VPN, Docker, outra interface), informe-o como host:porta.",
+      manualEndpointLabel: "Endereço do daemon",
+      errors: {
+        expired: "Este código de emparelhamento expirou.",
+        tokenRejected: "Este código de emparelhamento já foi usado ou expirou.",
+        unreachable: "Nenhum dos endereços do daemon respondeu.",
+        identityMismatch:
+          "O daemon nesse endereço não é aquele para o qual este link foi criado. Verifique o endereço ou peça um novo link ao host certo.",
+        claimFailed: "O daemon recusou a solicitação de emparelhamento.",
+      },
+      actions: {
+        done: "Concluído",
+        back: "Voltar",
+        tryAddress: "Tentar endereço",
+      },
     },
     direct: {
       title: "Conexão direta",
@@ -1702,10 +1737,11 @@ export const ptBR: TranslationResources = {
     },
     link: {
       title: "Colar link de pareamento",
-      helper: "Cole o link de pareamento do seu servidor.",
+      helper:
+        "Cole o link da página de reivindicação do daemon ou do `fde daemon pair`. Um novo daemon do FDE é reivindicado pelo primeiro dispositivo que emparelha.",
       label: "Link de pareamento",
       errors: {
-        required: "Cole um link de pareamento (.../#offer=...)",
+        required: "Cole um link de emparelhamento (…/pair#offer=…)",
         missingOffer: "O link deve incluir #offer=...",
         emptyOffer: "O payload da oferta está vazio",
         invalid: "Link de pareamento inválido",

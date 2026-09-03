@@ -21,12 +21,23 @@ import { defaultHostAppearance, type HostBadgeDisplay, type HostColor } from "@/
 import {
   buildDaemonWebSocketUrl,
   buildRelayWebSocketUrl,
-  decodeOfferFragmentPayload,
   normalizeHostPort,
   shouldUseTlsForDefaultHostedRelay,
 } from "@/utils/daemon-endpoints";
 import { resolveAppVersion } from "@/utils/app-version";
-import { ConnectionOfferSchema, type ConnectionOffer } from "@fde/protocol/connection-offer";
+import {
+  parseAnyConnectionOfferFromUrl,
+  type AnyConnectionOffer,
+  type ConnectionOffer,
+  type ConnectionOfferV3,
+} from "@fde/protocol/connection-offer";
+import {
+  claimDirectOffer as claimDirectOfferOverHttp,
+  type ClaimOfferOptions,
+  type ClaimResult,
+} from "@/pairing/claim-offer";
+import { resolveDeviceLabel } from "@/pairing/device-label";
+import { readLocalNetworkHints } from "@/network-scan/local-addresses";
 import { shouldUseDesktopDaemon } from "@/desktop/daemon/desktop-daemon";
 import { isWeb } from "@/constants/platform";
 import { DEFAULT_DAEMON_PORT } from "@/constants/daemon-port";
@@ -168,6 +179,11 @@ export interface HostRuntimeControllerDeps {
     hostname: string | null;
   }>;
   getClientId: () => Promise<string>;
+  /** Redeems a v3 claim offer; defaults to the HTTP client in `@/pairing/claim-offer`. */
+  claimDirectOffer?: (
+    offer: ConnectionOfferV3,
+    input: { label: string } & ClaimOfferOptions,
+  ) => Promise<ClaimResult>;
   readInitialConnectionHint?: () => InitialDaemonConnectionHint | null;
   mountClientHandlers?: (input: {
     client: DaemonClient;
@@ -1829,22 +1845,56 @@ export class HostRuntimeStore {
     });
   }
 
+  /**
+   * A v3 direct claim offer: prove one of the daemon's endpoints is the daemon
+   * the offer names, redeem the single-use token, and store the returned
+   * device credential as the password of a directTcp connection. The daemon
+   * is claimed by this device from then on (docs/permissions.md).
+   */
+  async claimAndUpsertDirectOffer(
+    offer: ConnectionOfferV3,
+    input: { label?: string; endpointOverride?: string } = {},
+  ): Promise<{
+    profile: HostProfile;
+    serverId: string;
+    hostname: string | null;
+    endpoint: string;
+  }> {
+    const claim = this.deps.claimDirectOffer ?? claimDirectOfferOverHttp;
+    const hints = await readLocalNetworkHints().catch(() => ({}) as { localAddresses?: string[] });
+    const result = await claim(offer, {
+      label: resolveDeviceLabel(),
+      ...(hints.localAddresses ? { localAddresses: hints.localAddresses } : {}),
+      ...(input.endpointOverride ? { endpointOverride: input.endpointOverride } : {}),
+    });
+    const hostname = result.hostname ?? offer.hostname ?? null;
+    const profile = await this.upsertDirectConnection({
+      serverId: offer.serverId,
+      endpoint: result.endpoint,
+      useTls: result.useTls,
+      password: result.credential,
+      label: input.label ?? hostname ?? undefined,
+    });
+    return { profile, serverId: offer.serverId, hostname, endpoint: result.endpoint };
+  }
+
+  async upsertConnectionFromAnyOffer(
+    offer: AnyConnectionOffer,
+    input: { label?: string; endpointOverride?: string } = {},
+  ): Promise<HostProfile> {
+    if (offer.v === 2) return this.upsertConnectionFromOffer(offer, input.label);
+    return (await this.claimAndUpsertDirectOffer(offer, input)).profile;
+  }
+
   async upsertConnectionFromOfferUrl(
     offerUrlOrFragment: string,
     label?: string,
   ): Promise<HostProfile> {
-    const marker = "#offer=";
-    const idx = offerUrlOrFragment.indexOf(marker);
-    if (idx === -1) {
+    const offer = parseAnyConnectionOfferFromUrl(offerUrlOrFragment);
+    if (!offer) {
       throw new Error("Missing #offer= fragment");
     }
-    const encoded = offerUrlOrFragment.slice(idx + marker.length).trim();
-    if (!encoded) {
-      throw new Error("Offer payload is empty");
-    }
-    const payload = decodeOfferFragmentPayload(encoded);
-    const offer = ConnectionOfferSchema.parse(payload);
-    return this.upsertConnectionFromOffer(offer, label);
+    return this.upsertConnectionFromAnyOffer(offer, { label });
   }
 
   async upsertConnectionFromListen(input: {
@@ -2537,6 +2587,19 @@ export interface HostMutations {
     label?: string;
   }) => Promise<HostProfile>;
   upsertConnectionFromOffer: (offer: ConnectionOffer, label?: string) => Promise<HostProfile>;
+  upsertConnectionFromAnyOffer: (
+    offer: AnyConnectionOffer,
+    input?: { label?: string; endpointOverride?: string },
+  ) => Promise<HostProfile>;
+  claimAndUpsertDirectOffer: (
+    offer: ConnectionOfferV3,
+    input?: { label?: string; endpointOverride?: string },
+  ) => Promise<{
+    profile: HostProfile;
+    serverId: string;
+    hostname: string | null;
+    endpoint: string;
+  }>;
   upsertConnectionFromOfferUrl: (
     offerUrlOrFragment: string,
     label?: string,
@@ -2557,6 +2620,9 @@ export function useHostMutations(): HostMutations {
       probeAndUpsertRemoteSshConnection: (input) => store.probeAndUpsertRemoteSshConnection(input),
       upsertRelayConnection: (input) => store.upsertRelayConnection(input),
       upsertConnectionFromOffer: (offer, label) => store.upsertConnectionFromOffer(offer, label),
+      upsertConnectionFromAnyOffer: (offer, input) =>
+        store.upsertConnectionFromAnyOffer(offer, input),
+      claimAndUpsertDirectOffer: (offer, input) => store.claimAndUpsertDirectOffer(offer, input),
       upsertConnectionFromOfferUrl: (url, label) => store.upsertConnectionFromOfferUrl(url, label),
       renameHost: (serverId, label) => store.renameHost(serverId, label),
       setHostColor: (serverId, color) => store.setHostColor(serverId, color),

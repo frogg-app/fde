@@ -3415,6 +3415,113 @@ describe("HostRuntimeStore", () => {
 
     store.syncHosts([]);
   });
+
+  it("claims a v3 direct offer and stores the credential as the directTcp password", async () => {
+    const claimCalls: Array<{ serverId: string; label: string; endpointOverride?: string }> = [];
+    const store = new HostRuntimeStore({
+      deps: {
+        createClient: () => new FakeDaemonClient() as unknown as DaemonClient,
+        connectToDaemon: async ({ host }) => ({
+          client: makeConnectedProbeClient(5) as unknown as DaemonClient,
+          serverId: host.serverId,
+          hostname: host.label ?? null,
+        }),
+        getClientId: async () => "cid_test_runtime",
+        claimDirectOffer: async (offer, input) => {
+          claimCalls.push({
+            serverId: offer.serverId,
+            label: input.label,
+            ...(input.endpointOverride ? { endpointOverride: input.endpointOverride } : {}),
+          });
+          return {
+            endpoint: "192.168.1.10:9999",
+            useTls: false,
+            hostname: "devbox",
+            serverId: offer.serverId,
+            credential: "device-credential",
+            principalId: "p_1",
+          };
+        },
+      },
+      storage: createMemoryHostRuntimeStorage(),
+    });
+
+    const url = encodeOfferUrl({
+      v: 3,
+      product: "fde",
+      serverId: "srv_claim",
+      hostname: "devbox",
+      daemonPublicKeyB64: "pk_test_offer",
+      direct: { endpoints: ["192.168.1.10:9999", "localhost:9999"] },
+      claim: { token: "tok", expiresAt: "2099-01-01T00:00:00.000Z" },
+    });
+    const profile = await store.upsertConnectionFromOfferUrl(url);
+
+    expect(claimCalls).toHaveLength(1);
+    expect(claimCalls[0]?.serverId).toBe("srv_claim");
+    expect(claimCalls[0]?.label.length).toBeGreaterThan(0);
+    expect(profile.serverId).toBe("srv_claim");
+    expect(profile.label).toBe("devbox");
+    expect(profile.connections).toEqual([
+      {
+        id: "direct:192.168.1.10:9999",
+        type: "directTcp",
+        endpoint: "192.168.1.10:9999",
+        useTls: false,
+        password: "device-credential",
+      },
+    ]);
+
+    store.syncHosts([]);
+  });
+
+  it("passes a typed endpoint through to the claim client", async () => {
+    let seenOverride: string | undefined;
+    const store = new HostRuntimeStore({
+      deps: {
+        createClient: () => new FakeDaemonClient() as unknown as DaemonClient,
+        connectToDaemon: async ({ host }) => ({
+          client: makeConnectedProbeClient(5) as unknown as DaemonClient,
+          serverId: host.serverId,
+          hostname: null,
+        }),
+        getClientId: async () => "cid_test_runtime",
+        claimDirectOffer: async (offer, input) => {
+          seenOverride = input.endpointOverride;
+          return {
+            endpoint: input.endpointOverride ?? "unexpected",
+            useTls: false,
+            hostname: null,
+            serverId: offer.serverId,
+            credential: "cred",
+            principalId: null,
+          };
+        },
+      },
+      storage: createMemoryHostRuntimeStorage(),
+    });
+
+    const result = await store.claimAndUpsertDirectOffer(
+      {
+        v: 3,
+        serverId: "srv_manual",
+        daemonPublicKeyB64: "pk",
+        direct: { endpoints: ["10.0.0.1:9999"] },
+        claim: { token: "tok", expiresAt: "2099-01-01T00:00:00.000Z" },
+      },
+      { endpointOverride: "devbox.local:9999" },
+    );
+
+    expect(seenOverride).toBe("devbox.local:9999");
+    expect(result.endpoint).toBe("devbox.local:9999");
+    expect(result.profile.connections[0]).toMatchObject({
+      type: "directTcp",
+      endpoint: "devbox.local:9999",
+      password: "cred",
+    });
+
+    store.syncHosts([]);
+  });
 });
 
 describe("readInitialDaemonConnectionHint", () => {

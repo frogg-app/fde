@@ -1,15 +1,13 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Alert, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import { StyleSheet, useUnistyles } from "react-native-unistyles";
-import { useIsCompactFormFactor } from "@/constants/layout";
 import { Link } from "lucide-react-native";
+import { hasOfferFragment } from "@fde/protocol/connection-offer";
 import type { HostProfile } from "@/types/host-connection";
-import { useHosts, useHostMutations } from "@/runtime/host-runtime";
-import { decodeOfferFragmentPayload, normalizeHostPort } from "@/utils/daemon-endpoints";
-import { connectToDaemon } from "@/utils/test-daemon-connection";
-import { ConnectionOfferSchema } from "@fde/protocol/connection-offer";
+import { usePairWithOffer, type PairSuccess } from "@/pairing/use-pair-with-offer";
 import { AdaptiveModalSheet, AdaptiveTextInput, type SheetHeader } from "./adaptive-modal-sheet";
+import { ClaimOfferPanel } from "./claim-offer-panel";
 import { Button } from "@/components/ui/button";
 import type { EditingTextInputHandle } from "@/components/ui/text-input";
 
@@ -60,108 +58,96 @@ export interface PairLinkModalProps {
   }) => void;
 }
 
+/**
+ * "Paste pairing link": accepts `https://frogg.app/pair#offer=…`,
+ * `paseo://pair#offer=…`, Paseo's `https://app.paseo.sh/#offer=…`, or a bare
+ * `#offer=` fragment. A relay (v2) offer pairs and closes as before; a claim
+ * (v3) offer runs the claim flow and shows its outcome before closing.
+ */
 export function PairLinkModal({ visible, onClose, onCancel, onSaved }: PairLinkModalProps) {
   const { theme } = useUnistyles();
   const { t } = useTranslation();
-  const daemons = useHosts();
-  const { upsertConnectionFromOfferUrl: upsertDaemonFromOfferUrl } = useHostMutations();
-  const isMobile = useIsCompactFormFactor();
+  const flow = usePairWithOffer();
+  const { state, pair, retryWithEndpoint, reset } = flow;
 
   const offerUrlRef = useRef("");
   const inputRef = useRef<EditingTextInputHandle>(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [validationError, setValidationError] = useState("");
+  const isPairing = state.status === "pairing";
 
   const clearInput = useCallback(() => {
     offerUrlRef.current = "";
     inputRef.current?.replaceText("");
   }, []);
 
+  useEffect(() => {
+    if (!visible) reset();
+  }, [reset, visible]);
+
   const pairIcon = useMemo(
     () => <Link size={16} color={theme.colors.accentForeground} />,
     [theme.colors.accentForeground],
   );
 
+  const finish = useCallback(
+    (success: PairSuccess) => {
+      onSaved?.({
+        profile: success.profile,
+        serverId: success.serverId,
+        hostname: success.hostname,
+        isNewHost: success.isNewHost,
+      });
+      clearInput();
+      setValidationError("");
+      reset();
+      onClose();
+    },
+    [clearInput, onClose, onSaved, reset],
+  );
+
   const handleClose = useCallback(() => {
-    if (isSaving) return;
+    if (isPairing) return;
     clearInput();
-    setErrorMessage("");
+    setValidationError("");
+    reset();
     onClose();
-  }, [isSaving, clearInput, onClose]);
+  }, [clearInput, isPairing, onClose, reset]);
 
   const handleCancel = useCallback(() => {
-    if (isSaving) return;
+    if (isPairing) return;
     clearInput();
-    setErrorMessage("");
+    setValidationError("");
+    reset();
     (onCancel ?? onClose)();
-  }, [isSaving, clearInput, onCancel, onClose]);
+  }, [clearInput, isPairing, onCancel, onClose, reset]);
 
   const handleSave = useCallback(async () => {
-    if (isSaving) return;
+    if (isPairing) return;
     const raw = offerUrlRef.current.trim();
     if (!raw) {
-      setErrorMessage(t("pairing.link.errors.required"));
+      setValidationError(t("pairing.link.errors.required"));
       return;
     }
-    if (!raw.includes("#offer=")) {
-      setErrorMessage(t("pairing.link.errors.missingOffer"));
+    if (!hasOfferFragment(raw)) {
+      setValidationError(t("pairing.link.errors.missingOffer"));
       return;
     }
+    setValidationError("");
+    const success = await pair(raw);
+    // Relay offers close straight away; claim offers show the owner confirmation first.
+    if (success && success.offer.v === 2) finish(success);
+  }, [finish, isPairing, pair, t]);
 
-    const parsedOffer = (() => {
-      try {
-        const idx = raw.indexOf("#offer=");
-        const encoded = raw.slice(idx + "#offer=".length).trim();
-        if (!encoded) {
-          throw new Error(t("pairing.link.errors.emptyOffer"));
-        }
-        const payload = decodeOfferFragmentPayload(encoded);
-        return ConnectionOfferSchema.parse(payload);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : t("pairing.link.errors.invalid");
-        setErrorMessage(message);
-        if (!isMobile) {
-          Alert.alert(t("pairing.link.alert.failedTitle"), message);
-        }
-        return null;
-      }
-    })();
+  const handleRetry = useCallback(
+    (endpoint: string) => {
+      void retryWithEndpoint(endpoint);
+    },
+    [retryWithEndpoint],
+  );
 
-    if (!parsedOffer) {
-      return;
-    }
-
-    try {
-      setIsSaving(true);
-      setErrorMessage("");
-
-      const { client, hostname } = await connectToDaemon(
-        {
-          id: "probe",
-          type: "relay",
-          relayEndpoint: normalizeHostPort(parsedOffer.relay.endpoint),
-          useTls: parsedOffer.relay.useTls,
-          daemonPublicKeyB64: parsedOffer.daemonPublicKeyB64,
-        },
-        { serverId: parsedOffer.serverId },
-      );
-      await client.close().catch(() => undefined);
-
-      const isNewHost = !daemons.some((daemon) => daemon.serverId === parsedOffer.serverId);
-      const profile = await upsertDaemonFromOfferUrl(raw, hostname ?? undefined);
-      onSaved?.({ profile, serverId: parsedOffer.serverId, hostname, isNewHost });
-      handleClose();
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : t("pairing.link.errors.unableToPair");
-      setErrorMessage(message);
-      if (!isMobile) {
-        Alert.alert(t("pairing.link.alert.failedTitle"), message);
-      }
-    } finally {
-      setIsSaving(false);
-    }
-  }, [daemons, handleClose, isMobile, isSaving, onSaved, t, upsertDaemonFromOfferUrl]);
+  const handleDone = useCallback(() => {
+    if (state.status === "success") finish(state);
+  }, [finish, state]);
 
   const handleChangeOfferUrl = useCallback((next: string) => {
     offerUrlRef.current = next;
@@ -172,6 +158,7 @@ export function PairLinkModal({ visible, onClose, onCancel, onSaved }: PairLinkM
   }, [handleSave]);
 
   const header = useMemo<SheetHeader>(() => ({ title: t("pairing.link.title") }), [t]);
+  const showForm = state.status === "idle" || state.status === "error";
 
   return (
     <AdaptiveModalSheet
@@ -180,52 +167,63 @@ export function PairLinkModal({ visible, onClose, onCancel, onSaved }: PairLinkM
       onClose={handleClose}
       testID="pair-link-modal"
     >
-      <Text style={styles.helper}>{t("pairing.link.helper")}</Text>
+      {showForm ? (
+        <>
+          <Text style={styles.helper}>{t("pairing.link.helper")}</Text>
 
-      <View style={styles.field}>
-        <Text style={styles.label}>{t("pairing.link.label")}</Text>
-        <AdaptiveTextInput
-          ref={inputRef}
-          testID="pair-link-input"
-          nativeID="pair-link-input"
-          accessibilityLabel={t("pairing.link.label")}
-          onChangeText={handleChangeOfferUrl}
-          placeholder="https://app.paseo.sh/#offer=..."
-          placeholderTextColor={theme.colors.foregroundMuted}
-          style={styles.input}
-          autoFocus
-          autoCapitalize="none"
-          autoCorrect={false}
-          keyboardType="url"
-        />
-        {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
-      </View>
+          <View style={styles.field}>
+            <Text style={styles.label}>{t("pairing.link.label")}</Text>
+            <AdaptiveTextInput
+              ref={inputRef}
+              testID="pair-link-input"
+              nativeID="pair-link-input"
+              accessibilityLabel={t("pairing.link.label")}
+              onChangeText={handleChangeOfferUrl}
+              placeholder="https://frogg.app/pair#offer=..."
+              placeholderTextColor={theme.colors.foregroundMuted}
+              style={styles.input}
+              autoFocus
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
+            />
+            {validationError ? <Text style={styles.error}>{validationError}</Text> : null}
+          </View>
+        </>
+      ) : null}
 
-      <View style={styles.actions}>
-        <Button
-          style={FLEX_ONE_STYLE}
-          variant="secondary"
-          onPress={handleCancel}
-          disabled={isSaving}
-          testID="pair-link-cancel"
-          accessibilityRole="button"
-          accessibilityLabel={t("pairing.link.actions.cancel")}
-        >
-          {t("pairing.link.actions.cancel")}
-        </Button>
-        <Button
-          style={FLEX_ONE_STYLE}
-          variant="default"
-          onPress={handleSavePress}
-          disabled={isSaving}
-          testID="pair-link-submit"
-          accessibilityRole="button"
-          accessibilityLabel={t("pairing.link.actions.pair")}
-          leftIcon={pairIcon}
-        >
-          {isSaving ? t("pairing.link.actions.pairing") : t("pairing.link.actions.pair")}
-        </Button>
-      </View>
+      <ClaimOfferPanel
+        state={state}
+        onRetryWithEndpoint={handleRetry}
+        onDone={handleDone}
+        testID="pair-link-claim-panel"
+      />
+
+      {showForm ? (
+        <View style={styles.actions}>
+          <Button
+            style={FLEX_ONE_STYLE}
+            variant="secondary"
+            onPress={handleCancel}
+            testID="pair-link-cancel"
+            accessibilityRole="button"
+            accessibilityLabel={t("pairing.link.actions.cancel")}
+          >
+            {t("pairing.link.actions.cancel")}
+          </Button>
+          <Button
+            style={FLEX_ONE_STYLE}
+            variant="default"
+            onPress={handleSavePress}
+            testID="pair-link-submit"
+            accessibilityRole="button"
+            accessibilityLabel={t("pairing.link.actions.pair")}
+            leftIcon={pairIcon}
+          >
+            {t("pairing.link.actions.pair")}
+          </Button>
+        </View>
+      ) : null}
     </AdaptiveModalSheet>
   );
 }

@@ -1594,11 +1594,11 @@ export const ja: TranslationResources = {
       },
       scanQr: {
         title: "QRコードをスキャン",
-        description: "暗号化されたリレー接続。",
+        description: "新しい FDE デーモンを取得するか、暗号化リレー経由でペアリングします。",
       },
       pasteLink: {
         title: "ペアリングリンクを貼り付け",
-        description: "暗号化されたリレー接続。",
+        description: "新しい FDE デーモンを取得するか、暗号化リレー経由でペアリングします。",
       },
     },
     networkScan: {
@@ -1609,6 +1609,41 @@ export const ja: TranslationResources = {
       rescan: "再スキャン",
       connect: "接続",
       connecting: "接続中…",
+      needsPairing: "ペアリングが必要",
+      pairingHint:
+        "ペアリングリンクを取得: ホストで `fde daemon pair` を実行するか、その Web アドレスを開き、ここでスキャンまたは貼り付けてください。",
+    },
+    claim: {
+      title: "FDE デーモンとペアリング",
+      thisDaemon: "この FDE デーモン",
+      claiming: "{{host}} とペアリング中…",
+      explainer:
+        "この FDE デーモンはまだ取得されていません。ペアリングすると、このデバイスが最初の所有者になります。",
+      successTitle: "ペアリング完了",
+      successBody:
+        "このデバイスは {{host}} の最初の所有者になりました。他のデバイスには新しいペアリングリンクが必要です。",
+      successRelayBody: "{{host}} を暗号化リレー経由で追加しました。",
+      noPendingOffer:
+        "ペアリングリンク (https://frogg.app/pair#offer=…) を開くか、「接続を追加」から貼り付けてください。",
+      newLinkHint:
+        "ペアリングコードは一回限りで、10 分で期限切れになります。新しいコードを取得: ホストで `fde daemon pair` を実行するか、その Web アドレスを再読み込みしてください。",
+      triedEndpoints: "試行済み:",
+      manualEndpointHelper:
+        "デーモンに別のアドレス (VPN、Docker、別のインターフェース) で到達できる場合は、host:port の形式で入力してください。",
+      manualEndpointLabel: "デーモンのアドレス",
+      errors: {
+        expired: "このペアリングコードは期限切れです。",
+        tokenRejected: "このペアリングコードは使用済みか期限切れです。",
+        unreachable: "デーモンのどのアドレスも応答しませんでした。",
+        identityMismatch:
+          "そのアドレスのデーモンは、このリンクの対象ではありません。アドレスを確認するか、正しいホストから新しいリンクを取得してください。",
+        claimFailed: "デーモンがペアリング要求を拒否しました。",
+      },
+      actions: {
+        done: "完了",
+        back: "戻る",
+        tryAddress: "このアドレスで試す",
+      },
     },
     direct: {
       title: "直接接続",
@@ -1686,10 +1721,11 @@ export const ja: TranslationResources = {
     },
     link: {
       title: "ペアリングリンクを貼り付け",
-      helper: "サーバーからのペアリングリンクを貼り付けてください。",
+      helper:
+        "デーモンのクレームページまたは `fde daemon pair` のリンクを貼り付けてください。新しい FDE デーモンは最初にペアリングしたデバイスのものになります。",
       label: "ペアリングリンク",
       errors: {
-        required: "ペアリングリンクを貼り付けてください（.../#offer=...）",
+        required: "ペアリングリンクを貼り付けてください (…/pair#offer=…)",
         missingOffer: "リンクには#offer=...が必要です",
         emptyOffer: "オファーのペイロードが空です",
         invalid: "無効なペアリングリンク",

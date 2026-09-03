@@ -14,6 +14,11 @@ export interface DiscoveredServer {
   serverId: string | null;
   /** `identity` when `/api/identity` answered, `health` when only `/api/health` did. */
   source: "identity" | "health";
+  /**
+   * True when the daemon is unclaimed: a LAN client must redeem a pairing link
+   * (`fde daemon pair` on the host) before it can connect. Null when unknown.
+   */
+  pairingRequired: boolean | null;
 }
 
 export interface ScanProgress {
@@ -28,4 +33,5 @@ export interface DaemonIdentity {
   hostname: string | null;
   version: string | null;
   product: string | null;
+  pairingRequired: boolean | null;
 }

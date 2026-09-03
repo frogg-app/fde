@@ -1589,11 +1589,11 @@ export const en = {
       },
       scanQr: {
         title: "Scan QR code",
-        description: "Encrypted relay connection.",
+        description: "Claim a new FDE daemon, or pair over the encrypted relay.",
       },
       pasteLink: {
         title: "Paste pairing link",
-        description: "Encrypted relay connection.",
+        description: "Claim a new FDE daemon, or pair over the encrypted relay.",
       },
     },
     networkScan: {
@@ -1604,6 +1604,41 @@ export const en = {
       rescan: "Scan again",
       connect: "Connect",
       connecting: "Connecting…",
+      needsPairing: "Needs pairing",
+      pairingHint:
+        "Get a pairing link: run `fde daemon pair` on the host, or open its web address, then scan or paste it here.",
+    },
+    claim: {
+      title: "Pair with an FDE daemon",
+      thisDaemon: "this FDE daemon",
+      claiming: "Pairing with {{host}}…",
+      explainer:
+        "This FDE daemon has not been claimed yet. Pairing makes this device its first owner.",
+      successTitle: "Paired",
+      successBody:
+        "This device is now the first owner of {{host}}. Other devices need a new pairing link from it.",
+      successRelayBody: "{{host}} was added over the encrypted relay.",
+      noPendingOffer:
+        "Open a pairing link (https://frogg.app/pair#offer=…) or paste one from Add connection.",
+      newLinkHint:
+        "Pairing codes are single-use and expire after ten minutes. Get a new one: run `fde daemon pair` on the host, or reload its web address for a fresh code.",
+      triedEndpoints: "Tried:",
+      manualEndpointHelper:
+        "If the daemon is reachable at another address (VPN, Docker, a different interface), enter it as host:port.",
+      manualEndpointLabel: "Daemon address",
+      errors: {
+        expired: "This pairing code has expired.",
+        tokenRejected: "This pairing code was already used or has expired.",
+        unreachable: "None of the daemon's addresses answered.",
+        identityMismatch:
+          "The daemon at that address is not the one this link was made for. Check the address, or get a new link from the right host.",
+        claimFailed: "The daemon refused the pairing request.",
+      },
+      actions: {
+        done: "Done",
+        back: "Back",
+        tryAddress: "Try address",
+      },
     },
     direct: {
       title: "Direct connection",
@@ -1681,10 +1716,11 @@ export const en = {
     },
     link: {
       title: "Paste pairing link",
-      helper: "Paste the pairing link from your server.",
+      helper:
+        "Paste the link from the daemon's claim page or from `fde daemon pair`. A new FDE daemon is claimed by the first device that pairs.",
       label: "Pairing link",
       errors: {
-        required: "Paste a pairing link (.../#offer=...)",
+        required: "Paste a pairing link (…/pair#offer=…)",
         missingOffer: "Link must include #offer=...",
         emptyOffer: "Offer payload is empty",
         invalid: "Invalid pairing link",
