@@ -1,9 +1,40 @@
+import { cpSync, existsSync, readFileSync, renameSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { ensurePrivateDirectory } from "./private-files.js";
 
+/**
+ * Where FDE keeps its state. `FDE_HOME` is the primary environment variable;
+ * `PASEO_HOME` keeps working as a fallback for daemons, services, and scripts
+ * written before the rename (FDE_HOME wins when both are set).
+ *
+ * With neither set the home is `~/.fde`. A machine that still has the old
+ * `~/.paseo` and no `~/.fde` is migrated once, in place: the directory is
+ * renamed (and copied, leaving the original, when a rename crosses devices).
+ * On-disk names inside the home are unchanged — `paseo.pid`, `config.json`,
+ * `daemon.log`.
+ */
+export const FDE_HOME_DIR_NAME = ".fde";
+export const LEGACY_HOME_DIR_NAME = ".paseo";
+
+export interface HomeMigrationNotice {
+  from: string;
+  to: string;
+  mode: "renamed" | "copied";
+}
+
+let migrationNotice: HomeMigrationNotice | null = null;
+let migrationAttempted = false;
+
+/** The migration that happened in this process, if any. Reported once, then cleared. */
+export function consumeHomeMigrationNotice(): HomeMigrationNotice | null {
+  const notice = migrationNotice;
+  migrationNotice = null;
+  return notice;
+}
+
 function expandHomeDir(input: string): string {
-  if (input.startsWith("~/")) {
+  if (input.startsWith("~/") || input.startsWith("~\\")) {
     return path.join(os.homedir(), input.slice(2));
   }
   if (input === "~") {
@@ -12,9 +43,94 @@ function expandHomeDir(input: string): string {
   return input;
 }
 
-export function resolvePaseoHome(env: NodeJS.ProcessEnv = process.env): string {
-  const raw = env.PASEO_HOME ?? "~/.paseo";
-  const resolved = path.resolve(expandHomeDir(raw));
+function nonEmpty(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
+}
+
+/** `FDE_HOME`, then `PASEO_HOME`; undefined when the caller set neither. */
+export function resolveConfiguredHome(env: NodeJS.ProcessEnv): string | undefined {
+  return nonEmpty(env.FDE_HOME) ?? nonEmpty(env.PASEO_HOME);
+}
+
+/**
+ * A daemon still running out of the legacy home. Moving the directory out from
+ * under it would strand its pid file, logs, and agent state, so the migration
+ * waits until that daemon has stopped.
+ */
+function legacyHomeIsInUse(legacy: string): boolean {
+  try {
+    const parsed = JSON.parse(readFileSync(path.join(legacy, "paseo.pid"), "utf8")) as {
+      pid?: unknown;
+    };
+    if (typeof parsed.pid !== "number" || !Number.isInteger(parsed.pid) || parsed.pid <= 0) {
+      return false;
+    }
+    process.kill(parsed.pid, 0);
+    return true;
+  } catch (error) {
+    // EPERM means the process exists but belongs to someone else.
+    return (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      (error as { code?: unknown }).code === "EPERM"
+    );
+  }
+}
+
+/**
+ * Moves `~/.paseo` to `~/.fde` when the new home does not exist yet. Runs at
+ * most once per process and only for the default (unconfigured) home.
+ */
+function migrateLegacyHome(target: string, legacy: string): void {
+  if (migrationAttempted) return;
+  migrationAttempted = true;
+  if (existsSync(target) || !existsSync(legacy)) return;
+  if (legacyHomeIsInUse(legacy)) return;
+
+  try {
+    renameSync(legacy, target);
+    migrationNotice = { from: legacy, to: target, mode: "renamed" };
+  } catch {
+    try {
+      cpSync(legacy, target, { recursive: true, preserveTimestamps: true });
+      migrationNotice = { from: legacy, to: target, mode: "copied" };
+    } catch {
+      // Leave the legacy home alone; the new home is created empty below.
+      return;
+    }
+  }
+
+  const notice = migrationNotice;
+  if (notice) {
+    process.stderr.write(
+      notice.mode === "renamed"
+        ? `[fde] Moved ${notice.from} to ${notice.to}\n`
+        : `[fde] Copied ${notice.from} to ${notice.to} (the original was left in place)\n`,
+    );
+  }
+}
+
+export function resolveFdeHome(env: NodeJS.ProcessEnv = process.env): string {
+  const configured = resolveConfiguredHome(env);
+  if (configured) {
+    const resolvedConfigured = path.resolve(expandHomeDir(configured));
+    ensurePrivateDirectory(resolvedConfigured);
+    return resolvedConfigured;
+  }
+
+  const resolved = path.resolve(path.join(os.homedir(), FDE_HOME_DIR_NAME));
+  migrateLegacyHome(resolved, path.resolve(path.join(os.homedir(), LEGACY_HOME_DIR_NAME)));
   ensurePrivateDirectory(resolved);
   return resolved;
+}
+
+/** @deprecated Use {@link resolveFdeHome}; kept because `$PASEO_HOME` still works. */
+export const resolvePaseoHome = resolveFdeHome;
+
+/** Test seam: forget that this process already tried the one-time migration. */
+export function resetHomeMigrationStateForTests(): void {
+  migrationAttempted = false;
+  migrationNotice = null;
 }

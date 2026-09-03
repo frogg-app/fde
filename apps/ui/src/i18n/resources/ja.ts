@@ -1778,7 +1778,7 @@ export const ja: TranslationResources = {
       label: "ペアリングリンク",
       errors: {
         required: "ペアリングリンクを貼り付けてください (…/pair#offer=…)",
-        missingOffer: "リンクには#offer=...が必要です",
+        missingOffer: "これは FDE のペアリングリンクではありません",
         emptyOffer: "オファーのペイロードが空です",
         invalid: "無効なペアリングリンク",
         unableToPair: "ホストをペアリングできません",

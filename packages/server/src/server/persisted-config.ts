@@ -319,7 +319,10 @@ export const PersistedConfigSchema = z
 
     app: z
       .object({
+        // Where pairing links point. `baseUrl` is the pre-rename name and still
+        // works; `pairingBaseUrl` wins when both are set.
         baseUrl: z.string().optional(),
+        pairingBaseUrl: z.string().optional(),
       })
       .strict()
       .optional(),
@@ -380,7 +383,7 @@ const DEFAULT_PERSISTED_CONFIG = PersistedConfigSchema.parse({
     },
   },
   app: {
-    baseUrl: DEFAULT_PAIRING_BASE_URL,
+    pairingBaseUrl: DEFAULT_PAIRING_BASE_URL,
   },
 }) as PersistedConfig;
 

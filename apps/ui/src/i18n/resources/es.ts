@@ -1807,7 +1807,7 @@ export const es: TranslationResources = {
       label: "Enlace de emparejamiento",
       errors: {
         required: "Pega un enlace de emparejamiento (…/pair#offer=…)",
-        missingOffer: "El enlace debe incluir#offer=...",
+        missingOffer: "Ese no es un enlace de emparejamiento de FDE",
         emptyOffer: "La carga útil de la oferta está vacía",
         invalid: "Enlace de emparejamiento no válido",
         unableToPair: "No se puede emparejar el host",

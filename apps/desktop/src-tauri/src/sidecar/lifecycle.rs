@@ -185,7 +185,7 @@ pub async fn start(
         daemon_start_env(&bundle, config),
     );
     log::info!(
-        "sidecar: starting daemon: {} (PASEO_HOME={}, PASEO_LISTEN={})",
+        "sidecar: starting daemon: {} (FDE_HOME={}, PASEO_LISTEN={})",
         invocation.describe(),
         config.home.display(),
         config.listen
@@ -294,7 +294,7 @@ mod tests {
 
     fn config() -> LaunchConfig {
         LaunchConfig {
-            home: PathBuf::from("/h/.paseo"),
+            home: PathBuf::from("/h/.fde"),
             listen: "127.0.0.1:6767".into(),
             manage_enabled: true,
         }
@@ -307,7 +307,7 @@ mod tests {
         assert_eq!(env["PASEO_WEB_UI_ENABLED"], "false");
         assert_eq!(env["PASEO_NODE_ENV"], "production");
         assert_eq!(env["PASEO_LISTEN"], "127.0.0.1:6767");
-        assert_eq!(env["PASEO_HOME"], "/h/.paseo");
+        assert_eq!(env["FDE_HOME"], "/h/.fde");
         assert_eq!(env["PASEO_CLI"], bundle().launcher().to_string_lossy());
     }
 

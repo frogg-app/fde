@@ -1,7 +1,13 @@
 // CLI exports for @fde/server
 export { createPaseoDaemon, type PaseoDaemon, type PaseoDaemonConfig } from "./bootstrap.js";
 export { loadConfig, type CliConfigOverrides } from "./config.js";
-export { resolvePaseoHome } from "./paseo-home.js";
+export {
+  consumeHomeMigrationNotice,
+  resolveConfiguredHome,
+  resolveFdeHome,
+  resolvePaseoHome,
+  type HomeMigrationNotice,
+} from "./paseo-home.js";
 export { getOrCreateServerId } from "./server-id.js";
 export { createRootLogger, type LogLevel, type LogFormat } from "./logger.js";
 export {

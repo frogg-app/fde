@@ -1896,7 +1896,7 @@ export class HostRuntimeStore {
   ): Promise<HostProfile> {
     const offer = parseAnyConnectionOfferFromUrl(offerUrlOrFragment);
     if (!offer) {
-      throw new Error("Missing #offer= fragment");
+      throw new Error("This is not an FDE pairing link");
     }
     return this.upsertConnectionFromAnyOffer(offer, { label });
   }

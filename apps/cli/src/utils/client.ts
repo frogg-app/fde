@@ -59,8 +59,8 @@ export function buildDaemonConnectionCommandError(options: {
     code: "DAEMON_NOT_RUNNING",
     message: `Cannot connect to daemon at ${host}: ${message}`,
     details: host.trim().startsWith("ssh://")
-      ? "Start the Paseo daemon on the SSH host; SSH transport does not install or start it."
-      : "Start the daemon with: paseo daemon start",
+      ? "Start the FDE daemon on the SSH host; SSH transport does not install or start it."
+      : "Start the daemon with: fde daemon start",
   };
 }
 
@@ -386,7 +386,7 @@ export async function connectToDaemon(options?: ConnectOptions): Promise<DaemonC
   async function tryNext(index: number, lastError: unknown): Promise<DaemonClient> {
     if (index >= hosts.length) {
       if (lastError instanceof Error) throw lastError;
-      throw new Error(`Unable to connect to Paseo daemon via ${hosts.join(", ")}`);
+      throw new Error(`Unable to connect to FDE daemon via ${hosts.join(", ")}`);
     }
     const host = hosts[index];
     const password = resolveDaemonPassword(host);

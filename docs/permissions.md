@@ -18,7 +18,7 @@ A pairing invitation is neither. It is an expiring, single-use exchange that cre
 ## Claimed state
 
 A daemon is **unclaimed** while nobody can authenticate to it: no daemon password is
-configured (`daemon.auth.password` / `PASEO_PASSWORD`) and `$PASEO_HOME/principals.json`
+configured (`daemon.auth.password` / `PASEO_PASSWORD`) and `$FDE_HOME/principals.json`
 holds no principal with a credential. The predicate lives in
 `packages/server/src/server/access-policy.ts` and is read live, so a change to the file
 takes effect without a restart.
@@ -64,12 +64,29 @@ through the daemon's config reload; `fde daemon status` shows the mode as `LAN T
 **Claiming** is the first direct pairing. The claim page (or `fde daemon pair` with relay
 off) hands out a v3 connection offer: `{ v: 3, serverId, hostname, daemonPublicKeyB64,
 direct: { endpoints }, claim: { token, expiresAt }, relay? }` encoded as
-`<app.baseUrl>#offer=<base64url>`, which with the default `app.baseUrl` is
-`https://frogg.app/pair#offer=…`. The payload lives in the URL fragment, so the page host
-never receives it; the same payload is also offered as the app deep link
-`paseo://pair#offer=…` (the gate page's "Open in FDE app" button, and `deepLink` in
+`<app.pairingBaseUrl>/code/<base64url>`, which with the default `app.pairingBaseUrl` is
+`https://pair.frogg.app/code/…`. The daemon serves that page itself at `GET /code/:code`
+(and `GET /pair?code=`), so `pair.frogg.app` can be reverse-proxied to your own daemon and
+no pairing code need ever reach frogg.app; the same payload is also offered as the app deep
+link `paseo://pair#offer=…` (the gate page's "Open in FDE" button, and `deepLink` in
 `fde daemon pair --json`), which the desktop shell routes straight into the app. The token is
 single-use and expires after ten minutes.
+
+### The pairing page
+
+`GET /code/:code` and `GET /pair?code=<code>` on the daemon render a small self-contained
+page for a pairing code: the QR, an "Open in FDE" deep link, the raw code to type in, and —
+when this daemon issued the code and the token is still live — a "Pair this browser" button
+that hands the code to the bundled web UI, which redeems it and keeps the credential. The
+page is public, because the code is the secret. Anything else (a malformed code, another
+daemon's code, one already used, one past `expiresAt`) renders the same "This pairing link
+has expired" page and nothing more, so the route never confirms which codes exist.
+`pair.frogg.app` is accepted as a `Host` header by default, so the hostname can be
+reverse-proxied to a daemon without setting `PASEO_HOSTNAMES`.
+
+`app.pairingBaseUrl` in `config.json` (default `https://pair.frogg.app`, overridable with
+`FDE_PAIRING_BASE_URL`) chooses the base the daemon puts in links. The older `app.baseUrl`
+is still read as a fallback.
 
 The app (`apps/ui/src/pairing/`) parses either form with `parseAnyConnectionOfferFromUrl`,
 probes each of `direct.endpoints` with `GET /api/identity` and keeps only one whose

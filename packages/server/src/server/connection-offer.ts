@@ -1,7 +1,7 @@
 import os from "node:os";
 
 import {
-  buildOfferFragmentUrl,
+  buildPairingUrl,
   ConnectionOfferV2Schema,
   type ConnectionOffer,
   type ConnectionOfferV3,
@@ -45,13 +45,13 @@ export async function createConnectionOfferV2(args: {
   });
 }
 
-export function encodeOfferToFragmentUrl(args: {
+export function encodeOfferToPairingUrl(args: {
   offer: ConnectionOffer | ConnectionOfferV3;
   appBaseUrl: string;
 }): string {
   const json = JSON.stringify(args.offer);
   const encoded = Buffer.from(json, "utf8").toString("base64url");
-  return buildOfferFragmentUrl(args.appBaseUrl, encoded);
+  return buildPairingUrl(args.appBaseUrl, encoded);
 }
 
 function getPrimaryLanIp(): string | null {

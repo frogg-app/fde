@@ -1,4 +1,4 @@
-import { hasOfferFragment } from "@fde/protocol/connection-offer";
+import { extractPairingCode, hasOfferFragment } from "@fde/protocol/connection-offer";
 
 /**
  * A pairing link that arrived from outside the app (web URL, native
@@ -30,19 +30,25 @@ export function subscribePendingOffer(listener: () => void): () => void {
 }
 
 /**
- * Normalises the ways an offer reaches the app as a URL: the canonical
- * `…#offer=<payload>` fragment, the `?offer=<payload>` query the web build
- * also accepts, and `paseo://pair#offer=…`. Returns a string with an
+ * Normalises the ways a pairing link reaches the app: the canonical
+ * `https://pair.frogg.app/code/<code>`, the `?code=` query, the older
+ * `…#offer=<payload>` fragment (including `paseo://pair#offer=…`), and the
+ * `?offer=` query the web build also accepts. Returns a string carrying an
  * `#offer=` fragment, or null when the URL carries no offer.
  */
 export function extractOfferLink(url: string | null | undefined): string | null {
   if (!url) return null;
   const trimmed = url.trim();
   if (hasOfferFragment(trimmed)) return trimmed;
-  const queryIndex = trimmed.indexOf("?");
+  const code = extractPairingCode(trimmed) ?? extractOfferQueryParam(trimmed);
+  return code ? `#offer=${code}` : null;
+}
+
+function extractOfferQueryParam(input: string): string | null {
+  const queryIndex = input.indexOf("?");
   if (queryIndex === -1) return null;
-  const hashIndex = trimmed.indexOf("#", queryIndex);
-  const query = trimmed.slice(queryIndex + 1, hashIndex === -1 ? undefined : hashIndex);
+  const hashIndex = input.indexOf("#", queryIndex);
+  const query = input.slice(queryIndex + 1, hashIndex === -1 ? undefined : hashIndex);
   const encoded = new URLSearchParams(query).get("offer")?.trim();
-  return encoded ? `#offer=${encoded}` : null;
+  return encoded ? encoded : null;
 }

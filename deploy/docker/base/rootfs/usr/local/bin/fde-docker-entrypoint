@@ -5,7 +5,7 @@
 set -euo pipefail
 
 : "${HOME:=/home/fde}"
-: "${PASEO_HOME:=${HOME}/.paseo}"
+: "${FDE_HOME:=${PASEO_HOME:-${HOME}/.fde}}"
 : "${PASEO_LISTEN:=0.0.0.0:9999}"
 : "${PASEO_WEB_UI_ENABLED:=true}"
 : "${PASEO_LOG_LEVEL:=info}"
@@ -17,7 +17,7 @@ set -euo pipefail
 : "${XDG_STATE_HOME:=${HOME}/.local/state}"
 : "${XDG_CACHE_HOME:=${HOME}/.cache}"
 
-export HOME PASEO_HOME PASEO_LISTEN PASEO_WEB_UI_ENABLED PASEO_LOG_LEVEL PASEO_LOG_FORMAT
+export HOME FDE_HOME PASEO_LISTEN PASEO_WEB_UI_ENABLED PASEO_LOG_LEVEL PASEO_LOG_FORMAT
 export CLAUDE_CONFIG_DIR CODEX_HOME XDG_CONFIG_HOME XDG_DATA_HOME XDG_STATE_HOME XDG_CACHE_HOME
 
 ensure_dir() {
@@ -28,7 +28,7 @@ ensure_dir() {
   fi
 }
 
-for dir in "$HOME" "$PASEO_HOME" "$CLAUDE_CONFIG_DIR" "$CODEX_HOME" \
+for dir in "$HOME" "$FDE_HOME" "$CLAUDE_CONFIG_DIR" "$CODEX_HOME" \
   "$XDG_CONFIG_HOME" "$XDG_DATA_HOME" "$XDG_STATE_HOME" "$XDG_CACHE_HOME" /workspace; do
   ensure_dir "$dir"
 done
@@ -40,7 +40,7 @@ if [[ "$#" -gt 0 ]]; then
   exec "$@"
 fi
 
-if [[ -z "${PASEO_PASSWORD:-}" ]] && [[ ! -s "${PASEO_HOME}/principals.json" ]]; then
+if [[ -z "${PASEO_PASSWORD:-}" ]] && [[ ! -s "${FDE_HOME}/principals.json" ]]; then
   {
     echo "[fde] No password and no paired device yet: the daemon is unclaimed."
     echo "[fde] Open http://<host>:${PASEO_LISTEN##*:}/ from another machine (or run 'fde daemon pair' here)"

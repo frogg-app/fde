@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StyleSheet, useUnistyles } from "react-native-unistyles";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import type { BarcodeScanningResult, BarcodeSettings } from "expo-camera";
-import { hasOfferFragment } from "@fde/protocol/connection-offer";
+import { hasPairingCode } from "@fde/protocol/connection-offer";
 import { usePairWithOffer } from "@/pairing/use-pair-with-offer";
 import { buildHostRootRoute, buildSettingsHostRoute } from "@/utils/host-routes";
 import { isWeb } from "@/constants/platform";
@@ -111,7 +111,7 @@ const styles = StyleSheet.create((theme) => ({
 
 function extractOfferUrlFromScan(result: BarcodeScanningResult): string | null {
   const raw = typeof result.data === "string" ? result.data.trim() : "";
-  return raw && hasOfferFragment(raw) ? raw : null;
+  return raw && hasPairingCode(raw) ? raw : null;
 }
 
 export default function PairScanScreen() {

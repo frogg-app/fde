@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 import { StyleSheet, useUnistyles } from "react-native-unistyles";
 import { Link } from "lucide-react-native";
-import { hasOfferFragment } from "@fde/protocol/connection-offer";
+import { hasPairingCode } from "@fde/protocol/connection-offer";
 import type { HostProfile } from "@/types/host-connection";
 import { usePairWithOffer, type PairSuccess } from "@/pairing/use-pair-with-offer";
 import { AdaptiveModalSheet, AdaptiveTextInput, type SheetHeader } from "./adaptive-modal-sheet";
@@ -59,9 +59,9 @@ export interface PairLinkModalProps {
 }
 
 /**
- * "Paste pairing link": accepts `https://frogg.app/pair#offer=…`,
- * `paseo://pair#offer=…`, Paseo's `https://app.paseo.sh/#offer=…`, or a bare
- * `#offer=` fragment. A relay (v2) offer pairs and closes as before; a claim
+ * "Paste pairing link": accepts `https://pair.frogg.app/code/<code>`, a
+ * `?code=` link, `paseo://pair#offer=…`, Paseo's
+ * `https://app.paseo.sh/#offer=…`, or a bare `#offer=` fragment. A relay (v2) offer pairs and closes as before; a claim
  * (v3) offer runs the claim flow and shows its outcome before closing.
  */
 export function PairLinkModal({ visible, onClose, onCancel, onSaved }: PairLinkModalProps) {
@@ -128,7 +128,7 @@ export function PairLinkModal({ visible, onClose, onCancel, onSaved }: PairLinkM
       setValidationError(t("pairing.link.errors.required"));
       return;
     }
-    if (!hasOfferFragment(raw)) {
+    if (!hasPairingCode(raw)) {
       setValidationError(t("pairing.link.errors.missingOffer"));
       return;
     }
@@ -179,7 +179,7 @@ export function PairLinkModal({ visible, onClose, onCancel, onSaved }: PairLinkM
               nativeID="pair-link-input"
               accessibilityLabel={t("pairing.link.label")}
               onChangeText={handleChangeOfferUrl}
-              placeholder="https://frogg.app/pair#offer=..."
+              placeholder="https://pair.frogg.app/code/..."
               placeholderTextColor={theme.colors.foregroundMuted}
               style={styles.input}
               autoFocus

@@ -120,7 +120,7 @@ function toStatusRows(status: DaemonStatus): StatusRow[] {
     { key: "Server ID", value: status.serverId ?? "-" },
     { key: "Local Daemon", value: status.localDaemon },
     { key: "Connected Daemon", value: status.connectedDaemon },
-    { key: "Home", value: status.home },
+    { key: "FDE Home", value: status.home },
     { key: "Listen", value: status.listen },
     { key: "Relay", value: status.relay },
     { key: "Hostname", value: status.hostname ?? "-" },

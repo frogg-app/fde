@@ -155,7 +155,11 @@ import { CheckoutDiffManager } from "./checkout-diff-manager.js";
 import { ScheduleService } from "./schedule/service.js";
 import { DaemonConfigStore, type MutableDaemonConfig } from "./daemon-config-store.js";
 import { createOrchestrationSkills } from "./orchestration-skills/index.js";
-import { resolveConfigFromPersisted, type CliConfigOverrides } from "./config.js";
+import {
+  resolveConfigFromPersisted,
+  resolvePairingBaseUrl,
+  type CliConfigOverrides,
+} from "./config.js";
 import { BrowserToolsBroker } from "./browser-tools/broker.js";
 import { DaemonConfigBrowserToolsPolicy } from "./browser-tools/policy.js";
 import { WorkspaceGitServiceImpl } from "./workspace-git-service.js";
@@ -218,6 +222,7 @@ import {
   type ClaimOfferSource,
 } from "./claim-offer.js";
 import { renderClaimGatePage } from "./claim-gate-page.js";
+import { mountPairingCodeRoutes } from "./pairing-code-route.js";
 import { DEFAULT_PAIRING_BASE_URL } from "@fde/protocol/connection-offer";
 import {
   createIdentityPreflightHandler,
@@ -762,12 +767,23 @@ export async function createPaseoDaemon(
   const scriptRuntimeStore = new WorkspaceScriptRuntimeStore();
   const workspaceSetupRuntime = new WorkspaceSetupRuntime();
   let configuredHostnames = config.hostnames ?? config.allowedHosts;
+  // `app.pairingBaseUrl` is the current name and `app.baseUrl` the pre-rename
+  // one; both are watched so an edit to either applies without a restart.
+  const persistedApp: { pairingBaseUrl?: string; baseUrl?: string } = {};
   let appBaseUrl = config.appBaseUrl ?? DEFAULT_PAIRING_BASE_URL;
+  const applyAppBaseUrl = () => {
+    appBaseUrl = resolvePairingBaseUrl(persistedApp) ?? DEFAULT_PAIRING_BASE_URL;
+  };
   daemonConfigStore.onFieldChange("hostnames", (value) => {
     configuredHostnames = value as HostnamesConfig | undefined;
   });
   daemonConfigStore.onFieldChange("app.baseUrl", (value) => {
-    appBaseUrl = typeof value === "string" ? value : DEFAULT_PAIRING_BASE_URL;
+    persistedApp.baseUrl = typeof value === "string" ? value : undefined;
+    applyAppBaseUrl();
+  });
+  daemonConfigStore.onFieldChange("app.pairingBaseUrl", (value) => {
+    persistedApp.pairingBaseUrl = typeof value === "string" ? value : undefined;
+    applyAppBaseUrl();
   });
   let wsServer: VoiceAssistantWebSocketServer | null = null;
   let autoUpdater: DaemonAutoUpdater | null = null;
@@ -882,6 +898,15 @@ export async function createPaseoDaemon(
     },
     offers: claimOffers,
   };
+  // The pairing landing page for this daemon's own `/code/<code>` links, so
+  // `pair.frogg.app` can be reverse-proxied here. Public, and mounted before
+  // the web UI so the SPA fallback does not swallow it.
+  mountPairingCodeRoutes(app, {
+    serverId,
+    offers: claimOffers,
+    pairingBaseUrl: () => appBaseUrl,
+  });
+
   mountWebUi(
     app,
     config,

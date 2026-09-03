@@ -49,7 +49,7 @@ export function isClaimOffer(offer: AnyConnectionOffer | null): boolean {
 
 export interface PairWithOfferController {
   state: PairFlowState;
-  /** Parse a link (or bare `#offer=` fragment) and pair. Resolves to the success state or null. */
+  /** Parse a pairing link (code URL, `?code=`, or `#offer=` fragment) and pair. */
   pair: (offerUrl: string) => Promise<PairSuccess | null>;
   /** Re-run a v3 claim against an endpoint the user typed. */
   retryWithEndpoint: (endpoint: string) => Promise<PairSuccess | null>;
@@ -154,7 +154,7 @@ export function usePairWithOffer(): PairWithOfferController {
           status: "error",
           offer: null,
           code: "invalid_link",
-          message: "Missing #offer= fragment",
+          message: "This is not an FDE pairing link",
           endpoints: [],
         });
         return null;

@@ -1,12 +1,9 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { dirname, join } from "node:path";
-import { homedir } from "node:os";
+import { resolveFdeHomePath } from "./fde-home.js";
 
-const CLIENT_SESSION_KEY_FILE = join(
-  process.env.PASEO_HOME ?? join(homedir(), ".paseo"),
-  "cli-client-id",
-);
+const CLIENT_SESSION_KEY_FILE = join(resolveFdeHomePath(), "cli-client-id");
 
 let cachedClientId: string | null = null;
 

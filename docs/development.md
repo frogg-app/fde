@@ -22,7 +22,7 @@ The web dev launcher passes the current Git branch to Metro as
 `EXPO_PUBLIC_PASEO_DEV_BUILD_LABEL`. The expanded sidebar shows it in the
 titlebar row. Production builds leave the variable unset and show no label.
 
-`npm run dev` is only a shorthand for `npm run dev:server`. Keep `127.0.0.1:9999` (the default daemon port since 0.1.11; upstream Paseo used 6767, and a `config.json` that still says `daemon.listen: "127.0.0.1:6767"` keeps working) for the packaged app and production-style `~/.paseo` state.
+`npm run dev` is only a shorthand for `npm run dev:server`. Keep `127.0.0.1:9999` (the default daemon port since 0.1.11; upstream Paseo used 6767, and a `config.json` that still says `daemon.listen: "127.0.0.1:6767"` keeps working) for the packaged app and production-style `~/.fde` state.
 
 ### PASEO_HOME
 
@@ -89,7 +89,7 @@ npm run ios        # → expo run:ios (apps/ui): builds and launches the app in 
 
 `expo run:ios` starts its own Metro and gives you the normal Simulator.app window (full speed, native touch, no stream).
 
-**Pointing the app at a daemon.** The client resolves its local daemon from `EXPO_PUBLIC_LOCAL_DAEMON` (`apps/ui/src/runtime/host-runtime.ts`); when unset it falls back to `localhost:9999`, the production `~/.paseo` daemon. To target a worktree's dev daemon instead, set it on the build command:
+**Pointing the app at a daemon.** The client resolves its local daemon from `EXPO_PUBLIC_LOCAL_DAEMON` (`apps/ui/src/runtime/host-runtime.ts`); when unset it falls back to `localhost:9999`, the production `~/.fde` daemon. To target a worktree's dev daemon instead, set it on the build command:
 
 ```bash
 EXPO_PUBLIC_LOCAL_DAEMON=localhost:${PASEO_SERVICE_DAEMON_PORT} npm run ios   # worktree daemon running as a Paseo service
@@ -227,19 +227,19 @@ boundaries are nested. A printable key after an empty newline should not change 
 
 ### Daemon logs
 
-Check `$PASEO_HOME/daemon.log` for daemon logs. The default level is `info`; set
+Check `$FDE_HOME/daemon.log` for daemon logs. The default level is `info`; set
 `PASEO_LOG_LEVEL=trace` before launching the daemon when you need full provider,
 session, and agent-manager traces for stuck-state debugging.
 
 The supervisor rotates `daemon.log`. Persisted `log.file.rotate` settings in
-`$PASEO_HOME/config.json` win first. Without persisted config, the optional
+`$FDE_HOME/config.json` win first. Without persisted config, the optional
 `PASEO_LOG_ROTATE_SIZE` and `PASEO_LOG_ROTATE_COUNT` env vars override the
 defaults. The default rotation is `10m` x `3` files everywhere.
 
 ### Git process pressure
 
 If Git refreshes consume too much CPU, disk, or antivirus capacity, especially on Windows, reduce
-the daemon-global Git process limits in `$PASEO_HOME/config.json`:
+the daemon-global Git process limits in `$FDE_HOME/config.json`:
 
 ```json
 {
@@ -344,7 +344,7 @@ Service proxy hostnames use the double-dash shape: `web--feature-auth--project.l
 ```
 
 Service ports use OS ephemeral allocation by default. Set `worktrees.servicePorts` in
-`$PASEO_HOME/config.json`, or replace it for one project with `worktree.servicePorts` in
+`$FDE_HOME/config.json`, or replace it for one project with `worktree.servicePorts` in
 `paseo.json`. The block accepts an inclusive `range` such as `"3000-4000"` or a `portScript`
 executable. Since `portScript` is executed directly without a shell, it must point to a real executable (e.g., a binary or a script with a proper shebang like `#!/bin/sh`) rather than an inline shell command or shell pipeline. For inline shell commands or pipelines, wrap them in a small script. `portScript` runs in the workspace directory with four arguments: service name,
 workspace ID, branch name, and worktree path. A missing branch is passed as an empty string. The same
@@ -489,19 +489,19 @@ default; pass `--server <server-id>` when targeting another server.
 Agent data lives at:
 
 ```
-$PASEO_HOME/agents/{cwd-with-dashes}/{agent-id}.json
+$FDE_HOME/agents/{cwd-with-dashes}/{agent-id}.json
 ```
 
 Find an agent by ID:
 
 ```bash
-find $PASEO_HOME/agents -name "{agent-id}.json"
+find $FDE_HOME/agents -name "{agent-id}.json"
 ```
 
 Find by content:
 
 ```bash
-rg -l "some title text" $PASEO_HOME/agents/
+rg -l "some title text" $FDE_HOME/agents/
 ```
 
 ## Provider session files

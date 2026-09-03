@@ -6,6 +6,8 @@ interface PairingInstructions {
   columns?: number;
   /** When set, the same offer as a `paseo://pair#offer=…` link for the desktop app. */
   deepLink?: string | null;
+  /** `PASEO_PAIRING_QR=0`: drop the QR section instead of explaining its absence. */
+  qrDisabled?: boolean;
 }
 
 function visibleWidth(value: string): number {
@@ -39,9 +41,11 @@ export function formatPairingInstructions({
   qr,
   columns,
   deepLink,
+  qrDisabled,
 }: PairingInstructions): string {
+  const qrSection = qrDisabled ? "" : `\nScan to pair:\n${formatQr(qr, columns)}\n`;
   const deepLinkSection = deepLink
     ? `\nThe FDE desktop app opens the link above directly (Paste pairing link also works). Same offer as an app link:\n${deepLink}\n`
     : "";
-  return `\nScan to pair:\n${formatQr(qr, columns)}\n\nPairing link (phone, QR, or paste into the app):\n${url}\n${deepLinkSection}\nTreat this pairing link like a password. Anyone with it can access this daemon.\n`;
+  return `${qrSection}\nPairing link (phone, QR, or paste into the app):\n${url}\n${deepLinkSection}\nTreat this pairing link like a password. Anyone with it can access this daemon.\n`;
 }

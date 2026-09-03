@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 # Removes an FDE daemon installation made by deploy/install.sh: stops and
 # unregisters the service, removes the bin links and the install directory.
-# Daemon state under ~/.paseo is kept unless FDE_PURGE=1.
+# Daemon state under ~/.fde is kept unless FDE_PURGE=1.
 #
 # Environment overrides mirror install.sh: FDE_INSTALL_DIR, FDE_BIN_DIR,
-# FDE_HOME (daemon state directory; default ~/.paseo).
+# FDE_HOME (daemon state directory; default ~/.fde).
 set -euo pipefail
 
 FDE_INSTALL_DIR="${FDE_INSTALL_DIR:-${HOME}/.local/share/fde}"
 FDE_BIN_DIR="${FDE_BIN_DIR:-${HOME}/.local/bin}"
-FDE_HOME="${FDE_HOME:-${PASEO_HOME:-${HOME}/.paseo}}"
+FDE_HOME="${FDE_HOME:-${PASEO_HOME:-${HOME}/.fde}}"
 FDE_PURGE="${FDE_PURGE:-0}"
 
 SERVICE_NAME="fde-daemon"

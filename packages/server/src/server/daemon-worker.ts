@@ -2,12 +2,12 @@ import { appendFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { createPaseoDaemon } from "./bootstrap.js";
 import { loadConfig } from "./config.js";
-import { resolvePaseoHome } from "./paseo-home.js";
+import { consumeHomeMigrationNotice, resolveFdeHome } from "./paseo-home.js";
 import { createRootLogger } from "./logger.js";
 import type { DaemonLifecycleIntent } from "./bootstrap.js";
 import { getProcessDiagnostics } from "./process-diagnostics.js";
 
-process.title = "Paseo Daemon";
+process.title = "FDE Daemon";
 
 type SupervisorLifecycleMessage =
   | {
@@ -68,9 +68,19 @@ function writeWorkerLifecycleLog(
 
 function bootstrapFromEnvironment(): BootstrapResult {
   try {
-    const paseoHome = resolvePaseoHome();
+    const paseoHome = resolveFdeHome();
     const config = loadConfig(paseoHome);
     const logger = createRootLogger({ log: config.log }, { paseoHome, file: false });
+    // Logged once, on the first start after the home moved from ~/.paseo to ~/.fde.
+    const migration = consumeHomeMigrationNotice();
+    if (migration) {
+      logger.info(
+        migration,
+        migration.mode === "renamed"
+          ? `Moved the FDE home from ${migration.from} to ${migration.to}`
+          : `Copied the FDE home from ${migration.from} to ${migration.to} (original left in place)`,
+      );
+    }
     return { paseoHome, logger, config };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

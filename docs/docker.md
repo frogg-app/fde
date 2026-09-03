@@ -15,7 +15,7 @@ The image:
 - starts through `fde daemon start --foreground`, i.e. the CLI and the
   supervisor entrypoint, under `tini`
 - listens on `0.0.0.0:9999` inside the container with the web UI enabled
-- keeps daemon state in `/home/fde/.paseo` (declared as a volume)
+- keeps daemon state in `/home/fde/.fde` (declared as a volume)
 - ships `git`, `openssh-client`, `curl`, `bash`, `procps`, `lbzip2`, but no
   agent CLIs
 
@@ -38,7 +38,7 @@ or by hand:
 docker run -d --name fde-daemon --restart unless-stopped \
   -p 0.0.0.0:9999:9999 \
   -e PASEO_PASSWORD=change-me \
-  -v "$HOME/.fde:/home/fde/.paseo" \
+  -v "$HOME/.fde:/home/fde/.fde" \
   -v "$PWD:/workspace" \
   froggapp/fde:0.1.6
 ```
@@ -90,13 +90,13 @@ or Compose `environment:`; the daemon forwards them to launched agents.
 
 | Mount              | Purpose                                                      |
 | ------------------ | ------------------------------------------------------------ |
-| `/home/fde/.paseo` | Daemon state: agents, config, pairing, logs                  |
+| `/home/fde/.fde` | Daemon state: agents, config, pairing, logs                  |
 | `/home/fde`        | Mount the whole home instead to persist agent config as well |
 | `/workspace`       | Code that the daemon and launched agents read and write      |
 
 | Variable               | Default            |
 | ---------------------- | ------------------ |
-| `PASEO_HOME`           | `/home/fde/.paseo` |
+| `PASEO_HOME`           | `/home/fde/.fde` |
 | `PASEO_LISTEN`         | `0.0.0.0:9999`     |
 | `PASEO_WEB_UI_ENABLED` | `true`             |
 | `PASEO_LOG_FORMAT`     | `json`             |

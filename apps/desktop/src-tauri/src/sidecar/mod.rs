@@ -101,16 +101,18 @@ pub fn register(app: &App) -> tauri::Result<()> {
     Ok(())
 }
 
-/// `$PASEO_HOME` or `~/.paseo`, as the daemon resolves it.
+/// `$FDE_HOME`, the legacy `$PASEO_HOME`, or `~/.fde`, as the daemon resolves it.
 pub fn paseo_home<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
-    if let Ok(home) = std::env::var("PASEO_HOME") {
-        if !home.trim().is_empty() {
-            return PathBuf::from(home);
+    for key in ["FDE_HOME", "PASEO_HOME"] {
+        if let Ok(home) = std::env::var(key) {
+            if !home.trim().is_empty() {
+                return PathBuf::from(home);
+            }
         }
     }
     app.path()
         .home_dir()
-        .map(|dir| dir.join(".paseo"))
+        .map(|dir| dir.join(".fde"))
         .unwrap_or_default()
 }
 

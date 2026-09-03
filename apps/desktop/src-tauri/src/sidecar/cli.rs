@@ -57,7 +57,7 @@ impl CliInvocation {
     /// path, plus the daemon home so the CLI looks at the same `paseo.pid`.
     pub fn probe_env(bundle: &InstalledBundle, home: &Path) -> BTreeMap<String, String> {
         let mut env = Self::base_env(&bundle.launcher());
-        env.insert("PASEO_HOME".into(), home.to_string_lossy().into_owned());
+        env.insert("FDE_HOME".into(), home.to_string_lossy().into_owned());
         env
     }
 
@@ -226,9 +226,9 @@ mod tests {
         assert_eq!(invocation.args[0], "--disable-warning=DEP0040");
         assert_eq!(invocation.args[1], bundle().cli_entry().to_string_lossy());
         assert_eq!(&invocation.args[2..], ["daemon", "status", "--json"]);
-        let env = CliInvocation::probe_env(&bundle(), Path::new("/home/u/.paseo"));
+        let env = CliInvocation::probe_env(&bundle(), Path::new("/home/u/.fde"));
         assert_eq!(env["PASEO_NODE_ENV"], "production");
-        assert_eq!(env["PASEO_HOME"], "/home/u/.paseo");
+        assert_eq!(env["FDE_HOME"], "/home/u/.fde");
         assert_eq!(env["PASEO_CLI"], bundle().launcher().to_string_lossy());
     }
 

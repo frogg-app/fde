@@ -9,6 +9,7 @@ import { pairCommand } from "./pair.js";
 import { runDaemonReloadCommand } from "./reload.js";
 import { runClaimStatusCommand, runResetClaimCommand } from "./claim.js";
 import { selfUpdateCommand } from "./self-update/command.js";
+import { runInstallServiceCommand, runUninstallServiceCommand } from "./service/command.js";
 import { withOutput } from "../../output/index.js";
 import { addJsonAndDaemonHostOptions, addJsonOption } from "../../utils/command-options.js";
 
@@ -19,7 +20,7 @@ function resolveHostnamesOption(hostnames: unknown, allowedHosts: unknown): stri
 }
 
 export function createDaemonCommand(): Command {
-  const daemon = new Command("daemon").description("Manage the Paseo daemon");
+  const daemon = new Command("daemon").description("Manage the FDE daemon");
 
   daemon.addCommand(startCommand());
   daemon.addCommand(pairCommand());
@@ -30,18 +31,18 @@ export function createDaemonCommand(): Command {
   ).action(withOutput(runDaemonReloadCommand));
 
   addJsonOption(daemon.command("status").description("Show local daemon status"))
-    .option("--home <path>", "Paseo home directory (default: ~/.paseo)")
+    .option("--home <path>", "FDE home directory (default: ~/.fde)")
     .action(withOutput(runStatusCommand));
 
   addJsonOption(daemon.command("stop").description("Stop the local daemon"))
-    .option("--home <path>", "Paseo home directory (default: ~/.paseo)")
+    .option("--home <path>", "FDE home directory (default: ~/.fde)")
     .option("--timeout <seconds>", "Wait timeout before failing (default: 15)")
     .option("--force", "Send SIGKILL if graceful stop times out")
     .option("--kill-timeout <seconds>", "Wait after SIGKILL before failing (default: 3)")
     .action(withOutput(runStopCommand));
 
   addJsonOption(daemon.command("restart").description("Restart the local daemon"))
-    .option("--home <path>", "Paseo home directory (default: ~/.paseo)")
+    .option("--home <path>", "FDE home directory (default: ~/.fde)")
     .option("--timeout <seconds>", "Wait timeout before force step (default: 15)")
     .option("--force", "Send SIGKILL if graceful stop times out")
     .option(
@@ -52,7 +53,7 @@ export function createDaemonCommand(): Command {
     .option("--relay", "Enable relay on restarted daemon")
     .option("--no-relay", "Disable relay on restarted daemon")
     .option("--no-mcp", "Disable Agent MCP on restarted daemon")
-    .option("--no-inject-mcp", "Disable auto-injecting the Paseo MCP into created agents")
+    .option("--no-inject-mcp", "Disable auto-injecting the FDE MCP into created agents")
     .option("--web-ui", "Enable the bundled daemon web UI on restarted daemon")
     .option("--no-web-ui", "Disable the bundled daemon web UI on restarted daemon")
     .option(
@@ -78,7 +79,7 @@ export function createDaemonCommand(): Command {
       .command("claim-status")
       .description("Show whether a device has paired with (claimed) this daemon"),
   )
-    .option("--home <path>", "Paseo home directory (default: ~/.paseo)")
+    .option("--home <path>", "FDE home directory (default: ~/.fde)")
     .action(withOutput(runClaimStatusCommand));
 
   addJsonOption(
@@ -86,15 +87,30 @@ export function createDaemonCommand(): Command {
       .command("reset-claim")
       .description("Forget all paired devices so the next LAN visitor sees the pairing page"),
   )
-    .option("--home <path>", "Paseo home directory (default: ~/.paseo)")
+    .option("--home <path>", "FDE home directory (default: ~/.fde)")
     .action(withOutput(runResetClaimCommand));
+
+  addJsonOption(
+    daemon
+      .command("install-service")
+      .description("Start the FDE daemon automatically when you log in"),
+  )
+    .option("--listen <listen>", "Listen target for the service (default: 127.0.0.1:9999)")
+    .option("--home <path>", "FDE home directory (default: ~/.fde)")
+    .action(withOutput(runInstallServiceCommand));
+
+  addJsonOption(
+    daemon.command("uninstall-service").description("Stop starting the FDE daemon when you log in"),
+  )
+    .option("--home <path>", "FDE home directory (default: ~/.fde)")
+    .action(withOutput(runUninstallServiceCommand));
 
   addJsonOption(
     daemon
       .command("set-password")
       .description("Prompt for and save a hashed daemon password to config.json"),
   )
-    .option("--home <path>", "Paseo home directory (default: ~/.paseo)")
+    .option("--home <path>", "FDE home directory (default: ~/.fde)")
     .action(withOutput(runSetPasswordCommand));
 
   addJsonOption(
@@ -105,7 +121,7 @@ export function createDaemonCommand(): Command {
       )
       .argument("<mode>", "on or off"),
   )
-    .option("--home <path>", "Paseo home directory (default: ~/.paseo)")
+    .option("--home <path>", "FDE home directory (default: ~/.fde)")
     .action(withOutput(runTrustLanCommand));
 
   return daemon;

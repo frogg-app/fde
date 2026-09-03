@@ -13,6 +13,8 @@ import { resolveLocalDaemonState } from "./local-daemon.js";
 import { addJsonOption } from "../../utils/command-options.js";
 import { formatPairingInstructions } from "../../output/pairing.js";
 import { buildPairingDeepLink } from "@fde/protocol/connection-offer";
+import { describeClaimStatus } from "./claim.js";
+import { describeAccessMode, resolveAccessMode, type DaemonAccessMode } from "./readiness.js";
 
 interface PairOptions {
   home?: string;
@@ -22,6 +24,7 @@ interface PairOptions {
 
 export interface PairCommandDependencies {
   resolveOffer: typeof resolveLocalPairingOffer;
+  resolveAccessMode: (home?: string) => Promise<DaemonAccessMode>;
   confirmRelay: typeof confirmRelayPairing;
   printDirectGuidance: typeof printDirectConnectionGuidance;
   isInteractive: () => boolean;
@@ -74,9 +77,26 @@ function createProcessOutput(): PairCommandOutput {
   };
 }
 
+/** `PASEO_PAIRING_QR=0` suppresses the terminal QR (CI, logs, narrow terminals). */
+export function pairingQrEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  const raw = env.PASEO_PAIRING_QR?.trim().toLowerCase();
+  if (raw === undefined || raw === "") return true;
+  return !["0", "false", "no", "off"].includes(raw);
+}
+
+export async function resolveDaemonAccessMode(home?: string): Promise<DaemonAccessMode> {
+  const status = await describeClaimStatus(home);
+  return resolveAccessMode({
+    passwordConfigured: status.passwordConfigured,
+    lanTrusted: status.lanTrusted,
+  });
+}
+
 export function pairCommand(): Command {
-  return addJsonOption(new Command("pair").description("Print the daemon pairing QR code and link"))
-    .option("--home <path>", "Paseo home directory (default: ~/.paseo)")
+  return addJsonOption(
+    new Command("pair").description("Print a fresh pairing link, QR code, and app deep link"),
+  )
+    .option("--home <path>", "FDE home directory (default: ~/.fde)")
     .option("--relay", "Enable relay without prompting")
     .action(async (_options: PairOptions, command: Command) => {
       await runPairCommand(command.optsWithGlobals());
@@ -130,11 +150,11 @@ async function resolveDaemonPairingOffer(
     const serverInfo = client.getLastServerInfoMessage();
     if (serverInfo?.serverId.trim() !== expectedServerId) {
       throw new Error(
-        "The reachable daemon belongs to a different Paseo home. Check --home or the daemon listen configuration.",
+        "The reachable daemon belongs to a different FDE home. Check --home or the daemon listen configuration.",
       );
     }
     if (serverInfo?.features?.daemonStatusRpc !== true) {
-      throw new Error("Update the Paseo daemon before pairing from this command.");
+      throw new Error("Update the FDE daemon before pairing from this command.");
     }
 
     let offer = await client.getDaemonPairingOffer({
@@ -142,7 +162,7 @@ async function resolveDaemonPairingOffer(
     });
     if (!offer.relayEnabled && enableRelay) {
       if (serverInfo.features.relayConfig !== true) {
-        throw new Error("Update the Paseo daemon before enabling relay from this command.");
+        throw new Error("Update the FDE daemon before enabling relay from this command.");
       }
       await client.patchDaemonConfig({ relay: { enabled: true } });
       offer = await client.getDaemonPairingOffer({
@@ -189,7 +209,7 @@ async function resolveDirectClaimOffer(listen: string): Promise<PairingOffer | n
 }
 
 export async function confirmRelayPairing(): Promise<boolean> {
-  log.message("Your connection is end-to-end encrypted. Paseo cannot read your code or messages.");
+  log.message("Your connection is end-to-end encrypted. FDE cannot read your code or messages.");
   log.message(`Learn how it works: ${RELAY_DOCS_URL}`);
   const answer = await confirm({
     message: "Enable relay to pair a device?",
@@ -210,9 +230,10 @@ export async function runPairCommand(
   options: PairOptions,
   dependencyOverrides: Partial<PairCommandDependencies> = {},
 ): Promise<void> {
-  if (options.home) process.env.PASEO_HOME = options.home;
+  if (options.home) process.env.FDE_HOME = options.home;
   const dependencies: PairCommandDependencies = {
     resolveOffer: resolveLocalPairingOffer,
+    resolveAccessMode: resolveDaemonAccessMode,
     confirmRelay: confirmRelayPairing,
     printDirectGuidance: printDirectConnectionGuidance,
     isInteractive: () => Boolean(process.stdin.isTTY && process.stdout.isTTY),
@@ -240,13 +261,19 @@ export async function runPairCommand(
     dependencies.output.success("Relay enabled");
   }
 
-  outputPairingResult(pairing, options, dependencies.output);
+  outputPairingResult(
+    pairing,
+    options,
+    dependencies.output,
+    await dependencies.resolveAccessMode(options.home),
+  );
 }
 
 function outputPairingResult(
   pairing: PairingOffer,
   options: PairOptions,
   output: PairCommandOutput,
+  accessMode: DaemonAccessMode,
 ): void {
   if (!pairing.url) {
     if (options.json) {
@@ -255,12 +282,12 @@ function outputPairingResult(
           code: "RELAY_DISABLED",
           message:
             "Relay pairing is disabled for this daemon and no direct offer is available (is the daemon running on TCP?).",
-          action: "Run paseo daemon pair --relay --json to enable it explicitly.",
+          action: "Run fde daemon pair --relay --json to enable it explicitly.",
         })}\n`,
       );
     } else {
       output.writeStderr(`${chalk.red("Relay pairing is disabled for this daemon.")}\n`);
-      output.writeStderr(`${chalk.yellow("Run paseo daemon pair --relay to enable it.")}\n`);
+      output.writeStderr(`${chalk.yellow("Run fde daemon pair --relay to enable it.")}\n`);
     }
     output.setExitCode(1);
     return;
@@ -272,6 +299,7 @@ function outputPairingResult(
       `${JSON.stringify(
         {
           relayEnabled: pairing.relayEnabled,
+          accessMode,
           mode: pairing.mode ?? (pairing.relayEnabled ? "relay" : "direct"),
           url: pairing.url,
           deepLink,
@@ -292,8 +320,10 @@ function outputPairingResult(
       qr: pairing.qr,
       columns: output.columns,
       deepLink,
+      qrDisabled: !pairingQrEnabled(),
     }),
   );
+  output.writeStdout(`${describeAccessMode(accessMode)}\n`);
   if (pairing.mode === "direct") {
     output.writeStdout(
       `${chalk.dim(`Direct LAN pairing: this daemon has not been claimed yet; the first device to pair becomes its owner. Single-use, expires ${pairing.expiresAt ?? "soon"}. Reachable at ${(pairing.endpoints ?? []).join(", ")}.`)}\n`,

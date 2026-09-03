@@ -16,6 +16,13 @@ describe("hostnames (vite-style)", () => {
     expect(isHostnameAllowed("[::1]:6767", undefined)).toBe(true);
   });
 
+  it("allows the pairing hostname so it can be reverse-proxied to a daemon", () => {
+    expect(isHostnameAllowed("pair.frogg.app", undefined)).toBe(true);
+    expect(isHostnameAllowed("pair.frogg.app:443", undefined)).toBe(true);
+    expect(isHostnameAllowed("PAIR.FROGG.APP", undefined)).toBe(true);
+    expect(isHostnameAllowed("evil.pair.frogg.app", undefined)).toBe(false);
+  });
+
   it("rejects non-default hosts when no allowlist is provided", () => {
     expect(isHostnameAllowed("evil.com:6767", undefined)).toBe(false);
   });

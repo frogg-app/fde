@@ -315,7 +315,7 @@ describe("paseo daemon bootstrap", () => {
       ).rejects.toThrow(/disabled/i);
       expect((await client.getDaemonStatus()).relay?.enabled).toBe(true);
       expect((await client.getDaemonPairingOffer()).url).toContain(
-        "https://after.example.test/#offer=",
+        "https://after.example.test/code/",
       );
     } finally {
       configureGitProcessPolicy(DEFAULT_GIT_PROCESS_POLICY);
@@ -939,7 +939,7 @@ export default function contribute(plugin: unknown) {
           includeQr: false,
         });
         expect(pairing.relayEnabled).toBe(true);
-        expect(pairing.url?.startsWith("https://app.paseo.sh/#offer=")).toBe(true);
+        expect(pairing.url?.startsWith("https://app.paseo.sh/code/")).toBe(true);
       } finally {
         await daemon.stop().catch(() => undefined);
         await daemon.agentManager.flush().catch(() => undefined);

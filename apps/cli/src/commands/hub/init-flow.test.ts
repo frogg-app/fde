@@ -43,13 +43,13 @@ describe("Hub guided setup continuation", () => {
     );
 
     assert.deepEqual(prompts.confirmations, [
-      "Connect this daemon to Paseo Hub?\n\nConnecting lets Hub identify this daemon and show whether it is online.\nIt does not allow Hub to create workspaces or run agents.",
+      "Connect this daemon to FDE Hub?\n\nConnecting lets Hub identify this daemon and show whether it is online.\nIt does not allow Hub to create workspaces or run agents.",
       "Allow Hub automations to run agents on this daemon?\n\nThis lets workflows triggered from GitHub, Slack, Discord, Linear, and other integrations create workspaces and run agents here.\n\nAgents can access files and run commands allowed by their workspace runtime.",
     ]);
     assert.deepEqual(prompts.selections, []);
     assert.deepEqual(prompts.messages, [
-      "Daemon connected with no permissions.\n\nEnable Hub automations later:\n  paseo hub permissions grant hub.execute",
-      "Configure triggers in Hub: https://hub.test/triggers\nOr scaffold triggers as code: paseo hub init",
+      "Daemon connected with no permissions.\n\nEnable Hub automations later:\n  fde hub permissions grant hub.execute",
+      "Configure triggers in Hub: https://hub.test/triggers\nOr scaffold triggers as code: fde hub init",
     ]);
     assert.deepEqual(calls, [{ operation: "token", origin: "https://hub.test" }]);
     assert.equal(daemon.connections, 1);
@@ -69,8 +69,8 @@ describe("Hub guided setup continuation", () => {
       setupEnvironment(cwd, credentials, daemon, connectDeclined, []),
     );
     assert.deepEqual(connectDeclined.messages, [
-      "Skipped daemon connection. Connect later with: paseo hub connect https://hub.test",
-      "Configure triggers in Hub: https://hub.test/triggers\nOr scaffold triggers as code: paseo hub init",
+      "Skipped daemon connection. Connect later with: fde hub connect https://hub.test",
+      "Configure triggers in Hub: https://hub.test/triggers\nOr scaffold triggers as code: fde hub init",
     ]);
   });
 
@@ -90,7 +90,7 @@ describe("Hub guided setup continuation", () => {
     assert.deepEqual(prompts.confirmations, []);
     assert.deepEqual(prompts.messages, [
       "This daemon is already connected to https://hub.test. Permissions: None.",
-      "Configure triggers in Hub: https://hub.test/triggers\nOr scaffold triggers as code: paseo hub init",
+      "Configure triggers in Hub: https://hub.test/triggers\nOr scaffold triggers as code: fde hub init",
     ]);
   });
 
@@ -120,8 +120,8 @@ describe("Hub guided setup continuation", () => {
     );
 
     assert.deepEqual(prompts.messages, [
-      "Skipped daemon connection. Connect later with: paseo hub connect https://hub.test",
-      "Configure triggers in Hub: https://hub.test/triggers\nOr scaffold triggers as code: paseo hub init",
+      "Skipped daemon connection. Connect later with: fde hub connect https://hub.test",
+      "Configure triggers in Hub: https://hub.test/triggers\nOr scaffold triggers as code: fde hub init",
     ]);
   });
 

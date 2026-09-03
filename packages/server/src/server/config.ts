@@ -31,6 +31,27 @@ import type { DaemonAutoUpdateConfig } from "@fde/protocol/messages";
 const DEFAULT_PORT = 9999;
 const DEFAULT_RELAY_ENDPOINT = "relay.paseo.sh:443";
 const DEFAULT_APP_BASE_URL = DEFAULT_PAIRING_BASE_URL;
+/**
+ * Bases written into config.json by earlier releases as *their* default. A home
+ * carrying one of these is not expressing a preference, so the current default
+ * wins; anything else the owner typed is honoured.
+ */
+const SUPERSEDED_APP_BASE_URLS = new Set(["https://frogg.app/pair", "https://app.paseo.sh"]);
+
+export function resolvePairingBaseUrl(app: {
+  pairingBaseUrl?: string;
+  baseUrl?: string;
+}): string | undefined {
+  for (const candidate of [app.pairingBaseUrl, app.baseUrl]) {
+    const trimmed = candidate?.trim().replace(/\/+$/, "");
+    if (trimmed && !SUPERSEDED_APP_BASE_URLS.has(trimmed)) return trimmed;
+  }
+  return undefined;
+}
+
+function resolvePersistedPairingBaseUrl(persisted: PersistedConfig): string | undefined {
+  return resolvePairingBaseUrl(persisted.app ?? {});
+}
 const DEFAULT_TRUSTED_PROXIES = ["loopback"];
 
 interface ResolveBundledWebUiDistDirInput {
@@ -566,7 +587,11 @@ function resolveStaticLoadConfigSettings(
     ]),
     trustedProxies: resolveTrustedProxiesConfig(env, persisted),
     trustLan: resolveTrustLanConfig(env, persisted),
-    appBaseUrl: env.PASEO_APP_BASE_URL ?? persisted.app?.baseUrl ?? DEFAULT_APP_BASE_URL,
+    appBaseUrl:
+      env.FDE_PAIRING_BASE_URL ??
+      env.PASEO_APP_BASE_URL ??
+      resolvePersistedPairingBaseUrl(persisted) ??
+      DEFAULT_APP_BASE_URL,
   };
 }
 
@@ -747,7 +772,9 @@ function resolveCoreDaemonOverridePaths(
   ) {
     paths.push("daemon.git.maxProcessConcurrency");
   }
-  if (env.PASEO_APP_BASE_URL !== undefined) paths.push("app.baseUrl");
+  if (env.FDE_PAIRING_BASE_URL !== undefined || env.PASEO_APP_BASE_URL !== undefined) {
+    paths.push("app.baseUrl", "app.pairingBaseUrl");
+  }
   if (env.PASEO_PASSWORD?.trim()) paths.push("daemon.auth.password");
   return paths;
 }

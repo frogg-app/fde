@@ -3880,7 +3880,7 @@ export class CodexAppServerAgentSession implements AgentSession {
         }
         const response = await this.client.request("thread/resume", params);
         this.rememberResolvedSandboxPolicy(response);
-        this.logger.info({ threadId }, "Unarchived Codex thread to restore active Paseo agent");
+        this.logger.info({ threadId }, "Unarchived Codex thread to restore active FDE agent");
         return;
       }
       this.logger.warn({ error, threadId }, "Failed to resume persisted Codex thread");

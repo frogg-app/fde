@@ -46,7 +46,7 @@ class FakeDaemonRuntime implements DaemonLaunchRuntime {
   }
 
   resolveHome(env: NodeJS.ProcessEnv): string {
-    return env.PASEO_HOME ?? "/tmp/paseo";
+    return env.FDE_HOME ?? env.PASEO_HOME ?? "/tmp/paseo";
   }
 
   spawnDetached(

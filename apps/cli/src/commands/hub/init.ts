@@ -117,7 +117,7 @@ export async function runHubGuidedSetup(
   state: HubGuidedSetupState = {},
 ): Promise<void> {
   requireInteractiveTerminal(environment);
-  intro("Set up Paseo Hub");
+  intro("Set up FDE Hub");
 
   const cwd = environment.cwd();
   const activeLogin = environment.credentials.active();
@@ -179,7 +179,7 @@ export async function runHubGuidedSetup(
     });
     log.success("Deployed");
   } else {
-    reportMessage(environment, `Skipped deployment. Run: paseo hub deploy -p ${project.slug}`);
+    reportMessage(environment, `Skipped deployment. Run: fde hub deploy -p ${project.slug}`);
   }
 
   const activityUrl = new URL(`/projects/${project.slug}/activity`, origin).toString();
@@ -212,7 +212,7 @@ export async function continueHubGuidedSetup(
   } else if (
     await requiredConfirm(
       environment,
-      "Connect this daemon to Paseo Hub?\n\nConnecting lets Hub identify this daemon and show whether it is online.\nIt does not allow Hub to create workspaces or run agents.",
+      "Connect this daemon to FDE Hub?\n\nConnecting lets Hub identify this daemon and show whether it is online.\nIt does not allow Hub to create workspaces or run agents.",
       true,
     )
   ) {
@@ -225,7 +225,7 @@ export async function continueHubGuidedSetup(
     if (!grantExecution) {
       reportMessage(
         environment,
-        "Daemon connected with no permissions.\n\nEnable Hub automations later:\n  paseo hub permissions grant hub.execute",
+        "Daemon connected with no permissions.\n\nEnable Hub automations later:\n  fde hub permissions grant hub.execute",
       );
     }
   } else {
@@ -297,7 +297,7 @@ async function ensureDaemonConnection(
     if (permissions.includes("hub.execute") && !status.permissions.includes("hub.execute")) {
       throw new HubCommandError(
         "HUB_DAEMON_EXECUTION_NOT_ALLOWED",
-        "This daemon is connected to Hub but cannot run Hub automations. Run `paseo hub permissions grant hub.execute`, then run Hub init again.",
+        "This daemon is connected to Hub but cannot run Hub automations. Run `fde hub permissions grant hub.execute`, then run Hub init again.",
       );
     }
     return connection.daemonId;
@@ -369,7 +369,7 @@ async function waitForDaemonReady(
         if (Date.now() >= deadline) {
           throw new HubCommandError(
             "HUB_DAEMON_CONNECTION_TIMEOUT",
-            "The daemon did not connect within 60 seconds. Check `paseo hub status`, then run Hub init again.",
+            "The daemon did not connect within 60 seconds. Check `fde hub status`, then run Hub init again.",
           );
         }
         reporter.progress(`Daemon is ${resolution.state}`);
@@ -395,7 +395,7 @@ async function chooseProject(
   const resolution = resolveHubInitProjects(result.data.projects);
   if (resolution.kind === "none") {
     throw new HubInitCancelledError(
-      `No Hub projects exist yet. Create one at ${new URL("/projects/new", origin).toString()}, then run paseo hub init again.`,
+      `No Hub projects exist yet. Create one at ${new URL("/projects/new", origin).toString()}, then run fde hub init again.`,
     );
   }
   if (resolution.kind === "selected") {
@@ -428,7 +428,7 @@ async function resolveStarterTriggerConnections(
   const connections = availableStarterTriggerConnections(resources, repository);
   if (connections.length === 0) {
     throw new HubInitCancelledError(
-      "No Hub app connection is ready for this workflow.\nConnect GitHub, Slack, or Discord in Hub → Apps, then run `paseo hub init` again.",
+      "No Hub app connection is ready for this workflow.\nConnect GitHub, Slack, or Discord in Hub → Apps, then run `fde hub init` again.",
     );
   }
   return connections;
@@ -438,7 +438,7 @@ function reportStarterTriggerConnections(
   environment: HubGuidedSetupEnvironment,
   connections: readonly HubStarterTriggerConnection[],
 ): void {
-  const details = `${connections.map(({ label }) => label).join("\n")}\n\nOnly configured connections are shown. To add another, open Hub → Apps, then run \`paseo hub init\` again.`;
+  const details = `${connections.map(({ label }) => label).join("\n")}\n\nOnly configured connections are shown. To add another, open Hub → Apps, then run \`fde hub init\` again.`;
   if (environment.prompts === undefined) {
     note(details, "Hub app connections ready for this workflow");
     return;
@@ -463,7 +463,7 @@ async function chooseStarterTriggerConnection(
   if (connection === undefined) {
     throw new HubCommandError(
       "HUB_PROVIDER_CONNECTION_INVALID",
-      "The selected Hub app connection is no longer available. Run paseo hub init again.",
+      "The selected Hub app connection is no longer available. Run fde hub init again.",
     );
   }
   return connection;
@@ -481,7 +481,7 @@ async function chooseStarterAgentRuntime(
   if (runtime === undefined) {
     throw new HubCommandError(
       "HUB_AGENT_RUNTIME_SELECTION_INVALID",
-      "The selected starter agent runtime is no longer available. Run paseo hub init again.",
+      "The selected starter agent runtime is no longer available. Run fde hub init again.",
     );
   }
   return runtime;
@@ -501,13 +501,13 @@ async function waitForStarterAgentProviders(
         if (state.kind === "unavailable") {
           throw new HubCommandError(
             "HUB_AGENT_RUNTIME_REQUIRED",
-            "No usable agent runtime is available from this daemon. Configure an enabled provider with a selectable model, then run paseo hub init again.",
+            "No usable agent runtime is available from this daemon. Configure an enabled provider with a selectable model, then run fde hub init again.",
           );
         }
         if (Date.now() >= deadline) {
           throw new HubCommandError(
             "HUB_AGENT_RUNTIME_TIMEOUT",
-            "Agent runtime discovery did not finish within 60 seconds. Check the daemon's provider configuration, then run paseo hub init again.",
+            "Agent runtime discovery did not finish within 60 seconds. Check the daemon's provider configuration, then run fde hub init again.",
           );
         }
         reporter.progress("Waiting for agent runtime discovery");
@@ -573,7 +573,7 @@ async function chooseStarterAgentMode(
 function invalidStarterAgentSelection(): HubCommandError {
   return new HubCommandError(
     "HUB_AGENT_RUNTIME_SELECTION_INVALID",
-    "The selected starter agent runtime is no longer available. Run paseo hub init again.",
+    "The selected starter agent runtime is no longer available. Run fde hub init again.",
   );
 }
 
@@ -807,7 +807,7 @@ async function requiredSelect<T extends string>(
 
 function requireInteractiveTerminal(environment: HubGuidedSetupEnvironment): void {
   if (!(environment.isInteractive?.() ?? (process.stdin.isTTY && process.stdout.isTTY))) {
-    throw new HubCommandError("HUB_INIT_INTERACTIVE_REQUIRED", "paseo hub init requires a TTY.");
+    throw new HubCommandError("HUB_INIT_INTERACTIVE_REQUIRED", "fde hub init requires a TTY.");
   }
 }
 

@@ -1,7 +1,7 @@
 import type { Logger } from "pino";
 
 import { DEFAULT_PAIRING_BASE_URL } from "@fde/protocol/connection-offer";
-import { createConnectionOfferV2, encodeOfferToFragmentUrl } from "./connection-offer.js";
+import { createConnectionOfferV2, encodeOfferToPairingUrl } from "./connection-offer.js";
 import { loadOrCreateDaemonKeyPair } from "./daemon-keypair.js";
 import { renderPairingQr } from "./pairing-qr.js";
 import { getOrCreateServerId } from "./server-id.js";
@@ -44,7 +44,7 @@ export async function generateLocalPairingOffer(args: {
     daemonPublicKeyB64: daemonKeyPair.publicKeyB64,
     relay: { endpoint: relayPublicEndpoint, useTls: relayPublicUseTls },
   });
-  const url = encodeOfferToFragmentUrl({ offer, appBaseUrl });
+  const url = encodeOfferToPairingUrl({ offer, appBaseUrl });
 
   if (args.includeQr === false) {
     return {
