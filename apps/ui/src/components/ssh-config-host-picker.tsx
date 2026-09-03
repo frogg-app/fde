@@ -169,7 +169,7 @@ export function SshConfigHostPicker({
           accessibilityLabel={t("pairing.remoteSsh.fields.daemonPort")}
           initialValue={daemonPortText}
           onChangeText={onDaemonPortChange}
-          placeholder="6767"
+          placeholder="9999"
           keyboardType="number-pad"
           autoCapitalize="none"
           autoCorrect={false}

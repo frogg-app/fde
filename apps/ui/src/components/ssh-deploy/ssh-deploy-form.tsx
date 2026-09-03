@@ -87,7 +87,7 @@ export function SshDeployForm({
           accessibilityLabel={t("settings.host.sshDeploy.fields.listen")}
           initialValue={initialListen}
           onChangeText={onListenChange}
-          placeholder="127.0.0.1:6767"
+          placeholder="127.0.0.1:9999"
           autoCapitalize="none"
           autoCorrect={false}
           editable={!disabled}

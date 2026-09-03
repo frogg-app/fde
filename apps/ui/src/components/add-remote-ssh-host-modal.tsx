@@ -223,7 +223,7 @@ export function AddRemoteSshHostModal({
           accessibilityLabel={t("pairing.remoteSsh.fields.target")}
           initialValue={manualTargetRef.current}
           onChangeText={handleManualTargetChange}
-          placeholder="ssh://user@host[:port][?daemonPort=6767]"
+          placeholder="ssh://user@host[:port][?daemonPort=9999]"
           autoCapitalize="none"
           autoCorrect={false}
           editable={!isSaving}

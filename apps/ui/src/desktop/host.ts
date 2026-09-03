@@ -168,6 +168,18 @@ export interface DesktopBrowserBridge {
   copyElement?: (payload: { text?: string; imageDataUrl?: string }) => Promise<boolean>;
 }
 
+/**
+ * Network facts only the shell can know. Every member is optional: the UI's
+ * local-network scan (`src/network-scan/`) falls back to the page host and the
+ * common private subnets when the shell offers nothing.
+ */
+export interface DesktopNetworkBridge {
+  /** IPv4 addresses of this machine's non-loopback interfaces, e.g. `["192.168.1.23"]`. */
+  localAddresses?: () => Promise<string[]>;
+  /** Reverse DNS for an IPv4 address; resolves null when nothing answers. */
+  reverseLookup?: (ip: string) => Promise<string | null>;
+}
+
 export interface DesktopInvokeBridge {
   invoke?: (command: string, args?: Record<string, unknown>) => Promise<unknown>;
 }
@@ -187,6 +199,7 @@ export interface DesktopHostBridge {
   webUtils?: DesktopWebUtilsBridge;
   menu?: DesktopMenuBridge;
   browser?: DesktopBrowserBridge;
+  network?: DesktopNetworkBridge;
 }
 
 declare global {

@@ -233,7 +233,7 @@ async function startRestartDaemon(input: {
   origin: string;
 }): Promise<StartedDaemon> {
   const port = await getAvailablePort();
-  if (port === 6767 || String(port) === process.env.E2E_DAEMON_PORT) {
+  if (port === 9999 || port === 6767 || String(port) === process.env.E2E_DAEMON_PORT) {
     return startRestartDaemon(input);
   }
 
@@ -302,9 +302,9 @@ function loadAppVersion(): string {
 }
 
 async function seedBrowserForDaemon(page: Page, input: { serverId: string; port: number }) {
-  await page.route(/:(6767)\b/, (route) => route.abort());
-  await page.routeWebSocket(/:(6767)\b/, async (ws) => {
-    await ws.close({ code: 1008, reason: "Blocked connection to localhost:6767 during e2e." });
+  await page.route(/:(9999|6767)\b/, (route) => route.abort());
+  await page.routeWebSocket(/:(9999|6767)\b/, async (ws) => {
+    await ws.close({ code: 1008, reason: "Blocked connection to localhost:9999 during e2e." });
   });
   await page.route(
     "**/*",

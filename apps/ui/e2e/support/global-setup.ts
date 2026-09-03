@@ -16,7 +16,8 @@ export interface WaitForServerOptions {
 type ServerProbe = (host: string, port: number) => Promise<void>;
 
 const RESERVED_LOCAL_PORTS = new Set([
-  6767, // Developer daemon.
+  9999, // Developer daemon.
+  6767, // Legacy developer daemon port.
   61680, // OpenCode's default local server.
 ]);
 
