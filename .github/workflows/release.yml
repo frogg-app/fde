@@ -246,7 +246,10 @@ jobs:
           workspaces: apps/desktop/src-tauri
           # A shared key (not `key:`) so a tag build restores the cache CI already warmed on
           # main. Without it every release compiled the Tauri dependency tree from scratch.
-          shared-key: desktop-${{ matrix.target }}
+          # The runner image is part of the key: rust-cache only distinguishes `runner.os`,
+          # so a cache warmed on ubuntu-latest (glibc 2.39) would poison this 22.04 job with
+          # build scripts it cannot execute.
+          shared-key: desktop-${{ matrix.target }}-${{ matrix.runner }}
 
       - name: Install dependencies
         run: node scripts/ci/npm-retry.mjs ci
