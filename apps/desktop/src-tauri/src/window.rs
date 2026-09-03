@@ -45,6 +45,9 @@ pub fn create_main_window(app: &App) -> tauri::Result<()> {
         .inner_size(1280.0, 820.0)
         .min_inner_size(640.0, 480.0)
         .decorations(native_decorations)
+        // The app's dark surface colour (theme.ts surface0) so the window never flashes
+        // white while the webview is still loading.
+        .background_color(tauri::window::Color(24, 27, 26, 255))
         .initialization_script(script);
 
     #[cfg(target_os = "macos")]
