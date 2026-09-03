@@ -49,6 +49,8 @@ futures-util = { version = "0.3", default-features = false, features = ["sink", 
 # Sidecar daemon bundle: download, verify, extract (src/sidecar/).
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "stream"] }
 sha2 = "0.10"
+# App updates from GitHub releases (src/updates/).
+semver = "1"
 flate2 = "1"
 tar = "0.4"
 zip = { version = "4", default-features = false, features = ["deflate"] }

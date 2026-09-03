@@ -11,6 +11,7 @@ mod launch;
 mod sidecar;
 mod ssh_config;
 mod transport;
+mod updates;
 mod window;
 
 use tauri::webview::PageLoadEvent;
@@ -49,6 +50,7 @@ pub fn run() {
             }
             log::info!("FDE {} starting", app.package_info().version);
             commands::register_state(app)?;
+            updates::register(app)?;
             window::create_main_window(app)?;
             launch::register_deep_link_handler(app.handle())?;
             Ok(())
