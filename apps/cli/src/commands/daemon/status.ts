@@ -5,6 +5,7 @@ import { connectToDaemon } from "../../utils/client.js";
 import type { CommandOptions, ListResult, OutputSchema } from "../../output/index.js";
 import { resolveLocalDaemonState } from "./local-daemon.js";
 import { resolveNodePathFromPid } from "./runtime-toolchain.js";
+import { resolveLanTrusted } from "./trust-lan.js";
 
 const DAEMON_STATUS_PROBE_TIMEOUT_MS = 1500;
 
@@ -32,6 +33,8 @@ interface DaemonStatus {
   cliVersion: string;
   daemonVersion: string | null;
   desktopManaged: boolean;
+  /** daemon.auth.trustLan: private-network clients connect without pairing or a password. */
+  lanTrusted: boolean;
   providers: ProviderBinaryStatus[];
   note?: string;
 }
@@ -129,6 +132,7 @@ function toStatusRows(status: DaemonStatus): StatusRow[] {
     { key: "CLI Node", value: status.cliNode },
     { key: "CLI", value: status.cliVersion },
     { key: "Daemon Version", value: status.daemonVersion ?? "-" },
+    { key: "LAN Trusted", value: String(status.lanTrusted) },
   ];
 
   if (status.note) {
@@ -434,6 +438,11 @@ export async function runStatusCommand(
   }
 
   const providers = daemonProviders ?? (await checkProviderBinaries());
+  const lanTrusted = await resolveLanTrusted({
+    home,
+    running: localDaemon === "running",
+    listen: daemonTarget,
+  });
 
   const daemonStatus: DaemonStatus = {
     serverId,
@@ -452,6 +461,7 @@ export async function runStatusCommand(
     cliVersion,
     daemonVersion,
     desktopManaged: state.pidInfo?.desktopManaged === true,
+    lanTrusted,
     providers,
     note,
   };

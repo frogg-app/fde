@@ -4,6 +4,7 @@ import { runStatusCommand } from "./status.js";
 import { runStopCommand } from "./stop.js";
 import { runRestartCommand } from "./restart.js";
 import { runSetPasswordCommand } from "./set-password.js";
+import { runTrustLanCommand } from "./trust-lan.js";
 import { pairCommand } from "./pair.js";
 import { runDaemonReloadCommand } from "./reload.js";
 import { runClaimStatusCommand, runResetClaimCommand } from "./claim.js";
@@ -93,6 +94,17 @@ export function createDaemonCommand(): Command {
   )
     .option("--home <path>", "Paseo home directory (default: ~/.paseo)")
     .action(withOutput(runSetPasswordCommand));
+
+  addJsonOption(
+    daemon
+      .command("trust-lan")
+      .description(
+        "on: private-network clients connect without pairing or a password (default); off: they must pair",
+      )
+      .argument("<mode>", "on or off"),
+  )
+    .option("--home <path>", "Paseo home directory (default: ~/.paseo)")
+    .action(withOutput(runTrustLanCommand));
 
   return daemon;
 }
