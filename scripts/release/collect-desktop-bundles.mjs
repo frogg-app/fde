@@ -14,7 +14,15 @@
 //        --arch x86_64|aarch64 [--release-dir apps/desktop/src-tauri/target/release]
 //        [--out-dir release-assets] [--version 1.2.3]
 
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
@@ -107,7 +115,13 @@ export function collectDesktopBundles({ platform, arch, version, releaseDir, out
   }
   mkdirSync(outDir, { recursive: true });
   for (const { from, to } of renames) {
-    copyFileSync(path.join(releaseDir, from), path.join(outDir, to));
+    const target = path.join(outDir, to);
+    copyFileSync(path.join(releaseDir, from), target);
+    // `sha256sum`-style sidecar so the in-app updater can verify what it downloads.
+    if (!to.endsWith(".sig") && !to.endsWith(".sha256")) {
+      const digest = createHash("sha256").update(readFileSync(target)).digest("hex");
+      writeFileSync(`${target}.sha256`, `${digest}  ${to}\n`);
+    }
   }
   return renames;
 }
