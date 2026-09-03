@@ -33,8 +33,7 @@
     "windows": {
       "nsis": {
         "installMode": "currentUser"
-      },
-      "signCommand": "powershell -NoProfile -ExecutionPolicy Bypass -File ../../scripts/release/sign-windows.ps1 %1"
+      }
     },
     "macOS": {
       "minimumSystemVersion": "10.15",

@@ -243,6 +243,11 @@ jobs:
             echo '{"bundle":{"createUpdaterArtifacts":true}}' > "$RUNNER_TEMP/updater-config.json"
             args+=(--config "$RUNNER_TEMP/updater-config.json")
           fi
+          if [ "$RUNNER_OS" = "Windows" ] && [ -n "$TRUSTED_SIGNING_ACCOUNT" ]; then
+            # Azure Trusted Signing via scripts/release/sign-windows.ps1 (Windows runners only).
+            echo '{"bundle":{"windows":{"signCommand":"powershell -NoProfile -ExecutionPolicy Bypass -File ../../scripts/release/sign-windows.ps1 %1"}}}' > "$RUNNER_TEMP/sign-config.json"
+            args+=(--config "$RUNNER_TEMP/sign-config.json")
+          fi
           npx --yes @tauri-apps/cli@^2 "${args[@]}"
 
       - name: Package portable Windows zip
