@@ -427,6 +427,7 @@ jobs:
         run: >-
           node scripts/release/build-android-apk.mjs
           --abi ${{ matrix.abi }}
+          --workers 2
           --out-dir release-assets
 
       - name: Upload to GitHub release
