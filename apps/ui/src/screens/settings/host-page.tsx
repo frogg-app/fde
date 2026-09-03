@@ -56,6 +56,7 @@ import { ProvidersSection } from "@/screens/settings/providers-section";
 import { ProviderUsageSettingsSection } from "@/provider-usage/settings-section";
 import { useProviderUsage } from "@/provider-usage/use-provider-usage";
 import { HostAppearanceSection } from "@/screens/settings/host-appearance-section";
+import { HostDaemonUpdateSection } from "@/screens/settings/host-daemon-update-section";
 import { HostSshDeploySection } from "@/screens/settings/host-ssh-deploy-section";
 import { SettingsSection } from "@/screens/settings/settings-section";
 import { useSessionStore } from "@/stores/session-store";
@@ -373,6 +374,9 @@ export function HostSettingsPage({
       {isLocalDaemon ? <LocalDaemonSection /> : null}
 
       {!isLocalDaemon ? <UpdateDaemonCard key={host.serverId} host={host} /> : null}
+
+      {/* Any transport: the daemon itself reports whether it can self-update. */}
+      <HostDaemonUpdateSection key={`self-update-${host.serverId}`} host={host} />
 
       {!isLocalDaemon ? <HostSshDeploySection key={`deploy-${host.serverId}`} host={host} /> : null}
 
