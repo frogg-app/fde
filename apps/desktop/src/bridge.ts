@@ -171,6 +171,32 @@ function createNotificationBridge(): NonNullable<DesktopHostBridge["notification
   };
 }
 
+interface LocalAddressEntry {
+  ip?: string;
+  prefixLength?: number;
+}
+
+function createNetworkBridge(): NonNullable<DesktopHostBridge["network"]> {
+  return {
+    localAddresses: async () => {
+      const entries = (await invoke("desktop_invoke", {
+        command: "network_local_addresses",
+        args: {},
+      })) as LocalAddressEntry[];
+      return (Array.isArray(entries) ? entries : [])
+        .filter((entry) => typeof entry?.ip === "string" && typeof entry.prefixLength === "number")
+        .map((entry) => `${entry.ip}/${entry.prefixLength}`);
+    },
+    reverseLookup: async (ip: string) => {
+      const name = await invoke("desktop_invoke", {
+        command: "network_reverse_lookup",
+        args: { ip },
+      });
+      return typeof name === "string" && name.length > 0 ? name : null;
+    },
+  };
+}
+
 function createBridge(): DesktopHostBridge {
   const platform = toElectronPlatform();
   return {
@@ -215,6 +241,7 @@ function createBridge(): DesktopHostBridge {
         return match;
       },
     },
+    network: createNetworkBridge(),
   };
 }
 

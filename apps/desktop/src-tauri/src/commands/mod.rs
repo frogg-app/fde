@@ -17,8 +17,9 @@ use crate::app_log;
 use crate::deep_link::AgentDeepLinkTarget;
 use crate::deploy::{self, DeployManager};
 use crate::launch::LaunchState;
+use crate::network;
 use crate::ssh_config;
-use crate::transport::{EventSink, TransportManager};
+use crate::transport::{ssh_auth, EventSink, TransportManager};
 
 const TRANSPORT_EVENT: &str = "paseo:event:local-daemon-transport-event";
 
@@ -26,6 +27,10 @@ const TRANSPORT_EVENT: &str = "paseo:event:local-daemon-transport-event";
 pub fn register_state(app: &App) -> tauri::Result<()> {
     let config_dir = app.path().app_config_dir()?;
     let data_dir = app.path().app_data_dir()?;
+    // The ssh askpass helper lives in the app cache dir (see `ssh_auth`).
+    if let Ok(cache_dir) = app.path().app_cache_dir() {
+        ssh_auth::configure_helper_dir(cache_dir.join("ssh-askpass"));
+    }
     app.manage(settings::SettingsStore::new(config_dir));
     app.manage(attachments::AttachmentStore::new(
         data_dir.join(attachments::DIRNAME),
@@ -82,6 +87,8 @@ pub async fn desktop_invoke(
         "send_local_daemon_transport_message" => app.state::<TransportManager>().send(&args).await,
         "close_local_daemon_transport" => app.state::<TransportManager>().close(&args),
         "list_ssh_config_hosts" => ssh_config::list_ssh_config_hosts(&app),
+        "network_local_addresses" => network::local_addresses(),
+        "network_reverse_lookup" => network::reverse_lookup(&args).await,
         "ssh_deploy_probe" => app.state::<DeployManager>().probe(&args).await,
         "ssh_deploy_start" => app
             .state::<DeployManager>()

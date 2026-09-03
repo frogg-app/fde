@@ -172,6 +172,17 @@ export interface DesktopInvokeBridge {
   invoke?: (command: string, args?: Record<string, unknown>) => Promise<unknown>;
 }
 
+/**
+ * Host-side network facts for the LAN scanner. `localAddresses` resolves to
+ * this machine's IPv4 addresses in CIDR form (`192.168.1.20/24`), interfaces
+ * that are up only, minus loopback and link-local. `reverseLookup` resolves
+ * to the PTR name of an address or `null` (the shell caps it at 1 s).
+ */
+export interface DesktopNetworkBridge {
+  localAddresses: () => Promise<string[]>;
+  reverseLookup?: (ip: string) => Promise<string | null>;
+}
+
 export interface DesktopHostBridge {
   platform?: string;
   windowChromeMode?: string;
@@ -187,6 +198,7 @@ export interface DesktopHostBridge {
   webUtils?: DesktopWebUtilsBridge;
   menu?: DesktopMenuBridge;
   browser?: DesktopBrowserBridge;
+  network?: DesktopNetworkBridge;
 }
 
 declare global {
