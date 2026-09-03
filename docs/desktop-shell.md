@@ -65,7 +65,8 @@ Implemented in Rust under `apps/desktop/src-tauri/src/commands/`:
 - `get_desktop_settings`, `patch_desktop_settings`, `migrate_legacy_desktop_settings`: JSON
   file (`desktop-settings.json`) in the app config dir, same document shape and coercion as
   Electron. `daemon.manageBuiltInDaemon` defaults to `false` until the sidecar exists.
-- `desktop_get_runtime_info`: `{appVersion, runningUnderARM64Translation:false}`.
+- `desktop_get_runtime_info`: `{appVersion, runningUnderARM64Translation:false, updateStrategy}`
+  (`updateStrategy` is `"tauri-signed"` or `"github-release"`, see Updates below).
 - `local_daemon_bundle_status`, `install_local_daemon_bundle {version?}`: the sidecar bundle
   store (see Local sidecar daemon below).
 - `desktop_daemon_status`, `start_desktop_daemon`, `stop_desktop_daemon {reason}`,
@@ -94,7 +95,8 @@ Implemented in Rust under `apps/desktop/src-tauri/src/commands/`:
   `read_file_base64`, `delete_attachment_file`, `garbage_collect_attachment_files`: managed
   attachment storage in the app data dir. Same argument and return shapes as Electron.
 - `desktop_get_system_idle_time`: returns 0 until an idle plugin is added.
-- `check_app_update`, `install_app_update`: `tauri-plugin-updater`.
+- `check_app_update {intent?, releaseChannel?}`, `install_app_update {releaseChannel?}`: see
+  Updates below (`src/updates/`).
 
 Everything else throws `Unknown desktop command`.
 
@@ -396,8 +398,85 @@ plus `windowsHide` in `spawnProcess`) survives the CLI exiting; that `paseo.pid`
   which points `devUrl` at Metro.
 - Release: `npm run build:ui` then `cargo tauri build`. Windows from this Linux VM:
   `cargo tauri build --runner cargo-xwin --target x86_64-pc-windows-msvc`, NSIS bundle.
-- Updater: `tauri-plugin-updater` reads a static `latest.json` from GitHub releases. Paseo's
+- Updater: see Updates. With a signing key, `tauri-plugin-updater` reads `latest.json` from
+  the GitHub release; without one the shell updates from the release assets directly. Paseo's
   rollout-stamping scripts do not apply and were dropped.
+
+## Updates
+
+The shell updates itself without depending on the Tauri updater signing key (which does not
+exist yet, see ROADMAP), and switches to the signed updater on its own once the key does.
+Everything lives in `apps/desktop/src-tauri/src/updates/`.
+
+**Strategy.** `updates::strategy()` returns `tauri-signed` when `plugins.updater.pubkey` in
+`tauri.conf.json` is a real key (not the `REPLACE_WITH_MINISIGN_PUBLIC_KEY` placeholder) and
+`endpoints` is non-empty, else `github-release`. It is reported as `updateStrategy` in
+`desktop_get_runtime_info` and in every check result. On `tauri-signed` the check and install go
+through `tauri-plugin-updater` (`signed.rs`); if that fails (the release has no `latest.json`, a
+signature does not verify) the shell logs it and falls back to the GitHub path for that call.
+
+**Detection** (`github.rs`, `release.rs`, `check.rs`). `check_app_update` GETs
+`https://api.github.com/repos/frogg-app/frogg-de/releases?per_page=30` with
+`Accept: application/vnd.github+json` and `User-Agent: FDE/<version>`. `FDE_GITHUB_TOKEN`
+(optional) is sent as a bearer token for private repositories and higher rate limits; it is
+never logged. The newest non-draft release whose tag parses as semver above the running version
+wins. The desktop settings' `releaseChannel` decides whether prerelease tags (`1.2.0-beta.1`)
+count: `stable` skips them, `beta` allows them. GitHub's own `prerelease` flag is ignored because
+`release.yml` marks every `0.x` version pre-release. The result is Electron's
+`AppUpdateCheckResult` (`hasUpdate`, `readyToInstall`, `currentVersion`, `latestVersion`,
+`body`, `date`, `errorMessage`) plus `notes` (release body markdown), `assets` (`name`, `size`,
+`url`), `asset`/`checksumAsset` (the ones this platform installs), `installKind`, `releaseUrl`,
+`strategy`, `channel` and `checkedAt`. Network and parse errors come back in `errorMessage`
+rather than as a rejected command, as Electron did. `FDE_UPDATE_RELEASES_URL` overrides the
+endpoint (tests, a mirror).
+
+**Cache and schedule** (`cache.rs`, `mod.rs`). The last result is written to
+`update-check.json` next to `desktop-settings.json`. A check with `intent: "automatic"` reuses a
+cached answer younger than 30 minutes for the same channel (never a failed one); `manual` always
+asks GitHub. `updates::register` spawns a task that checks 20 s after launch and every 6 h while
+the app runs, gated on `desktopSettings.updates.autoCheck` (default `true`); a failed check
+(offline) only logs at info level. Whenever a check finds a newer version the shell emits
+`paseo:event:app-update-available` with the result, which is what makes the sidebar callout
+appear; the UI answers it with an automatic check, served from the cache.
+
+**Asset selection** (`assets.rs`). `InstallContext::detect()` maps the platform to one of the
+assets `scripts/release/collect-desktop-bundles.mjs` publishes:
+
+| Platform                                        | Asset                           | Install (`install.rs`)                                                                                                                   |
+| ----------------------------------------------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Windows, `uninstall.exe` next to the exe (NSIS) | `FDE-<v>-x64-setup.exe`         | detached `cmd` helper waits for our pid, runs the installer with `/S` (per-user NSIS, no elevation), starts the exe again; the app exits |
+| Windows, portable                               | `FDE-<v>-x64-portable.exe`      | same helper does `move /Y` over the running exe and relaunches it; the app exits                                                         |
+| Linux with `$APPIMAGE` set                      | `FDE-<v>-x86_64.AppImage`       | copied next to `$APPIMAGE`, `chmod 755`, renamed over it, relaunched; the app exits                                                      |
+| Linux otherwise                                 | `FDE-<v>-amd64.deb`             | `xdg-open` hands the file to the package installer; the user restarts FDE afterwards                                                     |
+| macOS                                           | `FDE-<v>-<aarch64\|x86_64>.dmg` | `open` mounts the image; the user drags FDE to Applications (ad-hoc signed apps cannot be replaced in place reliably)                    |
+
+**Download** (`download.rs`) reuses the sidecar bundle fetcher: the asset lands in
+`<app cache dir>/updates/<name>` (any earlier copy is removed first) with
+`paseo:event:app-update-progress` `{phase:"download"|"verify"|"install"|"error", received,
+total, asset?, detail?}` events, throttled to every 256 KB. If the release carries
+`<name>.sha256`, it is fetched and verified before install; without one the download proceeds
+and a warning is logged (`release.yml` does not publish these sidecars for desktop bundles yet).
+
+**Install** returns `{installed, version, message, restartRequired, installKind}`; the paths
+that replace the running binary schedule `app.exit(0)` 750 ms after answering so the result
+reaches the webview, and the Exit hook still stops a desktop-managed daemon. Every step is
+logged to `fde.log` under `updates:`.
+
+**UI** (`apps/ui/src/desktop/updates/`): `desktop-updates-section.tsx` is Settings > Updates
+(current version and strategy, release channel, the automatic-check switch, Check for updates
+with the last-checked time, then a card for the available release with its notes rendered by
+`MarkdownRenderer`, the install hint for this platform, View on GitHub and Download & install
+with a progress bar fed by `app-update-progress.ts`). `use-desktop-app-updater.ts` listens for
+`app-update-available` and the progress events; `update-callout-source.tsx` keeps the sidebar
+callout and stops its polling when automatic checks are off. Tests: `src/updates/tests.rs`
+serves a fake releases JSON and asset from a loopback `TcpListener` and drives check, cache,
+download and checksum verification; the unit tests cover release selection, asset mapping,
+NSIS detection, the Windows helper scripts and the AppImage swap; Vitest covers the UI parsers
+and progress reducer.
+
+Not verified on hardware from this Linux VM: the Windows helper scripts (`/S` with Tauri's NSIS
+template, `move /Y` over a just-exited exe) and the macOS `open` flow; they are reviewed by
+reading and covered by string-level tests only.
 
 ## What was deliberately dropped from Electron
 

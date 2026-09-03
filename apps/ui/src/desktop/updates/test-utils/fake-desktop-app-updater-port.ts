@@ -42,6 +42,13 @@ function buildCheckResult(
     body: null,
     date: null,
     errorMessage: null,
+    notes: null,
+    assetName: null,
+    assetSize: null,
+    installKind: null,
+    releaseUrl: null,
+    strategy: null,
+    checkedAt: null,
     ...overrides,
   };
 }
@@ -53,6 +60,7 @@ function buildInstallResult(
     installed: false,
     version: null,
     message: "Update completed.",
+    restartRequired: false,
     ...overrides,
   };
 }

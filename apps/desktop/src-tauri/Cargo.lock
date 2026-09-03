@@ -1111,7 +1111,7 @@ checksum = "da7c62ceae207dd37ea5b845da6a0696c799f85e97da1ab5b7910be3c1c80223"
 
 [[package]]
 name = "fde"
-version = "0.1.11"
+version = "0.1.12"
 dependencies = [
  "base64 0.22.1",
  "dns-lookup",
@@ -1122,6 +1122,7 @@ dependencies = [
  "log",
  "percent-encoding",
  "reqwest 0.12.28",
+ "semver",
  "serde",
  "serde_json",
  "sha2",

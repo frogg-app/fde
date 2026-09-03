@@ -8,6 +8,7 @@ pub fn runtime_info<R: Runtime>(app: &AppHandle<R>) -> Value {
         "appVersion": app.package_info().version.to_string(),
         // Rosetta detection was dropped with the Electron shell.
         "runningUnderARM64Translation": false,
+        "updateStrategy": crate::updates::strategy(app).as_str(),
     })
 }
 

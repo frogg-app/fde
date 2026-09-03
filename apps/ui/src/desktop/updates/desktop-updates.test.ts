@@ -104,11 +104,74 @@ describe("desktop-updates helpers", () => {
     ).toEqual({
       appVersion: "0.1.64",
       runningUnderARM64Translation: true,
+      updateStrategy: null,
     });
+    expect(
+      parseDesktopRuntimeInfo({ appVersion: "1", updateStrategy: "github-release" }).updateStrategy,
+    ).toBe("github-release");
     expect(parseDesktopRuntimeInfo(null)).toEqual({
       appVersion: null,
       runningUnderARM64Translation: false,
+      updateStrategy: null,
     });
+  });
+
+  it("parses the shell's check result including release notes and the asset plan", async () => {
+    const { parseDesktopAppUpdateCheckResult } = await loadModuleForPlatform("web");
+
+    expect(
+      parseDesktopAppUpdateCheckResult({
+        hasUpdate: true,
+        readyToInstall: true,
+        currentVersion: "0.1.11",
+        latestVersion: "0.2.0",
+        body: "## Notes",
+        date: "2026-09-01T00:00:00Z",
+        errorMessage: null,
+        asset: { name: "FDE-0.2.0-amd64.deb", size: 12345, url: "https://x" },
+        installKind: "linux-deb",
+        releaseUrl: "https://github.com/frogg-app/frogg-de/releases/tag/v0.2.0",
+        strategy: "github-release",
+        channel: "stable",
+        checkedAt: 1_700_000_000_000,
+      }),
+    ).toEqual({
+      hasUpdate: true,
+      readyToInstall: true,
+      currentVersion: "0.1.11",
+      latestVersion: "0.2.0",
+      body: "## Notes",
+      date: "2026-09-01T00:00:00Z",
+      errorMessage: null,
+      notes: "## Notes",
+      assetName: "FDE-0.2.0-amd64.deb",
+      assetSize: 12345,
+      installKind: "linux-deb",
+      releaseUrl: "https://github.com/frogg-app/frogg-de/releases/tag/v0.2.0",
+      strategy: "github-release",
+      checkedAt: 1_700_000_000_000,
+    });
+
+    // Electron's narrower shape (the signed updater path) still parses.
+    const legacy = parseDesktopAppUpdateCheckResult({
+      hasUpdate: false,
+      readyToInstall: false,
+      currentVersion: "1",
+      latestVersion: "1",
+      body: null,
+      date: null,
+      errorMessage: "offline",
+      installKind: "unknown",
+    });
+    expect(legacy).toMatchObject({
+      errorMessage: "offline",
+      notes: null,
+      assetName: null,
+      installKind: null,
+      strategy: null,
+      checkedAt: null,
+    });
+    expect(() => parseDesktopAppUpdateCheckResult("nope")).toThrow(/Unexpected response/);
   });
 
   it("builds the direct Apple Silicon DMG URL from a version", async () => {

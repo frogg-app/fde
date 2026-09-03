@@ -1,13 +1,20 @@
-import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import {
   checkDesktopAppUpdate,
   formatVersionWithPrefix,
   installDesktopAppUpdate,
+  listenToDesktopAppUpdateAvailable,
   shouldShowDesktopUpdateSection,
   type DesktopAppUpdateCheckResult,
   type DesktopAppUpdateCheckIntent,
   type DesktopAppUpdateInstallResult,
 } from "@/desktop/updates/desktop-updates";
+import {
+  IDLE_APP_UPDATE_PROGRESS,
+  listenToDesktopAppUpdateProgress,
+  reduceAppUpdateProgress,
+  type AppUpdateProgress,
+} from "@/desktop/updates/app-update-progress";
 import { useDesktopSettings } from "@/desktop/settings/desktop-settings";
 import { useDesktopIpcErrorReporter } from "@/desktop/hooks/desktop-ipc-error";
 import {
@@ -29,6 +36,8 @@ export interface UseDesktopAppUpdaterReturn {
   lastCheckedAt: number | null;
   isChecking: boolean;
   isInstalling: boolean;
+  /** Download / verify / install progress reported by the shell while installing. */
+  progress: AppUpdateProgress;
   checkForUpdates: (options?: {
     intent?: DesktopAppUpdateCheckIntent;
     silent?: boolean;
@@ -41,6 +50,7 @@ export function useDesktopAppUpdater(): UseDesktopAppUpdaterReturn {
   const { settings: desktopSettings } = useDesktopSettings();
   const releaseChannel = desktopSettings.releaseChannel;
   const reportError = useDesktopIpcErrorReporter();
+  const [progress, setProgress] = useState<AppUpdateProgress>(IDLE_APP_UPDATE_PROGRESS);
 
   const updater = useMemo(
     () =>
@@ -75,11 +85,28 @@ export function useDesktopAppUpdater(): UseDesktopAppUpdaterReturn {
     [isDesktopApp, releaseChannel, updater],
   );
 
+  // Progress events only matter while an install runs; the shell emits them
+  // on `paseo:event:app-update-progress`.
   const installUpdate = useCallback(async () => {
     if (!isDesktopApp) {
       return null;
     }
-    return updater.installUpdate({ releaseChannel });
+    setProgress({ status: "active", phase: "download", received: 0, total: null });
+    let unlisten: (() => void) | null = null;
+    try {
+      unlisten = await listenToDesktopAppUpdateProgress((event) => {
+        setProgress((current) => reduceAppUpdateProgress(current, event));
+      });
+    } catch {
+      // No event API: the install still runs, only without a progress bar.
+    }
+    try {
+      const result = await updater.installUpdate({ releaseChannel });
+      setProgress((current) => (current.status === "error" ? current : IDLE_APP_UPDATE_PROGRESS));
+      return result;
+    } finally {
+      unlisten?.();
+    }
   }, [isDesktopApp, releaseChannel, updater]);
 
   useEffect(() => {
@@ -87,6 +114,35 @@ export function useDesktopAppUpdater(): UseDesktopAppUpdaterReturn {
       return;
     }
     void checkForUpdates({ intent: "automatic", silent: true });
+  }, [checkForUpdates, isDesktopApp]);
+
+  // The shell's own checks (every 6 h, and the cached answer to any check)
+  // announce a newer version here; an automatic re-check is served from that
+  // cache, so this only refreshes local state.
+  useEffect(() => {
+    if (!isDesktopApp) {
+      return undefined;
+    }
+    let disposed = false;
+    let unlisten: (() => void) | null = null;
+    listenToDesktopAppUpdateAvailable(() => {
+      void checkForUpdates({ intent: "automatic", silent: true });
+    })
+      .then((dispose) => {
+        if (disposed) {
+          dispose();
+        } else {
+          unlisten = dispose;
+        }
+        return;
+      })
+      .catch(() => {
+        // No event API on this host: polling still covers it.
+      });
+    return () => {
+      disposed = true;
+      unlisten?.();
+    };
   }, [checkForUpdates, isDesktopApp]);
 
   useEffect(() => {
@@ -119,6 +175,7 @@ export function useDesktopAppUpdater(): UseDesktopAppUpdaterReturn {
     lastCheckedAt: snapshot.lastCheckedAt,
     isChecking: snapshot.isChecking,
     isInstalling: snapshot.isInstalling,
+    progress,
     checkForUpdates,
     installUpdate,
   };

@@ -6,7 +6,6 @@ pub mod daemon;
 pub mod integrations;
 pub mod runtime;
 pub mod settings;
-pub mod updater;
 
 use std::sync::Arc;
 
@@ -111,8 +110,8 @@ pub async fn desktop_invoke(
         "garbage_collect_attachment_files" => app
             .state::<attachments::AttachmentStore>()
             .garbage_collect(&args),
-        "check_app_update" => updater::check(&app, &args).await,
-        "install_app_update" => updater::install(&app, &args).await,
+        "check_app_update" => crate::updates::check(&app, &args).await,
+        "install_app_update" => crate::updates::install(&app, &args).await,
         other => Err(format!("Unknown desktop command: {other}")),
     }
 }

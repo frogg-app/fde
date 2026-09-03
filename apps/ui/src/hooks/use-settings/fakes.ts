@@ -39,6 +39,9 @@ const DEFAULT_DESKTOP: DesktopSettings = {
     manageBuiltInDaemon: true,
     keepRunningAfterQuit: false,
   },
+  updates: {
+    autoCheck: true,
+  },
 };
 
 export function createFakeDesktopBridge(

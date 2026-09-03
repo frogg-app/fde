@@ -27,10 +27,18 @@ pub struct DaemonSettings {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct UpdateSettings {
+    /// Check GitHub releases every few hours while the app runs (`src/updates/`).
+    pub auto_check: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DesktopSettings {
     pub release_channel: String,
     pub notifications: NotificationSettings,
     pub daemon: DaemonSettings,
+    pub updates: UpdateSettings,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -58,6 +66,7 @@ impl Default for DesktopSettings {
                 manage_built_in_daemon: false,
                 keep_running_after_quit: false,
             },
+            updates: UpdateSettings { auto_check: true },
         }
     }
 }
@@ -82,6 +91,7 @@ pub struct SettingsPatch {
     pub play_sound: Option<bool>,
     pub manage_built_in_daemon: Option<bool>,
     pub keep_running_after_quit: Option<bool>,
+    pub auto_check: Option<bool>,
 }
 
 fn release_channel(value: Option<&Value>) -> Option<String> {
@@ -101,11 +111,13 @@ pub fn coerce_patch(input: &Value) -> SettingsPatch {
     };
     let notifications = input.get("notifications").and_then(Value::as_object);
     let daemon = input.get("daemon").and_then(Value::as_object);
+    let updates = input.get("updates").and_then(Value::as_object);
     SettingsPatch {
         release_channel: release_channel(input.get("releaseChannel")),
         play_sound: boolean(notifications.and_then(|n| n.get("playSound"))),
         manage_built_in_daemon: boolean(daemon.and_then(|d| d.get("manageBuiltInDaemon"))),
         keep_running_after_quit: boolean(daemon.and_then(|d| d.get("keepRunningAfterQuit"))),
+        auto_check: boolean(updates.and_then(|u| u.get("autoCheck"))),
     }
 }
 
@@ -142,6 +154,9 @@ pub fn merge(current: &DesktopSettings, patch: &SettingsPatch) -> DesktopSetting
             keep_running_after_quit: patch
                 .keep_running_after_quit
                 .unwrap_or(current.daemon.keep_running_after_quit),
+        },
+        updates: UpdateSettings {
+            auto_check: patch.auto_check.unwrap_or(current.updates.auto_check),
         },
     }
 }
@@ -302,6 +317,7 @@ mod tests {
         assert_eq!(settings["releaseChannel"], "stable");
         assert_eq!(settings["notifications"]["playSound"], true);
         assert_eq!(settings["daemon"]["manageBuiltInDaemon"], false);
+        assert_eq!(settings["updates"]["autoCheck"], true);
         assert!(store.file_path().exists());
         let raw: Value =
             serde_json::from_str(&fs::read_to_string(store.file_path()).unwrap()).unwrap();
@@ -317,9 +333,11 @@ mod tests {
                 "releaseChannel": "nightly",
                 "notifications": { "playSound": false, "extra": 1 },
                 "daemon": { "keepRunningAfterQuit": "yes", "manageBuiltInDaemon": true },
+                "updates": { "autoCheck": false },
                 "unknown": true
             }))
             .unwrap();
+        assert_eq!(patched["updates"]["autoCheck"], false);
         assert_eq!(
             patched["releaseChannel"], "stable",
             "invalid channel ignored"
