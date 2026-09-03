@@ -1,6 +1,6 @@
 {
   "name": "@fde/desktop",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "private": true,
   "description": "FDE (Frogg Development Environment) desktop shell (Tauri v2)",
   "license": "Apache-2.0",

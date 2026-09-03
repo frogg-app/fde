@@ -1,6 +1,6 @@
 {
   "name": "fde",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "private": true,
   "description": "FDE (Frogg Development Environment): Tauri desktop client for local and remote AI coding agents (fork of Paseo)",
   "license": "Apache-2.0",
