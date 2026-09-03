@@ -674,6 +674,7 @@ export const ru: TranslationResources = {
       actions: {
         workspaceActions: "Действия с рабочим пространством",
         newAgent: "Новый агент",
+        newAgentHere: "Новый агент в этом worktree",
         newTerminal: "Новый терминал",
         newBrowser: "Новая вкладка браузера",
         importSession: "Импортировать сессию",

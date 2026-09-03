@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import {
   Copy,
   Ellipsis,
+  GitBranchPlus,
   Globe,
   Import as ImportIcon,
   Settings,
@@ -28,12 +29,15 @@ import {
 import { TerminalProfileIcon } from "@/components/terminal-profile-icon";
 import { useDaemonConfig } from "@/hooks/use-daemon-config";
 import { getTerminalProfileIcon, resolveTerminalProfiles } from "@fde/protocol/terminal-profiles";
-import { buildSettingsHostSectionRoute } from "@/utils/host-routes";
+import { buildNewWorkspaceRoute, buildSettingsHostSectionRoute } from "@/utils/host-routes";
+import { resolveNewAgentPlacement } from "@/utils/new-agent-routing";
+import { useWorkspace } from "@/stores/session-store-hooks";
 import type { Theme } from "@/styles/theme";
 
 const ThemedEllipsis = withUnistyles(Ellipsis);
 const ThemedCopy = withUnistyles(Copy);
 const ThemedSquarePen = withUnistyles(SquarePen);
+const ThemedGitBranchPlus = withUnistyles(GitBranchPlus);
 const ThemedGlobe = withUnistyles(Globe);
 const ThemedImport = withUnistyles(ImportIcon);
 const ThemedSettings = withUnistyles(Settings);
@@ -41,6 +45,7 @@ const ThemedSettings = withUnistyles(Settings);
 const mutedColorMapping = (theme: Theme) => ({ color: theme.colors.foregroundMuted });
 
 const MENU_NEW_AGENT_ICON = <ThemedSquarePen size={16} uniProps={mutedColorMapping} />;
+const MENU_NEW_AGENT_HERE_ICON = <ThemedGitBranchPlus size={16} uniProps={mutedColorMapping} />;
 const MENU_NEW_BROWSER_ICON = <ThemedGlobe size={16} uniProps={mutedColorMapping} />;
 const MENU_NEW_TERMINAL_ICON = <TerminalProfileIcon iconKey={undefined} size={16} />;
 const MENU_IMPORT_ICON = <ThemedImport size={16} uniProps={mutedColorMapping} />;
@@ -198,6 +203,7 @@ function HeaderMenuProfileItem({
 
 export interface WorkspaceHeaderMenuMobileProps extends WorkspaceHeaderWorkspaceActions {
   normalizedServerId: string;
+  normalizedWorkspaceId: string;
   showCreateBrowserTab: boolean;
   createTerminalDisabled: boolean;
   onCreateDraftTab: () => void;
@@ -212,6 +218,7 @@ export interface WorkspaceHeaderMenuMobileProps extends WorkspaceHeaderWorkspace
  */
 export function WorkspaceHeaderMenuMobile({
   normalizedServerId,
+  normalizedWorkspaceId,
   showCreateBrowserTab,
   createTerminalDisabled,
   onCreateDraftTab,
@@ -231,6 +238,28 @@ export function WorkspaceHeaderMenuMobile({
   const handleEditProfiles = useCallback(() => {
     router.push(buildSettingsHostSectionRoute(normalizedServerId, "terminals") as Href);
   }, [normalizedServerId, router]);
+
+  // Inside a worktree, "New agent" opens New workspace with worktree isolation
+  // preselected instead of quietly putting a second agent in this one.
+  const workspace = useWorkspace(normalizedServerId, normalizedWorkspaceId);
+  const placement = useMemo(
+    () => resolveNewAgentPlacement({ serverId: normalizedServerId, workspace }),
+    [normalizedServerId, workspace],
+  );
+  const handleNewAgent = useCallback(() => {
+    if (placement.kind === "same-workspace") {
+      onCreateDraftTab();
+      return;
+    }
+    router.push(
+      buildNewWorkspaceRoute({
+        serverId: placement.serverId,
+        sourceDirectory: placement.sourceDirectory,
+        projectId: placement.projectId,
+        isolation: "worktree",
+      }) as Href,
+    );
+  }, [onCreateDraftTab, placement, router]);
 
   return (
     <DropdownMenu compactMode="sheet">
@@ -252,10 +281,19 @@ export function WorkspaceHeaderMenuMobile({
         <DropdownMenuItem
           testID="workspace-header-new-agent"
           leading={MENU_NEW_AGENT_ICON}
-          onSelect={onCreateDraftTab}
+          onSelect={handleNewAgent}
         >
           {t("workspace.header.actions.newAgent")}
         </DropdownMenuItem>
+        {placement.kind === "new-worktree" ? (
+          <DropdownMenuItem
+            testID="workspace-header-new-agent-here"
+            leading={MENU_NEW_AGENT_HERE_ICON}
+            onSelect={onCreateDraftTab}
+          >
+            {t("workspace.header.actions.newAgentHere")}
+          </DropdownMenuItem>
+        ) : null}
         {showCreateBrowserTab ? (
           <DropdownMenuItem
             testID="workspace-header-new-browser"

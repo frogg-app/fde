@@ -177,6 +177,8 @@ interface NewWorkspaceScreenProps {
   projectId?: string;
   displayName?: string;
   draftId?: string;
+  /** Overrides the remembered isolation for this visit (see useWorkspaceIsolation). */
+  initialIsolation?: "local" | "worktree";
 }
 
 // A terminal launch sends argv, not a message: there is nothing to attach and
@@ -692,13 +694,18 @@ interface WorkspaceIsolationState {
 function useWorkspaceIsolation(input: {
   supportsMultiplicity: boolean;
   worktreeSupport: "supported" | "unsupported" | "unknown";
+  initialIsolation?: "local" | "worktree";
 }): WorkspaceIsolationState {
   const { supportsMultiplicity, worktreeSupport } = input;
   // The last isolation choice is remembered alongside the other New Workspace
   // form preferences (provider, model, mode). A manual in-screen pick overrides
   // the remembered default until the screen remounts.
   const { preferences, updatePreferences } = useFormPreferences();
-  const [manualIsolation, setManualIsolation] = useState<"local" | "worktree" | null>(null);
+  // A caller that already knows the answer (the worktree menu asking for a
+  // worktree of its own) preselects it without overwriting the remembered choice.
+  const [manualIsolation, setManualIsolation] = useState<"local" | "worktree" | null>(
+    input.initialIsolation ?? null,
+  );
   const isolation = manualIsolation ?? preferences.isolation ?? "local";
   const canCreateWorktree = supportsMultiplicity && worktreeSupport !== "unsupported";
   const isWorktree = isolation === "worktree" && canCreateWorktree;
@@ -1544,6 +1551,7 @@ export function NewWorkspaceScreen({
   projectId,
   displayName: displayNameProp,
   draftId,
+  initialIsolation,
 }: NewWorkspaceScreenProps) {
   const queryClient = useQueryClient();
   const { theme } = useUnistyles();
@@ -1717,6 +1725,7 @@ export function NewWorkspaceScreen({
     useWorkspaceIsolation({
       supportsMultiplicity: supportsWorkspaceMultiplicity,
       worktreeSupport,
+      initialIsolation,
     });
 
   const branchSuggestionsQuery = useQuery({

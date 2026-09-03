@@ -669,6 +669,7 @@ export const ar: TranslationResources = {
       actions: {
         workspaceActions: "إجراءات Workspace",
         newAgent: "وكيل جديد",
+        newAgentHere: "وكيل جديد في شجرة العمل هذه",
         newTerminal: "محطة جديدة",
         newBrowser: "علامة تبويب متصفح جديدة",
         importSession: "جلسة الاستيراد",

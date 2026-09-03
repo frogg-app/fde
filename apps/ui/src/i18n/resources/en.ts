@@ -665,6 +665,7 @@ export const en = {
       actions: {
         workspaceActions: "Workspace actions",
         newAgent: "New agent",
+        newAgentHere: "New agent in this worktree",
         newTerminal: "New terminal",
         newBrowser: "New browser tab",
         importSession: "Import session",

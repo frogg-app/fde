@@ -665,6 +665,7 @@ export const zhCN: TranslationResources = {
       actions: {
         workspaceActions: "Workspace 操作",
         newAgent: "新建 Agent",
+        newAgentHere: "在此 worktree 中新建 Agent",
         newTerminal: "新建 Terminal",
         newBrowser: "新建浏览器标签",
         importSession: "导入会话",

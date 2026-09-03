@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { CheckoutStatusPayload } from "@/git/use-status-query";
 import {
   parseAgentKey,
+  resolveNewAgentPlacement,
   resolveNewAgentWorkingDir,
   resolveSelectedAgentForNewAgent,
 } from "./new-agent-routing";
@@ -89,5 +90,65 @@ describe("resolveSelectedAgentForNewAgent", () => {
         pathname: "/h/srv-1/settings",
       }),
     ).toBeNull();
+  });
+});
+
+describe("resolveNewAgentPlacement", () => {
+  const worktreeWorkspace = {
+    projectKind: "git",
+    worktreeSlug: "brave-otter",
+    projectRootPath: "/repo",
+    projectId: "project-1",
+  };
+
+  it("sends a worktree workspace to a worktree of its own, cut from the main repo", () => {
+    expect(resolveNewAgentPlacement({ serverId: "srv-1", workspace: worktreeWorkspace })).toEqual({
+      kind: "new-worktree",
+      serverId: "srv-1",
+      sourceDirectory: "/repo",
+      projectId: "project-1",
+    });
+  });
+
+  it("keeps a plain checkout in the same workspace", () => {
+    expect(
+      resolveNewAgentPlacement({
+        serverId: "srv-1",
+        workspace: { ...worktreeWorkspace, worktreeSlug: null },
+      }),
+    ).toEqual({ kind: "same-workspace" });
+  });
+
+  it("keeps non-git projects in the same workspace", () => {
+    expect(
+      resolveNewAgentPlacement({
+        serverId: "srv-1",
+        workspace: { ...worktreeWorkspace, projectKind: "plain" },
+      }),
+    ).toEqual({ kind: "same-workspace" });
+  });
+
+  it("falls back when the host or the workspace metadata is missing", () => {
+    expect(resolveNewAgentPlacement({ serverId: null, workspace: worktreeWorkspace })).toEqual({
+      kind: "same-workspace",
+    });
+    expect(resolveNewAgentPlacement({ serverId: "  ", workspace: worktreeWorkspace })).toEqual({
+      kind: "same-workspace",
+    });
+    expect(resolveNewAgentPlacement({ serverId: "srv-1", workspace: null })).toEqual({
+      kind: "same-workspace",
+    });
+    expect(
+      resolveNewAgentPlacement({
+        serverId: "srv-1",
+        workspace: { ...worktreeWorkspace, projectRootPath: "  " },
+      }),
+    ).toEqual({ kind: "same-workspace" });
+    expect(
+      resolveNewAgentPlacement({
+        serverId: "srv-1",
+        workspace: { ...worktreeWorkspace, projectId: undefined },
+      }),
+    ).toEqual({ kind: "same-workspace" });
   });
 });
