@@ -66,7 +66,15 @@ if (patchFilesByCwd.size === 0) {
 }
 
 const isWindows = process.platform === "win32";
-const cmd = isWindows ? "patch-package.cmd" : "patch-package";
+// Resolve the binary from the repo's node_modules so this works when invoked directly with
+// `node`, not only through `npm run` (which puts node_modules/.bin on PATH).
+const localBin = join(
+  process.cwd(),
+  "node_modules",
+  ".bin",
+  isWindows ? "patch-package.cmd" : "patch-package",
+);
+const cmd = existsSync(localBin) ? localBin : isWindows ? "patch-package.cmd" : "patch-package";
 
 let groupIndex = 0;
 for (const [cwd, files] of patchFilesByCwd) {
