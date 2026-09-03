@@ -56,7 +56,10 @@ Done items move to CHANGELOG.md.
       Electron's `<webview>` pane.
 - [ ] **Code signing** (Windows Authenticode, macOS notarisation) so SmartScreen and
       Gatekeeper stop blocking installs.
-- [ ] **Updater**: real signing key and `latest.json` endpoint for `tauri-plugin-updater`.
+- [x] **Updater**: in-app updates from GitHub release assets without a signing key
+      (`apps/desktop/src-tauri/src/updates/`, docs/desktop-shell.md "Updates"); switches to the
+      signed `tauri-plugin-updater` path automatically once `plugins.updater.pubkey` is real and
+      the release carries `latest.json`. Windows/macOS install paths verified by reading only.
 - [x] **CI**: GitHub Actions `ci.yml` and `release.yml` (Linux, Windows, macOS desktop bundles,
       daemon bundles, Docker). Manual: add signing and Docker Hub secrets (see docs/ci.md).
 - [ ] **Faster pre-commit hook**: per-workspace typecheck instead of the whole monorepo.
@@ -78,7 +81,8 @@ Blocked on the owner:
   and `gh secret set`. To enable signed updates: run `cargo tauri signer generate -w ~/.tauri/fde.key`,
   put the public key in `apps/desktop/src-tauri/tauri.conf.json` under `plugins.updater.pubkey`, and
   add `TAURI_SIGNING_PRIVATE_KEY` / `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` repo secrets. Until then the
-  release workflow skips `latest.json` and in-app updates report "not configured".
+  release workflow skips `latest.json` and in-app updates use the unsigned GitHub-release path
+  (checksum-verified when a `.sha256` sidecar is published).
 - **Docker Hub in CI.** Add `DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN` secrets; until then images are
   pushed manually from this VM (logged in as `froggapp`).
 - **Docker Hub visibility.** `froggapp/fde` was created public by the first push; the stored
