@@ -5,6 +5,12 @@
 - Android APK: `app.frogg.fde` identity, version code derived from the package version, `scripts/release/build-android-apk.mjs`, CI jobs, docs.
 - Playwright e2e re-baselined for the settings modal; fixed a cold deep-link into settings that could land on the wrong screen.
 - CI: lefthook removed from the dependency tree (macOS/Windows runners), conflicting apt package dropped, already-uploaded release assets are skipped on re-runs.
+- Android APK. `apps/ui` builds as the Android app (name "FDE", package id `app.frogg.fde`,
+  version code derived from the root `package.json`). `scripts/release/build-android-apk.mjs`
+  runs `expo prebuild` + Gradle locally and in CI; `release.yml` attaches
+  `FDE-<version>-android-arm64-v8a.apk` to the release, release-signed when the
+  `FDE_ANDROID_KEYSTORE_*` secrets exist and `-unsigned` (debug key) otherwise. `ci.yml`
+  assembles a debug APK on pull requests that touch `apps/ui`. See docs/android.md.
 
 ## 0.1.8
 
