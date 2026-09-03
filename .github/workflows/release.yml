@@ -358,7 +358,6 @@ jobs:
             fi
             gh release upload "$RELEASE_TAG" "$f" "${flags[@]}"
           done
-          gh release upload "$RELEASE_TAG" dist/bundles/fde-daemon-* "${flags[@]}"
 
   android:
     name: android apk ${{ matrix.abi }}
@@ -438,7 +437,15 @@ jobs:
           flags=()
           if [ "$CLOBBER" = "true" ]; then flags+=(--clobber); fi
           ls -l release-assets
-          gh release upload "$RELEASE_TAG" release-assets/FDE-*-android-*.apk "${flags[@]}"
+          existing=$(gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name')
+          for f in release-assets/FDE-*-android-*.apk; do
+            n=$(basename "$f")
+            if [ "$CLOBBER" != "true" ] && grep -qx -- "$n" <<<"$existing"; then
+              echo "::warning::$n already on $RELEASE_TAG; skipping"
+              continue
+            fi
+            gh release upload "$RELEASE_TAG" "$f" "${flags[@]}"
+          done
 
       - uses: actions/upload-artifact@v4
         with:
