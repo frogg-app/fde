@@ -672,6 +672,7 @@ export const ptBR: TranslationResources = {
       actions: {
         workspaceActions: "Ações do workspace",
         newAgent: "Novo agente",
+        newAgentHere: "Novo agente nesta worktree",
         newTerminal: "Novo terminal",
         newBrowser: "Nova aba de navegador",
         importSession: "Importar sessão",

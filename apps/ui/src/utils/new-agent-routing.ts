@@ -67,3 +67,47 @@ export function resolveNewAgentWorkingDir(
 
   return inferMainRepoRootFromPaseoWorktreePath(cwd) ?? cwd;
 }
+
+/**
+ * Where a "New agent" action should put the agent. Compact layouts have no tab
+ * strip, so the workspace menu is the only way to start one, and tapping it
+ * inside a worktree used to add a second agent to that same worktree without
+ * saying so. From a worktree the default is now a worktree of its own; the
+ * caller keeps an explicit item for the old behaviour.
+ */
+export type NewAgentPlacement =
+  | { kind: "same-workspace" }
+  | { kind: "new-worktree"; serverId: string; sourceDirectory: string; projectId: string };
+
+const SAME_WORKSPACE: NewAgentPlacement = { kind: "same-workspace" };
+
+export function resolveNewAgentPlacement(input: {
+  serverId: string | null | undefined;
+  workspace:
+    | {
+        worktreeSlug?: string | null;
+        projectKind?: string | null;
+        projectRootPath?: string | null;
+        projectId?: string | null;
+      }
+    | null
+    | undefined;
+}): NewAgentPlacement {
+  const serverId = input.serverId?.trim();
+  const workspace = input.workspace;
+  if (!serverId || !workspace) {
+    return SAME_WORKSPACE;
+  }
+  // Only a git checkout can have a worktree, and only a workspace that already
+  // sits in one has something to branch away from.
+  if (workspace.projectKind !== "git" || !workspace.worktreeSlug?.trim()) {
+    return SAME_WORKSPACE;
+  }
+  // The new worktree is cut from the main repo, not from this worktree.
+  const sourceDirectory = workspace.projectRootPath?.trim();
+  const projectId = workspace.projectId?.trim();
+  if (!sourceDirectory || !projectId) {
+    return SAME_WORKSPACE;
+  }
+  return { kind: "new-worktree", serverId, sourceDirectory, projectId };
+}

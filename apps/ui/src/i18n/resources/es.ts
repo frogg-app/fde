@@ -674,6 +674,7 @@ export const es: TranslationResources = {
       actions: {
         workspaceActions: "AccionesWorkspace",
         newAgent: "Nuevo agente",
+        newAgentHere: "Nuevo agente en este worktree",
         newTerminal: "Nueva terminal",
         newBrowser: "Nueva pestaña del navegador",
         importSession: "Importar sesión",
