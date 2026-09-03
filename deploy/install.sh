@@ -68,14 +68,36 @@ sha256_of() {
   fi
 }
 
+# Newest release including pre-releases, from the GitHub API. Needed because
+# every 0.x release is published as a pre-release and `/releases/latest`
+# skips those, redirecting to the releases index instead of a tag.
+resolve_latest_prerelease_version() {
+  local api tag
+  api="$(printf '%s' "${FDE_RELEASE_BASE}" |
+    sed -n 's#^https://github.com/\([^/]*\)/\([^/]*\)/releases/*$#https://api.github.com/repos/\1/\2/releases?per_page=1#p')"
+  [ -n "${api}" ] || die "could not resolve the latest release from ${FDE_RELEASE_BASE}/latest"
+  local body
+  body="$(curl -fsSL "${api}")" || die "could not resolve the latest release from ${api}"
+  tag="$(printf '%s\n' "${body}" | tr ',{' '\n\n' |
+    sed -n 's/^ *"tag_name" *: *"\([^"]*\)" *$/\1/p' | sed -n '1p')"
+  FDE_VERSION="${tag#v}"
+  [ -n "${FDE_VERSION}" ] || die "could not parse a version from ${api}"
+}
+
 resolve_latest_version() {
   need curl
-  local effective
+  local effective candidate
   effective="$(curl -fsSL -o /dev/null -w '%{url_effective}' "${FDE_RELEASE_BASE}/latest")" ||
     die "could not resolve the latest release from ${FDE_RELEASE_BASE}/latest"
-  FDE_VERSION="${effective##*/}"
-  FDE_VERSION="${FDE_VERSION#v}"
-  [ -n "${FDE_VERSION}" ] || die "could not parse a version from ${effective}"
+  candidate="${effective##*/}"
+  candidate="${candidate#v}"
+  case "${candidate}" in
+    [0-9]*)
+      FDE_VERSION="${candidate}"
+      return
+      ;;
+  esac
+  resolve_latest_prerelease_version
 }
 
 # Sets BUNDLE_PATH to a verified tarball, downloading it when needed.

@@ -126,6 +126,18 @@ jobs:
             echo "clobber=true" >> "$GITHUB_OUTPUT"
           fi
 
+      # https://frogg.app/install.sh redirects to the latest release's copy of
+      # these, so every published release must carry them: the script and the
+      # assets it downloads then always come from the same release.
+      - name: Upload install scripts to GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          flags=()
+          if [ "${{ steps.release.outputs.clobber }}" = "true" ]; then flags+=(--clobber); fi
+          gh release upload "$RELEASE_TAG" \
+            deploy/install.sh deploy/uninstall.sh deploy/install-docker.sh "${flags[@]}"
+
       - uses: actions/upload-artifact@v4
         with:
           name: release-notes

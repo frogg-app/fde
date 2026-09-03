@@ -88,21 +88,21 @@ or Compose `environment:`; the daemon forwards them to launched agents.
 
 ## Volumes and environment
 
-| Mount              | Purpose                                                      |
-| ------------------ | ------------------------------------------------------------ |
+| Mount            | Purpose                                                      |
+| ---------------- | ------------------------------------------------------------ |
 | `/home/fde/.fde` | Daemon state: agents, config, pairing, logs                  |
-| `/home/fde`        | Mount the whole home instead to persist agent config as well |
-| `/workspace`       | Code that the daemon and launched agents read and write      |
+| `/home/fde`      | Mount the whole home instead to persist agent config as well |
+| `/workspace`     | Code that the daemon and launched agents read and write      |
 
-| Variable               | Default            |
-| ---------------------- | ------------------ |
+| Variable               | Default          |
+| ---------------------- | ---------------- |
 | `PASEO_HOME`           | `/home/fde/.fde` |
-| `PASEO_LISTEN`         | `0.0.0.0:9999`     |
-| `PASEO_WEB_UI_ENABLED` | `true`             |
-| `PASEO_LOG_FORMAT`     | `json`             |
-| `PASEO_PASSWORD`       | unset              |
-| `PASEO_HOSTNAMES`      | unset              |
-| `PASEO_VOICE`          | unset (voice on)   |
+| `PASEO_LISTEN`         | `0.0.0.0:9999`   |
+| `PASEO_WEB_UI_ENABLED` | `true`           |
+| `PASEO_LOG_FORMAT`     | `json`           |
+| `PASEO_PASSWORD`       | unset            |
+| `PASEO_HOSTNAMES`      | unset            |
+| `PASEO_VOICE`          | unset (voice on) |
 
 The image ships the local speech runtime, so dictation and voice mode are on by
 default and download their models into the state volume on first use.

@@ -82,7 +82,7 @@ pairingRequired }` so LAN scanners and the app can list daemons before pairing.
       wins) treats private-network clients (10/8, 172.16/12, 192.168/16, link-local, ULA,
       IPv4-mapped forms) like loopback: no pairing, no password, no claim gate; public
       addresses keep the gate. A password is the opt-in lock for everyone. `fde daemon
-    trust-lan on|off` applies live; `fde daemon status` shows `LAN Trusted`; `/api/identity`
+trust-lan on|off` applies live; `fde daemon status` shows `LAN Trusted`; `/api/identity`
       answers `pairingRequired` per requester and reports `lanTrusted`. See docs/permissions.md
       "Trusted LAN".
 - [ ] App side of the claim flow (apps/ui, apps/desktop): parse v3 offers, connect to a direct
