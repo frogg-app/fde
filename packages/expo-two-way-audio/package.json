@@ -1,6 +1,6 @@
 {
   "name": "@fde/expo-two-way-audio",
-  "version": "0.1.17",
+  "version": "0.1.18",
   "description": "Native module for two way audio streaming",
   "keywords": [
     "ExpoTwoWayAudio",

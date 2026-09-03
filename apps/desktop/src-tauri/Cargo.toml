@@ -1,6 +1,6 @@
 [package]
 name = "fde"
-version = "0.1.17"
+version = "0.1.18"
 description = "FDE (Frogg Development Environment) desktop shell"
 edition = "2021"
 license = "Apache-2.0"

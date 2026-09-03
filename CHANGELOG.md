@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.18
+
+- Tests no longer touch the developer's home: every worker gets its own throwaway FDE home.
+  Previously the suite resolved the real `~/.fde` and could move a running daemon's state.
+- Test and CI repairs that had kept the pipeline red: nine lint errors, a plugin test resolving
+  a path outside the repository, a test requiring the Claude CLI, the relay test breaking on
+  wrangler 4, a missing server build before the CLI tests, stale default-port expectations, and
+  a claim timestamp assertion that failed whenever two writes shared a millisecond.
+
 ## 0.1.17
 
 - `install.sh` resolves the newest release even when every release is flagged as a pre-release: `/releases/latest` redirects to the releases index in that case, and the old resolver parsed the word `releases` as a version, so `curl -fsSL https://frogg.app/install.sh | bash` tried to download `fde-daemon-releases-<platform>.tar.gz`. It now validates what it parsed and falls back to the GitHub releases API.
