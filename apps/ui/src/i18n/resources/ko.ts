@@ -1652,6 +1652,15 @@ export const ko: TranslationResources = {
       fields: {
         target: "SSH 호스트",
         daemonPort: "데몬 포트",
+        daemonPassword: "데몬 비밀번호",
+        sshPassword: "SSH 비밀번호",
+        rememberSshPassword: "이 세션 동안 기억",
+      },
+      hints: {
+        daemonPassword:
+          "SSH 로그인이 아니라 FDE 데몬의 비밀번호입니다. 이 호스트와 함께 저장됩니다.",
+        sshPassword:
+          "SSH 로그인에만 사용됩니다. 저장되지 않으며, 기억하는 경우 앱을 닫을 때까지 메모리에만 보관됩니다.",
       },
       actions: {
         cancel: "취소",
@@ -1664,6 +1673,14 @@ export const ko: TranslationResources = {
         invalidDaemonPort: "데몬 포트는 1에서 65535 사이여야 합니다",
         invalidTarget: "유효한 ssh:// 호스트를 입력하세요",
         failedToConnect: "SSH로 연결할 수 없습니다. {{detail}}",
+        daemonPasswordRequired:
+          "{{host}}의 FDE 데몬에 비밀번호가 필요합니다. 아래에 입력한 뒤 다시 연결하세요.",
+        daemonPasswordIncorrect: "{{host}}의 FDE 데몬이 비밀번호를 거부했습니다.",
+        sshPasswordRequired:
+          "{{host}}이(가) SSH 키를 거부했지만 비밀번호 로그인은 허용합니다. 계속하려면 SSH 비밀번호를 입력하세요.",
+        sshPasswordIncorrect: "{{host}}이(가) SSH 비밀번호를 거부했습니다.",
+        sshHostKey:
+          "{{host}}의 호스트 키를 알 수 없거나 변경되었습니다. 터미널에서 ssh로 한 번 연결해 수락하세요.",
       },
     },
     link: {

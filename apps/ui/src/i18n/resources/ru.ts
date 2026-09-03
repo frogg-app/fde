@@ -1671,6 +1671,15 @@ export const ru: TranslationResources = {
       fields: {
         target: "Хост SSH",
         daemonPort: "Порт демона",
+        daemonPassword: "Пароль демона",
+        sshPassword: "Пароль SSH",
+        rememberSshPassword: "Запомнить на эту сессию",
+      },
+      hints: {
+        daemonPassword:
+          "Пароль демона FDE, а не вашего входа по SSH. Сохраняется вместе с этим хостом.",
+        sshPassword:
+          "Используется только для входа по SSH. Никогда не сохраняется; если запомнить, хранится в памяти до закрытия приложения.",
       },
       actions: {
         cancel: "Отмена",
@@ -1683,6 +1692,14 @@ export const ru: TranslationResources = {
         invalidDaemonPort: "Порт демона должен быть от 1 до 65535",
         invalidTarget: "Укажите корректный хост ssh://",
         failedToConnect: "Не удалось подключиться по SSH. {{detail}}",
+        daemonPasswordRequired:
+          "Демону FDE на {{host}} нужен пароль. Введите его ниже и подключитесь снова.",
+        daemonPasswordIncorrect: "Демон FDE на {{host}} отклонил пароль.",
+        sshPasswordRequired:
+          "{{host}} отклонил ваши ключи SSH, но принимает вход по паролю. Введите пароль SSH, чтобы продолжить.",
+        sshPasswordIncorrect: "{{host}} отклонил пароль SSH.",
+        sshHostKey:
+          "Ключ хоста {{host}} неизвестен или изменился. Подключитесь один раз из терминала через ssh, чтобы принять его.",
       },
     },
     link: {

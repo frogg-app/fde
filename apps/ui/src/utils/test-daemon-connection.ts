@@ -66,6 +66,7 @@ function buildRemoteSshClientConfig(input: {
         ? { daemonPort: input.connection.daemonPort }
         : {}),
     }),
+    ...(input.connection.password ? { password: input.connection.password } : {}),
   };
 }
 

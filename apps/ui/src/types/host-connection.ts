@@ -35,6 +35,8 @@ export interface RemoteSshHostConnection {
   host: string;
   sshPort?: number;
   daemonPort?: number;
+  /** The FDE daemon's password (not ssh's), sent through the tunnel like `directTcp` does. */
+  password?: string;
 }
 
 export interface RelayHostConnection {
@@ -155,7 +157,8 @@ function remoteSshConnectionEquals(
   return (
     left.host === right.host &&
     left.sshPort === right.sshPort &&
-    left.daemonPort === right.daemonPort
+    left.daemonPort === right.daemonPort &&
+    left.password === right.password
   );
 }
 
@@ -323,9 +326,11 @@ export function createRemoteSshHostConnection(input: {
   host: string;
   sshPort?: number;
   daemonPort?: number;
+  password?: string;
 }): RemoteSshHostConnection {
   const host = validateSshHost(input.host);
   const sshPort = input.sshPort === undefined ? undefined : validatePort(input.sshPort, "SSH port");
+  const password = input.password?.trim();
 
   const daemonPort =
     input.daemonPort === undefined || input.daemonPort === DEFAULT_SSH_DAEMON_PORT
@@ -345,6 +350,7 @@ export function createRemoteSshHostConnection(input: {
     host,
     ...(sshPort !== undefined ? { sshPort } : {}),
     ...(daemonPort !== undefined ? { daemonPort } : {}),
+    ...(password ? { password } : {}),
   };
 }
 
@@ -372,6 +378,7 @@ const StoredHostConnectionSchema = z.discriminatedUnion("type", [
     host: z.string(),
     sshPort: z.number().optional(),
     daemonPort: z.number().optional(),
+    password: z.string().optional(),
   }),
   z.strictObject({
     id: z.string().optional(),
@@ -423,6 +430,7 @@ function normalizeStoredConnection(connection: StoredHostConnection): HostConnec
         host: connection.host,
         ...(connection.sshPort !== undefined ? { sshPort: connection.sshPort } : {}),
         ...(connection.daemonPort !== undefined ? { daemonPort: connection.daemonPort } : {}),
+        ...(connection.password !== undefined ? { password: connection.password } : {}),
       });
     } catch {
       return null;

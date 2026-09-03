@@ -1674,6 +1674,14 @@ export const ptBR: TranslationResources = {
       fields: {
         target: "Host SSH",
         daemonPort: "Porta do daemon",
+        daemonPassword: "Senha do daemon",
+        sshPassword: "Senha SSH",
+        rememberSshPassword: "Lembrar nesta sessão",
+      },
+      hints: {
+        daemonPassword: "A senha do daemon FDE, não a do seu login SSH. Salva junto com este host.",
+        sshPassword:
+          "Usada apenas para entrar por SSH. Nunca é salva; se lembrada, fica na memória até o app fechar.",
       },
       actions: {
         cancel: "Cancelar",
@@ -1686,6 +1694,14 @@ export const ptBR: TranslationResources = {
         invalidDaemonPort: "A porta do daemon deve estar entre 1 e 65535",
         invalidTarget: "Insira um host ssh:// válido",
         failedToConnect: "Não foi possível conectar por SSH. {{detail}}",
+        daemonPasswordRequired:
+          "O daemon FDE em {{host}} exige uma senha. Digite-a abaixo e conecte novamente.",
+        daemonPasswordIncorrect: "O daemon FDE em {{host}} rejeitou a senha.",
+        sshPasswordRequired:
+          "{{host}} recusou suas chaves SSH, mas aceita login por senha. Digite a senha SSH para continuar.",
+        sshPasswordIncorrect: "{{host}} rejeitou a senha SSH.",
+        sshHostKey:
+          "A chave de host de {{host}} é desconhecida ou mudou. Conecte uma vez pelo terminal com ssh para aceitá-la.",
       },
     },
     link: {

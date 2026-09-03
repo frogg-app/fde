@@ -1642,6 +1642,14 @@ export const ar: TranslationResources = {
       fields: {
         target: "مضيف SSH",
         daemonPort: "منفذ الخادم",
+        daemonPassword: "كلمة مرور الخادم",
+        sshPassword: "كلمة مرور SSH",
+        rememberSshPassword: "تذكّر لهذه الجلسة",
+      },
+      hints: {
+        daemonPassword: "كلمة مرور خادم FDE، وليست كلمة مرور تسجيل دخول SSH. تُحفظ مع هذا المضيف.",
+        sshPassword:
+          "تُستخدم فقط لتسجيل الدخول عبر SSH. لا تُحفظ أبدًا؛ عند التذكّر تبقى في الذاكرة حتى إغلاق التطبيق.",
       },
       actions: {
         cancel: "إلغاء",
@@ -1654,6 +1662,14 @@ export const ar: TranslationResources = {
         invalidDaemonPort: "يجب أن يكون منفذ الخادم بين 1 و65535",
         invalidTarget: "أدخل مضيف ssh:// صالحًا",
         failedToConnect: "تعذر الاتصال عبر SSH. {{detail}}",
+        daemonPasswordRequired:
+          "يتطلب خادم FDE على {{host}} كلمة مرور. أدخلها أدناه ثم أعد الاتصال.",
+        daemonPasswordIncorrect: "رفض خادم FDE على {{host}} كلمة المرور.",
+        sshPasswordRequired:
+          "رفض {{host}} مفاتيح SSH لديك لكنه يقبل تسجيل الدخول بكلمة مرور. أدخل كلمة مرور SSH للمتابعة.",
+        sshPasswordIncorrect: "رفض {{host}} كلمة مرور SSH.",
+        sshHostKey:
+          "مفتاح المضيف لـ {{host}} غير معروف أو تغيّر. اتصل مرة واحدة من الطرفية عبر ssh لقبوله.",
       },
     },
     link: {

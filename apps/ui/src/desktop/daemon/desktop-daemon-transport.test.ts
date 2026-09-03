@@ -1,8 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   buildDesktopDaemonTransportUrl,
+  buildOpenSessionInput,
   createDesktopDaemonTransportFactory,
+  DesktopTransportError,
 } from "./desktop-daemon-transport";
+import { clearSessionSshPasswords, rememberSessionSshPassword } from "./ssh-session-passwords";
 import { createFakeLocalDaemonTransportRpc } from "./test-local-daemon-transport-rpc";
 
 const LOCAL_URL = "paseo+desktop://socket?path=%2Ftmp%2Fpaseo.sock";
@@ -91,6 +94,77 @@ describe("desktop-daemon-transport", () => {
       host: "deploy@example.com",
       sshPort: 2222,
       daemonPort: 7777,
+    });
+  });
+
+  it("forwards the daemon password subprotocol and the session ssh password", async () => {
+    const rpc = createFakeLocalDaemonTransportRpc();
+    const transportFactory = createDesktopDaemonTransportFactory(rpc);
+    rememberSessionSshPassword({ host: "deploy@example.com", sshPort: 2222 }, "hunter2");
+    try {
+      const url = buildDesktopDaemonTransportUrl({
+        transportType: "ssh",
+        host: "deploy@example.com",
+        sshPort: 2222,
+      });
+      // The ssh password never travels in the URL.
+      expect(url).not.toContain("hunter2");
+      transportFactory!({ url, protocols: ["paseo.bearer.daemon-pw"] });
+      rpc.resolveListen(vi.fn());
+      await Promise.resolve();
+
+      expect(rpc.openCalls[0]).toEqual({
+        sessionId: expect.stringMatching(/^local-session-/u),
+        target: {
+          transportType: "ssh",
+          host: "deploy@example.com",
+          sshPort: 2222,
+          sshPassword: "hunter2",
+        },
+        protocols: ["paseo.bearer.daemon-pw"],
+      });
+    } finally {
+      clearSessionSshPasswords();
+    }
+  });
+
+  it("leaves out the ssh password and protocols when there are none", () => {
+    expect(
+      buildOpenSessionInput({
+        sessionId: "s",
+        url: buildDesktopDaemonTransportUrl({ transportType: "ssh", host: "box" }),
+        protocols: [],
+        sessionSshPassword: () => undefined,
+      }),
+    ).toEqual({ sessionId: "s", target: { transportType: "ssh", host: "box" } });
+    expect(
+      buildOpenSessionInput({ sessionId: "s", url: LOCAL_URL, protocols: ["x"] }).target,
+    ).toEqual({ transportType: "socket", transportPath: "/tmp/paseo.sock" });
+  });
+
+  it("hands structured error details to the client as an Error", async () => {
+    const rpc = createFakeLocalDaemonTransportRpc();
+    const transportFactory = createDesktopDaemonTransportFactory(rpc);
+    const transport = transportFactory!({ url: LOCAL_URL });
+    const onError = vi.fn();
+    transport.onError(onError);
+    rpc.resolveListen(vi.fn());
+    await Promise.resolve();
+    const sessionId = rpc.openCalls[0]?.sessionId ?? "";
+    rpc.emitEvent({
+      sessionId,
+      kind: "error",
+      error: "Permission denied (publickey,password).",
+      detail: { kind: "ssh-auth", methods: ["publickey", "password"], passwordTried: false },
+    });
+    expect(onError).toHaveBeenCalledTimes(1);
+    const error = onError.mock.calls[0]?.[0] as DesktopTransportError;
+    expect(error).toBeInstanceOf(DesktopTransportError);
+    expect(error.message).toBe("Permission denied (publickey,password).");
+    expect(error.detail).toEqual({
+      kind: "ssh-auth",
+      methods: ["publickey", "password"],
+      passwordTried: false,
     });
   });
 

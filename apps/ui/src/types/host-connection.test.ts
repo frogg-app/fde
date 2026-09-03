@@ -175,6 +175,24 @@ describe("createRemoteSshHostConnection", () => {
     });
   });
 
+  it("keeps the daemon password out of the id and persists it like directTcp", () => {
+    const withPassword = createRemoteSshHostConnection({ host: "build-box", password: " pw " });
+    expect(withPassword).toEqual({
+      id: "ssh:build-box::",
+      type: "remoteSsh",
+      host: "build-box",
+      password: "pw",
+    });
+    expect(createRemoteSshHostConnection({ host: "build-box", password: "  " })).not.toHaveProperty(
+      "password",
+    );
+    const profile = normalizeStoredHostProfile({
+      serverId: "srv_ssh",
+      connections: [{ type: "remoteSsh", host: "build-box", password: "pw" }],
+    });
+    expect(profile?.connections[0]).toEqual(withPassword);
+  });
+
   it("rejects invalid SSH destinations and ports", () => {
     expect(() => createRemoteSshHostConnection({ host: "" })).toThrow("SSH host is required");
     expect(() => createRemoteSshHostConnection({ host: "bad host" })).toThrow(

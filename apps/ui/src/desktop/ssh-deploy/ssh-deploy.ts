@@ -1,6 +1,7 @@
 import { DEFAULT_SSH_DAEMON_PORT } from "@fde/protocol/ssh-transport";
 import { listenToDesktopEvent, type DesktopEventUnlisten } from "@/desktop/electron/events";
 import { invokeDesktopCommand } from "@/desktop/electron/invoke";
+import { getSessionSshPassword } from "@/desktop/daemon/ssh-session-passwords";
 
 /** Desktop bridge event name (`paseo:event:` is added by the shell). */
 export const SSH_DEPLOY_EVENT = "ssh-deploy-event";
@@ -128,12 +129,28 @@ export function sshDeployPrimaryAction(
   return "upgrade";
 }
 
+/**
+ * The ssh password the user typed for this host during this app session, if
+ * any, so probes and deploy jobs reach password-only hosts the way the
+ * tunnel does. In memory only; see `ssh-session-passwords.ts`.
+ */
+function withSessionSshPassword<T extends SshDeployTarget>(target: T): T {
+  const sshPassword = getSessionSshPassword({
+    host: target.host,
+    ...(target.sshPort !== undefined ? { sshPort: target.sshPort } : {}),
+  });
+  return sshPassword ? { ...target, sshPassword } : target;
+}
+
 export async function probeSshDeploy(target: SshDeployTarget): Promise<SshDeployProbe> {
   return parseSshDeployProbe(
-    await invokeDesktopCommand<unknown>("ssh_deploy_probe", {
-      host: target.host,
-      ...(target.sshPort !== undefined ? { sshPort: target.sshPort } : {}),
-    }),
+    await invokeDesktopCommand<unknown>(
+      "ssh_deploy_probe",
+      withSessionSshPassword({
+        host: target.host,
+        ...(target.sshPort !== undefined ? { sshPort: target.sshPort } : {}),
+      }),
+    ),
   );
 }
 
@@ -146,13 +163,20 @@ function jobIdOf(raw: unknown): string {
 }
 
 export async function startSshDeploy(input: SshDeployStartInput): Promise<string> {
-  return jobIdOf(await invokeDesktopCommand<unknown>("ssh_deploy_start", { ...input }));
+  return jobIdOf(
+    await invokeDesktopCommand<unknown>("ssh_deploy_start", withSessionSshPassword({ ...input })),
+  );
 }
 
 export async function uninstallSshDeploy(
   input: SshDeployTarget & { method: SshDeployMethod },
 ): Promise<string> {
-  return jobIdOf(await invokeDesktopCommand<unknown>("ssh_deploy_uninstall", { ...input }));
+  return jobIdOf(
+    await invokeDesktopCommand<unknown>(
+      "ssh_deploy_uninstall",
+      withSessionSshPassword({ ...input }),
+    ),
+  );
 }
 
 export async function cancelSshDeploy(jobId: string): Promise<void> {
