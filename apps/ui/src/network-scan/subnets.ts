@@ -30,7 +30,8 @@ export function isPrivateIpv4(value: string): boolean {
 
 /** The /24 prefix ("192.168.1") of an IPv4 address, or null for anything else. */
 export function subnetOf(value: string): string | null {
-  const octets = parseIpv4(value);
+  // The desktop shell reports interface addresses in CIDR form ("192.168.1.23/24").
+  const octets = parseIpv4(value.split("/")[0] ?? value);
   if (!octets) return null;
   return `${octets[0]}.${octets[1]}.${octets[2]}`;
 }

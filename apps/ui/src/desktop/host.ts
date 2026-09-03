@@ -174,7 +174,10 @@ export interface DesktopBrowserBridge {
  * common private subnets when the shell offers nothing.
  */
 export interface DesktopNetworkBridge {
-  /** IPv4 addresses of this machine's non-loopback interfaces, e.g. `["192.168.1.23"]`. */
+  /**
+   * IPv4 addresses of this machine's up, non-loopback, non-link-local interfaces. The
+   * shell returns CIDR form (`"192.168.1.23/24"`); a bare address is accepted too.
+   */
   localAddresses?: () => Promise<string[]>;
   /** Reverse DNS for an IPv4 address; resolves null when nothing answers. */
   reverseLookup?: (ip: string) => Promise<string | null>;
@@ -182,17 +185,6 @@ export interface DesktopNetworkBridge {
 
 export interface DesktopInvokeBridge {
   invoke?: (command: string, args?: Record<string, unknown>) => Promise<unknown>;
-}
-
-/**
- * Host-side network facts for the LAN scanner. `localAddresses` resolves to
- * this machine's IPv4 addresses in CIDR form (`192.168.1.20/24`), interfaces
- * that are up only, minus loopback and link-local. `reverseLookup` resolves
- * to the PTR name of an address or `null` (the shell caps it at 1 s).
- */
-export interface DesktopNetworkBridge {
-  localAddresses: () => Promise<string[]>;
-  reverseLookup?: (ip: string) => Promise<string | null>;
 }
 
 export interface DesktopHostBridge {

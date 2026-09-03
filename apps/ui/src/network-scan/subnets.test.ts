@@ -81,3 +81,7 @@ describe("buildProbeTargets", () => {
     expect(buildProbeTargets(["a", "b", "c", "d"], 9999)).toHaveLength(768);
   });
 });
+
+it("subnetOf accepts CIDR notation from the desktop shell", () => {
+  expect(subnetOf("192.168.1.23/24")).toBe("192.168.1");
+});
