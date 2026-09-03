@@ -114,10 +114,10 @@ const test = daemonTest.extend<{
       }
 
       // Hard guardrail: never allow tests to hit the developer's default daemon.
-      // This blocks both HTTP and WS attempts to :6767 (before any navigation).
-      await page.route(/:(6767)\b/, (route) => route.abort());
-      await page.routeWebSocket(/:(6767)\b/, async (ws) => {
-        await ws.close({ code: 1008, reason: "Blocked connection to localhost:6767 during e2e." });
+      // This blocks both HTTP and WS attempts to :9999 (and the legacy :6767) (before any navigation).
+      await page.route(/:(9999|6767)\b/, (route) => route.abort());
+      await page.routeWebSocket(/:(9999|6767)\b/, async (ws) => {
+        await ws.close({ code: 1008, reason: "Blocked connection to localhost:9999 during e2e." });
       });
 
       const entries: string[] = [];
