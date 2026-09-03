@@ -89,7 +89,7 @@ describe("parseSshDeployEvent", () => {
 
 describe("deploy card helpers", () => {
   it("defaults the listen address to loopback on the saved daemon port", () => {
-    expect(defaultSshDeployListen()).toBe("127.0.0.1:6767");
+    expect(defaultSshDeployListen()).toBe("127.0.0.1:9999");
     expect(defaultSshDeployListen(7000)).toBe("127.0.0.1:7000");
   });
 
