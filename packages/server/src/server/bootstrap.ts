@@ -219,7 +219,10 @@ import {
 } from "./claim-offer.js";
 import { renderClaimGatePage } from "./claim-gate-page.js";
 import { DEFAULT_PAIRING_BASE_URL } from "@fde/protocol/connection-offer";
-import { createIdentityRouteHandler } from "./identity-route.js";
+import {
+  createIdentityPreflightHandler,
+  createIdentityRouteHandler,
+} from "./identity-route.js";
 import { mountSetupRoutes } from "./setup-routes.js";
 import { WorkspaceAutoName } from "./workspace-auto-name.js";
 import { createGitMutationService } from "./session/git-mutation/git-mutation-service.js";
@@ -888,7 +891,9 @@ export async function createPaseoDaemon(
     res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
 
-  // Unauthenticated daemon identity for LAN scanners and the pairing flow.
+  // Unauthenticated daemon identity for LAN scanners and the pairing flow. The preflight is
+  // registered before the generic CORS middleware, which answers every OPTIONS with a bare 204.
+  app.options("/api/identity", createIdentityPreflightHandler());
   app.get(
     "/api/identity",
     createIdentityRouteHandler({

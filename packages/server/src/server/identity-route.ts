@@ -73,10 +73,8 @@ export function createIdentityRouteHandler(deps: IdentityRouteDependencies): Req
     res.setHeader("Cache-Control", "no-store");
     // Public, read-only discovery data: LAN scanners running inside the desktop webview or a
     // browser fetch it cross-origin, so it must not depend on the CORS allowlist.
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.json(describeDaemonIdentity(deps, req));
     setDiscoveryCorsHeaders(res);
-    res.json(describeDaemonIdentity(deps));
+    res.json(describeDaemonIdentity(deps, req));
   };
 }
 
