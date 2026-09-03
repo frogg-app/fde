@@ -39,6 +39,9 @@ export function describeDaemonIdentity(deps: IdentityRouteDependencies): DaemonI
 export function createIdentityRouteHandler(deps: IdentityRouteDependencies): RequestHandler {
   return (_req, res) => {
     res.setHeader("Cache-Control", "no-store");
+    // Public, read-only discovery data: LAN scanners running inside the desktop webview or a
+    // browser fetch it cross-origin, so it must not depend on the CORS allowlist.
+    res.setHeader("Access-Control-Allow-Origin", "*");
     res.json(describeDaemonIdentity(deps));
   };
 }

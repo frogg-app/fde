@@ -774,8 +774,13 @@ export async function createPaseoDaemon(
 
   // CORS - allow same-origin + configured origins
   const fixedAllowedOrigins = [
-    // Packaged desktop renderers use the custom paseo:// protocol scheme.
+    // Paseo's Electron renderer used the custom paseo:// scheme.
     "paseo://app",
+    // The FDE Tauri shell: WebKit reports `tauri://localhost`, WebView2 (Windows)
+    // `http://tauri.localhost` (or https on newer builds).
+    "tauri://localhost",
+    "http://tauri.localhost",
+    "https://tauri.localhost",
     // For TCP, add localhost variants
     ...(listenTarget.type === "tcp"
       ? [

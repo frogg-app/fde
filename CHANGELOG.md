@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.14
+
+- Daemon accepts WebSocket connections from the FDE desktop app (Tauri origins `tauri://localhost` and `http(s)://tauri.localhost` were rejected with 403, so direct TCP connections closed with code 1006).
+- `/api/identity` sends `Access-Control-Allow-Origin: *` so the in-app LAN scan can see daemons.
+- Windows portable build is published only as a zip.
+
 ## 0.1.13
 
 - Repository moved to `github.com/frogg-app/fde`; update checks, install scripts, deploy defaults, and docs point at the new address.
