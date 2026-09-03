@@ -85,11 +85,15 @@ export interface DesktopHostBridge {
    * For the UI's LAN scanner. `localAddresses` yields this machine's IPv4
    * addresses in CIDR form (`192.168.1.20/24`): interfaces that are up,
    * minus loopback and link-local. `reverseLookup` is the PTR name of an
-   * address or `null` (1 s budget).
+   * address or `null` (1 s budget). `probeIdentity` fetches a daemon's
+   * `/api/identity` (or `/api/health`) from Rust, outside the webview's
+   * networking rules; it resolves with the status and parsed body, and
+   * rejects when nothing answered within 700 ms.
    */
   network?: {
     localAddresses: () => Promise<string[]>;
     reverseLookup?: (ip: string) => Promise<string | null>;
+    probeIdentity?: (url: string) => Promise<{ status: number; body: unknown }>;
   };
   // Not implemented in milestone 1; the UI hides those features when absent.
   editor?: undefined;

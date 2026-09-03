@@ -16,6 +16,7 @@ import {
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { platform as osPlatform } from "@tauri-apps/plugin-os";
 import type { DesktopHostBridge, DragDropPayload, WindowChromeUpdate } from "./bridge-types";
+import { installDragRegionHandler } from "./drag-region";
 
 interface InjectedHostInfo {
   platform?: string;
@@ -194,6 +195,16 @@ function createNetworkBridge(): NonNullable<DesktopHostBridge["network"]> {
       });
       return typeof name === "string" && name.length > 0 ? name : null;
     },
+    probeIdentity: async (url: string) => {
+      const result = (await invoke("desktop_invoke", {
+        command: "network_probe_identity",
+        args: { url },
+      })) as { status?: unknown; body?: unknown } | null;
+      if (!result || typeof result.status !== "number") {
+        throw new Error("network_probe_identity returned no status");
+      }
+      return { status: result.status, body: result.body ?? null };
+    },
   };
 }
 
@@ -246,3 +257,8 @@ function createBridge(): DesktopHostBridge {
 }
 
 window.paseoDesktop = createBridge();
+
+// Custom chrome only: macOS keeps native decorations and its own drag.
+if (window.paseoDesktop.windowChromeMode !== "native-mac") {
+  installDragRegionHandler(window);
+}

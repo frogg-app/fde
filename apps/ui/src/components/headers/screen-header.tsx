@@ -9,8 +9,11 @@ import {
   HEADER_TOP_PADDING_MOBILE,
   useIsCompactFormFactor,
 } from "@/constants/layout";
-import { WindowChromeSafeArea } from "@/utils/desktop-window";
-import { TitlebarDragRegion } from "@/components/desktop/titlebar-drag-region";
+import { WindowChromeSafeArea, useWindowChromeCorners } from "@/utils/desktop-window";
+import {
+  TITLEBAR_DRAG_SURFACE_DATASET,
+  TitlebarDragRegion,
+} from "@/components/desktop/titlebar-drag-region";
 
 interface ScreenHeaderProps {
   left?: ReactNode;
@@ -47,9 +50,16 @@ export function ScreenHeader({
   const rowStyle = useMemo(() => [styles.row, borderless && styles.borderless], [borderless]);
   const leftCombinedStyle = useMemo(() => [styles.left, leftStyle], [leftStyle]);
   const rightCombinedStyle = useMemo(() => [styles.right, rightStyle], [rightStyle]);
+  // A header that sits under the window's top edge stands in for the title bar,
+  // so pressing anywhere on it (text included) drags the window. Headers inside
+  // a modal (`WindowChromeRegion corners="none"`) are not part of the chrome.
+  const isWindowChromeHeader = useWindowChromeCorners() !== "none";
 
   return (
-    <View style={styles.header}>
+    <View
+      style={styles.header}
+      dataSet={isWindowChromeHeader ? TITLEBAR_DRAG_SURFACE_DATASET : undefined}
+    >
       <View style={innerStyle}>
         <WindowChromeSafeArea
           placement="inline"

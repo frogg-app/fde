@@ -13,6 +13,7 @@ import {
   type DesktopWindowControlsPresentation,
 } from "@/desktop/window-chrome-presentation";
 import { useCustomDesktopWindowControls } from "@/utils/desktop-window";
+import { TITLEBAR_DRAG_SURFACE_DATASET } from "@/components/desktop/titlebar-drag-region";
 import type { Theme } from "@/styles/theme";
 
 type WindowControlKind = "minimize" | "maximize" | "restore" | "close";
@@ -144,6 +145,7 @@ export function DesktopWindowControls() {
   return (
     <View
       style={[styles.controls, { height: presentation.controlHeight }]}
+      dataSet={TITLEBAR_DRAG_SURFACE_DATASET}
       testID="desktop-window-controls"
     >
       <WindowControl

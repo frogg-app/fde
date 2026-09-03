@@ -35,11 +35,16 @@ function loadBridge(hostInfo) {
     setTimeout,
     clearTimeout,
   };
+  const domListeners = [];
+  sandbox.addEventListener = (type, handler, capture) => {
+    domListeners.push({ type, handler, capture });
+  };
+  sandbox.removeEventListener = () => {};
   sandbox.window = sandbox;
   sandbox.globalThis = sandbox;
   vm.createContext(sandbox);
   vm.runInContext(bundle, sandbox, { filename: "bridge.js" });
-  return { bridge: sandbox.window.paseoDesktop, invocations, listeners };
+  return { bridge: sandbox.window.paseoDesktop, invocations, listeners, domListeners };
 }
 
 test("bridge exposes the essential members and none of menu/editor/browser", () => {
@@ -123,6 +128,40 @@ test("network members call the Rust commands and normalise their answers", async
     cmd: "desktop_invoke",
     args: { command: "network_reverse_lookup", args: { ip: "192.168.1.20" } },
   });
+});
+
+test("network.probeIdentity calls network_probe_identity and insists on a status", async () => {
+  const { bridge, invocations } = loadBridge({
+    platform: "win32",
+    windowChromeMode: "custom-windows",
+  });
+  // The stub echoes the args, which carries no status: that must reject rather
+  // than read as a silent "nothing found".
+  await assert.rejects(
+    () => bridge.network.probeIdentity("http://192.168.1.17:9999/api/identity"),
+    /no status/,
+  );
+  assert.deepEqual(JSON.parse(JSON.stringify(invocations.at(-1))), {
+    cmd: "desktop_invoke",
+    args: {
+      command: "network_probe_identity",
+      args: { url: "http://192.168.1.17:9999/api/identity" },
+    },
+  });
+});
+
+test("custom chrome installs a capture-phase mousedown drag handler; macOS does not", () => {
+  for (const [hostInfo, expected] of [
+    [{ platform: "win32", windowChromeMode: "custom-windows" }, 1],
+    [{ platform: "linux", windowChromeMode: "custom-linux" }, 1],
+    [{ platform: "darwin", windowChromeMode: "native-mac" }, 0],
+  ]) {
+    const { domListeners } = loadBridge(hostInfo);
+    const mousedown = domListeners.filter(
+      (entry) => entry.type === "mousedown" && entry.capture === true,
+    );
+    assert.equal(mousedown.length, expected, hostInfo.windowChromeMode);
+  }
 });
 
 test("events.on returns a promise resolving to an unlisten function", async () => {

@@ -25,11 +25,17 @@ export const titlebarDragSurfaceStyle: React.CSSProperties = {
 };
 
 /**
- * Tauri ignores `-webkit-app-region`; its injected handler starts a window drag on
- * mousedown (and toggles maximize on double-click) only for elements carrying this
- * attribute. Spread it onto every drag surface next to `titlebarDragSurfaceStyle`.
+ * Tauri ignores `-webkit-app-region`. The shell's own handler
+ * (`apps/desktop/src/drag-region.ts`) walks up from the pressed element and starts a
+ * window drag at the first ancestor carrying this attribute, unless it passes an
+ * interactive element first (buttons, inputs, links, `role="button"`, ...). Spread it
+ * onto plain DOM drag surfaces next to `titlebarDragSurfaceStyle`; use
+ * `TITLEBAR_DRAG_SURFACE_DATASET` on React Native `View`s (`dataSet` becomes `data-*`).
  */
 export const titlebarDragSurfaceProps = { "data-tauri-drag-region": "" } as const;
+
+/** Same marker for RN `View`s: `<View dataSet={TITLEBAR_DRAG_SURFACE_DATASET} />`. */
+export const TITLEBAR_DRAG_SURFACE_DATASET = { tauriDragRegion: "" } as const;
 
 const DRAG_OVERLAY_STYLE: React.CSSProperties = {
   ...titlebarDragSurfaceStyle,
