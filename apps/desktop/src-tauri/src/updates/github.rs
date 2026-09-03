@@ -7,7 +7,7 @@ use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, USER_AGENT}
 
 use super::release::Release;
 
-pub const RELEASES_URL: &str = "https://api.github.com/repos/frogg-app/frogg-de/releases";
+pub const RELEASES_URL: &str = "https://api.github.com/repos/frogg-app/fde/releases";
 const TIMEOUT: Duration = Duration::from_secs(30);
 const PER_PAGE: u32 = 30;
 

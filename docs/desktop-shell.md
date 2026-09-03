@@ -297,7 +297,7 @@ hasDockerContainer, homeDir}`. `hasDocker` means `docker info` succeeds for that
 - `ssh_deploy_start {host, sshPort?, sshPassword?, method:"native"|"docker", version?, listen?, bundleUrl?}`
   returns `{jobId}` at once and runs the job in the background. Native pipes the embedded
   `deploy/install.sh` (`include_str!`, so the app ships exactly the repo's script) into
-  `ssh <host> "FDE_VERSION='…' FDE_LISTEN='…' FDE_RELEASE_BASE='https://github.com/frogg-app/frogg-de/releases' [FDE_BUNDLE_URL='…'] bash -s"`;
+  `ssh <host> "FDE_VERSION='…' FDE_LISTEN='…' FDE_RELEASE_BASE='https://github.com/frogg-app/fde/releases' [FDE_BUNDLE_URL='…'] bash -s"`;
   Docker pipes `deploy/install-docker.sh` with `FDE_VERSION`, `FDE_BIND` and `FDE_PORT`
   derived from `listen`. Defaults: version = the app's own version, listen =
   `127.0.0.1:9999`. Nothing is copied with scp: the script downloads
@@ -352,7 +352,7 @@ supervises it the way Electron supervised its packaged daemon. Everything lives 
   `{installed, version?, platform, arch, path?, downloading?:{received,total}}`.
 - **Install** (`install.rs`, `download.rs`, `archive.rs`): `install_local_daemon_bundle
 {version?}` (default: the app version) fetches the archive and its `.sha256` from
-  `https://github.com/frogg-app/frogg-de/releases/download/v<version>/…` with reqwest
+  `https://github.com/frogg-app/fde/releases/download/v<version>/…` with reqwest
   (rustls), verifies the digest, extracts into a staging directory (every entry path is checked:
   no absolute paths, `..`, drive prefixes or links escaping the bundle), validates the layout,
   renames it into place, flips `current`, prunes older versions. Progress is emitted as
@@ -429,7 +429,7 @@ through `tauri-plugin-updater` (`signed.rs`); if that fails (the release has no 
 signature does not verify) the shell logs it and falls back to the GitHub path for that call.
 
 **Detection** (`github.rs`, `release.rs`, `check.rs`). `check_app_update` GETs
-`https://api.github.com/repos/frogg-app/frogg-de/releases?per_page=30` with
+`https://api.github.com/repos/frogg-app/fde/releases?per_page=30` with
 `Accept: application/vnd.github+json` and `User-Agent: FDE/<version>`. `FDE_GITHUB_TOKEN`
 (optional) is sent as a bearer token for private repositories and higher rate limits; it is
 never logged. The newest non-draft release whose tag parses as semver above the running version

@@ -8,7 +8,7 @@ use serde_json::Value;
 use crate::transport::ssh_auth::{password_from_args, SshPassword};
 
 pub const DEFAULT_LISTEN: &str = "127.0.0.1:9999";
-pub const DEFAULT_RELEASE_BASE: &str = "https://github.com/frogg-app/frogg-de/releases";
+pub const DEFAULT_RELEASE_BASE: &str = "https://github.com/frogg-app/fde/releases";
 const MAX_VERSION_LEN: usize = 64;
 const MAX_URL_LEN: usize = 2048;
 
@@ -242,7 +242,7 @@ mod tests {
         assert_eq!(
             build_install_command(&request(DeployMethod::Native)),
             "FDE_VERSION='0.2.0' FDE_LISTEN='127.0.0.1:9999' \
-             FDE_RELEASE_BASE='https://github.com/frogg-app/frogg-de/releases' bash -s"
+             FDE_RELEASE_BASE='https://github.com/frogg-app/fde/releases' bash -s"
         );
         let mut with_url = request(DeployMethod::Native);
         with_url.bundle_url = Some("https://example.com/b.tar.gz".into());

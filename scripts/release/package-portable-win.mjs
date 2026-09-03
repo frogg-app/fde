@@ -45,7 +45,7 @@ export function buildReadme(version) {
     "  The binary is not code-signed yet. On first launch Windows SmartScreen may",
     '  show "Windows protected your PC": click "More info", then "Run anyway".',
     "",
-    "Source and releases: https://github.com/frogg-app/frogg-de",
+    "Source and releases: https://github.com/frogg-app/fde",
     "",
   ].join("\r\n");
 }

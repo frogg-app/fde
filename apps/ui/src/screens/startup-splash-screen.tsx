@@ -28,7 +28,7 @@ interface StartupSplashScreenProps {
   };
 }
 
-const GITHUB_ISSUE_URL = "https://github.com/frogg-app/frogg-de/issues/new";
+const GITHUB_ISSUE_URL = "https://github.com/frogg-app/fde/issues/new";
 const DOCS_URL = "https://paseo.sh/docs";
 
 const LOGO_SIZE = 96;

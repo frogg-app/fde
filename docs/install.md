@@ -85,7 +85,7 @@ service.
 | `FDE_VERSION`      | latest release                                   | Exact version to install, e.g. `0.1.7`                         |
 | `FDE_INSTALL_DIR`  | `~/.local/share/fde`                             | Install root (`versions/`, `current`)                          |
 | `FDE_BIN_DIR`      | `~/.local/bin`                                   | Where `fde`/`paseo` are linked                                 |
-| `FDE_RELEASE_BASE` | `https://github.com/frogg-app/frogg-de/releases` | Release download base                                          |
+| `FDE_RELEASE_BASE` | `https://github.com/frogg-app/fde/releases` | Release download base                                          |
 | `FDE_BUNDLE_URL`   | unset                                            | Download this exact tarball (+ `.sha256`) instead of a release |
 | `FDE_BUNDLE_FILE`  | unset                                            | Install this local tarball instead of downloading              |
 | `FDE_NO_SERVICE`   | `0`                                              | `1` skips the systemd/launchd service                          |

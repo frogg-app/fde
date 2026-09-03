@@ -136,7 +136,7 @@ fn deploy_job_streams_env_line_and_full_script_then_done() {
         let lines = logs(&received);
         assert!(lines.contains(
             &"CMD: FDE_VERSION='1.2.3' FDE_LISTEN='127.0.0.1:7000' \
-              FDE_RELEASE_BASE='https://github.com/frogg-app/frogg-de/releases' bash -s"
+              FDE_RELEASE_BASE='https://github.com/frogg-app/fde/releases' bash -s"
                 .to_string()
         ));
         assert!(lines.contains(&format!("STDIN: {}", INSTALL_SH.len())));

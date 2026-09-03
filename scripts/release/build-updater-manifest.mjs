@@ -4,7 +4,7 @@
 // renamed release assets and their minisign `.sig` files.
 //
 // Usage: node scripts/release/build-updater-manifest.mjs --version 1.2.3 --tag v1.2.3
-//        --repo frogg-app/frogg-de [--assets-dir release-assets] [--out latest.json]
+//        --repo frogg-app/fde [--assets-dir release-assets] [--out latest.json]
 //        [--notes-file notes.md]
 
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";

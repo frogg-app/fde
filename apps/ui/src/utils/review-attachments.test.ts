@@ -37,7 +37,7 @@ describe("buildGitHubAttachmentFromSearchItem", () => {
       kind: "issue",
       number: 55,
       title: "Improve startup error details",
-      url: "https://github.com/frogg-app/frogg-de/issues/55",
+      url: "https://github.com/frogg-app/fde/issues/55",
       state: "OPEN",
       body: "Issue body",
       labels: ["bug"],
@@ -49,7 +49,7 @@ describe("buildGitHubAttachmentFromSearchItem", () => {
       forge: "github",
       number: 55,
       title: "Improve startup error details",
-      url: "https://github.com/frogg-app/frogg-de/issues/55",
+      url: "https://github.com/frogg-app/fde/issues/55",
       body: "Issue body",
     });
   });

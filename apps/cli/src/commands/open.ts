@@ -84,7 +84,7 @@ function launchDesktop(args: string[]): void {
   const desktopApp = findDesktopApp();
   if (!desktopApp) {
     throw new Error(
-      "FDE desktop app not found. Install it from https://github.com/frogg-app/frogg-de/releases",
+      "FDE desktop app not found. Install it from https://github.com/frogg-app/fde/releases",
     );
   }
 

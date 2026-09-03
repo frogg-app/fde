@@ -289,7 +289,7 @@ function printNextSteps(pairingUrl: string | null, paseoHome: string, richUi: bo
       ? "1. Open FDE and scan the QR code above, or paste the pairing link."
       : "1. Open FDE and connect to your daemon.",
     "2. Pairing links open in the FDE desktop app directly (https://frogg.app/pair#offer=…).",
-    "3. Desktop app: https://github.com/frogg-app/frogg-de/releases/latest",
+    "3. Desktop app: https://github.com/frogg-app/fde/releases/latest",
     "4. Docs: https://paseo.sh/docs",
     '5. Example: paseo run --output-schema schema.json "extract fields"',
   ];

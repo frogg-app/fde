@@ -35,7 +35,7 @@ import { confirmDialog } from "@/utils/confirm-dialog";
 import { openExternalUrl } from "@/utils/open-external-url";
 import { formatMessageTimestamp } from "@/utils/time";
 
-const RELEASES_URL = "https://github.com/frogg-app/frogg-de/releases";
+const RELEASES_URL = "https://github.com/frogg-app/fde/releases";
 
 const ThemedDownload = withUnistyles(Download, (theme) => ({
   size: theme.iconSize.sm,

@@ -263,7 +263,7 @@ export function WelcomeScreen({ onHostAdded }: WelcomeScreenProps) {
   }, [installAndStart]);
 
   const handleOpenProjectSite = useCallback(() => {
-    void openExternalUrl("https://github.com/frogg-app/frogg-de/releases");
+    void openExternalUrl("https://github.com/frogg-app/fde/releases");
   }, []);
 
   const handleOpenSettings = useCallback(() => {
@@ -366,7 +366,7 @@ export function WelcomeScreen({ onHostAdded }: WelcomeScreenProps) {
             <Text style={styles.subtitle}>{t("onboarding.subtitle")}</Text>
             {isNative ? (
               <Pressable style={styles.setupLink} onPress={handleOpenProjectSite}>
-                <Text style={styles.setupLinkText}>github.com/frogg-app/frogg-de</Text>
+                <Text style={styles.setupLinkText}>github.com/frogg-app/fde</Text>
                 <ExternalLink size={14} color={theme.colors.accent} />
               </Pressable>
             ) : null}

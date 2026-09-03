@@ -10,7 +10,7 @@ use serde_json::{json, Value};
 
 pub const DIRNAME: &str = "daemon";
 const CURRENT_MARKER: &str = "current";
-pub const RELEASE_BASE: &str = "https://github.com/frogg-app/frogg-de/releases/download";
+pub const RELEASE_BASE: &str = "https://github.com/frogg-app/fde/releases/download";
 
 /// nodejs.org / bundle platform name for the running OS.
 pub fn platform_name() -> &'static str {
@@ -257,7 +257,7 @@ mod tests {
         assert!(name.starts_with("fde-daemon-0.1.6-"));
         assert!(name.ends_with(".tar.gz") || name.ends_with(".zip"));
         assert!(archive_url("0.1.6")
-            .starts_with("https://github.com/frogg-app/frogg-de/releases/download/v0.1.6/"));
+            .starts_with("https://github.com/frogg-app/fde/releases/download/v0.1.6/"));
     }
 
     #[test]

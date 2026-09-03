@@ -123,7 +123,7 @@ Blocked on the owner:
   and the CI Android APK wait.
 - **Code signing certificates** (Windows Authenticode, Apple Developer ID) for SmartScreen/Gatekeeper.
 - **Hosting `frogg.app/install.sh`**: a redirect to
-  `https://raw.githubusercontent.com/frogg-app/frogg-de/main/deploy/install.sh` (and
+  `https://raw.githubusercontent.com/frogg-app/fde/main/deploy/install.sh` (and
   `install-docker.sh`, `uninstall.sh`) is enough.
 
 Assumptions made:

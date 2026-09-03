@@ -26,7 +26,7 @@ set -euo pipefail
 
 FDE_INSTALL_DIR="${FDE_INSTALL_DIR:-${HOME}/.local/share/fde}"
 FDE_BIN_DIR="${FDE_BIN_DIR:-${HOME}/.local/bin}"
-FDE_RELEASE_BASE="${FDE_RELEASE_BASE:-https://github.com/frogg-app/frogg-de/releases}"
+FDE_RELEASE_BASE="${FDE_RELEASE_BASE:-https://github.com/frogg-app/fde/releases}"
 FDE_LISTEN="${FDE_LISTEN:-127.0.0.1:9999}"
 FDE_VERSION="${FDE_VERSION:-}"
 FDE_BUNDLE_FILE="${FDE_BUNDLE_FILE:-}"
