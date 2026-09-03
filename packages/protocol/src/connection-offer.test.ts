@@ -145,7 +145,9 @@ describe("pairing links", () => {
 
   it("keeps parsing the older #offer= and ?code= forms", () => {
     const encoded = encodeOfferFragmentPayload(offer);
-    expect(parseAnyConnectionOfferFromUrl(`https://frogg.app/pair#offer=${encoded}`)).toEqual(offer);
+    expect(parseAnyConnectionOfferFromUrl(`https://frogg.app/pair#offer=${encoded}`)).toEqual(
+      offer,
+    );
     expect(parseAnyConnectionOfferFromUrl(`https://pair.frogg.app/pair?code=${encoded}`)).toEqual(
       offer,
     );

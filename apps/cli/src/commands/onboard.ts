@@ -403,50 +403,13 @@ async function waitForDaemonReadyWithUi(args: {
   }
 }
 
-export async function runOnboard(options: OnboardOptions): Promise<void> {
-  const richUi = process.stdin.isTTY && process.stdout.isTTY;
-  if (richUi) {
-    intro("Welcome to FDE");
-  }
-
-  if (options.listen && options.port) {
-    cancel("Cannot use --listen and --port together");
-    process.exit(1);
-  }
-
-  let timeoutMs = DEFAULT_READY_TIMEOUT_MS;
-  try {
-    timeoutMs = parseTimeoutMs(options.timeout);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    cancel(message);
-    process.exit(1);
-  }
-
-  const paseoHome = resolveLocalPaseoHome(options.home);
-  if (richUi) {
-    renderNote(paseoHome, "FDE home");
-  } else {
-    console.log(`FDE home: ${paseoHome}`);
-  }
-
-  const voiceEnabled = await resolveAndPersistVoice(paseoHome, options);
-  log.message(
-    voiceEnabled
-      ? "Voice features enabled. Local speech models will be downloaded automatically if missing."
-      : "Voice features disabled. Local speech models will not be downloaded.",
-  );
-
-  await ensureDaemonStarted(options, richUi);
-  const ready = await waitForDaemonReadyWithUi({
-    home: options.home ?? paseoHome,
-    timeoutMs,
-    richUi,
-  });
-
-  await configureAutostart({ listen: ready.listen, home: options.home, richUi });
-
-  const claimStatus = await describeClaimStatus(options.home);
+/** Where this daemon can be reached and who may connect, once it is ready. */
+async function reportReachability(
+  ready: DaemonReadyState,
+  home: string | undefined,
+  richUi: boolean,
+): Promise<void> {
+  const claimStatus = await describeClaimStatus(home);
   printLines(
     describeReachability({
       listen: ready.listen,
@@ -459,7 +422,17 @@ export async function runOnboard(options: OnboardOptions): Promise<void> {
     "Reach this daemon",
     richUi,
   );
+}
 
+/**
+ * The pairing half of onboarding: a relay offer when relay is on, otherwise
+ * the direct LAN claim offer the daemon hands out.
+ */
+async function printPairingOffer(
+  options: OnboardOptions,
+  paseoHome: string,
+  richUi: boolean,
+): Promise<void> {
   if (options.relay === false) {
     log.message("Relay pairing skipped because --no-relay was provided.");
     printNextSteps(null, paseoHome, richUi);
@@ -510,4 +483,51 @@ export async function runOnboard(options: OnboardOptions): Promise<void> {
   if (richUi) {
     outro("FDE is ready!");
   }
+}
+
+export async function runOnboard(options: OnboardOptions): Promise<void> {
+  const richUi = process.stdin.isTTY && process.stdout.isTTY;
+  if (richUi) {
+    intro("Welcome to FDE");
+  }
+
+  if (options.listen && options.port) {
+    cancel("Cannot use --listen and --port together");
+    process.exit(1);
+  }
+
+  let timeoutMs = DEFAULT_READY_TIMEOUT_MS;
+  try {
+    timeoutMs = parseTimeoutMs(options.timeout);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    cancel(message);
+    process.exit(1);
+  }
+
+  const paseoHome = resolveLocalPaseoHome(options.home);
+  if (richUi) {
+    renderNote(paseoHome, "FDE home");
+  } else {
+    console.log(`FDE home: ${paseoHome}`);
+  }
+
+  const voiceEnabled = await resolveAndPersistVoice(paseoHome, options);
+  log.message(
+    voiceEnabled
+      ? "Voice features enabled. Local speech models will be downloaded automatically if missing."
+      : "Voice features disabled. Local speech models will not be downloaded.",
+  );
+
+  await ensureDaemonStarted(options, richUi);
+  const ready = await waitForDaemonReadyWithUi({
+    home: options.home ?? paseoHome,
+    timeoutMs,
+    richUi,
+  });
+
+  await configureAutostart({ listen: ready.listen, home: options.home, richUi });
+  await reportReachability(ready, options.home, richUi);
+
+  await printPairingOffer(options, paseoHome, richUi);
 }

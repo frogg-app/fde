@@ -1,11 +1,7 @@
 import type { Command } from "commander";
 
 import type { CommandOptions, OutputSchema, SingleResult } from "../../../output/index.js";
-import {
-  installLoginService,
-  uninstallLoginService,
-  type ServiceActionResult,
-} from "./install.js";
+import { installLoginService, uninstallLoginService, type ServiceActionResult } from "./install.js";
 
 /**
  * `fde daemon install-service` / `uninstall-service`: register the daemon with

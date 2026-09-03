@@ -44,4 +44,3 @@ export async function configureAutostart(args: {
   log.message(result.message);
   for (const hint of result.hints) log.message(hint);
 }
-

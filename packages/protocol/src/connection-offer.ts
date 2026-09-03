@@ -162,7 +162,10 @@ function extractCodePathSegment(input: string): string | null {
   const withoutQuery = withoutFragment.split("?")[0] ?? "";
   const codeIndex = withoutQuery.lastIndexOf(PAIRING_CODE_PATH);
   if (codeIndex === -1) return null;
-  const code = withoutQuery.slice(codeIndex + PAIRING_CODE_PATH.length).replace(/\/+$/, "").trim();
+  const code = withoutQuery
+    .slice(codeIndex + PAIRING_CODE_PATH.length)
+    .replace(/\/+$/, "")
+    .trim();
   return code.length > 0 && CODE_CHARS.test(code) ? code : null;
 }
 

@@ -137,9 +137,7 @@ export function createCli(): Command {
   ).action(withOutput(runDaemonReloadCommand));
 
   addJsonOption(
-    program
-      .command("restart")
-      .description('Restart local daemon (alias for "fde daemon restart")'),
+    program.command("restart").description('Restart local daemon (alias for "fde daemon restart")'),
   )
     .option("--home <path>", "FDE home directory (default: ~/.fde)")
     .option("--timeout <seconds>", "Wait timeout before force step (default: 15)")

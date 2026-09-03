@@ -35,4 +35,3 @@ button.secondary{background:transparent;color:var(--accent);border:1px solid var
 .status{font-size:13px;color:var(--muted)}
 .meta{margin-top:16px;font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:10px}
 `;
-

@@ -49,16 +49,28 @@ try {
     onboard.stdout.includes("CLI quick reference"),
     "onboard output should include CLI quick reference",
   );
-  assert(onboard.stdout.includes("paseo --help"), "onboard output should include --help shortcut");
-  assert(onboard.stdout.includes("paseo ls"), "onboard output should include ls shortcut");
+  assert(onboard.stdout.includes("fde --help"), "onboard output should include --help shortcut");
+  assert(onboard.stdout.includes("fde ls"), "onboard output should include ls shortcut");
   assert(
-    onboard.stdout.includes('paseo run "your prompt"'),
+    onboard.stdout.includes('fde run "your prompt"'),
     "onboard output should include run shortcut",
   );
-  assert(onboard.stdout.includes("paseo status"), "onboard output should include status shortcut");
+  assert(onboard.stdout.includes("fde status"), "onboard output should include status shortcut");
   assert(
     onboard.stdout.includes(join(paseoHome, "daemon.log")),
     "onboard output should include daemon log path",
+  );
+  assert(
+    onboard.stdout.includes("https://pair.frogg.app/code/"),
+    "onboard output should print the pairing link as a pair.frogg.app code URL",
+  );
+  assert(
+    onboard.stdout.includes("Access: "),
+    "onboard output should state who can connect right now",
+  );
+  assert(
+    onboard.stdout.includes(`FDE home: ${paseoHome}`),
+    "onboard output should print the FDE home in use",
   );
 
   const status =

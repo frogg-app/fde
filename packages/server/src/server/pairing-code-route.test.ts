@@ -87,7 +87,10 @@ describe("pairing code page", () => {
         buildOffer({ token: "gone", expiresAt: new Date(Date.now() - 1000).toISOString() }),
       );
       const unknownToken = encodeOfferFragmentPayload(
-        buildOffer({ token: "never-issued", expiresAt: new Date(Date.now() + 60_000).toISOString() }),
+        buildOffer({
+          token: "never-issued",
+          expiresAt: new Date(Date.now() + 60_000).toISOString(),
+        }),
       );
 
       for (const path of [
@@ -125,9 +128,7 @@ describe("resolvePairingCode", () => {
 
     // Another daemon's code still renders (a proxy may serve it) but cannot be
     // claimed here, and nothing about it is echoed back.
-    const foreign = encodeOfferFragmentPayload(
-      buildOffer({ ...claim, serverId: "srv_other" }),
-    );
+    const foreign = encodeOfferFragmentPayload(buildOffer({ ...claim, serverId: "srv_other" }));
     expect(resolvePairingCode(foreign, deps)).toEqual({
       hostname: null,
       canPairThisBrowser: false,
@@ -145,9 +146,7 @@ describe("resolvePairingCode", () => {
   test("reads the code out of a full pairing URL shape", () => {
     const claim = offers.issue();
     const code = encodeOfferFragmentPayload(buildOffer(claim));
-    expect(buildPairingUrl(PAIRING_BASE_URL, code)).toBe(
-      `${PAIRING_BASE_URL}/code/${code}`,
-    );
+    expect(buildPairingUrl(PAIRING_BASE_URL, code)).toBe(`${PAIRING_BASE_URL}/code/${code}`);
     expect(resolvePairingCode(code, deps)?.canPairThisBrowser).toBe(true);
   });
 });

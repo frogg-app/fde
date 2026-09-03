@@ -31,9 +31,7 @@ describe("systemd user unit", () => {
     );
 
     expect(plan.file?.path).toBe(`/scratch/config/systemd/user/${SERVICE_NAME}.service`);
-    expect(plan.file?.contents).toContain(
-      "ExecStart=/opt/fde/bin/fde daemon start --foreground",
-    );
+    expect(plan.file?.contents).toContain("ExecStart=/opt/fde/bin/fde daemon start --foreground");
     expect(plan.file?.contents).toContain("Environment=PASEO_LISTEN=127.0.0.1:9991");
     expect(plan.file?.contents).toContain(`Environment=FDE_HOME=${HOME_DIR}/.fde`);
     expect(plan.file?.contents).toContain("Environment=PATH=/opt/fde/bin:/usr/bin:/bin");
@@ -61,7 +59,9 @@ describe("systemd user unit", () => {
 
 describe("launchd agent", () => {
   test("writes a RunAtLoad plist into ~/Library/LaunchAgents", () => {
-    const plan = resolveServicePlan(planInput({ platform: "darwin", env: { PATH: "/usr/bin", UID: "501" } }));
+    const plan = resolveServicePlan(
+      planInput({ platform: "darwin", env: { PATH: "/usr/bin", UID: "501" } }),
+    );
 
     expect(plan.label).toBe(LAUNCHD_LABEL);
     expect(plan.file?.path).toBe(`${HOME_DIR}/Library/LaunchAgents/${LAUNCHD_LABEL}.plist`);
