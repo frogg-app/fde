@@ -19,9 +19,17 @@ import { isNative } from "@/constants/platform";
 
 export const titlebarDragSurfaceStyle: React.CSSProperties = {
   cursor: "default",
+  userSelect: "none",
   // @ts-expect-error — WebkitAppRegion is not in CSSProperties
   WebkitAppRegion: "drag",
 };
+
+/**
+ * Tauri ignores `-webkit-app-region`; its injected handler starts a window drag on
+ * mousedown (and toggles maximize on double-click) only for elements carrying this
+ * attribute. Spread it onto every drag surface next to `titlebarDragSurfaceStyle`.
+ */
+export const titlebarDragSurfaceProps = { "data-tauri-drag-region": "" } as const;
 
 const DRAG_OVERLAY_STYLE: React.CSSProperties = {
   ...titlebarDragSurfaceStyle,
@@ -54,7 +62,7 @@ export function TitlebarDragRegion() {
   return (
     <>
       {/* Drag overlay — VS Code .titlebar-drag-region (titlebarpart.css:57-64) */}
-      <div style={DRAG_OVERLAY_STYLE} />
+      <div style={DRAG_OVERLAY_STYLE} {...titlebarDragSurfaceProps} />
       {/* Top-edge resizer — VS Code .resizer (titlebarpart.css:249-256) */}
       <div style={TOP_RESIZER_STYLE} />
     </>
