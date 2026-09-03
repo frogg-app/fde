@@ -79,6 +79,7 @@ not retain non-Git directories.
 | `server/agent/providers/`       | Provider adapters (see "Agent providers" below)                                |
 | `server/orchestration-skills/`  | Bundled catalog, host selection, convergence, and skill-directory transactions |
 | `server/relay-transport.ts`     | Outbound relay connection with E2E encryption                                  |
+| `server/notifications/`         | Spoken alerts: text composer, TTS cache, background synthesis, audio route     |
 | `server/schedule/`              | Cron-based scheduled agents                                                    |
 
 ### `packages/protocol` — Wire schemas and shared protocol types
@@ -230,6 +231,20 @@ status once at the directory boundary rather than maintaining a second activity 
 
 - Terminal subscribe/input/capture commands
 - Voice/dictation streaming events (`dictation_stream_*`, `assistant_chunk`, `audio_output`, `transcription_result`)
+- `notification.audio.request` / `notification.audio.response` — cached alert audio for a spoken notification
+
+### Notification audio flow
+
+`AgentManager` reports an agent that finished, errored, or asked for a permission or an answer to
+the WebSocket server, which builds the text notification, decides who gets an in-app message and
+whether to push (`agent-attention-policy.ts`), and, when spoken alerts are on and TTS is ready,
+composes a spoken line (`notifications/spoken-text.ts`) and starts synthesis in the background
+(`notifications/spoken-alerts.ts`). The `agent_attention_required` payload and the push `data` go
+out immediately with `id`, `spokenText`, and `audioUrl`; the audio lands in
+`$PASEO_HOME/tts-cache/` a moment later. Clients fetch it with the `notification.audio.request` RPC
+(works over relay) or `GET /api/notifications/<id>/audio` behind the bearer middleware; a request
+that arrives before synthesis finishes waits for it. Details and app behaviour: [voice.md](voice.md).
+
 - Request/response pairs for fetch, list, create, etc., correlated by `requestId`; failures use `rpc_error`
 
 `directory_suggestions_request` is one daemon-owned filesystem search capability. The daemon
@@ -383,6 +398,7 @@ $PASEO_HOME/
 ├── daemon-keypair.json                         # Daemon identity for relay/E2EE
 ├── principals.json                             # Paired devices: principals + credential digests (permissions.md)
 ├── push-tokens.json                            # Mobile push tokens
+├── tts-cache/                                  # Synthesised spoken-alert audio (LRU, 50 MB)
 ├── paseo.sock / paseo.pid                      # Local IPC socket and pidfile
 └── daemon.log                                  # Daemon trace logs (rotated)
 ```

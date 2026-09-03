@@ -1828,6 +1828,47 @@ export const en = {
       stop: "Stop realtime voice and interrupt turn",
     },
   },
+  spokenAlerts: {
+    banner: {
+      play: "Play",
+      stop: "Stop",
+      replyByVoice: "Reply by voice",
+      dismiss: "Dismiss alert",
+    },
+    toast: {
+      play: "Play",
+    },
+    errors: {
+      unavailable: "Audio playback isn't available here.",
+      noAudio: "The host has no audio for this alert.",
+      unsupportedFormat: "This device can't play the alert's audio format.",
+      playbackFailed: "Couldn't play the alert.",
+    },
+    reply: {
+      title: "Reply by voice",
+      listening: "Listening…",
+      transcribing: "Transcribing…",
+      done: "Done",
+      cancel: "Cancel",
+      retry: "Try again",
+      send: "Send",
+      sendingIn: "Sending in {{seconds}}s…",
+      sending: "Sending…",
+      sent: "Sent",
+      failed: "Couldn't send the reply.",
+      startFailed: "Couldn't start listening.",
+      placeholder: "Your reply",
+      allow: "Allow",
+      deny: "Deny",
+      sendAsMessage: "Send as message",
+      willAllow: "This will allow the request.",
+      willDeny: "This will deny the request.",
+      ambiguous: "Not clearly a yes or a no. Choose what to do.",
+      permissionPrompt:
+        "The agent is waiting for a permission decision. Say yes or no, or dictate a reply.",
+      keepListening: "Keep listening for the next alert",
+    },
+  },
   rewind: {
     tooltip: "Rewind to this message",
     warning: "This action cannot be undone",
@@ -2167,6 +2208,18 @@ export const en = {
       fallbackHint: "If it is unavailable, FDE falls back to another available model",
       docs: "Docs",
       saveError: "Unable to update metadata generation",
+    },
+    voiceAlerts: {
+      title: "Voice alerts",
+      autoPlay: {
+        label: "Auto-play spoken alerts",
+        description: "Speak agent alerts as they arrive while an FDE is in the foreground.",
+      },
+      replyConfirm: {
+        label: "Confirm voice replies",
+        description:
+          "Show the transcript for two seconds before sending so you can edit or cancel.",
+      },
     },
     general: {
       title: "General",

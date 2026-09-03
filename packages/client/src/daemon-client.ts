@@ -15,6 +15,7 @@ import {
   DaemonUpdateResponseSchema,
   SessionInboundMessageSchema,
   type ActiveTurnBehavior,
+  type NotificationAudio,
   type ServerInfoStatusPayload,
 } from "@fde/protocol/messages";
 import { validateWSOutboundMessage } from "@fde/protocol/validation/ws-outbound";
@@ -917,6 +918,8 @@ const DEFAULT_RECONNECT_BASE_DELAY_MS = 1500;
 const DEFAULT_RECONNECT_MAX_DELAY_MS = 30000;
 const DEFAULT_SESSION_RPC_TIMEOUT_MS = 60_000;
 const PUSH_TOKEN_REVOCATION_TIMEOUT_MS = 2_000;
+// Synthesis may still be running when the app asks; the daemon waits up to 30s for it.
+const NOTIFICATION_AUDIO_TIMEOUT_MS = 45_000;
 const DEFAULT_CONNECT_TIMEOUT_MS = 15_000;
 const DEFAULT_LIVENESS_TIMEOUT_MS = 5000;
 const LIVENESS_HEARTBEAT_INTERVAL_MS = 10_000;
@@ -1889,6 +1892,20 @@ export class DaemonClient {
       responseType: "push.unregister.response",
       timeout: PUSH_TOKEN_REVOCATION_TIMEOUT_MS,
     });
+  }
+
+  /**
+   * Alert audio the daemon synthesised for an attention notification, or null when it has
+   * none (spoken alerts off, TTS failed, or the cache evicted it). Travels over the session
+   * so relay-connected phones can play it without an HTTP path to the daemon.
+   */
+  async fetchNotificationAudio(notificationId: string): Promise<NotificationAudio | null> {
+    const payload = await this.sendCorrelatedSessionRequest({
+      message: { type: "notification.audio.request", notificationId },
+      responseType: "notification.audio.response",
+      timeout: NOTIFICATION_AUDIO_TIMEOUT_MS,
+    });
+    return payload.audio;
   }
 
   async ping(params?: { requestId?: string; timeoutMs?: number }): Promise<{

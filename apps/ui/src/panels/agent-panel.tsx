@@ -49,6 +49,7 @@ import {
 } from "@/constants/layout";
 import { isNative, isWeb } from "@/constants/platform";
 import { useAgentAttentionClear } from "@/hooks/use-agent-attention-clear";
+import { SpokenAlertBanner } from "@/components/spoken-alert-banner";
 import { useAgentInputDraft, type AgentInputDraft } from "@/composer/draft/input-draft";
 import {
   type AgentScreenAgent,
@@ -1708,6 +1709,7 @@ function ActiveAgentComposer({
 
   return (
     <View style={inputAreaStyle} onLayout={onInputAreaLayout}>
+      <SpokenAlertBanner serverId={serverId} agentId={agentId} />
       <Composer
         agentId={agentId}
         serverId={serverId}

@@ -179,6 +179,7 @@ import { HubExecutionController } from "./hub/execution-controller.js";
 import type { HubExecutionAgents } from "./hub/daemon-executions.js";
 import { DownloadTokenStore } from "./file-download/token-store.js";
 import type { PushNotifications } from "./push/index.js";
+import type { SpokenAlertService } from "./notifications/spoken-alerts.js";
 import {
   archivePersistedWorkspaceRecord,
   archiveWorkspaceContents,
@@ -428,6 +429,7 @@ export interface SessionOptions {
   logger: pino.Logger;
   downloadTokenStore: DownloadTokenStore;
   pushNotifications: PushNotifications;
+  spokenAlerts?: SpokenAlertService | null;
   paseoHome: string;
   worktreesRoot?: string;
   agentManager: AgentManager;
@@ -658,6 +660,7 @@ export class Session {
   private readonly workspaceRecovery: WorkspaceRecoveryService;
   private readonly daemonConfigStore: DaemonConfigStore;
   private readonly pushNotifications: PushNotifications;
+  private readonly spokenAlerts: SessionOptions["spokenAlerts"];
   private readonly pluginRuntime: SessionOptions["pluginRuntime"];
   private readonly orchestrationSkills: SessionOptions["orchestrationSkills"];
   private unsubscribeAgentEvents: (() => void) | null = null;
@@ -734,6 +737,7 @@ export class Session {
       logger,
       downloadTokenStore,
       pushNotifications,
+      spokenAlerts,
       paseoHome,
       worktreesRoot,
       agentManager,
@@ -788,6 +792,7 @@ export class Session {
     this.onLifecycleIntent = onLifecycleIntent ?? null;
     this.onWorkspaceRecovered = onWorkspaceRecovered ?? null;
     this.pushNotifications = pushNotifications;
+    this.spokenAlerts = spokenAlerts;
     this.paseoHome = paseoHome;
     this.projectIcons = new ProjectIconReader(paseoHome);
     this.worktreesRoot = worktreesRoot;
@@ -2629,6 +2634,20 @@ export class Session {
           payload: { requestId: msg.requestId },
         });
         return;
+      case "notification.audio.request": {
+        const entry = (await this.spokenAlerts?.read(msg.notificationId)) ?? null;
+        this.emit({
+          type: "notification.audio.response",
+          payload: {
+            requestId: msg.requestId,
+            notificationId: msg.notificationId,
+            audio: entry
+              ? { base64: entry.bytes.toString("base64"), mimeType: entry.mimeType }
+              : null,
+          },
+        });
+        return;
+      }
     }
   }
 

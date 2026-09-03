@@ -1869,6 +1869,47 @@ export const fr: TranslationResources = {
       stop: "Arrêtez la voix en temps réel et interrompez le tour",
     },
   },
+  spokenAlerts: {
+    banner: {
+      play: "Lire",
+      stop: "Arrêter",
+      replyByVoice: "Répondre à la voix",
+      dismiss: "Ignorer l'alerte",
+    },
+    toast: {
+      play: "Lire",
+    },
+    errors: {
+      unavailable: "La lecture audio n'est pas disponible ici.",
+      noAudio: "L'hôte n'a pas d'audio pour cette alerte.",
+      unsupportedFormat: "Cet appareil ne peut pas lire le format audio de l'alerte.",
+      playbackFailed: "Impossible de lire l'alerte.",
+    },
+    reply: {
+      title: "Répondre à la voix",
+      listening: "Écoute…",
+      transcribing: "Transcription…",
+      done: "Terminé",
+      cancel: "Annuler",
+      retry: "Réessayer",
+      send: "Envoyer",
+      sendingIn: "Envoi dans {{seconds}} s…",
+      sending: "Envoi…",
+      sent: "Envoyé",
+      failed: "Impossible d'envoyer la réponse.",
+      startFailed: "Impossible de démarrer l'écoute.",
+      placeholder: "Votre réponse",
+      allow: "Autoriser",
+      deny: "Refuser",
+      sendAsMessage: "Envoyer comme message",
+      willAllow: "Cela autorisera la demande.",
+      willDeny: "Cela refusera la demande.",
+      ambiguous: "Ce n'est pas clairement un oui ou un non. Choisissez quoi faire.",
+      permissionPrompt:
+        "L'agent attend une décision d'autorisation. Dites oui ou non, ou dictez une réponse.",
+      keepListening: "Continuer à écouter la prochaine alerte",
+    },
+  },
   rewind: {
     tooltip: "Revenez à ce message",
     warning: "Cette action ne peut pas être annulée",
@@ -2119,6 +2160,18 @@ export const fr: TranslationResources = {
       fallbackHint: "S’il est indisponible, FDE utilise un autre modèle disponible",
       docs: "Documentation",
       saveError: "Impossible de mettre à jour la génération de métadonnées",
+    },
+    voiceAlerts: {
+      title: "Alertes vocales",
+      autoPlay: {
+        label: "Lire automatiquement les alertes vocales",
+        description: "Lit les alertes des agents à leur arrivée lorsqu'un FDE est au premier plan.",
+      },
+      replyConfirm: {
+        label: "Confirmer les réponses vocales",
+        description:
+          "Affiche la transcription pendant deux secondes avant l'envoi pour pouvoir la modifier ou l'annuler.",
+      },
     },
     general: {
       title: "Général",

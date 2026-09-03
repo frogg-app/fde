@@ -1829,6 +1829,47 @@ export const ko: TranslationResources = {
       stop: "실시간 음성 중지 및 턴 중단",
     },
   },
+  spokenAlerts: {
+    banner: {
+      play: "재생",
+      stop: "중지",
+      replyByVoice: "음성으로 답장",
+      dismiss: "알림 닫기",
+    },
+    toast: {
+      play: "재생",
+    },
+    errors: {
+      unavailable: "여기서는 오디오를 재생할 수 없습니다.",
+      noAudio: "호스트에 이 알림의 오디오가 없습니다.",
+      unsupportedFormat: "이 기기에서는 알림의 오디오 형식을 재생할 수 없습니다.",
+      playbackFailed: "알림을 재생하지 못했습니다.",
+    },
+    reply: {
+      title: "음성으로 답장",
+      listening: "듣는 중…",
+      transcribing: "받아쓰는 중…",
+      done: "완료",
+      cancel: "취소",
+      retry: "다시 시도",
+      send: "보내기",
+      sendingIn: "{{seconds}}초 후 전송…",
+      sending: "전송 중…",
+      sent: "전송됨",
+      failed: "답장을 보내지 못했습니다.",
+      startFailed: "듣기를 시작하지 못했습니다.",
+      placeholder: "답장 내용",
+      allow: "허용",
+      deny: "거부",
+      sendAsMessage: "메시지로 보내기",
+      willAllow: "이 요청을 허용합니다.",
+      willDeny: "이 요청을 거부합니다.",
+      ambiguous: "예인지 아니오인지 분명하지 않습니다. 동작을 선택하세요.",
+      permissionPrompt:
+        "에이전트가 권한 결정을 기다리고 있습니다. 예 또는 아니오라고 말하거나 답장을 말하세요.",
+      keepListening: "다음 알림도 계속 듣기",
+    },
+  },
   rewind: {
     tooltip: "이 메시지로 되감기",
     warning: "이 작업은 되돌릴 수 없습니다",
@@ -2078,6 +2119,18 @@ export const ko: TranslationResources = {
       fallbackHint: "사용할 수 없으면 FDE가 다른 사용 가능한 모델을 사용합니다",
       docs: "문서",
       saveError: "메타데이터 생성을 업데이트할 수 없습니다",
+    },
+    voiceAlerts: {
+      title: "음성 알림",
+      autoPlay: {
+        label: "음성 알림 자동 재생",
+        description: "FDE가 앞에 있을 때 에이전트 알림이 도착하면 바로 읽어 줍니다.",
+      },
+      replyConfirm: {
+        label: "음성 답장 확인",
+        description:
+          "보내기 전에 받아쓴 내용을 2초 동안 보여 주어 수정하거나 취소할 수 있게 합니다.",
+      },
     },
     general: {
       title: "일반",

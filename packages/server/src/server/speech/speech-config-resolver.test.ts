@@ -6,6 +6,35 @@ import { PersistedConfigSchema } from "../persisted-config.js";
 import { resolveSpeechConfig } from "./speech-config-resolver.js";
 
 describe("resolveSpeechConfig", () => {
+  test("spoken notifications follow the voice umbrella and honour their own opt-outs", () => {
+    const paseoHome = "/tmp/paseo-home";
+    const resolve = (env: NodeJS.ProcessEnv, persistedInput: unknown) =>
+      resolveSpeechConfig({
+        paseoHome,
+        env,
+        persisted: PersistedConfigSchema.parse(persistedInput),
+        localRuntimeAvailable: true,
+      }).speech.notifications;
+
+    expect(resolve({}, {})).toEqual({ enabled: true });
+    expect(resolve({ PASEO_VOICE: "0" }, {})).toEqual({ enabled: false });
+    expect(resolve({ PASEO_VOICE_NOTIFICATIONS: "0" }, {})).toEqual({ enabled: false });
+    expect(resolve({}, { features: { voice: { notifications: { enabled: false } } } })).toEqual({
+      enabled: false,
+    });
+    expect(
+      resolve({}, { features: { voice: { enabled: false, notifications: { enabled: true } } } }),
+    ).toEqual({ enabled: false });
+    expect(
+      resolveSpeechConfig({
+        paseoHome,
+        env: {} as NodeJS.ProcessEnv,
+        persisted: PersistedConfigSchema.parse({}),
+        localRuntimeAvailable: false,
+      }).speech.notifications,
+    ).toEqual({ enabled: false });
+  });
+
   test("resolves local-first defaults without env overrides", () => {
     const paseoHome = "/tmp/paseo-home";
     const persisted = PersistedConfigSchema.parse({});

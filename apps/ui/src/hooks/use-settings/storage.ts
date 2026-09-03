@@ -57,6 +57,8 @@ export function defaultContentFontSize(native: boolean): number {
 }
 
 export const DEFAULT_CONTENT_FONT_SIZE = defaultContentFontSize(isNative);
+// A phone in a pocket should speak up; a desktop with someone at it should not.
+export const DEFAULT_SPOKEN_ALERTS_AUTO_PLAY = isNative;
 export const MIN_CONTENT_FONT_SIZE = 10;
 export const MAX_CONTENT_FONT_SIZE = 21;
 export const DEFAULT_CODE_FONT_SIZE = 12; // == FONT_SIZE.code
@@ -92,6 +94,10 @@ export interface AppSettings {
   /** Desktop-only preferences for implicit opens into the ordinary side pane. */
   openInSidePane: OpenInSidePanePreferences;
   pullRequestOpenLocation: PullRequestOpenLocation;
+  /** Play a spoken agent alert as soon as it arrives while the app is in the foreground. */
+  spokenAlertsAutoPlay: boolean;
+  /** Show the voice-reply transcript for a moment before sending it. */
+  voiceReplyConfirm: boolean;
 }
 
 export type AppSettingsUpdate =
@@ -144,6 +150,8 @@ export const DEFAULT_CLIENT_SETTINGS: AppSettings = {
   vimKeybindings: false,
   openInSidePane: DEFAULT_OPEN_IN_SIDE_PANE_PREFERENCES,
   pullRequestOpenLocation: "explorer",
+  spokenAlertsAutoPlay: DEFAULT_SPOKEN_ALERTS_AUTO_PLAY,
+  voiceReplyConfirm: true,
 };
 
 export const DEFAULT_APP_SETTINGS: Settings = {
@@ -260,6 +268,8 @@ const StoredAppSettingsSchema = z
         legacyPullRequestsInSidePane: undefined,
       }),
     pullRequestOpenLocation: z.enum(["main", "side", "explorer"]).optional(),
+    spokenAlertsAutoPlay: z.boolean().catch(DEFAULT_SPOKEN_ALERTS_AUTO_PLAY),
+    voiceReplyConfirm: z.boolean().catch(true),
     // COMPAT(explorerSidebarRouting): replaced by source-specific side-pane preferences in v0.6.
     openSupportingTabsInSidePanel: z.boolean().optional().catch(undefined),
     // COMPAT(rendererDesktopSettings): these fields used to share this renderer-owned key.
