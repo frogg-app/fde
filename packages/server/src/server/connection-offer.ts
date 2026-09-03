@@ -1,6 +1,10 @@
 import os from "node:os";
 
-import { ConnectionOfferV2Schema, type ConnectionOffer } from "@fde/protocol/connection-offer";
+import {
+  ConnectionOfferV2Schema,
+  type ConnectionOffer,
+  type ConnectionOfferV3,
+} from "@fde/protocol/connection-offer";
 
 interface BuildOfferEndpointsArgs {
   listenHost: string;
@@ -41,7 +45,7 @@ export async function createConnectionOfferV2(args: {
 }
 
 export function encodeOfferToFragmentUrl(args: {
-  offer: ConnectionOffer;
+  offer: ConnectionOffer | ConnectionOfferV3;
   appBaseUrl: string;
 }): string {
   const json = JSON.stringify(args.offer);

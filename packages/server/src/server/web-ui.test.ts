@@ -7,7 +7,7 @@ import express from "express";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import pino from "pino";
 
-import { createWebUiMiddleware } from "./web-ui.js";
+import { createWebUiMiddleware, type WebUiGate } from "./web-ui.js";
 
 const logger = pino({ level: "silent" });
 
@@ -73,6 +73,7 @@ function createApp(options: {
   enabled: boolean;
   distDir: string | null;
   publicDir?: string;
+  gate?: WebUiGate;
 }): express.Application {
   const app = express();
   app.use(
@@ -81,6 +82,7 @@ function createApp(options: {
       distDir: options.distDir,
       label: "test-label",
       logger,
+      gate: options.gate,
     }),
   );
   app.get("/api/health", (_req, res) => res.json({ ok: true }));
@@ -302,5 +304,30 @@ describe("daemon web UI route module", () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toBe("");
+  });
+
+  test("serves the claim page instead of the app while the gate applies, then the app", async () => {
+    let claimed = false;
+    const gate: WebUiGate = {
+      shouldGate: (req) => !claimed && req.headers["x-test-remote"] === "1",
+      render: async () => "<!doctype html><title>Claim this FDE daemon</title>",
+    };
+    const app = createApp({ enabled: true, distDir, publicDir, gate });
+
+    const gated = await request(app, "GET", "/workspace/abc", { "x-test-remote": "1" });
+    expect(gated.status).toBe(200);
+    expect(gated.body).toContain("Claim this FDE daemon");
+    expect(gated.headers["cache-control"]).toContain("no-store");
+
+    const local = await request(app, "GET", "/workspace/abc");
+    expect(local.body).toContain("app");
+    expect((await request(app, "GET", "/api/health", { "x-test-remote": "1" })).body).toContain(
+      "ok",
+    );
+
+    claimed = true;
+    const afterClaim = await request(app, "GET", "/", { "x-test-remote": "1" });
+    expect(afterClaim.body).toContain("app");
+    expect(afterClaim.body).not.toContain("Claim this");
   });
 });

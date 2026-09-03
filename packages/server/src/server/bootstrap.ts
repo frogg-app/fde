@@ -202,7 +202,18 @@ import {
   isAgentMcpRequestAuthorized,
   type DaemonAuthConfig,
 } from "./auth.js";
-import { createWebUiMiddleware } from "./web-ui.js";
+import { createWebUiMiddleware, type WebUiGate } from "./web-ui.js";
+import { createAccessPolicy } from "./access-policy.js";
+import { createClaimStore, type ClaimStore } from "./claim-store.js";
+import { createClaimOfferStore } from "./claim-offer-store.js";
+import {
+  buildDirectClaimOffer,
+  renderClaimOfferQrSvg,
+  type ClaimOfferSource,
+} from "./claim-offer.js";
+import { renderClaimGatePage } from "./claim-gate-page.js";
+import { createIdentityRouteHandler } from "./identity-route.js";
+import { mountSetupRoutes } from "./setup-routes.js";
 import { WorkspaceAutoName } from "./workspace-auto-name.js";
 import { createGitMutationService } from "./session/git-mutation/git-mutation-service.js";
 import { workspaceIdsOnCheckout } from "./workspace-directory.js";
@@ -464,6 +475,7 @@ export interface PaseoDaemon {
   serviceProxy: ServiceProxySubsystem;
   scriptRuntimeStore: WorkspaceScriptRuntimeStore;
   browserToolsBroker: BrowserToolsBroker;
+  claimStore: ClaimStore;
   start(): Promise<void>;
   stop(): Promise<void>;
   getListenTarget(): ListenTarget | null;
@@ -506,15 +518,55 @@ async function reconcileManagedProcessLedger(
   }
 }
 
-function mountWebUi(app: express.Application, config: PaseoDaemonConfig, logger: Logger): void {
+function mountWebUi(
+  app: express.Application,
+  config: PaseoDaemonConfig,
+  logger: Logger,
+  gate: WebUiGate,
+): void {
   app.use(
     createWebUiMiddleware({
       enabled: config.webUi?.enabled ?? false,
       distDir: config.webUi?.distDir ?? null,
       label: getHostname(),
       logger,
+      gate,
     }),
   );
+}
+
+/**
+ * The claim page replaces the app only while nobody can authenticate yet
+ * (no password, no paired device) and the visitor is not on loopback. A
+ * single-machine setup opening http://localhost keeps working untouched.
+ */
+function createClaimGate(input: {
+  auth: DaemonAuthConfig;
+  claimStore: ClaimStore;
+  offerSource: ClaimOfferSource;
+  daemonVersion: string;
+}): WebUiGate {
+  const { auth, claimStore, offerSource } = input;
+  return {
+    shouldGate: (req) =>
+      !auth.password && !claimStore.isClaimed() && auth.access?.isLoopbackClient(req) === false,
+    render: async (req) => {
+      const requestHost = typeof req.headers.host === "string" ? req.headers.host : undefined;
+      const built = buildDirectClaimOffer(offerSource, {
+        requestHost,
+        useTls: req.protocol === "https",
+      });
+      return renderClaimGatePage({
+        hostname: offerSource.hostname,
+        serverId: offerSource.serverId,
+        version: input.daemonVersion,
+        pairingUrl: built.url,
+        qrSvg: await renderClaimOfferQrSvg(built.url),
+        expiresAt: built.expiresAt,
+        endpoints: built.endpoints,
+      });
+    },
+  };
 }
 
 function resolveExpressTrustProxySetting(config: PaseoDaemonConfig): true | string[] {
@@ -609,6 +661,16 @@ export async function createPaseoDaemon(
 
   const serverId = getOrCreateServerId(config.paseoHome, { logger });
   const daemonKeyPair = await loadOrCreateDaemonKeyPair(config.paseoHome, logger);
+  // Paired principals/credentials and the first-run claim gate (docs/permissions.md).
+  const claimStore = createClaimStore(config.paseoHome);
+  const claimOffers = createClaimOfferStore();
+  const authConfig: DaemonAuthConfig = {
+    ...config.auth,
+    access: createAccessPolicy({
+      claimStore,
+      getTrustedProxies: () => daemonConfigStore.get().trustedProxies ?? ["loopback"],
+    }),
+  };
   const managedProcesses = createBootstrapManagedProcessRegistry(config, logger);
   // Reconcile the helper-process ledger in the background so it never blocks the
   // daemon from coming up; terminating a live leftover can take a few seconds.
@@ -756,11 +818,32 @@ export async function createPaseoDaemon(
   // classification and host/CORS handling, but before daemon bearer auth, so
   // static app files load without the daemon password while API/WebSocket calls
   // remain protected.
-  mountWebUi(app, config, logger);
+  const claimOfferSource: ClaimOfferSource = {
+    serverId,
+    hostname: getHostname(),
+    daemonPublicKeyB64: daemonKeyPair.publicKeyB64,
+    appBaseUrl: () => appBaseUrl,
+    listenTarget: () => boundListenTarget ?? listenTarget,
+    relay: () => {
+      const live = relayRuntime?.getConfig();
+      return {
+        enabled: live?.enabled ?? daemonConfigStore.get().relay?.enabled ?? false,
+        publicEndpoint: live?.publicEndpoint ?? config.relayPublicEndpoint ?? "relay.paseo.sh:443",
+        publicUseTls: live?.publicUseTls ?? config.relayPublicUseTls ?? false,
+      };
+    },
+    offers: claimOffers,
+  };
+  mountWebUi(
+    app,
+    config,
+    logger,
+    createClaimGate({ auth: authConfig, claimStore, offerSource: claimOfferSource, daemonVersion }),
+  );
 
   app.use(
-    createRequireBearerMiddleware(config.auth, (context) => {
-      logger.warn(context, "Rejected HTTP request with invalid daemon password");
+    createRequireBearerMiddleware(authConfig, (context) => {
+      logger.warn(context, "Rejected HTTP request without valid daemon credentials");
     }),
   );
 
@@ -772,6 +855,24 @@ export async function createPaseoDaemon(
   // Health check endpoint
   app.get("/api/health", (_req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
+  // Unauthenticated daemon identity for LAN scanners and the pairing flow.
+  app.get(
+    "/api/identity",
+    createIdentityRouteHandler({
+      serverId,
+      version: daemonVersion,
+      hostname: getHostname,
+      listen: () => formatListenTarget(boundListenTarget ?? listenTarget),
+      isClaimed: () => claimStore.isClaimed() || Boolean(config.auth?.password),
+    }),
+  );
+  mountSetupRoutes(app, {
+    claimStore,
+    offerSource: claimOfferSource,
+    hasPassword: () => Boolean(config.auth?.password),
+    logger,
   });
 
   app.get("/api/status", (_req, res) => {
@@ -1628,7 +1729,7 @@ export async function createPaseoDaemon(
                 startPaused: true,
               },
               workspaceAutoName,
-              config.auth,
+              authConfig,
               speechService,
               terminalManager,
               {
@@ -1782,6 +1883,7 @@ export async function createPaseoDaemon(
     serviceProxy,
     scriptRuntimeStore,
     browserToolsBroker,
+    claimStore,
     start,
     stop,
     getListenTarget: () => boundListenTarget,

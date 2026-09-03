@@ -1,11 +1,20 @@
 import { compare, compareSync, hashSync } from "bcryptjs";
 import { timingSafeEqual } from "node:crypto";
+import type { IncomingMessage } from "node:http";
 import type { RequestHandler } from "express";
+
+import { isAuthRequired, type DaemonAccessPolicy } from "./access-policy.js";
+import { hashCredential } from "./claim-store.js";
 
 export const DAEMON_PASSWORD_BCRYPT_COST = 12;
 
 export interface DaemonAuthConfig {
   password?: string;
+  /**
+   * Paired-device credentials and loopback detection, attached by bootstrap.
+   * Without it only the password gates access (the pre-pairing behavior).
+   */
+  access?: DaemonAccessPolicy;
 }
 
 export interface BearerAuthRejectContext {
@@ -16,7 +25,20 @@ export interface BearerAuthRejectContext {
 
 interface BearerValidationInput {
   password: string | undefined;
+  credentialHashes?: readonly string[];
   token: string | null;
+}
+
+function matchesCredential(token: string, credentialHashes: readonly string[]): boolean {
+  const provided = Buffer.from(hashCredential(token), "hex");
+  let matched = false;
+  for (const hash of credentialHashes) {
+    const expected = Buffer.from(hash, "hex");
+    if (expected.length === provided.length && timingSafeEqual(provided, expected)) {
+      matched = true;
+    }
+  }
+  return matched;
 }
 
 export function isBearerTokenValid(input: BearerValidationInput): boolean {
@@ -24,25 +46,31 @@ export function isBearerTokenValid(input: BearerValidationInput): boolean {
 }
 
 export async function isBearerTokenValidAsync(input: BearerValidationInput): Promise<boolean> {
-  if (!input.password) {
+  const hashes = input.credentialHashes ?? [];
+  if (!input.password && hashes.length === 0) {
     return true;
   }
   if (input.token === null) {
     return false;
   }
-
-  return compare(input.token, input.password);
+  if (hashes.length > 0 && matchesCredential(input.token, hashes)) {
+    return true;
+  }
+  return input.password ? compare(input.token, input.password) : false;
 }
 
 export function isBearerTokenValidSync(input: BearerValidationInput): boolean {
-  if (!input.password) {
+  const hashes = input.credentialHashes ?? [];
+  if (!input.password && hashes.length === 0) {
     return true;
   }
   if (input.token === null) {
     return false;
   }
-
-  return compareSync(input.token, input.password);
+  if (hashes.length > 0 && matchesCredential(input.token, hashes)) {
+    return true;
+  }
+  return input.password ? compareSync(input.token, input.password) : false;
 }
 
 export function hashDaemonPassword(password: string): string {
@@ -87,13 +115,63 @@ export function extractWsBearerToken(protocol: string | null): string | null {
   return segments.slice(2).join(".");
 }
 
+export type BearerDecision =
+  | { ok: true }
+  | { ok: false; reason: "unclaimed" | "missing_token" | "invalid_token" };
+
+type RequestLike = Pick<IncomingMessage, "headers" | "socket">;
+
+/** Does this request need a bearer at all? (see access-policy.ts) */
+export function requestNeedsBearer(auth: DaemonAuthConfig | undefined, req: RequestLike): boolean {
+  return isAuthRequired({
+    password: auth?.password,
+    claimed: auth?.access?.isClaimed() ?? false,
+    loopback: auth?.access ? auth.access.isLoopbackClient(req) : true,
+  });
+}
+
+function decideWithSecrets(
+  auth: DaemonAuthConfig | undefined,
+  token: string | null,
+  valid: boolean,
+): BearerDecision {
+  const hasSecrets = Boolean(auth?.password) || (auth?.access?.credentialHashes().length ?? 0) > 0;
+  if (!hasSecrets) return { ok: false, reason: "unclaimed" };
+  if (token === null) return { ok: false, reason: "missing_token" };
+  return valid ? { ok: true } : { ok: false, reason: "invalid_token" };
+}
+
+export function authorizeBearerSync(
+  auth: DaemonAuthConfig | undefined,
+  req: RequestLike,
+  token: string | null,
+): BearerDecision {
+  if (!requestNeedsBearer(auth, req)) return { ok: true };
+  const credentialHashes = auth?.access?.credentialHashes() ?? [];
+  const valid =
+    token !== null && isBearerTokenValidSync({ password: auth?.password, credentialHashes, token });
+  return decideWithSecrets(auth, token, valid);
+}
+
+export async function authorizeBearerAsync(
+  auth: DaemonAuthConfig | undefined,
+  req: RequestLike,
+  token: string | null,
+): Promise<BearerDecision> {
+  if (!requestNeedsBearer(auth, req)) return { ok: true };
+  const credentialHashes = auth?.access?.credentialHashes() ?? [];
+  const valid =
+    token !== null &&
+    (await isBearerTokenValidAsync({ password: auth?.password, credentialHashes, token }));
+  return decideWithSecrets(auth, token, valid);
+}
+
 export function createRequireBearerMiddleware(
   auth: DaemonAuthConfig | undefined,
   onReject?: (context: BearerAuthRejectContext) => void,
 ): RequestHandler {
-  const password = auth?.password;
   return (req, res, next) => {
-    if (!password || shouldBypassBearerAuth(req.method, req.path)) {
+    if (shouldBypassBearerAuth(req.method, req.path)) {
       next();
       return;
     }
@@ -101,13 +179,17 @@ export function createRequireBearerMiddleware(
     void (async () => {
       try {
         const token = extractHttpBearerToken(req.header("authorization"));
-        if (!(await isBearerTokenValidAsync({ password, token }))) {
+        const decision = await authorizeBearerAsync(auth, req, token);
+        if (!decision.ok) {
           onReject?.({
             path: req.path,
             method: req.method,
             hasToken: token !== null,
           });
-          res.status(401).json({ error: "Unauthorized" });
+          res.status(401).json({
+            error: "Unauthorized",
+            ...(decision.reason === "unclaimed" ? { setup: "unclaimed" } : {}),
+          });
           return;
         }
 
@@ -120,9 +202,15 @@ export function createRequireBearerMiddleware(
 }
 
 const SELF_AUTHENTICATING_ROUTES = new Set(["/api/files/download", "/mcp/agents"]);
+const PUBLIC_ROUTES = new Set([
+  "/api/health",
+  "/api/identity",
+  "/api/setup/status",
+  "/api/setup/claim",
+]);
 
 function isBearerFreeRoute(path: string): boolean {
-  return path === "/api/health" || SELF_AUTHENTICATING_ROUTES.has(path);
+  return PUBLIC_ROUTES.has(path) || SELF_AUTHENTICATING_ROUTES.has(path);
 }
 
 export function shouldBypassBearerAuth(method: string, path: string): boolean {

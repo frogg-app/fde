@@ -139,15 +139,49 @@ function setResponseCacheHeaders(res: Response, isIndexHtml: boolean, resolvedFi
   }
 }
 
+/**
+ * First-run pairing gate. While the daemon is unclaimed and the request comes
+ * from beyond loopback, every app route serves the claim page instead of the
+ * app; `/api`, `/mcp`, and `/public` are untouched.
+ */
+export interface WebUiGate {
+  shouldGate(req: Parameters<RequestHandler>[0]): boolean;
+  render(req: Parameters<RequestHandler>[0]): Promise<string>;
+}
+
 export interface WebUiMiddlewareOptions {
   enabled: boolean;
   distDir: string | null;
   label: string;
   logger: Logger;
+  gate?: WebUiGate;
+}
+
+function serveGatePage(
+  gate: WebUiGate,
+  req: Parameters<RequestHandler>[0],
+  res: Parameters<RequestHandler>[1],
+  logger: Logger,
+): void {
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  if (req.method === "HEAD") {
+    res.status(200).end();
+    return;
+  }
+  gate.render(req).then(
+    (html) => {
+      res.status(200).send(html);
+    },
+    (error: unknown) => {
+      logger.error({ err: error }, "Failed to render the claim page");
+      res.status(500).end();
+    },
+  );
 }
 
 export function createWebUiMiddleware(options: WebUiMiddlewareOptions): RequestHandler {
-  const { enabled, distDir, label, logger } = options;
+  const { enabled, distDir, label, logger, gate } = options;
   const childLogger = logger.child({ module: "web-ui" });
 
   if (!enabled || !distDir) {
@@ -172,6 +206,11 @@ export function createWebUiMiddleware(options: WebUiMiddlewareOptions): RequestH
 
     if (!enabled || !distDir) {
       res.status(404).end();
+      return;
+    }
+
+    if (gate?.shouldGate(req)) {
+      serveGatePage(gate, req, res, childLogger);
       return;
     }
 
