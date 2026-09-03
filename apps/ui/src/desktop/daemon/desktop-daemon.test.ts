@@ -44,6 +44,7 @@ describe("listenToLocalTransportEvents", () => {
         code: null,
         reason: null,
         error: null,
+        detail: null,
       },
       {
         sessionId: "s1",
@@ -53,6 +54,7 @@ describe("listenToLocalTransportEvents", () => {
         code: null,
         reason: null,
         error: "ssh: boom",
+        detail: null,
       },
     ]);
   });

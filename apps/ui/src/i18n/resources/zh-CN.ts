@@ -1636,6 +1636,13 @@ export const zhCN: TranslationResources = {
       fields: {
         target: "SSH 主机",
         daemonPort: "守护进程端口",
+        daemonPassword: "守护进程密码",
+        sshPassword: "SSH 密码",
+        rememberSshPassword: "在本次会话中记住",
+      },
+      hints: {
+        daemonPassword: "这是 FDE 守护进程的密码，不是你的 SSH 登录密码。会随此主机一起保存。",
+        sshPassword: "仅用于 SSH 登录。永不保存；若选择记住，则仅保留在内存中直到应用关闭。",
       },
       actions: {
         cancel: "取消",
@@ -1648,6 +1655,12 @@ export const zhCN: TranslationResources = {
         invalidDaemonPort: "守护进程端口必须在 1 到 65535 之间",
         invalidTarget: "请输入有效的 ssh:// 主机",
         failedToConnect: "无法通过 SSH 连接。{{detail}}",
+        daemonPasswordRequired: "{{host}} 上的 FDE 守护进程需要密码。请在下方输入后重新连接。",
+        daemonPasswordIncorrect: "{{host}} 上的 FDE 守护进程拒绝了该密码。",
+        sshPasswordRequired:
+          "{{host}} 拒绝了你的 SSH 密钥，但接受密码登录。请输入 SSH 密码以继续。",
+        sshPasswordIncorrect: "{{host}} 拒绝了该 SSH 密码。",
+        sshHostKey: "{{host}} 的主机密钥未知或已更改。请先在终端中用 ssh 连接一次以接受它。",
       },
     },
     link: {

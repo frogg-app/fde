@@ -1665,6 +1665,14 @@ export const en = {
       fields: {
         target: "SSH host",
         daemonPort: "Daemon port",
+        daemonPassword: "Daemon password",
+        sshPassword: "SSH password",
+        rememberSshPassword: "Remember for this session",
+      },
+      hints: {
+        daemonPassword: "The password of the FDE daemon, not your SSH login. Saved with this host.",
+        sshPassword:
+          "Used only to log in over SSH. Never saved; kept in memory until the app closes when remembered.",
       },
       actions: {
         cancel: "Cancel",
@@ -1677,6 +1685,14 @@ export const en = {
         invalidDaemonPort: "Daemon port must be between 1 and 65535",
         invalidTarget: "Enter a valid ssh:// host",
         failedToConnect: "Unable to connect over SSH. {{detail}}",
+        daemonPasswordRequired:
+          "The FDE daemon on {{host}} requires a password. Enter it below and connect again.",
+        daemonPasswordIncorrect: "The FDE daemon on {{host}} rejected the password.",
+        sshPasswordRequired:
+          "{{host}} refused your SSH keys but accepts password login. Enter the SSH password to continue.",
+        sshPasswordIncorrect: "{{host}} rejected the SSH password.",
+        sshHostKey:
+          "The host key of {{host}} is unknown or has changed. Connect once from a terminal with ssh to accept it.",
       },
     },
     link: {

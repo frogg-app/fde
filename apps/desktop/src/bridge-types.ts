@@ -81,6 +81,16 @@ export interface DesktopHostBridge {
   };
   opener?: { openUrl?: (url: string) => Promise<void> };
   webUtils?: { getPathForFile?: (file: File) => string };
+  /**
+   * For the UI's LAN scanner. `localAddresses` yields this machine's IPv4
+   * addresses in CIDR form (`192.168.1.20/24`): interfaces that are up,
+   * minus loopback and link-local. `reverseLookup` is the PTR name of an
+   * address or `null` (1 s budget).
+   */
+  network?: {
+    localAddresses: () => Promise<string[]>;
+    reverseLookup?: (ip: string) => Promise<string | null>;
+  };
   // Not implemented in milestone 1; the UI hides those features when absent.
   editor?: undefined;
   menu?: undefined;

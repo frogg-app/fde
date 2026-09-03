@@ -6,13 +6,16 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use futures_util::{SinkExt, StreamExt};
+use serde_json::Value;
 use tokio::sync::{mpsc, Notify};
+use tokio_tungstenite::tungstenite::client::IntoClientRequest;
+use tokio_tungstenite::tungstenite::http::HeaderValue;
 use tokio_tungstenite::tungstenite::Message;
 use tokio_tungstenite::WebSocketStream;
 
 use super::session::{
-    close_event, error_event, incoming_message_event, open_event, TransportTarget,
-    DEFAULT_SSH_DAEMON_PORT, WS_ENDPOINT_PATH,
+    close_event, error_event, error_event_with_detail, incoming_message_event, open_event,
+    TransportTarget, DEFAULT_SSH_DAEMON_PORT, WS_ENDPOINT_PATH,
 };
 use super::socket::{self, BoxedStream};
 use super::ssh::SshProcess;
@@ -36,7 +39,24 @@ pub(super) struct SessionTask {
     pub(super) id: String,
     pub(super) generation: u64,
     pub(super) target: TransportTarget,
+    pub(super) protocols: Vec<String>,
     pub(super) cancel: Arc<Notify>,
+}
+
+/// Why setup failed: the message the UI shows, plus an optional structured
+/// detail (`{kind:"ssh-auth", …}`) it can act on.
+struct ConnectError {
+    message: String,
+    detail: Option<Value>,
+}
+
+impl From<String> for ConnectError {
+    fn from(message: String) -> Self {
+        Self {
+            message,
+            detail: None,
+        }
+    }
 }
 
 impl SessionTask {
@@ -59,10 +79,10 @@ impl SessionTask {
         }
     }
 
-    fn fail_opening(&self, message: String) {
+    fn fail_opening(&self, message: String, detail: Option<Value>) {
         if self.dispose() {
             log::warn!("transport {}: {message}", self.id);
-            (self.emit)(error_event(&self.id, &message));
+            (self.emit)(error_event_with_detail(&self.id, &message, detail));
         }
     }
 
@@ -74,19 +94,25 @@ impl SessionTask {
             _ => SETUP_TIMEOUT,
         };
         let setup = tokio::select! {
-            result = tokio::time::timeout(setup_timeout, connect(&self.target)) => result,
+            result = tokio::time::timeout(setup_timeout, connect(&self.target, &self.protocols)) => result,
             _ = self.cancel.notified() => return,
         };
         let mut endpoint = match setup {
             Ok(Ok(endpoint)) => endpoint,
-            Ok(Err(detail)) => {
-                return self.fail_opening(format!("Failed to connect to {description}: {detail}"))
+            Ok(Err(error)) => {
+                return self.fail_opening(
+                    format!("Failed to connect to {description}: {}", error.message),
+                    error.detail,
+                )
             }
             Err(_) => {
-                return self.fail_opening(format!(
-                    "Connection to {description} timed out during setup ({} s).",
-                    setup_timeout.as_secs()
-                ))
+                return self.fail_opening(
+                    format!(
+                        "Connection to {description} timed out during setup ({} s).",
+                        setup_timeout.as_secs()
+                    ),
+                    None,
+                )
             }
         };
         log::info!("transport {}: open ({description})", self.id);
@@ -170,22 +196,24 @@ async fn shutdown(mut endpoint: Endpoint) {
     }
 }
 
-async fn connect(target: &TransportTarget) -> Result<Endpoint, String> {
+async fn connect(target: &TransportTarget, protocols: &[String]) -> Result<Endpoint, ConnectError> {
     match target {
         TransportTarget::Ssh {
             host,
             ssh_port,
             daemon_port,
+            password,
         } => {
             let (mut ssh, stream) =
-                SshProcess::spawn(host, *ssh_port, *daemon_port).map_err(|e| e.to_string())?;
+                SshProcess::spawn(host, *ssh_port, *daemon_port, password.as_ref())
+                    .map_err(|e| e.to_string())?;
             let port = daemon_port.unwrap_or(DEFAULT_SSH_DAEMON_PORT);
             let url = format!("ws://127.0.0.1:{port}{WS_ENDPOINT_PATH}");
             // ssh exiting (auth refused, forward failed, host unreachable)
             // ends the attempt at once: its stderr is the error, not the
             // handshake's view of a closed pipe.
             let outcome = tokio::select! {
-                result = handshake(&url, Box::pin(stream)) => result,
+                result = handshake(&url, Box::pin(stream), protocols) => result,
                 exit = ssh.wait() => Err(match exit {
                     Some(failure) => format!("ssh exited before the tunnel opened: {failure}"),
                     None => "ssh exited before the tunnel opened".to_string(),
@@ -194,11 +222,17 @@ async fn connect(target: &TransportTarget) -> Result<Endpoint, String> {
             match outcome {
                 Ok(ws) => Ok(Endpoint { ws, ssh: Some(ssh) }),
                 Err(error) => {
-                    let detail = ssh.failure_detail().await;
+                    let failure = ssh.failure_detail().await;
+                    let detail = ssh.failure_detail_value();
                     ssh.kill().await;
-                    Err(match detail {
-                        Some(failure) if !error.contains(&failure) => format!("{error}: {failure}"),
-                        _ => error,
+                    Err(ConnectError {
+                        message: match failure {
+                            Some(failure) if !error.contains(&failure) => {
+                                format!("{error}: {failure}")
+                            }
+                            _ => error,
+                        },
+                        detail,
                     })
                 }
             }
@@ -208,7 +242,12 @@ async fn connect(target: &TransportTarget) -> Result<Endpoint, String> {
                 .await
                 .map_err(|e| e.to_string())?;
             Ok(Endpoint {
-                ws: handshake(&format!("ws://localhost{WS_ENDPOINT_PATH}"), stream).await?,
+                ws: handshake(
+                    &format!("ws://localhost{WS_ENDPOINT_PATH}"),
+                    stream,
+                    protocols,
+                )
+                .await?,
                 ssh: None,
             })
         }
@@ -217,16 +256,42 @@ async fn connect(target: &TransportTarget) -> Result<Endpoint, String> {
                 .await
                 .map_err(|e| e.to_string())?;
             Ok(Endpoint {
-                ws: handshake(&format!("ws://localhost{WS_ENDPOINT_PATH}"), stream).await?,
+                ws: handshake(
+                    &format!("ws://localhost{WS_ENDPOINT_PATH}"),
+                    stream,
+                    protocols,
+                )
+                .await?,
                 ssh: None,
             })
         }
     }
 }
 
-async fn handshake(url: &str, stream: BoxedStream) -> Result<WebSocketStream<BoxedStream>, String> {
+/// The upgrade request: `protocols` become one `Sec-WebSocket-Protocol`
+/// header (the daemon echoes the `paseo.bearer.*` entry it accepted).
+fn build_request(
+    url: &str,
+    protocols: &[String],
+) -> Result<tokio_tungstenite::tungstenite::handshake::client::Request, String> {
+    let mut request = url.into_client_request().map_err(|e| e.to_string())?;
+    if !protocols.is_empty() {
+        let value = HeaderValue::from_str(&protocols.join(", ")).map_err(|e| e.to_string())?;
+        request
+            .headers_mut()
+            .insert("Sec-WebSocket-Protocol", value);
+    }
+    Ok(request)
+}
+
+async fn handshake(
+    url: &str,
+    stream: BoxedStream,
+    protocols: &[String],
+) -> Result<WebSocketStream<BoxedStream>, String> {
     log::info!("transport: websocket handshake to {url}");
-    let (ws, response) = tokio_tungstenite::client_async(url, stream)
+    let request = build_request(url, protocols)?;
+    let (ws, response) = tokio_tungstenite::client_async(request, stream)
         .await
         .map_err(|e| {
             log::warn!("transport: websocket handshake to {url} failed: {e}");
@@ -237,4 +302,25 @@ async fn handshake(url: &str, stream: BoxedStream) -> Result<WebSocketStream<Box
         response.status()
     );
     Ok(ws)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn request_carries_subprotocols_as_one_header() {
+        let plain = build_request("ws://127.0.0.1:9999/ws", &[]).unwrap();
+        assert!(plain.headers().get("Sec-WebSocket-Protocol").is_none());
+        let with = build_request(
+            "ws://127.0.0.1:9999/ws",
+            &["paseo.bearer.pw".to_string(), "other".to_string()],
+        )
+        .unwrap();
+        assert_eq!(
+            with.headers().get("Sec-WebSocket-Protocol").unwrap(),
+            "paseo.bearer.pw, other"
+        );
+        assert_eq!(with.uri().path(), "/ws");
+    }
 }

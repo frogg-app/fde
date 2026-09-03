@@ -8,7 +8,9 @@ use base64::Engine;
 use serde_json::{json, Value};
 use tokio_tungstenite::tungstenite::Message;
 
-pub const DEFAULT_SSH_DAEMON_PORT: u16 = 6767;
+use super::ssh_auth::{password_from_args, SshPassword};
+
+pub const DEFAULT_SSH_DAEMON_PORT: u16 = 9999;
 pub const WS_ENDPOINT_PATH: &str = "/ws";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -17,6 +19,9 @@ pub enum TransportTarget {
         host: String,
         ssh_port: Option<u16>,
         daemon_port: Option<u16>,
+        /// Answers ssh's password prompt (see `ssh_auth`); absent means
+        /// `BatchMode`, keys and agent only.
+        password: Option<SshPassword>,
     },
     Socket {
         path: String,
@@ -41,6 +46,9 @@ impl TransportTarget {
 pub struct OpenSessionInput {
     pub session_id: String,
     pub target: TransportTarget,
+    /// WebSocket subprotocols for the handshake: the daemon password travels
+    /// as `paseo.bearer.<password>`, exactly as the browser client sends it.
+    pub protocols: Vec<String>,
 }
 
 fn validate_ssh_host(raw: &str) -> Result<String, String> {
@@ -103,9 +111,35 @@ pub fn parse_transport_target(value: &Value) -> Result<TransportTarget, String> 
             )?,
             ssh_port: parse_port(object.get("sshPort"), "SSH port")?,
             daemon_port: parse_port(object.get("daemonPort"), "Daemon port")?,
+            password: password_from_args(value),
         }),
         _ => Err("Unsupported desktop transport type.".into()),
     }
+}
+
+/// RFC 6455 subprotocol names are HTTP tokens; anything else would corrupt
+/// the handshake header.
+fn is_valid_subprotocol(name: &str) -> bool {
+    !name.is_empty()
+        && name
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || "!#$%&'*+-.^_`|~".contains(c))
+}
+
+fn parse_protocols(value: Option<&Value>) -> Result<Vec<String>, String> {
+    let Some(value) = value else {
+        return Ok(Vec::new());
+    };
+    let Some(items) = value.as_array() else {
+        return Err("Desktop transport protocols must be a list.".into());
+    };
+    items
+        .iter()
+        .map(|item| match item.as_str() {
+            Some(name) if is_valid_subprotocol(name) => Ok(name.to_string()),
+            _ => Err("Desktop transport subprotocol is invalid.".into()),
+        })
+        .collect()
 }
 
 fn is_valid_session_id(id: &str) -> bool {
@@ -131,6 +165,7 @@ pub fn parse_open_session_input(value: &Value) -> Result<OpenSessionInput, Strin
     Ok(OpenSessionInput {
         session_id: session_id.to_string(),
         target: parse_transport_target(object.get("target").unwrap_or(&Value::Null))?,
+        protocols: parse_protocols(object.get("protocols"))?,
     })
 }
 
@@ -180,6 +215,16 @@ pub fn error_event(session_id: &str, error: &str) -> Value {
     json!({ "sessionId": session_id, "kind": "error", "error": error })
 }
 
+/// An error event with a structured `detail` the UI can act on (for
+/// example `{kind:"ssh-auth", methods:[…]}`: ssh wants a password).
+pub fn error_event_with_detail(session_id: &str, error: &str, detail: Option<Value>) -> Value {
+    let mut event = error_event(session_id, error);
+    if let Some(detail) = detail {
+        event["detail"] = detail;
+    }
+    event
+}
+
 /// Maps an incoming frame to the webview event, or `None` for control frames.
 pub fn incoming_message_event(session_id: &str, message: &Message) -> Option<Value> {
     match message {
@@ -206,8 +251,40 @@ mod tests {
             TransportTarget::Ssh {
                 host: "dev@example.com".into(),
                 ssh_port: Some(2222),
-                daemon_port: None
+                daemon_port: None,
+                password: None,
             }
+        );
+        assert!(parsed.protocols.is_empty());
+    }
+
+    #[test]
+    fn parses_ssh_password_and_subprotocols() {
+        let input = json!({
+            "sessionId": "s",
+            "protocols": ["paseo.bearer.hunter2"],
+            "target": { "transportType": "ssh", "host": "box", "sshPassword": "pw" }
+        });
+        let parsed = parse_open_session_input(&input).unwrap();
+        assert_eq!(parsed.protocols, vec!["paseo.bearer.hunter2".to_string()]);
+        let TransportTarget::Ssh { password, .. } = parsed.target else {
+            panic!("ssh target");
+        };
+        assert_eq!(password.as_ref().map(SshPassword::expose), Some("pw"));
+        // The password never shows in a debug rendering of the target.
+        assert!(!format!("{password:?}").contains("pw"));
+
+        let bad = json!({ "sessionId": "s", "protocols": ["has space"],
+            "target": { "transportType": "ssh", "host": "box" } });
+        assert_eq!(
+            parse_open_session_input(&bad).unwrap_err(),
+            "Desktop transport subprotocol is invalid."
+        );
+        let not_list = json!({ "sessionId": "s", "protocols": "x",
+            "target": { "transportType": "ssh", "host": "box" } });
+        assert_eq!(
+            parse_open_session_input(&not_list).unwrap_err(),
+            "Desktop transport protocols must be a list."
         );
     }
 
@@ -259,6 +336,14 @@ mod tests {
         assert_eq!(
             close_event("s", 1000, "done"),
             json!({ "sessionId": "s", "kind": "close", "code": 1000, "reason": "done" })
+        );
+        assert_eq!(
+            error_event_with_detail("s", "denied", Some(json!({ "kind": "ssh-auth" }))),
+            json!({ "sessionId": "s", "kind": "error", "error": "denied", "detail": { "kind": "ssh-auth" } })
+        );
+        assert_eq!(
+            error_event_with_detail("s", "x", None),
+            error_event("s", "x")
         );
     }
 }

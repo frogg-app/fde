@@ -6,6 +6,7 @@
 pub mod session;
 pub mod socket;
 pub mod ssh;
+pub mod ssh_auth;
 #[cfg(all(test, unix))]
 mod ssh_e2e;
 mod task;
@@ -83,6 +84,7 @@ impl TransportManager {
             id: input.session_id,
             generation,
             target: input.target,
+            protocols: input.protocols,
             cancel,
         };
         tauri::async_runtime::spawn(task.run(rx));

@@ -1704,6 +1704,15 @@ export const fr: TranslationResources = {
       fields: {
         target: "Hôte SSH",
         daemonPort: "Port du daemon",
+        daemonPassword: "Mot de passe du daemon",
+        sshPassword: "Mot de passe SSH",
+        rememberSshPassword: "Mémoriser pour cette session",
+      },
+      hints: {
+        daemonPassword:
+          "Le mot de passe du daemon FDE, pas celui de votre connexion SSH. Enregistré avec cet hôte.",
+        sshPassword:
+          "Utilisé uniquement pour la connexion SSH. Jamais enregistré ; s’il est mémorisé, il reste en mémoire jusqu’à la fermeture de l’application.",
       },
       actions: {
         cancel: "Annuler",
@@ -1716,6 +1725,14 @@ export const fr: TranslationResources = {
         invalidDaemonPort: "Le port du daemon doit être compris entre 1 et 65535",
         invalidTarget: "Saisissez un hôte ssh:// valide",
         failedToConnect: "Connexion SSH impossible. {{detail}}",
+        daemonPasswordRequired:
+          "Le daemon FDE sur {{host}} exige un mot de passe. Saisissez-le ci-dessous puis reconnectez-vous.",
+        daemonPasswordIncorrect: "Le daemon FDE sur {{host}} a refusé le mot de passe.",
+        sshPasswordRequired:
+          "{{host}} a refusé vos clés SSH mais accepte la connexion par mot de passe. Saisissez le mot de passe SSH pour continuer.",
+        sshPasswordIncorrect: "{{host}} a refusé le mot de passe SSH.",
+        sshHostKey:
+          "La clé d’hôte de {{host}} est inconnue ou a changé. Connectez-vous une fois depuis un terminal avec ssh pour l’accepter.",
       },
     },
     link: {

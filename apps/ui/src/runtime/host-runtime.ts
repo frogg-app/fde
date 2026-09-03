@@ -536,6 +536,9 @@ function createDefaultDeps(): HostRuntimeControllerDeps {
             ...(connection.sshPort !== undefined ? { sshPort: connection.sshPort } : {}),
             ...(connection.daemonPort !== undefined ? { daemonPort: connection.daemonPort } : {}),
           }),
+          // The daemon's password rides the tunnel as the bearer subprotocol,
+          // exactly as for directTcp; the shell forwards it on the handshake.
+          ...(connection.password ? { password: connection.password } : {}),
         });
       }
       if (connection.type === "directTcp") {
@@ -1782,6 +1785,7 @@ export class HostRuntimeStore {
     host: string;
     sshPort?: number;
     daemonPort?: number;
+    password?: string;
     label?: string;
   }): Promise<{ profile: HostProfile; serverId: string; hostname: string | null }> {
     return this.probeAndUpsertConnection({
@@ -2527,6 +2531,7 @@ export interface HostMutations {
     host: string;
     sshPort?: number;
     daemonPort?: number;
+    password?: string;
     label?: string;
   }) => Promise<{ profile: HostProfile; serverId: string; hostname: string | null }>;
   upsertRelayConnection: (input: {

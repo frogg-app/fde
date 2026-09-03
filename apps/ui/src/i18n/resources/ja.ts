@@ -1670,6 +1670,15 @@ export const ja: TranslationResources = {
       fields: {
         target: "SSH ホスト",
         daemonPort: "デーモンのポート",
+        daemonPassword: "デーモンのパスワード",
+        sshPassword: "SSH パスワード",
+        rememberSshPassword: "このセッション中は記憶する",
+      },
+      hints: {
+        daemonPassword:
+          "FDE デーモンのパスワードです（SSH ログインのものではありません）。このホストと一緒に保存されます。",
+        sshPassword:
+          "SSH ログインにのみ使用します。保存はされず、記憶する場合もアプリを閉じるまでメモリ上に保持されるだけです。",
       },
       actions: {
         cancel: "キャンセル",
@@ -1682,6 +1691,14 @@ export const ja: TranslationResources = {
         invalidDaemonPort: "デーモンのポートは 1〜65535 の範囲で指定してください",
         invalidTarget: "有効な ssh:// ホストを入力してください",
         failedToConnect: "SSH で接続できません。{{detail}}",
+        daemonPasswordRequired:
+          "{{host}} の FDE デーモンにはパスワードが必要です。下に入力してもう一度接続してください。",
+        daemonPasswordIncorrect: "{{host}} の FDE デーモンがパスワードを拒否しました。",
+        sshPasswordRequired:
+          "{{host}} は SSH 鍵を拒否しましたが、パスワードでのログインは受け付けます。続行するには SSH パスワードを入力してください。",
+        sshPasswordIncorrect: "{{host}} が SSH パスワードを拒否しました。",
+        sshHostKey:
+          "{{host}} のホスト鍵が未知か変更されています。ターミナルから一度 ssh で接続して受け入れてください。",
       },
     },
     link: {

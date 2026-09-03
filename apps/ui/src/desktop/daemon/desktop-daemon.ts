@@ -51,6 +51,11 @@ export interface RemoteSshTransportTarget {
   host: string;
   sshPort?: number;
   daemonPort?: number;
+  /**
+   * Answers ssh's own password prompt (askpass in the shell). Never part of
+   * the transport URL or the host registry: it lives in memory only.
+   */
+  sshPassword?: string;
 }
 
 export type DesktopDaemonTransportTarget = LocalTransportTarget | RemoteSshTransportTarget;
@@ -59,9 +64,18 @@ export interface OpenLocalTransportSessionInput {
   [key: string]: unknown;
   sessionId: string;
   target: DesktopDaemonTransportTarget;
+  /** WebSocket subprotocols for the handshake (`paseo.bearer.<daemon password>`). */
+  protocols?: string[];
 }
 
-interface LocalTransportEventPayload {
+/** Structured reading of a transport error the UI can act on. */
+export interface LocalTransportErrorDetail {
+  kind: string;
+  methods?: string[];
+  passwordTried?: boolean;
+}
+
+export interface LocalTransportEventPayload {
   sessionId: string;
   kind: "open" | "message" | "close" | "error";
   text?: string | null;
@@ -69,6 +83,25 @@ interface LocalTransportEventPayload {
   code?: number | null;
   reason?: string | null;
   error?: string | null;
+  detail?: LocalTransportErrorDetail | null;
+}
+
+function parseErrorDetail(value: unknown): LocalTransportErrorDetail | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+  const kind = toStringOrNull(value.kind);
+  if (!kind) {
+    return null;
+  }
+  const methods = Array.isArray(value.methods)
+    ? value.methods.filter((method): method is string => typeof method === "string")
+    : undefined;
+  return {
+    kind,
+    ...(methods ? { methods } : {}),
+    ...(typeof value.passwordTried === "boolean" ? { passwordTried: value.passwordTried } : {}),
+  };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -196,6 +229,7 @@ export async function listenToLocalTransportEvents(
       code: toNumberOrNull(payload.code),
       reason: toStringOrNull(payload.reason),
       error: toStringOrNull(payload.error),
+      detail: parseErrorDetail(payload.detail),
     });
   });
 }

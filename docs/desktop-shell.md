@@ -44,6 +44,19 @@ scripts run (Tauri initialization script). Mapping:
 | `webUtils.getPathForFile(file)`                         | Tauri drag-drop already yields paths; `File` objects from `<input>` have no path in a webview, so this returns the path recorded by the drop listener or throws.                                                                                                                                                                                                                                                                                                                                                    |
 | `menu.*`, `editor.*`, `browser.*`                       | not implemented in milestone 1. Absent members make the UI hide those features.                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `network.localAddresses()`, `network.reverseLookup(ip)` | optional extension point declared by the UI (`apps/ui/src/desktop/host.ts`, `DesktopNetworkBridge`) for the "Servers on your network" scan (`apps/ui/src/network-scan/`). `localAddresses(): Promise<string[]>` returns the machine's non-loopback IPv4 addresses so the scan sweeps the right /24 subnets; `reverseLookup(ip): Promise<string \| null>` names a found daemon. When the member is absent the UI falls back to the page host and the common private subnets, and shows the daemon-reported hostname. |
+| Bridge member                                           | Tauri implementation                                                                                                                                                                                                                                                                                               |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `platform`, `windowChromeMode`                          | constants from `tauri-plugin-os` / config. Chrome mode: `native-mac` on macOS, `custom-windows`/`custom-linux` elsewhere (decorations off, UI draws the titlebar as it does today).                                                                                                                                |
+| `invoke(command, args)`                                 | `@tauri-apps/api/core` `invoke("desktop_invoke", { command, args })`. One Rust command dispatches on `command` and throws `Unknown desktop command: …` for anything unhandled, matching Electron.                                                                                                                  |
+| `events.on(name, handler)`                              | `listen("paseo:event:" + name)`; payload is delivered as-is (the UI already unwraps a `{payload}` envelope).                                                                                                                                                                                                       |
+| `getPendingOpenProject`, `agentNavigation.ready`        | Rust state seeded from CLI args / `paseo://h/<serverId>/agent/<agentId>` deep links, drained once. A second launch with a path emits `paseo:event:open-project` to the single main window instead of opening a new one; deep links after startup emit `paseo:event:open-agent`.                                    |
+| `window.*`                                              | `getCurrentWindow()` minimize/close/toggleMaximize/isMaximized/setFullscreen/isFullscreen/onResized; `setBadgeCount` via `setBadgeCount` (macOS/Linux); `updateChrome` sets window background colour. `onDragDropEvent` maps to Tauri's drag-drop event; the UI already has a dormant Tauri-style listener for it. |
+| `dialog.ask/askWithCheckbox/open`                       | `tauri-plugin-dialog`. `askWithCheckbox` has no native equivalent; implemented as two `ask` dialogs (the question, then "remember this choice?" using the checkbox label). The caller persists the choice, as it did with Electron.                                                                                |
+| `notification.*`                                        | `tauri-plugin-notification`. Desktop notifications have no click callback in the plugin, so `paseo:event:notification-click` is not emitted yet.                                                                                                                                                                   |
+| `opener.openUrl`                                        | `tauri-plugin-opener`.                                                                                                                                                                                                                                                                                             |
+| `webUtils.getPathForFile(file)`                         | Tauri drag-drop already yields paths; `File` objects from `<input>` have no path in a webview, so this returns the path recorded by the drop listener or throws.                                                                                                                                                   |
+| `network.localAddresses()`, `network.reverseLookup(ip)` | For the UI's LAN scanner. `localAddresses` resolves to this machine's IPv4 addresses as CIDR strings (`192.168.1.20/24`; interfaces that are up, minus loopback and link-local) from `network_local_addresses`; `reverseLookup` resolves to the PTR name or `null` from `network_reverse_lookup` (1 s budget).     |
+| `menu.*`, `editor.*`, `browser.*`                       | not implemented in milestone 1. Absent members make the UI hide those features.                                                                                                                                                                                                                                    |
 
 ### `desktop_invoke` commands (milestone 1)
 
@@ -68,6 +81,10 @@ Implemented in Rust under `apps/desktop/src-tauri/src/commands/`:
   (`skill-selection.json` in the app data dir, Electron's parsing rules).
 - `open_local_daemon_transport`, `send_local_daemon_transport_message`,
   `close_local_daemon_transport`: see Daemon connections below (`src/transport/`).
+- `network_local_addresses`: `[{interface, ip, prefixLength}]`, the IPv4 addresses of
+  interfaces that are up, minus loopback, link-local, unspecified/broadcast and single-host
+  (/32) prefixes (`if-addrs`; filtering in `src/network.rs`). `network_reverse_lookup {ip}`:
+  the PTR name of an address (`getnameinfo` via `dns-lookup`) or `null` after 1 s.
 - `list_ssh_config_hosts`: concrete `Host` entries of `~/.ssh/config` (one level of
   `Include`, wildcard patterns and `Match` blocks skipped) as
   `[{alias, hostName?, user?, port?, identityFile?}]` for the Remote SSH page's picker.
@@ -83,23 +100,26 @@ Everything else throws `Unknown desktop command`.
 
 ## Daemon connections
 
-| Host connection kind           | Milestone | How                                                                                                                                                              |
-| ------------------------------ | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `directTcp` (`ws://host:port`) | 1         | plain WebSocket from the webview, no shell involvement                                                                                                           |
-| `relay` (E2EE)                 | 1         | plain WebSocket, no shell involvement                                                                                                                            |
-| `remoteSsh`                    | 2         | Rust spawns the system `ssh -T -o BatchMode=yes … -W 127.0.0.1:<daemonPort> <host>` and runs the WebSocket client over its stdin/stdout (`src/transport/ssh.rs`) |
-| `directSocket` / `directPipe`  | 2         | Rust connects the unix socket / named pipe and runs the WebSocket client over it the same way                                                                    |
-| local sidecar                  | 3         | see below                                                                                                                                                        |
-| local sidecar                  | 3         | Rust downloads the daemon bundle and supervises it through its CLI; the webview then talks plain WebSocket to `127.0.0.1:<port>` (see below)                     |
+| Host connection kind           | Milestone | How                                                                                                                                                                                                                                                                                                                                     |
+| ------------------------------ | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `directTcp` (`ws://host:port`) | 1         | plain WebSocket from the webview, no shell involvement                                                                                                                                                                                                                                                                                  |
+| `relay` (E2EE)                 | 1         | plain WebSocket, no shell involvement                                                                                                                                                                                                                                                                                                   |
+| `remoteSsh`                    | 2         | Rust spawns the system `ssh -T -o BatchMode=yes … -W 127.0.0.1:<daemonPort> <host>` (default daemon port 9999; with an ssh password, askpass instead of `BatchMode`, see below) and runs the WebSocket client over its stdin/stdout (`src/transport/ssh.rs`); a daemon password rides the handshake as the `paseo.bearer.*` subprotocol |
+| `directSocket` / `directPipe`  | 2         | Rust connects the unix socket / named pipe and runs the WebSocket client over it the same way                                                                                                                                                                                                                                           |
+| local sidecar                  | 3         | see below                                                                                                                                                                                                                                                                                                                               |
+| local sidecar                  | 3         | Rust downloads the daemon bundle and supervises it through its CLI; the webview then talks plain WebSocket to `127.0.0.1:<port>` (see below)                                                                                                                                                                                            |
 
 ### Transport sessions
 
 `src/transport/` is a port of Electron's `local-transport.ts`. `open_local_daemon_transport
-{sessionId, target}` registers a session and spawns a task; the task connects (30 s setup
-timeout for sockets and pipes, 18 s for SSH), then emits
+{sessionId, target, protocols?}` registers a session and spawns a task; the task connects (30 s
+setup timeout for sockets and pipes, 18 s for SSH), then emits
 `paseo:event:local-daemon-transport-event` payloads
-`{sessionId, kind:"open"|"message"|"close"|"error", text?, binaryBase64?, code?, reason?, error?}`
-exactly as Electron did. `send_local_daemon_transport_message {sessionId, text?|binaryBase64?}`
+`{sessionId, kind:"open"|"message"|"close"|"error", text?, binaryBase64?, code?, reason?, error?, detail?}`
+exactly as Electron did, plus two additions: `protocols` (the WebSocket subprotocols the
+daemon client asked for, put on the handshake as one `Sec-WebSocket-Protocol` header) and an
+optional structured `detail` on `error` events (`{kind:"ssh-auth", methods, passwordTried}` or
+`{kind:"ssh-host-key"}`, see below). `send_local_daemon_transport_message {sessionId, text?|binaryBase64?}`
 awaits the write and fails while the session is still opening; `close_local_daemon_transport`
 removes the session first, so a closed session never emits again (the UI's
 `desktop-daemon-transport.ts` shim relies on that). Sessions are closed on app exit.
@@ -121,6 +141,10 @@ instead of a generic timeout:
    Before that, the WebSocket handshake races `ssh` exiting: an exit (auth refused, host key
    rejected under `BatchMode`, `connect_to 127.0.0.1 port 9999: failed`) produces an `error`
    event immediately with ssh's stderr as the detail.
+   event immediately with ssh's stderr as the message. `ssh_auth::classify_ssh_failure` reads
+   that stderr: `Permission denied (…)` with `password` or `keyboard-interactive` in the method
+   list becomes `detail: {kind:"ssh-auth", methods, passwordTried}`, a host-key failure
+   `detail: {kind:"ssh-host-key"}`; the UI prompts accordingly.
 3. The webview's connect timer and probe deadline for SSH hosts are 20 s
    (`REMOTE_SSH_CONNECT_TIMEOUT_MS` in `apps/ui/src/utils/test-daemon-connection.ts`), so a
    transport `error` always lands first.
@@ -172,7 +196,9 @@ first things to check on a real Windows 11 machine.
   after enabling it), or Git for Windows' agent with `FDE_SSH` pointed at its `ssh.exe`. The
   stderr text now reaches the Add host sheet verbatim, so this case is self-explaining.
   Likewise an unknown host key fails as `Host key verification failed.` — connect once from a
-  terminal to accept it.
+  terminal to accept it. Password-only hosts go through the askpass path (see "ssh password
+  authentication"); _verify_ on Windows that OpenSSH runs the `.cmd` helper named in
+  `SSH_ASKPASS` (it spawns it through `CreateProcess`, which runs `.cmd` files via `cmd.exe`).
 - **Which `~/.ssh/config`.** Windows OpenSSH reads `%USERPROFILE%\.ssh\config`. The picker's
   `list_ssh_config_hosts` uses Tauri's `home_dir()`, which is `FOLDERID_Profile` =
   `%USERPROFILE%` on Windows, so both sides read the same file (and the same directory for
@@ -181,6 +207,59 @@ first things to check on a real Windows 11 machine.
 - **What the log says.** Look for `ssh: spawning ssh …`, then `ssh: spawned C:\…\ssh.exe
 (pid …)` or `ssh: … not found`, then either `transport: websocket handshake … ok` or
   `ssh: exited with exit code: 255; stderr: …`.
+
+### Remote SSH: ssh password authentication
+
+Without a password the shell spawns `ssh -o BatchMode=yes`, so a host that only offers
+password login fails at once with `Permission denied (publickey,password)`. The UI classifies
+that failure (`apps/ui/src/components/remote-ssh-failure.ts`, the same rules as the Rust
+`classify_ssh_failure`), asks for the SSH password in the Add Remote SSH host sheet, and retries
+`open_local_daemon_transport` with `sshPassword` in the target. What the shell then does
+(`src/transport/ssh_auth.rs`, shared by the tunnel and the deploy jobs):
+
+- `BatchMode=yes` gives way to `-o NumberOfPasswordPrompts=1 -o
+PreferredAuthentications=publickey,keyboard-interactive,password`: keys and the agent are
+  still tried first, and ssh asks for the password at most once.
+- The child gets `SSH_ASKPASS=<helper>`, `SSH_ASKPASS_REQUIRE=force`, `FDE_SSH_PW=<password>` and,
+  when the app itself has no `DISPLAY`, `DISPLAY=fde` (older ssh only consults `SSH_ASKPASS`
+  when `DISPLAY` is set). The helper is a two-line script that prints `$FDE_SSH_PW` — on Unix
+  `fde-askpass.sh` (`#!/bin/sh` + `printf %s "$FDE_SSH_PW"`, mode 0700 in a 0700 directory),
+  on Windows `fde-askpass.cmd` running `powershell -NoProfile -NonInteractive -Command
+"[Console]::Out.Write($env:FDE_SSH_PW)"` — written to `<app cache dir>/ssh-askpass/` on first
+  use and rewritten whenever its content differs (a tampered helper is repaired, not trusted).
+  The helper holds no secret; it can stay on disk between runs.
+- **The password is only ever in the ssh child's environment.** It is never on the command
+  line (`ps` would show it), never in `fde.log` (`SshPassword`'s `Debug` prints
+  `<redacted>`; the spawn log line says `(password via askpass)`), never in the transport URL,
+  and never in the host registry: the UI keeps it in memory for the app session
+  (`apps/ui/src/desktop/daemon/ssh-session-passwords.ts`, keyed by host and ssh port) when
+  "Remember for this session" is on, or drops it right after the connect otherwise. Reconnects,
+  probes and deploy jobs read that same in-memory store, so a remembered password also covers
+  them; a password ssh rejected is forgotten at once so reconnects never hammer the host.
+- With askpass in place ssh also routes its other questions there — an unknown host key would
+  get the password as the answer and fail as `Host key verification failed.` (reported as
+  `detail: {kind:"ssh-host-key"}`, with copy telling the user to accept the key from a terminal
+  once). `keyboard-interactive` prompts are answered with the same password.
+
+Tests: `ssh_auth.rs` covers the argv/env building, the helper's permissions and output, and the
+stderr classification (keys only, password offered, keyboard-interactive, host key, other);
+`deploy/tests.rs` runs a fake `ssh` that refuses `BatchMode`, calls `$SSH_ASKPASS` and succeeds
+only when the helper prints the expected password, checking that the password never reaches
+argv; `transport/ssh_e2e.rs` does the same over the tunnel against a local daemon, and checks the
+daemon-password path against a second daemon started with `PASEO_PASSWORD=hunter2` on
+`127.0.0.1:$FDE_TEST_DAEMON_PASSWORD_PORT` (default 6798): no subprotocol closes with
+`4401 Password required`, a wrong one with `Incorrect password`, the right one opens.
+
+### Daemon password on SSH hosts
+
+A daemon started with a password closes the WebSocket with `4401 Password required` (or
+`Incorrect password`) after the upgrade. That is the FDE daemon's password, not ssh's: ssh
+already logged in and forwarded the port. The UI shows "The FDE daemon on <host> requires a
+password" with a daemon-password field; the value is stored on the `remoteSsh` connection
+(`password?`, persisted like `directTcp`'s) and handed to the `DaemonClient` as `password`, which
+turns it into the `paseo.bearer.<password>` subprotocol. The desktop transport shim passes those
+`protocols` to `open_local_daemon_transport`, and the Rust task puts them on the handshake
+request (`Sec-WebSocket-Protocol`), so the daemon sees exactly what a browser client sends.
 
 ## SSH deploy
 
@@ -192,7 +271,7 @@ tunnel uses. Rust side: `src/deploy/` (`args.rs` parsing and shell quoting, `pro
 
 Commands (`desktop_invoke`):
 
-- `ssh_deploy_probe {host, sshPort?}` runs a POSIX `sh` snippet (`PROBE_SNIPPET` in
+- `ssh_deploy_probe {host, sshPort?, sshPassword?}` runs a POSIX `sh` snippet (`PROBE_SNIPPET` in
   `probe.rs`; works on Linux and macOS) through `ssh -T -o BatchMode=yes -o ConnectTimeout=10
 [-p N] <host> 'sh -s'` and returns
   `{os, arch, hasDocker, hasSystemdUser, hasCurl, hasFde:{installed, version?},
@@ -200,7 +279,7 @@ hasDockerContainer, homeDir}`. `hasDocker` means `docker info` succeeds for that
   just that the binary exists. An installed daemon is `~/.local/share/fde/current/bin/fde`
   (version from `manifest.json`) or an `fde` on `PATH`. The result is the last stdout line
   prefixed `FDE_PROBE `, so login banners do not break parsing. 45 s timeout.
-- `ssh_deploy_start {host, sshPort?, method:"native"|"docker", version?, listen?, bundleUrl?}`
+- `ssh_deploy_start {host, sshPort?, sshPassword?, method:"native"|"docker", version?, listen?, bundleUrl?}`
   returns `{jobId}` at once and runs the job in the background. Native pipes the embedded
   `deploy/install.sh` (`include_str!`, so the app ships exactly the repo's script) into
   `ssh <host> "FDE_VERSION='…' FDE_LISTEN='…' FDE_RELEASE_BASE='https://github.com/frogg-app/frogg-de/releases' [FDE_BUNDLE_URL='…'] bash -s"`;
@@ -212,7 +291,10 @@ hasDockerContainer, homeDir}`. `hasDocker` means `docker info` succeeds for that
   `bundleUrl` must point at one plus a sidecar). The job emits
   `paseo:event:ssh-deploy-event` payloads `{jobId, kind:"log"|"done"|"error", text?, stream?,
 detail?, cancelled?}`: one `log` per stdout/stderr line, then `done` on exit 0 or `error`
-  with ssh's stderr tail / exit code (`format_ssh_failure`).
+  with ssh's stderr tail / exit code (`format_ssh_failure`) and, when ssh refused the login
+  with password auth on offer, `failure: {kind:"ssh-auth", methods, passwordTried}` (the same
+  reading as the transport's `detail`). The UI attaches the ssh password remembered for the
+  session to every probe and job, so password-only hosts deploy like any other.
 - `ssh_deploy_uninstall {host, sshPort?, method?}` pipes `deploy/uninstall.sh` (native) or a
   small `docker rm -f fde-daemon` script (Docker); same event stream.
 - `ssh_deploy_cancel {jobId}` kills the ssh child; the job ends with `error` and

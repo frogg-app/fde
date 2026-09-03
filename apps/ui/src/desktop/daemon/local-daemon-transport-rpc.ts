@@ -3,6 +3,7 @@ import {
   listenToLocalTransportEvents,
   openLocalTransportSession,
   sendLocalTransportMessage,
+  type LocalTransportErrorDetail,
   type OpenLocalTransportSessionInput,
 } from "./desktop-daemon";
 
@@ -14,6 +15,7 @@ export interface LocalDaemonTransportEvent {
   code?: number | null;
   reason?: string | null;
   error?: string | null;
+  detail?: LocalTransportErrorDetail | null;
 }
 
 export interface LocalDaemonTransportRpc {

@@ -22,10 +22,12 @@ const FAKE_SSH: &str = r#"#!/bin/sh
 # Fake ssh: the last argument is the host, `-W host:port` names the tunnel target.
 target=""
 host=""
+batch=no
 while [ $# -gt 0 ]; do
   case "$1" in
     -W) target="$2"; shift ;;
-    -p|-o) shift ;;
+    -o) [ "$2" = "BatchMode=yes" ] && batch=yes; shift ;;
+    -p) shift ;;
     *) host="$1" ;;
   esac
   shift
@@ -35,8 +37,19 @@ case "$host" in
     echo "user@denied: Permission denied (publickey)." >&2
     exit 255 ;;
   refused)
-    echo "connect_to 127.0.0.1 port 6767: failed." >&2
+    echo "connect_to 127.0.0.1 port 9999: failed." >&2
     exit 255 ;;
+  password-only)
+    # Only a password gets in, and only through the askpass helper.
+    if [ "$batch" = yes ] || [ -z "$SSH_ASKPASS" ]; then
+      echo "user@password-only: Permission denied (publickey,password)." >&2
+      exit 255
+    fi
+    if [ "$("$SSH_ASKPASS" "user@password-only's password:")" != "hunter2" ]; then
+      echo "Permission denied, please try again." >&2
+      echo "user@password-only: Permission denied (publickey,password)." >&2
+      exit 255
+    fi ;;
 esac
 exec socat STDIO "TCP:$target"
 "#;
@@ -175,7 +188,40 @@ fn remote_ssh_over_stdio_round_trips_and_reports_ssh_failures() {
         assert!(event["error"]
             .as_str()
             .unwrap()
-            .contains("connect_to 127.0.0.1 port 6767: failed."));
+            .contains("connect_to 127.0.0.1 port 9999: failed."));
+        assert!(
+            event.get("detail").is_none(),
+            "no structured detail: {event}"
+        );
+
+        // A password-only host: BatchMode is refused with a structured
+        // `ssh-auth` detail; the right password (askpass) opens the tunnel.
+        let (manager, mut events) = new_manager();
+        manager
+            .open(&open_args("ssh-pw-denied", "password-only", port))
+            .unwrap();
+        let event = next_event(&mut events, Duration::from_secs(5)).await;
+        assert_eq!(event["kind"], "error", "got {event}");
+        assert_eq!(
+            event["detail"],
+            json!({ "kind": "ssh-auth", "methods": ["publickey", "password"], "passwordTried": false })
+        );
+        let (manager, mut events) = new_manager();
+        let mut wrong = open_args("ssh-pw-wrong", "password-only", port);
+        wrong["target"]["sshPassword"] = json!("nope");
+        manager.open(&wrong).unwrap();
+        let event = next_event(&mut events, Duration::from_secs(5)).await;
+        assert_eq!(event["kind"], "error", "got {event}");
+        assert_eq!(event["detail"]["passwordTried"], true);
+        let (manager, mut events) = new_manager();
+        let mut right = open_args("ssh-pw-ok", "password-only", port);
+        right["target"]["sshPassword"] = json!("hunter2");
+        manager.open(&right).unwrap();
+        assert_eq!(
+            next_event(&mut events, Duration::from_secs(10)).await,
+            json!({ "sessionId": "ssh-pw-ok", "kind": "open" })
+        );
+        manager.close(&json!({ "sessionId": "ssh-pw-ok" })).unwrap();
     });
 }
 
@@ -190,7 +236,7 @@ fn missing_ssh_executable_is_an_immediate_error() {
     tauri::async_runtime::block_on(async {
         let (manager, mut events) = new_manager();
         manager
-            .open(&open_args("ssh-missing", "anything", 6767))
+            .open(&open_args("ssh-missing", "anything", 9999))
             .unwrap();
         let event = next_event(&mut events, Duration::from_secs(5)).await;
         assert_eq!(event["kind"], "error", "got {event}");
@@ -201,4 +247,79 @@ fn missing_ssh_executable_is_an_immediate_error() {
         Some(value) => std::env::set_var(SSH_PROGRAM_ENV, value),
         None => std::env::remove_var(SSH_PROGRAM_ENV),
     }
+}
+
+/// A daemon started with `PASEO_PASSWORD=hunter2` on
+/// `127.0.0.1:$FDE_TEST_DAEMON_PASSWORD_PORT` (default 6798): without the
+/// bearer subprotocol it closes the tunnelled socket with 4401 "Password
+/// required"; with `paseo.bearer.hunter2` on the handshake the session opens.
+#[test]
+fn daemon_password_travels_as_the_bearer_subprotocol() {
+    let port = std::env::var("FDE_TEST_DAEMON_PASSWORD_PORT")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(6798);
+    if !daemon_reachable(port) {
+        eprintln!("skipping: no password daemon on 127.0.0.1:{port}");
+        return;
+    }
+    if !socat_available() {
+        eprintln!("skipping: socat not installed");
+        return;
+    }
+    let _env = ENV_LOCK
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+    let dir = tempfile::tempdir().unwrap();
+    install_fake_ssh(dir.path());
+
+    tauri::async_runtime::block_on(async {
+        let (manager, mut events) = new_manager();
+        manager
+            .open(&open_args("pw-missing", "ok-host", port))
+            .unwrap();
+        assert_eq!(
+            next_event(&mut events, Duration::from_secs(10)).await,
+            json!({ "sessionId": "pw-missing", "kind": "open" })
+        );
+        let closed = next_event(&mut events, Duration::from_secs(10)).await;
+        assert_eq!(
+            closed,
+            json!({ "sessionId": "pw-missing", "kind": "close", "code": 4401, "reason": "Password required" })
+        );
+
+        let (manager, mut events) = new_manager();
+        let mut wrong = open_args("pw-wrong", "ok-host", port);
+        wrong["protocols"] = json!(["paseo.bearer.nope"]);
+        manager.open(&wrong).unwrap();
+        assert_eq!(
+            next_event(&mut events, Duration::from_secs(10)).await["kind"],
+            "open"
+        );
+        let closed = next_event(&mut events, Duration::from_secs(10)).await;
+        assert_eq!(closed["code"], 4401, "{closed}");
+        assert_eq!(closed["reason"], "Incorrect password");
+
+        let (manager, mut events) = new_manager();
+        let mut right = open_args("pw-ok", "ok-host", port);
+        right["protocols"] = json!(["paseo.bearer.hunter2"]);
+        manager.open(&right).unwrap();
+        assert_eq!(
+            next_event(&mut events, Duration::from_secs(10)).await,
+            json!({ "sessionId": "pw-ok", "kind": "open" })
+        );
+        let hello = json!({
+            "type": "hello",
+            "clientId": "fde-transport-test",
+            "clientType": "cli",
+            "protocolVersion": 1
+        });
+        manager
+            .send(&json!({ "sessionId": "pw-ok", "text": hello.to_string() }))
+            .await
+            .unwrap();
+        let reply = next_event(&mut events, Duration::from_secs(10)).await;
+        assert_eq!(reply["kind"], "message", "got {reply}");
+        manager.close(&json!({ "sessionId": "pw-ok" })).unwrap();
+    });
 }

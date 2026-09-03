@@ -8,6 +8,7 @@ mod commands;
 mod deep_link;
 mod deploy;
 mod launch;
+mod network;
 mod sidecar;
 mod ssh_config;
 mod transport;

@@ -56,6 +56,9 @@ test("bridge exposes the essential members and none of menu/editor/browser", () 
   for (const member of ["ask", "askWithCheckbox", "open"]) {
     assert.equal(typeof bridge.dialog[member], "function", `dialog.${member}`);
   }
+  for (const member of ["localAddresses", "reverseLookup"]) {
+    assert.equal(typeof bridge.network[member], "function", `network.${member}`);
+  }
   for (const member of ["isSupported", "sendNotification"]) {
     assert.equal(typeof bridge.notification[member], "function", `notification.${member}`);
   }
@@ -101,6 +104,24 @@ test("invoke routes through desktop_invoke with the command and args", async () 
   assert.deepEqual(JSON.parse(JSON.stringify(await bridge.agentNavigation.ready())), {
     serverId: "s",
     agentId: "a",
+  });
+});
+
+test("network members call the Rust commands and normalise their answers", async () => {
+  const { bridge, invocations } = loadBridge({
+    platform: "linux",
+    windowChromeMode: "custom-linux",
+  });
+  // The stub echoes the args (not a list), which must read as "no addresses".
+  assert.deepEqual(JSON.parse(JSON.stringify(await bridge.network.localAddresses())), []);
+  assert.deepEqual(JSON.parse(JSON.stringify(invocations.at(-1))), {
+    cmd: "desktop_invoke",
+    args: { command: "network_local_addresses", args: {} },
+  });
+  assert.equal(await bridge.network.reverseLookup("192.168.1.20"), null);
+  assert.deepEqual(JSON.parse(JSON.stringify(invocations.at(-1))), {
+    cmd: "desktop_invoke",
+    args: { command: "network_reverse_lookup", args: { ip: "192.168.1.20" } },
   });
 });
 

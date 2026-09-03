@@ -9,15 +9,17 @@ use std::process::Stdio;
 use tokio::process::{Child, Command};
 
 use crate::transport::ssh::ssh_program_candidates;
+use crate::transport::ssh_auth;
 
 use super::args::SshTarget;
 
-/// `ssh -T -o BatchMode=yes -o ConnectTimeout=10 [-p N] <host> <command>`.
+/// `ssh -T -o BatchMode=yes -o ConnectTimeout=10 [-p N] <host> <command>`;
+/// with a password the `BatchMode` option gives way to one askpass prompt
+/// (`ssh_auth::auth_args`).
 pub fn build_exec_args(target: &SshTarget, remote_command: &str) -> Vec<String> {
-    let mut args: Vec<String> = ["-T", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10"]
-        .iter()
-        .map(|arg| arg.to_string())
-        .collect();
+    let mut args: Vec<String> = vec!["-T".to_string()];
+    args.extend(ssh_auth::auth_args(target.ssh_password.as_ref()));
+    args.extend(["-o", "ConnectTimeout=10"].map(String::from));
     if let Some(port) = target.ssh_port {
         args.push("-p".into());
         args.push(port.to_string());
@@ -59,6 +61,7 @@ pub fn spawn(
         let mut command = Command::new(&program);
         command.args(&args);
         configure(&mut command);
+        ssh_auth::apply_password(&mut command, target.ssh_password.as_ref())?;
         match command.spawn() {
             Ok(child) => {
                 log::info!(
@@ -102,6 +105,7 @@ mod tests {
         let target = SshTarget {
             host: "dev@box".into(),
             ssh_port: Some(2222),
+            ssh_password: None,
         };
         assert_eq!(
             build_exec_args(&target, "FDE_VERSION='1' bash -s"),
@@ -120,7 +124,33 @@ mod tests {
         let plain = SshTarget {
             host: "box".into(),
             ssh_port: None,
+            ssh_password: None,
         };
         assert_eq!(build_exec_args(&plain, "sh -s")[5..], ["box", "sh -s"]);
+    }
+
+    #[test]
+    fn exec_args_with_password_prompt_once_and_never_carry_it() {
+        let target = SshTarget {
+            host: "box".into(),
+            ssh_port: None,
+            ssh_password: Some(ssh_auth::SshPassword::new("hunter2".into())),
+        };
+        let args = build_exec_args(&target, "sh -s");
+        assert_eq!(
+            args,
+            [
+                "-T",
+                "-o",
+                "NumberOfPasswordPrompts=1",
+                "-o",
+                "PreferredAuthentications=publickey,keyboard-interactive,password",
+                "-o",
+                "ConnectTimeout=10",
+                "box",
+                "sh -s"
+            ]
+        );
+        assert!(!args.iter().any(|arg| arg.contains("hunter2")));
     }
 }

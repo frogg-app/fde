@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, Text, View, type PressableStateCallbackType } from "react-native";
 import { StyleSheet, withUnistyles } from "react-native-unistyles";
 import { Check } from "lucide-react-native";
+import { DEFAULT_SSH_DAEMON_PORT } from "@fde/protocol/ssh-transport";
 import { Field, FormTextInput } from "@/components/ui/form-field";
 import type { FieldControlSize } from "@/components/ui/control-geometry";
 import { useFetchQuery } from "@/data/query";
@@ -169,7 +170,7 @@ export function SshConfigHostPicker({
           accessibilityLabel={t("pairing.remoteSsh.fields.daemonPort")}
           initialValue={daemonPortText}
           onChangeText={onDaemonPortChange}
-          placeholder="9999"
+          placeholder={String(DEFAULT_SSH_DAEMON_PORT)}
           keyboardType="number-pad"
           autoCapitalize="none"
           autoCorrect={false}
