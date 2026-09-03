@@ -154,6 +154,73 @@ describe("probeDaemon", () => {
     expect(found).toMatchObject({ endpoint: "10.0.0.3:9999", hostname: null, source: "health" });
   });
 
+  it("prefers the desktop shell's probe over fetch and reports its errors", async () => {
+    const shellCalls: string[] = [];
+    let fetchCalls = 0;
+    const found = await probeDaemon(
+      { ip: "192.168.1.17", port: 9999 },
+      {
+        fetchImpl: async () => {
+          fetchCalls += 1;
+          throw new Error("must not be used");
+        },
+        shellProbe: async (url) => {
+          shellCalls.push(url);
+          return {
+            status: 200,
+            body: { product: "fde", serverId: "srv_9", hostname: "frogg-dev" },
+          };
+        },
+      },
+    );
+    expect(shellCalls).toEqual(["http://192.168.1.17:9999/api/identity"]);
+    expect(fetchCalls).toBe(0);
+    expect(found).toMatchObject({ serverId: "srv_9", hostname: "frogg-dev", source: "identity" });
+
+    const errors: string[] = [];
+    expect(
+      await probeDaemon(
+        { ip: "192.168.1.18", port: 9999 },
+        {
+          shellProbe: async () => {
+            throw new Error("Connection refused (os error 111)");
+          },
+          onError: (target, message) => errors.push(`${target.ip}: ${message}`),
+        },
+      ),
+    ).toBeNull();
+    expect(errors).toEqual(["192.168.1.18: Connection refused (os error 111)"]);
+  });
+
+  it("reports the fetch failure reason, with aborts read as timeouts", async () => {
+    const errors: string[] = [];
+    await probeDaemon(
+      { ip: "10.0.0.7", port: 9999 },
+      {
+        fetchImpl: async () => {
+          throw new TypeError("Failed to fetch");
+        },
+        onError: (_target, message) => errors.push(message),
+      },
+    );
+    await probeDaemon(
+      { ip: "10.0.0.8", port: 9999 },
+      {
+        timeoutMs: 5,
+        fetchImpl: (_url, init) =>
+          new Promise((_resolve, reject) => {
+            init?.signal?.addEventListener("abort", () => {
+              const error = new Error("aborted");
+              error.name = "AbortError";
+              reject(error);
+            });
+          }),
+        onError: (_target, message) => errors.push(message),
+      },
+    );
+    expect(errors).toEqual(["Failed to fetch", "timed out"]);
+  });
+
   it("returns null when nothing answers or the answer is not a daemon", async () => {
     expect(
       await probeDaemon(

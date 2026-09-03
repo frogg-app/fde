@@ -1600,6 +1600,9 @@ export const zhCN: TranslationResources = {
       },
     },
     networkScan: {
+      diagnostics:
+        "已通过 {{transport}} 扫描 {{count}} 个地址。本地地址：{{addresses}}。首个错误：{{error}}",
+      diagnosticsNone: "无",
       title: "您网络中的服务器",
       scanning: "正在扫描 {{scanned}}/{{total}} 个地址…",
       none: "在 {{subnets}} 中未找到 FDE 服务器。",

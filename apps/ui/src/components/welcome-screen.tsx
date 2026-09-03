@@ -29,6 +29,8 @@ import { openExternalUrl } from "@/utils/open-external-url";
 import { isFdroidBuild } from "@/constants/build-profile";
 import { isWeb, isNative } from "@/constants/platform";
 import { isElectronRuntime } from "@/desktop/host";
+import { HEADER_INNER_HEIGHT } from "@/constants/layout";
+import { TITLEBAR_DRAG_SURFACE_DATASET } from "@/components/desktop/titlebar-drag-region";
 import { useLocalDaemonBundle } from "@/desktop/hooks/use-local-daemon-bundle";
 import {
   InstallProgressBar,
@@ -48,6 +50,14 @@ const styles = StyleSheet.create((theme) => ({
   root: {
     flex: 1,
     backgroundColor: theme.colors.surface0,
+  },
+  titlebarStrip: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: HEADER_INNER_HEIGHT,
+    zIndex: 1,
   },
   scrollView: {
     flex: 1,
@@ -353,6 +363,15 @@ export function WelcomeScreen({ onHostAdded }: WelcomeScreenProps) {
 
   return (
     <View style={styles.root}>
+      {isElectronRuntime() ? (
+        // Custom-chrome desktop: the top strip of the landing screen drags the
+        // window, like the title bar it replaces (there is no header here).
+        <View
+          style={styles.titlebarStrip}
+          dataSet={TITLEBAR_DRAG_SURFACE_DATASET}
+          testID="welcome-titlebar-strip"
+        />
+      ) : null}
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={scrollContentContainerStyle}

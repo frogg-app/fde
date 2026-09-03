@@ -1666,6 +1666,9 @@ export const fr: TranslationResources = {
       },
     },
     networkScan: {
+      diagnostics:
+        "{{count}} adresses analysées via {{transport}}. Adresses locales : {{addresses}}. Première erreur : {{error}}",
+      diagnosticsNone: "aucune",
       title: "Serveurs sur votre réseau",
       scanning: "Analyse de {{scanned}} adresses sur {{total}}…",
       none: "Aucun serveur FDE trouvé sur {{subnets}}.",

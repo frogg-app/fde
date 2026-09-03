@@ -1648,6 +1648,9 @@ export const ptBR: TranslationResources = {
       },
     },
     networkScan: {
+      diagnostics:
+        "{{count}} endereços verificados via {{transport}}. Endereços locais: {{addresses}}. Primeiro erro: {{error}}",
+      diagnosticsNone: "nenhum",
       title: "Servidores na sua rede",
       scanning: "Verificando {{scanned}} de {{total}} endereços…",
       none: "Nenhum servidor FDE encontrado em {{subnets}}.",

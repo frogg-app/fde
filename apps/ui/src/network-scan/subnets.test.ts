@@ -85,3 +85,14 @@ describe("buildProbeTargets", () => {
 it("subnetOf accepts CIDR notation from the desktop shell", () => {
   expect(subnetOf("192.168.1.23/24")).toBe("192.168.1");
 });
+
+// Regression: the shell reports "192.168.1.23/24", and the private-range check
+// used to reject the CIDR form outright, so every desktop scan silently fell
+// back to the default subnets ("No FDE servers found on 192.168.0.0/24, …").
+it("uses the shell's CIDR addresses for the subnet list", () => {
+  expect(isPrivateIpv4("192.168.1.23/24")).toBe(true);
+  expect(isPrivateIpv4("203.0.113.4/24")).toBe(false);
+  expect(
+    resolveCandidateSubnets({ localAddresses: ["192.168.1.23/24", "172.27.16.1/20"] }),
+  ).toEqual(["192.168.1", "172.27.16"]);
+});

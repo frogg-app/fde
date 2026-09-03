@@ -4,7 +4,11 @@ import { once } from "node:events";
 import type { IncomingMessage } from "node:http";
 import { afterEach, describe, expect, test } from "vitest";
 
-import { createIdentityRouteHandler, describeDaemonIdentity } from "./identity-route.js";
+import {
+  createIdentityPreflightHandler,
+  createIdentityRouteHandler,
+  describeDaemonIdentity,
+} from "./identity-route.js";
 
 const servers: http.Server[] = [];
 
@@ -79,6 +83,8 @@ describe("GET /api/identity", () => {
     const response = await fetch(`http://127.0.0.1:${port}/api/identity`);
     expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(response.headers.get("access-control-allow-origin")).toBe("*");
+    expect(response.headers.get("access-control-allow-private-network")).toBe("true");
     expect(await response.json()).toEqual({
       product: "fde",
       serverId: "srv_test",
@@ -88,5 +94,23 @@ describe("GET /api/identity", () => {
       pairingRequired: false,
       lanTrusted: false,
     });
+  });
+
+  test("answers the private-network preflight for any origin", async () => {
+    const app = express();
+    app.options("/api/identity", createIdentityPreflightHandler());
+    const port = await listen(app);
+    const response = await fetch(`http://127.0.0.1:${port}/api/identity`, {
+      method: "OPTIONS",
+      headers: {
+        Origin: "http://tauri.localhost",
+        "Access-Control-Request-Method": "GET",
+        "Access-Control-Request-Private-Network": "true",
+      },
+    });
+    expect(response.status).toBe(204);
+    expect(response.headers.get("access-control-allow-origin")).toBe("*");
+    expect(response.headers.get("access-control-allow-methods")).toBe("GET, OPTIONS");
+    expect(response.headers.get("access-control-allow-private-network")).toBe("true");
   });
 });

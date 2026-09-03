@@ -28,6 +28,17 @@ export interface ScanProgress {
 
 export type ScanStatus = "idle" | "scanning" | "done";
 
+/** What a user can quote when a scan finds nothing. */
+export interface ScanDiagnostics {
+  /** Addresses the shell reported (CIDR), empty in a browser. */
+  localAddresses: string[];
+  localAddressesError: string | null;
+  /** `shell` when the desktop shell's Rust probe carried the requests. */
+  transport: "shell" | "fetch";
+  /** First transport error per /24 prefix, e.g. `{"192.168.1": "Connection refused"}`. */
+  firstErrorBySubnet: Record<string, string>;
+}
+
 export interface DaemonIdentity {
   serverId: string | null;
   hostname: string | null;

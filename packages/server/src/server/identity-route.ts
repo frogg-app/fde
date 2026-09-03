@@ -53,6 +53,21 @@ export function describeDaemonIdentity(
   };
 }
 
+/**
+ * CORS for discovery: any origin may read it, and Chromium's Private Network
+ * Access preflight (`Access-Control-Request-Private-Network: true`, sent when a
+ * public-address-space page fetches a LAN address) is answered with
+ * `Access-Control-Allow-Private-Network: true`. Newer Chromium (Local Network
+ * Access, 138+) gates the request on a user permission instead and never sends
+ * the preflight, so the desktop shell probes from Rust; these headers still
+ * serve browsers in preflight mode.
+ */
+function setDiscoveryCorsHeaders(res: Parameters<RequestHandler>[1]): void {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Private-Network", "true");
+}
+
 export function createIdentityRouteHandler(deps: IdentityRouteDependencies): RequestHandler {
   return (req, res) => {
     res.setHeader("Cache-Control", "no-store");
@@ -60,5 +75,20 @@ export function createIdentityRouteHandler(deps: IdentityRouteDependencies): Req
     // browser fetch it cross-origin, so it must not depend on the CORS allowlist.
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.json(describeDaemonIdentity(deps, req));
+    setDiscoveryCorsHeaders(res);
+    res.json(describeDaemonIdentity(deps));
+  };
+}
+
+/**
+ * `OPTIONS /api/identity`. Register it before the daemon's CORS middleware
+ * (which answers every OPTIONS with a bare 204), e.g.
+ * `app.options("/api/identity", createIdentityPreflightHandler())`.
+ */
+export function createIdentityPreflightHandler(): RequestHandler {
+  return (_req, res) => {
+    setDiscoveryCorsHeaders(res);
+    res.setHeader("Access-Control-Max-Age", "600");
+    res.status(204).end();
   };
 }

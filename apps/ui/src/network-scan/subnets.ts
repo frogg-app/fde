@@ -18,7 +18,8 @@ export function parseIpv4(value: string): [number, number, number, number] | nul
 
 /** RFC 1918 and link-local ranges: the only ones worth sweeping for a LAN daemon. */
 export function isPrivateIpv4(value: string): boolean {
-  const octets = parseIpv4(value);
+  // Accepts the CIDR form the desktop shell reports ("192.168.1.23/24") as well.
+  const octets = parseIpv4(value.split("/")[0] ?? value);
   if (!octets) return false;
   const [a, b] = octets;
   if (a === 10) return true;
@@ -48,6 +49,8 @@ export function enumerateSubnetHosts(prefix: string): string[] {
 export interface SubnetHints {
   /** IPv4 addresses of this machine's interfaces (desktop bridge), if known. */
   localAddresses?: readonly string[];
+  /** Why the shell could not list its addresses, when it could not (diagnostics only). */
+  localAddressesError?: string;
   /** Host the web page was loaded from; a LAN IP means the daemon's subnet is a good guess. */
   pageHost?: string | null;
 }

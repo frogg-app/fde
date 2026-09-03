@@ -181,6 +181,13 @@ export interface DesktopNetworkBridge {
   localAddresses?: () => Promise<string[]>;
   /** Reverse DNS for an IPv4 address; resolves null when nothing answers. */
   reverseLookup?: (ip: string) => Promise<string | null>;
+  /**
+   * GET a daemon's `/api/identity` or `/api/health` from the shell process, so the
+   * webview's cross-origin and local-network rules do not apply. Resolves with the
+   * HTTP status and the JSON body (null when not JSON); rejects with the transport
+   * error when nothing answered within the shell's budget (~700 ms).
+   */
+  probeIdentity?: (url: string) => Promise<{ status: number; body: unknown }>;
 }
 
 export interface DesktopInvokeBridge {

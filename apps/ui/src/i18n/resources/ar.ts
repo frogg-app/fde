@@ -1616,6 +1616,9 @@ export const ar: TranslationResources = {
       },
     },
     networkScan: {
+      diagnostics:
+        "تم فحص {{count}} عنوانًا عبر {{transport}}. العناوين المحلية: {{addresses}}. أول خطأ: {{error}}",
+      diagnosticsNone: "لا شيء",
       title: "الخوادم على شبكتك",
       scanning: "جارٍ فحص {{scanned}} من {{total}} عنوانًا…",
       none: "لم يُعثر على خوادم FDE في {{subnets}}.",

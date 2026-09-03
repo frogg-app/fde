@@ -1628,6 +1628,9 @@ export const ko: TranslationResources = {
       },
     },
     networkScan: {
+      diagnostics:
+        "{{transport}}(으)로 주소 {{count}}개를 검색했습니다. 로컬 주소: {{addresses}}. 첫 번째 오류: {{error}}",
+      diagnosticsNone: "없음",
       title: "내 네트워크의 서버",
       scanning: "주소 {{total}}개 중 {{scanned}}개 검색 중…",
       none: "{{subnets}}에서 FDE 서버를 찾지 못했습니다.",

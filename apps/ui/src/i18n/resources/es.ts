@@ -1662,6 +1662,9 @@ export const es: TranslationResources = {
       },
     },
     networkScan: {
+      diagnostics:
+        "Se exploraron {{count}} direcciones mediante {{transport}}. Direcciones locales: {{addresses}}. Primer error: {{error}}",
+      diagnosticsNone: "ninguno",
       title: "Servidores en tu red",
       scanning: "Explorando {{scanned}} de {{total}} direcciones…",
       none: "No se encontraron servidores FDE en {{subnets}}.",

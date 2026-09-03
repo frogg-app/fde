@@ -5,7 +5,7 @@ import { StyleSheet, withUnistyles } from "react-native-unistyles";
 import { RefreshCw } from "lucide-react-native";
 import type { HostProfile } from "@/types/host-connection";
 import { useHostMutations, useHosts } from "@/runtime/host-runtime";
-import { useNetworkScan } from "@/network-scan/use-network-scan";
+import { firstScanError, useNetworkScan } from "@/network-scan/use-network-scan";
 import type { DiscoveredServer } from "@/network-scan/types";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -52,6 +52,10 @@ const styles = StyleSheet.create((theme) => ({
     color: theme.colors.foregroundMuted,
     fontSize: theme.fontSize.base,
     flexShrink: 1,
+  },
+  diagnosticsText: {
+    color: theme.colors.foregroundMuted,
+    fontSize: theme.fontSize.sm,
   },
   row: {
     flexDirection: "row",
@@ -243,6 +247,19 @@ export function NetworkServersList({ onConnected, testID }: NetworkServersListPr
       {scan.status === "done" && scan.servers.length > 0 ? (
         <Text style={styles.statusText}>
           {t("pairing.networkScan.scanned", { subnets: scannedSubnets })}
+        </Text>
+      ) : null}
+      {scan.status === "done" ? (
+        <Text style={styles.diagnosticsText} testID="network-scan-diagnostics">
+          {t("pairing.networkScan.diagnostics", {
+            count: scan.progress.scanned,
+            transport: scan.diagnostics.transport,
+            addresses:
+              scan.diagnostics.localAddresses.join(", ") ||
+              scan.diagnostics.localAddressesError ||
+              t("pairing.networkScan.diagnosticsNone"),
+            error: firstScanError(scan.diagnostics) ?? t("pairing.networkScan.diagnosticsNone"),
+          })}
         </Text>
       ) : null}
     </View>

@@ -1634,6 +1634,9 @@ export const ja: TranslationResources = {
       },
     },
     networkScan: {
+      diagnostics:
+        "{{transport}} 経由で {{count}} 件のアドレスをスキャンしました。ローカルアドレス: {{addresses}}。最初のエラー: {{error}}",
+      diagnosticsNone: "なし",
       title: "ネットワーク上のサーバー",
       scanning: "{{total}} 件中 {{scanned}} 件のアドレスをスキャン中…",
       none: "{{subnets}} に FDE サーバーは見つかりませんでした。",
