@@ -25,11 +25,18 @@ try {
     0,
     `onboard should succeed:\nstdout:\n${onboard.stdout}\nstderr:\n${onboard.stderr}`,
   );
-  assert(!onboard.stdout.includes("Scan to pair"), "onboard output should not include scan header");
-  assert(!onboard.stdout.includes("#offer="), "onboard output should not include a pairing offer");
+  // Relay stays off; the daemon hands out a direct (LAN) claim offer instead of a relay one.
   assert(
     onboard.stdout.includes("Daemon is running with relay off"),
     "onboard output should explain the direct connection path",
+  );
+  assert(
+    onboard.stdout.includes("#offer=") && onboard.stdout.includes("Direct LAN pairing"),
+    "onboard output should include a direct pairing offer",
+  );
+  assert(
+    !onboard.stdout.includes("relay.paseo.sh"),
+    "onboard output should not include a relay pairing offer",
   );
   assert(
     onboard.stdout.includes("CLI quick reference"),

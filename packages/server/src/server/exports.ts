@@ -12,6 +12,13 @@ export {
 export { hashDaemonPassword, isBearerTokenValid } from "./auth.js";
 export { generateLocalPairingOffer, type LocalPairingOffer } from "./pairing-offer.js";
 export {
+  createClaimStore,
+  PRINCIPALS_FILENAME,
+  type ClaimStore,
+  type PrincipalRecord,
+} from "./claim-store.js";
+export { type DaemonIdentity } from "./identity-route.js";
+export {
   ConnectionOfferSchema,
   decodeOfferFragmentPayload,
   parseConnectionOfferFromUrl,

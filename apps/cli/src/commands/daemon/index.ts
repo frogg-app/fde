@@ -6,6 +6,7 @@ import { runRestartCommand } from "./restart.js";
 import { runSetPasswordCommand } from "./set-password.js";
 import { pairCommand } from "./pair.js";
 import { runDaemonReloadCommand } from "./reload.js";
+import { runClaimStatusCommand, runResetClaimCommand } from "./claim.js";
 import { withOutput } from "../../output/index.js";
 import { addJsonAndDaemonHostOptions, addJsonOption } from "../../utils/command-options.js";
 
@@ -68,6 +69,22 @@ export function createDaemonCommand(): Command {
         );
       }),
     );
+
+  addJsonOption(
+    daemon
+      .command("claim-status")
+      .description("Show whether a device has paired with (claimed) this daemon"),
+  )
+    .option("--home <path>", "Paseo home directory (default: ~/.paseo)")
+    .action(withOutput(runClaimStatusCommand));
+
+  addJsonOption(
+    daemon
+      .command("reset-claim")
+      .description("Forget all paired devices so the next LAN visitor sees the pairing page"),
+  )
+    .option("--home <path>", "Paseo home directory (default: ~/.paseo)")
+    .action(withOutput(runResetClaimCommand));
 
   addJsonOption(
     daemon

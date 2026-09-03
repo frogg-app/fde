@@ -480,7 +480,9 @@ export async function runOnboard(options: OnboardOptions): Promise<void> {
     enableRelay: options.relay === true,
   });
 
-  if (!pairing.relayEnabled) {
+  // With relay off the daemon still hands out a direct (LAN) claim offer; only
+  // ask about relay when there is nothing to pair with at all.
+  if (!pairing.relayEnabled && !pairing.url) {
     const shouldEnable = richUi ? await confirmRelayPairing() : false;
     if (!shouldEnable) {
       printDirectConnectionGuidance();
@@ -490,6 +492,9 @@ export async function runOnboard(options: OnboardOptions): Promise<void> {
     }
     pairing = await resolveLocalPairingOffer({ paseoHome, enableRelay: true });
     log.success("Relay enabled");
+  }
+  if (pairing.mode === "direct") {
+    printDirectConnectionGuidance();
   }
 
   if (!pairing.url) {

@@ -7,7 +7,8 @@ import {
   loadConfig,
   resolvePaseoHome,
 } from "@fde/server";
-import { tryConnectToDaemon } from "../../utils/client.js";
+import { resolveDaemonPassword, tryConnectToDaemon } from "../../utils/client.js";
+import { daemonHttpJson, resolveLoopbackHttpBase } from "./daemon-http.js";
 import { resolveLocalDaemonState } from "./local-daemon.js";
 import { addJsonOption } from "../../utils/command-options.js";
 import { formatPairingInstructions } from "../../output/pairing.js";
@@ -37,6 +38,17 @@ export interface PairCommandOutput {
 export interface PairingOffer {
   relayEnabled: boolean;
   url: string | null;
+  qr: string | null;
+  /** `direct` offers carry a single-use claim token for LAN pairing; `relay` is the E2E relay offer. */
+  mode?: "relay" | "direct";
+  expiresAt?: string | null;
+  endpoints?: string[];
+}
+
+interface DirectOfferResponse {
+  url: string;
+  expiresAt: string;
+  endpoints: string[];
   qr: string | null;
 }
 
@@ -136,13 +148,42 @@ async function resolveDaemonPairingOffer(
         timeout: PAIRING_DAEMON_RPC_TIMEOUT_MS,
       });
     }
-    return {
-      relayEnabled: offer.relayEnabled,
-      url: offer.url || null,
-      qr: offer.qr ?? null,
-    };
+    if (offer.relayEnabled) {
+      return {
+        relayEnabled: true,
+        mode: "relay",
+        url: offer.url || null,
+        qr: offer.qr ?? null,
+      };
+    }
+    // Relay off: pair over the LAN with a single-use direct claim offer instead.
+    return (await resolveDirectClaimOffer(listen)) ?? { relayEnabled: false, url: null, qr: null };
   } finally {
     await client.close().catch(() => undefined);
+  }
+}
+
+async function resolveDirectClaimOffer(listen: string): Promise<PairingOffer | null> {
+  const base = resolveLoopbackHttpBase(listen);
+  if (!base) return null;
+  try {
+    const direct = await daemonHttpJson<DirectOfferResponse>({
+      base,
+      path: "/api/setup/offer",
+      method: "POST",
+      body: { qr: "terminal" },
+      bearer: resolveDaemonPassword(listen),
+    });
+    return {
+      relayEnabled: false,
+      mode: "direct",
+      url: direct.url,
+      qr: direct.qr,
+      expiresAt: direct.expiresAt,
+      endpoints: direct.endpoints,
+    };
+  } catch {
+    return null;
   }
 }
 
@@ -185,7 +226,8 @@ export async function runPairCommand(
   });
 
   const canPrompt = dependencies.isInteractive() && options.json !== true;
-  if (!pairing.relayEnabled && canPrompt) {
+  // A direct (LAN) offer needs no relay; only ask about relay when there is nothing to show.
+  if (!pairing.relayEnabled && !pairing.url && canPrompt) {
     const shouldEnable = await dependencies.confirmRelay();
     if (!shouldEnable) {
       dependencies.printDirectGuidance();
@@ -205,12 +247,13 @@ function outputPairingResult(
   options: PairOptions,
   output: PairCommandOutput,
 ): void {
-  if (!pairing.relayEnabled || !pairing.url) {
+  if (!pairing.url) {
     if (options.json) {
       output.writeStderr(
         `${JSON.stringify({
           code: "RELAY_DISABLED",
-          message: "Relay pairing is disabled for this daemon.",
+          message:
+            "Relay pairing is disabled for this daemon and no direct offer is available (is the daemon running on TCP?).",
           action: "Run paseo daemon pair --relay --json to enable it explicitly.",
         })}\n`,
       );
@@ -225,7 +268,14 @@ function outputPairingResult(
   if (options.json) {
     output.writeStdout(
       `${JSON.stringify(
-        { relayEnabled: pairing.relayEnabled, url: pairing.url, qr: pairing.qr },
+        {
+          relayEnabled: pairing.relayEnabled,
+          mode: pairing.mode ?? (pairing.relayEnabled ? "relay" : "direct"),
+          url: pairing.url,
+          qr: pairing.qr,
+          ...(pairing.expiresAt ? { expiresAt: pairing.expiresAt } : {}),
+          ...(pairing.endpoints ? { endpoints: pairing.endpoints } : {}),
+        },
         null,
         2,
       )}\n`,
@@ -240,4 +290,9 @@ function outputPairingResult(
       columns: output.columns,
     }),
   );
+  if (pairing.mode === "direct") {
+    output.writeStdout(
+      `${chalk.dim(`Direct LAN pairing: single-use, expires ${pairing.expiresAt ?? "soon"}. Reachable at ${(pairing.endpoints ?? []).join(", ")}.`)}\n`,
+    );
+  }
 }
