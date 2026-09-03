@@ -218,6 +218,7 @@ import {
   type ClaimOfferSource,
 } from "./claim-offer.js";
 import { renderClaimGatePage } from "./claim-gate-page.js";
+import { mountPairingCodeRoutes } from "./pairing-code-route.js";
 import { DEFAULT_PAIRING_BASE_URL } from "@fde/protocol/connection-offer";
 import { createIdentityRouteHandler } from "./identity-route.js";
 import { mountSetupRoutes } from "./setup-routes.js";
@@ -865,6 +866,15 @@ export async function createPaseoDaemon(
     },
     offers: claimOffers,
   };
+  // The pairing landing page for this daemon's own `/code/<code>` links, so
+  // `pair.frogg.app` can be reverse-proxied here. Public, and mounted before
+  // the web UI so the SPA fallback does not swallow it.
+  mountPairingCodeRoutes(app, {
+    serverId,
+    offers: claimOffers,
+    pairingBaseUrl: () => appBaseUrl,
+  });
+
   mountWebUi(
     app,
     config,

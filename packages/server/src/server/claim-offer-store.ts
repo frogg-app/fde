@@ -18,6 +18,8 @@ export interface ClaimOfferStore {
   issue(): ClaimOffer;
   /** Consumes the token; returns false when unknown, expired, or already used. */
   consume(token: string): boolean;
+  /** True while the token could still be consumed. Does not consume it. */
+  isLive(token: string): boolean;
   liveCount(): number;
 }
 
@@ -60,6 +62,11 @@ export function createClaimOfferStore(options: ClaimOfferStoreOptions = {}): Cla
       if (expiresAtMs === undefined) return false;
       live.delete(token);
       return expiresAtMs > now();
+    },
+    isLive: (token) => {
+      prune();
+      const expiresAtMs = live.get(token);
+      return expiresAtMs !== undefined && expiresAtMs > now();
     },
     liveCount: () => {
       prune();

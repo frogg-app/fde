@@ -38,9 +38,18 @@ function matchesHostnamePattern(hostname: string, pattern: string): boolean {
   return hostname === normalizedPattern;
 }
 
+/**
+ * The hostname FDE pairing links use. An owner who reverse-proxies it to their
+ * daemon should not also have to set `PASEO_HOSTNAMES`, and the name resolves
+ * to whatever that owner points it at, so allowing it costs nothing.
+ */
+export const PAIRING_HOSTNAME = "pair.frogg.app";
+
 function isDefaultAllowedHostname(hostname: string): boolean {
-  // Vite-style defaults: localhost, *.localhost, and all IP addresses.
+  // Vite-style defaults: localhost, *.localhost, all IP addresses, and the
+  // pairing hostname.
   if (hostname === "localhost") return true;
+  if (hostname === PAIRING_HOSTNAME) return true;
   if (hostname.endsWith(".localhost")) return true;
   if (net.isIP(hostname) !== 0) return true;
   return false;
@@ -51,7 +60,8 @@ function isDefaultAllowedHostname(hostname: string): boolean {
  *
  * Semantics:
  * - `hostnames === true` => allow any host.
- * - `hostnames === []` or `undefined` => allow localhost, *.localhost, and all IPs.
+ * - `hostnames === []` or `undefined` => allow localhost, *.localhost, all IPs,
+ *   and `pair.frogg.app` (see PAIRING_HOSTNAME).
  * - `hostnames === ['.example.com', 'myhost']` => allow those *in addition* to defaults.
  */
 export function isHostnameAllowed(
