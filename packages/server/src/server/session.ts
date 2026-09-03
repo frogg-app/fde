@@ -2352,6 +2352,13 @@ export class Session {
         return this.daemonSession.handleDiagnosticsRequest(msg);
       case "daemon.update.request":
         return this.daemonSession.handleUpdateRequest(msg);
+      case "daemon.update.check.request":
+        return this.daemonSession.handleUpdateCheckRequest(msg);
+      case "daemon.update.start.request":
+        return this.daemonSession.handleUpdateStartRequest(msg);
+      case "daemon.update.get_status.request":
+        this.daemonSession.handleUpdateGetStatusRequest(msg);
+        return undefined;
       case "set_daemon_config_request":
         this.emit({
           type: "set_daemon_config_response",

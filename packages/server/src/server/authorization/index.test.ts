@@ -78,3 +78,27 @@ describe("SessionAuthorization", () => {
     expect(() => parseDaemonPermissions(["hub.execution.*"])).toThrow("Invalid daemon permission");
   });
 });
+
+describe("daemon self-update authority", () => {
+  test("every daemon.update RPC and its progress broadcast need daemon.manage", () => {
+    const reader = new SessionAuthorization(["daemon.read", "workspace.write"]);
+    const manager = new SessionAuthorization(["daemon.manage"]);
+    for (const type of [
+      "daemon.update.check.request",
+      "daemon.update.start.request",
+      "daemon.update.get_status.request",
+    ] as const) {
+      expect(reader.allowsInbound(inboundMessage(type))).toBe(false);
+      expect(manager.allowsInbound(inboundMessage(type))).toBe(true);
+    }
+    for (const type of [
+      "daemon.update.check.response",
+      "daemon.update.start.response",
+      "daemon.update.get_status.response",
+      "daemon.update.run.progress",
+    ] as const) {
+      expect(reader.allowsOutbound(outboundMessage(type))).toBe(false);
+      expect(manager.allowsOutbound(outboundMessage(type))).toBe(true);
+    }
+  });
+});

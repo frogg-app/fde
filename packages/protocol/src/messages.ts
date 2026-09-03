@@ -4751,6 +4751,7 @@ export const DaemonConfigReloadResponseSchema = z.object({
  * older apps; the list is the set a current daemon emits.
  */
 export const DAEMON_UPDATE_RUN_PHASES = [
+  "check",
   "download",
   "verify",
   "install",

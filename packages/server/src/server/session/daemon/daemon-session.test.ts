@@ -525,3 +525,132 @@ describe("DaemonSession", () => {
     expect(message.payload.diagnostic).toContain("Agent lifecycle: idle=8, running=2");
   });
 });
+
+describe("DaemonSession self-update RPCs", () => {
+  test("answer not updatable when the daemon has no update service wired", async () => {
+    const { subsystem, emitted } = makeSubsystem({ daemonVersion: "0.1.13" });
+    await subsystem.handleUpdateCheckRequest({
+      type: "daemon.update.check.request",
+      requestId: "check-1",
+      channel: "beta",
+    });
+    await subsystem.handleUpdateStartRequest({
+      type: "daemon.update.start.request",
+      requestId: "start-1",
+    });
+    subsystem.handleUpdateGetStatusRequest({
+      type: "daemon.update.get_status.request",
+      requestId: "status-1",
+    });
+    expect(emitted).toEqual([
+      {
+        type: "daemon.update.check.response",
+        payload: {
+          requestId: "check-1",
+          updatable: false,
+          reason: "Self-update is not available on this daemon.",
+          currentVersion: "0.1.13",
+          channel: "beta",
+          latestVersion: null,
+          updateAvailable: false,
+          releaseUrl: null,
+          error: null,
+        },
+      },
+      {
+        type: "daemon.update.start.response",
+        payload: {
+          requestId: "start-1",
+          accepted: false,
+          runId: null,
+          targetVersion: null,
+          error: "Self-update is not available on this daemon.",
+        },
+      },
+      {
+        type: "daemon.update.get_status.response",
+        payload: {
+          requestId: "status-1",
+          updatable: false,
+          reason: "Self-update is not available on this daemon.",
+          currentVersion: "0.1.13",
+          installDir: null,
+          run: null,
+          lastResult: null,
+        },
+      },
+    ]);
+  });
+
+  test("delegate to the update service and correlate its answers", async () => {
+    const calls: string[] = [];
+    const update = {
+      async check(input: { channel?: string }) {
+        calls.push(`check:${input.channel}`);
+        return {
+          updatable: true,
+          reason: null,
+          currentVersion: "0.1.13",
+          channel: "stable" as const,
+          latestVersion: "0.1.14",
+          updateAvailable: true,
+          releaseUrl: null,
+          error: null,
+        };
+      },
+      async start(input: { version?: string }) {
+        calls.push(`start:${input.version}`);
+        return { accepted: true, runId: "run-1", targetVersion: "0.1.14", error: null };
+      },
+      status() {
+        return {
+          updatable: true,
+          reason: null,
+          currentVersion: "0.1.13",
+          installDir: "/opt/fde",
+          run: null,
+          lastResult: {
+            from: "0.1.12",
+            to: "0.1.13",
+            status: "applied" as const,
+            reason: null,
+            at: "2026-09-03T00:00:00.000Z",
+          },
+        };
+      },
+    };
+    const { subsystem, emitted } = makeSubsystem({
+      daemonVersion: "0.1.13",
+      daemonRuntimeConfig: {
+        listen: "0.0.0.0:9993",
+        update: update as unknown as DaemonRuntimeConfig["update"],
+        getRelayConfig: () => null,
+      },
+    });
+    await subsystem.handleUpdateCheckRequest({
+      type: "daemon.update.check.request",
+      requestId: "check-2",
+    });
+    await subsystem.handleUpdateStartRequest({
+      type: "daemon.update.start.request",
+      requestId: "start-2",
+      version: "0.1.14",
+    });
+    subsystem.handleUpdateGetStatusRequest({
+      type: "daemon.update.get_status.request",
+      requestId: "status-2",
+    });
+    expect(calls).toEqual(["check:undefined", "start:0.1.14"]);
+    expect(emitted.map((msg) => msg.type)).toEqual([
+      "daemon.update.check.response",
+      "daemon.update.start.response",
+      "daemon.update.get_status.response",
+    ]);
+    expect(emitted[1]).toMatchObject({
+      payload: { requestId: "start-2", accepted: true, runId: "run-1" },
+    });
+    expect(emitted[2]).toMatchObject({
+      payload: { requestId: "status-2", installDir: "/opt/fde", lastResult: { status: "applied" } },
+    });
+  });
+});

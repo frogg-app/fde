@@ -21,6 +21,7 @@ interface SupportedMutableConfigPatch {
   removeProviders?: string[];
   metadataGeneration?: MutableDaemonConfig["metadataGeneration"];
   autoArchiveAfterMerge?: boolean;
+  autoUpdate?: Partial<NonNullable<MutableDaemonConfig["autoUpdate"]>>;
   enableTerminalAgentHooks?: boolean;
   appendSystemPrompt?: string;
   terminalProfiles?: MutableDaemonConfig["terminalProfiles"];
@@ -176,6 +177,7 @@ const RELOADABLE_PATHS = [
   "daemon.git.maxProcessesPerSecond",
   "daemon.git.maxProcessConcurrency",
   "daemon.autoArchiveAfterMerge",
+  "daemon.autoUpdate",
   "daemon.enableTerminalAgentHooks",
   "daemon.appendSystemPrompt",
   "daemon.terminalProfiles",
@@ -199,6 +201,7 @@ const PERSISTED_TO_MUTABLE_PATH = new Map<string, string>([
   ["daemon.git.maxProcessesPerSecond", "git.maxProcessesPerSecond"],
   ["daemon.git.maxProcessConcurrency", "git.maxProcessConcurrency"],
   ["daemon.autoArchiveAfterMerge", "autoArchiveAfterMerge"],
+  ["daemon.autoUpdate", "autoUpdate"],
   ["daemon.enableTerminalAgentHooks", "enableTerminalAgentHooks"],
   ["daemon.appendSystemPrompt", "appendSystemPrompt"],
   ["daemon.terminalProfiles", "terminalProfiles"],
@@ -263,6 +266,7 @@ function pickSupportedPatchFields(patch: MutableDaemonConfigPatch): SupportedMut
     ...(patch.autoArchiveAfterMerge !== undefined
       ? { autoArchiveAfterMerge: patch.autoArchiveAfterMerge }
       : {}),
+    ...(patch.autoUpdate !== undefined ? { autoUpdate: patch.autoUpdate } : {}),
     ...(patch.enableTerminalAgentHooks !== undefined
       ? { enableTerminalAgentHooks: patch.enableTerminalAgentHooks }
       : {}),
@@ -641,6 +645,9 @@ function mergeMutableDaemonPatch(
   }
   if (patch.autoArchiveAfterMerge !== undefined) {
     next.autoArchiveAfterMerge = patch.autoArchiveAfterMerge;
+  }
+  if (patch.autoUpdate !== undefined) {
+    next.autoUpdate = { ...next.autoUpdate, ...patch.autoUpdate };
   }
   if (patch.enableTerminalAgentHooks !== undefined) {
     next.enableTerminalAgentHooks = patch.enableTerminalAgentHooks;
