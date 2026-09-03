@@ -63,6 +63,7 @@ import { HorizontalScrollProvider } from "@/contexts/horizontal-scroll-context";
 import { SessionProvider } from "@/contexts/session-context";
 import { SidebarCalloutProvider } from "@/contexts/sidebar-callout-context";
 import { ToastProvider } from "@/contexts/toast-context";
+import { SpokenAlertNotificationHost } from "@/components/spoken-alert-notification";
 import { VoiceProvider } from "@/contexts/voice-context";
 import {
   resolveStartupBlocker,
@@ -934,6 +935,7 @@ function RootAppTree() {
         <RootProviders>
           <RuntimeProviders>
             <AppShell />
+            <SpokenAlertNotificationHost />
             <VoiceReplySheet />
           </RuntimeProviders>
         </RootProviders>

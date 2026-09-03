@@ -14,6 +14,7 @@ const alert: SpokenAlert = {
   agentId: "agent",
   workspaceId: "ws",
   reason: "finished",
+  title: "ade finished",
   spokenText: "Fix login in webapp finished.",
   receivedAt: 1000,
 };
@@ -106,15 +107,41 @@ describe("reduceSpokenAlerts", () => {
 describe("shouldAutoPlaySpokenAlert", () => {
   const entry = received().entries[key]!;
 
-  it("plays a fresh alert once while the app is foregrounded with the setting on", () => {
+  it("plays a fresh alert once while the user is watching that agent", () => {
     expect(
-      shouldAutoPlaySpokenAlert({ entry, autoPlayEnabled: true, appActivelyVisible: true }),
+      shouldAutoPlaySpokenAlert({
+        entry,
+        autoPlayEnabled: true,
+        appActivelyVisible: true,
+        awayFromAgent: false,
+      }),
     ).toBe(true);
     expect(
-      shouldAutoPlaySpokenAlert({ entry, autoPlayEnabled: false, appActivelyVisible: true }),
+      shouldAutoPlaySpokenAlert({
+        entry,
+        autoPlayEnabled: false,
+        appActivelyVisible: true,
+        awayFromAgent: false,
+      }),
     ).toBe(false);
     expect(
-      shouldAutoPlaySpokenAlert({ entry, autoPlayEnabled: true, appActivelyVisible: false }),
+      shouldAutoPlaySpokenAlert({
+        entry,
+        autoPlayEnabled: true,
+        appActivelyVisible: false,
+        awayFromAgent: true,
+      }),
+    ).toBe(false);
+  });
+
+  it("stays quiet when the alert belongs to an agent the user is not on", () => {
+    expect(
+      shouldAutoPlaySpokenAlert({
+        entry,
+        autoPlayEnabled: true,
+        appActivelyVisible: true,
+        awayFromAgent: true,
+      }),
     ).toBe(false);
   });
 
@@ -127,6 +154,7 @@ describe("shouldAutoPlaySpokenAlert", () => {
         entry: state.entries[key]!,
         autoPlayEnabled: true,
         appActivelyVisible: true,
+        awayFromAgent: false,
       }),
     ).toBe(false);
   });

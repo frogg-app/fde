@@ -1224,6 +1224,7 @@ export const ja: TranslationResources = {
       noMatchingRefs: "一致するRefがありません。",
       searchPlaceholder: "ブランチとPRを検索",
       title: "開始点",
+      fromRef: "{{ref}} から",
     },
     launch: {
       title: "What to launch",
@@ -1847,8 +1848,10 @@ export const ja: TranslationResources = {
       replyByVoice: "音声で返信",
       dismiss: "アラートを閉じる",
     },
-    toast: {
+    notification: {
       play: "再生",
+      stop: "再生を停止",
+      open: "ワークスペースを開く",
     },
     errors: {
       unavailable: "ここでは音声を再生できません。",
@@ -2137,7 +2140,7 @@ export const ja: TranslationResources = {
       autoPlay: {
         label: "音声アラートを自動再生",
         description:
-          "FDE がフォアグラウンドにあるとき、エージェントのアラートを届き次第読み上げます。",
+          "そのエージェントを見ているときに限り、届いたアラートを読み上げます。それ以外では通知の再生ボタンを押すまで待ちます。",
       },
       replyConfirm: {
         label: "音声返信を確認する",

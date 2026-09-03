@@ -1228,6 +1228,7 @@ export const ru: TranslationResources = {
       noMatchingRefs: "Нет подходящих веток или PR.",
       searchPlaceholder: "Поиск веток и PR",
       title: "Начать с",
+      fromRef: "от {{ref}}",
     },
     launch: {
       title: "Что запустить",
@@ -1859,8 +1860,10 @@ export const ru: TranslationResources = {
       replyByVoice: "Ответить голосом",
       dismiss: "Скрыть оповещение",
     },
-    toast: {
+    notification: {
       play: "Воспроизвести",
+      stop: "Остановить воспроизведение",
+      open: "Открыть рабочее пространство",
     },
     errors: {
       unavailable: "Воспроизведение звука здесь недоступно.",
@@ -2149,7 +2152,7 @@ export const ru: TranslationResources = {
       autoPlay: {
         label: "Автовоспроизведение голосовых оповещений",
         description:
-          "Озвучивать оповещения агентов по мере поступления, пока FDE на переднем плане.",
+          "Озвучивать оповещение агента сразу по прибытии, но только пока вы смотрите на этого агента. В остальных случаях оно ждёт за кнопкой воспроизведения в уведомлении.",
       },
       replyConfirm: {
         label: "Подтверждать голосовые ответы",

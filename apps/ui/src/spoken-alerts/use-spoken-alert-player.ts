@@ -1,16 +1,15 @@
 import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { DaemonClient } from "@fde/client/internal/daemon-client";
-import { isWeb } from "@/constants/platform";
-import { useVoiceAudioEngineOptional } from "@/contexts/voice-context";
-import { UnsupportedAlertAudioError, toAlertPlaybackSource } from "./audio";
+import { useAlertAudioPlayback } from "./alert-audio-playback";
+import { UnsupportedAlertAudioError } from "./audio";
 import { alertKey, type SpokenAlert } from "./state";
 import { useSpokenAlertsStore } from "./store";
 
 export interface SpokenAlertPlayer {
   play: (alert: SpokenAlert, options?: { autoPlay?: boolean }) => Promise<void>;
   stop: (alert: SpokenAlert) => void;
-  /** False when the app has no audio engine or the host cannot hand over audio. */
+  /** False when the platform has no audio output or the host cannot hand over audio. */
   canPlay: boolean;
 }
 
@@ -22,18 +21,18 @@ function describeError(error: unknown, t: (key: string) => string): string {
 }
 
 /**
- * Fetches an alert's audio over the session and plays it through the shared voice engine.
+ * Fetches an alert's audio over the session and plays it on the platform's media output.
  * Every transition goes through the store so banners, toasts, and auto-play agree on state.
  */
 export function useSpokenAlertPlayer(client: DaemonClient | null): SpokenAlertPlayer {
   const { t } = useTranslation();
-  const engine = useVoiceAudioEngineOptional();
+  const playback = useAlertAudioPlayback();
   const dispatch = useSpokenAlertsStore((state) => state.dispatch);
 
   const play = useCallback(
     async (alert: SpokenAlert, options?: { autoPlay?: boolean }) => {
       const key = alertKey(alert.serverId, alert.agentId);
-      if (!client || !engine) {
+      if (!client || !playback) {
         dispatch({
           type: "playback_failed",
           key,
@@ -53,13 +52,12 @@ export function useSpokenAlertPlayer(client: DaemonClient | null): SpokenAlertPl
         if (!audio) {
           throw new Error(t("spokenAlerts.errors.noAudio"));
         }
-        const source = toAlertPlaybackSource(audio, { canDecodeCodecs: isWeb });
         dispatch({ type: "playback_started", key, id: alert.id });
         const current = useSpokenAlertsStore.getState().entries[key];
         if (current?.alert.id !== alert.id || current.playback.status !== "playing") {
           return;
         }
-        await engine.play(source);
+        await playback.play(audio);
         dispatch({ type: "playback_finished", key, id: alert.id });
       } catch (error) {
         const stoppedByUser =
@@ -68,19 +66,19 @@ export function useSpokenAlertPlayer(client: DaemonClient | null): SpokenAlertPl
         dispatch({ type: "playback_failed", key, id: alert.id, message: describeError(error, t) });
       }
     },
-    [client, dispatch, engine, t],
+    [client, dispatch, playback, t],
   );
 
   const stop = useCallback(
     (alert: SpokenAlert) => {
       dispatch({ type: "stopped", key: alertKey(alert.serverId, alert.agentId) });
-      engine?.stop();
+      playback?.stop();
     },
-    [dispatch, engine],
+    [dispatch, playback],
   );
 
   return useMemo(
-    () => ({ play, stop, canPlay: client !== null && engine !== null }),
-    [client, engine, play, stop],
+    () => ({ play, stop, canPlay: client !== null && playback !== null }),
+    [client, play, playback, stop],
   );
 }

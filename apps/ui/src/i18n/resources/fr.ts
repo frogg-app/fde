@@ -1246,6 +1246,7 @@ export const fr: TranslationResources = {
       noMatchingRefs: "Aucune référence correspondante.",
       searchPlaceholder: "Rechercher des succursales et des PR",
       title: "Commencer à partir de",
+      fromRef: "depuis {{ref}}",
     },
     launch: {
       title: "What to launch",
@@ -1879,8 +1880,10 @@ export const fr: TranslationResources = {
       replyByVoice: "Répondre à la voix",
       dismiss: "Ignorer l'alerte",
     },
-    toast: {
+    notification: {
       play: "Lire",
+      stop: "Arrêter la lecture",
+      open: "Ouvrir l'espace de travail",
     },
     errors: {
       unavailable: "La lecture audio n'est pas disponible ici.",
@@ -2168,7 +2171,8 @@ export const fr: TranslationResources = {
       title: "Alertes vocales",
       autoPlay: {
         label: "Lire automatiquement les alertes vocales",
-        description: "Lit les alertes des agents à leur arrivée lorsqu'un FDE est au premier plan.",
+        description:
+          "Lit l'alerte d'un agent à son arrivée, mais seulement pendant que vous regardez cet agent. Ailleurs, elle attend derrière le bouton de lecture de la notification.",
       },
       replyConfirm: {
         label: "Confirmer les réponses vocales",

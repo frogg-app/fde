@@ -253,7 +253,7 @@ function SessionProviderInternal({ children, serverId, client }: SessionProvider
   );
   const _sessionStateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const attentionNotifiedRef = useRef<Map<string, number>>(new Map());
-  const onSpokenAlertArrival = useSpokenAlertArrival({ serverId, client, toast });
+  const onSpokenAlertArrival = useSpokenAlertArrival({ serverId, client });
   const appStateRef = useRef(AppState.currentState);
   const forcedTimelineTailReplacements = useRef(new Set<string>());
   const viewedTimelineSyncRef = useRef<ViewedTimelineOwner | null>(null);

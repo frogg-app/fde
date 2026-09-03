@@ -7,6 +7,8 @@ export interface SpokenAlert {
   agentId: string;
   workspaceId: string | null;
   reason: SpokenAlertReason;
+  /** The notification headline the daemon sent, e.g. "ade finished". */
+  title: string | null;
   spokenText: string;
   receivedAt: number;
 }
@@ -119,11 +121,17 @@ export interface AutoPlayDecisionInput {
   entry: SpokenAlertEntry;
   autoPlayEnabled: boolean;
   appActivelyVisible: boolean;
+  /** The user is on another agent, or the app is not in front of them. */
+  awayFromAgent: boolean;
 }
 
-/** Auto-play fires once per alert, only while the app is in the foreground with the setting on. */
+/**
+ * Auto-play fires once per alert, and only while the user is actually watching the agent it
+ * belongs to. Anywhere else the alert waits behind the notification's play button rather than
+ * speaking over whatever the phone is doing.
+ */
 export function shouldAutoPlaySpokenAlert(input: AutoPlayDecisionInput): boolean {
-  if (!input.autoPlayEnabled || !input.appActivelyVisible) return false;
+  if (!input.autoPlayEnabled || !input.appActivelyVisible || input.awayFromAgent) return false;
   if (input.entry.autoPlayAttempted) return false;
   return input.entry.playback.status === "idle";
 }

@@ -1237,6 +1237,7 @@ export const ptBR: TranslationResources = {
       noMatchingRefs: "Nenhuma ref correspondente.",
       searchPlaceholder: "Buscar branches e PRs",
       title: "Começar de",
+      fromRef: "de {{ref}}",
     },
     launch: {
       title: "What to launch",
@@ -1860,8 +1861,10 @@ export const ptBR: TranslationResources = {
       replyByVoice: "Responder por voz",
       dismiss: "Dispensar alerta",
     },
-    toast: {
+    notification: {
       play: "Reproduzir",
+      stop: "Parar a reprodução",
+      open: "Abrir o espaço de trabalho",
     },
     errors: {
       unavailable: "A reprodução de áudio não está disponível aqui.",
@@ -2149,7 +2152,7 @@ export const ptBR: TranslationResources = {
       autoPlay: {
         label: "Reproduzir alertas falados automaticamente",
         description:
-          "Lê os alertas dos agentes ao chegarem enquanto um FDE está em primeiro plano.",
+          "Lê o alerta de um agente ao chegar, mas apenas enquanto você está vendo esse agente. Em outros lugares, ele espera atrás do botão de reprodução da notificação.",
       },
       replyConfirm: {
         label: "Confirmar respostas por voz",

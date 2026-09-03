@@ -1201,6 +1201,7 @@ export const zhCN: TranslationResources = {
       noMatchingRefs: "没有匹配的 refs。",
       searchPlaceholder: "搜索分支和 PR",
       title: "起始位置",
+      fromRef: "从 {{ref}}",
     },
     launch: {
       title: "What to launch",
@@ -1800,8 +1801,10 @@ export const zhCN: TranslationResources = {
       replyByVoice: "语音回复",
       dismiss: "关闭提醒",
     },
-    toast: {
+    notification: {
       play: "播放",
+      stop: "停止播放",
+      open: "打开工作区",
     },
     errors: {
       unavailable: "此处无法播放音频。",
@@ -2086,7 +2089,8 @@ export const zhCN: TranslationResources = {
       title: "语音提醒",
       autoPlay: {
         label: "自动播放语音提醒",
-        description: "当某个 FDE 位于前台时，代理提醒到达后立即朗读。",
+        description:
+          "仅当你正在查看该代理时，提醒到达后立即朗读；其他情况下会等待你点击通知上的播放按钮。",
       },
       replyConfirm: {
         label: "确认语音回复",

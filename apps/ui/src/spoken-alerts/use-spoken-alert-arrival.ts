@@ -2,15 +2,10 @@ import { useCallback, useRef } from "react";
 import type { DaemonClient } from "@fde/client/internal/daemon-client";
 import type { AgentAttentionNotificationPayload } from "@fde/protocol/agent-attention-notification";
 import { useSettings } from "@/hooks/use-settings";
-import type { ToastApi } from "@/components/toast-host";
-import { SpokenAlertToastContent } from "@/components/spoken-alert-toast";
 import { receiveSpokenAlert } from "./receive";
 import { shouldAutoPlaySpokenAlert, type SpokenAlertReason } from "./state";
 import { useSpokenAlertsStore } from "./store";
 import { useSpokenAlertPlayer, type SpokenAlertPlayer } from "./use-spoken-alert-player";
-
-// Long enough to read the gist and reach the Play button; the banner keeps the alert after.
-const SPOKEN_ALERT_TOAST_MS = 6000;
 
 export interface SpokenAlertArrival {
   agentId: string;
@@ -45,15 +40,14 @@ function autoPlayThenMaybeReply(
 
 /**
  * What happens the moment an attention notification with spoken text reaches this session:
- * it is recorded for the agent's banner, auto-played when the setting and foreground allow,
- * and otherwise offered as a toast with a Play button while the user is elsewhere in the app.
+ * it is recorded for the agent's banner, auto-played only while the user is watching that
+ * agent with the setting on, and otherwise raised as a notification card they can play.
  */
 export function useSpokenAlertArrival(params: {
   serverId: string;
   client: DaemonClient | null;
-  toast: ToastApi;
 }): (arrival: SpokenAlertArrival) => void {
-  const { serverId, client, toast } = params;
+  const { serverId, client } = params;
   const player = useSpokenAlertPlayer(client);
   const autoPlayEnabled = useSettings((settings) => settings.spokenAlertsAutoPlay);
   const autoPlayEnabledRef = useRef(autoPlayEnabled);
@@ -76,18 +70,14 @@ export function useSpokenAlertArrival(params: {
           entry,
           autoPlayEnabled: autoPlayEnabledRef.current,
           appActivelyVisible: arrival.appActivelyVisible,
+          awayFromAgent: arrival.awayFromAgent,
         })
       ) {
         autoPlayThenMaybeReply(player, received.key, serverId, arrival.agentId);
         return;
       }
-      if (arrival.appActivelyVisible && arrival.awayFromAgent && arrival.reason !== "error") {
-        toast.show(<SpokenAlertToastContent alert={received.alert} player={player} />, {
-          durationMs: SPOKEN_ALERT_TOAST_MS,
-          testID: "spoken-alert-toast",
-        });
-      }
+      useSpokenAlertsStore.getState().showNotification(received.key);
     },
-    [player, serverId, toast],
+    [player, serverId],
   );
 }

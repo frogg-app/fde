@@ -1221,6 +1221,7 @@ export const en = {
       noMatchingRefs: "No matching refs.",
       searchPlaceholder: "Search branches and PRs",
       title: "Start from",
+      fromRef: "from {{ref}}",
     },
     launch: {
       title: "What to launch",
@@ -1838,8 +1839,10 @@ export const en = {
       replyByVoice: "Reply by voice",
       dismiss: "Dismiss alert",
     },
-    toast: {
+    notification: {
       play: "Play",
+      stop: "Stop playback",
+      open: "Open workspace",
     },
     errors: {
       unavailable: "Audio playback isn't available here.",
@@ -2216,7 +2219,8 @@ export const en = {
       title: "Voice alerts",
       autoPlay: {
         label: "Auto-play spoken alerts",
-        description: "Speak agent alerts as they arrive while an FDE is in the foreground.",
+        description:
+          "Speak an agent's alert as it arrives, but only while you are watching that agent. Everywhere else it waits behind the notification's play button.",
       },
       replyConfirm: {
         label: "Confirm voice replies",

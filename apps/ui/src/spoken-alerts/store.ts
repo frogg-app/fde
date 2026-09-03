@@ -15,6 +15,11 @@ export interface VoiceReplyTarget {
 
 interface SpokenAlertsStore extends SpokenAlertsState {
   dispatch: (event: SpokenAlertEvent) => void;
+  /** Which alert is showing as the top-of-screen notification card; null when none is up. */
+  notificationKey: string | null;
+  showNotification: (key: string) => void;
+  /** Takes the card away. Playback, and the agent's banner, carry on without it. */
+  dismissNotification: (key?: string) => void;
   /** Which agent the voice-reply sheet is open for; null when closed. */
   voiceReply: VoiceReplyTarget | null;
   openVoiceReply: (target: VoiceReplyTarget) => void;
@@ -29,8 +34,19 @@ export const useSpokenAlertsStore = create<SpokenAlertsStore>((set) => ({
   dispatch: (event) =>
     set((state) => {
       const next = reduceSpokenAlerts({ entries: state.entries }, event);
-      return next.entries === state.entries ? state : { entries: next.entries };
+      const clearsCard = event.type === "dismissed" && state.notificationKey === event.key;
+      if (next.entries === state.entries && !clearsCard) return state;
+      return {
+        entries: next.entries,
+        ...(clearsCard ? { notificationKey: null } : {}),
+      };
     }),
+  notificationKey: null,
+  showNotification: (key) => set({ notificationKey: key }),
+  dismissNotification: (key) =>
+    set((state) =>
+      key === undefined || state.notificationKey === key ? { notificationKey: null } : state,
+    ),
   voiceReply: null,
   openVoiceReply: (target) => set({ voiceReply: target }),
   closeVoiceReply: () => set({ voiceReply: null }),
@@ -44,4 +60,14 @@ export function selectSpokenAlertEntry(
   agentId: string,
 ): SpokenAlertEntry | null {
   return state.entries[alertKey(serverId, agentId)] ?? null;
+}
+
+/** The alert the audio output is busy with, if any; drives the floating stop control. */
+export function selectBusySpokenAlertEntry(state: SpokenAlertsState): SpokenAlertEntry | null {
+  for (const entry of Object.values(state.entries)) {
+    if (entry.playback.status === "playing" || entry.playback.status === "loading") {
+      return entry;
+    }
+  }
+  return null;
 }

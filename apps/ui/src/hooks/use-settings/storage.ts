@@ -94,7 +94,7 @@ export interface AppSettings {
   /** Desktop-only preferences for implicit opens into the ordinary side pane. */
   openInSidePane: OpenInSidePanePreferences;
   pullRequestOpenLocation: PullRequestOpenLocation;
-  /** Play a spoken agent alert as soon as it arrives while the app is in the foreground. */
+  /** Speak an agent alert on arrival while the user is watching that agent. */
   spokenAlertsAutoPlay: boolean;
   /** Show the voice-reply transcript for a moment before sending it. */
   voiceReplyConfirm: boolean;

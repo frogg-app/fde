@@ -9,7 +9,14 @@ import { StyleSheet, useUnistyles, withUnistyles } from "react-native-unistyles"
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { createNameId } from "mnemonic-id";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, Folder, FolderPlus, GitBranch, GitPullRequest } from "lucide-react-native";
+import {
+  ChevronDown,
+  Folder,
+  FolderPlus,
+  GitBranch,
+  GitBranchPlus,
+  GitPullRequest,
+} from "lucide-react-native";
 import { Composer } from "@/composer";
 import { FileDropZone } from "@/components/file-drop/file-drop-zone";
 import {
@@ -219,17 +226,24 @@ function RefPickerBadgeContent({
   iconColor: string;
   iconSize: number;
 }) {
+  const { t } = useTranslation();
+  const isPullRequest = selectedItem?.kind === "github-pr";
+  // "from main" rather than a bare "main": the isolation row above is also a branch
+  // control, and without the preposition the two read as two branch choices.
+  const label = isPullRequest
+    ? triggerLabel
+    : t("newWorkspace.refPicker.fromRef", { ref: triggerLabel });
   return (
     <>
       <View style={styles.badgeIconBox}>
-        {selectedItem?.kind === "github-pr" ? (
+        {isPullRequest ? (
           <GitPullRequest size={iconSize} color={iconColor} />
         ) : (
           <GitBranch size={iconSize} color={iconColor} />
         )}
       </View>
       <Text style={styles.badgeText} numberOfLines={1}>
-        {triggerLabel}
+        {label}
       </Text>
     </>
   );
@@ -432,7 +446,7 @@ function IsolationOptionItem({
     () => (
       <View style={styles.rowIconBox}>
         {optionId === "worktree" ? (
-          <GitBranch size={iconSize} color={iconColor} />
+          <GitBranchPlus size={iconSize} color={iconColor} />
         ) : (
           <Folder size={iconSize} color={iconColor} />
         )}
@@ -656,7 +670,7 @@ function IsolationPickerTrigger({
         >
           <View style={styles.badgeIconBox}>
             {isolation === "worktree" ? (
-              <GitBranch size={iconSize} color={iconColor} />
+              <GitBranchPlus size={iconSize} color={iconColor} />
             ) : (
               <Folder size={iconSize} color={iconColor} />
             )}

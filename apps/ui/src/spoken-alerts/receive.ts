@@ -30,6 +30,7 @@ export function receiveSpokenAlert(params: {
     agentId: params.agentId,
     workspaceId: notification.data.workspaceId ?? null,
     reason: params.reason,
+    title: notification.title || null,
     spokenText: notification.spokenText,
     receivedAt: Number.isFinite(receivedAt) ? receivedAt : Date.now(),
   });
@@ -64,6 +65,7 @@ export function receiveSpokenAlertFromNotificationData(
     agentId: target.agentId,
     workspaceId: target.workspaceId,
     reason: readReason(data),
+    title: readString(data, "title"),
     spokenText,
     receivedAt: Date.now(),
   });

@@ -1246,6 +1246,7 @@ export const es: TranslationResources = {
       noMatchingRefs: "No hay árbitros coincidentes.",
       searchPlaceholder: "Buscar sucursales y relaciones públicas",
       title: "Empezar desde",
+      fromRef: "desde {{ref}}",
     },
     launch: {
       title: "What to launch",
@@ -1875,8 +1876,10 @@ export const es: TranslationResources = {
       replyByVoice: "Responder por voz",
       dismiss: "Descartar alerta",
     },
-    toast: {
+    notification: {
       play: "Reproducir",
+      stop: "Detener la reproducción",
+      open: "Abrir el espacio de trabajo",
     },
     errors: {
       unavailable: "La reproducción de audio no está disponible aquí.",
@@ -2164,7 +2167,7 @@ export const es: TranslationResources = {
       autoPlay: {
         label: "Reproducir alertas habladas automáticamente",
         description:
-          "Lee en voz alta las alertas de los agentes al llegar mientras un FDE está en primer plano.",
+          "Lee en voz alta la alerta de un agente al llegar, pero solo mientras estás viendo ese agente. En cualquier otro sitio espera tras el botón de reproducción de la notificación.",
       },
       replyConfirm: {
         label: "Confirmar respuestas de voz",

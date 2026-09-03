@@ -1219,6 +1219,7 @@ export const ko: TranslationResources = {
       noMatchingRefs: "일치하는 ref가 없습니다.",
       searchPlaceholder: "브랜치와 PR 검색",
       title: "시작 위치",
+      fromRef: "{{ref}}에서",
     },
     launch: {
       title: "What to launch",
@@ -1839,8 +1840,10 @@ export const ko: TranslationResources = {
       replyByVoice: "음성으로 답장",
       dismiss: "알림 닫기",
     },
-    toast: {
+    notification: {
       play: "재생",
+      stop: "재생 중지",
+      open: "워크스페이스 열기",
     },
     errors: {
       unavailable: "여기서는 오디오를 재생할 수 없습니다.",
@@ -2127,7 +2130,8 @@ export const ko: TranslationResources = {
       title: "음성 알림",
       autoPlay: {
         label: "음성 알림 자동 재생",
-        description: "FDE가 앞에 있을 때 에이전트 알림이 도착하면 바로 읽어 줍니다.",
+        description:
+          "해당 에이전트를 보고 있을 때만 알림이 도착하는 즉시 읽어 줍니다. 그 밖에는 알림의 재생 버튼을 누를 때까지 기다립니다.",
       },
       replyConfirm: {
         label: "음성 답장 확인",

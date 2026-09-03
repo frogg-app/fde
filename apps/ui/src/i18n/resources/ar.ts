@@ -1211,6 +1211,7 @@ export const ar: TranslationResources = {
       noMatchingRefs: "لا توجد مراجع مطابقة.",
       searchPlaceholder: "بحث الفروع والعلاقات العامة",
       title: "ابدأ من",
+      fromRef: "من {{ref}}",
     },
     launch: {
       title: "What to launch",
@@ -1825,8 +1826,10 @@ export const ar: TranslationResources = {
       replyByVoice: "الرد بالصوت",
       dismiss: "تجاهل التنبيه",
     },
-    toast: {
+    notification: {
       play: "تشغيل",
+      stop: "إيقاف التشغيل",
+      open: "فتح مساحة العمل",
     },
     errors: {
       unavailable: "تشغيل الصوت غير متاح هنا.",
@@ -2112,7 +2115,8 @@ export const ar: TranslationResources = {
       title: "التنبيهات الصوتية",
       autoPlay: {
         label: "تشغيل التنبيهات المنطوقة تلقائيًا",
-        description: "قراءة تنبيهات الوكلاء فور وصولها عندما يكون أحد تطبيقات FDE في المقدمة.",
+        description:
+          "قراءة تنبيه الوكيل فور وصوله، ولكن فقط أثناء متابعتك لهذا الوكيل. في غير ذلك ينتظر خلف زر التشغيل في الإشعار.",
       },
       replyConfirm: {
         label: "تأكيد الردود الصوتية",
