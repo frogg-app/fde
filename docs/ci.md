@@ -47,9 +47,10 @@ meta ──┬── ui ── desktop (linux x86_64, windows x86_64, macos aarc
   and does nothing.
 - **android** runs `scripts/release/build-android-apk.mjs --abi arm64-v8a` on
   `ubuntu-latest` (Temurin 21, the runner's Android SDK with licenses accepted by
-  `android-actions/setup-android`, Gradle cache) and uploads the APK. With the
-  `FDE_ANDROID_KEYSTORE_*` secrets the APK is release-signed; without them it is
-  debug-signed and named `-unsigned`. See [android.md](android.md).
+  `android-actions/setup-android`, Gradle cache) and uploads the APK. The
+  `FDE_ANDROID_KEYSTORE_*` secrets are mandatory here: the job fails before the build
+  when they are missing, because a debug-signed APK cannot update a release-signed
+  install. See [android.md](android.md).
 - **updater-manifest** runs only when `TAURI_SIGNING_PRIVATE_KEY` is set: it collects the
   `.sig` files from all desktop jobs and uploads `latest.json`, which
   `plugins.updater.endpoints` in `tauri.conf.json` points at.
@@ -64,20 +65,28 @@ meta ──┬── ui ── desktop (linux x86_64, windows x86_64, macos aarc
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | `FDE-<ver>-amd64.deb`                       | Tauri deb (Linux x86_64)                                                                          |
 | `FDE-<ver>-x86_64.AppImage`                 | Tauri AppImage                                                                                    |
-| `FDE-<ver>-x64-setup.exe`                   | Tauri NSIS installer (per-user, unsigned)                                                         |
-| `FDE-<ver>-x64-portable.zip`                | Bare `fde.exe` from the Windows build                                                             |
-| `FDE-<ver>-x64-portable.zip`                | `scripts/release/package-portable-win.mjs` (exe + README)                                         |
+| `FDE-<ver>-x64-setup.zip`                   | Tauri NSIS installer (per-user, unsigned), zipped by `scripts/release/package-windows-zips.mjs`   |
+| `FDE-<ver>-x64-portable.zip`                | `scripts/release/package-windows-zips.mjs` (`fde.exe` + README)                                   |
 | `FDE-<ver>-aarch64.dmg`, `-x86_64.dmg`      | Tauri DMG per architecture                                                                        |
 | `FDE-<ver>-<arch>.app.tar.gz` + `.sig`      | macOS updater bundle, only with a signing key                                                     |
-| `*.sig`                                     | minisign signatures next to AppImage/NSIS, only with the key                                      |
+| `*.sig`                                     | minisign signatures next to the AppImage/installer zip, only with the key                         |
 | `latest.json`                               | Updater manifest, only with the key                                                               |
 | `fde-daemon-<ver>-<platform>-<arch>.tar.gz` | Daemon bundle + `.sha256`, read by `deploy/install.sh` and the desktop app's local daemon install |
 | `fde-daemon-<ver>-win-<arch>.zip`           | Windows daemon bundle + `.sha256`, read by the desktop app's local daemon install                 |
-| `FDE-<ver>-android-arm64-v8a.apk`           | Android APK (`-unsigned.apk` when no release keystore secret is configured)                       |
+| `FDE-<ver>-android-arm64-v8a.apk`           | Android APK, always release-signed (the job fails without the keystore secrets)                   |
 
 Tauri itself names bundles `FDE_<ver>_amd64.AppImage`, `FDE_<ver>_x64-setup.exe` and so
 on; the rename step is the only place that mapping lives, so change
 `collect-desktop-bundles.mjs` (and this table) together.
+
+Nothing Windows is published as a raw `.exe`: GitHub rejects those uploads, and Windows
+blocks bare downloaded executables. Both Windows assets are therefore zips, written by
+`scripts/release/package-windows-zips.mjs` before the rename step. Because the updater
+verifies the bytes it downloads, the installer zip — not the `.exe` the bundler signed — is
+what gets a minisign `.sig`: the workflow re-signs it with `tauri signer sign` when
+`TAURI_SIGNING_PRIVATE_KEY` is set. `tauri-plugin-updater` unpacks a zipped NSIS installer
+itself, and the GitHub-release path in `apps/desktop/src-tauri/src/updates/install.rs`
+extracts it before running it.
 
 ### Never overwrite a published asset
 
@@ -90,19 +99,20 @@ rule applies to the Docker exact-version tag.
 
 ## Secrets
 
-Add these under Settings > Secrets and variables > Actions. Everything works without them;
-the related steps are skipped.
+Add these under Settings > Secrets and variables > Actions. Most are optional and the
+related steps are skipped without them; the `FDE_ANDROID_KEYSTORE_*` pair is required and
+the android job of a release fails without it.
 
-| Secret                               | Used by          | Purpose                                                                                                                                                               |
-| ------------------------------------ | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TAURI_SIGNING_PRIVATE_KEY`          | desktop, updater | minisign private key for `tauri-plugin-updater` artifacts (`cargo tauri signer generate`). Its public key must replace the placeholder `pubkey` in `tauri.conf.json`. |
-| `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | desktop          | Password of that key (empty string if the key has none).                                                                                                              |
-| `DOCKERHUB_USERNAME`                 | docker           | Docker Hub account with push rights on `froggapp/fde`.                                                                                                                |
-| `DOCKERHUB_TOKEN`                    | docker           | Access token for that account.                                                                                                                                        |
-| `FDE_ANDROID_KEYSTORE_BASE64`        | android          | `base64 -w0` of the release keystore (`keytool -genkeypair`, see docs/android.md). Without it the APK is debug-signed and named `-unsigned`.                          |
-| `FDE_ANDROID_KEYSTORE_PASSWORD`      | android          | Store password. Required together with the keystore.                                                                                                                  |
-| `FDE_ANDROID_KEY_ALIAS`              | android          | Key alias (defaults to `fde`).                                                                                                                                        |
-| `FDE_ANDROID_KEY_PASSWORD`           | android          | Key password (defaults to the store password).                                                                                                                        |
+| Secret                               | Used by          | Purpose                                                                                                                                                                 |
+| ------------------------------------ | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TAURI_SIGNING_PRIVATE_KEY`          | desktop, updater | minisign private key for `tauri-plugin-updater` artifacts (`cargo tauri signer generate`). Its public key must replace the placeholder `pubkey` in `tauri.conf.json`.   |
+| `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | desktop          | Password of that key (empty string if the key has none).                                                                                                                |
+| `DOCKERHUB_USERNAME`                 | docker           | Docker Hub account with push rights on `froggapp/fde`.                                                                                                                  |
+| `DOCKERHUB_TOKEN`                    | docker           | Access token for that account.                                                                                                                                          |
+| `FDE_ANDROID_KEYSTORE_BASE64`        | android          | `base64 -w0` of the release keystore (`keytool -genkeypair`, see docs/android.md). Required: without it the release job fails instead of publishing a debug-signed APK. |
+| `FDE_ANDROID_KEYSTORE_PASSWORD`      | android          | Store password. Required together with the keystore.                                                                                                                    |
+| `FDE_ANDROID_KEY_ALIAS`              | android          | Key alias (defaults to `fde`).                                                                                                                                          |
+| `FDE_ANDROID_KEY_PASSWORD`           | android          | Key password (defaults to the store password).                                                                                                                          |
 
 Later, for code signing (roadmap): `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`,
 `APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID` for a Developer ID

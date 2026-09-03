@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { test } from "node:test";
@@ -9,7 +9,8 @@ import {
   createZip,
   listZip,
   packagePortableWindows,
-} from "./package-portable-win.mjs";
+  packageWindowsInstallerZip,
+} from "./package-windows-zips.mjs";
 
 test("createZip writes entries that inflate back to their contents", () => {
   const zip = createZip([
@@ -59,5 +60,38 @@ test("packagePortableWindows fails clearly without a binary", () => {
         outputDir: tmpdir(),
       }),
     /Windows binary not found/,
+  );
+});
+
+test("packageWindowsInstallerZip wraps the NSIS installer under its release name", () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "fde-setup-"));
+  const nsisDir = path.join(dir, "bundle/nsis");
+  mkdirSync(nsisDir, { recursive: true });
+  writeFileSync(path.join(nsisDir, "FDE_1.2.3_x64-setup.exe"), Buffer.alloc(2048, 9));
+  const result = packageWindowsInstallerZip({
+    version: "1.2.3",
+    nsisDir,
+    outputDir: path.join(dir, "out"),
+  });
+  assert.equal(path.basename(result.zipPath), "FDE-1.2.3-x64-setup.zip");
+  assert.equal(result.installerByteSize, 2048);
+  assert.deepEqual(listZip(readFileSync(result.zipPath)), [
+    { name: "FDE-1.2.3-x64-setup.exe", size: 2048 },
+  ]);
+});
+
+test("packageWindowsInstallerZip fails clearly on no or several installers", () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "fde-setup-"));
+  const nsisDir = path.join(dir, "bundle/nsis");
+  assert.throws(
+    () => packageWindowsInstallerZip({ version: "1.2.3", nsisDir, outputDir: dir }),
+    /No NSIS installer found/,
+  );
+  mkdirSync(nsisDir, { recursive: true });
+  writeFileSync(path.join(nsisDir, "FDE_1.2.3_x64-setup.exe"), "a");
+  writeFileSync(path.join(nsisDir, "FDE_1.2.4_x64-setup.exe"), "b");
+  assert.throws(
+    () => packageWindowsInstallerZip({ version: "1.2.3", nsisDir, outputDir: dir }),
+    /Several NSIS installers/,
   );
 });

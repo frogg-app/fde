@@ -3,7 +3,7 @@
 //!
 //! | kind              | asset                          |
 //! | ----------------- | ------------------------------ |
-//! | Windows installer | `FDE-<v>-x64-setup.exe`        |
+//! | Windows installer | `FDE-<v>-x64-setup.zip`        |
 //! | Windows portable  | `FDE-<v>-x64-portable.zip`     |
 //! | Linux AppImage    | `FDE-<v>-x86_64.AppImage`      |
 //! | Linux deb         | `FDE-<v>-amd64.deb`            |
@@ -35,7 +35,8 @@ impl AssetKind {
     /// Release asset name for `version` on `arch` (`aarch64` or `x86_64`).
     pub fn asset_name(self, version: &str, arch: &str) -> String {
         match self {
-            AssetKind::WindowsInstaller => format!("FDE-{version}-x64-setup.exe"),
+            // Both Windows assets are zips: GitHub rejects raw .exe release assets.
+            AssetKind::WindowsInstaller => format!("FDE-{version}-x64-setup.zip"),
             AssetKind::WindowsPortable => format!("FDE-{version}-x64-portable.zip"),
             AssetKind::LinuxAppImage => format!("FDE-{version}-x86_64.AppImage"),
             AssetKind::LinuxDeb => format!("FDE-{version}-amd64.deb"),
@@ -157,7 +158,7 @@ mod tests {
     fn names_assets_like_the_release_workflow() {
         assert_eq!(
             AssetKind::WindowsInstaller.asset_name("0.2.0", "x86_64"),
-            "FDE-0.2.0-x64-setup.exe"
+            "FDE-0.2.0-x64-setup.zip"
         );
         assert_eq!(
             AssetKind::WindowsPortable.asset_name("0.2.0", "x86_64"),

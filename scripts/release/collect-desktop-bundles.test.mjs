@@ -24,20 +24,22 @@ test("linux: deb and AppImage get dashed names, signatures follow", () => {
   ]);
 });
 
-test("windows: installer, bare exe and portable zip", () => {
+test("windows: installer zip with its signature, and the portable zip", () => {
   const renames = planBundleRenames({
     platform: "windows",
     arch: "x86_64",
     version: "0.1.5",
     files: [
       "bundle/nsis/FDE_0.1.5_x64-setup.exe",
+      "bundle/nsis-zip/FDE-0.1.5-x64-setup.zip",
+      "bundle/nsis-zip/FDE-0.1.5-x64-setup.zip.sig",
       "fde.exe",
       "bundle/portable/FDE-0.1.5-x64-portable.zip",
     ],
   });
   assert.deepEqual(
     renames.map((entry) => entry.to),
-    ["FDE-0.1.5-x64-setup.exe", "FDE-0.1.5-x64-portable.zip"],
+    ["FDE-0.1.5-x64-setup.zip", "FDE-0.1.5-x64-setup.zip.sig", "FDE-0.1.5-x64-portable.zip"],
   );
 });
 

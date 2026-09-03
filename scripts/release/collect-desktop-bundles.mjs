@@ -3,7 +3,7 @@
 // flat directory with the release asset names documented in docs/ci.md:
 //
 //   FDE-<version>-amd64.deb            FDE-<version>-x86_64.AppImage
-//   FDE-<version>-x64-setup.exe        FDE-<version>-x64-portable.zip
+//   FDE-<version>-x64-setup.zip        FDE-<version>-x64-portable.zip
 //   FDE-<version>-aarch64.dmg          FDE-<version>-x86_64.dmg
 //   FDE-<version>-<arch>.app.tar.gz    (macOS updater bundle)
 //
@@ -36,8 +36,11 @@ const BUNDLE_RULES = {
     { dir: "bundle/deb", extension: ".deb", name: (v) => `FDE-${v}-amd64.deb` },
     { dir: "bundle/appimage", extension: ".AppImage", name: (v) => `FDE-${v}-x86_64.AppImage` },
   ],
+  // Windows ships zipped: GitHub rejects raw .exe release assets (and Windows
+  // itself blocks bare downloaded exes). scripts/release/package-windows-zips.mjs
+  // writes both zips before this runs.
   windows: [
-    { dir: "bundle/nsis", extension: "-setup.exe", name: (v) => `FDE-${v}-x64-setup.exe` },
+    { dir: "bundle/nsis-zip", extension: "-setup.zip", name: (v) => `FDE-${v}-x64-setup.zip` },
     { dir: "bundle/portable", extension: ".zip", name: (v) => `FDE-${v}-x64-portable.zip` },
   ],
   macos: [
@@ -50,8 +53,8 @@ const BUNDLE_RULES = {
   ],
 };
 
-/** `.sig` files ride along with the bundle they sign; the portable exe is never signed. */
-const SIGNED_EXTENSIONS = [".AppImage", "-setup.exe", ".app.tar.gz"];
+/** `.sig` files ride along with the bundle they sign; the portable zip is never signed. */
+const SIGNED_EXTENSIONS = [".AppImage", "-setup.zip", ".app.tar.gz"];
 
 /**
  * Pure planning step: `files` lists paths relative to the release dir (as `/`-joined

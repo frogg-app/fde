@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.18
+
+- Windows releases ship only as zips: the NSIS installer is published as `FDE-<ver>-x64-setup.zip` next to `FDE-<ver>-x64-portable.zip`. GitHub rejects raw `.exe` release assets, so the installer upload used to fail. Both updaters unpack the zip before running the installer, and the updater signature now covers the zip.
+- Android: the app now says when there is a newer release. On start and every six hours it checks the GitHub releases and shows an "Update available" callout; "What's new" opens the release page and "Download update" opens the APK built for the device, which Android's package installer takes over. Nothing is installed from inside the app, so no extra permissions. Prereleases and debug-signed `-unsigned` APKs are never offered. See [docs/android.md](docs/android.md) "In-app update prompt".
+- Sidebar callouts render on native, not only on the web/desktop build.
+- ROADMAP has a "Mobile clients" section: ABI-aware asset pick, in-app APK install, a mobile Updates settings section, release channels, the OTA decision, and the signing-migration notice for the debug-signed installs listed in docs/android.md "Signing".
+
 ## 0.1.17
 
 - `install.sh` resolves the newest release even when every release is flagged as a pre-release: `/releases/latest` redirects to the releases index in that case, and the old resolver parsed the word `releases` as a version, so `curl -fsSL https://frogg.app/install.sh | bash` tried to download `fde-daemon-releases-<platform>.tar.gz`. It now validates what it parsed and falls back to the GitHub releases API.
