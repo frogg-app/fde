@@ -15,6 +15,16 @@ describe("formatPairingInstructions", () => {
     );
   });
 
+  it("prints the app deep link on its own line when given", () => {
+    const deepLink = "paseo://pair#offer=pairing-offer";
+    const output = formatPairingInstructions({ qr: QR, url: URL, columns: 7, deepLink });
+
+    expect(output.split("\n")).toContain(URL);
+    expect(output.split("\n")).toContain(deepLink);
+    expect(output).toContain("FDE desktop app opens the link above directly");
+    expect(formatPairingInstructions({ qr: QR, url: URL, columns: 7 })).not.toContain("paseo://");
+  });
+
   it("does not print a QR that would reach the terminal edge", () => {
     const output = formatPairingInstructions({ qr: QR, url: URL, columns: 6 });
 

@@ -12,6 +12,7 @@ import { daemonHttpJson, resolveLoopbackHttpBase } from "./daemon-http.js";
 import { resolveLocalDaemonState } from "./local-daemon.js";
 import { addJsonOption } from "../../utils/command-options.js";
 import { formatPairingInstructions } from "../../output/pairing.js";
+import { buildPairingDeepLink } from "@fde/protocol/connection-offer";
 
 interface PairOptions {
   home?: string;
@@ -265,6 +266,7 @@ function outputPairingResult(
     return;
   }
 
+  const deepLink = buildPairingDeepLink(pairing.url);
   if (options.json) {
     output.writeStdout(
       `${JSON.stringify(
@@ -272,6 +274,7 @@ function outputPairingResult(
           relayEnabled: pairing.relayEnabled,
           mode: pairing.mode ?? (pairing.relayEnabled ? "relay" : "direct"),
           url: pairing.url,
+          deepLink,
           qr: pairing.qr,
           ...(pairing.expiresAt ? { expiresAt: pairing.expiresAt } : {}),
           ...(pairing.endpoints ? { endpoints: pairing.endpoints } : {}),
@@ -288,11 +291,12 @@ function outputPairingResult(
       url: pairing.url,
       qr: pairing.qr,
       columns: output.columns,
+      deepLink,
     }),
   );
   if (pairing.mode === "direct") {
     output.writeStdout(
-      `${chalk.dim(`Direct LAN pairing: single-use, expires ${pairing.expiresAt ?? "soon"}. Reachable at ${(pairing.endpoints ?? []).join(", ")}.`)}\n`,
+      `${chalk.dim(`Direct LAN pairing: this daemon has not been claimed yet; the first device to pair becomes its owner. Single-use, expires ${pairing.expiresAt ?? "soon"}. Reachable at ${(pairing.endpoints ?? []).join(", ")}.`)}\n`,
     );
   }
 }

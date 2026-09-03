@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { z } from "zod";
+import { DEFAULT_PAIRING_BASE_URL } from "@fde/protocol/connection-offer";
 
 import {
   AgentProviderRuntimeSettingsMapSchema,
@@ -358,7 +359,7 @@ const DEFAULT_PERSISTED_CONFIG = PersistedConfigSchema.parse({
     },
   },
   app: {
-    baseUrl: "https://app.paseo.sh",
+    baseUrl: DEFAULT_PAIRING_BASE_URL,
   },
 }) as PersistedConfig;
 

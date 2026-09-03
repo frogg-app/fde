@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { resolvePaseoNodeEnv } from "./paseo-env.js";
 import { z } from "zod";
+import { DEFAULT_PAIRING_BASE_URL } from "@fde/protocol/connection-offer";
 import { expandTilde } from "../utils/path.js";
 
 import type { PaseoDaemonConfig } from "./bootstrap.js";
@@ -27,7 +28,7 @@ import { resolveGitProcessPolicy } from "../utils/git-process-scheduler.js";
 
 const DEFAULT_PORT = 9999;
 const DEFAULT_RELAY_ENDPOINT = "relay.paseo.sh:443";
-const DEFAULT_APP_BASE_URL = "https://app.paseo.sh";
+const DEFAULT_APP_BASE_URL = DEFAULT_PAIRING_BASE_URL;
 const DEFAULT_TRUSTED_PROXIES = ["loopback"];
 
 interface ResolveBundledWebUiDistDirInput {

@@ -1,6 +1,7 @@
 import os from "node:os";
 
 import {
+  buildOfferFragmentUrl,
   ConnectionOfferV2Schema,
   type ConnectionOffer,
   type ConnectionOfferV3,
@@ -50,7 +51,7 @@ export function encodeOfferToFragmentUrl(args: {
 }): string {
   const json = JSON.stringify(args.offer);
   const encoded = Buffer.from(json, "utf8").toString("base64url");
-  return `${args.appBaseUrl.replace(/\/$/, "")}/#offer=${encoded}`;
+  return buildOfferFragmentUrl(args.appBaseUrl, encoded);
 }
 
 function getPrimaryLanIp(): string | null {
