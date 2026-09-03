@@ -67,6 +67,7 @@ describe("server config", () => {
         PASEO_PASSWORD: "secret",
         PASEO_RELAY_ENDPOINT: "relay.example.test:443",
         PASEO_TRUSTED_PROXIES: "true",
+        PASEO_TRUST_LAN: "0",
         PASEO_WEB_UI_ENABLED: "true",
         PASEO_LOG_FILE_PATH: "custom.log",
         PASEO_VOICE_LLM_PROVIDER: "codex",
@@ -76,6 +77,7 @@ describe("server config", () => {
 
     expect(config.configReload?.overrideControlledPaths).toEqual([
       "daemon.auth.password",
+      "daemon.auth.trustLan",
       "daemon.listen",
       "daemon.relay.endpoint",
       "daemon.relay.useTls",
@@ -84,10 +86,31 @@ describe("server config", () => {
       "features.webUi.enabled",
       "log.file.path",
     ]);
+    expect(config.trustLan).toBe(false);
     expect(config.listen).toBe("127.0.0.1:7000");
     expect(config.trustedProxies).toBe(true);
     expect(config.log?.file?.path).toBe("custom.log");
     expect(config.voiceLlmProvider).toBe("codex");
+  });
+
+  test("trusts the LAN by default, honors daemon.auth.trustLan, and lets PASEO_TRUST_LAN win", async () => {
+    const paseoHome = await mkdtemp(path.join(os.tmpdir(), "paseo-config-trust-lan-"));
+    roots.push(paseoHome);
+
+    expect(loadConfig(paseoHome, { env: {} }).trustLan).toBe(true);
+
+    await writeFile(
+      path.join(paseoHome, "config.json"),
+      JSON.stringify({ version: 1, daemon: { auth: { trustLan: false } } }),
+    );
+    expect(loadConfig(paseoHome, { env: {} }).trustLan).toBe(false);
+    expect(loadConfig(paseoHome, { env: { PASEO_TRUST_LAN: "1" } }).trustLan).toBe(true);
+    expect(loadConfig(paseoHome, { env: { PASEO_TRUST_LAN: "off" } }).trustLan).toBe(false);
+    expect(
+      loadConfig(paseoHome, { env: { PASEO_TRUST_LAN: "1" } }).configReload
+        ?.overrideControlledPaths,
+    ).toEqual(["daemon.auth.trustLan"]);
+    expect(loadConfig(paseoHome, { env: {} }).configReload?.overrideControlledPaths).toEqual([]);
   });
 
   test.each([

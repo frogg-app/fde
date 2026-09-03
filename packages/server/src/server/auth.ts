@@ -3,7 +3,7 @@ import { timingSafeEqual } from "node:crypto";
 import type { IncomingMessage } from "node:http";
 import type { RequestHandler } from "express";
 
-import { isAuthRequired, type DaemonAccessPolicy } from "./access-policy.js";
+import { DEFAULT_TRUST_LAN, isAuthRequired, type DaemonAccessPolicy } from "./access-policy.js";
 import { hashCredential } from "./claim-store.js";
 
 export const DAEMON_PASSWORD_BCRYPT_COST = 12;
@@ -11,8 +11,9 @@ export const DAEMON_PASSWORD_BCRYPT_COST = 12;
 export interface DaemonAuthConfig {
   password?: string;
   /**
-   * Paired-device credentials and loopback detection, attached by bootstrap.
-   * Without it only the password gates access (the pre-pairing behavior).
+   * Paired-device credentials and client locality (loopback / trusted LAN /
+   * public), attached by bootstrap. Without it only the password gates access
+   * (the pre-pairing behavior).
    */
   access?: DaemonAccessPolicy;
 }
@@ -126,7 +127,8 @@ export function requestNeedsBearer(auth: DaemonAuthConfig | undefined, req: Requ
   return isAuthRequired({
     password: auth?.password,
     claimed: auth?.access?.isClaimed() ?? false,
-    loopback: auth?.access ? auth.access.isLoopbackClient(req) : true,
+    client: auth?.access ? auth.access.clientLocality(req) : "loopback",
+    trustLan: auth?.access?.trustLan() ?? DEFAULT_TRUST_LAN,
   });
 }
 

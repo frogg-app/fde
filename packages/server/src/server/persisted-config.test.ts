@@ -97,6 +97,19 @@ describe("PersistedConfigSchema daemon trusted proxy config", () => {
   });
 });
 
+describe("PersistedConfigSchema daemon auth config", () => {
+  test("accepts the trustLan opt-out next to the password", () => {
+    const parsed = PersistedConfigSchema.parse({
+      daemon: { auth: { trustLan: false } },
+    });
+    expect(parsed.daemon?.auth).toEqual({ trustLan: false });
+    expect(PersistedConfigSchema.parse({ daemon: { auth: {} } }).daemon?.auth?.trustLan).toBe(
+      undefined,
+    );
+    expect(() => PersistedConfigSchema.parse({ daemon: { auth: { trustLan: "no" } } })).toThrow();
+  });
+});
+
 describe("PersistedConfigSchema daemon web UI feature config", () => {
   test("accepts optional web UI enable flag and dist dir", () => {
     const parsed = PersistedConfigSchema.parse({

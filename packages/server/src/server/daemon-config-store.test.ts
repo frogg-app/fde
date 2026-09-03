@@ -31,6 +31,7 @@ function reloadableConfig(
     agentProfiles: daemon.agentProfiles,
     cors: { allowedOrigins: [] },
     trustedProxies: ["loopback"],
+    trustLan: daemon.auth?.trustLan ?? true,
     git: {
       maxProcessesPerSecond: git.maxProcessesPerSecond ?? 64,
       maxProcessConcurrency: git.maxProcessConcurrency ?? 8,
@@ -940,6 +941,32 @@ describe("DaemonConfigStore reload", () => {
     });
     expect(store.get().browserTools.enabled).toBe(true);
     expect(store.get().git).toEqual({ maxProcessesPerSecond: 12, maxProcessConcurrency: 3 });
+  });
+
+  test("applies daemon.auth.trustLan live, in both directions", () => {
+    const { paseoHome, store, persisted } = createReloadableStore();
+    const changes: unknown[] = [];
+    store.onFieldChange("trustLan", (value) => changes.push(value));
+    expect(store.get().trustLan).toBe(true);
+
+    writeConfig(paseoHome, {
+      ...persisted,
+      daemon: { ...persisted.daemon, auth: { trustLan: false } },
+    });
+    expect(store.reload()).toEqual({
+      appliedPaths: ["daemon.auth.trustLan"],
+      restartRequiredPaths: [],
+      overrideControlledPaths: [],
+    });
+    expect(store.get().trustLan).toBe(false);
+
+    writeConfig(paseoHome, {
+      ...persisted,
+      daemon: { ...persisted.daemon, auth: { trustLan: true } },
+    });
+    expect(store.reload().appliedPaths).toEqual(["daemon.auth.trustLan"]);
+    expect(store.get().trustLan).toBe(true);
+    expect(changes).toEqual([false, true]);
   });
 
   test("applies the global plugin switch in both directions", () => {

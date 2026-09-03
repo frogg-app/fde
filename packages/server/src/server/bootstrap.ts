@@ -209,7 +209,7 @@ import {
   type DaemonAuthConfig,
 } from "./auth.js";
 import { createWebUiMiddleware, type WebUiGate } from "./web-ui.js";
-import { createAccessPolicy } from "./access-policy.js";
+import { createAccessPolicy, DEFAULT_TRUST_LAN } from "./access-policy.js";
 import { createClaimStore, type ClaimStore } from "./claim-store.js";
 import { createClaimOfferStore } from "./claim-offer-store.js";
 import {
@@ -410,6 +410,8 @@ export interface PaseoDaemonConfig {
   allowedHosts?: HostnamesConfig;
   hostnames?: HostnamesConfig;
   trustedProxies?: true | string[];
+  /** Treat private-network clients like loopback (docs/permissions.md, "Trusted LAN"). */
+  trustLan?: boolean;
   mcpEnabled?: boolean;
   mcpInjectIntoAgents?: boolean;
   browserToolsEnabled?: boolean;
@@ -558,7 +560,7 @@ function createClaimGate(input: {
   const { auth, claimStore, offerSource } = input;
   return {
     shouldGate: (req) =>
-      !auth.password && !claimStore.isClaimed() && auth.access?.isLoopbackClient(req) === false,
+      !auth.password && !claimStore.isClaimed() && auth.access?.isTrustedClient(req) === false,
     render: async (req) => {
       const requestHost = typeof req.headers.host === "string" ? req.headers.host : undefined;
       const built = buildDirectClaimOffer(offerSource, {
@@ -578,6 +580,19 @@ function createClaimGate(input: {
   };
 }
 
+/**
+ * `trustLan` rides along in the mutable config (the schema passes unknown keys
+ * through) so `fde daemon trust-lan` and `fde daemon reload` apply it live.
+ */
+function readMutableTrustLan(config: MutableDaemonConfig): boolean {
+  const value = (config as Record<string, unknown>).trustLan;
+  return typeof value === "boolean" ? value : DEFAULT_TRUST_LAN;
+}
+
+function configuredTrustLan(config: Pick<PaseoDaemonConfig, "trustLan">): boolean {
+  return config.trustLan ?? DEFAULT_TRUST_LAN;
+}
+
 function resolveExpressTrustProxySetting(config: PaseoDaemonConfig): true | string[] {
   return config.trustedProxies ?? ["loopback"];
 }
@@ -594,6 +609,7 @@ function createInitialMutableDaemonConfig(config: PaseoDaemonConfig): MutableDae
     ...(config.hostnames !== undefined ? { hostnames: config.hostnames } : {}),
     cors: { allowedOrigins: config.corsAllowedOrigins },
     trustedProxies: config.trustedProxies ?? ["loopback"],
+    trustLan: configuredTrustLan(config),
     git: config.git ?? resolveGitProcessPolicy({ env: process.env }),
     app: { baseUrl: config.appBaseUrl ?? DEFAULT_PAIRING_BASE_URL },
     ...(config.providerCatalogRefreshTimeoutMs !== undefined
@@ -678,6 +694,7 @@ export async function createPaseoDaemon(
     access: createAccessPolicy({
       claimStore,
       getTrustedProxies: () => daemonConfigStore.get().trustedProxies ?? ["loopback"],
+      getTrustLan: () => readMutableTrustLan(daemonConfigStore.get()),
     }),
   };
   const managedProcesses = createBootstrapManagedProcessRegistry(config, logger);
@@ -880,6 +897,8 @@ export async function createPaseoDaemon(
       hostname: getHostname,
       listen: () => formatListenTarget(boundListenTarget ?? listenTarget),
       isClaimed: () => claimStore.isClaimed() || Boolean(config.auth?.password),
+      trustLan: () => authConfig.access?.trustLan() ?? DEFAULT_TRUST_LAN,
+      isTrustedClient: (req) => authConfig.access?.isTrustedClient(req) ?? false,
     }),
   );
   mountSetupRoutes(app, {

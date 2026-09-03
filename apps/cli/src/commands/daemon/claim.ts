@@ -1,5 +1,10 @@
 import type { Command } from "commander";
-import { createClaimStore, loadPersistedConfig, type DaemonIdentity } from "@fde/server";
+import {
+  createClaimStore,
+  DEFAULT_TRUST_LAN,
+  loadPersistedConfig,
+  type DaemonIdentity,
+} from "@fde/server";
 
 import type {
   CommandOptions,
@@ -30,7 +35,9 @@ export interface ClaimStatusResult {
   claimed: boolean;
   claimedAt: string | null;
   passwordConfigured: boolean;
-  /** True when a LAN client must pair (or use a password) before it can connect. */
+  /** daemon.auth.trustLan: private-network clients connect without pairing or a password. */
+  lanTrusted: boolean;
+  /** True when a client beyond loopback (beyond the LAN while `lanTrusted`) must pair or use a password. */
   pairingRequired: boolean;
   principals: ClaimPrincipalSummary[];
   daemon:
@@ -44,6 +51,13 @@ export interface ResetClaimResult {
   principalsPath: string;
   removedPrincipals: number;
   message: string;
+}
+
+function describePairingNeeded(data: ClaimStatusResult): string {
+  if (!data.pairingRequired) return "no";
+  return data.lanTrusted
+    ? "yes, for clients beyond the private network"
+    : "yes, for clients beyond loopback";
 }
 
 const claimStatusSchema: OutputSchema<ClaimStatusResult> = {
@@ -60,7 +74,8 @@ const claimStatusSchema: OutputSchema<ClaimStatusResult> = {
     const lines = [
       `Claimed:        ${data.claimed ? `yes (${data.claimedAt ?? "unknown time"})` : "no"}`,
       `Password:       ${data.passwordConfigured ? "configured" : "not configured"}`,
-      `Pairing needed: ${data.pairingRequired ? "yes, for clients beyond loopback" : "no"}`,
+      `LAN trusted:    ${data.lanTrusted ? "yes (fde daemon trust-lan off to require pairing on the LAN)" : "no"}`,
+      `Pairing needed: ${describePairingNeeded(data)}`,
       `Principals:     ${data.principalsPath}`,
       `Daemon:         ${
         data.daemon.reachable
@@ -105,7 +120,9 @@ export async function describeClaimStatus(home?: string): Promise<ClaimStatusRes
   const paseoHome = resolveLocalPaseoHome(home);
   const store = createClaimStore(paseoHome);
   const file = store.read();
-  const passwordConfigured = Boolean(loadPersistedConfig(paseoHome).daemon?.auth?.password);
+  const persistedAuth = loadPersistedConfig(paseoHome).daemon?.auth;
+  const passwordConfigured = Boolean(persistedAuth?.password);
+  const lanTrusted = persistedAuth?.trustLan ?? DEFAULT_TRUST_LAN;
   const claimed = store.isClaimed();
   const state = resolveLocalDaemonState({ home });
   return {
@@ -114,6 +131,7 @@ export async function describeClaimStatus(home?: string): Promise<ClaimStatusRes
     claimed,
     claimedAt: file.claimedAt ?? null,
     passwordConfigured,
+    lanTrusted,
     pairingRequired: !claimed && !passwordConfigured,
     principals: file.principals.map((principal) => ({
       id: principal.id,

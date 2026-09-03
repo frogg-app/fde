@@ -57,9 +57,11 @@ curl -fsSL https://frogg.app/install.sh | bash
 curl -fsSL https://frogg.app/install-docker.sh | bash
 ```
 
-Then pair: open `http://<host>:9999/` from another machine (or run `fde daemon pair`
-on the host) and scan the code from the FDE app. The first device to pair claims the
-daemon; after that every LAN client needs to pair or use a password. Voice
+Then connect: devices on the same private network reach the daemon straight away, no
+pairing or password (`fde daemon set-password` adds a password for everyone,
+`fde daemon trust-lan off` makes the LAN pair too). From anywhere else, open
+`http://<host>:9999/` (or run `fde daemon pair` on the host) and scan the code from the
+FDE app; the first device to pair claims the daemon. Voice
 (dictation and voice mode) is on out of the box; `PASEO_VOICE=0` turns it off.
 
 Both scripts are non-interactive and safe to re-run for upgrades. See

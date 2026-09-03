@@ -20,6 +20,7 @@ import type {
 } from "./agent/provider-launch-config.js";
 import { ProviderOverrideSchema } from "./agent/provider-launch-config.js";
 import { AgentProviderSchema } from "@fde/protocol/provider-manifest";
+import { DEFAULT_TRUST_LAN } from "./access-policy.js";
 import { hashDaemonPassword } from "./auth.js";
 import { resolveSpeechConfig } from "./speech/speech-config-resolver.js";
 import type { RequestedSpeechProviders } from "./speech/speech-types.js";
@@ -443,6 +444,15 @@ function parseTrustedProxiesEnv(value: string | undefined): TrustedProxiesConfig
     .filter((proxy) => proxy.length > 0);
 }
 
+function resolveTrustLanConfig(
+  env: NodeJS.ProcessEnv,
+  persisted: ReturnType<typeof loadPersistedConfig>,
+): boolean {
+  return (
+    parseBooleanEnv(env.PASEO_TRUST_LAN) ?? persisted.daemon?.auth?.trustLan ?? DEFAULT_TRUST_LAN
+  );
+}
+
 function resolveTrustedProxiesConfig(
   env: NodeJS.ProcessEnv,
   persisted: ReturnType<typeof loadPersistedConfig>,
@@ -539,6 +549,7 @@ function resolveStaticLoadConfigSettings(
       cli?.hostnames,
     ]),
     trustedProxies: resolveTrustedProxiesConfig(env, persisted),
+    trustLan: resolveTrustLanConfig(env, persisted),
     appBaseUrl: env.PASEO_APP_BASE_URL ?? persisted.app?.baseUrl ?? DEFAULT_APP_BASE_URL,
   };
 }
@@ -571,6 +582,7 @@ export function resolveConfigFromPersisted(
     agentProfiles,
     hostnames,
     trustedProxies,
+    trustLan,
     appBaseUrl,
   } = resolveStaticLoadConfigSettings(env, cli, persisted);
 
@@ -605,6 +617,7 @@ export function resolveConfigFromPersisted(
     corsAllowedOrigins: resolveCorsAllowedOrigins(env, persisted),
     hostnames,
     trustedProxies,
+    trustLan,
     mcpEnabled,
     mcpInjectIntoAgents,
     browserToolsEnabled,
@@ -706,6 +719,7 @@ function resolveCoreDaemonOverridePaths(
   if (parseTrustedProxiesEnv(env.PASEO_TRUSTED_PROXIES) !== undefined) {
     paths.push("daemon.trustedProxies");
   }
+  if (parseBooleanEnv(env.PASEO_TRUST_LAN) !== undefined) paths.push("daemon.auth.trustLan");
   if (parsePositiveGitOverride(env.PASEO_GIT_MAX_PROCESSES_PER_SECOND)) {
     paths.push("daemon.git.maxProcessesPerSecond");
   }

@@ -1,3 +1,4 @@
+import type { IncomingMessage } from "node:http";
 import type { RequestHandler } from "express";
 
 /**
@@ -14,8 +15,17 @@ export interface DaemonIdentity {
   hostname: string;
   version: string;
   listen: string | null;
+  /**
+   * Whether *this requester* must pair (or use a password) before it can
+   * connect. False for loopback, for the LAN while `lanTrusted`, and for
+   * everyone once the daemon is claimed or has a password.
+   */
   pairingRequired: boolean;
+  /** The daemon's `daemon.auth.trustLan` mode: private-network clients connect without pairing. */
+  lanTrusted: boolean;
 }
+
+type RequestLike = Pick<IncomingMessage, "headers" | "socket">;
 
 export interface IdentityRouteDependencies {
   serverId: string;
@@ -23,25 +33,32 @@ export interface IdentityRouteDependencies {
   hostname: () => string;
   listen: () => string | null;
   isClaimed: () => boolean;
+  trustLan: () => boolean;
+  /** Loopback or trusted-LAN requester (see access-policy.ts). */
+  isTrustedClient: (req: RequestLike) => boolean;
 }
 
-export function describeDaemonIdentity(deps: IdentityRouteDependencies): DaemonIdentity {
+export function describeDaemonIdentity(
+  deps: IdentityRouteDependencies,
+  req: RequestLike,
+): DaemonIdentity {
   return {
     product: IDENTITY_PRODUCT,
     serverId: deps.serverId,
     hostname: deps.hostname(),
     version: deps.version,
     listen: deps.listen(),
-    pairingRequired: !deps.isClaimed(),
+    pairingRequired: !deps.isClaimed() && !deps.isTrustedClient(req),
+    lanTrusted: deps.trustLan(),
   };
 }
 
 export function createIdentityRouteHandler(deps: IdentityRouteDependencies): RequestHandler {
-  return (_req, res) => {
+  return (req, res) => {
     res.setHeader("Cache-Control", "no-store");
     // Public, read-only discovery data: LAN scanners running inside the desktop webview or a
     // browser fetch it cross-origin, so it must not depend on the CORS allowlist.
     res.setHeader("Access-Control-Allow-Origin", "*");
-    res.json(describeDaemonIdentity(deps));
+    res.json(describeDaemonIdentity(deps, req));
   };
 }

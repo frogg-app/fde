@@ -10,6 +10,7 @@ export {
   type PersistedConfig,
 } from "./persisted-config.js";
 export { hashDaemonPassword, isBearerTokenValid } from "./auth.js";
+export { DEFAULT_TRUST_LAN } from "./access-policy.js";
 export { generateLocalPairingOffer, type LocalPairingOffer } from "./pairing-offer.js";
 export {
   createClaimStore,
