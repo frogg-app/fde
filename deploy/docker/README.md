@@ -14,7 +14,7 @@ or:
 docker run -d --name fde-daemon --restart unless-stopped \
   -p 0.0.0.0:9999:9999 \
   -e PASEO_PASSWORD=change-me \
-  -v "$HOME/.fde:/home/fde/.paseo" \
+  -v "$HOME/.fde:/home/fde/.fde" \
   -v "$PWD:/workspace" \
   froggapp/fde:0.1.6
 ```

@@ -126,7 +126,7 @@ export function createCli(): Command {
       .command("status")
       .description('Show local daemon status (alias for "paseo daemon status")'),
   )
-    .option("--home <path>", "FDE home directory (default: ~/.paseo)")
+    .option("--home <path>", "FDE home directory (default: ~/.fde)")
     .action(withOutput(runDaemonStatusCommand));
 
   addJsonAndDaemonHostOptions(
@@ -138,7 +138,7 @@ export function createCli(): Command {
       .command("restart")
       .description('Restart local daemon (alias for "paseo daemon restart")'),
   )
-    .option("--home <path>", "FDE home directory (default: ~/.paseo)")
+    .option("--home <path>", "FDE home directory (default: ~/.fde)")
     .option("--timeout <seconds>", "Wait timeout before force step (default: 15)")
     .option("--force", "Send SIGKILL if graceful stop times out")
     .option(

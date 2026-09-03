@@ -21,7 +21,7 @@
 #   FDE_BUNDLE_FILE   install from a local bundle tarball instead of downloading
 #   FDE_NO_SERVICE=1  skip service installation
 #   FDE_LISTEN        daemon listen address for the service (default: 127.0.0.1:9999)
-#   FDE_HOME          daemon state directory for the service (default: ~/.paseo)
+#   FDE_HOME          daemon state directory for the service (default: ~/.fde)
 set -euo pipefail
 
 FDE_INSTALL_DIR="${FDE_INSTALL_DIR:-${HOME}/.local/share/fde}"
@@ -190,7 +190,7 @@ ExecStart=${FDE_INSTALL_DIR}/current/bin/fde daemon start --foreground
 Environment=PASEO_LISTEN=${FDE_LISTEN}
 Environment=PASEO_WEB_UI_ENABLED=true
 Environment=PATH=${FDE_BIN_DIR}:${PATH}
-${FDE_HOME:+Environment=PASEO_HOME=${FDE_HOME}}
+${FDE_HOME:+Environment=FDE_HOME=${FDE_HOME}}
 Restart=on-failure
 RestartSec=5
 KillMode=mixed
@@ -245,7 +245,7 @@ write_launchd_plist() {
     <key>PASEO_LISTEN</key><string>${FDE_LISTEN}</string>
     <key>PASEO_WEB_UI_ENABLED</key><string>true</string>
     <key>PATH</key><string>${FDE_BIN_DIR}:${PATH}</string>
-${FDE_HOME:+    <key>PASEO_HOME</key><string>${FDE_HOME}</string>}
+${FDE_HOME:+    <key>FDE_HOME</key><string>${FDE_HOME}</string>}
   </dict>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><true/>

@@ -17,6 +17,6 @@ services:
       # PASEO_HOSTNAMES: "fde.example.com,.lan"
     volumes:
       # Persistent daemon state (agents, config, pairing).
-      - ./fde-home:/home/fde/.paseo
+      - ./fde-home:/home/fde/.fde
       # Code visible to the daemon and the agents it launches.
       - ./workspace:/workspace

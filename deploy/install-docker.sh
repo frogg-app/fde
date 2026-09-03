@@ -55,7 +55,7 @@ run_args=(
   --name "${FDE_CONTAINER}"
   --restart unless-stopped
   -p "${FDE_BIND}:${FDE_PORT}:9999"
-  -v "${FDE_HOME}:/home/fde/.paseo"
+  -v "${FDE_HOME}:/home/fde/.fde"
   -e PASEO_LISTEN=0.0.0.0:9999
   -e PASEO_WEB_UI_ENABLED=true
 )

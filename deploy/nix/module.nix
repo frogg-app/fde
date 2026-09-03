@@ -35,13 +35,13 @@ in
       default =
         if cfg.user == "paseo"
         then "/var/lib/paseo"
-        else "/home/${cfg.user}/.paseo";
+        else "/home/${cfg.user}/.fde";
       defaultText = lib.literalExpression ''
         if cfg.user == "paseo"
         then "/var/lib/paseo"
-        else "/home/''${cfg.user}/.paseo"
+        else "/home/''${cfg.user}/.fde"
       '';
-      description = "Directory for Paseo state (PASEO_HOME). Stores agent data, config, and logs.";
+      description = "Directory for FDE state (FDE_HOME). Stores agent data, config, and logs.";
     };
 
     port = lib.mkOption {
@@ -180,7 +180,7 @@ in
         }
       '';
       description = ''
-        Declarative content for `$PASEO_HOME/config.json`. Rendered to JSON
+        Declarative content for `$FDE_HOME/config.json`. Rendered to JSON
         and installed on every service start.
 
         Runtime mutations to `config.json` (e.g. via `paseo daemon set-password`
@@ -230,7 +230,7 @@ in
       '';
 
       environment = {
-        PASEO_HOME = cfg.dataDir;
+        FDE_HOME = cfg.dataDir;
         PASEO_LISTEN = "${cfg.listenAddress}:${toString cfg.port}";
       } // lib.optionalAttrs cfg.inheritUserEnvironment (
         let
