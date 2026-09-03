@@ -42,7 +42,7 @@ Done items move to CHANGELOG.md.
 - [x] **Default daemon port 9999** (server, CLI, installers, Docker, Nix, docs; an explicit
       `6767` in `config.json` keeps working).
 - [x] **`GET /api/identity`**: unauthenticated `{ product, serverId, hostname, version, listen,
-  pairingRequired }` so LAN scanners and the app can list daemons before pairing.
+pairingRequired }` so LAN scanners and the app can list daemons before pairing.
 - [x] **First-run pairing gate.** An unclaimed daemon reached from beyond loopback serves the
       "Claim this FDE daemon" page (QR + link, single-use expiring v3 direct offer) instead of
       the app and answers 401 on API/WS; the first device that pairs mints a principal +
@@ -56,6 +56,13 @@ Done items move to CHANGELOG.md.
       target; dictation/voice mode default on when the runtime is present, models download on
       first use. Umbrella opt-out `PASEO_VOICE=0` / `features.voice.enabled=false`; the
       fine-grained keys still work; onboarding defaults to enabled.
+- [x] **Spoken alerts and voice replies.** The daemon composes a short spoken line for every
+      agent alert (finished, question, permission, error), synthesises it with the local TTS,
+      caches it under `$PASEO_HOME/tts-cache`, and ships `spokenText` + `audioUrl` in the
+      attention payload and the mobile push. The app plays it (auto-play on mobile by default),
+      and "Reply by voice" dictates the next message or the permission decision. Opt out with
+      `PASEO_VOICE_NOTIFICATIONS=0` / `features.voice.notifications.enabled=false`. See
+      docs/voice.md.
 - [x] Desktop app: SSH deploy. "Daemon on this host" card on Remote SSH hosts (and in the
       Add host sheet) probes the host and pipes `deploy/install.sh` / `install-docker.sh` /
       `uninstall.sh` into `ssh … bash -s`, streaming the output; the host downloads the

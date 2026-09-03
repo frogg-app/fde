@@ -13,6 +13,12 @@ that and replaces the ~200 MB Electron runtime with a native Tauri window, so th
 desktop app is a small binary you can install on any Windows, macOS, or Linux
 machine and point at a remote host where the agent CLIs actually live.
 
+On top of that, an FDE reads agent notifications aloud and lets you answer by voice: when an
+agent finishes, asks a question, or needs a permission, the daemon synthesises a short spoken
+alert you can play from the app or from the push notification on your phone, and "Reply by
+voice" dictates the next message or the permission decision. See
+[docs/voice.md](docs/voice.md).
+
 FDE diverged from Paseo at v0.7.2 and is maintained independently. Credit for
 the original work goes to Mohamed Boudra and the Paseo contributors; see
 [NOTICE](NOTICE).
