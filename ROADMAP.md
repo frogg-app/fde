@@ -42,7 +42,7 @@ Done items move to CHANGELOG.md.
 - [x] **Default daemon port 9999** (server, CLI, installers, Docker, Nix, docs; an explicit
       `6767` in `config.json` keeps working).
 - [x] **`GET /api/identity`**: unauthenticated `{ product, serverId, hostname, version, listen,
-    pairingRequired }` so LAN scanners and the app can list daemons before pairing.
+  pairingRequired }` so LAN scanners and the app can list daemons before pairing.
 - [x] **First-run pairing gate.** An unclaimed daemon reached from beyond loopback serves the
       "Claim this FDE daemon" page (QR + link, single-use expiring v3 direct offer) instead of
       the app and answers 401 on API/WS; the first device that pairs mints a principal +
@@ -116,6 +116,11 @@ Blocked on the owner:
   `bundle.windows.signCommand`); create a Trusted Signing account (~$10/month) and add the six
   `AZURE_*`/`TRUSTED_SIGNING_*` secrets listed in that script. Until then users must set Smart App
   Control to Off (Windows Security > App & browser control).
+- **GitHub Actions minutes exhausted (2026-09-03).** September usage on the private repo is
+  ~1,830 Linux + 196 macOS (10x) + 124 Windows (2x) minutes, past the 2,000 included, so every
+  job now fails at startup. Raise the org spending limit or make the repo public (free standard
+  runners). Until then Windows/Linux/daemon bundles/Docker are built on the dev VM; macOS DMGs
+  and the CI Android APK wait.
 - **Code signing certificates** (Windows Authenticode, Apple Developer ID) for SmartScreen/Gatekeeper.
 - **Hosting `frogg.app/install.sh`**: a redirect to
   `https://raw.githubusercontent.com/frogg-app/frogg-de/main/deploy/install.sh` (and
