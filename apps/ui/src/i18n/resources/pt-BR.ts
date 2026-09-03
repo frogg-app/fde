@@ -1616,6 +1616,15 @@ export const ptBR: TranslationResources = {
         description: "Conexão relay criptografada.",
       },
     },
+    networkScan: {
+      title: "Servidores na sua rede",
+      scanning: "Verificando {{scanned}} de {{total}} endereços…",
+      none: "Nenhum servidor FDE encontrado em {{subnets}}.",
+      scanned: "Verificado {{subnets}}.",
+      rescan: "Verificar de novo",
+      connect: "Conectar",
+      connecting: "Conectando…",
+    },
     direct: {
       title: "Conexão direta",
       helper: "Informe o endereço de um servidor FDE.",
@@ -1631,6 +1640,9 @@ export const ptBR: TranslationResources = {
         label: "Avançado",
         show: "Mostrar avançado",
         hide: "Ocultar avançado",
+        helper:
+          "Qualquer forma funciona: host, host:porta, http(s)://host:porta, ws(s)://host:porta ou tcp://host:porta?ssl=true. Um daemon FDE fala HTTP e WebSocket na porta {{port}}.",
+        resolved: "Vai conectar a",
       },
       passwordVisibility: {
         show: "Mostrar senha",

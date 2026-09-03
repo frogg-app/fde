@@ -1634,6 +1634,15 @@ export const fr: TranslationResources = {
         description: "Connexion relais cryptée.",
       },
     },
+    networkScan: {
+      title: "Serveurs sur votre réseau",
+      scanning: "Analyse de {{scanned}} adresses sur {{total}}…",
+      none: "Aucun serveur FDE trouvé sur {{subnets}}.",
+      scanned: "Analysé : {{subnets}}.",
+      rescan: "Analyser à nouveau",
+      connect: "Se connecter",
+      connecting: "Connexion…",
+    },
     direct: {
       title: "Connexion directe",
       helper: "Saisissez l'adresse d'un serveur FDE.",
@@ -1649,6 +1658,9 @@ export const fr: TranslationResources = {
         label: "Avancé",
         show: "Afficher avancé",
         hide: "Masquer avancé",
+        helper:
+          "Toutes les formes fonctionnent : hôte, hôte:port, http(s)://hôte:port, ws(s)://hôte:port ou tcp://hôte:port?ssl=true. Un daemon FDE parle HTTP et WebSocket sur le port {{port}}.",
+        resolved: "Connexion à",
       },
       passwordVisibility: {
         show: "Afficher le mot de passe",

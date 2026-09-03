@@ -1613,6 +1613,15 @@ export const ru: TranslationResources = {
         description: "Зашифрованное подключение через ретранслятор.",
       },
     },
+    networkScan: {
+      title: "Серверы в вашей сети",
+      scanning: "Проверено {{scanned}} из {{total}} адресов…",
+      none: "Серверы FDE не найдены в {{subnets}}.",
+      scanned: "Проверено: {{subnets}}.",
+      rescan: "Сканировать снова",
+      connect: "Подключиться",
+      connecting: "Подключение…",
+    },
     direct: {
       title: "Прямое подключение",
       helper: "Введите адрес сервера FDE.",
@@ -1628,6 +1637,9 @@ export const ru: TranslationResources = {
         label: "Дополнительные параметры",
         show: "Показать дополнительные параметры",
         hide: "Скрыть дополнительные параметры",
+        helper:
+          "Подойдёт любая форма: хост, хост:порт, http(s)://хост:порт, ws(s)://хост:порт или tcp://хост:порт?ssl=true. Демон FDE отвечает по HTTP и WebSocket на порту {{port}}.",
+        resolved: "Подключение к",
       },
       passwordVisibility: {
         show: "Показать пароль",

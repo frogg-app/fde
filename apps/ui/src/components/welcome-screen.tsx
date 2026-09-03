@@ -19,6 +19,7 @@ import { getHostRuntimeStore, isHostRuntimeConnected, useHosts } from "@/runtime
 import { AddHostModal } from "./add-host-modal";
 import { AddRemoteSshHostModal } from "./add-remote-ssh-host-modal";
 import { PairLinkModal } from "./pair-link-modal";
+import { NetworkServersList } from "./network-servers-list";
 import { Button } from "@/components/ui/button";
 import { resolveAppVersion } from "@/utils/app-version";
 import { formatVersionWithPrefix } from "@/desktop/updates/desktop-updates";
@@ -398,6 +399,9 @@ export function WelcomeScreen({ onHostAdded }: WelcomeScreenProps) {
             {mode === "remote"
               ? actions.map((action) => <WelcomeActionButton key={action.key} action={action} />)
               : null}
+            {mode === "remote" ? (
+              <NetworkServersList onConnected={handleHostSaved} testID="welcome-network-servers" />
+            ) : null}
             {mode === "local" ? (
               <View style={styles.localProgress} testID="welcome-local-daemon-progress">
                 {installProgress.status === "installing" ? (

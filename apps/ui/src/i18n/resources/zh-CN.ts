@@ -1568,6 +1568,15 @@ export const zhCN: TranslationResources = {
         description: "加密 relay 连接。",
       },
     },
+    networkScan: {
+      title: "您网络中的服务器",
+      scanning: "正在扫描 {{scanned}}/{{total}} 个地址…",
+      none: "在 {{subnets}} 中未找到 FDE 服务器。",
+      scanned: "已扫描 {{subnets}}。",
+      rescan: "重新扫描",
+      connect: "连接",
+      connecting: "连接中…",
+    },
     direct: {
       title: "直接连接",
       helper: "输入 FDE server 的地址。",
@@ -1583,6 +1592,9 @@ export const zhCN: TranslationResources = {
         label: "高级",
         show: "显示高级选项",
         hide: "隐藏高级选项",
+        helper:
+          "任意形式均可：主机、主机:端口、http(s)://主机:端口、ws(s)://主机:端口 或 tcp://主机:端口?ssl=true。FDE 守护进程在端口 {{port}} 上提供 HTTP 和 WebSocket。",
+        resolved: "将连接到",
       },
       passwordVisibility: {
         show: "显示密码",

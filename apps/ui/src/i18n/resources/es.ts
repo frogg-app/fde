@@ -1630,6 +1630,15 @@ export const es: TranslationResources = {
         description: "Conexión de retransmisión cifrada.",
       },
     },
+    networkScan: {
+      title: "Servidores en tu red",
+      scanning: "Explorando {{scanned}} de {{total}} direcciones…",
+      none: "No se encontraron servidores FDE en {{subnets}}.",
+      scanned: "Explorado {{subnets}}.",
+      rescan: "Explorar de nuevo",
+      connect: "Conectar",
+      connecting: "Conectando…",
+    },
     direct: {
       title: "Conexión directa",
       helper: "Ingrese la dirección de un servidor FDE.",
@@ -1645,6 +1654,9 @@ export const es: TranslationResources = {
         label: "Avanzado",
         show: "Mostrar avanzado",
         hide: "Ocultar avanzado",
+        helper:
+          "Vale cualquier forma: host, host:puerto, http(s)://host:puerto, ws(s)://host:puerto o tcp://host:puerto?ssl=true. Un daemon de FDE habla HTTP y WebSocket en el puerto {{port}}.",
+        resolved: "Se conectará a",
       },
       passwordVisibility: {
         show: "Mostrar contraseña",

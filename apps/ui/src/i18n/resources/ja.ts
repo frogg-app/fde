@@ -1601,6 +1601,15 @@ export const ja: TranslationResources = {
         description: "暗号化されたリレー接続。",
       },
     },
+    networkScan: {
+      title: "ネットワーク上のサーバー",
+      scanning: "{{total}} 件中 {{scanned}} 件のアドレスをスキャン中…",
+      none: "{{subnets}} に FDE サーバーは見つかりませんでした。",
+      scanned: "{{subnets}} をスキャンしました。",
+      rescan: "再スキャン",
+      connect: "接続",
+      connecting: "接続中…",
+    },
     direct: {
       title: "直接接続",
       helper: "FDEサーバーのアドレスを入力してください。",
@@ -1616,6 +1625,9 @@ export const ja: TranslationResources = {
         label: "詳細設定",
         show: "詳細設定を表示",
         hide: "詳細設定を非表示",
+        helper:
+          "どの形式でも入力できます: ホスト、ホスト:ポート、http(s)://ホスト:ポート、ws(s)://ホスト:ポート、tcp://ホスト:ポート?ssl=true。FDE デーモンはポート {{port}} で HTTP と WebSocket を提供します。",
+        resolved: "接続先",
       },
       passwordVisibility: {
         show: "パスワードを表示",

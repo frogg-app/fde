@@ -1584,6 +1584,15 @@ export const ar: TranslationResources = {
         description: "اتصال التتابع المشفر.",
       },
     },
+    networkScan: {
+      title: "الخوادم على شبكتك",
+      scanning: "جارٍ فحص {{scanned}} من {{total}} عنوانًا…",
+      none: "لم يُعثر على خوادم FDE في {{subnets}}.",
+      scanned: "تم فحص {{subnets}}.",
+      rescan: "إعادة الفحص",
+      connect: "اتصال",
+      connecting: "جارٍ الاتصال…",
+    },
     direct: {
       title: "اتصال مباشر",
       helper: "أدخل عنوان خادم FDE.",
@@ -1599,6 +1608,9 @@ export const ar: TranslationResources = {
         label: "متقدم",
         show: "عرض متقدم",
         hide: "إخفاء المتقدمة",
+        helper:
+          "يمكنك استخدام أي صيغة: مضيف، مضيف:منفذ، http(s)://مضيف:منفذ، ws(s)://مضيف:منفذ أو tcp://مضيف:منفذ?ssl=true. يستجيب خادم FDE عبر HTTP وWebSocket على المنفذ {{port}}.",
+        resolved: "سيتم الاتصال بـ",
       },
       passwordVisibility: {
         show: "إظهار كلمة المرور",

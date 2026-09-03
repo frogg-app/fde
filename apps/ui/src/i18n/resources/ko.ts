@@ -1596,6 +1596,15 @@ export const ko: TranslationResources = {
         description: "암호화된 릴레이 연결.",
       },
     },
+    networkScan: {
+      title: "내 네트워크의 서버",
+      scanning: "주소 {{total}}개 중 {{scanned}}개 검색 중…",
+      none: "{{subnets}}에서 FDE 서버를 찾지 못했습니다.",
+      scanned: "{{subnets}} 검색 완료.",
+      rescan: "다시 검색",
+      connect: "연결",
+      connecting: "연결 중…",
+    },
     direct: {
       title: "직접 연결",
       helper: "FDE 서버의 주소를 입력하세요.",
@@ -1611,6 +1620,9 @@ export const ko: TranslationResources = {
         label: "고급",
         show: "고급 표시",
         hide: "고급 숨기기",
+        helper:
+          "어떤 형식이든 사용할 수 있습니다: 호스트, 호스트:포트, http(s)://호스트:포트, ws(s)://호스트:포트 또는 tcp://호스트:포트?ssl=true. FDE 데몬은 포트 {{port}}에서 HTTP와 WebSocket을 제공합니다.",
+        resolved: "연결 대상",
       },
       passwordVisibility: {
         show: "비밀번호 표시",

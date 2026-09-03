@@ -1596,6 +1596,15 @@ export const en = {
         description: "Encrypted relay connection.",
       },
     },
+    networkScan: {
+      title: "Servers on your network",
+      scanning: "Scanning {{scanned}} of {{total}} addresses…",
+      none: "No FDE servers found on {{subnets}}.",
+      scanned: "Scanned {{subnets}}.",
+      rescan: "Scan again",
+      connect: "Connect",
+      connecting: "Connecting…",
+    },
     direct: {
       title: "Direct connection",
       helper: "Enter the address of an FDE server.",
@@ -1611,6 +1620,9 @@ export const en = {
         label: "Advanced",
         show: "Show advanced",
         hide: "Hide advanced",
+        helper:
+          "Any form works: host, host:port, http(s)://host:port, ws(s)://host:port or tcp://host:port?ssl=true. An FDE daemon speaks HTTP and WebSocket on port {{port}}.",
+        resolved: "Will connect to",
       },
       passwordVisibility: {
         show: "Show password",
