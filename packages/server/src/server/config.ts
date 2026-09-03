@@ -801,6 +801,7 @@ function resolveSpeechOverrideControlledPaths(
   };
 
   add("PASEO_VOICE", "features.voice.enabled");
+  add("PASEO_VOICE_NOTIFICATIONS", "features.voice.notifications.enabled");
   add("PASEO_DICTATION_ENABLED", "features.dictation.enabled");
   add("PASEO_DICTATION_STT_PROVIDER", "features.dictation.stt.provider");
   if (

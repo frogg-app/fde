@@ -748,6 +748,25 @@ export const AgentTimelineItemPayloadSchema: z.ZodType<AgentTimelineItem, unknow
   }),
 ]);
 
+// COMPAT(spokenNotifications): `id`, `spokenText`, and `audioUrl` were added in v0.1.14 and stay
+// optional so a daemon without TTS and an older app still exchange the text-only payload.
+export const AgentAttentionNotificationSchema = z.object({
+  title: z.string(),
+  body: z.string(),
+  data: z.object({
+    serverId: z.string(),
+    workspaceId: z.string().optional(),
+    agentId: z.string(),
+    reason: z.enum(["finished", "error", "permission"]),
+    notificationId: z.string().optional(),
+    spokenText: z.string().optional(),
+    audioUrl: z.string().optional(),
+  }),
+  id: z.string().optional(),
+  spokenText: z.string().optional(),
+  audioUrl: z.string().optional(),
+});
+
 export const AgentStreamEventPayloadSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("thread_started"),
@@ -802,18 +821,7 @@ export const AgentStreamEventPayloadSchema = z.discriminatedUnion("type", [
     reason: z.enum(["finished", "error", "permission"]),
     timestamp: z.string(),
     shouldNotify: z.boolean(),
-    notification: z
-      .object({
-        title: z.string(),
-        body: z.string(),
-        data: z.object({
-          serverId: z.string(),
-          workspaceId: z.string().optional(),
-          agentId: z.string(),
-          reason: z.enum(["finished", "error", "permission"]),
-        }),
-      })
-      .optional(),
+    notification: AgentAttentionNotificationSchema.optional(),
   }),
 ]);
 
@@ -2808,6 +2816,26 @@ export const PushUnregisterResponseSchema = z.object({
   }),
 });
 
+export const NotificationAudioRequestSchema = z.object({
+  type: z.literal("notification.audio.request"),
+  requestId: z.string(),
+  notificationId: z.string(),
+});
+
+export const NotificationAudioSchema = z.object({
+  base64: z.string(),
+  mimeType: z.string(),
+});
+
+export const NotificationAudioResponseSchema = z.object({
+  type: z.literal("notification.audio.response"),
+  payload: z.object({
+    requestId: z.string(),
+    notificationId: z.string(),
+    audio: NotificationAudioSchema.nullable(),
+  }),
+});
+
 // ============================================================================
 // Terminal Messages
 // ============================================================================
@@ -3180,6 +3208,7 @@ export const SessionInboundMessageSchema = z.discriminatedUnion("type", [
   ListCommandsRequestSchema,
   RegisterPushTokenMessageSchema,
   PushUnregisterRequestSchema,
+  NotificationAudioRequestSchema,
   ListTerminalsRequestSchema,
   SubscribeTerminalsRequestSchema,
   UnsubscribeTerminalsRequestSchema,
@@ -3390,6 +3419,8 @@ export const ServerInfoStatusPayloadSchema = z
         directorySync: z.boolean().optional(),
         // COMPAT(workspaceLabels): added in v0.5.0, remove after 2027-08-14.
         workspaceLabels: z.boolean().optional(),
+        // COMPAT(spokenNotifications): added in v0.1.14, remove gate after 2027-09-03.
+        spokenNotifications: z.boolean().optional(),
         // COMPAT(checkoutForgeSetAutoMerge): added in v0.2.0-beta.1. Remove the
         // feature gate and checkoutGithubSetAutoMerge fallback after 2027-01-17
         // once the supported daemon floor is >= v0.2.0.
@@ -4501,18 +4532,7 @@ export const AgentAttentionRequiredMessageSchema = z.object({
     reason: z.enum(["finished", "error", "permission"]),
     timestamp: z.string(),
     shouldNotify: z.boolean(),
-    notification: z
-      .object({
-        title: z.string(),
-        body: z.string(),
-        data: z.object({
-          serverId: z.string(),
-          workspaceId: z.string().optional(),
-          agentId: z.string(),
-          reason: z.enum(["finished", "error", "permission"]),
-        }),
-      })
-      .optional(),
+    notification: AgentAttentionNotificationSchema.optional(),
   }),
 });
 
@@ -6374,6 +6394,7 @@ export const SessionOutboundMessageSchema = z.discriminatedUnion("type", [
   StatusMessageSchema,
   PongMessageSchema,
   PushUnregisterResponseSchema,
+  NotificationAudioResponseSchema,
   RpcErrorMessageSchema,
   ArtifactMessageSchema,
   AgentUpdateMessageSchema,
@@ -6957,6 +6978,9 @@ export type ListCommandsResponse = z.infer<typeof ListCommandsResponseSchema>;
 export type RegisterPushTokenMessage = z.infer<typeof RegisterPushTokenMessageSchema>;
 export type PushUnregisterRequest = z.infer<typeof PushUnregisterRequestSchema>;
 export type PushUnregisterResponse = z.infer<typeof PushUnregisterResponseSchema>;
+export type NotificationAudioRequest = z.infer<typeof NotificationAudioRequestSchema>;
+export type NotificationAudioResponse = z.infer<typeof NotificationAudioResponseSchema>;
+export type NotificationAudio = z.infer<typeof NotificationAudioSchema>;
 
 // Terminal message types
 export type ListTerminalsRequest = z.infer<typeof ListTerminalsRequestSchema>;

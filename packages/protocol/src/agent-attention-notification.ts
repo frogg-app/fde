@@ -8,12 +8,50 @@ export interface AgentAttentionNotificationData {
   workspaceId?: string;
   agentId: string;
   reason: AgentAttentionReason;
+  notificationId?: string;
+  spokenText?: string;
+  audioUrl?: string;
 }
 
+/**
+ * `id`, `spokenText`, and `audioUrl` are present only when the daemon prepared a spoken
+ * alert; `data` repeats them so a mobile push carries them to the notification tap.
+ */
 export interface AgentAttentionNotificationPayload {
   title: string;
   body: string;
   data: AgentAttentionNotificationData;
+  id?: string;
+  spokenText?: string;
+  audioUrl?: string;
+}
+
+export interface SpokenAgentAttentionNotification {
+  id: string;
+  spokenText: string;
+  audioUrl: string;
+}
+
+export function withSpokenNotification(
+  payload: AgentAttentionNotificationPayload,
+  spoken: SpokenAgentAttentionNotification,
+): AgentAttentionNotificationPayload {
+  return {
+    ...payload,
+    id: spoken.id,
+    spokenText: spoken.spokenText,
+    audioUrl: spoken.audioUrl,
+    data: {
+      ...payload.data,
+      notificationId: spoken.id,
+      spokenText: spoken.spokenText,
+      audioUrl: spoken.audioUrl,
+    },
+  };
+}
+
+export function notificationAudioPath(notificationId: string): string {
+  return `/api/notifications/${encodeURIComponent(notificationId)}/audio`;
 }
 
 interface BuildAgentAttentionNotificationPayloadInput {
@@ -175,9 +213,17 @@ function resolveAgentAttentionTitle(reason: AgentAttentionReason): string {
   return "Agent finished";
 }
 
-function resolveAgentAttentionPreview(
-  input: BuildAgentAttentionNotificationPayloadInput,
-): string | null {
+export type AgentAttentionGistInput = Pick<
+  BuildAgentAttentionNotificationPayloadInput,
+  "reason" | "assistantMessage" | "permissionRequest"
+>;
+
+/** The one-line, markdown-free gist a notification body and a spoken alert share. */
+export function resolveAgentAttentionGist(input: AgentAttentionGistInput): string | null {
+  return resolveAgentAttentionPreview(input);
+}
+
+function resolveAgentAttentionPreview(input: AgentAttentionGistInput): string | null {
   if (input.reason === "finished") {
     return buildNotificationPreview(input.assistantMessage);
   }

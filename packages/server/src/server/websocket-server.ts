@@ -9,7 +9,11 @@ import type { AgentStorage } from "./agent/agent-storage.js";
 import type { DownloadTokenStore } from "./file-download/token-store.js";
 import type { TerminalManager } from "../terminal/terminal-manager.js";
 import type pino from "pino";
-import type { ProjectRegistry, WorkspaceRegistry } from "./workspace-registry.js";
+import {
+  resolveWorkspaceDisplayName,
+  type ProjectRegistry,
+  type WorkspaceRegistry,
+} from "./workspace-registry.js";
 import type { ProjectUpdate } from "./workspace-reconciliation-service.js";
 import type { ScheduleService } from "./schedule/service.js";
 import type { CheckoutDiffManager, CheckoutDiffMetrics } from "./checkout-diff-manager.js";
@@ -57,6 +61,8 @@ import {
   type PushNotifications,
   type PushNotificationSender,
 } from "./push/index.js";
+import { composeSpokenNotificationText } from "./notifications/spoken-text.js";
+import type { SpokenAlertService } from "./notifications/spoken-alerts.js";
 import type { ScriptHealthState } from "./script-health-monitor.js";
 import type { ServiceProxySubsystem } from "./service-proxy.js";
 import type { WorkspaceScriptRuntimeStore } from "./workspace-script-runtime-store.js";
@@ -70,6 +76,11 @@ import {
 import {
   buildAgentAttentionNotificationPayload,
   findLatestPermissionRequest,
+  notificationAudioPath,
+  withSpokenNotification,
+  type AgentAttentionNotificationPayload,
+  type AgentAttentionReason,
+  type NotificationPermissionRequest,
 } from "@fde/protocol/agent-attention-notification";
 import { createGitHubService } from "../services/github-service.js";
 import type { ForgeService } from "../services/forge-service.js";
@@ -561,6 +572,7 @@ export class VoiceAssistantWebSocketServer {
   private readonly daemonConfigStore: DaemonConfigStore;
   private readonly pushNotifications: PushNotifications;
   private readonly pushNotificationSender: PushNotificationSender;
+  private readonly spokenAlerts: SpokenAlertService | null;
   private readonly mcpBaseUrl: string | null;
   private speech!: SpeechService | null;
   private terminalManager!: TerminalManager | null;
@@ -649,8 +661,10 @@ export class VoiceAssistantWebSocketServer {
     pluginRuntime?: SessionOptions["pluginRuntime"],
     orchestrationSkills?: SessionOptions["orchestrationSkills"],
     workspaceLabelService?: WorkspaceLabelService,
+    spokenAlerts?: SpokenAlertService | null,
   ) {
     this.logger = logger.child({ module: "websocket-server" });
+    this.spokenAlerts = spokenAlerts ?? null;
     this.workspaceSetupRuntime = workspaceSetupRuntime;
     this.advertiseDaemonStatusRpc = wsConfig.daemonStatusRpc !== false;
     this.advertiseRelayConfig = wsConfig.relayConfig !== false;
@@ -1410,6 +1424,7 @@ export class VoiceAssistantWebSocketServer {
       },
       downloadTokenStore: this.downloadTokenStore,
       pushNotifications: this.pushNotifications,
+      spokenAlerts: this.spokenAlerts,
       paseoHome: this.paseoHome,
       worktreesRoot: this.worktreesRoot,
       agentManager: this.agentManager,
@@ -1637,6 +1652,8 @@ export class VoiceAssistantWebSocketServer {
         directorySync: true,
         // COMPAT(workspaceLabels): added in v0.5.0, remove after 2027-08-14.
         ...(this.workspaceLabelService ? { workspaceLabels: true } : {}),
+        // COMPAT(spokenNotifications): added in v0.1.14, remove gate after 2027-09-03.
+        ...(this.spokenAlerts?.isAvailable() ? { spokenNotifications: true } : {}),
         // COMPAT(providersSnapshot): keep optional until all clients rely on snapshot flow.
         providersSnapshot: true,
         // COMPAT(providersSnapshotCwd): added in v0.3.2, remove gate after 2027-02-10.
@@ -2530,13 +2547,21 @@ export class VoiceAssistantWebSocketServer {
     const allStates = clientEntries.map((e) => e.state);
     const nowMs = Date.now();
     const assistantMessage = await this.agentManager.getLastAssistantMessage(params.agentId);
-    const notification = buildAgentAttentionNotificationPayload({
+    const permissionRequest = findLatestPermissionRequest(agent.pendingPermissions);
+    const textNotification = buildAgentAttentionNotificationPayload({
       reason: params.reason,
       serverId: this.serverId,
       workspaceId: agent.workspaceId,
       agentId: params.agentId,
       assistantMessage,
-      permissionRequest: findLatestPermissionRequest(agent.pendingPermissions),
+      permissionRequest,
+    });
+    const notification = await this.attachSpokenAlert(textNotification, {
+      agentId: params.agentId,
+      workspaceId: agent.workspaceId,
+      reason: params.reason,
+      assistantMessage,
+      permissionRequest,
     });
 
     const plan = computeNotificationPlan({
@@ -2588,6 +2613,45 @@ export class VoiceAssistantWebSocketServer {
 
       this.sendToClient(ws, message);
     }
+  }
+
+  /**
+   * Adds `spokenText` and `audioUrl` when spoken alerts are on. Synthesis runs in the
+   * background so the notification itself is never delayed by TTS.
+   */
+  private async attachSpokenAlert(
+    notification: AgentAttentionNotificationPayload,
+    params: {
+      agentId: string;
+      workspaceId: string;
+      reason: AgentAttentionReason;
+      assistantMessage: string | null;
+      permissionRequest: NotificationPermissionRequest | null;
+    },
+  ): Promise<AgentAttentionNotificationPayload> {
+    if (!this.spokenAlerts?.isAvailable()) {
+      return notification;
+    }
+    const [storedAgent, workspace] = await Promise.all([
+      this.agentStorage.get(params.agentId),
+      this.workspaceRegistry.get(params.workspaceId),
+    ]);
+    const spokenText = composeSpokenNotificationText({
+      reason: params.reason,
+      agentTitle: storedAgent?.title ?? null,
+      workspaceName: workspace ? resolveWorkspaceDisplayName(workspace) : null,
+      assistantMessage: params.assistantMessage,
+      permissionRequest: params.permissionRequest,
+    });
+    const id = randomUUID();
+    if (!this.spokenAlerts.prepare({ id, text: spokenText })) {
+      return notification;
+    }
+    return withSpokenNotification(notification, {
+      id,
+      spokenText,
+      audioUrl: notificationAudioPath(id),
+    });
   }
 
   private async broadcastTerminalAttention(params: {

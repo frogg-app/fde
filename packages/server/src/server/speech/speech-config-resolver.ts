@@ -188,6 +188,31 @@ function resolveRequestedSpeechProviders(params: {
   };
 }
 
+function resolveVoiceNotificationsEnabled(params: {
+  env: NodeJS.ProcessEnv;
+  persisted: PersistedConfig;
+  localRuntimeAvailable: boolean;
+}): boolean {
+  const defaults: VoiceDefaultsInput = {
+    umbrella: parseOptionalBooleanFlag(
+      firstSpeechDefinedValue<string | boolean>([
+        params.env.PASEO_VOICE,
+        params.persisted.features?.voice?.enabled,
+      ]),
+    ),
+    localRuntimeAvailable: params.localRuntimeAvailable,
+  };
+  return resolveVoiceFeatureEnabled(
+    parseOptionalBooleanFlag(
+      firstSpeechDefinedValue<string | boolean>([
+        params.env.PASEO_VOICE_NOTIFICATIONS,
+        params.persisted.features?.voice?.notifications?.enabled,
+      ]),
+    ),
+    defaults,
+  );
+}
+
 export function resolveSpeechConfig(params: {
   paseoHome: string;
   env: NodeJS.ProcessEnv;
@@ -198,10 +223,16 @@ export function resolveSpeechConfig(params: {
   openai: PaseoOpenAIConfig | undefined;
   speech: PaseoSpeechConfig;
 } {
+  const localRuntimeAvailable = params.localRuntimeAvailable ?? isLocalSpeechRuntimeAvailable();
   const providers = resolveRequestedSpeechProviders({
     env: params.env,
     persisted: params.persisted,
-    localRuntimeAvailable: params.localRuntimeAvailable ?? isLocalSpeechRuntimeAvailable(),
+    localRuntimeAvailable,
+  });
+  const notificationsEnabled = resolveVoiceNotificationsEnabled({
+    env: params.env,
+    persisted: params.persisted,
+    localRuntimeAvailable,
   });
 
   const local = resolveLocalSpeechConfig({
@@ -221,6 +252,7 @@ export function resolveSpeechConfig(params: {
     openai,
     speech: {
       providers,
+      notifications: { enabled: notificationsEnabled },
       sttLanguages: local.sttLanguages,
       ...(local.local ? { local: local.local } : {}),
     },

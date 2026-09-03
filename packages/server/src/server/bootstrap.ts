@@ -128,6 +128,12 @@ import type { OpenAiSpeechProviderConfig } from "./speech/providers/openai/confi
 import type { LocalSpeechProviderConfig } from "./speech/providers/local/config.js";
 import type { RequestedSpeechProviders } from "./speech/speech-types.js";
 import { createSpeechService } from "./speech/speech-runtime.js";
+import { mountNotificationAudioRoute } from "./notifications/audio-route.js";
+import {
+  createSpokenAlertService,
+  isSpokenNotificationsEnabled,
+} from "./notifications/spoken-alerts.js";
+import { createTtsCache } from "./notifications/tts-cache.js";
 import { AgentManager } from "./agent/agent-manager.js";
 import { AgentStorage } from "./agent/agent-storage.js";
 import { attachAgentStoragePersistence } from "./persistence-hooks.js";
@@ -374,6 +380,8 @@ export interface PaseoSpeechSttLanguages {
 
 export interface PaseoSpeechConfig {
   providers: RequestedSpeechProviders;
+  /** Spoken agent alerts (TTS of attention notifications). Absent means off. */
+  notifications?: { enabled: boolean };
   sttLanguages?: PaseoSpeechSttLanguages;
   local?: PaseoLocalSpeechConfig;
 }
@@ -1632,6 +1640,14 @@ export async function createPaseoDaemon(
   });
   logger.info({ elapsed: elapsed() }, "Speech service created");
 
+  const spokenAlerts = createSpokenAlertService({
+    enabled: isSpokenNotificationsEnabled(config.speech),
+    resolveTts: () => speechService.resolveTts(),
+    cache: createTtsCache({ dir: path.join(config.paseoHome, "tts-cache") }),
+    logger,
+  });
+  mountNotificationAudioRoute({ app, spokenAlerts, logger });
+
   logger.info({ elapsed: elapsed() }, "Bootstrap complete, ready to start listening");
 
   const start = async () => {
@@ -1781,6 +1797,7 @@ export async function createPaseoDaemon(
               pluginRuntime,
               orchestrationSkills,
               workspaceLabelService,
+              spokenAlerts,
             );
             pluginRuntime.bindPaseoSessionHost(wsServer);
             await pluginRuntime.start();
