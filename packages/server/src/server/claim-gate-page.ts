@@ -1,6 +1,7 @@
 /**
  * The "Claim this FDE daemon" page: what the web server serves instead of the
- * app while the daemon is unclaimed and reached from beyond loopback. It is
+ * app while the daemon is unclaimed and reached from an untrusted address (public,
+ * or the LAN with `daemon.auth.trustLan` off). It is
  * self-contained (inline CSS, inline SVG QR, no external assets) and polls
  * `/api/setup/status` until a device has paired, then reloads into the app.
  */
@@ -110,7 +111,7 @@ export function renderClaimGatePage(input: ClaimGatePageInput): string {
     <button id="refresh" class="secondary" type="button">New code</button>
     <span id="status" class="status">Waiting for a device to pair…</span>
   </div>
-  <div class="meta">Reachable at ${endpoints} · server ${escapeHtml(input.serverId)} · FDE ${escapeHtml(input.version)}. On the daemon's own machine: <code>fde daemon pair</code>, or <code>fde daemon set-password</code> to use a password instead.</div>
+  <div class="meta">Reachable at ${endpoints} · server ${escapeHtml(input.serverId)} · FDE ${escapeHtml(input.version)}. You are seeing this page because your address is not on the daemon's trusted private network (or <code>fde daemon trust-lan off</code> is set). On the daemon's own machine: <code>fde daemon pair</code>, <code>fde daemon set-password</code> to use a password instead, or <code>fde daemon trust-lan on</code> to let the local network in without pairing.</div>
 </main>
 <script>${SCRIPT}</script>
 </body>

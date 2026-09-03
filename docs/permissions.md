@@ -25,17 +25,41 @@ takes effect without a restart.
 
 What an unclaimed daemon does with a request depends only on where it comes from:
 
-| Client                                      | Unclaimed                                                                  | Claimed                                          |
-| ------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------ |
-| Loopback (127.0.0.1, ::1, socket, pipe)     | open, as before (no password, no bearer needed)                            | open unless a password is configured             |
-| Beyond loopback (LAN, Docker bridge, proxy) | web UI serves the claim page; API/WS answer 401                            | bearer required: a device credential or password |
-| Relay / Hub                                 | unchanged: the pairing QR public key and Hub enrollment are the credential |
+| Client                                         | Unclaimed                                                                  | Claimed                                          |
+| ---------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------ |
+| Loopback (127.0.0.1, ::1, socket, pipe)        | open, as before (no password, no bearer needed)                            | open unless a password is configured             |
+| Private network, `trustLan` on (the default)   | open, like loopback                                                        | open unless a password is configured             |
+| Public address, or private with `trustLan` off | web UI serves the claim page; API/WS answer 401                            | bearer required: a device credential or password |
+| Relay / Hub                                    | unchanged: the pairing QR public key and Hub enrollment are the credential |
 
 Loopback stays open on purpose: the CLI, the desktop app's sidecar, and a dev daemon all
 talk to their own machine's daemon without a password, and the first-run gate must never
 lock a single-machine setup out of itself. The client address honors `daemon.trustedProxies`
 (default `loopback`) the same way Express's `trust proxy` does, so a reverse proxy on
 localhost does not turn LAN visitors into loopback clients.
+
+### Trusted LAN
+
+`daemon.auth.trustLan` (default `true`; `PASEO_TRUST_LAN=0|1` overrides it, and the
+environment wins) treats clients on the daemon's own private network exactly like loopback:
+no bearer unless a password is configured, no claim page, and `GET /api/identity` answers
+`pairingRequired: false` to them. "Private network" is the address the request resolves to
+after trusted proxies, when it falls in IPv4 `10/8`, `172.16/12`, `192.168/16`, or
+`169.254/16` (link-local), or IPv6 `fc00::/7` (unique-local) or `fe80::/10` (link-local),
+including the IPv4-mapped forms (`::ffff:192.168.1.10`). Carrier-grade NAT (`100.64/10`)
+and every routable address are public and keep the rules above. Pairing stays available on
+a trusted LAN (the app can still claim, `POST /api/setup/offer` still mints credentials),
+it is just no longer required; `/api/identity` also reports the mode as `lanTrusted`.
+
+The trade-off is deliberate and worth stating plainly: with `trustLan` on and no password,
+**anyone who can reach the daemon on the same private network can control your agents,
+files, and terminals** — a roommate on the Wi-Fi, a coworker on the office LAN, another
+container on the Docker bridge. That is the right default for a daemon on a home network
+or a single-user machine, and the wrong one for a shared or untrusted network. The
+password is the opt-in lock and applies to everyone, LAN included: `fde daemon
+set-password` (or `PASEO_PASSWORD`). To keep the pairing gate on the LAN without a
+password, run `fde daemon trust-lan off` (the CLI writes `config.json` and applies it live
+through the daemon's config reload; `fde daemon status` shows the mode as `LAN Trusted`).
 
 **Claiming** is the first direct pairing. The claim page (or `fde daemon pair` with relay
 off) hands out a v3 connection offer: `{ v: 3, serverId, hostname, daemonPublicKeyB64,
@@ -65,10 +89,11 @@ control it.
 
 Related surfaces:
 
-- `GET /api/identity` (public): `{ product: "fde", serverId, hostname, version, listen, pairingRequired }`
+- `GET /api/identity` (public): `{ product: "fde", serverId, hostname, version, listen, pairingRequired, lanTrusted }` (`pairingRequired` is answered for the requester's own address)
 - `GET /api/setup/status` (public): `{ claimed, pairingRequired }`, polled by the claim page
 - `POST /api/setup/offer` (bearer policy applies): a fresh direct offer for pairing another device
 - `fde daemon claim-status [--json]`, `fde daemon reset-claim [--json]`: inspect or delete `principals.json`
+- `fde daemon trust-lan on|off [--json]`: write `daemon.auth.trustLan` and apply it live; `fde daemon set-password`: the opt-in lock for everyone
 
 Per-principal grants are recorded (`permissions` on each principal) but every paired
 device currently receives the full owner set; narrowing per device is future work, and the

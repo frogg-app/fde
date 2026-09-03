@@ -13,11 +13,20 @@ Neither path needs Node or npm on the host. The native install ships a
 and CLI, and their production dependencies for one platform. The Docker image
 is built from the same bundle.
 
-## First run: install, then pair
+## First run: install, then connect
 
-1. Install the daemon (native or Docker, below). It listens on port `9999` by default
-   and, unless you set a password, starts **unclaimed**: nobody has paired with it yet.
-2. Get a pairing link. Either open `http://<host>:9999/` from another machine, which
+1. Install the daemon (native or Docker, below). It listens on port `9999` by default.
+   **On your own network you are done**: devices on the same private network (home
+   Wi-Fi, office LAN, `192.168.x.x` / `10.x.x.x` / `172.16-31.x.x`) connect straight
+   away, with no pairing and no password, so open `http://<host>:9999/` or add the host
+   in the app. There is no login until you ask for one: `fde daemon set-password` on the
+   host makes everyone (LAN included) need the password, and `fde daemon trust-lan off`
+   keeps the pairing gate below for LAN clients too. Read
+   [permissions.md](permissions.md#trusted-lan) before leaving the default on a shared
+   or untrusted network: anyone on it can drive your agents.
+2. Everyone else (a public address, or the LAN after `trust-lan off`) must pair first.
+   Unless you set a password the daemon starts **unclaimed**: nobody has paired with it
+   yet. Get a pairing link: either open `http://<host>:9999/` from that machine, which
    shows the "Claim this FDE daemon" page with a QR code and link, or run
    `fde daemon pair` on the host (with relay off it prints the same direct LAN offer).
    The link looks like `https://frogg.app/pair#offer=<payload>`; the payload stays in
@@ -30,16 +39,16 @@ is built from the same bundle.
    app" or choose _Paste pairing link_. The app shows "This FDE daemon has not been
    claimed yet. Pairing makes this device its first owner.", finds a reachable address
    from the link, redeems the code, and stores the returned device credential with the
-   host. The daemon is now claimed: the web page switches to the app, and every other LAN
-   client needs to pair (`fde daemon pair` again, or the app's "pair another device")
-   or use a password (`fde daemon set-password`). Daemons that still need pairing show
-   up as "Needs pairing" in the app's "Servers on your network" list instead of a
-   Connect button.
+   host. The daemon is now claimed: the web page switches to the app, and every other
+   client that is not on a trusted network needs to pair (`fde daemon pair` again, or
+   the app's "pair another device") or use a password (`fde daemon set-password`).
+   Daemons that still need pairing show up as "Needs pairing" in the app's "Servers on
+   your network" list instead of a Connect button.
 
-`fde daemon claim-status` shows who has paired; `fde daemon reset-claim` forgets all
-devices and brings the pairing page back. Loopback clients on the host itself (the CLI,
-`http://localhost:9999/`) are never gated; see
-[permissions.md](permissions.md#claimed-state) for the exact rules.
+`fde daemon claim-status` shows who has paired and whether the LAN is trusted;
+`fde daemon reset-claim` forgets all devices and brings the pairing page back for
+gated clients. Loopback clients on the host itself (the CLI, `http://localhost:9999/`)
+are never gated; see [permissions.md](permissions.md#claimed-state) for the exact rules.
 
 Voice (dictation and voice mode) is on by default because the bundle ships the local
 speech runtime; models download in the background on first use and the app shows
@@ -80,22 +89,24 @@ service.
 
 ### Environment overrides
 
-| Variable           | Default                                          | Purpose                                                        |
-| ------------------ | ------------------------------------------------ | -------------------------------------------------------------- |
-| `FDE_VERSION`      | latest release                                   | Exact version to install, e.g. `0.1.7`                         |
-| `FDE_INSTALL_DIR`  | `~/.local/share/fde`                             | Install root (`versions/`, `current`)                          |
-| `FDE_BIN_DIR`      | `~/.local/bin`                                   | Where `fde`/`paseo` are linked                                 |
+| Variable           | Default                                     | Purpose                                                        |
+| ------------------ | ------------------------------------------- | -------------------------------------------------------------- |
+| `FDE_VERSION`      | latest release                              | Exact version to install, e.g. `0.1.7`                         |
+| `FDE_INSTALL_DIR`  | `~/.local/share/fde`                        | Install root (`versions/`, `current`)                          |
+| `FDE_BIN_DIR`      | `~/.local/bin`                              | Where `fde`/`paseo` are linked                                 |
 | `FDE_RELEASE_BASE` | `https://github.com/frogg-app/fde/releases` | Release download base                                          |
-| `FDE_BUNDLE_URL`   | unset                                            | Download this exact tarball (+ `.sha256`) instead of a release |
-| `FDE_BUNDLE_FILE`  | unset                                            | Install this local tarball instead of downloading              |
-| `FDE_NO_SERVICE`   | `0`                                              | `1` skips the systemd/launchd service                          |
-| `FDE_LISTEN`       | `127.0.0.1:9999`                                 | Daemon listen address written into the service                 |
-| `FDE_HOME`         | `~/.paseo`                                       | Daemon state directory written into the service (`PASEO_HOME`) |
+| `FDE_BUNDLE_URL`   | unset                                       | Download this exact tarball (+ `.sha256`) instead of a release |
+| `FDE_BUNDLE_FILE`  | unset                                       | Install this local tarball instead of downloading              |
+| `FDE_NO_SERVICE`   | `0`                                         | `1` skips the systemd/launchd service                          |
+| `FDE_LISTEN`       | `127.0.0.1:9999`                            | Daemon listen address written into the service                 |
+| `FDE_HOME`         | `~/.paseo`                                  | Daemon state directory written into the service (`PASEO_HOME`) |
 
-`FDE_LISTEN=0.0.0.0:9999` makes the daemon reachable from the network; the first
-device to pair claims it (see "First run" above), or set a password with
-`fde daemon set-password`. With the loopback default, reach it through an SSH
-tunnel or the desktop app's SSH connection.
+`FDE_LISTEN=0.0.0.0:9999` makes the daemon reachable from the network: devices on the
+same private network connect straight away, the first device to pair from anywhere
+else claims it (see "First run" above). Set a password with `fde daemon set-password`
+to require a login from everyone, or `fde daemon trust-lan off` to make LAN clients
+pair too. With the loopback default, reach it through an SSH tunnel or the desktop
+app's SSH connection.
 
 ### Upgrade, uninstall
 
