@@ -89,6 +89,12 @@ Blocked on the owner:
 - **Swap file on the build VM.** An 8 GB `/swapfile.fde` was enabled (not in fstab, gone at
   reboot) so Gradle/Hermes could finish on 9 GB RAM. Remove with
   `sudo swapoff /swapfile.fde && sudo rm /swapfile.fde` if unwanted.
+- **Windows Smart App Control blocks the unsigned exe** (0.1.10 report). No rebuild fixes this:
+  Smart App Control only runs binaries signed by a Microsoft-trusted certificate and has no
+  "run anyway". The pipeline is wired for Azure Trusted Signing (`scripts/release/sign-windows.ps1`,
+  `bundle.windows.signCommand`); create a Trusted Signing account (~$10/month) and add the six
+  `AZURE_*`/`TRUSTED_SIGNING_*` secrets listed in that script. Until then users must set Smart App
+  Control to Off (Windows Security > App & browser control).
 - **Code signing certificates** (Windows Authenticode, Apple Developer ID) for SmartScreen/Gatekeeper.
 - **Hosting `frogg.de/install.sh`**: a redirect to
   `https://raw.githubusercontent.com/frogg-app/frogg-de/main/deploy/install.sh` (and

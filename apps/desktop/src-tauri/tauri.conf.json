@@ -33,7 +33,8 @@
     "windows": {
       "nsis": {
         "installMode": "currentUser"
-      }
+      },
+      "signCommand": "powershell -NoProfile -ExecutionPolicy Bypass -File ../../scripts/release/sign-windows.ps1 %1"
     },
     "macOS": {
       "minimumSystemVersion": "10.15",
@@ -44,15 +45,11 @@
   "plugins": {
     "updater": {
       "pubkey": "REPLACE_WITH_MINISIGN_PUBLIC_KEY",
-      "endpoints": [
-        "https://github.com/frogg-app/frogg-de/releases/latest/download/latest.json"
-      ]
+      "endpoints": ["https://github.com/frogg-app/frogg-de/releases/latest/download/latest.json"]
     },
     "deep-link": {
       "desktop": {
-        "schemes": [
-          "paseo"
-        ]
+        "schemes": ["paseo"]
       }
     }
   }
