@@ -269,12 +269,10 @@ type ProviderSubagentManagerEvent = Extract<
   { type: "provider_subagent" }
 >["event"];
 
-// TODO: Remove once all app store clients are on >=0.1.45 and understand arbitrary provider strings.
-// Clients before 0.1.45 validate providers with z.enum(["claude", "codex", "opencode"]) and reject
-// the entire session message if they encounter an unknown provider.
-const LEGACY_PROVIDER_IDS = new Set(["claude", "codex", "opencode"]);
-const MIN_VERSION_ALL_PROVIDERS = "0.1.45";
-const MIN_VERSION_EXPLICIT_WORKSPACE_RECOVERY = "0.1.105";
+// FDE never shipped the pre-0.1.45 / pre-0.1.105 Paseo clients that the old version gates
+// existed for, and FDE's version numbers restarted at 0.1.x, so gating on the client's app
+// version would wrongly treat every FDE client as legacy (hiding providers and using the legacy
+// workspace restore). All providers are visible and explicit workspace recovery is always used.
 function errorToFriendlyMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
   if (typeof error === "string") return error;
@@ -292,29 +290,8 @@ function resolveSubscriptionId(
   return uuidv4();
 }
 
-function isAppVersionAtLeast(appVersion: string | null, minVersion: string): boolean {
-  if (!appVersion) return false;
-  // Strip prerelease suffix: "0.1.45-beta.4" -> "0.1.45"
-  const base = appVersion.replace(/-.*$/, "");
-  const parts = base.split(".").map(Number);
-  const minParts = minVersion.split(".").map(Number);
-  for (let i = 0; i < minParts.length; i++) {
-    const a = parts[i] ?? 0;
-    const b = minParts[i] ?? 0;
-    if (a > b) return true;
-    if (a < b) return false;
-  }
-  return true;
-}
-
-function clientSupportsAllProviders(appVersion: string | null): boolean {
-  return isAppVersionAtLeast(appVersion, MIN_VERSION_ALL_PROVIDERS);
-}
-
-function clientUsesLegacyWorkspaceRestore(appVersion: string | null): boolean {
-  return (
-    appVersion !== null && !isAppVersionAtLeast(appVersion, MIN_VERSION_EXPLICIT_WORKSPACE_RECOVERY)
-  );
+function clientUsesLegacyWorkspaceRestore(_appVersion: string | null): boolean {
+  return false;
 }
 
 type DeleteFencedAgentStorage = AgentStorage & {
@@ -1796,11 +1773,8 @@ export class Session {
     return buildStoredAgentPayload(record, registeredProviderIds);
   }
 
-  private isProviderVisibleToClient(provider: string): boolean {
-    if (clientSupportsAllProviders(this.appVersion)) {
-      return true;
-    }
-    return LEGACY_PROVIDER_IDS.has(provider);
+  private isProviderVisibleToClient(_provider: string): boolean {
+    return true;
   }
 
   private async buildProjectPlacementForWorkspace(
