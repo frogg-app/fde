@@ -1620,11 +1620,11 @@ export const ko: TranslationResources = {
       },
       scanQr: {
         title: "QR 코드 스캔",
-        description: "암호화된 릴레이 연결.",
+        description: "새 FDE 데몬을 소유하거나 암호화 릴레이로 페어링합니다.",
       },
       pasteLink: {
         title: "페어링 링크 붙여넣기",
-        description: "암호화된 릴레이 연결.",
+        description: "새 FDE 데몬을 소유하거나 암호화 릴레이로 페어링합니다.",
       },
     },
     networkScan: {
@@ -1635,6 +1635,41 @@ export const ko: TranslationResources = {
       rescan: "다시 검색",
       connect: "연결",
       connecting: "연결 중…",
+      needsPairing: "페어링 필요",
+      pairingHint:
+        "페어링 링크 받기: 호스트에서 `fde daemon pair`를 실행하거나 웹 주소를 연 다음, 여기에서 스캔하거나 붙여넣으세요.",
+    },
+    claim: {
+      title: "FDE 데몬과 페어링",
+      thisDaemon: "이 FDE 데몬",
+      claiming: "{{host}}와(과) 페어링 중…",
+      explainer:
+        "이 FDE 데몬은 아직 소유자가 없습니다. 페어링하면 이 기기가 첫 번째 소유자가 됩니다.",
+      successTitle: "페어링됨",
+      successBody:
+        "이 기기가 이제 {{host}}의 첫 번째 소유자입니다. 다른 기기는 새 페어링 링크가 필요합니다.",
+      successRelayBody: "{{host}}을(를) 암호화 릴레이로 추가했습니다.",
+      noPendingOffer:
+        "페어링 링크(https://frogg.app/pair#offer=…)를 열거나 연결 추가에서 붙여넣으세요.",
+      newLinkHint:
+        "페어링 코드는 일회용이며 10분 후 만료됩니다. 새 코드 받기: 호스트에서 `fde daemon pair`를 실행하거나 웹 주소를 새로 고치세요.",
+      triedEndpoints: "시도한 주소:",
+      manualEndpointHelper:
+        "데몬에 다른 주소(VPN, Docker, 다른 인터페이스)로 접근할 수 있다면 host:port 형식으로 입력하세요.",
+      manualEndpointLabel: "데몬 주소",
+      errors: {
+        expired: "이 페어링 코드는 만료되었습니다.",
+        tokenRejected: "이 페어링 코드는 이미 사용되었거나 만료되었습니다.",
+        unreachable: "데몬의 어떤 주소도 응답하지 않았습니다.",
+        identityMismatch:
+          "해당 주소의 데몬은 이 링크의 대상이 아닙니다. 주소를 확인하거나 올바른 호스트에서 새 링크를 받으세요.",
+        claimFailed: "데몬이 페어링 요청을 거부했습니다.",
+      },
+      actions: {
+        done: "완료",
+        back: "뒤로",
+        tryAddress: "주소로 시도",
+      },
     },
     direct: {
       title: "직접 연결",
@@ -1728,10 +1763,11 @@ export const ko: TranslationResources = {
     },
     link: {
       title: "페어링 링크 붙여넣기",
-      helper: "서버에서 받은 페어링 링크를 붙여넣으세요.",
+      helper:
+        "데몬의 클레임 페이지 또는 `fde daemon pair`의 링크를 붙여넣으세요. 새 FDE 데몬은 처음 페어링한 기기가 소유합니다.",
       label: "페어링 링크",
       errors: {
-        required: "페어링 링크를 붙여넣으세요 (.../#offer=...)",
+        required: "페어링 링크를 붙여넣으세요 (…/pair#offer=…)",
         missingOffer: "링크에 #offer=...가 포함되어야 합니다",
         emptyOffer: "Offer 페이로드가 비어 있습니다",
         invalid: "잘못된 페어링 링크",

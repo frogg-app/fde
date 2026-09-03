@@ -1654,11 +1654,11 @@ export const es: TranslationResources = {
       },
       scanQr: {
         title: "Escanea el códigoQR",
-        description: "Conexión de retransmisión cifrada.",
+        description: "Reclama un daemon de FDE nuevo o empareja mediante el relay cifrado.",
       },
       pasteLink: {
         title: "Pegar enlace de emparejamiento",
-        description: "Conexión de retransmisión cifrada.",
+        description: "Reclama un daemon de FDE nuevo o empareja mediante el relay cifrado.",
       },
     },
     networkScan: {
@@ -1669,6 +1669,41 @@ export const es: TranslationResources = {
       rescan: "Explorar de nuevo",
       connect: "Conectar",
       connecting: "Conectando…",
+      needsPairing: "Necesita emparejamiento",
+      pairingHint:
+        "Obtén un enlace de emparejamiento: ejecuta `fde daemon pair` en el host o abre su dirección web, y luego escanéalo o pégalo aquí.",
+    },
+    claim: {
+      title: "Emparejar con un daemon de FDE",
+      thisDaemon: "este daemon de FDE",
+      claiming: "Emparejando con {{host}}…",
+      explainer:
+        "Este daemon de FDE aún no ha sido reclamado. Al emparejarlo, este dispositivo se convierte en su primer propietario.",
+      successTitle: "Emparejado",
+      successBody:
+        "Este dispositivo es ahora el primer propietario de {{host}}. Otros dispositivos necesitan un nuevo enlace de emparejamiento.",
+      successRelayBody: "{{host}} se añadió mediante el relay cifrado.",
+      noPendingOffer:
+        "Abre un enlace de emparejamiento (https://frogg.app/pair#offer=…) o pega uno desde Añadir conexión.",
+      newLinkHint:
+        "Los códigos de emparejamiento son de un solo uso y caducan a los diez minutos. Consigue uno nuevo: ejecuta `fde daemon pair` en el host o recarga su dirección web.",
+      triedEndpoints: "Intentado:",
+      manualEndpointHelper:
+        "Si el daemon es accesible en otra dirección (VPN, Docker, otra interfaz), escríbela como host:puerto.",
+      manualEndpointLabel: "Dirección del daemon",
+      errors: {
+        expired: "Este código de emparejamiento ha caducado.",
+        tokenRejected: "Este código de emparejamiento ya se usó o ha caducado.",
+        unreachable: "Ninguna de las direcciones del daemon respondió.",
+        identityMismatch:
+          "El daemon de esa dirección no es para el que se creó este enlace. Revisa la dirección o pide un nuevo enlace al host correcto.",
+        claimFailed: "El daemon rechazó la solicitud de emparejamiento.",
+      },
+      actions: {
+        done: "Listo",
+        back: "Atrás",
+        tryAddress: "Probar dirección",
+      },
     },
     direct: {
       title: "Conexión directa",
@@ -1764,10 +1799,11 @@ export const es: TranslationResources = {
     },
     link: {
       title: "Pegar enlace de emparejamiento",
-      helper: "Pegue el enlace de emparejamiento de su servidor.",
+      helper:
+        "Pega el enlace de la página de reclamación del daemon o de `fde daemon pair`. Un daemon de FDE nuevo queda reclamado por el primer dispositivo que se empareja.",
       label: "Enlace de emparejamiento",
       errors: {
-        required: "Pegue un enlace de emparejamiento (.../#offer=...)",
+        required: "Pega un enlace de emparejamiento (…/pair#offer=…)",
         missingOffer: "El enlace debe incluir#offer=...",
         emptyOffer: "La carga útil de la oferta está vacía",
         invalid: "Enlace de emparejamiento no válido",

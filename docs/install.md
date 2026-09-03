@@ -17,16 +17,24 @@ is built from the same bundle.
 
 1. Install the daemon (native or Docker, below). It listens on port `9999` by default
    and, unless you set a password, starts **unclaimed**: nobody has paired with it yet.
-2. Get a pairing code. Either open `http://<host>:9999/` from another machine, which
+2. Get a pairing link. Either open `http://<host>:9999/` from another machine, which
    shows the "Claim this FDE daemon" page with a QR code and link, or run
    `fde daemon pair` on the host (with relay off it prints the same direct LAN offer).
-   The code is single-use and expires after ten minutes; reload the page or re-run the
-   command for a new one.
-3. In the FDE desktop or mobile app choose _Pair a daemon_ and scan the code or paste
-   the link. The app connects, redeems the code, and receives its device credential.
-   The daemon is now claimed: the web page switches to the app, and every other LAN
+   The link looks like `https://frogg.app/pair#offer=<payload>`; the payload stays in
+   the fragment, so nothing is sent to frogg.app. The same offer is also available as
+   `paseo://pair#offer=<payload>` (the page's "Open in FDE app" button, `deepLink` in
+   `fde daemon pair --json`), which opens the installed desktop app directly. The code is
+   single-use and expires after ten minutes; reload the page or re-run the command for a
+   new one.
+3. In the FDE app: on a phone, choose _Scan QR code_; on a computer, click "Open in FDE
+   app" or choose _Paste pairing link_. The app shows "This FDE daemon has not been
+   claimed yet. Pairing makes this device its first owner.", finds a reachable address
+   from the link, redeems the code, and stores the returned device credential with the
+   host. The daemon is now claimed: the web page switches to the app, and every other LAN
    client needs to pair (`fde daemon pair` again, or the app's "pair another device")
-   or use a password (`fde daemon set-password`).
+   or use a password (`fde daemon set-password`). Daemons that still need pairing show
+   up as "Needs pairing" in the app's "Servers on your network" list instead of a
+   Connect button.
 
 `fde daemon claim-status` shows who has paired; `fde daemon reset-claim` forgets all
 devices and brings the pairing page back. Loopback clients on the host itself (the CLI,

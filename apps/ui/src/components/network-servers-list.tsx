@@ -82,6 +82,22 @@ const styles = StyleSheet.create((theme) => ({
     fontSize: theme.fontSize.base,
     marginTop: theme.spacing[1],
   },
+  rowHint: {
+    color: theme.colors.foregroundMuted,
+    fontSize: theme.fontSize.sm,
+    marginTop: theme.spacing[1],
+  },
+  badge: {
+    paddingHorizontal: theme.spacing[3],
+    paddingVertical: theme.spacing[1],
+    borderRadius: theme.borderRadius.full,
+    backgroundColor: theme.colors.surface3,
+  },
+  badgeText: {
+    color: theme.colors.foreground,
+    fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.medium,
+  },
 }));
 
 function describeServer(server: DiscoveredServer): { title: string; subtext: string } {
@@ -144,6 +160,29 @@ function NetworkServerRow({
   const handlePress = useCallback(() => {
     void handleConnect();
   }, [handleConnect]);
+
+  // An unclaimed daemon refuses LAN clients until one redeems a pairing link,
+  // so a bare Connect would only fail with 401: point at the link instead.
+  if (server.pairingRequired) {
+    return (
+      <View style={styles.row} testID={`network-server-${server.endpoint}`}>
+        <View style={styles.rowBody}>
+          <Text style={styles.rowTitle} numberOfLines={1}>
+            {title}
+          </Text>
+          <Text style={styles.rowSubtext} numberOfLines={1}>
+            {subtext}
+          </Text>
+          <Text style={styles.rowHint} testID={`network-server-${server.endpoint}-pairing-hint`}>
+            {t("pairing.networkScan.pairingHint")}
+          </Text>
+        </View>
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>{t("pairing.networkScan.needsPairing")}</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.row} testID={`network-server-${server.endpoint}`}>

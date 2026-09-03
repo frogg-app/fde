@@ -40,14 +40,28 @@ localhost does not turn LAN visitors into loopback clients.
 **Claiming** is the first direct pairing. The claim page (or `fde daemon pair` with relay
 off) hands out a v3 connection offer: `{ v: 3, serverId, hostname, daemonPublicKeyB64,
 direct: { endpoints }, claim: { token, expiresAt }, relay? }` encoded as
-`<app.baseUrl>/#offer=<base64url>`. The token is single-use and expires after ten minutes.
-The client connects to one of the endpoints and `POST /api/setup/claim { token, label }`;
-the daemon mints a principal with all permissions and one credential, returns the plaintext
-credential once, and stores only its SHA-256 in `principals.json` (mode 0600). From then on
-the credential is the bearer for that device (`Authorization: Bearer …`, or the
-`paseo.bearer.<credential>` WebSocket subprotocol, the same slot a password uses), and the
-daemon is claimed. Anyone who can reach an unclaimed daemon on the network can claim it;
-that is no wider than the pre-gate behavior, where they could already control it.
+`<app.baseUrl>#offer=<base64url>`, which with the default `app.baseUrl` is
+`https://frogg.app/pair#offer=…`. The payload lives in the URL fragment, so the page host
+never receives it; the same payload is also offered as the app deep link
+`paseo://pair#offer=…` (the gate page's "Open in FDE app" button, and `deepLink` in
+`fde daemon pair --json`), which the desktop shell routes straight into the app. The token is
+single-use and expires after ten minutes.
+
+The app (`apps/ui/src/pairing/`) parses either form with `parseAnyConnectionOfferFromUrl`,
+probes each of `direct.endpoints` with `GET /api/identity` and keeps only one whose
+`serverId` matches the offer (an endpoint on one of the device's own /24 subnets is tried
+first), then `POST /api/setup/claim { token, label }` with a device label such as
+`FDE Desktop on <machine>`. The daemon mints a principal with all permissions and one
+credential, returns the plaintext credential once, and stores only its SHA-256 in
+`principals.json` (mode 0600). The app stores that credential as the `password` of a
+`directTcp` host connection, so from then on it is the bearer for that device
+(`Authorization: Bearer …`, or the `paseo.bearer.<credential>` WebSocket subprotocol, the
+same slot a password uses), and the daemon is claimed. A used or expired token answers 403
+and the app asks for a new link; when no endpoint answers it lists the ones it tried and
+lets the user type another; an endpoint that answers with a different `serverId` is
+reported as a mismatch rather than claimed. Anyone who can reach an unclaimed daemon on the
+network can claim it; that is no wider than the pre-gate behavior, where they could already
+control it.
 
 Related surfaces:
 

@@ -3,6 +3,7 @@ import { Command, Option } from "commander";
 import { writeFileSync } from "node:fs";
 import path from "node:path";
 import { loadPersistedConfig, type PersistedConfig } from "@fde/server";
+import { buildPairingDeepLink } from "@fde/protocol/connection-offer";
 import {
   resolveLocalPaseoHome,
   resolveLocalDaemonState,
@@ -287,7 +288,7 @@ function printNextSteps(pairingUrl: string | null, paseoHome: string, richUi: bo
     pairingUrl
       ? "1. Open FDE and scan the QR code above, or paste the pairing link."
       : "1. Open FDE and connect to your daemon.",
-    "2. Web app: https://app.paseo.sh",
+    "2. Pairing links open in the FDE desktop app directly (https://frogg.app/pair#offer=…).",
     "3. Desktop app: https://github.com/frogg-app/frogg-de/releases/latest",
     "4. Docs: https://paseo.sh/docs",
     '5. Example: paseo run --output-schema schema.json "extract fields"',
@@ -520,6 +521,7 @@ export async function runOnboard(options: OnboardOptions): Promise<void> {
       url: pairing.url,
       qr: pairing.qr,
       columns: process.stdout.columns,
+      deepLink: buildPairingDeepLink(pairing.url),
     }),
   );
   printNextSteps(pairing.url, paseoHome, richUi);

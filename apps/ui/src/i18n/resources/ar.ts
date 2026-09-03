@@ -1608,11 +1608,11 @@ export const ar: TranslationResources = {
       },
       scanQr: {
         title: "مسح رمز QR",
-        description: "اتصال التتابع المشفر.",
+        description: "امتلك خادم FDE جديدًا، أو اقترن عبر المرحّل المشفّر.",
       },
       pasteLink: {
         title: "الصق رابط الاقتران",
-        description: "اتصال التتابع المشفر.",
+        description: "امتلك خادم FDE جديدًا، أو اقترن عبر المرحّل المشفّر.",
       },
     },
     networkScan: {
@@ -1623,6 +1623,40 @@ export const ar: TranslationResources = {
       rescan: "إعادة الفحص",
       connect: "اتصال",
       connecting: "جارٍ الاتصال…",
+      needsPairing: "يحتاج إلى اقتران",
+      pairingHint:
+        "احصل على رابط اقتران: شغّل `fde daemon pair` على المضيف أو افتح عنوانه على الويب، ثم امسحه أو الصقه هنا.",
+    },
+    claim: {
+      title: "الاقتران بخادم FDE",
+      thisDaemon: "خادم FDE هذا",
+      claiming: "جارٍ الاقتران بـ {{host}}…",
+      explainer: "لم يُمتلك خادم FDE هذا بعد. الاقتران يجعل هذا الجهاز مالكه الأول.",
+      successTitle: "تم الاقتران",
+      successBody:
+        "أصبح هذا الجهاز المالك الأول لـ {{host}}. تحتاج الأجهزة الأخرى إلى رابط اقتران جديد.",
+      successRelayBody: "تمت إضافة {{host}} عبر المرحّل المشفّر.",
+      noPendingOffer:
+        "افتح رابط اقتران (https://frogg.app/pair#offer=…) أو الصق واحدًا من «إضافة اتصال».",
+      newLinkHint:
+        "رموز الاقتران تُستخدم مرة واحدة وتنتهي صلاحيتها بعد عشر دقائق. احصل على رمز جديد: شغّل `fde daemon pair` على المضيف أو أعد تحميل عنوانه على الويب.",
+      triedEndpoints: "تمت المحاولة:",
+      manualEndpointHelper:
+        "إذا كان الخادم متاحًا على عنوان آخر (VPN أو Docker أو واجهة مختلفة)، فأدخله بصيغة host:port.",
+      manualEndpointLabel: "عنوان الخادم",
+      errors: {
+        expired: "انتهت صلاحية رمز الاقتران هذا.",
+        tokenRejected: "رمز الاقتران هذا مستخدم من قبل أو منتهي الصلاحية.",
+        unreachable: "لم يستجب أي من عناوين الخادم.",
+        identityMismatch:
+          "الخادم على هذا العنوان ليس الذي أُنشئ هذا الرابط له. تحقق من العنوان أو احصل على رابط جديد من المضيف الصحيح.",
+        claimFailed: "رفض الخادم طلب الاقتران.",
+      },
+      actions: {
+        done: "تم",
+        back: "رجوع",
+        tryAddress: "جرّب العنوان",
+      },
     },
     direct: {
       title: "اتصال مباشر",
@@ -1717,10 +1751,11 @@ export const ar: TranslationResources = {
     },
     link: {
       title: "الصق رابط الاقتران",
-      helper: "الصق رابط الاقتران من الخادم الخاص بك.",
+      helper:
+        "الصق الرابط من صفحة امتلاك الخادم أو من `fde daemon pair`. يمتلك خادمَ FDE الجديد أولُ جهاز يقترن به.",
       label: "رابط الاقتران",
       errors: {
-        required: "الصق رابط الاقتران (.../#offer=...)",
+        required: "الصق رابط الاقتران (…/pair#offer=…)",
         missingOffer: "يجب أن يتضمن الرابط #offer=...",
         emptyOffer: "حمولة العرض فارغة",
         invalid: "رابط الاقتران غير صالح",

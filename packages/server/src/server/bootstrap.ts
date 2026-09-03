@@ -212,6 +212,7 @@ import {
   type ClaimOfferSource,
 } from "./claim-offer.js";
 import { renderClaimGatePage } from "./claim-gate-page.js";
+import { DEFAULT_PAIRING_BASE_URL } from "@fde/protocol/connection-offer";
 import { createIdentityRouteHandler } from "./identity-route.js";
 import { mountSetupRoutes } from "./setup-routes.js";
 import { WorkspaceAutoName } from "./workspace-auto-name.js";
@@ -586,7 +587,7 @@ function createInitialMutableDaemonConfig(config: PaseoDaemonConfig): MutableDae
     cors: { allowedOrigins: config.corsAllowedOrigins },
     trustedProxies: config.trustedProxies ?? ["loopback"],
     git: config.git ?? resolveGitProcessPolicy({ env: process.env }),
-    app: { baseUrl: config.appBaseUrl ?? "https://app.paseo.sh" },
+    app: { baseUrl: config.appBaseUrl ?? DEFAULT_PAIRING_BASE_URL },
     ...(config.providerCatalogRefreshTimeoutMs !== undefined
       ? { catalogRefreshTimeoutMs: config.providerCatalogRefreshTimeoutMs }
       : {}),
@@ -720,12 +721,12 @@ export async function createPaseoDaemon(
   const scriptRuntimeStore = new WorkspaceScriptRuntimeStore();
   const workspaceSetupRuntime = new WorkspaceSetupRuntime();
   let configuredHostnames = config.hostnames ?? config.allowedHosts;
-  let appBaseUrl = config.appBaseUrl ?? "https://app.paseo.sh";
+  let appBaseUrl = config.appBaseUrl ?? DEFAULT_PAIRING_BASE_URL;
   daemonConfigStore.onFieldChange("hostnames", (value) => {
     configuredHostnames = value as HostnamesConfig | undefined;
   });
   daemonConfigStore.onFieldChange("app.baseUrl", (value) => {
-    appBaseUrl = typeof value === "string" ? value : "https://app.paseo.sh";
+    appBaseUrl = typeof value === "string" ? value : DEFAULT_PAIRING_BASE_URL;
   });
   let wsServer: VoiceAssistantWebSocketServer | null = null;
   let serviceProxyListenTarget: ListenTarget | null = null;

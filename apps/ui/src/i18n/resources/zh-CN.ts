@@ -1592,11 +1592,11 @@ export const zhCN: TranslationResources = {
       },
       scanQr: {
         title: "扫描二维码",
-        description: "加密 relay 连接。",
+        description: "认领新的 FDE 守护进程，或通过加密中继配对。",
       },
       pasteLink: {
         title: "粘贴配对链接",
-        description: "加密 relay 连接。",
+        description: "认领新的 FDE 守护进程，或通过加密中继配对。",
       },
     },
     networkScan: {
@@ -1607,6 +1607,38 @@ export const zhCN: TranslationResources = {
       rescan: "重新扫描",
       connect: "连接",
       connecting: "连接中…",
+      needsPairing: "需要配对",
+      pairingHint:
+        "获取配对链接：在主机上运行 `fde daemon pair`，或打开其网页地址，然后在此扫描或粘贴。",
+    },
+    claim: {
+      title: "与 FDE 守护进程配对",
+      thisDaemon: "此 FDE 守护进程",
+      claiming: "正在与 {{host}} 配对…",
+      explainer: "此 FDE 守护进程尚未被认领。配对后，此设备将成为它的第一位所有者。",
+      successTitle: "已配对",
+      successBody: "此设备现已成为 {{host}} 的第一位所有者。其他设备需要新的配对链接。",
+      successRelayBody: "已通过加密中继添加 {{host}}。",
+      noPendingOffer: "打开配对链接 (https://frogg.app/pair#offer=…)，或在“添加连接”中粘贴一个。",
+      newLinkHint:
+        "配对码仅可使用一次，十分钟后过期。获取新配对码：在主机上运行 `fde daemon pair`，或刷新其网页地址。",
+      triedEndpoints: "已尝试：",
+      manualEndpointHelper:
+        "如果守护进程可通过其他地址访问（VPN、Docker、其他网卡），请以 host:port 形式输入。",
+      manualEndpointLabel: "守护进程地址",
+      errors: {
+        expired: "此配对码已过期。",
+        tokenRejected: "此配对码已被使用或已过期。",
+        unreachable: "守护进程的所有地址均无响应。",
+        identityMismatch:
+          "该地址上的守护进程不是此链接所对应的那个。请检查地址，或从正确的主机获取新链接。",
+        claimFailed: "守护进程拒绝了配对请求。",
+      },
+      actions: {
+        done: "完成",
+        back: "返回",
+        tryAddress: "尝试此地址",
+      },
     },
     direct: {
       title: "直接连接",
@@ -1696,10 +1728,11 @@ export const zhCN: TranslationResources = {
     },
     link: {
       title: "粘贴配对链接",
-      helper: "粘贴来自 server 的配对链接。",
+      helper:
+        "粘贴守护进程认领页面或 `fde daemon pair` 给出的链接。新的 FDE 守护进程归第一个配对的设备所有。",
       label: "配对链接",
       errors: {
-        required: "请粘贴配对链接（.../#offer=...）",
+        required: "请粘贴配对链接 (…/pair#offer=…)",
         missingOffer: "链接必须包含 #offer=...",
         emptyOffer: "Offer payload 为空",
         invalid: "无效的配对链接",

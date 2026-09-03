@@ -1658,11 +1658,11 @@ export const fr: TranslationResources = {
       },
       scanQr: {
         title: "Scanner le codeQR",
-        description: "Connexion relais cryptée.",
+        description: "Revendiquer un nouveau daemon FDE, ou appairer via le relais chiffré.",
       },
       pasteLink: {
         title: "Coller le lien d'association",
-        description: "Connexion relais cryptée.",
+        description: "Revendiquer un nouveau daemon FDE, ou appairer via le relais chiffré.",
       },
     },
     networkScan: {
@@ -1673,6 +1673,41 @@ export const fr: TranslationResources = {
       rescan: "Analyser à nouveau",
       connect: "Se connecter",
       connecting: "Connexion…",
+      needsPairing: "Appairage requis",
+      pairingHint:
+        "Obtenez un lien d'appairage : lancez `fde daemon pair` sur l'hôte ou ouvrez son adresse web, puis scannez-le ou collez-le ici.",
+    },
+    claim: {
+      title: "Appairer avec un daemon FDE",
+      thisDaemon: "ce daemon FDE",
+      claiming: "Appairage avec {{host}}…",
+      explainer:
+        "Ce daemon FDE n'a pas encore été revendiqué. L'appairage fait de cet appareil son premier propriétaire.",
+      successTitle: "Appairé",
+      successBody:
+        "Cet appareil est désormais le premier propriétaire de {{host}}. Les autres appareils auront besoin d'un nouveau lien d'appairage.",
+      successRelayBody: "{{host}} a été ajouté via le relais chiffré.",
+      noPendingOffer:
+        "Ouvrez un lien d'appairage (https://frogg.app/pair#offer=…) ou collez-en un depuis Ajouter une connexion.",
+      newLinkHint:
+        "Les codes d'appairage sont à usage unique et expirent après dix minutes. Obtenez-en un nouveau : lancez `fde daemon pair` sur l'hôte ou rechargez son adresse web.",
+      triedEndpoints: "Essayé :",
+      manualEndpointHelper:
+        "Si le daemon est joignable à une autre adresse (VPN, Docker, autre interface), saisissez-la sous la forme hôte:port.",
+      manualEndpointLabel: "Adresse du daemon",
+      errors: {
+        expired: "Ce code d'appairage a expiré.",
+        tokenRejected: "Ce code d'appairage a déjà été utilisé ou a expiré.",
+        unreachable: "Aucune des adresses du daemon n'a répondu.",
+        identityMismatch:
+          "Le daemon à cette adresse n'est pas celui pour lequel ce lien a été créé. Vérifiez l'adresse ou demandez un nouveau lien au bon hôte.",
+        claimFailed: "Le daemon a refusé la demande d'appairage.",
+      },
+      actions: {
+        done: "Terminé",
+        back: "Retour",
+        tryAddress: "Essayer l'adresse",
+      },
     },
     direct: {
       title: "Connexion directe",
@@ -1768,10 +1803,11 @@ export const fr: TranslationResources = {
     },
     link: {
       title: "Coller le lien d'association",
-      helper: "Collez le lien d'appairage depuis votre serveur.",
+      helper:
+        "Collez le lien de la page de revendication du daemon ou de `fde daemon pair`. Un nouveau daemon FDE est revendiqué par le premier appareil qui s'appaire.",
       label: "Lien d'appariement",
       errors: {
-        required: "Collez un lien d'appairage (.../#offer=...)",
+        required: "Collez un lien d'appairage (…/pair#offer=…)",
         missingOffer: "Le lien doit inclure#offer=...",
         emptyOffer: "La charge utile de l'offre est vide",
         invalid: "Lien d'association invalide",

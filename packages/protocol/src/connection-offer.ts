@@ -74,6 +74,67 @@ export function decodeOfferFragmentPayload(encoded: string): unknown {
 
 const OFFER_FRAGMENT_PREFIX = "#offer=";
 
+/**
+ * Where FDE pairing links point: `https://frogg.app/pair#offer=<payload>`. The
+ * payload stays in the fragment, so the page host never receives it. This is
+ * the daemon's default `app.baseUrl`.
+ */
+export const DEFAULT_PAIRING_BASE_URL = "https://frogg.app/pair";
+
+/**
+ * The same payload as an app deep link, `paseo://pair#offer=<payload>`. The
+ * scheme stays `paseo` because the desktop shell already registers it.
+ */
+export const PAIRING_DEEP_LINK_SCHEME = "paseo";
+export const PAIRING_DEEP_LINK_BASE = `${PAIRING_DEEP_LINK_SCHEME}://pair`;
+
+function encodeUtf8ToBase64Url(input: string): string {
+  const bytes = new TextEncoder().encode(input);
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return globalThis.btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+export function encodeOfferFragmentPayload(offer: AnyConnectionOffer): string {
+  return encodeUtf8ToBase64Url(JSON.stringify(offer));
+}
+
+/**
+ * Joins a base URL and an encoded offer. A bare origin keeps Paseo's
+ * `https://host/#offer=` shape; a base with a path becomes `…/pair#offer=`.
+ */
+export function buildOfferFragmentUrl(baseUrl: string, encoded: string): string {
+  const base = baseUrl.trim().replace(/\/+$/, "");
+  let hasPath = false;
+  try {
+    hasPath = new URL(base).pathname.replace(/\/+$/, "").length > 0;
+  } catch {
+    hasPath = false;
+  }
+  return `${base}${hasPath ? "" : "/"}${OFFER_FRAGMENT_PREFIX}${encoded}`;
+}
+
+/** `paseo://pair#offer=<payload>` for any link or fragment carrying an offer; null without one. */
+export function buildPairingDeepLink(offerUrlOrFragment: string): string | null {
+  const encoded = extractOfferFragmentEncoded(offerUrlOrFragment);
+  return encoded ? `${PAIRING_DEEP_LINK_BASE}${OFFER_FRAGMENT_PREFIX}${encoded}` : null;
+}
+
+/** True for `paseo://pair#offer=…` (a trailing slash before the fragment is tolerated). */
+export function isPairingDeepLink(input: string): boolean {
+  const trimmed = input.trim();
+  return (
+    (trimmed.startsWith(`${PAIRING_DEEP_LINK_BASE}#`) ||
+      trimmed.startsWith(`${PAIRING_DEEP_LINK_BASE}/#`)) &&
+    extractOfferFragmentEncoded(trimmed) !== null
+  );
+}
+
+/** True when the input carries an `#offer=` fragment with a non-empty payload. */
+export function hasOfferFragment(input: string): boolean {
+  return extractOfferFragmentEncoded(input) !== null;
+}
+
 function extractOfferFragmentEncoded(input: string): string | null {
   const trimmed = input.trim();
   if (!trimmed) return null;
@@ -84,7 +145,8 @@ function extractOfferFragmentEncoded(input: string): string | null {
 }
 
 /**
- * Parse a pairing-offer URL of the form `https://app.paseo.sh/#offer=<base64url>`.
+ * Parse a pairing-offer URL of the form `https://frogg.app/pair#offer=<base64url>`
+ * (or Paseo's `https://app.paseo.sh/#offer=…`, or `paseo://pair#offer=…`).
  *
  * Returns `null` if the input has no `#offer=` fragment. Throws if the fragment
  * exists but the payload is malformed or fails schema validation.

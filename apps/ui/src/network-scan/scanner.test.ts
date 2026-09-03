@@ -11,6 +11,7 @@ function server(overrides: Partial<DiscoveredServer> & { ip: string }): Discover
     version: null,
     serverId: null,
     source: "health",
+    pairingRequired: null,
     ...overrides,
   };
 }
@@ -119,7 +120,25 @@ describe("probeDaemon", () => {
       version: "0.4.1",
       serverId: "srv_1",
       source: "identity",
+      pairingRequired: null,
     });
+  });
+
+  it("reports pairingRequired from an unclaimed daemon's identity", async () => {
+    const found = await probeDaemon(
+      { ip: "10.0.0.6", port: 9999 },
+      {
+        fetchImpl: async () =>
+          jsonResponse(200, {
+            serverId: "srv_unclaimed",
+            hostname: "newbox",
+            version: "0.1.12",
+            product: "fde",
+            pairingRequired: true,
+          }),
+      },
+    );
+    expect(found).toMatchObject({ serverId: "srv_unclaimed", pairingRequired: true });
   });
 
   it("falls back to /api/health on older daemons", async () => {
@@ -160,7 +179,11 @@ describe("probeDaemon", () => {
       hostname: null,
       version: "1.2.3",
       product: null,
+      pairingRequired: null,
     });
+    expect(
+      parseDaemonIdentity({ serverId: "srv", product: "fde", pairingRequired: true }),
+    ).toMatchObject({ serverId: "srv", pairingRequired: true });
     expect(parseDaemonIdentity({})).toBeNull();
     expect(parseDaemonIdentity("nope")).toBeNull();
     expect(parseDaemonHealth({ status: "ok" })).toBe(true);
