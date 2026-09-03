@@ -4,6 +4,7 @@ import type { PersistedConfig } from "../persisted-config.js";
 import type { PaseoOpenAIConfig, PaseoSpeechConfig } from "../bootstrap.js";
 import { resolveLocalSpeechConfig } from "./providers/local/config.js";
 import { resolveOpenAiSpeechConfig } from "./providers/openai/config.js";
+import { resolveSherpaLoaderEnv } from "./providers/local/sherpa/sherpa-runtime-env.js";
 import {
   SpeechProviderIdSchema,
   type RequestedSpeechProvider,
@@ -43,8 +44,35 @@ const RequestedSpeechProvidersSchema = z.object({
   voiceTts: OptionalSpeechProviderSchema.default("local"),
 });
 
-function resolveOptionalBooleanFlag(value: unknown): boolean {
-  return OptionalBooleanFlagSchema.parse(value) ?? true;
+function parseOptionalBooleanFlag(value: unknown): boolean | undefined {
+  return OptionalBooleanFlagSchema.parse(value);
+}
+
+/**
+ * Voice defaults on, but only when the local speech runtime (the sherpa-onnx
+ * platform package) is present: a bundle without it would otherwise start a
+ * worker that can only fail. Precedence for each feature:
+ *
+ * 1. `PASEO_VOICE=0` / `features.voice.enabled=false` turns everything off
+ * 2. the fine-grained key (`PASEO_DICTATION_ENABLED`, `features.dictation.enabled`, ...)
+ * 3. `PASEO_VOICE=1` / `features.voice.enabled=true`
+ * 4. whether the local runtime is available
+ */
+export interface VoiceDefaultsInput {
+  umbrella: boolean | undefined;
+  localRuntimeAvailable: boolean;
+}
+
+export function resolveVoiceFeatureEnabled(
+  fineGrained: boolean | undefined,
+  defaults: VoiceDefaultsInput,
+): boolean {
+  if (defaults.umbrella === false) return false;
+  return fineGrained ?? defaults.umbrella ?? defaults.localRuntimeAvailable;
+}
+
+export function isLocalSpeechRuntimeAvailable(): boolean {
+  return resolveSherpaLoaderEnv() !== null;
 }
 
 interface FeatureProviderInputs {
@@ -64,12 +92,25 @@ function firstSpeechDefinedValue<T>(values: Array<T | null | undefined>): T | un
 function buildFeatureProviderInputs(params: {
   env: NodeJS.ProcessEnv;
   persisted: PersistedConfig;
+  localRuntimeAvailable: boolean;
 }): Record<keyof RequestedSpeechProviders, FeatureProviderInputs> {
-  const voiceModeEnabled = resolveOptionalBooleanFlag(
-    firstSpeechDefinedValue<string | boolean>([
-      params.env.PASEO_VOICE_MODE_ENABLED,
-      params.persisted.features?.voiceMode?.enabled,
-    ]),
+  const defaults: VoiceDefaultsInput = {
+    umbrella: parseOptionalBooleanFlag(
+      firstSpeechDefinedValue<string | boolean>([
+        params.env.PASEO_VOICE,
+        params.persisted.features?.voice?.enabled,
+      ]),
+    ),
+    localRuntimeAvailable: params.localRuntimeAvailable,
+  };
+  const voiceModeEnabled = resolveVoiceFeatureEnabled(
+    parseOptionalBooleanFlag(
+      firstSpeechDefinedValue<string | boolean>([
+        params.env.PASEO_VOICE_MODE_ENABLED,
+        params.persisted.features?.voiceMode?.enabled,
+      ]),
+    ),
+    defaults,
   );
   return {
     dictationStt: {
@@ -77,11 +118,14 @@ function buildFeatureProviderInputs(params: {
         params.env.PASEO_DICTATION_STT_PROVIDER,
         params.persisted.features?.dictation?.stt?.provider,
       ]),
-      enabled: resolveOptionalBooleanFlag(
-        firstSpeechDefinedValue<string | boolean>([
-          params.env.PASEO_DICTATION_ENABLED,
-          params.persisted.features?.dictation?.enabled,
-        ]),
+      enabled: resolveVoiceFeatureEnabled(
+        parseOptionalBooleanFlag(
+          firstSpeechDefinedValue<string | boolean>([
+            params.env.PASEO_DICTATION_ENABLED,
+            params.persisted.features?.dictation?.enabled,
+          ]),
+        ),
+        defaults,
       ),
     },
     voiceTurnDetection: {
@@ -122,6 +166,7 @@ function buildRequestedFeatureProvider(
 function resolveRequestedSpeechProviders(params: {
   env: NodeJS.ProcessEnv;
   persisted: PersistedConfig;
+  localRuntimeAvailable: boolean;
 }): RequestedSpeechProviders {
   const featureProviders = buildFeatureProviderInputs(params);
 
@@ -147,6 +192,8 @@ export function resolveSpeechConfig(params: {
   paseoHome: string;
   env: NodeJS.ProcessEnv;
   persisted: PersistedConfig;
+  /** Defaults to probing for the sherpa-onnx platform package. */
+  localRuntimeAvailable?: boolean;
 }): {
   openai: PaseoOpenAIConfig | undefined;
   speech: PaseoSpeechConfig;
@@ -154,6 +201,7 @@ export function resolveSpeechConfig(params: {
   const providers = resolveRequestedSpeechProviders({
     env: params.env,
     persisted: params.persisted,
+    localRuntimeAvailable: params.localRuntimeAvailable ?? isLocalSpeechRuntimeAvailable(),
   });
 
   const local = resolveLocalSpeechConfig({

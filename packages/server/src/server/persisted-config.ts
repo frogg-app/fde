@@ -324,6 +324,8 @@ export const PersistedConfigSchema = z
       .optional(),
     features: z
       .object({
+        // Umbrella switch for dictation + voice mode; `false` turns both off.
+        voice: z.object({ enabled: z.boolean().optional() }).strict().optional(),
         dictation: FeatureDictationSchema.optional(),
         voiceMode: FeatureVoiceModeSchema.optional(),
         webUi: FeatureWebUiSchema.optional(),

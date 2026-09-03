@@ -41,6 +41,12 @@ type OnboardPersistedConfig = PersistedConfig & {
 
 const DEFAULT_READY_TIMEOUT_MS = 10 * 60 * 1000;
 const READY_PROBE_TIMEOUT_MS = 1200;
+/**
+ * Voice is on by default: the daemon bundle ships the local speech runtime and
+ * models download on first use. `--voice disable`, `PASEO_VOICE=0`, or
+ * `features.voice.enabled=false` opt out.
+ */
+export const DEFAULT_VOICE_ENABLED = true;
 
 class OnboardCancelledError extends Error {}
 
@@ -117,15 +123,18 @@ async function resolveVoiceSelection(mode: OnboardOptions["voice"]): Promise<boo
   }
 
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
-    log.message("Non-interactive terminal detected; voice setup defaults to disabled.");
-    return false;
+    log.message(
+      `Non-interactive terminal detected; voice setup defaults to ${DEFAULT_VOICE_ENABLED ? "enabled" : "disabled"}.`,
+    );
+    return DEFAULT_VOICE_ENABLED;
   }
 
   const answer = await confirm({
-    message: "Enable voice features? (downloads local STT/TTS models in background)",
+    message:
+      "Enable voice features? (on by default; downloads local STT/TTS models in the background)",
     active: "Yes",
     inactive: "No",
-    initialValue: false,
+    initialValue: DEFAULT_VOICE_ENABLED,
   });
 
   if (isCancel(answer)) {
@@ -315,7 +324,7 @@ export function onboardCommand(): Command {
     )
     .addOption(new Option("--allowed-hosts <hosts>").hideHelp())
     .option("--timeout <seconds>", "Max time to wait for daemon readiness (default: 600)")
-    .option("--voice <mode>", "Voice setup mode: ask, enable, disable", "ask")
+    .option("--voice <mode>", "Voice setup mode: ask, enable, disable (default: enabled)", "ask")
     .action(async (options: RawOnboardOptions) => {
       await runOnboard({
         ...options,
