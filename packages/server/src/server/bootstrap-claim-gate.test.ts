@@ -8,11 +8,13 @@ import { parseAnyConnectionOfferFromUrl } from "@fde/protocol/connection-offer";
 import { createTestPaseoDaemon, type TestPaseoDaemon } from "./test-utils/paseo-daemon.js";
 
 /**
- * The test daemon binds 127.0.0.1, so a "remote" visitor is simulated with
+ * The test daemon binds 127.0.0.1, so a remote visitor is simulated with
  * X-Forwarded-For: the default trusted proxy setting is `loopback`, exactly the
- * reverse-proxy-on-localhost case the gate has to see through.
+ * reverse-proxy-on-localhost case the gate has to see through. `LAN` is a
+ * private address (trusted by default), `PUBLIC` a routable one (never trusted).
  */
-const REMOTE = { "x-forwarded-for": "192.168.1.23" };
+const LAN = { "x-forwarded-for": "192.168.1.10" };
+const PUBLIC = { "x-forwarded-for": "203.0.113.5" };
 const CORRECT_PASSWORD_HASH = "$2b$12$OLxyuuP9uLK30Uzc4wQX0O6liuU/Q1t5P2b0Ebf36mULvpVK3DRZW";
 
 function extractPairingUrl(html: string): string {
@@ -47,7 +49,9 @@ describe("first-run claim gate", () => {
   let tempRoot: string | null = null;
   let daemonHandle: TestPaseoDaemon | null = null;
 
-  async function startDaemon(options: { password?: string } = {}): Promise<TestPaseoDaemon> {
+  async function startDaemon(
+    options: { password?: string; trustLan?: boolean } = {},
+  ): Promise<TestPaseoDaemon> {
     tempRoot = await mkdtemp(path.join(os.tmpdir(), "fde-claim-gate-"));
     const distDir = path.join(tempRoot, "dist");
     await mkdir(distDir, { recursive: true });
@@ -58,6 +62,7 @@ describe("first-run claim gate", () => {
     daemonHandle = await createTestPaseoDaemon({
       mcpEnabled: false,
       webUi: { enabled: true, distDir },
+      trustLan: options.trustLan,
       ...(options.password ? { auth: { password: options.password } } : {}),
     });
     return daemonHandle;
@@ -72,14 +77,15 @@ describe("first-run claim gate", () => {
     }
   });
 
-  test("serves the claim page to remote visitors, the app to loopback, and the app after claiming", async () => {
+  test("serves the claim page to public visitors, the app to loopback, and the app after claiming", async () => {
     const { port, daemon } = await startDaemon();
     const base = `http://127.0.0.1:${port}`;
 
-    const identity = await (await fetch(`${base}/api/identity`, { headers: REMOTE })).json();
+    const identity = await (await fetch(`${base}/api/identity`, { headers: PUBLIC })).json();
     expect(identity).toMatchObject({
       product: "fde",
       pairingRequired: true,
+      lanTrusted: true,
       listen: `127.0.0.1:${port}`,
     });
 
@@ -87,7 +93,7 @@ describe("first-run claim gate", () => {
     expect(loopback.status).toBe(200);
     expect(await loopback.text()).toContain("the app");
 
-    const gated = await fetch(`${base}/some/deep/link`, { headers: REMOTE });
+    const gated = await fetch(`${base}/some/deep/link`, { headers: PUBLIC });
     expect(gated.status).toBe(200);
     expect(gated.headers.get("cache-control")).toContain("no-store");
     const html = await gated.text();
@@ -95,11 +101,11 @@ describe("first-run claim gate", () => {
     expect(html).toContain("#25B5C8");
     expect(html).toContain("<svg");
 
-    // Remote API and WebSocket access is locked while unclaimed.
-    const lockedApi = await fetch(`${base}/api/status`, { headers: REMOTE });
+    // Public API and WebSocket access is locked while unclaimed.
+    const lockedApi = await fetch(`${base}/api/status`, { headers: PUBLIC });
     expect(lockedApi.status).toBe(401);
     expect(await lockedApi.json()).toEqual({ error: "Unauthorized", setup: "unclaimed" });
-    expect(await wsClose(port, REMOTE)).toEqual({ code: 4401, reason: "Pairing required" });
+    expect(await wsClose(port, PUBLIC)).toEqual({ code: 4401, reason: "Pairing required" });
     // Loopback keeps working as before.
     expect((await fetch(`${base}/api/status`)).status).toBe(200);
     expect(await wsClose(port, {})).toBe("open");
@@ -109,12 +115,12 @@ describe("first-run claim gate", () => {
     expect(offer.direct.endpoints[0]).toBe(`127.0.0.1:${port}`);
     expect(offer.serverId).toBe(identity.serverId);
 
-    const status = await (await fetch(`${base}/api/setup/status`, { headers: REMOTE })).json();
+    const status = await (await fetch(`${base}/api/setup/status`, { headers: PUBLIC })).json();
     expect(status).toEqual({ claimed: false, pairingRequired: true });
 
     const claimed = await fetch(`${base}/api/setup/claim`, {
       method: "POST",
-      headers: { ...REMOTE, "content-type": "application/json" },
+      headers: { ...PUBLIC, "content-type": "application/json" },
       body: JSON.stringify({ token: offer.claim.token, label: "Phone" }),
     });
     expect(claimed.status).toBe(201);
@@ -126,51 +132,105 @@ describe("first-run claim gate", () => {
     // The token was single-use.
     const replay = await fetch(`${base}/api/setup/claim`, {
       method: "POST",
-      headers: { ...REMOTE, "content-type": "application/json" },
+      headers: { ...PUBLIC, "content-type": "application/json" },
       body: JSON.stringify({ token: offer.claim.token }),
     });
     expect(replay.status).toBe(403);
 
-    const afterClaim = await fetch(`${base}/`, { headers: REMOTE });
+    const afterClaim = await fetch(`${base}/`, { headers: PUBLIC });
     expect(await afterClaim.text()).toContain("the app");
     expect((await (await fetch(`${base}/api/identity`)).json()).pairingRequired).toBe(false);
 
-    // The minted credential is the bearer for HTTP and WebSocket from remote clients.
+    // The minted credential is the bearer for HTTP and WebSocket from public clients.
     const withCredential = await fetch(`${base}/api/status`, {
-      headers: { ...REMOTE, authorization: `Bearer ${minted.credential}` },
+      headers: { ...PUBLIC, authorization: `Bearer ${minted.credential}` },
     });
     expect(withCredential.status).toBe(200);
-    expect((await fetch(`${base}/api/status`, { headers: REMOTE })).status).toBe(401);
-    expect(await wsClose(port, REMOTE, `paseo.bearer.${minted.credential}`)).toBe("open");
-    expect(await wsClose(port, REMOTE, "paseo.bearer.wrong")).toEqual({
+    expect((await fetch(`${base}/api/status`, { headers: PUBLIC })).status).toBe(401);
+    expect(await wsClose(port, PUBLIC, `paseo.bearer.${minted.credential}`)).toBe("open");
+    expect(await wsClose(port, PUBLIC, "paseo.bearer.wrong")).toEqual({
       code: 4401,
       reason: "Incorrect password",
     });
 
-    // Paired clients can issue another offer; unauthenticated remote clients cannot.
+    // Paired clients can issue another offer; unauthenticated public clients cannot.
     const anotherOffer = await fetch(`${base}/api/setup/offer`, {
       method: "POST",
-      headers: { ...REMOTE, authorization: `Bearer ${minted.credential}` },
+      headers: { ...PUBLIC, authorization: `Bearer ${minted.credential}` },
     });
     expect(anotherOffer.status).toBe(200);
     expect((await anotherOffer.json()).claimed).toBe(true);
     expect(
-      (await fetch(`${base}/api/setup/offer`, { method: "POST", headers: REMOTE })).status,
+      (await fetch(`${base}/api/setup/offer`, { method: "POST", headers: PUBLIC })).status,
     ).toBe(401);
 
     // Reset (what `fde daemon reset-claim` does) brings the gate back without a restart.
     daemon.claimStore.reset();
-    expect(await (await fetch(`${base}/`, { headers: REMOTE })).text()).toContain(
+    expect(await (await fetch(`${base}/`, { headers: PUBLIC })).text()).toContain(
       "Claim this FDE daemon",
     );
+  });
+
+  test("a LAN visitor behind the trusted proxy is treated like loopback while trustLan is on", async () => {
+    const { port } = await startDaemon();
+    const base = `http://127.0.0.1:${port}`;
+
+    // No gate, no bearer: the LAN client gets the app, the API, and a WebSocket.
+    const identity = await (await fetch(`${base}/api/identity`, { headers: LAN })).json();
+    expect(identity).toMatchObject({ pairingRequired: false, lanTrusted: true });
+    expect(await (await fetch(`${base}/`, { headers: LAN })).text()).toContain("the app");
+    expect((await fetch(`${base}/api/status`, { headers: LAN })).status).toBe(200);
+    expect(await wsClose(port, LAN)).toBe("open");
+
+    // The same daemon still gates a public address.
+    expect(
+      (await (await fetch(`${base}/api/identity`, { headers: PUBLIC })).json()).pairingRequired,
+    ).toBe(true);
+    expect(await (await fetch(`${base}/`, { headers: PUBLIC })).text()).toContain(
+      "Claim this FDE daemon",
+    );
+    expect(await wsClose(port, PUBLIC)).toEqual({ code: 4401, reason: "Pairing required" });
+
+    // Pairing stays available to a LAN client that wants a credential of its own.
+    const offer = await fetch(`${base}/api/setup/offer`, { method: "POST", headers: LAN });
+    expect(offer.status).toBe(200);
+    const { url } = (await offer.json()) as { url: string };
+    const parsed = parseAnyConnectionOfferFromUrl(url);
+    if (!parsed || parsed.v !== 3) throw new Error("expected a v3 direct claim offer");
+    const claimed = await fetch(`${base}/api/setup/claim`, {
+      method: "POST",
+      headers: { ...LAN, "content-type": "application/json" },
+      body: JSON.stringify({ token: parsed.claim.token, label: "Laptop" }),
+    });
+    expect(claimed.status).toBe(201);
+    const minted = (await claimed.json()) as { credential: string };
+    expect(await wsClose(port, PUBLIC, `paseo.bearer.${minted.credential}`)).toBe("open");
+  });
+
+  test("with trustLan off a LAN visitor sees the gate and needs a bearer", async () => {
+    const { port } = await startDaemon({ trustLan: false });
+    const base = `http://127.0.0.1:${port}`;
+
+    const identity = await (await fetch(`${base}/api/identity`, { headers: LAN })).json();
+    expect(identity).toMatchObject({ pairingRequired: true, lanTrusted: false });
+    expect(await (await fetch(`${base}/`, { headers: LAN })).text()).toContain(
+      "Claim this FDE daemon",
+    );
+    expect((await fetch(`${base}/api/status`, { headers: LAN })).status).toBe(401);
+    expect(await wsClose(port, LAN)).toEqual({ code: 4401, reason: "Pairing required" });
+    // Loopback is never gated.
+    expect((await fetch(`${base}/api/status`)).status).toBe(200);
   });
 
   test("a configured password counts as claimed: no gate, password required everywhere", async () => {
     const { port } = await startDaemon({ password: CORRECT_PASSWORD_HASH });
     const base = `http://127.0.0.1:${port}`;
     expect((await (await fetch(`${base}/api/identity`)).json()).pairingRequired).toBe(false);
-    expect(await (await fetch(`${base}/`, { headers: REMOTE })).text()).toContain("the app");
+    expect(await (await fetch(`${base}/`, { headers: PUBLIC })).text()).toContain("the app");
     expect((await fetch(`${base}/api/status`)).status).toBe(401);
+    // The password is the opt-in lock: a trusted LAN client needs it too.
+    expect((await fetch(`${base}/api/status`, { headers: LAN })).status).toBe(401);
+    expect(await wsClose(port, LAN)).toEqual({ code: 4401, reason: "Password required" });
     expect(
       (await fetch(`${base}/api/status`, { headers: { authorization: "Bearer correct-password" } }))
         .status,

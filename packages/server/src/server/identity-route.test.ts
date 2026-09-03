@@ -1,6 +1,7 @@
 import express from "express";
 import http from "node:http";
 import { once } from "node:events";
+import type { IncomingMessage } from "node:http";
 import { afterEach, describe, expect, test } from "vitest";
 
 import { createIdentityRouteHandler, describeDaemonIdentity } from "./identity-route.js";
@@ -25,26 +26,39 @@ async function listen(app: express.Application): Promise<number> {
   return address.port;
 }
 
+const PUBLIC_REQUEST = {
+  headers: {},
+  socket: { remoteAddress: "203.0.113.5" },
+} as unknown as IncomingMessage;
+
 describe("GET /api/identity", () => {
-  test("describes the daemon and whether pairing is still required", () => {
+  test("describes the daemon and whether this requester still needs to pair", () => {
     let claimed = false;
+    let trusted = false;
     const deps = {
       serverId: "srv_test",
       version: "1.2.3",
       hostname: () => "devbox",
       listen: () => "0.0.0.0:9999",
       isClaimed: () => claimed,
+      trustLan: () => true,
+      isTrustedClient: () => trusted,
     };
-    expect(describeDaemonIdentity(deps)).toEqual({
+    expect(describeDaemonIdentity(deps, PUBLIC_REQUEST)).toEqual({
       product: "fde",
       serverId: "srv_test",
       hostname: "devbox",
       version: "1.2.3",
       listen: "0.0.0.0:9999",
       pairingRequired: true,
+      lanTrusted: true,
     });
+    // A loopback or trusted-LAN requester connects straight away while unclaimed.
+    trusted = true;
+    expect(describeDaemonIdentity(deps, PUBLIC_REQUEST).pairingRequired).toBe(false);
+    trusted = false;
     claimed = true;
-    expect(describeDaemonIdentity(deps).pairingRequired).toBe(false);
+    expect(describeDaemonIdentity(deps, PUBLIC_REQUEST).pairingRequired).toBe(false);
   });
 
   test("serves JSON with no-store caching", async () => {
@@ -57,6 +71,8 @@ describe("GET /api/identity", () => {
         hostname: () => "devbox",
         listen: () => null,
         isClaimed: () => false,
+        trustLan: () => false,
+        isTrustedClient: (req) => req.socket.remoteAddress === "127.0.0.1",
       }),
     );
     const port = await listen(app);
@@ -69,7 +85,8 @@ describe("GET /api/identity", () => {
       hostname: "devbox",
       version: "0.0.0",
       listen: null,
-      pairingRequired: true,
+      pairingRequired: false,
+      lanTrusted: false,
     });
   });
 });

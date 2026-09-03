@@ -1,6 +1,13 @@
-import { describe, expect, test } from "vitest";
+import { mkdtempSync, rmSync } from "node:fs";
+import type { IncomingMessage } from "node:http";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import { afterEach, describe, expect, test } from "vitest";
 
+import { createAccessPolicy, type DaemonAccessPolicy } from "./access-policy.js";
+import { createClaimStore } from "./claim-store.js";
 import {
+  authorizeBearerAsync,
   extractHttpBearerToken,
   extractWsBearerProtocol,
   extractWsBearerToken,
@@ -8,6 +15,7 @@ import {
   isAgentMcpRequestAuthorized,
   isBearerTokenValidAsync,
   isBearerTokenValid,
+  requestNeedsBearer,
   shouldBypassBearerAuth,
 } from "./auth.js";
 
@@ -119,5 +127,90 @@ describe("agent MCP request authorizer", () => {
         authorizationHeader: "Bearer wrong-token",
       }),
     ).toBe(false);
+  });
+});
+
+describe("bearer requirement by client locality", () => {
+  interface MatrixCase {
+    trustLan: boolean;
+    password: string | undefined;
+    client: "loopback" | "lan" | "public";
+    needsBearer: boolean;
+  }
+
+  const SOCKETS: Record<MatrixCase["client"], string> = {
+    loopback: "127.0.0.1",
+    lan: "::ffff:192.168.1.10",
+    public: "203.0.113.5",
+  };
+
+  const homes: string[] = [];
+  afterEach(() => {
+    for (const home of homes.splice(0)) rmSync(home, { recursive: true, force: true });
+  });
+
+  function policyFor(trustLan: boolean): DaemonAccessPolicy {
+    const home = mkdtempSync(path.join(tmpdir(), "fde-auth-matrix-"));
+    homes.push(home);
+    return createAccessPolicy({
+      claimStore: createClaimStore(home),
+      getTrustedProxies: () => ["loopback"],
+      getTrustLan: () => trustLan,
+    });
+  }
+
+  function requestFrom(address: string, forwardedFor?: string): IncomingMessage {
+    return {
+      headers: forwardedFor ? { "x-forwarded-for": forwardedFor } : {},
+      socket: { remoteAddress: address },
+    } as unknown as IncomingMessage;
+  }
+
+  const MATRIX: MatrixCase[] = [
+    // trustLan on (the default): loopback and the LAN are open, the internet is not.
+    { trustLan: true, password: undefined, client: "loopback", needsBearer: false },
+    { trustLan: true, password: undefined, client: "lan", needsBearer: false },
+    { trustLan: true, password: undefined, client: "public", needsBearer: true },
+    // trustLan off: only loopback is open.
+    { trustLan: false, password: undefined, client: "loopback", needsBearer: false },
+    { trustLan: false, password: undefined, client: "lan", needsBearer: true },
+    { trustLan: false, password: undefined, client: "public", needsBearer: true },
+    // A password is the opt-in lock for everyone, whatever trustLan says.
+    { trustLan: true, password: CORRECT_PASSWORD_HASH, client: "loopback", needsBearer: true },
+    { trustLan: true, password: CORRECT_PASSWORD_HASH, client: "lan", needsBearer: true },
+    { trustLan: true, password: CORRECT_PASSWORD_HASH, client: "public", needsBearer: true },
+    { trustLan: false, password: CORRECT_PASSWORD_HASH, client: "loopback", needsBearer: true },
+    { trustLan: false, password: CORRECT_PASSWORD_HASH, client: "lan", needsBearer: true },
+    { trustLan: false, password: CORRECT_PASSWORD_HASH, client: "public", needsBearer: true },
+  ];
+
+  test.each(MATRIX)(
+    "trustLan=$trustLan password=$password client=$client -> needsBearer=$needsBearer",
+    async ({ trustLan, password, client, needsBearer }) => {
+      const auth = { password, access: policyFor(trustLan) };
+      const req = requestFrom(SOCKETS[client]);
+      expect(requestNeedsBearer(auth, req)).toBe(needsBearer);
+      const withoutToken = await authorizeBearerAsync(auth, req, null);
+      expect(withoutToken.ok).toBe(!needsBearer);
+      if (password) {
+        expect(await authorizeBearerAsync(auth, req, "correct-password")).toEqual({ ok: true });
+        expect(await authorizeBearerAsync(auth, req, "wrong")).toEqual({
+          ok: false,
+          reason: "invalid_token",
+        });
+      } else if (needsBearer) {
+        // Unclaimed and no password: nothing can authenticate yet.
+        expect(withoutToken).toEqual({ ok: false, reason: "unclaimed" });
+      }
+    },
+  );
+
+  test("a LAN client behind a trusted proxy is classified by its forwarded address", () => {
+    const trusting = { password: undefined, access: policyFor(true) };
+    const req = requestFrom("127.0.0.1", "192.168.1.10");
+    expect(trusting.access.clientLocality(req)).toBe("lan");
+    expect(trusting.access.isLoopbackClient(req)).toBe(false);
+    expect(requestNeedsBearer(trusting, req)).toBe(false);
+    expect(requestNeedsBearer({ password: undefined, access: policyFor(false) }, req)).toBe(true);
   });
 });

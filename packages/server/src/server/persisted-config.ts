@@ -96,6 +96,8 @@ const BcryptHashSchema = z.string().regex(/^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/
 const DaemonAuthSchema = z
   .object({
     password: BcryptHashSchema.optional(),
+    // Treat private-network clients like loopback (no bearer, no claim gate). Default true.
+    trustLan: z.boolean().optional(),
   })
   .strict();
 

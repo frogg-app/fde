@@ -46,6 +46,7 @@ interface TestPaseoDaemonOptions {
   serviceProxy?: PaseoDaemonConfig["serviceProxy"];
   webUi?: PaseoDaemonConfig["webUi"];
   trustedProxies?: PaseoDaemonConfig["trustedProxies"];
+  trustLan?: PaseoDaemonConfig["trustLan"];
   agentProfiles?: AgentProfile[];
   autoArchiveAfterMerge?: boolean;
   pluginsEnabled?: PaseoDaemonConfig["pluginsEnabled"];
@@ -192,6 +193,7 @@ async function prepareTestDaemonConfig(
     serviceProxy: options.serviceProxy,
     webUi: options.webUi,
     trustedProxies: options.trustedProxies,
+    trustLan: options.trustLan,
     openai: options.openai,
     speech: options.speech,
     voiceLlmProvider: options.voiceLlmProvider ?? null,
