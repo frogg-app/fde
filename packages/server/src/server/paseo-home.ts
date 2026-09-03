@@ -86,9 +86,6 @@ function legacyHomeIsInUse(legacy: string): boolean {
 function migrateLegacyHome(target: string, legacy: string): void {
   if (migrationAttempted) return;
   migrationAttempted = true;
-  // A test run must never move the developer's own home. Suites that mean to exercise the
-  // migration call it with an explicit FDE_HOME, which never reaches this path.
-  if (process.env.VITEST || process.env.NODE_ENV === "test") return;
   if (existsSync(target) || !existsSync(legacy)) return;
   if (legacyHomeIsInUse(legacy)) return;
 
