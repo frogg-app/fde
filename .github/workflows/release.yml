@@ -135,11 +135,22 @@ jobs:
       - name: Upload install scripts to GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
+          CLOBBER: ${{ steps.release.outputs.clobber }}
         run: |
           flags=()
-          if [ "${{ steps.release.outputs.clobber }}" = "true" ]; then flags+=(--clobber); fi
-          gh release upload "$RELEASE_TAG" \
-            deploy/install.sh deploy/uninstall.sh deploy/install-docker.sh "${flags[@]}"
+          if [ "$CLOBBER" = "true" ]; then flags+=(--clobber); fi
+          # Skip names already on the release like every other upload step does.
+          # Without this, re-running the workflow against a published release
+          # fails here and takes every job that needs `meta` down with it.
+          existing=$(gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name')
+          for f in deploy/install.sh deploy/uninstall.sh deploy/install-docker.sh; do
+            n=$(basename "$f")
+            if [ "$CLOBBER" != "true" ] && grep -qx -- "$n" <<<"$existing"; then
+              echo "::warning::$n already on $RELEASE_TAG; skipping"
+              continue
+            fi
+            gh release upload "$RELEASE_TAG" "$f" "${flags[@]}"
+          done
 
       - uses: actions/upload-artifact@v7
         with:
