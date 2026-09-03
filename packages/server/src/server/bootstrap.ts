@@ -224,10 +224,7 @@ import {
 import { renderClaimGatePage } from "./claim-gate-page.js";
 import { mountPairingCodeRoutes } from "./pairing-code-route.js";
 import { DEFAULT_PAIRING_BASE_URL } from "@fde/protocol/connection-offer";
-import {
-  createIdentityPreflightHandler,
-  createIdentityRouteHandler,
-} from "./identity-route.js";
+import { createIdentityPreflightHandler, createIdentityRouteHandler } from "./identity-route.js";
 import { mountSetupRoutes } from "./setup-routes.js";
 import { WorkspaceAutoName } from "./workspace-auto-name.js";
 import { createGitMutationService } from "./session/git-mutation/git-mutation-service.js";
