@@ -10,16 +10,19 @@ use tauri::{AppHandle, Emitter, Manager, Runtime};
 use tauri_plugin_deep_link::DeepLinkExt;
 
 use crate::deep_link::{
-    parse_agent_deep_link, parse_agent_deep_link_from_args, AgentDeepLinkTarget,
+    parse_agent_deep_link, parse_agent_deep_link_from_args, parse_pairing_deep_link,
+    parse_pairing_deep_link_from_args, AgentDeepLinkTarget, PairingDeepLink,
 };
 use crate::window::MAIN_WINDOW_LABEL;
 
 const OPEN_PROJECT_FLAG: &str = "--open-project";
 const IGNORED_ARG_PREFIXES: &[&str] = &["-psn_", "--no-sandbox"];
+pub const OPEN_PAIRING_OFFER_EVENT: &str = "paseo:event:open-pairing-offer";
 
 pub struct LaunchState {
     pending_open_project: Mutex<Option<String>>,
     navigation: Mutex<AgentNavigationInbox>,
+    pairing: Mutex<Inbox<PairingDeepLink>>,
 }
 
 #[derive(Default)]
@@ -28,13 +31,54 @@ struct AgentNavigationInbox {
     pending: Option<AgentDeepLinkTarget>,
 }
 
+/// Same handshake as the agent inbox, for one queued pairing offer: the page
+/// declares itself ready (`pairing_offer_ready`) after registering its
+/// `open-pairing-offer` listener, and anything that arrived earlier is handed
+/// back from that call instead of being emitted into the void.
+struct Inbox<T> {
+    ready: bool,
+    pending: Option<T>,
+}
+
+impl<T> Default for Inbox<T> {
+    fn default() -> Self {
+        Self {
+            ready: false,
+            pending: None,
+        }
+    }
+}
+
 impl LaunchState {
     pub fn from_argv(args: &[String]) -> Self {
         let mut navigation = AgentNavigationInbox::default();
         navigation.pending = parse_agent_deep_link_from_args(args);
+        let mut pairing = Inbox::default();
+        pairing.pending = parse_pairing_deep_link_from_args(args);
         Self {
             pending_open_project: Mutex::new(parse_open_project_path(args)),
             navigation: Mutex::new(navigation),
+            pairing: Mutex::new(pairing),
+        }
+    }
+
+    /// The page registered its `open-pairing-offer` listener; hand over anything queued.
+    pub fn pairing_offer_ready(&self) -> Option<PairingDeepLink> {
+        let mut inbox = self.pairing.lock().unwrap();
+        inbox.ready = true;
+        inbox.pending.take()
+    }
+
+    /// Returns the offer when the page can receive it now, otherwise queues it
+    /// (a newer offer replaces an older queued one: claim tokens are single-use
+    /// and short-lived, so only the latest is worth delivering).
+    pub fn deliver_or_queue_pairing(&self, link: PairingDeepLink) -> Option<PairingDeepLink> {
+        let mut inbox = self.pairing.lock().unwrap();
+        if inbox.ready {
+            Some(link)
+        } else {
+            inbox.pending = Some(link);
+            None
         }
     }
 
@@ -49,6 +93,7 @@ impl LaunchState {
     /// The page started loading (or reloading): its listeners are gone.
     pub fn window_loading(&self) {
         self.navigation.lock().unwrap().ready = false;
+        self.pairing.lock().unwrap().ready = false;
     }
 
     /// The page registered its `open-agent` listener; hand over anything queued.
@@ -118,11 +163,23 @@ pub fn receive_agent_deep_link<R: Runtime>(app: &AppHandle<R>, target: AgentDeep
     focus_main_window(app);
 }
 
+/// A `paseo://pair#offer=…` link: the UI parses the offer and runs the claim
+/// flow (`apps/ui/src/pairing/`), so only the raw URL crosses the bridge.
+pub fn receive_pairing_deep_link<R: Runtime>(app: &AppHandle<R>, link: PairingDeepLink) {
+    let state = app.state::<LaunchState>();
+    if let Some(ready_link) = state.deliver_or_queue_pairing(link) {
+        let _ = app.emit_to(MAIN_WINDOW_LABEL, OPEN_PAIRING_OFFER_EVENT, ready_link);
+    }
+    focus_main_window(app);
+}
+
 /// A second launch (`fde /path/to/project`, or an OS handing us a
 /// `paseo://` link on Windows/Linux). Deep links in `argv` are forwarded to the
 /// deep-link plugin by the single-instance plugin, so only paths are handled here.
 pub fn handle_second_instance<R: Runtime>(app: &AppHandle<R>, argv: &[String]) {
-    if parse_agent_deep_link_from_args(argv).is_some() {
+    if parse_agent_deep_link_from_args(argv).is_some()
+        || parse_pairing_deep_link_from_args(argv).is_some()
+    {
         return;
     }
     if let Some(path) = parse_open_project_path(argv) {
@@ -152,6 +209,8 @@ pub fn register_deep_link_handler<R: Runtime>(app: &AppHandle<R>) -> tauri::Resu
         for url in event.urls() {
             if let Some(target) = parse_agent_deep_link(url.as_str()) {
                 receive_agent_deep_link(&handle, target);
+            } else if let Some(link) = parse_pairing_deep_link(url.as_str()) {
+                receive_pairing_deep_link(&handle, link);
             }
         }
     });
@@ -199,6 +258,35 @@ mod tests {
             None
         );
         assert_eq!(parse_open_project_path(&args(&["fde", "-psn_0_1"])), None);
+    }
+
+    #[test]
+    fn pairing_offer_queues_until_ready_then_delivers_directly() {
+        let raw = "paseo://pair#offer=eyJ2IjozfQ";
+        let state = LaunchState::from_argv(&args(&["fde", raw]));
+        let link = PairingDeepLink {
+            url: raw.to_string(),
+        };
+        assert_eq!(state.pairing_offer_ready(), Some(link.clone()));
+        assert_eq!(state.pairing_offer_ready(), None, "drained once");
+        assert_eq!(state.deliver_or_queue_pairing(link.clone()), Some(link.clone()));
+        state.window_loading();
+        assert_eq!(state.deliver_or_queue_pairing(link.clone()), None);
+        let newer = PairingDeepLink {
+            url: "paseo://pair#offer=newer".to_string(),
+        };
+        assert_eq!(state.deliver_or_queue_pairing(newer.clone()), None);
+        assert_eq!(state.pairing_offer_ready(), Some(newer), "latest offer wins");
+    }
+
+    #[test]
+    fn pairing_and_agent_links_do_not_cross_inboxes() {
+        let state = LaunchState::from_argv(&args(&["fde", "paseo://pair#offer=abc"]));
+        assert_eq!(state.window_ready(), None);
+        assert!(state.pairing_offer_ready().is_some());
+        let state = LaunchState::from_argv(&args(&["fde", "paseo://h/srv/agent/ag"]));
+        assert_eq!(state.pairing_offer_ready(), None);
+        assert!(state.window_ready().is_some());
     }
 
     #[test]

@@ -104,6 +104,12 @@ pub async fn desktop_invoke(
         "garbage_collect_attachment_files" => app
             .state::<attachments::AttachmentStore>()
             .garbage_collect(&args),
+        // Pairing deep links (`paseo://pair#offer=…`, see `launch.rs`): the page
+        // calls this after registering its `open-pairing-offer` listener.
+        "pairing_offer_ready" => Ok(serde_json::to_value(
+            app.state::<LaunchState>().pairing_offer_ready(),
+        )
+        .map_err(|error| error.to_string())?),
         "check_app_update" => updater::check(&app, &args).await,
         "install_app_update" => updater::install(&app, &args).await,
         other => Err(format!("Unknown desktop command: {other}")),
