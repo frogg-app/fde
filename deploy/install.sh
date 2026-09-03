@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # FDE daemon installer for Linux and macOS hosts.
 #
-#   curl -fsSL https://frogg.de/install.sh | bash
+#   curl -fsSL https://frogg.app/install.sh | bash
 #
 # Installs a self-contained daemon bundle (Node runtime + daemon + CLI) into a
 # versioned directory, links `fde` and `paseo` into a bin directory, and
@@ -35,7 +35,7 @@ FDE_NO_SERVICE="${FDE_NO_SERVICE:-0}"
 FDE_HOME="${FDE_HOME:-}"
 
 SERVICE_NAME="fde-daemon"
-LAUNCHD_LABEL="de.frogg.fde-daemon"
+LAUNCHD_LABEL="app.frogg.fde-daemon"
 
 log() { printf '[fde] %s\n' "$*"; }
 die() { printf '[fde] error: %s\n' "$*" >&2; exit 1; }
@@ -117,7 +117,12 @@ verify_bundle() {
 # in the right versioned directory.
 read_bundle_version() {
   local manifest
-  manifest="$(tar -xzOf "${BUNDLE_PATH}" --wildcards '*/manifest.json' 2>/dev/null || tar -xzOf "${BUNDLE_PATH}" '*/manifest.json')"
+  # Only the bundle's top-level manifest.json: the web UI ships its own PWA manifest.json deeper
+  # in the tree, and a wildcard match would pick that one up.
+  local manifest_entry
+  manifest_entry="$(tar -tzf "${BUNDLE_PATH}" | grep -E '^[^/]+/manifest\.json$' | head -n1)"
+  [ -n "${manifest_entry}" ] || die "bundle has no top-level manifest.json"
+  manifest="$(tar -xzOf "${BUNDLE_PATH}" "${manifest_entry}")"
   BUNDLE_VERSION="$(printf '%s' "${manifest}" | sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' | head -n1)"
   [ -n "${BUNDLE_VERSION}" ] || die "bundle manifest has no version"
   local bundle_target

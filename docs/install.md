@@ -16,7 +16,7 @@ is built from the same bundle.
 ## Native install
 
 ```bash
-curl -fsSL https://frogg.de/install.sh | bash
+curl -fsSL https://frogg.app/install.sh | bash
 ```
 
 What it does:
@@ -33,7 +33,7 @@ What it does:
    - Linux: systemd user unit `~/.config/systemd/user/fde-daemon.service`,
      enabled and started with `systemctl --user`. The daemon stops with your
      session unless you run `sudo loginctl enable-linger $USER` once.
-   - macOS: launchd agent `~/Library/LaunchAgents/de.frogg.fde-daemon.plist`,
+   - macOS: launchd agent `~/Library/LaunchAgents/app.frogg.fde-daemon.plist`,
      loaded with `launchctl bootstrap gui/$UID`.
 
 The service inherits the `PATH` of the shell that ran the installer, so agent
@@ -66,16 +66,16 @@ reach it through an SSH tunnel or the desktop app's SSH connection.
 ### Upgrade, uninstall
 
 ```bash
-curl -fsSL https://frogg.de/install.sh | bash        # upgrade to latest
+curl -fsSL https://frogg.app/install.sh | bash        # upgrade to latest
 FDE_VERSION=0.1.7 bash deploy/install.sh              # pin a version
-curl -fsSL https://frogg.de/uninstall.sh | bash      # remove service, links, install dir
+curl -fsSL https://frogg.app/uninstall.sh | bash      # remove service, links, install dir
 FDE_PURGE=1 bash deploy/uninstall.sh                  # ... and the daemon state too
 ```
 
 ## Docker install
 
 ```bash
-curl -fsSL https://frogg.de/install-docker.sh | bash
+curl -fsSL https://frogg.app/install-docker.sh | bash
 ```
 
 Pulls `froggapp/fde:<version>` and starts a container named `fde-daemon` with

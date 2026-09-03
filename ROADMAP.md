@@ -24,7 +24,7 @@ Done items move to CHANGELOG.md.
 
 ## Install story (replaces `npm install -g @getpaseo/cli`)
 
-- [x] **`curl -fsSL https://frogg.de/install.sh | bash`** for remote hosts. Ships a
+- [x] **`curl -fsSL https://frogg.app/install.sh | bash`** for remote hosts. Ships a
       self-contained daemon bundle (pinned Node 22 runtime + built daemon + CLI) into
       `~/.local/share/fde`, links `fde` and `paseo` into `~/.local/bin`, and installs a
       systemd user service (or launchd agent on macOS). No npm on the host.
@@ -37,7 +37,7 @@ Done items move to CHANGELOG.md.
       darwin-arm64, darwin-x64, win-x64, win-arm64) and attaches it plus `.sha256` sidecars
       to the GitHub release the installer and the desktop app read; pushes the Docker image
       tags when Docker Hub secrets exist.
-- [ ] Hosting for `frogg.de/install.sh`, `uninstall.sh`, `install-docker.sh` (redirects
+- [ ] Hosting for `frogg.app/install.sh`, `uninstall.sh`, `install-docker.sh` (redirects
       to the raw files in the repo are enough).
 - [x] Desktop app: SSH deploy. "Daemon on this host" card on Remote SSH hosts (and in the
       Add host sheet) probes the host and pipes `deploy/install.sh` / `install-docker.sh` /
@@ -96,7 +96,7 @@ Blocked on the owner:
   `AZURE_*`/`TRUSTED_SIGNING_*` secrets listed in that script. Until then users must set Smart App
   Control to Off (Windows Security > App & browser control).
 - **Code signing certificates** (Windows Authenticode, Apple Developer ID) for SmartScreen/Gatekeeper.
-- **Hosting `frogg.de/install.sh`**: a redirect to
+- **Hosting `frogg.app/install.sh`**: a redirect to
   `https://raw.githubusercontent.com/frogg-app/frogg-de/main/deploy/install.sh` (and
   `install-docker.sh`, `uninstall.sh`) is enough.
 

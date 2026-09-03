@@ -13,7 +13,7 @@ FDE_HOME="${FDE_HOME:-${PASEO_HOME:-${HOME}/.paseo}}"
 FDE_PURGE="${FDE_PURGE:-0}"
 
 SERVICE_NAME="fde-daemon"
-LAUNCHD_LABEL="de.frogg.fde-daemon"
+LAUNCHD_LABEL="app.frogg.fde-daemon"
 
 log() { printf '[fde] %s\n' "$*"; }
 

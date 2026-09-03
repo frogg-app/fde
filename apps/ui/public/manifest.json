@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "Paseo",
-  "short_name": "Paseo",
-  "description": "Monitor and control local AI coding agents from anywhere.",
+  "name": "FDE",
+  "short_name": "FDE",
+  "description": "Frogg Development Environment: monitor and control AI coding agents from anywhere.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

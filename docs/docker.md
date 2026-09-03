@@ -26,7 +26,7 @@ requests require `PASEO_PASSWORD` when one is configured.
 ## Quick start
 
 ```bash
-curl -fsSL https://frogg.de/install-docker.sh | bash
+curl -fsSL https://frogg.app/install-docker.sh | bash
 ```
 
 or by hand:

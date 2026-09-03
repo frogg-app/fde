@@ -5,7 +5,7 @@ the same HTTP origin. It is built from the self-contained daemon bundle, so it
 carries its own Node runtime on a `debian:bookworm-slim` base.
 
 ```bash
-curl -fsSL https://frogg.de/install-docker.sh | bash
+curl -fsSL https://frogg.app/install-docker.sh | bash
 ```
 
 or:

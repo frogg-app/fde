@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Runs the FDE daemon as a Docker container.
 #
-#   curl -fsSL https://frogg.de/install-docker.sh | bash
+#   curl -fsSL https://frogg.app/install-docker.sh | bash
 #
 # Pulls the image, then (re)creates the `fde-daemon` container with the daemon
 # listening on 0.0.0.0:6767 inside the container, published on the host at
