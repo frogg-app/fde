@@ -43,6 +43,7 @@ RUN set -eux; \
 FROM debian:bookworm-slim
 
 ENV HOME=/home/fde \
+    FDE_DOCKER=1 \
     PASEO_HOME=/home/fde/.paseo \
     PASEO_LISTEN=0.0.0.0:9999 \
     PASEO_WEB_UI_ENABLED=true \

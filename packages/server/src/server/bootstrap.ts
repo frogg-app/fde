@@ -247,6 +247,13 @@ import {
 } from "./hub/relationship-remote.js";
 import { DaemonExecutions } from "./hub/daemon-executions.js";
 import { PluginService } from "./plugins/index.js";
+import {
+  DaemonAutoUpdater,
+  DEFAULT_AUTO_UPDATE_CONFIG,
+} from "./session/daemon/daemon-auto-updater.js";
+import { describeDaemonInstall } from "./session/daemon/daemon-update-install.js";
+import { DaemonUpdateService } from "./session/daemon/daemon-update-service.js";
+import type { DaemonAutoUpdateConfig } from "@fde/protocol/messages";
 import { ManagedPluginSources } from "./plugins/managed-source.js";
 
 const MCP_DEBUG_BATCH_LIMIT = 10;
@@ -423,6 +430,7 @@ export interface PaseoDaemonConfig {
     maxProcessConcurrency: number;
   };
   autoArchiveAfterMerge?: boolean;
+  autoUpdate?: DaemonAutoUpdateConfig;
   enableTerminalAgentHooks?: boolean;
   appendSystemPrompt?: string;
   terminalProfiles?: TerminalProfile[];
@@ -600,6 +608,10 @@ function resolveExpressTrustProxySetting(config: PaseoDaemonConfig): true | stri
   return config.trustedProxies ?? ["loopback"];
 }
 
+function resolveAutoUpdate(config: PaseoDaemonConfig): DaemonAutoUpdateConfig {
+  return config.autoUpdate ?? DEFAULT_AUTO_UPDATE_CONFIG;
+}
+
 function createInitialMutableDaemonConfig(config: PaseoDaemonConfig): MutableDaemonConfig {
   const providers = config.providerOverrides ?? {};
 
@@ -624,6 +636,7 @@ function createInitialMutableDaemonConfig(config: PaseoDaemonConfig): MutableDae
       providers: config.metadataGeneration?.providers ?? [],
     },
     autoArchiveAfterMerge: config.autoArchiveAfterMerge ?? false,
+    autoUpdate: resolveAutoUpdate(config),
     enableTerminalAgentHooks: config.enableTerminalAgentHooks ?? false,
     appendSystemPrompt: config.appendSystemPrompt ?? "",
     pluginsEnabled: config.pluginsEnabled ?? false,
@@ -757,6 +770,7 @@ export async function createPaseoDaemon(
     appBaseUrl = typeof value === "string" ? value : DEFAULT_PAIRING_BASE_URL;
   });
   let wsServer: VoiceAssistantWebSocketServer | null = null;
+  let autoUpdater: DaemonAutoUpdater | null = null;
   let serviceProxyListenTarget: ListenTarget | null = null;
   const scriptHealthMonitor = new ScriptHealthMonitor({
     serviceProxy,
@@ -1757,6 +1771,23 @@ export async function createPaseoDaemon(
               logger.info("Daemon password authentication enabled");
             }
 
+            // Self-update lives next to the listener: the CLI verifies the restarted
+            // daemon on this exact address (docs/install.md "Updating").
+            const updateService = new DaemonUpdateService({
+              install: describeDaemonInstall({ desktopManaged: config.desktopManaged === true }),
+              daemonVersion,
+              paseoHome: config.paseoHome,
+              listen: formatListenTarget(boundListenTarget ?? listenTarget),
+              logger,
+            });
+            autoUpdater = new DaemonAutoUpdater({
+              service: updateService,
+              getConfig: () => daemonConfigStore.get().autoUpdate,
+              hasRunningAgents: () =>
+                agentManager.listAgents().some((agent) => agent.lifecycle === "running"),
+              logger,
+            });
+
             wsServer = new VoiceAssistantWebSocketServer(
               httpServer,
               logger,
@@ -1810,6 +1841,7 @@ export async function createPaseoDaemon(
                   return appBaseUrl;
                 },
                 desktopManaged: config.desktopManaged === true,
+                update: updateService,
                 getRelayConfig: () =>
                   relayRuntime?.getConfig() ?? {
                     enabled: daemonConfigStore.get().relay?.enabled ?? relayEnabled,
@@ -1831,6 +1863,11 @@ export async function createPaseoDaemon(
             pluginRuntime.bindPaseoSessionHost(wsServer);
             await pluginRuntime.start();
             wsServer.beginAcceptingConnections();
+            {
+              const server = wsServer;
+              updateService.setBroadcaster((msg) => server.broadcast(wrapSessionMessage(msg)));
+            }
+            autoUpdater.start();
             relayRuntime = createRelayRuntime({
               config: {
                 enabled: relayEnabled,
@@ -1885,6 +1922,7 @@ export async function createPaseoDaemon(
   };
 
   const stop = async () => {
+    autoUpdater?.stop();
     await pluginRuntime.stopAllPlugins();
     await hubRelationships.stop();
     workspaceReconciliation.dispose();

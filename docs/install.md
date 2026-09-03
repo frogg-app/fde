@@ -111,11 +111,119 @@ app's SSH connection.
 ### Upgrade, uninstall
 
 ```bash
-curl -fsSL https://frogg.app/install.sh | bash        # upgrade to latest
+fde daemon self-update                                # upgrade in place, with rollback (below)
+curl -fsSL https://frogg.app/install.sh | bash        # re-run the installer to upgrade to latest
 FDE_VERSION=0.1.7 bash deploy/install.sh              # pin a version
 curl -fsSL https://frogg.app/uninstall.sh | bash      # remove service, links, install dir
 FDE_PURGE=1 bash deploy/uninstall.sh                  # ... and the daemon state too
 ```
+
+## Updating
+
+A native install can update itself; the same path serves the CLI, a connected
+client, and the optional scheduler. Every route ends in the same supervisor,
+so the rollback guarantee is the same everywhere.
+
+### Manually
+
+```bash
+fde daemon self-update                       # newest stable release above the running one
+fde daemon self-update --check               # only report what is available
+fde daemon self-update --channel beta        # accept prereleases
+fde daemon self-update --to 0.1.14           # an exact release
+fde daemon self-update --json --no-wait      # progress as JSON lines, return at hand-off
+```
+
+The command resolves the target from the GitHub releases
+(`https://api.github.com/repos/frogg-app/fde/releases`; `FDE_GITHUB_TOKEN`
+raises the rate limit and lets a private repository answer, `FDE_RELEASES_API`
+points at another listing, and `FDE_RELEASE_BASE` with `--to` downloads
+from a mirror without the API). It downloads
+`fde-daemon-<v>-<platform>-<arch>.tar.gz` with its `.sha256`, verifies the
+checksum, unpacks into `<install dir>/versions/<v>` next to the running
+version, writes `<install dir>/previous`, and hands off to a detached
+supervisor (`fde daemon self-update --apply`, a hidden subcommand) that
+survives the daemon restart. The supervisor:
+
+1. flips `current` to the new version (an atomic symlink rename);
+2. restarts the daemon: `systemctl --user restart fde-daemon`,
+   `launchctl kickstart -k`, or, without a service, `fde daemon stop` followed by
+   `<install dir>/current/bin/fde daemon start` on the same home and listen address;
+3. polls `GET /api/identity` until it reports the new version and `GET /api/health`
+   answers, for up to 90 seconds (`--verify-timeout <ms>`);
+4. on failure or a crash loop flips `current` back to `previous`, restarts again,
+   and verifies the old version is answering.
+
+The outcome lands in `<install dir>/last-update.json`
+(`{ from, to, status: "applied" | "rolled_back" | "failed", reason, at }`) and every
+step is appended to `<install dir>/self-update.log`. The foreground command waits
+for that file and exits `0` (applied), `2` (rolled back), or `1` (failed). Re-running
+is safe: a version already under `versions/` is not downloaded again, and the
+current version is never re-applied. At most three versions are kept; `current` and
+`previous` are never pruned. The install dir is `FDE_INSTALL_DIR` (the installer
+writes it into the service environment) or `~/.local/share/fde`.
+
+### From a connected client
+
+Every host's settings page has a **Daemon updates** section for daemons that
+support it (`features.daemonUpdateRuns` in `server_info`): the current version,
+_Check for daemon updates_, _Update daemon to vX_ with the download/verify/install/
+restart phases, and, once the daemon is back, the applied or rolled-back outcome
+from `last-update.json`. The RPCs are `daemon.update.check`, `daemon.update.start`
+and `daemon.update.get_status` (all need the `daemon.manage` permission); progress is
+broadcast as `daemon.update.run.progress`. The daemon runs its own bundled CLI for
+the work, so the client never needs shell access. A daemon that is not a versioned
+install answers `updatable: false` with the reason: a dev checkout, the desktop
+app's sidecar (the app updates it), or Docker, where the hint is to pull the new
+image (`install-docker.sh --update`, below).
+
+### Automatically
+
+Off by default. Enable it from the same settings section, in `config.json`:
+
+```json
+"daemon": {
+  "autoUpdate": { "enabled": true, "channel": "stable", "checkIntervalHours": 24, "quietHours": [9, 18] }
+}
+```
+
+or with `PASEO_AUTO_UPDATE=1` in the service environment. The daemon checks the
+channel on the interval (first check five minutes after start) and updates when
+no agent is running; while agents run it retries every fifteen minutes.
+`quietHours` is a local `[start, end)` window in which nothing is applied.
+
+### What rollback does and does not cover
+
+Rollback protects against a daemon that does not come back: a bundle that fails
+to start, a crash loop, a version that never answers `/api/identity`. It cannot
+protect against a working daemon with a regression, and it says nothing about
+the UI: the web UI and the desktop app ship with the app, not the daemon, so a
+bad UI build is fixed by updating (or downgrading) the app.
+
+### Docker
+
+```bash
+FDE_VERSION=0.1.14 bash deploy/install-docker.sh --update
+```
+
+pulls the tag, keeps the running container aside as `fde-daemon-previous`, starts
+the new one, and waits up to `FDE_HEALTH_TIMEOUT` (90) seconds for
+`/api/health`. If it does not answer, the new container is removed and the previous
+one is started again; the script exits non-zero so a caller notices.
+
+### Logs and files
+
+| Path                             | Purpose                                               |
+| -------------------------------- | ----------------------------------------------------- |
+| `<install dir>/self-update.log`  | Every step of every run, including the supervisor     |
+| `<install dir>/last-update.json` | Outcome of the last run; what the app shows           |
+| `<install dir>/previous`         | Version `current` pointed to before the last flip     |
+| `<install dir>/versions/<v>/`    | Installed versions; a failed one stays for inspection |
+| `$PASEO_HOME/daemon.log`         | The daemon's own log around the restart               |
+
+`scripts/dev/self-update-rollback-test.sh <bundle.tar.gz>` runs the whole path on a
+scratch install: it derives a deliberately broken bundle, proves the rollback, then
+updates to a good one.
 
 ## Docker install
 

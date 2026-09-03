@@ -209,6 +209,22 @@ export const AgentSkillSelectionSchema = z.discriminatedUnion("mode", [
 ]);
 export type AgentSkillSelection = z.infer<typeof AgentSkillSelectionSchema>;
 
+export const DaemonUpdateChannelSchema = z.enum(["stable", "beta"]);
+export type DaemonUpdateChannel = z.infer<typeof DaemonUpdateChannelSchema>;
+
+/** `daemon.autoUpdate` in config.json: opt-in scheduled self-update of a versioned install. */
+export const DaemonAutoUpdateConfigSchema = z.object({
+  enabled: z.boolean(),
+  channel: DaemonUpdateChannelSchema,
+  checkIntervalHours: z.number().positive(),
+  // Local hours [start, end); an update is never applied inside the window.
+  quietHours: z
+    .tuple([z.number().int().min(0).max(23), z.number().int().min(0).max(23)])
+    .nullable()
+    .optional(),
+});
+export type DaemonAutoUpdateConfig = z.infer<typeof DaemonAutoUpdateConfigSchema>;
+
 export const MutableDaemonConfigSchema = z
   .object({
     // COMPAT(relayConfig): added in v0.2.6, remove after 2027-01-31 when old daemons are unsupported.
@@ -246,6 +262,8 @@ export const MutableDaemonConfigSchema = z
     skills: z.object({ selection: AgentSkillSelectionSchema.optional() }).strict().optional(),
     pluginsEnabled: z.boolean().optional(),
     plugins: z.record(PluginIdSchema, PluginSourceSchema).optional(),
+    // COMPAT(daemonAutoUpdate): added in v0.1.14, optional so older apps and daemons ignore it.
+    autoUpdate: DaemonAutoUpdateConfigSchema.optional(),
   })
   .passthrough();
 
@@ -266,6 +284,7 @@ export const MutableDaemonConfigPatchSchema = z
     agentProfiles: z.array(AgentProfileSchema).optional(),
     pluginsEnabled: z.boolean().optional(),
     plugins: z.record(PluginIdSchema, PluginSourceSchema).optional(),
+    autoUpdate: DaemonAutoUpdateConfigSchema.partial().optional(),
   })
   .partial()
   .passthrough();
@@ -1420,6 +1439,26 @@ export const DaemonGetPairingOfferRequestSchema = z.object({
 
 export const DaemonConfigReloadRequestSchema = z.object({
   type: z.literal("daemon.config.reload.request"),
+  requestId: z.string(),
+});
+
+// Versioned-install self-update (`fde daemon self-update`), distinct from the
+// npm-based `daemon.update.request` which stays for upstream installs.
+export const DaemonUpdateCheckRequestSchema = z.object({
+  type: z.literal("daemon.update.check.request"),
+  requestId: z.string(),
+  channel: DaemonUpdateChannelSchema.optional(),
+});
+
+export const DaemonUpdateStartRequestSchema = z.object({
+  type: z.literal("daemon.update.start.request"),
+  requestId: z.string(),
+  version: z.string().optional(),
+  channel: DaemonUpdateChannelSchema.optional(),
+});
+
+export const DaemonUpdateGetStatusRequestSchema = z.object({
+  type: z.literal("daemon.update.get_status.request"),
   requestId: z.string(),
 });
 
@@ -3084,6 +3123,9 @@ export const SessionInboundMessageSchema = z.discriminatedUnion("type", [
   DaemonGetStatusRequestSchema,
   DaemonGetPairingOfferRequestSchema,
   DaemonConfigReloadRequestSchema,
+  DaemonUpdateCheckRequestSchema,
+  DaemonUpdateStartRequestSchema,
+  DaemonUpdateGetStatusRequestSchema,
   HubManagementDaemonConnectRequestSchema,
   HubManagementDaemonGetStatusRequestSchema,
   HubManagementDaemonDisconnectRequestSchema,
@@ -3500,6 +3542,8 @@ export const ServerInfoStatusPayloadSchema = z
         daemonDiagnostics: z.boolean().optional(),
         // COMPAT(daemonSelfUpdate): added in v0.1.93, remove gate after 2026-12-13.
         daemonSelfUpdate: z.boolean().optional(),
+        // COMPAT(daemonUpdateRuns): added in v0.1.14 (FDE), remove gate after 2027-03-03.
+        daemonUpdateRuns: z.boolean().optional(),
         // COMPAT(agentForkContext): added in v0.1.102, remove gate after 2026-12-28.
         agentForkContext: z.boolean().optional(),
         // COMPAT(agentForkContextCursor): added in v0.1.108, remove gate after 2027-01-14.
@@ -4720,6 +4764,93 @@ export const DaemonConfigReloadResponseSchema = z.object({
     })
     .passthrough(),
 });
+
+/**
+ * Phases a self-update run reports (`daemon.update.run.progress`). Kept as a
+ * plain string on the wire so a later daemon can add phases without breaking
+ * older apps; the list is the set a current daemon emits.
+ */
+export const DAEMON_UPDATE_RUN_PHASES = [
+  "check",
+  "download",
+  "verify",
+  "install",
+  "restart",
+  "health_check",
+  "applied",
+  "rolled_back",
+  "failed",
+] as const;
+export type DaemonUpdateRunPhase = (typeof DAEMON_UPDATE_RUN_PHASES)[number];
+
+export const DaemonUpdateRunSchema = z.object({
+  runId: z.string(),
+  from: z.string().nullable(),
+  to: z.string(),
+  phase: z.string(),
+  message: z.string().nullable(),
+  at: z.string(),
+});
+export type DaemonUpdateRun = z.infer<typeof DaemonUpdateRunSchema>;
+
+/** `<install dir>/last-update.json` as written by the self-update supervisor. */
+export const DaemonUpdateLastResultSchema = z.object({
+  from: z.string().nullable(),
+  to: z.string(),
+  status: z.enum(["applied", "rolled_back", "failed"]),
+  reason: z.string().nullable(),
+  at: z.string(),
+});
+export type DaemonUpdateLastResult = z.infer<typeof DaemonUpdateLastResultSchema>;
+
+export const DaemonUpdateCheckResponseSchema = z.object({
+  type: z.literal("daemon.update.check.response"),
+  payload: z.object({
+    requestId: z.string(),
+    updatable: z.boolean(),
+    reason: z.string().nullable(),
+    currentVersion: z.string(),
+    channel: DaemonUpdateChannelSchema,
+    latestVersion: z.string().nullable(),
+    updateAvailable: z.boolean(),
+    releaseUrl: z.string().nullable(),
+    error: z.string().nullable(),
+  }),
+});
+export type DaemonUpdateCheckResponse = z.infer<typeof DaemonUpdateCheckResponseSchema>;
+
+export const DaemonUpdateStartResponseSchema = z.object({
+  type: z.literal("daemon.update.start.response"),
+  payload: z.object({
+    requestId: z.string(),
+    accepted: z.boolean(),
+    runId: z.string().nullable(),
+    targetVersion: z.string().nullable(),
+    error: z.string().nullable(),
+  }),
+});
+export type DaemonUpdateStartResponse = z.infer<typeof DaemonUpdateStartResponseSchema>;
+
+export const DaemonUpdateGetStatusResponseSchema = z.object({
+  type: z.literal("daemon.update.get_status.response"),
+  payload: z.object({
+    requestId: z.string(),
+    updatable: z.boolean(),
+    reason: z.string().nullable(),
+    currentVersion: z.string(),
+    installDir: z.string().nullable(),
+    run: DaemonUpdateRunSchema.nullable(),
+    lastResult: DaemonUpdateLastResultSchema.nullable(),
+  }),
+});
+export type DaemonUpdateGetStatusResponse = z.infer<typeof DaemonUpdateGetStatusResponseSchema>;
+
+// Broadcast to every session while a self-update run is in flight; not correlated.
+export const DaemonUpdateRunProgressMessageSchema = z.object({
+  type: z.literal("daemon.update.run.progress"),
+  payload: DaemonUpdateRunSchema,
+});
+export type DaemonUpdateRunProgressMessage = z.infer<typeof DaemonUpdateRunProgressMessageSchema>;
 
 export const DiagnosticsResponseSchema = z.object({
   type: z.literal("diagnostics.response"),
@@ -6566,6 +6697,10 @@ export const SessionOutboundMessageSchema = z.discriminatedUnion("type", [
   LoopStopResponseSchema,
   DaemonUpdateProgressMessageSchema,
   DaemonUpdateResponseSchema,
+  DaemonUpdateCheckResponseSchema,
+  DaemonUpdateStartResponseSchema,
+  DaemonUpdateGetStatusResponseSchema,
+  DaemonUpdateRunProgressMessageSchema,
 ]);
 
 export type SessionOutboundMessage = z.infer<typeof SessionOutboundMessageSchema>;

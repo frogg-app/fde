@@ -2757,6 +2757,49 @@ export const fr: TranslationResources = {
           dialogFailedMessage:
             "Impossible d'ouvrir la boîte de dialogue de confirmation de redémarrage.",
         },
+        selfUpdate: {
+          title: "Mises à jour du daemon",
+          info: "Met à jour un daemon installé avec install.sh (ou par le déploiement SSH de l'app de bureau) depuis les releases GitHub. Le daemon télécharge la nouvelle version à côté de l'actuelle, redémarre avec elle et revient seul à la version précédente si la nouvelle ne démarre pas.",
+          versionLabel: "Daemon {{version}}",
+          versionUnknown: "Version du daemon inconnue",
+          hint: "Vérifie si le canal de releases propose un daemon plus récent",
+          check: "Rechercher des mises à jour du daemon",
+          checking: "Recherche...",
+          upToDate: "Le daemon est à jour",
+          available: "La version {{version}} est disponible",
+          checkFailed: "Impossible de rechercher des mises à jour : {{error}}",
+          notUpdatable: "Ce daemon ne peut pas se mettre à jour lui-même",
+          update: "Mettre à jour le daemon vers {{version}}",
+          confirmTitle: "Mettre à jour {{name}} vers {{version}}",
+          confirmMessage:
+            "Le daemon redémarre avec la nouvelle version ; les agents en cours sont brièvement interrompus. Si la nouvelle version ne démarre pas, la précédente est restaurée automatiquement.",
+          confirm: "Mettre à jour",
+          reconnecting: "Redémarrage du daemon, en attente de son retour...",
+          unableToReconnect:
+            "{{name}} n'est pas revenu en ligne. Consultez self-update.log sur l'hôte.",
+          startFailedTitle: "Échec de la mise à jour",
+          logHint: "Détails : {{installDir}}/self-update.log",
+          phases: {
+            check: "Résolution de la release...",
+            download: "Téléchargement...",
+            verify: "Vérification de la somme de contrôle...",
+            install: "Installation...",
+            restart: "Redémarrage...",
+            failed: "La mise à jour a échoué",
+          },
+          outcome: {
+            applied: "Mis à jour de {{from}} vers {{to}}",
+            rolled_back: "La mise à jour vers {{to}} a échoué ; retour à {{from}}",
+            failed: "La mise à jour de {{from}} vers {{to}} a échoué",
+          },
+          autoUpdate: {
+            title: "Mettre à jour automatiquement",
+            hint: "Vérifie le canal chaque jour et met à jour quand aucun agent ne tourne. Le retour arrière protège contre un daemon qui ne démarre pas, pas contre une interface défectueuse, livrée avec l'app.",
+            channelLabel: "Canal de releases",
+            stable: "Stable",
+            beta: "Bêta",
+          },
+        },
         update: {
           desktopManagedHint:
             "Ce daemon est géré par FDE Desktop. Mettez à jour FDE Desktop sur l’hôte.",

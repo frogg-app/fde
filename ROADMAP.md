@@ -39,6 +39,15 @@ Done items move to CHANGELOG.md.
       tags when Docker Hub secrets exist.
 - [ ] Hosting for `frogg.app/install.sh`, `uninstall.sh`, `install-docker.sh` (redirects
       to the raw files in the repo are enough).
+- [x] **Daemon self-update with rollback.** `fde daemon self-update [--to|--channel|--check]`
+      installs a release next to the running version and a detached supervisor flips
+      `current`, restarts the service, verifies `/api/identity`, and reverts to `previous`
+      if the new daemon does not come up (`last-update.json`, `self-update.log`). The
+      `daemon.update.check/start/get_status` RPCs and the host settings page trigger the
+      same path from a client; `daemon.autoUpdate` / `PASEO_AUTO_UPDATE=1` schedules it.
+      `install-docker.sh --update` swaps the container with the same health-check rollback.
+      Verified on Linux (unmanaged and scratch installs); systemd-run hand-off, launchd,
+      and the Windows zip path are by inspection only. See docs/install.md "Updating".
 - [x] **Default daemon port 9999** (server, CLI, installers, Docker, Nix, docs; an explicit
       `6767` in `config.json` keeps working).
 - [x] **`GET /api/identity`**: unauthenticated `{ product, serverId, hostname, version, listen,

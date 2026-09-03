@@ -26,6 +26,7 @@ import { resolveSpeechConfig } from "./speech/speech-config-resolver.js";
 import type { RequestedSpeechProviders } from "./speech/speech-types.js";
 import { mergeHostnames, parseHostnamesEnv, type HostnamesConfig } from "./hostnames.js";
 import { resolveGitProcessPolicy } from "../utils/git-process-scheduler.js";
+import type { DaemonAutoUpdateConfig } from "@fde/protocol/messages";
 
 const DEFAULT_PORT = 9999;
 const DEFAULT_RELAY_ENDPOINT = "relay.paseo.sh:443";
@@ -514,6 +515,20 @@ function resolveAppendSystemPrompt(persisted: ReturnType<typeof loadPersistedCon
   return persisted.daemon?.appendSystemPrompt ?? "";
 }
 
+/** `daemon.autoUpdate` with `PASEO_AUTO_UPDATE` overriding `enabled`; off by default. */
+export function resolveAutoUpdateConfig(
+  env: NodeJS.ProcessEnv,
+  persisted: ReturnType<typeof loadPersistedConfig>,
+): DaemonAutoUpdateConfig {
+  const persistedAutoUpdate = persisted.daemon?.autoUpdate;
+  return {
+    enabled: parseBooleanEnv(env.PASEO_AUTO_UPDATE) ?? persistedAutoUpdate?.enabled ?? false,
+    channel: persistedAutoUpdate?.channel ?? "stable",
+    checkIntervalHours: persistedAutoUpdate?.checkIntervalHours ?? 24,
+    quietHours: persistedAutoUpdate?.quietHours ?? null,
+  };
+}
+
 function resolveBrowserToolsEnabled(persisted: ReturnType<typeof loadPersistedConfig>): boolean {
   return persisted.daemon?.browserTools?.enabled ?? false;
 }
@@ -541,6 +556,7 @@ function resolveStaticLoadConfigSettings(
       cli?.mcpInjectIntoAgents ?? persisted.daemon?.mcp?.injectIntoAgents ?? false,
     browserToolsEnabled: resolveBrowserToolsEnabled(persisted),
     autoArchiveAfterMerge: persisted.daemon?.autoArchiveAfterMerge ?? false,
+    autoUpdate: resolveAutoUpdateConfig(env, persisted),
     appendSystemPrompt: resolveAppendSystemPrompt(persisted),
     ...resolveProfileLists(persisted),
     hostnames: mergeHostnames([
@@ -577,6 +593,7 @@ export function resolveConfigFromPersisted(
     mcpInjectIntoAgents,
     browserToolsEnabled,
     autoArchiveAfterMerge,
+    autoUpdate,
     appendSystemPrompt,
     terminalProfiles,
     agentProfiles,
@@ -623,6 +640,7 @@ export function resolveConfigFromPersisted(
     browserToolsEnabled,
     git: resolveGitProcessConfig(env, persisted),
     autoArchiveAfterMerge,
+    autoUpdate,
     enableTerminalAgentHooks: persisted.daemon?.enableTerminalAgentHooks ?? false,
     appendSystemPrompt,
     terminalProfiles,
@@ -714,6 +732,7 @@ function resolveCoreDaemonOverridePaths(
   }
   if (cli?.mcpEnabled !== undefined) paths.push("daemon.mcp.enabled");
   if (cli?.mcpInjectIntoAgents !== undefined) paths.push("daemon.mcp.injectIntoAgents");
+  if (parseBooleanEnv(env.PASEO_AUTO_UPDATE) !== undefined) paths.push("daemon.autoUpdate.enabled");
   // Hostname sources append instead of replacing one another, so a launch value
   // does not prevent a persisted hostname edit from taking effect.
   if (parseTrustedProxiesEnv(env.PASEO_TRUSTED_PROXIES) !== undefined) {

@@ -9,7 +9,10 @@
 # the daemon running. The service inherits the PATH of the shell that ran the
 # installer, so agent CLIs visible here are visible to the daemon.
 # Non-interactive and idempotent: re-running upgrades in place and restarts
-# the service.
+# the service. Later upgrades can also run on the host itself with
+# `fde daemon self-update` (or from a connected client), which uses the same
+# layout: versions/<v>, the `current` link, and the `previous` marker it
+# rolls back to when a new version fails to come up.
 #
 # Environment overrides:
 #   FDE_VERSION       release to install (default: latest GitHub release)
@@ -156,6 +159,12 @@ install_bundle() {
     ln -sfn "versions/${BUNDLE_VERSION}" "${FDE_INSTALL_DIR}/current"
   fi
 
+  # The rollback target for `fde daemon self-update`; only changes on a real
+  # version switch so a re-run never points previous at the current version.
+  if [ -n "${PREVIOUS_VERSION}" ] && [ "${PREVIOUS_VERSION}" != "${BUNDLE_VERSION}" ]; then
+    printf '%s\n' "${PREVIOUS_VERSION}" > "${FDE_INSTALL_DIR}/previous"
+  fi
+
   ln -sfn "${FDE_INSTALL_DIR}/current/bin/fde" "${FDE_BIN_DIR}/fde"
   ln -sfn "${FDE_INSTALL_DIR}/current/bin/paseo" "${FDE_BIN_DIR}/paseo"
   log "linked ${FDE_BIN_DIR}/fde and ${FDE_BIN_DIR}/paseo"
@@ -190,7 +199,9 @@ ExecStart=${FDE_INSTALL_DIR}/current/bin/fde daemon start --foreground
 Environment=PASEO_LISTEN=${FDE_LISTEN}
 Environment=PASEO_WEB_UI_ENABLED=true
 Environment=PATH=${FDE_BIN_DIR}:${PATH}
+Environment=FDE_INSTALL_DIR=${FDE_INSTALL_DIR}
 ${FDE_HOME:+Environment=PASEO_HOME=${FDE_HOME}}
+${FDE_HOME:+Environment=FDE_HOME=${FDE_HOME}}
 Restart=on-failure
 RestartSec=5
 KillMode=mixed
@@ -245,7 +256,9 @@ write_launchd_plist() {
     <key>PASEO_LISTEN</key><string>${FDE_LISTEN}</string>
     <key>PASEO_WEB_UI_ENABLED</key><string>true</string>
     <key>PATH</key><string>${FDE_BIN_DIR}:${PATH}</string>
+    <key>FDE_INSTALL_DIR</key><string>${FDE_INSTALL_DIR}</string>
 ${FDE_HOME:+    <key>PASEO_HOME</key><string>${FDE_HOME}</string>}
+${FDE_HOME:+    <key>FDE_HOME</key><string>${FDE_HOME}</string>}
   </dict>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><true/>
@@ -285,6 +298,7 @@ print_next_steps() {
   fi
   log "pair a client:     fde daemon pair"
   log "check status:      fde daemon status"
+  log "update later:      fde daemon self-update   (rolls back by itself if the new version fails)"
   case ":${PATH}:" in
     *":${FDE_BIN_DIR}:"*) ;;
     *) log "add ${FDE_BIN_DIR} to your PATH to use fde directly" ;;

@@ -8,6 +8,7 @@ import { runTrustLanCommand } from "./trust-lan.js";
 import { pairCommand } from "./pair.js";
 import { runDaemonReloadCommand } from "./reload.js";
 import { runClaimStatusCommand, runResetClaimCommand } from "./claim.js";
+import { selfUpdateCommand } from "./self-update/command.js";
 import { withOutput } from "../../output/index.js";
 import { addJsonAndDaemonHostOptions, addJsonOption } from "../../utils/command-options.js";
 
@@ -22,6 +23,7 @@ export function createDaemonCommand(): Command {
 
   daemon.addCommand(startCommand());
   daemon.addCommand(pairCommand());
+  daemon.addCommand(selfUpdateCommand());
 
   addJsonAndDaemonHostOptions(
     daemon.command("reload").description("Reload config.json without restarting the daemon"),

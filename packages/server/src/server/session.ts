@@ -620,6 +620,28 @@ function workspaceLabelErrorCode(error: unknown): string {
   return "workspace_label_failed";
 }
 
+type DaemonUpdateMessage = Extract<
+  SessionInboundMessage,
+  {
+    type:
+      | "daemon.update.request"
+      | "daemon.update.check.request"
+      | "daemon.update.start.request"
+      | "daemon.update.get_status.request";
+  }
+>;
+
+const DAEMON_UPDATE_MESSAGE_TYPES: ReadonlySet<SessionInboundMessage["type"]> = new Set([
+  "daemon.update.request",
+  "daemon.update.check.request",
+  "daemon.update.start.request",
+  "daemon.update.get_status.request",
+] satisfies DaemonUpdateMessage["type"][]);
+
+function isDaemonUpdateMessage(msg: SessionInboundMessage): msg is DaemonUpdateMessage {
+  return DAEMON_UPDATE_MESSAGE_TYPES.has(msg.type);
+}
+
 export class Session {
   private readonly clientId: string;
   private readonly authorization: SessionAuthorization;
@@ -2323,7 +2345,27 @@ export class Session {
     }
   }
 
+  /** The daemon update family: the npm-era RPC plus the versioned self-update runs. */
+  private dispatchDaemonUpdateMessage(msg: DaemonUpdateMessage): Promise<void> | undefined {
+    switch (msg.type) {
+      case "daemon.update.request":
+        return this.daemonSession.handleUpdateRequest(msg);
+      case "daemon.update.check.request":
+        return this.daemonSession.handleUpdateCheckRequest(msg);
+      case "daemon.update.start.request":
+        return this.daemonSession.handleUpdateStartRequest(msg);
+      case "daemon.update.get_status.request":
+        this.daemonSession.handleUpdateGetStatusRequest(msg);
+        return undefined;
+      default:
+        return undefined;
+    }
+  }
+
   private dispatchAgentConfigMessage(msg: SessionInboundMessage): Promise<void> | undefined {
+    if (isDaemonUpdateMessage(msg)) {
+      return this.dispatchDaemonUpdateMessage(msg);
+    }
     switch (msg.type) {
       case "set_agent_mode_request":
         return this.agentConfigSession.handleSetAgentModeRequest(msg);
@@ -2355,8 +2397,6 @@ export class Session {
         return this.daemonSession.handleHubRelationshipRequest(msg);
       case "diagnostics.request":
         return this.daemonSession.handleDiagnosticsRequest(msg);
-      case "daemon.update.request":
-        return this.daemonSession.handleUpdateRequest(msg);
       case "set_daemon_config_request":
         this.emit({
           type: "set_daemon_config_response",

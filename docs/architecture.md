@@ -408,3 +408,10 @@ $PASEO_HOME/
 1. **Local daemon** (default): `paseo daemon start` on `127.0.0.1:9999` (6767 was the upstream default and still works when configured explicitly)
 2. **Managed desktop**: the desktop shell spawns the daemon as subprocess, and stops it again on quit so that "restart the app" is a complete reset. Settings > Host > "Keep daemon running after quit" opts out. Only a daemon the desktop started is stopped — a daemon you started yourself with `paseo daemon start` is left alone (`paseo.pid` records `desktopManaged`).
 3. **Remote + relay**: Daemon behind firewall, relay bridges with E2E encryption
+
+Native installs (`deploy/install.sh`) are versioned: `<install dir>/versions/<v>` plus a
+`current` link. `fde daemon self-update` (also reachable through the `daemon.update.*`
+RPCs and the opt-in `daemon.autoUpdate` scheduler) installs a new version next to the
+running one and hands off to a detached supervisor that flips `current`, restarts the
+service, verifies `/api/identity`, and rolls back to `previous` when the new daemon does
+not come up. See [install.md](install.md), "Updating".

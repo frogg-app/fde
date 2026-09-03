@@ -88,6 +88,10 @@ import type {
   DaemonGetStatusResponse,
   DaemonGetPairingOfferResponse,
   DaemonConfigReloadResponse,
+  DaemonUpdateChannel,
+  DaemonUpdateCheckResponse,
+  DaemonUpdateGetStatusResponse,
+  DaemonUpdateStartResponse,
   DiagnosticsResponse,
   AgentRewindResponseMessage,
   ListTerminalsResponse,
@@ -4711,6 +4715,45 @@ export class DaemonClient {
     });
   }
 
+  async checkDaemonUpdate(
+    options: { channel?: DaemonUpdateChannel; requestId?: string } = {},
+  ): Promise<DaemonUpdateCheckResponse["payload"]> {
+    this.requireDaemonUpdateRunsSupport();
+    return this.sendNamespacedCorrelatedSessionRequest({
+      requestId: options.requestId,
+      message: {
+        type: "daemon.update.check.request",
+        ...(options.channel ? { channel: options.channel } : {}),
+      },
+      timeout: 60_000,
+    });
+  }
+
+  async startDaemonUpdate(
+    options: { version?: string; channel?: DaemonUpdateChannel; requestId?: string } = {},
+  ): Promise<DaemonUpdateStartResponse["payload"]> {
+    this.requireDaemonUpdateRunsSupport();
+    return this.sendNamespacedCorrelatedSessionRequest({
+      requestId: options.requestId,
+      message: {
+        type: "daemon.update.start.request",
+        ...(options.version ? { version: options.version } : {}),
+        ...(options.channel ? { channel: options.channel } : {}),
+      },
+      timeout: 60_000,
+    });
+  }
+
+  async getDaemonUpdateStatus(
+    requestId?: string,
+  ): Promise<DaemonUpdateGetStatusResponse["payload"]> {
+    this.requireDaemonUpdateRunsSupport();
+    return this.sendNamespacedCorrelatedSessionRequest({
+      requestId,
+      message: { type: "daemon.update.get_status.request" },
+    });
+  }
+
   async connectHub(
     hubUrl: string,
     token: string,
@@ -5625,6 +5668,13 @@ export class DaemonClient {
     // COMPAT(hubRelationship): added in v0.1.X, drop the gate when floor >= v0.1.X.
     if (this.lastServerInfoMessage?.features?.hubRelationship !== true) {
       throw new Error("Update the host to use Hub relationship management.");
+    }
+  }
+
+  private requireDaemonUpdateRunsSupport(): void {
+    // COMPAT(daemonUpdateRuns): added in v0.1.14 (FDE), remove gate after 2027-03-03.
+    if (this.lastServerInfoMessage?.features?.daemonUpdateRuns !== true) {
+      throw new Error("Update the host to manage daemon updates from the app.");
     }
   }
 

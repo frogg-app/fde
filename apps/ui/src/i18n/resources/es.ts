@@ -2751,6 +2751,48 @@ export const es: TranslationResources = {
           dialogFailedMessage:
             "No se puede abrir el cuadro de diálogo de confirmación de reinicio.",
         },
+        selfUpdate: {
+          title: "Actualizaciones del daemon",
+          info: "Actualiza un daemon instalado con install.sh (o con el despliegue SSH de la app de escritorio) desde las releases de GitHub. El daemon descarga la nueva versión junto a la actual, se reinicia con ella y vuelve solo a la versión anterior si la nueva no arranca.",
+          versionLabel: "Daemon {{version}}",
+          versionUnknown: "Versión del daemon desconocida",
+          hint: "Busca un daemon más reciente en el canal de releases",
+          check: "Buscar actualizaciones del daemon",
+          checking: "Buscando...",
+          upToDate: "El daemon está actualizado",
+          available: "La versión {{version}} está disponible",
+          checkFailed: "No se pudieron buscar actualizaciones: {{error}}",
+          notUpdatable: "Este daemon no puede actualizarse a sí mismo",
+          update: "Actualizar el daemon a {{version}}",
+          confirmTitle: "Actualizar {{name}} a {{version}}",
+          confirmMessage:
+            "El daemon se reinicia con la nueva versión; los agentes en ejecución se interrumpen brevemente. Si la nueva versión no arranca, se restaura la anterior automáticamente.",
+          confirm: "Actualizar",
+          reconnecting: "Reiniciando el daemon y esperando a que vuelva...",
+          unableToReconnect: "{{name}} no volvió a conectarse. Revisa self-update.log en el host.",
+          startFailedTitle: "La actualización falló",
+          logHint: "Detalles: {{installDir}}/self-update.log",
+          phases: {
+            check: "Resolviendo la release...",
+            download: "Descargando...",
+            verify: "Verificando la suma de comprobación...",
+            install: "Instalando...",
+            restart: "Reiniciando...",
+            failed: "La actualización falló",
+          },
+          outcome: {
+            applied: "Actualizado de {{from}} a {{to}}",
+            rolled_back: "La actualización a {{to}} falló; se volvió a {{from}}",
+            failed: "La actualización de {{from}} a {{to}} falló",
+          },
+          autoUpdate: {
+            title: "Actualizar automáticamente",
+            hint: "Consulta el canal a diario y actualiza cuando no hay agentes en ejecución. La reversión protege contra un daemon que no arranca, no contra una UI defectuosa, que viene con la app.",
+            channelLabel: "Canal de releases",
+            stable: "Estable",
+            beta: "Beta",
+          },
+        },
         update: {
           desktopManagedHint:
             "Este daemon está administrado por FDE Desktop. Actualiza FDE Desktop en el host.",

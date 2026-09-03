@@ -12,12 +12,15 @@ import type { ManagedAgent } from "../../agent/agent-manager.js";
 import type { PersistedProjectRecord, PersistedWorkspaceRecord } from "../../workspace-registry.js";
 import type { HubRelationshipManagement } from "../../hub/relationship-controller.js";
 import type { DaemonConfigReloadResult } from "../../daemon-config-store.js";
+import type { DaemonUpdateService } from "./daemon-update-service.js";
 
 export interface DaemonRuntimeConfig {
   listen: string | null;
   worktreesRoot?: string;
   appBaseUrl?: string;
   desktopManaged?: boolean;
+  /** Versioned-install self-update; absent on daemons started without bootstrap wiring. */
+  update?: DaemonUpdateService;
   getRelayConfig(): {
     enabled: boolean;
     endpoint: string;
@@ -310,5 +313,64 @@ export class DaemonSession {
     msg: Extract<SessionInboundMessage, { type: "daemon.update.request" }>,
   ): Promise<void> {
     await this.selfUpdate.dispatch(msg);
+  }
+
+  async handleUpdateCheckRequest(
+    msg: Extract<SessionInboundMessage, { type: "daemon.update.check.request" }>,
+  ): Promise<void> {
+    const update = this.daemonRuntimeConfig?.update;
+    const payload = update
+      ? await update.check({ channel: msg.channel })
+      : {
+          ...this.updateUnavailable(),
+          channel: msg.channel ?? ("stable" as const),
+          latestVersion: null,
+          updateAvailable: false,
+          releaseUrl: null,
+          error: null,
+        };
+    this.host.emit({
+      type: "daemon.update.check.response",
+      payload: { requestId: msg.requestId, ...payload },
+    });
+  }
+
+  async handleUpdateStartRequest(
+    msg: Extract<SessionInboundMessage, { type: "daemon.update.start.request" }>,
+  ): Promise<void> {
+    const update = this.daemonRuntimeConfig?.update;
+    const payload = update
+      ? await update.start({ version: msg.version, channel: msg.channel })
+      : {
+          accepted: false,
+          runId: null,
+          targetVersion: null,
+          error: this.updateUnavailable().reason,
+        };
+    this.host.emit({
+      type: "daemon.update.start.response",
+      payload: { requestId: msg.requestId, ...payload },
+    });
+  }
+
+  handleUpdateGetStatusRequest(
+    msg: Extract<SessionInboundMessage, { type: "daemon.update.get_status.request" }>,
+  ): void {
+    const update = this.daemonRuntimeConfig?.update;
+    const payload = update
+      ? update.status()
+      : { ...this.updateUnavailable(), installDir: null, run: null, lastResult: null };
+    this.host.emit({
+      type: "daemon.update.get_status.response",
+      payload: { requestId: msg.requestId, ...payload },
+    });
+  }
+
+  private updateUnavailable(): { updatable: false; reason: string; currentVersion: string } {
+    return {
+      updatable: false,
+      reason: "Self-update is not available on this daemon.",
+      currentVersion: this.daemonVersion ?? "unknown",
+    };
   }
 }
