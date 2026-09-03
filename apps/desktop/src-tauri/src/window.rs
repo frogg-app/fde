@@ -45,6 +45,9 @@ pub fn create_main_window(app: &App) -> tauri::Result<()> {
         .inner_size(1280.0, 820.0)
         .min_inner_size(640.0, 480.0)
         .decorations(native_decorations)
+        // Created hidden: the window-state plugin restores the saved position/size below,
+        // and showing only afterwards avoids the "spawn centred, then teleport" jump.
+        .visible(false)
         // The app's dark surface colour (theme.ts surface0) so the window never flashes
         // white while the webview is still loading.
         .background_color(tauri::window::Color(24, 27, 26, 255))
@@ -55,6 +58,13 @@ pub fn create_main_window(app: &App) -> tauri::Result<()> {
         .title_bar_style(tauri::TitleBarStyle::Overlay)
         .hidden_title(true);
 
-    builder.build()?;
+    let window = builder.build()?;
+    {
+        use tauri_plugin_window_state::{StateFlags, WindowExt};
+        if let Err(error) = window.restore_state(StateFlags::all()) {
+            log::warn!("window: could not restore saved state: {error}");
+        }
+    }
+    window.show()?;
     Ok(())
 }
