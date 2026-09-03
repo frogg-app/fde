@@ -19,12 +19,16 @@ let fetchAgentHistoryBatch: UseAgentHistoryModule["fetchAgentHistoryBatch"];
 let fetchAgentHistoryPage: UseAgentHistoryModule["fetchAgentHistoryPage"];
 let collectAgentHistoryHostErrors: UseAgentHistoryModule["collectAgentHistoryHostErrors"];
 
+// Imported here rather than at the top so __DEV__ is already false when the
+// module first evaluates. Transforming that graph cold takes well over the 10s
+// default hook timeout when the whole suite runs at once, and a timed-out hook
+// fails the file, so the wait is given room.
 beforeAll(async () => {
   const module = await import("./use-agent-history");
   fetchAgentHistoryBatch = module.fetchAgentHistoryBatch;
   fetchAgentHistoryPage = module.fetchAgentHistoryPage;
   collectAgentHistoryHostErrors = module.collectAgentHistoryHostErrors;
-});
+}, 60_000);
 
 type FetchAgentHistory = DaemonClient["fetchAgentHistory"];
 type FetchAgentHistoryResult = Awaited<ReturnType<FetchAgentHistory>>;
