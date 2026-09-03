@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
@@ -511,10 +512,17 @@ describe("ClaudeAgentClient.fetchCatalog", () => {
   });
 });
 
+function hasClaudeCodeOnPath(): boolean {
+  const command = process.platform === "win32" ? "where" : "which";
+  return spawnSync(command, ["claude"], { stdio: "ignore" }).status === 0;
+}
+
 describe("ClaudeAgentClient binary resolution", () => {
   const logger = createTestLogger();
 
-  test("resolves the installed Claude Code version", async () => {
+  // Reads the version from the user's own Claude Code install, so it only runs where
+  // the CLI is on PATH (developer machines, not the hosted CI runners).
+  test.skipIf(!hasClaudeCodeOnPath())("resolves the installed Claude Code version", async () => {
     await expect(resolveClaudeCodeVersion()).resolves.toMatch(/^\d+\.\d+\.\d+$/);
   });
 
