@@ -8,6 +8,10 @@ import { runTrustLanCommand } from "./trust-lan.js";
 import { pairCommand } from "./pair.js";
 import { runDaemonReloadCommand } from "./reload.js";
 import { runClaimStatusCommand, runResetClaimCommand } from "./claim.js";
+import {
+  runInstallServiceCommand,
+  runUninstallServiceCommand,
+} from "./service/command.js";
 import { withOutput } from "../../output/index.js";
 import { addJsonAndDaemonHostOptions, addJsonOption } from "../../utils/command-options.js";
 
@@ -86,6 +90,23 @@ export function createDaemonCommand(): Command {
   )
     .option("--home <path>", "FDE home directory (default: ~/.fde)")
     .action(withOutput(runResetClaimCommand));
+
+  addJsonOption(
+    daemon
+      .command("install-service")
+      .description("Start the FDE daemon automatically when you log in"),
+  )
+    .option("--listen <listen>", "Listen target for the service (default: 127.0.0.1:9999)")
+    .option("--home <path>", "FDE home directory (default: ~/.fde)")
+    .action(withOutput(runInstallServiceCommand));
+
+  addJsonOption(
+    daemon
+      .command("uninstall-service")
+      .description("Stop starting the FDE daemon when you log in"),
+  )
+    .option("--home <path>", "FDE home directory (default: ~/.fde)")
+    .action(withOutput(runUninstallServiceCommand));
 
   addJsonOption(
     daemon
