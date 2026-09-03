@@ -29,9 +29,11 @@ is built from the same bundle.
    yet. Get a pairing link: either open `http://<host>:9999/` from that machine, which
    shows the "Claim this FDE daemon" page with a QR code and link, or run
    `fde daemon pair` on the host (with relay off it prints the same direct LAN offer).
-   The link looks like `https://frogg.app/pair#offer=<payload>`; the payload stays in
-   the fragment, so nothing is sent to frogg.app. The same offer is also available as
-   `paseo://pair#offer=<payload>` (the page's "Open in FDE app" button, `deepLink` in
+   The link looks like `https://pair.frogg.app/code/<code>`, where the code is the
+   offer payload. `pair.frogg.app` only renders a page that hands the code to the app;
+   you can also point that hostname at your own daemon, which serves the same page from
+   `GET /code/<code>` (and `GET /pair?code=<code>`). The same offer is also available as
+   `paseo://pair#offer=<code>` (the page's "Open in FDE" button, `deepLink` in
    `fde daemon pair --json`), which opens the installed desktop app directly. The code is
    single-use and expires after ten minutes; reload the page or re-run the command for a
    new one.
@@ -54,6 +56,39 @@ Voice (dictation and voice mode) is on by default because the bundle ships the l
 speech runtime; models download in the background on first use and the app shows
 "downloading models" until they are ready. Opt out with `PASEO_VOICE=0` or
 `"features": { "voice": { "enabled": false } }` in `config.json`.
+
+## Where the daemon keeps its state
+
+The FDE home is `~/.fde`. Set `FDE_HOME` to move it; the older `PASEO_HOME` still works and
+`FDE_HOME` wins when both are set. On a machine that still has `~/.paseo` and no `~/.fde`,
+the next daemon or CLI start moves it once — a rename, or a copy that leaves the original
+when the rename would cross devices — and logs the move; a home a daemon is still running
+from is left alone until that daemon stops. Nothing inside the directory is renamed:
+`config.json`, `paseo.pid`, `daemon.log`, `principals.json` keep their names.
+`fde daemon status` and onboarding both print the home in use.
+
+## Start the daemon at login
+
+The installers register a service for you. To do it (or undo it) yourself, on any platform:
+
+```bash
+fde daemon install-service                       # start FDE when I log in
+fde daemon install-service --listen 0.0.0.0:9999 # ... reachable from the network
+fde daemon uninstall-service                     # stop doing that
+```
+
+- **Linux**: a systemd user unit at `~/.config/systemd/user/fde-daemon.service`
+  (`$XDG_CONFIG_HOME` is honoured), enabled and started with `systemctl --user`. The
+  daemon stops when your session ends unless you run `sudo loginctl enable-linger $USER`
+  once — the command prints that reminder.
+- **macOS**: a launchd agent at `~/Library/LaunchAgents/app.frogg.fde-daemon.plist`,
+  loaded with `launchctl bootstrap gui/$UID`.
+- **Windows**: a Task Scheduler task named "FDE Daemon", registered with
+  `schtasks /Create /SC ONLOGON`, running the CLI's `daemon start --foreground`.
+
+`fde onboard` asks the same question ("Start the FDE daemon automatically when you log
+in?", default yes). A non-interactive run does nothing unless `FDE_AUTOSTART` is set:
+`FDE_AUTOSTART=1` installs the service, `FDE_AUTOSTART=0` removes it.
 
 ## Native install
 
@@ -99,7 +134,7 @@ service.
 | `FDE_BUNDLE_FILE`  | unset                                       | Install this local tarball instead of downloading              |
 | `FDE_NO_SERVICE`   | `0`                                         | `1` skips the systemd/launchd service                          |
 | `FDE_LISTEN`       | `127.0.0.1:9999`                            | Daemon listen address written into the service                 |
-| `FDE_HOME`         | `~/.paseo`                                  | Daemon state directory written into the service (`PASEO_HOME`) |
+| `FDE_HOME`         | `~/.fde`                                    | Daemon state directory written into the service (`FDE_HOME`)   |
 
 `FDE_LISTEN=0.0.0.0:9999` makes the daemon reachable from the network: devices on the
 same private network connect straight away, the first device to pair from anywhere
@@ -132,7 +167,7 @@ which is how you upgrade.
 | --------------- | --------------------------- | -------------------------------------------------- |
 | `FDE_VERSION`   | `latest`                    | Image tag                                          |
 | `FDE_IMAGE`     | `froggapp/fde:$FDE_VERSION` | Full image reference                               |
-| `FDE_HOME`      | `~/.fde`                    | Host directory mounted at `/home/fde/.paseo`       |
+| `FDE_HOME`      | `~/.fde`                    | Host directory mounted at `/home/fde/.fde`         |
 | `FDE_PORT`      | `9999`                      | Host port published to the daemon                  |
 | `FDE_BIND`      | `0.0.0.0`                   | Host address the port is published on              |
 | `FDE_WORKSPACE` | unset                       | Host directory mounted at `/workspace`             |

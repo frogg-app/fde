@@ -364,8 +364,8 @@ detail?:"checksum"|"download"|"extract", version?}`. `FDE_DAEMON_BUNDLE_URL` ove
 daemon/apps/cli/dist/index.js daemon …`), which avoids `cmd.exe` quoting on Windows and is
   spawned with `CREATE_NO_WINDOW` there. The launchers stay for humans and are what the daemon
   gets as `PASEO_CLI`. Start is `fde daemon start` with `PASEO_DESKTOP_MANAGED=1`,
-  `PASEO_WEB_UI_ENABLED=false`, `PASEO_NODE_ENV=production`, `PASEO_HOME` (`$PASEO_HOME` or
-  `~/.paseo`) and `PASEO_LISTEN=127.0.0.1:<port>` (`daemon.port` in desktop settings, default
+  `PASEO_WEB_UI_ENABLED=false`, `PASEO_NODE_ENV=production`, `PASEO_HOME` (`$FDE_HOME` or
+  `~/.fde`) and `PASEO_LISTEN=127.0.0.1:<port>` (`daemon.port` in desktop settings, default
   9999); the CLI detaches the supervisor and applies its 1.2 s early-exit grace, then the shell
   polls `fde daemon status --json` every 200 ms for up to 150 attempts (30 s) until the status is
   running with a server id and listen address. Status is Electron's `DesktopDaemonStatus`
@@ -401,7 +401,7 @@ Reviewed by reading, not by running (the Windows build is cross-compiled). First
 verify on a real machine: that `node.exe` spawned with `CREATE_NO_WINDOW` and piped stdio
 runs the CLI without a console flash; that the supervisor the CLI detaches (Node `detached`
 plus `windowsHide` in `spawnProcess`) survives the CLI exiting; that `paseo.pid`,
-`daemon.log` and the listen address land under `%USERPROFILE%\.paseo`; and that the zip's
+`daemon.log` and the listen address land under `%USERPROFILE%\.fde`; and that the zip's
 `node_modules/@fde/*` directories resolve (`fde --version`, `fde daemon status --json` from
 `bin\fde.cmd`).
 

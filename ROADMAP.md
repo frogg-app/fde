@@ -37,6 +37,26 @@ Done items move to CHANGELOG.md.
       darwin-arm64, darwin-x64, win-x64, win-arm64) and attaches it plus `.sha256` sidecars
       to the GitHub release the installer and the desktop app read; pushes the Docker image
       tags when Docker Hub secrets exist.
+- [x] **`~/.fde` home.** `FDE_HOME` is the primary env var (`PASEO_HOME` still works as a
+      fallback; `FDE_HOME` wins), the default home is `~/.fde`, and an existing `~/.paseo`
+      is moved there once on the next start unless a daemon is still running from it.
+      Installers, Docker (`/home/fde/.fde`), Nix, and the desktop sidecar follow;
+      file names inside the home are unchanged. See docs/install.md.
+- [x] **Run at login.** `fde daemon install-service` / `uninstall-service` register a
+      systemd user unit, a launchd agent, or a Windows `schtasks /SC ONLOGON` task running
+      `fde daemon start --foreground`; onboarding asks the same question
+      (`FDE_AUTOSTART=0|1` non-interactively).
+- [x] **Onboarding never hangs.** Readiness is `GET /api/identity` answering
+      `product: "fde"`, so a daemon with a password or a pairing requirement is recognised
+      as ready and onboarding says how to pair instead of polling for ten minutes. It also
+      prints the LAN addresses to type into the app and the current access mode.
+- [x] **`fde pair`** (top-level, alias of `fde daemon pair`) prints
+      `https://pair.frogg.app/code/<code>`, the `paseo://pair#offer=<code>` deep link, a QR
+      (`PASEO_PAIRING_QR=0` to suppress), and one line saying whether the LAN is trusted,
+      pairing is required, or a password is set. `app.pairingBaseUrl` sets the base.
+- [x] **The daemon serves the pairing page** at `GET /code/:code` and `GET /pair?code=`,
+      so `pair.frogg.app` can be reverse-proxied to your own daemon. Invalid or expired
+      codes render one generic message; `pair.frogg.app` is an allowed Host by default.
 - [ ] Hosting for `frogg.app/install.sh`, `uninstall.sh`, `install-docker.sh` (redirects
       to the raw files in the repo are enough).
 - [x] **Default daemon port 9999** (server, CLI, installers, Docker, Nix, docs; an explicit
