@@ -85,8 +85,12 @@ export function planBundleRenames({ platform, arch, version, files }) {
     // bundles match, the one already carrying this release's name wins; anything
     // else is genuinely ambiguous and the rename would be a guess.
     const named = matches.filter((file) => path.posix.basename(file) === target);
-    const picked = named.length === 1 ? named[0] : matches.length === 1 ? matches[0] : null;
-    if (!picked) {
+    let picked = null;
+    if (named.length === 1) {
+      picked = named[0];
+    } else if (matches.length === 1) {
+      picked = matches[0];
+    } else {
       throw new Error(`Several ${rule.dir} bundles match: ${matches.join(", ")}`);
     }
     renames.push({ from: picked, to: target });
