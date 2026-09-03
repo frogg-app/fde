@@ -2,8 +2,9 @@ name: Release
 
 # Builds and publishes a GitHub release for a `vX.Y.Z` tag: desktop bundles for
 # Linux, Windows and macOS, the daemon bundles the install script downloads, the
-# updater manifest (when a signing key is configured), the Android APK (always
-# release-signed: the job fails when the keystore secrets are missing) and the
+# updater manifest (when a signing key is configured), the Android APK (release-
+# signed when the keystore secrets are set, otherwise debug-signed and named
+# `-unsigned`; see the android job) and the
 # Docker image (when Docker Hub credentials are configured). docs/ci.md explains
 # the flow, the asset names and the secrets.
 
@@ -398,16 +399,17 @@ jobs:
       matrix:
         abi: [arm64-v8a]
     steps:
-      # Fails in seconds rather than after the ~30 minute Gradle build. Both
-      # triggers of this workflow (tag push and workflow_dispatch) publish assets
-      # to a GitHub release, so neither may fall back to the debug key: that key
-      # is the shared Expo/RN template `debug.keystore`, and an APK signed with it
-      # cannot update a release-signed install (docs/android.md).
-      - name: Require the release keystore
+      # No release keystore is configured yet, and every APK published so far
+      # (0.1.18 and earlier) is debug-signed. Android identifies an app by its
+      # signing key, so switching to a release key now would stop those installs
+      # updating: they would have to be uninstalled first, losing their data.
+      # Until that migration is planned (docs/android.md "Signing"), a missing
+      # keystore is a warning and the APK ships `-unsigned`, matching what is
+      # already installed. It must not be treated as a distributable build.
+      - name: Warn when the release keystore is missing
         if: needs.meta.outputs.android_signing != 'true'
         run: |
-          echo "::error::No Android release keystore configured for $RELEASE_TAG. Set the repository secrets FDE_ANDROID_KEYSTORE_BASE64, FDE_ANDROID_KEYSTORE_PASSWORD, FDE_ANDROID_KEY_ALIAS and FDE_ANDROID_KEY_PASSWORD, then re-run this workflow. Without them the APK is signed with the publicly known Expo/React Native debug key; Android identifies an app by its signing key, so such an APK cannot update a release-signed install and must never be published as a release asset."
-          exit 1
+          echo "::warning::No Android release keystore for $RELEASE_TAG; the APK is signed with the publicly known Expo/React Native debug key and is published as -unsigned. Set FDE_ANDROID_KEYSTORE_BASE64, FDE_ANDROID_KEYSTORE_PASSWORD, FDE_ANDROID_KEY_ALIAS and FDE_ANDROID_KEY_PASSWORD to sign it, and see docs/android.md before doing so: existing debug-signed installs cannot update to a release-signed APK."
 
       - uses: actions/checkout@v7
         with:
@@ -448,9 +450,10 @@ jobs:
       - name: Install dependencies
         run: node scripts/ci/npm-retry.mjs ci
 
-      # The keystore is a base64-encoded .jks/.keystore in a secret. The guard
-      # above already failed the job if it is missing (see docs/android.md).
+      # The keystore is a base64-encoded .jks/.keystore in a secret; without it
+      # the APK is debug-signed and named `-unsigned` (see docs/android.md).
       - name: Prepare release keystore
+        if: needs.meta.outputs.android_signing == 'true'
         env:
           FDE_ANDROID_KEYSTORE_BASE64: ${{ secrets.FDE_ANDROID_KEYSTORE_BASE64 }}
         run: |

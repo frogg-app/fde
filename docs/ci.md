@@ -61,19 +61,19 @@ meta ──┬── ui ── desktop (linux x86_64, windows x86_64, macos aarc
 
 ### Release asset names
 
-| Asset                                       | Source                                                                                            |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `FDE-<ver>-amd64.deb`                       | Tauri deb (Linux x86_64)                                                                          |
-| `FDE-<ver>-x86_64.AppImage`                 | Tauri AppImage                                                                                    |
-| `FDE-<ver>-x64-setup.zip`                   | Tauri NSIS installer (per-user, unsigned), zipped by `scripts/release/package-windows-zips.mjs`   |
-| `FDE-<ver>-x64-portable.zip`                | `scripts/release/package-windows-zips.mjs` (`fde.exe` + README)                                   |
-| `FDE-<ver>-aarch64.dmg`, `-x86_64.dmg`      | Tauri DMG per architecture                                                                        |
-| `FDE-<ver>-<arch>.app.tar.gz` + `.sig`      | macOS updater bundle, only with a signing key                                                     |
-| `*.sig`                                     | minisign signatures next to the AppImage/installer zip, only with the key                         |
-| `latest.json`                               | Updater manifest, only with the key                                                               |
-| `fde-daemon-<ver>-<platform>-<arch>.tar.gz` | Daemon bundle + `.sha256`, read by `deploy/install.sh` and the desktop app's local daemon install |
-| `fde-daemon-<ver>-win-<arch>.zip`           | Windows daemon bundle + `.sha256`, read by the desktop app's local daemon install                 |
-| `FDE-<ver>-android-arm64-v8a.apk`           | Android APK, always release-signed (the job fails without the keystore secrets)                   |
+| Asset                                        | Source                                                                                            |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `FDE-<ver>-amd64.deb`                        | Tauri deb (Linux x86_64)                                                                          |
+| `FDE-<ver>-x86_64.AppImage`                  | Tauri AppImage                                                                                    |
+| `FDE-<ver>-x64-setup.zip`                    | Tauri NSIS installer (per-user, unsigned), zipped by `scripts/release/package-windows-zips.mjs`   |
+| `FDE-<ver>-x64-portable.zip`                 | `scripts/release/package-windows-zips.mjs` (`fde.exe` + README)                                   |
+| `FDE-<ver>-aarch64.dmg`, `-x86_64.dmg`       | Tauri DMG per architecture                                                                        |
+| `FDE-<ver>-<arch>.app.tar.gz` + `.sig`       | macOS updater bundle, only with a signing key                                                     |
+| `*.sig`                                      | minisign signatures next to the AppImage/installer zip, only with the key                         |
+| `latest.json`                                | Updater manifest, only with the key                                                               |
+| `fde-daemon-<ver>-<platform>-<arch>.tar.gz`  | Daemon bundle + `.sha256`, read by `deploy/install.sh` and the desktop app's local daemon install |
+| `fde-daemon-<ver>-win-<arch>.zip`            | Windows daemon bundle + `.sha256`, read by the desktop app's local daemon install                 |
+| `FDE-<ver>-android-arm64-v8a[-unsigned].apk` | Android APK; release-signed with the keystore secrets, otherwise debug-signed and `-unsigned`     |
 
 Tauri itself names bundles `FDE_<ver>_amd64.AppImage`, `FDE_<ver>_x64-setup.exe` and so
 on; the rename step is the only place that mapping lives, so change
