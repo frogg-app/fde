@@ -6,9 +6,16 @@ pre-commit:
       exclude:
         - "package-lock.json"
         - "**/package-lock.json"
+        # Generated sources the formatter and linter ignore by config: leaving them in
+        # the job's file list makes a generated-only commit fail with "no files found".
+        - "**/*.gen.ts"
+        - "**/*.gen.tsx"
+        - "packages/protocol/src/generated/**"
       run: npm run format:check:files -- {staged_files}
     - name: lint
       glob: "*.{js,jsx,ts,tsx}"
+      exclude:
+        - "packages/protocol/src/generated/**"
       run: npm run lint -- {staged_files}
     - name: typecheck
       run: node scripts/ci/typecheck-staged.mjs
