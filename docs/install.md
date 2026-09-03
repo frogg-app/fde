@@ -30,9 +30,10 @@ is built from the same bundle.
    shows the "Claim this FDE daemon" page with a QR code and link, or run
    `fde daemon pair` on the host (with relay off it prints the same direct LAN offer).
    The link looks like `https://pair.frogg.app/code/<code>`, where the code is the
-   offer payload. `pair.frogg.app` only renders a page that hands the code to the app;
-   you can also point that hostname at your own daemon, which serves the same page from
-   `GET /code/<code>` (and `GET /pair?code=<code>`). The same offer is also available as
+   offer payload. `pair.frogg.app` only renders a page that hands the code to the app
+   (a stateless service built from the same route, `deploy/pair`); you can also point that
+   hostname at your own daemon, which serves the same page from `GET /code/<code>` (and
+   `GET /pair?code=<code>`). The same offer is also available as
    `paseo://pair#offer=<code>` (the page's "Open in FDE" button, `deepLink` in
    `fde daemon pair --json`), which opens the installed desktop app directly. The code is
    single-use and expires after ten minutes; reload the page or re-run the command for a
@@ -96,11 +97,22 @@ in?", default yes). A non-interactive run does nothing unless `FDE_AUTOSTART` is
 curl -fsSL https://frogg.app/install.sh | bash
 ```
 
+`frogg.app/install.sh` is a 302 to this repository's copy of `deploy/install.sh`
+(the reverse proxy in front of `frogg.app` holds the rule, so the URL never
+changes). Every release also carries the three scripts as assets, so
+`https://github.com/frogg-app/fde/releases/download/v<version>/install.sh` pins
+the installer that shipped with a given release. Note that
+`/releases/latest/...` resolves only once a release is published without the
+pre-release flag, which every `0.x` release carries.
+
 What it does:
 
 1. Detects the platform (`linux`/`darwin`, `x64`/`arm64`) and downloads
    `fde-daemon-<version>-<platform>-<arch>.tar.gz` plus its `.sha256` sidecar
-   from the GitHub release, verifying the checksum.
+   from the GitHub release, verifying the checksum. Without `FDE_VERSION` it
+   resolves the newest release itself, falling back to the GitHub API when
+   `/releases/latest` resolves to nothing because every published release is
+   still flagged as a pre-release.
 2. Unpacks it into `~/.local/share/fde/versions/<version>/` and points the
    `~/.local/share/fde/current` symlink at it (the swap is atomic, so a running
    `fde` keeps resolving a complete tree).

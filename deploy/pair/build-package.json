@@ -1,0 +1,11 @@
+{
+  "name": "fde-pair-page-build",
+  "private": true,
+  "description": "Only the packages the pairing-page bundle needs. Keep in sync with packages/server/package.json.",
+  "dependencies": {
+    "esbuild": "^0.25.12",
+    "express": "^4.18.2",
+    "qrcode": "^1.5.4",
+    "zod": "^4.4.3"
+  }
+}

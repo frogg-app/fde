@@ -1,0 +1,20 @@
+# The public pairing page. Stateless: no volumes, no secrets, safe to restart
+# or run on more than one host. Put it behind the reverse proxy that terminates
+# TLS for `pair.frogg.app`.
+services:
+  fde-pair-page:
+    image: froggapp/fde-pair-page:0.1.17
+    container_name: fde-pair-page
+    restart: unless-stopped
+    ports:
+      - "8787:8787"
+    environment:
+      # The base URL the rendered QR points back at: the public hostname, not
+      # the container's address.
+      FDE_PAIRING_BASE_URL: https://pair.frogg.app
+      FDE_PAIR_ROOT_REDIRECT: https://frogg.app
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL

@@ -78,11 +78,19 @@ single-use and expires after ten minutes.
 page for a pairing code: the QR, an "Open in FDE" deep link, the raw code to type in, and —
 when this daemon issued the code and the token is still live — a "Pair this browser" button
 that hands the code to the bundled web UI, which redeems it and keeps the credential. The
-page is public, because the code is the secret. Anything else (a malformed code, another
-daemon's code, one already used, one past `expiresAt`) renders the same "This pairing link
-has expired" page and nothing more, so the route never confirms which codes exist.
-`pair.frogg.app` is accepted as a `Host` header by default, so the hostname can be
-reverse-proxied to a daemon without setting `PASEO_HOSTNAMES`.
+page is public, because the code is the secret. Anything that is not a live offer (a
+malformed code, one already used, one past `expiresAt`) renders the same "This pairing link
+has expired" page and nothing more, so the route never confirms which codes exist. Another
+daemon's live code still renders — a proxy in front of many daemons has to be able to serve
+it — but with no "Pair this browser" button and with `hostname` omitted, so the page echoes
+nothing about a machine this daemon does not own. `pair.frogg.app` is accepted as a `Host`
+header by default, so the hostname can be reverse-proxied to a daemon without setting
+`PASEO_HOSTNAMES`.
+
+Because a code carries the whole offer, the page can also be served by something that is not
+a daemon at all: `deploy/pair` builds a small stateless image that mounts only this route,
+which is what answers the public `pair.frogg.app`. See
+[deploy/pair/README.md](../deploy/pair/README.md).
 
 `app.pairingBaseUrl` in `config.json` (default `https://pair.frogg.app`, overridable with
 `FDE_PAIRING_BASE_URL`) chooses the base the daemon puts in links. The older `app.baseUrl`
