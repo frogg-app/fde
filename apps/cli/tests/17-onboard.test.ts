@@ -30,9 +30,16 @@ try {
     onboard.stdout.includes("Daemon is running with relay off"),
     "onboard output should explain the direct connection path",
   );
+  const offerMatch = onboard.stdout.match(/#offer=([A-Za-z0-9_-]+)/);
+  assert(offerMatch?.[1], "onboard output should include a pairing offer");
+  const offerPayload = JSON.parse(Buffer.from(offerMatch[1], "base64url").toString("utf8")) as {
+    v?: number;
+    direct?: { endpoints?: string[] };
+  };
+  assert.strictEqual(offerPayload.v, 3, "the offer should be a direct (v3) claim offer");
   assert(
-    onboard.stdout.includes("#offer=") && onboard.stdout.includes("Direct LAN pairing"),
-    "onboard output should include a direct pairing offer",
+    offerPayload.direct?.endpoints?.includes(`127.0.0.1:${port}`),
+    "the direct offer should list the daemon endpoint",
   );
   assert(
     !onboard.stdout.includes("relay.paseo.sh"),
