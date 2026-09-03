@@ -18,7 +18,7 @@ try {
   console.log("Test 1: `paseo` runs blocking onboarding without implicit relay pairing");
   // Voice is on by default (and would download speech models); opt out to keep the test hermetic.
   const onboard =
-    await $`PASEO_HOME=${paseoHome} PASEO_LISTEN=127.0.0.1:${port} PASEO_PAIRING_QR=0 npx paseo --voice disable`.nothrow();
+    await $`PASEO_HOME=${paseoHome} PASEO_LISTEN=127.0.0.1:${port} PASEO_VOICE=0 npx paseo`.nothrow();
 
   assert.strictEqual(
     onboard.exitCode,
@@ -79,7 +79,7 @@ try {
   );
   console.log("✓ --no-relay suppresses pairing for an already-running daemon\n");
 
-  console.log("Test 3: --voice disable persists the voice opt-out in config");
+  console.log("Test 3: PASEO_VOICE=0 persists the voice opt-out in config");
   const configRaw = await readFile(join(paseoHome, "config.json"), "utf-8");
   const config = JSON.parse(configRaw) as {
     features?: {
@@ -103,7 +103,7 @@ try {
     !daemonLog.includes("Ensuring local speech models"),
     "daemon should not attempt local speech model setup when voice is disabled",
   );
-  console.log("✓ --voice disable persisted the voice opt-out\n");
+  console.log("✓ PASEO_VOICE=0 persisted the voice opt-out\n");
 } finally {
   await $`PASEO_HOME=${paseoHome} npx paseo daemon stop --home ${paseoHome} --force`.nothrow();
   await rm(paseoHome, { recursive: true, force: true });

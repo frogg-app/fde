@@ -81,8 +81,9 @@ log "state:  ${FDE_HOME}"
 if [ "${FDE_BIND}" = "127.0.0.1" ] || [ "${FDE_BIND}" = "localhost" ]; then
   log "the daemon port is bound to loopback; reach it through an SSH tunnel"
 elif [ -z "${FDE_PASSWORD}" ]; then
-  log "no FDE_PASSWORD set: anyone who can reach port ${FDE_PORT} can control the daemon"
+  log "no FDE_PASSWORD set: the daemon is unclaimed until the first device pairs (open the web UI or run the pair command below)"
 fi
 log "pair a client:   docker exec ${FDE_CONTAINER} fde daemon pair"
+log "pairing status:  docker exec ${FDE_CONTAINER} fde daemon claim-status"
 log "logs:            docker logs -f ${FDE_CONTAINER}"
 log "install agents:  docker exec -it ${FDE_CONTAINER} bash   (see docs/docker.md)"

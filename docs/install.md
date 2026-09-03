@@ -13,6 +13,31 @@ Neither path needs Node or npm on the host. The native install ships a
 and CLI, and their production dependencies for one platform. The Docker image
 is built from the same bundle.
 
+## First run: install, then pair
+
+1. Install the daemon (native or Docker, below). It listens on port `9999` by default
+   and, unless you set a password, starts **unclaimed**: nobody has paired with it yet.
+2. Get a pairing code. Either open `http://<host>:9999/` from another machine, which
+   shows the "Claim this FDE daemon" page with a QR code and link, or run
+   `fde daemon pair` on the host (with relay off it prints the same direct LAN offer).
+   The code is single-use and expires after ten minutes; reload the page or re-run the
+   command for a new one.
+3. In the FDE desktop or mobile app choose _Pair a daemon_ and scan the code or paste
+   the link. The app connects, redeems the code, and receives its device credential.
+   The daemon is now claimed: the web page switches to the app, and every other LAN
+   client needs to pair (`fde daemon pair` again, or the app's "pair another device")
+   or use a password (`fde daemon set-password`).
+
+`fde daemon claim-status` shows who has paired; `fde daemon reset-claim` forgets all
+devices and brings the pairing page back. Loopback clients on the host itself (the CLI,
+`http://localhost:9999/`) are never gated; see
+[permissions.md](permissions.md#claimed-state) for the exact rules.
+
+Voice (dictation and voice mode) is on by default because the bundle ships the local
+speech runtime; models download in the background on first use and the app shows
+"downloading models" until they are ready. Opt out with `PASEO_VOICE=0` or
+`"features": { "voice": { "enabled": false } }` in `config.json`.
+
 ## Native install
 
 ```bash
@@ -59,9 +84,10 @@ service.
 | `FDE_LISTEN`       | `127.0.0.1:9999`                                 | Daemon listen address written into the service                 |
 | `FDE_HOME`         | `~/.paseo`                                       | Daemon state directory written into the service (`PASEO_HOME`) |
 
-`FDE_LISTEN=0.0.0.0:9999` makes the daemon reachable from the network; set a
-password afterwards with `fde daemon set-password`. With the loopback default,
-reach it through an SSH tunnel or the desktop app's SSH connection.
+`FDE_LISTEN=0.0.0.0:9999` makes the daemon reachable from the network; the first
+device to pair claims it (see "First run" above), or set a password with
+`fde daemon set-password`. With the loopback default, reach it through an SSH
+tunnel or the desktop app's SSH connection.
 
 ### Upgrade, uninstall
 
@@ -121,8 +147,11 @@ fde-daemon-<v>-<platform>-<arch>/
 
 The launcher runs the CLI, and the CLI starts the daemon through the
 supervisor entrypoint, the same launch contract the Nix package and the Docker
-image follow. The sherpa-onnx local speech binaries are left out to keep the
-bundle small; everything else the daemon can do works.
+image follow. The bundle includes the sherpa-onnx local speech runtime for its
+target platform (`sherpa-onnx-<platform>-<arch>`, about 32 MiB unpacked on
+linux-x64) so dictation and voice mode work out of the box; speech models are
+downloaded on first use. sherpa publishes no win-arm64 package, so that bundle
+has no local speech and voice defaults to off there.
 
 ### Windows bundle
 
@@ -153,6 +182,7 @@ yet; see `docs/desktop-shell.md` for what to verify first.
 a temp dir, starts the daemon, checks the web UI answers, and stops it.
 
 ## Deploying from the desktop app
+
 ## The desktop app's local daemon
 
 The desktop app installs the same bundle for the machine it runs on into its

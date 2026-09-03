@@ -19,9 +19,12 @@ The image:
 - ships `git`, `openssh-client`, `curl`, `bash`, `procps`, `lbzip2`, but no
   agent CLIs
 
-Open the container's HTTP origin, for example `http://<host>:9999`, to load
-the web UI. Static UI files load without daemon auth; API and WebSocket
-requests require `PASEO_PASSWORD` when one is configured.
+Open the container's HTTP origin, for example `http://<host>:9999`. Until a
+device has paired (or `PASEO_PASSWORD` is set) it shows the "Claim this FDE
+daemon" page with a QR code; pair from the FDE app and the page turns into the
+web UI. Static UI files load without daemon auth; API and WebSocket requests
+from outside the container need the paired device credential or
+`PASEO_PASSWORD`. See [install.md](install.md#first-run-install-then-pair).
 
 ## Quick start
 
@@ -99,6 +102,11 @@ or Compose `environment:`; the daemon forwards them to launched agents.
 | `PASEO_LOG_FORMAT`     | `json`             |
 | `PASEO_PASSWORD`       | unset              |
 | `PASEO_HOSTNAMES`      | unset              |
+| `PASEO_VOICE`          | unset (voice on)   |
+
+The image ships the local speech runtime, so dictation and voice mode are on by
+default and download their models into the state volume on first use.
+`PASEO_VOICE=0` turns both off.
 
 Bind-mounted directories must be writable by uid/gid `1000:1000`; the
 entrypoint chowns mounts that are still root-owned on first start.
@@ -124,7 +132,10 @@ When reaching the daemon by DNS name, set `PASEO_HOSTNAMES` (for example
 
 ## Security
 
-- Set `PASEO_PASSWORD` for any published port.
+- A published port starts unclaimed: the first device to pair owns the daemon.
+  Pair right after starting the container, or set `PASEO_PASSWORD` instead.
+  `docker exec fde-daemon fde daemon claim-status` shows who has paired and
+  `reset-claim` forgets them.
 - Put HTTPS in front for direct browser access.
 - The container is the isolation boundary for agents: they can read and write
   whatever is mounted into `/workspace` and any credentials in the home volume.
@@ -149,6 +160,9 @@ unpacks it under `/opt/fde`.
 
 - **The web UI loads but cannot connect**: with `PASEO_PASSWORD` set, add a
   direct connection using that password.
+- **The pairing page keeps showing**: no device has completed pairing yet, or
+  the code expired (reload for a new one). `docker exec fde-daemon fde daemon
+claim-status --json` reports the state.
 - **403 Host not allowed**: set `PASEO_HOSTNAMES`.
 - **Provider not available**: install that agent CLI in a child image.
 - **Permission errors in `/workspace`**: make the directory writable by

@@ -48,6 +48,14 @@ const READY_PROBE_TIMEOUT_MS = 1200;
  */
 export const DEFAULT_VOICE_ENABLED = true;
 
+/** Non-interactive runs honor the `PASEO_VOICE` umbrella switch, then the default. */
+export function resolveNonInteractiveVoiceDefault(env: NodeJS.ProcessEnv): boolean {
+  const raw = env.PASEO_VOICE?.trim().toLowerCase();
+  if (raw !== undefined && ["0", "false", "no", "off"].includes(raw)) return false;
+  if (raw !== undefined && ["1", "true", "yes", "on"].includes(raw)) return true;
+  return DEFAULT_VOICE_ENABLED;
+}
+
 class OnboardCancelledError extends Error {}
 
 const plainNoteFormat = (line: string): string => line;
@@ -123,10 +131,11 @@ async function resolveVoiceSelection(mode: OnboardOptions["voice"]): Promise<boo
   }
 
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
+    const selected = resolveNonInteractiveVoiceDefault(process.env);
     log.message(
-      `Non-interactive terminal detected; voice setup defaults to ${DEFAULT_VOICE_ENABLED ? "enabled" : "disabled"}.`,
+      `Non-interactive terminal detected; voice setup defaults to ${selected ? "enabled" : "disabled"}.`,
     );
-    return DEFAULT_VOICE_ENABLED;
+    return selected;
   }
 
   const answer = await confirm({

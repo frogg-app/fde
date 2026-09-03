@@ -15,6 +15,51 @@ A principal is the durable identity the daemon authorizes. A credential proves t
 
 A pairing invitation is neither. It is an expiring, single-use exchange that creates a principal and credential with the permissions selected by its issuer.
 
+## Claimed state
+
+A daemon is **unclaimed** while nobody can authenticate to it: no daemon password is
+configured (`daemon.auth.password` / `PASEO_PASSWORD`) and `$PASEO_HOME/principals.json`
+holds no principal with a credential. The predicate lives in
+`packages/server/src/server/access-policy.ts` and is read live, so a change to the file
+takes effect without a restart.
+
+What an unclaimed daemon does with a request depends only on where it comes from:
+
+| Client                                      | Unclaimed                                                                  | Claimed                                          |
+| ------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------ |
+| Loopback (127.0.0.1, ::1, socket, pipe)     | open, as before (no password, no bearer needed)                            | open unless a password is configured             |
+| Beyond loopback (LAN, Docker bridge, proxy) | web UI serves the claim page; API/WS answer 401                            | bearer required: a device credential or password |
+| Relay / Hub                                 | unchanged: the pairing QR public key and Hub enrollment are the credential |
+
+Loopback stays open on purpose: the CLI, the desktop app's sidecar, and a dev daemon all
+talk to their own machine's daemon without a password, and the first-run gate must never
+lock a single-machine setup out of itself. The client address honors `daemon.trustedProxies`
+(default `loopback`) the same way Express's `trust proxy` does, so a reverse proxy on
+localhost does not turn LAN visitors into loopback clients.
+
+**Claiming** is the first direct pairing. The claim page (or `fde daemon pair` with relay
+off) hands out a v3 connection offer: `{ v: 3, serverId, hostname, daemonPublicKeyB64,
+direct: { endpoints }, claim: { token, expiresAt }, relay? }` encoded as
+`<app.baseUrl>/#offer=<base64url>`. The token is single-use and expires after ten minutes.
+The client connects to one of the endpoints and `POST /api/setup/claim { token, label }`;
+the daemon mints a principal with all permissions and one credential, returns the plaintext
+credential once, and stores only its SHA-256 in `principals.json` (mode 0600). From then on
+the credential is the bearer for that device (`Authorization: Bearer …`, or the
+`paseo.bearer.<credential>` WebSocket subprotocol, the same slot a password uses), and the
+daemon is claimed. Anyone who can reach an unclaimed daemon on the network can claim it;
+that is no wider than the pre-gate behavior, where they could already control it.
+
+Related surfaces:
+
+- `GET /api/identity` (public): `{ product: "fde", serverId, hostname, version, listen, pairingRequired }`
+- `GET /api/setup/status` (public): `{ claimed, pairingRequired }`, polled by the claim page
+- `POST /api/setup/offer` (bearer policy applies): a fresh direct offer for pairing another device
+- `fde daemon claim-status [--json]`, `fde daemon reset-claim [--json]`: inspect or delete `principals.json`
+
+Per-principal grants are recorded (`permissions` on each principal) but every paired
+device currently receives the full owner set; narrowing per device is future work, and the
+session model already attenuates rather than widens.
+
 ## Permissions
 
 | Permission          | Authority                                                                  |

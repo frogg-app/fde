@@ -50,7 +50,8 @@ The heart of Paseo. A Node.js process that:
 - Streams agent output in real time via a timeline model
 - Provides agent-to-agent tools through a transport-neutral tool catalog, with MCP as one adapter
 - Optionally connects outbound to a relay for remote access
-- Optionally serves the browser web client from the same HTTP server (self-hosting guide: [public-docs/web-ui.md](../public-docs/web-ui.md))
+- Optionally serves the browser web client from the same HTTP server (self-hosting guide: [public-docs/web-ui.md](../public-docs/web-ui.md)); until a device has paired, LAN visitors get the claim page instead (`server/claim-gate-page.ts`, [permissions.md](permissions.md#claimed-state))
+- Exposes a few unauthenticated HTTP routes next to `/api/health`: `/api/identity` (`server/identity-route.ts`) and the pairing routes under `/api/setup/*` (`server/setup-routes.ts`)
 
 All paths are under `packages/server/src/`.
 
@@ -380,6 +381,7 @@ $PASEO_HOME/
 ├── schedules/                                  # Scheduled-agent definitions and runs
 ├── config.json                                 # Daemon config (mutable)
 ├── daemon-keypair.json                         # Daemon identity for relay/E2EE
+├── principals.json                             # Paired devices: principals + credential digests (permissions.md)
 ├── push-tokens.json                            # Mobile push tokens
 ├── paseo.sock / paseo.pid                      # Local IPC socket and pidfile
 └── daemon.log                                  # Daemon trace logs (rotated)
@@ -387,6 +389,6 @@ $PASEO_HOME/
 
 ## Deployment models
 
-1. **Local daemon** (default): `paseo daemon start` on `127.0.0.1:9999`
+1. **Local daemon** (default): `paseo daemon start` on `127.0.0.1:9999` (6767 was the upstream default and still works when configured explicitly)
 2. **Managed desktop**: the desktop shell spawns the daemon as subprocess, and stops it again on quit so that "restart the app" is a complete reset. Settings > Host > "Keep daemon running after quit" opts out. Only a daemon the desktop started is stopped — a daemon you started yourself with `paseo daemon start` is left alone (`paseo.pid` records `desktopManaged`).
 3. **Remote + relay**: Daemon behind firewall, relay bridges with E2E encryption
