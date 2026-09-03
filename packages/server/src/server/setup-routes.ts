@@ -86,12 +86,12 @@ export function createSetupOfferHandler(deps: SetupRouteDependencies): RequestHa
         res.status(409).json({ error: error instanceof Error ? error.message : String(error) });
         return;
       }
-      const qr =
-        qrMode === "svg"
-          ? await renderClaimOfferQrSvg(built.url)
-          : qrMode === "terminal"
-            ? await renderPairingQr(built.url).catch(() => null)
-            : null;
+      let qr: string | null = null;
+      if (qrMode === "svg") {
+        qr = await renderClaimOfferQrSvg(built.url);
+      } else if (qrMode === "terminal") {
+        qr = await renderPairingQr(built.url).catch(() => null);
+      }
       res.setHeader("Cache-Control", "no-store");
       res.json({
         url: built.url,

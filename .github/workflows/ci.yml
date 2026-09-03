@@ -73,7 +73,9 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Build library dependencies
-        run: npm run build:server-deps && npm run build --workspace=@fde/expo-two-way-audio
+        # The CLI unit tests import @fde/server (the claim and self-update commands), so the
+        # server and CLI dists have to exist too, not just the shared libraries.
+        run: npm run build:server && npm run build --workspace=@fde/expo-two-way-audio
 
       - name: Test protocol, client, highlight, relay, plugin
         run: >-

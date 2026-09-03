@@ -72,6 +72,27 @@ function run(cmd, args, options = {}) {
   }
 }
 
+/** Validates the release keystore environment and says which key the build will use. */
+function reportSigning({ signed, variant }) {
+  if (!signed) {
+    if (variant === "release") {
+      console.log(
+        "FDE_ANDROID_KEYSTORE is not set: the release APK will be debug-signed (-unsigned suffix).",
+      );
+    }
+    return;
+  }
+  if (!existsSync(process.env.FDE_ANDROID_KEYSTORE)) {
+    throw new Error(`FDE_ANDROID_KEYSTORE does not exist: ${process.env.FDE_ANDROID_KEYSTORE}`);
+  }
+  for (const key of ["FDE_ANDROID_KEYSTORE_PASSWORD", "FDE_ANDROID_KEY_ALIAS"]) {
+    if (!process.env[key]) throw new Error(`${key} is required when FDE_ANDROID_KEYSTORE is set`);
+  }
+  console.log(
+    `Signing with ${process.env.FDE_ANDROID_KEYSTORE} (alias ${process.env.FDE_ANDROID_KEY_ALIAS}).`,
+  );
+}
+
 function main() {
   const { values } = parseArgs({
     options: {
@@ -98,21 +119,7 @@ function main() {
   if (!process.env.ANDROID_HOME && !process.env.ANDROID_SDK_ROOT) {
     throw new Error("ANDROID_HOME (or ANDROID_SDK_ROOT) must point at an Android SDK");
   }
-  if (signed) {
-    if (!existsSync(process.env.FDE_ANDROID_KEYSTORE)) {
-      throw new Error(`FDE_ANDROID_KEYSTORE does not exist: ${process.env.FDE_ANDROID_KEYSTORE}`);
-    }
-    for (const key of ["FDE_ANDROID_KEYSTORE_PASSWORD", "FDE_ANDROID_KEY_ALIAS"]) {
-      if (!process.env[key]) throw new Error(`${key} is required when FDE_ANDROID_KEYSTORE is set`);
-    }
-    console.log(
-      `Signing with ${process.env.FDE_ANDROID_KEYSTORE} (alias ${process.env.FDE_ANDROID_KEY_ALIAS}).`,
-    );
-  } else if (variant === "release") {
-    console.log(
-      "FDE_ANDROID_KEYSTORE is not set: the release APK will be debug-signed (-unsigned suffix).",
-    );
-  }
+  reportSigning({ signed, variant });
 
   const env = {
     ...process.env,

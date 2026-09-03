@@ -3,8 +3,8 @@ import { parseDaemonPortInput, resolveRemoteSshTarget } from "./remote-ssh-targe
 
 describe("parseDaemonPortInput", () => {
   it("treats blank as the default port", () => {
-    expect(parseDaemonPortInput("")).toBe(6767);
-    expect(parseDaemonPortInput("   ")).toBe(6767);
+    expect(parseDaemonPortInput("")).toBe(9999);
+    expect(parseDaemonPortInput("   ")).toBe(9999);
   });
 
   it("accepts whole ports in range and rejects the rest", () => {
@@ -25,7 +25,7 @@ describe("resolveRemoteSshTarget", () => {
       {
         ok: true,
         uri: "ssh://build-box",
-        target: { host: "build-box", daemonPort: 6767 },
+        target: { host: "build-box", daemonPort: 9999 },
       },
     );
   });
