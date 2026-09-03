@@ -15,7 +15,8 @@ import { parseArgs } from "node:util";
 /** Updater platform key -> the asset that platform installs (names from collect-desktop-bundles). */
 export const UPDATER_ASSETS = {
   "linux-x86_64": (v) => `FDE-${v}-x86_64.AppImage`,
-  "windows-x86_64": (v) => `FDE-${v}-x64-setup.exe`,
+  // Zipped NSIS installer: the plugin unpacks it (and GitHub will not take a raw .exe).
+  "windows-x86_64": (v) => `FDE-${v}-x64-setup.zip`,
   "darwin-aarch64": (v) => `FDE-${v}-aarch64.app.tar.gz`,
   "darwin-x86_64": (v) => `FDE-${v}-x86_64.app.tar.gz`,
 };

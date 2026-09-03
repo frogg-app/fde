@@ -2,6 +2,7 @@
 
 ## 0.1.18
 
+- Windows releases ship only as zips: the NSIS installer is published as `FDE-<ver>-x64-setup.zip` next to `FDE-<ver>-x64-portable.zip`. GitHub rejects raw `.exe` release assets, so the installer upload used to fail. Both updaters unpack the zip before running the installer, and the updater signature now covers the zip.
 - Tests no longer touch the developer's home: every worker gets its own throwaway FDE home.
   Previously the suite resolved the real `~/.fde` and could move a running daemon's state.
 - Test and CI repairs that had kept the pipeline red: nine lint errors, a plugin test resolving

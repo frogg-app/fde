@@ -1,10 +1,17 @@
 #!/usr/bin/env node
-// Packages the cross-compiled Windows binary as a portable zip next to the
-// NSIS installer: FDE-<version>-x64-portable.zip containing
-// FDE-<version>-portable/{FDE.exe,README.txt}. No dependencies: the zip is
-// written with Node's zlib (deflate + crc32).
+// Packages both Windows release assets as zips. GitHub rejects our uploads when a
+// raw .exe is pushed as a release asset, and Windows itself is hostile to bare
+// downloaded exes, so nothing Windows leaves the build as an .exe:
+//
+//   FDE-<version>-x64-portable.zip  FDE-<version>-portable/{FDE.exe,README.txt}
+//   FDE-<version>-x64-setup.zip     FDE-<version>-x64-setup.exe (the NSIS installer)
+//
+// The installer zip is what both updaters consume: tauri-plugin-updater unpacks a
+// zipped NSIS installer itself, and the GitHub-release path in
+// apps/desktop/src-tauri/src/updates/install.rs extracts it before running it.
+// No dependencies: the zips are written with Node's zlib (deflate + crc32).
 
-import { mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { crc32, deflateRawSync } from "node:zlib";
@@ -145,14 +152,17 @@ export function listZip(buffer) {
   return entries;
 }
 
+function readPackageVersion() {
+  return JSON.parse(readFileSync(path.join(REPO_ROOT, "package.json"), "utf8")).version;
+}
+
 export function packagePortableWindows({
   version,
   releaseDir = WINDOWS_RELEASE_DIR,
   exePath = path.join(releaseDir, "fde.exe"),
   outputDir = path.join(releaseDir, "bundle/portable"),
 } = {}) {
-  const resolvedVersion =
-    version ?? JSON.parse(readFileSync(path.join(REPO_ROOT, "package.json"), "utf8")).version;
+  const resolvedVersion = version ?? readPackageVersion();
   let exe;
   try {
     exe = readFileSync(exePath);
@@ -171,13 +181,65 @@ export function packagePortableWindows({
   return { zipPath, byteSize: zip.length, exeByteSize: exe.length };
 }
 
+/**
+ * Zips the NSIS installer Tauri wrote under `bundle/nsis/` into
+ * `bundle/nsis-zip/FDE-<version>-x64-setup.zip`, holding a single entry named
+ * `FDE-<version>-x64-setup.exe`. The installer's own `.sig` does not carry over:
+ * the updater verifies whatever it downloads, so the zip is signed after this
+ * step (see the release workflow).
+ */
+export function packageWindowsInstallerZip({
+  version,
+  releaseDir = WINDOWS_RELEASE_DIR,
+  nsisDir = path.join(releaseDir, "bundle/nsis"),
+  outputDir = path.join(releaseDir, "bundle/nsis-zip"),
+} = {}) {
+  const resolvedVersion = version ?? readPackageVersion();
+  const installers = listSetupExecutables(nsisDir);
+  if (installers.length === 0) {
+    throw new Error(`No NSIS installer found in ${nsisDir}. Run the Tauri Windows build first.`);
+  }
+  // A dev checkout's target dir keeps every version ever built, so prefer the one
+  // Tauri just wrote for this version (`FDE_<version>_x64-setup.exe`) and only
+  // fall back to "there must be exactly one" when the name does not match.
+  const forThisVersion = installers.filter((entry) => entry.includes(`_${resolvedVersion}_`));
+  const candidates = forThisVersion.length > 0 ? forThisVersion : installers;
+  if (candidates.length > 1) {
+    throw new Error(`Several NSIS installers in ${nsisDir}: ${candidates.join(", ")}`);
+  }
+  const installerPath = path.join(nsisDir, candidates[0]);
+  const installer = readFileSync(installerPath);
+  const entryName = `FDE-${resolvedVersion}-x64-setup.exe`;
+  const zip = createZip([
+    { name: entryName, data: installer, mtime: statSync(installerPath).mtime },
+  ]);
+  mkdirSync(outputDir, { recursive: true });
+  const zipPath = path.join(outputDir, `FDE-${resolvedVersion}-x64-setup.zip`);
+  writeFileSync(zipPath, zip);
+  return { zipPath, entryName, byteSize: zip.length, installerByteSize: installer.length };
+}
+
+function listSetupExecutables(dir) {
+  let entries;
+  try {
+    entries = readdirSync(dir);
+  } catch {
+    return [];
+  }
+  return entries.filter((entry) => entry.endsWith("-setup.exe"));
+}
+
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
     const flagIndex = process.argv.indexOf("--release-dir");
     const releaseDir =
       flagIndex === -1 ? WINDOWS_RELEASE_DIR : resolveReleaseDir(process.argv[flagIndex + 1]);
-    const result = packagePortableWindows({ releaseDir });
-    console.log(`Wrote ${result.zipPath} (${(result.byteSize / 1024 / 1024).toFixed(1)} MB)`);
+    for (const result of [
+      packagePortableWindows({ releaseDir }),
+      packageWindowsInstallerZip({ releaseDir }),
+    ]) {
+      console.log(`Wrote ${result.zipPath} (${(result.byteSize / 1024 / 1024).toFixed(1)} MB)`);
+    }
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
     process.exit(1);
