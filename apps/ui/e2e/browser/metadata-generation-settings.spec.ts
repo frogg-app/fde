@@ -50,7 +50,10 @@ test("chooses a metadata model and can return to automatic selection", async ({
   await page.getByText("Ten second stream", { exact: true }).click();
 
   await expect(page.getByRole("button", { name: /Ten second stream/ })).toBeVisible();
+  // The settings modal does not survive a reload (it steps off the /settings
+  // route when it opens), so reopen the section to read the persisted value.
   await page.reload();
+  await openMetadataGenerationSettings(page);
   await expect(page.getByRole("button", { name: "Manual", exact: true })).toHaveAttribute(
     "aria-selected",
     "true",
@@ -63,6 +66,7 @@ test("chooses a metadata model and can return to automatic selection", async ({
 
   await page.getByRole("button", { name: "Automatic", exact: true }).click();
   await page.reload();
+  await openMetadataGenerationSettings(page);
 
   await expect(page.getByRole("button", { name: "Automatic", exact: true })).toHaveAttribute(
     "aria-selected",

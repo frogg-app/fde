@@ -25,7 +25,7 @@ import {
   expectProjectSettingsFormHidden,
   expectProjectSettingsFormVisible,
   expectProjectTitle,
-  expectProjectSettingsHistoryRoundTrip,
+  expectProjectSettingsReturnRoundTrip,
   expectSaveButtonDisabled,
   expectScriptRowCount,
   expectWriteFailedCalloutActions,
@@ -244,7 +244,7 @@ test.describe("Projects settings", () => {
     await expectProjectHostContextHidden(page);
     await returnToProjectsList(page);
     await openProjectSettings(page, editableProject.name);
-    await expectProjectSettingsHistoryRoundTrip(page, editableProject.name);
+    await expectProjectSettingsReturnRoundTrip(page, editableProject.name);
   });
 
   test("user edits worktree setup on a non-GitHub remote project", async ({
