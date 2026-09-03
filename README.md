@@ -47,7 +47,7 @@ where your code and agent CLIs live. No Node or npm needed on the host:
 # native install: versioned bundle in ~/.local/share/fde + systemd/launchd service
 curl -fsSL https://frogg.app/install.sh | bash
 
-# or run it in Docker: froggapp/fde with the state in ~/.fde, port 6767
+# or run it in Docker: froggapp/fde with the state in ~/.fde, port 9999
 curl -fsSL https://frogg.app/install-docker.sh | bash
 ```
 

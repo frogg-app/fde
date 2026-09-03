@@ -27,7 +27,7 @@ import { runLocalPaseo } from "./helpers/local-cli.ts";
 
 console.log("=== LS Command Tests ===\n");
 
-// Get random port that's definitely not in use (never 6767)
+// Get random port that's definitely not in use (never 9999)
 const port = 10000 + Math.floor(Math.random() * 50000);
 const paseoHome = await mkdtemp(join(tmpdir(), "paseo-test-home-"));
 

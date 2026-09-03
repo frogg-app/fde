@@ -387,6 +387,6 @@ $PASEO_HOME/
 
 ## Deployment models
 
-1. **Local daemon** (default): `paseo daemon start` on `127.0.0.1:6767`
+1. **Local daemon** (default): `paseo daemon start` on `127.0.0.1:9999`
 2. **Managed desktop**: the desktop shell spawns the daemon as subprocess, and stops it again on quit so that "restart the app" is a complete reset. Settings > Host > "Keep daemon running after quit" opts out. Only a daemon the desktop started is stopped — a daemon you started yourself with `paseo daemon start` is left alone (`paseo.pid` records `desktopManaged`).
 3. **Remote + relay**: Daemon behind firewall, relay bridges with E2E encryption

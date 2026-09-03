@@ -20,14 +20,14 @@
 #                     instead of resolving one from FDE_RELEASE_BASE
 #   FDE_BUNDLE_FILE   install from a local bundle tarball instead of downloading
 #   FDE_NO_SERVICE=1  skip service installation
-#   FDE_LISTEN        daemon listen address for the service (default: 127.0.0.1:6767)
+#   FDE_LISTEN        daemon listen address for the service (default: 127.0.0.1:9999)
 #   FDE_HOME          daemon state directory for the service (default: ~/.paseo)
 set -euo pipefail
 
 FDE_INSTALL_DIR="${FDE_INSTALL_DIR:-${HOME}/.local/share/fde}"
 FDE_BIN_DIR="${FDE_BIN_DIR:-${HOME}/.local/bin}"
 FDE_RELEASE_BASE="${FDE_RELEASE_BASE:-https://github.com/frogg-app/frogg-de/releases}"
-FDE_LISTEN="${FDE_LISTEN:-127.0.0.1:6767}"
+FDE_LISTEN="${FDE_LISTEN:-127.0.0.1:9999}"
 FDE_VERSION="${FDE_VERSION:-}"
 FDE_BUNDLE_FILE="${FDE_BUNDLE_FILE:-}"
 FDE_BUNDLE_URL="${FDE_BUNDLE_URL:-}"

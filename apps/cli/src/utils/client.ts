@@ -27,7 +27,7 @@ export interface DaemonConnectionCommandError {
   details: string;
 }
 
-const DEFAULT_HOST = "localhost:6767";
+const DEFAULT_HOST = "localhost:9999";
 const DEFAULT_TIMEOUT = 15000;
 const PID_FILENAME = "paseo.pid";
 
@@ -167,7 +167,7 @@ function resolveConfiguredTcpDaemonHost(env: NodeJS.ProcessEnv, paseoHome: strin
   if (!isTcpDaemonHost(configuredHost)) {
     return null;
   }
-  return configuredHost === "127.0.0.1:6767" ? null : configuredHost;
+  return configuredHost === "127.0.0.1:9999" ? null : configuredHost;
 }
 
 export function resolveDefaultDaemonHosts(env: NodeJS.ProcessEnv = process.env): string[] {

@@ -17,7 +17,7 @@ export function startCommand(): Command {
   return new Command("start")
     .description("Start the local Paseo daemon")
     .option("--listen <listen>", "Listen target (host:port, port, or unix socket path)")
-    .option("--port <port>", "Port to listen on (default: 6767)")
+    .option("--port <port>", "Port to listen on (default: 9999)")
     .option("--home <path>", "Paseo home directory (default: ~/.paseo)")
     .option("--foreground", "Run in foreground (don't daemonize)")
     .option("--relay", "Enable relay connection")

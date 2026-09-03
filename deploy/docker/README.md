@@ -12,14 +12,14 @@ or:
 
 ```bash
 docker run -d --name fde-daemon --restart unless-stopped \
-  -p 0.0.0.0:6767:6767 \
+  -p 0.0.0.0:9999:9999 \
   -e PASEO_PASSWORD=change-me \
   -v "$HOME/.fde:/home/fde/.paseo" \
   -v "$PWD:/workspace" \
   froggapp/fde:0.1.6
 ```
 
-Then open `http://<host>:6767`.
+Then open `http://<host>:9999`.
 
 Build locally with `scripts/release/build-docker.sh`. The image does not
 bundle agent CLIs; see `Dockerfile.agents.example` and

@@ -4,7 +4,7 @@
 #   curl -fsSL https://frogg.app/install-docker.sh | bash
 #
 # Pulls the image, then (re)creates the `fde-daemon` container with the daemon
-# listening on 0.0.0.0:6767 inside the container, published on the host at
+# listening on 0.0.0.0:9999 inside the container, published on the host at
 # FDE_BIND:FDE_PORT, the web UI enabled, and the daemon state on a host
 # directory. Re-running upgrades in place: the existing
 # container is replaced, the state directory is kept.
@@ -13,7 +13,7 @@
 #   FDE_VERSION      image tag to run (default: latest)
 #   FDE_IMAGE        full image reference (default: froggapp/fde:$FDE_VERSION)
 #   FDE_HOME         host directory for daemon state (default: ~/.fde)
-#   FDE_PORT         host port published to the daemon (default: 6767)
+#   FDE_PORT         host port published to the daemon (default: 9999)
 #   FDE_BIND         host address the port is published on (default: 0.0.0.0;
 #                    127.0.0.1 keeps it reachable only through an SSH tunnel)
 #   FDE_WORKSPACE    host directory mounted at /workspace (default: none)
@@ -25,7 +25,7 @@ set -euo pipefail
 FDE_VERSION="${FDE_VERSION:-latest}"
 FDE_IMAGE="${FDE_IMAGE:-froggapp/fde:${FDE_VERSION}}"
 FDE_HOME="${FDE_HOME:-${HOME}/.fde}"
-FDE_PORT="${FDE_PORT:-6767}"
+FDE_PORT="${FDE_PORT:-9999}"
 FDE_BIND="${FDE_BIND:-0.0.0.0}"
 FDE_WORKSPACE="${FDE_WORKSPACE:-}"
 FDE_PASSWORD="${FDE_PASSWORD:-}"
@@ -54,9 +54,9 @@ run_args=(
   -d
   --name "${FDE_CONTAINER}"
   --restart unless-stopped
-  -p "${FDE_BIND}:${FDE_PORT}:6767"
+  -p "${FDE_BIND}:${FDE_PORT}:9999"
   -v "${FDE_HOME}:/home/fde/.paseo"
-  -e PASEO_LISTEN=0.0.0.0:6767
+  -e PASEO_LISTEN=0.0.0.0:9999
   -e PASEO_WEB_UI_ENABLED=true
 )
 if [ -n "${FDE_WORKSPACE}" ]; then

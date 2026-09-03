@@ -6,7 +6,7 @@ set -euo pipefail
 
 : "${HOME:=/home/fde}"
 : "${PASEO_HOME:=${HOME}/.paseo}"
-: "${PASEO_LISTEN:=0.0.0.0:6767}"
+: "${PASEO_LISTEN:=0.0.0.0:9999}"
 : "${PASEO_WEB_UI_ENABLED:=true}"
 : "${PASEO_LOG_LEVEL:=info}"
 : "${PASEO_LOG_FORMAT:=json}"

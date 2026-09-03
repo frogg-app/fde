@@ -195,7 +195,7 @@ snapshot so a mixed edit can apply its live subset and still name the paths that
 {
   version: 1,
   daemon: {
-    listen: "127.0.0.1:6767",
+    listen: "127.0.0.1:9999",
     hostnames: true | string[],   // legacy alias `allowedHosts` is migrated on load
     trustedProxies: true | string[], // defaults to ["loopback"]; Express proxy names/CIDRs
     mcp: { enabled: boolean, injectIntoAgents: boolean },

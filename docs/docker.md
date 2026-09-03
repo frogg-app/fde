@@ -14,12 +14,12 @@ The image:
 - runs the daemon as the non-root `fde` user (uid/gid `1000:1000`)
 - starts through `fde daemon start --foreground`, i.e. the CLI and the
   supervisor entrypoint, under `tini`
-- listens on `0.0.0.0:6767` inside the container with the web UI enabled
+- listens on `0.0.0.0:9999` inside the container with the web UI enabled
 - keeps daemon state in `/home/fde/.paseo` (declared as a volume)
 - ships `git`, `openssh-client`, `curl`, `bash`, `procps`, `lbzip2`, but no
   agent CLIs
 
-Open the container's HTTP origin, for example `http://<host>:6767`, to load
+Open the container's HTTP origin, for example `http://<host>:9999`, to load
 the web UI. Static UI files load without daemon auth; API and WebSocket
 requests require `PASEO_PASSWORD` when one is configured.
 
@@ -33,7 +33,7 @@ or by hand:
 
 ```bash
 docker run -d --name fde-daemon --restart unless-stopped \
-  -p 0.0.0.0:6767:6767 \
+  -p 0.0.0.0:9999:9999 \
   -e PASEO_PASSWORD=change-me \
   -v "$HOME/.fde:/home/fde/.paseo" \
   -v "$PWD:/workspace" \
@@ -94,7 +94,7 @@ or Compose `environment:`; the daemon forwards them to launched agents.
 | Variable               | Default            |
 | ---------------------- | ------------------ |
 | `PASEO_HOME`           | `/home/fde/.paseo` |
-| `PASEO_LISTEN`         | `0.0.0.0:6767`     |
+| `PASEO_LISTEN`         | `0.0.0.0:9999`     |
 | `PASEO_WEB_UI_ENABLED` | `true`             |
 | `PASEO_LOG_FORMAT`     | `json`             |
 | `PASEO_PASSWORD`       | unset              |
@@ -109,7 +109,7 @@ Forward HTTP and WebSocket upgrades to the same port.
 
 ```nginx
 location / {
-    proxy_pass http://127.0.0.1:6767;
+    proxy_pass http://127.0.0.1:9999;
     proxy_http_version 1.1;
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection "upgrade";

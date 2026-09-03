@@ -304,7 +304,7 @@ export function onboardCommand(): Command {
   return new Command("onboard")
     .description("Run first-time setup, start daemon, and print pairing instructions")
     .option("--listen <listen>", "Listen target (host:port, port, or unix socket path)")
-    .option("--port <port>", "Port to listen on (default: 6767)")
+    .option("--port <port>", "Port to listen on (default: 9999)")
     .option("--home <path>", "FDE home directory (default: ~/.paseo)")
     .option("--relay", "Enable relay connection without prompting")
     .option("--no-relay", "Disable relay connection")

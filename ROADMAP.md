@@ -31,7 +31,7 @@ Done items move to CHANGELOG.md.
       (`deploy/install.sh`, `deploy/uninstall.sh`; bundle builder
       `scripts/release/build-daemon-bundle.mjs`; see `docs/install.md`.)
 - [x] **Docker image** `froggapp/fde` from `deploy/docker`, versioned tags per the org
-      rules, daemon listening on `0.0.0.0:6767` with the web UI enabled.
+      rules, daemon listening on `0.0.0.0:9999` with the web UI enabled.
       (`deploy/install-docker.sh`, `scripts/release/build-docker.sh`.)
 - [x] Release pipeline builds the daemon bundle per platform (linux-x64, linux-arm64,
       darwin-arm64, darwin-x64, win-x64, win-arm64) and attaches it plus `.sha256` sidecars

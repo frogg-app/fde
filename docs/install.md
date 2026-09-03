@@ -56,10 +56,10 @@ service.
 | `FDE_BUNDLE_URL`   | unset                                            | Download this exact tarball (+ `.sha256`) instead of a release |
 | `FDE_BUNDLE_FILE`  | unset                                            | Install this local tarball instead of downloading              |
 | `FDE_NO_SERVICE`   | `0`                                              | `1` skips the systemd/launchd service                          |
-| `FDE_LISTEN`       | `127.0.0.1:6767`                                 | Daemon listen address written into the service                 |
+| `FDE_LISTEN`       | `127.0.0.1:9999`                                 | Daemon listen address written into the service                 |
 | `FDE_HOME`         | `~/.paseo`                                       | Daemon state directory written into the service (`PASEO_HOME`) |
 
-`FDE_LISTEN=0.0.0.0:6767` makes the daemon reachable from the network; set a
+`FDE_LISTEN=0.0.0.0:9999` makes the daemon reachable from the network; set a
 password afterwards with `fde daemon set-password`. With the loopback default,
 reach it through an SSH tunnel or the desktop app's SSH connection.
 
@@ -79,7 +79,7 @@ curl -fsSL https://frogg.app/install-docker.sh | bash
 ```
 
 Pulls `froggapp/fde:<version>` and starts a container named `fde-daemon` with
-`--restart unless-stopped`, port `0.0.0.0:6767` published, and the daemon state
+`--restart unless-stopped`, port `0.0.0.0:9999` published, and the daemon state
 on the host under `~/.fde`. Re-running replaces the container (state is kept),
 which is how you upgrade.
 
@@ -88,7 +88,7 @@ which is how you upgrade.
 | `FDE_VERSION`   | `latest`                    | Image tag                                          |
 | `FDE_IMAGE`     | `froggapp/fde:$FDE_VERSION` | Full image reference                               |
 | `FDE_HOME`      | `~/.fde`                    | Host directory mounted at `/home/fde/.paseo`       |
-| `FDE_PORT`      | `6767`                      | Host port published to the daemon                  |
+| `FDE_PORT`      | `9999`                      | Host port published to the daemon                  |
 | `FDE_BIND`      | `0.0.0.0`                   | Host address the port is published on              |
 | `FDE_WORKSPACE` | unset                       | Host directory mounted at `/workspace`             |
 | `FDE_PASSWORD`  | unset                       | Sets `PASEO_PASSWORD` (do this on shared networks) |
@@ -179,6 +179,6 @@ GitHub release itself (`FDE_RELEASE_BASE`, or an exact `FDE_BUNDLE_URL`), so
 the release tagged `v<version>` must carry
 `fde-daemon-<version>-<platform>-<arch>.tar.gz` and its `.sha256` for the
 host's platform. The version defaults to the app's own. The listen address
-defaults to `127.0.0.1:6767` because the app reaches the daemon through the
+defaults to `127.0.0.1:9999` because the app reaches the daemon through the
 SSH tunnel; for Docker it becomes `FDE_BIND`/`FDE_PORT`. See
 [desktop-shell.md](desktop-shell.md), "SSH deploy".

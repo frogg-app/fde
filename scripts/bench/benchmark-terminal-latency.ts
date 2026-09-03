@@ -2,7 +2,7 @@
  * Reproducible terminal latency benchmark (Node-only, isolated daemon).
  *
  * Boots its OWN isolated daemon subprocess (fresh mkdtemp PASEO_HOME, random
- * port) — it NEVER touches the developer daemon on port 6767 — and measures:
+ * port) — it NEVER touches the developer daemon on port 9999 — and measures:
  *   A) terminal echo latency  (single-byte input -> first echoed output frame)
  *   B) terminal output jitter (inter-frame gaps while a command drains ~2MB)
  *   C) RPC ping RTT at 10Hz (proxy for daemon main-loop delay)
@@ -176,8 +176,8 @@ interface BootedDaemon {
 
 async function bootDaemon(): Promise<BootedDaemon> {
   const port = await getFreePort();
-  if (port === 6767) {
-    throw new Error("Refusing to use port 6767 (the developer daemon)");
+  if (port === 9999 || port === 6767) {
+    throw new Error("Refusing to use port ${port} (the developer daemon)");
   }
   const paseoHome = await mkdtemp(path.join(os.tmpdir(), "paseo-bench-home-"));
   const tsxBin = execSync("which tsx").toString().trim();

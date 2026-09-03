@@ -16,7 +16,7 @@
  * 7. Cleanup
  *
  * CRITICAL RULES:
- * - NEVER use port 6767 (user's running daemon)
+ * - NEVER use port 9999 (user's running daemon)
  * - Always use claude provider with haiku model for fast, cheap tests
  * - Clean up resources after test completes
  */

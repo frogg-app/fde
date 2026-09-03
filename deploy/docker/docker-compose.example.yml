@@ -1,6 +1,6 @@
 # Minimal FDE daemon + web UI deployment.
 #
-# Open http://<host>:6767 after `docker compose up -d`.
+# Open http://<host>:9999 after `docker compose up -d`.
 # For any network-reachable deployment, change PASEO_PASSWORD first.
 # Pin the exact image version so a redeploy is reproducible.
 services:
@@ -9,7 +9,7 @@ services:
     container_name: fde-daemon
     restart: unless-stopped
     ports:
-      - "0.0.0.0:6767:6767"
+      - "0.0.0.0:9999:9999"
     environment:
       PASEO_PASSWORD: "change-me"
       # Add DNS names you use to reach this container. IPs and localhost are
