@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
+import { DEFAULT_SSH_DAEMON_PORT } from "@fde/protocol/ssh-transport";
 import { parseDaemonPortInput, resolveRemoteSshTarget } from "./remote-ssh-target";
 
 describe("parseDaemonPortInput", () => {
   it("treats blank as the default port", () => {
-    expect(parseDaemonPortInput("")).toBe(6767);
-    expect(parseDaemonPortInput("   ")).toBe(6767);
+    expect(parseDaemonPortInput("")).toBe(DEFAULT_SSH_DAEMON_PORT);
+    expect(parseDaemonPortInput("   ")).toBe(DEFAULT_SSH_DAEMON_PORT);
   });
 
   it("accepts whole ports in range and rejects the rest", () => {
@@ -25,7 +26,7 @@ describe("resolveRemoteSshTarget", () => {
       {
         ok: true,
         uri: "ssh://build-box",
-        target: { host: "build-box", daemonPort: 6767 },
+        target: { host: "build-box", daemonPort: DEFAULT_SSH_DAEMON_PORT },
       },
     );
   });

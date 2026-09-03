@@ -8,4 +8,9 @@ Run:
 npm run generate:validators --workspace=@fde/protocol
 ```
 
-The generated TypeScript is intentionally gitignored. zod-aot is exact-pinned because this is a young solo-maintainer project; keep the generated validator behind protocol regression tests when upgrading it.
+The generated TypeScript is intentionally gitignored: `prebuild`, `pretypecheck`, and
+`pretest` regenerate it, and every package that consumes `@fde/protocol` builds it first,
+so a fresh clone produces the validator before anything imports it. Committing it only
+gave every checkout a multi-thousand-line diff the moment someone ran a typecheck.
+
+zod-aot is exact-pinned because this is a young solo-maintainer project; keep the generated validator behind protocol regression tests when upgrading it.
