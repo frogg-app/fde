@@ -921,12 +921,12 @@ export class VoiceAssistantWebSocketServer {
     if (!decision.ok) {
       const requestMetadata = extractSocketRequestMetadata(request);
       // "Password required" / "Incorrect password" are stable strings the CLI classifies.
-      const reason =
-        decision.reason === "unclaimed"
-          ? "Pairing required"
-          : decision.reason === "missing_token"
-            ? "Password required"
-            : "Incorrect password";
+      let reason = "Incorrect password";
+      if (decision.reason === "unclaimed") {
+        reason = "Pairing required";
+      } else if (decision.reason === "missing_token") {
+        reason = "Password required";
+      }
       this.logger.warn(
         { ...requestMetadata, hasToken: token !== null, reason: decision.reason },
         "Rejected WebSocket connection without valid daemon credentials",
