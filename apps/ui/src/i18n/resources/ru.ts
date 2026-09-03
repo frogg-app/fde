@@ -1645,6 +1645,9 @@ export const ru: TranslationResources = {
       },
     },
     networkScan: {
+      diagnostics:
+        "Проверено {{count}} адресов через {{transport}}. Локальные адреса: {{addresses}}. Первая ошибка: {{error}}",
+      diagnosticsNone: "нет",
       title: "Серверы в вашей сети",
       scanning: "Проверено {{scanned}} из {{total}} адресов…",
       none: "Серверы FDE не найдены в {{subnets}}.",

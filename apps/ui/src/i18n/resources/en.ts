@@ -1628,6 +1628,9 @@ export const en = {
       },
     },
     networkScan: {
+      diagnostics:
+        "Scanned {{count}} addresses via {{transport}}. Local addresses: {{addresses}}. First error: {{error}}",
+      diagnosticsNone: "none",
       title: "Servers on your network",
       scanning: "Scanning {{scanned}} of {{total}} addresses…",
       none: "No FDE servers found on {{subnets}}.",

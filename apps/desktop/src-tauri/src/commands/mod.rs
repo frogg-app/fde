@@ -88,6 +88,7 @@ pub async fn desktop_invoke(
         "list_ssh_config_hosts" => ssh_config::list_ssh_config_hosts(&app),
         "network_local_addresses" => network::local_addresses(),
         "network_reverse_lookup" => network::reverse_lookup(&args).await,
+        "network_probe_identity" => network::probe_identity(&args).await,
         "ssh_deploy_probe" => app.state::<DeployManager>().probe(&args).await,
         "ssh_deploy_start" => app
             .state::<DeployManager>()

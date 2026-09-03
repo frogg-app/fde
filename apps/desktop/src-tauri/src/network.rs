@@ -1,4 +1,5 @@
-//! `network_local_addresses` and `network_reverse_lookup`: what the UI's
+//! `network_local_addresses`, `network_reverse_lookup` and
+//! `network_probe_identity`: what the UI's
 //! LAN scanner needs from the machine it runs on. Addresses are the IPv4
 //! ones of interfaces that are up, with their prefix length, minus loopback
 //! and link-local; reverse lookup is one `getnameinfo` with a 1 s budget.
@@ -108,6 +109,75 @@ pub async fn reverse_lookup(args: &Value) -> Result<Value, String> {
     Ok(Value::String(name))
 }
 
+const PROBE_TIMEOUT: Duration = Duration::from_millis(700);
+const PROBE_BODY_LIMIT: usize = 64 * 1024;
+const PROBE_PATHS: [&str; 2] = ["/api/identity", "/api/health"];
+
+/// Checks the URL the scanner hands over: plain `http`/`https`, one of the
+/// daemon's two discovery paths, nothing else (the command is reachable from
+/// the page, so it must not become a general HTTP client).
+pub fn validate_probe_url(raw: &str) -> Result<reqwest::Url, String> {
+    let url =
+        reqwest::Url::parse(raw.trim()).map_err(|_| "url must be an absolute URL.".to_string())?;
+    if !matches!(url.scheme(), "http" | "https") {
+        return Err("url must use http or https.".into());
+    }
+    if url.host_str().is_none() {
+        return Err("url must name a host.".into());
+    }
+    if !PROBE_PATHS.contains(&url.path()) || url.query().is_some() || url.fragment().is_some() {
+        return Err("url must point at /api/identity or /api/health.".into());
+    }
+    Ok(url)
+}
+
+/// `network_probe_identity {url}`: GET the URL from Rust with a 700 ms
+/// budget and answer `{status, body}` (body parsed as JSON, `null` when it
+/// is not JSON). The webview cannot be trusted with this request: WebView2
+/// applies Chromium's local-network-access rules to `http://tauri.localhost`
+/// and silently fails LAN fetches. Errors are the transport's message so the
+/// scanner can show the first one.
+pub async fn probe_identity(args: &Value) -> Result<Value, String> {
+    let raw = args.get("url").and_then(Value::as_str).unwrap_or_default();
+    let url = validate_probe_url(raw)?;
+    let client = reqwest::Client::builder()
+        .timeout(PROBE_TIMEOUT)
+        .connect_timeout(PROBE_TIMEOUT)
+        .redirect(reqwest::redirect::Policy::none())
+        .build()
+        .map_err(|error| error.to_string())?;
+    let response = client
+        .get(url)
+        .header(reqwest::header::ACCEPT, "application/json")
+        .send()
+        .await
+        .map_err(|error| describe_reqwest_error(&error))?;
+    let status = response.status().as_u16();
+    let bytes = response
+        .bytes()
+        .await
+        .map_err(|error| describe_reqwest_error(&error))?;
+    let body = if bytes.len() > PROBE_BODY_LIMIT {
+        Value::Null
+    } else {
+        serde_json::from_slice::<Value>(&bytes).unwrap_or(Value::Null)
+    };
+    Ok(json!({ "status": status, "body": body }))
+}
+
+fn describe_reqwest_error(error: &reqwest::Error) -> String {
+    if error.is_timeout() {
+        return "timed out".into();
+    }
+    // reqwest's Display nests the cause ("error sending request for url (…): …");
+    // the innermost message is the useful part ("Connection refused").
+    let mut source: &dyn std::error::Error = error;
+    while let Some(next) = source.source() {
+        source = next;
+    }
+    source.to_string()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -147,6 +217,94 @@ mod tests {
                 },
             ]
         );
+    }
+
+    /// What `if-addrs` yields on a Windows laptop: adapter names with spaces,
+    /// the Wi-Fi /24, Hyper-V / WSL virtual switches (up, /20), a disabled
+    /// Ethernet port (OperStatus Down → not up) and an APIPA fallback.
+    #[test]
+    fn keeps_windows_shaped_addresses_in_order() {
+        let kept = filter_addresses([
+            raw("Wi-Fi", [192, 168, 1, 42], 24, true),
+            raw("Ethernet", [169, 254, 12, 7], 16, true),
+            raw("Ethernet 2", [192, 168, 50, 3], 24, false),
+            raw("vEthernet (WSL)", [172, 27, 16, 1], 20, true),
+            raw("Loopback Pseudo-Interface 1", [127, 0, 0, 1], 8, true),
+        ]);
+        assert_eq!(
+            kept.iter()
+                .map(|a| format!("{}/{}", a.ip, a.prefix_length))
+                .collect::<Vec<_>>(),
+            vec!["192.168.1.42/24", "172.27.16.1/20"]
+        );
+    }
+
+    #[test]
+    fn probe_url_accepts_only_daemon_discovery_paths() {
+        assert!(validate_probe_url("http://192.168.1.17:9999/api/identity").is_ok());
+        assert!(validate_probe_url("https://box.local/api/health").is_ok());
+        for bad in [
+            "",
+            "192.168.1.17:9999/api/identity",
+            "ftp://192.168.1.17/api/identity",
+            "file:///etc/passwd",
+            "http://192.168.1.17:9999/api/hosts",
+            "http://192.168.1.17:9999/api/identity?x=1",
+            "http://192.168.1.17:9999/api/identity#f",
+        ] {
+            assert!(validate_probe_url(bad).is_err(), "{bad} should be rejected");
+        }
+    }
+
+    #[test]
+    fn probe_identity_returns_status_and_json_or_the_transport_error() {
+        use std::io::{Read, Write};
+        use std::net::TcpListener;
+
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = listener.local_addr().unwrap().port();
+        std::thread::spawn(move || {
+            let (mut stream, _) = listener.accept().unwrap();
+            let mut buffer = [0u8; 2048];
+            let _ = stream.read(&mut buffer);
+            let body = r#"{"product":"fde","serverId":"srv_1","hostname":"box"}"#;
+            let _ = write!(
+                stream,
+                "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                body.len(),
+                body
+            );
+        });
+        tauri::async_runtime::block_on(async {
+            let answer = probe_identity(&json!({
+                "url": format!("http://127.0.0.1:{port}/api/identity")
+            }))
+            .await
+            .unwrap();
+            assert_eq!(answer["status"], 200);
+            assert_eq!(answer["body"]["serverId"], "srv_1");
+
+            // A closed port answers quickly with the OS error, not a timeout.
+            let closed = TcpListener::bind("127.0.0.1:0").unwrap();
+            let closed_port = closed.local_addr().unwrap().port();
+            drop(closed);
+            let started = std::time::Instant::now();
+            let error = probe_identity(&json!({
+                "url": format!("http://127.0.0.1:{closed_port}/api/identity")
+            }))
+            .await
+            .unwrap_err();
+            assert!(started.elapsed() < Duration::from_secs(3));
+            assert!(!error.is_empty());
+            assert!(!error.contains("error sending request"), "{error}");
+
+            assert_eq!(
+                probe_identity(&json!({ "url": "http://x/" }))
+                    .await
+                    .unwrap_err(),
+                "url must point at /api/identity or /api/health."
+            );
+        });
     }
 
     #[test]
