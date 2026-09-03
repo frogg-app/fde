@@ -12,7 +12,8 @@
     "build:win": "cargo tauri build --runner cargo-xwin --target x86_64-pc-windows-msvc --bundles nsis",
     "build:win:portable": "node ../../scripts/release/package-portable-win.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "npm run build:bridge && node --test test/*.test.mjs && cargo test --manifest-path src-tauri/Cargo.toml"
+    "test": "npm run build:bridge && node --test test/*.test.mjs && cargo test --manifest-path src-tauri/Cargo.toml",
+    "test:harness": "npm run build:bridge && node --test test/*.harness.mjs"
   },
   "devDependencies": {
     "@tauri-apps/api": "^2.11.1",
