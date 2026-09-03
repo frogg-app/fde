@@ -38,7 +38,18 @@ cleanup() {
 trap cleanup EXIT
 
 log() { printf '\n[self-update-test] %s\n' "$*"; }
-fail() { printf '[self-update-test] FAIL: %s\n' "$*" >&2; exit 1; }
+fail() {
+  printf '[self-update-test] FAIL: %s\n' "$*" >&2
+  if [ -f "${install_dir}/self-update.log" ]; then
+    echo "self-update.log:" >&2
+    sed 's/^/  /' "${install_dir}/self-update.log" >&2
+  fi
+  if [ -f "${home_dir}/daemon.log" ]; then
+    echo "daemon.log (tail):" >&2
+    tail -n 20 "${home_dir}/daemon.log" | sed 's/^/  /' >&2
+  fi
+  exit 1
+}
 
 sha256_of() { sha256sum "$1" | awk '{print $1}'; }
 
@@ -100,9 +111,16 @@ good_version="$(bump_patch "${base_version}" 2)"
 log "deriving a broken ${broken_version} and a good ${good_version} bundle from ${base_version}"
 derive_bundle "${install_dir}/versions/${base_version}" "${broken_version}" 1 >/dev/null
 derive_bundle "${install_dir}/versions/${base_version}" "${good_version}" 0 >/dev/null
-(cd "${serve_dir}" && python3 -m http.server --bind 127.0.0.1 "${http_port}" >"${work}/http.log" 2>&1) &
+python3 -m http.server --directory "${serve_dir}" --bind 127.0.0.1 "${http_port}" >"${work}/http.log" 2>&1 &
 http_pid=$!
 sleep 1
+broken_asset="download/v${broken_version}/fde-daemon-${broken_version}-${platform_arch}.tar.gz"
+if ! curl -fsSI "http://127.0.0.1:${http_port}/${broken_asset}" >/dev/null; then
+  echo "served tree:" >&2
+  find "${serve_dir}" -type f >&2
+  cat "${work}/http.log" >&2
+  fail "the local release server does not serve ${broken_asset}"
+fi
 
 export FDE_INSTALL_DIR="${install_dir}" PASEO_HOME="${home_dir}" PASEO_LISTEN="${listen}"
 export FDE_RELEASE_BASE="http://127.0.0.1:${http_port}"

@@ -9,7 +9,7 @@ import {
 } from "node:fs";
 import { mkdir, rename, rm } from "node:fs/promises";
 import path from "node:path";
-import { Readable } from "node:stream";
+import { once } from "node:events";
 import { pipeline } from "node:stream/promises";
 
 /**
@@ -118,12 +118,19 @@ export async function downloadFile(options: DownloadOptions): Promise<void> {
     let received = 0;
     await mkdir(path.dirname(options.destination), { recursive: true });
     const partial = `${options.destination}.part`;
-    const source = Readable.fromWeb(response.body as import("stream/web").ReadableStream);
-    source.on("data", (chunk: Buffer) => {
+    // Iterate the web stream directly: Readable.fromWeb plus a 'data' listener
+    // trips an undici pause assertion on Node 22 under backpressure.
+    const file = createWriteStream(partial);
+    const body = response.body as unknown as AsyncIterable<Uint8Array>;
+    for await (const chunk of body) {
       received += chunk.length;
       options.onProgress?.(received, total);
+      if (!file.write(chunk)) await once(file, "drain");
+    }
+    await new Promise<void>((resolve, reject) => {
+      file.once("error", reject);
+      file.end(resolve);
     });
-    await pipeline(source, createWriteStream(partial));
     await rename(partial, options.destination);
   } finally {
     clearTimeout(timer);

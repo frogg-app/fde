@@ -1,5 +1,5 @@
 import { spawn, spawnSync } from "node:child_process";
-import { existsSync, openSync, readFileSync } from "node:fs";
+import { openSync, readFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { resolveLocalDaemonState, stopLocalDaemon } from "../local-daemon.js";
@@ -133,11 +133,32 @@ export function createUnmanagedServiceManager(options: UnmanagedServiceOptions):
   };
 }
 
+/**
+ * True when the service definition at `filePath` launches `<installDir>/current`.
+ * A unit that belongs to another install (a developer's real daemon while a
+ * scratch install is under test) must never be restarted on its behalf.
+ */
+export function serviceFileTargetsInstall(filePath: string, installDir: string): boolean {
+  try {
+    const content = readFileSync(filePath, "utf8");
+    const launcher = path.join(installDir, "current", "bin", "fde");
+    return content.includes(launcher) || content.includes(`FDE_INSTALL_DIR=${installDir}`);
+  } catch {
+    return false;
+  }
+}
+
 export function detectServiceManager(options: UnmanagedServiceOptions): ServiceManager {
-  if (options.platform === "linux" && existsSync(systemdUnitPath())) {
+  if (
+    options.platform === "linux" &&
+    serviceFileTargetsInstall(systemdUnitPath(), options.installDir)
+  ) {
     return createSystemdServiceManager();
   }
-  if (options.platform === "darwin" && existsSync(launchdPlistPath())) {
+  if (
+    options.platform === "darwin" &&
+    serviceFileTargetsInstall(launchdPlistPath(), options.installDir)
+  ) {
     return createLaunchdServiceManager();
   }
   return createUnmanagedServiceManager(options);

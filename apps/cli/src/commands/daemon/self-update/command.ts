@@ -171,8 +171,9 @@ export function selfUpdateCommand(): Command {
       .addOption(new Option("--apply <version>").hideHelp())
       .addOption(new Option("--previous <version>").hideHelp())
       .addOption(new Option("--http-base <url>").hideHelp())
-      .action(async (options: SelfUpdateCommandOptions) => {
-        await runSelfUpdateCommand(options);
+      // `--json` is also a root option, so read it merged with the globals.
+      .action(async (_options: SelfUpdateCommandOptions, command: Command) => {
+        await runSelfUpdateCommand(command.optsWithGlobals() as SelfUpdateCommandOptions);
       })
   );
 }
