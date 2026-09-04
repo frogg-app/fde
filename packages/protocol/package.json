@@ -31,7 +31,8 @@
     "pretest": "npm run generate:validators",
     "generate:json-schema": "node scripts/generate-json-schema.mjs",
     "generate:rust": "npm run generate:json-schema && node scripts/generate-rust-types.mjs",
-    "postbuild": "npm run generate:rust"
+    "postbuild": "npm run generate:rust && npm run generate:text-match-fixtures",
+    "generate:text-match-fixtures": "node scripts/generate-text-match-fixtures.mjs"
   },
   "dependencies": {
     "zod": "^4.4.3"
