@@ -9,6 +9,7 @@ mod config;
 mod daemon_config;
 mod envelope;
 mod frames;
+mod http_proxy;
 mod netclass;
 mod proxy;
 mod pty;
@@ -41,6 +42,7 @@ struct AppState {
     listen: String,
     web_ui_dist: Option<std::path::PathBuf>,
     native_terminals: bool,
+    http_proxy: Option<http_proxy::HttpProxy>,
 }
 
 impl AppState {
@@ -76,6 +78,7 @@ async fn main() -> anyhow::Result<()> {
         allowed_origins: persisted.allowed_origins,
         hostname: hostname(),
         listen: config.listen.to_string(),
+        http_proxy: config.upstream.as_deref().and_then(http_proxy::HttpProxy::from_ws_url),
         web_ui_dist: config.web_ui_dist.clone(),
         native_terminals: config.native_terminals,
     });
@@ -120,9 +123,21 @@ async fn main() -> anyhow::Result<()> {
 /// configured, which is the Node behaviour when the web UI is disabled.
 async fn web_ui_handler(
     State(state): State<Arc<AppState>>,
-    uri: axum::http::Uri,
-    headers: HeaderMap,
+    request: axum::extract::Request,
 ) -> Response {
+    let uri = request.uri().clone();
+    let headers = request.headers().clone();
+
+    // Daemon-owned paths must never fall through to the SPA: answering 200 with
+    // index.html turns a missing route into a silently corrupt response (a file
+    // download that yields HTML). Proxy them, or fail loudly.
+    if http_proxy::is_daemon_path(uri.path()) {
+        return match state.http_proxy.as_ref() {
+            Some(proxy) => proxy.forward(request).await,
+            None => StatusCode::NOT_FOUND.into_response(),
+        };
+    }
+
     let Some(dist) = state.web_ui_dist.as_deref() else {
         return StatusCode::NOT_FOUND.into_response();
     };
