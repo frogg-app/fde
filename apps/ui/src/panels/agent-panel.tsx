@@ -1709,7 +1709,7 @@ function ActiveAgentComposer({
 
   return (
     <View style={inputAreaStyle} onLayout={onInputAreaLayout}>
-      <SpokenAlertBanner serverId={serverId} agentId={agentId} />
+      <SpokenAlertBanner serverId={serverId} agentId={agentId} workspaceId={workspaceId} />
       <Composer
         agentId={agentId}
         serverId={serverId}

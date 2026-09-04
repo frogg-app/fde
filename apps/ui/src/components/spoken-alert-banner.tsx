@@ -8,10 +8,13 @@ import { useHostRuntimeClient } from "@/runtime/host-runtime";
 import { alertKey } from "@/spoken-alerts/state";
 import { useSpokenAlertsStore } from "@/spoken-alerts/store";
 import { useSpokenAlertPlayer } from "@/spoken-alerts/use-spoken-alert-player";
+import { useWorkspaceVoiceAlertsEnabled } from "@/stores/workspace-voice-alerts-store";
+import { MAX_CONTENT_WIDTH } from "@/constants/layout";
 
 interface SpokenAlertBannerProps {
   serverId: string;
   agentId: string;
+  workspaceId?: string | null;
 }
 
 const ThemedVolumeIcon = withUnistyles(Volume2, (theme) => ({
@@ -28,8 +31,9 @@ const ThemedCloseIcon = withUnistyles(X, (theme) => ({
  * Sits above the composer while the agent has a spoken alert: the alert text, a play/stop
  * control, and the way into a voice reply. Disappears on dismiss or when a message is sent.
  */
-export function SpokenAlertBanner({ serverId, agentId }: SpokenAlertBannerProps) {
+export function SpokenAlertBanner({ serverId, agentId, workspaceId }: SpokenAlertBannerProps) {
   const { t } = useTranslation();
+  const voiceAlertsEnabled = useWorkspaceVoiceAlertsEnabled(serverId, workspaceId);
   const key = alertKey(serverId, agentId);
   const entry = useSpokenAlertsStore((state) => state.entries[key] ?? null);
   const dispatch = useSpokenAlertsStore((state) => state.dispatch);
@@ -55,7 +59,7 @@ export function SpokenAlertBanner({ serverId, agentId }: SpokenAlertBannerProps)
     dispatch({ type: "dismissed", key });
   }, [dispatch, entry, key, player]);
 
-  if (!entry) {
+  if (!entry || !voiceAlertsEnabled) {
     return null;
   }
 
@@ -64,56 +68,66 @@ export function SpokenAlertBanner({ serverId, agentId }: SpokenAlertBannerProps)
   const failure = entry.playback.status === "failed" ? entry.playback.message : null;
 
   return (
-    <View style={styles.container} testID="spoken-alert-banner">
-      <View style={styles.header}>
-        <ThemedVolumeIcon />
-        <Text style={styles.text} numberOfLines={3}>
-          {entry.alert.spokenText}
-        </Text>
-        <Pressable
-          onPress={handleDismiss}
-          accessibilityRole="button"
-          accessibilityLabel={t("spokenAlerts.banner.dismiss")}
-          hitSlop={8}
-          style={styles.dismiss}
-          testID="spoken-alert-dismiss"
-        >
-          <ThemedCloseIcon />
-        </Pressable>
-      </View>
-      {failure ? <Text style={styles.failure}>{failure}</Text> : null}
-      <View style={styles.actions}>
-        <Button
-          size="sm"
-          variant="secondary"
-          onPress={handlePlayPress}
-          disabled={!player.canPlay}
-          loading={entry.playback.status === "loading"}
-          leftIcon={isBusy ? Square : Play}
-          accessibilityLabel={playLabel}
-          testID="spoken-alert-play"
-        >
-          {playLabel}
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onPress={handleReplyPress}
-          leftIcon={Mic}
-          accessibilityLabel={t("spokenAlerts.banner.replyByVoice")}
-          testID="spoken-alert-reply"
-        >
-          {t("spokenAlerts.banner.replyByVoice")}
-        </Button>
+    <View style={styles.wrapper}>
+      <View style={styles.container} testID="spoken-alert-banner">
+        <View style={styles.header}>
+          <ThemedVolumeIcon />
+          <Text style={styles.text} numberOfLines={3}>
+            {entry.alert.spokenText}
+          </Text>
+          <Pressable
+            onPress={handleDismiss}
+            accessibilityRole="button"
+            accessibilityLabel={t("spokenAlerts.banner.dismiss")}
+            hitSlop={8}
+            style={styles.dismiss}
+            testID="spoken-alert-dismiss"
+          >
+            <ThemedCloseIcon />
+          </Pressable>
+        </View>
+        {failure ? <Text style={styles.failure}>{failure}</Text> : null}
+        <View style={styles.actions}>
+          <Button
+            size="sm"
+            variant="secondary"
+            onPress={handlePlayPress}
+            disabled={!player.canPlay}
+            loading={entry.playback.status === "loading"}
+            leftIcon={isBusy ? Square : Play}
+            accessibilityLabel={playLabel}
+            testID="spoken-alert-play"
+          >
+            {playLabel}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onPress={handleReplyPress}
+            leftIcon={Mic}
+            accessibilityLabel={t("spokenAlerts.banner.replyByVoice")}
+            testID="spoken-alert-reply"
+          >
+            {t("spokenAlerts.banner.replyByVoice")}
+          </Button>
+        </View>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create((theme) => ({
-  container: {
-    marginHorizontal: theme.spacing[3],
+  // Matches the composer: the same outer gutter and content cap, so the banner lines up with
+  // the chat column instead of spanning the whole pane.
+  wrapper: {
+    width: "100%",
+    alignItems: "center",
+    paddingHorizontal: theme.spacing[4],
     marginBottom: theme.spacing[2],
+  },
+  container: {
+    width: "100%",
+    maxWidth: MAX_CONTENT_WIDTH,
     padding: theme.spacing[3],
     gap: theme.spacing[2],
     borderRadius: theme.borderRadius.xl,

@@ -1820,6 +1820,11 @@ export const ar: TranslationResources = {
     },
   },
   spokenAlerts: {
+    workspaceToggle: {
+      label: "التنبيهات الصوتية",
+      enable: "تشغيل التنبيهات الصوتية لمساحة العمل هذه",
+      disable: "إيقاف التنبيهات الصوتية لمساحة العمل هذه",
+    },
     banner: {
       play: "تشغيل",
       stop: "إيقاف",

@@ -1842,6 +1842,11 @@ export const ja: TranslationResources = {
     },
   },
   spokenAlerts: {
+    workspaceToggle: {
+      label: "音声アラート",
+      enable: "このワークスペースの音声アラートをオンにする",
+      disable: "このワークスペースの音声アラートをオフにする",
+    },
     banner: {
       play: "再生",
       stop: "停止",

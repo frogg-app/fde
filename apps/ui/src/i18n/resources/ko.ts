@@ -1834,6 +1834,11 @@ export const ko: TranslationResources = {
     },
   },
   spokenAlerts: {
+    workspaceToggle: {
+      label: "음성 알림",
+      enable: "이 워크스페이스의 음성 알림 켜기",
+      disable: "이 워크스페이스의 음성 알림 끄기",
+    },
     banner: {
       play: "재생",
       stop: "중지",

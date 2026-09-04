@@ -1854,6 +1854,11 @@ export const ru: TranslationResources = {
     },
   },
   spokenAlerts: {
+    workspaceToggle: {
+      label: "Голосовые оповещения",
+      enable: "Включить голосовые оповещения для этого рабочего пространства",
+      disable: "Выключить голосовые оповещения для этого рабочего пространства",
+    },
     banner: {
       play: "Воспроизвести",
       stop: "Остановить",

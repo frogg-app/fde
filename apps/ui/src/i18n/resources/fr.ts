@@ -1874,6 +1874,11 @@ export const fr: TranslationResources = {
     },
   },
   spokenAlerts: {
+    workspaceToggle: {
+      label: "Alertes vocales",
+      enable: "Activer les alertes vocales pour cet espace de travail",
+      disable: "Désactiver les alertes vocales pour cet espace de travail",
+    },
     banner: {
       play: "Lire",
       stop: "Arrêter",

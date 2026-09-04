@@ -1870,6 +1870,11 @@ export const es: TranslationResources = {
     },
   },
   spokenAlerts: {
+    workspaceToggle: {
+      label: "Alertas de voz",
+      enable: "Activar las alertas de voz en este espacio de trabajo",
+      disable: "Desactivar las alertas de voz en este espacio de trabajo",
+    },
     banner: {
       play: "Reproducir",
       stop: "Detener",

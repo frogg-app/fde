@@ -1833,6 +1833,11 @@ export const en = {
     },
   },
   spokenAlerts: {
+    workspaceToggle: {
+      label: "Voice alerts",
+      enable: "Turn on voice alerts for this workspace",
+      disable: "Turn off voice alerts for this workspace",
+    },
     banner: {
       play: "Play",
       stop: "Stop",

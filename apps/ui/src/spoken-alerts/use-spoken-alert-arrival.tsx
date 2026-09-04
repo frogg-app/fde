@@ -2,6 +2,8 @@ import { useCallback, useRef } from "react";
 import type { DaemonClient } from "@fde/client/internal/daemon-client";
 import type { AgentAttentionNotificationPayload } from "@fde/protocol/agent-attention-notification";
 import { useSettings } from "@/hooks/use-settings";
+import { useSessionStore } from "@/stores/session-store";
+import { readWorkspaceVoiceAlertsEnabled } from "@/stores/workspace-voice-alerts-store";
 import type { ToastApi } from "@/components/toast-host";
 import { SpokenAlertToastContent } from "@/components/spoken-alert-toast";
 import { receiveSpokenAlert } from "./receive";
@@ -20,6 +22,16 @@ export interface SpokenAlertArrival {
   appActivelyVisible: boolean;
   /** The user is not looking at this agent right now (other agent, or app in background). */
   awayFromAgent: boolean;
+}
+
+/**
+ * Spoken alerts are opt-in per workspace, so an alert for a workspace that never turned them
+ * on is dropped before it can be recorded, spoken, or toasted.
+ */
+function isSpokenAlertWantedForAgent(serverId: string, agentId: string): boolean {
+  const session = useSessionStore.getState().sessions[serverId];
+  const agent = session?.agents?.get(agentId) ?? session?.agentDetails?.get(agentId) ?? null;
+  return readWorkspaceVoiceAlertsEnabled(serverId, agent?.workspaceId);
 }
 
 function autoPlayThenMaybeReply(
@@ -61,6 +73,7 @@ export function useSpokenAlertArrival(params: {
 
   return useCallback(
     (arrival: SpokenAlertArrival) => {
+      if (!isSpokenAlertWantedForAgent(serverId, arrival.agentId)) return;
       const received = receiveSpokenAlert({
         serverId,
         agentId: arrival.agentId,
