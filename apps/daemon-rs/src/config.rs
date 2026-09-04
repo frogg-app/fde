@@ -10,6 +10,8 @@ pub struct Config {
     /// `None` means run standalone and reject unknown types instead of proxying.
     pub upstream: Option<String>,
     pub web_ui_enabled: bool,
+    /// Directory of the bundled browser UI, if it is enabled and present.
+    pub web_ui_dist: Option<std::path::PathBuf>,
 }
 
 const DEFAULT_PORT: u16 = 9999;
@@ -32,12 +34,20 @@ impl Config {
             },
         };
 
+        let web_ui_enabled = std::env::var("PASEO_WEB_UI_ENABLED")
+            .map(|v| v != "0" && v != "false")
+            .unwrap_or(true);
+        // Ships next to the daemon in a release build; overridable for dev.
+        let web_ui_dist = std::env::var("FDE_RS_WEB_UI_DIST")
+            .ok()
+            .map(std::path::PathBuf::from)
+            .filter(|p| p.is_dir());
+
         Ok(Self {
             listen,
             upstream: std::env::var("FDE_RS_UPSTREAM").ok().filter(|v| !v.is_empty()),
-            web_ui_enabled: std::env::var("PASEO_WEB_UI_ENABLED")
-                .map(|v| v != "0" && v != "false")
-                .unwrap_or(true),
+            web_ui_enabled,
+            web_ui_dist: web_ui_dist.filter(|_| web_ui_enabled),
         })
     }
 }

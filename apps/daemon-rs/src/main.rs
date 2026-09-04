@@ -10,6 +10,7 @@ mod daemon_config;
 mod envelope;
 mod netclass;
 mod proxy;
+mod web_ui;
 
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -33,6 +34,7 @@ struct AppState {
     upstream_url: Option<String>,
     auth: auth::AuthConfig,
     allowed_origins: Vec<String>,
+    web_ui_dist: Option<std::path::PathBuf>,
 }
 
 impl AppState {
@@ -66,6 +68,7 @@ async fn main() -> anyhow::Result<()> {
         upstream_url: config.upstream.clone(),
         auth: persisted.auth,
         allowed_origins: persisted.allowed_origins,
+        web_ui_dist: config.web_ui_dist.clone(),
     });
 
     let app = Router::new()
@@ -75,6 +78,8 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/identity", get(identity))
         .route("/api/status", get(status))
         .route("/ws", get(ws_upgrade))
+        // Everything else is the SPA. Registered last so it never shadows /api.
+        .fallback(get(web_ui_handler))
         .with_state(state.clone());
 
     let listener = tokio::net::TcpListener::bind(config.listen).await?;
@@ -85,6 +90,7 @@ async fn main() -> anyhow::Result<()> {
         port = bound.port(),
         upstream = config.upstream.as_deref().unwrap_or("<none>"),
         auth_required,
+        web_ui = state.web_ui_dist.as_ref().map(|d| d.display().to_string()).unwrap_or_default(),
         home = home.as_ref().map(|h| h.display().to_string()).unwrap_or_default(),
         "Server listening"
     );
@@ -98,6 +104,38 @@ async fn main() -> anyhow::Result<()> {
     })
     .await?;
     Ok(())
+}
+
+/// Serves the bundled browser UI. Returns 404 when no dist directory is
+/// configured, which is the Node behaviour when the web UI is disabled.
+async fn web_ui_handler(
+    State(state): State<Arc<AppState>>,
+    uri: axum::http::Uri,
+    headers: HeaderMap,
+) -> Response {
+    let Some(dist) = state.web_ui_dist.as_deref() else {
+        return StatusCode::NOT_FOUND.into_response();
+    };
+    let accept_encoding = header(&headers, "accept-encoding");
+    let Some(resolved) = web_ui::resolve(dist, uri.path(), accept_encoding) else {
+        return StatusCode::NOT_FOUND.into_response();
+    };
+    let Ok(body) = tokio::fs::read(&resolved.file).await else {
+        return StatusCode::NOT_FOUND.into_response();
+    };
+
+    let mut response = Response::builder()
+        .header("Content-Type", resolved.content_type)
+        .header("Cache-Control", resolved.cache_control);
+    if let Some(encoding) = resolved.content_encoding {
+        response = response.header("Content-Encoding", encoding);
+        // Content-Encoding varies by request, so caches must not share entries.
+        response = response.header("Vary", "Accept-Encoding");
+    }
+    if resolved.is_index_html {
+        response = response.header("Pragma", "no-cache").header("Expires", "0");
+    }
+    response.body(body.into()).unwrap_or_else(|_| StatusCode::INTERNAL_SERVER_ERROR.into_response())
 }
 
 async fn health() -> impl IntoResponse {
