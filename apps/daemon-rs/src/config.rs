@@ -12,6 +12,9 @@ pub struct Config {
     pub web_ui_enabled: bool,
     /// Directory of the bundled browser UI, if it is enabled and present.
     pub web_ui_dist: Option<std::path::PathBuf>,
+    /// Serve terminal streams from in-process PTYs instead of proxying them.
+    /// Opt-in: the Node daemon still owns the terminal registry.
+    pub native_terminals: bool,
 }
 
 const DEFAULT_PORT: u16 = 9999;
@@ -48,6 +51,9 @@ impl Config {
             upstream: std::env::var("FDE_RS_UPSTREAM").ok().filter(|v| !v.is_empty()),
             web_ui_enabled,
             web_ui_dist: web_ui_dist.filter(|_| web_ui_enabled),
+            native_terminals: std::env::var("FDE_RS_NATIVE_TERMINALS")
+                .map(|v| v == "1" || v == "true")
+                .unwrap_or(false),
         })
     }
 }

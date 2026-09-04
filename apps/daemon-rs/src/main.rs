@@ -11,6 +11,8 @@ mod envelope;
 mod frames;
 mod netclass;
 mod proxy;
+mod pty;
+mod terminals;
 mod web_ui;
 
 use std::net::SocketAddr;
@@ -36,6 +38,7 @@ struct AppState {
     auth: auth::AuthConfig,
     allowed_origins: Vec<String>,
     web_ui_dist: Option<std::path::PathBuf>,
+    native_terminals: bool,
 }
 
 impl AppState {
@@ -70,6 +73,7 @@ async fn main() -> anyhow::Result<()> {
         auth: persisted.auth,
         allowed_origins: persisted.allowed_origins,
         web_ui_dist: config.web_ui_dist.clone(),
+        native_terminals: config.native_terminals,
     });
 
     let app = Router::new()
@@ -91,6 +95,7 @@ async fn main() -> anyhow::Result<()> {
         port = bound.port(),
         upstream = config.upstream.as_deref().unwrap_or("<none>"),
         auth_required,
+        native_terminals = config.native_terminals,
         web_ui = state.web_ui_dist.as_ref().map(|d| d.display().to_string()).unwrap_or_default(),
         home = home.as_ref().map(|h| h.display().to_string()).unwrap_or_default(),
         "Server listening"
@@ -212,6 +217,11 @@ async fn ws_upgrade(
 
 async fn handle_socket(mut socket: WebSocket, state: Arc<AppState>) {
     let (from_upstream_tx, mut from_upstream_rx) = mpsc::channel::<proxy::Frame>(256);
+    // Frames produced locally (native terminal output) rather than by upstream.
+    let (local_tx, mut local_rx) = mpsc::channel::<Vec<u8>>(256);
+    let mut terminals = state
+        .native_terminals
+        .then(|| terminals::Terminals::new(local_tx));
 
     // If the Node daemon is unreachable we still serve the message types we
     // implement natively rather than dropping the client.
@@ -228,6 +238,12 @@ async fn handle_socket(mut socket: WebSocket, state: Arc<AppState>) {
 
     loop {
         tokio::select! {
+            // Frames from natively-owned terminals.
+            Some(bytes) = local_rx.recv() => {
+                if socket.send(Message::Binary(bytes)).await.is_err() {
+                    break;
+                }
+            }
             // Replies from the Node daemon, relayed verbatim.
             Some(frame) = from_upstream_rx.recv() => {
                 let message = match frame {
@@ -242,12 +258,12 @@ async fn handle_socket(mut socket: WebSocket, state: Arc<AppState>) {
                 let Some(Ok(msg)) = incoming else { break };
                 match msg {
                     Message::Text(text) => {
-                        if !handle_text(&text, &mut socket, upstream.as_ref()).await {
+                        if !handle_text(&text, &mut socket, upstream.as_ref(), terminals.as_mut()).await {
                             break;
                         }
                     }
                     Message::Binary(bytes) => {
-                        if !handle_binary(bytes, upstream.as_ref()).await {
+                        if !handle_binary(bytes, upstream.as_ref(), terminals.as_mut()).await {
                             break;
                         }
                     }
@@ -264,6 +280,7 @@ async fn handle_text(
     text: &str,
     socket: &mut WebSocket,
     upstream: Option<&proxy::Upstream>,
+    terminals: Option<&mut terminals::Terminals>,
 ) -> bool {
     let parsed: Inbound = match serde_json::from_str(text) {
         Ok(v) => v,
@@ -281,6 +298,15 @@ async fn handle_text(
             let pong = json!({ "type": "pong", "timestamp": ping.timestamp });
             socket.send(Message::Text(pong.to_string())).await.is_ok()
         }
+        Inbound::Session { message } => {
+            if let Some(terminals) = terminals {
+                if let Some(reply) = native_terminal_reply(message, terminals) {
+                    return socket.send(Message::Text(reply.to_string())).await.is_ok();
+                }
+            }
+            tracing::trace!(session_type = parsed.session_type(), "forwarding upstream");
+            forward(text, upstream).await
+        }
         _ => {
             tracing::trace!(session_type = parsed.session_type(), "forwarding upstream");
             forward(text, upstream).await
@@ -288,10 +314,77 @@ async fn handle_text(
     }
 }
 
+/// Serves terminal create/subscribe natively when native terminals are on.
+/// Returns None for anything we do not own, which then goes upstream.
+fn native_terminal_reply(
+    message: &serde_json::Value,
+    terminals: &mut terminals::Terminals,
+) -> Option<serde_json::Value> {
+    let request_id = message.get("requestId")?.as_str()?.to_string();
+    match message.get("type")?.as_str()? {
+        "create_terminal_request" => {
+            let cwd = message.get("cwd").and_then(|c| c.as_str());
+            let size = message.get("size");
+            let rows = size.and_then(|s| s.get("rows")?.as_u64()).unwrap_or(24) as u16;
+            let cols = size.and_then(|s| s.get("cols")?.as_u64()).unwrap_or(80) as u16;
+
+            let payload = match terminals.create(cwd, rows, cols) {
+                Ok((id, _slot)) => json!({
+                    "terminal": {
+                        "id": id,
+                        "name": "terminal",
+                        "cwd": cwd.unwrap_or("/"),
+                        "workspaceId": message.get("workspaceId").and_then(|w| w.as_str()),
+                    },
+                    "error": null,
+                    "requestId": request_id,
+                }),
+                Err(err) => json!({
+                    "terminal": null,
+                    "error": err.to_string(),
+                    "requestId": request_id,
+                }),
+            };
+            Some(json!({ "type": "session", "message": {
+                "type": "create_terminal_response", "payload": payload } }))
+        }
+        "subscribe_terminal_request" => {
+            let terminal_id = message.get("terminalId")?.as_str()?;
+            // Only ours: ids the Node daemon issued must go upstream.
+            let slot = terminals.slot_for(terminal_id)?;
+            Some(json!({ "type": "session", "message": {
+                "type": "subscribe_terminal_response",
+                "payload": {
+                    "terminalId": terminal_id,
+                    "slot": slot,
+                    "error": null,
+                    "requestId": request_id,
+                }
+            } }))
+        }
+        _ => None,
+    }
+}
+
 /// Terminal I/O and file transfers. Decoded only far enough to log the route;
 /// the payload is relayed intact.
-async fn handle_binary(bytes: Vec<u8>, upstream: Option<&proxy::Upstream>) -> bool {
+async fn handle_binary(
+    bytes: Vec<u8>,
+    upstream: Option<&proxy::Upstream>,
+    terminals: Option<&mut terminals::Terminals>,
+) -> bool {
     match frames::decode(&bytes) {
+        Some(frames::Frame::Terminal { opcode, slot, payload }) => {
+            // Natively-owned slots are served here; everything else falls
+            // through to the Node daemon, which still owns the registry.
+            if let Some(terminals) = terminals {
+                let payload = payload.to_vec();
+                if terminals.handle(opcode, slot, &payload).await {
+                    return true;
+                }
+            }
+            tracing::trace!(?opcode, slot, "forwarding terminal frame upstream");
+        }
         Some(frame) => tracing::trace!(?frame, "forwarding binary frame upstream"),
         None => {
             tracing::debug!(len = bytes.len(), "dropping undecodable binary frame");
