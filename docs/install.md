@@ -97,9 +97,13 @@ in?", default yes). A non-interactive run does nothing unless `FDE_AUTOSTART` is
 curl -fsSL https://frogg.app/install.sh | bash
 ```
 
-`frogg.app/install.sh` is a 302 to this repository's copy of `deploy/install.sh`
-(the reverse proxy in front of `frogg.app` holds the rule, so the URL never
-changes). Every release also carries the three scripts as assets, so
+`frogg.app/install.sh` is served by a Cloudflare Worker
+([deploy/install-worker](../deploy/install-worker/README.md)) that proxies this
+repository's copy of `deploy/install.sh`, so the URL never changes and the bytes
+you pipe into your shell come from a hostname this project controls. It serves a
+fixed allowlist of three paths and fails closed: if the source is unreachable or
+does not look like a shell script you get a 502, and `curl -f` passes nothing on
+to `bash`. Every release also carries the three scripts as assets, so
 `https://github.com/frogg-app/fde/releases/download/v<version>/install.sh` pins
 the installer that shipped with a given release. Note that
 `/releases/latest/...` resolves only once a release is published without the
