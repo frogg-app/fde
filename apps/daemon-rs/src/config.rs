@@ -9,29 +9,32 @@ pub struct Config {
     /// Upstream Node daemon for message types not yet implemented natively.
     /// `None` means run standalone and reject unknown types instead of proxying.
     pub upstream: Option<String>,
-    pub home: Option<String>,
     pub web_ui_enabled: bool,
 }
 
 const DEFAULT_PORT: u16 = 9999;
 
 impl Config {
-    pub fn from_env() -> anyhow::Result<Self> {
+    /// `persisted_listen` is `daemon.listen` from config.json; env wins over it,
+    /// matching the Node daemon's precedence.
+    pub fn from_env(persisted_listen: Option<&str>) -> anyhow::Result<Self> {
         let listen = match std::env::var("PASEO_LISTEN") {
             Ok(v) if !v.trim().is_empty() => parse_listen(v.trim())?,
-            _ => {
+            _ => match persisted_listen.map(str::trim).filter(|v| !v.is_empty()) {
+                Some(value) => parse_listen(value)?,
+                None => {
                 let port = std::env::var("PASEO_PORT")
                     .ok()
                     .and_then(|p| p.trim().parse::<u16>().ok())
                     .unwrap_or(DEFAULT_PORT);
                 SocketAddr::from(([127, 0, 0, 1], port))
-            }
+                }
+            },
         };
 
         Ok(Self {
             listen,
             upstream: std::env::var("FDE_RS_UPSTREAM").ok().filter(|v| !v.is_empty()),
-            home: std::env::var("FDE_HOME").or_else(|_| std::env::var("PASEO_HOME")).ok(),
             web_ui_enabled: std::env::var("PASEO_WEB_UI_ENABLED")
                 .map(|v| v != "0" && v != "false")
                 .unwrap_or(true),

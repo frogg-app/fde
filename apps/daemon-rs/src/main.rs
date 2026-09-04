@@ -4,16 +4,21 @@
 //! and forwards the rest to the Node daemon (see `proxy`). The point is to migrate
 //! the protocol surface incrementally while staying a drop-in replacement.
 
+mod auth;
 mod config;
+mod daemon_config;
 mod envelope;
+mod netclass;
 mod proxy;
 
+use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Instant;
 
 use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
-use axum::extract::State;
-use axum::response::IntoResponse;
+use axum::extract::{ConnectInfo, State};
+use axum::http::{HeaderMap, StatusCode};
+use axum::response::{IntoResponse, Response};
 use axum::routing::get;
 use axum::{Json, Router};
 use envelope::Inbound;
@@ -26,6 +31,18 @@ struct AppState {
     server_id: String,
     started: Instant,
     upstream_url: Option<String>,
+    auth: auth::AuthConfig,
+    allowed_origins: Vec<String>,
+}
+
+impl AppState {
+    /// The locality of a request, honouring the same inputs the Node daemon uses.
+    /// X-Forwarded-For is deliberately *not* trusted here: the Node daemon only
+    /// honours it for configured trusted proxies, and until we port that setting
+    /// the safe direction is to gate more, never less.
+    fn locality(&self, peer: SocketAddr) -> netclass::Locality {
+        netclass::classify(Some(&peer.ip().to_string()))
+    }
 }
 
 #[tokio::main]
@@ -33,19 +50,27 @@ async fn main() -> anyhow::Result<()> {
     let boot = Instant::now();
     tracing_subscriber::fmt()
         .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "info".into()),
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
         )
         .init();
 
-    let config = config::Config::from_env()?;
+    let home = daemon_config::resolve_home();
+    let persisted = daemon_config::load(home.as_deref());
+    let config = config::Config::from_env(persisted.listen.as_deref())?;
+
+    let auth_required = persisted.auth.password_hash.is_some()
+        || !persisted.auth.credential_hashes.is_empty();
     let state = Arc::new(AppState {
         server_id: uuid::Uuid::new_v4().to_string(),
         started: Instant::now(),
         upstream_url: config.upstream.clone(),
+        auth: persisted.auth,
+        allowed_origins: persisted.allowed_origins,
     });
 
     let app = Router::new()
+        // Unauthenticated by design, matching the Node daemon: health for probes,
+        // identity for LAN scanners and the pairing flow.
         .route("/api/health", get(health))
         .route("/api/identity", get(identity))
         .route("/api/status", get(status))
@@ -59,15 +84,19 @@ async fn main() -> anyhow::Result<()> {
         host = %bound.ip(),
         port = bound.port(),
         upstream = config.upstream.as_deref().unwrap_or("<none>"),
-        web_ui = config.web_ui_enabled,
+        auth_required,
+        home = home.as_ref().map(|h| h.display().to_string()).unwrap_or_default(),
         "Server listening"
     );
 
-    axum::serve(listener, app)
-        .with_graceful_shutdown(async {
-            let _ = tokio::signal::ctrl_c().await;
-        })
-        .await?;
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .with_graceful_shutdown(async {
+        let _ = tokio::signal::ctrl_c().await;
+    })
+    .await?;
     Ok(())
 }
 
@@ -83,26 +112,70 @@ async fn identity(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     }))
 }
 
-async fn status(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    Json(json!({
-        "status": "ok",
-        "uptimeMs": state.started.elapsed().as_millis() as u64,
-        "runtime": "rust",
-    }))
+async fn status(
+    State(state): State<Arc<AppState>>,
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
+) -> Response {
+    let token = auth::extract_http_bearer_token(header(&headers, "authorization"));
+    match state.auth.authorize(state.locality(peer), token.as_deref()) {
+        auth::Decision::Ok => Json(json!({
+            "status": "ok",
+            "uptimeMs": state.started.elapsed().as_millis() as u64,
+            "runtime": "rust",
+        }))
+        .into_response(),
+        decision => {
+            tracing::warn!(?decision, %peer, "rejected /api/status");
+            StatusCode::UNAUTHORIZED.into_response()
+        }
+    }
+}
+
+fn header<'a>(headers: &'a HeaderMap, name: &str) -> Option<&'a str> {
+    headers.get(name).and_then(|v| v.to_str().ok())
 }
 
 async fn ws_upgrade(
     ws: WebSocketUpgrade,
     State(state): State<Arc<AppState>>,
-) -> impl IntoResponse {
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
+) -> Response {
+    let origin = header(&headers, "origin");
+    let host = header(&headers, "host");
+
+    if !auth::origin_allowed(origin, host, &state.allowed_origins) {
+        tracing::warn!(?origin, %peer, "rejected connection from origin");
+        return (StatusCode::FORBIDDEN, "Origin not allowed").into_response();
+    }
+
+    let protocol_header = header(&headers, "sec-websocket-protocol").map(str::to_owned);
+    let token = auth::extract_ws_bearer_token(protocol_header.as_deref());
+    match state.auth.authorize(state.locality(peer), token.as_deref()) {
+        auth::Decision::Ok => {}
+        decision => {
+            tracing::warn!(?decision, %peer, "rejected websocket upgrade");
+            return (StatusCode::UNAUTHORIZED, "Unauthorized").into_response();
+        }
+    }
+
+    // Echo back the exact subprotocol the client offered, or the upgrade fails.
+    let selected = protocol_header
+        .as_deref()
+        .and_then(|h| h.split(',').map(str::trim).find(|p| !p.is_empty()).map(str::to_owned));
+    let ws = match selected {
+        Some(protocol) => ws.protocols([protocol]),
+        None => ws,
+    };
     ws.on_upgrade(move |socket| handle_socket(socket, state))
 }
 
 async fn handle_socket(mut socket: WebSocket, state: Arc<AppState>) {
     let (from_upstream_tx, mut from_upstream_rx) = mpsc::channel::<String>(256);
 
-    // Dial the Node daemon lazily-but-eagerly: if we cannot reach it, we still
-    // serve the message types we implement natively rather than dropping the client.
+    // If the Node daemon is unreachable we still serve the message types we
+    // implement natively rather than dropping the client.
     let upstream = match &state.upstream_url {
         Some(url) => match proxy::Upstream::connect(url, from_upstream_tx).await {
             Ok(up) => Some(up),
@@ -179,8 +252,7 @@ fn now_iso8601() -> String {
         .unwrap_or_default();
     // Avoids a chrono dependency; the Node daemon only needs a valid ISO-8601 string.
     let secs = now.as_secs();
-    let days = secs / 86_400;
-    let (y, m, d) = civil_from_days(days as i64);
+    let (y, m, d) = civil_from_days((secs / 86_400) as i64);
     let (hh, mm, ss) = (secs % 86_400 / 3600, secs % 3600 / 60, secs % 60);
     format!("{y:04}-{m:02}-{d:02}T{hh:02}:{mm:02}:{ss:02}.{:03}Z", now.subsec_millis())
 }
