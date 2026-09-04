@@ -35,7 +35,12 @@ impl PtySession {
         let (rows, cols) = (spawn.rows.max(1), spawn.cols.max(1));
         let pty = NativePtySystem::default();
         let pair = pty
-            .openpty(PtySize { rows, cols, pixel_width: 0, pixel_height: 0 })
+            .openpty(PtySize {
+                rows,
+                cols,
+                pixel_width: 0,
+                pixel_height: 0,
+            })
             .context("opening a pty")?;
 
         let mut command = CommandBuilder::new(spawn.command);
@@ -46,8 +51,14 @@ impl PtySession {
         // Without TERM, curses programs refuse to draw.
         command.env("TERM", "xterm-256color");
 
-        let child = pair.slave.spawn_command(command).context("spawning the child process")?;
-        let mut reader = pair.master.try_clone_reader().context("cloning the pty reader")?;
+        let child = pair
+            .slave
+            .spawn_command(command)
+            .context("spawning the child process")?;
+        let mut reader = pair
+            .master
+            .try_clone_reader()
+            .context("cloning the pty reader")?;
         let writer = pair.master.take_writer().context("taking the pty writer")?;
 
         let (output, _) = broadcast::channel(1024);
@@ -90,7 +101,10 @@ impl PtySession {
     }
 
     pub fn write_input(&self, bytes: &[u8]) -> Result<()> {
-        let mut writer = self.writer.lock().map_err(|_| anyhow::anyhow!("pty writer poisoned"))?;
+        let mut writer = self
+            .writer
+            .lock()
+            .map_err(|_| anyhow::anyhow!("pty writer poisoned"))?;
         writer.write_all(bytes)?;
         writer.flush()?;
         Ok(())
@@ -98,9 +112,17 @@ impl PtySession {
 
     pub fn resize(&self, rows: u16, cols: u16) -> Result<()> {
         let (rows, cols) = (rows.max(1), cols.max(1));
-        let pair = self.pair.lock().map_err(|_| anyhow::anyhow!("pty pair poisoned"))?;
+        let pair = self
+            .pair
+            .lock()
+            .map_err(|_| anyhow::anyhow!("pty pair poisoned"))?;
         pair.master
-            .resize(PtySize { rows, cols, pixel_width: 0, pixel_height: 0 })
+            .resize(PtySize {
+                rows,
+                cols,
+                pixel_width: 0,
+                pixel_height: 0,
+            })
             .context("resizing the pty")?;
         if let Ok(mut screen) = self.screen.lock() {
             screen.set_size(rows, cols);
@@ -182,7 +204,11 @@ mod tests {
     #[test]
     fn runs_a_command_and_captures_its_output() {
         let session = sh("echo NATIVE_PTY_OK");
-        assert!(wait_for(&session, "NATIVE_PTY_OK"), "got: {:?}", session.visible_text());
+        assert!(
+            wait_for(&session, "NATIVE_PTY_OK"),
+            "got: {:?}",
+            session.visible_text()
+        );
     }
 
     #[test]
@@ -203,7 +229,11 @@ mod tests {
     fn accepts_input_and_echoes_it_back() {
         let session = sh("read line; echo GOT:$line");
         session.write_input(b"typed\n").unwrap();
-        assert!(wait_for(&session, "GOT:typed"), "got: {:?}", session.visible_text());
+        assert!(
+            wait_for(&session, "GOT:typed"),
+            "got: {:?}",
+            session.visible_text()
+        );
     }
 
     #[test]
@@ -225,7 +255,10 @@ mod tests {
         assert!(wait_for(&session, "RED"));
         let snapshot = session.snapshot();
         assert!(!snapshot.is_empty());
-        assert!(snapshot.contains(&0x1b), "snapshot should carry escape sequences");
+        assert!(
+            snapshot.contains(&0x1b),
+            "snapshot should carry escape sequences"
+        );
         assert!(String::from_utf8_lossy(&snapshot).contains("RED"));
     }
 

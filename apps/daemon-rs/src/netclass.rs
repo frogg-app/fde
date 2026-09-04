@@ -95,7 +95,13 @@ mod tests {
 
     #[test]
     fn classifies_private_lan_ranges() {
-        for addr in ["10.0.0.1", "172.16.0.1", "172.31.255.255", "192.168.1.10", "169.254.1.1"] {
+        for addr in [
+            "10.0.0.1",
+            "172.16.0.1",
+            "172.31.255.255",
+            "192.168.1.10",
+            "169.254.1.1",
+        ] {
             assert!(is_private_lan_ip(addr), "{addr} should be LAN");
         }
         for addr in ["172.15.0.1", "172.32.0.1", "8.8.8.8", "1.1.1.1"] {

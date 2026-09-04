@@ -42,17 +42,26 @@ mod tests {
     #[test]
     fn reads_a_ping_envelope() {
         let msg: Inbound = serde_json::from_str(r#"{"type":"ping","timestamp":42}"#).unwrap();
-        assert!(matches!(msg, Inbound::Ping(Ping { timestamp: Some(42) })));
+        assert!(matches!(
+            msg,
+            Inbound::Ping(Ping {
+                timestamp: Some(42)
+            })
+        ));
     }
 
     #[test]
     fn keeps_unknown_session_payloads_intact() {
-        let raw = r#"{"type":"session","message":{"type":"create_agent_request","x":{"deep":[1,2]}}}"#;
+        let raw =
+            r#"{"type":"session","message":{"type":"create_agent_request","x":{"deep":[1,2]}}}"#;
         let msg: Inbound = serde_json::from_str(raw).unwrap();
         assert_eq!(msg.session_type(), Some("create_agent_request"));
         // Round-trips without loss, which is what makes opaque proxying safe.
         let back = serde_json::to_value(&msg).unwrap();
-        assert_eq!(back, serde_json::from_str::<serde_json::Value>(raw).unwrap());
+        assert_eq!(
+            back,
+            serde_json::from_str::<serde_json::Value>(raw).unwrap()
+        );
     }
 
     #[test]

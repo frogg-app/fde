@@ -81,7 +81,9 @@ fn matches_credential(token: &str, credential_hashes: &[String]) -> bool {
     let provided = Sha256::digest(token.as_bytes());
     let mut matched = false;
     for hash in credential_hashes {
-        let Ok(expected) = hex_decode(hash) else { continue };
+        let Ok(expected) = hex_decode(hash) else {
+            continue;
+        };
         if expected.len() == provided.len() {
             matched |= bool::from(provided.as_slice().ct_eq(&expected));
         }
@@ -198,7 +200,10 @@ mod tests {
 
     #[test]
     fn extracts_an_http_bearer_token() {
-        assert_eq!(extract_http_bearer_token(Some("Bearer tok")).as_deref(), Some("tok"));
+        assert_eq!(
+            extract_http_bearer_token(Some("Bearer tok")).as_deref(),
+            Some("tok")
+        );
         assert_eq!(extract_http_bearer_token(Some("bearer tok")), None);
         assert_eq!(extract_http_bearer_token(Some("Bearer a b")), None);
     }
@@ -221,9 +226,18 @@ mod tests {
             credential_hashes: vec![hex_encode(&Sha256::digest(b"s3cret"))],
             ..Default::default()
         };
-        assert_eq!(cfg.authorize(Locality::Public, Some("s3cret")), Decision::Ok);
-        assert_eq!(cfg.authorize(Locality::Public, Some("wrong")), Decision::InvalidToken);
-        assert_eq!(cfg.authorize(Locality::Public, None), Decision::MissingToken);
+        assert_eq!(
+            cfg.authorize(Locality::Public, Some("s3cret")),
+            Decision::Ok
+        );
+        assert_eq!(
+            cfg.authorize(Locality::Public, Some("wrong")),
+            Decision::InvalidToken
+        );
+        assert_eq!(
+            cfg.authorize(Locality::Public, None),
+            Decision::MissingToken
+        );
     }
 
     #[test]
@@ -233,17 +247,38 @@ mod tests {
             password_hash: Some(bcrypt::hash("hunter2", 4).unwrap()),
             ..Default::default()
         };
-        assert_eq!(cfg.authorize(Locality::Loopback, Some("hunter2")), Decision::Ok);
-        assert_eq!(cfg.authorize(Locality::Loopback, Some("nope")), Decision::InvalidToken);
-        assert_eq!(cfg.authorize(Locality::Loopback, None), Decision::MissingToken);
+        assert_eq!(
+            cfg.authorize(Locality::Loopback, Some("hunter2")),
+            Decision::Ok
+        );
+        assert_eq!(
+            cfg.authorize(Locality::Loopback, Some("nope")),
+            Decision::InvalidToken
+        );
+        assert_eq!(
+            cfg.authorize(Locality::Loopback, None),
+            Decision::MissingToken
+        );
     }
 
     #[test]
     fn same_origin_covers_loopback_aliases_on_a_shared_port() {
-        assert!(is_same_origin(Some("http://127.0.0.1:9999"), Some("127.0.0.1:9999")));
-        assert!(is_same_origin(Some("http://localhost:9999"), Some("127.0.0.1:9999")));
-        assert!(!is_same_origin(Some("http://localhost:9999"), Some("127.0.0.1:8888")));
-        assert!(!is_same_origin(Some("http://evil.com"), Some("127.0.0.1:9999")));
+        assert!(is_same_origin(
+            Some("http://127.0.0.1:9999"),
+            Some("127.0.0.1:9999")
+        ));
+        assert!(is_same_origin(
+            Some("http://localhost:9999"),
+            Some("127.0.0.1:9999")
+        ));
+        assert!(!is_same_origin(
+            Some("http://localhost:9999"),
+            Some("127.0.0.1:8888")
+        ));
+        assert!(!is_same_origin(
+            Some("http://evil.com"),
+            Some("127.0.0.1:9999")
+        ));
         assert!(!is_same_origin(None, Some("127.0.0.1:9999")));
     }
 
@@ -252,9 +287,21 @@ mod tests {
         let allowed = vec!["http://tauri.localhost".to_string()];
         // Non-browser clients send no Origin and are allowed through.
         assert!(origin_allowed(None, Some("127.0.0.1:9999"), &allowed));
-        assert!(origin_allowed(Some("http://tauri.localhost"), None, &allowed));
-        assert!(!origin_allowed(Some("http://evil.com"), Some("127.0.0.1:9999"), &allowed));
-        assert!(origin_allowed(Some("http://evil.com"), None, &["*".to_string()]));
+        assert!(origin_allowed(
+            Some("http://tauri.localhost"),
+            None,
+            &allowed
+        ));
+        assert!(!origin_allowed(
+            Some("http://evil.com"),
+            Some("127.0.0.1:9999"),
+            &allowed
+        ));
+        assert!(origin_allowed(
+            Some("http://evil.com"),
+            None,
+            &["*".to_string()]
+        ));
     }
 
     fn hex_encode(bytes: &[u8]) -> String {

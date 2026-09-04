@@ -29,7 +29,11 @@ pub struct Terminals {
 
 impl Terminals {
     pub fn new(outbound: mpsc::Sender<Vec<u8>>) -> Self {
-        Self { sessions: HashMap::new(), by_id: HashMap::new(), outbound }
+        Self {
+            sessions: HashMap::new(),
+            by_id: HashMap::new(),
+            outbound,
+        }
     }
 
     /// The lowest unused slot, or None when all 256 are taken.
@@ -39,8 +43,15 @@ impl Terminals {
 
     /// Creates a terminal for a `create_terminal_request`, returning its id and
     /// slot. The id is ours alone - the Node registry knows nothing about it.
-    pub fn create(&mut self, cwd: Option<&str>, rows: u16, cols: u16) -> anyhow::Result<(String, u8)> {
-        let slot = self.free_slot().ok_or_else(|| anyhow::anyhow!("no free terminal slots"))?;
+    pub fn create(
+        &mut self,
+        cwd: Option<&str>,
+        rows: u16,
+        cols: u16,
+    ) -> anyhow::Result<(String, u8)> {
+        let slot = self
+            .free_slot()
+            .ok_or_else(|| anyhow::anyhow!("no free terminal slots"))?;
         self.open(slot, cwd, rows, cols)?;
         let id = format!("rs-{}", uuid::Uuid::new_v4());
         self.by_id.insert(id.clone(), slot);
@@ -52,7 +63,13 @@ impl Terminals {
     }
 
     /// Starts a shell on `slot`, replacing any session already there.
-    pub fn open(&mut self, slot: u8, cwd: Option<&str>, rows: u16, cols: u16) -> anyhow::Result<()> {
+    pub fn open(
+        &mut self,
+        slot: u8,
+        cwd: Option<&str>,
+        rows: u16,
+        cols: u16,
+    ) -> anyhow::Result<()> {
         let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/sh".to_string());
         let session = PtySession::spawn(Spawn {
             command: &shell,
@@ -165,7 +182,11 @@ mod tests {
         let mut terminals = Terminals::new(tx);
         terminals.open(3, Some("/tmp"), 24, 80).unwrap();
 
-        assert!(terminals.handle(TerminalOpcode::Input, 3, b"echo FRAMED_OK\n").await);
+        assert!(
+            terminals
+                .handle(TerminalOpcode::Input, 3, b"echo FRAMED_OK\n")
+                .await
+        );
         assert!(collect_output(&mut rx, "FRAMED_OK").await);
         terminals.close_all();
     }
@@ -200,8 +221,16 @@ mod tests {
         let mut terminals = Terminals::new(tx);
         terminals.open(0, Some("/tmp"), 24, 80).unwrap();
 
-        assert!(terminals.handle(TerminalOpcode::Resize, 0, br#"{"rows":40,"cols":100}"#).await);
-        assert!(terminals.handle(TerminalOpcode::Resize, 0, b"not json").await);
+        assert!(
+            terminals
+                .handle(TerminalOpcode::Resize, 0, br#"{"rows":40,"cols":100}"#)
+                .await
+        );
+        assert!(
+            terminals
+                .handle(TerminalOpcode::Resize, 0, b"not json")
+                .await
+        );
         terminals.close_all();
     }
 
@@ -210,13 +239,16 @@ mod tests {
         let (tx, mut rx) = mpsc::channel(256);
         let mut terminals = Terminals::new(tx);
         terminals.open(1, Some("/tmp"), 24, 80).unwrap();
-        terminals.handle(TerminalOpcode::Input, 1, b"echo SNAP\n").await;
+        terminals
+            .handle(TerminalOpcode::Input, 1, b"echo SNAP\n")
+            .await;
         assert!(collect_output(&mut rx, "SNAP").await);
 
         terminals.handle(TerminalOpcode::Snapshot, 1, b"").await;
         let deadline = tokio::time::Instant::now() + Duration::from_secs(5);
         while tokio::time::Instant::now() < deadline {
-            if let Ok(Some(frame)) = tokio::time::timeout(Duration::from_millis(500), rx.recv()).await
+            if let Ok(Some(frame)) =
+                tokio::time::timeout(Duration::from_millis(500), rx.recv()).await
             {
                 if frame[0] == TerminalOpcode::Snapshot as u8 {
                     assert_eq!(frame[1], 1, "snapshot must carry the slot");

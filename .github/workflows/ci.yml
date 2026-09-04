@@ -120,6 +120,36 @@ jobs:
       - name: Test server (unit, no e2e)
         run: npx vitest run --root packages/server --fileParallelism --exclude "**/*.e2e.test.ts" --shard=${{ matrix.shard }}/3
 
+  daemon-rs:
+    name: daemon (rust)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/daemon-rs
+          # Distinct from the desktop crate's key: sharing one would let a cache
+          # warmed by either poison the other (see the desktop job).
+          shared-key: daemon-rs-x86_64-unknown-linux-gnu
+
+      - name: Check formatting
+        working-directory: apps/daemon-rs
+        run: cargo fmt --check
+
+      - name: Clippy
+        working-directory: apps/daemon-rs
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: Test
+        working-directory: apps/daemon-rs
+        run: cargo test
+
   desktop:
     name: desktop (linux deb)
     # ubuntu-22.04 like release.yml: the two share a Rust cache, and a build

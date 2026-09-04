@@ -25,8 +25,16 @@ pub enum FileTransferOpcode {
 
 #[derive(Debug, PartialEq)]
 pub enum Frame<'a> {
-    Terminal { opcode: TerminalOpcode, slot: u8, payload: &'a [u8] },
-    FileTransfer { opcode: FileTransferOpcode, slot: u8, payload: &'a [u8] },
+    Terminal {
+        opcode: TerminalOpcode,
+        slot: u8,
+        payload: &'a [u8],
+    },
+    FileTransfer {
+        opcode: FileTransferOpcode,
+        slot: u8,
+        payload: &'a [u8],
+    },
 }
 
 impl TerminalOpcode {
@@ -59,10 +67,17 @@ pub fn decode(bytes: &[u8]) -> Option<Frame<'_>> {
     }
     let (opcode, slot, payload) = (bytes[0], bytes[1], &bytes[2..]);
     if let Some(opcode) = TerminalOpcode::from_byte(opcode) {
-        return Some(Frame::Terminal { opcode, slot, payload });
+        return Some(Frame::Terminal {
+            opcode,
+            slot,
+            payload,
+        });
     }
-    FileTransferOpcode::from_byte(opcode)
-        .map(|opcode| Frame::FileTransfer { opcode, slot, payload })
+    FileTransferOpcode::from_byte(opcode).map(|opcode| Frame::FileTransfer {
+        opcode,
+        slot,
+        payload,
+    })
 }
 
 pub fn encode_terminal(opcode: TerminalOpcode, slot: u8, payload: &[u8]) -> Vec<u8> {
@@ -83,7 +98,11 @@ mod tests {
         assert_eq!(encoded, vec![0x01, 7, b'h', b'e', b'l', b'l', b'o']);
         assert_eq!(
             decode(&encoded),
-            Some(Frame::Terminal { opcode: TerminalOpcode::Output, slot: 7, payload: b"hello" })
+            Some(Frame::Terminal {
+                opcode: TerminalOpcode::Output,
+                slot: 7,
+                payload: b"hello"
+            })
         );
     }
 
@@ -98,7 +117,14 @@ mod tests {
         ] {
             let bytes = [byte, 3];
             let frame = decode(&bytes).unwrap();
-            assert_eq!(frame, Frame::Terminal { opcode: expected, slot: 3, payload: &[] });
+            assert_eq!(
+                frame,
+                Frame::Terminal {
+                    opcode: expected,
+                    slot: 3,
+                    payload: &[]
+                }
+            );
         }
     }
 
@@ -117,7 +143,10 @@ mod tests {
     #[test]
     fn rejects_short_and_unknown_frames() {
         assert!(decode(&[]).is_none());
-        assert!(decode(&[0x01]).is_none(), "an opcode with no slot byte is incomplete");
+        assert!(
+            decode(&[0x01]).is_none(),
+            "an opcode with no slot byte is incomplete"
+        );
         assert!(decode(&[0x99, 0]).is_none());
     }
 }

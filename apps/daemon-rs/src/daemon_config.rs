@@ -73,7 +73,9 @@ pub fn resolve_home() -> Option<PathBuf> {
             }
         }
     }
-    std::env::var("HOME").ok().map(|h| Path::new(&h).join(".fde"))
+    std::env::var("HOME")
+        .ok()
+        .map(|h| Path::new(&h).join(".fde"))
 }
 
 pub fn load(home: Option<&Path>) -> Loaded {
@@ -96,7 +98,10 @@ pub fn load(home: Option<&Path>) -> Loaded {
 
     // PASEO_PASSWORD is plaintext in the env; the Node daemon bcrypts it at load.
     // We hash it here for the same reason, so the compare path is uniform.
-    let password_hash = match std::env::var("PASEO_PASSWORD").ok().filter(|p| !p.trim().is_empty()) {
+    let password_hash = match std::env::var("PASEO_PASSWORD")
+        .ok()
+        .filter(|p| !p.trim().is_empty())
+    {
         Some(plain) => bcrypt::hash(plain.trim(), 12).ok(),
         None => daemon.auth.and_then(|a| a.password),
     };
@@ -177,7 +182,10 @@ mod tests {
 
         std::fs::write(dir.join("server-id"), "srv_fromdisk\n").unwrap();
         let loaded = load(Some(&dir));
-        assert_eq!(loaded.server_id, "srv_fromdisk", "must reuse the Node daemon's id");
+        assert_eq!(
+            loaded.server_id, "srv_fromdisk",
+            "must reuse the Node daemon's id"
+        );
         assert_eq!(loaded.listen.as_deref(), Some("0.0.0.0:6767"));
         assert_eq!(loaded.allowed_origins, vec!["http://a".to_string()]);
         assert_eq!(loaded.auth.password_hash.as_deref(), Some("$2b$12$abc"));
@@ -191,7 +199,11 @@ mod tests {
         let dir = tempdir();
         let first = load(Some(&dir)).server_id;
         assert!(first.starts_with("srv_"));
-        assert_eq!(load(Some(&dir)).server_id, first, "must be stable across restarts");
+        assert_eq!(
+            load(Some(&dir)).server_id,
+            first,
+            "must be stable across restarts"
+        );
         std::fs::remove_dir_all(&dir).ok();
     }
 
@@ -200,7 +212,10 @@ mod tests {
         let loaded = load(Some(Path::new("/nonexistent-fde-home")));
         assert!(loaded.listen.is_none());
         assert!(loaded.auth.password_hash.is_none());
-        assert!(loaded.auth.trust_lan, "trustLan defaults to true like the Node daemon");
+        assert!(
+            loaded.auth.trust_lan,
+            "trustLan defaults to true like the Node daemon"
+        );
 
         let dir = tempdir();
         std::fs::write(dir.join("config.json"), "{ not json").unwrap();

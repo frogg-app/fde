@@ -68,8 +68,8 @@ async fn main() -> anyhow::Result<()> {
     let persisted = daemon_config::load(home.as_deref());
     let config = config::Config::from_env(persisted.listen.as_deref())?;
 
-    let auth_required = persisted.auth.password_hash.is_some()
-        || !persisted.auth.credential_hashes.is_empty();
+    let auth_required =
+        persisted.auth.password_hash.is_some() || !persisted.auth.credential_hashes.is_empty();
     let state = Arc::new(AppState {
         server_id: persisted.server_id.clone(),
         started: Instant::now(),
@@ -78,7 +78,10 @@ async fn main() -> anyhow::Result<()> {
         allowed_origins: persisted.allowed_origins,
         hostname: hostname(),
         listen: config.listen.to_string(),
-        http_proxy: config.upstream.as_deref().and_then(http_proxy::HttpProxy::from_ws_url),
+        http_proxy: config
+            .upstream
+            .as_deref()
+            .and_then(http_proxy::HttpProxy::from_ws_url),
         web_ui_dist: config.web_ui_dist.clone(),
         native_terminals: config.native_terminals,
     });
@@ -160,7 +163,9 @@ async fn web_ui_handler(
     if resolved.is_index_html {
         response = response.header("Pragma", "no-cache").header("Expires", "0");
     }
-    response.body(body.into()).unwrap_or_else(|_| StatusCode::INTERNAL_SERVER_ERROR.into_response())
+    response
+        .body(body.into())
+        .unwrap_or_else(|_| StatusCode::INTERNAL_SERVER_ERROR.into_response())
 }
 
 async fn health() -> impl IntoResponse {
@@ -175,15 +180,23 @@ fn discovery_headers(response: Response) -> Response {
     let mut response = response;
     let headers = response.headers_mut();
     headers.insert("Access-Control-Allow-Origin", "*".parse().unwrap());
-    headers.insert("Access-Control-Allow-Methods", "GET, OPTIONS".parse().unwrap());
-    headers.insert("Access-Control-Allow-Private-Network", "true".parse().unwrap());
+    headers.insert(
+        "Access-Control-Allow-Methods",
+        "GET, OPTIONS".parse().unwrap(),
+    );
+    headers.insert(
+        "Access-Control-Allow-Private-Network",
+        "true".parse().unwrap(),
+    );
     headers.insert("Cache-Control", "no-store".parse().unwrap());
     response
 }
 
 async fn identity_preflight() -> Response {
     let mut response = discovery_headers(StatusCode::NO_CONTENT.into_response());
-    response.headers_mut().insert("Access-Control-Max-Age", "600".parse().unwrap());
+    response
+        .headers_mut()
+        .insert("Access-Control-Max-Age", "600".parse().unwrap());
     response
 }
 
@@ -266,9 +279,12 @@ async fn ws_upgrade(
     }
 
     // Echo back the exact subprotocol the client offered, or the upgrade fails.
-    let selected = protocol_header
-        .as_deref()
-        .and_then(|h| h.split(',').map(str::trim).find(|p| !p.is_empty()).map(str::to_owned));
+    let selected = protocol_header.as_deref().and_then(|h| {
+        h.split(',')
+            .map(str::trim)
+            .find(|p| !p.is_empty())
+            .map(str::to_owned)
+    });
     let ws = match selected {
         Some(protocol) => ws.protocols([protocol]),
         None => ws,
@@ -444,7 +460,11 @@ async fn handle_binary(
     terminals: Option<&mut terminals::Terminals>,
 ) -> bool {
     match frames::decode(&bytes) {
-        Some(frames::Frame::Terminal { opcode, slot, payload }) => {
+        Some(frames::Frame::Terminal {
+            opcode,
+            slot,
+            payload,
+        }) => {
             // Natively-owned slots are served here; everything else falls
             // through to the Node daemon, which still owns the registry.
             if let Some(terminals) = terminals {
@@ -492,7 +512,10 @@ fn now_iso8601() -> String {
     let secs = now.as_secs();
     let (y, m, d) = civil_from_days((secs / 86_400) as i64);
     let (hh, mm, ss) = (secs % 86_400 / 3600, secs % 3600 / 60, secs % 60);
-    format!("{y:04}-{m:02}-{d:02}T{hh:02}:{mm:02}:{ss:02}.{:03}Z", now.subsec_millis())
+    format!(
+        "{y:04}-{m:02}-{d:02}T{hh:02}:{mm:02}:{ss:02}.{:03}Z",
+        now.subsec_millis()
+    )
 }
 
 /// Howard Hinnant's days-from-civil, inverted.

@@ -27,11 +27,11 @@ impl Config {
             _ => match persisted_listen.map(str::trim).filter(|v| !v.is_empty()) {
                 Some(value) => parse_listen(value)?,
                 None => {
-                let port = std::env::var("PASEO_PORT")
-                    .ok()
-                    .and_then(|p| p.trim().parse::<u16>().ok())
-                    .unwrap_or(DEFAULT_PORT);
-                SocketAddr::from(([127, 0, 0, 1], port))
+                    let port = std::env::var("PASEO_PORT")
+                        .ok()
+                        .and_then(|p| p.trim().parse::<u16>().ok())
+                        .unwrap_or(DEFAULT_PORT);
+                    SocketAddr::from(([127, 0, 0, 1], port))
                 }
             },
         };
@@ -47,7 +47,9 @@ impl Config {
 
         Ok(Self {
             listen,
-            upstream: std::env::var("FDE_RS_UPSTREAM").ok().filter(|v| !v.is_empty()),
+            upstream: std::env::var("FDE_RS_UPSTREAM")
+                .ok()
+                .filter(|v| !v.is_empty()),
             web_ui_dist: web_ui_dist.filter(|_| web_ui_enabled),
             native_terminals: std::env::var("FDE_RS_NATIVE_TERMINALS")
                 .map(|v| v == "1" || v == "true")
@@ -82,10 +84,19 @@ mod tests {
 
     #[test]
     fn parses_the_forms_the_node_daemon_accepts() {
-        assert_eq!(parse_listen("0.0.0.0:6767").unwrap().to_string(), "0.0.0.0:6767");
+        assert_eq!(
+            parse_listen("0.0.0.0:6767").unwrap().to_string(),
+            "0.0.0.0:6767"
+        );
         assert_eq!(parse_listen("6767").unwrap().to_string(), "127.0.0.1:6767");
-        assert_eq!(parse_listen("localhost:80").unwrap().to_string(), "127.0.0.1:80");
-        assert_eq!(parse_listen("[::1]:6767").unwrap().to_string(), "[::1]:6767");
+        assert_eq!(
+            parse_listen("localhost:80").unwrap().to_string(),
+            "127.0.0.1:80"
+        );
+        assert_eq!(
+            parse_listen("[::1]:6767").unwrap().to_string(),
+            "[::1]:6767"
+        );
         assert!(parse_listen("0.0.0.0:not-a-port").is_err());
     }
 }

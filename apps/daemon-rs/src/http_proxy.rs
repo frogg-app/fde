@@ -15,8 +15,12 @@ use hyper_util::rt::TokioExecutor;
 const DAEMON_PREFIXES: [&str; 3] = ["/api/", "/mcp/", "/public/"];
 
 pub fn is_daemon_path(path: &str) -> bool {
-    DAEMON_PREFIXES.iter().any(|prefix| path.starts_with(prefix))
-        || DAEMON_PREFIXES.iter().any(|prefix| path == prefix.trim_end_matches('/'))
+    DAEMON_PREFIXES
+        .iter()
+        .any(|prefix| path.starts_with(prefix))
+        || DAEMON_PREFIXES
+            .iter()
+            .any(|prefix| path == prefix.trim_end_matches('/'))
 }
 
 #[derive(Clone)]
@@ -63,7 +67,10 @@ impl HttpProxy {
 }
 
 fn status(code: StatusCode) -> Response<Body> {
-    Response::builder().status(code).body(Body::empty()).unwrap_or_default()
+    Response::builder()
+        .status(code)
+        .body(Body::empty())
+        .unwrap_or_default()
 }
 
 fn http_base_from_ws(ws_url: &str) -> Option<String> {
@@ -93,14 +100,26 @@ mod tests {
         // Client-side routes must still reach the SPA.
         assert!(!is_daemon_path("/"));
         assert!(!is_daemon_path("/workspace/abc"));
-        assert!(!is_daemon_path("/apidocs"), "a prefix match must not be a substring match");
+        assert!(
+            !is_daemon_path("/apidocs"),
+            "a prefix match must not be a substring match"
+        );
     }
 
     #[test]
     fn derives_the_http_base_from_the_ws_url() {
-        assert_eq!(http_base_from_ws("ws://127.0.0.1:9999/ws").as_deref(), Some("http://127.0.0.1:9999"));
-        assert_eq!(http_base_from_ws("wss://box:443/ws").as_deref(), Some("https://box:443"));
-        assert_eq!(http_base_from_ws("ws://host").as_deref(), Some("http://host"));
+        assert_eq!(
+            http_base_from_ws("ws://127.0.0.1:9999/ws").as_deref(),
+            Some("http://127.0.0.1:9999")
+        );
+        assert_eq!(
+            http_base_from_ws("wss://box:443/ws").as_deref(),
+            Some("https://box:443")
+        );
+        assert_eq!(
+            http_base_from_ws("ws://host").as_deref(),
+            Some("http://host")
+        );
         assert_eq!(http_base_from_ws("not-a-url"), None);
         assert_eq!(http_base_from_ws("ws://"), None);
     }

@@ -70,7 +70,11 @@ fn select_encoding(accept_encoding: Option<&str>) -> Option<&'static str> {
     }
 }
 
-pub fn resolve(dist_dir: &Path, request_path: &str, accept_encoding: Option<&str>) -> Option<Resolved> {
+pub fn resolve(
+    dist_dir: &Path,
+    request_path: &str,
+    accept_encoding: Option<&str>,
+) -> Option<Resolved> {
     let mut file = dist_dir.join(sanitize(request_path));
 
     if file.is_dir() {
@@ -121,7 +125,13 @@ pub fn resolve(dist_dir: &Path, request_path: &str, accept_encoding: Option<&str
         "no-cache"
     };
 
-    Some(Resolved { file, content_encoding, cache_control, is_index_html, content_type })
+    Some(Resolved {
+        file,
+        content_encoding,
+        cache_control,
+        is_index_html,
+        content_type,
+    })
 }
 
 fn content_type_for(file: &Path) -> &'static str {
@@ -163,7 +173,10 @@ mod tests {
         assert!(is_hashed_asset(Path::new("app-0123456789abcdef0.js")));
         assert!(is_hashed_asset(Path::new("x.0123456789abcdef.css")));
         assert!(!is_hashed_asset(Path::new("plain.css")));
-        assert!(!is_hashed_asset(Path::new("app-0123abc.js")), "under 16 hex chars");
+        assert!(
+            !is_hashed_asset(Path::new("app-0123abc.js")),
+            "under 16 hex chars"
+        );
     }
 
     #[test]
@@ -171,7 +184,10 @@ mod tests {
         let dir = fixture();
         let r = resolve(&dir, "/workspace/some/deep/route", None).unwrap();
         assert!(r.is_index_html);
-        assert_eq!(r.cache_control, "no-store, no-cache, must-revalidate, proxy-revalidate");
+        assert_eq!(
+            r.cache_control,
+            "no-store, no-cache, must-revalidate, proxy-revalidate"
+        );
         assert_eq!(r.content_type, "text/html; charset=utf-8");
         std::fs::remove_dir_all(&dir).ok();
     }
