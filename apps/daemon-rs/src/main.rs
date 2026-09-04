@@ -9,6 +9,8 @@ mod config;
 mod daemon_config;
 mod envelope;
 mod frames;
+mod generated;
+mod generated_tests;
 mod http_proxy;
 mod netclass;
 mod proxy;
@@ -43,6 +45,7 @@ struct AppState {
     web_ui_dist: Option<std::path::PathBuf>,
     native_terminals: bool,
     http_proxy: Option<http_proxy::HttpProxy>,
+    validate_protocol: bool,
 }
 
 impl AppState {
@@ -84,6 +87,7 @@ async fn main() -> anyhow::Result<()> {
             .and_then(http_proxy::HttpProxy::from_ws_url),
         web_ui_dist: config.web_ui_dist.clone(),
         native_terminals: config.native_terminals,
+        validate_protocol: config.validate_protocol,
     });
 
     let app = Router::new()
@@ -106,6 +110,7 @@ async fn main() -> anyhow::Result<()> {
         upstream = config.upstream.as_deref().unwrap_or("<none>"),
         auth_required,
         native_terminals = config.native_terminals,
+        validate_protocol = config.validate_protocol,
         web_ui = state.web_ui_dist.as_ref().map(|d| d.display().to_string()).unwrap_or_default(),
         home = home.as_ref().map(|h| h.display().to_string()).unwrap_or_default(),
         "Server listening"
@@ -344,6 +349,9 @@ async fn handle_socket(mut socket: WebSocket, state: Arc<AppState>) {
                 let Some(Ok(msg)) = incoming else { break };
                 match msg {
                     Message::Text(text) => {
+                        if state.validate_protocol {
+                            validate_against_schema(&text);
+                        }
                         if !handle_text(&text, &mut socket, upstream.as_ref(), terminals.as_mut()).await {
                             break;
                         }
@@ -357,6 +365,37 @@ async fn handle_socket(mut socket: WebSocket, state: Arc<AppState>) {
                     _ => {}
                 }
             }
+        }
+    }
+}
+
+/// Shadow-parses real traffic with the generated protocol types and logs any
+/// mismatch. Observational only: the message is handled exactly as before, so
+/// this can run against live traffic to prove the generated types before
+/// anything depends on them.
+fn validate_against_schema(text: &str) {
+    match serde_json::from_str::<generated::inbound::WsInboundMessage>(text) {
+        Ok(parsed) => {
+            // A silent shape difference is the failure mode that matters, so
+            // check the round trip rather than just that parsing succeeded.
+            let (Ok(original), Ok(round_tripped)) = (
+                serde_json::from_str::<serde_json::Value>(text),
+                serde_json::to_value(&parsed),
+            ) else {
+                return;
+            };
+            if original != round_tripped {
+                tracing::warn!(
+                    message_type = original.get("type").and_then(|t| t.as_str()),
+                    "protocol round trip changed the message"
+                );
+            }
+        }
+        Err(error) => {
+            let message_type = serde_json::from_str::<serde_json::Value>(text)
+                .ok()
+                .and_then(|v| v.get("type").and_then(|t| t.as_str()).map(str::to_owned));
+            tracing::warn!(?message_type, %error, "generated types rejected a real message");
         }
     }
 }
@@ -380,8 +419,9 @@ async fn handle_text(
 
     match &parsed {
         // Natively handled: a pong needs no Node daemon round trip.
-        Inbound::Ping(ping) => {
-            let pong = json!({ "type": "pong", "timestamp": ping.timestamp });
+        // WSPongMessageSchema is `{ type: "pong" }` and nothing else.
+        Inbound::Ping => {
+            let pong = json!({ "type": "pong" });
             socket.send(Message::Text(pong.to_string())).await.is_ok()
         }
         Inbound::Session { message } => {

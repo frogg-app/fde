@@ -12,16 +12,10 @@ use serde_json::Value;
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum Inbound {
-    Ping(Ping),
+    Ping,
     Hello(Value),
     RecordingState(Value),
     Session { message: Value },
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct Ping {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub timestamp: Option<i64>,
 }
 
 impl Inbound {
@@ -41,13 +35,19 @@ mod tests {
 
     #[test]
     fn reads_a_ping_envelope() {
+        // WSPingMessageSchema carries no fields. The session-level `ping` is a
+        // different message that does take requestId/clientSentAt; conflating
+        // the two is how this daemon ended up emitting an off-schema pong.
+        let msg: Inbound = serde_json::from_str(r#"{"type":"ping"}"#).unwrap();
+        assert!(matches!(msg, Inbound::Ping));
+    }
+
+    #[test]
+    fn a_ping_with_extra_fields_is_still_a_ping() {
+        // serde ignores unknown fields, so an older client sending extras is
+        // tolerated - but we must not echo them back into the pong.
         let msg: Inbound = serde_json::from_str(r#"{"type":"ping","timestamp":42}"#).unwrap();
-        assert!(matches!(
-            msg,
-            Inbound::Ping(Ping {
-                timestamp: Some(42)
-            })
-        ));
+        assert!(matches!(msg, Inbound::Ping));
     }
 
     #[test]

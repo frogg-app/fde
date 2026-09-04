@@ -14,6 +14,9 @@ pub struct Config {
     /// Serve terminal streams from in-process PTYs instead of proxying them.
     /// Opt-in: the Node daemon still owns the terminal registry.
     pub native_terminals: bool,
+    /// Shadow-parse inbound traffic with the generated protocol types and log
+    /// mismatches. Observational; does not change how messages are handled.
+    pub validate_protocol: bool,
 }
 
 const DEFAULT_PORT: u16 = 9999;
@@ -52,6 +55,9 @@ impl Config {
                 .filter(|v| !v.is_empty()),
             web_ui_dist: web_ui_dist.filter(|_| web_ui_enabled),
             native_terminals: std::env::var("FDE_RS_NATIVE_TERMINALS")
+                .map(|v| v == "1" || v == "true")
+                .unwrap_or(false),
+            validate_protocol: std::env::var("FDE_RS_VALIDATE_PROTOCOL")
                 .map(|v| v == "1" || v == "true")
                 .unwrap_or(false),
         })

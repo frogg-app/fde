@@ -138,6 +138,17 @@ jobs:
           # warmed by either poison the other (see the desktop job).
           shared-key: daemon-rs-x86_64-unknown-linux-gnu
 
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: node scripts/ci/npm-retry.mjs ci
+
+      - name: Generated protocol types are current
+        run: ./scripts/ci/check-generated-rust.sh
+
       - name: Check formatting
         working-directory: apps/daemon-rs
         run: cargo fmt --check
