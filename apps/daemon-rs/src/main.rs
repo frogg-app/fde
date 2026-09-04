@@ -15,6 +15,7 @@ mod http_proxy;
 mod netclass;
 mod proxy;
 mod pty;
+mod search;
 mod terminals;
 mod web_ui;
 
