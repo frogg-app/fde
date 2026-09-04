@@ -28,7 +28,10 @@
     "watch": "concurrently --kill-others --names validation,tsc --prefix-colors green,yellow \"node scripts/watch-validation-aot.mjs\" \"tsc -p tsconfig.json --watch --preserveWatchOutput\"",
     "prebuild": "npm run generate:validators",
     "pretypecheck": "npm run generate:validators",
-    "pretest": "npm run generate:validators"
+    "pretest": "npm run generate:validators",
+    "generate:json-schema": "node scripts/generate-json-schema.mjs",
+    "generate:rust": "npm run generate:json-schema && node scripts/generate-rust-types.mjs",
+    "postbuild": "npm run generate:rust"
   },
   "dependencies": {
     "zod": "^4.4.3"

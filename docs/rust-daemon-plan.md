@@ -27,15 +27,15 @@ Empirically, from the daemon's own `ws_slow_request` log over seven days. That
 log records only requests the daemon considered slow, which is exactly the
 ranking we want:
 
-| Request | Slow-request count | Area |
-| --- | --- | --- |
-| `checkout_status_request` | 15 | git |
-| `create_agent_request` | 13 | agent |
-| `directory_suggestions_request` | 12 | filesystem |
-| `checkout_pr_status_request` | 10 | git (network) |
-| `subscribe_checkout_diff_request` | 9 | git |
-| `dictation_stream_start` | 3 | speech |
-| everything else | 3 or fewer each | |
+| Request                           | Slow-request count | Area          |
+| --------------------------------- | ------------------ | ------------- |
+| `checkout_status_request`         | 15                 | git           |
+| `create_agent_request`            | 13                 | agent         |
+| `directory_suggestions_request`   | 12                 | filesystem    |
+| `checkout_pr_status_request`      | 10                 | git (network) |
+| `subscribe_checkout_diff_request` | 9                  | git           |
+| `dictation_stream_start`          | 3                  | speech        |
+| everything else                   | 3 or fewer each    |               |
 
 Git accounts for 34% of slow requests and filesystem walking another 12%. That
 is 46% of the observed pain in two areas Rust is unusually good at, and neither
