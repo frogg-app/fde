@@ -8,6 +8,7 @@ mod auth;
 mod config;
 mod daemon_config;
 mod envelope;
+mod frames;
 mod netclass;
 mod proxy;
 mod web_ui;
@@ -210,7 +211,7 @@ async fn ws_upgrade(
 }
 
 async fn handle_socket(mut socket: WebSocket, state: Arc<AppState>) {
-    let (from_upstream_tx, mut from_upstream_rx) = mpsc::channel::<String>(256);
+    let (from_upstream_tx, mut from_upstream_rx) = mpsc::channel::<proxy::Frame>(256);
 
     // If the Node daemon is unreachable we still serve the message types we
     // implement natively rather than dropping the client.
@@ -228,20 +229,30 @@ async fn handle_socket(mut socket: WebSocket, state: Arc<AppState>) {
     loop {
         tokio::select! {
             // Replies from the Node daemon, relayed verbatim.
-            Some(text) = from_upstream_rx.recv() => {
-                if socket.send(Message::Text(text)).await.is_err() {
+            Some(frame) = from_upstream_rx.recv() => {
+                let message = match frame {
+                    proxy::Frame::Text(text) => Message::Text(text),
+                    proxy::Frame::Binary(bytes) => Message::Binary(bytes),
+                };
+                if socket.send(message).await.is_err() {
                     break;
                 }
             }
             incoming = socket.recv() => {
                 let Some(Ok(msg)) = incoming else { break };
-                let text = match msg {
-                    Message::Text(t) => t,
+                match msg {
+                    Message::Text(text) => {
+                        if !handle_text(&text, &mut socket, upstream.as_ref()).await {
+                            break;
+                        }
+                    }
+                    Message::Binary(bytes) => {
+                        if !handle_binary(bytes, upstream.as_ref()).await {
+                            break;
+                        }
+                    }
                     Message::Close(_) => break,
-                    _ => continue,
-                };
-                if !handle_text(&text, &mut socket, upstream.as_ref()).await {
-                    break;
+                    _ => {}
                 }
             }
         }
@@ -277,9 +288,25 @@ async fn handle_text(
     }
 }
 
+/// Terminal I/O and file transfers. Decoded only far enough to log the route;
+/// the payload is relayed intact.
+async fn handle_binary(bytes: Vec<u8>, upstream: Option<&proxy::Upstream>) -> bool {
+    match frames::decode(&bytes) {
+        Some(frame) => tracing::trace!(?frame, "forwarding binary frame upstream"),
+        None => {
+            tracing::debug!(len = bytes.len(), "dropping undecodable binary frame");
+            return true;
+        }
+    }
+    match upstream {
+        Some(up) => up.send(proxy::Frame::Binary(bytes)).await.is_ok(),
+        None => true,
+    }
+}
+
 async fn forward(text: &str, upstream: Option<&proxy::Upstream>) -> bool {
     match upstream {
-        Some(up) => up.send(text.to_string()).await.is_ok(),
+        Some(up) => up.send(proxy::Frame::Text(text.to_string())).await.is_ok(),
         None => true,
     }
 }
