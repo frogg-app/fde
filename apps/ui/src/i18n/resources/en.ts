@@ -1833,6 +1833,19 @@ export const en = {
     },
   },
   spokenAlerts: {
+    notification: {
+      title: "Update from {{name}}",
+      titleFallback: "Update from your agent",
+      play: "Play the update",
+      stop: "Stop",
+      dismiss: "Dismiss the update",
+      open: "Open {{name}}",
+    },
+    workspaceToggle: {
+      label: "Voice alerts",
+      enable: "Turn on voice alerts for this workspace",
+      disable: "Turn off voice alerts for this workspace",
+    },
     banner: {
       play: "Play",
       stop: "Stop",

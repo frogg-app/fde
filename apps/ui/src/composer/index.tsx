@@ -100,6 +100,7 @@ import {
   persistAttachmentFromFileUri,
 } from "@/attachments/service";
 import { resolveAgentControlsMode } from "@/composer/agent-controls/mode";
+import { ComposerVoiceAlertsToggle } from "@/composer/voice-alerts-toggle";
 import { resolveComposerInputMode, type ComposerInputMode } from "@/composer/input-mode";
 import { resolveActiveSendBehavior } from "./input/state";
 import { useKeyboardShiftStyle } from "@/hooks/use-keyboard-shift-style";
@@ -308,24 +309,40 @@ interface RenderLeftContentArgs {
   agentControls: DraftAgentControlsProps | undefined;
   agentId: string;
   serverId: string;
+  workspaceId?: string | null;
   focusInput: () => void;
   isCompactLayout: boolean;
   showAgentControls: boolean;
 }
 
 function renderLeftContent(args: RenderLeftContentArgs): ReactElement | null {
-  const { agentControls, agentId, serverId, focusInput, isCompactLayout } = args;
+  const { agentControls, agentId, serverId, workspaceId, focusInput, isCompactLayout } = args;
   if (!args.showAgentControls) return null;
-  if (resolveAgentControlsMode(agentControls) === "draft" && agentControls) {
-    return <DraftAgentControls {...agentControls} isCompactLayout={isCompactLayout} />;
-  }
-  return (
-    <AgentControls
-      agentId={agentId}
+  const voiceAlertsToggle = (
+    <ComposerVoiceAlertsToggle
       serverId={serverId}
-      onDropdownClose={focusInput}
+      workspaceId={workspaceId}
       isCompactLayout={isCompactLayout}
     />
+  );
+  if (resolveAgentControlsMode(agentControls) === "draft" && agentControls) {
+    return (
+      <>
+        <DraftAgentControls {...agentControls} isCompactLayout={isCompactLayout} />
+        {voiceAlertsToggle}
+      </>
+    );
+  }
+  return (
+    <>
+      <AgentControls
+        agentId={agentId}
+        serverId={serverId}
+        onDropdownClose={focusInput}
+        isCompactLayout={isCompactLayout}
+      />
+      {voiceAlertsToggle}
+    </>
   );
 }
 
@@ -2159,11 +2176,20 @@ function ComposerContentImpl({
         agentControls,
         agentId,
         serverId,
+        workspaceId,
         focusInput,
         isCompactLayout,
         showAgentControls: mode.showAgentControls,
       }),
-    [agentControls, agentId, focusInput, isCompactLayout, mode.showAgentControls, serverId],
+    [
+      agentControls,
+      agentId,
+      focusInput,
+      isCompactLayout,
+      mode.showAgentControls,
+      serverId,
+      workspaceId,
+    ],
   );
 
   const handleAttachButtonRef = useCallback((node: View | null) => {

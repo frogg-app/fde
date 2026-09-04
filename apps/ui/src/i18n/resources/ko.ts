@@ -1834,6 +1834,19 @@ export const ko: TranslationResources = {
     },
   },
   spokenAlerts: {
+    notification: {
+      title: "{{name}}의 새 소식",
+      titleFallback: "에이전트의 새 소식",
+      play: "새 소식 재생",
+      stop: "중지",
+      dismiss: "새 소식 닫기",
+      open: "{{name}} 열기",
+    },
+    workspaceToggle: {
+      label: "음성 알림",
+      enable: "이 워크스페이스의 음성 알림 켜기",
+      disable: "이 워크스페이스의 음성 알림 끄기",
+    },
     banner: {
       play: "재생",
       stop: "중지",

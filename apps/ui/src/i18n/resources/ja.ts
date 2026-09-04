@@ -1842,6 +1842,19 @@ export const ja: TranslationResources = {
     },
   },
   spokenAlerts: {
+    notification: {
+      title: "{{name}} からの更新",
+      titleFallback: "エージェントからの更新",
+      play: "更新を再生",
+      stop: "停止",
+      dismiss: "更新を閉じる",
+      open: "{{name}} を開く",
+    },
+    workspaceToggle: {
+      label: "音声アラート",
+      enable: "このワークスペースの音声アラートをオンにする",
+      disable: "このワークスペースの音声アラートをオフにする",
+    },
     banner: {
       play: "再生",
       stop: "停止",

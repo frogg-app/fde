@@ -1820,6 +1820,19 @@ export const ar: TranslationResources = {
     },
   },
   spokenAlerts: {
+    notification: {
+      title: "تحديث من {{name}}",
+      titleFallback: "تحديث من وكيلك",
+      play: "تشغيل التحديث",
+      stop: "إيقاف",
+      dismiss: "تجاهل التحديث",
+      open: "فتح {{name}}",
+    },
+    workspaceToggle: {
+      label: "التنبيهات الصوتية",
+      enable: "تشغيل التنبيهات الصوتية لمساحة العمل هذه",
+      disable: "إيقاف التنبيهات الصوتية لمساحة العمل هذه",
+    },
     banner: {
       play: "تشغيل",
       stop: "إيقاف",

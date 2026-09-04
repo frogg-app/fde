@@ -23,6 +23,8 @@ export interface SpokenAlertEntry {
   playback: SpokenAlertPlayback;
   /** Set once auto-play has been attempted, so a returning alert never replays by itself. */
   autoPlayAttempted: boolean;
+  /** The alert still owes the user a notification card; cleared once they see or dismiss it. */
+  notify: boolean;
 }
 
 export interface SpokenAlertsState {
@@ -31,12 +33,13 @@ export interface SpokenAlertsState {
 }
 
 export type SpokenAlertEvent =
-  | { type: "received"; alert: SpokenAlert }
+  | { type: "received"; alert: SpokenAlert; notify: boolean }
   | { type: "play_requested"; key: string; autoPlay: boolean }
   | { type: "playback_started"; key: string; id: string }
   | { type: "playback_finished"; key: string; id: string }
   | { type: "playback_failed"; key: string; id: string; message: string }
   | { type: "stopped"; key: string }
+  | { type: "notification_dismissed"; key: string }
   | { type: "dismissed"; key: string };
 
 export const EMPTY_SPOKEN_ALERTS_STATE: SpokenAlertsState = { entries: {} };
@@ -78,6 +81,7 @@ export function reduceSpokenAlerts(
         alert: event.alert,
         playback: { status: "idle" },
         autoPlayAttempted: false,
+        notify: event.notify,
       });
     }
     case "play_requested": {
@@ -106,6 +110,11 @@ export function reduceSpokenAlerts(
       });
     case "stopped":
       return withPlayback(state, event.key, null, { status: "idle" });
+    case "notification_dismissed": {
+      const entry = state.entries[event.key];
+      if (!entry?.notify) return state;
+      return replaceEntry(state, event.key, { ...entry, notify: false });
+    }
     case "dismissed": {
       if (!state.entries[event.key]) return state;
       const entries = { ...state.entries };
@@ -126,4 +135,16 @@ export function shouldAutoPlaySpokenAlert(input: AutoPlayDecisionInput): boolean
   if (!input.autoPlayEnabled || !input.appActivelyVisible) return false;
   if (input.entry.autoPlayAttempted) return false;
   return input.entry.playback.status === "idle";
+}
+
+/**
+ * Keys of the alerts owed a notification card, oldest first so the newest lands nearest the
+ * corner. Keys rather than entries: the caller compares them shallowly and each card then
+ * subscribes to its own entry, so one alert's playback does not re-render the others.
+ */
+export function selectSpokenAlertNotificationKeys(state: SpokenAlertsState): string[] {
+  return Object.entries(state.entries)
+    .filter(([, entry]) => entry.notify)
+    .sort(([, left], [, right]) => left.alert.receivedAt - right.alert.receivedAt)
+    .map(([key]) => key);
 }

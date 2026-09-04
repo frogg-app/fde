@@ -1795,6 +1795,19 @@ export const zhCN: TranslationResources = {
     },
   },
   spokenAlerts: {
+    notification: {
+      title: "来自 {{name}} 的更新",
+      titleFallback: "来自你的智能体的更新",
+      play: "播放更新",
+      stop: "停止",
+      dismiss: "关闭更新",
+      open: "打开 {{name}}",
+    },
+    workspaceToggle: {
+      label: "语音提醒",
+      enable: "为此工作区开启语音提醒",
+      disable: "为此工作区关闭语音提醒",
+    },
     banner: {
       play: "播放",
       stop: "停止",
