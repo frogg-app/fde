@@ -1855,6 +1855,14 @@ export const ptBR: TranslationResources = {
     },
   },
   spokenAlerts: {
+    notification: {
+      title: "Novidades de {{name}}",
+      titleFallback: "Novidades do seu agente",
+      play: "Reproduzir a novidade",
+      stop: "Parar",
+      dismiss: "Dispensar a novidade",
+      open: "Abrir {{name}}",
+    },
     workspaceToggle: {
       label: "Alertas de voz",
       enable: "Ativar os alertas de voz neste espaço de trabalho",

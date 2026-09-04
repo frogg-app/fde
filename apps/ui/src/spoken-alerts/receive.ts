@@ -8,8 +8,8 @@ export interface ReceivedSpokenAlert {
   alert: SpokenAlert;
 }
 
-function record(alert: SpokenAlert): ReceivedSpokenAlert {
-  useSpokenAlertsStore.getState().dispatch({ type: "received", alert });
+function record(alert: SpokenAlert, notify: boolean): ReceivedSpokenAlert {
+  useSpokenAlertsStore.getState().dispatch({ type: "received", alert, notify });
   return { key: alertKey(alert.serverId, alert.agentId), alert };
 }
 
@@ -20,19 +20,24 @@ export function receiveSpokenAlert(params: {
   reason: SpokenAlertReason;
   timestamp: string;
   notification?: AgentAttentionNotificationPayload;
+  /** Whether the alert should also raise a notification card. */
+  notify: boolean;
 }): ReceivedSpokenAlert | null {
   const notification = params.notification;
   if (!notification?.id || !notification.spokenText) return null;
   const receivedAt = Date.parse(params.timestamp);
-  return record({
-    id: notification.id,
-    serverId: params.serverId,
-    agentId: params.agentId,
-    workspaceId: notification.data.workspaceId ?? null,
-    reason: params.reason,
-    spokenText: notification.spokenText,
-    receivedAt: Number.isFinite(receivedAt) ? receivedAt : Date.now(),
-  });
+  return record(
+    {
+      id: notification.id,
+      serverId: params.serverId,
+      agentId: params.agentId,
+      workspaceId: notification.data.workspaceId ?? null,
+      reason: params.reason,
+      spokenText: notification.spokenText,
+      receivedAt: Number.isFinite(receivedAt) ? receivedAt : Date.now(),
+    },
+    params.notify,
+  );
 }
 
 function readString(data: Record<string, unknown>, key: string): string | null {
@@ -58,13 +63,16 @@ export function receiveSpokenAlertFromNotificationData(
   const id = readString(data, "notificationId");
   const spokenText = readString(data, "spokenText");
   if (!target.serverId || !target.agentId || !id || !spokenText) return null;
-  return record({
-    id,
-    serverId: target.serverId,
-    agentId: target.agentId,
-    workspaceId: target.workspaceId,
-    reason: readReason(data),
-    spokenText,
-    receivedAt: Date.now(),
-  });
+  return record(
+    {
+      id,
+      serverId: target.serverId,
+      agentId: target.agentId,
+      workspaceId: target.workspaceId,
+      reason: readReason(data),
+      spokenText,
+      receivedAt: Date.now(),
+    },
+    false,
+  );
 }

@@ -1874,6 +1874,14 @@ export const fr: TranslationResources = {
     },
   },
   spokenAlerts: {
+    notification: {
+      title: "Du nouveau de {{name}}",
+      titleFallback: "Du nouveau de votre agent",
+      play: "Écouter la mise à jour",
+      stop: "Arrêter",
+      dismiss: "Ignorer la mise à jour",
+      open: "Ouvrir {{name}}",
+    },
     workspaceToggle: {
       label: "Alertes vocales",
       enable: "Activer les alertes vocales pour cet espace de travail",

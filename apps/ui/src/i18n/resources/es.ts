@@ -1870,6 +1870,14 @@ export const es: TranslationResources = {
     },
   },
   spokenAlerts: {
+    notification: {
+      title: "Novedades de {{name}}",
+      titleFallback: "Novedades de tu agente",
+      play: "Reproducir la novedad",
+      stop: "Detener",
+      dismiss: "Descartar la novedad",
+      open: "Abrir {{name}}",
+    },
     workspaceToggle: {
       label: "Alertas de voz",
       enable: "Activar las alertas de voz en este espacio de trabajo",
