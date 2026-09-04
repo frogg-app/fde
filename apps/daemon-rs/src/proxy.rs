@@ -26,8 +26,6 @@ pub struct Upstream {
 #[derive(Debug, PartialEq)]
 pub enum SendOutcome {
     Delivered,
-    /// No upstream configured; the message had nowhere to go but that is expected.
-    NoUpstream,
     /// The upstream connection is gone. The client should be disconnected so it
     /// reconnects rather than talking into a void.
     Disconnected,

@@ -117,7 +117,9 @@ impl PtySession {
         }
     }
 
-    /// Plain text of the visible screen, without formatting.
+    /// Plain text of the visible screen, without formatting. Used by tests and
+    /// by terminal-activity reporting once that is ported.
+    #[allow(dead_code)]
     pub fn visible_text(&self) -> String {
         match self.screen.lock() {
             Ok(screen) => screen.screen().contents(),
@@ -125,6 +127,7 @@ impl PtySession {
         }
     }
 
+    #[allow(dead_code)]
     pub fn size(&self) -> (u16, u16) {
         match self.screen.lock() {
             Ok(screen) => screen.screen().size(),
@@ -133,6 +136,7 @@ impl PtySession {
     }
 
     /// None while the child is still running.
+    #[allow(dead_code)]
     pub fn exit_status(&self) -> Option<u32> {
         let mut child = self.child.lock().ok()?;
         match child.try_wait() {

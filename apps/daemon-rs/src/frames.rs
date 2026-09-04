@@ -13,6 +13,9 @@ pub enum TerminalOpcode {
     Restore = 0x05,
 }
 
+// Names mirror the protocol's FileTransferOpcode exactly; renaming them to
+// please the lint would make the mapping harder to check against the source.
+#[allow(clippy::enum_variant_names)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FileTransferOpcode {
     FileBegin = 0x10,

@@ -50,10 +50,9 @@ fn is_hashed_asset(file: &Path) -> bool {
 fn sanitize(request_path: &str) -> PathBuf {
     let mut out = PathBuf::new();
     for component in Path::new(request_path.trim_start_matches('/')).components() {
-        match component {
-            Component::Normal(part) => out.push(part),
-            // ParentDir, RootDir, CurDir and prefixes are all dropped.
-            _ => {}
+        // ParentDir, RootDir, CurDir and prefixes are all dropped.
+        if let Component::Normal(part) = component {
+            out.push(part);
         }
     }
     out

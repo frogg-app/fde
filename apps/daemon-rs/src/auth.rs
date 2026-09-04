@@ -113,7 +113,7 @@ pub fn extract_ws_bearer_token(header: Option<&str>) -> Option<String> {
 
 /// `extractHttpBearerToken`: exactly `Bearer <token>`, one whitespace-separated arg.
 pub fn extract_http_bearer_token(header: Option<&str>) -> Option<String> {
-    let parts: Vec<&str> = header?.trim().split_whitespace().collect();
+    let parts: Vec<&str> = header?.split_whitespace().collect();
     match parts.as_slice() {
         ["Bearer", token] => Some((*token).to_string()),
         _ => None,

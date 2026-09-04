@@ -415,7 +415,7 @@ async fn deliver(upstream: Option<&proxy::Upstream>, frame: proxy::Frame) -> boo
         return true;
     };
     match upstream.send(frame).await {
-        proxy::SendOutcome::Delivered | proxy::SendOutcome::NoUpstream => true,
+        proxy::SendOutcome::Delivered => true,
         proxy::SendOutcome::Disconnected => {
             tracing::warn!("upstream daemon closed; disconnecting client so it reconnects");
             false

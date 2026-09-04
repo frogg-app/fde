@@ -9,7 +9,6 @@ pub struct Config {
     /// Upstream Node daemon for message types not yet implemented natively.
     /// `None` means run standalone and reject unknown types instead of proxying.
     pub upstream: Option<String>,
-    pub web_ui_enabled: bool,
     /// Directory of the bundled browser UI, if it is enabled and present.
     pub web_ui_dist: Option<std::path::PathBuf>,
     /// Serve terminal streams from in-process PTYs instead of proxying them.
@@ -49,7 +48,6 @@ impl Config {
         Ok(Self {
             listen,
             upstream: std::env::var("FDE_RS_UPSTREAM").ok().filter(|v| !v.is_empty()),
-            web_ui_enabled,
             web_ui_dist: web_ui_dist.filter(|_| web_ui_enabled),
             native_terminals: std::env::var("FDE_RS_NATIVE_TERMINALS")
                 .map(|v| v == "1" || v == "true")
