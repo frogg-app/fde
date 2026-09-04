@@ -38,6 +38,7 @@ import {
   stopDesktopDaemon,
 } from "@/desktop/daemon/desktop-daemon";
 import { LocalDaemonSection } from "@/desktop/components/desktop-updates-section";
+import { DaemonConflictWarning } from "@/hosts/daemon-conflict-warning";
 import { useDaemonStatus } from "@/desktop/hooks/use-daemon-status";
 import { loadDesktopSettings, useDesktopSettings } from "@/desktop/settings/desktop-settings";
 import { PairDeviceModal } from "@/desktop/components/pair-device-modal";
@@ -241,6 +242,7 @@ export function HostConnectionsPage({ serverId }: { serverId: string }) {
   return (
     <View>
       <HostConnectionError serverId={serverId} />
+      <DaemonConflictWarning serverId={serverId} />
       <ConnectionsSection host={host} />
     </View>
   );
