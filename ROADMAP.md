@@ -57,6 +57,9 @@ Done items move to CHANGELOG.md.
 - [x] **The daemon serves the pairing page** at `GET /code/:code` and `GET /pair?code=`,
       so `pair.frogg.app` can be reverse-proxied to your own daemon. Invalid or expired
       codes render one generic message; `pair.frogg.app` is an allowed Host by default.
+- [x] **The pairing page runs on Cloudflare** (`deploy/pair-worker`): the same render
+      path as the daemon route behind a `fetch` handler, so `pair.frogg.app` needs no
+      host, no origin and no TLS config. Byte-identical HTML to the express service.
 - [ ] Hosting for `frogg.app/install.sh`, `uninstall.sh`, `install-docker.sh` (redirects
       to the raw files in the repo are enough).
 - [x] **Daemon self-update with rollback.** `fde daemon self-update [--to|--channel|--check]`

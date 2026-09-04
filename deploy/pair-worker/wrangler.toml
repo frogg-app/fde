@@ -1,0 +1,31 @@
+# The public pairing page as a Cloudflare Worker (`pair.frogg.app`).
+#
+# Stateless: no bindings, no KV, no secrets. The pairing code in the URL is the
+# whole offer, so the Worker never contacts a daemon and stores nothing.
+#
+# Deploy from the repository root:
+#   node packages/server/scripts/build-pair-worker.mjs
+#   npx wrangler deploy --config deploy/pair-worker/wrangler.toml
+
+name = "fde-pair-page"
+main = "../../packages/server/dist/pair-worker/worker.mjs"
+compatibility_date = "2025-09-01"
+
+# No nodejs_compat: the bundle imports no Node built-ins and touches neither
+# Buffer nor process, so it runs on the bare Workers runtime.
+
+# The QR is the only real work per request, so keep an eye on CPU time: the
+# free plan caps an invocation at 10ms, the paid plan at 30s.
+[observability]
+enabled = true
+
+[vars]
+# Must be the hostname people reach: it is what the rendered QR encodes.
+FDE_PAIRING_BASE_URL = "https://pair.frogg.app"
+FDE_PAIR_ROOT_REDIRECT = "https://frogg.app"
+
+# Serves the hostname directly; no DNS record or origin is needed beyond the
+# zone itself. Remove this block to deploy on a *.workers.dev subdomain first.
+[[routes]]
+pattern = "pair.frogg.app/*"
+zone_name = "frogg.app"

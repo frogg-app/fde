@@ -216,11 +216,8 @@ import { createWebUiMiddleware, type WebUiGate } from "./web-ui.js";
 import { createAccessPolicy, DEFAULT_TRUST_LAN } from "./access-policy.js";
 import { createClaimStore, type ClaimStore } from "./claim-store.js";
 import { createClaimOfferStore } from "./claim-offer-store.js";
-import {
-  buildDirectClaimOffer,
-  renderClaimOfferQrSvg,
-  type ClaimOfferSource,
-} from "./claim-offer.js";
+import { buildDirectClaimOffer, type ClaimOfferSource } from "./claim-offer.js";
+import { renderPairingQrSvg } from "./pairing-qr.js";
 import { renderClaimGatePage } from "./claim-gate-page.js";
 import { mountPairingCodeRoutes } from "./pairing-code-route.js";
 import { DEFAULT_PAIRING_BASE_URL } from "@fde/protocol/connection-offer";
@@ -585,7 +582,7 @@ function createClaimGate(input: {
         serverId: offerSource.serverId,
         version: input.daemonVersion,
         pairingUrl: built.url,
-        qrSvg: await renderClaimOfferQrSvg(built.url),
+        qrSvg: await renderPairingQrSvg(built.url),
         expiresAt: built.expiresAt,
         endpoints: built.endpoints,
       });

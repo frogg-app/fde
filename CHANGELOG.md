@@ -5,6 +5,7 @@
 - Compact layouts no longer put a second agent in a worktree by accident. The workspace menu is the only way to start an agent there, and inside a worktree "New agent" quietly added one to that same checkout; it now opens New workspace with worktree isolation preselected, cut from the main repository. Adding an agent to the current worktree is still one tap away, as an explicit "New agent in this worktree" item.
 - Settings: host settings sit above app settings, and the app group is anchored to the bottom.
 - Windows releases ship only as zips: the NSIS installer is published as `FDE-<ver>-x64-setup.zip` next to `FDE-<ver>-x64-portable.zip`. GitHub rejects raw `.exe` release assets, so the installer upload used to fail. Both updaters unpack the zip before running the installer, and the updater signature now covers the zip.
+- The public pairing page also deploys as a Cloudflare Worker (`deploy/pair-worker`), so `pair.frogg.app` can run with no host, no origin and no reverse proxy. It shares every module that decides what a visitor sees with the daemon's own `GET /code/:code` route — the code decoder, both page renderers, the QR and the CSP — and reimplements only the transport; a test asserts the Worker and the express service return byte-identical HTML. Deployment notes in [deploy/pair-worker/README.md](deploy/pair-worker/README.md).
 
 ## 0.1.18
 

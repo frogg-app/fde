@@ -12,7 +12,7 @@ import type express from "express";
 import type { RequestHandler } from "express";
 
 import { parseAnyConnectionOfferFromUrl } from "@fde/protocol/connection-offer";
-import { renderClaimOfferQrSvg } from "./claim-offer.js";
+import { renderPairingQrSvg } from "./pairing-qr.js";
 import type { ClaimOfferStore } from "./claim-offer-store.js";
 import { renderExpiredPairingPage, renderPairingCodePage } from "./pairing-code-page.js";
 
@@ -85,7 +85,7 @@ export function createPairingCodeHandler(
         renderPairingCodePage({
           code,
           hostname: resolved.hostname,
-          qrSvg: await renderClaimOfferQrSvg(url),
+          qrSvg: await renderPairingQrSvg(url),
           canPairThisBrowser: resolved.canPairThisBrowser,
         }),
       );
