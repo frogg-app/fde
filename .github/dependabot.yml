@@ -17,6 +17,16 @@ updates:
       - dependency-name: react-native-reanimated
       - dependency-name: react-native-worklets
       - dependency-name: expo*
+      - dependency-name: "@react-native/*"
+      - dependency-name: "@react-native-community/*"
+      # Native modules whose supported range tracks the RN/Expo version above.
+      # Grouping them with ordinary patches makes the whole batch unmergeable.
+      - dependency-name: "@shopify/react-native-skia"
+      - dependency-name: react-native-screens
+      - dependency-name: react-native-safe-area-context
+      - dependency-name: react-native-nitro-modules
+      - dependency-name: react-native-keyboard-controller
+      - dependency-name: react-native-unistyles
 
   - package-ecosystem: cargo
     directory: /apps/desktop/src-tauri
