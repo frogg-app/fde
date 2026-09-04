@@ -437,6 +437,15 @@ plus `windowsHide` in `spawnProcess`) survives the CLI exiting; that `paseo.pid`
   which points `devUrl` at Metro.
 - Release: `npm run build:ui` then `cargo tauri build`. Windows from this Linux VM:
   `cargo tauri build --runner cargo-xwin --target x86_64-pc-windows-msvc`, NSIS bundle.
+- Installer icon: NSIS does _not_ fall back to `bundle.icon`. Without
+  `bundle > windows > nsis > installerIcon` the bundler leaves `MUI_ICON` undefined and NSIS
+  uses its own beige default, so `FDE-<version>-x64-setup.exe` ships with a stranger's icon
+  both in Explorer and in the installer window. `installerIcon`/`uninstallerIcon` are set to
+  `icons/icon.ico` for that reason.
+- DevTools: the `devtools` Tauri feature is on, so release builds carry the inspector but keep
+  it closed. `FDE_DEVTOOLS=1` opens it on the main window at startup — the only way to take a
+  heap snapshot or a CPU profile from a bundled app. On Windows:
+  `set FDE_DEVTOOLS=1 && "%LOCALAPPDATA%\FDE\FDE.exe"`.
 - Updater: see Updates. With a signing key, `tauri-plugin-updater` reads `latest.json` from
   the GitHub release; without one the shell updates from the release assets directly. Paseo's
   rollout-stamping scripts do not apply and were dropped.
