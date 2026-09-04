@@ -75,7 +75,22 @@ site later needs no change here.
 ## Verify
 
 ```bash
+scripts/release/verify-install-routes.sh
+```
+
+A post-deploy smoke test: it checks all three routes, then runs a real install
+and uninstall against them and asserts the result, exiting non-zero on any
+failure. Point it elsewhere with `FDE_ROUTE_BASE`.
+
+The cycle runs in a throwaway container, and that matters: `uninstall.sh` calls
+`systemctl --user disable --now fde-daemon` without reference to
+`FDE_INSTALL_DIR`, so running it on a host with a real daemon stops that daemon
+-- including the one an agent session is running under. The container has no
+systemd, so the same script is inert there.
+
+By hand:
+
+```bash
 curl -fsSL https://frogg.app/install.sh | head -3        # a real shell script
 curl -sI  https://frogg.app/install.sh | grep -i x-fde-  # which source it served
-curl -s -o /dev/null -w '%{http_code}\n' https://frogg.app/nope.sh   # 404
 ```

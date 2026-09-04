@@ -7,6 +7,7 @@
 - Windows releases ship only as zips: the NSIS installer is published as `FDE-<ver>-x64-setup.zip` next to `FDE-<ver>-x64-portable.zip`. GitHub rejects raw `.exe` release assets, so the installer upload used to fail. Both updaters unpack the zip before running the installer, and the updater signature now covers the zip.
 - The public pairing page also deploys as a Cloudflare Worker (`deploy/pair-worker`), so `pair.frogg.app` can run with no host, no origin and no reverse proxy. It shares every module that decides what a visitor sees with the daemon's own `GET /code/:code` route — the code decoder, both page renderers, the QR and the CSP — and reimplements only the transport; a test asserts the Worker and the express service return byte-identical HTML. Deployment notes in [deploy/pair-worker/README.md](deploy/pair-worker/README.md).
 - `https://frogg.app/install.sh`, `/uninstall.sh` and `/install-docker.sh` are live, served by a Cloudflare Worker (`deploy/install-worker`) that proxies the scripts out of `deploy/` in the public repository. It answers a fixed allowlist of three paths, fails closed with a 502 when the source is unreachable or does not look like a shell script (so `curl -f` pipes nothing to `bash`), and names the ref it served in `X-Fde-Source`.
+- `scripts/release/verify-install-routes.sh` smoke-tests those routes after a deploy: it checks all three, then runs a real install and uninstall against them in a throwaway container and asserts the result.
 
 ## 0.1.18
 
