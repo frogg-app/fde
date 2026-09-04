@@ -236,6 +236,7 @@ async fn handle_socket(mut socket: WebSocket, state: Arc<AppState>) {
         None => None,
     };
 
+    let has_upstream = upstream.is_some();
     loop {
         tokio::select! {
             // Frames from natively-owned terminals.
@@ -244,8 +245,16 @@ async fn handle_socket(mut socket: WebSocket, state: Arc<AppState>) {
                     break;
                 }
             }
-            // Replies from the Node daemon, relayed verbatim.
-            Some(frame) = from_upstream_rx.recv() => {
+            // Replies from the Node daemon, relayed verbatim. A closed channel
+            // means the upstream connection ended; drop the client too so it
+            // reconnects rather than talking into a void. This is the reliable
+            // signal - a send into the outbound buffer can still succeed for a
+            // moment after the upstream has actually gone.
+            frame = from_upstream_rx.recv(), if has_upstream => {
+                let Some(frame) = frame else {
+                    tracing::warn!("upstream daemon closed; disconnecting client so it reconnects");
+                    break;
+                };
                 let message = match frame {
                     proxy::Frame::Text(text) => Message::Text(text),
                     proxy::Frame::Binary(bytes) => Message::Binary(bytes),
@@ -391,16 +400,26 @@ async fn handle_binary(
             return true;
         }
     }
-    match upstream {
-        Some(up) => up.send(proxy::Frame::Binary(bytes)).await.is_ok(),
-        None => true,
-    }
+    deliver(upstream, proxy::Frame::Binary(bytes)).await
 }
 
 async fn forward(text: &str, upstream: Option<&proxy::Upstream>) -> bool {
-    match upstream {
-        Some(up) => up.send(proxy::Frame::Text(text.to_string())).await.is_ok(),
-        None => true,
+    deliver(upstream, proxy::Frame::Text(text.to_string())).await
+}
+
+/// Returns false when the client connection should close. Losing the upstream
+/// mid-connection closes the client too: the alternative is silently swallowing
+/// its messages, which looks like a hung UI rather than a dropped connection.
+async fn deliver(upstream: Option<&proxy::Upstream>, frame: proxy::Frame) -> bool {
+    let Some(upstream) = upstream else {
+        return true;
+    };
+    match upstream.send(frame).await {
+        proxy::SendOutcome::Delivered | proxy::SendOutcome::NoUpstream => true,
+        proxy::SendOutcome::Disconnected => {
+            tracing::warn!("upstream daemon closed; disconnecting client so it reconnects");
+            false
+        }
     }
 }
 

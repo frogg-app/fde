@@ -21,6 +21,18 @@ pub struct Upstream {
     to_upstream: mpsc::Sender<Frame>,
 }
 
+/// Distinguishes "we have no upstream configured" from "the upstream we had has
+/// gone away", which the connection loop must treat differently.
+#[derive(Debug, PartialEq)]
+pub enum SendOutcome {
+    Delivered,
+    /// No upstream configured; the message had nowhere to go but that is expected.
+    NoUpstream,
+    /// The upstream connection is gone. The client should be disconnected so it
+    /// reconnects rather than talking into a void.
+    Disconnected,
+}
+
 impl Upstream {
     /// Dials the Node daemon and starts both pump tasks. Frames arriving from
     /// upstream are pushed to `from_upstream` for the caller to relay to its client.
@@ -62,10 +74,10 @@ impl Upstream {
         Ok(Self { to_upstream })
     }
 
-    pub async fn send(&self, frame: Frame) -> Result<()> {
-        self.to_upstream
-            .send(frame)
-            .await
-            .context("upstream daemon connection is closed")
+    pub async fn send(&self, frame: Frame) -> SendOutcome {
+        match self.to_upstream.send(frame).await {
+            Ok(()) => SendOutcome::Delivered,
+            Err(_) => SendOutcome::Disconnected,
+        }
     }
 }
