@@ -671,6 +671,7 @@ export const ja: TranslationResources = {
       actions: {
         workspaceActions: "ワークスペースアクション",
         newAgent: "新しいエージェント",
+        newAgentHere: "このワークツリーに新しいエージェント",
         newTerminal: "新しいターミナル",
         newBrowser: "新しいブラウザタブ",
         importSession: "セッションをインポート",

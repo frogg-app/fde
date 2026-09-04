@@ -221,6 +221,17 @@ describe("global routes", () => {
     expect(buildNewWorkspaceRoute({ serverId: "local" })).toBe("/new?serverId=local");
   });
 
+  it("buildNewWorkspaceRoute carries an isolation preset", () => {
+    expect(
+      buildNewWorkspaceRoute({
+        serverId: "local",
+        sourceDirectory: "/repo",
+        projectId: "project-1",
+        isolation: "worktree",
+      }),
+    ).toBe("/new?serverId=local&dir=%2Frepo&projectId=project-1&isolation=worktree");
+  });
+
   it("buildNewWorkspaceRoute accepts initial project context", () => {
     expect(
       buildNewWorkspaceRoute({

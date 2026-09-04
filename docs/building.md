@@ -44,17 +44,20 @@ The binary is named `fde` and bundle filenames follow the Tauri `productName` ("
 
 The Windows command expands to
 `cargo tauri build --runner cargo-xwin --target x86_64-pc-windows-msvc --bundles nsis`
-followed by `npm run build:win:portable --workspace=@fde/desktop`. The installer is
+followed by `npm run build:win:zips --workspace=@fde/desktop`. The installer is
 unsigned; Tauri warns about that and continues. macOS bundles must be built on a Mac.
 
-### Portable Windows zip
+### Windows zips
 
-`scripts/release/package-portable-win.mjs` (the `build:win:portable` step) takes the built
+`scripts/release/package-windows-zips.mjs` (the `build:win:zips` step) takes the built
 `fde.exe` from `target/x86_64-pc-windows-msvc/release/` and writes
 `bundle/portable/FDE-<version>-x64-portable.zip`, containing
 `FDE-<version>-portable/FDE.exe` and a `README.txt` (no installer, WebView2 required,
 settings under `%APPDATA%\app.frogg.fde`, SmartScreen note). The zip is written with
-Node's `zlib`, no extra dependency. It can be re-run on its own after a Tauri Windows build;
+Node's `zlib`, no extra dependency. The same step wraps the NSIS installer as
+`bundle/nsis-zip/FDE-<version>-x64-setup.zip` (a single `FDE-<version>-x64-setup.exe`
+inside): releases never carry a raw `.exe`, because GitHub rejects those uploads and
+Windows blocks bare downloaded executables. It can be re-run on its own after a Tauri Windows build;
 the version comes from the root `package.json`. A native Windows build (`cargo tauri build`
 on Windows, as the release workflow does) writes to `target/release` instead; pass
 `--release-dir apps/desktop/src-tauri/target/<triple>/release` or set

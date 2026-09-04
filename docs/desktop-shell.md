@@ -481,13 +481,13 @@ appear; the UI answers it with an automatic check, served from the cache.
 **Asset selection** (`assets.rs`). `InstallContext::detect()` maps the platform to one of the
 assets `scripts/release/collect-desktop-bundles.mjs` publishes:
 
-| Platform                                        | Asset                           | Install (`install.rs`)                                                                                                                   |
-| ----------------------------------------------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Windows, `uninstall.exe` next to the exe (NSIS) | `FDE-<v>-x64-setup.exe`         | detached `cmd` helper waits for our pid, runs the installer with `/S` (per-user NSIS, no elevation), starts the exe again; the app exits |
-| Windows, portable                               | `FDE-<v>-x64-portable.zip`      | same helper does `move /Y` over the running exe and relaunches it; the app exits                                                         |
-| Linux with `$APPIMAGE` set                      | `FDE-<v>-x86_64.AppImage`       | copied next to `$APPIMAGE`, `chmod 755`, renamed over it, relaunched; the app exits                                                      |
-| Linux otherwise                                 | `FDE-<v>-amd64.deb`             | `xdg-open` hands the file to the package installer; the user restarts FDE afterwards                                                     |
-| macOS                                           | `FDE-<v>-<aarch64\|x86_64>.dmg` | `open` mounts the image; the user drags FDE to Applications (ad-hoc signed apps cannot be replaced in place reliably)                    |
+| Platform                                        | Asset                           | Install (`install.rs`)                                                                                                                                                               |
+| ----------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Windows, `uninstall.exe` next to the exe (NSIS) | `FDE-<v>-x64-setup.zip`         | the setup exe is unpacked next to the download, then a detached `cmd` helper waits for our pid, runs it with `/S` (per-user NSIS, no elevation), starts the exe again; the app exits |
+| Windows, portable                               | `FDE-<v>-x64-portable.zip`      | the exe is unpacked the same way; the helper does `move /Y` over the running exe and relaunches it; the app exits                                                                    |
+| Linux with `$APPIMAGE` set                      | `FDE-<v>-x86_64.AppImage`       | copied next to `$APPIMAGE`, `chmod 755`, renamed over it, relaunched; the app exits                                                                                                  |
+| Linux otherwise                                 | `FDE-<v>-amd64.deb`             | `xdg-open` hands the file to the package installer; the user restarts FDE afterwards                                                                                                 |
+| macOS                                           | `FDE-<v>-<aarch64\|x86_64>.dmg` | `open` mounts the image; the user drags FDE to Applications (ad-hoc signed apps cannot be replaced in place reliably)                                                                |
 
 **Download** (`download.rs`) reuses the sidecar bundle fetcher: the asset lands in
 `<app cache dir>/updates/<name>` (any earlier copy is removed first) with

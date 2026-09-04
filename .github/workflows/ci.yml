@@ -122,7 +122,9 @@ jobs:
 
   desktop:
     name: desktop (linux deb)
-    runs-on: ubuntu-latest
+    # ubuntu-22.04 like release.yml: the two share a Rust cache, and a build
+    # script compiled against 24.04's glibc cannot run on the release runner.
+    runs-on: ubuntu-22.04
     # Platform builds are slow; keep them off the pull-request gate and run them
     # once the change is on main (or on demand via workflow_dispatch).
     if: github.event_name != 'pull_request'
@@ -147,7 +149,10 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: apps/desktop/src-tauri
-          shared-key: desktop-x86_64-unknown-linux-gnu
+          # The runner image is part of the key: rust-cache only distinguishes
+          # `runner.os` ("Linux" for both 22.04 and 24.04), so without it a cache
+          # warmed on one image poisons a job on the other.
+          shared-key: desktop-x86_64-unknown-linux-gnu-ubuntu-22.04
 
       - name: Install dependencies
         run: node scripts/ci/npm-retry.mjs ci

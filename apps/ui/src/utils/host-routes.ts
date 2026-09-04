@@ -434,6 +434,8 @@ interface NewWorkspaceRouteOptions {
   displayName?: string;
   projectId?: string;
   draftId?: string;
+  /** Preselects the isolation control; the screen still lets the user change it. */
+  isolation?: "local" | "worktree";
 }
 
 function buildNewWorkspaceSearch(options: NewWorkspaceRouteOptions): string {
@@ -453,6 +455,9 @@ function buildNewWorkspaceSearch(options: NewWorkspaceRouteOptions): string {
   }
   if (options.draftId) {
     params.set("draftId", options.draftId);
+  }
+  if (options.isolation) {
+    params.set("isolation", options.isolation);
   }
   return params.toString();
 }

@@ -2,10 +2,11 @@ name: Release
 
 # Builds and publishes a GitHub release for a `vX.Y.Z` tag: desktop bundles for
 # Linux, Windows and macOS, the daemon bundles the install script downloads, the
-# updater manifest (when a signing key is configured), the Android APK (release-signed
-# when a keystore secret is configured) and the Docker image (when Docker Hub
-# credentials are configured). docs/ci.md explains the flow, the asset names and the
-# secrets.
+# updater manifest (when a signing key is configured), the Android APK (release-
+# signed when the keystore secrets are set, otherwise debug-signed and named
+# `-unsigned`; see the android job) and the
+# Docker image (when Docker Hub credentials are configured). docs/ci.md explains
+# the flow, the asset names and the secrets.
 
 on:
   push:
@@ -71,7 +72,9 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
 
-      # Optional secrets are detected once here; jobs that need them read the flags.
+      # Secrets are detected once here; jobs that need them read the flags. The
+      # updater and docker flags are optional; android_signing is not — the
+      # android job fails when it is false (see that job's first step).
       - name: Detect optional secrets
         id: secrets
         env:
@@ -132,11 +135,22 @@ jobs:
       - name: Upload install scripts to GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
+          CLOBBER: ${{ steps.release.outputs.clobber }}
         run: |
           flags=()
-          if [ "${{ steps.release.outputs.clobber }}" = "true" ]; then flags+=(--clobber); fi
-          gh release upload "$RELEASE_TAG" \
-            deploy/install.sh deploy/uninstall.sh deploy/install-docker.sh "${flags[@]}"
+          if [ "$CLOBBER" = "true" ]; then flags+=(--clobber); fi
+          # Skip names already on the release like every other upload step does.
+          # Without this, re-running the workflow against a published release
+          # fails here and takes every job that needs `meta` down with it.
+          existing=$(gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name')
+          for f in deploy/install.sh deploy/uninstall.sh deploy/install-docker.sh; do
+            n=$(basename "$f")
+            if [ "$CLOBBER" != "true" ] && grep -qx -- "$n" <<<"$existing"; then
+              echo "::warning::$n already on $RELEASE_TAG; skipping"
+              continue
+            fi
+            gh release upload "$RELEASE_TAG" "$f" "${flags[@]}"
+          done
 
       - uses: actions/upload-artifact@v7
         with:
@@ -232,7 +246,10 @@ jobs:
           workspaces: apps/desktop/src-tauri
           # A shared key (not `key:`) so a tag build restores the cache CI already warmed on
           # main. Without it every release compiled the Tauri dependency tree from scratch.
-          shared-key: desktop-${{ matrix.target }}
+          # The runner image is part of the key: rust-cache only distinguishes `runner.os`,
+          # so a cache warmed on ubuntu-latest (glibc 2.39) would poison this 22.04 job with
+          # build scripts it cannot execute.
+          shared-key: desktop-${{ matrix.target }}-${{ matrix.runner }}
 
       - name: Install dependencies
         run: node scripts/ci/npm-retry.mjs ci
@@ -264,9 +281,22 @@ jobs:
           fi
           npx --yes @tauri-apps/cli@^2 "${args[@]}"
 
-      - name: Package portable Windows zip
+      # Both Windows assets ship as zips: GitHub refuses raw .exe release assets.
+      # The installer zip replaces the bundler's .exe.sig with a signature over the
+      # zip, which is what the updater actually downloads and verifies.
+      - name: Package Windows zips (portable and installer)
         if: matrix.platform == 'windows'
-        run: node scripts/release/package-portable-win.mjs --release-dir "$RELEASE_DIR"
+        run: node scripts/release/package-windows-zips.mjs --release-dir "$RELEASE_DIR"
+
+      - name: Sign the Windows installer zip for the updater
+        if: matrix.platform == 'windows' && needs.meta.outputs.signing == 'true'
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          for zip in "$RELEASE_DIR"/bundle/nsis-zip/*-setup.zip; do
+            npx --yes @tauri-apps/cli@^2 signer sign --password "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD" "$zip"
+          done
 
       - name: Collect release assets
         run: >-
@@ -383,6 +413,18 @@ jobs:
       matrix:
         abi: [arm64-v8a]
     steps:
+      # No release keystore is configured yet, and every APK published so far
+      # (0.1.18 and earlier) is debug-signed. Android identifies an app by its
+      # signing key, so switching to a release key now would stop those installs
+      # updating: they would have to be uninstalled first, losing their data.
+      # Until that migration is planned (docs/android.md "Signing"), a missing
+      # keystore is a warning and the APK ships `-unsigned`, matching what is
+      # already installed. It must not be treated as a distributable build.
+      - name: Warn when the release keystore is missing
+        if: needs.meta.outputs.android_signing != 'true'
+        run: |
+          echo "::warning::No Android release keystore for $RELEASE_TAG; the APK is signed with the publicly known Expo/React Native debug key and is published as -unsigned. Set FDE_ANDROID_KEYSTORE_BASE64, FDE_ANDROID_KEYSTORE_PASSWORD, FDE_ANDROID_KEY_ALIAS and FDE_ANDROID_KEY_PASSWORD to sign it, and see docs/android.md before doing so: existing debug-signed installs cannot update to a release-signed APK."
+
       - uses: actions/checkout@v7
         with:
           ref: ${{ env.RELEASE_TAG }}
@@ -422,8 +464,8 @@ jobs:
       - name: Install dependencies
         run: node scripts/ci/npm-retry.mjs ci
 
-      # The keystore is a base64-encoded .jks/.keystore in a secret; without it the
-      # APK is debug-signed and named `-unsigned` (see docs/android.md).
+      # The keystore is a base64-encoded .jks/.keystore in a secret; without it
+      # the APK is debug-signed and named `-unsigned` (see docs/android.md).
       - name: Prepare release keystore
         if: needs.meta.outputs.android_signing == 'true'
         env:

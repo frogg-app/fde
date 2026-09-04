@@ -674,6 +674,7 @@ export const fr: TranslationResources = {
       actions: {
         workspaceActions: "ActionsWorkspace",
         newAgent: "Nouvel agent",
+        newAgentHere: "Nouvel agent dans ce worktree",
         newTerminal: "Nouvelle borne",
         newBrowser: "Nouvel onglet du navigateur",
         importSession: "Session d'importation",

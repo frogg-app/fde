@@ -669,6 +669,7 @@ export const ko: TranslationResources = {
       actions: {
         workspaceActions: "워크스페이스 작업",
         newAgent: "새 에이전트",
+        newAgentHere: "이 워크트리에 새 에이전트",
         newTerminal: "새 터미널",
         newBrowser: "새 브라우저 탭",
         importSession: "세션 가져오기",

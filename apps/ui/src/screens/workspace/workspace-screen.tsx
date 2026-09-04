@@ -1014,6 +1014,7 @@ function WorkspaceHeaderTitleBar({
         {isMobile ? (
           <WorkspaceHeaderMenuMobile
             normalizedServerId={normalizedServerId}
+            normalizedWorkspaceId={normalizedWorkspaceId}
             currentBranchName={currentBranchName}
             showWorkspaceSetup={showWorkspaceSetup}
             showCreateBrowserTab={showCreateBrowserTab}

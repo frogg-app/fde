@@ -1,11 +1,13 @@
 //! Applying a downloaded asset. Every path returns an `InstallOutcome` the
 //! webview shows and logs what it did to `fde.log`.
 //!
-//! - Windows installer: a detached `cmd` helper waits for this process to exit,
-//!   runs `FDE-<v>-x64-setup.exe /S` (per-user NSIS, no elevation) and starts
-//!   the app again; the shell exits right after answering the command.
-//! - Windows portable: the same helper `move /Y`s the new exe over the running
-//!   one and relaunches it.
+//! - Windows installer: the download is `FDE-<v>-x64-setup.zip` (releases carry
+//!   no bare exes); the installer is unpacked next to it, then a detached `cmd`
+//!   helper waits for this process to exit, runs it with `/S` (per-user NSIS, no
+//!   elevation) and starts the app again; the shell exits right after answering
+//!   the command.
+//! - Windows portable: the same zip dance, then the helper `move /Y`s the new
+//!   exe over the running one and relaunches it.
 //! - Linux AppImage: the new file is copied next to `$APPIMAGE`, made
 //!   executable and renamed over it (the running image keeps its old inode
 //!   mounted), then relaunched.
@@ -40,8 +42,10 @@ pub fn install(
     let pid = std::process::id();
     match kind {
         AssetKind::WindowsInstaller => {
+            // Ships zipped like the portable build; unpack the setup exe first.
+            let installer = extract_exe_from_zip(downloaded)?;
             let script = installer_script(
-                &downloaded.to_string_lossy(),
+                &installer.to_string_lossy(),
                 &current_exe.to_string_lossy(),
                 pid,
             );
@@ -57,7 +61,7 @@ pub fn install(
         AssetKind::WindowsPortable => {
             // The portable build ships as a zip (bare exes get blocked by Windows); pull the
             // executable out next to the download and swap that in.
-            let new_exe = extract_portable_exe(downloaded)?;
+            let new_exe = extract_exe_from_zip(downloaded)?;
             let script = portable_script(
                 &new_exe.to_string_lossy(),
                 &current_exe.to_string_lossy(),
@@ -133,13 +137,14 @@ pub fn installer_script(installer: &str, exe: &str, pid: u32) -> String {
     )
 }
 
-/// `cmd` batch script: wait for `pid` to exit, replace the exe, relaunch.
-
-/// Extracts the portable zip beside itself and returns the path of the executable inside it.
-pub fn extract_portable_exe(archive: &std::path::Path) -> Result<std::path::PathBuf, String> {
+/// Extracts a Windows zip asset beside itself and returns the path of the
+/// executable inside it (the portable `FDE.exe` or the NSIS setup exe).
+pub fn extract_exe_from_zip(archive: &std::path::Path) -> Result<std::path::PathBuf, String> {
     let destination = archive.with_extension("extracted");
     let _ = std::fs::remove_dir_all(&destination);
-    crate::sidecar::archive::extract_bundle(archive, &destination)?;
+    // Not the sidecar bundle layout: the installer zip keeps the setup exe at the
+    // root, so the top-level component must survive extraction.
+    crate::sidecar::archive::extract_zip_preserving_paths(archive, &destination)?;
     find_exe(&destination).ok_or_else(|| format!("no .exe found in {}", archive.display()))
 }
 
@@ -161,6 +166,7 @@ fn find_exe(dir: &std::path::Path) -> Option<std::path::PathBuf> {
     nested.into_iter().find_map(|sub| find_exe(&sub))
 }
 
+/// `cmd` batch script: wait for `pid` to exit, replace the exe, relaunch.
 pub fn portable_script(new_exe: &str, target_exe: &str, pid: u32) -> String {
     format!(
         "@echo off\r\n{}move /Y \"{new_exe}\" \"{target_exe}\" || exit /b 1\r\nstart \"\" \"{target_exe}\"\r\n",
@@ -252,14 +258,16 @@ mod tests {
     #[test]
     fn installer_script_waits_then_runs_silent_setup_and_restarts() {
         let script = installer_script(
-            r"C:\cache\FDE-1.0.0-x64-setup.exe",
+            r"C:\cache\FDE-1.0.0-x64-setup.extracted\FDE-1.0.0-x64-setup.exe",
             r"C:\Apps\FDE\fde.exe",
             4242,
         );
         assert!(script.starts_with("@echo off\r\n:wait\r\n"));
         assert!(script.contains("tasklist /FI \"PID eq 4242\" 2>nul | find \" 4242 \" >nul"));
         assert!(script.contains("goto wait"));
-        assert!(script.contains("start \"\" /wait \"C:\\cache\\FDE-1.0.0-x64-setup.exe\" /S\r\n"));
+        assert!(script.contains(
+            "start \"\" /wait \"C:\\cache\\FDE-1.0.0-x64-setup.extracted\\FDE-1.0.0-x64-setup.exe\" /S\r\n"
+        ));
         assert!(script.ends_with("start \"\" \"C:\\Apps\\FDE\\fde.exe\"\r\n"));
         let wait_index = script.find(":wait").unwrap();
         let setup_index = script.find("/S").unwrap();
@@ -272,15 +280,46 @@ mod tests {
     #[test]
     fn portable_script_moves_over_the_exe_and_relaunches() {
         let script = portable_script(
-            r"C:\cache\FDE-1.0.0-x64-portable.exe",
+            r"C:\cache\FDE-1.0.0-x64-portable.extracted\FDE.exe",
             r"D:\Tools\fde.exe",
             7,
         );
         assert!(script.contains("find \" 7 \""));
         assert!(script.contains(
-            "move /Y \"C:\\cache\\FDE-1.0.0-x64-portable.exe\" \"D:\\Tools\\fde.exe\" || exit /b 1\r\n"
+            "move /Y \"C:\\cache\\FDE-1.0.0-x64-portable.extracted\\FDE.exe\" \"D:\\Tools\\fde.exe\" || exit /b 1\r\n"
         ));
         assert!(script.ends_with("start \"\" \"D:\\Tools\\fde.exe\"\r\n"));
+    }
+
+    #[test]
+    fn finds_the_exe_in_both_windows_zip_layouts() {
+        use crate::sidecar::archive::tests::make_zip;
+
+        // The installer zip keeps the setup exe at the root (what
+        // tauri-plugin-updater looks for); the portable zip nests it in a folder.
+        let dir = tempfile::tempdir().unwrap();
+        let setup = dir.path().join("FDE-1.0.0-x64-setup.zip");
+        make_zip(&setup, &[("FDE-1.0.0-x64-setup.exe", b"MZ setup")]);
+        let found = extract_exe_from_zip(&setup).unwrap();
+        assert_eq!(found.file_name().unwrap(), "FDE-1.0.0-x64-setup.exe");
+        assert_eq!(std::fs::read(&found).unwrap(), b"MZ setup");
+
+        let portable = dir.path().join("FDE-1.0.0-x64-portable.zip");
+        make_zip(
+            &portable,
+            &[
+                ("FDE-1.0.0-portable/README.txt", b"read me"),
+                ("FDE-1.0.0-portable/FDE.exe", b"MZ portable"),
+            ],
+        );
+        let found = extract_exe_from_zip(&portable).unwrap();
+        assert_eq!(found.file_name().unwrap(), "FDE.exe");
+        assert_eq!(std::fs::read(&found).unwrap(), b"MZ portable");
+
+        let empty = dir.path().join("FDE-1.0.0-x64-setup-empty.zip");
+        make_zip(&empty, &[("notes.txt", b"no exe here")]);
+        let error = extract_exe_from_zip(&empty).unwrap_err();
+        assert!(error.contains("no .exe found"), "{error}");
     }
 
     #[test]

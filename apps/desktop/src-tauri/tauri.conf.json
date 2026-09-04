@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "FDE",
-  "version": "0.1.18",
+  "version": "0.1.19",
   "identifier": "app.frogg.fde",
   "build": {
     "frontendDist": "../../ui/dist",
@@ -44,11 +44,15 @@
   "plugins": {
     "updater": {
       "pubkey": "REPLACE_WITH_MINISIGN_PUBLIC_KEY",
-      "endpoints": ["https://github.com/frogg-app/fde/releases/latest/download/latest.json"]
+      "endpoints": [
+        "https://github.com/frogg-app/fde/releases/latest/download/latest.json"
+      ]
     },
     "deep-link": {
       "desktop": {
-        "schemes": ["paseo"]
+        "schemes": [
+          "paseo"
+        ]
       }
     }
   }

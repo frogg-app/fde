@@ -3,7 +3,7 @@
 // flat directory with the release asset names documented in docs/ci.md:
 //
 //   FDE-<version>-amd64.deb            FDE-<version>-x86_64.AppImage
-//   FDE-<version>-x64-setup.exe        FDE-<version>-x64-portable.zip
+//   FDE-<version>-x64-setup.zip        FDE-<version>-x64-portable.zip
 //   FDE-<version>-aarch64.dmg          FDE-<version>-x86_64.dmg
 //   FDE-<version>-<arch>.app.tar.gz    (macOS updater bundle)
 //
@@ -36,8 +36,11 @@ const BUNDLE_RULES = {
     { dir: "bundle/deb", extension: ".deb", name: (v) => `FDE-${v}-amd64.deb` },
     { dir: "bundle/appimage", extension: ".AppImage", name: (v) => `FDE-${v}-x86_64.AppImage` },
   ],
+  // Windows ships zipped: GitHub rejects raw .exe release assets (and Windows
+  // itself blocks bare downloaded exes). scripts/release/package-windows-zips.mjs
+  // writes both zips before this runs.
   windows: [
-    { dir: "bundle/nsis", extension: "-setup.exe", name: (v) => `FDE-${v}-x64-setup.exe` },
+    { dir: "bundle/nsis-zip", extension: "-setup.zip", name: (v) => `FDE-${v}-x64-setup.zip` },
     { dir: "bundle/portable", extension: ".zip", name: (v) => `FDE-${v}-x64-portable.zip` },
   ],
   macos: [
@@ -50,8 +53,8 @@ const BUNDLE_RULES = {
   ],
 };
 
-/** `.sig` files ride along with the bundle they sign; the portable exe is never signed. */
-const SIGNED_EXTENSIONS = [".AppImage", "-setup.exe", ".app.tar.gz"];
+/** `.sig` files ride along with the bundle they sign; the portable zip is never signed. */
+const SIGNED_EXTENSIONS = [".AppImage", "-setup.zip", ".app.tar.gz"];
 
 /**
  * Pure planning step: `files` lists paths relative to the release dir (as `/`-joined
@@ -74,17 +77,26 @@ export function planBundleRenames({ platform, arch, version, files }) {
       }
       return rule.exact ? base === rule.exact : base.endsWith(rule.extension);
     });
-    if (matches.length > 1) {
-      throw new Error(`Several ${rule.dir} bundles match: ${matches.join(", ")}`);
-    }
     if (matches.length === 0) {
       continue;
     }
     const target = rule.name(version, arch);
-    renames.push({ from: matches[0], to: target });
-    const signable = SIGNED_EXTENSIONS.some((extension) => matches[0].endsWith(extension));
-    if (signable && files.includes(`${matches[0]}.sig`)) {
-      renames.push({ from: `${matches[0]}.sig`, to: `${target}.sig` });
+    // A dev checkout's target dir keeps every version ever built. When several
+    // bundles match, the one already carrying this release's name wins; anything
+    // else is genuinely ambiguous and the rename would be a guess.
+    const named = matches.filter((file) => path.posix.basename(file) === target);
+    let picked = null;
+    if (named.length === 1) {
+      picked = named[0];
+    } else if (matches.length === 1) {
+      picked = matches[0];
+    } else {
+      throw new Error(`Several ${rule.dir} bundles match: ${matches.join(", ")}`);
+    }
+    renames.push({ from: picked, to: target });
+    const signable = SIGNED_EXTENSIONS.some((extension) => picked.endsWith(extension));
+    if (signable && files.includes(`${picked}.sig`)) {
+      renames.push({ from: `${picked}.sig`, to: `${target}.sig` });
     }
   }
   return renames;
