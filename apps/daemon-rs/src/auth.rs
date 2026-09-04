@@ -31,6 +31,12 @@ pub enum Decision {
 }
 
 impl AuthConfig {
+    /// Claimed means at least one credential has been issued, matching
+    /// `claimStore.isClaimed()`. A password alone does not claim the daemon.
+    pub fn is_claimed(&self) -> bool {
+        !self.credential_hashes.is_empty()
+    }
+
     fn has_secrets(&self) -> bool {
         self.password_hash.is_some() || !self.credential_hashes.is_empty()
     }

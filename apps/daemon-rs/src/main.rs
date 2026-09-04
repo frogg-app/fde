@@ -37,6 +37,8 @@ struct AppState {
     upstream_url: Option<String>,
     auth: auth::AuthConfig,
     allowed_origins: Vec<String>,
+    hostname: String,
+    listen: String,
     web_ui_dist: Option<std::path::PathBuf>,
     native_terminals: bool,
 }
@@ -67,11 +69,13 @@ async fn main() -> anyhow::Result<()> {
     let auth_required = persisted.auth.password_hash.is_some()
         || !persisted.auth.credential_hashes.is_empty();
     let state = Arc::new(AppState {
-        server_id: uuid::Uuid::new_v4().to_string(),
+        server_id: persisted.server_id.clone(),
         started: Instant::now(),
         upstream_url: config.upstream.clone(),
         auth: persisted.auth,
         allowed_origins: persisted.allowed_origins,
+        hostname: hostname(),
+        listen: config.listen.to_string(),
         web_ui_dist: config.web_ui_dist.clone(),
         native_terminals: config.native_terminals,
     });
@@ -80,7 +84,7 @@ async fn main() -> anyhow::Result<()> {
         // Unauthenticated by design, matching the Node daemon: health for probes,
         // identity for LAN scanners and the pairing flow.
         .route("/api/health", get(health))
-        .route("/api/identity", get(identity))
+        .route("/api/identity", get(identity).options(identity_preflight))
         .route("/api/status", get(status))
         .route("/ws", get(ws_upgrade))
         // Everything else is the SPA. Registered last so it never shadows /api.
@@ -148,12 +152,54 @@ async fn health() -> impl IntoResponse {
     Json(json!({ "status": "ok", "timestamp": now_iso8601() }))
 }
 
-async fn identity(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    Json(json!({
-        "serverId": state.server_id,
-        "version": DAEMON_VERSION,
-        "runtime": "rust",
-    }))
+/// Discovery CORS: any origin may read identity, and Chromium's Private Network
+/// Access preflight is answered, exactly as `identity-route.ts` does. LAN
+/// scanners fetch this cross-origin before pairing, so it must not depend on
+/// the CORS allowlist.
+fn discovery_headers(response: Response) -> Response {
+    let mut response = response;
+    let headers = response.headers_mut();
+    headers.insert("Access-Control-Allow-Origin", "*".parse().unwrap());
+    headers.insert("Access-Control-Allow-Methods", "GET, OPTIONS".parse().unwrap());
+    headers.insert("Access-Control-Allow-Private-Network", "true".parse().unwrap());
+    headers.insert("Cache-Control", "no-store".parse().unwrap());
+    response
+}
+
+async fn identity_preflight() -> Response {
+    let mut response = discovery_headers(StatusCode::NO_CONTENT.into_response());
+    response.headers_mut().insert("Access-Control-Max-Age", "600".parse().unwrap());
+    response
+}
+
+async fn identity(
+    State(state): State<Arc<AppState>>,
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
+) -> Response {
+    let locality = state.locality(peer);
+    let trusted = netclass::is_client_trusted(locality, state.auth.trust_lan);
+    let claimed = state.auth.is_claimed();
+    discovery_headers(
+        Json(json!({
+            "product": "fde",
+            "serverId": state.server_id,
+            "hostname": state.hostname,
+            "version": DAEMON_VERSION,
+            "listen": state.listen,
+            "pairingRequired": !claimed && !trusted,
+            "lanTrusted": state.auth.trust_lan,
+        }))
+        .into_response(),
+    )
+}
+
+fn hostname() -> String {
+    std::fs::read_to_string("/proc/sys/kernel/hostname")
+        .ok()
+        .map(|h| h.trim().to_string())
+        .filter(|h| !h.is_empty())
+        .or_else(|| std::env::var("HOSTNAME").ok())
+        .unwrap_or_else(|| "unknown".to_string())
 }
 
 async fn status(

@@ -58,6 +58,8 @@ struct Credential {
 
 pub struct Loaded {
     pub listen: Option<String>,
+    /// Stable id shared with the Node daemon via $FDE_HOME/server-id.
+    pub server_id: String,
     pub allowed_origins: Vec<String>,
     pub auth: AuthConfig,
 }
@@ -101,6 +103,7 @@ pub fn load(home: Option<&Path>) -> Loaded {
 
     Loaded {
         listen: daemon.listen,
+        server_id: read_or_create_server_id(home),
         allowed_origins: daemon.cors.map(|c| c.allowed_origins).unwrap_or_default(),
         auth: AuthConfig {
             password_hash,
@@ -108,6 +111,31 @@ pub fn load(home: Option<&Path>) -> Loaded {
             trust_lan: daemon.trust_lan.unwrap_or(true),
         },
     }
+}
+
+/// Reuses the Node daemon's server-id so both report the same identity for the
+/// same home. Falls back to an ephemeral id when there is no writable home.
+fn read_or_create_server_id(home: Option<&Path>) -> String {
+    let Some(path) = home.map(|h| h.join("server-id")) else {
+        return ephemeral_server_id();
+    };
+    if let Ok(existing) = std::fs::read_to_string(&path) {
+        let trimmed = existing.trim();
+        if !trimmed.is_empty() {
+            return trimmed.to_string();
+        }
+    }
+    let generated = ephemeral_server_id();
+    if let Some(parent) = path.parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
+    let _ = std::fs::write(&path, &generated);
+    generated
+}
+
+fn ephemeral_server_id() -> String {
+    // Matches the Node daemon's srv_<token> shape.
+    format!("srv_{}", uuid::Uuid::new_v4().simple())
 }
 
 fn read_json<T: serde::de::DeserializeOwned>(path: PathBuf) -> Option<T> {
@@ -147,12 +175,23 @@ mod tests {
         )
         .unwrap();
 
+        std::fs::write(dir.join("server-id"), "srv_fromdisk\n").unwrap();
         let loaded = load(Some(&dir));
+        assert_eq!(loaded.server_id, "srv_fromdisk", "must reuse the Node daemon's id");
         assert_eq!(loaded.listen.as_deref(), Some("0.0.0.0:6767"));
         assert_eq!(loaded.allowed_origins, vec!["http://a".to_string()]);
         assert_eq!(loaded.auth.password_hash.as_deref(), Some("$2b$12$abc"));
         assert_eq!(loaded.auth.credential_hashes, vec!["aa".to_string()]);
         assert!(!loaded.auth.trust_lan);
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn generates_and_persists_a_server_id_when_none_exists() {
+        let dir = tempdir();
+        let first = load(Some(&dir)).server_id;
+        assert!(first.starts_with("srv_"));
+        assert_eq!(load(Some(&dir)).server_id, first, "must be stable across restarts");
         std::fs::remove_dir_all(&dir).ok();
     }
 
