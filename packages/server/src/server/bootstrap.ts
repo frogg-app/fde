@@ -134,6 +134,14 @@ import {
   isSpokenNotificationsEnabled,
 } from "./notifications/spoken-alerts.js";
 import { createTtsCache } from "./notifications/tts-cache.js";
+import { resolveCompanionCapability } from "./companion/capability.js";
+import { resolveCompanionModelConfig } from "./companion/anthropic-config.js";
+import { createCompanionFillerBank } from "./companion/fillers.js";
+import { CompanionNotebookStore, companionNotebookPath } from "./companion/store.js";
+import { createCompanionTools } from "./companion/tools/index.js";
+import { createCompanionSubagentRunner } from "./companion/tools/thinking.js";
+import { createCompanionModelClient } from "./companion/orchestrator.js";
+import type { CompanionRuntime } from "./companion/session.js";
 import { AgentManager } from "./agent/agent-manager.js";
 import { AgentStorage } from "./agent/agent-storage.js";
 import { attachAgentStoragePersistence } from "./persistence-hooks.js";
@@ -1710,6 +1718,39 @@ export async function createPaseoDaemon(
   });
   mountNotificationAudioRoute({ app, spokenAlerts, logger });
 
+  const companionFillers = createCompanionFillerBank({
+    cache: createTtsCache({ dir: path.join(config.paseoHome, "tts-cache") }),
+    resolveTts: () => speechService.resolveTts(),
+    logger,
+  });
+  const companionPersisted = loadPersistedConfig(config.paseoHome, logger);
+  const companion: CompanionRuntime = {
+    capability: resolveCompanionCapability({ env: process.env, persisted: companionPersisted }),
+    modelConfig: resolveCompanionModelConfig({ env: process.env, persisted: companionPersisted }),
+    notebook: new CompanionNotebookStore({ filePath: companionNotebookPath(config.paseoHome) }),
+    fillers: companionFillers,
+    createModelClient: createCompanionModelClient,
+    createTools: ({ deferredJobs, logger: sessionLogger }) =>
+      createCompanionTools({
+        agentManager,
+        agentStorage,
+        workspaceRegistry,
+        deferredJobs,
+        notebook: companion.notebook,
+        logger: sessionLogger,
+      }),
+    runDeferredJob: createCompanionSubagentRunner({
+      agentManager,
+      providerSnapshotManager,
+      daemonConfig: { metadataGeneration: daemonConfigStore.get().metadataGeneration },
+      cwd: config.paseoHome,
+      logger,
+    }),
+  };
+  if (companion.capability.enabled) {
+    void companionFillers.prewarm();
+  }
+
   logger.info({ elapsed: elapsed() }, "Bootstrap complete, ready to start listening");
 
   const start = async () => {
@@ -1878,6 +1919,7 @@ export async function createPaseoDaemon(
               orchestrationSkills,
               workspaceLabelService,
               spokenAlerts,
+              companion,
             );
             pluginRuntime.bindPaseoSessionHost(wsServer);
             await pluginRuntime.start();

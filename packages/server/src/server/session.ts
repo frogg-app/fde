@@ -158,6 +158,12 @@ import {
   setProjectCustomIcon,
 } from "../utils/project-custom-icon.js";
 import { VoiceSession } from "./session/voice/voice-session.js";
+import {
+  COMPANION_DISABLED_REASON_CODE,
+  CompanionSession,
+  emitCompanionStartResponse,
+  type CompanionRuntime,
+} from "./companion/session.js";
 import { CheckoutSession } from "./session/checkout/checkout-session.js";
 import {
   createWorkspaceGitObserverService,
@@ -502,6 +508,7 @@ export interface SessionOptions {
   voice?: {
     turnDetection?: Resolvable<TurnDetectionProvider | null>;
   };
+  companion?: CompanionRuntime;
   voiceBridge?: {
     registerVoiceSpeakHandler?: (agentId: string, handler: VoiceSpeakHandler) => void;
     unregisterVoiceSpeakHandler?: (agentId: string) => void;
@@ -732,6 +739,7 @@ export class Session {
   private readonly workspaceGitObserver: WorkspaceGitObserverService;
   private readonly workspaceDirectory: WorkspaceDirectory;
   private readonly voiceSession: VoiceSession;
+  private readonly companionSession: CompanionSession | null;
   private readonly checkoutSession: CheckoutSession;
   private readonly scheduleSession: ScheduleSession;
   private readonly providerCatalogSession: ProviderCatalogSession;
@@ -796,6 +804,7 @@ export class Session {
       voice,
       voiceBridge,
       dictation,
+      companion,
       serverId,
       daemonVersion,
       daemonRuntimeConfig,
@@ -1104,6 +1113,14 @@ export class Session {
       voice,
       voiceBridge,
       dictation,
+    });
+
+    this.companionSession = this.createCompanionSession({
+      companion,
+      tts,
+      stt,
+      voice,
+      sttLanguage,
     });
 
     this.subscribeToAgentEvents();
@@ -2177,6 +2194,66 @@ export class Session {
     });
   }
 
+  private createCompanionSession(input: {
+    companion: CompanionRuntime | undefined;
+    tts: SessionOptions["tts"];
+    stt: SessionOptions["stt"];
+    voice: SessionOptions["voice"];
+    sttLanguage: string | undefined;
+  }): CompanionSession | null {
+    if (!input.companion) {
+      return null;
+    }
+    return new CompanionSession({
+      host: { emit: (msg) => this.emit(msg) },
+      logger: this.sessionLogger,
+      sessionId: this.sessionId,
+      runtime: input.companion,
+      tts: input.tts,
+      stt: input.stt,
+      turnDetection: input.voice?.turnDetection ?? null,
+      sttLanguage: input.sttLanguage ?? "en",
+    });
+  }
+
+  /**
+   * Everything audio-stateful belongs to `CompanionSession`. A daemon with no
+   * Companion runtime refuses the start and drops the rest on the floor.
+   */
+  private dispatchCompanionMessage(msg: SessionInboundMessage): Promise<void> | undefined {
+    switch (msg.type) {
+      case "companion.session.start.request":
+        if (!this.companionSession) {
+          emitCompanionStartResponse((outbound) => this.emit(outbound), msg.requestId, {
+            reasonCode: COMPANION_DISABLED_REASON_CODE,
+            retryable: false,
+          });
+          return undefined;
+        }
+        return this.companionSession.handleSessionStart(msg);
+      case "companion.session.stop.request":
+        if (!this.companionSession) {
+          this.emit({
+            type: "companion.session.stop.response",
+            payload: { requestId: msg.requestId, accepted: false },
+          });
+          return undefined;
+        }
+        return this.companionSession.handleSessionStop(msg);
+      case "companion.audio.chunk":
+        return this.companionSession?.handleAudioChunk(msg);
+      case "companion.audio.played":
+        this.companionSession?.handleAudioPlayed(msg.id);
+        return undefined;
+      case "companion.message.send.request":
+        return this.companionSession?.handleMessageSend(msg);
+      case "companion.notebook.fetch.request":
+        return this.companionSession?.handleNotebookFetch(msg);
+      default:
+        return undefined;
+    }
+  }
+
   private dispatchVoiceAndControlMessage(msg: SessionInboundMessage): Promise<void> | undefined {
     switch (msg.type) {
       case "voice_audio_chunk":
@@ -2223,7 +2300,7 @@ export class Session {
         return undefined;
       }
       default:
-        return undefined;
+        return this.dispatchCompanionMessage(msg);
     }
   }
 
@@ -7661,6 +7738,7 @@ export class Session {
     this.providerCatalogSession.dispose();
 
     await this.voiceSession.cleanup();
+    await this.companionSession?.cleanup();
 
     this.terminalController.dispose();
 
