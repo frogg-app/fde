@@ -939,6 +939,41 @@ describe("relative typed-entry configuration", () => {
     ]);
   });
 
+  it("orders results the same way whatever locale the daemon host runs under", async () => {
+    // Swedish collates "a-ring"/"a-umlaut" after z, English before it, so an
+    // unpinned localeCompare made the same query over the same tree return a
+    // different order depending on the host's LANG.
+    for (const name of ["apple", "arlig", "zebra", "\u00e4rlig"]) {
+      mkdirSync(path.join(workspaceDir, name), { recursive: true });
+    }
+
+    const order = async () =>
+      (
+        await searchRelativeDirectoryEntries({
+          cwd: workspaceDir,
+          query: "",
+          limit: 20,
+          includeFiles: false,
+          includeDirectories: true,
+        })
+      ).map((entry) => entry.path);
+
+    const original = process.env.LANG;
+    const swedish = await (async () => {
+      process.env.LANG = "sv_SE.UTF-8";
+      try {
+        return await order();
+      } finally {
+        if (original === undefined) delete process.env.LANG;
+        else process.env.LANG = original;
+      }
+    })();
+
+    expect(swedish).toEqual(await order());
+    // And the ordering itself is the English one users already saw.
+    expect(swedish.indexOf("\u00e4rlig")).toBeLessThan(swedish.indexOf("zebra"));
+  });
+
   it("fuzzy-matches natural language against the full path", async () => {
     mkdirSync(path.join(workspaceDir, "blankpage", "editor"), { recursive: true });
 
