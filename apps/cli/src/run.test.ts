@@ -5,14 +5,14 @@ import { describe, expect, it } from "vitest";
 import { createCliParseArgv } from "./run";
 
 describe("runCli", () => {
-  it("defaults an empty CLI invocation to onboard", () => {
+  it("shows help for a bare invocation instead of starting onboarding", () => {
     expect(
       createCliParseArgv({
         argv: [],
         cwd: process.cwd(),
         nodeArgv: ["node", "paseo"],
       }),
-    ).toEqual(["node", "paseo", "onboard"]);
+    ).toEqual(["node", "paseo", "--help"]);
   });
 
   it("routes explicit root relay flags to onboard", () => {

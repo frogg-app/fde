@@ -1,0 +1,40 @@
+name: Set up Node and install dependencies
+description: >-
+  Node 22 plus an installed node_modules tree, restored from cache when nothing
+  that shaped it has changed.
+
+  `actions/setup-node`'s `cache: npm` only caches the npm *download* cache, so
+  `npm ci` still spends ~40s linking a tree that is byte-identical between runs.
+
+  The key covers everything the tree is built against. `runner.os` alone is not
+  enough: it reads "Linux" for both ubuntu-22.04 and ubuntu-24.04, so a tree
+  carrying native modules (node-pty, sherpa-onnx) compiled on one image would be
+  restored onto the other. `ImageOS` distinguishes them. This is the same trap
+  the desktop job's rust-cache key documents.
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v7
+      with:
+        node-version: "22"
+        cache: npm
+
+    - name: Restore node_modules
+      id: cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          node_modules
+          apps/*/node_modules
+          packages/*/node_modules
+        key: >-
+          node-modules-${{ env.ImageOS }}-${{ runner.arch }}-node22-${{ hashFiles('package-lock.json') }}
+
+    - name: Install dependencies
+      # Only on a miss. A hit restored a tree built from this exact lockfile, on
+      # this exact image and architecture, so its native builds are already
+      # correct - rebuilding them here would cost back everything the cache saved.
+      if: steps.cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: node scripts/ci/npm-retry.mjs ci
