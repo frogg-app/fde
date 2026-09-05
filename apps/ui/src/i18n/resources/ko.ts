@@ -2477,6 +2477,21 @@ export const ko: TranslationResources = {
         local: "로컬",
         remoteSsh: "원격 SSH",
       },
+      daemonConflict: {
+        title: "이 머신에서 데몬이 여러 개 실행 중입니다",
+        message:
+          "{{machine}}에서 데몬 {{count}}개가 실행 중입니다. 각각 고유한 에이전트와 워크스페이스를 가지므로 보이는 내용은 연결된 데몬에 따라 달라집니다. 사용할 데몬을 선택하고 다른 하나가 필요 없다면 종료하세요.",
+        activeLabel: "{{name}} (연결됨)",
+        version: "v{{version}}",
+        versionUnknown: "버전 알 수 없음",
+        shutdown: "종료",
+        shutdownTitle: "데몬을 종료할까요?",
+        shutdownMessage:
+          "{{name}}을(를) 종료할까요? 해당 데몬에서 실행 중인 에이전트가 모두 중지됩니다. 다른 데몬에는 영향을 주지 않습니다.",
+        shutdownConfirm: "종료",
+        shutdownFailedTitle: "오류",
+        shutdownFailedMessage: "해당 데몬을 종료할 수 없습니다.",
+      },
       connections: {
         title: "연결",
         removeTitle: "연결 제거",
