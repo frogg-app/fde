@@ -28,13 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v7
-        with:
-          node-version: "22"
-          cache: npm
-
-      - name: Install dependencies
-        run: node scripts/ci/npm-retry.mjs ci
+      - uses: ./.github/actions/setup-node-deps
 
       - name: Check formatting
         run: npx oxfmt --check .
@@ -54,28 +48,17 @@ jobs:
         run: npm run typecheck
 
   tests:
-    name: unit tests (libraries, ui, cli)
+    name: unit tests (libraries, cli)
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version: "22"
-          cache: npm
-
-      - name: Install dependencies
-        run: node scripts/ci/npm-retry.mjs ci
-
-      - name: Install Playwright Chromium (ui browser project)
-        timeout-minutes: 10
-        run: npx playwright install --with-deps chromium
+      - uses: ./.github/actions/setup-node-deps
 
       - name: Build library dependencies
         # The CLI unit tests import @fde/server (the claim and self-update commands), so the
         # server and CLI dists have to exist too, not just the shared libraries.
-        run: npm run build:server && npm run build --workspace=@fde/expo-two-way-audio
+        run: npm run build:server
 
       - name: Test protocol, client, highlight, relay, plugin
         run: >-
@@ -89,11 +72,13 @@ jobs:
       - name: Test cli (unit)
         run: npm run test:unit --workspace=@fde/cli
 
-      - name: Test ui
-        run: npm run test --workspace=@fde/app
-
-  server-tests:
-    name: unit tests (server) ${{ matrix.shard }}/3
+  ui-tests:
+    # The ui suite is the longest job in the pipeline, and its two vitest
+    # projects have different needs: `unit` is 597 files of plain node tests,
+    # `browser` is 11 files that need a Chromium download. Splitting them keeps
+    # the Playwright install off the shards, and sharding the rest turns a
+    # single long job into three short ones.
+    name: unit tests (ui) ${{ matrix.shard }}/3
     runs-on: ubuntu-latest
     timeout-minutes: 25
     strategy:
@@ -102,23 +87,62 @@ jobs:
         shard: [1, 2, 3]
     steps:
       - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-node-deps
+
+      - name: Build library dependencies
+        # Deps only: the ui imports @fde/client and @fde/protocol but never
+        # @fde/server, and the CLI tests that did moved to their own job.
+        run: npm run build:server-deps && npm run build --workspace=@fde/expo-two-way-audio
+
+      - name: Test ui (unit)
+        run: >-
+          npx vitest run --root apps/ui --project unit
+          --shard=${{ matrix.shard }}/3
+
+  ui-browser-tests:
+    name: browser tests (ui)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-node-deps
+
+      - name: Install Playwright Chromium
+        timeout-minutes: 10
+        run: npx playwright install --with-deps chromium
+
+      - name: Build library dependencies
+        run: npm run build:server-deps && npm run build --workspace=@fde/expo-two-way-audio
+
+      - name: Test ui (browser)
+        run: npx vitest run --root apps/ui --project browser
+
+  server-tests:
+    name: unit tests (server) ${{ matrix.shard }}/5
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        # Five, not three. vitest shards by file count rather than duration, and
+        # the server's slow files clustered in shard 1 - it ran 272s against the
+        # others' 149s, making it the whole pipeline's critical path. More,
+        # smaller shards blunt that imbalance without needing to know which
+        # files are slow.
+        shard: [1, 2, 3, 4, 5]
+    steps:
+      - uses: actions/checkout@v7
         with:
           # Worktree tests compare against origin/main.
           fetch-depth: 0
 
-      - uses: actions/setup-node@v7
-        with:
-          node-version: "22"
-          cache: npm
-
-      - name: Install dependencies
-        run: node scripts/ci/npm-retry.mjs ci
+      - uses: ./.github/actions/setup-node-deps
 
       - name: Build server dependencies
         run: npm run build:server-deps
 
       - name: Test server (unit, no e2e)
-        run: npx vitest run --root packages/server --fileParallelism --exclude "**/*.e2e.test.ts" --shard=${{ matrix.shard }}/3
+        run: npx vitest run --root packages/server --fileParallelism --exclude "**/*.e2e.test.ts" --shard=${{ matrix.shard }}/5
 
   daemon-rs:
     name: daemon (rust)
@@ -138,13 +162,7 @@ jobs:
           # warmed by either poison the other (see the desktop job).
           shared-key: daemon-rs-x86_64-unknown-linux-gnu
 
-      - uses: actions/setup-node@v7
-        with:
-          node-version: "22"
-          cache: npm
-
-      - name: Install dependencies
-        run: node scripts/ci/npm-retry.mjs ci
+      - uses: ./.github/actions/setup-node-deps
 
       - name: Generated protocol types are current
         run: ./scripts/ci/check-generated-rust.sh

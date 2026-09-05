@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { DaemonClientConfig } from "@fde/client/internal/daemon-client";
 import type { DaemonConnectionDependencies, DaemonProbeClient } from "./test-daemon-connection";
 
@@ -69,6 +69,18 @@ class FakeDaemonProbe {
 
 describe("test-daemon-connection connectToDaemon", () => {
   let probe: FakeDaemonProbe;
+  let connectToDaemon: typeof import("./test-daemon-connection").connectToDaemon;
+
+  beforeAll(async () => {
+    vi.stubGlobal("__DEV__", false);
+    // Imported here rather than at the top so __DEV__ is already false when the
+    // module first evaluates, and hoisted out of the tests so only one of them
+    // pays for transforming the graph. Cold, that transform runs past the
+    // default 5s test timeout, which failed whichever test happened to import
+    // first - visible when this file runs alone or in a shard, and masked in a
+    // full run by another file having warmed the module already.
+    ({ connectToDaemon } = await import("./test-daemon-connection"));
+  }, 60_000);
 
   beforeEach(() => {
     vi.stubGlobal("__DEV__", false);
@@ -76,7 +88,6 @@ describe("test-daemon-connection connectToDaemon", () => {
   });
 
   it("reuses the app clientId for direct connections", async () => {
-    const { connectToDaemon } = await import("./test-daemon-connection");
     const first = await connectToDaemon(
       {
         id: "direct:lan:6767",
@@ -106,7 +117,6 @@ describe("test-daemon-connection connectToDaemon", () => {
   });
 
   it("keeps direct TCP probes on the renderer WebSocket", async () => {
-    const { connectToDaemon } = await import("./test-daemon-connection");
     const deps = {
       ...probe.deps,
       createWebSocketTransportFactory: () => {
@@ -129,7 +139,6 @@ describe("test-daemon-connection connectToDaemon", () => {
   });
 
   it("encodes the local socket target into the client config", async () => {
-    const { connectToDaemon } = await import("./test-daemon-connection");
     const result = await connectToDaemon(
       {
         id: "socket:/tmp/paseo.sock",
@@ -145,7 +154,6 @@ describe("test-daemon-connection connectToDaemon", () => {
   });
 
   it("uses the desktop transport for Remote SSH connections", async () => {
-    const { connectToDaemon } = await import("./test-daemon-connection");
     const transportFactory = vi.fn();
     const result = await connectToDaemon(
       {
@@ -172,7 +180,6 @@ describe("test-daemon-connection connectToDaemon", () => {
   });
 
   it("passes direct TCP connection passwords into the client config", async () => {
-    const { connectToDaemon } = await import("./test-daemon-connection");
     const result = await connectToDaemon(
       {
         id: "direct:lan:6767",
@@ -189,7 +196,6 @@ describe("test-daemon-connection connectToDaemon", () => {
   });
 
   it("passes performance tracing into the connected client", async () => {
-    const { connectToDaemon } = await import("./test-daemon-connection");
     const trace = {
       isEnabled: () => true,
       beginSection: vi.fn(),
@@ -210,7 +216,6 @@ describe("test-daemon-connection connectToDaemon", () => {
   });
 
   it("uses relay TLS from the stored connection", async () => {
-    const { connectToDaemon } = await import("./test-daemon-connection");
     const tlsResult = await connectToDaemon(
       {
         id: "relay:wss:[::1]:443",
@@ -242,7 +247,6 @@ describe("test-daemon-connection connectToDaemon", () => {
   });
 
   it("surfaces auth rejection as an incorrect password", async () => {
-    const { connectToDaemon } = await import("./test-daemon-connection");
     probe.failNextConnection(
       new Error("Transport closed (code 4001)"),
       "Transport closed (code 4001)",
@@ -265,7 +269,6 @@ describe("test-daemon-connection connectToDaemon", () => {
   });
 
   it("keeps generic transport failures generic when a password was supplied", async () => {
-    const { connectToDaemon } = await import("./test-daemon-connection");
     probe.failNextConnection(new Error("Transport error"), "Transport error");
 
     await expect(
