@@ -14,7 +14,9 @@ import {
   type CompanionModelStream,
   type CompanionTurnEvent,
 } from "./orchestrator.js";
+import { CompanionDeferredJobs, describeSettledJob } from "./deferred-jobs.js";
 import { CompanionNotebookStore, companionNotebookPath } from "./store.js";
+import { createCompanionThinkingTools } from "./tools/thinking.js";
 import { defineCompanionTool, type CompanionTool } from "./tools/index.js";
 
 function textMessage(text: string): Anthropic.Message {
@@ -297,6 +299,77 @@ describe("CompanionOrchestrator", () => {
       { role: "user", content: "how many agents?" },
       { role: "assistant", content: "three." },
       { role: "user", content: "Your notebook is empty.\n\nThey said: which ones?" },
+    ]);
+  });
+
+  it("speaks a deferred job's result when it re-enters as a synthetic user turn", async () => {
+    let finish = (_answer: string): void => {};
+    const answer = new Promise<string>((resolve) => {
+      finish = resolve;
+    });
+    const deferredJobs = new CompanionDeferredJobs({
+      run: () => answer,
+      logger: { warn: () => {} },
+      idFactory: () => "job-1",
+    });
+    const settled: string[] = [];
+    deferredJobs.subscribe((job) => {
+      if (job.status !== "running") {
+        settled.push(describeSettledJob(job));
+      }
+    });
+    const { client, requests } = createScriptedClient([
+      {
+        events: deltaEvents(["hmm, let me think about that."]),
+        message: toolUseMessage({
+          text: "hmm, let me think about that.",
+          toolName: "think",
+          toolInput: { question: "why is the push test flaky?", label: "the flaky test" },
+        }),
+      },
+      { events: [], message: textMessage("ok") },
+      {
+        events: deltaEvents(["it races on the lease clock."]),
+        message: textMessage("it races on the lease clock."),
+      },
+    ]);
+    const orchestrator = new CompanionOrchestrator({
+      client,
+      tools: createCompanionThinkingTools({ deferredJobs }),
+      notebook,
+    });
+
+    const first = await collect(orchestrator.turn("why is the push test flaky?"));
+
+    expect(first).toContainEqual({ type: "tool_started", name: "think", deferred: true });
+    expect(first.at(-1)).toEqual({
+      type: "completed",
+      reply: "hmm, let me think about that.",
+      tools: ["think"],
+    });
+    expect(requests[1].params.messages[2]).toEqual({
+      role: "user",
+      content: [
+        {
+          type: "tool_result",
+          tool_use_id: "toolu_1",
+          content: JSON.stringify({ status: "started", jobId: "job-1" }),
+        },
+      ],
+    });
+
+    finish("It races on the lease clock.");
+    await deferredJobs.drain();
+
+    expect(settled).toEqual([
+      "The background job you started (the flaky test) finished. Result:\nIt races on the lease clock.\n\nTell the user, in one or two spoken sentences.",
+    ]);
+
+    const second = await collect(orchestrator.turn(settled[0]));
+
+    expect(second).toEqual([
+      { type: "text_delta", text: "it races on the lease clock." },
+      { type: "completed", reply: "it races on the lease clock.", tools: [] },
     ]);
   });
 
