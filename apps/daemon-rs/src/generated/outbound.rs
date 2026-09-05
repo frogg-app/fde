@@ -94,6 +94,8 @@ pub enum SessionMessage {
     CompanionTranscript(CompanionTranscript),
     #[serde(rename = "companion.reply")]
     CompanionReply(CompanionReply),
+    #[serde(rename = "companion.notebook.fetch.response")]
+    CompanionNotebookFetchResponse(CompanionNotebookFetchResponse),
     #[serde(rename = "companion.notebook.update")]
     CompanionNotebookUpdate(CompanionNotebookUpdate),
     #[serde(rename = "companion.job.update")]
@@ -2322,14 +2324,61 @@ pub struct CompanionReplyPayload {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionNotebookFetchResponse {
+    pub payload: CompanionNotebookFetchResponsePayload,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionNotebookFetchResponsePayload {
+    #[serde(rename = "requestId")]
+    pub request_id: String,
+    pub notebook: CompanionNotebookFetchResponsePayloadNotebook,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionNotebookFetchResponsePayloadNotebook {
+    pub entries: Vec<CompanionNotebookFetchResponsePayloadNotebookEntriesItem>,
+    #[serde(rename = "updatedAt")]
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionNotebookFetchResponsePayloadNotebookEntriesItem {
+    pub id: String,
+    pub kind: CompanionNotebookFetchResponsePayloadNotebookEntriesItemKind,
+    pub text: String,
+    pub status: CompanionNotebookFetchResponsePayloadNotebookEntriesItemStatus,
+    #[serde(rename = "agentId", skip_serializing_if = "Option::is_none")]
+    pub agent_id: Option<String>,
+    #[serde(rename = "updatedAt")]
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum CompanionNotebookFetchResponsePayloadNotebookEntriesItemKind {
+    #[serde(rename = "topic")]
+    Topic,
+    #[serde(rename = "task")]
+    Task,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum CompanionNotebookFetchResponsePayloadNotebookEntriesItemStatus {
+    #[serde(rename = "open")]
+    Open,
+    #[serde(rename = "active")]
+    Active,
+    #[serde(rename = "done")]
+    Done,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CompanionNotebookUpdate {
     pub payload: CompanionNotebookUpdatePayload,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CompanionNotebookUpdatePayload {
-    #[serde(rename = "requestId", skip_serializing_if = "Option::is_none")]
-    pub request_id: Option<String>,
     pub notebook: CompanionNotebookUpdatePayloadNotebook,
 }
 

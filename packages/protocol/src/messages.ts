@@ -991,8 +991,6 @@ export const CompanionMessageSendRequestSchema = z.object({
   text: z.string(),
 });
 
-// Answered by companion.notebook.update carrying the echoed requestId, which is
-// also pushed unprompted whenever the notebook changes.
 export const CompanionNotebookFetchRequestSchema = z.object({
   type: z.literal("companion.notebook.fetch.request"),
   requestId: z.string(),
@@ -3463,12 +3461,19 @@ export const CompanionNotebookSchema = z.object({
   updatedAt: z.string(),
 });
 
-// `requestId` echoes companion.notebook.fetch.request when this answers a fetch,
-// and is null when the daemon pushes a notebook change on its own.
+export const CompanionNotebookFetchResponseSchema = z.object({
+  type: z.literal("companion.notebook.fetch.response"),
+  payload: z.object({
+    requestId: z.string(),
+    notebook: CompanionNotebookSchema,
+  }),
+});
+
+// Unprompted push when the Companion rewrites its notebook mid-conversation.
+// A fetch is answered by companion.notebook.fetch.response instead.
 export const CompanionNotebookUpdateMessageSchema = z.object({
   type: z.literal("companion.notebook.update"),
   payload: z.object({
-    requestId: z.string().nullable(),
     notebook: CompanionNotebookSchema,
   }),
 });
@@ -6660,6 +6665,7 @@ export const SessionOutboundMessageSchema = z.discriminatedUnion("type", [
   CompanionInputStateMessageSchema,
   CompanionTranscriptMessageSchema,
   CompanionReplyMessageSchema,
+  CompanionNotebookFetchResponseSchema,
   CompanionNotebookUpdateMessageSchema,
   CompanionJobUpdateMessageSchema,
   DictationStreamAckMessageSchema,
@@ -6870,6 +6876,7 @@ export type CompanionNotebookEntryKind = z.infer<typeof CompanionNotebookEntryKi
 export type CompanionNotebookEntryStatus = z.infer<typeof CompanionNotebookEntryStatusSchema>;
 export type CompanionNotebookEntry = z.infer<typeof CompanionNotebookEntrySchema>;
 export type CompanionNotebook = z.infer<typeof CompanionNotebookSchema>;
+export type CompanionNotebookFetchResponse = z.infer<typeof CompanionNotebookFetchResponseSchema>;
 export type CompanionNotebookUpdateMessage = z.infer<typeof CompanionNotebookUpdateMessageSchema>;
 export type CompanionJobStatus = z.infer<typeof CompanionJobStatusSchema>;
 export type CompanionJobUpdateMessage = z.infer<typeof CompanionJobUpdateMessageSchema>;
