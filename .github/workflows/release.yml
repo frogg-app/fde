@@ -71,9 +71,14 @@ jobs:
             echo "::error::Tag $RELEASE_TAG does not match package.json version $package_version. Bump, sync, commit, then tag that commit."
             exit 1
           fi
+          # Only a semver prerelease suffix (0.2.0-beta.1) is a prerelease. A
+          # 0.x version is not: marking it one flagged every release the project
+          # has ever made, and `fde daemon self-update` on the stable channel
+          # requires prerelease !== true, so it could never find an update at
+          # all. The CLI checks the suffix itself, so this flag need not.
           prerelease=false
           case "$version" in
-            0.*|*-*) prerelease=true ;;
+            *-*) prerelease=true ;;
           esac
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
