@@ -14,6 +14,7 @@ export interface ShortcutRoutingContext {
   commandCenterOpen: boolean;
   shortcutsDialogOpen: boolean;
   settingsModalOpen: boolean;
+  companionOpen: boolean;
 }
 
 export interface ShortcutRoutingInput {
@@ -35,7 +36,8 @@ export type ShortcutAction =
   | { kind: "callback"; name: ShortcutCallbackName }
   | { kind: "command-center-toggle"; nextOpen: boolean; scope?: "files" }
   | { kind: "shortcuts-dialog-toggle"; nextOpen: boolean }
-  | { kind: "settings-modal-close" };
+  | { kind: "settings-modal-close" }
+  | { kind: "companion-toggle"; nextOpen: boolean };
 
 const NONE: ShortcutAction = { kind: "none" };
 
@@ -212,6 +214,8 @@ export function routeKeyboardShortcut(
       return { kind: "open-project-picker" };
     case "settings.toggle":
       return routeSettingsToggle(ctx);
+    case "companion.toggle":
+      return { kind: "companion-toggle", nextOpen: !ctx.companionOpen };
     case "command-center.toggle":
       return { kind: "command-center-toggle", nextOpen: !ctx.commandCenterOpen };
     case "command-center.files":

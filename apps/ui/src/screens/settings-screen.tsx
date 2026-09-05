@@ -38,6 +38,7 @@ import { Switch } from "@/components/ui/switch";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { DesktopPermissionsSection } from "@/desktop/components/desktop-permissions-section";
 import { DesktopNotificationsSection } from "@/desktop/components/desktop-notifications-section";
+import { CompanionSection } from "@/screens/settings/companion-section";
 import { VoiceAlertsSection } from "@/screens/settings/voice-alerts-section";
 import { BrowserDataSection } from "@/desktop/browser/settings/browser-data-section";
 import { IntegrationsSection } from "@/desktop/components/integrations-section";
@@ -741,6 +742,7 @@ export default function SettingsScreen({ view, openAddHostIntent = null }: Setti
                   handleTerminalScrollbackLinesChange={handleTerminalScrollbackLinesChange}
                 />
                 <VoiceAlertsSection />
+                <CompanionSection />
                 {isDesktopApp ? <BrowserDataSection /> : null}
               </>
             );

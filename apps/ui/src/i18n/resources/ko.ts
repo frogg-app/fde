@@ -1833,6 +1833,57 @@ export const ko: TranslationResources = {
       stop: "실시간 음성 중지 및 턴 중단",
     },
   },
+  companion: {
+    title: "컴패니언",
+    status: {
+      connecting: "연결 중…",
+    },
+    micState: {
+      idle: "대기 중",
+      listening: "듣는 중",
+      thinking: "생각 중",
+      speaking: "말하는 중",
+    },
+    actions: {
+      mute: "음소거",
+      unmute: "음소거 해제",
+      stop: "중지",
+      send: "보내기",
+    },
+    compose: {
+      placeholder: "말하는 대신 입력하세요",
+      sent: "보냈습니다",
+    },
+    topics: {
+      empty: "아직 추적 중인 항목이 없습니다.",
+    },
+    error: {
+      startFailed: "컴패니언을 시작하지 못했습니다",
+      sendFailed: "메시지를 보내지 못했습니다",
+    },
+    reason: {
+      unknown: "데몬이 이유를 알려주지 않았습니다.",
+      companion_key_missing: "이 데몬에 Anthropic API 키가 설정되어 있지 않습니다.",
+      companion_disabled: "이 데몬에서 컴패니언이 꺼져 있습니다.",
+      companion_microphone_unavailable: "마이크를 사용할 수 없습니다.",
+      companion_session_closed: "컴패니언 세션이 닫혔습니다.",
+      companion_busy: "컴패니언이 다른 차례를 처리 중입니다.",
+    },
+    unavailable: {
+      title: "컴패니언을 사용할 수 없습니다",
+      description: "이 데몬은 컴패니언을 제공하지 않습니다.",
+    },
+    settings: {
+      autoStart: {
+        label: "바로 대화 시작",
+        description: "탭을 기다리지 않고 컴패니언이 열리는 즉시 세션을 시작합니다.",
+      },
+      replyText: {
+        label: "응답 텍스트 표시",
+        description: "컴패니언이 말하는 내용을 함께 읽습니다.",
+      },
+    },
+  },
   spokenAlerts: {
     notification: {
       title: "{{name}}의 새 소식",
@@ -2391,6 +2442,7 @@ export const ko: TranslationResources = {
         toggleRightSidebar: "사이드 패널 토글",
         toggleBothSidebars: "양쪽 사이드바 토글",
         toggleSettings: "설정 토글",
+        toggleCompanion: "컴패니언 열기/닫기",
         toggleFocusMode: "집중 모드 토글",
         cycleTheme: "테마 순환",
         focusMessageInput: "메시지 입력란에 포커스",

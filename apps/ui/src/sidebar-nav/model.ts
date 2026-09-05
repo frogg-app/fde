@@ -1,6 +1,6 @@
 import type { PluginSidebarGroup } from "@/plugins/sidebar-groups";
 
-export const BUILTIN_SIDEBAR_NAV_IDS = ["new-workspace", "history", "search"] as const;
+export const BUILTIN_SIDEBAR_NAV_IDS = ["new-workspace", "companion", "history", "search"] as const;
 export type BuiltinSidebarNavId = (typeof BUILTIN_SIDEBAR_NAV_IDS)[number];
 
 /** Persisted shape. Array order is the display order. */
@@ -27,6 +27,7 @@ export type SidebarNavItem = BuiltinSidebarNavItem | PluginSidebarNavItem;
 
 const BUILTIN_LABEL_KEYS: Record<BuiltinSidebarNavId, string> = {
   "new-workspace": "sidebar.actions.newWorkspace",
+  companion: "companion.title",
   history: "sidebar.sections.sessions",
   search: "sidebar.sections.search",
 };
@@ -42,6 +43,7 @@ export function builtinSidebarNavLabelKey(id: BuiltinSidebarNavId): string {
  */
 const BUILTIN_SHORTCUT_ACTIONS: Record<BuiltinSidebarNavId, string | null> = {
   "new-workspace": "new-workspace",
+  companion: "toggle-companion",
   history: null,
   search: "toggle-command-center",
 };

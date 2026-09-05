@@ -46,6 +46,7 @@ export interface CompanionState {
 
   open: () => void;
   close: () => void;
+  setOpen: (isOpen: boolean) => void;
   sessionStarting: () => void;
   sessionStarted: () => void;
   sessionFailed: (input: { reasonCode: string | null; retryable: boolean }) => void;
@@ -110,6 +111,7 @@ export const useCompanionStore = create<CompanionState>((set) => ({
 
   open: () => set({ isOpen: true }),
   close: () => set({ isOpen: false }),
+  setOpen: (isOpen) => set({ isOpen }),
 
   sessionStarting: () => set({ session: { status: "starting" } }),
   sessionStarted: () => set({ session: { status: "open" }, ...CONVERSATION_RESET }),

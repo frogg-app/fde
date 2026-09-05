@@ -1832,6 +1832,57 @@ export const en = {
       stop: "Stop realtime voice and interrupt turn",
     },
   },
+  companion: {
+    title: "Companion",
+    status: {
+      connecting: "Connecting…",
+    },
+    micState: {
+      idle: "Idle",
+      listening: "Listening",
+      thinking: "Thinking",
+      speaking: "Speaking",
+    },
+    actions: {
+      mute: "Mute",
+      unmute: "Unmute",
+      stop: "Stop",
+      send: "Send",
+    },
+    compose: {
+      placeholder: "Type instead of speaking",
+      sent: "Sent",
+    },
+    topics: {
+      empty: "Nothing tracked yet.",
+    },
+    error: {
+      startFailed: "The Companion could not start",
+      sendFailed: "Your message was not sent",
+    },
+    reason: {
+      unknown: "The daemon did not say why.",
+      companion_key_missing: "No Anthropic API key is configured on this daemon.",
+      companion_disabled: "The Companion is turned off on this daemon.",
+      companion_microphone_unavailable: "The microphone is unavailable.",
+      companion_session_closed: "The Companion session is closed.",
+      companion_busy: "The Companion is busy with another turn.",
+    },
+    unavailable: {
+      title: "The Companion is unavailable",
+      description: "This daemon does not offer the Companion.",
+    },
+    settings: {
+      autoStart: {
+        label: "Start talking straight away",
+        description: "Open a session as soon as the Companion opens, instead of waiting for a tap.",
+      },
+      replyText: {
+        label: "Show reply text",
+        description: "Read what the Companion is saying while it speaks.",
+      },
+    },
+  },
   spokenAlerts: {
     notification: {
       title: "Update from {{name}}",
@@ -2478,6 +2529,7 @@ export const en = {
         toggleRightSidebar: "Toggle Explorer sidebar",
         toggleBothSidebars: "Toggle both sidebars",
         toggleSettings: "Toggle settings",
+        toggleCompanion: "Toggle the Companion",
         toggleFocusMode: "Toggle focus mode",
         cycleTheme: "Cycle theme",
         focusMessageInput: "Focus message input",
