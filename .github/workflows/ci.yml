@@ -90,7 +90,9 @@ jobs:
       - uses: ./.github/actions/setup-node-deps
 
       - name: Build library dependencies
-        run: npm run build:server && npm run build --workspace=@fde/expo-two-way-audio
+        # Deps only: the ui imports @fde/client and @fde/protocol but never
+        # @fde/server, and the CLI tests that did moved to their own job.
+        run: npm run build:server-deps && npm run build --workspace=@fde/expo-two-way-audio
 
       - name: Test ui (unit)
         run: >-
@@ -110,19 +112,24 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Build library dependencies
-        run: npm run build:server && npm run build --workspace=@fde/expo-two-way-audio
+        run: npm run build:server-deps && npm run build --workspace=@fde/expo-two-way-audio
 
       - name: Test ui (browser)
         run: npx vitest run --root apps/ui --project browser
 
   server-tests:
-    name: unit tests (server) ${{ matrix.shard }}/3
+    name: unit tests (server) ${{ matrix.shard }}/5
     runs-on: ubuntu-latest
     timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3]
+        # Five, not three. vitest shards by file count rather than duration, and
+        # the server's slow files clustered in shard 1 - it ran 272s against the
+        # others' 149s, making it the whole pipeline's critical path. More,
+        # smaller shards blunt that imbalance without needing to know which
+        # files are slow.
+        shard: [1, 2, 3, 4, 5]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -135,7 +142,7 @@ jobs:
         run: npm run build:server-deps
 
       - name: Test server (unit, no e2e)
-        run: npx vitest run --root packages/server --fileParallelism --exclude "**/*.e2e.test.ts" --shard=${{ matrix.shard }}/3
+        run: npx vitest run --root packages/server --fileParallelism --exclude "**/*.e2e.test.ts" --shard=${{ matrix.shard }}/5
 
   daemon-rs:
     name: daemon (rust)
