@@ -1884,7 +1884,9 @@ export const ptBR: TranslationResources = {
     },
     reason: {
       unknown: "O daemon não informou o motivo.",
-      companion_key_missing: "Nenhuma chave de API da Anthropic está configurada neste daemon.",
+      companion_backend_missing:
+        "Este daemon não tem chave de API da Anthropic nem a CLI do Claude Code.",
+      companion_backend_failed: "A sessão de modelo do Companion não conseguiu iniciar.",
       companion_disabled: "O Companheiro está desativado neste daemon.",
       companion_microphone_unavailable: "O microfone não está disponível.",
       companion_session_closed: "A sessão do Companheiro está encerrada.",

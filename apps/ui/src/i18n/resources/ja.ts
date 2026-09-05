@@ -1871,7 +1871,9 @@ export const ja: TranslationResources = {
     },
     reason: {
       unknown: "デーモンは理由を返しませんでした。",
-      companion_key_missing: "このデーモンには Anthropic API キーが設定されていません。",
+      companion_backend_missing:
+        "このデーモンには Anthropic API キーも Claude Code CLI もありません。",
+      companion_backend_failed: "コンパニオンのモデルセッションを開始できませんでした。",
       companion_disabled: "このデーモンではコンパニオンが無効です。",
       companion_microphone_unavailable: "マイクを利用できません。",
       companion_session_closed: "コンパニオンのセッションは終了しています。",

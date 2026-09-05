@@ -160,14 +160,14 @@ describe("companion session lifecycle", () => {
   it("reports the daemon's refusal instead of opening the mic", async () => {
     const engine = createFakeEngine();
     const adapter = createFakeAdapter({
-      start: { accepted: false, reasonCode: "companion_key_missing", retryable: false },
+      start: { accepted: false, reasonCode: "companion_backend_missing", retryable: false },
     });
     const { sink, events } = createRecordingSink();
     const runtime = createCompanionRuntime({ engine, sink });
 
     await runtime.start(adapter);
 
-    expect(events).toEqual(["sessionFailed:companion_key_missing:false"]);
+    expect(events).toEqual(["sessionFailed:companion_backend_missing:false"]);
     expect(engine.captureStarted).toBe(false);
     expect(runtime.isActive()).toBe(false);
   });

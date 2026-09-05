@@ -1883,7 +1883,8 @@ export const ru: TranslationResources = {
     },
     reason: {
       unknown: "Демон не сообщил причину.",
-      companion_key_missing: "На этом демоне не настроен ключ API Anthropic.",
+      companion_backend_missing: "На этом демоне нет ни ключа API Anthropic, ни CLI Claude Code.",
+      companion_backend_failed: "Не удалось запустить сеанс модели Companion.",
       companion_disabled: "Компаньон отключён на этом демоне.",
       companion_microphone_unavailable: "Микрофон недоступен.",
       companion_session_closed: "Сессия Компаньона закрыта.",

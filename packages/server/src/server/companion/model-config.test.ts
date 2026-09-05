@@ -1,22 +1,49 @@
 import { describe, expect, test } from "vitest";
 
 import { PersistedConfigSchema } from "../persisted-config.js";
-import { DEFAULT_COMPANION_MODEL, resolveCompanionModelConfig } from "./anthropic-config.js";
+import { DEFAULT_COMPANION_MODEL, resolveCompanionModelConfig } from "./model-config.js";
 
-function resolve(env: NodeJS.ProcessEnv, persistedInput: unknown) {
+function resolve(env: NodeJS.ProcessEnv, persistedInput: unknown, claudeCliAvailable = false) {
   return resolveCompanionModelConfig({
     env,
     persisted: PersistedConfigSchema.parse(persistedInput),
+    claudeCliAvailable,
   });
 }
 
 describe("resolveCompanionModelConfig", () => {
-  test("is unavailable with a key-missing reason when no key resolves", () => {
+  test("is unavailable only when there is neither a key nor the Claude Code CLI", () => {
     expect(resolve({}, {})).toEqual({
       status: "unavailable",
-      reasonCode: "companion_key_missing",
+      reasonCode: "companion_backend_missing",
       message:
-        "The Companion needs an Anthropic API key. Set providers.anthropic.apiKey or ANTHROPIC_API_KEY.",
+        "The Companion needs an Anthropic API key or the Claude Code CLI. Set providers.anthropic.apiKey or ANTHROPIC_API_KEY, or install and sign in to Claude Code.",
+    });
+  });
+
+  test("falls back to the CLI backend when no key resolves but Claude Code is installed", () => {
+    expect(resolve({}, {}, true)).toEqual({
+      status: "available",
+      backend: "cli",
+      model: DEFAULT_COMPANION_MODEL,
+    });
+  });
+
+  test("prefers the faster API backend when a key resolves and the CLI is also there", () => {
+    expect(resolve({ ANTHROPIC_API_KEY: "env-key" }, {}, true)).toEqual({
+      status: "available",
+      backend: "api",
+      apiKey: "env-key",
+      baseUrl: null,
+      model: DEFAULT_COMPANION_MODEL,
+    });
+  });
+
+  test("the CLI backend still takes the configured model override", () => {
+    expect(resolve({ PASEO_COMPANION_MODEL: "env-model" }, {}, true)).toEqual({
+      status: "available",
+      backend: "cli",
+      model: "env-model",
     });
   });
 
@@ -27,6 +54,7 @@ describe("resolveCompanionModelConfig", () => {
     );
     expect(resolved).toEqual({
       status: "available",
+      backend: "api",
       apiKey: "config-key",
       baseUrl: null,
       model: DEFAULT_COMPANION_MODEL,
@@ -38,6 +66,7 @@ describe("resolveCompanionModelConfig", () => {
       resolve({ ANTHROPIC_API_KEY: "env-key", ANTHROPIC_BASE_URL: "https://proxy.test" }, {}),
     ).toEqual({
       status: "available",
+      backend: "api",
       apiKey: "env-key",
       baseUrl: "https://proxy.test",
       model: DEFAULT_COMPANION_MODEL,
@@ -52,6 +81,7 @@ describe("resolveCompanionModelConfig", () => {
       ),
     ).toEqual({
       status: "available",
+      backend: "api",
       apiKey: "config-key",
       baseUrl: "https://config.test",
       model: DEFAULT_COMPANION_MODEL,

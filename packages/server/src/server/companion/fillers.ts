@@ -2,6 +2,7 @@ import type { Readable } from "node:stream";
 import type { Logger } from "pino";
 
 import { toCacheEntry } from "../notifications/spoken-alerts.js";
+import type { CompanionBackendKind } from "./backend.js";
 import type { TtsCache } from "../notifications/tts-cache.js";
 import type { TextToSpeechProvider } from "../speech/speech-provider.js";
 
@@ -19,8 +20,17 @@ export const COMPANION_FILLERS = [
   "hold on",
 ] as const;
 
-/** How long after end-of-speech a silence stops being a pause and starts being a bug. */
-export const COMPANION_STALL_DELAY_MS = 700;
+/**
+ * How long after end-of-speech a silence stops being a pause and starts being a
+ * bug. Backend-dependent, because the two paths are a second apart: the CLI's
+ * routine warm turn puts first audio around 1.9 s, so at the API's 700 ms it
+ * would fill before every ordinary answer and the filler would stop meaning
+ * "this one is taking a while".
+ */
+export const COMPANION_STALL_DELAY_MS: Record<CompanionBackendKind, number> = {
+  api: 700,
+  cli: 2500,
+};
 
 const CACHE_ID_PREFIX = "companion-filler:";
 
@@ -127,13 +137,12 @@ export interface CompanionStallGuard {
 export interface CompanionStallGuardOptions {
   scheduler: CompanionScheduler;
   onStall: () => void;
-  delayMs?: number;
+  delayMs: number;
 }
 
 export function createCompanionStallGuard(
   options: CompanionStallGuardOptions,
 ): CompanionStallGuard {
-  const delayMs = options.delayMs ?? COMPANION_STALL_DELAY_MS;
   let cancelPending: (() => void) | null = null;
 
   function cancel(): void {
@@ -144,7 +153,7 @@ export function createCompanionStallGuard(
   return {
     arm() {
       cancel();
-      cancelPending = options.scheduler.schedule(delayMs, () => {
+      cancelPending = options.scheduler.schedule(options.delayMs, () => {
         cancelPending = null;
         options.onStall();
       });

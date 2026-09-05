@@ -66,9 +66,8 @@ import type { SpokenAlertService } from "./notifications/spoken-alerts.js";
 import type { ScriptHealthState } from "./script-health-monitor.js";
 import type { ServiceProxySubsystem } from "./service-proxy.js";
 import type { WorkspaceScriptRuntimeStore } from "./workspace-script-runtime-store.js";
-import { resolveCompanionCapability } from "./companion/capability.js";
+import { COMPANION_DISABLED_MESSAGE } from "./companion/capability.js";
 import type { CompanionRuntime } from "./companion/session.js";
-import { loadPersistedConfig } from "./persisted-config.js";
 import type { SpeechReadinessSnapshot, SpeechService } from "./speech/speech-runtime.js";
 import type { VoiceCallerContext, VoiceSpeakHandler } from "./voice-types.js";
 import {
@@ -549,6 +548,15 @@ function requireWebSocketServices(params: {
 /**
  * WebSocket server that only accepts sockets + parses/forwards messages to the session layer.
  */
+/**
+ * Resolving the Companion's capability needs an async probe for the Claude Code
+ * CLI, so bootstrap does it once and the runtime carries the answer. A daemon
+ * built without a Companion runtime has no Companion to advertise.
+ */
+function toCompanionCapability(companion: CompanionRuntime | undefined): ServerCapabilityState {
+  return companion?.capability ?? { enabled: false, reason: COMPANION_DISABLED_MESSAGE };
+}
+
 export class VoiceAssistantWebSocketServer {
   private readonly logger: pino.Logger;
   private readonly wss: WebSocketServer;
@@ -724,12 +732,7 @@ export class VoiceAssistantWebSocketServer {
       throw new Error("providerSnapshotManager is required");
     }
     this.providerSnapshotManager = providerSnapshotManager;
-    // `features.companion.*` and `providers.anthropic.*` are not reloadable, so
-    // the capability is resolved once from the config the daemon started with.
-    this.companionCapability = resolveCompanionCapability({
-      env: process.env,
-      persisted: loadPersistedConfig(paseoHome, this.logger),
-    });
+    this.companionCapability = toCompanionCapability(companion);
     this.serverCapabilities = buildServerCapabilities({
       readiness: this.speech?.getReadiness() ?? null,
       companion: this.companionCapability,

@@ -17,7 +17,8 @@ import type {
   TurnDetectionProvider,
   TurnDetectionSession,
 } from "../speech/turn-detection-provider.js";
-import { COMPANION_KEY_MISSING_REASON_CODE } from "./anthropic-config.js";
+import { createCompanionApiBackend } from "./backends/api.js";
+import { COMPANION_BACKEND_MISSING_REASON_CODE } from "./model-config.js";
 import {
   COMPANION_STALL_DELAY_MS,
   type CompanionFillerBank,
@@ -190,7 +191,7 @@ afterEach(async () => {
 
 interface HarnessOptions {
   turns?: ScriptedTurn[];
-  apiKeyMissing?: boolean;
+  backendMissing?: boolean;
   speechAvailable?: boolean;
   /** Off when a test needs playback to stay open while it interrupts. */
   autoAck?: boolean;
@@ -216,18 +217,29 @@ function createHarness(options: HarnessOptions = {}) {
 
   const runtime: CompanionRuntime = {
     capability: { enabled: true, reason: "" },
-    modelConfig: options.apiKeyMissing
+    modelConfig: options.backendMissing
       ? {
           status: "unavailable",
-          reasonCode: COMPANION_KEY_MISSING_REASON_CODE,
-          message: "no key",
+          reasonCode: COMPANION_BACKEND_MISSING_REASON_CODE,
+          message: "no backend",
         }
-      : { status: "available", apiKey: "sk-test", baseUrl: null, model: COMPANION_MODEL },
+      : {
+          status: "available",
+          backend: "api",
+          apiKey: "sk-test",
+          baseUrl: null,
+          model: COMPANION_MODEL,
+        },
     notebook: new CompanionNotebookStore({ filePath: companionNotebookPath(home) }),
     fillers,
     createTools: () => [],
     runDeferredJob: async () => "done",
-    createModelClient: () => createScriptedClient(options.turns ?? []),
+    createBackend: ({ tools }) =>
+      createCompanionApiBackend({
+        client: createScriptedClient(options.turns ?? []),
+        tools,
+        model: COMPANION_MODEL,
+      }),
   };
 
   const session = new CompanionSession({
@@ -275,14 +287,14 @@ function createHarness(options: HarnessOptions = {}) {
 
 describe("CompanionSession start", () => {
   it("refuses with the key reason code and never opens a microphone without an API key", async () => {
-    const harness = createHarness({ apiKeyMissing: true });
+    const harness = createHarness({ backendMissing: true });
 
     await harness.start();
 
     expect(harness.of("companion.session.start.response")[0].payload).toEqual({
       requestId: "r1",
       accepted: false,
-      reasonCode: COMPANION_KEY_MISSING_REASON_CODE,
+      reasonCode: COMPANION_BACKEND_MISSING_REASON_CODE,
       retryable: false,
     });
     expect(harness.sttSessions).toHaveLength(0);
@@ -353,7 +365,7 @@ describe("CompanionSession turns", () => {
 
     const turn = harness.typed("what is everyone up to");
     await settle();
-    harness.scheduler.advance(COMPANION_STALL_DELAY_MS);
+    harness.scheduler.advance(COMPANION_STALL_DELAY_MS.api);
     await settle();
 
     expect(harness.fillers.taken).toEqual(["one sec"]);
@@ -371,7 +383,7 @@ describe("CompanionSession turns", () => {
     await harness.start();
 
     await harness.typed("what is everyone up to");
-    harness.scheduler.advance(COMPANION_STALL_DELAY_MS * 10);
+    harness.scheduler.advance(COMPANION_STALL_DELAY_MS.api * 10);
     await settle();
 
     expect(harness.fillers.taken).toEqual([]);

@@ -128,13 +128,34 @@ describe("createCompanionFillerBank", () => {
 });
 
 describe("createCompanionStallGuard", () => {
+  it("waits far longer on the CLI backend, whose routine turn is already a second slower", () => {
+    const scheduler = createManualScheduler();
+    let stalls = 0;
+    const guard = createCompanionStallGuard({
+      scheduler,
+      onStall: () => (stalls += 1),
+      delayMs: COMPANION_STALL_DELAY_MS.cli,
+    });
+
+    guard.arm();
+    scheduler.advance(COMPANION_STALL_DELAY_MS.api);
+    expect(stalls).toBe(0);
+
+    scheduler.advance(COMPANION_STALL_DELAY_MS.cli - COMPANION_STALL_DELAY_MS.api);
+    expect(stalls).toBe(1);
+  });
+
   it("speaks once the silence outlasts the stall delay", () => {
     const scheduler = createManualScheduler();
     let stalls = 0;
-    const guard = createCompanionStallGuard({ scheduler, onStall: () => (stalls += 1) });
+    const guard = createCompanionStallGuard({
+      scheduler,
+      onStall: () => (stalls += 1),
+      delayMs: COMPANION_STALL_DELAY_MS.api,
+    });
 
     guard.arm();
-    scheduler.advance(COMPANION_STALL_DELAY_MS - 1);
+    scheduler.advance(COMPANION_STALL_DELAY_MS.api - 1);
     expect(stalls).toBe(0);
 
     scheduler.advance(1);
@@ -144,7 +165,11 @@ describe("createCompanionStallGuard", () => {
   it("stays quiet when real audio is queued before the delay elapses", () => {
     const scheduler = createManualScheduler();
     let stalls = 0;
-    const guard = createCompanionStallGuard({ scheduler, onStall: () => (stalls += 1) });
+    const guard = createCompanionStallGuard({
+      scheduler,
+      onStall: () => (stalls += 1),
+      delayMs: COMPANION_STALL_DELAY_MS.api,
+    });
 
     guard.arm();
     scheduler.advance(400);
@@ -158,7 +183,11 @@ describe("createCompanionStallGuard", () => {
   it("replaces the pending guard when a new turn re-arms it", () => {
     const scheduler = createManualScheduler();
     let stalls = 0;
-    const guard = createCompanionStallGuard({ scheduler, onStall: () => (stalls += 1) });
+    const guard = createCompanionStallGuard({
+      scheduler,
+      onStall: () => (stalls += 1),
+      delayMs: COMPANION_STALL_DELAY_MS.api,
+    });
 
     guard.arm();
     scheduler.advance(400);
@@ -166,7 +195,7 @@ describe("createCompanionStallGuard", () => {
     scheduler.advance(400);
     expect(stalls).toBe(0);
 
-    scheduler.advance(COMPANION_STALL_DELAY_MS);
+    scheduler.advance(COMPANION_STALL_DELAY_MS.api);
     expect(stalls).toBe(1);
   });
 });

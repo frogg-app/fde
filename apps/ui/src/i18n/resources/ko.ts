@@ -1863,7 +1863,8 @@ export const ko: TranslationResources = {
     },
     reason: {
       unknown: "데몬이 이유를 알려주지 않았습니다.",
-      companion_key_missing: "이 데몬에 Anthropic API 키가 설정되어 있지 않습니다.",
+      companion_backend_missing: "이 데몬에는 Anthropic API 키도 Claude Code CLI도 없습니다.",
+      companion_backend_failed: "컴패니언의 모델 세션을 시작하지 못했습니다.",
       companion_disabled: "이 데몬에서 컴패니언이 꺼져 있습니다.",
       companion_microphone_unavailable: "마이크를 사용할 수 없습니다.",
       companion_session_closed: "컴패니언 세션이 닫혔습니다.",

@@ -1903,7 +1903,8 @@ export const fr: TranslationResources = {
     },
     reason: {
       unknown: "Le démon n'a pas indiqué pourquoi.",
-      companion_key_missing: "Aucune clé d'API Anthropic n'est configurée sur ce démon.",
+      companion_backend_missing: "Ce démon n'a ni clé d'API Anthropic ni CLI Claude Code.",
+      companion_backend_failed: "La session de modèle du Companion n'a pas pu démarrer.",
       companion_disabled: "Le Compagnon est désactivé sur ce démon.",
       companion_microphone_unavailable: "Le microphone n'est pas disponible.",
       companion_session_closed: "La session du Compagnon est fermée.",

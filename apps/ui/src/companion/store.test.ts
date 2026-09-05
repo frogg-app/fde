@@ -156,11 +156,11 @@ describe("companion session failure", () => {
   it("keeps an actionable failure until the user dismisses it", () => {
     store().open();
     store().sessionStarting();
-    store().sessionFailed({ reasonCode: "companion_key_missing", retryable: false });
+    store().sessionFailed({ reasonCode: "companion_backend_missing", retryable: false });
 
     expect(store().session).toEqual({
       status: "failed",
-      reasonCode: "companion_key_missing",
+      reasonCode: "companion_backend_missing",
       retryable: false,
     });
     expect(micState()).toBe("idle");

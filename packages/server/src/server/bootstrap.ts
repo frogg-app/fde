@@ -135,12 +135,13 @@ import {
 } from "./notifications/spoken-alerts.js";
 import { createTtsCache } from "./notifications/tts-cache.js";
 import { resolveCompanionCapability } from "./companion/capability.js";
-import { resolveCompanionModelConfig } from "./companion/anthropic-config.js";
+import { isClaudeCliAvailable, resolveCompanionModelConfig } from "./companion/model-config.js";
 import { createCompanionFillerBank } from "./companion/fillers.js";
 import { CompanionNotebookStore, companionNotebookPath } from "./companion/store.js";
 import { createCompanionTools } from "./companion/tools/index.js";
 import { createCompanionSubagentRunner } from "./companion/tools/thinking.js";
-import { createCompanionModelClient } from "./companion/orchestrator.js";
+import { createCompanionApiBackend, createCompanionModelClient } from "./companion/backends/api.js";
+import { createCompanionCliBackend } from "./companion/backends/cli.js";
 import type { CompanionRuntime } from "./companion/session.js";
 import { AgentManager } from "./agent/agent-manager.js";
 import { AgentStorage } from "./agent/agent-storage.js";
@@ -1724,12 +1725,30 @@ export async function createPaseoDaemon(
     logger,
   });
   const companionPersisted = loadPersistedConfig(config.paseoHome, logger);
+  const claudeCliAvailable = await isClaudeCliAvailable();
+  const companionModelInputs = {
+    env: process.env,
+    persisted: companionPersisted,
+    claudeCliAvailable,
+  };
   const companion: CompanionRuntime = {
-    capability: resolveCompanionCapability({ env: process.env, persisted: companionPersisted }),
-    modelConfig: resolveCompanionModelConfig({ env: process.env, persisted: companionPersisted }),
+    capability: resolveCompanionCapability(companionModelInputs),
+    modelConfig: resolveCompanionModelConfig(companionModelInputs),
     notebook: new CompanionNotebookStore({ filePath: companionNotebookPath(config.paseoHome) }),
     fillers: companionFillers,
-    createModelClient: createCompanionModelClient,
+    createBackend: ({ config: modelConfig, tools, logger: sessionLogger }) =>
+      modelConfig.backend === "api"
+        ? createCompanionApiBackend({
+            client: createCompanionModelClient(modelConfig),
+            tools,
+            model: modelConfig.model,
+          })
+        : createCompanionCliBackend({
+            model: modelConfig.model,
+            tools,
+            cwd: config.paseoHome,
+            logger: sessionLogger,
+          }),
     createTools: ({ deferredJobs, logger: sessionLogger }) =>
       createCompanionTools({
         agentManager,

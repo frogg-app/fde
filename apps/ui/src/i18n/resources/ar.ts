@@ -1849,7 +1849,8 @@ export const ar: TranslationResources = {
     },
     reason: {
       unknown: "لم يوضّح الخادم السبب.",
-      companion_key_missing: "لا يوجد مفتاح Anthropic API مُهيّأ على هذا الخادم.",
+      companion_backend_missing: "لا يوجد على هذا الخادم مفتاح Anthropic API ولا واجهة Claude Code.",
+      companion_backend_failed: "تعذّر بدء جلسة النموذج الخاصة بالرفيق.",
       companion_disabled: "الرفيق معطّل على هذا الخادم.",
       companion_microphone_unavailable: "الميكروفون غير متاح.",
       companion_session_closed: "جلسة الرفيق مغلقة.",

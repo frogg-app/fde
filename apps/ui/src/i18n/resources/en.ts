@@ -1862,7 +1862,8 @@ export const en = {
     },
     reason: {
       unknown: "The daemon did not say why.",
-      companion_key_missing: "No Anthropic API key is configured on this daemon.",
+      companion_backend_missing: "This daemon has no Anthropic API key and no Claude Code CLI.",
+      companion_backend_failed: "The Companion's model session would not start.",
       companion_disabled: "The Companion is turned off on this daemon.",
       companion_microphone_unavailable: "The microphone is unavailable.",
       companion_session_closed: "The Companion session is closed.",

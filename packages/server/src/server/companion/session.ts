@@ -13,10 +13,13 @@ import {
   createVoiceTurnController,
   type VoiceTurnController,
 } from "../session/voice/voice-turn-controller.js";
+import type { CompanionBackend } from "./backend.js";
 import {
-  COMPANION_KEY_MISSING_REASON_CODE,
+  COMPANION_BACKEND_MISSING_REASON_CODE,
+  type CompanionApiModelConfig,
+  type CompanionCliModelConfig,
   type CompanionModelConfig,
-} from "./anthropic-config.js";
+} from "./model-config.js";
 import {
   CompanionDeferredJobs,
   describeSettledJob,
@@ -24,6 +27,7 @@ import {
   type CompanionDeferredJobRunner,
 } from "./deferred-jobs.js";
 import {
+  COMPANION_STALL_DELAY_MS,
   createCompanionStallGuard,
   systemScheduler,
   type CompanionFillerBank,
@@ -31,12 +35,7 @@ import {
   type CompanionStallGuard,
 } from "./fillers.js";
 import type { CompanionNotebook } from "./notebook.js";
-import {
-  CompanionOrchestrator,
-  CompanionTurnError,
-  type CompanionModelClient,
-  type CompanionModelSettings,
-} from "./orchestrator.js";
+import { CompanionOrchestrator, CompanionTurnError } from "./orchestrator.js";
 import {
   createCompanionSpeechStream,
   type CompanionSpeechSink,
@@ -48,6 +47,7 @@ import type { CompanionTool } from "./tools/index.js";
 /** Why a start was refused. The app maps these to copy; the daemon fails closed. */
 export const COMPANION_DISABLED_REASON_CODE = "companion_disabled";
 export const COMPANION_SPEECH_UNAVAILABLE_REASON_CODE = "companion_speech_unavailable";
+export const COMPANION_BACKEND_FAILED_REASON_CODE = "companion_backend_failed";
 
 /** What the Companion says when its own model refuses the turn. */
 const TURN_FAILURE_LINES: Record<CompanionTurnError["reason"], string> = {
@@ -66,6 +66,14 @@ export interface CompanionToolFactoryInput {
   logger: Logger;
 }
 
+export type CompanionAvailableModelConfig = CompanionApiModelConfig | CompanionCliModelConfig;
+
+export interface CompanionBackendFactoryInput {
+  config: CompanionAvailableModelConfig;
+  tools: readonly CompanionTool[];
+  logger: Logger;
+}
+
 /**
  * The daemon-scoped half of the Companion, built once in bootstrap. Everything
  * conversational — history, tools, deferred jobs, audio — is per client and
@@ -79,7 +87,7 @@ export interface CompanionRuntime {
   fillers: CompanionFillerBank;
   createTools(input: CompanionToolFactoryInput): CompanionTool[];
   runDeferredJob: CompanionDeferredJobRunner;
-  createModelClient(settings: CompanionModelSettings): CompanionModelClient;
+  createBackend(input: CompanionBackendFactoryInput): CompanionBackend;
 }
 
 export interface CompanionSessionOptions {
@@ -120,6 +128,14 @@ export function emitCompanionStartResponse(
 }
 
 /**
+ * An unavailable Companion never arms the guard, so its threshold is moot; it
+ * takes the API path's so the value is always a real one.
+ */
+function stallBackendKind(config: CompanionModelConfig): "api" | "cli" {
+  return config.status === "available" && config.backend === "cli" ? "cli" : "api";
+}
+
+/**
  * The store keeps notes; the wire carries entries. Note status is a subset of
  * entry status, so the mapping is a rename, not a translation.
  */
@@ -149,6 +165,7 @@ export class CompanionSession {
   private started = false;
   private turnController: VoiceTurnController | null = null;
   private orchestrator: CompanionOrchestrator | null = null;
+  private backend: CompanionBackend | null = null;
   private unsubscribeJobs: (() => void) | null = null;
 
   private turnAbort = new AbortController();
@@ -168,6 +185,7 @@ export class CompanionSession {
       onStall: () => {
         void this.speakFiller();
       },
+      delayMs: COMPANION_STALL_DELAY_MS[stallBackendKind(options.runtime.modelConfig)],
     });
   }
 
@@ -199,12 +217,29 @@ export class CompanionSession {
       run: this.runtime.runDeferredJob,
       logger: this.logger,
     });
+    const tools = this.runtime.createTools({ deferredJobs, logger: this.logger });
+    const backend = this.runtime.createBackend({ config: model, tools, logger: this.logger });
+
+    // The CLI backend spends seconds spawning a process and initialising its
+    // harness. Opening the session pays that, so no conversational turn does.
+    try {
+      await backend.warm();
+    } catch (error) {
+      this.logger.error({ err: error }, "Companion backend failed to warm");
+      await backend.close();
+      this.emitStartResponse(msg.requestId, {
+        reasonCode: COMPANION_BACKEND_FAILED_REASON_CODE,
+        retryable: true,
+      });
+      return;
+    }
+
     this.unsubscribeJobs = deferredJobs.subscribe((job) => this.handleDeferredJob(job));
+    this.backend = backend;
     this.orchestrator = new CompanionOrchestrator({
-      client: this.runtime.createModelClient(model),
-      tools: this.runtime.createTools({ deferredJobs, logger: this.logger }),
+      backend,
+      tools,
       notebook: this.runtime.notebook,
-      model: model.model,
     });
 
     await this.startTurnController();
@@ -269,7 +304,7 @@ export class CompanionSession {
 
   private refuseStart(): CompanionStartRefusal | null {
     if (this.runtime.modelConfig.status === "unavailable") {
-      return { reasonCode: COMPANION_KEY_MISSING_REASON_CODE, retryable: false };
+      return { reasonCode: COMPANION_BACKEND_MISSING_REASON_CODE, retryable: false };
     }
     if (!this.runtime.capability.enabled) {
       return { reasonCode: COMPANION_DISABLED_REASON_CODE, retryable: false };
@@ -514,6 +549,10 @@ export class CompanionSession {
     this.unsubscribeJobs = null;
     this.orchestrator = null;
     this.started = false;
+
+    const backend = this.backend;
+    this.backend = null;
+    await backend?.close();
 
     const controller = this.turnController;
     this.turnController = null;

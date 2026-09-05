@@ -1824,7 +1824,8 @@ export const zhCN: TranslationResources = {
     },
     reason: {
       unknown: "守护进程未说明原因。",
-      companion_key_missing: "此守护进程未配置 Anthropic API 密钥。",
+      companion_backend_missing: "此守护进程既没有 Anthropic API 密钥，也没有 Claude Code CLI。",
+      companion_backend_failed: "无法启动伴侣的模型会话。",
       companion_disabled: "此守护进程已关闭伙伴。",
       companion_microphone_unavailable: "麦克风不可用。",
       companion_session_closed: "伙伴会话已关闭。",
