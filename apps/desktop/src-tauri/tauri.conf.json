@@ -44,15 +44,11 @@
   "plugins": {
     "updater": {
       "pubkey": "REPLACE_WITH_MINISIGN_PUBLIC_KEY",
-      "endpoints": [
-        "https://github.com/frogg-app/fde/releases/latest/download/latest.json"
-      ]
+      "endpoints": ["https://github.com/frogg-app/fde/releases/latest/download/latest.json"]
     },
     "deep-link": {
       "desktop": {
-        "schemes": [
-          "paseo"
-        ]
+        "schemes": ["paseo"]
       }
     }
   }
