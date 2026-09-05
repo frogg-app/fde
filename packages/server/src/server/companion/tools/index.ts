@@ -87,7 +87,7 @@ export interface CompanionToolDependencies
   notebook: CompanionNotebookStore;
 }
 
-function createNotebookTool(notebook: CompanionNotebookStore): CompanionTool {
+export function createCompanionNotebookTool(notebook: CompanionNotebookStore): CompanionTool {
   return defineCompanionTool({
     name: "note",
     description:
@@ -110,7 +110,7 @@ function createNotebookTool(notebook: CompanionNotebookStore): CompanionTool {
 export function createCompanionTools(deps: CompanionToolDependencies): CompanionTool[] {
   return [
     ...createCompanionAgentTools(deps),
-    createNotebookTool(deps.notebook),
+    createCompanionNotebookTool(deps.notebook),
     ...createCompanionThinkingTools(deps),
   ];
 }

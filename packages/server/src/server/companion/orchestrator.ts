@@ -1,4 +1,9 @@
-import Anthropic from "@anthropic-ai/sdk";
+import Anthropic, {
+  APIConnectionError,
+  APIError,
+  AuthenticationError,
+  RateLimitError,
+} from "@anthropic-ai/sdk";
 
 import { COMPANION_SYSTEM_PROMPT } from "./system-prompt.js";
 import type { CompanionNotebookStore } from "./store.js";
@@ -75,16 +80,16 @@ export class CompanionTurnError extends Error {
 }
 
 function toTurnError(error: unknown): CompanionTurnError {
-  if (error instanceof Anthropic.AuthenticationError) {
+  if (error instanceof AuthenticationError) {
     return new CompanionTurnError("authentication", error.message, error.status);
   }
-  if (error instanceof Anthropic.RateLimitError) {
+  if (error instanceof RateLimitError) {
     return new CompanionTurnError("rate_limit", error.message, error.status);
   }
-  if (error instanceof Anthropic.APIConnectionError) {
+  if (error instanceof APIConnectionError) {
     return new CompanionTurnError("connection", error.message, null);
   }
-  if (error instanceof Anthropic.APIError) {
+  if (error instanceof APIError) {
     return new CompanionTurnError("api", error.message, error.status ?? null);
   }
   throw error;
