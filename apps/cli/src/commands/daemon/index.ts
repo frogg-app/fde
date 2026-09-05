@@ -19,29 +19,34 @@ function resolveHostnamesOption(hostnames: unknown, allowedHosts: unknown): stri
   return undefined;
 }
 
-export function createDaemonCommand(): Command {
-  const daemon = new Command("daemon").description("Manage the FDE daemon");
-
-  daemon.addCommand(startCommand());
-  daemon.addCommand(pairCommand());
-  daemon.addCommand(selfUpdateCommand());
+/**
+ * Daemon lifecycle, attached directly to the root.
+ *
+ * `fde` is the daemon's own binary, so `fde daemon start` said the same thing
+ * twice. These are the verbs you reach for most and they now sit at the top
+ * level; the pairing and access verbs live under `fde auth` instead.
+ */
+export function addDaemonLifecycleCommands(program: Command): Command {
+  program.addCommand(startCommand());
+  // Renamed from `self-update`: there is nothing else it could update.
+  program.addCommand(selfUpdateCommand().name("update"));
 
   addJsonAndDaemonHostOptions(
-    daemon.command("reload").description("Reload config.json without restarting the daemon"),
+    program.command("reload").description("Reload config.json without restarting the daemon"),
   ).action(withOutput(runDaemonReloadCommand));
 
-  addJsonOption(daemon.command("status").description("Show local daemon status"))
+  addJsonOption(program.command("status").description("Show local daemon status"))
     .option("--home <path>", "FDE home directory (default: ~/.fde)")
     .action(withOutput(runStatusCommand));
 
-  addJsonOption(daemon.command("stop").description("Stop the local daemon"))
+  addJsonOption(program.command("stop").description("Stop the local daemon"))
     .option("--home <path>", "FDE home directory (default: ~/.fde)")
     .option("--timeout <seconds>", "Wait timeout before failing (default: 15)")
     .option("--force", "Send SIGKILL if graceful stop times out")
     .option("--kill-timeout <seconds>", "Wait after SIGKILL before failing (default: 3)")
     .action(withOutput(runStopCommand));
 
-  addJsonOption(daemon.command("restart").description("Restart the local daemon"))
+  addJsonOption(program.command("restart").description("Restart the local daemon"))
     .option("--home <path>", "FDE home directory (default: ~/.fde)")
     .option("--timeout <seconds>", "Wait timeout before force step (default: 15)")
     .option("--force", "Send SIGKILL if graceful stop times out")
@@ -75,23 +80,7 @@ export function createDaemonCommand(): Command {
     );
 
   addJsonOption(
-    daemon
-      .command("claim-status")
-      .description("Show whether a device has paired with (claimed) this daemon"),
-  )
-    .option("--home <path>", "FDE home directory (default: ~/.fde)")
-    .action(withOutput(runClaimStatusCommand));
-
-  addJsonOption(
-    daemon
-      .command("reset-claim")
-      .description("Forget all paired devices so the next LAN visitor sees the pairing page"),
-  )
-    .option("--home <path>", "FDE home directory (default: ~/.fde)")
-    .action(withOutput(runResetClaimCommand));
-
-  addJsonOption(
-    daemon
+    program
       .command("install-service")
       .description("Start the FDE daemon automatically when you log in"),
   )
@@ -100,13 +89,45 @@ export function createDaemonCommand(): Command {
     .action(withOutput(runInstallServiceCommand));
 
   addJsonOption(
-    daemon.command("uninstall-service").description("Stop starting the FDE daemon when you log in"),
+    program
+      .command("uninstall-service")
+      .description("Stop starting the FDE daemon when you log in"),
   )
     .option("--home <path>", "FDE home directory (default: ~/.fde)")
     .action(withOutput(runUninstallServiceCommand));
 
+  return program;
+}
+
+/**
+ * Pairing and access control. Separated from lifecycle because these decide
+ * *who may connect*, which is a different question from whether the daemon is
+ * running - and because flattening all thirteen daemon commands to the root
+ * would just move the bloat.
+ */
+export function createAuthCommand(): Command {
+  const auth = new Command("auth").description("Manage pairing and daemon access");
+
+  auth.addCommand(pairCommand());
+
   addJsonOption(
-    daemon
+    auth
+      .command("claim-status")
+      .description("Show whether a device has paired with (claimed) this daemon"),
+  )
+    .option("--home <path>", "FDE home directory (default: ~/.fde)")
+    .action(withOutput(runClaimStatusCommand));
+
+  addJsonOption(
+    auth
+      .command("reset-claim")
+      .description("Forget all paired devices so the next LAN visitor sees the pairing page"),
+  )
+    .option("--home <path>", "FDE home directory (default: ~/.fde)")
+    .action(withOutput(runResetClaimCommand));
+
+  addJsonOption(
+    auth
       .command("set-password")
       .description("Prompt for and save a hashed daemon password to config.json"),
   )
@@ -114,7 +135,7 @@ export function createDaemonCommand(): Command {
     .action(withOutput(runSetPasswordCommand));
 
   addJsonOption(
-    daemon
+    auth
       .command("trust-lan")
       .description(
         "on: private-network clients connect without pairing or a password (default); off: they must pair",
@@ -124,5 +145,5 @@ export function createDaemonCommand(): Command {
     .option("--home <path>", "FDE home directory (default: ~/.fde)")
     .action(withOutput(runTrustLanCommand));
 
-  return daemon;
+  return auth;
 }
