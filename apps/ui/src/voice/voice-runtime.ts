@@ -2,7 +2,9 @@ import { Buffer } from "buffer";
 import type { AgentStreamEventPayload, SessionOutboundMessage } from "@fde/protocol/messages";
 import { resolveVoiceUnavailableMessage } from "@/utils/server-info-capabilities";
 import type { DaemonServerInfo } from "@/stores/session-store";
-import type { AudioEngine } from "@/voice/audio-engine-types";
+import type { AudioEngine, AudioPlaybackSource } from "@/voice/audio-engine-types";
+import { decodeAudioChunk, toAudioPlaybackSource } from "@/voice/playback-source";
+import { stepDisplayVolume } from "@/voice/volume-smoothing";
 import {
   THINKING_TONE_NATIVE_PCM_BASE64,
   THINKING_TONE_NATIVE_PCM_DURATION_MS,
@@ -11,10 +13,6 @@ import {
 const PCM_MIME_TYPE = "audio/pcm;rate=16000;bits=16";
 const KEEP_AWAKE_TAG = "paseo:voice";
 const THINKING_TONE_REPEAT_GAP_MS = 350;
-const DISPLAY_VOLUME_PUBLISH_INTERVAL_MS = 120;
-const DISPLAY_VOLUME_CHANGE_EPSILON = 0.02;
-const DISPLAY_VOLUME_ATTACK = 0.35;
-const DISPLAY_VOLUME_RELEASE = 0.18;
 
 type TurnEventType = Extract<
   AgentStreamEventPayload["type"],
@@ -88,7 +86,7 @@ type AudioOutputPayload = Extract<SessionOutboundMessage, { type: "audio_output"
 interface StreamingPlaybackChunk {
   id: string;
   chunkIndex: number;
-  source: { arrayBuffer(): Promise<ArrayBuffer>; size: number; type: string };
+  source: AudioPlaybackSource;
 }
 
 interface StreamingPlaybackGroup {
@@ -261,28 +259,6 @@ export function createVoiceRuntime(deps: VoiceRuntimeDeps): VoiceRuntime {
       return null;
     }
     return sessions.get(state.snapshot.activeServerId) ?? null;
-  }
-
-  function decodeAudioChunk(base64: string): Uint8Array {
-    return Buffer.from(base64, "base64");
-  }
-
-  function toPlaybackSource(
-    bytes: Uint8Array,
-    format: string,
-  ): { arrayBuffer(): Promise<ArrayBuffer>; size: number; type: string } {
-    let mimeType: string;
-    if (format === "pcm") mimeType = "audio/pcm;rate=24000;bits=16";
-    else if (format === "mp3") mimeType = "audio/mpeg";
-    else mimeType = `audio/${format}`;
-
-    return {
-      size: bytes.byteLength,
-      type: mimeType,
-      async arrayBuffer() {
-        return Uint8Array.from(bytes).buffer;
-      },
-    };
   }
 
   function resetPlaybackState(): void {
@@ -527,25 +503,17 @@ export function createVoiceRuntime(deps: VoiceRuntimeDeps): VoiceRuntime {
   }
 
   function publishDisplayVolume(level: number, nowMs: number): void {
-    const previousVolume = state.telemetry.volume;
-    const smoothing = level >= previousVolume ? DISPLAY_VOLUME_ATTACK : DISPLAY_VOLUME_RELEASE;
-    const nextVolume = Math.max(
-      0,
-      Math.min(1, previousVolume + (level - previousVolume) * smoothing),
-    );
-    const enoughTimeElapsed =
-      nowMs - state.lastDisplayVolumePublishMs >= DISPLAY_VOLUME_PUBLISH_INTERVAL_MS;
-    const enoughChange = Math.abs(nextVolume - previousVolume) >= DISPLAY_VOLUME_CHANGE_EPSILON;
-
-    if (!enoughTimeElapsed && !enoughChange) {
+    const step = stepDisplayVolume({
+      level,
+      previousVolume: state.telemetry.volume,
+      msSinceLastPublish: nowMs - state.lastDisplayVolumePublishMs,
+    });
+    if (!step.shouldPublish) {
       return;
     }
 
     state.lastDisplayVolumePublishMs = nowMs;
-    patchTelemetry((prev) => ({
-      ...prev,
-      volume: Number(nextVolume.toFixed(3)),
-    }));
+    patchTelemetry((prev) => ({ ...prev, volume: step.volume }));
   }
 
   async function performLocalStop(): Promise<void> {
@@ -700,7 +668,7 @@ export function createVoiceRuntime(deps: VoiceRuntimeDeps): VoiceRuntime {
       group.chunks.set(chunkIndex, {
         id: payload.id,
         chunkIndex,
-        source: toPlaybackSource(decoded, payload.format),
+        source: toAudioPlaybackSource(decoded, payload.format),
       });
       if (payload.isLastChunk) {
         group.finalChunkIndex = chunkIndex;
