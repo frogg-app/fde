@@ -17,6 +17,12 @@ on:
         description: "Existing tag to build and publish (for example v0.1.5)"
         required: true
         type: string
+      only:
+        description: "Build one job group instead of the whole release"
+        required: false
+        default: all
+        type: choice
+        options: [all, android]
 
 permissions:
   contents: write
@@ -161,6 +167,7 @@ jobs:
   ui:
     name: web ui export
     needs: meta
+    if: inputs.only != 'android'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -189,6 +196,7 @@ jobs:
   desktop:
     name: desktop ${{ matrix.platform }} ${{ matrix.arch }}
     needs: [meta, ui]
+    if: inputs.only != 'android'
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     strategy:
@@ -332,6 +340,7 @@ jobs:
   daemon-bundle:
     name: daemon bundle ${{ matrix.target }}
     needs: meta
+    if: inputs.only != 'android'
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     strategy:
@@ -407,7 +416,7 @@ jobs:
     name: android apk ${{ matrix.abi }}
     needs: meta
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
@@ -474,6 +483,10 @@ jobs:
           echo "$FDE_ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/fde-release.keystore"
           echo "FDE_ANDROID_KEYSTORE=$RUNNER_TEMP/fde-release.keystore" >> "$GITHUB_ENV"
 
+      # `--serial` (one worker, Gradle heap capped well under the 4 GB
+      # expo-gradle-jvmargs writes into gradle.properties). With `--workers 2`
+      # the 0.1.20 run died with "AAPT2 Daemon #0: Idle daemon unexpectedly
+      # exit": the runner OOM-killed the native aapt2 process mid-build.
       - name: Build release APK
         env:
           FDE_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.FDE_ANDROID_KEYSTORE_PASSWORD }}
@@ -482,7 +495,7 @@ jobs:
         run: >-
           node scripts/release/build-android-apk.mjs
           --abi ${{ matrix.abi }}
-          --workers 2
+          --serial
           --out-dir release-assets
 
       - name: Upload to GitHub release
@@ -512,7 +525,7 @@ jobs:
   updater-manifest:
     name: updater latest.json
     needs: [meta, desktop]
-    if: needs.meta.outputs.signing == 'true'
+    if: inputs.only != 'android' && (needs.meta.outputs.signing == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -562,7 +575,7 @@ jobs:
   docker:
     name: docker image
     needs: meta
-    if: needs.meta.outputs.docker == 'true'
+    if: inputs.only != 'android' && (needs.meta.outputs.docker == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 40
     env:
