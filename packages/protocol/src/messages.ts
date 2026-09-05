@@ -960,6 +960,42 @@ export const AudioPlayedMessageSchema = z.object({
   id: z.string(),
 });
 
+export const CompanionSessionStartRequestSchema = z.object({
+  type: z.literal("companion.session.start.request"),
+  requestId: z.string(),
+});
+
+export const CompanionSessionStopRequestSchema = z.object({
+  type: z.literal("companion.session.stop.request"),
+  requestId: z.string(),
+});
+
+// Streamed microphone audio; there is no per-chunk response, the daemon answers
+// with companion.transcript / companion.audio.output as the turn progresses.
+export const CompanionAudioChunkMessageSchema = z.object({
+  type: z.literal("companion.audio.chunk"),
+  audio: z.string(),
+  format: z.string(),
+  isLast: z.boolean(),
+});
+
+// Playback acknowledgement for one companion.audio.output chunk. No response.
+export const CompanionAudioPlayedMessageSchema = z.object({
+  type: z.literal("companion.audio.played"),
+  id: z.string(),
+});
+
+export const CompanionMessageSendRequestSchema = z.object({
+  type: z.literal("companion.message.send.request"),
+  requestId: z.string(),
+  text: z.string(),
+});
+
+export const CompanionNotebookFetchRequestSchema = z.object({
+  type: z.literal("companion.notebook.fetch.request"),
+  requestId: z.string(),
+});
+
 const AgentDirectoryFilterSchema = z.object({
   labels: z.record(z.string(), z.string()).optional(),
   projectKeys: z.array(z.string()).optional(),
@@ -3088,6 +3124,12 @@ export const HubExecutionControlRequestSchema = z.object({
 export type HubExecutionControlRequest = z.infer<typeof HubExecutionControlRequestSchema>;
 
 export const SessionInboundMessageSchema = z.discriminatedUnion("type", [
+  CompanionSessionStartRequestSchema,
+  CompanionSessionStopRequestSchema,
+  CompanionAudioChunkMessageSchema,
+  CompanionAudioPlayedMessageSchema,
+  CompanionMessageSendRequestSchema,
+  CompanionNotebookFetchRequestSchema,
   HubExecutionAgentCreateRequestSchema,
   HubExecutionAgentValidateRequestSchema,
   HubExecutionControlRequestSchema,
@@ -3349,6 +3391,105 @@ export const VoiceInputStateMessageSchema = z.object({
   }),
 });
 
+export const CompanionSessionStartResponseSchema = z.object({
+  type: z.literal("companion.session.start.response"),
+  payload: z.object({
+    requestId: z.string(),
+    accepted: z.boolean(),
+    reasonCode: z.string().nullable(),
+    retryable: z.boolean(),
+  }),
+});
+
+export const CompanionSessionStopResponseSchema = z.object({
+  type: z.literal("companion.session.stop.response"),
+  payload: z.object({
+    requestId: z.string(),
+    accepted: z.boolean(),
+  }),
+});
+
+export const CompanionAudioOutputMessageSchema = z.object({
+  type: z.literal("companion.audio.output"),
+  payload: z.object({
+    audio: z.string(),
+    format: z.string(),
+    id: z.string(),
+    groupId: z.string(),
+    isLastChunk: z.boolean(),
+  }),
+});
+
+export const CompanionInputStateMessageSchema = z.object({
+  type: z.literal("companion.input.state"),
+  payload: z.object({
+    isSpeaking: z.boolean(),
+  }),
+});
+
+export const CompanionTranscriptMessageSchema = z.object({
+  type: z.literal("companion.transcript"),
+  payload: z.object({
+    text: z.string(),
+    isFinal: z.boolean(),
+  }),
+});
+
+export const CompanionReplyMessageSchema = z.object({
+  type: z.literal("companion.reply"),
+  payload: z.object({
+    text: z.string(),
+    isFinal: z.boolean(),
+  }),
+});
+
+export const CompanionNotebookEntryKindSchema = z.enum(["topic", "task"]);
+
+export const CompanionNotebookEntryStatusSchema = z.enum(["open", "active", "done"]);
+
+export const CompanionNotebookEntrySchema = z.object({
+  id: z.string(),
+  kind: CompanionNotebookEntryKindSchema,
+  text: z.string(),
+  status: CompanionNotebookEntryStatusSchema,
+  agentId: z.string().nullable(),
+  updatedAt: z.string(),
+});
+
+export const CompanionNotebookSchema = z.object({
+  entries: z.array(CompanionNotebookEntrySchema),
+  updatedAt: z.string(),
+});
+
+export const CompanionNotebookFetchResponseSchema = z.object({
+  type: z.literal("companion.notebook.fetch.response"),
+  payload: z.object({
+    requestId: z.string(),
+    notebook: CompanionNotebookSchema,
+  }),
+});
+
+// Unprompted push when the Companion rewrites its notebook mid-conversation.
+// A fetch is answered by companion.notebook.fetch.response instead.
+export const CompanionNotebookUpdateMessageSchema = z.object({
+  type: z.literal("companion.notebook.update"),
+  payload: z.object({
+    notebook: CompanionNotebookSchema,
+  }),
+});
+
+export const CompanionJobStatusSchema = z.enum(["started", "running", "completed", "failed"]);
+
+export const CompanionJobUpdateMessageSchema = z.object({
+  type: z.literal("companion.job.update"),
+  payload: z.object({
+    jobId: z.string(),
+    label: z.string(),
+    status: CompanionJobStatusSchema,
+    summary: z.string().nullable(),
+  }),
+});
+
 export const DictationStreamAckMessageSchema = z.object({
   type: z.literal("dictation_stream_ack"),
   payload: z.object({
@@ -3407,6 +3548,7 @@ export const ServerVoiceCapabilitiesSchema = z.object({
 export const ServerCapabilitiesSchema = z
   .object({
     voice: ServerVoiceCapabilitiesSchema.optional(),
+    companion: ServerCapabilityStateSchema.optional(),
   })
   .passthrough();
 
@@ -6517,6 +6659,15 @@ export const SessionOutboundMessageSchema = z.discriminatedUnion("type", [
   AudioOutputMessageSchema,
   TranscriptionResultMessageSchema,
   VoiceInputStateMessageSchema,
+  CompanionSessionStartResponseSchema,
+  CompanionSessionStopResponseSchema,
+  CompanionAudioOutputMessageSchema,
+  CompanionInputStateMessageSchema,
+  CompanionTranscriptMessageSchema,
+  CompanionReplyMessageSchema,
+  CompanionNotebookFetchResponseSchema,
+  CompanionNotebookUpdateMessageSchema,
+  CompanionJobUpdateMessageSchema,
   DictationStreamAckMessageSchema,
   DictationStreamFinishAcceptedMessageSchema,
   DictationStreamPartialMessageSchema,
@@ -6709,6 +6860,26 @@ export type SessionOutboundMessage = z.infer<typeof SessionOutboundMessageSchema
 export type ActivityLogMessage = z.infer<typeof ActivityLogMessageSchema>;
 export type AssistantChunkMessage = z.infer<typeof AssistantChunkMessageSchema>;
 export type AudioOutputMessage = z.infer<typeof AudioOutputMessageSchema>;
+export type CompanionSessionStartRequest = z.infer<typeof CompanionSessionStartRequestSchema>;
+export type CompanionSessionStopRequest = z.infer<typeof CompanionSessionStopRequestSchema>;
+export type CompanionAudioChunkMessage = z.infer<typeof CompanionAudioChunkMessageSchema>;
+export type CompanionAudioPlayedMessage = z.infer<typeof CompanionAudioPlayedMessageSchema>;
+export type CompanionMessageSendRequest = z.infer<typeof CompanionMessageSendRequestSchema>;
+export type CompanionNotebookFetchRequest = z.infer<typeof CompanionNotebookFetchRequestSchema>;
+export type CompanionSessionStartResponse = z.infer<typeof CompanionSessionStartResponseSchema>;
+export type CompanionSessionStopResponse = z.infer<typeof CompanionSessionStopResponseSchema>;
+export type CompanionAudioOutputMessage = z.infer<typeof CompanionAudioOutputMessageSchema>;
+export type CompanionInputStateMessage = z.infer<typeof CompanionInputStateMessageSchema>;
+export type CompanionTranscriptMessage = z.infer<typeof CompanionTranscriptMessageSchema>;
+export type CompanionReplyMessage = z.infer<typeof CompanionReplyMessageSchema>;
+export type CompanionNotebookEntryKind = z.infer<typeof CompanionNotebookEntryKindSchema>;
+export type CompanionNotebookEntryStatus = z.infer<typeof CompanionNotebookEntryStatusSchema>;
+export type CompanionNotebookEntry = z.infer<typeof CompanionNotebookEntrySchema>;
+export type CompanionNotebook = z.infer<typeof CompanionNotebookSchema>;
+export type CompanionNotebookFetchResponse = z.infer<typeof CompanionNotebookFetchResponseSchema>;
+export type CompanionNotebookUpdateMessage = z.infer<typeof CompanionNotebookUpdateMessageSchema>;
+export type CompanionJobStatus = z.infer<typeof CompanionJobStatusSchema>;
+export type CompanionJobUpdateMessage = z.infer<typeof CompanionJobUpdateMessageSchema>;
 export type TranscriptionResultMessage = z.infer<typeof TranscriptionResultMessageSchema>;
 export type StatusMessage = z.infer<typeof StatusMessageSchema>;
 export type ServerCapabilityState = z.infer<typeof ServerCapabilityStateSchema>;

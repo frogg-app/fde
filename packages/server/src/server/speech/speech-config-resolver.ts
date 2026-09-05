@@ -213,6 +213,38 @@ function resolveVoiceNotificationsEnabled(params: {
   );
 }
 
+/**
+ * The Companion reuses the voice stack's STT/TTS, so it follows the same
+ * precedence as the voice features: the `features.voice` umbrella can turn it
+ * off outright, `PASEO_COMPANION_ENABLED` / `features.companion.enabled` decide
+ * next, and otherwise it tracks the local speech runtime. The Anthropic key is
+ * a separate gate, applied where the capability is advertised.
+ */
+export function resolveCompanionFeatureEnabled(params: {
+  env: NodeJS.ProcessEnv;
+  persisted: PersistedConfig;
+  localRuntimeAvailable: boolean;
+}): boolean {
+  const defaults: VoiceDefaultsInput = {
+    umbrella: parseOptionalBooleanFlag(
+      firstSpeechDefinedValue<string | boolean>([
+        params.env.PASEO_VOICE,
+        params.persisted.features?.voice?.enabled,
+      ]),
+    ),
+    localRuntimeAvailable: params.localRuntimeAvailable,
+  };
+  return resolveVoiceFeatureEnabled(
+    parseOptionalBooleanFlag(
+      firstSpeechDefinedValue<string | boolean>([
+        params.env.PASEO_COMPANION_ENABLED,
+        params.persisted.features?.companion?.enabled,
+      ]),
+    ),
+    defaults,
+  );
+}
+
 export function resolveSpeechConfig(params: {
   paseoHome: string;
   env: NodeJS.ProcessEnv;

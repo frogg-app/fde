@@ -138,6 +138,114 @@
               "properties": {
                 "type": {
                   "type": "string",
+                  "const": "companion.session.start.request"
+                },
+                "requestId": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type",
+                "requestId"
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "companion.session.stop.request"
+                },
+                "requestId": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type",
+                "requestId"
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "companion.audio.chunk"
+                },
+                "audio": {
+                  "type": "string"
+                },
+                "format": {
+                  "type": "string"
+                },
+                "isLast": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "type",
+                "audio",
+                "format",
+                "isLast"
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "companion.audio.played"
+                },
+                "id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type",
+                "id"
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "companion.message.send.request"
+                },
+                "requestId": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type",
+                "requestId",
+                "text"
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "companion.notebook.fetch.request"
+                },
+                "requestId": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type",
+                "requestId"
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
                   "const": "hub.execution.agent.create.request"
                 },
                 "requestId": {

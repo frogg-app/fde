@@ -82,6 +82,24 @@ pub enum SessionMessage {
     TranscriptionResult(TranscriptionResult),
     #[serde(rename = "voice_input_state")]
     VoiceInputState(VoiceInputState),
+    #[serde(rename = "companion.session.start.response")]
+    CompanionSessionStartResponse(CompanionSessionStartResponse),
+    #[serde(rename = "companion.session.stop.response")]
+    CompanionSessionStopResponse(CompanionSessionStopResponse),
+    #[serde(rename = "companion.audio.output")]
+    CompanionAudioOutput(CompanionAudioOutput),
+    #[serde(rename = "companion.input.state")]
+    CompanionInputState(CompanionInputState),
+    #[serde(rename = "companion.transcript")]
+    CompanionTranscript(CompanionTranscript),
+    #[serde(rename = "companion.reply")]
+    CompanionReply(CompanionReply),
+    #[serde(rename = "companion.notebook.fetch.response")]
+    CompanionNotebookFetchResponse(CompanionNotebookFetchResponse),
+    #[serde(rename = "companion.notebook.update")]
+    CompanionNotebookUpdate(CompanionNotebookUpdate),
+    #[serde(rename = "companion.job.update")]
+    CompanionJobUpdate(CompanionJobUpdate),
     #[serde(rename = "dictation_stream_ack")]
     DictationStreamAck(DictationStreamAck),
     #[serde(rename = "dictation_stream_finish_accepted")]
@@ -2225,6 +2243,207 @@ pub struct VoiceInputState {
 pub struct VoiceInputStatePayload {
     #[serde(rename = "isSpeaking")]
     pub is_speaking: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionSessionStartResponse {
+    pub payload: CompanionSessionStartResponsePayload,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionSessionStartResponsePayload {
+    #[serde(rename = "requestId")]
+    pub request_id: String,
+    pub accepted: bool,
+    #[serde(rename = "reasonCode", skip_serializing_if = "Option::is_none")]
+    pub reason_code: Option<String>,
+    pub retryable: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionSessionStopResponse {
+    pub payload: CompanionSessionStopResponsePayload,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionSessionStopResponsePayload {
+    #[serde(rename = "requestId")]
+    pub request_id: String,
+    pub accepted: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionAudioOutput {
+    pub payload: CompanionAudioOutputPayload,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionAudioOutputPayload {
+    pub audio: String,
+    pub format: String,
+    pub id: String,
+    #[serde(rename = "groupId")]
+    pub group_id: String,
+    #[serde(rename = "isLastChunk")]
+    pub is_last_chunk: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionInputState {
+    pub payload: CompanionInputStatePayload,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionInputStatePayload {
+    #[serde(rename = "isSpeaking")]
+    pub is_speaking: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionTranscript {
+    pub payload: CompanionTranscriptPayload,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionTranscriptPayload {
+    pub text: String,
+    #[serde(rename = "isFinal")]
+    pub is_final: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionReply {
+    pub payload: CompanionReplyPayload,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionReplyPayload {
+    pub text: String,
+    #[serde(rename = "isFinal")]
+    pub is_final: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionNotebookFetchResponse {
+    pub payload: CompanionNotebookFetchResponsePayload,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionNotebookFetchResponsePayload {
+    #[serde(rename = "requestId")]
+    pub request_id: String,
+    pub notebook: CompanionNotebookFetchResponsePayloadNotebook,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionNotebookFetchResponsePayloadNotebook {
+    pub entries: Vec<CompanionNotebookFetchResponsePayloadNotebookEntriesItem>,
+    #[serde(rename = "updatedAt")]
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionNotebookFetchResponsePayloadNotebookEntriesItem {
+    pub id: String,
+    pub kind: CompanionNotebookFetchResponsePayloadNotebookEntriesItemKind,
+    pub text: String,
+    pub status: CompanionNotebookFetchResponsePayloadNotebookEntriesItemStatus,
+    #[serde(rename = "agentId", skip_serializing_if = "Option::is_none")]
+    pub agent_id: Option<String>,
+    #[serde(rename = "updatedAt")]
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum CompanionNotebookFetchResponsePayloadNotebookEntriesItemKind {
+    #[serde(rename = "topic")]
+    Topic,
+    #[serde(rename = "task")]
+    Task,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum CompanionNotebookFetchResponsePayloadNotebookEntriesItemStatus {
+    #[serde(rename = "open")]
+    Open,
+    #[serde(rename = "active")]
+    Active,
+    #[serde(rename = "done")]
+    Done,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionNotebookUpdate {
+    pub payload: CompanionNotebookUpdatePayload,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionNotebookUpdatePayload {
+    pub notebook: CompanionNotebookUpdatePayloadNotebook,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionNotebookUpdatePayloadNotebook {
+    pub entries: Vec<CompanionNotebookUpdatePayloadNotebookEntriesItem>,
+    #[serde(rename = "updatedAt")]
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionNotebookUpdatePayloadNotebookEntriesItem {
+    pub id: String,
+    pub kind: CompanionNotebookUpdatePayloadNotebookEntriesItemKind,
+    pub text: String,
+    pub status: CompanionNotebookUpdatePayloadNotebookEntriesItemStatus,
+    #[serde(rename = "agentId", skip_serializing_if = "Option::is_none")]
+    pub agent_id: Option<String>,
+    #[serde(rename = "updatedAt")]
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum CompanionNotebookUpdatePayloadNotebookEntriesItemKind {
+    #[serde(rename = "topic")]
+    Topic,
+    #[serde(rename = "task")]
+    Task,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum CompanionNotebookUpdatePayloadNotebookEntriesItemStatus {
+    #[serde(rename = "open")]
+    Open,
+    #[serde(rename = "active")]
+    Active,
+    #[serde(rename = "done")]
+    Done,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionJobUpdate {
+    pub payload: CompanionJobUpdatePayload,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionJobUpdatePayload {
+    #[serde(rename = "jobId")]
+    pub job_id: String,
+    pub label: String,
+    pub status: CompanionJobUpdatePayloadStatus,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub summary: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum CompanionJobUpdatePayloadStatus {
+    #[serde(rename = "started")]
+    Started,
+    #[serde(rename = "running")]
+    Running,
+    #[serde(rename = "completed")]
+    Completed,
+    #[serde(rename = "failed")]
+    Failed,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
