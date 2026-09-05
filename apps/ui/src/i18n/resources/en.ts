@@ -1833,6 +1833,19 @@ export const en = {
     },
   },
   spokenAlerts: {
+    notification: {
+      title: "Update from {{name}}",
+      titleFallback: "Update from your agent",
+      play: "Play the update",
+      stop: "Stop",
+      dismiss: "Dismiss the update",
+      open: "Open {{name}}",
+    },
+    workspaceToggle: {
+      label: "Voice alerts",
+      enable: "Turn on voice alerts for this workspace",
+      disable: "Turn off voice alerts for this workspace",
+    },
     banner: {
       play: "Play",
       stop: "Stop",
@@ -2550,6 +2563,21 @@ export const en = {
         relay: "Relay",
         local: "Local",
         remoteSsh: "Remote SSH",
+      },
+      daemonConflict: {
+        title: "More than one daemon on this machine",
+        message:
+          "{{count}} daemons are running on {{machine}}. Each has its own agents and workspaces, so what you see depends on which one you are connected to. Pick the one you want and, if the other is not needed, shut it down.",
+        activeLabel: "{{name}} (connected)",
+        version: "v{{version}}",
+        versionUnknown: "version unknown",
+        shutdown: "Shut down",
+        shutdownTitle: "Shut down daemon?",
+        shutdownMessage:
+          "Shut down {{name}}? Any agents running on it will stop. This does not affect the other daemon.",
+        shutdownConfirm: "Shut down",
+        shutdownFailedTitle: "Error",
+        shutdownFailedMessage: "Unable to shut down that daemon.",
       },
       connections: {
         title: "Connections",

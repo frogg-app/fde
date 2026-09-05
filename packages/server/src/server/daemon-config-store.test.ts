@@ -8,22 +8,34 @@ import { loadPersistedConfig } from "./persisted-config.js";
 import type { PersistedConfig } from "./persisted-config.js";
 import type { MutableDaemonConfig } from "@fde/protocol/messages";
 
+function reloadableGit(git: NonNullable<PersistedConfig["daemon"]>["git"]) {
+  return {
+    maxProcessesPerSecond: git?.maxProcessesPerSecond ?? 64,
+    maxProcessConcurrency: git?.maxProcessConcurrency ?? 8,
+  };
+}
+
+function reloadableAgents(agents: PersistedConfig["agents"]) {
+  return {
+    providers: (agents?.providers ?? {}) as MutableDaemonConfig["providers"],
+    metadataGeneration: { providers: agents?.metadataGeneration?.providers ?? [] },
+  };
+}
+
 function reloadableConfig(
   persisted: PersistedConfig,
   options: { relayEnabledFallback?: boolean } = {},
 ): MutableDaemonConfig {
   const daemon = persisted.daemon ?? {};
-  const relay = daemon.relay ?? {};
-  const git = daemon.git ?? {};
-  const agents = persisted.agents ?? {};
+  const agents = reloadableAgents(persisted.agents);
   return {
     relay: {
-      enabled: relay.enabled ?? options.relayEnabledFallback ?? true,
+      enabled: daemon.relay?.enabled ?? options.relayEnabledFallback ?? true,
     },
     mcp: { enabled: true, injectIntoAgents: false },
     browserTools: { enabled: daemon.browserTools?.enabled ?? false },
-    providers: (agents.providers ?? {}) as MutableDaemonConfig["providers"],
-    metadataGeneration: { providers: agents.metadataGeneration?.providers ?? [] },
+    providers: agents.providers,
+    metadataGeneration: agents.metadataGeneration,
     autoArchiveAfterMerge: daemon.autoArchiveAfterMerge ?? false,
     enableTerminalAgentHooks: daemon.enableTerminalAgentHooks ?? false,
     appendSystemPrompt: daemon.appendSystemPrompt ?? "",
@@ -32,11 +44,8 @@ function reloadableConfig(
     cors: { allowedOrigins: [] },
     trustedProxies: ["loopback"],
     trustLan: daemon.auth?.trustLan ?? true,
-    git: {
-      maxProcessesPerSecond: git.maxProcessesPerSecond ?? 64,
-      maxProcessConcurrency: git.maxProcessConcurrency ?? 8,
-    },
-    app: { baseUrl: "https://app.paseo.sh" },
+    git: reloadableGit(daemon.git),
+    app: { baseUrl: "https://pair.frogg.app" },
     pluginsEnabled: persisted.pluginsEnabled ?? false,
     plugins: persisted.plugins ?? {},
   };

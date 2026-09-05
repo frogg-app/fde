@@ -2,8 +2,9 @@ name: Release
 
 # Builds and publishes a GitHub release for a `vX.Y.Z` tag: desktop bundles for
 # Linux, Windows and macOS, the daemon bundles the install script downloads, the
-# updater manifest (when a signing key is configured), the Android APK (always
-# release-signed: the job fails when the keystore secrets are missing) and the
+# updater manifest (when a signing key is configured), the Android APK (release-
+# signed when the keystore secrets are set, otherwise debug-signed and named
+# `-unsigned`; see the android job) and the
 # Docker image (when Docker Hub credentials are configured). docs/ci.md explains
 # the flow, the asset names and the secrets.
 
@@ -16,6 +17,12 @@ on:
         description: "Existing tag to build and publish (for example v0.1.5)"
         required: true
         type: string
+      only:
+        description: "Build one job group instead of the whole release"
+        required: false
+        default: all
+        type: choice
+        options: [all, android]
 
 permissions:
   contents: write
@@ -51,7 +58,7 @@ jobs:
       docker: ${{ steps.secrets.outputs.docker }}
       android_signing: ${{ steps.secrets.outputs.android_signing }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.RELEASE_TAG }}
 
@@ -134,13 +141,24 @@ jobs:
       - name: Upload install scripts to GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
+          CLOBBER: ${{ steps.release.outputs.clobber }}
         run: |
           flags=()
-          if [ "${{ steps.release.outputs.clobber }}" = "true" ]; then flags+=(--clobber); fi
-          gh release upload "$RELEASE_TAG" \
-            deploy/install.sh deploy/uninstall.sh deploy/install-docker.sh "${flags[@]}"
+          if [ "$CLOBBER" = "true" ]; then flags+=(--clobber); fi
+          # Skip names already on the release like every other upload step does.
+          # Without this, re-running the workflow against a published release
+          # fails here and takes every job that needs `meta` down with it.
+          existing=$(gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name')
+          for f in deploy/install.sh deploy/uninstall.sh deploy/install-docker.sh; do
+            n=$(basename "$f")
+            if [ "$CLOBBER" != "true" ] && grep -qx -- "$n" <<<"$existing"; then
+              echo "::warning::$n already on $RELEASE_TAG; skipping"
+              continue
+            fi
+            gh release upload "$RELEASE_TAG" "$f" "${flags[@]}"
+          done
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: release-notes
           path: notes.md
@@ -149,14 +167,15 @@ jobs:
   ui:
     name: web ui export
     needs: meta
+    if: inputs.only != 'android'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.RELEASE_TAG }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
@@ -167,7 +186,7 @@ jobs:
       - name: Export web UI
         run: npm run build:ui
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ui-dist
           path: apps/ui/dist
@@ -177,6 +196,7 @@ jobs:
   desktop:
     name: desktop ${{ matrix.platform }} ${{ matrix.arch }}
     needs: [meta, ui]
+    if: inputs.only != 'android'
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     strategy:
@@ -208,11 +228,11 @@ jobs:
     env:
       RELEASE_DIR: apps/desktop/src-tauri/target/${{ matrix.target }}/release
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.RELEASE_TAG }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
@@ -232,12 +252,17 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: apps/desktop/src-tauri
-          key: ${{ matrix.target }}
+          # A shared key (not `key:`) so a tag build restores the cache CI already warmed on
+          # main. Without it every release compiled the Tauri dependency tree from scratch.
+          # The runner image is part of the key: rust-cache only distinguishes `runner.os`,
+          # so a cache warmed on ubuntu-latest (glibc 2.39) would poison this 22.04 job with
+          # build scripts it cannot execute.
+          shared-key: desktop-${{ matrix.target }}-${{ matrix.runner }}
 
       - name: Install dependencies
         run: node scripts/ci/npm-retry.mjs ci
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: ui-dist
           path: apps/ui/dist
@@ -306,7 +331,7 @@ jobs:
             fi
             gh release upload "$RELEASE_TAG" "$f" "${flags[@]}"
           done
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: release-assets-${{ matrix.platform }}-${{ matrix.arch }}
           path: release-assets
@@ -315,6 +340,7 @@ jobs:
   daemon-bundle:
     name: daemon bundle ${{ matrix.target }}
     needs: meta
+    if: inputs.only != 'android'
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     strategy:
@@ -331,7 +357,7 @@ jobs:
           - { runner: ubuntu-latest, target: win-x64 }
           - { runner: ubuntu-latest, target: win-arm64 }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.RELEASE_TAG }}
 
@@ -347,7 +373,7 @@ jobs:
             echo "::notice::scripts/release/build-daemon-bundle.mjs is not on $RELEASE_TAG; skipping daemon bundle."
           fi
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         if: steps.script.outputs.present == 'true'
         with:
           node-version: "22"
@@ -390,24 +416,25 @@ jobs:
     name: android apk ${{ matrix.abi }}
     needs: meta
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
         abi: [arm64-v8a]
     steps:
-      # Fails in seconds rather than after the ~30 minute Gradle build. Both
-      # triggers of this workflow (tag push and workflow_dispatch) publish assets
-      # to a GitHub release, so neither may fall back to the debug key: that key
-      # is the shared Expo/RN template `debug.keystore`, and an APK signed with it
-      # cannot update a release-signed install (docs/android.md).
-      - name: Require the release keystore
+      # No release keystore is configured yet, and every APK published so far
+      # (0.1.18 and earlier) is debug-signed. Android identifies an app by its
+      # signing key, so switching to a release key now would stop those installs
+      # updating: they would have to be uninstalled first, losing their data.
+      # Until that migration is planned (docs/android.md "Signing"), a missing
+      # keystore is a warning and the APK ships `-unsigned`, matching what is
+      # already installed. It must not be treated as a distributable build.
+      - name: Warn when the release keystore is missing
         if: needs.meta.outputs.android_signing != 'true'
         run: |
-          echo "::error::No Android release keystore configured for $RELEASE_TAG. Set the repository secrets FDE_ANDROID_KEYSTORE_BASE64, FDE_ANDROID_KEYSTORE_PASSWORD, FDE_ANDROID_KEY_ALIAS and FDE_ANDROID_KEY_PASSWORD, then re-run this workflow. Without them the APK is signed with the publicly known Expo/React Native debug key; Android identifies an app by its signing key, so such an APK cannot update a release-signed install and must never be published as a release asset."
-          exit 1
+          echo "::warning::No Android release keystore for $RELEASE_TAG; the APK is signed with the publicly known Expo/React Native debug key and is published as -unsigned. Set FDE_ANDROID_KEYSTORE_BASE64, FDE_ANDROID_KEYSTORE_PASSWORD, FDE_ANDROID_KEY_ALIAS and FDE_ANDROID_KEY_PASSWORD to sign it, and see docs/android.md before doing so: existing debug-signed installs cannot update to a release-signed APK."
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.RELEASE_TAG }}
       - name: Free disk space (Android SDK + NDK + node_modules need it)
@@ -425,36 +452,41 @@ jobs:
           sudo rm -rf /usr/local/lib/android/sdk/ndk /usr/local/lib/android/sdk/emulator /usr/local/lib/android/sdk/system-images || true
           df -h /
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "21"
 
       # ubuntu-latest ships the Android SDK; this accepts the licenses so Gradle can
       # fetch any platform/build-tools/NDK version React Native asks for.
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v4
         with:
           log-accepted-android-sdk-licenses: false
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
 
       - name: Install dependencies
         run: node scripts/ci/npm-retry.mjs ci
 
-      # The keystore is a base64-encoded .jks/.keystore in a secret. The guard
-      # above already failed the job if it is missing (see docs/android.md).
+      # The keystore is a base64-encoded .jks/.keystore in a secret; without it
+      # the APK is debug-signed and named `-unsigned` (see docs/android.md).
       - name: Prepare release keystore
+        if: needs.meta.outputs.android_signing == 'true'
         env:
           FDE_ANDROID_KEYSTORE_BASE64: ${{ secrets.FDE_ANDROID_KEYSTORE_BASE64 }}
         run: |
           echo "$FDE_ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/fde-release.keystore"
           echo "FDE_ANDROID_KEYSTORE=$RUNNER_TEMP/fde-release.keystore" >> "$GITHUB_ENV"
 
+      # `--serial` (one worker, Gradle heap capped well under the 4 GB
+      # expo-gradle-jvmargs writes into gradle.properties). With `--workers 2`
+      # the 0.1.20 run died with "AAPT2 Daemon #0: Idle daemon unexpectedly
+      # exit": the runner OOM-killed the native aapt2 process mid-build.
       - name: Build release APK
         env:
           FDE_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.FDE_ANDROID_KEYSTORE_PASSWORD }}
@@ -463,7 +495,6 @@ jobs:
         run: >-
           node scripts/release/build-android-apk.mjs
           --abi ${{ matrix.abi }}
-          --require-signing
           --serial
           --out-dir release-assets
 
@@ -485,7 +516,7 @@ jobs:
             gh release upload "$RELEASE_TAG" "$f" "${flags[@]}"
           done
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: release-assets-android-${{ matrix.abi }}
           path: release-assets
@@ -494,15 +525,15 @@ jobs:
   updater-manifest:
     name: updater latest.json
     needs: [meta, desktop]
-    if: needs.meta.outputs.signing == 'true'
+    if: inputs.only != 'android' && (needs.meta.outputs.signing == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.RELEASE_TAG }}
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           # The android job also uploads release-assets-android-*; the manifest
           # script only looks at desktop bundles and their .sig files.
@@ -510,7 +541,7 @@ jobs:
           path: release-assets
           merge-multiple: true
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: release-notes
           path: notes
@@ -544,18 +575,18 @@ jobs:
   docker:
     name: docker image
     needs: meta
-    if: needs.meta.outputs.docker == 'true'
+    if: inputs.only != 'android' && (needs.meta.outputs.docker == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 40
     env:
       IMAGE: froggapp/fde
       VERSION: ${{ needs.meta.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.RELEASE_TAG }}
 
-      - uses: docker/login-action@v3
+      - uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -583,10 +614,10 @@ jobs:
           echo "tags=$tags" >> "$GITHUB_OUTPUT"
           echo "Pushing: $tags"
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v4
         if: steps.tags.outputs.push == 'true'
 
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@v7
         if: steps.tags.outputs.push == 'true'
         with:
           context: .

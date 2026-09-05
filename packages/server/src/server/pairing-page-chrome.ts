@@ -5,6 +5,23 @@
  */
 export const FDE_ACCENT = "#25B5C8";
 
+/** Where `GET /` sends a visitor who arrives without a pairing code. */
+export const DEFAULT_PAIR_PAGE_ROOT_REDIRECT = "https://frogg.app";
+
+/**
+ * The pages are self-contained (inline CSS, inline SVG QR, one inline script)
+ * and load nothing from anywhere, so everything else can be denied. Lives here
+ * so the express service and the Cloudflare Worker ship the same policy.
+ */
+export const CONTENT_SECURITY_POLICY = [
+  "default-src 'none'",
+  "style-src 'unsafe-inline'",
+  "script-src 'unsafe-inline'",
+  "base-uri 'none'",
+  "form-action 'none'",
+  "frame-ancestors 'none'",
+].join("; ");
+
 export function escapeHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")

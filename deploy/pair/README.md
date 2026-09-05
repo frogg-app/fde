@@ -32,6 +32,10 @@ Anything that is not a live, unexpired offer — malformed, past `expiresAt`, or
 not an offer at all — renders one generic "This pairing link has expired" page
 with a 404, so the service confirms nothing about which codes exist.
 
+There is a second deployment of this same page as a Cloudflare Worker in
+[`deploy/pair-worker`](../pair-worker/README.md) — same modules, `fetch` instead
+of express — for running it with no host to operate.
+
 ## Run it
 
 ```bash

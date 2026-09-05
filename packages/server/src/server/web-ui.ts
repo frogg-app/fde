@@ -172,10 +172,12 @@ function serveGatePage(
   gate.render(req).then(
     (html) => {
       res.status(200).send(html);
+      return undefined;
     },
     (error: unknown) => {
       logger.error({ err: error }, "Failed to render the claim page");
       res.status(500).end();
+      return undefined;
     },
   );
 }

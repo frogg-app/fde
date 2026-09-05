@@ -16,3 +16,16 @@ export async function renderPairingQr(url: string): Promise<string> {
     .map((line) => `${BLACK_ON_WHITE}${line}${RESET_COLORS}`)
     .join("\n");
 }
+
+/**
+ * Inline SVG QR for a pairing link, shared by the daemon's own page, the
+ * standalone express service and the Cloudflare Worker. Returns null when
+ * rendering fails so a page can still show the link and the raw code.
+ */
+export async function renderPairingQrSvg(url: string): Promise<string | null> {
+  try {
+    return await QRCode.toString(url, { type: "svg", margin: 1 });
+  } catch {
+    return null;
+  }
+}

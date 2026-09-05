@@ -135,6 +135,7 @@ import {
 import { buildNotificationRoute, resolveNotificationTarget } from "@/utils/notification-routing";
 import { receiveSpokenAlertFromNotificationData } from "@/spoken-alerts/receive";
 import { VoiceReplySheet } from "@/components/voice-reply-sheet";
+import { SpokenAlertNotifications } from "@/components/spoken-alert-notifications";
 import { navigateToAgent } from "@/utils/navigate-to-agent";
 import { PluginCatalogSync } from "@/plugins";
 import { OfferLinkListener } from "@/pairing/offer-link-listener";
@@ -934,6 +935,7 @@ function RootAppTree() {
         <RootProviders>
           <RuntimeProviders>
             <AppShell />
+            <SpokenAlertNotifications />
             <VoiceReplySheet />
           </RuntimeProviders>
         </RootProviders>

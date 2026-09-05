@@ -20,8 +20,11 @@ import express from "express";
 
 import { DEFAULT_PAIRING_BASE_URL } from "@fde/protocol/connection-offer";
 import { createClaimOfferStore } from "./claim-offer-store.js";
+import { CONTENT_SECURITY_POLICY, DEFAULT_PAIR_PAGE_ROOT_REDIRECT } from "./pairing-page-chrome.js";
 import { renderExpiredPairingPage } from "./pairing-code-page.js";
 import { mountPairingCodeRoutes } from "./pairing-code-route.js";
+
+export { CONTENT_SECURITY_POLICY, DEFAULT_PAIR_PAGE_ROOT_REDIRECT };
 
 export interface PairPageAppOptions {
   /** Base URL the rendered QR points back at. Default `https://pair.frogg.app`. */
@@ -29,21 +32,6 @@ export interface PairPageAppOptions {
   /** Where `GET /` sends visitors who arrive without a code. */
   rootRedirect?: string;
 }
-
-export const DEFAULT_PAIR_PAGE_ROOT_REDIRECT = "https://frogg.app";
-
-/**
- * The pages are self-contained (inline CSS, inline SVG QR, one inline script)
- * and load nothing from anywhere, so everything else can be denied.
- */
-const CONTENT_SECURITY_POLICY = [
-  "default-src 'none'",
-  "style-src 'unsafe-inline'",
-  "script-src 'unsafe-inline'",
-  "base-uri 'none'",
-  "form-action 'none'",
-  "frame-ancestors 'none'",
-].join("; ");
 
 export function createPairPageApp(options: PairPageAppOptions = {}): express.Express {
   const pairingBaseUrl = options.pairingBaseUrl ?? DEFAULT_PAIRING_BASE_URL;

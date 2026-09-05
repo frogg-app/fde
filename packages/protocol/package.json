@@ -1,6 +1,6 @@
 {
   "name": "@fde/protocol",
-  "version": "0.1.17",
+  "version": "0.1.20",
   "description": "Paseo shared protocol schemas and wire types",
   "files": [
     "dist",
@@ -28,7 +28,11 @@
     "watch": "concurrently --kill-others --names validation,tsc --prefix-colors green,yellow \"node scripts/watch-validation-aot.mjs\" \"tsc -p tsconfig.json --watch --preserveWatchOutput\"",
     "prebuild": "npm run generate:validators",
     "pretypecheck": "npm run generate:validators",
-    "pretest": "npm run generate:validators"
+    "pretest": "npm run generate:validators",
+    "generate:json-schema": "node scripts/generate-json-schema.mjs",
+    "generate:rust": "npm run generate:json-schema && node scripts/generate-rust-types.mjs",
+    "postbuild": "npm run generate:rust && npm run generate:text-match-fixtures",
+    "generate:text-match-fixtures": "node scripts/generate-text-match-fixtures.mjs"
   },
   "dependencies": {
     "zod": "^4.4.3"

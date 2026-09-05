@@ -1,0 +1,38 @@
+# The install-script short URLs (`https://frogg.app/install.sh` and friends).
+#
+# Proxies the scripts out of `deploy/` in the public repository, so the bytes
+# people pipe into bash come from a hostname this project controls. Stateless:
+# no bindings, no KV, no secrets.
+#
+# Deploy from the repository root:
+#   npx wrangler deploy --config deploy/install-worker/wrangler.toml
+#
+# No build step: wrangler bundles the TypeScript entry point itself.
+
+name = "fde-install-scripts"
+main = "../../packages/server/src/server/install-script-worker.ts"
+compatibility_date = "2025-09-01"
+
+[observability]
+enabled = true
+
+[vars]
+FDE_INSTALL_REPO = "frogg-app/fde"
+# Tip of main. Set to a tag (e.g. "v0.1.19") to serve only a version you have
+# deliberately shipped.
+FDE_INSTALL_REF = "main"
+FDE_INSTALL_CACHE_SECONDS = "300"
+
+# Only the three script paths are routed, so the apex and everything else on
+# frogg.app still reach whatever origin the zone points at.
+[[routes]]
+pattern = "frogg.app/install.sh"
+zone_name = "frogg.app"
+
+[[routes]]
+pattern = "frogg.app/uninstall.sh"
+zone_name = "frogg.app"
+
+[[routes]]
+pattern = "frogg.app/install-docker.sh"
+zone_name = "frogg.app"

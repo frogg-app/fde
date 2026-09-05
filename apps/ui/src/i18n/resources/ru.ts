@@ -1854,6 +1854,19 @@ export const ru: TranslationResources = {
     },
   },
   spokenAlerts: {
+    notification: {
+      title: "Обновление от {{name}}",
+      titleFallback: "Обновление от вашего агента",
+      play: "Воспроизвести обновление",
+      stop: "Остановить",
+      dismiss: "Скрыть обновление",
+      open: "Открыть {{name}}",
+    },
+    workspaceToggle: {
+      label: "Голосовые оповещения",
+      enable: "Включить голосовые оповещения для этого рабочего пространства",
+      disable: "Выключить голосовые оповещения для этого рабочего пространства",
+    },
     banner: {
       play: "Воспроизвести",
       stop: "Остановить",
@@ -2492,6 +2505,21 @@ export const ru: TranslationResources = {
         relay: "Ретранслятор",
         local: "Локальный",
         remoteSsh: "Удалённый SSH",
+      },
+      daemonConflict: {
+        title: "На этой машине запущено несколько демонов",
+        message:
+          "На {{machine}} запущено демонов: {{count}}. У каждого свои агенты и рабочие пространства, поэтому увиденное зависит от того, к какому вы подключены. Выберите нужный, а если второй не нужен — остановите его.",
+        activeLabel: "{{name}} (подключён)",
+        version: "v{{version}}",
+        versionUnknown: "версия неизвестна",
+        shutdown: "Остановить",
+        shutdownTitle: "Остановить демон?",
+        shutdownMessage:
+          "Остановить {{name}}? Все запущенные на нём агенты будут остановлены. На другой демон это не повлияет.",
+        shutdownConfirm: "Остановить",
+        shutdownFailedTitle: "Ошибка",
+        shutdownFailedMessage: "Не удалось остановить этот демон.",
       },
       connections: {
         title: "Подключения",

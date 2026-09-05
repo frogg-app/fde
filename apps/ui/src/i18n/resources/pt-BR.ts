@@ -1855,6 +1855,19 @@ export const ptBR: TranslationResources = {
     },
   },
   spokenAlerts: {
+    notification: {
+      title: "Novidades de {{name}}",
+      titleFallback: "Novidades do seu agente",
+      play: "Reproduzir a novidade",
+      stop: "Parar",
+      dismiss: "Dispensar a novidade",
+      open: "Abrir {{name}}",
+    },
+    workspaceToggle: {
+      label: "Alertas de voz",
+      enable: "Ativar os alertas de voz neste espaço de trabalho",
+      disable: "Desativar os alertas de voz neste espaço de trabalho",
+    },
     banner: {
       play: "Reproduzir",
       stop: "Parar",
@@ -2488,6 +2501,21 @@ export const ptBR: TranslationResources = {
         relay: "Relay",
         local: "Local",
         remoteSsh: "SSH remoto",
+      },
+      daemonConflict: {
+        title: "Mais de um daemon nesta máquina",
+        message:
+          "{{count}} daemons estão em execução em {{machine}}. Cada um tem seus próprios agentes e workspaces, então o que você vê depende de a qual está conectado. Escolha o que quiser usar e, se o outro não for necessário, desligue-o.",
+        activeLabel: "{{name}} (conectado)",
+        version: "v{{version}}",
+        versionUnknown: "versão desconhecida",
+        shutdown: "Desligar",
+        shutdownTitle: "Desligar o daemon?",
+        shutdownMessage:
+          "Desligar {{name}}? Todos os agentes em execução nele serão interrompidos. Isso não afeta o outro daemon.",
+        shutdownConfirm: "Desligar",
+        shutdownFailedTitle: "Erro",
+        shutdownFailedMessage: "Não foi possível desligar esse daemon.",
       },
       connections: {
         title: "Conexões",

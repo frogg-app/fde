@@ -27,3 +27,4 @@ apps/desktop/src-tauri/bridge.js
 *.keystore
 *.jks
 google-services*.json
+.dev/

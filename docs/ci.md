@@ -61,19 +61,19 @@ meta ──┬── ui ── desktop (linux x86_64, windows x86_64, macos aarc
 
 ### Release asset names
 
-| Asset                                       | Source                                                                                            |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `FDE-<ver>-amd64.deb`                       | Tauri deb (Linux x86_64)                                                                          |
-| `FDE-<ver>-x86_64.AppImage`                 | Tauri AppImage                                                                                    |
-| `FDE-<ver>-x64-setup.zip`                   | Tauri NSIS installer (per-user, unsigned), zipped by `scripts/release/package-windows-zips.mjs`   |
-| `FDE-<ver>-x64-portable.zip`                | `scripts/release/package-windows-zips.mjs` (`fde.exe` + README)                                   |
-| `FDE-<ver>-aarch64.dmg`, `-x86_64.dmg`      | Tauri DMG per architecture                                                                        |
-| `FDE-<ver>-<arch>.app.tar.gz` + `.sig`      | macOS updater bundle, only with a signing key                                                     |
-| `*.sig`                                     | minisign signatures next to the AppImage/installer zip, only with the key                         |
-| `latest.json`                               | Updater manifest, only with the key                                                               |
-| `fde-daemon-<ver>-<platform>-<arch>.tar.gz` | Daemon bundle + `.sha256`, read by `deploy/install.sh` and the desktop app's local daemon install |
-| `fde-daemon-<ver>-win-<arch>.zip`           | Windows daemon bundle + `.sha256`, read by the desktop app's local daemon install                 |
-| `FDE-<ver>-android-arm64-v8a.apk`           | Android APK, always release-signed (the job fails without the keystore secrets)                   |
+| Asset                                        | Source                                                                                            |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `FDE-<ver>-amd64.deb`                        | Tauri deb (Linux x86_64)                                                                          |
+| `FDE-<ver>-x86_64.AppImage`                  | Tauri AppImage                                                                                    |
+| `FDE-<ver>-x64-setup.zip`                    | Tauri NSIS installer (per-user, unsigned), zipped by `scripts/release/package-windows-zips.mjs`   |
+| `FDE-<ver>-x64-portable.zip`                 | `scripts/release/package-windows-zips.mjs` (`fde.exe` + README)                                   |
+| `FDE-<ver>-aarch64.dmg`, `-x86_64.dmg`       | Tauri DMG per architecture                                                                        |
+| `FDE-<ver>-<arch>.app.tar.gz` + `.sig`       | macOS updater bundle, only with a signing key                                                     |
+| `*.sig`                                      | minisign signatures next to the AppImage/installer zip, only with the key                         |
+| `latest.json`                                | Updater manifest, only with the key                                                               |
+| `fde-daemon-<ver>-<platform>-<arch>.tar.gz`  | Daemon bundle + `.sha256`, read by `deploy/install.sh` and the desktop app's local daemon install |
+| `fde-daemon-<ver>-win-<arch>.zip`            | Windows daemon bundle + `.sha256`, read by the desktop app's local daemon install                 |
+| `FDE-<ver>-android-arm64-v8a[-unsigned].apk` | Android APK; release-signed with the keystore secrets, otherwise debug-signed and `-unsigned`     |
 
 Tauri itself names bundles `FDE_<ver>_amd64.AppImage`, `FDE_<ver>_x64-setup.exe` and so
 on; the rename step is the only place that mapping lives, so change
@@ -149,3 +149,45 @@ from `package.json`.
    be replaced, or bump the patch version instead.
 3. Docker: if `froggapp/fde:<version>` already exists the job skips the push; a different
    image needs a new version.
+
+## Fast feedback
+
+`npm run verify` runs the CI gate locally, every check in parallel across all cores:
+
+```bash
+npm run verify --fast   # format, lint, typecheck — about 20 seconds
+npm run verify          # the above plus every unit suite — a few minutes
+```
+
+Use it before pushing. Hosted CI is the backstop, not the inner loop.
+
+The pull-request gate is deliberately small: format/lint/typecheck plus the unit suites, with
+the server suite sharded three ways. The desktop and Android builds are slow and no longer run
+on pull requests; they run on pushes to `main` and via `workflow_dispatch`.
+
+### Self-hosted runner (optional, much faster)
+
+A runner on a development machine keeps `node_modules`, the cargo target directory and the
+Android SDK warm, which removes most of a hosted run's cost. Install one with:
+
+```bash
+mkdir -p ~/actions-runner && cd ~/actions-runner
+V=$(curl -s https://api.github.com/repos/actions/runner/releases/latest | grep -oP '"tag_name": "v\K[^"]+')
+curl -sL -o runner.tar.gz "https://github.com/actions/runner/releases/download/v${V}/actions-runner-linux-x64-${V}.tar.gz"
+tar xzf runner.tar.gz && rm runner.tar.gz
+./config.sh --url https://github.com/frogg-app/fde \
+  --token "$(gh api -X POST repos/frogg-app/fde/actions/runners/registration-token --jq .token)" \
+  --labels self-hosted,linux,x64,fde-dev --unattended
+sudo ./svc.sh install "$USER" && sudo ./svc.sh start
+```
+
+Then point a job at it with `runs-on: [self-hosted, fde-dev]`.
+
+**Security:** this repository is public, so a self-hosted runner must never execute code from a
+fork's pull request. Guard any self-hosted job with
+
+```yaml
+if: github.event.pull_request.head.repo.full_name == github.repository
+```
+
+and set Settings → Actions → "Require approval for all outside collaborators".

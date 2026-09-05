@@ -1820,6 +1820,19 @@ export const ar: TranslationResources = {
     },
   },
   spokenAlerts: {
+    notification: {
+      title: "تحديث من {{name}}",
+      titleFallback: "تحديث من وكيلك",
+      play: "تشغيل التحديث",
+      stop: "إيقاف",
+      dismiss: "تجاهل التحديث",
+      open: "فتح {{name}}",
+    },
+    workspaceToggle: {
+      label: "التنبيهات الصوتية",
+      enable: "تشغيل التنبيهات الصوتية لمساحة العمل هذه",
+      disable: "إيقاف التنبيهات الصوتية لمساحة العمل هذه",
+    },
     banner: {
       play: "تشغيل",
       stop: "إيقاف",
@@ -2447,6 +2460,21 @@ export const ar: TranslationResources = {
         relay: "تتابع",
         local: "محلي",
         remoteSsh: "SSH عن بُعد",
+      },
+      daemonConflict: {
+        title: "أكثر من خدمة واحدة على هذا الجهاز",
+        message:
+          "تعمل {{count}} من الخدمات على {{machine}}. لكل واحدة وكلاؤها ومساحات عملها الخاصة، لذا يعتمد ما تراه على الخدمة المتصل بها. اختر الخدمة التي تريدها، وإذا لم تكن الأخرى مطلوبة فأوقفها.",
+        activeLabel: "{{name}} (متصل)",
+        version: "الإصدار {{version}}",
+        versionUnknown: "إصدار غير معروف",
+        shutdown: "إيقاف",
+        shutdownTitle: "إيقاف الخدمة؟",
+        shutdownMessage:
+          "هل تريد إيقاف {{name}}؟ ستتوقف جميع الوكلاء العاملين عليها. لن يؤثر ذلك على الخدمة الأخرى.",
+        shutdownConfirm: "إيقاف",
+        shutdownFailedTitle: "خطأ",
+        shutdownFailedMessage: "تعذر إيقاف تلك الخدمة.",
       },
       connections: {
         title: "اتصالات",

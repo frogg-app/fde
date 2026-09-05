@@ -1,5 +1,3 @@
-import * as QRCode from "qrcode";
-
 import { ConnectionOfferV3Schema, type ConnectionOfferV3 } from "@fde/protocol/connection-offer";
 import { buildOfferEndpoints, encodeOfferToPairingUrl } from "./connection-offer.js";
 import type { ClaimOfferStore } from "./claim-offer-store.js";
@@ -62,12 +60,4 @@ export function buildDirectClaimOffer(
     expiresAt: claim.expiresAt,
     endpoints: uniqueEndpoints,
   };
-}
-
-export async function renderClaimOfferQrSvg(url: string): Promise<string | null> {
-  try {
-    return await QRCode.toString(url, { type: "svg", margin: 1 });
-  } catch {
-    return null;
-  }
 }

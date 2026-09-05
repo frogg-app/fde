@@ -142,7 +142,9 @@ beforeAll(async () => {
   });
 
   ({ useAgentInputDraft } = await import("./input-draft"));
-});
+  // Same cold-transform wait as use-agent-history.test.ts: the default 10s hook
+  // timeout is not enough for this import when the suite runs at full width.
+}, 60_000);
 
 describe("useAgentInputDraft live contract", () => {
   beforeEach(() => {

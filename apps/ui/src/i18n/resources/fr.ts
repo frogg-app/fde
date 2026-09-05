@@ -1874,6 +1874,19 @@ export const fr: TranslationResources = {
     },
   },
   spokenAlerts: {
+    notification: {
+      title: "Du nouveau de {{name}}",
+      titleFallback: "Du nouveau de votre agent",
+      play: "Écouter la mise à jour",
+      stop: "Arrêter",
+      dismiss: "Ignorer la mise à jour",
+      open: "Ouvrir {{name}}",
+    },
+    workspaceToggle: {
+      label: "Alertes vocales",
+      enable: "Activer les alertes vocales pour cet espace de travail",
+      disable: "Désactiver les alertes vocales pour cet espace de travail",
+    },
     banner: {
       play: "Lire",
       stop: "Arrêter",
@@ -2509,6 +2522,21 @@ export const fr: TranslationResources = {
         relay: "Relais",
         local: "Locale",
         remoteSsh: "SSH distant",
+      },
+      daemonConflict: {
+        title: "Plusieurs daemons sur cette machine",
+        message:
+          "{{count}} daemons sont en cours d'exécution sur {{machine}}. Chacun a ses propres agents et espaces de travail : ce que vous voyez dépend donc de celui auquel vous êtes connecté. Choisissez celui que vous voulez et, si l'autre est inutile, arrêtez-le.",
+        activeLabel: "{{name}} (connecté)",
+        version: "v{{version}}",
+        versionUnknown: "version inconnue",
+        shutdown: "Arrêter",
+        shutdownTitle: "Arrêter le daemon ?",
+        shutdownMessage:
+          "Arrêter {{name}} ? Tous les agents qui y tournent s'arrêteront. Cela n'affecte pas l'autre daemon.",
+        shutdownConfirm: "Arrêter",
+        shutdownFailedTitle: "Erreur",
+        shutdownFailedMessage: "Impossible d'arrêter ce daemon.",
       },
       connections: {
         title: "Relations",

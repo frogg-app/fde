@@ -20,6 +20,18 @@ where pairing codes come from.
 The service is **stateless**: no volumes, no secrets, no migrations. Restart
 it, move it, or run several copies behind a load balancer without ceremony.
 
+## Two deployments, same page
+
+| Deployment                                                                  | Best for                                                           |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Container ([`deploy/pair`](../deploy/pair/README.md))                       | A host you already operate and want everything to live on          |
+| Cloudflare Worker ([`deploy/pair-worker`](../deploy/pair-worker/README.md)) | No host, no OS to patch, independent of your own power and network |
+
+Both render the same page from the same modules — only the transport differs,
+and a test asserts the two return byte-identical HTML. The rest of this runbook
+covers the container; see the Worker README for that path, which needs no DNS
+record, no origin and no reverse proxy when the zone is on Cloudflare.
+
 ## Prerequisites
 
 - A host that can run a container and is reachable from your reverse proxy.

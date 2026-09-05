@@ -6,8 +6,29 @@ export interface GitProcessPolicy {
   maxProcessConcurrency: number;
 }
 
+/**
+ * `maxProcessConcurrency` is the resource guard: it bounds how many git
+ * processes exist at once, which is what protects the host.
+ *
+ * `maxProcessesPerSecond` is a runaway-loop backstop on top of that, and it
+ * used to be 64. That bound below the natural rate rather than above it: eight
+ * concurrent commands averaging ~5ms sustain roughly 1600/s, so a 64/s ceiling
+ * capped throughput at a few percent of capacity and turned ordinary
+ * concurrency into queue latency. One `checkout_status_request` spawns 13
+ * processes, so five workspaces refreshing together exceeded a whole second's
+ * budget in one go.
+ *
+ * Measured on this repo, ten concurrent status calls: 2021ms wall for 463ms of
+ * actual git work at 64/s, against 207ms once the ceiling was lifted. Twenty:
+ * 4064ms against 544ms.
+ *
+ * 2048 is chosen to sit above the sustainable rate for any plausible command
+ * duration - eight concurrent 2ms commands is 4000/s in the limit, and the
+ * short reads this scheduler mostly runs measure 2-8ms - while still bounding a
+ * pathological spawn loop by two orders of magnitude.
+ */
 export const DEFAULT_GIT_PROCESS_POLICY: GitProcessPolicy = {
-  maxProcessesPerSecond: 64,
+  maxProcessesPerSecond: 2048,
   maxProcessConcurrency: 8,
 };
 

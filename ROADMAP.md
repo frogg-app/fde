@@ -57,8 +57,13 @@ Done items move to CHANGELOG.md.
 - [x] **The daemon serves the pairing page** at `GET /code/:code` and `GET /pair?code=`,
       so `pair.frogg.app` can be reverse-proxied to your own daemon. Invalid or expired
       codes render one generic message; `pair.frogg.app` is an allowed Host by default.
-- [ ] Hosting for `frogg.app/install.sh`, `uninstall.sh`, `install-docker.sh` (redirects
-      to the raw files in the repo are enough).
+- [x] **The pairing page runs on Cloudflare** (`deploy/pair-worker`): the same render
+      path as the daemon route behind a `fetch` handler, so `pair.frogg.app` needs no
+      host, no origin and no TLS config. Byte-identical HTML to the express service.
+- [x] **Hosting for `frogg.app/install.sh`, `uninstall.sh`, `install-docker.sh`**
+      (`deploy/install-worker`): a Cloudflare Worker proxies the scripts out of `deploy/`
+      in the public repository. Fixed allowlist, fails closed on a bad fetch, and
+      `X-Fde-Source` names the exact ref it served.
 - [x] **Daemon self-update with rollback.** `fde daemon self-update [--to|--channel|--check]`
       installs a release next to the running version and a detached supervisor flips
       `current`, restarts the service, verifies `/api/identity`, and reverts to `previous`
@@ -132,6 +137,17 @@ trust-lan on|off` applies live; `fde daemon status` shows `LAN Trusted`; `/api/i
 
 - [ ] iOS app (the Expo UI still builds for iOS; scripts under `scripts/mobile`). Android is done, see "Now".
 - [ ] macOS builds and DMG packaging.
+- [ ] **Triggers (was "Hub").** Run agents from external events - GitHub, Slack, Discord,
+      Linear. The daemon half exists and is specified in docs/hub.md
+      (`packages/server/src/server/hub/`): outbound WebSocket, durable execution IDs,
+      idempotent creates, `hub.execute` permission, MCP-only tool preapproval. The CLI half
+      is renamed to `fde trigger` and every subcommand is disabled, because the old
+      implementation defaulted to `https://hub.paseo.sh` - an upstream-hosted service we do
+      not run - and enrolling handed a third party a standing connection able to create
+      workspaces and run agents against local repositories.
+      A rewrite needs a trigger service we control (none exists in this repo), or a
+      self-hostable one. Low priority: nothing depends on it and it is inert today.
+      The old CLI implementation is kept at `apps/cli/src/commands/hub/` for reference.
 
 ## Notes and assumptions (autonomous run, 2026-09-02)
 
@@ -165,9 +181,6 @@ Blocked on the owner:
   runners). Until then Windows/Linux/daemon bundles/Docker are built on the dev VM; macOS DMGs
   and the CI Android APK wait.
 - **Code signing certificates** (Windows Authenticode, Apple Developer ID) for SmartScreen/Gatekeeper.
-- **Hosting `frogg.app/install.sh`**: a redirect to
-  `https://raw.githubusercontent.com/frogg-app/fde/main/deploy/install.sh` (and
-  `install-docker.sh`, `uninstall.sh`) is enough.
 
 Assumptions made:
 

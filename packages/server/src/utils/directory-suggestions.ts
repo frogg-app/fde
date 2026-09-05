@@ -77,6 +77,8 @@ interface DirectoryListCacheEntry {
   expiresAt: number;
   modifiedAtMs: number;
   changedAtMs: number;
+  /** Wall clock when the listing was read, for the same-tick check below. */
+  cachedAtMs: number;
   entries: RawChildEntry[];
 }
 
@@ -110,6 +112,19 @@ export const WORKSPACE_SEARCH_HIDDEN_DIRECTORIES = [
   ".paseo",
   ".vscode",
 ] as const;
+/**
+ * Path and filename ordering, pinned to one locale.
+ *
+ * `localeCompare` with no locale uses the runtime's default, so the same query
+ * over the same tree ranked differently depending on the daemon host's LANG:
+ * under sv-SE "arlig" sorts after "zebra" and under en-US before it. Suggestion
+ * order is part of the response, so that made results machine-dependent.
+ *
+ * "en" keeps the ordering users already see - it is what an unset locale
+ * resolved to on virtually every host - while making it the same everywhere.
+ */
+const PATH_COLLATOR = new Intl.Collator("en");
+
 const IGNORED_DIRECTORY_NAMES = new Set([
   "node_modules",
   "venv",
@@ -505,7 +520,7 @@ function compareRank(left: RankedEntry, right: RankedEntry): number {
     left.fuzzyScore - right.fuzzyScore ||
     left.depth - right.depth ||
     compareKinds(left.kind, right.kind) ||
-    left.path.localeCompare(right.path)
+    PATH_COLLATOR.compare(left.path, right.path)
   );
 }
 
@@ -636,7 +651,14 @@ async function readChildren(directory: string): Promise<ChildEntry[]> {
     cached &&
     cached.expiresAt > Date.now() &&
     cached.modifiedAtMs === directoryInfo.mtimeMs &&
-    cached.changedAtMs === directoryInfo.ctimeMs
+    cached.changedAtMs === directoryInfo.ctimeMs &&
+    // Equal timestamps only prove nothing changed if the directory was already
+    // settled when we read it. Caching a listing in the same millisecond the
+    // directory was last written cannot distinguish "unchanged" from "changed
+    // again within that millisecond", so a child created immediately after a
+    // search stayed invisible for the whole TTL.
+    cached.cachedAtMs > cached.modifiedAtMs &&
+    cached.cachedAtMs > cached.changedAtMs
   ) {
     rawEntries = cached.entries;
   } else {
@@ -644,12 +666,14 @@ async function readChildren(directory: string): Promise<ChildEntry[]> {
     rawEntries = dirents
       .map(toRawChildEntry)
       .filter((entry): entry is RawChildEntry => entry !== null)
-      .sort((left, right) => left.name.localeCompare(right.name));
+      .sort((left, right) => PATH_COLLATOR.compare(left.name, right.name));
     if (CAN_VALIDATE_DIRECTORY_CACHE_FROM_METADATA) {
+      const cachedAtMs = Date.now();
       directoryListCache.set(directory, {
-        expiresAt: Date.now() + DIRECTORY_LIST_CACHE_TTL_MS,
+        expiresAt: cachedAtMs + DIRECTORY_LIST_CACHE_TTL_MS,
         modifiedAtMs: directoryInfo.mtimeMs,
         changedAtMs: directoryInfo.ctimeMs,
+        cachedAtMs,
         entries: rawEntries,
       });
       pruneCache();
@@ -658,7 +682,7 @@ async function readChildren(directory: string): Promise<ChildEntry[]> {
 
   return (await Promise.all(rawEntries.map((entry) => resolveChild(directory, entry))))
     .filter((entry): entry is ChildEntry => entry !== null)
-    .sort((left, right) => left.name.localeCompare(right.name));
+    .sort((left, right) => PATH_COLLATOR.compare(left.name, right.name));
 }
 
 async function loadGitIgnoredPaths(root: string): Promise<Set<string>> {

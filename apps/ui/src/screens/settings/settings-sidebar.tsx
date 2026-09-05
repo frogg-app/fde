@@ -262,20 +262,6 @@ export function SettingsSidebar({
 
   const sidebarBody = (
     <>
-      <View style={sidebarStyles.list}>
-        <Text style={sidebarStyles.groupLabel}>{t("settings.groups.app")}</Text>
-        {items.map((item) => (
-          <SidebarSectionButton
-            key={item.id}
-            itemId={item.id}
-            label={t(item.labelKey)}
-            icon={item.icon}
-            isSelected={selectedSectionId === item.id}
-            onSelect={onSelectSection}
-          />
-        ))}
-      </View>
-      <SidebarSeparator />
       {hasHosts ? (
         <View style={sidebarStyles.list}>
           <Text style={sidebarStyles.groupLabel}>{t("settings.groups.host")}</Text>
@@ -327,6 +313,22 @@ export function SettingsSidebar({
           ) : null}
         </View>
       )}
+      <View style={isDesktop ? sidebarStyles.appGroupDesktop : undefined}>
+        <SidebarSeparator />
+        <View style={sidebarStyles.list}>
+          <Text style={sidebarStyles.groupLabel}>{t("settings.groups.app")}</Text>
+          {items.map((item) => (
+            <SidebarSectionButton
+              key={item.id}
+              itemId={item.id}
+              label={t(item.labelKey)}
+              icon={item.icon}
+              isSelected={selectedSectionId === item.id}
+              onSelect={onSelectSection}
+            />
+          ))}
+        </View>
+      </View>
     </>
   );
 
@@ -340,6 +342,7 @@ export function SettingsSidebar({
       {isDesktop ? (
         <ScrollView
           style={sidebarStyles.scrollBody}
+          contentContainerStyle={sidebarStyles.scrollContent}
           showsVerticalScrollIndicator={false}
           testID="settings-sidebar-scroll-body"
         >
@@ -362,9 +365,18 @@ const sidebarStyles = StyleSheet.create((theme) => ({
   scrollBody: {
     flex: 1,
   },
+  // Lets the app group sit against the bottom of the nav column while the
+  // host group stays anchored to the top.
+  scrollContent: {
+    flexGrow: 1,
+  },
   mobileContainer: {
     paddingVertical: theme.spacing[2],
     paddingHorizontal: theme.spacing[2],
+  },
+  // Anchors the app group to the bottom of the nav column.
+  appGroupDesktop: {
+    marginTop: "auto",
   },
   list: {
     paddingVertical: theme.spacing[2],

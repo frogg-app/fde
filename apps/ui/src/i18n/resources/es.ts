@@ -1870,6 +1870,19 @@ export const es: TranslationResources = {
     },
   },
   spokenAlerts: {
+    notification: {
+      title: "Novedades de {{name}}",
+      titleFallback: "Novedades de tu agente",
+      play: "Reproducir la novedad",
+      stop: "Detener",
+      dismiss: "Descartar la novedad",
+      open: "Abrir {{name}}",
+    },
+    workspaceToggle: {
+      label: "Alertas de voz",
+      enable: "Activar las alertas de voz en este espacio de trabajo",
+      disable: "Desactivar las alertas de voz en este espacio de trabajo",
+    },
     banner: {
       play: "Reproducir",
       stop: "Detener",
@@ -2506,6 +2519,21 @@ export const es: TranslationResources = {
         relay: "Relé",
         local: "Local",
         remoteSsh: "SSH remoto",
+      },
+      daemonConflict: {
+        title: "Hay más de un daemon en esta máquina",
+        message:
+          "Se están ejecutando {{count}} daemons en {{machine}}. Cada uno tiene sus propios agentes y espacios de trabajo, así que lo que ves depende de a cuál estés conectado. Elige el que quieras y, si el otro no hace falta, apágalo.",
+        activeLabel: "{{name}} (conectado)",
+        version: "v{{version}}",
+        versionUnknown: "versión desconocida",
+        shutdown: "Apagar",
+        shutdownTitle: "¿Apagar el daemon?",
+        shutdownMessage:
+          "¿Apagar {{name}}? Se detendrán todos los agentes que se ejecuten en él. Esto no afecta al otro daemon.",
+        shutdownConfirm: "Apagar",
+        shutdownFailedTitle: "Error",
+        shutdownFailedMessage: "No se pudo apagar ese daemon.",
       },
       connections: {
         title: "Conexiones",

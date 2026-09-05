@@ -3,12 +3,8 @@ import type { Logger } from "pino";
 import { z } from "zod";
 
 import type { ClaimStore } from "./claim-store.js";
-import {
-  buildDirectClaimOffer,
-  renderClaimOfferQrSvg,
-  type ClaimOfferSource,
-} from "./claim-offer.js";
-import { renderPairingQr } from "./pairing-qr.js";
+import { buildDirectClaimOffer, type ClaimOfferSource } from "./claim-offer.js";
+import { renderPairingQr, renderPairingQrSvg } from "./pairing-qr.js";
 
 /**
  * First-run pairing routes.
@@ -86,12 +82,12 @@ export function createSetupOfferHandler(deps: SetupRouteDependencies): RequestHa
         res.status(409).json({ error: error instanceof Error ? error.message : String(error) });
         return;
       }
-      const qr =
-        qrMode === "svg"
-          ? await renderClaimOfferQrSvg(built.url)
-          : qrMode === "terminal"
-            ? await renderPairingQr(built.url).catch(() => null)
-            : null;
+      let qr: string | null = null;
+      if (qrMode === "svg") {
+        qr = await renderPairingQrSvg(built.url);
+      } else if (qrMode === "terminal") {
+        qr = await renderPairingQr(built.url).catch(() => null);
+      }
       res.setHeader("Cache-Control", "no-store");
       res.json({
         url: built.url,

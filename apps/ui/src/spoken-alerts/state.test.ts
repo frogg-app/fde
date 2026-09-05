@@ -3,6 +3,7 @@ import {
   EMPTY_SPOKEN_ALERTS_STATE,
   alertKey,
   reduceSpokenAlerts,
+  selectSpokenAlertNotificationKeys,
   shouldAutoPlaySpokenAlert,
   type SpokenAlert,
   type SpokenAlertsState,
@@ -19,8 +20,12 @@ const alert: SpokenAlert = {
 };
 const key = alertKey("srv", "agent");
 
-function received(state: SpokenAlertsState = EMPTY_SPOKEN_ALERTS_STATE, next = alert) {
-  return reduceSpokenAlerts(state, { type: "received", alert: next });
+function received(
+  state: SpokenAlertsState = EMPTY_SPOKEN_ALERTS_STATE,
+  next = alert,
+  notify = false,
+) {
+  return reduceSpokenAlerts(state, { type: "received", alert: next, notify });
 }
 
 describe("reduceSpokenAlerts", () => {
@@ -30,6 +35,7 @@ describe("reduceSpokenAlerts", () => {
       alert,
       playback: { status: "idle" },
       autoPlayAttempted: false,
+      notify: false,
     });
 
     const playing = reduceSpokenAlerts(first, { type: "play_requested", key, autoPlay: false });
@@ -38,6 +44,7 @@ describe("reduceSpokenAlerts", () => {
       alert: { ...alert, id: "n2", spokenText: "Now finished." },
       playback: { status: "idle" },
       autoPlayAttempted: false,
+      notify: false,
     });
   });
 
@@ -129,5 +136,28 @@ describe("shouldAutoPlaySpokenAlert", () => {
         appActivelyVisible: true,
       }),
     ).toBe(false);
+  });
+
+  it("raises a notification only for an alert that asked for one", () => {
+    expect(received().entries[key]!.notify).toBe(false);
+    expect(received(EMPTY_SPOKEN_ALERTS_STATE, alert, true).entries[key]!.notify).toBe(true);
+  });
+
+  it("clears the notification without losing the alert", () => {
+    const state = received(EMPTY_SPOKEN_ALERTS_STATE, alert, true);
+    const dismissed = reduceSpokenAlerts(state, { type: "notification_dismissed", key });
+    expect(dismissed.entries[key]!.notify).toBe(false);
+    expect(dismissed.entries[key]!.alert).toEqual(alert);
+    expect(reduceSpokenAlerts(dismissed, { type: "notification_dismissed", key })).toBe(dismissed);
+  });
+
+  it("lists the alerts owed a card oldest first", () => {
+    let state = received(EMPTY_SPOKEN_ALERTS_STATE, { ...alert, receivedAt: 2000 }, true);
+    state = received(state, { ...alert, agentId: "older", receivedAt: 1000 }, true);
+    state = received(state, { ...alert, agentId: "quiet", receivedAt: 3000 }, false);
+    expect(selectSpokenAlertNotificationKeys(state)).toEqual([
+      alertKey("srv", "older"),
+      alertKey("srv", "agent"),
+    ]);
   });
 });

@@ -1842,6 +1842,19 @@ export const ja: TranslationResources = {
     },
   },
   spokenAlerts: {
+    notification: {
+      title: "{{name}} からの更新",
+      titleFallback: "エージェントからの更新",
+      play: "更新を再生",
+      stop: "停止",
+      dismiss: "更新を閉じる",
+      open: "{{name}} を開く",
+    },
+    workspaceToggle: {
+      label: "音声アラート",
+      enable: "このワークスペースの音声アラートをオンにする",
+      disable: "このワークスペースの音声アラートをオフにする",
+    },
     banner: {
       play: "再生",
       stop: "停止",
@@ -2473,6 +2486,21 @@ export const ja: TranslationResources = {
         relay: "リレー",
         local: "ローカル",
         remoteSsh: "リモート SSH",
+      },
+      daemonConflict: {
+        title: "このマシンで複数のデーモンが動作しています",
+        message:
+          "{{machine}} で {{count}} 個のデーモンが動作しています。それぞれが独自のエージェントとワークスペースを持つため、表示内容は接続先によって変わります。使用するものを選び、もう一方が不要であれば停止してください。",
+        activeLabel: "{{name}}（接続中）",
+        version: "v{{version}}",
+        versionUnknown: "バージョン不明",
+        shutdown: "停止",
+        shutdownTitle: "デーモンを停止しますか？",
+        shutdownMessage:
+          "{{name}} を停止しますか？そのデーモンで実行中のエージェントはすべて停止します。もう一方のデーモンには影響しません。",
+        shutdownConfirm: "停止",
+        shutdownFailedTitle: "エラー",
+        shutdownFailedMessage: "そのデーモンを停止できませんでした。",
       },
       connections: {
         title: "接続",

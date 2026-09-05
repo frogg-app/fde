@@ -1,4 +1,5 @@
 import { Command } from "commander";
+import { createHeartbeatCommand } from "../heartbeat/index.js";
 import { runModeCommand } from "./mode.js";
 import { addArchiveOptions, runArchiveCommand } from "./archive.js";
 import { addDeleteOptions, runDeleteCommand } from "./delete.js";
@@ -11,10 +12,8 @@ import { addInspectOptions, runInspectCommand } from "./inspect.js";
 import { addWaitOptions, runWaitCommand } from "./wait.js";
 import { addAttachOptions, runAttachCommand } from "./attach.js";
 import { addReloadOptions, runReloadCommand } from "./reload.js";
-import { addImportOptions, runImportCommand } from "./import.js";
 import { runUpdateCommand } from "./update.js";
 import { runDetachCommand } from "./detach.js";
-import { addOpenOptions, runOpenCommand } from "./open.js";
 import { withOutput } from "../../output/index.js";
 import {
   addDaemonHostOption,
@@ -32,17 +31,9 @@ export function createAgentCommand(): Command {
     withOutput(runRunCommand),
   );
 
-  addJsonAndDaemonHostOptions(addImportOptions(agent.command("import"))).action(
-    withOutput(runImportCommand),
-  );
-
   addDaemonHostOption(addAttachOptions(agent.command("attach"))).action(runAttachCommand);
 
   addDaemonHostOption(addLogsOptions(agent.command("logs"))).action(runLogsCommand);
-
-  addJsonAndDaemonHostOptions(addOpenOptions(agent.command("open"))).action(
-    withOutput(runOpenCommand),
-  );
 
   addJsonAndDaemonHostOptions(addStopOptions(agent.command("stop"))).action(
     withOutput(runStopCommand),
@@ -103,6 +94,12 @@ export function createAgentCommand(): Command {
         [],
       ),
   ).action(withOutput(runUpdateCommand));
+
+  // Heartbeats are an agent scheduling its own recurring prompts, keyed on the
+
+  // caller's PASEO_AGENT_ID. It was a top-level group; it belongs here.
+
+  agent.addCommand(createHeartbeatCommand());
 
   return agent;
 }
