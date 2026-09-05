@@ -53,7 +53,7 @@ sha2 = "0.10"
 semver = "1"
 flate2 = "1"
 tar = "0.4"
-zip = { version = "4", default-features = false, features = ["deflate"] }
+zip = { version = "8", default-features = false, features = ["deflate"] }
 if-addrs = "0.15.0"
 dns-lookup = "4.0.1"
 
