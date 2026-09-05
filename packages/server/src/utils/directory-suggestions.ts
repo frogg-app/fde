@@ -77,6 +77,8 @@ interface DirectoryListCacheEntry {
   expiresAt: number;
   modifiedAtMs: number;
   changedAtMs: number;
+  /** Wall clock when the listing was read, for the same-tick check below. */
+  cachedAtMs: number;
   entries: RawChildEntry[];
 }
 
@@ -649,7 +651,14 @@ async function readChildren(directory: string): Promise<ChildEntry[]> {
     cached &&
     cached.expiresAt > Date.now() &&
     cached.modifiedAtMs === directoryInfo.mtimeMs &&
-    cached.changedAtMs === directoryInfo.ctimeMs
+    cached.changedAtMs === directoryInfo.ctimeMs &&
+    // Equal timestamps only prove nothing changed if the directory was already
+    // settled when we read it. Caching a listing in the same millisecond the
+    // directory was last written cannot distinguish "unchanged" from "changed
+    // again within that millisecond", so a child created immediately after a
+    // search stayed invisible for the whole TTL.
+    cached.cachedAtMs > cached.modifiedAtMs &&
+    cached.cachedAtMs > cached.changedAtMs
   ) {
     rawEntries = cached.entries;
   } else {
@@ -659,10 +668,12 @@ async function readChildren(directory: string): Promise<ChildEntry[]> {
       .filter((entry): entry is RawChildEntry => entry !== null)
       .sort((left, right) => PATH_COLLATOR.compare(left.name, right.name));
     if (CAN_VALIDATE_DIRECTORY_CACHE_FROM_METADATA) {
+      const cachedAtMs = Date.now();
       directoryListCache.set(directory, {
-        expiresAt: Date.now() + DIRECTORY_LIST_CACHE_TTL_MS,
+        expiresAt: cachedAtMs + DIRECTORY_LIST_CACHE_TTL_MS,
         modifiedAtMs: directoryInfo.mtimeMs,
         changedAtMs: directoryInfo.ctimeMs,
+        cachedAtMs,
         entries: rawEntries,
       });
       pruneCache();

@@ -2,6 +2,7 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, test } from "vitest";
+import { DEFAULT_GIT_PROCESS_POLICY } from "../utils/git-process-scheduler.js";
 
 import { loadConfig } from "./config.js";
 
@@ -22,10 +23,9 @@ describe("daemon Git process config", () => {
   test("defaults the global process limits", async () => {
     const home = await createHome();
 
-    expect(loadConfig(home, { env: {} }).git).toEqual({
-      maxProcessesPerSecond: 64,
-      maxProcessConcurrency: 8,
-    });
+    // Asserted against the shared default rather than repeated literals, so
+    // tuning the policy does not mean editing the same numbers in two places.
+    expect(loadConfig(home, { env: {} }).git).toEqual(DEFAULT_GIT_PROCESS_POLICY);
   });
 
   test("loads both limits from daemon.git", async () => {

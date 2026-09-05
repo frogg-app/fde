@@ -1,7 +1,11 @@
 import { setImmediate as scheduleImmediate } from "node:timers";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
-import { GitProcessScheduler, resolveGitProcessPolicy } from "./git-process-scheduler.js";
+import {
+  DEFAULT_GIT_PROCESS_POLICY,
+  GitProcessScheduler,
+  resolveGitProcessPolicy,
+} from "./git-process-scheduler.js";
 
 function createConcurrencyTask(
   index: number,
@@ -167,5 +171,24 @@ describe("resolveGitProcessPolicy", () => {
         persisted: { maxProcessesPerSecond: 5, maxProcessConcurrency: 4 },
       }),
     ).toEqual({ maxProcessesPerSecond: 12, maxProcessConcurrency: 7 });
+  });
+});
+
+describe("default policy", () => {
+  test("keeps the per-second ceiling clear of the rate concurrency can sustain", () => {
+    // The concurrency limit is the resource guard; the per-second limit is only
+    // a runaway backstop. If it ever drops below what concurrency can sustain,
+    // it silently becomes the bottleneck and ordinary parallel work turns into
+    // queue latency - which is what a 64/s default did to checkout status, at
+    // 13 spawns per call.
+    const { maxProcessConcurrency, maxProcessesPerSecond } = DEFAULT_GIT_PROCESS_POLICY;
+    // A short git command (rev-parse, config --get) measures 2-8ms.
+    const sustainableRate = maxProcessConcurrency / 0.008;
+    expect(maxProcessesPerSecond).toBeGreaterThanOrEqual(sustainableRate);
+  });
+
+  test("still bounds a runaway spawn loop", () => {
+    expect(DEFAULT_GIT_PROCESS_POLICY.maxProcessesPerSecond).toBeLessThan(10_000);
+    expect(DEFAULT_GIT_PROCESS_POLICY.maxProcessConcurrency).toBeLessThan(64);
   });
 });
