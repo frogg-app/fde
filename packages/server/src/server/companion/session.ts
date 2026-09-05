@@ -248,6 +248,7 @@ export class CompanionSession {
       return;
     }
     this.emitTranscript(text, true);
+    this.stallGuard.arm();
     await this.enqueueTurn(text);
   }
 
