@@ -28,3 +28,6 @@ apps/desktop/src-tauri/bridge.js
 *.jks
 google-services*.json
 .dev/
+
+# Vitest browser-mode attachment output.
+apps/ui/.vitest-attachments/

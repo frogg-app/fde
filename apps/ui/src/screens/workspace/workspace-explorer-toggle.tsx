@@ -69,13 +69,41 @@ interface DesktopWorkspaceExplorerToggleProps extends Omit<WorkspaceExplorerTogg
   owner: WorkspaceExplorerToggleOwner;
 }
 
+/**
+ * The workspace header owns the toggle only while the sidebar is collapsed. Once
+ * it is open, the sidebar carries its own close button so the control sits next
+ * to the thing it closes instead of across the window.
+ */
+export function shouldShowHeaderExplorerToggle({
+  owner,
+  expanded,
+}: {
+  owner: WorkspaceExplorerToggleOwner;
+  expanded: boolean;
+}): boolean {
+  return owner !== "mobile" && !expanded;
+}
+
+/** The open sidebar renders its own close button on every desktop platform. */
+export function shouldShowSidebarExplorerToggle({
+  owner,
+  expanded,
+}: {
+  owner: WorkspaceExplorerToggleOwner;
+  expanded: boolean;
+}): boolean {
+  return owner !== "mobile" && expanded;
+}
+
 export function WorkspaceHeaderExplorerToggle({
   owner,
   accessibilityState,
   style,
   ...toggleProps
 }: DesktopWorkspaceExplorerToggleProps) {
-  if (owner === "mobile" || (owner === "window" && accessibilityState.expanded)) return null;
+  if (!shouldShowHeaderExplorerToggle({ owner, expanded: accessibilityState.expanded })) {
+    return null;
+  }
   return (
     <WorkspaceExplorerToggle
       {...toggleProps}
@@ -88,8 +116,17 @@ export function WorkspaceHeaderExplorerToggle({
 
 export function WorkspaceExplorerSidebarToggle({
   owner,
+  accessibilityState,
   ...toggleProps
 }: DesktopWorkspaceExplorerToggleProps) {
-  if (owner !== "window") return null;
-  return <WorkspaceExplorerToggle {...toggleProps} mobile={false} />;
+  if (!shouldShowSidebarExplorerToggle({ owner, expanded: accessibilityState.expanded })) {
+    return null;
+  }
+  return (
+    <WorkspaceExplorerToggle
+      {...toggleProps}
+      accessibilityState={accessibilityState}
+      mobile={false}
+    />
+  );
 }
