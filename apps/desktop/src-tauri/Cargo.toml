@@ -48,7 +48,7 @@ tokio-tungstenite = "0.30"
 futures-util = { version = "0.3", default-features = false, features = ["sink", "std"] }
 # Sidecar daemon bundle: download, verify, extract (src/sidecar/).
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "stream"] }
-sha2 = "0.10"
+sha2 = "0.11"
 # App updates from GitHub releases (src/updates/).
 semver = "1"
 flate2 = "1"
