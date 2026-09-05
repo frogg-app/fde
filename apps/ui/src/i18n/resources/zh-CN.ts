@@ -2431,6 +2431,21 @@ export const zhCN: TranslationResources = {
         local: "本地",
         remoteSsh: "远程 SSH",
       },
+      daemonConflict: {
+        title: "此机器上运行着多个守护进程",
+        message:
+          "{{machine}} 上正在运行 {{count}} 个守护进程。每个都有各自的代理和工作区，因此你看到的内容取决于连接的是哪一个。选择需要的那个，如果另一个不再需要，请将其关闭。",
+        activeLabel: "{{name}}（已连接）",
+        version: "v{{version}}",
+        versionUnknown: "版本未知",
+        shutdown: "关闭",
+        shutdownTitle: "要关闭守护进程吗？",
+        shutdownMessage:
+          "要关闭 {{name}} 吗？其上运行的所有代理都会停止。这不会影响另一个守护进程。",
+        shutdownConfirm: "关闭",
+        shutdownFailedTitle: "错误",
+        shutdownFailedMessage: "无法关闭该守护进程。",
+      },
       connections: {
         title: "连接",
         removeTitle: "移除连接",

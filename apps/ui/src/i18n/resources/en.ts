@@ -2564,6 +2564,21 @@ export const en = {
         local: "Local",
         remoteSsh: "Remote SSH",
       },
+      daemonConflict: {
+        title: "More than one daemon on this machine",
+        message:
+          "{{count}} daemons are running on {{machine}}. Each has its own agents and workspaces, so what you see depends on which one you are connected to. Pick the one you want and, if the other is not needed, shut it down.",
+        activeLabel: "{{name}} (connected)",
+        version: "v{{version}}",
+        versionUnknown: "version unknown",
+        shutdown: "Shut down",
+        shutdownTitle: "Shut down daemon?",
+        shutdownMessage:
+          "Shut down {{name}}? Any agents running on it will stop. This does not affect the other daemon.",
+        shutdownConfirm: "Shut down",
+        shutdownFailedTitle: "Error",
+        shutdownFailedMessage: "Unable to shut down that daemon.",
+      },
       connections: {
         title: "Connections",
         removeTitle: "Remove connection",
