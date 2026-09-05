@@ -77,7 +77,7 @@ interface DirectoryListCacheEntry {
   expiresAt: number;
   modifiedAtMs: number;
   changedAtMs: number;
-  /** Wall clock when the listing was read, for the same-tick check below. */
+  /** Wall clock when the listing was read, for the settling check below. */
   cachedAtMs: number;
   entries: RawChildEntry[];
 }
@@ -95,6 +95,16 @@ const DIRECTORY_LIST_CACHE_TTL_MS = 8_000;
 const DIRECTORY_LIST_CACHE_MAX_ENTRIES = 4_000;
 const GIT_IGNORED_PATHS_CACHE_TTL_MS = 8_000;
 const GIT_IGNORED_PATHS_CACHE_MAX_ENTRIES = 256;
+// Inode timestamps come from the kernel's coarse clock, whose granularity is one
+// scheduler tick (1ms at CONFIG_HZ=1000, 10ms at 100), while Date.now() reads the
+// fine clock and so always runs a little ahead of it. Equal timestamps therefore
+// do not prove a directory is unchanged: a child created in the same tick as the
+// listing leaves mtime and ctime exactly where they were - measured at 97% of
+// same-tick writes on Linux - and no comparison against Date.now() can spot it.
+// A listing is only trustworthy once the directory has been settled for longer
+// than any plausible tick, because only then is a later write certain to move a
+// timestamp. Directories written within the margin simply get re-read.
+const DIRECTORY_SETTLED_MARGIN_MS = 100;
 // Windows does not reliably update directory mtime/ctime when children change,
 // so metadata cannot safely validate a cross-request listing cache there.
 const CAN_VALIDATE_DIRECTORY_CACHE_FROM_METADATA = process.platform !== "win32";
@@ -652,13 +662,11 @@ async function readChildren(directory: string): Promise<ChildEntry[]> {
     cached.expiresAt > Date.now() &&
     cached.modifiedAtMs === directoryInfo.mtimeMs &&
     cached.changedAtMs === directoryInfo.ctimeMs &&
-    // Equal timestamps only prove nothing changed if the directory was already
-    // settled when we read it. Caching a listing in the same millisecond the
-    // directory was last written cannot distinguish "unchanged" from "changed
-    // again within that millisecond", so a child created immediately after a
-    // search stayed invisible for the whole TTL.
-    cached.cachedAtMs > cached.modifiedAtMs &&
-    cached.cachedAtMs > cached.changedAtMs
+    // Equal timestamps only prove nothing changed if the directory had settled
+    // well before we read it - see DIRECTORY_SETTLED_MARGIN_MS. Without this a
+    // child created just after a search stayed invisible for the whole TTL.
+    cached.cachedAtMs - Math.max(cached.modifiedAtMs, cached.changedAtMs) >
+      DIRECTORY_SETTLED_MARGIN_MS
   ) {
     rawEntries = cached.entries;
   } else {

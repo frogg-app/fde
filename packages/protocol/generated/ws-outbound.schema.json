@@ -33724,6 +33724,9 @@
                                 },
                                 "size": {
                                   "type": "number"
+                                },
+                                "contentHash": {
+                                  "type": "string"
                                 }
                               },
                               "required": [
@@ -33808,6 +33811,9 @@
                                         },
                                         "size": {
                                           "type": "number"
+                                        },
+                                        "contentHash": {
+                                          "type": "string"
                                         }
                                       },
                                       "required": [
@@ -34006,6 +34012,9 @@
                             },
                             "size": {
                               "type": "number"
+                            },
+                            "contentHash": {
+                              "type": "string"
                             }
                           },
                           "required": [
@@ -34085,6 +34094,9 @@
                                         },
                                         "size": {
                                           "type": "number"
+                                        },
+                                        "contentHash": {
+                                          "type": "string"
                                         }
                                       },
                                       "required": [

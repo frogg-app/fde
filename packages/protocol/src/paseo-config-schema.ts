@@ -96,9 +96,15 @@ export const PaseoConfigSchema = PaseoConfigRawSchema.extend({
   .passthrough()
   .catch({});
 
+// Filesystem timestamps are too coarse on their own: tmpfs and other
+// coarse-clock filesystems can stamp two consecutive writes with the same
+// mtime, so a same-size edit would slip past the stale-write guard. The
+// content hash is the authoritative part of the token; mtime and size remain
+// for display and for tokens minted by older clients.
 export const PaseoConfigRevisionSchema = z.object({
   mtimeMs: z.number(),
   size: z.number(),
+  contentHash: z.string().optional(),
 });
 
 export const ProjectConfigRpcErrorSchema = z.discriminatedUnion("code", [
