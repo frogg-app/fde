@@ -22,6 +22,7 @@ function makeCtx(overrides: Partial<ShortcutRoutingContext> = {}): ShortcutRouti
     commandCenterOpen: false,
     shortcutsDialogOpen: false,
     settingsModalOpen: false,
+    companionOpen: false,
     ...overrides,
   };
 }
@@ -444,5 +445,22 @@ describe("routeKeyboardShortcut — unknown actions", () => {
     expect(
       routeKeyboardShortcut({ action: "totally.made.up", payload: null }, makeCtx()),
     ).toEqual<ShortcutAction>({ kind: "none" });
+  });
+});
+
+describe("routeKeyboardShortcut — companion.toggle", () => {
+  it("opens the Companion when it is closed", () => {
+    expect(routeKeyboardShortcut({ action: "companion.toggle", payload: null }, makeCtx())).toEqual(
+      { kind: "companion-toggle", nextOpen: true },
+    );
+  });
+
+  it("closes the Companion when it is open", () => {
+    expect(
+      routeKeyboardShortcut(
+        { action: "companion.toggle", payload: null },
+        makeCtx({ companionOpen: true }),
+      ),
+    ).toEqual({ kind: "companion-toggle", nextOpen: false });
   });
 });

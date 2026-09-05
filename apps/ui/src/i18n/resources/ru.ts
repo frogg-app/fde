@@ -1853,6 +1853,58 @@ export const ru: TranslationResources = {
       stop: "Остановить голосовой режим реального времени и прервать текущий ответ",
     },
   },
+  companion: {
+    title: "Компаньон",
+    status: {
+      connecting: "Подключение…",
+    },
+    micState: {
+      idle: "Ожидание",
+      listening: "Слушает",
+      thinking: "Думает",
+      speaking: "Говорит",
+    },
+    actions: {
+      mute: "Выключить микрофон",
+      unmute: "Включить микрофон",
+      stop: "Остановить",
+      send: "Отправить",
+    },
+    compose: {
+      placeholder: "Введите текст вместо речи",
+      sent: "Отправлено",
+    },
+    topics: {
+      empty: "Пока ничего не отслеживается.",
+    },
+    error: {
+      startFailed: "Не удалось запустить Компаньона",
+      sendFailed: "Сообщение не отправлено",
+    },
+    reason: {
+      unknown: "Демон не сообщил причину.",
+      companion_backend_missing: "На этом демоне нет ни ключа API Anthropic, ни CLI Claude Code.",
+      companion_backend_failed: "Не удалось запустить сеанс модели Companion.",
+      companion_disabled: "Компаньон отключён на этом демоне.",
+      companion_microphone_unavailable: "Микрофон недоступен.",
+      companion_session_closed: "Сессия Компаньона закрыта.",
+      companion_busy: "Компаньон занят другим ходом.",
+    },
+    unavailable: {
+      title: "Компаньон недоступен",
+      description: "Этот демон не предоставляет Компаньона.",
+    },
+    settings: {
+      autoStart: {
+        label: "Начинать разговор сразу",
+        description: "Открывать сессию сразу при открытии Компаньона, не дожидаясь нажатия.",
+      },
+      replyText: {
+        label: "Показывать текст ответа",
+        description: "Читайте то, что Компаньон говорит, пока он говорит.",
+      },
+    },
+  },
   spokenAlerts: {
     notification: {
       title: "Обновление от {{name}}",
@@ -2420,6 +2472,7 @@ export const ru: TranslationResources = {
         toggleRightSidebar: "Переключить боковую панель",
         toggleBothSidebars: "Переключить обе боковые панели",
         toggleSettings: "Переключить настройки",
+        toggleCompanion: "Показать или скрыть Компаньона",
         toggleFocusMode: "Переключить режим фокусировки",
         cycleTheme: "Переключить тему",
         focusMessageInput: "Перейти к полю ввода сообщения",

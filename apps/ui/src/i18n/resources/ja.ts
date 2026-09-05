@@ -1841,6 +1841,59 @@ export const ja: TranslationResources = {
       stop: "リアルタイム音声を停止してターンを中断",
     },
   },
+  companion: {
+    title: "コンパニオン",
+    status: {
+      connecting: "接続中…",
+    },
+    micState: {
+      idle: "待機中",
+      listening: "聞いています",
+      thinking: "考えています",
+      speaking: "話しています",
+    },
+    actions: {
+      mute: "ミュート",
+      unmute: "ミュート解除",
+      stop: "停止",
+      send: "送信",
+    },
+    compose: {
+      placeholder: "話す代わりに入力",
+      sent: "送信しました",
+    },
+    topics: {
+      empty: "まだ追跡している項目はありません。",
+    },
+    error: {
+      startFailed: "コンパニオンを開始できませんでした",
+      sendFailed: "メッセージを送信できませんでした",
+    },
+    reason: {
+      unknown: "デーモンは理由を返しませんでした。",
+      companion_backend_missing:
+        "このデーモンには Anthropic API キーも Claude Code CLI もありません。",
+      companion_backend_failed: "コンパニオンのモデルセッションを開始できませんでした。",
+      companion_disabled: "このデーモンではコンパニオンが無効です。",
+      companion_microphone_unavailable: "マイクを利用できません。",
+      companion_session_closed: "コンパニオンのセッションは終了しています。",
+      companion_busy: "コンパニオンは別のターンを処理中です。",
+    },
+    unavailable: {
+      title: "コンパニオンを利用できません",
+      description: "このデーモンはコンパニオンを提供していません。",
+    },
+    settings: {
+      autoStart: {
+        label: "すぐに話し始める",
+        description: "タップを待たず、コンパニオンを開いた時点でセッションを開始します。",
+      },
+      replyText: {
+        label: "返答テキストを表示",
+        description: "コンパニオンが話している内容を読めるようにします。",
+      },
+    },
+  },
   spokenAlerts: {
     notification: {
       title: "{{name}} からの更新",
@@ -2400,6 +2453,7 @@ export const ja: TranslationResources = {
         toggleRightSidebar: "サイドパネルを切り替え",
         toggleBothSidebars: "両方のサイドバーを切り替え",
         toggleSettings: "設定を切り替え",
+        toggleCompanion: "コンパニオンの表示を切り替え",
         toggleFocusMode: "フォーカスモードを切り替え",
         cycleTheme: "テーマを順に切り替え",
         focusMessageInput: "メッセージ入力にフォーカス",

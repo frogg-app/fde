@@ -192,7 +192,13 @@ export const SHORTCUT_HELP_ROW_ORDER: Record<ShortcutSectionId, readonly string[
     "workspace-pane-move-tab-down",
     "workspace-pane-close",
   ],
-  layout: ["toggle-left-sidebar", "toggle-right-sidebar", "toggle-both-sidebars", "toggle-focus"],
+  layout: [
+    "toggle-companion",
+    "toggle-left-sidebar",
+    "toggle-right-sidebar",
+    "toggle-both-sidebars",
+    "toggle-focus",
+  ],
   "agent-input": [
     "focus-message-input",
     "cycle-agent-mode",
@@ -239,6 +245,7 @@ const SHORTCUT_HELP_LABEL_KEYS: Record<string, string> = {
   "toggle-right-sidebar": "settings.shortcuts.help.toggleRightSidebar",
   "toggle-both-sidebars": "settings.shortcuts.help.toggleBothSidebars",
   "toggle-settings": "settings.shortcuts.help.toggleSettings",
+  "toggle-companion": "settings.shortcuts.help.toggleCompanion",
   "toggle-focus": "settings.shortcuts.help.toggleFocusMode",
   "cycle-theme": "settings.shortcuts.help.cycleTheme",
   "focus-message-input": "settings.shortcuts.help.focusMessageInput",
@@ -1109,6 +1116,30 @@ const SHORTCUT_BINDINGS: readonly ShortcutBinding[] = [
       id: "voice-toggle",
       section: "agent-input",
       label: "Toggle voice mode",
+    },
+  },
+  {
+    id: "companion-toggle-cmd-shift-k-mac",
+    action: "companion.toggle",
+    combo: "Cmd+Shift+K",
+    repeat: false,
+    when: { mac: true, commandCenter: false, terminal: false },
+    help: {
+      id: "toggle-companion",
+      section: "layout",
+      label: "Toggle the Companion",
+    },
+  },
+  {
+    id: "companion-toggle-ctrl-shift-k-non-mac",
+    action: "companion.toggle",
+    combo: "Ctrl+Shift+K",
+    repeat: false,
+    when: { mac: false, commandCenter: false, terminal: false },
+    help: {
+      id: "toggle-companion",
+      section: "layout",
+      label: "Toggle the Companion",
     },
   },
   {

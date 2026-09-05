@@ -98,6 +98,10 @@ export interface AppSettings {
   spokenAlertsAutoPlay: boolean;
   /** Show the voice-reply transcript for a moment before sending it. */
   voiceReplyConfirm: boolean;
+  /** Open a Companion session as soon as the surface opens, rather than waiting for a tap. */
+  companionAutoStart: boolean;
+  /** Show the Companion's reply text while it speaks. */
+  companionShowReplyText: boolean;
 }
 
 export type AppSettingsUpdate =
@@ -152,6 +156,8 @@ export const DEFAULT_CLIENT_SETTINGS: AppSettings = {
   pullRequestOpenLocation: "explorer",
   spokenAlertsAutoPlay: DEFAULT_SPOKEN_ALERTS_AUTO_PLAY,
   voiceReplyConfirm: true,
+  companionAutoStart: true,
+  companionShowReplyText: true,
 };
 
 export const DEFAULT_APP_SETTINGS: Settings = {
@@ -270,6 +276,8 @@ const StoredAppSettingsSchema = z
     pullRequestOpenLocation: z.enum(["main", "side", "explorer"]).optional(),
     spokenAlertsAutoPlay: z.boolean().catch(DEFAULT_SPOKEN_ALERTS_AUTO_PLAY),
     voiceReplyConfirm: z.boolean().catch(true),
+    companionAutoStart: z.boolean().catch(true),
+    companionShowReplyText: z.boolean().catch(true),
     // COMPAT(explorerSidebarRouting): replaced by source-specific side-pane preferences in v0.6.
     openSupportingTabsInSidePanel: z.boolean().optional().catch(undefined),
     // COMPAT(rendererDesktopSettings): these fields used to share this renderer-owned key.

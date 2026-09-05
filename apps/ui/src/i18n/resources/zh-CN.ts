@@ -1794,6 +1794,58 @@ export const zhCN: TranslationResources = {
       stop: "停止 realtime voice 并中断 turn",
     },
   },
+  companion: {
+    title: "伙伴",
+    status: {
+      connecting: "连接中…",
+    },
+    micState: {
+      idle: "空闲",
+      listening: "正在聆听",
+      thinking: "正在思考",
+      speaking: "正在说话",
+    },
+    actions: {
+      mute: "静音",
+      unmute: "取消静音",
+      stop: "停止",
+      send: "发送",
+    },
+    compose: {
+      placeholder: "改用输入而不是说话",
+      sent: "已发送",
+    },
+    topics: {
+      empty: "暂无跟踪中的内容。",
+    },
+    error: {
+      startFailed: "无法启动伙伴",
+      sendFailed: "消息未发送",
+    },
+    reason: {
+      unknown: "守护进程未说明原因。",
+      companion_backend_missing: "此守护进程既没有 Anthropic API 密钥，也没有 Claude Code CLI。",
+      companion_backend_failed: "无法启动伴侣的模型会话。",
+      companion_disabled: "此守护进程已关闭伙伴。",
+      companion_microphone_unavailable: "麦克风不可用。",
+      companion_session_closed: "伙伴会话已关闭。",
+      companion_busy: "伙伴正在处理另一轮对话。",
+    },
+    unavailable: {
+      title: "伙伴不可用",
+      description: "此守护进程不提供伙伴。",
+    },
+    settings: {
+      autoStart: {
+        label: "立即开始对话",
+        description: "打开伙伴时立即开始会话，而不是等待点按。",
+      },
+      replyText: {
+        label: "显示回复文本",
+        description: "在伙伴说话时同时阅读它所说的内容。",
+      },
+    },
+  },
   spokenAlerts: {
     notification: {
       title: "来自 {{name}} 的更新",
@@ -2345,6 +2397,7 @@ export const zhCN: TranslationResources = {
         toggleRightSidebar: "切换侧边面板",
         toggleBothSidebars: "切换两侧边栏",
         toggleSettings: "切换设置",
+        toggleCompanion: "切换伙伴",
         toggleFocusMode: "切换专注模式",
         cycleTheme: "循环切换主题",
         focusMessageInput: "聚焦消息输入框",

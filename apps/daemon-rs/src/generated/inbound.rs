@@ -94,6 +94,18 @@ pub struct Session {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum SessionMessage {
+    #[serde(rename = "companion.session.start.request")]
+    CompanionSessionStartRequest(CompanionSessionStartRequest),
+    #[serde(rename = "companion.session.stop.request")]
+    CompanionSessionStopRequest(CompanionSessionStopRequest),
+    #[serde(rename = "companion.audio.chunk")]
+    CompanionAudioChunk(CompanionAudioChunk),
+    #[serde(rename = "companion.audio.played")]
+    CompanionAudioPlayed(CompanionAudioPlayed),
+    #[serde(rename = "companion.message.send.request")]
+    CompanionMessageSendRequest(CompanionMessageSendRequest),
+    #[serde(rename = "companion.notebook.fetch.request")]
+    CompanionNotebookFetchRequest(CompanionNotebookFetchRequest),
     #[serde(rename = "hub.execution.agent.create.request")]
     HubExecutionAgentCreateRequest(HubExecutionAgentCreateRequest),
     #[serde(rename = "hub.execution.agent.validate.request")]
@@ -490,6 +502,44 @@ pub enum SessionMessage {
     LoopLogs(LoopLogs),
     #[serde(rename = "loop/stop")]
     LoopStop(LoopStop),
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionSessionStartRequest {
+    #[serde(rename = "requestId")]
+    pub request_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionSessionStopRequest {
+    #[serde(rename = "requestId")]
+    pub request_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionAudioChunk {
+    pub audio: String,
+    pub format: String,
+    #[serde(rename = "isLast")]
+    pub is_last: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionAudioPlayed {
+    pub id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionMessageSendRequest {
+    #[serde(rename = "requestId")]
+    pub request_id: String,
+    pub text: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionNotebookFetchRequest {
+    #[serde(rename = "requestId")]
+    pub request_id: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

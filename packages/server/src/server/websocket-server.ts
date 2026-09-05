@@ -66,6 +66,8 @@ import type { SpokenAlertService } from "./notifications/spoken-alerts.js";
 import type { ScriptHealthState } from "./script-health-monitor.js";
 import type { ServiceProxySubsystem } from "./service-proxy.js";
 import type { WorkspaceScriptRuntimeStore } from "./workspace-script-runtime-store.js";
+import { COMPANION_DISABLED_MESSAGE } from "./companion/capability.js";
+import type { CompanionRuntime } from "./companion/session.js";
 import type { SpeechReadinessSnapshot, SpeechService } from "./speech/speech-runtime.js";
 import type { VoiceCallerContext, VoiceSpeakHandler } from "./voice-types.js";
 import {
@@ -386,12 +388,14 @@ function resolveCapabilityReason(params: {
 
 function buildServerCapabilities(params: {
   readiness: SpeechReadinessSnapshot | null;
-}): ServerCapabilities | undefined {
+  companion: ServerCapabilityState;
+}): ServerCapabilities {
   const readiness = params.readiness;
   if (!readiness) {
-    return undefined;
+    return { companion: params.companion };
   }
   return {
+    companion: params.companion,
     voice: {
       dictation: toServerCapabilityState({
         state: readiness.dictation,
@@ -544,6 +548,15 @@ function requireWebSocketServices(params: {
 /**
  * WebSocket server that only accepts sockets + parses/forwards messages to the session layer.
  */
+/**
+ * Resolving the Companion's capability needs an async probe for the Claude Code
+ * CLI, so bootstrap does it once and the runtime carries the answer. A daemon
+ * built without a Companion runtime has no Companion to advertise.
+ */
+function toCompanionCapability(companion: CompanionRuntime | undefined): ServerCapabilityState {
+  return companion?.capability ?? { enabled: false, reason: COMPANION_DISABLED_MESSAGE };
+}
+
 export class VoiceAssistantWebSocketServer {
   private readonly logger: pino.Logger;
   private readonly wss: WebSocketServer;
@@ -573,6 +586,7 @@ export class VoiceAssistantWebSocketServer {
   private readonly pushNotifications: PushNotifications;
   private readonly pushNotificationSender: PushNotificationSender;
   private readonly spokenAlerts: SpokenAlertService | null;
+  private readonly companion: CompanionRuntime | undefined;
   private readonly mcpBaseUrl: string | null;
   private speech!: SpeechService | null;
   private terminalManager!: TerminalManager | null;
@@ -595,6 +609,7 @@ export class VoiceAssistantWebSocketServer {
     | ((workspaceId: string, oldBranch: string | null, newBranch: string | null) => void)
     | null;
   private serverCapabilities: ServerCapabilities | undefined;
+  private readonly companionCapability: ServerCapabilityState;
   private readonly runtimeMetrics = new WebSocketRuntimeMetricsWindow();
   private lastRuntimeMetricsSnapshot: WebSocketRuntimeDiagnosticPayload | null = null;
   private runtimeMetricsInterval: ReturnType<typeof setInterval> | null = null;
@@ -662,9 +677,11 @@ export class VoiceAssistantWebSocketServer {
     orchestrationSkills?: SessionOptions["orchestrationSkills"],
     workspaceLabelService?: WorkspaceLabelService,
     spokenAlerts?: SpokenAlertService | null,
+    companion?: CompanionRuntime,
   ) {
     this.logger = logger.child({ module: "websocket-server" });
     this.spokenAlerts = spokenAlerts ?? null;
+    this.companion = companion;
     this.workspaceSetupRuntime = workspaceSetupRuntime;
     this.advertiseDaemonStatusRpc = wsConfig.daemonStatusRpc !== false;
     this.advertiseRelayConfig = wsConfig.relayConfig !== false;
@@ -715,8 +732,10 @@ export class VoiceAssistantWebSocketServer {
       throw new Error("providerSnapshotManager is required");
     }
     this.providerSnapshotManager = providerSnapshotManager;
+    this.companionCapability = toCompanionCapability(companion);
     this.serverCapabilities = buildServerCapabilities({
       readiness: this.speech?.getReadiness() ?? null,
+      companion: this.companionCapability,
     });
     this.unsubscribeSpeechReadiness =
       this.speech?.onReadinessChange((snapshot) => {
@@ -967,7 +986,9 @@ export class VoiceAssistantWebSocketServer {
   }
 
   public publishSpeechReadiness(readiness: SpeechReadinessSnapshot | null): void {
-    this.updateServerCapabilities(buildServerCapabilities({ readiness }));
+    this.updateServerCapabilities(
+      buildServerCapabilities({ readiness, companion: this.companionCapability }),
+    );
   }
 
   public updateServerCapabilities(capabilities: ServerCapabilities | null | undefined): void {
@@ -1462,6 +1483,7 @@ export class VoiceAssistantWebSocketServer {
       voice: {
         turnDetection: () => this.speech?.resolveTurnDetection() ?? null,
       },
+      companion: this.companion,
       voiceBridge: {
         registerVoiceSpeakHandler: (agentId, handler) => {
           this.voiceSpeakHandlers.set(agentId, handler);

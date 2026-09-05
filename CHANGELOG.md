@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.0
+
+- **Companion: a real-time voice conversation that sits above projects and workspaces.** You talk to it and it answers straight away; it never does the work itself. Anything that needs real thought is handed to a headless subagent while it keeps talking to you, and it drives, starts and reports on the agents running in your workspaces. A fast orchestrator model (`claude-haiku-4-5`) answers over the Messages API rather than the agent provider stack, which launches a CLI per turn and is far too slow for conversation.
+- The Companion never leaves a silence. Text is cut into speakable segments and sent to TTS while the model is still generating, so it starts talking mid-sentence; if nothing has been said 700 ms after you stop, a pre-synthesised filler covers the gap. It keeps its own small notebook of topics and open tasks, which is what lets its context stay tiny — old turns are dropped rather than summarised.
+- The Companion opens from a sidebar row, the command palette or a shortcut, as a sheet on compact layouts and a centred card on desktop: a mic orb, your live transcript, its reply as it speaks, and a strip of current topics you can tap to jump to the agent working on one. It reuses voice mode's audio stack wholesale — VAD, streaming speech-to-text and barge-in — and is advertised through `server_info.capabilities.companion`, so the control never appears when the daemon cannot honour it. Enable with an Anthropic API key; see [docs/companion.md](docs/companion.md).
+- Project skills and tooling for working in this repository: `skills/fde-dev` (build order, dev daemon, the fast verification loop), `skills/fde-rpc` (the thirteen-step checklist for adding a session RPC, including the outbound permission record that is easy to miss), `skills/fde-i18n` (the nine-locale procedure), a `dev-tooling` agent definition, `scripts/dev/worktree-status.mjs`, and `scripts/ci/verify.mjs --changed`, which lints and tests only what you changed.
+- Plugin scaffold tests no longer leak generated directories into the working tree.
+
 ## 0.1.19
 
 - Compact layouts no longer put a second agent in a worktree by accident. The workspace menu is the only way to start an agent there, and inside a worktree "New agent" quietly added one to that same checkout; it now opens New workspace with worktree isolation preselected, cut from the main repository. Adding an agent to the current worktree is still one tap away, as an explicit "New agent in this worktree" item.

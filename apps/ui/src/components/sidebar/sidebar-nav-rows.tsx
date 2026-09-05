@@ -1,5 +1,5 @@
 import { router, usePathname } from "expo-router";
-import { History, Plus, Search } from "lucide-react-native";
+import { AudioLines, History, Plus, Search } from "lucide-react-native";
 import { memo, useCallback, useMemo, type ComponentType } from "react";
 import { useTranslation } from "react-i18next";
 import { View, type StyleProp, type ViewStyle } from "react-native";
@@ -14,6 +14,7 @@ import {
   type BuiltinSidebarNavId,
 } from "@/sidebar-nav/model";
 import { useSidebarNavItems } from "@/sidebar-nav/use-sidebar-nav-items";
+import { useCompanionStore } from "@/companion/store";
 import { useKeyboardShortcutsStore } from "@/stores/keyboard-shortcuts-store";
 import { useActiveWorkspaceSelection } from "@/stores/navigation-active-workspace-store";
 import { useWorkspace } from "@/stores/session-store-hooks";
@@ -125,6 +126,27 @@ function SidebarHistoryRow({ onBeforeNavigate }: SidebarNavRowProps) {
   );
 }
 
+function SidebarCompanionRow({ onBeforeNavigate }: SidebarNavRowProps) {
+  const { t } = useTranslation();
+  const shortcutKeys = useShortcutKeys(builtinSidebarNavShortcutAction("companion"));
+  const openCompanion = useCompanionStore((state) => state.open);
+  const handlePress = useCallback(() => {
+    onBeforeNavigate?.();
+    openCompanion();
+  }, [onBeforeNavigate, openCompanion]);
+
+  return (
+    <SidebarHeaderRow
+      icon={AudioLines}
+      label={t(builtinSidebarNavLabelKey("companion"))}
+      onPress={handlePress}
+      testID="sidebar-companion"
+      variant="compact"
+      shortcutKeys={shortcutKeys}
+    />
+  );
+}
+
 function SidebarSearchRow({ onBeforeNavigate }: SidebarNavRowProps) {
   const { t } = useTranslation();
   const shortcutKeys = useShortcutKeys(builtinSidebarNavShortcutAction("search"));
@@ -148,6 +170,7 @@ function SidebarSearchRow({ onBeforeNavigate }: SidebarNavRowProps) {
 
 const BUILTIN_ROWS: Record<BuiltinSidebarNavId, ComponentType<SidebarNavRowProps>> = {
   "new-workspace": SidebarNewWorkspaceRow,
+  companion: SidebarCompanionRow,
   history: SidebarHistoryRow,
   search: SidebarSearchRow,
 };

@@ -5,6 +5,15 @@ Done items move to CHANGELOG.md.
 
 ## Now
 
+- [ ] **Companion: real-time voice conversation.** A fast, cheap conversational orchestrator
+      that sits above projects and workspaces. It talks to you in real time, delegates
+      anything that needs thought to headless subagents, drives and reports on the agents
+      running in your workspaces, and keeps a small notebook of current topics and tasks so
+      its own context stays tiny. Never leaves a silence: a prompt contract plus a
+      pre-synthesised filler bank cover the gap while work is delegated. Reuses the voice
+      mode audio stack (VAD, streaming STT, barge-in, TTS) and replaces the brain.
+      See docs/companion.md.
+
 - [x] **Desktop command stubs.** Every `desktop_*` / daemon / CLI command the UI invokes is
       implemented; the daemon family is real since milestone 3 (`install_cli` still answers
       "ships with the sidecar").

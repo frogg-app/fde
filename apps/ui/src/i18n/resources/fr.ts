@@ -1873,6 +1873,58 @@ export const fr: TranslationResources = {
       stop: "Arrêtez la voix en temps réel et interrompez le tour",
     },
   },
+  companion: {
+    title: "Compagnon",
+    status: {
+      connecting: "Connexion…",
+    },
+    micState: {
+      idle: "Inactif",
+      listening: "À l'écoute",
+      thinking: "Réflexion",
+      speaking: "Parle",
+    },
+    actions: {
+      mute: "Couper le micro",
+      unmute: "Réactiver le micro",
+      stop: "Arrêter",
+      send: "Envoyer",
+    },
+    compose: {
+      placeholder: "Écrivez au lieu de parler",
+      sent: "Envoyé",
+    },
+    topics: {
+      empty: "Rien de suivi pour l'instant.",
+    },
+    error: {
+      startFailed: "Le Compagnon n'a pas pu démarrer",
+      sendFailed: "Votre message n'a pas été envoyé",
+    },
+    reason: {
+      unknown: "Le démon n'a pas indiqué pourquoi.",
+      companion_backend_missing: "Ce démon n'a ni clé d'API Anthropic ni CLI Claude Code.",
+      companion_backend_failed: "La session de modèle du Companion n'a pas pu démarrer.",
+      companion_disabled: "Le Compagnon est désactivé sur ce démon.",
+      companion_microphone_unavailable: "Le microphone n'est pas disponible.",
+      companion_session_closed: "La session du Compagnon est fermée.",
+      companion_busy: "Le Compagnon est occupé par un autre tour.",
+    },
+    unavailable: {
+      title: "Le Compagnon n'est pas disponible",
+      description: "Ce démon ne propose pas le Compagnon.",
+    },
+    settings: {
+      autoStart: {
+        label: "Parler tout de suite",
+        description: "Ouvre une session dès l'ouverture du Compagnon, sans attendre une pression.",
+      },
+      replyText: {
+        label: "Afficher le texte de la réponse",
+        description: "Lisez ce que dit le Compagnon pendant qu'il parle.",
+      },
+    },
+  },
   spokenAlerts: {
     notification: {
       title: "Du nouveau de {{name}}",
@@ -2436,6 +2488,7 @@ export const fr: TranslationResources = {
         toggleRightSidebar: "Basculer le panneau latéral",
         toggleBothSidebars: "Basculer les deux barres latérales",
         toggleSettings: "Basculer les paramètres",
+        toggleCompanion: "Afficher ou masquer le Compagnon",
         toggleFocusMode: "Basculer le mode de mise au point",
         cycleTheme: "Thème du cycle",
         focusMessageInput: "Saisie du message de focus",
