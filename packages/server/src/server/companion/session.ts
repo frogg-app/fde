@@ -175,6 +175,8 @@ export class CompanionSession {
    * utterance would talk straight over the user.
    */
   private isUserSpeaking = false;
+  /** What the user has actually heard of the turn in flight. Reset per turn. */
+  private spokenText = "";
   private turnQueue: Promise<void> = Promise.resolve();
   private readonly fillerGroupIds = new Set<string>();
 
@@ -411,7 +413,8 @@ export class CompanionSession {
       onError: (error) => this.logger.warn({ err: error }, "Companion segment failed to speak"),
       signal,
     });
-    const turn = orchestrator.turn(text);
+    this.spokenText = "";
+    const turn = orchestrator.turn(text, () => this.spokenText);
     let reply = "";
     try {
       for await (const event of turn) {
@@ -468,13 +471,19 @@ export class CompanionSession {
 
   private createSink(signal: AbortSignal): CompanionSpeechSink {
     return {
-      speak: (text) =>
-        this.ttsManager.generateAndWaitForPlayback(
+      speak: (text) => {
+        // Counted as heard the moment it is handed to TTS. A segment cut off
+        // part-way through playback is still mostly heard, so crediting it is
+        // closer to the truth than dropping it -- and far closer than crediting
+        // everything the model generated.
+        this.spokenText += this.spokenText ? ` ${text}` : text;
+        return this.ttsManager.generateAndWaitForPlayback(
           text,
           (msg) => this.forwardAudio(msg),
           signal,
           true,
-        ),
+        );
+      },
     };
   }
 
