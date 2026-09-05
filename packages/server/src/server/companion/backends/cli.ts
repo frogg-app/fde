@@ -2,14 +2,13 @@ import {
   createSdkMcpServer,
   tool,
   type Options,
-  type Query,
   type SDKMessage,
   type SDKResultMessage,
   type SDKUserMessage,
 } from "@anthropic-ai/claude-agent-sdk";
 import type { Logger } from "pino";
 
-import { claudeQuery, type ClaudeQueryFactory } from "../../agent/providers/claude/query.js";
+import { claudeQuery, type ClaudeQueryInput } from "../../agent/providers/claude/query.js";
 import {
   CompanionTurnError,
   type CompanionBackend,
@@ -185,13 +184,23 @@ function toSdkTools(tools: readonly CompanionTool[]) {
   );
 }
 
+/**
+ * The slice of the agent SDK's `Query` the Companion uses. A real `Query`
+ * satisfies it structurally, and a test can build one without a CLI process.
+ */
+export interface CompanionCliSession extends AsyncIterable<SDKMessage> {
+  interrupt(): Promise<unknown>;
+}
+
+export type CompanionCliSessionFactory = (input: ClaudeQueryInput) => CompanionCliSession;
+
 export interface CompanionCliBackendOptions {
   model: string;
   tools: readonly CompanionTool[];
   cwd: string;
   logger: Logger;
   /** Injected in tests so no CLI process is spawned. */
-  queryFactory?: ClaudeQueryFactory;
+  startSession?: CompanionCliSessionFactory;
 }
 
 /**
@@ -230,10 +239,8 @@ export function createCompanionCliBackend(options: CompanionCliBackendOptions): 
     },
   };
 
-  const session: Query = claudeQuery(
-    { prompt: promptInput.stream, options: queryOptions },
-    options.queryFactory ? { queryFactory: options.queryFactory } : {},
-  );
+  const start: CompanionCliSessionFactory = options.startSession ?? ((input) => claudeQuery(input));
+  const session = start({ prompt: promptInput.stream, options: queryOptions });
 
   let active: CompanionCliTurnChannel | null = null;
   let pumpFailure: CompanionTurnError | null = null;
