@@ -2520,6 +2520,21 @@ export const es: TranslationResources = {
         local: "Local",
         remoteSsh: "SSH remoto",
       },
+      daemonConflict: {
+        title: "Hay más de un daemon en esta máquina",
+        message:
+          "Se están ejecutando {{count}} daemons en {{machine}}. Cada uno tiene sus propios agentes y espacios de trabajo, así que lo que ves depende de a cuál estés conectado. Elige el que quieras y, si el otro no hace falta, apágalo.",
+        activeLabel: "{{name}} (conectado)",
+        version: "v{{version}}",
+        versionUnknown: "versión desconocida",
+        shutdown: "Apagar",
+        shutdownTitle: "¿Apagar el daemon?",
+        shutdownMessage:
+          "¿Apagar {{name}}? Se detendrán todos los agentes que se ejecuten en él. Esto no afecta al otro daemon.",
+        shutdownConfirm: "Apagar",
+        shutdownFailedTitle: "Error",
+        shutdownFailedMessage: "No se pudo apagar ese daemon.",
+      },
       connections: {
         title: "Conexiones",
         removeTitle: "Quitar conexión",

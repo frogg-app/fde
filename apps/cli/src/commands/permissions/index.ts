@@ -5,8 +5,11 @@ import { runDenyCommand } from "./deny.js";
 import { withOutput } from "../../output/index.js";
 import { addJsonAndDaemonHostOptions } from "../../utils/command-options.js";
 
-export function createPermitCommand(): Command {
-  const permit = new Command("permit").description("Manage permission requests");
+export function createPermissionsCommand(): Command {
+  // `permit` stays as a hidden alias so existing scripts keep working.
+  const permit = new Command("permissions")
+    .description("Manage permission requests")
+    .alias("permit");
 
   addJsonAndDaemonHostOptions(
     permit.command("ls").description("List all pending permissions"),
