@@ -169,6 +169,12 @@ export class CompanionSession {
   private unsubscribeJobs: (() => void) | null = null;
 
   private turnAbort = new AbortController();
+  /**
+   * True between VAD `speech_started` and `speech_stopped`. The Companion must
+   * never speak while this is set: a reply or filler that becomes ready mid-
+   * utterance would talk straight over the user.
+   */
+  private isUserSpeaking = false;
   private turnQueue: Promise<void> = Promise.resolve();
   private readonly fillerGroupIds = new Set<string>();
 
@@ -332,8 +338,16 @@ export class CompanionSession {
       stt,
       sttLanguage: this.sttLanguage,
       callbacks: {
+        // Barge-in hangs off VAD onset, not the first STT partial. A partial
+        // needs the VAD confirm window, a round trip through the recogniser and
+        // a non-filler result, so gating on it let the Companion talk over the
+        // user for the best part of a second -- and never stop at all when the
+        // recogniser returned nothing usable.
         onSpeechStarted: async () => {
           this.logger.debug("Companion VAD speech_started");
+          this.isUserSpeaking = true;
+          this.emitInputState(true);
+          this.bargeIn();
         },
         onPartialTranscript: async ({ transcript }) => {
           this.emitInputState(true);
@@ -341,6 +355,7 @@ export class CompanionSession {
           this.bargeIn();
         },
         onSpeechStopped: async () => {
+          this.isUserSpeaking = false;
           this.emitInputState(false);
           this.stallGuard.arm();
         },
@@ -477,6 +492,12 @@ export class CompanionSession {
       this.logger.warn({ id }, "Dropping ungrouped Companion audio chunk");
       return;
     }
+    // Synthesis that finished while the user started talking is dropped rather
+    // than played late: `bargeIn` has already abandoned the turn it belongs to.
+    if (this.isUserSpeaking) {
+      this.logger.debug({ id }, "Dropping Companion audio chunk while the user is speaking");
+      return;
+    }
     this.host.emit({
       type: "companion.audio.output",
       payload: { audio, format, id, groupId, isLastChunk },
@@ -490,7 +511,7 @@ export class CompanionSession {
    */
   private async speakFiller(): Promise<void> {
     const filler = await this.runtime.fillers.take();
-    if (!filler || this.turnAbort.signal.aborted) {
+    if (!filler || this.turnAbort.signal.aborted || this.isUserSpeaking) {
       return;
     }
     const groupId = `companion-filler-${Date.now()}`;

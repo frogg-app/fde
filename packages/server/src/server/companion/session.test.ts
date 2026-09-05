@@ -427,4 +427,81 @@ describe("CompanionSession turns", () => {
     expect(harness.of("companion.input.state").at(-1)!.payload.isSpeaking).toBe(true);
     await harness.session.cleanup();
   });
+
+  // Barge-in used to hang off the first STT partial, so the Companion talked
+  // over the user until the recogniser produced one -- and forever when it
+  // produced nothing usable. VAD onset alone must be enough.
+  it("stops speaking on VAD onset, without waiting for a partial transcript", async () => {
+    const gate = createGate();
+    const harness = createHarness({
+      turns: [
+        {
+          deltas: [
+            "The push test only fails on Windows, as far as I can tell.",
+            " I have not found the cause yet.",
+          ],
+          gate: gate.promise,
+        },
+      ],
+      autoAck: false,
+    });
+    await harness.start();
+
+    const firstSynthesis = harness.tts.nextSynthesis();
+    const turn = harness.typed("what happened to the push test");
+    await firstSynthesis;
+
+    // No transcript event at all -- only the detector fires.
+    harness.detector.emit("speech_started");
+    await settle();
+
+    expect(harness.of("companion.input.state").at(-1)!.payload.isSpeaking).toBe(true);
+
+    gate.open();
+    await turn;
+
+    expect(harness.tts.synthesized).toEqual([
+      "The push test only fails on Windows, as far as I can tell.",
+    ]);
+    expect(harness.of("companion.reply").some((msg) => msg.payload.isFinal)).toBe(false);
+    await harness.session.cleanup();
+  });
+
+  // Audio that finishes synthesising mid-utterance must be dropped, not played
+  // late on top of the user.
+  it("emits no further audio once the user starts speaking", async () => {
+    const gate = createGate();
+    const harness = createHarness({
+      turns: [
+        {
+          deltas: [
+            "That test has been flaky on Windows for a while now.",
+            " I have not found the cause yet.",
+          ],
+          gate: gate.promise,
+        },
+      ],
+      autoAck: false,
+    });
+    await harness.start();
+
+    const firstSynthesis = harness.tts.nextSynthesis();
+    const turn = harness.typed("why is the push test flaky");
+    await firstSynthesis;
+
+    harness.detector.emit("speech_started");
+    await settle();
+    const afterBargeIn = harness.of("companion.audio.output").length;
+
+    gate.open();
+    await turn;
+    await settle();
+
+    expect(harness.of("companion.audio.output").length).toBe(afterBargeIn);
+
+    harness.detector.emit("speech_stopped");
+    await settle();
+    expect(harness.of("companion.input.state").at(-1)!.payload.isSpeaking).toBe(false);
+    await harness.session.cleanup();
+  });
 });
