@@ -31,11 +31,14 @@ export interface CompanionTool {
   description: string;
   /** Deferred tools return a job id immediately; the answer arrives in a later turn. */
   deferred: boolean;
+  /** JSON Schema, for the Messages API tool declaration. */
   inputSchema: Anthropic.Tool.InputSchema;
+  /** The same shape in Zod, for the agent SDK's in-process MCP tool declaration. */
+  inputShape: z.ZodRawShape;
   invoke: (input: unknown) => Promise<CompanionToolResult>;
 }
 
-interface CompanionToolConfig<Schema extends z.ZodType> {
+interface CompanionToolConfig<Schema extends z.ZodObject> {
   name: CompanionToolName;
   description: string;
   deferred: boolean;
@@ -54,7 +57,7 @@ function formatIssues(error: z.ZodError): string {
  * without a cast: validation happens here, and the handler only ever sees a
  * parsed value.
  */
-export function defineCompanionTool<Schema extends z.ZodType>(
+export function defineCompanionTool<Schema extends z.ZodObject>(
   config: CompanionToolConfig<Schema>,
 ): CompanionTool {
   const jsonSchema = z.toJSONSchema(config.schema, {
@@ -67,6 +70,7 @@ export function defineCompanionTool<Schema extends z.ZodType>(
     description: config.description,
     deferred: config.deferred,
     inputSchema: { ...jsonSchema, type: "object" },
+    inputShape: config.schema.shape,
     invoke: async (input) => {
       const parsed = config.schema.safeParse(input);
       if (!parsed.success) {
@@ -113,14 +117,6 @@ export function createCompanionTools(deps: CompanionToolDependencies): Companion
     createCompanionNotebookTool(deps.notebook),
     ...createCompanionThinkingTools(deps),
   ];
-}
-
-export function toAnthropicTools(tools: readonly CompanionTool[]): Anthropic.Tool[] {
-  return tools.map((tool) => ({
-    name: tool.name,
-    description: tool.description,
-    input_schema: tool.inputSchema,
-  }));
 }
 
 export async function invokeCompanionTool(

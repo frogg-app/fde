@@ -1,57 +1,35 @@
-import Anthropic, {
-  APIConnectionError,
-  APIError,
-  AuthenticationError,
-  RateLimitError,
-} from "@anthropic-ai/sdk";
-
-import { COMPANION_SYSTEM_PROMPT } from "./system-prompt.js";
-import type { CompanionNotebookStore } from "./store.js";
 import {
-  invokeCompanionTool,
-  toAnthropicTools,
-  type CompanionTool,
-  type CompanionToolName,
-} from "./tools/index.js";
+  type CompanionBackend,
+  type CompanionBackendToolCall,
+  type CompanionBackendToolResult,
+  type CompanionBackendTurn,
+  type CompanionTurnMessage,
+} from "./backend.js";
+import { createCompanionApiBackend, type CompanionModelClient } from "./backends/api.js";
+import type { CompanionNotebookStore } from "./store.js";
+import { invokeCompanionTool, type CompanionTool, type CompanionToolName } from "./tools/index.js";
+
+export {
+  CompanionTurnError,
+  type CompanionBackend,
+  type CompanionBackendKind,
+  type CompanionTurnFailureReason,
+} from "./backend.js";
+export {
+  createCompanionModelClient,
+  type CompanionModelClient,
+  type CompanionModelSettings,
+  type CompanionModelStream,
+} from "./backends/api.js";
 
 /** The exact model. Never date-suffixed: the suffixed ids are a training artefact. */
 export const COMPANION_MODEL = "claude-haiku-4-5";
-
-const MAX_TOKENS = 1024;
 
 /** Conversational turns kept in context. Anything older lives in the notebook. */
 const HISTORY_LIMIT = 12;
 
 /** Bound on tool round-trips inside one turn, so a confused model cannot spin. */
 const MAX_TOOL_ROUNDS = 4;
-
-/**
- * The `available: true` branch of `CompanionModelConfig` from `anthropic-config.ts`.
- * Structural on purpose: the orchestrator needs a key, a URL and a model, and
- * nothing about how they were resolved.
- */
-export interface CompanionModelSettings {
-  apiKey: string;
-  baseUrl: string | null;
-  model: string;
-}
-
-export interface CompanionModelStream extends AsyncIterable<Anthropic.MessageStreamEvent> {
-  finalMessage: () => Promise<Anthropic.Message>;
-}
-
-/** The seam the turn loop talks to. `client.messages` satisfies it directly. */
-export interface CompanionModelClient {
-  stream: (params: Anthropic.MessageCreateParamsStreaming) => CompanionModelStream;
-}
-
-export function createCompanionModelClient(settings: CompanionModelSettings): CompanionModelClient {
-  const client = new Anthropic({
-    apiKey: settings.apiKey,
-    ...(settings.baseUrl ? { baseURL: settings.baseUrl } : {}),
-  });
-  return { stream: (params) => client.messages.stream(params) };
-}
 
 /**
  * What one conversational turn emits.
@@ -65,64 +43,39 @@ export type CompanionTurnEvent =
   | { type: "tool_started"; name: CompanionToolName; deferred: boolean }
   | { type: "completed"; reply: string; tools: CompanionToolName[] };
 
-export type CompanionTurnFailureReason = "authentication" | "rate_limit" | "api" | "connection";
-
-export class CompanionTurnError extends Error {
-  readonly reason: CompanionTurnFailureReason;
-  readonly status: number | null;
-
-  constructor(reason: CompanionTurnFailureReason, message: string, status: number | null) {
-    super(message);
-    this.name = "CompanionTurnError";
-    this.reason = reason;
-    this.status = status;
-  }
-}
-
-function toTurnError(error: unknown): CompanionTurnError {
-  if (error instanceof AuthenticationError) {
-    return new CompanionTurnError("authentication", error.message, error.status);
-  }
-  if (error instanceof RateLimitError) {
-    return new CompanionTurnError("rate_limit", error.message, error.status);
-  }
-  if (error instanceof APIConnectionError) {
-    return new CompanionTurnError("connection", error.message, null);
-  }
-  if (error instanceof APIError) {
-    return new CompanionTurnError("api", error.message, error.status ?? null);
-  }
-  throw error;
-}
-
-interface CompanionHistoryTurn {
-  role: "user" | "assistant";
-  text: string;
-}
-
-export interface CompanionOrchestratorOptions {
-  client: CompanionModelClient;
+interface CompanionOrchestratorBase {
   tools: readonly CompanionTool[];
   notebook: CompanionNotebookStore;
-  model?: string;
 }
 
 /**
- * The conversational brain. Owns the rolling window, the tool loop, and the
- * cached prompt prefix; owns no audio and no persistence beyond the notebook.
+ * Either a backend, or an Anthropic client as shorthand for the API one.
+ */
+export type CompanionOrchestratorOptions =
+  | (CompanionOrchestratorBase & { backend: CompanionBackend })
+  | (CompanionOrchestratorBase & { client: CompanionModelClient; model?: string });
+
+/**
+ * The conversational brain. Owns the rolling window and the tool loop; owns no
+ * audio, no wire format, and no persistence beyond the notebook.
  */
 export class CompanionOrchestrator {
-  private readonly client: CompanionModelClient;
+  private readonly backend: CompanionBackend;
   private readonly tools: readonly CompanionTool[];
   private readonly notebook: CompanionNotebookStore;
-  private readonly model: string;
-  private readonly history: CompanionHistoryTurn[] = [];
+  private readonly history: CompanionTurnMessage[] = [];
 
   constructor(options: CompanionOrchestratorOptions) {
-    this.client = options.client;
     this.tools = options.tools;
     this.notebook = options.notebook;
-    this.model = options.model ?? COMPANION_MODEL;
+    this.backend =
+      "backend" in options
+        ? options.backend
+        : createCompanionApiBackend({
+            client: options.client,
+            tools: options.tools,
+            model: options.model ?? COMPANION_MODEL,
+          });
   }
 
   /**
@@ -131,83 +84,72 @@ export class CompanionOrchestrator {
    */
   async *turn(text: string): AsyncGenerator<CompanionTurnEvent, void> {
     const notebook = await this.notebook.promptText();
-    const messages = this.buildMessages(text, notebook);
+    const preamble = notebook ? `Your notebook right now:\n${notebook}` : "Your notebook is empty.";
+    const backendTurn = this.backend.beginTurn({
+      text: `${preamble}\n\nThey said: ${text}`,
+      history: this.history,
+    });
+
     const invoked: CompanionToolName[] = [];
     let reply = "";
+    let toolResults: CompanionBackendToolResult[] = [];
 
     for (let round = 0; round < MAX_TOOL_ROUNDS; round += 1) {
-      const message = yield* this.streamOnce(messages, (delta) => {
+      const response = yield* this.streamRound(backendTurn, toolResults, invoked, (delta) => {
         reply += delta;
       });
-      messages.push({ role: "assistant", content: message.content });
-
-      if (message.stop_reason !== "tool_use") {
+      if (response.length === 0) {
         break;
       }
-
-      const results: Anthropic.ToolResultBlockParam[] = [];
-      for (const block of message.content) {
-        if (block.type !== "tool_use") {
-          continue;
-        }
-        const tool = this.tools.find((candidate) => candidate.name === block.name);
+      toolResults = [];
+      for (const call of response) {
+        const tool = this.tools.find((candidate) => candidate.name === call.name);
         if (tool) {
           invoked.push(tool.name);
           yield { type: "tool_started", name: tool.name, deferred: tool.deferred };
         }
-        const result = await invokeCompanionTool(this.tools, block.name, block.input);
-        results.push({
-          type: "tool_result",
-          tool_use_id: block.id,
+        const result = await invokeCompanionTool(this.tools, call.name, call.input);
+        toolResults.push({
+          id: call.id,
           content: result.ok ? result.content : result.error,
-          ...(result.ok ? {} : { is_error: true }),
+          isError: !result.ok,
         });
       }
-      messages.push({ role: "user", content: results });
     }
 
     this.remember(text, reply);
     yield { type: "completed", reply, tools: invoked };
   }
 
-  private async *streamOnce(
-    messages: Anthropic.MessageParam[],
+  /**
+   * One assistant response. A backend that runs its own tool loop announces
+   * tools here instead of handing them back, so both paths emit the same
+   * `tool_started` events in the same order.
+   */
+  private async *streamRound(
+    backendTurn: CompanionBackendTurn,
+    toolResults: readonly CompanionBackendToolResult[],
+    invoked: CompanionToolName[],
     onDelta: (delta: string) => void,
-  ): AsyncGenerator<CompanionTurnEvent, Anthropic.Message> {
-    const stream = this.client.stream({
-      model: this.model,
-      max_tokens: MAX_TOKENS,
-      stream: true,
-      system: [
-        {
-          type: "text",
-          text: COMPANION_SYSTEM_PROMPT,
-          cache_control: { type: "ephemeral" },
-        },
-      ],
-      tools: toAnthropicTools(this.tools),
-      messages,
-    });
-
-    try {
-      for await (const event of stream) {
-        if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-          onDelta(event.delta.text);
-          yield { type: "text_delta", text: event.delta.text };
-        }
+  ): AsyncGenerator<CompanionTurnEvent, readonly CompanionBackendToolCall[]> {
+    const responses = backendTurn.respond(toolResults);
+    for (;;) {
+      const next = await responses.next();
+      if (next.done) {
+        return next.value.toolCalls;
       }
-      return await stream.finalMessage();
-    } catch (error) {
-      throw toTurnError(error);
+      const event = next.value;
+      if (event.type === "text_delta") {
+        onDelta(event.text);
+        yield { type: "text_delta", text: event.text };
+        continue;
+      }
+      const tool = this.tools.find((candidate) => candidate.name === event.name);
+      if (tool) {
+        invoked.push(tool.name);
+        yield { type: "tool_started", name: tool.name, deferred: tool.deferred };
+      }
     }
-  }
-
-  private buildMessages(text: string, notebook: string): Anthropic.MessageParam[] {
-    const preamble = notebook ? `Your notebook right now:\n${notebook}` : "Your notebook is empty.";
-    return [
-      ...this.history.map((entry) => ({ role: entry.role, content: entry.text })),
-      { role: "user" as const, content: `${preamble}\n\nThey said: ${text}` },
-    ];
   }
 
   private remember(userText: string, reply: string): void {

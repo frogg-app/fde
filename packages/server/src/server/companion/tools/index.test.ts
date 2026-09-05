@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
+import { toAnthropicTools } from "../backends/api.js";
 import { CompanionDeferredJobs } from "../deferred-jobs.js";
 import { CompanionNotebookStore, companionNotebookPath } from "../store.js";
 import { createCompanionThinkingTools } from "./thinking.js";
@@ -10,7 +11,6 @@ import {
   COMPANION_TOOL_NAMES,
   createCompanionNotebookTool,
   invokeCompanionTool,
-  toAnthropicTools,
   type CompanionTool,
 } from "./index.js";
 
