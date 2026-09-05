@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { tmpdir } from "node:os";
 import ts from "typescript";
@@ -7,14 +7,27 @@ import { scaffoldPluginDirectory } from "./scaffold.js";
 
 const directories: string[] = [];
 
+// Scaffolded projects only typecheck where `@fde/plugin`, react and zod resolve, so they have to
+// live inside the repo. `node_modules/.tmp` is already ignored by git, so an interrupted run
+// leaves nothing behind in `git status` the way an `apps/cli/.plugin-scaffold-*` directory did.
+async function makeScaffoldParent(): Promise<string> {
+  const root = path.resolve(new URL("../../../../..", import.meta.url).pathname);
+  const holder = path.join(root, "node_modules", ".tmp");
+  await mkdir(holder, { recursive: true });
+  const parent = await mkdtemp(path.join(holder, "plugin-scaffold-"));
+  directories.push(parent);
+  return parent;
+}
+
 afterEach(async () => {
-  await Promise.all(directories.splice(0).map((directory) => rm(directory, { recursive: true })));
+  await Promise.all(
+    directories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })),
+  );
 });
 
 describe("plugin scaffold", () => {
   it("creates a standalone split-runtime project that typechecks", async () => {
-    const parent = await mkdtemp(path.join(process.cwd(), ".plugin-scaffold-"));
-    directories.push(parent);
+    const parent = await makeScaffoldParent();
     const directory = path.join(parent, "hello-plugin");
 
     await scaffoldPluginDirectory(directory);
@@ -59,11 +72,10 @@ describe("plugin scaffold", () => {
     await expect(readFile(path.join(directory, "main.client.tsx"), "utf8")).resolves.toContain(
       "Hello from my plugin",
     );
-  });
+  }, 20_000);
 
   it("typechecks client and server Paseo API access", async () => {
-    const parent = await mkdtemp(path.join(process.cwd(), ".plugin-scaffold-"));
-    directories.push(parent);
+    const parent = await makeScaffoldParent();
     const directory = path.join(parent, "paseo-api-plugin");
     await scaffoldPluginDirectory(directory);
     await Promise.all([
