@@ -146,6 +146,17 @@ trust-lan on|off` applies live; `fde daemon status` shows `LAN Trusted`; `/api/i
 
 - [ ] iOS app (the Expo UI still builds for iOS; scripts under `scripts/mobile`). Android is done, see "Now".
 - [ ] macOS builds and DMG packaging.
+- [ ] **Triggers (was "Hub").** Run agents from external events - GitHub, Slack, Discord,
+      Linear. The daemon half exists and is specified in docs/hub.md
+      (`packages/server/src/server/hub/`): outbound WebSocket, durable execution IDs,
+      idempotent creates, `hub.execute` permission, MCP-only tool preapproval. The CLI half
+      is renamed to `fde trigger` and every subcommand is disabled, because the old
+      implementation defaulted to `https://hub.paseo.sh` - an upstream-hosted service we do
+      not run - and enrolling handed a third party a standing connection able to create
+      workspaces and run agents against local repositories.
+      A rewrite needs a trigger service we control (none exists in this repo), or a
+      self-hostable one. Low priority: nothing depends on it and it is inert today.
+      The old CLI implementation is kept at `apps/cli/src/commands/hub/` for reference.
 
 ## Notes and assumptions (autonomous run, 2026-09-02)
 

@@ -2502,6 +2502,21 @@ export const ptBR: TranslationResources = {
         local: "Local",
         remoteSsh: "SSH remoto",
       },
+      daemonConflict: {
+        title: "Mais de um daemon nesta máquina",
+        message:
+          "{{count}} daemons estão em execução em {{machine}}. Cada um tem seus próprios agentes e workspaces, então o que você vê depende de a qual está conectado. Escolha o que quiser usar e, se o outro não for necessário, desligue-o.",
+        activeLabel: "{{name}} (conectado)",
+        version: "v{{version}}",
+        versionUnknown: "versão desconhecida",
+        shutdown: "Desligar",
+        shutdownTitle: "Desligar o daemon?",
+        shutdownMessage:
+          "Desligar {{name}}? Todos os agentes em execução nele serão interrompidos. Isso não afeta o outro daemon.",
+        shutdownConfirm: "Desligar",
+        shutdownFailedTitle: "Erro",
+        shutdownFailedMessage: "Não foi possível desligar esse daemon.",
+      },
       connections: {
         title: "Conexões",
         removeTitle: "Remover conexão",
