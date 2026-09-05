@@ -3758,6 +3758,9 @@
                         },
                         "size": {
                           "type": "number"
+                        },
+                        "contentHash": {
+                          "type": "string"
                         }
                       },
                       "required": [
