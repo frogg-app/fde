@@ -79,8 +79,9 @@ jobs:
           echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
 
       # Secrets are detected once here; jobs that need them read the flags. The
-      # updater and docker flags are optional; android_signing is not — the
-      # android job fails when it is false (see that job's first step).
+      # updater and docker flags are optional, and so is android_signing: when
+      # it is false the android job warns and publishes a debug-signed APK
+      # named -unsigned (see that job's first step).
       - name: Detect optional secrets
         id: secrets
         env:
