@@ -203,9 +203,14 @@ Outbound:
 | `companion.audio.output`           | `audio`, `format`, `id`, `groupId`, `isLastChunk` |
 | `companion.input.state`            | `isSpeaking`                                      |
 | `companion.transcript`             | `text`, `isFinal`                                 |
-| `companion.reply`                  | `text`, `isFinal` (what it is saying, for the UI) |
+| `companion.reply`                  | `text`, `isFinal` — the accumulated reply so far  |
 | `companion.notebook.update`        | the notebook snapshot                             |
 | `companion.job.update`             | `jobId`, `label`, `status`, `summary`             |
+
+`companion.reply` carries the **whole reply so far**, not a delta — each message replaces
+the last. A snapshot costs marginally more on the wire than a delta but cannot drift out of
+sync when one is dropped, and it lets a spoken filler be replaced wholesale by the answer
+that follows it. Clients assign; they never concatenate.
 
 Permissions: session/audio/message map to `workspace.write`, notebook fetch to
 `workspace.read`. Capability advertisement rides on `server_info.capabilities.companion`

@@ -6,7 +6,7 @@ import { z } from "zod";
  * timeline. Anything longer belongs to a subagent, not here.
  */
 export const CompanionNoteKindSchema = z.enum(["topic", "task"]);
-export const CompanionNoteStatusSchema = z.enum(["open", "done"]);
+export const CompanionNoteStatusSchema = z.enum(["open", "active", "done"]);
 
 export const CompanionNoteSchema = z.object({
   id: z.string().min(1),

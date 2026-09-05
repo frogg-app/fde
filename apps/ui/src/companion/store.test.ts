@@ -108,13 +108,21 @@ describe("companion transcript and reply", () => {
     expect(store().finalTranscript).toBe("how is the build");
   });
 
-  it("accumulates streamed reply deltas until the final one", () => {
+  it("shows the latest reply snapshot rather than concatenating them", () => {
     openSession();
     store().replyReceived({ text: "Two agents ", isFinal: false });
-    store().replyReceived({ text: "are running.", isFinal: true });
+    store().replyReceived({ text: "Two agents are running.", isFinal: true });
 
     expect(store().reply).toBe("Two agents are running.");
     expect(store().isReplyFinal).toBe(true);
+  });
+
+  it("replaces a spoken filler with the reply that follows it", () => {
+    openSession();
+    store().replyReceived({ text: "One sec.", isFinal: true });
+    store().replyReceived({ text: "Two agents are running.", isFinal: true });
+
+    expect(store().reply).toBe("Two agents are running.");
   });
 });
 

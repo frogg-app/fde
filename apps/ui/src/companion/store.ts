@@ -146,8 +146,7 @@ export const useCompanionStore = create<CompanionState>((set) => ({
         : { partialTranscript: text },
     ),
 
-  replyReceived: ({ text, isFinal }) =>
-    set((state) => ({ reply: state.reply + text, isReplyFinal: isFinal })),
+  replyReceived: ({ text, isFinal }) => set({ reply: text, isReplyFinal: isFinal }),
 
   companionAudioStarted: () => set({ isSpeaking: true, isThinking: false }),
   companionAudioFinished: () => set({ isSpeaking: false }),
