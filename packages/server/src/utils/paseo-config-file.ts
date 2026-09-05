@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import {
   PaseoConfigRawSchema,
   type PaseoConfigRaw,
@@ -43,6 +43,7 @@ export function statPaseoConfigPath(repoRoot: string): PaseoConfigRevision | nul
   return {
     mtimeMs: stats.mtimeMs,
     size: stats.size,
+    contentHash: hashPaseoConfigFile(configPath),
   };
 }
 
@@ -117,7 +118,16 @@ function paseoConfigRevisionsEqual(
   if (left === null || right === null) {
     return left === right;
   }
+  // Coarse-clock filesystems can hand two consecutive writes the same mtime,
+  // so trust the content hash whenever both tokens carry one.
+  if (left.contentHash !== undefined && right.contentHash !== undefined) {
+    return left.contentHash === right.contentHash;
+  }
   return left.mtimeMs === right.mtimeMs && left.size === right.size;
+}
+
+function hashPaseoConfigFile(configPath: string): string {
+  return createHash("sha256").update(readFileSync(configPath)).digest("hex");
 }
 
 function removeTempPaseoConfig(tempPath: string): void {
