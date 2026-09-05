@@ -22,14 +22,18 @@ export const COMPANION_FILLERS = [
 
 /**
  * How long after end-of-speech a silence stops being a pause and starts being a
- * bug. Backend-dependent, because the two paths are a second apart: the CLI's
- * routine warm turn puts first audio around 1.9 s, so at the API's 700 ms it
- * would fill before every ordinary answer and the filler would stop meaning
- * "this one is taking a while".
+ * bug. Backend-dependent, because the two paths are more than a second apart.
+ *
+ * Measured over fifteen warm CLI turns on this hardware, first text delta lands
+ * at a median of 1.73 s and a ninetieth percentile of 2.27 s; first audio is
+ * about 450 ms behind that. At the API path's 700 ms the CLI would speak a
+ * filler before every ordinary answer, and a filler that always fires stops
+ * meaning "this one is taking a while". 3.5 s clears the slow tail, so the
+ * filler fires only on turns that really are stuck.
  */
 export const COMPANION_STALL_DELAY_MS: Record<CompanionBackendKind, number> = {
   api: 700,
-  cli: 2500,
+  cli: 3500,
 };
 
 const CACHE_ID_PREFIX = "companion-filler:";

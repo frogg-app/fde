@@ -90,6 +90,17 @@ export function resolveCompanionModelConfig(inputs: CompanionModelInputs): Compa
   };
 }
 
+/**
+ * Probing for the CLI is async, so bootstrap resolves the inputs once here and
+ * both the capability and the model config are answered from the same snapshot.
+ */
+export async function resolveCompanionModelInputs(params: {
+  env: NodeJS.ProcessEnv;
+  persisted: PersistedConfig;
+}): Promise<CompanionModelInputs> {
+  return { ...params, claudeCliAvailable: await isClaudeCliAvailable() };
+}
+
 export async function isClaudeCliAvailable(commandConfig?: ProviderCommand): Promise<boolean> {
   const launch = await resolveProviderLaunch({
     ...(commandConfig ? { commandConfig } : {}),

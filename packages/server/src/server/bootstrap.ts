@@ -135,7 +135,10 @@ import {
 } from "./notifications/spoken-alerts.js";
 import { createTtsCache } from "./notifications/tts-cache.js";
 import { resolveCompanionCapability } from "./companion/capability.js";
-import { isClaudeCliAvailable, resolveCompanionModelConfig } from "./companion/model-config.js";
+import {
+  resolveCompanionModelConfig,
+  resolveCompanionModelInputs,
+} from "./companion/model-config.js";
 import { createCompanionFillerBank } from "./companion/fillers.js";
 import { CompanionNotebookStore, companionNotebookPath } from "./companion/store.js";
 import { createCompanionTools } from "./companion/tools/index.js";
@@ -1725,12 +1728,10 @@ export async function createPaseoDaemon(
     logger,
   });
   const companionPersisted = loadPersistedConfig(config.paseoHome, logger);
-  const claudeCliAvailable = await isClaudeCliAvailable();
-  const companionModelInputs = {
+  const companionModelInputs = await resolveCompanionModelInputs({
     env: process.env,
     persisted: companionPersisted,
-    claudeCliAvailable,
-  };
+  });
   const companion: CompanionRuntime = {
     capability: resolveCompanionCapability(companionModelInputs),
     modelConfig: resolveCompanionModelConfig(companionModelInputs),

@@ -67,25 +67,30 @@ mic ─▶ VoiceTurnController ─▶ final transcript
 New module `packages/server/src/server/companion/`. Nothing outside it changes except
 `session.ts` dispatch, `bootstrap.ts` wiring, and the protocol package.
 
-| File                  | Owns                                                                   |
-| --------------------- | ---------------------------------------------------------------------- |
-| `orchestrator.ts`     | the streaming Messages API loop, tool dispatch, turn assembly          |
-| `anthropic-config.ts` | API key/base URL/model resolution                                      |
-| `tools/index.ts`      | the tool catalog and its Zod schemas                                   |
-| `tools/agents.ts`     | fast tools over `AgentManager`                                         |
-| `tools/thinking.ts`   | deferred tools that spawn headless subagents                           |
-| `deferred-jobs.ts`    | the background job registry and completion fan-out                     |
-| `notebook.ts`         | the Companion's own small memory: topics, tasks, one-line state        |
-| `store.ts`            | atomic persistence of the notebook                                     |
-| `session.ts`          | `CompanionSession`: per-client audio state, turn lifecycle             |
-| `speech-stream.ts`    | streaming text → sentence segments → TTS, so audio starts mid-sentence |
-| `fillers.ts`          | the pre-synthesised filler bank and the stall guard                    |
+| File                | Owns                                                                     |
+| ------------------- | ------------------------------------------------------------------------ |
+| `orchestrator.ts`   | the streaming turn loop, tool dispatch, turn assembly                    |
+| `backend.ts`        | the backend port: text deltas, tool calls, tool results                  |
+| `backends/api.ts`   | the Anthropic Messages API backend                                       |
+| `backends/cli.ts`   | the Claude Code CLI backend, one agent SDK session per Companion session |
+| `model-config.ts`   | backend selection, and key/base URL/model resolution                     |
+| `tools/index.ts`    | the tool catalog and its Zod schemas                                     |
+| `tools/agents.ts`   | fast tools over `AgentManager`                                           |
+| `tools/thinking.ts` | deferred tools that spawn headless subagents                             |
+| `deferred-jobs.ts`  | the background job registry and completion fan-out                       |
+| `notebook.ts`       | the Companion's own small memory: topics, tasks, one-line state          |
+| `store.ts`          | atomic persistence of the notebook                                       |
+| `session.ts`        | `CompanionSession`: per-client audio state, turn lifecycle               |
+| `speech-stream.ts`  | streaming text → sentence segments → TTS, so audio starts mid-sentence   |
+| `fillers.ts`        | the pre-synthesised filler bank and the stall guard                      |
 
 #### The orchestrator model
 
-Direct Anthropic Messages API through `@anthropic-ai/sdk` (already a daemon dependency),
-**not** the agent provider stack — the provider stack launches CLI processes, which is far
-too slow for a conversational turn.
+The turn loop talks to a **backend port** (`backend.ts`): text deltas, tool calls, tool
+results, and nothing about how any of it travels. Two backends implement it.
+
+**The API backend** (`backends/api.ts`) is the fast path: the Anthropic Messages API
+through `@anthropic-ai/sdk`, already a daemon dependency.
 
 - Model: `claude-haiku-4-5`, `max_tokens: 1024`, streaming.
 - Key resolution mirrors the OpenAI speech pattern
@@ -97,8 +102,33 @@ too slow for a conversational turn.
 - No thinking. Haiku 4.5 predates adaptive thinking, and a conversational turn must not
   pause to reason — that is what the deferred tools are for.
 
-If no key resolves, the Companion is advertised as unavailable with reason
-`companion_key_missing`; the app never shows a control it cannot honour.
+**The CLI backend** (`backends/cli.ts`) is for the far commoner machine: Claude Code
+installed and signed in, no API key anywhere. It holds one `@anthropic-ai/claude-agent-sdk`
+session per Companion session, in streaming-input mode with `includePartialMessages: true`
+— without partial messages you only get whole messages, and the streaming-TTS seam that
+makes this feature feel alive is dead.
+
+- Same model id, from the same config keys. The session runs with no built-in tools, no
+  skills, no filesystem settings and no inherited MCP servers, so its prompt is the
+  Companion's system prompt and nothing else.
+- **The session is warmed when the Companion session opens.** Spawning the process,
+  initialising the harness, connecting the in-process MCP server and making the first model
+  request costs ~2.2 s; the warm turn pays all of it during `companion.session.start`, so
+  no conversational turn ever does. A session that cannot warm refuses the start with
+  `companion_backend_failed` rather than accepting a Companion that cannot talk.
+- **Tools are mounted as an in-process MCP server**, not driven through the orchestrator's
+  loop. The CLI harness owns its own tool loop, and feeding results back through ours would
+  mean fabricating `tool_result` user messages it does not accept from an SDK client. The
+  MCP handlers call the same `invokeCompanionTool` the API path's loop calls, so tool
+  behaviour cannot diverge between backends — only declaration and dispatch do. The backend
+  reports each call as it starts, so both paths emit the same `tool_started` events.
+- No prompt caching. The CLI reports zero cache reads and writes on every turn, so the
+  frozen prefix buys nothing here; it is part of why the path is slower.
+
+**Selection.** A key wins whenever one resolves — the API path is meaningfully faster. With
+no key, the CLI backs it if Claude Code is installed. Only when neither is there is the
+Companion advertised as unavailable, with reason `companion_backend_missing`; the app never
+shows a control it cannot honour.
 
 #### Tools
 
@@ -139,25 +169,45 @@ Two mechanisms, because one is not enough:
 1. **Prompt contract.** A response may contain text and tool calls together. The system
    prompt requires that any turn calling a deferred tool also emits a short spoken line in
    the same response. That line is spoken while the job runs.
-2. **Stall guard.** If no audio has been emitted 700 ms after end-of-speech, the daemon
-   speaks a filler from a small rotating bank, pre-synthesised at startup into the
-   existing `tts-cache` so playback is instant. The bank is deliberately short and
-   varied; a repeated filler is worse than a silence.
+2. **Stall guard.** If no audio has been emitted by the backend's stall threshold after
+   end-of-speech — 700 ms on the API path, 3.5 s on the CLI — the daemon speaks a filler
+   from a small rotating bank, pre-synthesised at startup into the existing `tts-cache` so
+   playback is instant. The bank is deliberately short and varied; a repeated filler is
+   worse than a silence.
+
+   The threshold is backend-dependent because a filler that fires on every turn is worse
+   than a slightly slow answer: it stops meaning "this one is taking a while" and becomes
+   noise. The CLI's routine first audio is around 2.2 s, so 700 ms there would fill before
+   nearly every ordinary answer. 3.5 s sits past the measured slow tail.
 
 The stall guard is cancelled the moment the first real segment is queued, and a filler is
 never spoken twice in a row.
 
 #### Latency
 
-The turn budget, from end-of-speech to first audio byte:
+From end-of-speech to first audio byte, per backend. **Measured** numbers come from
+`backends/cli.real.e2e.test.ts` against a real signed-in Claude Code on a Linux VM, fifteen
+warm turns with the real system prompt and tool catalog. **Estimated** numbers are reasoned
+budgets that nothing here has measured — this machine has no Anthropic API key, so the API
+backend's model latency has never been timed.
 
-| Stage                        | Budget  |
-| ---------------------------- | ------- |
-| final transcript (local STT) | ~250 ms |
-| orchestrator first token     | ~400 ms |
-| first sentence boundary      | ~150 ms |
-| TTS first segment (Kokoro)   | ~300 ms |
-| **total**                    | ~1.1 s  |
+| Stage                        | API backend     | CLI backend         |
+| ---------------------------- | --------------- | ------------------- |
+| final transcript (local STT) | ~250 ms est.    | ~250 ms est.        |
+| first text delta             | ~400 ms est.    | **1.73 s measured** |
+| first sentence boundary      | ~150 ms est.    | ~150 ms est.        |
+| TTS first segment (Kokoro)   | ~300 ms est.    | ~300 ms est.        |
+| **first audio**              | **~1.1 s est.** | **~2.4 s**          |
+
+The CLI's first-delta distribution over those fifteen turns: min 1.24 s, median 1.73 s,
+ninetieth percentile 2.27 s, max 2.62 s. Session warm — process spawn, harness init, MCP
+connect and one throwaway model request — measured 2.20–2.37 s, and is paid at session open,
+never inside a turn.
+
+So the CLI costs roughly **+1.3 s per turn**. That is a real regression against the API
+path and the reason a key still wins the selection, but it is the difference between a
+Companion and no Companion on a machine without one, and it stays inside the range where a
+spoken answer still reads as an answer rather than a hang.
 
 The one non-negotiable implementation detail: **TTS is driven from the token stream, not
 from the finished message.** `speech-stream.ts` consumes text deltas, cuts at the first
@@ -215,15 +265,22 @@ that follows it. Clients assign; they never concatenate.
 Permissions: session/audio/message map to `workspace.write`, notebook fetch to
 `workspace.read`. Capability advertisement rides on `server_info.capabilities.companion`
 = `{ enabled, reason }`, resolved the same way the voice features are
-(`speech-config-resolver.ts`), gated additionally on an Anthropic key being present.
+(`speech-config-resolver.ts`), gated additionally on a backend being reachable — an
+Anthropic key or an installed Claude Code CLI. Bootstrap probes for the CLI once at startup
+and the Companion runtime carries the answer, because that probe is async and capability
+resolution is not.
 
 Config keys, following the existing table in [voice.md](voice.md):
 
-| Feature   | `config.json`                | Environment               |
-| --------- | ---------------------------- | ------------------------- |
-| Companion | `features.companion.enabled` | `PASEO_COMPANION_ENABLED` |
-| Model     | `features.companion.model`   | `PASEO_COMPANION_MODEL`   |
-| API key   | `providers.anthropic.apiKey` | `ANTHROPIC_API_KEY`       |
+| Feature   | `config.json`                 | Environment               |
+| --------- | ----------------------------- | ------------------------- |
+| Companion | `features.companion.enabled`  | `PASEO_COMPANION_ENABLED` |
+| Model     | `features.companion.model`    | `PASEO_COMPANION_MODEL`   |
+| API key   | `providers.anthropic.apiKey`  | `ANTHROPIC_API_KEY`       |
+| Base URL  | `providers.anthropic.baseUrl` | `ANTHROPIC_BASE_URL`      |
+
+With no API key the Companion uses the Claude Code CLI, which brings its own
+authentication; nothing else needs configuring.
 
 ### App
 
