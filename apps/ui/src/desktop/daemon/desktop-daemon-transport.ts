@@ -206,7 +206,7 @@ export function createDesktopDaemonTransportFactory(
 
     void (async () => {
       try {
-        const cleanup = await rpc.listenToEvents(handleEvent);
+        const cleanup = await rpc.listenToEvents(handleEvent, sessionId);
         if (disposed) {
           cleanup();
           return;

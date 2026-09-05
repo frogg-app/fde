@@ -20,46 +20,79 @@ export interface KeyedLine {
 // monospace text. Generous enough to cover the vast majority of real blocks.
 export const MAX_HIGHLIGHT_CHARS = 100_000;
 
-class LRUCache<K, V> {
-  private readonly map = new Map<K, V>();
-  constructor(private readonly max: number) {}
+// Budget in source characters rather than entry count. Entries vary by four orders
+// of magnitude — MAX_HIGHLIGHT_CHARS admits 100k-char inputs — so a count-based
+// bound puts no ceiling on the memory this holds, and the token arrays are
+// themselves several times the size of the source they came from.
+const TOKENIZATION_CACHE_MAX_CHARS = 2_000_000;
 
-  get(key: K): V | undefined {
-    const value = this.map.get(key);
-    if (value === undefined) return undefined;
+interface CacheEntry {
+  value: HighlightToken[][];
+  cost: number;
+}
+
+class SizedLRUCache<K> {
+  private readonly map = new Map<K, CacheEntry>();
+  private totalCost = 0;
+  constructor(private readonly maxCost: number) {}
+
+  get(key: K): HighlightToken[][] | undefined {
+    const entry = this.map.get(key);
+    if (entry === undefined) return undefined;
     this.map.delete(key);
-    this.map.set(key, value);
-    return value;
+    this.map.set(key, entry);
+    return entry.value;
   }
 
-  set(key: K, value: V): void {
-    if (this.map.has(key)) this.map.delete(key);
-    else if (this.map.size >= this.max) {
-      const oldest = this.map.keys().next().value;
-      if (oldest !== undefined) this.map.delete(oldest);
+  set(key: K, value: HighlightToken[][], cost: number): void {
+    const existing = this.map.get(key);
+    if (existing) {
+      this.totalCost -= existing.cost;
+      this.map.delete(key);
     }
-    this.map.set(key, value);
+    this.map.set(key, { value, cost });
+    this.totalCost += cost;
+    while (this.totalCost > this.maxCost) {
+      const oldest = this.map.keys().next().value;
+      if (oldest === undefined) break;
+      const evicted = this.map.get(oldest);
+      this.map.delete(oldest);
+      this.totalCost -= evicted?.cost ?? 0;
+    }
+  }
+
+  /** Test seam: current budget consumption in source characters. */
+  get size(): number {
+    return this.totalCost;
   }
 }
 
-const tokenizationCache = new LRUCache<string, HighlightToken[][]>(200);
+const tokenizationCache = new SizedLRUCache<string>(TOKENIZATION_CACHE_MAX_CHARS);
 
 // Tokenize `code` to per-line tokens, cached. Returns null when the language is
 // unsupported, the input is over the size cap, or parsing throws — callers then
 // render plain text.
-export function tokenizeToLines(code: string, ext: string | null): HighlightToken[][] | null {
+export function tokenizeToLines(
+  code: string,
+  ext: string | null,
+  options?: { cache?: boolean },
+): HighlightToken[][] | null {
   if (!ext) return null;
   if (code.length > MAX_HIGHLIGHT_CHARS) return null;
+  const shouldCache = options?.cache ?? true;
   const cacheKey = `${ext}:${code}`;
-  const cached = tokenizationCache.get(cacheKey);
-  if (cached) return cached;
+  if (shouldCache) {
+    const cached = tokenizationCache.get(cacheKey);
+    if (cached) return cached;
+  }
   let lines: HighlightToken[][];
   try {
     lines = highlightCode(code, `x.${ext}`);
   } catch {
     return null;
   }
-  tokenizationCache.set(cacheKey, lines);
+  // The key holds a full copy of the source, so charge both to the budget.
+  if (shouldCache) tokenizationCache.set(cacheKey, lines, code.length * 2);
   return lines;
 }
 

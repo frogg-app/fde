@@ -73,7 +73,10 @@ import { useStableEvent } from "@/hooks/use-stable-event";
 import { HighlightedCodeBlock } from "@/components/highlighted-code-block";
 import { MarkdownFenceBlock } from "@/components/markdown/fence";
 import type { MarkdownPhase } from "@/components/markdown/fence/types";
-import { splitMarkdownBlocks } from "@/utils/split-markdown-blocks";
+import {
+  clipMarkdownBlocksToLength,
+  splitMarkdownBlocksWithRanges,
+} from "@/utils/split-markdown-blocks";
 import { useRevealedText } from "@/hooks/use-revealed-text";
 import { colorMarkdownLinkChildren } from "@/components/markdown/link-children";
 import { createAssistantMarkdownParser } from "@/utils/assistant-markdown-parser";
@@ -159,6 +162,12 @@ function useDisableOuterSpacing(disableOuterSpacing: boolean | undefined) {
 
 const WEB_TOOLCALL_SHIMMER_KEYFRAME_ID = "paseo-toolcall-shimmer-keyframes";
 const WEB_TOOLCALL_SHIMMER_ANIMATION_NAME = "paseo-toolcall-shimmer";
+// One parser for the whole app, like every other markdown surface
+// (rich-clipboard, plan-card, markdown/renderer). It holds no per-message state,
+// so building one per mounted message only cost construction time on every scroll
+// and retained a full rule chain per row.
+const assistantMarkdownParser = createAssistantMarkdownParser();
+
 const MARKDOWN_ALLOWED_IMAGE_HANDLERS = [
   "data:image/png;base64",
   "data:image/gif;base64",
@@ -1500,7 +1509,7 @@ export const AssistantMessage = memo(function AssistantMessage({
   phase,
 }: AssistantMessageProps) {
   const { t } = useTranslation();
-  const markdownParser = useMemo(createAssistantMarkdownParser, []);
+  const markdownParser = assistantMarkdownParser;
   const renderedMessage = useMemo(() => capAssistantMessageForRender(message), [message]);
   // Paint a paced prefix while the turn is streaming so text arrives at a steady
   // rate instead of in whatever lumps the daemon's coalescing window produced.
@@ -1741,6 +1750,7 @@ export const AssistantMessage = memo(function AssistantMessage({
           key={node.key}
           code={node.content}
           language={null}
+          phase={phase}
           inheritedStyles={inheritedStyles}
           textStyle={styles.code_block}
         />
@@ -1947,7 +1957,19 @@ export const AssistantMessage = memo(function AssistantMessage({
     };
   }, [client, fileLinkActions, markdownParser, occurrenceKey, phase, serverId, workspaceRoot]);
 
-  const blocks = useMemo(() => splitMarkdownBlocks(revealedMessage), [revealedMessage]);
+  // Split the message text, not the revealed prefix. `revealedMessage` advances on
+  // every animation frame while streaming, and splitting runs a full markdown-it
+  // parse — keying the memo on it meant a whole-document parse per frame, quadratic
+  // over a turn. The text itself only changes when the daemon sends more, so this
+  // memo actually holds; clipping to the reveal point is a slice.
+  const blockRanges = useMemo(
+    () => splitMarkdownBlocksWithRanges(renderedMessage.text),
+    [renderedMessage.text],
+  );
+  const blocks = useMemo(
+    () => clipMarkdownBlocksToLength(blockRanges, revealedMessage.length),
+    [blockRanges, revealedMessage.length],
+  );
   const keyedBlocks = useMemo(
     () => blocks.map((block, index) => ({ key: `block:${index}`, block })),
     [blocks],

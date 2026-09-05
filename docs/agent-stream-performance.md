@@ -4,6 +4,9 @@ How assistant text gets from a provider to the screen, and why it is paced on th
 
 For terminal output, which is a separate pipeline with separate budgets, see [terminal-performance.md](terminal-performance.md).
 
+A source-level audit of this pipeline plus the desktop transport, covering the findings behind the
+invariants below, is in [performance-investigation-2026-09.html](performance-investigation-2026-09.html).
+
 ## The pipeline
 
 ```
@@ -40,6 +43,23 @@ So arrival sets a _target_ and the reveal rate is derived from the backlog inste
   through that hook; the web viewport once skipped it and history hosts of a live tool group went
   stale. A new field on `StreamLayoutItem` must be added to `areLayoutItemsEquivalent`, or sharing
   silently stops.
+- **Block splitting is keyed on the message text, not the revealed prefix.** `splitMarkdownBlocks`
+  runs a full markdown-it parse to find structural blank lines, so keying the memo on the paced
+  reveal meant a whole-document parse per frame — quadratic over a turn, and the single largest
+  render cost while streaming. `AssistantMessage` splits `renderedMessage.text` once and calls
+  `clipMarkdownBlocksToLength` to cut the result down to what is revealed. Clipping is asserted
+  equivalent to splitting the prefix directly at every reveal offset in
+  `split-markdown-blocks.test.ts`; that property is the reason the substitution is safe, so a change
+  to either function has to keep it.
+- **A code fence does not highlight while it is streaming.** The tokenizer cache in
+  `highlight-cache.ts` is keyed on the whole source, so a growing fence misses on every frame,
+  re-tokenizes the whole block, and evicts genuinely reusable entries with prefixes nothing will ask
+  for again. `HighlightedCodeBlock` takes the `phase` and paints plain monospace until the turn
+  completes. It defaults to `"complete"`, so a static surface (file preview, plan card, the default
+  markdown renderer) is unaffected — only callers that stream have to thread the phase through.
+- **The tokenizer cache is bounded in characters, not entries.** `MAX_HIGHLIGHT_CHARS` admits 100k
+  inputs, so a count-based bound put no ceiling on retained memory. The budget charges the key as
+  well as the value, because the key holds a full copy of the source.
 
 ## Measuring
 

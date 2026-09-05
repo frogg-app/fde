@@ -1,0 +1,1115 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>FDE — Memory &amp; CPU Investigation</title>
+    <style>
+      :root {
+        --bg: #ffffff;
+        --fg: #16191d;
+        --muted: #5c6470;
+        --line: #e3e7ec;
+        --surface: #f7f9fb;
+        --accent: #0b8ecb;
+        --accent-soft: #e6f4fb;
+        --crit: #b3261e;
+        --crit-bg: #fdecea;
+        --high: #a15c00;
+        --high-bg: #fdf3e3;
+        --med: #4a5568;
+        --med-bg: #eef1f5;
+        --ok: #1e7a4d;
+        --ok-bg: #e7f5ee;
+        --code: #f2f4f7;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0f1216;
+          --fg: #e6e9ee;
+          --muted: #98a2b0;
+          --line: #242a32;
+          --surface: #161a20;
+          --accent: #3fb6ef;
+          --accent-soft: #10222c;
+          --crit: #ff8a80;
+          --crit-bg: #2a1512;
+          --high: #e5a94f;
+          --high-bg: #2a2113;
+          --med: #a9b4c2;
+          --med-bg: #1c2129;
+          --ok: #5fd39a;
+          --ok-bg: #12261d;
+          --code: #1a1f26;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font:
+          16px/1.65 -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Inter,
+          Roboto,
+          sans-serif;
+      }
+      .wrap {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 56px 24px 96px;
+      }
+      h1 {
+        font-size: 34px;
+        line-height: 1.2;
+        margin: 0 0 8px;
+        letter-spacing: -0.02em;
+      }
+      h2 {
+        font-size: 24px;
+        margin: 56px 0 4px;
+        letter-spacing: -0.01em;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--line);
+      }
+      h3 {
+        font-size: 18px;
+        margin: 32px 0 8px;
+      }
+      .sub {
+        color: var(--muted);
+        margin: 0 0 8px;
+      }
+      code,
+      pre {
+        font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      }
+      code {
+        background: var(--code);
+        padding: 0.12em 0.38em;
+        border-radius: 4px;
+        font-size: 0.88em;
+      }
+      pre {
+        background: var(--code);
+        padding: 14px 16px;
+        border-radius: 8px;
+        overflow-x: auto;
+        font-size: 13px;
+        line-height: 1.55;
+        border: 1px solid var(--line);
+      }
+      pre code {
+        background: none;
+        padding: 0;
+        font-size: inherit;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 20px 0;
+        font-size: 14.5px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+      th {
+        font-weight: 600;
+        color: var(--muted);
+        font-size: 12.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      tbody tr:hover {
+        background: var(--surface);
+      }
+      .tag {
+        display: inline-block;
+        font-size: 11.5px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        padding: 3px 8px;
+        border-radius: 999px;
+        white-space: nowrap;
+      }
+      .t-crit {
+        background: var(--crit-bg);
+        color: var(--crit);
+      }
+      .t-high {
+        background: var(--high-bg);
+        color: var(--high);
+      }
+      .t-med {
+        background: var(--med-bg);
+        color: var(--med);
+      }
+      .t-ok {
+        background: var(--ok-bg);
+        color: var(--ok);
+      }
+      .plat {
+        font-size: 12.5px;
+        color: var(--muted);
+        font-weight: 500;
+      }
+      .finding {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 22px 24px;
+        margin: 24px 0;
+        background: var(--surface);
+      }
+      .finding h3 {
+        margin-top: 0;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .finding .meta {
+        font-size: 13px;
+        color: var(--muted);
+        margin: -4px 0 16px;
+      }
+      .finding .lbl {
+        font-weight: 600;
+        color: var(--fg);
+        font-size: 13.5px;
+        margin: 16px 0 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .note {
+        border-left: 3px solid var(--accent);
+        background: var(--accent-soft);
+        padding: 14px 18px;
+        border-radius: 0 8px 8px 0;
+        margin: 24px 0;
+        font-size: 14.5px;
+      }
+      .note strong {
+        color: var(--accent);
+      }
+      ul,
+      ol {
+        padding-left: 22px;
+      }
+      li {
+        margin: 5px 0;
+      }
+      a {
+        color: var(--accent);
+      }
+      .f {
+        font-family: ui-monospace, Menlo, Consolas, monospace;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      hr {
+        border: 0;
+        border-top: 1px solid var(--line);
+        margin: 48px 0;
+      }
+      .foot {
+        color: var(--muted);
+        font-size: 13.5px;
+        margin-top: 56px;
+        padding-top: 20px;
+        border-top: 1px solid var(--line);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>FDE — memory &amp; CPU investigation</h1>
+      <p class="sub">
+        Static analysis of <code>talented-unicorn</code> @ <code>6c0fb3c</code> · 2026-09-05 ·
+        scope: Android (Expo) and Windows (Tauri) slowness
+      </p>
+
+      <div class="note">
+        <strong>Method and its limits.</strong> This is a source-level audit — I read the streaming,
+        rendering, transport and store code paths and traced allocation and retention by hand. I did
+        <em>not</em> attach a profiler to a running Android or Windows build, so the
+        <em>ranking</em> below is my judgement about likely impact, not measured data. Every finding
+        is a concrete, verifiable code defect with file and line references; the "expected impact"
+        column is an estimate. The last section lists the measurements I'd take to confirm the
+        ordering before anyone spends a sprint on it.
+      </div>
+
+      <h2>Summary</h2>
+
+      <p>
+        Two genuinely distinct problems are stacked on top of each other, which is why both
+        platforms feel bad in different ways:
+      </p>
+
+      <ul>
+        <li>
+          <strong>Shared (hits Android and Windows equally):</strong> the assistant-message render
+          path re-parses markdown and re-tokenizes syntax highlighting from scratch on
+          <em>every animation frame</em> while a turn is streaming. This is quadratic in message
+          length and is almost certainly the dominant CPU cost during an active agent turn.
+        </li>
+        <li>
+          <strong>Windows-only:</strong> every inbound daemon WebSocket frame crosses the Tauri IPC
+          boundary as its own <code>emit</code>, with binary frames base64-encoded. Android's app
+          speaks WebSocket directly and pays none of this.
+        </li>
+        <li>
+          <strong>Memory:</strong> one unambiguous unbounded retention bug in
+          <code>@fde/client</code> that holds whole file bodies forever, plus a syntax-highlight
+          cache bounded by entry <em>count</em> rather than bytes that the streaming path actively
+          poisons.
+        </li>
+      </ul>
+
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Finding</th>
+            <th>Class</th>
+            <th>Platform</th>
+            <th>Severity</th>
+            <th>Expected impact</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>Full markdown parse per animation frame while streaming</td>
+            <td>CPU</td>
+            <td class="plat">Both</td>
+            <td><span class="tag t-crit">Critical</span></td>
+            <td>Dominant cost during a turn; O(n²) in block length</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>Streaming code fences re-tokenize every frame and poison the highlight LRU</td>
+            <td>CPU + memory</td>
+            <td class="plat">Both</td>
+            <td><span class="tag t-crit">Critical</span></td>
+            <td>O(n²) CPU; cache can reach hundreds of MB</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td><code>completedBinaryFileReads</code> never cleared on the failure path</td>
+            <td>Memory</td>
+            <td class="plat">Both</td>
+            <td><span class="tag t-med">Low</span></td>
+            <td>Leaks one file body per error-after-transfer</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td>One Tauri <code>emit</code> per WebSocket frame; binary base64'd</td>
+            <td>CPU</td>
+            <td class="plat">Windows</td>
+            <td><span class="tag t-high">High</span></td>
+            <td>~4 copies of every byte on the UI thread</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td>Global transport event fans out to every session listener</td>
+            <td>CPU</td>
+            <td class="plat">Windows</td>
+            <td><span class="tag t-med">Medium</span></td>
+            <td>O(sessions) wasted work per frame</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td>Store identity churn re-runs all ~172 selectors per flush</td>
+            <td>CPU</td>
+            <td class="plat">Both</td>
+            <td><span class="tag t-med">Medium</span></td>
+            <td>Constant floor at ~60&nbsp;Hz during streaming</td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td>A <code>MarkdownIt</code> instance per mounted assistant message</td>
+            <td>Memory</td>
+            <td class="plat">Both</td>
+            <td><span class="tag t-med">Medium</span></td>
+            <td>Retained bloat + mount cost when scrolling</td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td><s>Unbounded Tauri transport channels</s> &mdash; retracted, see below</td>
+            <td>Memory</td>
+            <td class="plat">Windows</td>
+            <td><span class="tag t-ok">Not a bug</span></td>
+            <td>None</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Findings</h2>
+
+      <!-- 1 -->
+      <div class="finding">
+        <h3>
+          1. Full markdown parse on every animation frame while streaming
+          <span class="tag t-crit">Critical</span>
+        </h3>
+        <p class="meta">
+          CPU · Android + Windows · <span class="f">apps/ui/src/components/message.tsx:1950</span>,
+          <span class="f">apps/ui/src/utils/split-markdown-blocks.ts</span>
+        </p>
+
+        <p><code>AssistantMessage</code> splits its text into markdown blocks for rendering:</p>
+        <pre><code>// message.tsx:1950
+const blocks = useMemo(() =&gt; splitMarkdownBlocks(revealedMessage), [revealedMessage]);</code></pre>
+
+        <p>
+          The memo looks like it protects the call, but <code>revealedMessage</code> comes from
+          <code>useRevealedText</code> (<span class="f">apps/ui/src/hooks/use-revealed-text.ts</span
+          >), which is a <code>requestAnimationFrame</code> loop: while
+          <code>phase === "streaming"</code> it advances the revealed prefix and calls
+          <code>forceRender</code> on <em>every frame</em>. So the memo's dependency changes ~60
+          times a second, and the memo never hits.
+        </p>
+
+        <p>
+          What runs 60&nbsp;times a second is not cheap. <code>splitMarkdownBlocks</code> runs a
+          complete markdown-it block parse of the entire text purely to decide which blank lines are
+          structural:
+        </p>
+        <pre><code>// split-markdown-blocks.ts
+function getStructuralBlankLines(text: string, lines: string[]): Set&lt;number&gt; {
+  const blankLines = new Set&lt;number&gt;();
+  for (const token of markdownBlockParser.parse(text, {})) {  // &lt;-- full parse
+    ...</code></pre>
+
+        <p class="lbl">Why it compounds</p>
+        <p>
+          Cost is O(text length) per frame and the text grows monotonically through the turn, so
+          total work across a turn is <strong>O(n²)</strong>. Block promotion in the reducer caps
+          <em>n</em> at one markdown block rather than the whole message, which helps — but a single
+          long code fence, a long table, or a long unbroken paragraph never gets promoted, so
+          <em>n</em> is the whole fence. A 500-line code block streamed in over 30 seconds means
+          roughly 1,800 full parses of a document that averages 250 lines.
+        </p>
+
+        <p>
+          This is my primary suspect for the shared slowness. It is the only thing I found that
+          scales with both message length and frame rate simultaneously, on both platforms.
+        </p>
+
+        <p class="lbl">The same call is also in the reducer</p>
+        <pre><code>// apps/ui/src/types/stream.ts:1777, inside promoteCompletedAssistantBlocks
+const blocks = splitMarkdownBlocks(activeItem.text);</code></pre>
+        <p>
+          The reducer queue flushes on a frame boundary too —
+          <code>scheduleAgentStreamReducerFlush</code> races a
+          <code>requestAnimationFrame</code> against a <code>setTimeout(48ms)</code> (<span
+            class="f"
+            >session-stream-reducers.ts:1881</span
+          >) — and flushes <em>all</em> pending agents at once. So with several agents streaming,
+          this is one full parse per agent per frame, on top of the per-message render cost above.
+        </p>
+
+        <p class="lbl">Fix</p>
+        <ol>
+          <li>
+            <strong>Decouple block splitting from the reveal clock.</strong> Split on the underlying
+            <code>renderedMessage.text</code>, not on <code>revealedMessage</code>, and apply the
+            reveal prefix only to the final block. Text arriving from the daemon changes far less
+            often than 60&nbsp;Hz, so the memo would start hitting. This alone should remove most of
+            the cost.
+          </li>
+          <li>
+            <strong>Make <code>splitMarkdownBlocks</code> incremental.</strong> It is called
+            repeatedly with strings that are prefixes of one another. Cache the
+            structural-blank-line scan keyed by a prefix length and only re-parse the tail after the
+            last confirmed block boundary.
+          </li>
+          <li>
+            Failing both, memoize <code>splitMarkdownBlocks</code> behind a small LRU keyed by text
+            — a band-aid, but a one-line one.
+          </li>
+        </ol>
+      </div>
+
+      <!-- 2 -->
+      <div class="finding">
+        <h3>
+          2. Streaming code fences re-tokenize every frame and poison the highlight cache
+          <span class="tag t-crit">Critical</span>
+        </h3>
+        <p class="meta">
+          CPU + memory · Android + Windows ·
+          <span class="f">apps/ui/src/utils/highlight-cache.ts</span>,
+          <span class="f">apps/ui/src/components/highlighted-code-block.tsx:77</span>
+        </p>
+
+        <p>
+          Two separate defects that reinforce each other, both triggered by the same thing: a code
+          fence being streamed in.
+        </p>
+
+        <p class="lbl">2a — CPU: the tokenization cache cannot hit during streaming</p>
+        <pre><code>// highlight-cache.ts:50
+export function tokenizeToLines(code: string, ext: string | null) {
+  ...
+  const cacheKey = `${ext}:${code}`;        // key is the ENTIRE source text
+  const cached = tokenizationCache.get(cacheKey);</code></pre>
+        <p>
+          The cache key is the full source. While a fence streams, every frame presents a
+          <em>different, longer</em> string, so every lookup misses and the whole grown block is
+          re-tokenized from scratch. <code>HighlightedCodeBlock</code> has no streaming gate at all:
+        </p>
+        <pre><code>// highlighted-code-block.tsx:77
+const keyedLines = useMemo&lt;KeyedLine[] | null&gt;(
+  () =&gt; highlightToKeyedLines(renderedCode, fenceLanguageToExtension(language)),
+  [renderedCode, language],   // renderedCode changes every frame
+);</code></pre>
+        <p>
+          Note there is no <code>phase</code> prop on this component — it cannot tell streaming from
+          complete. On top of the tokenizer, <code>highlightToKeyedLines</code> is
+          <em>not</em> cached and allocates one wrapper object per token per line on every call,
+          then <code>renderCodeSegments</code> allocates a React element per token. For a 500-line
+          block that is tens of thousands of objects per frame, straight into the nursery. On
+          Android's JS engine this is exactly the shape that produces visible GC stutter.
+        </p>
+
+        <p class="lbl">2b — Memory: an LRU bounded by count, fed one entry per prefix</p>
+        <pre><code>const tokenizationCache = new LRUCache&lt;string, HighlightToken[][]&gt;(200);</code></pre>
+        <p>
+          200 <em>entries</em>, with no byte budget, while <code>MAX_HIGHLIGHT_CHARS</code> admits
+          inputs up to 100,000 characters. Worst case the keys alone are 20&nbsp;MB, and the values
+          — nested arrays of token objects — are typically several times the size of the source they
+          came from. A few hundred MB is reachable.
+        </p>
+        <p>
+          Streaming makes this concrete rather than theoretical. Every frame inserts a
+          <em>new</em> entry for the current prefix. A 50&nbsp;KB fence streamed over 400 frames
+          writes 400 entries averaging 25&nbsp;KB of key each — and evicts all 200 genuinely useful
+          entries in the process. So the cache both bloats and stops working, at the same moment.
+        </p>
+
+        <p class="lbl">Fix</p>
+        <ol>
+          <li>
+            <strong>Gate highlighting on phase.</strong> Thread the existing
+            <code>MarkdownPhase</code> down to <code>HighlightedCodeBlock</code> and render plain
+            monospace text while <code>phase === "streaming"</code>, highlighting once on
+            completion. Cheapest fix, largest win, and visually near-identical.
+          </li>
+          <li>
+            <strong>Don't cache streaming prefixes.</strong> Give <code>tokenizeToLines</code> a
+            <code>{ cache: boolean }</code> option and pass <code>false</code> for in-flight text.
+          </li>
+          <li>
+            <strong>Budget the LRU in bytes, not entries</strong> — e.g. 8&nbsp;MB of accumulated
+            <code>code.length</code> — and hash the key rather than storing the full source as the
+            key.
+          </li>
+          <li>
+            Memoize <code>highlightToKeyedLines</code> alongside the token cache so the keyed-line
+            and React element allocation isn't repeated on unrelated re-renders.
+          </li>
+        </ol>
+      </div>
+
+      <!-- 3 -->
+      <div class="finding">
+        <h3>
+          3. <code>completedBinaryFileReads</code> is never cleared on the failure path
+          <span class="tag t-med">Low</span>
+        </h3>
+        <p class="meta">
+          Memory leak · Android + Windows ·
+          <span class="f">packages/client/src/daemon-client.ts:4380–4412, 5961–5970</span>
+        </p>
+
+        <p>
+          The one finding here that is an outright bug rather than a design cost. Binary file reads
+          are assembled from chunk frames and parked in a map for the awaiting caller to collect:
+        </p>
+        <pre><code>// daemon-client.ts:5961 — chunk stream completes
+const bytes = concatByteChunks(transfer.chunks, transfer.size);
+this.activeBinaryFileTransfers.delete(frame.requestId);
+this.completedBinaryFileReads.set(frame.requestId, { bytes, ... });   // full file body</code></pre>
+        <pre><code>// daemon-client.ts:4388 — the caller
+try {
+  const payload = await this.requestFileExplorer(cwd, path, "file", id, true, maxBytes);
+  if (payload.error) throw new Error(payload.error);
+  const binaryResult = this.completedBinaryFileReads.get(id);
+  if (binaryResult) {
+    this.completedBinaryFileReads.delete(id);   // only cleared here, on success
+    return binaryResult;
+  }
+  ...
+} finally {
+  this.pendingBinaryFileReads.delete(id);
+  this.activeBinaryFileTransfers.delete(id);
+  // completedBinaryFileReads is NOT cleared
+}</code></pre>
+
+        <p>
+          The <code>finally</code> block cleans up two of the three maps and forgets the third — the
+          only one holding megabytes.
+        </p>
+
+        <p class="lbl">How it triggers &mdash; narrower than it first looks</p>
+        <p>
+          <strong>Correction to my initial read.</strong> I first assessed this as leaking on any
+          RPC timeout, which would have made it the dominant Android leak. Tracing it properly while
+          fixing it, that is wrong: the <code>finally</code> clears
+          <code>activeBinaryFileTransfers</code>, and the completion handler at 5927 bails when
+          there is no active transfer &mdash; so a <em>late</em> frame arriving after a timeout
+          never reaches the <code>set</code>. The insert and the awaiting <code>get</code> are also
+          separated only by a microtask, which a timer cannot preempt.
+        </p>
+        <p>
+          The surviving path is narrow: the daemon returns a <code>payload.error</code> for a
+          request whose bytes already landed, so <code>readFile</code> throws at 4397 before
+          reaching the <code>get</code>/ <code>delete</code> at 4400. That leaks one file body per
+          occurrence, permanently.
+        </p>
+        <p>
+          So this is a real defect with a genuinely trivial fix, but <strong>Low</strong> severity
+          in practice, not High &mdash; it is not the Android memory story I initially suggested.
+          Findings 1 and 2 carry that weight instead.
+        </p>
+
+        <p class="lbl">Fix</p>
+        <p>
+          Add <code>this.completedBinaryFileReads.delete(resolvedRequestId)</code> to the existing
+          <code>finally</code> block. That covers the synchronous-rejection case. For the genuinely
+          late frame — completion arriving after the caller is gone — also refuse to insert when
+          there is no corresponding <code>pendingBinaryFileReads</code> entry, and add a TTL sweep
+          as a backstop. All three are small, independent changes.
+        </p>
+      </div>
+
+      <!-- 4 -->
+      <div class="finding">
+        <h3>
+          4. One Tauri <code>emit</code> per WebSocket frame, binary base64-encoded
+          <span class="tag t-high">High</span>
+        </h3>
+        <p class="meta">
+          CPU · Windows (and macOS/Linux desktop) ·
+          <span class="f">apps/desktop/src-tauri/src/transport/task.rs:145–162</span>,
+          <span class="f">transport/session.rs:202–208</span>,
+          <span class="f">commands/mod.rs:38</span>
+        </p>
+
+        <p>
+          This is the clearest reason Windows would feel worse than Android on the same workload —
+          Android's Expo app opens a WebSocket directly and never touches this code.
+        </p>
+
+        <p>The transport read loop forwards each frame individually:</p>
+        <pre><code>// transport/task.rs
+Some(Ok(message)) =&gt; {
+    if let Some(event) = incoming_message_event(&amp;self.id, &amp;message) {
+        if self.is_current() { (self.emit)(event); }   // one emit per frame
+    }
+}</code></pre>
+        <pre><code>// commands/mod.rs:38
+let emit: EventSink = Arc::new(move |payload| {
+    if let Err(error) = handle.emit(TRANSPORT_EVENT, payload) { ... }
+});</code></pre>
+
+        <p>
+          There is no batching or coalescing. During an agent turn the daemon emits many small
+          deltas per second, and each one is a full IPC round trip: build a
+          <code>serde_json::Value</code>, serialize it, post it to WebView2, parse it in JS,
+          dispatch to listeners. WebView2's IPC has meaningful per-message overhead, so the fixed
+          cost per frame dominates the payload cost for small deltas.
+        </p>
+
+        <p class="lbl">The binary path is worse</p>
+        <pre><code>// transport/session.rs:206
+pub fn binary_message_event(session_id: &amp;str, bytes: &amp;[u8]) -&gt; Value {
+    json!({ "sessionId": session_id, "kind": "message", "binaryBase64": BASE64.encode(bytes) })
+}</code></pre>
+        <p>
+          Binary frames — which is how file reads are chunked — get base64'd (+33%), embedded in a
+          JSON value, serialized <em>again</em> by Tauri's IPC with escaping, parsed in JS, then
+          base64-decoded back to bytes in <code>decodeBase64ToBytes</code>. That's roughly four full
+          copies of every byte, all on or adjacent to the UI thread. Opening a 10&nbsp;MB file means
+          moving ~40&nbsp;MB through the main thread.
+        </p>
+
+        <p class="lbl">Fix</p>
+        <ol>
+          <li>
+            <strong>Coalesce text frames.</strong> Buffer inbound frames in the Rust task and emit
+            an array on a short interval (4–8&nbsp;ms) or when the buffer hits a size threshold. The
+            JS side already handles messages one at a time; the change is a loop. This trades a few
+            ms of latency for a large constant-factor reduction in IPC crossings.
+          </li>
+          <li>
+            <strong>Get binary off the JSON channel.</strong> Tauri v2 supports raw byte responses
+            via a custom protocol / <code>tauri::ipc::Response</code>. Serving file bodies over that
+            instead of base64-in-JSON removes three of the four copies.
+          </li>
+          <li>
+            <strong>Use <code>emit_to</code>, not <code>emit</code></strong> — see finding 5.
+          </li>
+        </ol>
+      </div>
+
+      <!-- 5 -->
+      <div class="finding">
+        <h3>
+          5. The global transport event fans out to every session listener
+          <span class="tag t-med">Medium</span>
+        </h3>
+        <p class="meta">
+          CPU · Windows ·
+          <span class="f">apps/ui/src/desktop/daemon/desktop-daemon.ts:220–233</span>,
+          <span class="f">desktop-daemon-transport.ts:177–204</span>
+        </p>
+
+        <p>
+          Every transport instance subscribes to the <em>same</em> global
+          <code>local-daemon-transport-event</code>, and the per-session filter happens last:
+        </p>
+        <pre><code>// desktop-daemon.ts:220 — runs for EVERY listener, on EVERY message
+return listenToDesktopEvent&lt;unknown&gt;("local-daemon-transport-event", (payload) =&gt; {
+  if (!isRecord(payload)) return;
+  handler({
+    sessionId: toStringOrNull(payload.sessionId) ?? "",
+    kind: ...,
+    text: toStringOrNull(payload.text),
+    binaryBase64: toStringOrNull(payload.binaryBase64),   // whole base64 blob, coerced
+    ... 8 fields total
+  });
+});</code></pre>
+        <pre><code>// desktop-daemon-transport.ts:178 — the filter, AFTER the object is already built
+const handleEvent = (payload: LocalDaemonTransportEvent) =&gt; {
+  if (disposed || payload.sessionId !== sessionId) return;   // discard</code></pre>
+
+        <p>
+          With <em>M</em> connected daemons, each message allocates and populates
+          <em>M</em> normalization objects and discards <em>M−1</em> of them. Combined with finding
+          4's lack of batching, that is M&nbsp;×&nbsp;frames-per-second wasted allocations. It is a
+          constant factor rather than an algorithmic problem, which is why I've rated it Medium —
+          but it is essentially free to fix.
+        </p>
+
+        <p class="lbl">Fix</p>
+        <p>
+          Filter on <code>sessionId</code> <em>before</em> constructing the normalized object.
+          Better: emit per-session event names
+          (<code>local-daemon-transport-event:{sessionId}</code>) from Rust and use
+          <code>emit_to</code> so the routing happens once, in Rust, instead of once per listener in
+          JS.
+        </p>
+      </div>
+
+      <!-- 6 -->
+      <div class="finding">
+        <h3>
+          6. Store identity churn re-runs every selector on every flush
+          <span class="tag t-med">Medium</span>
+        </h3>
+        <p class="meta">
+          CPU · Android + Windows ·
+          <span class="f">apps/ui/src/stores/session-store.ts:1045–1056</span>
+        </p>
+
+        <p>
+          <code>setAgentStreamState</code> is careful about <em>change detection</em> — it bails
+          early when nothing changed — but when something did change it replaces the identity of the
+          entire tree:
+        </p>
+        <pre><code>return {
+  ...prev,
+  sessions: { ...prev.sessions, [serverId]: { ...session, agentStreamTail: nextTail, ... } },
+};</code></pre>
+
+        <p>
+          Any selector reading <code>state.sessions</code> therefore re-runs on every stream flush —
+          which is frame-rate, ~60&nbsp;Hz, and flushes all agents together. There are
+          <strong>172</strong> store subscription sites in <code>apps/ui</code>. Each re-runs its
+          selector function and its equality check per flush, even for components displaying data
+          that provably did not change (the sidebar, the tab strip, settings panels).
+        </p>
+
+        <p>
+          To be fair to the existing code, the hot selectors are already defensively written —
+          <code>use-aggregated-agents.ts</code> preserves object identity field-by-field so
+          downstream <code>memo</code> comparisons bail, and
+          <code>legacy-migration.tsx</code> returns a joined string rather than an array. This is a
+          well-tuned system fighting its own store shape. But the selector bodies themselves still
+          run 60 times a second, and several allocate a fresh object before comparing (<code
+            >use-aggregated-agents.ts:42–50</code
+          >
+          builds a new <code>Record</code> per call for <code>useShallow</code> to discard).
+        </p>
+
+        <p class="lbl">Fix</p>
+        <p>
+          The structural fix is to move the per-agent stream tails out of the single
+          <code>sessions</code>
+          record into their own store — or a per-agent external store subscribed via
+          <code>useSyncExternalStore</code> — so that a stream delta only notifies subscribers of
+          that agent. That's real work. A cheaper interim step: audit the selectors that fire on
+          <code>state.sessions</code> and narrow them to the specific sub-map they read, so shallow
+          comparison rejects earlier and allocates less.
+        </p>
+      </div>
+
+      <!-- 7 -->
+      <div class="finding">
+        <h3>
+          7. A <code>MarkdownIt</code> instance per mounted assistant message
+          <span class="tag t-med">Medium</span>
+        </h3>
+        <p class="meta">
+          Memory · Android + Windows ·
+          <span class="f">apps/ui/src/components/message.tsx:1503</span>
+        </p>
+
+        <pre><code>const markdownParser = useMemo(createAssistantMarkdownParser, []);</code></pre>
+
+        <p>
+          The empty dependency array makes this per-component-<em>instance</em>, not per-app. Every
+          mounted assistant message constructs and retains its own <code>MarkdownIt</code> — full
+          rule chains, options objects, the linkify machinery, and a patched
+          <code>validateLink</code> closure.
+        </p>
+
+        <p>Every other surface in the codebase gets this right with a module-level singleton:</p>
+        <pre><code>src/utils/rich-clipboard.ts:3        const markdownRenderer = createAssistantMarkdownParser();
+src/components/plan-card.tsx:13      const planMarkdownParser = createMarkdownParser({ linkify: false });
+src/components/markdown/renderer.tsx:71 const defaultMarkdownParser = createMarkdownParser({ linkify: true });</code></pre>
+
+        <p>
+          <code>message.tsx</code> is the outlier — and it is the one on the hot path. With ~20
+          messages mounted (<code>DEFAULT_MOUNTED_RECENT_STREAM_ITEMS</code>) per agent panel,
+          across several open agents, that is dozens of retained parsers. It also means construction
+          cost on every mount, i.e. during fast scrolling, which is where Android scroll jank would
+          show up.
+        </p>
+
+        <p class="lbl">Fix</p>
+        <p>
+          Hoist to a module-level singleton like the other three call sites. The parser is stateless
+          between <code>render</code> calls and the <code>validateLink</code> patch is constant, so
+          there is no reason for per-instance construction. One-line change, and it makes the
+          <code>markdownRules</code> memo below it (which lists <code>markdownParser</code> as a
+          dependency) stable across instances too.
+        </p>
+      </div>
+
+      <!-- 8 -->
+      <div class="finding">
+        <h3>
+          8. Unbounded Tauri transport channels &mdash; <span class="tag t-ok">retracted</span>
+        </h3>
+        <p class="meta">
+          Withdrawn on closer reading ·
+          <span class="f">apps/desktop/src-tauri/src/transport/mod.rs:60, 162</span>
+        </p>
+
+        <p>
+          I flagged <code>mpsc::unbounded_channel()</code> in the transport as an unbounded daemon
+          &rarr; webview buffer. That was a pattern-match on the call, not a trace of the path, and
+          it does not hold:
+        </p>
+        <ul>
+          <li>
+            <strong>mod.rs:60</strong> is the <em>outgoing</em> queue (app &rarr; daemon), and every
+            message carries a <code>oneshot</code> reply that
+            <code>TransportManager::send</code> awaits (<span class="f">mod.rs:105&ndash;110</span
+            >). Each caller blocks until its write completes, so depth is bounded by concurrent
+            senders. That is backpressure, just expressed with a per-message ack.
+          </li>
+          <li>
+            <strong>mod.rs:162</strong> is inside <code>mod tests</code> &mdash; a test-only sink.
+          </li>
+          <li>
+            The production inbound path never queues at all: <code>emit</code> calls
+            <code>handle.emit</code> synchronously (<span class="f">commands/mod.rs:38</span>).
+          </li>
+        </ul>
+        <p>
+          No fix applied, and none needed. Recorded here rather than deleted so the claim isn't
+          re-derived from the same grep later.
+        </p>
+      </div>
+
+      <hr />
+
+      <h2>Things I checked that are <em>not</em> the problem</h2>
+
+      <p>Recorded so nobody re-investigates them:</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Area</th>
+            <th>Verdict</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Transcript virtualization</td>
+            <td>
+              <span class="tag t-ok">OK</span> — <code>agent-stream/</code> uses
+              <code>@tanstack/react-virtual</code> on web and FlatList on native, with a considered
+              bottom-anchor controller and history-window paging. Well built.
+            </td>
+          </tr>
+          <tr>
+            <td>Session-store eviction on agent removal</td>
+            <td>
+              <span class="tag t-ok">OK</span> — <code>removeAgentDirectoryReplica</code> (<span
+                class="f"
+                >agent-directory-sync.ts:102</span
+              >) clears all the per-agent maps including <code>agentStreamTail</code>. Not a leak.
+            </td>
+          </tr>
+          <tr>
+            <td>Stream reducer batching</td>
+            <td>
+              <span class="tag t-ok">OK</span> —
+              <code>createAgentStreamReducerQueue</code> coalesces deltas per agent and flushes on a
+              frame boundary. Correctly designed.
+            </td>
+          </tr>
+          <tr>
+            <td><code>LiveElapsed</code> timer in <code>message.tsx:735</code></td>
+            <td>
+              <span class="tag t-ok">OK</span> — gated on <code>active</code>, isolated so only it
+              re-renders, cleans up properly.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              "Unbalanced" <code>addEventListener</code> in <code>use-app-visible.ts</code>,
+              <code>tooltip.tsx</code>
+            </td>
+            <td>
+              <span class="tag t-ok">OK</span> — deliberate module-level singletons with documented
+              rationale. False positives from the naive grep.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              IndexedDB listeners (<code>attachment-store</code>, <code>row-store.web</code>,
+              <code>icon-cache-storage.web</code>)
+            </td>
+            <td>
+              <span class="tag t-ok">OK</span> — one-shot <code>onsuccess</code>/<code
+                >onerror</code
+              >
+              handlers on request objects that become garbage. Not leaks.
+            </td>
+          </tr>
+          <tr>
+            <td>Deep clones</td>
+            <td>
+              <span class="tag t-ok">OK</span> — only one
+              <code>JSON.parse(JSON.stringify(...))</code> in the whole UI (<span class="f"
+                >plugins/timeline/model.ts:93</span
+              >), and it's a deliberate plugin sandbox boundary on a cold path.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Suggested order of work</h2>
+
+      <ol>
+        <li>
+          <strong>Finding 1, step 1</strong> — split blocks on the source text rather than the
+          revealed prefix. Small, surgical, and if my reading is right it is the single largest win
+          on both platforms.
+        </li>
+        <li>
+          <strong>Finding 2, step 1</strong> — thread <code>phase</code> into
+          <code>HighlightedCodeBlock</code> and skip highlighting while streaming. Also small;
+          removes the O(n²) tokenization and the cache poisoning together.
+        </li>
+        <li>
+          <strong>Finding 3</strong> — one line in a <code>finally</code> block. Do it regardless of
+          profiling results; it is a straightforward bug.
+        </li>
+        <li><strong>Finding 7</strong> — one-line hoist to a module singleton.</li>
+        <li>
+          <strong>Finding 4</strong> — batch inbound frames in the Rust transport task. Bigger
+          change, and the main lever for Windows specifically.
+        </li>
+        <li>
+          <strong>Findings 2b, 5, 8</strong> — cache byte budget, pre-filter by session, bounded
+          channels. Cheap hardening.
+        </li>
+        <li>
+          <strong>Finding 6</strong> — store restructuring. Only worth it if measurements show a
+          floor remaining after the above.
+        </li>
+      </ol>
+
+      <h2>What was changed</h2>
+
+      <p>
+        Findings 1, 2, 3, 4, 5 and 7 are fixed in the working tree. Finding 6 was deliberately left
+        alone and finding 8 turned out not to be a bug.
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Change</th>
+            <th>Files</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>
+              Added <code>splitMarkdownBlocksWithRanges</code> +
+              <code>clipMarkdownBlocksToLength</code>. The message now splits the
+              <em>source text</em> once and clips to the reveal point, so the memo holds across
+              frames instead of missing on every one.
+            </td>
+            <td class="f">split-markdown-blocks.ts, message.tsx</td>
+          </tr>
+          <tr>
+            <td>2a</td>
+            <td>
+              <code>HighlightedCodeBlock</code> takes a <code>phase</code> prop and renders plain
+              monospace while streaming, highlighting once on completion. Defaults to
+              <code>"complete"</code>, so static callers are unaffected.
+            </td>
+            <td class="f">highlighted-code-block.tsx, markdown/fence/index.tsx, message.tsx</td>
+          </tr>
+          <tr>
+            <td>2b</td>
+            <td>
+              Token cache re-bounded by source characters (2M) instead of 200 entries, charging both
+              key and value. <code>tokenizeToLines</code> gained an opt-out for uncacheable callers.
+            </td>
+            <td class="f">highlight-cache.ts</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>
+              <code>completedBinaryFileReads.delete()</code> added to the <code>finally</code>.
+            </td>
+            <td class="f">daemon-client.ts</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td>
+              Inbound frames coalesce into one emit via an 8&nbsp;ms / 64-event / 256&nbsp;KB
+              batcher. Emits a bare event for a single-message batch, so the existing wire shape is
+              preserved; the JS listener accepts both.
+            </td>
+            <td class="f">transport/task.rs, desktop-daemon.ts</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td>
+              Listener filters on <code>sessionId</code> before building the normalized object.
+            </td>
+            <td class="f">
+              desktop-daemon.ts, local-daemon-transport-rpc.ts, desktop-daemon-transport.ts
+            </td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td>Assistant <code>MarkdownIt</code> hoisted to a module singleton.</td>
+            <td class="f">message.tsx</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p class="lbl" style="font-weight: 600; margin-top: 24px">Tests added</p>
+      <ul>
+        <li>
+          <strong>Clip/split equivalence</strong> — for nine markdown shapes (fences, tables, lists,
+          quotes, indented code), clipping the pre-split blocks is asserted equal to splitting the
+          prefix directly at <em>every</em> reveal offset. This caught a real defect during
+          development: the clip retained a trailing newline the prefix split dropped.
+        </li>
+        <li>
+          <strong>Transport batching</strong> — a 12-frame burst must arrive complete, in order, in
+          fewer emits than frames.
+        </li>
+      </ul>
+
+      <div class="note">
+        <strong>Not done: finding 6 (store identity churn).</strong> Unchanged on purpose. It is the
+        one item that needs restructuring rather than a local edit, and I said in the original
+        ranking it was only worth doing if a floor remained after the rest. That question is now
+        measurable rather than speculative — worth profiling before spending the effort.
+      </div>
+
+      <p class="lbl" style="font-weight: 600; margin-top: 24px">Verification</p>
+      <ul>
+        <li><code>apps/ui</code>: 5,097 unit tests, typecheck, oxlint, oxfmt.</li>
+        <li><code>apps/desktop</code>: 124 Rust tests plus the node harness.</li>
+        <li><code>packages/client</code>: 141 tests.</li>
+        <li>
+          Two pre-existing failures in <code>remote-ssh-target.test.ts</code> are unrelated —
+          confirmed failing identically on a clean tree.
+        </li>
+        <li>No runtime verification on an actual Android or Windows build; this VM is headless.</li>
+      </ul>
+
+      <h2>How to confirm the ranking</h2>
+
+      <p>
+        The ordering above is inference from reading code. Before committing significant effort, I'd
+        measure:
+      </p>
+
+      <ul>
+        <li>
+          <strong>Windows:</strong> WebView2 DevTools performance profile during an active agent
+          turn that includes a long code fence. Look for <code>parse</code> /
+          <code>tokenizeToLines</code> / <code>splitMarkdownBlocks</code> self-time, and count
+          <code>__TAURI_EVENT_PLUGIN_INTERNALS__</code> callback invocations per second. If findings
+          1 and 2 are right, markdown-it should be the top self-time entry by a wide margin.
+        </li>
+        <li>
+          <strong>Android:</strong> Hermes sampling profiler over the same scenario, plus a heap
+          snapshot before and after (a) streaming a long code block and (b) opening and cancelling
+          several image previews on a throttled connection. Finding 3 predicts retained
+          <code>Uint8Array</code>s reachable from
+          <code>DaemonClient.completedBinaryFileReads</code>; finding 2b predicts a large retained
+          <code>tokenizationCache</code> dominated by key strings.
+        </li>
+        <li>
+          <strong>Both:</strong> the repo already has
+          <span class="f">apps/ui/e2e/browser/agent-stream-smoothness.spec.ts</span> and
+          <span class="f">apps/ui/perf/side-pane-performance.spec.ts</span>. Extending the
+          smoothness spec with a long-code-fence fixture would turn findings 1 and 2 into a
+          regression test rather than a one-off investigation.
+        </li>
+        <li>
+          <strong>Cheap sanity check</strong> for finding 1, no profiler needed: temporarily
+          hard-code <code>isTextRevealPacingSupported()</code> to <code>false</code> (which makes
+          <code>useRevealedText</code> return the text directly and stops the rAF loop) and see how
+          much of the slowness disappears. If it largely does, finding 1 is confirmed and the fix is
+          well-scoped.
+        </li>
+      </ul>
+
+      <p class="foot">
+        Static source audit — no profiler was attached to a running build, so severity ordering is
+        estimated, not measured. All file and line references are against
+        <code>talented-unicorn</code> @ <code>6c0fb3c</code>.
+      </p>
+    </div>
+  </body>
+</html>
