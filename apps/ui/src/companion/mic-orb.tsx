@@ -22,8 +22,10 @@ const ThemedSpinner = withUnistyles(LoadingSpinner, (theme) => ({
 
 interface MicOrbProps {
   state: CompanionMicState;
-  /** Smoothed capture level, 0–1. */
+  /** Smoothed capture level, 0–1. Drives the ring while listening. */
   volume: number;
+  /** Loudness of the Companion's own voice, 0–1. Drives the ring while speaking. */
+  speakingVolume?: number;
   accessibilityLabel: string;
   onPress: () => void;
   testID?: string;
@@ -34,9 +36,20 @@ interface MicOrbProps {
  * stays neutral so the orb alone carries what the Companion is doing: the fill
  * says the state, the ring says how loudly you are talking.
  */
-export function MicOrb({ state, volume, accessibilityLabel, onPress, testID }: MicOrbProps) {
+export function MicOrb({
+  state,
+  volume,
+  speakingVolume = 0,
+  accessibilityLabel,
+  onPress,
+  testID,
+}: MicOrbProps) {
   const isQuiet = state === "idle";
-  const ringScale = state === "listening" ? 1 + volume * RING_GAIN : 1;
+  // Two independent amplitudes share the one ring: the microphone while the
+  // user talks, the reply while the Companion does. Driving it from capture
+  // alone left the orb inert for the half of the conversation the user spends
+  // listening. See docs/companion-voice-design.md.
+  const ringScale = 1 + ringLevel(state, volume, speakingVolume) * RING_GAIN;
 
   const ringStyle = useMemo(
     () => [
@@ -67,6 +80,13 @@ export function MicOrb({ state, volume, accessibilityLabel, onPress, testID }: M
       </View>
     </Pressable>
   );
+}
+
+/** Whichever amplitude the current state should move to, or none at all. */
+function ringLevel(state: CompanionMicState, volume: number, speakingVolume: number): number {
+  if (state === "listening") return volume;
+  if (state === "speaking") return speakingVolume;
+  return 0;
 }
 
 function OrbGlyph({ state }: { state: CompanionMicState }) {

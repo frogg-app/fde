@@ -75,6 +75,7 @@ function CompanionBody({ serverId, isAvailable, unavailableReason }: CompanionBo
   const session = useCompanionStore((state) => state.session);
   const isMuted = useCompanionStore((state) => state.isMuted);
   const volume = useCompanionStore((state) => state.volume);
+  const speakingVolume = useCompanionStore((state) => state.speakingVolume);
   const isThinking = useCompanionStore((state) => state.isThinking);
   const isSpeaking = useCompanionStore((state) => state.isSpeaking);
   const partialTranscript = useCompanionStore((state) => state.partialTranscript);
@@ -172,6 +173,7 @@ function CompanionBody({ serverId, isAvailable, unavailableReason }: CompanionBo
         <MicOrb
           state={micState}
           volume={volume}
+          speakingVolume={speakingVolume}
           accessibilityLabel={t(`companion.micState.${micState}`)}
           onPress={isSessionOpen ? toggleMute : start}
           testID="companion-mic-orb"

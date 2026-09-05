@@ -29,8 +29,10 @@ export interface CompanionState {
   isOpen: boolean;
   session: CompanionSession;
   isMuted: boolean;
-  /** Smoothed capture level, 0–1, driving the orb's volume ring. */
+  /** Smoothed capture level, 0–1, driving the orb's volume ring while listening. */
   volume: number;
+  /** Loudness of the Companion's own voice, 0–1, driving the ring while it speaks. */
+  speakingVolume: number;
   /** True while the daemon hears the user speaking. */
   isUserSpeaking: boolean;
   /** True while a turn is in flight and the Companion has not started speaking. */
@@ -55,6 +57,7 @@ export interface CompanionState {
   dismissSessionError: () => void;
   setMuted: (isMuted: boolean) => void;
   setVolume: (volume: number) => void;
+  setSpeakingVolume: (volume: number) => void;
   userSpeakingChanged: (isSpeaking: boolean) => void;
   transcriptReceived: (input: { text: string; isFinal: boolean }) => void;
   replyReceived: (input: { text: string; isFinal: boolean }) => void;
@@ -75,6 +78,7 @@ const NO_TOPICS: CompanionNotebookEntry[] = [];
 const CONVERSATION_RESET = {
   isMuted: false,
   volume: 0,
+  speakingVolume: 0,
   isUserSpeaking: false,
   isThinking: false,
   isSpeaking: false,
@@ -123,6 +127,7 @@ export const useCompanionStore = create<CompanionState>((set) => ({
     set((state) => (state.session.status === "failed" ? { session: CLOSED_SESSION } : {})),
 
   setMuted: (isMuted) => set((state) => ({ isMuted, volume: isMuted ? 0 : state.volume })),
+  setSpeakingVolume: (speakingVolume) => set({ speakingVolume }),
   setVolume: (volume) => set((state) => ({ volume: state.isMuted ? 0 : volume })),
 
   // Barge-in: the user talking over the Companion ends its turn immediately, so
@@ -149,7 +154,7 @@ export const useCompanionStore = create<CompanionState>((set) => ({
   replyReceived: ({ text, isFinal }) => set({ reply: text, isReplyFinal: isFinal }),
 
   companionAudioStarted: () => set({ isSpeaking: true, isThinking: false }),
-  companionAudioFinished: () => set({ isSpeaking: false }),
+  companionAudioFinished: () => set({ isSpeaking: false, speakingVolume: 0 }),
 
   notebookReceived: (topics) => set({ topics: [...topics] }),
 
