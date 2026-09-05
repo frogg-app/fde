@@ -8091,6 +8091,342 @@
               "properties": {
                 "type": {
                   "type": "string",
+                  "const": "companion.session.start.response"
+                },
+                "payload": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "accepted": {
+                      "type": "boolean"
+                    },
+                    "reasonCode": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "accepted",
+                    "reasonCode",
+                    "retryable"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "type",
+                "payload"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "companion.session.stop.response"
+                },
+                "payload": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "accepted": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "accepted"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "type",
+                "payload"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "companion.audio.output"
+                },
+                "payload": {
+                  "type": "object",
+                  "properties": {
+                    "audio": {
+                      "type": "string"
+                    },
+                    "format": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "groupId": {
+                      "type": "string"
+                    },
+                    "isLastChunk": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "audio",
+                    "format",
+                    "id",
+                    "groupId",
+                    "isLastChunk"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "type",
+                "payload"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "companion.input.state"
+                },
+                "payload": {
+                  "type": "object",
+                  "properties": {
+                    "isSpeaking": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "isSpeaking"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "type",
+                "payload"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "companion.transcript"
+                },
+                "payload": {
+                  "type": "object",
+                  "properties": {
+                    "text": {
+                      "type": "string"
+                    },
+                    "isFinal": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "text",
+                    "isFinal"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "type",
+                "payload"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "companion.reply"
+                },
+                "payload": {
+                  "type": "object",
+                  "properties": {
+                    "text": {
+                      "type": "string"
+                    },
+                    "isFinal": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "text",
+                    "isFinal"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "type",
+                "payload"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "companion.notebook.update"
+                },
+                "payload": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "notebook": {
+                      "type": "object",
+                      "properties": {
+                        "entries": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "topic",
+                                  "task"
+                                ]
+                              },
+                              "text": {
+                                "type": "string"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "open",
+                                  "active",
+                                  "done"
+                                ]
+                              },
+                              "agentId": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "updatedAt": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "kind",
+                              "text",
+                              "status",
+                              "agentId",
+                              "updatedAt"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "updatedAt": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "entries",
+                        "updatedAt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "notebook"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "type",
+                "payload"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "companion.job.update"
+                },
+                "payload": {
+                  "type": "object",
+                  "properties": {
+                    "jobId": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "started",
+                        "running",
+                        "completed",
+                        "failed"
+                      ]
+                    },
+                    "summary": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "jobId",
+                    "label",
+                    "status",
+                    "summary"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "type",
+                "payload"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
                   "const": "dictation_stream_ack"
                 },
                 "payload": {
