@@ -155,9 +155,24 @@ from `package.json`.
 `npm run verify` runs the CI gate locally, every check in parallel across all cores:
 
 ```bash
-npm run verify --fast   # format, lint, typecheck — about 20 seconds
-npm run verify          # the above plus every unit suite — a few minutes
+npm run verify -- --fast   # format, lint, typecheck — about 20 seconds
+npm run verify             # the above plus every unit suite — a few minutes
 ```
+
+Note the `--`: without it npm swallows the flag instead of passing it to the script.
+
+For the inner loop, scope the run to what you actually touched:
+
+```bash
+node scripts/ci/verify.mjs --changed          # only the checks your diff can break
+node scripts/ci/verify.mjs --changed --fast   # same, without tests
+node scripts/ci/verify.mjs --changed=main     # compare against a different base
+```
+
+`--changed` diffs against the merge base with `origin/main`, then formats and lints exactly the
+changed files and typechecks and unit-tests exactly the workspaces they belong to. It shares its
+change detection and workspace mapping with the pre-commit hook
+(`scripts/ci/changed-files.mjs`), so the two agree on what a change is.
 
 Use it before pushing. Hosted CI is the backstop, not the inner loop.
 
