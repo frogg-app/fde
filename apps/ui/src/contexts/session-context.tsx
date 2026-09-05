@@ -29,7 +29,12 @@ import {
   type NotificationPermissionRequest,
 } from "@fde/protocol/agent-attention-notification";
 
-import type { DaemonClient } from "@fde/client/internal/daemon-client";
+import {
+  CompanionMessageRejectedError,
+  type DaemonClient,
+} from "@fde/client/internal/daemon-client";
+import { CompanionMessageRejected } from "@/companion/runtime";
+import { getCompanionRuntime, registerCompanionSession } from "@/companion/session-registry";
 import type { AgentSessionConfig } from "@fde/protocol/agent-types";
 import type { GitSetupOptions } from "@fde/protocol/messages";
 import type { AgentPermissionResponse } from "@fde/protocol/agent-types";
@@ -410,6 +415,34 @@ function SessionProviderInternal({ children, serverId, client }: SessionProvider
     return () => unregister?.();
   }, [client, serverId, setIsPlayingAudio, t, voiceRuntime]);
 
+  useEffect(
+    () =>
+      registerCompanionSession({
+        serverId,
+        startSession: async () => {
+          const response = await client.startCompanionSession();
+          return {
+            accepted: response.accepted,
+            reasonCode: response.reasonCode ?? null,
+            retryable: response.retryable,
+          };
+        },
+        stopSession: () => client.stopCompanionSession(),
+        sendAudioChunk: (audio, format) => client.sendCompanionAudioChunk(audio, format),
+        audioPlayed: (id) => client.companionAudioPlayed(id),
+        sendMessage: async (text) => {
+          try {
+            await client.sendCompanionMessage(text);
+          } catch (error) {
+            throw error instanceof CompanionMessageRejectedError
+              ? new CompanionMessageRejected(error.reasonCode)
+              : error;
+          }
+        },
+      }),
+    [client, serverId],
+  );
+
   useEffect(() => {
     voiceRuntime?.updateSessionConnection(serverId, isConnected);
   }, [isConnected, serverId, voiceRuntime]);
@@ -761,6 +794,23 @@ function SessionProviderInternal({ children, serverId, client }: SessionProvider
       voiceRuntime?.onServerSpeechStateChanged(serverId, message.payload.isSpeaking);
     });
 
+    const companionRuntime = getCompanionRuntime();
+    const unsubCompanionAudio = client.on("companion.audio.output", (message) => {
+      companionRuntime.handleAudioOutput(message.payload);
+    });
+    const unsubCompanionInputState = client.on("companion.input.state", (message) => {
+      companionRuntime.handleInputState(message.payload.isSpeaking);
+    });
+    const unsubCompanionTranscript = client.on("companion.transcript", (message) => {
+      companionRuntime.handleTranscript(message.payload);
+    });
+    const unsubCompanionReply = client.on("companion.reply", (message) => {
+      companionRuntime.handleReply(message.payload);
+    });
+    const unsubCompanionNotebook = client.on("companion.notebook.update", (message) => {
+      companionRuntime.handleNotebook(message.payload.notebook.entries);
+    });
+
     const unsubTerminalAttention = client.on("terminal_attention_required", (message) => {
       if (message.type !== "terminal_attention_required") {
         return;
@@ -783,6 +833,11 @@ function SessionProviderInternal({ children, serverId, client }: SessionProvider
     });
 
     return () => {
+      unsubCompanionAudio();
+      unsubCompanionInputState();
+      unsubCompanionTranscript();
+      unsubCompanionReply();
+      unsubCompanionNotebook();
       unsubTimelineReplacement();
       unsubAgentStream();
       unsubAgentTimeline();

@@ -1869,6 +1869,58 @@ export const es: TranslationResources = {
       stop: "Detener la voz en tiempo real e interrumpir el turno.",
     },
   },
+  companion: {
+    title: "Compañero",
+    status: {
+      connecting: "Conectando…",
+    },
+    micState: {
+      idle: "Inactivo",
+      listening: "Escuchando",
+      thinking: "Pensando",
+      speaking: "Hablando",
+    },
+    actions: {
+      mute: "Silenciar",
+      unmute: "Activar sonido",
+      stop: "Detener",
+      send: "Enviar",
+    },
+    compose: {
+      placeholder: "Escribe en lugar de hablar",
+      sent: "Enviado",
+    },
+    topics: {
+      empty: "Todavía no hay nada en seguimiento.",
+    },
+    error: {
+      startFailed: "No se pudo iniciar el Compañero",
+      sendFailed: "No se envió tu mensaje",
+    },
+    reason: {
+      unknown: "El daemon no indicó el motivo.",
+      companion_key_missing: "No hay ninguna clave de API de Anthropic configurada en este daemon.",
+      companion_disabled: "El Compañero está desactivado en este daemon.",
+      companion_microphone_unavailable: "El micrófono no está disponible.",
+      companion_session_closed: "La sesión del Compañero está cerrada.",
+      companion_busy: "El Compañero está ocupado con otro turno.",
+    },
+    unavailable: {
+      title: "El Compañero no está disponible",
+      description: "Este daemon no ofrece el Compañero.",
+    },
+    settings: {
+      autoStart: {
+        label: "Empezar a hablar de inmediato",
+        description:
+          "Abre una sesión en cuanto se abra el Compañero, en lugar de esperar un toque.",
+      },
+      replyText: {
+        label: "Mostrar el texto de la respuesta",
+        description: "Lee lo que dice el Compañero mientras habla.",
+      },
+    },
+  },
   spokenAlerts: {
     notification: {
       title: "Novedades de {{name}}",
@@ -2434,6 +2486,7 @@ export const es: TranslationResources = {
         toggleRightSidebar: "Alternar panel lateral",
         toggleBothSidebars: "Alternar ambas barras laterales",
         toggleSettings: "Alternar configuración",
+        toggleCompanion: "Alternar el Compañero",
         toggleFocusMode: "Alternar modo de enfoque",
         cycleTheme: "Tema del ciclo",
         focusMessageInput: "Entrada de mensaje de enfoque",

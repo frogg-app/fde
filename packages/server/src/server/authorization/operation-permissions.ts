@@ -277,6 +277,7 @@ const OUTBOUND_PERMISSION = {
   "companion.audio.output": "workspace.write",
   "companion.input.state": "workspace.write",
   "companion.job.update": "workspace.write",
+  "companion.message.send.response": "workspace.write",
   "companion.notebook.fetch.response": "workspace.read",
   "companion.notebook.update": "workspace.read",
   "companion.reply": "workspace.write",

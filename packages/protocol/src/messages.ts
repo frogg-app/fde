@@ -3409,6 +3409,18 @@ export const CompanionSessionStopResponseSchema = z.object({
   }),
 });
 
+// The typed-input fallback is a user action that can fail, so it is answered
+// rather than fire-and-forget; `reasonCode` names the refusal for the app's
+// failure UI.
+export const CompanionMessageSendResponseSchema = z.object({
+  type: z.literal("companion.message.send.response"),
+  payload: z.object({
+    requestId: z.string(),
+    accepted: z.boolean(),
+    reasonCode: z.string().nullable(),
+  }),
+});
+
 export const CompanionAudioOutputMessageSchema = z.object({
   type: z.literal("companion.audio.output"),
   payload: z.object({
@@ -6661,6 +6673,7 @@ export const SessionOutboundMessageSchema = z.discriminatedUnion("type", [
   VoiceInputStateMessageSchema,
   CompanionSessionStartResponseSchema,
   CompanionSessionStopResponseSchema,
+  CompanionMessageSendResponseSchema,
   CompanionAudioOutputMessageSchema,
   CompanionInputStateMessageSchema,
   CompanionTranscriptMessageSchema,
@@ -6868,6 +6881,7 @@ export type CompanionMessageSendRequest = z.infer<typeof CompanionMessageSendReq
 export type CompanionNotebookFetchRequest = z.infer<typeof CompanionNotebookFetchRequestSchema>;
 export type CompanionSessionStartResponse = z.infer<typeof CompanionSessionStartResponseSchema>;
 export type CompanionSessionStopResponse = z.infer<typeof CompanionSessionStopResponseSchema>;
+export type CompanionMessageSendResponse = z.infer<typeof CompanionMessageSendResponseSchema>;
 export type CompanionAudioOutputMessage = z.infer<typeof CompanionAudioOutputMessageSchema>;
 export type CompanionInputStateMessage = z.infer<typeof CompanionInputStateMessageSchema>;
 export type CompanionTranscriptMessage = z.infer<typeof CompanionTranscriptMessageSchema>;

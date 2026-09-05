@@ -45,6 +45,9 @@ export default defineConfig({
             instances: [{ browser: "chromium" }],
             screenshotDirectory: ".vitest-screenshots",
           },
+          // Attachments are binary test output, so they go somewhere already
+          // ignored rather than into the worktree as hash-named churn.
+          attachmentsDir: path.resolve(__dirname, "../../node_modules/.tmp/vitest-attachments"),
           globalSetup: path.resolve(__dirname, "src/runtime/websocket-test-global-setup.ts"),
         },
       },

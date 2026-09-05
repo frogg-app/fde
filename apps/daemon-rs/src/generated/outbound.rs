@@ -86,6 +86,8 @@ pub enum SessionMessage {
     CompanionSessionStartResponse(CompanionSessionStartResponse),
     #[serde(rename = "companion.session.stop.response")]
     CompanionSessionStopResponse(CompanionSessionStopResponse),
+    #[serde(rename = "companion.message.send.response")]
+    CompanionMessageSendResponse(CompanionMessageSendResponse),
     #[serde(rename = "companion.audio.output")]
     CompanionAudioOutput(CompanionAudioOutput),
     #[serde(rename = "companion.input.state")]
@@ -2270,6 +2272,20 @@ pub struct CompanionSessionStopResponsePayload {
     #[serde(rename = "requestId")]
     pub request_id: String,
     pub accepted: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionMessageSendResponse {
+    pub payload: CompanionMessageSendResponsePayload,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionMessageSendResponsePayload {
+    #[serde(rename = "requestId")]
+    pub request_id: String,
+    pub accepted: bool,
+    #[serde(rename = "reasonCode", skip_serializing_if = "Option::is_none")]
+    pub reason_code: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

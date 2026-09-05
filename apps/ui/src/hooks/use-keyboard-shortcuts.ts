@@ -34,6 +34,7 @@ import { getDesktopHost, isElectronRuntime } from "@/desktop/host";
 import { isImeComposingKeyboardEvent } from "@/utils/keyboard-ime";
 import { buildOpenProjectRoute } from "@/utils/host-routes";
 import { hasActiveWebOverlay } from "@/lib/overlay-root";
+import { useCompanionStore } from "@/companion/store";
 import { useSettingsModalStore } from "@/settings-modal/store";
 import {
   type ActiveWorkspaceSelection,
@@ -221,6 +222,9 @@ export function useKeyboardShortcuts({
         case "settings-modal-close":
           useSettingsModalStore.getState().close();
           return true;
+        case "companion-toggle":
+          useCompanionStore.getState().setOpen(action.nextOpen);
+          return true;
       }
     };
 
@@ -242,6 +246,7 @@ export function useKeyboardShortcuts({
           commandCenterOpen: store.commandCenterOpen,
           shortcutsDialogOpen: store.shortcutsDialogOpen,
           settingsModalOpen: useSettingsModalStore.getState().view !== null,
+          companionOpen: useCompanionStore.getState().isOpen,
         },
       );
       const handled = performShortcutAction(

@@ -1819,6 +1819,57 @@ export const ar: TranslationResources = {
       stop: "إيقاف الصوت في الوقت الحقيقي ومقاطعة الدوران",
     },
   },
+  companion: {
+    title: "الرفيق",
+    status: {
+      connecting: "جارٍ الاتصال…",
+    },
+    micState: {
+      idle: "خامل",
+      listening: "يستمع",
+      thinking: "يفكر",
+      speaking: "يتحدث",
+    },
+    actions: {
+      mute: "كتم",
+      unmute: "إلغاء الكتم",
+      stop: "إيقاف",
+      send: "إرسال",
+    },
+    compose: {
+      placeholder: "اكتب بدلاً من التحدث",
+      sent: "تم الإرسال",
+    },
+    topics: {
+      empty: "لا شيء متابَع بعد.",
+    },
+    error: {
+      startFailed: "تعذّر بدء الرفيق",
+      sendFailed: "لم يتم إرسال رسالتك",
+    },
+    reason: {
+      unknown: "لم يوضّح الخادم السبب.",
+      companion_key_missing: "لا يوجد مفتاح Anthropic API مُهيّأ على هذا الخادم.",
+      companion_disabled: "الرفيق معطّل على هذا الخادم.",
+      companion_microphone_unavailable: "الميكروفون غير متاح.",
+      companion_session_closed: "جلسة الرفيق مغلقة.",
+      companion_busy: "الرفيق مشغول بدور آخر.",
+    },
+    unavailable: {
+      title: "الرفيق غير متاح",
+      description: "هذا الخادم لا يوفّر الرفيق.",
+    },
+    settings: {
+      autoStart: {
+        label: "ابدأ التحدث فوراً",
+        description: "افتح جلسة بمجرد فتح الرفيق، بدلاً من انتظار الضغط.",
+      },
+      replyText: {
+        label: "إظهار نص الرد",
+        description: "اقرأ ما يقوله الرفيق أثناء حديثه.",
+      },
+    },
+  },
   spokenAlerts: {
     notification: {
       title: "تحديث من {{name}}",
@@ -2375,6 +2426,7 @@ export const ar: TranslationResources = {
         toggleRightSidebar: "تبديل اللوحة الجانبية",
         toggleBothSidebars: "تبديل كلا الشريطين الجانبيين",
         toggleSettings: "تبديل الإعدادات",
+        toggleCompanion: "تبديل الرفيق",
         toggleFocusMode: "تبديل وضع التركيز",
         cycleTheme: "موضوع الدورة",
         focusMessageInput: "التركيز على إدخال الرسالة",

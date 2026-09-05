@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { router, type Href } from "expo-router";
 import { useTranslation } from "react-i18next";
 import {
+  AudioLines,
   CircleDashed,
   Folder,
   FolderPlus,
@@ -27,7 +28,9 @@ import { buildOpenProjectRoute, buildSessionsRoute, buildSettingsRoute } from "@
 import { getShortcutOs } from "@/utils/shortcut-platform";
 import type { CommandCenterContribution, CommandCenterIconProps } from "./contributions";
 import { useCommandCenterActions } from "./provider";
-import { buildGroupingContribution } from "./root-contributions";
+import { useCompanionHost } from "@/companion/use-companion-host";
+import { useCompanionStore } from "@/companion/store";
+import { buildCompanionContribution, buildGroupingContribution } from "./root-contributions";
 
 const ThemedPlus = withUnistyles(Plus, (theme) => ({ color: theme.colors.foregroundMuted }));
 const ThemedFolderPlus = withUnistyles(FolderPlus, (theme) => ({
@@ -48,6 +51,9 @@ const ThemedCircleDashed = withUnistyles(CircleDashed, (theme) => ({
   color: theme.colors.foregroundMuted,
 }));
 const ThemedPanelLeft = withUnistyles(PanelLeft, (theme) => ({
+  color: theme.colors.foregroundMuted,
+}));
+const ThemedAudioLines = withUnistyles(AudioLines, (theme) => ({
   color: theme.colors.foregroundMuted,
 }));
 
@@ -83,6 +89,10 @@ function CircleDashedIcon({ size }: CommandCenterIconProps) {
   return <ThemedCircleDashed size={size} strokeWidth={2.2} />;
 }
 
+function CompanionIcon({ size }: CommandCenterIconProps) {
+  return <ThemedAudioLines size={size} strokeWidth={2.2} />;
+}
+
 function PanelLeftIcon({ size }: CommandCenterIconProps) {
   return <ThemedPanelLeft size={size} strokeWidth={2.2} />;
 }
@@ -102,6 +112,8 @@ export function CommandCenterRootActions() {
   const groupMode = useSidebarViewStore((state) => state.groupMode);
   const setGroupMode = useSidebarViewStore((state) => state.setGroupMode);
   const isCompact = useIsCompactFormFactor();
+  const isCompanionAvailable = useCompanionHost().isAvailable;
+  const openCompanion = useCompanionStore((state) => state.open);
   const toggleMobileAgentList = usePanelStore((state) => state.toggleMobileAgentList);
   const toggleDesktopAgentList = usePanelStore((state) => state.toggleDesktopAgentList);
   const toggleAgentList = isCompact ? toggleMobileAgentList : toggleDesktopAgentList;
@@ -258,6 +270,22 @@ export function CommandCenterRootActions() {
       });
     }
 
+    const companion = buildCompanionContribution({
+      isAvailable: isCompanionAvailable,
+      title: t("companion.title"),
+      sectionTitle: t("shell.commandCenter.actions"),
+      icon: CompanionIcon,
+      shortcutKeys:
+        resolveShortcutKeysForAction("toggle-companion", overrides, shortcutPlatform) ?? undefined,
+      open: () => {
+        clearCommandCenterFocusRestoreElement();
+        openCompanion();
+      },
+    });
+    if (companion) {
+      availableActions.push(companion);
+    }
+
     availableActions.push(
       buildGroupingContribution({
         groupMode,
@@ -275,6 +303,8 @@ export function CommandCenterRootActions() {
   }, [
     groupMode,
     homeRoute,
+    isCompanionAvailable,
+    openCompanion,
     keyboardActionDispatcher,
     openAddProject,
     overrides,
