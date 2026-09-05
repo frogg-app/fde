@@ -20,6 +20,8 @@ import {
 } from "@fde/protocol/messages";
 import { validateWSOutboundMessage } from "@fde/protocol/validation/ws-outbound";
 import type {
+  CompanionNotebook,
+  CompanionSessionStartResponse,
   AgentStreamEventPayload,
   AgentSnapshotPayload,
   ProjectPlacementPayload,
@@ -887,6 +889,17 @@ class DaemonRpcError extends Error {
     this.requestId = params.requestId;
     this.requestType = params.requestType;
     this.code = params.code;
+  }
+}
+
+/** The daemon refused a typed Companion message; `reasonCode` is its machine reason. */
+export class CompanionMessageRejectedError extends Error {
+  readonly reasonCode: string | null;
+
+  constructor(params: { reasonCode: string | null }) {
+    super(`Companion rejected the message${params.reasonCode ? ` (${params.reasonCode})` : ""}`);
+    this.name = "CompanionMessageRejectedError";
+    this.reasonCode = params.reasonCode;
   }
 }
 
@@ -3655,6 +3668,74 @@ export class DaemonClient {
 
   async audioPlayed(id: string): Promise<void> {
     this.sendSessionMessage({ type: "audio_played", id });
+  }
+
+  // ============================================================================
+  // Companion
+  // ============================================================================
+
+  async startCompanionSession(): Promise<CompanionSessionStartResponse["payload"]> {
+    const requestId = this.createRequestId();
+    return this.sendRequest({
+      requestId,
+      message: { type: "companion.session.start.request", requestId },
+      select: (msg) => {
+        if (msg.type !== "companion.session.start.response") return null;
+        if (msg.payload.requestId !== requestId) return null;
+        return msg.payload;
+      },
+    });
+  }
+
+  async stopCompanionSession(): Promise<void> {
+    const requestId = this.createRequestId();
+    await this.sendRequest({
+      requestId,
+      message: { type: "companion.session.stop.request", requestId },
+      select: (msg) => {
+        if (msg.type !== "companion.session.stop.response") return null;
+        if (msg.payload.requestId !== requestId) return null;
+        return msg.payload;
+      },
+    });
+  }
+
+  async sendCompanionAudioChunk(audio: string, format: string, isLast = false): Promise<void> {
+    this.sendSessionMessage({ type: "companion.audio.chunk", audio, format, isLast });
+  }
+
+  async companionAudioPlayed(id: string): Promise<void> {
+    this.sendSessionMessage({ type: "companion.audio.played", id });
+  }
+
+  async sendCompanionMessage(text: string): Promise<void> {
+    const requestId = this.createRequestId();
+    const response = await this.sendRequest({
+      requestId,
+      message: { type: "companion.message.send.request", requestId, text },
+      select: (msg) => {
+        if (msg.type !== "companion.message.send.response") return null;
+        if (msg.payload.requestId !== requestId) return null;
+        return msg.payload;
+      },
+    });
+    if (!response.accepted) {
+      throw new CompanionMessageRejectedError({ reasonCode: response.reasonCode });
+    }
+  }
+
+  async fetchCompanionNotebook(): Promise<CompanionNotebook> {
+    const requestId = this.createRequestId();
+    const response = await this.sendRequest({
+      requestId,
+      message: { type: "companion.notebook.fetch.request", requestId },
+      select: (msg) => {
+        if (msg.type !== "companion.notebook.fetch.response") return null;
+        if (msg.payload.requestId !== requestId) return null;
+        return msg.payload;
+      },
+    });
+    return response.notebook;
   }
 
   // ============================================================================

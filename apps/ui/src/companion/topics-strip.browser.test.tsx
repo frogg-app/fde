@@ -1,7 +1,7 @@
-import type { CompanionNotebookEntry } from "@fde/protocol/messages";
 import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it } from "vitest";
+import type { CompanionTopicRow } from "./topic-rows";
 import { TopicsStrip } from "./topics-strip";
 
 interface OpenedAgent {
@@ -24,7 +24,7 @@ function recordOpen(input: OpenedAgent): void {
   opened.push(input);
 }
 
-function mountStrip(topics: readonly CompanionNotebookEntry[]): Mounted {
+function mountStrip(topics: readonly CompanionTopicRow[]): Mounted {
   const container = document.createElement("div");
   document.body.appendChild(container);
   const root = createRoot(container);
@@ -43,12 +43,11 @@ function row(entry: Mounted, id: string): HTMLElement {
   return element;
 }
 
-function topic(overrides: Partial<CompanionNotebookEntry> = {}): CompanionNotebookEntry {
+function topic(overrides: Partial<CompanionTopicRow> = {}): CompanionTopicRow {
   return {
     id: "topic-1",
-    kind: "topic",
-    title: "Ship the installer",
-    state: "running",
+    text: "Ship the installer",
+    status: "active",
     agent: { serverId: "local", agentId: "agent-1", label: "installer" },
     ...overrides,
   };
@@ -75,7 +74,7 @@ describe("TopicsStrip", () => {
   it("renders one row per notebook entry, with its title and agent chip", () => {
     const entry = mountStrip([
       topic(),
-      topic({ id: "topic-2", kind: "task", title: "Check the relay", state: "needs_input" }),
+      topic({ id: "topic-2", text: "Check the relay", status: "open" }),
     ]);
 
     expect(row(entry, "topic-1").textContent).toContain("Ship the installer");
@@ -83,11 +82,11 @@ describe("TopicsStrip", () => {
     expect(row(entry, "topic-2").textContent).toContain("Check the relay");
   });
 
-  it("gives each row the status dot colour for its state", () => {
+  it("gives each row the status dot colour for its notebook status", () => {
     const entry = mountStrip([
-      topic({ id: "running", state: "running" }),
-      topic({ id: "needs-input", state: "needs_input" }),
-      topic({ id: "failed", state: "failed" }),
+      topic({ id: "active", status: "active" }),
+      topic({ id: "open", status: "open" }),
+      topic({ id: "done", status: "done" }),
     ]);
 
     const dotColor = (id: string) => {
@@ -96,9 +95,11 @@ describe("TopicsStrip", () => {
       return getComputedStyle(dot).backgroundColor;
     };
 
-    expect(dotColor("running")).toBe("rgb(38, 138, 224)");
-    expect(dotColor("needs-input")).toBe("rgb(179, 120, 36)");
-    expect(dotColor("failed")).toBe("rgb(241, 46, 47)");
+    // Active borrows the running blue, open reads as an inactive dot, and a
+    // finished line paints nothing while keeping the row aligned.
+    expect(dotColor("active")).toBe("rgb(38, 138, 224)");
+    expect(dotColor("open")).toBe("rgb(228, 228, 231)");
+    expect(dotColor("done")).toBe("rgba(0, 0, 0, 0)");
   });
 
   it("navigates to the agent a row refers to when it is tapped", () => {

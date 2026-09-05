@@ -1,4 +1,4 @@
-import type { CompanionAudioOutputPayload } from "@fde/protocol/messages";
+import type { CompanionAudioOutputMessage } from "@fde/protocol/messages";
 import { describe, expect, it } from "vitest";
 import type { AudioEngine, AudioPlaybackSource } from "@/voice/audio-engine-types";
 import {
@@ -126,7 +126,7 @@ function audioChunk(input: {
   groupId: string;
   id: string;
   isLastChunk: boolean;
-}): CompanionAudioOutputPayload {
+}): CompanionAudioOutputMessage["payload"] {
   return {
     audio: Buffer.from(input.text, "utf8").toString("base64"),
     format: "pcm",

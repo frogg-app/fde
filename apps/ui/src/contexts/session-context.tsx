@@ -808,7 +808,7 @@ function SessionProviderInternal({ children, serverId, client }: SessionProvider
       companionRuntime.handleReply(message.payload);
     });
     const unsubCompanionNotebook = client.on("companion.notebook.update", (message) => {
-      companionRuntime.handleNotebook(message.payload.entries);
+      companionRuntime.handleNotebook(message.payload.notebook.entries);
     });
 
     const unsubTerminalAttention = client.on("terminal_attention_required", (message) => {

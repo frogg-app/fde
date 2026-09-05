@@ -20,9 +20,10 @@ function openSession() {
 const topic: CompanionNotebookEntry = {
   id: "topic-1",
   kind: "topic",
-  title: "Ship the installer",
-  state: "running",
-  agent: { serverId: "local", agentId: "agent-1", label: "installer" },
+  text: "Ship the installer",
+  status: "active",
+  agentId: "agent-1",
+  updatedAt: "2026-09-05T00:00:00.000Z",
 };
 
 beforeEach(() => {

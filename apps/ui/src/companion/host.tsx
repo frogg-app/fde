@@ -11,7 +11,9 @@ import {
 import { Alert } from "@/components/ui/alert";
 import { useSettings } from "@/hooks/use-settings";
 import { Button } from "@/components/ui/button";
+import { useSessionStore } from "@/stores/session-store";
 import { navigateToAgent } from "@/utils/navigate-to-agent";
+import { buildCompanionTopicRows } from "./topic-rows";
 import { MicOrb } from "./mic-orb";
 import { getCompanionRuntime, getCompanionSession } from "./session-registry";
 import { deriveCompanionMicState, useCompanionStore } from "./store";
@@ -78,7 +80,13 @@ function CompanionBody({ serverId, isAvailable, unavailableReason }: CompanionBo
   const partialTranscript = useCompanionStore((state) => state.partialTranscript);
   const finalTranscript = useCompanionStore((state) => state.finalTranscript);
   const reply = useCompanionStore((state) => state.reply);
-  const topics = useCompanionStore((state) => state.topics);
+  const notebookEntries = useCompanionStore((state) => state.topics);
+  const hostSession = useSessionStore((state) => (serverId ? state.sessions[serverId] : undefined));
+  // The strip's owner resolves every row once, so no row runs its own selector.
+  const topics = useMemo(
+    () => buildCompanionTopicRows({ entries: notebookEntries, serverId, session: hostSession }),
+    [notebookEntries, serverId, hostSession],
+  );
   const send = useCompanionStore((state) => state.send);
   const sessionStarting = useCompanionStore((state) => state.sessionStarting);
   const sessionStopping = useCompanionStore((state) => state.sessionStopping);

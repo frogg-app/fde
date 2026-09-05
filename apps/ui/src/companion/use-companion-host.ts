@@ -1,7 +1,10 @@
 import { useShallow } from "zustand/react/shallow";
 import { useActiveWorkspaceSelection } from "@/stores/navigation-active-workspace-store";
 import { useSessionStore } from "@/stores/session-store";
-import { companionUnavailableReason, isCompanionAvailable } from "./availability";
+import {
+  getCompanionReadinessState,
+  resolveCompanionUnavailableMessage,
+} from "@/utils/server-info-capabilities";
 
 export interface CompanionHost {
   serverId: string | null;
@@ -27,10 +30,12 @@ export function useCompanionHost(): CompanionHost {
     serverId ? (state.sessions[serverId]?.serverInfo ?? null) : null,
   );
 
+  const readiness = getCompanionReadinessState({ serverInfo });
+
   return {
     serverId,
-    isAvailable: serverId !== null && isCompanionAvailable(serverInfo),
-    unavailableReason: companionUnavailableReason(serverInfo),
+    isAvailable: serverId !== null && readiness?.enabled === true,
+    unavailableReason: resolveCompanionUnavailableMessage({ serverInfo }),
   };
 }
 

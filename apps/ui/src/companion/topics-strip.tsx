@@ -1,13 +1,13 @@
-import type { CompanionNotebookEntry } from "@fde/protocol/messages";
 import { memo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, Text, View } from "react-native";
 import { StyleSheet } from "react-native-unistyles";
 import { getStatusDotColor } from "@/utils/status-dot-color";
 import type { SidebarStateBucket } from "@/utils/sidebar-agent-state";
+import { companionTopicDot, type CompanionTopicRow } from "./topic-rows";
 
 export interface TopicsStripProps {
-  topics: readonly CompanionNotebookEntry[];
+  topics: readonly CompanionTopicRow[];
   /** Navigates to the agent a row refers to; the Companion keeps listening. */
   onOpenAgent: (input: { serverId: string; agentId: string }) => void;
 }
@@ -38,7 +38,7 @@ export function TopicsStrip({ topics, onOpenAgent }: TopicsStripProps) {
 }
 
 interface TopicRowProps {
-  topic: CompanionNotebookEntry;
+  topic: CompanionTopicRow;
   onOpenAgent: (input: { serverId: string; agentId: string }) => void;
 }
 
@@ -51,9 +51,9 @@ const TopicRow = memo(function TopicRow({ topic, onOpenAgent }: TopicRowProps) {
 
   const row = (
     <>
-      <View style={dotStyleFor(topic.state)} />
+      <View style={dotStyleFor(topic.status)} />
       <Text style={styles.title} numberOfLines={1}>
-        {topic.title}
+        {topic.text}
       </Text>
       {agent ? (
         <View style={styles.chip}>
@@ -77,7 +77,7 @@ const TopicRow = memo(function TopicRow({ topic, onOpenAgent }: TopicRowProps) {
     <Pressable
       onPress={handlePress}
       accessibilityRole="button"
-      accessibilityLabel={topic.title}
+      accessibilityLabel={topic.text}
       style={styles.row}
       testID={`companion-topic-${topic.id}`}
     >
@@ -86,12 +86,10 @@ const TopicRow = memo(function TopicRow({ topic, onOpenAgent }: TopicRowProps) {
   );
 });
 
-function dotStyleFor(state: SidebarStateBucket) {
-  if (state === "needs_input") return styles.dotNeedsInput;
-  if (state === "failed") return styles.dotFailed;
-  if (state === "running") return styles.dotRunning;
-  if (state === "attention") return styles.dotAttention;
-  return styles.dotDone;
+function dotStyleFor(status: CompanionTopicRow["status"]) {
+  const dot = companionTopicDot(status);
+  if (dot.bucket === "running") return styles.dotRunning;
+  return dot.showDoneAsInactive ? styles.dotInactive : styles.dotDone;
 }
 
 const DOT_SIZE = 6;
@@ -99,11 +97,11 @@ const DOT_SIZE = 6;
 const styles = StyleSheet.create((theme) => {
   // One bucket-to-colour map for the whole app, baked per variant so each style
   // prop stays a stable object.
-  const dot = (bucket: SidebarStateBucket) => ({
+  const dot = (bucket: SidebarStateBucket, showDoneAsInactive: boolean) => ({
     width: DOT_SIZE,
     height: DOT_SIZE,
     borderRadius: theme.borderRadius.full,
-    backgroundColor: getStatusDotColor({ theme, bucket, showDoneAsInactive: true }) ?? undefined,
+    backgroundColor: getStatusDotColor({ theme, bucket, showDoneAsInactive }) ?? undefined,
   });
 
   return {
@@ -145,10 +143,9 @@ const styles = StyleSheet.create((theme) => {
       fontSize: theme.fontSize.sm,
       color: theme.colors.foregroundMuted,
     },
-    dotNeedsInput: dot("needs_input"),
-    dotFailed: dot("failed"),
-    dotRunning: dot("running"),
-    dotAttention: dot("attention"),
-    dotDone: dot("done"),
+    dotRunning: dot("running", false),
+    dotInactive: dot("done", true),
+    // Finished lines resolve to no colour; the view stays as an alignment spacer.
+    dotDone: dot("done", false),
   };
 });

@@ -1,5 +1,5 @@
 import { Buffer } from "buffer";
-import type { CompanionAudioOutputPayload, CompanionNotebookEntry } from "@fde/protocol/messages";
+import type { CompanionAudioOutputMessage, CompanionNotebookEntry } from "@fde/protocol/messages";
 import type { AudioEngine, AudioPlaybackSource } from "@/voice/audio-engine-types";
 import { decodeAudioChunk, toAudioPlaybackSource } from "@/voice/playback-source";
 import { stepDisplayVolume } from "@/voice/volume-smoothing";
@@ -75,7 +75,7 @@ export interface CompanionRuntime {
   sendMessage(text: string): Promise<void>;
   handleCapturePcm(chunk: Uint8Array): void;
   handleCaptureVolume(level: number): void;
-  handleAudioOutput(payload: CompanionAudioOutputPayload): void;
+  handleAudioOutput(payload: CompanionAudioOutputMessage["payload"]): void;
   handleInputState(isSpeaking: boolean): void;
   handleTranscript(input: { text: string; isFinal: boolean }): void;
   handleReply(input: { text: string; isFinal: boolean }): void;
