@@ -211,14 +211,20 @@ export type LocalTransportEventHandler = (payload: LocalTransportEventPayload) =
 
 export async function listenToLocalTransportEvents(
   handler: LocalTransportEventHandler,
+  sessionId?: string,
 ): Promise<LocalTransportEventUnlisten> {
   if (typeof getDesktopHost()?.events?.on !== "function") {
     throw new Error("Desktop events API is unavailable.");
   }
-  // `listenToDesktopEvent` strips a `{payload}` envelope, so a shell that
-  // forwards its native event object still delivers the bare payload here.
-  return listenToDesktopEvent<unknown>("local-daemon-transport-event", (payload) => {
+  const deliver = (payload: unknown): void => {
     if (!isRecord(payload)) {
+      return;
+    }
+    // The shell emits one global event, so every open session's listener sees every
+    // message. Reject other sessions' traffic before building the normalized object
+    // below — otherwise each message costs one throwaway object, including a copy of
+    // the base64 body, per connected daemon.
+    if (sessionId !== undefined && payload.sessionId !== sessionId) {
       return;
     }
     handler({
@@ -231,6 +237,21 @@ export async function listenToLocalTransportEvents(
       error: toStringOrNull(payload.error),
       detail: parseErrorDetail(payload.detail),
     });
+  };
+
+  // `listenToDesktopEvent` strips a `{payload}` envelope, so a shell that
+  // forwards its native event object still delivers the bare payload here.
+  return listenToDesktopEvent<unknown>("local-daemon-transport-event", (payload) => {
+    // The Tauri shell coalesces a burst of inbound frames into one emit to keep
+    // IPC hops down, and sends a bare event when a batch held only one. Older
+    // shells only ever send the bare form.
+    if (Array.isArray(payload)) {
+      for (const entry of payload) {
+        deliver(entry);
+      }
+      return;
+    }
+    deliver(payload);
   });
 }
 

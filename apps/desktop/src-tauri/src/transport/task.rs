@@ -132,21 +132,36 @@ impl SessionTask {
         }
         (self.emit)(open_event(&self.id));
 
+        // Inbound frames are coalesced into one emit per batch. Each emit is a
+        // separate IPC hop into the webview, and on WebView2 the per-hop cost
+        // dominates a small streaming delta — so a turn that arrives as hundreds of
+        // little frames per second used to cost hundreds of round trips per second.
+        let mut batch = EventBatch::new();
+
         loop {
             tokio::select! {
-                _ = self.cancel.notified() => break,
+                _ = batch.deadline() => batch.flush(&self.emit),
+                _ = self.cancel.notified() => {
+                    batch.flush(&self.emit);
+                    break;
+                }
                 request = outgoing.recv() => match request {
                     Some((message, reply)) => {
                         let result = endpoint.ws.send(message).await.map_err(|e| format!("Local transport write failed: {e}"));
                         let _ = reply.send(result);
                     }
-                    None => break,
+                    None => {
+                        batch.flush(&self.emit);
+                        break;
+                    }
                 },
                 incoming = endpoint.ws.next() => match incoming {
                     Some(Ok(Message::Close(frame))) => {
                         let (code, reason) = frame
                             .map(|f| (u16::from(f.code), f.reason.to_string()))
                             .unwrap_or((1005, String::new()));
+                        // Buffered messages precede the close they arrived before.
+                        batch.flush(&self.emit);
                         if self.dispose() {
                             log::info!("transport {}: closed by peer ({code} {reason})", self.id);
                             (self.emit)(close_event(&self.id, code, &reason));
@@ -156,7 +171,7 @@ impl SessionTask {
                     Some(Ok(message)) => {
                         if let Some(event) = incoming_message_event(&self.id, &message) {
                             if self.is_current() {
-                                (self.emit)(event);
+                                batch.push(event, &self.emit);
                             }
                         }
                     }
@@ -168,6 +183,7 @@ impl SessionTask {
                             },
                             None => error.to_string(),
                         };
+                        batch.flush(&self.emit);
                         if self.dispose() {
                             log::warn!("transport {}: read failed: {detail}", self.id);
                             (self.emit)(error_event(&self.id, &detail));
@@ -176,6 +192,7 @@ impl SessionTask {
                         break;
                     }
                     None => {
+                        batch.flush(&self.emit);
                         if self.dispose() {
                             log::info!("transport {}: stream ended", self.id);
                             (self.emit)(close_event(&self.id, 1006, ""));
@@ -187,6 +204,84 @@ impl SessionTask {
         }
         shutdown(endpoint).await;
     }
+}
+
+/// How long a message may wait for company before it is emitted on its own.
+/// Short enough to stay invisible next to a frame at 60 Hz, long enough that a
+/// burst of streaming deltas rides in on one IPC hop.
+const BATCH_WINDOW: Duration = Duration::from_millis(8);
+/// Flush early past these, so batching never adds latency to a fast producer or
+/// builds a single payload large enough to stall the webview parsing it.
+const BATCH_MAX_EVENTS: usize = 64;
+const BATCH_MAX_BYTES: usize = 256 * 1024;
+
+/// Coalesces inbound message events into one emit.
+///
+/// Emits a bare event when a batch holds exactly one, so the low-rate case is
+/// shaped exactly as it was before batching, and an array otherwise. Non-message
+/// events (open / close / error) are never batched — callers flush first, so
+/// ordering against them is preserved.
+struct EventBatch {
+    pending: Vec<Value>,
+    bytes: usize,
+    deadline: Option<tokio::time::Instant>,
+}
+
+impl EventBatch {
+    fn new() -> Self {
+        Self {
+            pending: Vec::new(),
+            bytes: 0,
+            deadline: None,
+        }
+    }
+
+    /// Resolves when the open batch is due. Never resolves when there is none, so
+    /// it parks harmlessly in the select.
+    async fn deadline(&self) {
+        match self.deadline {
+            Some(deadline) => tokio::time::sleep_until(deadline).await,
+            None => std::future::pending().await,
+        }
+    }
+
+    fn push(&mut self, event: Value, emit: &EventSink) {
+        self.bytes += estimate_event_bytes(&event);
+        self.pending.push(event);
+        if self.deadline.is_none() {
+            self.deadline = Some(tokio::time::Instant::now() + BATCH_WINDOW);
+        }
+        if self.pending.len() >= BATCH_MAX_EVENTS || self.bytes >= BATCH_MAX_BYTES {
+            self.flush(emit);
+        }
+    }
+
+    fn flush(&mut self, emit: &EventSink) {
+        self.deadline = None;
+        self.bytes = 0;
+        match self.pending.len() {
+            0 => {}
+            1 => {
+                if let Some(event) = self.pending.pop() {
+                    emit(event);
+                }
+            }
+            _ => emit(Value::Array(std::mem::take(&mut self.pending))),
+        }
+    }
+}
+
+/// Rough payload size — the body dominates, and this only has to be good enough
+/// to decide when to flush.
+fn estimate_event_bytes(event: &Value) -> usize {
+    let field = |name: &str| {
+        event
+            .get(name)
+            .and_then(Value::as_str)
+            .map(str::len)
+            .unwrap_or(0)
+    };
+    field("text") + field("binaryBase64") + 64
 }
 
 async fn shutdown(mut endpoint: Endpoint) {

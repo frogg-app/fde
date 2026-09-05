@@ -244,6 +244,56 @@ mod tests {
         });
     }
 
+    /// A burst of inbound frames should arrive as one array-shaped emit rather than
+    /// one IPC hop each, while every frame still shows up exactly once and in order.
+    #[test]
+    fn coalesces_a_burst_of_inbound_frames_into_one_event() {
+        tauri::async_runtime::block_on(async {
+            let dir = tempfile::tempdir().unwrap();
+            let socket_path = spawn_echo_server(dir.path()).await;
+            let (manager, mut events) = manager();
+            let open = json!({ "sessionId": "b1", "target": { "transportType": "socket", "transportPath": socket_path } });
+            manager.open(&open).unwrap();
+            assert_eq!(
+                next_event(&mut events).await,
+                json!({ "sessionId": "b1", "kind": "open" })
+            );
+
+            const BURST: usize = 12;
+            for index in 0..BURST {
+                manager
+                    .send(&json!({ "sessionId": "b1", "text": format!("m{index}") }))
+                    .await
+                    .unwrap();
+            }
+
+            // Drain whatever the batcher produced and flatten it back to a list.
+            let mut seen: Vec<String> = Vec::new();
+            let mut emits = 0;
+            while seen.len() < BURST {
+                let event = next_event(&mut events).await;
+                emits += 1;
+                match event {
+                    Value::Array(batch) => {
+                        for entry in batch {
+                            seen.push(entry["text"].as_str().unwrap().to_string());
+                        }
+                    }
+                    single => seen.push(single["text"].as_str().unwrap().to_string()),
+                }
+            }
+
+            let expected: Vec<String> = (0..BURST).map(|index| format!("m{index}")).collect();
+            assert_eq!(seen, expected, "every frame arrives once, in order");
+            assert!(
+                emits < BURST,
+                "expected batching to use fewer emits than frames, got {emits} for {BURST}"
+            );
+
+            manager.close(&json!({ "sessionId": "b1" })).unwrap();
+        });
+    }
+
     #[test]
     fn reports_connection_failures_as_error_events() {
         tauri::async_runtime::block_on(async {

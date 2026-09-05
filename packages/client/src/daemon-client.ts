@@ -4409,6 +4409,11 @@ export class DaemonClient {
     } finally {
       this.pendingBinaryFileReads.delete(resolvedRequestId);
       this.activeBinaryFileTransfers.delete(resolvedRequestId);
+      // A completed transfer parks the whole file body here for the await above to
+      // collect. Every exit that isn't that collection — an error payload arriving
+      // after the bytes landed, most of all — has to drop it, or the body is retained
+      // for the lifetime of the client.
+      this.completedBinaryFileReads.delete(resolvedRequestId);
     }
   }
 

@@ -11,6 +11,7 @@ import { useIsCompactFormFactor } from "@/constants/layout";
 import { syntaxTokenStyleFor } from "@/styles/syntax-token-styles";
 import { CODE_SURFACE_DATASET } from "@/styles/code-surface";
 import { highlightToKeyedLines, type KeyedLine } from "@/utils/highlight-cache";
+import type { MarkdownPhase } from "@/components/markdown/fence/types";
 import {
   markdownCopyCodeBlockDataSet,
   markdownCopyDataSet,
@@ -22,6 +23,14 @@ interface HighlightedCodeBlockProps {
   language: string | null | undefined;
   inheritedStyles: TextStyle;
   textStyle: TextStyle;
+  /**
+   * While `"streaming"` the block renders as plain monospace text and takes the
+   * colour on completion. Tokenizing a fence that grows every frame re-does the
+   * whole block each time — quadratic over the fence, and it evicts the shared
+   * token cache with prefixes nothing will ask for again. Defaults to
+   * `"complete"` so static callers highlight as before.
+   */
+  phase?: MarkdownPhase;
 }
 
 // Fence info strings ("```ts", "```typescript", "```ts {1,3}") map to the
@@ -59,6 +68,7 @@ export const HighlightedCodeBlock = React.memo(function HighlightedCodeBlock({
   language,
   inheritedStyles,
   textStyle,
+  phase = "complete",
 }: HighlightedCodeBlockProps) {
   // Box styles (bg / padding / border / radius / margin) go on the wrapper View
   // so the absolute copy button positions relative to the visible code area,
@@ -73,9 +83,11 @@ export const HighlightedCodeBlock = React.memo(function HighlightedCodeBlock({
     [language],
   );
 
+  const isStreaming = phase === "streaming";
   const keyedLines = useMemo<KeyedLine[] | null>(
-    () => highlightToKeyedLines(renderedCode, fenceLanguageToExtension(language)),
-    [renderedCode, language],
+    () =>
+      isStreaming ? null : highlightToKeyedLines(renderedCode, fenceLanguageToExtension(language)),
+    [isStreaming, renderedCode, language],
   );
 
   const isCompact = useIsCompactFormFactor();

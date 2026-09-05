@@ -20,7 +20,11 @@ export interface LocalDaemonTransportEvent {
 
 export interface LocalDaemonTransportRpc {
   openSession(input: OpenLocalTransportSessionInput): Promise<void>;
-  listenToEvents(handler: (event: LocalDaemonTransportEvent) => void): Promise<() => void>;
+  /** `sessionId` lets the listener drop other sessions' traffic before normalizing it. */
+  listenToEvents(
+    handler: (event: LocalDaemonTransportEvent) => void,
+    sessionId?: string,
+  ): Promise<() => void>;
   sendMessage(input: { sessionId: string; text?: string; binaryBase64?: string }): Promise<void>;
   closeSession(sessionId: string): Promise<void>;
 }
