@@ -69,6 +69,13 @@ const OpenAiProviderSchema = z
   })
   .strict();
 
+const AnthropicProviderSchema = z
+  .object({
+    apiKey: z.string().min(1).optional(),
+    baseUrl: z.string().trim().min(1).optional(),
+  })
+  .strict();
+
 const LocalSpeechProviderSchema = z
   .object({
     modelsDir: z.string().min(1).optional(),
@@ -79,6 +86,7 @@ const ProvidersSchema = z
   .object({
     openai: OpenAiProviderSchema.optional(),
     local: LocalSpeechProviderSchema.optional(),
+    anthropic: AnthropicProviderSchema.optional(),
   })
   .strict();
 
@@ -156,6 +164,13 @@ const FeatureVoiceModeSchema = z
       })
       .strict()
       .optional(),
+  })
+  .strict();
+
+const FeatureCompanionSchema = z
+  .object({
+    enabled: z.boolean().optional(),
+    model: z.string().trim().min(1).optional(),
   })
   .strict();
 
@@ -353,6 +368,7 @@ export const PersistedConfigSchema = z
           .optional(),
         dictation: FeatureDictationSchema.optional(),
         voiceMode: FeatureVoiceModeSchema.optional(),
+        companion: FeatureCompanionSchema.optional(),
         webUi: FeatureWebUiSchema.optional(),
       })
       .strict()

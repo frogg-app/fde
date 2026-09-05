@@ -48,3 +48,27 @@ export function resolveVoiceUnavailableMessage(params: {
   }
   return null;
 }
+
+export function getCompanionReadinessState(params: {
+  serverInfo: DaemonServerInfo | null | undefined;
+}): ServerCapabilityState | null {
+  const capabilities = getServerCapabilities({ serverInfo: params.serverInfo });
+  return capabilities?.companion ?? null;
+}
+
+export function resolveCompanionUnavailableMessage(params: {
+  serverInfo: DaemonServerInfo | null | undefined;
+}): string | null {
+  const readiness = getCompanionReadinessState({ serverInfo: params.serverInfo });
+  if (!readiness) {
+    return null;
+  }
+  if (readiness.enabled && readiness.reason.trim().length === 0) {
+    return null;
+  }
+  const message = readiness.reason.trim();
+  if (message.length > 0) {
+    return message;
+  }
+  return null;
+}

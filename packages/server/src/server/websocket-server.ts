@@ -66,6 +66,8 @@ import type { SpokenAlertService } from "./notifications/spoken-alerts.js";
 import type { ScriptHealthState } from "./script-health-monitor.js";
 import type { ServiceProxySubsystem } from "./service-proxy.js";
 import type { WorkspaceScriptRuntimeStore } from "./workspace-script-runtime-store.js";
+import { resolveCompanionCapability } from "./companion/capability.js";
+import { loadPersistedConfig } from "./persisted-config.js";
 import type { SpeechReadinessSnapshot, SpeechService } from "./speech/speech-runtime.js";
 import type { VoiceCallerContext, VoiceSpeakHandler } from "./voice-types.js";
 import {
@@ -386,12 +388,14 @@ function resolveCapabilityReason(params: {
 
 function buildServerCapabilities(params: {
   readiness: SpeechReadinessSnapshot | null;
-}): ServerCapabilities | undefined {
+  companion: ServerCapabilityState;
+}): ServerCapabilities {
   const readiness = params.readiness;
   if (!readiness) {
-    return undefined;
+    return { companion: params.companion };
   }
   return {
+    companion: params.companion,
     voice: {
       dictation: toServerCapabilityState({
         state: readiness.dictation,
@@ -595,6 +599,7 @@ export class VoiceAssistantWebSocketServer {
     | ((workspaceId: string, oldBranch: string | null, newBranch: string | null) => void)
     | null;
   private serverCapabilities: ServerCapabilities | undefined;
+  private readonly companionCapability: ServerCapabilityState;
   private readonly runtimeMetrics = new WebSocketRuntimeMetricsWindow();
   private lastRuntimeMetricsSnapshot: WebSocketRuntimeDiagnosticPayload | null = null;
   private runtimeMetricsInterval: ReturnType<typeof setInterval> | null = null;
@@ -715,8 +720,15 @@ export class VoiceAssistantWebSocketServer {
       throw new Error("providerSnapshotManager is required");
     }
     this.providerSnapshotManager = providerSnapshotManager;
+    // `features.companion.*` and `providers.anthropic.*` are not reloadable, so
+    // the capability is resolved once from the config the daemon started with.
+    this.companionCapability = resolveCompanionCapability({
+      env: process.env,
+      persisted: loadPersistedConfig(paseoHome, this.logger),
+    });
     this.serverCapabilities = buildServerCapabilities({
       readiness: this.speech?.getReadiness() ?? null,
+      companion: this.companionCapability,
     });
     this.unsubscribeSpeechReadiness =
       this.speech?.onReadinessChange((snapshot) => {
@@ -967,7 +979,9 @@ export class VoiceAssistantWebSocketServer {
   }
 
   public publishSpeechReadiness(readiness: SpeechReadinessSnapshot | null): void {
-    this.updateServerCapabilities(buildServerCapabilities({ readiness }));
+    this.updateServerCapabilities(
+      buildServerCapabilities({ readiness, companion: this.companionCapability }),
+    );
   }
 
   public updateServerCapabilities(capabilities: ServerCapabilities | null | undefined): void {
