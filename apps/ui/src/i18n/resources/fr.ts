@@ -2523,6 +2523,21 @@ export const fr: TranslationResources = {
         local: "Locale",
         remoteSsh: "SSH distant",
       },
+      daemonConflict: {
+        title: "Plusieurs daemons sur cette machine",
+        message:
+          "{{count}} daemons sont en cours d'exécution sur {{machine}}. Chacun a ses propres agents et espaces de travail : ce que vous voyez dépend donc de celui auquel vous êtes connecté. Choisissez celui que vous voulez et, si l'autre est inutile, arrêtez-le.",
+        activeLabel: "{{name}} (connecté)",
+        version: "v{{version}}",
+        versionUnknown: "version inconnue",
+        shutdown: "Arrêter",
+        shutdownTitle: "Arrêter le daemon ?",
+        shutdownMessage:
+          "Arrêter {{name}} ? Tous les agents qui y tournent s'arrêteront. Cela n'affecte pas l'autre daemon.",
+        shutdownConfirm: "Arrêter",
+        shutdownFailedTitle: "Erreur",
+        shutdownFailedMessage: "Impossible d'arrêter ce daemon.",
+      },
       connections: {
         title: "Relations",
         removeTitle: "Supprimer la connexion",

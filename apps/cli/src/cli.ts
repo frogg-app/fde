@@ -1,7 +1,7 @@
 import { Command, Option } from "commander";
 import { createAgentCommand } from "./commands/agent/index.js";
 import { createDaemonCommand } from "./commands/daemon/index.js";
-import { createPermitCommand } from "./commands/permit/index.js";
+import { createPermissionsCommand } from "./commands/permissions/index.js";
 import { createProviderCommand } from "./commands/provider/index.js";
 import { createPluginCommand } from "./commands/plugin/index.js";
 import { createProjectCommand } from "./commands/project/index.js";
@@ -12,7 +12,7 @@ import { createTerminalCommand } from "./commands/terminal/index.js";
 import { createWorktreeCommand } from "./commands/worktree/index.js";
 import { createWorkspaceCommand } from "./commands/workspace/index.js";
 import { createHeartbeatCommand } from "./commands/heartbeat/index.js";
-import { createHubCommand } from "./commands/hub/index.js";
+import { createTriggerCommand } from "./commands/trigger/index.js";
 import { createHooksCommand } from "./commands/hooks.js";
 import { startCommand as daemonStartCommand } from "./commands/daemon/start.js";
 import { runStatusCommand as runDaemonStatusCommand } from "./commands/daemon/status.js";
@@ -173,7 +173,7 @@ export function createCli(): Command {
 
   // Daemon commands
   program.addCommand(createDaemonCommand());
-  program.addCommand(createHubCommand());
+  program.addCommand(createTriggerCommand());
 
   // Chat commands
 
@@ -188,7 +188,7 @@ export function createCli(): Command {
   program.addCommand(createHeartbeatCommand());
 
   // Permission commands
-  program.addCommand(createPermitCommand());
+  program.addCommand(createPermissionsCommand());
 
   // Provider commands
   program.addCommand(createProviderCommand());
