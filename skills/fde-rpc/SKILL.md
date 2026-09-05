@@ -5,8 +5,9 @@ description: Add or change a WebSocket session RPC between the FDE daemon and it
 
 # Adding a session RPC
 
-Twelve files in a fixed order. Skipping one usually surfaces as a typecheck error in an
-unrelated package or a CI job that fails on generated artifacts, so follow the order.
+Thirteen steps across seven hand-edited files, in a fixed order. Skipping one usually surfaces as
+a typecheck error in an unrelated package or a CI job that fails on generated artifacts, so
+follow the order.
 
 Read [docs/rpc-namespacing.md](../../docs/rpc-namespacing.md) and
 [docs/protocol-compatibility.md](../../docs/protocol-compatibility.md) before designing the
@@ -42,26 +43,35 @@ Everything in steps 1–5 is `packages/protocol/src/messages.ts`.
 6. **Capability flag**, if the app must gate on it — add
    `<flagName>: z.boolean().optional()` to `features` on `ServerInfoStatusPayloadSchema`, with a
    `// COMPAT(<name>): added in vX.Y.Z, remove after <date>` comment.
-7. **Permissions** — `packages/server/src/server/authorization/operation-permissions.ts`. Add the
-   request to `INBOUND_PERMISSION` and the response to `OUTBOUND_PERMISSION`, keeping the
-   alphabetical order. Both tables end in `as const satisfies Record<...Operation, ...>`, so a
-   missing key is a typecheck failure, not a runtime one.
-8. **Handler** — the domain session file, e.g.
+7. **Inbound permission** — `packages/server/src/server/authorization/operation-permissions.ts`,
+   the `INBOUND_PERMISSION` record. Add the `.request` key in alphabetical order.
+8. **Outbound permission** — the _second_ record in the same file, `OUTBOUND_PERMISSION`. This is
+   the step agents skip. It is a separate exhaustive `Record` keyed over
+   `SessionOutboundMessage["type"]`, so **every** outbound type needs a row: responses, and also
+   pure server-push events (`agent_stream`, `workspace_update`, `project.update`). Permissions do
+   not "key off the inbound request" — the outbound frame is authorized independently on its way
+   out. Pick the same permission you gave the request. Only one key in the whole record is
+   legitimately `null`: `rpc_error`, which must reach a client that is not allowed to do anything
+   else. Do not add new `null` rows.
+   Note the two direction-inverted pairs already in the tables — `browser.automation.execute.*`
+   lives with `.response` inbound and `.request` outbound, because the daemon is the caller. If
+   your message works that way, the records swap too.
+9. **Handler** — the domain session file, e.g.
    `packages/server/src/server/session/checkout/checkout-session.ts`. Handlers take
    `Extract<SessionInboundMessage, { type: "ns.x.request" }>`, return `Promise<void>`, and
    **emit** the response. They never return it.
-9. **Dispatch** — `packages/server/src/server/session.ts`. Add a `case` to the
-   `dispatchXxxMessage` switch for your domain (`dispatchCheckoutMessage` is around line 2419).
-   `dispatchInboundMessage` chains those with `??`; each switch has `default: return undefined`.
-10. **Advertise the capability** — `buildServerInfoStatusPayload` in
+10. **Dispatch** — `packages/server/src/server/session.ts`. Add a `case` to the
+    `dispatchXxxMessage` switch for your domain (`dispatchCheckoutMessage` is around line 2419).
+    `dispatchInboundMessage` chains those with `??`; each switch has `default: return undefined`.
+11. **Advertise the capability** — `buildServerInfoStatusPayload` in
     `packages/server/src/server/websocket-server.ts`. A flag means the running daemon can
     actually perform the action, not merely that a handler exists; conditional flags use
     `...(cond ? { flag: true } : {})`.
-11. **Client method** — `packages/client/src/daemon-client.ts`: import the response type, add a
+12. **Client method** — `packages/client/src/daemon-client.ts`: import the response type, add a
     `type XPayload = XResponse["payload"]` alias, then a public async method calling
     `this.sendNamespacedCorrelatedSessionRequest<"ns.x.response">({ requestId, message, timeout })`.
     Dotted names get response-type derivation for free here.
-12. **Call site** — gate on the capability in exactly one place
+13. **Call site** — gate on the capability in exactly one place
     (`session?.serverInfo?.features?.<flag> === true`) and let everything downstream read a clean
     shape. No fallback path for old daemons; the user updates or does not get the feature.
 
@@ -105,8 +115,30 @@ The authorization test enumerates `SessionInboundMessageSchema.options` and asse
 operation has a permission — that is the exhaustiveness gate that catches a union entry with no
 permission row.
 
-If a downstream package reports that a field you just added does not exist, the schema is fine
-and `client` is compiled against the old protocol `dist/`. Run `npm run build:client`.
+## Reading a typecheck error in `operation-permissions.ts`
+
+Two different mistakes both land on this one file, and the error code tells them apart. Verified
+by deleting and by adding a key against a current build:
+
+- **`TS2741: Property '"x.response"' is missing in type ... but required in type 'Record<...>'`**,
+  usually with a companion `TS2551` on the `OUTBOUND_PERMISSION[operation]` accessor below — you
+  genuinely forgot the row. Add it (step 8).
+- **`TS2353: Object literal may only specify known properties`** naming your new key — the row is
+  there but the union does not contain the type. Almost
+  always a **stale `@fde/protocol` build**, not a bug in your entry. `@fde/server` typechecks
+  against `packages/protocol/dist`, so a message type you added minutes ago is invisible until
+  protocol is rebuilt. Run this **before** concluding anything about the entry:
+
+  ```bash
+  npm run build:protocol && npm run build:client
+  ```
+
+  If TS2353 survives a fresh build, then and only then is it a real typo in the key. See the
+  stale-build trap in [skills/fde-dev](../fde-dev/SKILL.md) for the general shape of this failure.
+
+The same discriminator applies to `INBOUND_PERMISSION`. Any other downstream package reporting
+that a field you just added does not exist is the same stale-`dist` story: run `npm run
+build:client`.
 
 ## Shims
 
