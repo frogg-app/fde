@@ -28,7 +28,7 @@
     "test:e2e:lifecycle": "npx tsx tests/e2e/agent-lifecycle.test.ts"
   },
   "dependencies": {
-    "@clack/prompts": "1.1.0",
+    "@clack/prompts": "1.7.0",
     "@fde/client": "0.2.0",
     "@fde/protocol": "0.2.0",
     "@fde/server": "0.2.0",
