@@ -7,7 +7,7 @@
 //! reads the Releases API, picks the newest semver above the running version
 //! for the settings' `releaseChannel`, downloads the platform asset with
 //! progress events, verifies its `.sha256` sidecar and installs it
-//! (`install.rs`). Checks run every 6 h while the app runs and on demand;
+//! (`install.rs`). Checks run every 30 min while the app runs and on demand;
 //! the last result is cached in the config dir (`cache.rs`).
 
 pub mod assets;
@@ -40,8 +40,7 @@ pub const PROGRESS_EVENT: &str = "paseo:event:app-update-progress";
 const DOWNLOAD_DIRNAME: &str = "updates";
 /// Automatic checks reuse a cached answer younger than this.
 const AUTOMATIC_CACHE_TTL_MS: u64 = 30 * 60 * 1000;
-const AUTO_CHECK_INITIAL_DELAY: Duration = Duration::from_secs(20);
-const AUTO_CHECK_INTERVAL: Duration = Duration::from_secs(6 * 60 * 60);
+const AUTO_CHECK_INTERVAL: Duration = Duration::from_secs(30 * 60);
 /// Time for the install result to reach the webview before the shell exits.
 const EXIT_GRACE: Duration = Duration::from_millis(750);
 
@@ -178,10 +177,12 @@ pub fn register(app: &App) -> tauri::Result<()> {
 }
 
 async fn auto_check_loop<R: Runtime>(app: AppHandle<R>) {
-    tokio::time::sleep(AUTO_CHECK_INITIAL_DELAY).await;
+    let mut launch_check = true;
     loop {
         if auto_check_enabled(&app) {
-            match check(&app, &json!({ "intent": "automatic" })).await {
+            // A fresh launch must not reuse a result cached by the previous run.
+            let intent = if launch_check { "manual" } else { "automatic" };
+            match check(&app, &json!({ "intent": intent })).await {
                 Ok(result) => log::info!(
                     "updates: automatic check done (hasUpdate: {})",
                     result["hasUpdate"]
@@ -189,6 +190,7 @@ async fn auto_check_loop<R: Runtime>(app: AppHandle<R>) {
                 Err(error) => log::info!("updates: automatic check skipped: {error}"),
             }
         }
+        launch_check = false;
         tokio::time::sleep(AUTO_CHECK_INTERVAL).await;
     }
 }

@@ -1,6 +1,7 @@
 import android.annotation.SuppressLint
 import android.content.Context
 import android.media.AudioAttributes
+import android.media.AudioDeviceCallback
 import android.media.AudioDeviceInfo
 import android.media.AudioFocusRequest
 import android.media.AudioFormat
@@ -11,10 +12,9 @@ import android.media.MediaRecorder
 import android.media.audiofx.AcousticEchoCanceler
 import android.media.audiofx.NoiseSuppressor
 import android.os.Build
-import android.os.PowerManager
 import android.util.Log
 import androidx.annotation.RequiresApi
-import java.util.LinkedList
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.Queue
 import java.util.concurrent.Executors
 import kotlin.math.pow
@@ -25,17 +25,19 @@ class AudioEngine (context: Context) {
     private val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
     private val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
 
-    private lateinit var audioRecord: AudioRecord
+    @Volatile private var audioRecord: AudioRecord? = null
     private lateinit var audioManager: AudioManager
     private lateinit var audioTrack: AudioTrack
     private var audioFocusRequest: AudioFocusRequest? = null
-    private val audioSampleQueue: Queue<ByteArray> = LinkedList()
+    private val audioSampleQueue: Queue<ByteArray> = ConcurrentLinkedQueue()
+    @Volatile private var disposed = false
+    @Volatile private var playbackGeneration = 0
     private var echoCanceler: AcousticEchoCanceler? = null
     private var noiseSuppressor: NoiseSuppressor? = null
     private val executorServiceMicrophone = Executors.newFixedThreadPool(1)
     private val executorServicePlayback = Executors.newFixedThreadPool(1)
     private var speakerDevice: AudioDeviceInfo? = null
-    private var communicationRouteActive = false
+    @Volatile private var communicationRouteActive = false
     private var bridgeWindowStartedAtMs = System.currentTimeMillis()
     private var micEvents = 0
     private var micBytes = 0L
@@ -44,18 +46,40 @@ class AudioEngine (context: Context) {
     private var playbackWrites = 0
     private var playbackWriteBytes = 0L
 
-    var isRecording = false
+    @Volatile var isRecording = false
     private var isRecordingBeforePause = false
-    var isPlaying = false
+    @Volatile var isPlaying = false
 
     // Callbacks
-    var onMicDataCallback: ((ByteArray) -> Unit)? = null
-    var onInputVolumeCallback: ((Float) -> Unit)? = null
-    var onOutputVolumeCallback: ((Float) -> Unit)? = null
-    var onAudioInterruptionCallback: ((String) -> Unit)? = null
+    @Volatile var onMicDataCallback: ((ByteArray) -> Unit)? = null
+    @Volatile var onInputVolumeCallback: ((Float) -> Unit)? = null
+    @Volatile var onOutputVolumeCallback: ((Float) -> Unit)? = null
+    @Volatile var onAudioInterruptionCallback: ((String) -> Unit)? = null
+
+    private val audioDeviceCallback = object : AudioDeviceCallback() {
+        override fun onAudioDevicesAdded(addedDevices: Array<out AudioDeviceInfo>?) {
+            Log.d("AudioEngine", "onAudioDevicesAdded")
+            super.onAudioDevicesAdded(addedDevices)
+            synchronized(this@AudioEngine) {
+                if (!disposed && communicationRouteActive) updateAudioRouting()
+            }
+        }
+        override fun onAudioDevicesRemoved(removedDevices: Array<out AudioDeviceInfo>?) {
+            Log.d("AudioEngine", "onAudioDevicesRemoved")
+            super.onAudioDevicesRemoved(removedDevices)
+            synchronized(this@AudioEngine) {
+                if (!disposed && communicationRouteActive) updateAudioRouting()
+            }
+        }
+    }
 
     init {
-        initializeAudio(context)
+        try {
+            initializeAudio(context)
+        } catch (error: Exception) {
+            tearDown()
+            throw error
+        }
     }
 
     private fun flushBridgeStats(reason: String) {
@@ -88,23 +112,7 @@ class AudioEngine (context: Context) {
             handleAudioFocusBlocked()
         }
 
-        // Listen for changes in audio routing
-        audioManager.registerAudioDeviceCallback(object:android.media.AudioDeviceCallback(){
-            override fun onAudioDevicesAdded(addedDevices: Array<out AudioDeviceInfo>?) {
-                Log.d("AudioEngine", "onAudioDevicesAdded")
-                super.onAudioDevicesAdded(addedDevices)
-                if (communicationRouteActive) {
-                    updateAudioRouting()
-                }
-            }
-            override fun onAudioDevicesRemoved(removedDevices: Array<out AudioDeviceInfo>?) {
-                Log.d("AudioEngine", "onAudioDevicesRemoved")
-                super.onAudioDevicesRemoved(removedDevices)
-                if (communicationRouteActive) {
-                    updateAudioRouting()
-                }
-            }
-        }, null)
+        audioManager.registerAudioDeviceCallback(audioDeviceCallback, null)
 
         val bufferSize = AudioTrack.getMinBufferSize(
             SAMPLE_RATE,
@@ -125,9 +133,8 @@ class AudioEngine (context: Context) {
             bufferSize,
             AudioTrack.MODE_STREAM,
             audioManager.generateAudioSessionId()
-        ).apply {
-            play()
-        }
+        )
+        audioTrack.play()
     }
 
     private fun updateAudioRouting() {
@@ -196,7 +203,9 @@ class AudioEngine (context: Context) {
      * device can leave Bluetooth earbuds on their narrow-band call route after capture stops.
      */
     @SuppressLint("NewApi")
+    @Synchronized
     fun releaseAudioSession() {
+        if (disposed) return
         if (isRecording || isPlaying) {
             return
         }
@@ -254,7 +263,8 @@ class AudioEngine (context: Context) {
                         .build()
                 )
                 .setAcceptsDelayedFocusGain(true)
-                .setOnAudioFocusChangeListener { focusChange ->
+                .setOnAudioFocusChangeListener focus@ { focusChange ->
+                    if (disposed) return@focus
                     when (focusChange) {
                         AudioManager.AUDIOFOCUS_GAIN -> {
                             Log.d("AudioEngine", "Audio focus gained")
@@ -285,7 +295,9 @@ class AudioEngine (context: Context) {
         return false
     }
 
+    @Synchronized
     private fun handleAudioFocusBlocked() {
+        if (disposed) return
         if (isRecording) {
             stopRecording()
         }
@@ -307,6 +319,7 @@ class AudioEngine (context: Context) {
     @RequiresApi(Build.VERSION_CODES.Q)
     @SuppressLint("MissingPermission")
     private fun startRecording(): Boolean {
+        if (disposed) return false
         activateCommunicationRoute()
         if (!requestAudioFocus()) {
             handleAudioFocusBlocked()
@@ -314,7 +327,7 @@ class AudioEngine (context: Context) {
         }
 
         val bufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT)
-        audioRecord = AudioRecord(
+        val recorder = AudioRecord(
             MediaRecorder.AudioSource.VOICE_COMMUNICATION,
             SAMPLE_RATE,
             CHANNEL_CONFIG,
@@ -322,39 +335,47 @@ class AudioEngine (context: Context) {
             bufferSize
         )
 
-        if (audioRecord.state != AudioRecord.STATE_INITIALIZED) {
-            throw RuntimeException("Audio Record can't initialize!")
-        }
-
-        if (AcousticEchoCanceler.isAvailable()){
-            echoCanceler = AcousticEchoCanceler.create(audioRecord.audioSessionId)
-            if (echoCanceler != null) {
-                echoCanceler?.enabled = true
-                Log.i("AudioEngine", "Echo Canceler enabled")
+        audioRecord = recorder
+        try {
+            if (recorder.state != AudioRecord.STATE_INITIALIZED) {
+                throw RuntimeException("Audio Record can't initialize!")
             }
-        }
 
-        if (NoiseSuppressor.isAvailable()){
-            noiseSuppressor = NoiseSuppressor.create(audioRecord.audioSessionId)
-            if (noiseSuppressor != null) {
-                noiseSuppressor?.enabled = true
-                Log.i("AudioEngine", "Noise Suppressor enabled")
+            if (AcousticEchoCanceler.isAvailable()){
+                echoCanceler = AcousticEchoCanceler.create(recorder.audioSessionId)
+                if (echoCanceler != null) {
+                    echoCanceler?.enabled = true
+                    Log.i("AudioEngine", "Echo Canceler enabled")
+                }
             }
-        }
 
-        audioRecord.startRecording()
-        isRecording = true
-        startMicSampleTap()
-        return true
+            if (NoiseSuppressor.isAvailable()){
+                noiseSuppressor = NoiseSuppressor.create(recorder.audioSessionId)
+                if (noiseSuppressor != null) {
+                    noiseSuppressor?.enabled = true
+                    Log.i("AudioEngine", "Noise Suppressor enabled")
+                }
+            }
+
+            recorder.startRecording()
+            isRecording = true
+            startMicSampleTap(recorder)
+            return true
+        } catch (error: Exception) {
+            stopRecording()
+            releaseAudioSession()
+            throw error
+        }
     }
 
-    private fun startMicSampleTap(){
+    private fun startMicSampleTap(recorder: AudioRecord){
         executorServiceMicrophone.execute {
             val buffer = ByteArray(1024)
             try {
-                while (isRecording) {
-                    val read = audioRecord.read(buffer, 0, buffer.size)
-                    if (read > 0) {
+                while (isRecording && audioRecord === recorder) {
+                    val read = recorder.read(buffer, 0, buffer.size)
+                    if (read < 0) throw IllegalStateException("AudioRecord.read failed: $read")
+                    if (read > 0 && isRecording && audioRecord === recorder) {
                         val data = buffer.copyOf(read)
                         micEvents += 1
                         micBytes += data.size.toLong()
@@ -367,25 +388,42 @@ class AudioEngine (context: Context) {
                 Log.d("AudioEngine", "Mic sample tap stopped.")
             }catch (e: Exception){
                 Log.e("AudioEngine", "Error reading mic sample data", e)
-                isRecording = false
-                tearDown()
-                throw e
+                // Stopping/replacing a recorder can interrupt its blocking read.
+                // An old worker must never tear down the next capture session.
+                synchronized(this) {
+                    if (audioRecord === recorder) {
+                        stopRecording()
+                        onAudioInterruptionCallback?.invoke("blocked")
+                    }
+                }
             }
         }
     }
 
+    @Synchronized
     private fun stopRecording() {
-        if (!isRecording) return
         isRecording = false
-        if (audioRecord.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
-            audioRecord.stop()
-            audioRecord.release()
+        val recorder = audioRecord
+        audioRecord = null
+        // Effects belong to one AudioRecord session, not the lifetime of this engine.
+        runCatching { echoCanceler?.release() }
+        echoCanceler = null
+        runCatching { noiseSuppressor?.release() }
+        noiseSuppressor = null
+        if (recorder != null) {
+            runCatching {
+                if (recorder.recordingState == AudioRecord.RECORDSTATE_RECORDING) recorder.stop()
+            }
+            // Failed initialization and already-stopped recorders still own native resources.
+            runCatching { recorder.release() }
         }
         onInputVolumeCallback?.invoke(0.0F)
     }
 
     @RequiresApi(Build.VERSION_CODES.Q)
+    @Synchronized
     fun toggleRecording(value: Boolean): Boolean {
+        if (disposed) return false
         if (value == isRecording) return isRecording
 
         if (value) {
@@ -399,7 +437,9 @@ class AudioEngine (context: Context) {
     }
 
     @SuppressLint("NewApi")
+    @Synchronized
     fun playPCMData(data: ByteArray) {
+        if (disposed) return
         acquireAudioSessionIfNeeded()
         audioSampleQueue.add(data)
         playbackEvents += 1
@@ -416,25 +456,34 @@ class AudioEngine (context: Context) {
     }
 
     private fun playAudioFromSampleQueue() {
-        executorServicePlayback.execute{
-            isPlaying = true
+        // Called under the engine lock: reserve the worker before submitting it.
+        val generation = ++playbackGeneration
+        isPlaying = true
+        executorServicePlayback.execute {
             try {
-                while (audioSampleQueue.isNotEmpty()){
-                    val data = audioSampleQueue.poll()
-                    if (data != null){
-                        playSample(data)
-                        val audioVolume = calculateRMSLevel(data)
-                        onOutputVolumeCallback?.invoke(audioVolume)
-                    }else{
-                        break
+                while (true) {
+                    val data = synchronized(this) {
+                        if (disposed || generation != playbackGeneration) return@execute
+                        audioSampleQueue.poll() ?: run {
+                            isPlaying = false
+                            onOutputVolumeCallback?.invoke(0.0F)
+                            return@execute
+                        }
+                    }
+                    playSample(data)
+                    if (!disposed && generation == playbackGeneration) {
+                        onOutputVolumeCallback?.invoke(calculateRMSLevel(data))
                     }
                 }
-            }catch (e: Exception){
-                Log.e("AudioEngine", "Error playing audio", e)
-                e.printStackTrace()
-            }finally {
-                isPlaying = false
-                onOutputVolumeCallback?.invoke(0.0F)
+            } catch (error: Exception) {
+                Log.e("AudioEngine", "Error playing audio", error)
+                synchronized(this) {
+                    if (generation == playbackGeneration) {
+                        audioSampleQueue.clear()
+                        isPlaying = false
+                        onOutputVolumeCallback?.invoke(0.0F)
+                    }
+                }
             }
         }
     }
@@ -451,7 +500,9 @@ class AudioEngine (context: Context) {
         flushBridgeStats("write")
     }
 
+    @Synchronized
     fun bypassVoiceProcessing(bypass: Boolean) {
+        if (disposed) return
         if (bypass) {
             echoCanceler?.enabled = false
             noiseSuppressor?.enabled = false
@@ -462,14 +513,18 @@ class AudioEngine (context: Context) {
     }
 
     @RequiresApi(Build.VERSION_CODES.Q)
+    @Synchronized
     fun pauseRecordingAndPlayer() {
+        if (disposed) return
         isRecordingBeforePause = isRecording
         isRecording = toggleRecording(false)
         audioTrack.pause()
     }
 
     @RequiresApi(Build.VERSION_CODES.Q)
+    @Synchronized
     fun resumeRecordingAndPlayer() {
+        if (disposed) return
         val wasRecordingBeforePause = isRecordingBeforePause
         // Only take the session back if something was actually live when we backgrounded. The
         // activity lifecycle listener calls this on every onResume, so requesting
@@ -490,7 +545,10 @@ class AudioEngine (context: Context) {
         audioTrack.play()
     }
 
+    @Synchronized
     fun stopPlayback() {
+        if (disposed) return
+        playbackGeneration += 1
         audioSampleQueue.clear()
         audioTrack.pause()
         audioTrack.flush()
@@ -499,28 +557,50 @@ class AudioEngine (context: Context) {
         Log.d("AudioEngine", "Playback stopped")
     }
 
+    @Synchronized
     fun pausePlayback() {
+        if (disposed) return
         audioTrack.pause()
         Log.d("AudioEngine", "Playback paused")
     }
 
     @SuppressLint("NewApi")
+    @Synchronized
     fun resumePlayback() {
+        if (disposed) return
         acquireAudioSessionIfNeeded()
         audioTrack.play()
         Log.d("AudioEngine", "Playback resumed")
     }
 
     @SuppressLint("NewApi")
+    @Synchronized
     fun tearDown() {
+        if (disposed) return
+        disposed = true
+        // Drop closures into the Expo module before asynchronous workers finish.
+        onMicDataCallback = null
+        onInputVolumeCallback = null
+        onOutputVolumeCallback = null
+        onAudioInterruptionCallback = null
         stopRecording()
-        audioTrack.stop()
-        releaseCommunicationRoute()
+        isPlaying = false
+        isRecordingBeforePause = false
+        audioSampleQueue.clear()
+        runCatching { audioManager.unregisterAudioDeviceCallback(audioDeviceCallback) }
+        if (::audioTrack.isInitialized) {
+            runCatching { audioTrack.pause() }
+            runCatching { audioTrack.flush() }
+            runCatching { audioTrack.stop() }
+            runCatching { audioTrack.release() }
+        }
+        runCatching { releaseCommunicationRoute() }
         audioFocusRequest?.let { request ->
-            audioManager.abandonAudioFocusRequest(request)
+            runCatching { audioManager.abandonAudioFocusRequest(request) }
         }
         audioFocusRequest = null
         executorServiceMicrophone.shutdownNow()
+        executorServicePlayback.shutdownNow()
     }
 
 

@@ -177,8 +177,10 @@ export function createCompanionRuntime(deps: CompanionRuntimeDeps): CompanionRun
 
       try {
         await deps.engine.initialize();
+        if (generation !== state.generation) return;
         await deps.engine.startCapture();
       } catch {
+        if (generation !== state.generation) return;
         state.adapter = null;
         await adapter.stopSession().catch(() => undefined);
         deps.sink.sessionFailed({

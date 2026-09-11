@@ -78,7 +78,7 @@ test.describe("Model B sidebar shape", () => {
 
       // The global new-workspace button is the universal entry — present for both
       // kinds regardless of their per-row affordance.
-      await expect(page.getByTestId("sidebar-global-new-workspace")).toBeVisible({
+      await expect(page.getByTestId("sidebar-home")).toBeVisible({
         timeout: 30_000,
       });
     } finally {

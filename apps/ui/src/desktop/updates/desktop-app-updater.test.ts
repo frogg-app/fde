@@ -490,3 +490,39 @@ describe("formatStatusText", () => {
     }
   });
 });
+
+describe("desktop install responsiveness", () => {
+  it("publishes busy state immediately and admits only one install", async () => {
+    const { updater, port } = createUpdater();
+    const pending = port.deferNextInstall();
+    const first = updater.installUpdate({ releaseChannel: "stable" });
+    expect(updater.getSnapshot().isInstalling).toBe(true);
+    expect(updater.getSnapshot().status).toBe("installing");
+    await expect(updater.installUpdate({ releaseChannel: "stable" })).resolves.toBeNull();
+    await expect(updater.checkForUpdates({ releaseChannel: "stable" })).resolves.toBeNull();
+    expect(port.recordedInstalls).toEqual([{ releaseChannel: "stable" }]);
+    expect(port.recordedChecks).toEqual([]);
+    pending.resolve(buildFakeInstallResult({ installed: true }));
+    await first;
+    expect(updater.getSnapshot().status).toBe("installed");
+    expect(updater.getSnapshot().isInstalling).toBe(false);
+  });
+
+  it("does not let an earlier check overwrite installation progress", async () => {
+    const { updater, port } = createUpdater();
+    const checking = port.deferNextCheck();
+    const check = updater.checkForUpdates({ releaseChannel: "stable" });
+    const installing = port.deferNextInstall();
+    const install = updater.installUpdate({ releaseChannel: "stable" });
+    checking.resolve(buildFakeCheckResult({ hasUpdate: false }));
+    await check;
+    expect(updater.getSnapshot().status).toBe("installing");
+    installing.reject(new Error("Download failed"));
+    await install;
+    expect(updater.getSnapshot().status).toBe("error");
+    expect(updater.getSnapshot().errorMessage).toBe("Download failed");
+    expect(updater.getSnapshot().isInstalling).toBe(false);
+    await updater.installUpdate({ releaseChannel: "stable" });
+    expect(port.recordedInstalls).toHaveLength(2);
+  });
+});

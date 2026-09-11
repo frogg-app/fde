@@ -135,6 +135,7 @@ export class DictationStreamManager {
   private readonly finalTimeoutMs: number;
   private readonly autoCommitSeconds: number;
   private readonly streams = new Map<string, DictationStreamState>();
+  private readonly connectingStreams = new Map<string, StreamingTranscriptionSession>();
 
   constructor(params: {
     logger: pino.Logger;
@@ -158,7 +159,7 @@ export class DictationStreamManager {
   }
 
   public cleanupAll(): void {
-    for (const dictationId of this.streams.keys()) {
+    for (const dictationId of new Set([...this.streams.keys(), ...this.connectingStreams.keys()])) {
       this.cleanupDictationStream(dictationId);
     }
   }
@@ -189,9 +190,11 @@ export class DictationStreamManager {
       return;
     }
 
+    this.connectingStreams.set(dictationId, stt);
+
     stt.on("committed", ({ segmentId }) => {
       const state = this.streams.get(dictationId);
-      if (!state) {
+      if (!state || state.stt !== stt) {
         return;
       }
       if (state.inFlightCommitCount > 0) {
@@ -208,7 +211,7 @@ export class DictationStreamManager {
 
     stt.on("transcript", ({ segmentId, transcript, isFinal }) => {
       const state = this.streams.get(dictationId);
-      if (!state) {
+      if (!state || state.stt !== stt) {
         return;
       }
       state.transcriptsBySegmentId.set(segmentId, transcript);
@@ -236,6 +239,12 @@ export class DictationStreamManager {
     stt.on("error", (err) => {
       const message = err instanceof Error ? err.message : String(err);
       const state = this.streams.get(dictationId);
+      if (this.connectingStreams.get(dictationId) === stt) {
+        this.cleanupDictationStream(dictationId);
+        this.failDictationStream(dictationId, message, true);
+        return;
+      }
+      if (!state || state.stt !== stt) return;
       if (state && state.finishRequested && isBufferTooSmallError(message)) {
         if (state.inFlightCommitCount > 0) {
           state.inFlightCommitCount -= 1;
@@ -252,6 +261,8 @@ export class DictationStreamManager {
     try {
       await stt.connect();
     } catch (error) {
+      if (this.connectingStreams.get(dictationId) !== stt) return;
+      this.connectingStreams.delete(dictationId);
       const message = error instanceof Error ? error.message : String(error);
       this.failDictationStream(dictationId, message, true);
       try {
@@ -261,6 +272,12 @@ export class DictationStreamManager {
       }
       return;
     }
+
+    if (this.connectingStreams.get(dictationId) !== stt) {
+      stt.close();
+      return;
+    }
+    this.connectingStreams.delete(dictationId);
 
     const inputRate = parsePcmRateFromFormat(format, 16000) ?? 16000;
     if (!Number.isFinite(inputRate) || inputRate <= 0) {
@@ -363,7 +380,7 @@ export class DictationStreamManager {
       const resampled = state.resampler ? state.resampler.processChunk(pcm16) : pcm16;
       if (resampled.length > 0) {
         state.stt.appendPcm16(resampled);
-        state.debugAudioChunks.push(resampled);
+        if (isPaseoDictationDebugEnabled()) state.debugAudioChunks.push(resampled);
         state.bytesSinceCommit += resampled.length;
         state.peakSinceCommit = Math.max(state.peakSinceCommit, pcm16lePeakAbs(resampled));
         try {
@@ -528,7 +545,12 @@ export class DictationStreamManager {
     error: string,
     retryable: boolean,
   ): Promise<void> {
+    const state = this.streams.get(dictationId);
+    const connecting = this.connectingStreams.get(dictationId);
     const debugRecordingPath = await this.maybePersistDictationStreamAudio(dictationId);
+    const streamChanged = this.streams.get(dictationId) !== state;
+    const connectionChanged = this.connectingStreams.get(dictationId) !== connecting;
+    if (streamChanged || connectionChanged) return;
     this.emit({
       type: "dictation_stream_error",
       payload: {
@@ -554,6 +576,13 @@ export class DictationStreamManager {
   }
 
   private cleanupDictationStream(dictationId: string): void {
+    const connecting = this.connectingStreams.get(dictationId);
+    this.connectingStreams.delete(dictationId);
+    try {
+      connecting?.close();
+    } catch {
+      // A provider may already have closed its failed connection.
+    }
     const state = this.streams.get(dictationId) ?? null;
     if (!state) {
       return;
@@ -561,12 +590,12 @@ export class DictationStreamManager {
     if (state.finalTimeout) {
       clearTimeout(state.finalTimeout);
     }
+    this.streams.delete(dictationId);
     try {
       state.stt.close();
     } catch {
       // no-op
     }
-    this.streams.delete(dictationId);
   }
 
   private estimateFinalizationTimeout(state: DictationStreamState): {

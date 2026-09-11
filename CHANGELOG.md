@@ -1,8 +1,31 @@
 # Changelog
 
-## 0.2.1 - 2026-09-11
+## 0.2.2 - 2026-09-11
 
-Unreleased; repository baseline cleanup.
+- Native desktop update checks run on launch and every 30 minutes, matching the UI
+  polling interval, with available updates shown in a bottom-right toast. Download and install starts directly with in-app busy/progress
+  feedback; the extra confirmation dialog is removed and duplicate installs are blocked. Reported Download and install stalls and delayed hover feedback remain
+  open for reproduction; this schedule change does not establish a responsiveness fix.
+
+- Desktop exit bounds the daemon cleanup helper to 15 seconds and records lifecycle
+  events. Reported surviving WebView2 processes and blocked relaunch remain under investigation.
+- Sidebar defaults to Home, Search, History, followed by Companion. Add project
+  and Settings are stacked labeled footer rows; workspace creation stays with
+  each project. Existing default navigation preferences migrate to the new order.
+- Desktop transport bounds pending writes and cancels or times out stalled socket
+  writes. MCP agent waits release caller abort listeners. Terminal output pauses
+  PTY reads when the headless parser falls behind. Regression tests cover these
+  defects; confirmation of the reported device memory growth remains open in the
+  [investigation](docs/memory-lockup-investigation.md).
+- Voice lifecycle fixes release Android recording effects, device callbacks,
+  AudioTrack and executors, prevent delayed microphone/playback startup after Stop,
+  and close speech sessions canceled during connection. Native Android fixes require
+  a rebuilt APK; device memory verification remains open.
+- Proposed [settings layout](docs/settings-layout-plan.md) separates App settings
+  and saved host profiles from daemon configuration; the settings redesign is not
+  implemented yet.
+
+## 0.2.1 - 2026-09-11
 
 - Companion interrupts on voice activity, retains interrupted conversation context,
   starts the first speech segment earlier, and animates the orb from reply audio.

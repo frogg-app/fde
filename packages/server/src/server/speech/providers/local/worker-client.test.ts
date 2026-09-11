@@ -142,6 +142,36 @@ async function waitForMicrotasks(): Promise<void> {
 }
 
 describe("LocalSpeechWorkerClient", () => {
+  it.each(["voiceStt", "dictationStt", "vad"] as const)(
+    "releases a %s session closed during worker startup",
+    async (kind) => {
+      vi.useFakeTimers();
+      const { client, workers } = createClient({ idleTtlMs: 5 });
+      try {
+        const provider =
+          kind === "vad"
+            ? new WorkerBackedTurnDetectionProvider(client)
+            : new WorkerBackedSpeechToTextProvider(client, kind);
+        const session = provider.createSession({ logger: pino({ level: "silent" }) });
+        const connecting = session.connect();
+        const request = workers[0].sent[0];
+        session.close();
+        workers[0].respond(request, { requiredSampleRate: 16000 });
+        await connecting;
+        const closeRequest = workers[0].sent[1];
+        expect(closeRequest).toMatchObject({ type: "session.close", sessionId: request.sessionId });
+        workers[0].respond(closeRequest);
+        await vi.advanceTimersByTimeAsync(6);
+        expect(workers[0].killed).toBe(true);
+        await expect(session.connect()).rejects.toThrow("session is closed");
+        expect(workers).toHaveLength(1);
+      } finally {
+        client.shutdown();
+        vi.useRealTimers();
+      }
+    },
+  );
+
   it("does not spawn the worker until first local speech use", () => {
     const { workers } = createClient();
 

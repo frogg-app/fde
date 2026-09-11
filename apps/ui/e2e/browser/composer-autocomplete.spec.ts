@@ -150,7 +150,7 @@ async function installListCommandsStub(page: Page): Promise<void> {
 }
 
 async function openAppWideNewWorkspace(page: Page): Promise<void> {
-  await page.getByTestId("sidebar-global-new-workspace").first().click();
+  await page.keyboard.press("Control+n");
   await page.waitForURL((url) => url.pathname === "/new", { timeout: 30_000 });
 }
 

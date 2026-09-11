@@ -1,14 +1,13 @@
 import { router } from "expo-router";
-import { FolderPlus, GitBranch, Home, Server, Settings, X } from "lucide-react-native";
+import { FolderPlus, GitBranch, Settings, X } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
-import { memo, useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Pressable,
   StyleSheet as RNStyleSheet,
   Text,
   useWindowDimensions,
   View,
-  type PressableStateCallbackType,
 } from "react-native";
 import { Gesture } from "react-native-gesture-handler";
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue } from "react-native-reanimated";
@@ -24,7 +23,7 @@ import {
   SIDEBAR_RESIZE_ACTIVATION_OFFSET,
   SIDEBAR_RESIZE_FAIL_OFFSET,
 } from "@/components/sidebar-resize-handle-layout";
-import { HostPicker } from "@/components/hosts/host-picker";
+import { SidebarHeaderRow } from "@/components/sidebar/sidebar-header-row";
 import { SidebarDisplayPreferencesMenu } from "@/components/sidebar/display-preferences/menu";
 import { SidebarNavRows } from "@/components/sidebar/sidebar-nav-rows";
 import { SidebarResizeHandle } from "@/components/sidebar-resize-handle";
@@ -43,17 +42,11 @@ import { RetainedPanelActivity } from "@/components/retained-panel";
 import type { SidebarWorkspaceGroup } from "@/components/sidebar/sidebar-labels";
 import type { SidebarProjectIconTarget } from "@/utils/sidebar-project-row-model";
 import { type SidebarGroupMode, useSidebarViewStore } from "@/stores/sidebar-view-store";
-import { useHosts } from "@/runtime/host-runtime";
 import { usePanelStore } from "@/stores/panel-store";
 import { useOwnsWindowChromeCorner, WindowChromeSafeArea } from "@/utils/desktop-window";
 import { useCloseAgentListGesture } from "@/mobile-panels/gestures";
 import { MobilePanelOverlay } from "@/mobile-panels/presentation";
-import {
-  buildOpenProjectRoute,
-  buildSettingsAddHostRoute,
-  buildSettingsRoute,
-} from "@/utils/host-routes";
-import { openHostOverview } from "@/navigation/settings-navigation";
+import { buildSettingsRoute } from "@/utils/host-routes";
 import { SidebarAgentListSkeleton } from "./sidebar-agent-list-skeleton";
 import { SidebarCalloutSlot } from "./sidebar-callout-slot";
 import { SidebarWorkspaceList } from "./sidebar-workspace-list";
@@ -80,19 +73,13 @@ interface SidebarSharedProps {
   toggleProjectCollapsed: (projectViewKey: string) => void;
   handleRefresh: () => void;
   handleOpenProject: () => void;
-  handleHome: () => void;
   handleSettings: () => void;
   labels: SidebarLabels;
-  handleAddHost: () => void;
-  handleOpenHostSettings: (serverId: string) => void;
 }
 
 interface SidebarLabels {
   addProject: string;
-  hosts: string;
-  home: string;
   settings: string;
-  searchHosts: string;
   closeSidebar: string;
 }
 
@@ -166,43 +153,10 @@ export const LeftSidebar = memo(function LeftSidebar({ active }: { active: boole
     router.push(buildSettingsRoute());
   }, []);
 
-  const handleAddHostMobile = useCallback(() => {
-    showMobileAgent();
-    router.push(buildSettingsAddHostRoute(Date.now()));
-  }, [showMobileAgent]);
-
-  const handleAddHostDesktop = useCallback(() => {
-    router.push(buildSettingsAddHostRoute(Date.now()));
-  }, []);
-
-  const handleOpenHostSettingsMobile = useCallback(
-    (serverId: string) => {
-      showMobileAgent();
-      openHostOverview(serverId);
-    },
-    [showMobileAgent],
-  );
-
-  const handleOpenHostSettingsDesktop = useCallback((serverId: string) => {
-    openHostOverview(serverId);
-  }, []);
-
-  const handleHomeMobile = useCallback(() => {
-    showMobileAgent();
-    router.push(buildOpenProjectRoute());
-  }, [showMobileAgent]);
-
-  const handleHomeDesktop = useCallback(() => {
-    router.push(buildOpenProjectRoute());
-  }, []);
-
   const labels = useMemo(
     (): SidebarLabels => ({
       addProject: t("sidebar.actions.addProject"),
-      hosts: t("sidebar.actions.hosts"),
-      home: t("sidebar.actions.home"),
       settings: t("sidebar.actions.settings"),
-      searchHosts: t("sidebar.host.searchPlaceholder"),
       closeSidebar: t("sidebar.actions.closeSidebar"),
     }),
     [t],
@@ -238,10 +192,7 @@ export const LeftSidebar = memo(function LeftSidebar({ active }: { active: boole
           insetsBottom={insets.bottom}
           closeSidebar={showMobileAgent}
           handleOpenProject={handleOpenProjectMobile}
-          handleHome={handleHomeMobile}
           handleSettings={handleSettingsMobile}
-          handleAddHost={handleAddHostMobile}
-          handleOpenHostSettings={handleOpenHostSettingsMobile}
         />
       </RetainedPanelActivity>
     );
@@ -254,179 +205,11 @@ export const LeftSidebar = memo(function LeftSidebar({ active }: { active: boole
         insetsTop={insets.top}
         active={active}
         handleOpenProject={handleOpenProjectDesktop}
-        handleHome={handleHomeDesktop}
         handleSettings={handleSettingsDesktop}
-        handleAddHost={handleAddHostDesktop}
-        handleOpenHostSettings={handleOpenHostSettingsDesktop}
       />
     </RetainedPanelActivity>
   );
 });
-
-function sidebarHostOptionTestID(serverId: string): string {
-  return `sidebar-host-row-${serverId}`;
-}
-
-function FooterIconButton({
-  buttonRef,
-  onPress,
-  testID,
-  label,
-  icon: Icon,
-  iconSize,
-  shortcutKeys,
-  theme,
-}: {
-  onPress: () => void;
-  testID: string;
-  label: string;
-  icon: typeof FolderPlus;
-  iconSize?: number;
-  shortcutKeys?: ReturnType<typeof useShortcutKeys>;
-  theme: SidebarTheme;
-  buttonRef?: RefObject<View | null>;
-}) {
-  return (
-    <Tooltip delayDuration={300}>
-      <TooltipTrigger asChild>
-        <Pressable
-          ref={buttonRef}
-          style={styles.footerIconButton}
-          testID={testID}
-          nativeID={testID}
-          collapsable={false}
-          accessible
-          accessibilityLabel={label}
-          accessibilityRole="button"
-          onPress={onPress}
-        >
-          {({ hovered }) => (
-            <Icon
-              size={iconSize ?? theme.iconSize.md}
-              color={hovered ? theme.colors.foreground : theme.colors.foregroundMuted}
-            />
-          )}
-        </Pressable>
-      </TooltipTrigger>
-      <TooltipContent side="top" align="center" offset={8}>
-        <IconTooltipContent label={label} shortcutKeys={shortcutKeys} />
-      </TooltipContent>
-    </Tooltip>
-  );
-}
-
-function footerAddProjectButtonStyle({
-  hovered,
-}: PressableStateCallbackType & { hovered?: boolean }) {
-  return [styles.footerAddProjectButton, Boolean(hovered) && styles.footerAddProjectButtonHovered];
-}
-
-function FooterAddProjectButton({
-  onPress,
-  label,
-  shortcutKeys,
-  theme,
-}: {
-  onPress: () => void;
-  label: string;
-  shortcutKeys: ReturnType<typeof useShortcutKeys>;
-  theme: SidebarTheme;
-}) {
-  return (
-    <Tooltip delayDuration={300}>
-      <TooltipTrigger asChild>
-        <Pressable
-          style={footerAddProjectButtonStyle}
-          testID="sidebar-add-project"
-          nativeID="sidebar-add-project"
-          accessible
-          accessibilityLabel={label}
-          accessibilityRole="button"
-          onPress={onPress}
-        >
-          {({ hovered }) => {
-            const isHovered = Boolean(hovered);
-            return (
-              <>
-                <FolderPlus
-                  size={theme.iconSize.sm}
-                  color={isHovered ? theme.colors.foreground : theme.colors.foregroundMuted}
-                />
-                <Text
-                  numberOfLines={1}
-                  style={[
-                    styles.footerAddProjectLabel,
-                    isHovered && styles.footerAddProjectLabelHovered,
-                  ]}
-                >
-                  {label}
-                </Text>
-              </>
-            );
-          }}
-        </Pressable>
-      </TooltipTrigger>
-      <TooltipContent side="top" align="center" offset={8}>
-        <IconTooltipContent label={label} shortcutKeys={shortcutKeys} />
-      </TooltipContent>
-    </Tooltip>
-  );
-}
-
-function SidebarHostPicker({
-  theme,
-  label,
-  onAddHost,
-  onOpenHostSettings,
-}: {
-  theme: SidebarTheme;
-  label: string;
-  onAddHost: () => void;
-  onOpenHostSettings: (serverId: string) => void;
-}) {
-  const hosts = useHosts();
-  const triggerRef = useRef<View | null>(null);
-  const [isOpen, setIsOpen] = useState(false);
-
-  const handleSelect = useCallback(
-    (id: string) => {
-      onOpenHostSettings(id);
-    },
-    [onOpenHostSettings],
-  );
-
-  const handleOpen = useCallback(() => setIsOpen(true), []);
-
-  return (
-    <HostPicker
-      hosts={hosts}
-      value=""
-      onSelect={handleSelect}
-      open={isOpen}
-      onOpenChange={setIsOpen}
-      anchorRef={triggerRef}
-      includeAddHost
-      onAddHost={onAddHost}
-      showActiveConnection
-      onOpenHostSettings={onOpenHostSettings}
-      searchable
-      desktopPlacement="top-start"
-      desktopMinWidth={240}
-      addHostTestID="sidebar-host-add"
-      hostOptionTestID={sidebarHostOptionTestID}
-    >
-      <FooterIconButton
-        buttonRef={triggerRef}
-        onPress={handleOpen}
-        testID="sidebar-hosts-trigger"
-        label={label}
-        icon={Server}
-        iconSize={theme.iconSize.sm}
-        theme={theme}
-      />
-    </HostPicker>
-  );
-}
 
 function IconTooltipContent({
   label,
@@ -444,62 +227,33 @@ function IconTooltipContent({
 }
 
 function SidebarFooter({
-  theme,
   handleOpenProject,
-  handleHome,
   handleSettings,
   labels,
-  handleAddHost,
-  handleOpenHostSettings,
-}: {
-  theme: SidebarTheme;
-  handleOpenProject: () => void;
-  handleHome: () => void;
-  handleSettings: () => void;
-  labels: {
-    addProject: string;
-    hosts: string;
-    home: string;
-    settings: string;
-    searchHosts: string;
-  };
-  handleAddHost: () => void;
-  handleOpenHostSettings: (serverId: string) => void;
-}) {
+}: Pick<SidebarSharedProps, "handleOpenProject" | "handleSettings" | "labels">) {
   const newAgentKeys = useShortcutKeys("new-agent");
   const settingsKeys = useShortcutKeys("toggle-settings");
 
   return (
     <View style={styles.sidebarFooter}>
-      <FooterAddProjectButton
+      <SidebarHeaderRow
+        icon={FolderPlus}
         onPress={handleOpenProject}
         label={labels.addProject}
         shortcutKeys={newAgentKeys}
-        theme={theme}
+        testID="sidebar-add-project"
+        nativeID="sidebar-add-project"
+        variant="compact"
       />
-      <View style={styles.footerIconRow}>
-        <SidebarHostPicker
-          theme={theme}
-          label={labels.hosts}
-          onAddHost={handleAddHost}
-          onOpenHostSettings={handleOpenHostSettings}
-        />
-        <FooterIconButton
-          onPress={handleHome}
-          testID="sidebar-home"
-          label={labels.home}
-          icon={Home}
-          theme={theme}
-        />
-        <FooterIconButton
-          onPress={handleSettings}
-          testID="sidebar-settings"
-          label={labels.settings}
-          icon={Settings}
-          shortcutKeys={settingsKeys}
-          theme={theme}
-        />
-      </View>
+      <SidebarHeaderRow
+        icon={Settings}
+        onPress={handleSettings}
+        label={labels.settings}
+        shortcutKeys={settingsKeys}
+        testID="sidebar-settings"
+        nativeID="sidebar-settings"
+        variant="compact"
+      />
     </View>
   );
 }
@@ -523,11 +277,8 @@ function MobileSidebar({
   toggleProjectCollapsed,
   handleRefresh,
   handleOpenProject,
-  handleHome,
   handleSettings,
   labels,
-  handleAddHost,
-  handleOpenHostSettings,
   insetsTop,
   insetsBottom,
   closeSidebar,
@@ -603,13 +354,9 @@ function MobileSidebar({
         )}
 
         <SidebarFooter
-          theme={theme}
           handleOpenProject={handleOpenProject}
-          handleHome={handleHome}
           handleSettings={handleSettings}
           labels={labels}
-          handleAddHost={handleAddHost}
-          handleOpenHostSettings={handleOpenHostSettings}
         />
       </View>
     </MobilePanelOverlay>
@@ -634,11 +381,8 @@ function DesktopSidebar({
   toggleProjectCollapsed,
   handleRefresh,
   handleOpenProject,
-  handleHome,
   handleSettings,
   labels,
-  handleAddHost,
-  handleOpenHostSettings,
   insetsTop,
   active,
 }: DesktopSidebarProps) {
@@ -779,13 +523,9 @@ function DesktopSidebar({
         <SidebarCalloutSlot />
 
         <SidebarFooter
-          theme={theme}
           handleOpenProject={handleOpenProject}
-          handleHome={handleHome}
           handleSettings={handleSettings}
           labels={labels}
-          handleAddHost={handleAddHost}
-          handleOpenHostSettings={handleOpenHostSettings}
         />
 
         <SidebarResizeHandle
@@ -929,51 +669,10 @@ const styles = StyleSheet.create((theme) => ({
     fontWeight: theme.fontWeight.medium,
   },
   sidebarFooter: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: theme.spacing[2],
-    paddingHorizontal: theme.spacing[2],
-    paddingVertical: theme.spacing[3],
+    gap: 2,
+    paddingVertical: theme.spacing[2],
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
-  },
-  footerIconRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: theme.spacing[2],
-    flexShrink: 0,
-  },
-  footerAddProjectButton: {
-    minWidth: 0,
-    minHeight: 32,
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: theme.spacing[2],
-    paddingVertical: theme.spacing[1.5],
-    paddingHorizontal: theme.spacing[2],
-    borderRadius: theme.borderRadius.lg,
-  },
-  footerAddProjectButtonHovered: {
-    backgroundColor: theme.colors.surfaceSidebarHover,
-  },
-  footerAddProjectLabel: {
-    minWidth: 0,
-    flexShrink: 1,
-    fontSize: theme.fontSize.base,
-    fontWeight: theme.fontWeight.normal,
-    color: theme.colors.foregroundMuted,
-  },
-  footerAddProjectLabelHovered: {
-    color: theme.colors.foreground,
-  },
-  footerIconButton: {
-    width: 28,
-    height: 28,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: theme.spacing[1],
-    paddingHorizontal: theme.spacing[1],
   },
   tooltipRow: {
     flexDirection: "row",

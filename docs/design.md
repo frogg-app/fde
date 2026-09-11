@@ -98,7 +98,7 @@ Five primitives. The pick is determined by option count, the need to search, and
 
 `<DropdownMenu>` is for a small fixed set anchored to a trigger. Theme picker, kebab menus on workspace and project rows (`apps/ui/src/components/sidebar-workspace-list.tsx:684-770`), row "more" menus. Items can be async (`status: "pending"`) and can include destructive entries. Under ~10 options where the user knows what they're looking for.
 
-`<Combobox>` is for a large or searchable list. Host switcher in the sidebar footer, model selector in the composer, branch switcher in the workspace header (`apps/ui/src/components/branch-switcher.tsx`). The user types to find the option, or the list is long enough to scroll.
+`<Combobox>` is for a large or searchable list. Host picker in Settings, model selector in the composer, branch switcher in the workspace header (`apps/ui/src/components/branch-switcher.tsx`). The user types to find the option, or the list is long enough to scroll.
 
 `<ContextMenu>` is for right-click and long-press on a target. The row is the trigger; there is no visible affordance. Used for incidental actions on workspace rows in the sidebar (`apps/ui/src/components/sidebar-workspace-list.tsx`).
 
@@ -290,3 +290,13 @@ New status pills use `<StatusBadge>`. Identity, shortcut, and interactive link b
 | Trigger-anchored menu                               | `apps/ui/src/components/ui/dropdown-menu.tsx` (used in `sidebar-workspace-list.tsx`, theme picker)                                                                                                                                                                              |
 | Right-click / long-press menu                       | `apps/ui/src/components/ui/context-menu.tsx` (used in `sidebar-workspace-list.tsx`)                                                                                                                                                                                             |
 | Headers (back, screen, menu)                        | `apps/ui/src/components/headers/back-header.tsx`, `screen-header.tsx`, `menu-header.tsx`                                                                                                                                                                                        |
+
+## Sidebar navigation
+
+The default top-level order is Home, Search, History, followed by Companion and
+available plugin entries. Appearance settings can customize navigation visibility
+and order. Workspace creation belongs to each project; there is no global New
+workspace row. The footer contains two stacked, full-width labeled rows: Add project
+and Settings. Host management is reached through Settings, not an unlabeled footer
+icon. See [settings-layout-plan.md](settings-layout-plan.md) for the proposed next
+step separating local host profiles from daemon configuration.

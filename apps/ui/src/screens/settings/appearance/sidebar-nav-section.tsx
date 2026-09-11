@@ -7,7 +7,7 @@ import {
   ArrowUp,
   AudioLines,
   History,
-  Plus,
+  Home,
   Search,
   type LucideIcon,
 } from "lucide-react-native";
@@ -37,7 +37,7 @@ const moveUpIcon = <ThemedArrowUp size={ICON_SIZE.sm} uniProps={mutedColorMappin
 const moveDownIcon = <ThemedArrowDown size={ICON_SIZE.sm} uniProps={mutedColorMapping} />;
 
 const BUILTIN_ICONS: Record<BuiltinSidebarNavId, LucideIcon> = {
-  "new-workspace": Plus,
+  home: Home,
   companion: AudioLines,
   history: History,
   search: Search,

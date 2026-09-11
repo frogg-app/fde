@@ -19,6 +19,12 @@ Terminal frames share the daemon main event loop with all agent traffic. The `ev
 
 ## Invariants (the easy-to-break ones)
 
+- **Headless parsing applies producer flow control.** PTY reads pause at 1,048,576
+  queued characters and resume at 262,144 or below after parsing. Publish parsed
+  output before resuming; disposal must not resume the PTY from a late callback.
+  This prevents an output burst from indefinitely outrunning the asynchronous
+  parser. The watermark is in characters and is not a total process-memory limit.
+
 - **Coalescers are leading+trailing throttles.** The first chunk after an idle window flushes immediately (synchronously); only sustained bursts wait for the trailing timer. Reverting to trailing-only adds a full window (~5ms) to every keystroke echo.
 - **Output coalescing happens in the worker, before IPC.** One `process.send` per pty chunk was a main-loop flood under build output. Non-output messages (snapshot/snapshotReady/titleChange/exit) must flush the coalescer first so ordering is preserved.
 - **Coalesced output carries the LAST chunk's revision.** Snapshot replay dedup (`replayTerminalOutputAfterSnapshot`) skips buffered output with `revision <= replayRevision`; a merged batch with a lower revision would be wrongly skipped (lost output).

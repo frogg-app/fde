@@ -57,7 +57,27 @@ export function useDesktopAppUpdater(): UseDesktopAppUpdaterReturn {
       createDesktopAppUpdater({
         port: {
           checkDesktopAppUpdate,
-          installDesktopAppUpdate,
+          async installDesktopAppUpdate(input) {
+            // The updater publishes installing before entering this port, so
+            // even delayed progress-listener setup has immediate busy feedback.
+            setProgress({ status: "active", phase: "download", received: 0, total: null });
+            let unlisten: (() => void) | null = null;
+            try {
+              try {
+                unlisten = await listenToDesktopAppUpdateProgress((event) => {
+                  setProgress((current) => reduceAppUpdateProgress(current, event));
+                });
+              } catch {
+                // Progress is optional; installation failures still reach the updater.
+              }
+              return await installDesktopAppUpdate(input);
+            } finally {
+              unlisten?.();
+              setProgress((current) =>
+                current.status === "error" ? current : IDLE_APP_UPDATE_PROGRESS,
+              );
+            }
+          },
         },
         now: () => Date.now(),
         reportInstallError: reportError,
@@ -85,28 +105,9 @@ export function useDesktopAppUpdater(): UseDesktopAppUpdaterReturn {
     [isDesktopApp, releaseChannel, updater],
   );
 
-  // Progress events only matter while an install runs; the shell emits them
-  // on `paseo:event:app-update-progress`.
   const installUpdate = useCallback(async () => {
-    if (!isDesktopApp) {
-      return null;
-    }
-    setProgress({ status: "active", phase: "download", received: 0, total: null });
-    let unlisten: (() => void) | null = null;
-    try {
-      unlisten = await listenToDesktopAppUpdateProgress((event) => {
-        setProgress((current) => reduceAppUpdateProgress(current, event));
-      });
-    } catch {
-      // No event API: the install still runs, only without a progress bar.
-    }
-    try {
-      const result = await updater.installUpdate({ releaseChannel });
-      setProgress((current) => (current.status === "error" ? current : IDLE_APP_UPDATE_PROGRESS));
-      return result;
-    } finally {
-      unlisten?.();
-    }
+    if (!isDesktopApp) return null;
+    return updater.installUpdate({ releaseChannel });
   }, [isDesktopApp, releaseChannel, updater]);
 
   useEffect(() => {
@@ -116,7 +117,7 @@ export function useDesktopAppUpdater(): UseDesktopAppUpdaterReturn {
     void checkForUpdates({ intent: "automatic", silent: true });
   }, [checkForUpdates, isDesktopApp]);
 
-  // The shell's own checks (every 6 h, and the cached answer to any check)
+  // The shell's own checks (every 30 min, and the cached answer to any check)
   // announce a newer version here; an automatic re-check is served from that
   // cache, so this only refreshes local state.
   useEffect(() => {

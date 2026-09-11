@@ -4,7 +4,7 @@
 // Download & install button that shows the shell's download progress.
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Alert, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { StyleSheet, withUnistyles } from "react-native-unistyles";
 import { Download, RefreshCw } from "lucide-react-native";
@@ -31,7 +31,6 @@ import { useDesktopAppUpdater } from "@/desktop/updates/use-desktop-app-updater"
 import { useSettings, type Settings as EffectiveSettings } from "@/hooks/use-settings";
 import { SettingsSection } from "@/screens/settings/settings-section";
 import { settingsStyles } from "@/styles/settings";
-import { confirmDialog } from "@/utils/confirm-dialog";
 import { openExternalUrl } from "@/utils/open-external-url";
 import { formatMessageTimestamp } from "@/utils/time";
 
@@ -152,6 +151,7 @@ function AvailableUpdateCard({
             leftIcon={downloadIcon}
             onPress={onInstall}
             disabled={!canInstall}
+            loading={isInstalling}
             testID="desktop-update-install"
           >
             {isInstalling
@@ -219,26 +219,8 @@ export function DesktopUpdatesSection({ appVersion }: { appVersion: string | nul
   }, [checkForUpdates]);
 
   const handleInstall = useCallback(() => {
-    void confirmDialog({
-      title: t("settings.about.updates.installTitle"),
-      message: t("settings.about.updates.installMessage"),
-      confirmLabel: t("settings.about.updates.installConfirm"),
-      cancelLabel: t("common.actions.cancel"),
-    })
-      .then((confirmed) => {
-        if (confirmed) {
-          void installUpdate();
-        }
-        return;
-      })
-      .catch((error) => {
-        console.error("[Settings] Failed to open app update confirmation", error);
-        Alert.alert(
-          t("settings.about.updates.alertTitle"),
-          t("settings.about.updates.alertMessage"),
-        );
-      });
-  }, [installUpdate, t]);
+    void installUpdate();
+  }, [installUpdate]);
 
   if (!isDesktopApp) {
     return null;

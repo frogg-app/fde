@@ -21,6 +21,8 @@ use super::socket::{self, BoxedStream};
 use super::ssh::SshProcess;
 use super::{lock, EventSink, Outgoing, Registry, SessionState};
 
+const WRITE_TIMEOUT: Duration = Duration::from_secs(10);
+
 pub const SETUP_TIMEOUT: Duration = Duration::from_secs(30);
 /// Remote SSH gets a shorter window: ssh's own `ConnectTimeout=10` covers the
 /// TCP connect, and the webview's connect timer for SSH hosts (20 s in
@@ -86,7 +88,7 @@ impl SessionTask {
         }
     }
 
-    pub(super) async fn run(self, mut outgoing: mpsc::UnboundedReceiver<Outgoing>) {
+    pub(super) async fn run(self, mut outgoing: mpsc::Receiver<Outgoing>) {
         let description = self.target.describe();
         log::info!("transport {}: opening {description}", self.id);
         let setup_timeout = match self.target {
@@ -146,9 +148,32 @@ impl SessionTask {
                     break;
                 }
                 request = outgoing.recv() => match request {
-                    Some((message, reply)) => {
-                        let result = endpoint.ws.send(message).await.map_err(|e| format!("Local transport write failed: {e}"));
+                    Some((message, reply, _byte_permit)) => {
+                        // A blocked socket must not keep a closed session (and its
+                        // queued payloads) alive indefinitely.
+                        let result = tokio::select! {
+                            biased;
+                            _ = self.cancel.notified() => {
+                                let _ = reply.send(Err("Local transport session is closed.".into()));
+                                break;
+                            }
+                            result = tokio::time::timeout(WRITE_TIMEOUT, endpoint.ws.send(message)) => {
+                                match result {
+                                    Ok(result) => result.map_err(|e| format!("Local transport write failed: {e}")),
+                                    Err(_) => Err("Local transport write timed out.".into()),
+                                }
+                            }
+                        };
+                        let failed = result.as_ref().err().cloned();
                         let _ = reply.send(result);
+                        if let Some(error) = failed {
+                            batch.flush(&self.emit);
+                            if self.dispose() {
+                                (self.emit)(error_event(&self.id, &error));
+                                (self.emit)(close_event(&self.id, 1006, ""));
+                            }
+                            break;
+                        }
                     }
                     None => {
                         batch.flush(&self.emit);
@@ -202,6 +227,8 @@ impl SessionTask {
                 },
             }
         }
+        // Reject queued callers before the bounded graceful socket shutdown.
+        drop(outgoing);
         shutdown(endpoint).await;
     }
 }

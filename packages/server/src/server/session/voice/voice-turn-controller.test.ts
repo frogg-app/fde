@@ -154,6 +154,20 @@ function createControllerHarness(options?: { sttLanguage?: string }) {
 }
 
 describe("voice turn controller", () => {
+  it("ignores late provider errors and speech events after stop", async () => {
+    const harness = createControllerHarness();
+    await harness.controller.start();
+    await harness.controller.stop();
+    harness.sttSessions[0].emitError(new Error("late provider error"));
+    harness.detector.emit("speech_started");
+    harness.detector.emit("speech_stopped");
+    await settleSerialQueue();
+    expect(harness.sttSessions).toHaveLength(1);
+    expect(harness.onSpeechStarted).not.toHaveBeenCalled();
+    expect(harness.onSpeechStopped).not.toHaveBeenCalled();
+    expect(harness.onError).not.toHaveBeenCalled();
+  });
+
   it("passes configured language to streaming STT", async () => {
     const harness = createControllerHarness({ sttLanguage: "pt" });
 

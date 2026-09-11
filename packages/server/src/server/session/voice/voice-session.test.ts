@@ -20,21 +20,37 @@ const VOICE_AGENT_ID = "11111111-1111-4111-8111-111111111111";
 
 class FakeVoiceTurnDetectionSession extends EventEmitter implements TurnDetectionSession {
   public readonly requiredSampleRate = 16000;
+  public closeCount = 0;
 
-  async connect(): Promise<void> {}
+  constructor(private readonly connectGate: () => Promise<void> = async () => {}) {
+    super();
+  }
+
+  async connect(): Promise<void> {
+    await this.connectGate();
+  }
 
   appendPcm16(_chunk: Buffer): void {}
 
   flush(): void {}
   reset(): void {}
-  close(): void {}
+  close(): void {
+    this.closeCount += 1;
+  }
 }
 
 class FakeVoiceSttSession extends EventEmitter implements StreamingTranscriptionSession {
   public readonly requiredSampleRate = 16000;
   public commitCount = 0;
+  public closeCount = 0;
 
-  async connect(): Promise<void> {}
+  constructor(private readonly connectGate: () => Promise<void> = async () => {}) {
+    super();
+  }
+
+  async connect(): Promise<void> {
+    await this.connectGate();
+  }
 
   appendPcm16(_pcm16le: Buffer): void {}
 
@@ -43,7 +59,9 @@ class FakeVoiceSttSession extends EventEmitter implements StreamingTranscription
   }
 
   clear(): void {}
-  close(): void {}
+  close(): void {
+    this.closeCount += 1;
+  }
 
   emitCommitted(event: StreamingTranscriptionCommittedEvent): void {
     this.emit("committed", event);
@@ -79,9 +97,12 @@ function createFakeHost(): FakeVoiceHost {
   };
 }
 
-function createVoiceSession() {
-  const detector = new FakeVoiceTurnDetectionSession();
-  const sttSession = new FakeVoiceSttSession();
+function createVoiceSession(options?: {
+  sttConnect?: () => Promise<void>;
+  detectorConnect?: () => Promise<void>;
+}) {
+  const detector = new FakeVoiceTurnDetectionSession(options?.detectorConnect);
+  const sttSession = new FakeVoiceSttSession(options?.sttConnect);
   const stt: SpeechToTextProvider = {
     id: "local",
     createSession: vi.fn(() => sttSession),
@@ -110,6 +131,44 @@ async function settle(): Promise<void> {
 }
 
 describe("VoiceSession streaming transcription", () => {
+  test.each(["stt", "detector"])(
+    "cleanup during %s startup closes providers and cannot re-enable voice",
+    async (phase) => {
+      let release!: () => void;
+      const gate = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      let markStarted!: () => void;
+      const started = new Promise<void>((resolve) => {
+        markStarted = resolve;
+      });
+      const connectGate = () => {
+        markStarted();
+        return gate;
+      };
+      const { voiceSession, sttSession, detector, host } = createVoiceSession(
+        phase === "stt" ? { sttConnect: connectGate } : { detectorConnect: connectGate },
+      );
+      const enabling = voiceSession.handleSetVoiceMode(true, VOICE_AGENT_ID, "pending-enable");
+      await started;
+      await voiceSession.cleanup();
+      expect(sttSession.closeCount).toBeGreaterThan(0);
+      expect(detector.closeCount).toBeGreaterThan(0);
+      release();
+      await enabling;
+      expect(host.emitted).toContainEqual(
+        expect.objectContaining({
+          type: "set_voice_mode_response",
+          payload: expect.objectContaining({
+            requestId: "pending-enable",
+            accepted: false,
+            enabled: false,
+          }),
+        }),
+      );
+    },
+  );
+
   test("surfaces a refused voice-mode agent interruption", async () => {
     const { voiceSession, host } = createVoiceSession();
     host.interruptAgentIfRunning = vi.fn(async () => {

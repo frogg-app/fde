@@ -89,3 +89,17 @@ send the words as a message. Otherwise the transcript is sent as the agent's nex
 
 **Keep listening for the next alert** (the switch in the sheet) is the hands-free mode: once an
 auto-played alert finishes, the sheet opens again on its own for the next reply.
+
+## Audio resource lifetime
+
+Capture and playback startup can outlive Stop while waiting for permissions, native
+initialization, or decoding. Engines and runtimes invalidate pending work at Stop or
+destroy, and late completions must release resources without reopening audio. Clearing
+queued playback does not transfer ownership away from the active queue worker.
+
+Android recording effects belong to one recorder and are released on every stop.
+Engine teardown also unregisters device callbacks, releases playback resources, clears
+Expo callbacks, and shuts down worker executors. These native fixes require a rebuilt
+APK. Desktop/web engines disconnect playback nodes and stop acquired microphone tracks,
+including late permission grants. See the [memory investigation](memory-lockup-investigation.md)
+for demonstrated regressions and remaining device validation.

@@ -219,7 +219,7 @@ test.describe("Settings — compact master-detail", () => {
     await expectSettingsSidebarVisible(page);
   });
 
-  test("host picker settings opens Overview and backs through the settings list", async ({
+  test("sidebar Settings opens host Overview and backs through the settings list", async ({
     page,
     withWorkspace,
   }) => {
@@ -228,8 +228,8 @@ test.describe("Settings — compact master-detail", () => {
 
     await openWorkspace(page, workspace);
     await page.getByRole("button", { name: "Open menu", exact: true }).click();
-    await page.getByTestId("sidebar-hosts-trigger").click();
-    await page.getByRole("button", { name: /Open .* settings/ }).click();
+    await page.getByTestId("sidebar-settings").click();
+    await openCompactSettingsHost(page);
 
     await expectAppRoute(page, buildSettingsHostSectionRoute(getServerId(), "host"));
     await expect(page.getByText("Overview", { exact: true })).toBeVisible();

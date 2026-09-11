@@ -20,6 +20,10 @@ export interface FakeDesktopAppUpdaterPort extends DesktopAppUpdaterPort {
   failNextCheck(error: unknown): void;
   nextInstallResult(result: DesktopAppUpdateInstallResult): void;
   failNextInstall(error: unknown): void;
+  deferNextInstall(): {
+    resolve(result: DesktopAppUpdateInstallResult): void;
+    reject(error: unknown): void;
+  };
 }
 
 type CheckOutcome =
@@ -29,7 +33,8 @@ type CheckOutcome =
 
 type InstallOutcome =
   | { kind: "result"; result: DesktopAppUpdateInstallResult }
-  | { kind: "error"; error: unknown };
+  | { kind: "error"; error: unknown }
+  | { kind: "deferred"; promise: Promise<DesktopAppUpdateInstallResult> };
 
 function buildCheckResult(
   overrides: Partial<DesktopAppUpdateCheckResult> = {},
@@ -96,6 +101,16 @@ export function createFakeDesktopAppUpdaterPort(): FakeDesktopAppUpdaterPort {
     nextInstallResult(result) {
       installOutcomes.push({ kind: "result", result });
     },
+    deferNextInstall() {
+      let resolve!: (result: DesktopAppUpdateInstallResult) => void;
+      let reject!: (error: unknown) => void;
+      const promise = new Promise<DesktopAppUpdateInstallResult>((res, rej) => {
+        resolve = res;
+        reject = rej;
+      });
+      installOutcomes.push({ kind: "deferred", promise });
+      return { resolve, reject };
+    },
     failNextInstall(error) {
       installOutcomes.push({ kind: "error", error });
     },
@@ -122,6 +137,7 @@ export function createFakeDesktopAppUpdaterPort(): FakeDesktopAppUpdaterPort {
       if (outcome.kind === "result") {
         return outcome.result;
       }
+      if (outcome.kind === "deferred") return outcome.promise;
       throw outcome.error;
     },
   };

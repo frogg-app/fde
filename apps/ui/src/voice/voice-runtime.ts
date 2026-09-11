@@ -722,13 +722,22 @@ export function createVoiceRuntime(deps: VoiceRuntimeDeps): VoiceRuntime {
           }
         }
 
+        if (state.generation !== generation) return;
         await deps.activateKeepAwake(KEEP_AWAKE_TAG).catch((error) => {
           console.warn("[VoiceRuntime] Failed to activate keep-awake:", error);
         });
 
+        if (state.generation !== generation) {
+          if (state.snapshot.phase === "disabled") {
+            await deps.deactivateKeepAwake(KEEP_AWAKE_TAG).catch(() => undefined);
+          }
+          return;
+        }
         await deps.engine.initialize();
+        if (state.generation !== generation) return;
         await session.adapter.setVoiceMode(true, agentId);
         enabledCurrentVoiceMode = true;
+        if (state.generation !== generation) return;
         await deps.engine.startCapture();
         if (state.generation !== generation) {
           return;
@@ -746,6 +755,7 @@ export function createVoiceRuntime(deps: VoiceRuntimeDeps): VoiceRuntime {
           isMuted: deps.engine.isMuted(),
         }));
       } catch (error) {
+        if (state.generation !== generation) return;
         if (enabledCurrentVoiceMode) {
           await session.adapter.setVoiceMode(false).catch(() => undefined);
         }

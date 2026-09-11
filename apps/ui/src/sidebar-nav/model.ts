@@ -1,6 +1,6 @@
 import type { PluginSidebarGroup } from "@/plugins/sidebar-groups";
 
-export const BUILTIN_SIDEBAR_NAV_IDS = ["new-workspace", "companion", "history", "search"] as const;
+export const BUILTIN_SIDEBAR_NAV_IDS = ["home", "search", "history", "companion"] as const;
 export type BuiltinSidebarNavId = (typeof BUILTIN_SIDEBAR_NAV_IDS)[number];
 
 /** Persisted shape. Array order is the display order. */
@@ -26,7 +26,7 @@ export interface PluginSidebarNavItem {
 export type SidebarNavItem = BuiltinSidebarNavItem | PluginSidebarNavItem;
 
 const BUILTIN_LABEL_KEYS: Record<BuiltinSidebarNavId, string> = {
-  "new-workspace": "sidebar.actions.newWorkspace",
+  home: "sidebar.actions.home",
   companion: "companion.title",
   history: "sidebar.sections.sessions",
   search: "sidebar.sections.search",
@@ -42,7 +42,7 @@ export function builtinSidebarNavLabelKey(id: BuiltinSidebarNavId): string {
  * two never disagree about which shortcut belongs to which item.
  */
 const BUILTIN_SHORTCUT_ACTIONS: Record<BuiltinSidebarNavId, string | null> = {
-  "new-workspace": "new-workspace",
+  home: null,
   companion: "toggle-companion",
   history: null,
   search: "toggle-command-center",
@@ -66,18 +66,50 @@ export function resolveSidebarNavItems(input: {
   pluginGroups: readonly PluginSidebarGroup[];
   preferences: readonly SidebarNavPreference[];
 }): SidebarNavItem[] {
+  const legacyKeys = input.preferences
+    .filter(({ key }) => key === "new-workspace" || isBuiltinSidebarNavId(key))
+    .map(({ key }) => key)
+    .join(",");
+  const hasLegacyDefaultOrder =
+    legacyKeys === "new-workspace,history,search" ||
+    legacyKeys === "new-workspace,companion,history,search";
+  let preferences = input.preferences;
+  if (hasLegacyDefaultOrder) {
+    // Reorder only the old builtin slots, preserving plugin placement and visibility.
+    const builtinPreferences = input.preferences.filter(({ key }) => isBuiltinSidebarNavId(key));
+    builtinPreferences.sort(
+      (a, b) =>
+        BUILTIN_SIDEBAR_NAV_IDS.findIndex((id) => id === a.key) -
+        BUILTIN_SIDEBAR_NAV_IDS.findIndex((id) => id === b.key),
+    );
+    let builtinIndex = 0;
+    preferences = input.preferences.map((preference) =>
+      isBuiltinSidebarNavId(preference.key) ? builtinPreferences[builtinIndex++] : preference,
+    );
+  }
   const groupsByKey = new Map(
     input.pluginGroups.map((group) => [pluginSidebarNavKey(group), group] as const),
   );
   const items: SidebarNavItem[] = [];
   const placed = new Set<string>();
 
-  for (const preference of input.preferences) {
+  // Home replaces the footer shortcut; introduce it first for existing installations.
+  if (!preferences.some((preference) => preference.key === "home")) {
+    placed.add("home");
+    items.push({ kind: "builtin", key: "home", id: "home", visible: true });
+  }
+
+  for (const preference of preferences) {
     if (placed.has(preference.key)) continue;
     const group = groupsByKey.get(preference.key);
     if (group) {
       placed.add(preference.key);
-      items.push({ kind: "plugin", key: preference.key, group, visible: preference.visible });
+      items.push({
+        kind: "plugin",
+        key: preference.key,
+        group,
+        visible: preference.visible,
+      });
     } else if (isBuiltinSidebarNavId(preference.key)) {
       placed.add(preference.key);
       items.push({

@@ -30,6 +30,20 @@ visible until device or deployment evidence closes them.
 
 ## Next: establish reliable everyday use
 
+- [ ] **Windows shutdown and relaunch.** User reports large, active WebView2
+      processes surviving FDE close and blocking relaunch. Confirm process ownership,
+      profile shutdown, and validate normal/update exits under voice load. See
+      [process evidence](docs/memory-lockup-investigation.md#windows-process-evidence-and-failure-to-exit).
+
+- [ ] **Investigate update-install UI stalls.** Download and install reportedly
+      takes 10–15 seconds to show confirmation; hover/cursor feedback is also delayed.
+      The app may already be slow from memory growth; the button is not a proven cause.
+      Reproduce on a rebuilt desktop app and verify immediate pending feedback and
+      responsive interaction. See the [incident record](docs/memory-lockup-investigation.md#open-report-update-install-and-delayed-hover).
+- [ ] **Resolve reported memory growth and lockups.** Reproduce on the affected
+      device, identify the growing process, and compare the fixed build under the
+      same workload. Track concrete fixes and remaining acceptance in the
+      [investigation](docs/memory-lockup-investigation.md).
 - [ ] **Validate Companion on devices.** Exercise a full microphone-to-speaker
       conversation with API and CLI backends, interruption, reconnect, failures,
       headphones and speakers. Record full-loop latency and device details.
@@ -55,6 +69,10 @@ visible until device or deployment evidence closes them.
 
 ## Feature backlog
 
+- [ ] **Separate app and host settings.** Default to App settings, put saved host
+      profiles under App → Hosts, and expose daemon configuration through a
+      Host settings tab with an explicit host selector. See the
+      [layout and migration plan](docs/settings-layout-plan.md).
 - [ ] **LAN discovery in Add host.** Claim parsing/credential storage already
       exists. The remaining feature is discovering candidate hosts and presenting
       their `/api/identity` results without manually entering an address.

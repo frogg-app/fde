@@ -86,6 +86,49 @@ describe("voice runtime", () => {
     vi.useRealTimers();
   });
 
+  it("does not reopen capture when initialization finishes after Stop", async () => {
+    const adapter = createSessionAdapter();
+    const { runtime, engine } = createRuntime();
+    let finishInitialization!: () => void;
+    vi.mocked(engine.initialize).mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finishInitialization = resolve;
+        }),
+    );
+    runtime.registerSession(adapter);
+    const starting = runtime.startVoice("server-1", "agent-1");
+    await vi.advanceTimersByTimeAsync(0);
+    expect(engine.initialize).toHaveBeenCalledTimes(1);
+    await runtime.stopVoice();
+    finishInitialization();
+    await starting;
+    expect(engine.startCapture).not.toHaveBeenCalled();
+    expect(adapter.setVoiceMode).not.toHaveBeenCalledWith(true, "agent-1");
+    expect(runtime.getSnapshot().phase).toBe("disabled");
+  });
+
+  it("does not reopen capture after a canceled voice-mode request completes", async () => {
+    const adapter = createSessionAdapter();
+    const { runtime, engine } = createRuntime();
+    let finishModeRequest!: () => void;
+    vi.mocked(adapter.setVoiceMode).mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finishModeRequest = resolve;
+        }),
+    );
+    runtime.registerSession(adapter);
+    const starting = runtime.startVoice("server-1", "agent-1");
+    await vi.advanceTimersByTimeAsync(0);
+    expect(adapter.setVoiceMode).toHaveBeenCalledWith(true, "agent-1");
+    await runtime.stopVoice();
+    finishModeRequest();
+    await starting;
+    expect(engine.startCapture).not.toHaveBeenCalled();
+    expect(runtime.getSnapshot().phase).toBe("disabled");
+  });
+
   it("starts voice when adapter is ready", async () => {
     const adapter = createSessionAdapter();
     const { runtime, engine } = createRuntime();

@@ -43,6 +43,15 @@ pub fn run() {
                 webview.state::<launch::LaunchState>().window_loading();
             }
         })
+        .on_window_event(|window, event| match event {
+            tauri::WindowEvent::CloseRequested { .. } => {
+                log::info!("window {}: close requested", window.label());
+            }
+            tauri::WindowEvent::Destroyed => {
+                log::info!("window {}: destroyed", window.label());
+            }
+            _ => {}
+        })
         .setup(|app| {
             if let Some(path) = app_log::log_file_path(app.handle()) {
                 if let Err(error) = app_log::FileLogger::install(&path) {
@@ -59,12 +68,17 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while building FDE")
         .run(|app, event| {
+            if let tauri::RunEvent::ExitRequested { code, .. } = &event {
+                log::info!("app: exit requested (code={code:?})");
+            }
             if let tauri::RunEvent::Exit = event {
+                log::info!("app: exit cleanup started");
                 app.state::<transport::TransportManager>().close_all();
                 app.state::<deploy::DeployManager>().cancel_all();
                 // Electron's quit lifecycle: stop a desktop-managed daemon
                 // unless the user asked to keep it running after quit.
                 sidecar::stop_on_exit(app);
+                log::info!("app: exit cleanup finished");
             }
         });
 }

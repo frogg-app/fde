@@ -31,22 +31,50 @@ function summarize(items: readonly SidebarNavItem[]): SidebarNavPreference[] {
 }
 
 describe("resolveSidebarNavItems", () => {
+  it.each([
+    ["new-workspace", "history", "search"],
+    ["new-workspace", "companion", "history", "search"],
+  ])("migrates a persisted default order %j", (...keys) => {
+    const preferences = keys.map((key) => ({ key, visible: key !== "companion" }));
+    const items = resolveSidebarNavItems({ pluginGroups: [], preferences });
+    expect(items.map(({ key }) => key)).toEqual(["home", "search", "history", "companion"]);
+    if (keys.includes("companion")) {
+      expect(items.find(({ key }) => key === "companion")?.visible).toBe(false);
+    }
+  });
+
+  it("introduces Home first without inheriting retired workspace visibility", () => {
+    const preferences = [
+      { key: "new-workspace", visible: false },
+      { key: "search", visible: true },
+      { key: "history", visible: false },
+      { key: "companion", visible: false },
+    ];
+
+    expect(summarize(resolveSidebarNavItems({ pluginGroups: [], preferences }))).toEqual([
+      { key: "home", visible: true },
+      { key: "search", visible: true },
+      { key: "history", visible: false },
+      { key: "companion", visible: false },
+    ]);
+  });
+
   it("yields builtins then plugins, all visible, when nothing is stored", () => {
     const items = resolveSidebarNavItems({ pluginGroups: [kanban, notes], preferences: [] });
 
     expect(summarize(items)).toEqual([
-      { key: "new-workspace", visible: true },
-      { key: "companion", visible: true },
-      { key: "history", visible: true },
+      { key: "home", visible: true },
       { key: "search", visible: true },
+      { key: "history", visible: true },
+      { key: "companion", visible: true },
       { key: kanbanKey, visible: true },
       { key: notesKey, visible: true },
     ]);
     expect(items[4]).toEqual({ kind: "plugin", key: kanbanKey, group: kanban, visible: true });
     expect(items[0]).toEqual({
       kind: "builtin",
-      key: "new-workspace",
-      id: "new-workspace",
+      key: "home",
+      id: "home",
       visible: true,
     });
   });
@@ -57,16 +85,16 @@ describe("resolveSidebarNavItems", () => {
       preferences: [
         { key: kanbanKey, visible: false },
         { key: "search", visible: true },
-        { key: "new-workspace", visible: false },
+        { key: "home", visible: false },
       ],
     });
 
     expect(summarize(items)).toEqual([
       { key: kanbanKey, visible: false },
       { key: "search", visible: true },
-      { key: "new-workspace", visible: false },
-      { key: "companion", visible: true },
+      { key: "home", visible: false },
       { key: "history", visible: true },
+      { key: "companion", visible: true },
       { key: notesKey, visible: true },
     ]);
   });
@@ -81,12 +109,7 @@ describe("resolveSidebarNavItems", () => {
       ],
     });
 
-    expect(items.map((item) => item.key)).toEqual([
-      "history",
-      "new-workspace",
-      "companion",
-      "search",
-    ]);
+    expect(items.map((item) => item.key)).toEqual(["home", "history", "search", "companion"]);
   });
 
   it("lets the first of duplicate keys win", () => {
@@ -99,10 +122,10 @@ describe("resolveSidebarNavItems", () => {
     });
 
     expect(summarize(items)).toEqual([
+      { key: "home", visible: true },
       { key: "history", visible: false },
-      { key: "new-workspace", visible: true },
-      { key: "companion", visible: true },
       { key: "search", visible: true },
+      { key: "companion", visible: true },
     ]);
   });
 });
@@ -114,10 +137,10 @@ describe("setSidebarNavItemVisible", () => {
     const next = setSidebarNavItemVisible({ items, key: "search", visible: false, previous: [] });
 
     expect(next).toEqual([
-      { key: "new-workspace", visible: true },
-      { key: "companion", visible: true },
-      { key: "history", visible: true },
+      { key: "home", visible: true },
       { key: "search", visible: false },
+      { key: "history", visible: true },
+      { key: "companion", visible: true },
       { key: kanbanKey, visible: true },
     ]);
   });
@@ -133,16 +156,16 @@ describe("setSidebarNavItemVisible", () => {
 
     expect(next).toEqual([
       { key: notesKey, visible: false },
+      { key: "home", visible: true },
       { key: "history", visible: false },
-      { key: "new-workspace", visible: true },
-      { key: "companion", visible: true },
       { key: "search", visible: true },
+      { key: "companion", visible: true },
     ]);
   });
 
   it("keeps an unavailable plugin in its configured position", () => {
     const previous: SidebarNavPreference[] = [
-      { key: "new-workspace", visible: true },
+      { key: "home", visible: true },
       { key: notesKey, visible: false },
       { key: "history", visible: true },
       { key: "search", visible: true },
@@ -152,7 +175,7 @@ describe("setSidebarNavItemVisible", () => {
     const next = setSidebarNavItemVisible({ items, key: "history", visible: false, previous });
 
     expect(next).toEqual([
-      { key: "new-workspace", visible: true },
+      { key: "home", visible: true },
       { key: notesKey, visible: false },
       { key: "history", visible: false },
       { key: "search", visible: true },
@@ -179,10 +202,10 @@ describe("moveSidebarNavItem", () => {
     const next = moveSidebarNavItem({ items, key: "search", direction: "up", previous: [] });
 
     expect(next.map((preference) => preference.key)).toEqual([
-      "new-workspace",
-      "companion",
       "search",
+      "home",
       "history",
+      "companion",
       kanbanKey,
     ]);
   });
@@ -191,18 +214,18 @@ describe("moveSidebarNavItem", () => {
     const next = moveSidebarNavItem({ items, key: "search", direction: "down", previous: [] });
 
     expect(next.map((preference) => preference.key)).toEqual([
-      "new-workspace",
-      "companion",
+      "home",
       "history",
-      kanbanKey,
       "search",
+      "companion",
+      kanbanKey,
     ]);
   });
 
   it("leaves the order alone at the boundaries", () => {
     const first = moveSidebarNavItem({
       items,
-      key: "new-workspace",
+      key: "home",
       direction: "up",
       previous: [],
     });
@@ -234,7 +257,7 @@ describe("moveSidebarNavItem", () => {
 
 describe("builtinSidebarNavShortcutAction", () => {
   it("maps only the builtins that have a keyboard shortcut", () => {
-    expect(builtinSidebarNavShortcutAction("new-workspace")).toBe("new-workspace");
+    expect(builtinSidebarNavShortcutAction("home")).toBeNull();
     expect(builtinSidebarNavShortcutAction("search")).toBe("toggle-command-center");
     expect(builtinSidebarNavShortcutAction("companion")).toBe("toggle-companion");
     expect(builtinSidebarNavShortcutAction("history")).toBeNull();

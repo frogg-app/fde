@@ -158,7 +158,7 @@ test.describe("Project with no workspaces persists", () => {
       const newWorkspaceRow = page.getByTestId(
         `sidebar-project-new-workspace-row-${projectViewKey}`,
       );
-      const globalNewWorkspace = page.getByTestId("sidebar-global-new-workspace");
+      const homeButton = page.getByTestId("sidebar-home");
 
       await gotoAppShell(page);
       await waitForSidebarHydration(page);
@@ -181,7 +181,7 @@ test.describe("Project with no workspaces persists", () => {
       await expect(projectRow).toBeVisible({ timeout: 30_000 });
       await expect(newWorkspaceRow).toBeVisible({ timeout: 30_000 });
       await expect(newWorkspaceRow).toContainText("New workspace");
-      await expect(globalNewWorkspace).toBeVisible({ timeout: 30_000 });
+      await expect(homeButton).toBeVisible({ timeout: 30_000 });
 
       // The project survives a reload after its last workspace is archived.
       await page.reload();
