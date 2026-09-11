@@ -16,8 +16,6 @@ export type DesktopAppUpdateStatus =
   | "installed"
   | "error";
 
-export const PENDING_RECHECK_MS = 10_000;
-
 export interface DesktopAppUpdaterSnapshot {
   status: DesktopAppUpdateStatus;
   availableUpdate: DesktopAppUpdateCheckResult | null;

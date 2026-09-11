@@ -189,7 +189,14 @@ The command resolves the target from the GitHub releases
 (`https://api.github.com/repos/frogg-app/fde/releases`; `FDE_GITHUB_TOKEN`
 raises the rate limit and lets a private repository answer, `FDE_RELEASES_API`
 points at another listing, and `FDE_RELEASE_BASE` with `--to` downloads
-from a mirror without the API). It downloads
+from a mirror without the API). If the default public API returns HTTP 403 or 429
+without an explicit token, the CLI retries once using `GH_TOKEN`, `GITHUB_TOKEN`,
+or an existing `gh auth login` credential, in that order. The `gh` lookup has a
+five-second timeout. These reused credentials stay in the release lookup and are
+never forwarded to download hosts or custom API/mirror URLs. Rate-limit failures
+include the reset time when GitHub provides one.
+
+It downloads
 `fde-daemon-<v>-<platform>-<arch>.tar.gz` with its `.sha256`, verifies the
 checksum, unpacks into `<install dir>/versions/<v>` next to the running
 version, writes `<install dir>/previous`, and hands off to a detached

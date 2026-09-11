@@ -1,5 +1,44 @@
 # Changelog
 
+## 0.2.9 - 2026-09-11
+
+- Fix an update notification feedback loop: reading a cached available update no longer
+  emits another event that triggers another check. Missing assets and failed cache
+  persistence cannot restart the loop; pending updates use the 30-minute schedule.
+- When GitHub rate-limits an unauthenticated CLI update check, retry once using an
+  existing GitHub login. Tokens stay in memory and are never sent to mirrors.
+
+- Repeating `fde start` reports that the daemon is already running, with no error log dump.
+
+Includes the previously unpublished 0.2.1–0.2.8 maintenance fixes.
+
+- Desktop checks for updates on launch and every 30 minutes, announces available
+  updates in a bottom-right toast, and shows download/install progress without
+  an additional app confirmation. Repeated install requests are blocked.
+- Sidebar navigation defaults to Home, Search, History, then Companion. Add project
+  and Settings are stacked labeled footer buttons; new workspaces belong to projects.
+- Voice cleanup releases Android recording effects, audio resources, callbacks,
+  and worker threads. Stopped microphone/playback operations cannot start late,
+  and canceled speech connections release their sessions. Android needs the rebuilt APK.
+- Desktop transport bounds pending writes and cancels stalled writes, MCP waits
+  release abort listeners, and terminal output pauses when its parser falls behind.
+  Desktop exit bounds daemon cleanup and records lifecycle events.
+- Companion retains interrupted conversation context, starts speech earlier, and
+  tolerates cold local speech workers. Windows installers use the FDE icon.
+- Refresh compatible editor, provider, protocol, browser-test, and build dependencies.
+  Align CodeMirror and React Query package identities and apply OpenCode's cancellation
+  patch whether the SDK is hoisted or installed in the server workspace. Keep native
+  speech, terminal beta, prompt, and lint-tool migrations separate from routine updates.
+- Upgrade desktop ZIP and SHA-2 handling with archive/checksum regression coverage,
+  and update server UUID/OpenAI SDK integrations. Desktop source builds require Rust 1.88.
+- The proposed settings redesign separates app host profiles from daemon settings;
+  it is documented, not implemented. CI/release guidance now identifies actual FDE
+  workflows and their platform coverage. Full typecheck builds native-audio types
+  first, so local checks work from a clean checkout too.
+- Device validation remains open for the reported memory growth, 10–15 second
+  installer/hover delays, and surviving Windows WebView2 processes. Automated checks
+  establish specific repairs, not a confirmed cause or resolution of every device symptom.
+
 ## 0.2.8 - 2026-09-11
 
 - Repeating `fde start` reports that the daemon is already running, with no error log dump.

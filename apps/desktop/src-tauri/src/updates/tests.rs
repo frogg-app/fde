@@ -175,6 +175,14 @@ async fn check_finds_the_newest_release_and_maps_the_platform_asset() {
     assert!(mac.has_update && !mac.ready_to_install);
     assert!(mac.error_message.unwrap().contains("FDE-10.0.0-beta.1-"));
 
+    // Results from a previous binary cannot keep advertising an installed update.
+    let mut previous = result.clone();
+    previous.current_version = "0.0.9".into();
+    updates.remember(&previous);
+    assert!(updates
+        .fresh_cached(Channel::Stable, result.checked_at)
+        .is_none());
+
     // The cache round-trips through the JSON shape and answers automatic checks.
     updates.remember(&result);
     let cached = updates
@@ -287,4 +295,142 @@ async fn download_rejects_a_checksum_mismatch_and_a_missing_sidecar_is_tolerated
 
     let path = download_asset(&updates, &asset, None).await.unwrap();
     assert_eq!(std::fs::read(path).unwrap(), PAYLOAD);
+}
+
+#[tokio::test]
+async fn automatic_cached_check_does_not_reemit_available_to_its_listener() {
+    let server = serve(200, payload_digest());
+    let dir = tempfile::tempdir().unwrap();
+    let events = Arc::new(Mutex::new(Vec::new()));
+    let updates = updates(&server, dir.path(), events.clone());
+
+    // The background check notifies the UI after persisting an available update.
+    let fresh = updates
+        .check_with(
+            Channel::Stable,
+            true,
+            updates.check_github(Channel::Stable, Some(AssetKind::LinuxDeb)),
+        )
+        .await;
+    assert_eq!(fresh["hasUpdate"], true);
+    assert_eq!(
+        events.lock().unwrap().drain(..).collect::<Vec<_>>(),
+        vec![(super::AVAILABLE_EVENT.to_string(), fresh.clone())]
+    );
+
+    // The UI's available-event listener asks for the cached result. Re-emitting
+    // here schedules that listener again, creating an unbounded IPC/event loop.
+    let cached = updates
+        .check_with(Channel::Stable, true, async {
+            panic!("the listener's automatic check must reuse the fresh cache")
+        })
+        .await;
+    assert_eq!(cached, fresh);
+    assert!(
+        events.lock().unwrap().is_empty(),
+        "reading cached availability must not notify its listener again"
+    );
+
+    // A manual check still bypasses that cache and notifies exactly once.
+    let manual = updates
+        .check_with(
+            Channel::Stable,
+            false,
+            updates.check_github(Channel::Stable, Some(AssetKind::LinuxDeb)),
+        )
+        .await;
+    assert_eq!(manual["hasUpdate"], true);
+    assert_eq!(
+        *events.lock().unwrap(),
+        vec![(super::AVAILABLE_EVENT.to_string(), manual)]
+    );
+}
+
+#[tokio::test]
+async fn missing_platform_asset_returns_error_without_availability_event() {
+    let server = serve(200, payload_digest());
+    let dir = tempfile::tempdir().unwrap();
+    let events = Arc::new(Mutex::new(Vec::new()));
+    let updates = updates(&server, dir.path(), events.clone());
+
+    // The newest beta has only a Linux asset. Neither manual nor automatic
+    // checks may announce an error result that their listener cannot cache.
+    for automatic in [false, true] {
+        let result = updates
+            .check_with(
+                Channel::Beta,
+                automatic,
+                updates.check_github(Channel::Beta, Some(AssetKind::WindowsInstaller)),
+            )
+            .await;
+        assert_eq!(result["hasUpdate"], true);
+        assert_eq!(result["readyToInstall"], false);
+        assert!(result["errorMessage"]
+            .as_str()
+            .unwrap()
+            .contains("has no FDE-10.0.0-beta.1-x64-setup.zip"));
+        assert!(updates
+            .fresh_cached(Channel::Beta, super::cache::now_ms())
+            .is_none());
+        assert!(
+            events.lock().unwrap().is_empty(),
+            "an uncacheable error must not trigger the availability listener"
+        );
+    }
+}
+
+#[tokio::test]
+async fn automatic_check_reuses_memory_when_persisting_cache_fails() {
+    let server = serve(200, payload_digest());
+    let dir = tempfile::tempdir().unwrap();
+    let events = Arc::new(Mutex::new(Vec::new()));
+    let updates = updates(&server, dir.path(), events.clone());
+    // A file where the config directory belongs makes persistence fail on all
+    // platforms, including tests run with elevated filesystem privileges.
+    std::fs::write(&updates.config_dir, b"not a directory").unwrap();
+    let fresh = updates
+        .check_with(
+            Channel::Stable,
+            true,
+            updates.check_github(Channel::Stable, Some(AssetKind::LinuxDeb)),
+        )
+        .await;
+    assert_eq!(fresh["hasUpdate"], true);
+    assert_eq!(fresh["errorMessage"], Value::Null);
+    assert_eq!(
+        events.lock().unwrap().drain(..).collect::<Vec<_>>(),
+        vec![(super::AVAILABLE_EVENT.to_string(), fresh.clone())]
+    );
+    assert!(super::cache::read(&updates.config_dir).is_none());
+    let cached = updates
+        .check_with(Channel::Stable, true, async {
+            panic!("failed disk persistence must not force the availability listener to refetch")
+        })
+        .await;
+    assert_eq!(cached, fresh);
+    assert!(events.lock().unwrap().is_empty());
+    assert_eq!(updates.last_check().unwrap().result, fresh);
+}
+
+#[tokio::test]
+async fn updates_loads_last_check_from_disk_once_at_startup() {
+    let server = serve(200, payload_digest());
+    let dir = tempfile::tempdir().unwrap();
+    let events = Arc::new(Mutex::new(Vec::new()));
+    let first = updates(&server, dir.path(), events.clone());
+    let result = first
+        .check_github(Channel::Stable, Some(AssetKind::LinuxDeb))
+        .await;
+    first.remember(&result);
+
+    let restarted = updates(&server, dir.path(), events.clone());
+    assert_eq!(restarted.last_check(), first.last_check());
+    std::fs::remove_file(super::cache::cache_path(&restarted.config_dir)).unwrap();
+    let cached = restarted
+        .check_with(Channel::Stable, true, async {
+            panic!("a loaded cache must not depend on subsequent disk reads")
+        })
+        .await;
+    assert_eq!(cached, result.to_json());
+    assert!(events.lock().unwrap().is_empty());
 }

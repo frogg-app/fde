@@ -23,7 +23,7 @@ mod tests;
 
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use serde_json::{json, Value};
@@ -68,6 +68,7 @@ pub struct Updates {
     pub download_dir: PathBuf,
     pub strategy: Strategy,
     emit: EventSink,
+    last_check: Mutex<Option<LastCheck>>,
     installing: AtomicBool,
 }
 
@@ -80,6 +81,7 @@ impl Updates {
         strategy: Strategy,
         emit: EventSink,
     ) -> Self {
+        let last_check = Mutex::new(cache::read(&config_dir));
         Self {
             releases_url,
             current_version,
@@ -87,6 +89,7 @@ impl Updates {
             download_dir,
             strategy,
             emit,
+            last_check,
             installing: AtomicBool::new(false),
         }
     }
@@ -100,29 +103,57 @@ impl Updates {
     }
 
     pub fn last_check(&self) -> Option<LastCheck> {
-        cache::read(&self.config_dir)
+        self.last_check.lock().unwrap().clone()
     }
 
-    /// Persists `result`; failures only log (the check itself succeeded).
+    /// Remembers `result` in memory before persistence, so listeners can reuse
+    /// it even if the config directory is unwritable. Disk failures only log.
     pub fn remember(&self, result: &CheckResult) {
         let entry = LastCheck {
             checked_at: result.checked_at,
             result: result.to_json(),
         };
+        *self.last_check.lock().unwrap() = Some(entry.clone());
         if let Err(error) = cache::write(&self.config_dir, &entry) {
             log::warn!("updates: could not write {}: {error}", cache::FILENAME);
         }
     }
 
-    /// A cached answer an automatic check may reuse: same channel, no error,
+    /// A cached answer an automatic check may reuse: same app version and channel, no error,
     /// younger than the TTL.
     pub fn fresh_cached(&self, channel: Channel, now: u64) -> Option<Value> {
         let cached = self.last_check()?;
         let result: CheckResult = serde_json::from_value(cached.result.clone()).ok()?;
-        (result.channel == check::channel_name(channel)
+        (result.current_version == self.current_version
+            && result.channel == check::channel_name(channel)
             && result.error_message.is_none()
             && cached.age_ms(now) < AUTOMATIC_CACHE_TTL_MS)
             .then_some(cached.result)
+    }
+
+    /// Applies cache reuse, persistence, and notifications to either check strategy.
+    async fn check_with(
+        &self,
+        channel: Channel,
+        automatic: bool,
+        fresh_check: impl std::future::Future<Output = CheckResult>,
+    ) -> Value {
+        if automatic {
+            if let Some(cached) = self.fresh_cached(channel, cache::now_ms()) {
+                // The availability listener reads this cache. Emitting here
+                // would trigger another automatic check indefinitely.
+                return cached;
+            }
+        }
+        let result = fresh_check.await;
+        self.remember(&result);
+        let payload = result.to_json();
+        // Error results are not reusable by the listener's automatic check.
+        // Announcing a release with no platform asset would repeatedly refetch it.
+        if result.has_update && result.error_message.is_none() {
+            self.emit_available(payload.clone());
+        }
+        payload
     }
 
     /// The GitHub-release check for `channel` on this platform.
@@ -232,21 +263,9 @@ pub async fn check<R: Runtime>(app: &AppHandle<R>, args: &Value) -> Result<Value
     let updates = app.state::<Updates>();
     let channel = channel_for(app, args);
     let automatic = args.get("intent").and_then(Value::as_str) != Some("manual");
-    if automatic {
-        if let Some(cached) = updates.fresh_cached(channel, cache::now_ms()) {
-            if cached["hasUpdate"] == json!(true) {
-                updates.emit_available(cached.clone());
-            }
-            return Ok(cached);
-        }
-    }
-    let result = run_check(app, &updates, channel).await;
-    updates.remember(&result);
-    let payload = result.to_json();
-    if result.has_update {
-        updates.emit_available(payload.clone());
-    }
-    Ok(payload)
+    Ok(updates
+        .check_with(channel, automatic, run_check(app, &updates, channel))
+        .await)
 }
 
 /// `install_app_update {releaseChannel?}`: `{installed, version, message,
