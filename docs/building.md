@@ -8,7 +8,7 @@ injects into the webview. `bridge.js` is generated (gitignored); `cargo tauri` r
 ## Prerequisites
 
 - Node 22 and `npm ci` at the repo root.
-- Rust stable, `cargo install tauri-cli --version ^2` (`cargo tauri`).
+- Rust stable (1.88 or newer), `cargo install tauri-cli --version ^2` (`cargo tauri`).
 - Linux: `libwebkit2gtk-4.1-dev`, `libgtk-3-dev`, `libayatana-appindicator3-dev`,
   `librsvg2-dev`, `patchelf`.
 - Windows cross-builds from Linux: `cargo install cargo-xwin`,
