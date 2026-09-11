@@ -27,6 +27,22 @@ updates:
       - dependency-name: react-native-nitro-modules
       - dependency-name: react-native-keyboard-controller
       - dependency-name: react-native-unistyles
+      # Jest types must track the Expo module test runtime (currently Jest 29).
+      - dependency-name: "@types/jest"
+        update-types: [version-update:semver-major]
+      # Keep terminal prereleases and native speech upgrades out of routine batches.
+      - dependency-name: "@xterm/headless"
+      - dependency-name: sherpa-onnx-node
+      # These upgrades need a deliberate lint-policy or vendored-patch migration.
+      - dependency-name: oxfmt
+      - dependency-name: oxlint
+      - dependency-name: oxlint-tsgolint
+      - dependency-name: "@opencode-ai/sdk"
+      - dependency-name: "@clack/prompts"
+      # Keep identity-sensitive dependencies aligned with root overrides.
+      - dependency-name: "@codemirror/state"
+      - dependency-name: "@codemirror/view"
+      - dependency-name: "@tanstack/react-query"
 
   - package-ecosystem: cargo
     directory: /apps/desktop/src-tauri

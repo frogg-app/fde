@@ -33,6 +33,10 @@ const patchedPackages = [
     patchPrefix: "@mattermost+react-native-paste-input+",
   },
   {
+    nodeModulesPath: "node_modules/@opencode-ai/sdk",
+    patchPrefix: "@opencode-ai+sdk+",
+  },
+  {
     nodeModulesPath: "packages/server/node_modules/@opencode-ai/sdk",
     patchPrefix: "@opencode-ai+sdk+",
     cwd: "packages/server",

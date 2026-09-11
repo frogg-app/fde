@@ -1,6 +1,9 @@
 # Release
 
-> Note: mobile (iOS/Android) builds are not wired up in this fork; the commands below are kept for reference from upstream Paseo.
+> Historical upstream Paseo procedure. For FDE releases, use [CI and releases](ci.md)
+> and [building](building.md). FDE ships Tauri desktop bundles and Android APKs;
+> the npm/EAS workflows and approval procedure below are retained as upstream
+> reference and do not describe this fork.
 
 All workspaces share one version and release together.
 

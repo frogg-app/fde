@@ -58,12 +58,40 @@ local branch while its unfinished index remains attached to it.
 
 ## Dependency PRs
 
-Seven Dependabot PRs were open at audit time: #12, #13, #15, #16, #17, #18 and
-#35. They remain separate from baseline integration. #13 and #18 had green PR
-checks, but those checks do not constitute desktop platform acceptance for #13.
-The others had failing checks; #35 failed during dependency setup. Review version
-compatibility and rerun current checks before merging, rather than bundling them
-with recovered application fixes.
+The follow-up audit found seven open dependency PRs: #12, #13, #15, #16,
+#17, #18, and #37 (which superseded #35). The old failures on #12, #15,
+#16, and #17 came from unrelated Tauri JSON formatting, before typecheck ran.
+PR #37 failed dependency installation because oxlint 1.82 requires
+oxlint-tsgolint >=7.0.2001, but the root dependency remained ^0.22.1.
+
+- #12 (ZIP), #13 (SHA-2), #15 (UUID), and #17 (OpenAI SDK) are selected for
+  integration with refreshed compatibility checks. Follow their PR checks for
+  merge status; local compatibility results do not replace platform acceptance.
+- #16 (js-yaml) was closed: no maintained implementation or release script
+  imports the direct root dependency. The grouped maintenance update removes it;
+  transitive users retain their own dependency declarations.
+- #18 (Jest types 30) was closed because it does not match the native audio
+  module's Jest 29 runtime. Keep types aligned until Expo module scripts migrates.
+- #37 is narrowed to compatible updates, with CodeMirror and React Query
+  root overrides aligned to prevent duplicate class/context identities.
+
+### Deliberately held upgrades
+
+Dependabot excludes the following packages from routine grouped updates. These
+are explicit follow-ups, not completed migrations:
+
+| Package                  | Retained version                           | Upgrade work required                                                                                                                 |
+| ------------------------ | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| oxfmt                    | 0.46.0                                     | Review formatter changes; 0.67.0 changes nine unrelated source files.                                                                 |
+| oxlint / oxlint-tsgolint | 1.61.0 / 0.22.1                            | Upgrade together and review newly enabled lint rules; 1.82.0 reports over 1,000 existing-source diagnostics.                          |
+| @opencode-ai/sdk         | 1.14.46                                    | Migrate and verify the version-specific reader-cancellation patch; postinstall now supports both hoisted and workspace installations. |
+| @clack/prompts           | 1.1.0                                      | Adapt cancellation narrowing and custom validators to the newer CLI prompt contract.                                                  |
+| sherpa-onnx-node         | 1.12.28                                    | Validate native speech libraries and full microphone-to-speaker behavior on supported platforms.                                      |
+| @xterm/headless          | daemon 6.0.0; UI test dependency unchanged | Coordinate terminal releases; do not move production daemon code to a beta through a routine batch.                                   |
+
+CodeMirror state/view and React Query updates also require root override changes
+in the same patch; their automated bumps are excluded to prevent invalid or
+split dependency trees. These holds do not disable security review.
 
 ## Verification boundary
 
