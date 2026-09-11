@@ -2,6 +2,7 @@
 //! disk (tests, local builds); anything else goes through reqwest with a
 //! streaming body so the UI can show progress.
 
+use std::io::Read;
 use std::path::{Path, PathBuf};
 
 use futures_util::StreamExt;
@@ -94,7 +95,18 @@ pub async fn fetch_text(url: &str) -> Result<String, String> {
 pub fn sha256_of_file(path: &Path) -> Result<String, String> {
     let mut file = std::fs::File::open(path).map_err(|e| e.to_string())?;
     let mut hasher = Sha256::new();
-    std::io::copy(&mut file, &mut hasher).map_err(|e| e.to_string())?;
+    // sha2 0.11 no longer implements std::io::Write. Keep hashing streamed
+    // with a fixed buffer rather than loading a complete installer into RAM.
+    let mut buffer = [0u8; 64 * 1024];
+    loop {
+        let read = match file.read(&mut buffer) {
+            Ok(0) => break,
+            Ok(read) => read,
+            Err(error) if error.kind() == std::io::ErrorKind::Interrupted => continue,
+            Err(error) => return Err(error.to_string()),
+        };
+        hasher.update(&buffer[..read]);
+    }
     Ok(hasher
         .finalize()
         .iter()
@@ -163,6 +175,23 @@ mod tests {
         verify_checksum(&path, &format!("{digest}  x.bin")).unwrap();
         let error = verify_checksum(&path, &format!("{}  x.bin", "0".repeat(64))).unwrap_err();
         assert!(error.contains("checksum mismatch"));
+    }
+
+    #[test]
+    fn hashes_empty_files_and_multiple_read_buffers() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("digest.bin");
+        std::fs::write(&path, []).unwrap();
+        assert_eq!(
+            sha256_of_file(&path).unwrap(),
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        );
+        // The million-'a' vector crosses full buffers and ends with a short read.
+        std::fs::write(&path, vec![b'a'; 1_000_000]).unwrap();
+        assert_eq!(
+            sha256_of_file(&path).unwrap(),
+            "cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0"
+        );
     }
 
     #[tokio::test]

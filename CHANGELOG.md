@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.4 - 2026-09-11
+
+- Upgrade desktop SHA-256 verification to sha2 0.11, replacing its removed I/O
+  writer adapter with bounded streaming reads. Cover empty files and multi-buffer
+  payloads to preserve installer checksum verification.
+
 ## 0.2.3 - 2026-09-11
 
 - Upgrade desktop ZIP extraction to zip 8.6.0 and align the declared Rust minimum
