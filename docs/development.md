@@ -566,3 +566,8 @@ PID file produces a single `Daemon already running (PID …).` message and succe
 A stale PID file still allows startup. A concurrent successful start is recognized
 before reporting startup failure; genuine failures retain their diagnostic output.
 Use `fde restart` to restart a running daemon with changed launch options.
+
+Legacy `fde daemon <command>` invocations remain accepted but hidden from root
+help. Installed service definitions, desktop integrations, and update supervisors
+still depend on them, including `daemon self-update` and its internal apply flags.
+Use the top-level lifecycle commands and `fde auth` for new interactive guidance.

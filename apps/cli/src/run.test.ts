@@ -42,6 +42,22 @@ describe("runCli", () => {
     ).toEqual(["node", "paseo", "daemon", "set-password"]);
   });
 
+  it("recognizes legacy daemon commands even beside a directory named daemon", () => {
+    const root = mkdtempSync(path.join(tmpdir(), "fde-cli-legacy-"));
+    mkdirSync(path.join(root, "daemon"));
+    try {
+      expect(
+        createCliParseArgv({
+          argv: ["daemon", "start", "--foreground"],
+          cwd: root,
+          nodeArgv: ["node", "fde"],
+        }),
+      ).toEqual(["node", "fde", "daemon", "start", "--foreground"]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it("preserves the hooks command argv", () => {
     expect(
       createCliParseArgv({

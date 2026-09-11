@@ -147,3 +147,14 @@ export function createAuthCommand(): Command {
 
   return auth;
 }
+
+/** Preserve commands embedded in installed services and older client integrations. */
+export function createLegacyDaemonCommand(): Command {
+  const daemon = new Command("daemon").description("Legacy daemon commands");
+  addDaemonLifecycleCommands(daemon);
+  daemon.addCommand(selfUpdateCommand());
+  for (const command of createAuthCommand().commands) {
+    daemon.addCommand(command);
+  }
+  return daemon;
+}

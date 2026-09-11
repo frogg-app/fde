@@ -68,10 +68,11 @@ describe("canonical CLI surface", () => {
     expect(cli.commands.map((command) => command.name())).not.toContain("pair");
   });
 
-  it("promotes daemon lifecycle to the root, with no daemon namespace left", () => {
+  it("promotes daemon lifecycle to the root while hiding legacy compatibility", () => {
     const cli = createCli();
     const names = cli.commands.map((command) => command.name());
-    expect(names).not.toContain("daemon");
+    expect(names).toContain("daemon");
+    expect(cli.helpInformation()).not.toMatch(/^\s+daemon(?:\s|$)/m);
     // `self-update` said the same thing twice; it is just `update` now.
     expect(names).toContain("update");
     expect(names).not.toContain("self-update");
