@@ -1,6 +1,7 @@
 import { Command, Option } from "commander";
 import chalk from "chalk";
 import {
+  resolveLocalDaemonState,
   startLocalDaemonForeground,
   startLocalDaemonDetached,
   type DaemonStartOptions as StartOptions,
@@ -46,23 +47,35 @@ export async function runStart(options: StartOptions): Promise<void> {
     process.exit(1);
   }
 
+  if (reportAlreadyRunning(options)) return;
+
   if (!options.foreground) {
     try {
       const startup = await startLocalDaemonDetached(options);
       console.log(chalk.green(`Daemon starting in background (PID ${startup.pid ?? "unknown"}).`));
       console.log(chalk.dim(`Logs: ${startup.logPath}`));
     } catch (err) {
+      // Another start may win the race after the initial check.
+      if (reportAlreadyRunning(options)) return;
       exitWithError(getErrorMessage(err));
     }
     return;
   }
   try {
     const status = startLocalDaemonForeground(options);
+    if (status !== 0 && reportAlreadyRunning(options)) return;
     process.exit(status);
   } catch (err) {
     const message = getErrorMessage(err);
     exitWithError(`Failed to start daemon: ${message}`);
   }
+}
+
+function reportAlreadyRunning(options: StartOptions): boolean {
+  const state = resolveLocalDaemonState({ home: options.home });
+  if (!state.running || !state.pidInfo) return false;
+  console.log(`Daemon already running (PID ${state.pidInfo.pid}).`);
+  return true;
 }
 
 function exitWithError(message: string): never {
