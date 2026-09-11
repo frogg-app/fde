@@ -1,6 +1,7 @@
 import type pino from "pino";
-import { OpenAI } from "openai";
+import { OpenAI, type ClientOptions } from "openai";
 import { Readable } from "node:stream";
+import type { ReadableStream } from "node:stream/web";
 import type { SpeechStreamResult, TextToSpeechProvider } from "../../speech-provider.js";
 
 export type { SpeechStreamResult };
@@ -18,7 +19,11 @@ export class OpenAITTS implements TextToSpeechProvider {
   private readonly config: TTSConfig;
   private readonly logger: pino.Logger;
 
-  constructor(ttsConfig: TTSConfig, parentLogger: pino.Logger) {
+  constructor(
+    ttsConfig: TTSConfig,
+    parentLogger: pino.Logger,
+    transport?: Pick<ClientOptions, "fetch" | "maxRetries">,
+  ) {
     this.config = {
       model: "tts-1",
       voice: "alloy",
@@ -27,6 +32,7 @@ export class OpenAITTS implements TextToSpeechProvider {
     };
     this.logger = parentLogger.child({ module: "agent", provider: "openai", component: "tts" });
     this.openaiClient = new OpenAI({
+      ...transport,
       apiKey: ttsConfig.apiKey,
       ...(ttsConfig.baseUrl ? { baseURL: ttsConfig.baseUrl } : {}),
     });
@@ -67,7 +73,8 @@ export class OpenAITTS implements TextToSpeechProvider {
           | "pcm",
       });
 
-      const audioStream = response.body as unknown as Readable;
+      if (!response.body) throw new Error("Speech response contained no audio stream");
+      const audioStream = Readable.fromWeb(response.body as ReadableStream<Uint8Array>);
 
       const duration = Date.now() - startTime;
       this.logger.debug({ duration }, "Speech synthesis stream ready");

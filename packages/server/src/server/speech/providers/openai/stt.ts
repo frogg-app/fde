@@ -1,6 +1,6 @@
 import { EventEmitter } from "node:events";
 import type pino from "pino";
-import { OpenAI } from "openai";
+import { OpenAI, type ClientOptions } from "openai";
 import { writeFile, unlink } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
@@ -52,10 +52,15 @@ export class OpenAISTT implements SpeechToTextProvider {
   private readonly logger: pino.Logger;
   public readonly id = "openai" as const;
 
-  constructor(sttConfig: STTConfig, parentLogger: pino.Logger) {
+  constructor(
+    sttConfig: STTConfig,
+    parentLogger: pino.Logger,
+    transport?: Pick<ClientOptions, "fetch" | "maxRetries">,
+  ) {
     this.config = sttConfig;
     this.logger = parentLogger.child({ module: "agent", provider: "openai", component: "stt" });
     this.openaiClient = new OpenAI({
+      ...transport,
       apiKey: sttConfig.apiKey,
       ...(sttConfig.baseUrl ? { baseURL: sttConfig.baseUrl } : {}),
     });
