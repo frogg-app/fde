@@ -87,7 +87,7 @@
   },
   "devDependencies": {
     "@types/ws": "^8.5.14",
-    "@typescript/native-preview": "7.0.0-dev.20260423.1",
+    "@typescript/native-preview": "7.0.0-dev.20260707.2",
     "@vercel/nft": "^1.5.0",
     "concurrently": "^10.0.5",
     "cross-env": "^10.1.0",
