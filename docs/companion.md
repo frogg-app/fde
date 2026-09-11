@@ -8,8 +8,11 @@ It is deliberately _not_ a coding agent. It is a fast, cheap conversational orch
 whose whole job is to stay in the conversation. Anything that needs real thought is
 handed to a subagent while the Companion keeps talking to you.
 
-> Status: in development on `voice-conversation-orchestrator`. This page is the design
-> and the spec; sections marked **(planned)** are not built yet.
+> Status (2026-09-11): implemented and included in 0.2.0, with interruption,
+> speech segmentation and orb follow-ups integrated for 0.2.1. Full-loop device
+> acceptance remains open; backend measurements below are not end-to-end results.
+> See [voice follow-ups](companion-voice-design.md) for current limitations and
+> [ROADMAP.md](../ROADMAP.md) for remaining work.
 
 ## How it differs from voice mode
 

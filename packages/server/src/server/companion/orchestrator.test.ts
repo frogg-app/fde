@@ -302,6 +302,37 @@ describe("CompanionOrchestrator", () => {
     ]);
   });
 
+  // A barge-in abandons the generator part-way. The exchange still has to reach
+  // the history, or the Companion has no record it ever spoke: it repeats itself
+  // and answers "what was that last thing?" with nothing. See
+  // docs/companion-voice-design.md.
+  it("remembers what the user heard when a turn is abandoned part-way", async () => {
+    const { client, requests } = createScriptedClient([
+      {
+        events: deltaEvents(["It only fails on Windows.", " I have not found the cause yet."]),
+        message: textMessage("It only fails on Windows. I have not found the cause yet."),
+      },
+      { events: deltaEvents(["sure."]), message: textMessage("sure.") },
+    ]);
+    const orchestrator = new CompanionOrchestrator({ client, tools: [], notebook });
+
+    // Take one event, then abandon it the way a barge-in does.
+    const turn = orchestrator.turn("why is the push test flaky", () => "It only fails on Windows.");
+    await turn.next();
+    await turn.return(undefined);
+
+    await collect(orchestrator.turn("what was that last thing?"));
+
+    expect(requests[1].params.messages).toEqual([
+      { role: "user", content: "why is the push test flaky" },
+      { role: "assistant", content: "It only fails on Windows." },
+      {
+        role: "user",
+        content: "Your notebook is empty.\n\nThey said: what was that last thing?",
+      },
+    ]);
+  });
+
   it("speaks a deferred job's result when it re-enters as a synthetic user turn", async () => {
     let finish = (_answer: string): void => {};
     const answer = new Promise<string>((resolve) => {

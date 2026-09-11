@@ -13,6 +13,18 @@
 const MIN_SEGMENT_CHARS = 40;
 
 /**
+ * The first segment of a turn is allowed to be much shorter than the rest.
+ *
+ * Time to first audio is what the listener experiences as the Companion's
+ * response time; everything after streams while they are already listening. So
+ * the opening clause is cut as early as a natural boundary allows and the rest
+ * of the turn keeps the longer minimum, which reads better. Splitting the whole
+ * reply this finely would make the prosody choppy. See
+ * docs/companion-voice-design.md.
+ */
+const FIRST_SEGMENT_MIN_CHARS = 16;
+
+/**
  * A clause-free run this long is never going to reach a boundary in time, so it
  * is cut at the last word instead of holding the listener in silence.
  */
@@ -30,6 +42,12 @@ function findBoundary(buffer: string, pattern: RegExp, minChars: number): number
     }
   }
   return null;
+}
+
+function smallest(a: number | null, b: number | null): number | null {
+  if (a === null) return b;
+  if (b === null) return a;
+  return Math.min(a, b);
 }
 
 function findWordCut(buffer: string): number | null {
@@ -50,15 +68,22 @@ export interface CompanionSpeakableCut {
  * or has no boundary yet. Exported because the cut points are the behaviour
  * worth testing directly.
  */
-export function cutSpeakableSegment(buffer: string): CompanionSpeakableCut | null {
+export function cutSpeakableSegment(buffer: string, isFirst = false): CompanionSpeakableCut | null {
+  const minChars = isFirst ? FIRST_SEGMENT_MIN_CHARS : MIN_SEGMENT_CHARS;
   const trimmedStart = buffer.replace(/^\s+/, "");
-  if (trimmedStart.length < MIN_SEGMENT_CHARS) {
+  if (trimmedStart.length < minChars) {
     return null;
   }
 
-  const sentenceEnd = findBoundary(trimmedStart, SENTENCE_BOUNDARY, MIN_SEGMENT_CHARS);
-  const clauseEnd = sentenceEnd ?? findBoundary(trimmedStart, CLAUSE_BOUNDARY, MIN_SEGMENT_CHARS);
-  const cut = clauseEnd ?? findWordCut(trimmedStart);
+  const sentenceEnd = findBoundary(trimmedStart, SENTENCE_BOUNDARY, minChars);
+  const clauseEnd = findBoundary(trimmedStart, CLAUSE_BOUNDARY, minChars);
+  // The opening segment takes whichever boundary comes first, so it gets out as
+  // early as the text allows. Later segments prefer a full sentence, because by
+  // then the listener is already hearing audio and prosody matters more.
+  const boundary = isFirst
+    ? (smallest(sentenceEnd, clauseEnd) ?? null)
+    : (sentenceEnd ?? clauseEnd);
+  const cut = boundary ?? findWordCut(trimmedStart);
   if (cut === null) {
     return null;
   }
@@ -122,17 +147,20 @@ export function createCompanionSpeechStream(
     queue = speakAfter(queue, segment);
   }
 
+  let isFirstSegment = true;
+
   return {
     push(text) {
       if (options.signal.aborted) {
         return;
       }
       buffer += text;
-      let cut = cutSpeakableSegment(buffer);
+      let cut = cutSpeakableSegment(buffer, isFirstSegment);
       while (cut) {
         buffer = cut.rest;
+        isFirstSegment = false;
         enqueue(cut.segment);
-        cut = cutSpeakableSegment(buffer);
+        cut = cutSpeakableSegment(buffer, isFirstSegment);
       }
     },
 

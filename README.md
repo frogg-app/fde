@@ -85,7 +85,9 @@ Both scripts are non-interactive and safe to re-run for upgrades. See
 
 ## Status
 
-Pre-release. See [CHANGELOG.md](CHANGELOG.md).
+Early development. Latest published release: **0.2.0**. See
+[CHANGELOG.md](CHANGELOG.md) for implemented changes and [ROADMAP.md](ROADMAP.md)
+for remaining work and platform verification gaps.
 
 ## License
 

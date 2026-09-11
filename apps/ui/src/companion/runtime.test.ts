@@ -108,6 +108,7 @@ function createRecordingSink(): { sink: CompanionRuntimeSink; events: string[] }
     sessionStopped: () => events.push("sessionStopped"),
     setMuted: (isMuted) => events.push(`muted:${isMuted}`),
     setVolume: (volume) => events.push(`volume:${volume}`),
+    setSpeakingVolume: (volume) => events.push(`speakingVolume:${volume}`),
     userSpeakingChanged: (isSpeaking) => events.push(`speaking:${isSpeaking}`),
     transcriptReceived: ({ text, isFinal }) => events.push(`transcript:${text}:${isFinal}`),
     replyReceived: ({ text, isFinal }) => events.push(`reply:${text}:${isFinal}`),

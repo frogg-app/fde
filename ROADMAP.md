@@ -1,202 +1,105 @@
-# Roadmap
+# FDE roadmap
 
-Working list for FDE (Frogg Development Environment). Ordered roughly by priority.
-Done items move to CHANGELOG.md.
+Reviewed against source and GitHub on 2026-09-11. This is the current backlog;
+[CHANGELOG.md](CHANGELOG.md) records completed work. An unchecked item is planned,
+not evidence that someone is actively working on it.
 
-## Now
+Latest published release: **0.2.0** (2026-09-05). The **0.2.1** baseline integrates
+previously unmerged fixes and documentation cleanup; it has not been released.
+See [repository status](docs/project-status.md) for branch reconciliation and
+preserved work outside this checkout.
 
-- [ ] **Companion: real-time voice conversation.** A fast, cheap conversational orchestrator
-      that sits above projects and workspaces. It talks to you in real time, delegates
-      anything that needs thought to headless subagents, drives and reports on the agents
-      running in your workspaces, and keeps a small notebook of current topics and tasks so
-      its own context stays tiny. Never leaves a silence: a prompt contract plus a
-      pre-synthesised filler bank cover the gap while work is delegated. Reuses the voice
-      mode audio stack (VAD, streaming STT, barge-in, TTS) and replaces the brain.
-      See docs/companion.md.
+## Implemented baseline
 
-- [x] **Desktop command stubs.** Every `desktop_*` / daemon / CLI command the UI invokes is
-      implemented; the daemon family is real since milestone 3 (`install_cli` still answers
-      "ships with the sidecar").
-- [ ] **Milestone 2: Remote SSH from Rust.** Port Electron's SSH tunnel
-      (`ssh` subprocess proxied to a loopback WebSocket) and the
-      `open/send/close_local_daemon_transport` commands, so Remote SSH hosts work.
-- [ ] **SSH config host picker.** On the Remote SSH page, list `Host` entries from
-      `~/.ssh/config` (HostName, User, Port, IdentityFile resolved) as a one-click
-      alternative to typing `ssh://user@host`.
-- [ ] **Portable Windows zip** as a standard build artifact next to the NSIS installer.
-- [x] **Rebrand follow-through.** No user-facing "Paseo" remains except the About attribution.
-- [x] **Android APK.** `apps/ui` builds as the Android app (`app.frogg.fde`, name "FDE",
-      version code derived from the root `package.json`); `scripts/release/build-android-apk.mjs`
-      builds it locally and in `release.yml`, which attaches `FDE-<version>-android-arm64-v8a.apk`
-      to the release (release-signed when the `FDE_ANDROID_KEYSTORE_*` secrets exist). See
-      docs/android.md. Manual: generate the release keystore and add the secrets.
+- Tauri desktop shell for Windows, macOS and Linux; direct and relay connections,
+  Rust SSH/socket/pipe transport, SSH config host picker, and SSH daemon deploy.
+- Optional local daemon download/supervision, run-at-login services, daemon
+  self-update with rollback, and desktop updates from GitHub release assets.
+- Native daemon installers and Docker packaging; `~/.fde` migration, port 9999,
+  trusted-LAN policy, first-device claim gate and client v3 claim handling.
+- Windows installer and portable ZIP, macOS DMGs for both architectures, Linux
+  deb/AppImage, six daemon bundle targets, and an Android APK build pipeline.
+  The published 0.2.0 Android artifact is **unsigned**.
+- Voice dictation, voice mode, spoken agent alerts/replies, and Companion with
+  API and Claude Code CLI backends. Capability gating does not prove audio quality.
+- Markdown/highlight and transport streaming optimizations, git scheduler and
+  directory-cache fixes, staged-workspace typechecking, and sharded CI tests.
 
-## Install story (replaces `npm install -g @getpaseo/cli`)
+Implementation does not imply validation on every target. Keep the gaps below
+visible until device or deployment evidence closes them.
 
-- [x] **`curl -fsSL https://frogg.app/install.sh | bash`** for remote hosts. Ships a
-      self-contained daemon bundle (pinned Node 22 runtime + built daemon + CLI) into
-      `~/.local/share/fde`, links `fde` and `paseo` into `~/.local/bin`, and installs a
-      systemd user service (or launchd agent on macOS). No npm on the host.
-      (`deploy/install.sh`, `deploy/uninstall.sh`; bundle builder
-      `scripts/release/build-daemon-bundle.mjs`; see `docs/install.md`.)
-- [x] **Docker image** `froggapp/fde` from `deploy/docker`, versioned tags per the org
-      rules, daemon listening on `0.0.0.0:9999` with the web UI enabled.
-      (`deploy/install-docker.sh`, `scripts/release/build-docker.sh`.)
-- [x] Release pipeline builds the daemon bundle per platform (linux-x64, linux-arm64,
-      darwin-arm64, darwin-x64, win-x64, win-arm64) and attaches it plus `.sha256` sidecars
-      to the GitHub release the installer and the desktop app read; pushes the Docker image
-      tags when Docker Hub secrets exist.
-- [x] **`~/.fde` home.** `FDE_HOME` is the primary env var (`PASEO_HOME` still works as a
-      fallback; `FDE_HOME` wins), the default home is `~/.fde`, and an existing `~/.paseo`
-      is moved there once on the next start unless a daemon is still running from it.
-      Installers, Docker (`/home/fde/.fde`), Nix, and the desktop sidecar follow;
-      file names inside the home are unchanged. See docs/install.md.
-- [x] **Run at login.** `fde daemon install-service` / `uninstall-service` register a
-      systemd user unit, a launchd agent, or a Windows `schtasks /SC ONLOGON` task running
-      `fde daemon start --foreground`; onboarding asks the same question
-      (`FDE_AUTOSTART=0|1` non-interactively).
-- [x] **Onboarding never hangs.** Readiness is `GET /api/identity` answering
-      `product: "fde"`, so a daemon with a password or a pairing requirement is recognised
-      as ready and onboarding says how to pair instead of polling for ten minutes. It also
-      prints the LAN addresses to type into the app and the current access mode.
-- [x] **`fde pair`** (top-level, alias of `fde daemon pair`) prints
-      `https://pair.frogg.app/code/<code>`, the `paseo://pair#offer=<code>` deep link, a QR
-      (`PASEO_PAIRING_QR=0` to suppress), and one line saying whether the LAN is trusted,
-      pairing is required, or a password is set. `app.pairingBaseUrl` sets the base.
-- [x] **The daemon serves the pairing page** at `GET /code/:code` and `GET /pair?code=`,
-      so `pair.frogg.app` can be reverse-proxied to your own daemon. Invalid or expired
-      codes render one generic message; `pair.frogg.app` is an allowed Host by default.
-- [x] **The pairing page runs on Cloudflare** (`deploy/pair-worker`): the same render
-      path as the daemon route behind a `fetch` handler, so `pair.frogg.app` needs no
-      host, no origin and no TLS config. Byte-identical HTML to the express service.
-- [x] **Hosting for `frogg.app/install.sh`, `uninstall.sh`, `install-docker.sh`**
-      (`deploy/install-worker`): a Cloudflare Worker proxies the scripts out of `deploy/`
-      in the public repository. Fixed allowlist, fails closed on a bad fetch, and
-      `X-Fde-Source` names the exact ref it served.
-- [x] **Daemon self-update with rollback.** `fde daemon self-update [--to|--channel|--check]`
-      installs a release next to the running version and a detached supervisor flips
-      `current`, restarts the service, verifies `/api/identity`, and reverts to `previous`
-      if the new daemon does not come up (`last-update.json`, `self-update.log`). The
-      `daemon.update.check/start/get_status` RPCs and the host settings page trigger the
-      same path from a client; `daemon.autoUpdate` / `PASEO_AUTO_UPDATE=1` schedules it.
-      `install-docker.sh --update` swaps the container with the same health-check rollback.
-      Verified on Linux (unmanaged and scratch installs); systemd-run hand-off, launchd,
-      and the Windows zip path are by inspection only. See docs/install.md "Updating".
-- [x] **Default daemon port 9999** (server, CLI, installers, Docker, Nix, docs; an explicit
-      `6767` in `config.json` keeps working).
-- [x] **`GET /api/identity`**: unauthenticated `{ product, serverId, hostname, version, listen,
-pairingRequired }` so LAN scanners and the app can list daemons before pairing.
-- [x] **First-run pairing gate.** An unclaimed daemon reached from beyond loopback serves the
-      "Claim this FDE daemon" page (QR + link, single-use expiring v3 direct offer) instead of
-      the app and answers 401 on API/WS; the first device that pairs mints a principal +
-      credential in `$PASEO_HOME/principals.json` and claims it. Loopback is never gated.
-      `fde daemon claim-status` / `reset-claim`; `fde daemon pair` prints the direct offer when
-      relay is off. See docs/permissions.md "Claimed state".
-- [x] **Trusted LAN by default.** `daemon.auth.trustLan` (default on; `PASEO_TRUST_LAN=0|1`
-      wins) treats private-network clients (10/8, 172.16/12, 192.168/16, link-local, ULA,
-      IPv4-mapped forms) like loopback: no pairing, no password, no claim gate; public
-      addresses keep the gate. A password is the opt-in lock for everyone. `fde daemon
-trust-lan on|off` applies live; `fde daemon status` shows `LAN Trusted`; `/api/identity`
-      answers `pairingRequired` per requester and reports `lanTrusted`. See docs/permissions.md
-      "Trusted LAN".
-- [ ] App side of the claim flow (apps/ui, apps/desktop): parse v3 offers, connect to a direct
-      endpoint, `POST /api/setup/claim`, store the credential as the host password, show
-      `/api/identity` results in an "Add host" LAN scan.
-- [x] **Voice on by default.** Bundles and the Docker image ship `sherpa-onnx-<platform>` for the
-      target; dictation/voice mode default on when the runtime is present, models download on
-      first use. Umbrella opt-out `PASEO_VOICE=0` / `features.voice.enabled=false`; the
-      fine-grained keys still work; onboarding defaults to enabled.
-- [x] **Spoken alerts and voice replies.** The daemon composes a short spoken line for every
-      agent alert (finished, question, permission, error), synthesises it with the local TTS,
-      caches it under `$PASEO_HOME/tts-cache`, and ships `spokenText` + `audioUrl` in the
-      attention payload and the mobile push. The app plays it (auto-play on mobile by default),
-      and "Reply by voice" dictates the next message or the permission decision. Opt out with
-      `PASEO_VOICE_NOTIFICATIONS=0` / `features.voice.notifications.enabled=false`. See
-      docs/voice.md.
-- [x] Desktop app: SSH deploy. "Daemon on this host" card on Remote SSH hosts (and in the
-      Add host sheet) probes the host and pipes `deploy/install.sh` / `install-docker.sh` /
-      `uninstall.sh` into `ssh … bash -s`, streaming the output; the host downloads the
-      bundle from the release itself (`FDE_RELEASE_BASE` / `FDE_BUNDLE_URL`). See
-      docs/desktop-shell.md "SSH deploy".
+## Next: establish reliable everyday use
 
-## Next
+- [ ] **Validate Companion on devices.** Exercise a full microphone-to-speaker
+      conversation with API and CLI backends, interruption, reconnect, failures,
+      headphones and speakers. Record full-loop latency and device details.
+      The 0.2.0 release had no recorded full-loop acceptance test; backend timings
+      and automated tests do not close this item.
+- [ ] **Finish Companion interruption semantics.** Cancel in-flight backend work
+      so an interrupted turn cannot delay the next one. Reconcile history to
+      audio actually played rather than text handed to TTS. See
+      [voice follow-ups](docs/companion-voice-design.md).
+- [ ] **Companion configuration and workspace creation.** Refresh capability when
+      credentials/flags change without restarting the daemon; support creating a
+      workspace before `create_agent` when no existing workspace fits.
+- [ ] **Platform acceptance pass.** Verify Windows sidecar install/start/stop,
+      macOS and Windows updater hand-off/rollback, SSH auth and reconnect, mobile
+      claims and spoken alerts, and Android/Windows streaming on real hardware.
+      Capture profiles before assigning a performance improvement percentage.
+- [ ] **Signing and distribution.** Configure persistent Android release signing,
+      Windows Authenticode, macOS Developer ID/notarization, and updater signing.
+      The desktop updater public key is still a placeholder; unsigned GitHub
+      asset updates remain the fallback. See [CI](docs/ci.md) and
+      [Android](docs/android.md) for setup. Verify secret configuration rather
+      than treating old missing-secret notes as current evidence.
 
-- [x] **Milestone 3: local daemon sidecar.** Optional download of the daemon bundle from
-      the desktop app for users who want to run agents on the same machine
-      (`apps/desktop/src-tauri/src/sidecar/`, docs/desktop-shell.md). Not yet exercised on
-      a real Windows machine: the win-x64 zip and the `node.exe` launch path are verified
-      by inspection only.
-- [ ] **Milestone 4: browser automation** via Playwright driven from the daemon, replacing
-      Electron's `<webview>` pane.
-- [ ] **Code signing** (Windows Authenticode, macOS notarisation) so SmartScreen and
-      Gatekeeper stop blocking installs.
-- [x] **Updater**: in-app updates from GitHub release assets without a signing key
-      (`apps/desktop/src-tauri/src/updates/`, docs/desktop-shell.md "Updates"); switches to the
-      signed `tauri-plugin-updater` path automatically once `plugins.updater.pubkey` is real and
-      the release carries `latest.json`. Windows/macOS install paths verified by reading only.
-- [x] **CI**: GitHub Actions `ci.yml` and `release.yml` (Linux, Windows, macOS desktop bundles,
-      daemon bundles, Docker). Manual: add signing and Docker Hub secrets (see docs/ci.md).
-- [ ] **Faster pre-commit hook**: per-workspace typecheck instead of the whole monorepo.
-- [ ] Tighten the webview CSP once the UI's connection origins are enumerated.
-- [ ] Notification click routing (Tauri notification plugin has no desktop click callback).
-- [ ] Rename `PASEO_*` env vars, `~/.paseo`, and the `paseo://` scheme to FDE equivalents
-      with a compatibility shim, once no upstream daemons need to interoperate.
+## Feature backlog
 
-## Later
+- [ ] **LAN discovery in Add host.** Claim parsing/credential storage already
+      exists. The remaining feature is discovering candidate hosts and presenting
+      their `/api/identity` results without manually entering an address.
+- [ ] **Browser automation.** A daemon-driven Playwright replacement for the old
+      Electron webview pane. Define the user workflow and permissions first.
+- [ ] **Notification click routing.** Specify how desktop clicks reopen the
+      relevant host/workspace/agent across platforms.
+- [ ] **Tighten webview CSP.** Enumerate the UI's required connection origins and
+      verify direct, relay, SSH and local-sidecar connections against the policy.
+- [ ] **iOS delivery.** Upstream Expo/iOS tooling exists; establish FDE signing,
+      distribution and device acceptance. Android already has a release pipeline.
 
-- [ ] iOS app (the Expo UI still builds for iOS; scripts under `scripts/mobile`). Android is done, see "Now".
-- [ ] macOS builds and DMG packaging.
-- [ ] **Triggers (was "Hub").** Run agents from external events - GitHub, Slack, Discord,
-      Linear. The daemon half exists and is specified in docs/hub.md
-      (`packages/server/src/server/hub/`): outbound WebSocket, durable execution IDs,
-      idempotent creates, `hub.execute` permission, MCP-only tool preapproval. The CLI half
-      is renamed to `fde trigger` and every subcommand is disabled, because the old
-      implementation defaulted to `https://hub.paseo.sh` - an upstream-hosted service we do
-      not run - and enrolling handed a third party a standing connection able to create
-      workspaces and run agents against local repositories.
-      A rewrite needs a trigger service we control (none exists in this repo), or a
-      self-hostable one. Low priority: nothing depends on it and it is inert today.
-      The old CLI implementation is kept at `apps/cli/src/commands/hub/` for reference.
+## Engineering backlog
 
-## Notes and assumptions (autonomous run, 2026-09-02)
+- [ ] **Rust terminal registry**, if measurements justify prioritizing it:
+      reconnect persistence, workspace ownership, naming, restore, and visibility
+      across clients. Native terminal streams remain opt-in until these work.
+      [Migration plan](docs/rust-daemon-plan.md).
+- [ ] **Session decomposition.** Most original extractions, including checkout
+      mutations, already exist. Next proposed slice is workspace request handling,
+      reusing existing provisioning/recovery/observer services; agent lifecycle
+      follows. [Current plan](docs/refactors/session-decomposition-plan.md).
+- [ ] **Browser E2E baseline.** Audit the older settings-route specs against the
+      settings modal; distinguish the Playwright E2E suite from passing Vitest
+      browser component tests. Retain the idle memory probe as a diagnostic,
+      not a claimed performance acceptance test.
+- [ ] **Dependency updates.** Review the seven open Dependabot PRs separately with
+      compatibility checks. Major library updates are not baseline cleanup.
 
-Blocked on the owner:
+## Deferred deliberately
 
-- **Updater signing.** The permission classifier on this VM blocks both `cargo tauri signer generate`
-  and `gh secret set`. To enable signed updates: run `cargo tauri signer generate -w ~/.tauri/fde.key`,
-  put the public key in `apps/desktop/src-tauri/tauri.conf.json` under `plugins.updater.pubkey`, and
-  add `TAURI_SIGNING_PRIVATE_KEY` / `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` repo secrets. Until then the
-  release workflow skips `latest.json` and in-app updates use the unsigned GitHub-release path
-  (checksum-verified when a `.sha256` sidecar is published).
-- **Docker Hub in CI.** Add `DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN` secrets; until then images are
-  pushed manually from this VM (logged in as `froggapp`).
-- **Docker Hub visibility.** `froggapp/fde` was created public by the first push; the stored
-  access token cannot change visibility (403). Set it private in Docker Hub settings if wanted.
-- **Android release keystore.** Generate one keystore and keep it forever (`docs/android.md`), then
-  add `FDE_ANDROID_KEYSTORE_BASE64`, `FDE_ANDROID_KEYSTORE_PASSWORD`, `FDE_ANDROID_KEY_ALIAS`,
-  `FDE_ANDROID_KEY_PASSWORD` secrets. The APK on v0.1.8 is signed with a throwaway local key.
-- **Swap file on the build VM.** An 8 GB `/swapfile.fde` was enabled (not in fstab, gone at
-  reboot) so Gradle/Hermes could finish on 9 GB RAM. Remove with
-  `sudo swapoff /swapfile.fde && sudo rm /swapfile.fde` if unwanted.
-- **Windows Smart App Control blocks the unsigned exe** (0.1.10 report). No rebuild fixes this:
-  Smart App Control only runs binaries signed by a Microsoft-trusted certificate and has no
-  "run anyway". The pipeline is wired for Azure Trusted Signing (`scripts/release/sign-windows.ps1`,
-  `bundle.windows.signCommand`); create a Trusted Signing account (~$10/month) and add the six
-  `AZURE_*`/`TRUSTED_SIGNING_*` secrets listed in that script. Until then users must set Smart App
-  Control to Off (Windows Security > App & browser control).
-- **GitHub Actions minutes exhausted (2026-09-03).** September usage on the private repo is
-  ~1,830 Linux + 196 macOS (10x) + 124 Windows (2x) minutes, past the 2,000 included, so every
-  job now fails at startup. Raise the org spending limit or make the repo public (free standard
-  runners). Until then Windows/Linux/daemon bundles/Docker are built on the dev VM; macOS DMGs
-  and the CI Android APK wait.
-- **Code signing certificates** (Windows Authenticode, Apple Developer ID) for SmartScreen/Gatekeeper.
+- **Rust filesystem walker:** scoring core ported and fixture-checked; traversal
+  order affects budgeted results, so porting the walker is paused.
+- **Rust git port:** cancelled after measurement identified scheduler queuing as
+  the bottleneck and the scheduler was fixed. Revisit only for measured diff work.
+- **Rust speech:** deferred despite memory cost; model management, VAD and streaming
+  make it a substantial migration. Agent providers and plugin JS hosts stay Node.
+- **Triggers:** CLI commands are disabled. A service we control or a self-hostable
+  replacement must exist before enabling external events. See [hub.md](docs/hub.md).
+- **Remaining Paseo wire/env/deep-link renames:** keep compatibility until an
+  explicit migration policy exists. `FDE_HOME` and `~/.fde` are already implemented.
 
-Assumptions made:
+## Keeping this current
 
-- Wire-level names stay Paseo (`PASEO_*`, `~/.paseo`, `paseo://`) for daemon compatibility.
-- Release assets use dashed names `FDE-<version>-<arch>.<ext>`; Windows also ships the bare
-  portable exe because SmartScreen blocks the unsigned installer more aggressively.
-- macOS builds only happen in GitHub Actions (this VM cannot build them); they are ad-hoc signed.
-- Playwright e2e specs (~30) that asserted the old full-screen settings route still need
-  re-baselining against the settings modal; unit tests and typecheck are the gate for now.
-- The daemon bundle keeps `npm` so remote hosts can `npm install -g` agent CLIs without Node.
+Update the relevant item in the same PR as implementation. Move completed work to
+the changelog; leave only a concrete verification gap when testing is incomplete.
+Do not promote historical incidents (quota exhaustion, missing secrets, local
+swap files) into permanent project blockers. Record current evidence and date.

@@ -1,12 +1,13 @@
 # Product
 
-What Paseo is, who it's for, and where it's going.
+What FDE is, who it's for, and where it's going. FDE forks Paseo v0.7.2.
+See [ROADMAP.md](../ROADMAP.md) for current priorities.
 
-## What is Paseo
+## What is FDE
 
-Paseo is a next-generation development environment built around agents. One interface to run, monitor, and interact with coding agents across desktop, mobile, terminal, and web.
+FDE is a next-generation development environment built around agents. One interface to run, monitor, and interact with coding agents across desktop, mobile, terminal, and web.
 
-The development workflow is shifting from manually editing files to orchestrating agents that do the editing. Paseo is built for that workflow.
+The development workflow is shifting from manually editing files to orchestrating agents that do the editing. FDE is built for that workflow.
 
 ## Core philosophy
 
@@ -17,7 +18,7 @@ Freedom and flexibility. Every design decision follows from this:
 - **Self-hosted** — The daemon runs on your machine. Your code, your keys, your environment. No inference markup, no cloud dependency.
 - **Respectful** - No telemetry, no forced cloud, no forced accounts
 - **Open source** — Apache-2.0. Users can inspect, fork, and contribute.
-- **BYOK** — Bring your own keys. Use your subsidized plans and first-party provider pricing. Paseo adds zero cost on top.
+- **BYOK** — Bring your own keys. Use your subsidized plans and first-party provider pricing. FDE adds zero cost on top.
 
 ## How it works
 
@@ -37,7 +38,7 @@ A workspace is a flexible canvas:
 
 ### The daemon
 
-Paseo is a client-server system. The daemon (Node.js) runs on your machine, manages agent processes, and streams output in real time over WebSocket. Clients connect to the daemon — locally or remotely.
+FDE is a client-server system. The daemon (Node.js) runs on your machine, manages agent processes, and streams output in real time over WebSocket. Clients connect to the daemon — locally or remotely.
 
 This architecture means:
 
@@ -68,14 +69,15 @@ Anyone who builds software:
 3. **The daemon as infrastructure.** Server/client architecture enables deployment anywhere.
 4. **Open source outlasts funding.** Open source communities are resilient. Contributors become advocates.
 
-## Current state (May 2026)
+## Current state (reviewed September 2026)
 
-- Desktop (Electron), mobile (iOS/Android), web, CLI
+- Desktop (Tauri, Windows/macOS/Linux), Android build pipeline, web and CLI;
+  iOS delivery remains planned.
 - Built-in providers: Claude Code (Agent SDK), Codex (app-server), GitHub Copilot (ACP), OpenCode, Pi, OMP
 - One-click ACP provider catalog: CodeWhale, Cursor, Hermes, Qwen Coder, Kimi Code, and others — plus custom ACP providers
 - Voice mode: dictate prompts or talk through problems hands-free
 - MCP server exposes the daemon to other agents (workspaces, create/detach agent, schedules, heartbeats, terminals, workspace renaming)
 - Scheduled agents (cron-style triggers) via app, CLI, and MCP
-- Frequent releases (multiple per week)
+- Latest published FDE release: 0.2.0; see the changelog for subsequent unreleased work.
 - Community contributions across packaging, providers, and bug fixes
 - Key UX: split panes, keybinding customization, workspace model, in-app browser

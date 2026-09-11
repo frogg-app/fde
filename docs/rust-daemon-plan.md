@@ -5,6 +5,14 @@ HTTP and `/ws`, serves natively what it implements, and forwards everything else
 to the Node daemon. This document is the plan for what to migrate next, and what
 not to migrate at all.
 
+## Current status (2026-09-11)
+
+The foundation and opt-in native terminal streams exist. This is an experimental
+front end to the Node daemon, not the default production daemon. There is no
+active full rewrite. The next proposed migration is the terminal registry;
+filesystem walking is paused, the git port was cancelled, and speech is deferred.
+See [ROADMAP.md](../ROADMAP.md) for its priority relative to product work.
+
 ## Why incremental, and not a rewrite
 
 `packages/server` is 172k lines of source and **224k lines of tests**. The tests
@@ -41,20 +49,21 @@ Git accounts for 34% of slow requests and filesystem walking another 12%. That
 is 46% of the observed pain in two areas Rust is unusually good at, and neither
 touches agent state.
 
-## Stage 0 - generate Rust types from the protocol (foundation)
+## Stage 0 - generate Rust types from the protocol (done)
 
 **Do not rewrite `packages/protocol`.** Its 408 message types are consumed by
 `apps/ui`, `packages/client` and `apps/cli`, all TypeScript. Making Rust the
 source of truth means generating TypeScript for three consumers - the wrong
 direction.
 
-Instead keep zod as the single source of truth and add a Rust target.
+The implemented pipeline keeps zod as the single source of truth and adds a Rust target.
 `packages/protocol` already has an AOT codegen pipeline
 (`scripts/generate-validation-aot.mjs`), zod 4.5 ships `z.toJSONSchema`, and
 `typify` turns JSON Schema into serde types.
 
-Until this exists, every natively-handled message means hand-written structs
-that silently drift from the schema. Everything below depends on it.
+`npm run generate:rust --workspace=@fde/protocol` exports JSON Schema and
+generates the Rust types under `apps/daemon-rs/src/generated/`. It also runs
+after the protocol build. Keep regenerated output in sync when schemas change.
 
 ## Stage 1 - filesystem (partly done, then stopped)
 

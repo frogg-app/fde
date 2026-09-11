@@ -66,5 +66,20 @@ pub fn create_main_window(app: &App) -> tauri::Result<()> {
         }
     }
     window.show()?;
+
+    // Release builds ship the inspector but keep it closed. Without this there is no way to
+    // capture a heap snapshot or a performance profile from a bundled app, which is what
+    // diagnosing a renderer-side leak actually requires.
+    if devtools_requested() {
+        window.open_devtools();
+    }
     Ok(())
+}
+
+/// `FDE_DEVTOOLS=1` opens the web inspector on the main window at startup.
+fn devtools_requested() -> bool {
+    matches!(
+        std::env::var("FDE_DEVTOOLS").as_deref(),
+        Ok("1") | Ok("true")
+    )
 }
