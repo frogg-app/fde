@@ -16,6 +16,14 @@ describe("normalizeClientMessageId", () => {
 });
 
 describe("resolveClientMessageId", () => {
+  test("generates distinct UUID v4 message ids with the production Node crypto implementation", () => {
+    const ids = Array.from({ length: 32 }, () => resolveClientMessageId(undefined));
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const id of ids) {
+      expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+    }
+  });
+
   test("preserves a non-empty clientMessageId", () => {
     expect(resolveClientMessageId("client-msg-3", () => "generated-id")).toBe("client-msg-3");
   });
