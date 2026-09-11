@@ -1,6 +1,6 @@
 {
   "name": "@fde/protocol",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "Paseo shared protocol schemas and wire types",
   "files": [
     "dist",
@@ -41,6 +41,6 @@
     "@types/node": "^20.9.0",
     "typescript": "^5.2.2",
     "vitest": "^4.1.6",
-    "zod-aot": "0.20.4"
+    "zod-aot": "0.21.1"
   }
 }
