@@ -145,6 +145,26 @@ async function settle(): Promise<void> {
 }
 
 describe("companion session lifecycle", () => {
+  it("does not reopen the microphone when initialization completes after Stop", async () => {
+    const engine = createFakeEngine();
+    let finishInitialization!: () => void;
+    engine.initialize = () =>
+      new Promise<void>((resolve) => {
+        finishInitialization = resolve;
+      });
+    const adapter = createFakeAdapter();
+    const { sink, events } = createRecordingSink();
+    const runtime = createCompanionRuntime({ engine, sink });
+    const starting = runtime.start(adapter);
+    await settle();
+    await runtime.stop();
+    finishInitialization();
+    await starting;
+    expect(engine.captureStarted).toBe(false);
+    expect(runtime.isActive()).toBe(false);
+    expect(events).not.toContain("sessionStarted");
+  });
+
   it("opens capture and reports the session as started", async () => {
     const engine = createFakeEngine();
     const adapter = createFakeAdapter();

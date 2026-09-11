@@ -9,6 +9,8 @@ pub mod ssh;
 pub mod ssh_auth;
 #[cfg(all(test, unix))]
 mod ssh_e2e;
+#[cfg(all(test, unix))]
+mod stalled_write_tests;
 mod task;
 
 use std::collections::HashMap;
@@ -16,14 +18,22 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 
 use serde_json::Value;
-use tokio::sync::{mpsc, oneshot, Notify};
+use tokio::sync::{mpsc, oneshot, Notify, OwnedSemaphorePermit, Semaphore};
 use tokio_tungstenite::tungstenite::Message;
 
 use session::{decode_outgoing_message, parse_open_session_input, session_id_from_args};
 use task::SessionTask;
 
 pub type EventSink = Arc<dyn Fn(Value) + Send + Sync>;
-pub(super) type Outgoing = (Message, oneshot::Sender<Result<(), String>>);
+pub(super) type Outgoing = (
+    Message,
+    oneshot::Sender<Result<(), String>>,
+    OwnedSemaphorePermit,
+);
+const MAX_PENDING_WRITES: usize = 32;
+// Match the daemon physical-socket budget. Charge IPC payload bytes before
+// decoding/cloning, and hold admission through the in-flight socket write.
+const MAX_PENDING_WRITE_BYTES: usize = 64 * 1024 * 1024;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(super) enum SessionState {
@@ -34,7 +44,8 @@ pub(super) enum SessionState {
 pub(super) struct SessionEntry {
     pub(super) generation: u64,
     pub(super) state: SessionState,
-    pub(super) outgoing: mpsc::UnboundedSender<Outgoing>,
+    pub(super) outgoing: mpsc::Sender<Outgoing>,
+    pub(super) write_bytes: Arc<Semaphore>,
     pub(super) cancel: Arc<Notify>,
 }
 
@@ -57,7 +68,7 @@ impl TransportManager {
 
     pub fn open(&self, args: &Value) -> Result<Value, String> {
         let input = parse_open_session_input(args)?;
-        let (tx, rx) = mpsc::unbounded_channel();
+        let (tx, rx) = mpsc::channel(MAX_PENDING_WRITES);
         let cancel = Arc::new(Notify::new());
         let generation = self.generations.fetch_add(1, Ordering::Relaxed);
         {
@@ -74,6 +85,7 @@ impl TransportManager {
                     generation,
                     state: SessionState::Opening,
                     outgoing: tx,
+                    write_bytes: Arc::new(Semaphore::new(MAX_PENDING_WRITE_BYTES)),
                     cancel: Arc::clone(&cancel),
                 },
             );
@@ -93,7 +105,7 @@ impl TransportManager {
 
     pub async fn send(&self, args: &Value) -> Result<Value, String> {
         let id = session_id_from_args(args);
-        let sender = {
+        let (sender, write_bytes) = {
             let sessions = lock(&self.sessions);
             let entry = sessions
                 .get(&id)
@@ -101,13 +113,32 @@ impl TransportManager {
             if entry.state != SessionState::Open {
                 return Err("Local transport session is not open yet.".into());
             }
-            entry.outgoing.clone()
+            (entry.outgoing.clone(), Arc::clone(&entry.write_bytes))
         };
+        // Do not await admission: pending IPC futures would simply become a
+        // second unbounded queue retaining the original JSON payloads.
+        let slot = sender.try_reserve_owned().map_err(|error| match error {
+            mpsc::error::TrySendError::Full(_) => {
+                "Local transport write queue is full.".to_string()
+            }
+            mpsc::error::TrySendError::Closed(_) => {
+                "Local transport session is closed.".to_string()
+            }
+        })?;
+        let payload_bytes = args
+            .get("text")
+            .and_then(Value::as_str)
+            .or_else(|| args.get("binaryBase64").and_then(Value::as_str))
+            .map(str::len)
+            .unwrap_or(0);
+        let byte_count = u32::try_from(payload_bytes)
+            .map_err(|_| "Local transport write exceeds the byte budget.".to_string())?;
+        let byte_permit = write_bytes
+            .try_acquire_many_owned(byte_count)
+            .map_err(|_| "Local transport write byte budget is full.".to_string())?;
         let message = decode_outgoing_message(args)?;
         let (reply, done) = oneshot::channel();
-        sender
-            .send((message, reply))
-            .map_err(|_| "Local transport session is closed.".to_string())?;
+        slot.send((message, reply, byte_permit));
         done.await
             .unwrap_or_else(|_| Err("Local transport session is closed.".into()))?;
         Ok(Value::Null)

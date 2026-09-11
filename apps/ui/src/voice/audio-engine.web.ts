@@ -1,24 +1,20 @@
-import { isElectronRuntime } from "@/desktop/host";
 import type {
   AudioEngine,
   AudioEngineCallbacks,
   AudioPlaybackSource,
 } from "@/voice/audio-engine-types";
+import {
+  browserAudioResources,
+  type WebAudioResources,
+  type WebAudioContext,
+  type WebCapture,
+  type WebPlayback,
+} from "./audio-engine.web-resources";
 
 interface QueuedAudio {
   audio: AudioPlaybackSource;
   resolve: (duration: number) => void;
   reject: (error: Error) => void;
-}
-
-function getAudioContextCtor(): typeof AudioContext | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-  const browserWindow = window as typeof window & {
-    webkitAudioContext?: typeof AudioContext;
-  };
-  return browserWindow.AudioContext ?? browserWindow.webkitAudioContext ?? null;
 }
 
 function floatToInt16(sample: number): number {
@@ -46,364 +42,198 @@ function resampleToPcm16(input: Float32Array, inputRate: number, outputRate: num
   return new Uint8Array(output.buffer, output.byteOffset, output.byteLength);
 }
 
-function parsePcmSampleRate(mimeType: string): number | null {
-  const match = /rate=(\d+)/i.exec(mimeType);
-  if (!match) {
-    return null;
-  }
-  const rate = Number(match[1]);
-  return Number.isFinite(rate) && rate > 0 ? rate : null;
-}
-
-function pcm16LeToAudioBuffer(
-  context: AudioContext,
-  bytes: Uint8Array,
-  sampleRate: number,
-): AudioBuffer {
-  const sampleCount = Math.floor(bytes.length / 2);
-  const audioBuffer = context.createBuffer(1, sampleCount, sampleRate);
-  const channel = audioBuffer.getChannelData(0);
-  for (let i = 0; i < sampleCount; i += 1) {
-    const lo = bytes[i * 2];
-    const hi = bytes[i * 2 + 1];
-    let value = (hi << 8) | lo;
-    if (value & 0x8000) {
-      value -= 0x10000;
-    }
-    channel[i] = value / 0x8000;
-  }
-  return audioBuffer;
-}
-
-async function decodeAudioData(context: AudioContext, buffer: ArrayBuffer): Promise<AudioBuffer> {
-  const maybePromise = context.decodeAudioData(buffer.slice(0));
-  if (maybePromise && typeof maybePromise.then === "function") {
-    return maybePromise;
-  }
-  return await new Promise<AudioBuffer>((resolve, reject) => {
-    context.decodeAudioData(buffer.slice(0), resolve, reject);
-  });
-}
-
 export function createAudioEngine(
   callbacks: AudioEngineCallbacks,
-  _options?: { traceLabel?: string },
+  options?: { traceLabel?: string; resources?: WebAudioResources },
 ): AudioEngine {
-  const refs: {
-    playbackContext: AudioContext | null;
-    captureContext: AudioContext | null;
-    stream: MediaStream | null;
-    source: MediaStreamAudioSourceNode | null;
-    processor: ScriptProcessorNode | null;
-    gain: GainNode | null;
-    started: boolean;
-    muted: boolean;
-    queue: QueuedAudio[];
-    processingQueue: boolean;
-    activePlayback: {
-      source: AudioBufferSourceNode;
-      resolve: (duration: number) => void;
-      reject: (error: Error) => void;
-      settled: boolean;
-    } | null;
-  } = {
-    playbackContext: null,
-    captureContext: null,
-    stream: null,
-    source: null,
-    processor: null,
-    gain: null,
-    started: false,
-    muted: false,
-    queue: [],
-    processingQueue: false,
-    activePlayback: null,
-  };
+  const resources = options?.resources ?? browserAudioResources;
+  let destroyed = false;
+  let playbackContext: WebAudioContext | null = null;
+  let captureContext: WebAudioContext | null = null;
+  let capture: WebCapture | null = null;
+  let captureStart: Promise<void> | null = null;
+  let captureGeneration = 0;
+  let playbackGeneration = 0;
+  let muted = false;
+  const queue: QueuedAudio[] = [];
+  let processingQueue = false;
+  let activeItem: QueuedAudio | null = null;
+  let activePlayback: WebPlayback | null = null;
+  let cancelPlayback: (() => void) | null = null;
+  let cancelWork: (() => void) | null = null;
 
-  async function ensurePlaybackContext(): Promise<AudioContext> {
-    if (refs.playbackContext) {
-      if (refs.playbackContext.state === "suspended") {
-        await refs.playbackContext.resume().catch(() => undefined);
-      }
-      return refs.playbackContext;
-    }
+  function assertLive() {
+    if (destroyed) throw new Error("Audio engine destroyed");
+  }
 
-    const AudioContextCtor = getAudioContextCtor();
-    if (!AudioContextCtor) {
-      throw new Error("AudioContext unavailable");
-    }
-
-    const context = new AudioContextCtor();
-    if (context.state === "suspended") {
-      await context.resume().catch(() => undefined);
-    }
-    refs.playbackContext = context;
+  async function ensurePlaybackContext(): Promise<WebAudioContext> {
+    assertLive();
+    if (!playbackContext) playbackContext = resources.createContext();
+    const context = playbackContext;
+    await context.resume();
     return context;
   }
 
-  async function ensureCaptureContext(): Promise<AudioContext> {
-    if (refs.captureContext) {
-      if (refs.captureContext.state === "suspended") {
-        await refs.captureContext.resume().catch(() => undefined);
-      }
-      return refs.captureContext;
-    }
-
-    const AudioContextCtor = getAudioContextCtor();
-    if (!AudioContextCtor) {
-      throw new Error("AudioContext unavailable");
-    }
-
-    const context = new AudioContextCtor();
-    if (context.state === "suspended") {
-      await context.resume().catch(() => undefined);
-    }
-    refs.captureContext = context;
-    return context;
+  function playbackCancelled(generation: number): boolean {
+    return destroyed || generation !== playbackGeneration;
   }
 
-  async function playAudio(audio: AudioPlaybackSource): Promise<number> {
+  async function playAudio(audio: AudioPlaybackSource, generation: number): Promise<number> {
     const context = await ensurePlaybackContext();
-    const arrayBuffer = await audio.arrayBuffer();
-    const type = (audio.type || "").toLowerCase();
-    const audioBuffer = type.startsWith("audio/pcm")
-      ? pcm16LeToAudioBuffer(
-          context,
-          new Uint8Array(arrayBuffer),
-          parsePcmSampleRate(type) ?? 24000,
-        )
-      : await decodeAudioData(context, arrayBuffer);
-
-    const durationSec = audioBuffer.duration;
-    const source = context.createBufferSource();
-    source.buffer = audioBuffer;
-    source.connect(context.destination);
-
-    return await new Promise<number>((resolve, reject) => {
-      refs.activePlayback = { source, resolve, reject, settled: false };
-
-      const settle = (fn: () => void) => {
-        const active = refs.activePlayback;
-        if (!active || active.source !== source || active.settled) {
-          return;
-        }
-        active.settled = true;
-        refs.activePlayback = null;
-        fn();
+    if (playbackCancelled(generation)) throw new Error("Playback stopped");
+    const bytes = await audio.arrayBuffer();
+    if (playbackCancelled(generation)) throw new Error("Playback stopped");
+    const decoded = await context.decode(bytes, audio.type);
+    if (playbackCancelled(generation)) throw new Error("Playback stopped");
+    return new Promise<number>((resolve, reject) => {
+      let settled = false;
+      function settle(error?: Error) {
+        if (settled) return;
+        settled = true;
+        const source = activePlayback;
+        activePlayback = null;
+        cancelPlayback = null;
+        source?.disconnect();
+        if (error) reject(error);
+        else resolve(decoded.duration);
+      }
+      cancelPlayback = () => {
+        const source = activePlayback;
+        // Remove the ended callback before stop, including adapters that end synchronously.
+        settle(new Error("Playback stopped"));
+        source?.stop();
       };
-
-      source.addEventListener("ended", () => {
-        settle(() => resolve(durationSec));
-      });
-
       try {
-        source.start();
+        activePlayback = decoded.start(() => settle());
       } catch (error) {
-        settle(() => reject(error instanceof Error ? error : new Error(String(error))));
+        settle(error instanceof Error ? error : new Error(String(error)));
       }
     });
   }
 
   async function processQueue(): Promise<void> {
-    if (refs.processingQueue || refs.queue.length === 0) {
-      return;
-    }
-
-    refs.processingQueue = true;
-    while (refs.queue.length > 0) {
-      const item = refs.queue.shift()!;
-      try {
-        const duration = await playAudio(item.audio);
-        item.resolve(duration);
-      } catch (error) {
-        item.reject(error instanceof Error ? error : new Error(String(error)));
+    if (processingQueue) return;
+    processingQueue = true;
+    try {
+      while (queue.length > 0) {
+        const item = queue.shift()!;
+        activeItem = item;
+        const generation = playbackGeneration;
+        try {
+          const cancellation = new Promise<never>((_resolve, reject) => {
+            cancelWork = () => reject(new Error("Playback stopped"));
+          });
+          const duration = await Promise.race([playAudio(item.audio, generation), cancellation]);
+          item.resolve(duration);
+        } catch (error) {
+          item.reject(error instanceof Error ? error : new Error(String(error)));
+        } finally {
+          activeItem = null;
+          cancelWork = null;
+        }
       }
+    } finally {
+      processingQueue = false;
     }
-    refs.processingQueue = false;
   }
 
   async function stopCapture(): Promise<void> {
-    refs.started = false;
-
-    try {
-      refs.processor?.disconnect();
-      refs.source?.disconnect();
-      refs.gain?.disconnect();
-    } catch {
-      // Ignore best-effort teardown errors.
-    }
-
-    if (refs.stream) {
-      for (const track of refs.stream.getTracks()) {
-        try {
-          track.stop();
-        } catch {
-          // Ignore best-effort teardown errors.
-        }
-      }
-    }
-
-    refs.stream = null;
-    refs.source = null;
-    refs.processor = null;
-    refs.gain = null;
-    refs.muted = false;
+    captureGeneration++;
+    captureStart = null;
+    const previousCapture = capture;
+    const previousContext = captureContext;
+    capture = null;
+    captureContext = null;
+    muted = false;
+    previousCapture?.disconnect();
     callbacks.onVolumeLevel(0);
+    await previousContext?.close().catch(() => undefined);
+  }
 
-    const captureContext = refs.captureContext;
-    refs.captureContext = null;
-    if (captureContext && captureContext.state !== "closed") {
-      await captureContext.close().catch(() => undefined);
+  async function beginCapture(generation: number): Promise<void> {
+    try {
+      const context = resources.createContext();
+      captureContext = context;
+      await context.resume();
+      if (destroyed || generation !== captureGeneration) return;
+      const acquired = await context.capture((input, inputRate) => {
+        if (!capture || destroyed || generation !== captureGeneration) return;
+        let sumSquares = 0;
+        for (const sample of input) sumSquares += sample * sample;
+        const rms = Math.sqrt(sumSquares / Math.max(1, input.length));
+        callbacks.onVolumeLevel(Math.min(1, Math.max(0, rms * 2)));
+        if (!muted) callbacks.onCaptureData(resampleToPcm16(input, inputRate, 16000));
+      });
+      if (destroyed || generation !== captureGeneration) {
+        acquired.disconnect();
+        return;
+      }
+      capture = acquired;
+    } catch (error) {
+      if (destroyed || generation !== captureGeneration) return;
+      await stopCapture();
+      const wrapped = error instanceof Error ? error : new Error(String(error));
+      callbacks.onError?.(wrapped);
+      throw wrapped;
     }
+  }
+
+  function stop() {
+    playbackGeneration++;
+    // Settle the caller even when a browser decode/read cannot itself be cancelled.
+    activeItem?.reject(new Error("Playback stopped"));
+    cancelWork?.();
+    cancelPlayback?.();
+  }
+
+  function clearQueue() {
+    for (const item of queue.splice(0)) item.reject(new Error("Playback stopped"));
   }
 
   return {
     async initialize() {
       await ensurePlaybackContext();
     },
-
     async destroy() {
-      this.stop();
-      this.clearQueue();
-      await stopCapture();
-
-      const playbackContext = refs.playbackContext;
-      refs.playbackContext = null;
-      if (playbackContext && playbackContext.state !== "closed") {
-        await playbackContext.close().catch(() => undefined);
-      }
+      if (destroyed) return;
+      destroyed = true;
+      stop();
+      clearQueue();
+      const previousContext = playbackContext;
+      playbackContext = null;
+      await Promise.all([stopCapture(), previousContext?.close().catch(() => undefined)]);
     },
-
-    async startCapture() {
-      if (refs.started) {
-        return;
-      }
-
-      const missingNavigator =
-        typeof navigator === "undefined" ||
-        !navigator.mediaDevices ||
-        typeof navigator.mediaDevices.getUserMedia !== "function";
-      const secureContext =
-        typeof window !== "undefined" && typeof window.isSecureContext === "boolean"
-          ? window.isSecureContext
-          : true;
-      const currentOrigin =
-        typeof window !== "undefined" && window.location ? window.location.origin : "unknown";
-      const isDesktopApp = isElectronRuntime();
-
-      if (missingNavigator) {
-        throw new Error("Microphone capture is not supported in this environment");
-      }
-      if (!secureContext && !isDesktopApp) {
-        throw new Error(
-          `Microphone access requires HTTPS or localhost. Current origin: ${currentOrigin}`,
-        );
-      }
-
-      try {
-        const context = await ensureCaptureContext();
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            channelCount: 1,
-            noiseSuppression: true,
-            echoCancellation: true,
-            autoGainControl: true,
-          },
-        });
-        const source = context.createMediaStreamSource(stream);
-        const processor = context.createScriptProcessor(4096, 1, 1);
-        const gain = context.createGain();
-        gain.gain.value = 0;
-
-        processor.onaudioprocess = (event) => {
-          if (!refs.started) {
-            return;
-          }
-
-          const input = event.inputBuffer.getChannelData(0);
-          let sumSquares = 0;
-          for (let i = 0; i < input.length; i += 1) {
-            const sample = input[i];
-            sumSquares += sample * sample;
-          }
-          const rms = Math.sqrt(sumSquares / Math.max(1, input.length));
-          const normalized = Math.min(1, Math.max(0, rms * 2));
-          callbacks.onVolumeLevel(normalized);
-
-          if (refs.muted) {
-            return;
-          }
-
-          callbacks.onCaptureData(resampleToPcm16(input, context.sampleRate, 16000));
-        };
-
-        source.connect(processor);
-        processor.connect(gain);
-        gain.connect(context.destination);
-
-        refs.started = true;
-        refs.stream = stream;
-        refs.source = source;
-        refs.processor = processor;
-        refs.gain = gain;
-      } catch (error) {
-        await stopCapture();
-        const wrapped = error instanceof Error ? error : new Error(String(error));
-        callbacks.onError?.(wrapped);
-        throw wrapped;
-      }
+    startCapture() {
+      assertLive();
+      if (capture) return Promise.resolve();
+      if (captureStart) return captureStart;
+      const generation = ++captureGeneration;
+      const pending = beginCapture(generation).finally(() => {
+        if (captureStart === pending) captureStart = null;
+      });
+      captureStart = pending;
+      return pending;
     },
-
-    async stopCapture() {
-      await stopCapture();
-    },
-
+    stopCapture,
     toggleMute() {
-      refs.muted = !refs.muted;
-      if (refs.muted) {
-        callbacks.onVolumeLevel(0);
-      }
-      return refs.muted;
+      muted = !muted;
+      if (muted) callbacks.onVolumeLevel(0);
+      return muted;
     },
-
     isMuted() {
-      return refs.muted;
+      return muted;
     },
-
-    async play(audio: AudioPlaybackSource) {
-      return await new Promise<number>((resolve, reject) => {
-        refs.queue.push({ audio, resolve, reject });
-        if (!refs.processingQueue) {
-          void processQueue();
-        }
+    async play(audio) {
+      assertLive();
+      return new Promise<number>((resolve, reject) => {
+        queue.push({ audio, resolve, reject });
+        void processQueue();
       });
     },
-
-    stop() {
-      if (refs.activePlayback) {
-        const active = refs.activePlayback;
-        refs.activePlayback = null;
-        try {
-          active.source.stop();
-        } catch {
-          // Ignore best-effort stop errors.
-        }
-        if (!active.settled) {
-          active.settled = true;
-          active.reject(new Error("Playback stopped"));
-        }
-      }
-    },
-
-    clearQueue() {
-      while (refs.queue.length > 0) {
-        refs.queue.shift()!.reject(new Error("Playback stopped"));
-      }
-      refs.processingQueue = false;
-    },
-
+    stop,
+    clearQueue,
     isPlaying() {
-      return refs.activePlayback !== null;
+      return activePlayback !== null;
     },
   };
 }

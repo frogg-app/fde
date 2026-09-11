@@ -18,7 +18,12 @@ class FakeRealtimeSession extends EventEmitter implements StreamingTranscription
   closed = false;
   requiredSampleRate = 24000;
 
+  constructor(private readonly connectionGate: Promise<void> = Promise.resolve()) {
+    super();
+  }
+
   async connect(): Promise<void> {
+    await this.connectionGate;
     this.connected = true;
   }
 
@@ -73,6 +78,74 @@ const tick = async (): Promise<void> => {
   await Promise.resolve();
   await Promise.resolve();
 };
+
+function pendingConnection() {
+  let resolve!: () => void;
+  const promise = new Promise<void>((done) => {
+    resolve = done;
+  });
+  return { session: new FakeRealtimeSession(promise), resolve };
+}
+
+function lifecycleHarness(sessions: FakeRealtimeSession[]) {
+  const emitted: Array<{ type: string; payload: unknown }> = [];
+  const manager = new DictationStreamManager({
+    logger: pino({ level: "silent" }),
+    emit: (message) => emitted.push(message),
+    sessionId: "lifecycle-test",
+    stt: {
+      id: "fake",
+      createSession() {
+        const session = sessions.shift();
+        if (!session) throw new Error("No next session");
+        return session;
+      },
+    },
+  });
+  return { manager, emitted };
+}
+
+describe("DictationStreamManager connection ownership", () => {
+  it.each(["cancel", "disconnect"])(
+    "closes a pending connection on %s without resurrecting it",
+    async (action) => {
+      const pending = pendingConnection();
+      const { manager, emitted } = lifecycleHarness([pending.session]);
+      const start = manager.handleStart("d1", "audio/pcm;rate=24000;bits=16");
+      if (action === "cancel") manager.handleCancel("d1");
+      else manager.cleanupAll();
+      expect(pending.session.closed).toBe(true);
+      pending.resolve();
+      await start;
+      expect(emitted).toEqual([]);
+      pending.session.emitTranscript("old", "late transcript", true);
+      expect(emitted).toEqual([]);
+    },
+  );
+
+  it("keeps the replacement when the old connection finishes and emits late events", async () => {
+    const old = pendingConnection();
+    const replacement = new FakeRealtimeSession();
+    const { manager, emitted } = lifecycleHarness([old.session, replacement]);
+    const firstStart = manager.handleStart("d1", "audio/pcm;rate=24000;bits=16");
+    await manager.handleStart("d1", "audio/pcm;rate=24000;bits=16");
+    old.resolve();
+    await firstStart;
+    emitted.length = 0;
+    old.session.emitCommitted("old");
+    old.session.emitTranscript("old", "obsolete", true);
+    old.session.emitError("obsolete failure");
+    await tick();
+    expect(emitted).toEqual([]);
+    expect(old.session.closed).toBe(true);
+    expect(replacement.closed).toBe(false);
+    replacement.emitTranscript("new", "current", false);
+    expect(emitted).toEqual([
+      { type: "dictation_stream_partial", payload: { dictationId: "d1", text: "current" } },
+    ]);
+    manager.cleanupAll();
+  });
+});
 
 describe("DictationStreamManager (finish buffer-too-small tolerance)", () => {
   const env = {

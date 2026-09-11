@@ -25,9 +25,9 @@ import {
 } from "../support/helpers/workspace-ui";
 
 // Model B entry points into the New Workspace screen. The surviving entries are
-// the global button (universal) and each project's per-row New workspace icon
+// the keyboard shortcut and each project's per-row New workspace icon
 // (preselects that project) — shown for git projects and for non-git projects on
-// a multiplicity-capable host. These specs prove the global entry opens the
+// a multiplicity-capable host. These specs prove the shortcut opens the
 // screen, the project icon preselects the right project across the reused 'new'
 // screen, and non-git projects never offer the worktree Isolation control.
 
@@ -48,7 +48,7 @@ test.describe("New workspace entry points", () => {
     await client?.close().catch(() => undefined);
   });
 
-  test("the global new-workspace button opens the New Workspace screen", async ({ page }) => {
+  test("the new-workspace shortcut opens the New Workspace screen", async ({ page }) => {
     const seeded: SeededWorkspace = await seedWorkspace({ repoPrefix: "entry-global-button-" });
 
     try {
@@ -77,7 +77,7 @@ test.describe("New workspace entry points", () => {
       });
 
       const globalButton = page.getByTestId("sidebar-global-new-workspace");
-      await expect(globalButton).toBeVisible({ timeout: 30_000 });
+      await expect(globalButton).toHaveCount(0);
 
       await openGlobalNewWorkspaceComposer(page);
       await expect(page.getByTestId("host-chooser")).toHaveCount(0);
@@ -261,7 +261,7 @@ test.describe("New workspace entry points", () => {
       await expect(projectRow(page, gitProject.projectKey)).toBeVisible({ timeout: 30_000 });
       await expect(projectRow(page, nonGitProject.projectKey)).toBeVisible({ timeout: 30_000 });
 
-      // Open New Workspace for the non-git project via the global button, then
+      // Open New Workspace for the non-git project via the keyboard shortcut, then
       // select it in the picker (the per-row icon would preselect it too).
       await openGlobalNewWorkspaceComposer(page);
       const trigger = page.getByTestId("new-workspace-project-picker-trigger");

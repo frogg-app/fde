@@ -1,13 +1,11 @@
 import { router, usePathname } from "expo-router";
-import { AudioLines, History, Plus, Search } from "lucide-react-native";
-import { memo, useCallback, useMemo, type ComponentType } from "react";
+import { AudioLines, History, Home, Search } from "lucide-react-native";
+import { useCallback, useMemo, type ComponentType } from "react";
 import { useTranslation } from "react-i18next";
 import { View, type StyleProp, type ViewStyle } from "react-native";
 import { SidebarHeaderRow } from "@/components/sidebar/sidebar-header-row";
 import { useShortcutKeys } from "@/hooks/use-shortcut-keys";
 import { PluginSidebarItemRow } from "@/plugins/sidebar-items";
-import { canCreateWorktreeForProjectKind } from "@/projects/host-projects";
-import { useHostFeature } from "@/runtime/host-features";
 import {
   builtinSidebarNavLabelKey,
   builtinSidebarNavShortcutAction,
@@ -16,9 +14,7 @@ import {
 import { useSidebarNavItems } from "@/sidebar-nav/use-sidebar-nav-items";
 import { useCompanionStore } from "@/companion/store";
 import { useKeyboardShortcutsStore } from "@/stores/keyboard-shortcuts-store";
-import { useActiveWorkspaceSelection } from "@/stores/navigation-active-workspace-store";
-import { useWorkspace } from "@/stores/session-store-hooks";
-import { buildNewWorkspaceRoute, buildSessionsRoute } from "@/utils/host-routes";
+import { buildOpenProjectRoute, buildSessionsRoute } from "@/utils/host-routes";
 
 interface SidebarNavRowProps {
   onBeforeNavigate?: () => void;
@@ -59,52 +55,26 @@ export function SidebarNavRows({ style, onBeforeNavigate }: SidebarNavRowsProps)
   );
 }
 
-const SidebarNewWorkspaceRow = memo(function SidebarNewWorkspaceRow({
-  onBeforeNavigate,
-}: SidebarNavRowProps) {
+function SidebarHomeRow({ onBeforeNavigate }: SidebarNavRowProps) {
   const { t } = useTranslation();
-  const shortcutKeys = useShortcutKeys(builtinSidebarNavShortcutAction("new-workspace"));
-  const activeWorkspaceSelection = useActiveWorkspaceSelection();
-  const activeWorkspaceServerId = activeWorkspaceSelection?.serverId ?? null;
-  const activeWorkspaceId = activeWorkspaceSelection?.workspaceId ?? null;
-  const activeWorkspace = useWorkspace(activeWorkspaceServerId, activeWorkspaceId);
-  const supportsWorkspaceMultiplicity = useHostFeature(
-    activeWorkspaceServerId,
-    "workspaceMultiplicity",
-  );
-  const canUseActiveWorkspaceContext = Boolean(
-    activeWorkspace &&
-    (supportsWorkspaceMultiplicity || canCreateWorktreeForProjectKind(activeWorkspace.projectKind)),
-  );
-
+  const pathname = usePathname();
   const handlePress = useCallback(() => {
     onBeforeNavigate?.();
-    router.push(
-      activeWorkspaceServerId
-        ? buildNewWorkspaceRoute(
-            activeWorkspace && canUseActiveWorkspaceContext
-              ? {
-                  serverId: activeWorkspaceServerId,
-                  sourceDirectory: activeWorkspace.projectRootPath,
-                  projectId: activeWorkspace.projectId,
-                }
-              : { serverId: activeWorkspaceServerId },
-          )
-        : buildNewWorkspaceRoute(),
-    );
-  }, [activeWorkspace, activeWorkspaceServerId, canUseActiveWorkspaceContext, onBeforeNavigate]);
+    router.push(buildOpenProjectRoute());
+  }, [onBeforeNavigate]);
 
   return (
     <SidebarHeaderRow
-      icon={Plus}
-      label={t(builtinSidebarNavLabelKey("new-workspace"))}
+      icon={Home}
+      label={t(builtinSidebarNavLabelKey("home"))}
       onPress={handlePress}
-      testID="sidebar-global-new-workspace"
+      isActive={pathname === buildOpenProjectRoute()}
+      testID="sidebar-home"
+      nativeID="sidebar-home"
       variant="compact"
-      shortcutKeys={shortcutKeys}
     />
   );
-});
+}
 
 function SidebarHistoryRow({ onBeforeNavigate }: SidebarNavRowProps) {
   const { t } = useTranslation();
@@ -169,7 +139,7 @@ function SidebarSearchRow({ onBeforeNavigate }: SidebarNavRowProps) {
 }
 
 const BUILTIN_ROWS: Record<BuiltinSidebarNavId, ComponentType<SidebarNavRowProps>> = {
-  "new-workspace": SidebarNewWorkspaceRow,
+  home: SidebarHomeRow,
   companion: SidebarCompanionRow,
   history: SidebarHistoryRow,
   search: SidebarSearchRow,

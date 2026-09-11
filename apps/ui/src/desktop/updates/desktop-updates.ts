@@ -210,7 +210,7 @@ export async function installDesktopAppUpdate({
 }
 
 /**
- * The shell emits this whenever a check (manual, automatic, or the 6-hourly
+ * The shell emits this whenever a check (manual, automatic, or the 30-minute
  * background one) finds a newer version; the payload is a check result.
  */
 export async function listenToDesktopAppUpdateAvailable(

@@ -8,28 +8,33 @@ import expo.modules.kotlin.Promise
 import expo.modules.interfaces.permissions.Permissions
 
 class ExpoTwoWayAudioModule : Module() {
+    private var ownedEngine: AudioEngine? = null
     companion object {
         private const val ON_MIC_DATA_EVENT = "onMicrophoneData"
         private const val ON_INPUT_VOLUME_LEVEL_EVENT = "onInputVolumeLevelData"
         private const val ON_OUTPUT_VOLUME_LEVEL_EVENT = "onOutputVolumeLevelData"
         private const val ON_RECORDING_CHANGE_EVENT = "onRecordingChange"
         private const val ON_AUDIO_INTERRUPTION_EVENT = "onAudioInterruption"
-        var audioEngine: AudioEngine? = null
+        @Volatile var audioEngine: AudioEngine? = null
     }
 
     override fun definition() = ModuleDefinition {
         Name("ExpoTwoWayAudio")
         AsyncFunction("initialize") { promise: Promise ->
-            try {
-                if (audioEngine != null) {
+            synchronized(ExpoTwoWayAudioModule::class.java) {
+                try {
+                    if (audioEngine != null) {
+                        promise.resolve(true)
+                        return@AsyncFunction
+                    }
+                    val context = appContext.reactContext
+                        ?: throw IllegalStateException("React context is unavailable")
+                    audioEngine = AudioEngine(context).also { ownedEngine = it }
+                    setupCallbacks()
                     promise.resolve(true)
-                    return@AsyncFunction
+                } catch (e: Exception) {
+                    promise.resolve(false)
                 }
-                audioEngine = appContext.reactContext?.let { AudioEngine(it) }
-                setupCallbacks()
-                promise.resolve(true)
-            } catch (e: Exception) {
-                promise.resolve(false)
             }
         }
 
@@ -51,8 +56,11 @@ class ExpoTwoWayAudioModule : Module() {
          }
 
          Function("tearDown") {
-             audioEngine?.tearDown()
-             audioEngine = null
+             synchronized(ExpoTwoWayAudioModule::class.java) {
+                 audioEngine?.tearDown()
+                 audioEngine = null
+                 ownedEngine = null
+             }
              null
          }
 
@@ -110,6 +118,18 @@ class ExpoTwoWayAudioModule : Module() {
                  android.Manifest.permission.RECORD_AUDIO
              )
          }
+
+        OnDestroy {
+            // Only the module that created this singleton owns teardown. A stale
+            // module destruction must not release a replacement engine.
+            synchronized(ExpoTwoWayAudioModule::class.java) {
+                ownedEngine?.let { engine ->
+                    engine.tearDown()
+                    if (audioEngine === engine) audioEngine = null
+                }
+                ownedEngine = null
+            }
+        }
 
         // Register events
         Events(

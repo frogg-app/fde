@@ -171,6 +171,23 @@ the Tauri event object as-is, so the transport shim (which keys every event on
 `payload.sessionId`) dropped everything, `open` never arrived, and every Remote SSH connect
 ended in the UI's generic "Connection timed out" — the bug behind the 0.1.5 fix.
 
+### Transport write limits and cancellation
+
+SSH, socket, and pipe sessions admit at most 32 queued writes and 64 MiB of aggregate
+IPC payload bytes, including the active write. The byte budget matches the daemon's
+physical-socket budget; binary payloads are charged at their larger base64 IPC size.
+Admission rejects immediately before decoding or cloning, so waiting IPC calls cannot
+become a second unbounded queue. This is a payload budget, not a process RSS limit:
+IPC arguments, WebSocket buffers, and other allocations add overhead.
+
+A socket write races session cancellation and a 10-second deadline. Closing a session
+releases its active and queued callers even when the peer stops reading; a timeout or
+write failure emits error/close events and removes the session so the client can reconnect.
+The regression in `src/transport/stalled_write_tests.rs` uses a real Unix socket whose
+peer completes the WebSocket handshake and then stops reading. It covers byte/count
+admission, cancellation, queued-call cleanup, and automatic timeout. The old write loop
+failed the close test. Windows named-pipe/SSH runtime acceptance remains a device check.
+
 ### Remote SSH: timing and errors
 
 The connect path has three timers, and their order is what puts ssh's own message on screen
@@ -480,10 +497,10 @@ endpoint (tests, a mirror).
 **Cache and schedule** (`cache.rs`, `mod.rs`). The last result is written to
 `update-check.json` next to `desktop-settings.json`. A check with `intent: "automatic"` reuses a
 cached answer younger than 30 minutes for the same channel (never a failed one); `manual` always
-asks GitHub. `updates::register` spawns a task that checks 20 s after launch and every 6 h while
+asks GitHub. `updates::register` spawns a task that checks on launch and every 30 min while
 the app runs, gated on `desktopSettings.updates.autoCheck` (default `true`); a failed check
 (offline) only logs at info level. Whenever a check finds a newer version the shell emits
-`paseo:event:app-update-available` with the result, which is what makes the sidebar callout
+`paseo:event:app-update-available` with the result, which is what makes the update notification
 appear; the UI answers it with an automatic check, served from the cache.
 
 **Asset selection** (`assets.rs`). `InstallContext::detect()` maps the platform to one of the
@@ -514,8 +531,9 @@ logged to `fde.log` under `updates:`.
 with the last-checked time, then a card for the available release with its notes rendered by
 `MarkdownRenderer`, the install hint for this platform, View on GitHub and Download & install
 with a progress bar fed by `app-update-progress.ts`). `use-desktop-app-updater.ts` listens for
-`app-update-available` and the progress events; `update-callout-source.tsx` keeps the sidebar
-callout and stops its polling when automatic checks are off. Tests: `src/updates/tests.rs`
+`app-update-available` and the progress events; `update-callout-source.tsx` shows a
+bottom-right update toast, retains a sidebar fallback after dismissal, and stops polling
+when automatic checks are off. Native platforms use a no-op toast implementation. Tests: `src/updates/tests.rs`
 serves a fake releases JSON and asset from a loopback `TcpListener` and drives check, cache,
 download and checksum verification; the unit tests cover release selection, asset mapping,
 NSIS detection, the Windows helper scripts and the AppImage swap; Vitest covers the UI parsers
@@ -532,3 +550,8 @@ reading and covered by string-level tests only.
 - Electron's `<webview>` browser pane and CDP-driven browser automation. Browser automation
   returns in a later milestone as Playwright driven from the daemon.
 - Rosetta detection (`runningUnderARM64Translation` is always false).
+
+The update action starts directly in the app, without a pre-install confirmation
+dialog. It immediately enters a busy state before progress-listener setup, rejects
+duplicate clicks while running, and shows download/verification/install progress or
+an actionable error. Windows executable replacement still closes and relaunches FDE.

@@ -636,8 +636,17 @@ export class VoiceSession {
     });
 
     this.sessionLogger.info("startVoiceTurnController connecting controller");
-    await controller.start();
     this.voiceTurnController = controller;
+    try {
+      await controller.start();
+      if (this.voiceTurnController !== controller) {
+        throw new Error("Voice input stopped during startup");
+      }
+    } catch (error) {
+      if (this.voiceTurnController === controller) this.voiceTurnController = null;
+      await controller.stop();
+      throw error;
+    }
     this.sessionLogger.info("startVoiceTurnController connected");
   }
 

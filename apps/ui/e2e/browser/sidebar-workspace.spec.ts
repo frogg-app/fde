@@ -272,10 +272,10 @@ test.describe("Half-screen desktop layout", () => {
       expect(scrollTop).toBe(160);
 
       await page.getByTestId("menu-button").click();
-      await expect(page.getByTestId("sidebar-global-new-workspace")).not.toBeVisible();
+      await expect(page.getByTestId("sidebar-home")).not.toBeVisible();
 
       await page.getByTestId("menu-button").click();
-      await expect(page.getByTestId("sidebar-global-new-workspace")).toBeVisible();
+      await expect(page.getByTestId("sidebar-home")).toBeVisible();
       await expect(sidebarScroll).toHaveJSProperty("scrollTop", scrollTop);
     } finally {
       await workspace.cleanup();
@@ -284,7 +284,7 @@ test.describe("Half-screen desktop layout", () => {
 
   test("keeps the pinned sidebar at half of a 14-inch Mac display", async ({ page }) => {
     await gotoAppShell(page);
-    await expect(page.getByTestId("sidebar-global-new-workspace")).toBeVisible();
+    await expect(page.getByTestId("sidebar-home")).toBeVisible();
     await expect(page.getByTestId("agent-list-backdrop")).not.toBeVisible();
   });
 
@@ -299,7 +299,7 @@ test.describe("Half-screen desktop layout", () => {
     expect(openBounds?.x).toBeGreaterThan(12);
 
     await openToggle.click();
-    await expect(page.getByTestId("sidebar-global-new-workspace")).not.toBeVisible();
+    await expect(page.getByTestId("sidebar-home")).not.toBeVisible();
 
     const closedToggle = page.getByTestId("menu-button");
     const closedIcon = closedToggle.locator("svg").first();
@@ -333,7 +333,7 @@ test.describe("Half-screen desktop layout", () => {
         page.getByTestId("explorer-sidebar-tab-files").filter({ visible: true }),
       ).toBeVisible();
       await expect(explorerToggle).toHaveAccessibleName("Close Explorer sidebar");
-      await expect(page.getByTestId("sidebar-global-new-workspace")).toBeVisible();
+      await expect(page.getByTestId("sidebar-home")).toBeVisible();
       await expect(page.getByTestId("explorer-sidebar-tab-rail")).toBeVisible();
       await expect(page.getByTestId("workspace-tabs-row").filter({ visible: true })).toHaveCount(1);
 
@@ -342,7 +342,7 @@ test.describe("Half-screen desktop layout", () => {
         page.getByTestId("explorer-sidebar-tab-files").filter({ visible: true }),
       ).toHaveCount(0);
       await expect(explorerToggle).toHaveAccessibleName("Open Explorer sidebar");
-      await expect(page.getByTestId("sidebar-global-new-workspace")).toBeVisible();
+      await expect(page.getByTestId("sidebar-home")).toBeVisible();
     } finally {
       await workspace.cleanup();
     }

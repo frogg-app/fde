@@ -102,6 +102,7 @@ export function createVoiceTurnController(params: {
   });
 
   let state: VoiceInputState = { status: "idle" };
+  let stopped = false;
   let resampler: Pcm16MonoResampler | null = null;
   let sttSession: StreamingTranscriptionSession | null = null;
   let sttResampler: Pcm16MonoResampler | null = null;
@@ -235,6 +236,7 @@ export function createVoiceTurnController(params: {
   }
 
   async function reconnectSttSession(): Promise<void> {
+    if (stopped) return;
     const previousSession = sttSession;
     sttSession = null;
     sttResampler = null;
@@ -243,16 +245,22 @@ export function createVoiceTurnController(params: {
 
     try {
       const nextSession = createSttSession();
-      await nextSession.connect();
       sttSession = nextSession;
+      await nextSession.connect();
+      if (stopped) {
+        nextSession.close();
+        return;
+      }
       params.logger.info("voice_turn.stt_reconnected");
     } catch (error) {
+      if (stopped) return;
       fail(error);
       params.logger.warn({ err: error }, "voice_turn.stt_reconnect_failed");
     }
   }
 
   function handleSttError(error: unknown): void {
+    if (stopped) return;
     fail(error);
     params.logger.warn({ err: error }, "voice_turn.stt_error");
     if (reconnectAttemptedForTurn) {
@@ -309,6 +317,7 @@ export function createVoiceTurnController(params: {
   }
 
   function handleSttTranscript(event: StreamingTranscriptionEvent): void {
+    if (stopped) return;
     if (event.isFinal) {
       handleFinalSttTranscript(event);
       return;
@@ -324,6 +333,7 @@ export function createVoiceTurnController(params: {
     });
     session.on("transcript", handleSttTranscript);
     session.on("committed", ({ segmentId }) => {
+      if (stopped) return;
       sealedTranscriptSegmentIds.add(segmentId);
       if (state.status === "capturing" && !activeTranscriptSegmentId) {
         activeTranscriptSegmentId = segmentId;
@@ -399,11 +409,12 @@ export function createVoiceTurnController(params: {
   }
 
   async function handleSpeechStarted(): Promise<void> {
-    if (state.status === "capturing") {
+    if (stopped || state.status === "capturing") {
       return;
     }
 
     await params.callbacks.onSpeechStarted();
+    if (stopped) return;
 
     const startedAt = Date.now();
     activeTranscriptSegmentId = null;
@@ -425,6 +436,7 @@ export function createVoiceTurnController(params: {
   }
 
   async function handleSpeechStopped(): Promise<void> {
+    if (stopped) return;
     if (state.status !== "capturing") {
       return;
     }
@@ -476,13 +488,28 @@ export function createVoiceTurnController(params: {
 
   return {
     async start(): Promise<void> {
-      sttSession = createSttSession();
-      await sttSession.connect();
+      if (stopped) throw new Error("Voice input controller is stopped");
+      const session = createSttSession();
+      sttSession = session;
+      await session.connect();
+      if (stopped) {
+        session.close();
+        throw new Error("Voice input stopped during startup");
+      }
       await detector.connect();
+      if (stopped) {
+        detector.close();
+        throw new Error("Voice input stopped during startup");
+      }
       state = { status: "listening" };
     },
 
     async stop(): Promise<void> {
+      stopped = true;
+      // Start/reconnect may be waiting on provider setup outside the serial
+      // cleanup. Release those resources now instead of waiting for setup.
+      detector.close();
+      sttSession?.close();
       await runSerial(async () => {
         clearFinalizingTurnTimeout();
         detector.close();

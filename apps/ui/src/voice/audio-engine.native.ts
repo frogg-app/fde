@@ -1,3 +1,4 @@
+import * as native from "@fde/expo-two-way-audio";
 import type {
   AudioEngine,
   AudioEngineCallbacks,
@@ -70,10 +71,10 @@ export function createAudioEngine(
   callbacks: AudioEngineCallbacks,
   _options?: AudioEngineTraceOptions,
 ): AudioEngine {
-  const native = require("@fde/expo-two-way-audio");
-
   const refs: {
     initialized: boolean;
+    initialization: Promise<void> | null;
+    captureGeneration: number;
     captureActive: boolean;
     muted: boolean;
     queue: QueuedAudio[];
@@ -87,6 +88,8 @@ export function createAudioEngine(
     destroyed: boolean;
   } = {
     initialized: false,
+    initialization: null,
+    captureGeneration: 0,
     captureActive: false,
     muted: false,
     queue: [],
@@ -133,14 +136,24 @@ export function createAudioEngine(
   );
 
   async function ensureInitialized(): Promise<void> {
-    if (refs.initialized) {
-      return;
+    if (refs.destroyed) throw new Error("Audio engine destroyed");
+    if (refs.initialized) return;
+    if (!refs.initialization) {
+      refs.initialization = (async () => {
+        const success = await native.initialize();
+        if (!success) {
+          throw new Error("expo-two-way-audio: native initialize() returned false");
+        }
+        if (refs.destroyed) {
+          native.tearDown();
+          throw new Error("Audio engine destroyed");
+        }
+        refs.initialized = true;
+      })().finally(() => {
+        refs.initialization = null;
+      });
     }
-    const success = await native.initialize();
-    if (!success) {
-      throw new Error("expo-two-way-audio: native initialize() returned false");
-    }
-    refs.initialized = true;
+    await refs.initialization;
   }
 
   /**
@@ -179,47 +192,47 @@ export function createAudioEngine(
     }
   }
 
-  async function playAudio(audio: AudioPlaybackSource): Promise<number> {
-    await ensureInitialized();
-
-    return await new Promise<number>((resolve, reject) => {
-      refs.activePlayback = { resolve, reject, settled: false };
-
-      audio
-        .arrayBuffer()
-        .then((arrayBuffer) => {
+  function playAudio(audio: AudioPlaybackSource): Promise<number> {
+    return new Promise<number>((resolve, reject) => {
+      // Own initialization and decoding too: stop must settle this call before
+      // either asynchronous operation completes, without allowing it to restart.
+      const active = { resolve, reject, settled: false };
+      refs.activePlayback = active;
+      function isCurrent(): boolean {
+        return !refs.destroyed && refs.activePlayback === active && !active.settled;
+      }
+      async function start(): Promise<void> {
+        try {
+          await ensureInitialized();
+          if (!isCurrent()) {
+            releaseSessionIfIdle();
+            return;
+          }
+          const arrayBuffer = await audio.arrayBuffer();
+          if (!isCurrent()) return;
           const pcm = new Uint8Array(arrayBuffer);
           const inputRate = parsePcmSampleRate(audio.type || "") ?? 24000;
-
-          // Native AudioEngine expects 16kHz PCM16
           const pcm16k = resamplePcm16(pcm, inputRate, 16000);
           const durationSec = pcm16k.length / 2 / 16000;
 
           native.resumePlayback();
           native.playPCMData(pcm16k);
-
-          clearPlaybackTimeout();
           refs.playbackTimeout = setTimeout(() => {
+            if (!isCurrent()) return;
             clearPlaybackTimeout();
-            const active = refs.activePlayback;
-            if (!active || active.settled) {
-              return;
-            }
             active.settled = true;
             refs.activePlayback = null;
             resolve(durationSec);
           }, durationSec * 1000);
-          return undefined;
-        })
-        .catch((error: unknown) => {
+        } catch (error) {
+          if (!isCurrent()) return;
           clearPlaybackTimeout();
-          const active = refs.activePlayback;
-          if (active && !active.settled) {
-            active.settled = true;
-            refs.activePlayback = null;
-            reject(error instanceof Error ? error : new Error(String(error)));
-          }
-        });
+          active.settled = true;
+          refs.activePlayback = null;
+          reject(error instanceof Error ? error : new Error(String(error)));
+        }
+      }
+      void start();
     });
   }
 
@@ -252,6 +265,7 @@ export function createAudioEngine(
         return;
       }
       refs.destroyed = true;
+      refs.captureGeneration += 1;
       this.stop();
       this.clearQueue();
       if (refs.captureActive) {
@@ -271,13 +285,20 @@ export function createAudioEngine(
     },
 
     async startCapture() {
+      if (refs.destroyed) throw new Error("Audio engine destroyed");
       if (refs.captureActive) {
         return;
       }
 
+      const generation = ++refs.captureGeneration;
       try {
         await ensureMicrophonePermission();
+        if (refs.destroyed || generation !== refs.captureGeneration) return;
         await ensureInitialized();
+        if (refs.destroyed || generation !== refs.captureGeneration) {
+          releaseSessionIfIdle();
+          return;
+        }
         const isRecording = native.toggleRecording(true);
         if (!isRecording) {
           throw new Error(
@@ -286,6 +307,7 @@ export function createAudioEngine(
         }
         refs.captureActive = true;
       } catch (error) {
+        if (refs.destroyed || generation !== refs.captureGeneration) return;
         const wrapped = error instanceof Error ? error : new Error(String(error));
         callbacks.onError?.(wrapped);
         throw wrapped;
@@ -293,6 +315,7 @@ export function createAudioEngine(
     },
 
     async stopCapture() {
+      refs.captureGeneration += 1;
       if (refs.captureActive) {
         native.toggleRecording(false);
       }
@@ -315,6 +338,7 @@ export function createAudioEngine(
     },
 
     async play(audio: AudioPlaybackSource) {
+      if (refs.destroyed) throw new Error("Audio engine destroyed");
       return await new Promise<number>((resolve, reject) => {
         refs.queue.push({ audio, resolve, reject });
         if (!refs.processingQueue) {
@@ -339,7 +363,7 @@ export function createAudioEngine(
       while (refs.queue.length > 0) {
         refs.queue.shift()!.reject(new Error("Playback stopped"));
       }
-      refs.processingQueue = false;
+      // The active drainer owns processingQueue until its current call settles.
       releaseSessionIfIdle();
     },
 

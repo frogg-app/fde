@@ -1,5 +1,5 @@
 import { Gift } from "lucide-react-native";
-import { type ReactNode, useEffect, useRef } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useUnistyles } from "react-native-unistyles";
 import {
@@ -16,6 +16,10 @@ import {
 import { useDesktopAppUpdater } from "@/desktop/updates/use-desktop-app-updater";
 import { useStableEvent } from "@/hooks/use-stable-event";
 import { openExternalUrl } from "@/utils/open-external-url";
+
+import { UpdateToast } from "./update-toast";
+import { updateToastVersion } from "./update-toast-state";
+import { describeAppUpdateProgress } from "./app-update-progress";
 
 const CHECK_INTERVAL_MS = 30 * 60 * 1000;
 const CHANGELOG_URL = "https://github.com/frogg-app/fde/releases";
@@ -51,7 +55,19 @@ export function UpdateCalloutSource() {
     checkForUpdates,
     installUpdate,
     isInstalling,
+    progress,
   } = useDesktopAppUpdater();
+  const [dismissedVersions, setDismissedVersions] = useState<ReadonlySet<string>>(() => new Set());
+  const toastVersion = updateToastVersion({
+    isDesktopApp,
+    status,
+    latestVersion: availableUpdate?.latestVersion ?? null,
+    dismissedVersions,
+  });
+  const dismissToast = useStableEvent(() => {
+    if (!toastVersion) return;
+    setDismissedVersions((previous) => new Set([...previous, toastVersion]));
+  });
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const openChangelog = useStableEvent(() => {
@@ -63,14 +79,13 @@ export function UpdateCalloutSource() {
   const retry = useStableEvent(() => {
     void checkForUpdates();
   });
-  // The shell runs its own 6-hourly check and announces results through
+  // The shell runs its own periodic check and announces results through
   // `app-update-available` (handled inside useDesktopAppUpdater); this
   // interval only re-reads the shell's cached answer, so it is cheap, and it
   // stops when the user turns automatic checks off.
   useEffect(() => {
     if (!isDesktopApp) return;
 
-    void checkForUpdates({ intent: "automatic", silent: true });
     if (!autoCheck) return;
 
     intervalRef.current = setInterval(() => {
@@ -85,6 +100,7 @@ export function UpdateCalloutSource() {
   }, [autoCheck, isDesktopApp, checkForUpdates]);
 
   useEffect(() => {
+    if (toastVersion) return;
     const descriptor = resolveUpdateCalloutDescriptor({
       isDesktopApp,
       status,
@@ -124,9 +140,47 @@ export function UpdateCalloutSource() {
     theme.colors.foregroundMuted,
     theme.iconSize.sm,
     t,
+    toastVersion,
   ]);
 
-  return null;
+  if (!toastVersion) return null;
+  const descriptor = resolveUpdateCalloutDescriptor({
+    isDesktopApp,
+    status,
+    isInstalling,
+    availableUpdate,
+    errorMessage,
+  });
+  if (!descriptor) return null;
+  const canInstall = availableUpdate?.readyToInstall === true;
+  let installLabel = t("desktop.updates.section.downloadAndInstall");
+  if (isInstalling) installLabel = t("desktop.updates.callout.installingAction");
+  else if (status === "error") installLabel = t("common.actions.retry");
+  const toastActions: SidebarCalloutAction[] = [
+    { label: t("desktop.updates.callout.whatsNew"), onPress: openChangelog },
+    {
+      label: installLabel,
+      onPress: install,
+      variant: "primary",
+      disabled: isInstalling || !canInstall,
+      testID: "desktop-update-toast-install",
+    },
+  ];
+  let description = renderBody(descriptor.body, t);
+  if (isInstalling && progress.status === "active") {
+    description = describeAppUpdateProgress(progress);
+  } else if (status === "available" && !canInstall) {
+    description = t("desktop.updates.section.noAsset");
+  }
+  return (
+    <UpdateToast
+      title={descriptor.title}
+      description={description}
+      variant={descriptor.variant}
+      actions={toastActions}
+      onDismiss={dismissToast}
+    />
+  );
 }
 
 function UpdateAvailableDescription({

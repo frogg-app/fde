@@ -136,7 +136,7 @@ const styles = StyleSheet.create((theme) => ({
     paddingHorizontal: theme.spacing[3],
     borderRadius: theme.borderRadius.lg,
   },
-  // Compact header entries (New workspace / History) sit tighter than the
+  // Compact header entries (Home / Search / History) sit tighter than the
   // workspace-row shape the base button mirrors.
   buttonCompact: {
     minHeight: 32,

@@ -250,7 +250,7 @@ pub fn pid_file_is_desktop_managed(home: &Path) -> bool {
 
 /// Electron's quit lifecycle: unless the user keeps the daemon running after
 /// quit, a desktop-managed daemon is stopped before the process exits.
-/// Blocking on purpose: it runs from Tauri's exit callback.
+/// Runs from Tauri's exit callback with a bounded helper lifetime.
 pub fn stop_on_exit(sidecar: &Sidecar, home: &Path, keep_running_after_quit: bool) {
     if keep_running_after_quit {
         log::info!("sidecar: exit: keepRunningAfterQuit is set, leaving the daemon running");
@@ -270,12 +270,8 @@ pub fn stop_on_exit(sidecar: &Sidecar, home: &Path, keep_running_after_quit: boo
         "sidecar: exit: stopping desktop-managed daemon: {}",
         invocation.describe()
     );
-    match cli::run_blocking(&invocation) {
-        Ok(output) => log::info!(
-            "sidecar: exit: stop exited with {:?}: {}",
-            output.exit_code,
-            output.stdout.trim()
-        ),
+    match cli::run_on_exit(&invocation) {
+        Ok(exit_code) => log::info!("sidecar: exit: stop exited with {exit_code:?}"),
         Err(error) => log::warn!("sidecar: exit: stop failed: {error}"),
     }
 }

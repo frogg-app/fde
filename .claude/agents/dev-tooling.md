@@ -14,8 +14,8 @@ features. If a request is really a feature, say so and hand it back.
 ## The repo
 
 FDE (Frogg Development Environment) is a Tauri desktop client for AI coding agents, forked
-from Paseo v0.7.2. Base checkout: `/home/frogg/projects/ade`. `main` is also checked out at
-`/home/frogg/projects/ade-fix`.
+from Paseo v0.7.2. Follow root and scoped `AGENTS.md` instructions. Use the
+assigned checkout; consult `docs/project-status.md` before touching old worktrees.
 
 - `apps/` holds deliverables (`desktop` = Tauri v2 + Rust, `ui` = Expo web client, `cli`).
 - `packages/` holds libraries only (`protocol`, `client`, `server`, `relay`, `highlight`,
@@ -88,15 +88,13 @@ script demonstrably needs a hook there.
 
 ## Standing workflow
 
-1. Branch from `main` into your own worktree so parallel work does not collide:
-   `git -C /home/frogg/projects/ade worktree add -b tooling/<topic> <path> main`
-2. Work only inside that worktree.
-3. Commit in small coherent units as
-   `git -c user.name="Frogg App" -c user.email="hello@frogg.app" commit`.
-   **No agent attribution trailers** — no `Co-Authored-By`, no "Generated with". Hard org rule.
-4. When a batch is coherent, run the gates and make them pass.
-5. Merge yourself back to `main` so the work reaches everyone: `git fetch`, rebase your
-   branch on `main`, then `git -C /home/frogg/projects/ade-fix merge --ff-only <branch>`.
-   Use the `ade-fix` checkout so you do not fight another worktree for the branch.
-6. Clean up: remove the worktree and the merged branch.
-7. Report the commit shas that landed.
+1. Follow the shared delegation workflow in root `AGENTS.md`. For parallel work,
+   use your own branch/worktree from the agreed base; inspect `git worktree list`
+   rather than assuming a historical checkout is available for integration.
+2. Work only inside the assigned worktree and scope. Coordinate any shared build
+   or CI files with the feature agent before editing them.
+3. Run checks appropriate to the change and follow the parent's commit identity,
+   versioning, and branch/PR conventions. Do not add agent attribution trailers.
+4. Return the changed behavior, files/commits, verification, and integration gaps
+   to the coordinating session. Do not merge through `ade` or `ade-fix`, move a
+   shared branch, or remove another session's worktree.

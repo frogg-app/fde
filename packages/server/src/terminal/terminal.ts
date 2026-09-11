@@ -12,6 +12,7 @@ import { findExecutable } from "../executable-resolution/executable-resolution.j
 import type { TerminalCell, TerminalState } from "@fde/protocol/messages";
 import { TerminalInputModeTracker } from "@fde/protocol/terminal-input-mode";
 import { TerminalActivityTracker } from "./activity/terminal-activity-tracker.js";
+import { TerminalOutputFlow } from "./terminal-output-flow.js";
 import type { TerminalActivity, TerminalActivityState } from "@fde/protocol/terminal-activity";
 
 const { Terminal } = xterm;
@@ -955,6 +956,7 @@ export async function createTerminal(options: CreateTerminalOptions): Promise<Te
       },
     }),
   });
+  const outputFlow = new TerminalOutputFlow({ source: ptyProcess, parser: terminal });
 
   function emitTitleChange(nextTitle: string | undefined): void {
     if (title === nextTitle) {
@@ -1153,6 +1155,7 @@ export async function createTerminal(options: CreateTerminalOptions): Promise<Te
     disposeTitleChangeSubscription();
     disposeCommandLifecycleSubscription.dispose();
     activityTracker.dispose();
+    outputFlow.dispose();
     terminal.dispose();
     listeners.clear();
     exitListeners.clear();
@@ -1162,7 +1165,7 @@ export async function createTerminal(options: CreateTerminalOptions): Promise<Te
   }
 
   function writeOutputToHeadless(data: string): void {
-    terminal.write(data, () => {
+    outputFlow.write(data, () => {
       if (disposed || killed) {
         return;
       }

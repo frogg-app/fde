@@ -92,18 +92,17 @@ export function resolveRequiredProviderModel(
  * the SDK tool timeout trigger a generic "tool failed" error.
  */
 export async function waitForAgentWithTimeout(
-  agentManager: AgentManager,
+  agentManager: Pick<AgentManager, "waitForAgentEvent" | "getAgent" | "getTimeline">,
   agentId: string,
   options?: {
     signal?: AbortSignal;
     waitForActive?: boolean;
   },
 ): Promise<WaitForAgentResult> {
-  const timeoutController = new AbortController();
   const combinedController = new AbortController();
 
   const timeoutId = setTimeout(() => {
-    timeoutController.abort(new Error("wait timeout"));
+    combinedController.abort(new Error("wait timeout"));
   }, AGENT_WAIT_TIMEOUT_MS);
 
   const forwardAbort = (reason: unknown) => {
@@ -112,21 +111,15 @@ export async function waitForAgentWithTimeout(
     }
   };
 
-  if (options?.signal) {
-    if (options.signal.aborted) {
-      forwardAbort(options.signal.reason);
+  const callerSignal = options?.signal;
+  const onCallerAbort = () => forwardAbort(callerSignal?.reason);
+  if (callerSignal) {
+    if (callerSignal.aborted) {
+      onCallerAbort();
     } else {
-      options.signal.addEventListener("abort", () => forwardAbort(options.signal!.reason), {
-        once: true,
-      });
+      callerSignal.addEventListener("abort", onCallerAbort, { once: true });
     }
   }
-
-  timeoutController.signal.addEventListener(
-    "abort",
-    () => forwardAbort(timeoutController.signal.reason),
-    { once: true },
-  );
 
   try {
     const result = await agentManager.waitForAgentEvent(agentId, {
@@ -155,6 +148,7 @@ export async function waitForAgentWithTimeout(
     throw error;
   } finally {
     clearTimeout(timeoutId);
+    callerSignal?.removeEventListener("abort", onCallerAbort);
   }
 }
 
