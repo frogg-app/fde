@@ -116,7 +116,11 @@ What it does:
 2. Unpacks it into `~/.local/share/fde/versions/<version>/` and points the
    `~/.local/share/fde/current` symlink at it (the swap is atomic, so a running
    `fde` keeps resolving a complete tree).
-3. Links `fde` and `paseo` into `~/.local/bin`.
+3. Links `fde` and `paseo` into `~/.local/bin` and configures PATH in the
+   user’s Bash, Zsh, Fish, or POSIX login profile. Open a new terminal after
+   installation, or run the printed PATH command to use the CLI in the current
+   terminal. Re-running the installer does not duplicate its PATH entries.
+   Unsupported shells get a manual PATH reminder.
 4. Installs a service that runs `fde daemon start --foreground` with
    `PASEO_LISTEN` and `PASEO_WEB_UI_ENABLED=true`:
    - Linux: systemd user unit `~/.config/systemd/user/fde-daemon.service`,
@@ -136,17 +140,18 @@ service.
 
 ### Environment overrides
 
-| Variable           | Default                                     | Purpose                                                        |
-| ------------------ | ------------------------------------------- | -------------------------------------------------------------- |
-| `FDE_VERSION`      | latest release                              | Exact version to install, e.g. `0.1.7`                         |
-| `FDE_INSTALL_DIR`  | `~/.local/share/fde`                        | Install root (`versions/`, `current`)                          |
-| `FDE_BIN_DIR`      | `~/.local/bin`                              | Where `fde`/`paseo` are linked                                 |
-| `FDE_RELEASE_BASE` | `https://github.com/frogg-app/fde/releases` | Release download base                                          |
-| `FDE_BUNDLE_URL`   | unset                                       | Download this exact tarball (+ `.sha256`) instead of a release |
-| `FDE_BUNDLE_FILE`  | unset                                       | Install this local tarball instead of downloading              |
-| `FDE_NO_SERVICE`   | `0`                                         | `1` skips the systemd/launchd service                          |
-| `FDE_LISTEN`       | `127.0.0.1:9999`                            | Daemon listen address written into the service                 |
-| `FDE_HOME`         | `~/.fde`                                    | Daemon state directory written into the service (`FDE_HOME`)   |
+| Variable             | Default                                     | Purpose                                                        |
+| -------------------- | ------------------------------------------- | -------------------------------------------------------------- |
+| `FDE_VERSION`        | latest release                              | Exact version to install, e.g. `0.1.7`                         |
+| `FDE_INSTALL_DIR`    | `~/.local/share/fde`                        | Install root (`versions/`, `current`)                          |
+| `FDE_BIN_DIR`        | `~/.local/bin`                              | Where `fde`/`paseo` are linked                                 |
+| `FDE_RELEASE_BASE`   | `https://github.com/frogg-app/fde/releases` | Release download base                                          |
+| `FDE_BUNDLE_URL`     | unset                                       | Download this exact tarball (+ `.sha256`) instead of a release |
+| `FDE_BUNDLE_FILE`    | unset                                       | Install this local tarball instead of downloading              |
+| `FDE_NO_MODIFY_PATH` | `0`                                         | `1` leaves shell startup files unchanged                       |
+| `FDE_NO_SERVICE`     | `0`                                         | `1` skips the systemd/launchd service                          |
+| `FDE_LISTEN`         | `127.0.0.1:9999`                            | Daemon listen address written into the service                 |
+| `FDE_HOME`           | `~/.fde`                                    | Daemon state directory written into the service (`FDE_HOME`)   |
 
 `FDE_LISTEN=0.0.0.0:9999` makes the daemon reachable from the network: devices on the
 same private network connect straight away, the first device to pair from anywhere
