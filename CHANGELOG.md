@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.11 - 2026-09-11
+
+- Fix local speech loading when npm hoists the native Sherpa library away from
+  its JavaScript wrapper. Recover the wrapper API and reject incomplete exports
+  instead of returning raw bindings that lack `OfflineRecognizer`.
+
 ## 0.2.10 - 2026-09-11
 
 - Restore hidden compatibility for legacy `fde daemon` commands used by installed

@@ -103,3 +103,19 @@ Expo callbacks, and shuts down worker executors. These native fixes require a re
 APK. Desktop/web engines disconnect playback nodes and stop acquired microphone tracks,
 including late permission grants. See the [memory investigation](memory-lockup-investigation.md)
 for demonstrated regressions and remaining device validation.
+
+## Native speech loading
+
+`sherpa-onnx-node` supplies JavaScript constructors around a platform-specific
+`.node` addon. They are different APIs: raw addon bindings do not expose
+`OfflineRecognizer`, `OfflineTts`, or `Vad` constructors. npm can nest the wrapper
+under the server workspace while hoisting its native dependency to the bundle
+root, beyond the upstream loader's relative search paths. FDE resolves the native
+addon, supplies it to the wrapper, and validates the public constructor API.
+A successful raw addon load alone does not establish speech readiness.
+
+The 0.2.10 Linux bundle reproduced `sherpa.OfflineRecognizer is not a constructor`
+in this layout. Local layout repair restored real Parakeet transcription; the
+loader regression fix is included in 0.2.11. Native dependency updates should
+verify a hoisted package layout and actual speech initialization, not just addon
+loading or daemon health.

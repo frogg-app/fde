@@ -1,4 +1,4 @@
-import { createRequire } from "node:module";
+import Module, { createRequire } from "node:module";
 import path from "node:path";
 import { existsSync } from "node:fs";
 import { spawnSync } from "node:child_process";
@@ -75,11 +75,56 @@ function loadWithRequire(
   attempts: LoadAttempt[],
 ): SherpaOnnxNodeModule | null {
   try {
-    return requireFn(target) as SherpaOnnxNodeModule;
+    const loaded = requireFn(target) as SherpaOnnxNodeModule;
+    for (const name of [
+      "OfflineRecognizer",
+      "OnlineRecognizer",
+      "OfflineTts",
+      "Vad",
+      "CircularBuffer",
+    ] as const) {
+      if (typeof loaded?.[name] !== "function") {
+        throw new Error(`sherpa-onnx-node wrapper is missing the ${name} constructor`);
+      }
+    }
+    return loaded;
   } catch (error) {
     appendAttempt(attempts, target, error);
     return null;
   }
+}
+
+/** Bridge upstream's relative-only native lookup to Node's resolved platform package.
+ * The .node addon exports low-level functions, not the public JS constructors.
+ * All wrapper modules share addon.js; seed that one cache entry and load the
+ * actual wrapper so its stream, recognizer, TTS, and VAD adapters stay intact.
+ */
+function loadWrapperWithAddon(
+  requireFn: NodeRequire,
+  addonPath: string,
+  attempts: LoadAttempt[],
+): SherpaOnnxNodeModule | null {
+  let bridgePath: string | undefined;
+  let previous: NodeModule | undefined;
+  try {
+    bridgePath = requireFn.resolve("sherpa-onnx-node/addon.js");
+    previous = requireFn.cache[bridgePath];
+    const native = requireFn(addonPath);
+    const bridge = new Module(bridgePath);
+    bridge.filename = bridgePath;
+    bridge.loaded = true;
+    bridge.exports = native;
+    requireFn.cache[bridgePath] = bridge;
+    const wrapper = loadWithRequire(requireFn, "sherpa-onnx-node", attempts);
+    if (wrapper) return wrapper;
+  } catch (error) {
+    appendAttempt(attempts, addonPath, error);
+  }
+  if (bridgePath) {
+    if (previous) requireFn.cache[bridgePath] = previous;
+    else delete requireFn.cache[bridgePath];
+  }
+  return null;
 }
 
 function buildFailure(attempts: LoadAttempt[], pkgName: string): Error {
@@ -122,7 +167,7 @@ export function loadSherpaOnnxNode(): SherpaOnnxNodeModule {
     const addonPath = path.join(platformPkgDir, "sherpa-onnx.node");
 
     if (existsSync(addonPath)) {
-      const byPath = loadWithRequire(require, addonPath, attempts);
+      const byPath = loadWrapperWithAddon(require, addonPath, attempts);
       if (byPath) {
         cached = byPath;
         return cached;
@@ -130,7 +175,7 @@ export function loadSherpaOnnxNode(): SherpaOnnxNodeModule {
 
       // Linux fallback for broken prebuilt RUNPATHs.
       maybePatchLinuxAddonRunpath(addonPath);
-      const afterPatch = loadWithRequire(require, addonPath, attempts);
+      const afterPatch = loadWrapperWithAddon(require, addonPath, attempts);
       if (afterPatch) {
         cached = afterPatch;
         return cached;
