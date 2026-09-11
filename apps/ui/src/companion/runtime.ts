@@ -2,6 +2,7 @@ import { Buffer } from "buffer";
 import type { CompanionAudioOutputMessage, CompanionNotebookEntry } from "@fde/protocol/messages";
 import type { AudioEngine, AudioPlaybackSource } from "@/voice/audio-engine-types";
 import { decodeAudioChunk, toAudioPlaybackSource } from "@/voice/playback-source";
+import { pcm16Rms } from "@/voice/speaking-level";
 import { stepDisplayVolume } from "@/voice/volume-smoothing";
 
 const PCM_MIME_TYPE = "audio/pcm;rate=16000;bits=16";
@@ -35,6 +36,7 @@ export interface CompanionRuntimeSink {
   sessionStopped(): void;
   setMuted(isMuted: boolean): void;
   setVolume(volume: number): void;
+  setSpeakingVolume(volume: number): void;
   userSpeakingChanged(isSpeaking: boolean): void;
   transcriptReceived(input: { text: string; isFinal: boolean }): void;
   replyReceived(input: { text: string; isFinal: boolean }): void;
@@ -55,6 +57,8 @@ export interface CompanionRuntimeDeps {
 interface PlaybackGroup {
   chunks: AudioPlaybackSource[];
   chunkIds: string[];
+  /** Per-chunk loudness, so the orb can move to the Companion's own voice. */
+  levels: number[];
   isComplete: boolean;
 }
 
@@ -109,6 +113,7 @@ export function createCompanionRuntime(deps: CompanionRuntimeDeps): CompanionRun
     groupOrder.length = 0;
     deps.engine.stop();
     deps.engine.clearQueue();
+    deps.sink.setSpeakingVolume(0);
   }
 
   async function drain(generation: number, adapter: CompanionSessionAdapter): Promise<void> {
@@ -126,6 +131,7 @@ export function createCompanionRuntime(deps: CompanionRuntimeDeps): CompanionRun
 
         const source = group.chunks.shift();
         const chunkId = group.chunkIds.shift();
+        const level = group.levels.shift() ?? 0;
         if (!source || !chunkId) {
           if (!group.isComplete) return;
           groups.delete(groupId);
@@ -138,6 +144,7 @@ export function createCompanionRuntime(deps: CompanionRuntimeDeps): CompanionRun
           deps.sink.companionAudioStarted();
         }
 
+        deps.sink.setSpeakingVolume(level);
         await deps.engine.play(source);
         if (generation !== state.generation) return;
         await adapter.audioPlayed(chunkId);
@@ -145,6 +152,7 @@ export function createCompanionRuntime(deps: CompanionRuntimeDeps): CompanionRun
     } finally {
       draining = false;
       if (announcedStart && generation === state.generation) {
+        deps.sink.setSpeakingVolume(0);
         deps.sink.companionAudioFinished();
       }
     }
@@ -254,12 +262,14 @@ export function createCompanionRuntime(deps: CompanionRuntimeDeps): CompanionRun
 
       let group = groups.get(payload.groupId);
       if (!group) {
-        group = { chunks: [], chunkIds: [], isComplete: false };
+        group = { chunks: [], chunkIds: [], levels: [], isComplete: false };
         groups.set(payload.groupId, group);
         groupOrder.push(payload.groupId);
       }
-      group.chunks.push(toAudioPlaybackSource(decodeAudioChunk(payload.audio), payload.format));
+      const bytes = decodeAudioChunk(payload.audio);
+      group.chunks.push(toAudioPlaybackSource(bytes, payload.format));
       group.chunkIds.push(payload.id);
+      group.levels.push(pcm16Rms(bytes));
       group.isComplete = group.isComplete || payload.isLastChunk;
 
       void drain(state.generation, adapter);

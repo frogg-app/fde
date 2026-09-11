@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.1 - 2026-09-11
+
+Unreleased; repository baseline cleanup.
+
+- Companion interrupts on voice activity, retains interrupted conversation context,
+  starts the first speech segment earlier, and animates the orb from reply audio.
+  Full-loop device validation and backend cancellation remain open.
+- Spoken alerts tolerate cold local model startup and can retry failed synthesis;
+  concurrent retry requests share one synthesis.
+- Windows installers use the FDE icon. `FDE_DEVTOOLS=1` opens the bundled inspector
+  for diagnostics; an opt-in idle memory probe is included.
+- Roadmap and engineering plans now distinguish implemented work, deferred work,
+  and verification gaps.
+
 ## 0.2.0
 
 - **Companion: a real-time voice conversation that sits above projects and workspaces.** You talk to it and it answers straight away; it never does the work itself. Anything that needs real thought is handed to a headless subagent while it keeps talking to you, and it drives, starts and reports on the agents running in your workspaces. A fast orchestrator model (`claude-haiku-4-5`) answers over the Messages API rather than the agent provider stack, which launches a CLI per turn and is far too slow for conversation.

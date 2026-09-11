@@ -82,7 +82,22 @@ export class CompanionOrchestrator {
    * Run one turn. `text` is a final transcript, or the synthetic user turn a
    * settled deferred job re-enters with.
    */
-  async *turn(text: string): AsyncGenerator<CompanionTurnEvent, void> {
+  async *turn(
+    text: string,
+    /**
+     * What the user has actually heard so far, if the caller can tell us.
+     *
+     * A barge-in abandons this generator part-way, and the exchange still has
+     * to reach the history or the Companion has no record it ever spoke -- it
+     * would repeat itself, and answer "what was that last thing?" with nothing.
+     * Recording the generated reply instead would overshoot the other way,
+     * leaving it certain it said sentences that never reached a speaker. This
+     * is the same reconciliation OpenAI's `conversation.item.truncate`
+     * performs, arriving from the opposite direction; see
+     * docs/companion-voice-design.md.
+     */
+    heardSoFar?: () => string,
+  ): AsyncGenerator<CompanionTurnEvent, void> {
     const notebook = await this.notebook.promptText();
     const preamble = notebook ? `Your notebook right now:\n${notebook}` : "Your notebook is empty.";
     const backendTurn = this.backend.beginTurn({
@@ -93,32 +108,41 @@ export class CompanionOrchestrator {
     const invoked: CompanionToolName[] = [];
     let reply = "";
     let toolResults: CompanionBackendToolResult[] = [];
+    let remembered = false;
 
-    for (let round = 0; round < MAX_TOOL_ROUNDS; round += 1) {
-      const response = yield* this.streamRound(backendTurn, toolResults, invoked, (delta) => {
-        reply += delta;
-      });
-      if (response.length === 0) {
-        break;
-      }
-      toolResults = [];
-      for (const call of response) {
-        const tool = this.tools.find((candidate) => candidate.name === call.name);
-        if (tool) {
-          invoked.push(tool.name);
-          yield { type: "tool_started", name: tool.name, deferred: tool.deferred };
-        }
-        const result = await invokeCompanionTool(this.tools, call.name, call.input);
-        toolResults.push({
-          id: call.id,
-          content: result.ok ? result.content : result.error,
-          isError: !result.ok,
+    try {
+      for (let round = 0; round < MAX_TOOL_ROUNDS; round += 1) {
+        const response = yield* this.streamRound(backendTurn, toolResults, invoked, (delta) => {
+          reply += delta;
         });
+        if (response.length === 0) {
+          break;
+        }
+        toolResults = [];
+        for (const call of response) {
+          const tool = this.tools.find((candidate) => candidate.name === call.name);
+          if (tool) {
+            invoked.push(tool.name);
+            yield { type: "tool_started", name: tool.name, deferred: tool.deferred };
+          }
+          const result = await invokeCompanionTool(this.tools, call.name, call.input);
+          toolResults.push({
+            id: call.id,
+            content: result.ok ? result.content : result.error,
+            isError: !result.ok,
+          });
+        }
+      }
+
+      remembered = true;
+      this.remember(text, reply);
+      yield { type: "completed", reply, tools: invoked };
+    } finally {
+      // Reached on an abandoned generator too: `.return()` unwinds through here.
+      if (!remembered) {
+        this.remember(text, heardSoFar ? heardSoFar() : reply);
       }
     }
-
-    this.remember(text, reply);
-    yield { type: "completed", reply, tools: invoked };
   }
 
   /**

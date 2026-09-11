@@ -167,4 +167,15 @@ describe("createCompanionSpeechStream", () => {
     ]);
     expect(stream.errors.map((error) => error.message)).toEqual(["TTS not configured"]);
   });
+
+  // Time to first audio is what the listener reads as the response time, so the
+  // opening clause is cut early and the rest of the turn keeps the longer
+  // minimum. See docs/companion-voice-design.md.
+  it("cuts the first segment earlier than the ones after it", () => {
+    const reply = "It only fails on Windows, and I have not found the cause.";
+    // First: out at the opening clause, ~25 chars in.
+    expect(cutSpeakableSegment(reply, true)?.segment).toBe("It only fails on Windows,");
+    // Later: holds for the sentence, so the prosody does not go choppy.
+    expect(cutSpeakableSegment(reply, false)?.segment).toBe(reply);
+  });
 });

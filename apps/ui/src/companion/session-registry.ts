@@ -38,6 +38,7 @@ export function getCompanionRuntime(): CompanionRuntime {
       sessionStopped: () => useCompanionStore.getState().sessionStopped(),
       setMuted: (isMuted) => useCompanionStore.getState().setMuted(isMuted),
       setVolume: (volume) => useCompanionStore.getState().setVolume(volume),
+      setSpeakingVolume: (volume) => useCompanionStore.getState().setSpeakingVolume(volume),
       userSpeakingChanged: (isSpeaking) =>
         useCompanionStore.getState().userSpeakingChanged(isSpeaking),
       transcriptReceived: (input) => useCompanionStore.getState().transcriptReceived(input),

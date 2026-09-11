@@ -9,8 +9,8 @@ lives in code at `apps/ui/src/desktop/host.ts` (`DesktopHostBridge`) and
 
 - **No Node runtime in the app.** The shell is Rust plus a few hundred lines of injected
   TypeScript. The daemon is either a remote host or an optional sidecar.
-- **Thin client first.** Milestone 1 ships with remote hosts only (direct TCP and relay).
-  The local sidecar daemon is milestone 3. A user on a Windows laptop with no agent CLIs
+- **Thin client first.** Direct TCP, relay and Rust SSH transport are implemented.
+  The optional local sidecar daemon is also implemented (historical milestone 3). A user on a Windows laptop with no agent CLIs
   installs the binary, adds a host, and works.
 - **The UI must not know it is in Tauri.** `apps/ui` detects the desktop by the presence of
   `window.paseoDesktop` at runtime, never by a build flag. The shell implements that object.
@@ -147,7 +147,6 @@ Everything else throws `Unknown desktop command`.
 | `relay` (E2EE)                 | 1         | plain WebSocket, no shell involvement                                                                                                                                                                                                                                                                                                   |
 | `remoteSsh`                    | 2         | Rust spawns the system `ssh -T -o BatchMode=yes … -W 127.0.0.1:<daemonPort> <host>` (default daemon port 9999; with an ssh password, askpass instead of `BatchMode`, see below) and runs the WebSocket client over its stdin/stdout (`src/transport/ssh.rs`); a daemon password rides the handshake as the `paseo.bearer.*` subprotocol |
 | `directSocket` / `directPipe`  | 2         | Rust connects the unix socket / named pipe and runs the WebSocket client over it the same way                                                                                                                                                                                                                                           |
-| local sidecar                  | 3         | see below                                                                                                                                                                                                                                                                                                                               |
 | local sidecar                  | 3         | Rust downloads the daemon bundle and supervises it through its CLI; the webview then talks plain WebSocket to `127.0.0.1:<port>` (see below)                                                                                                                                                                                            |
 
 ### Transport sessions
@@ -437,6 +436,15 @@ plus `windowsHide` in `spawnProcess`) survives the CLI exiting; that `paseo.pid`
   which points `devUrl` at Metro.
 - Release: `npm run build:ui` then `cargo tauri build`. Windows from this Linux VM:
   `cargo tauri build --runner cargo-xwin --target x86_64-pc-windows-msvc`, NSIS bundle.
+- Installer icon: NSIS does _not_ fall back to `bundle.icon`. Without
+  `bundle > windows > nsis > installerIcon` the bundler leaves `MUI_ICON` undefined and NSIS
+  uses its own beige default, so `FDE-<version>-x64-setup.exe` ships with a stranger's icon
+  both in Explorer and in the installer window. `installerIcon`/`uninstallerIcon` are set to
+  `icons/icon.ico` for that reason.
+- DevTools: the `devtools` Tauri feature is on, so release builds carry the inspector but keep
+  it closed. `FDE_DEVTOOLS=1` opens it on the main window at startup — the only way to take a
+  heap snapshot or a CPU profile from a bundled app. On Windows:
+  `set FDE_DEVTOOLS=1 && "%LOCALAPPDATA%\FDE\FDE.exe"`.
 - Updater: see Updates. With a signing key, `tauri-plugin-updater` reads `latest.json` from
   the GitHub release; without one the shell updates from the release assets directly. Paseo's
   rollout-stamping scripts do not apply and were dropped.

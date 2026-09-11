@@ -14,8 +14,9 @@ npm run dev:app
 
 Root checkout dev is intentionally split across terminals:
 
-- `npm run dev:server` runs the daemon on `127.0.0.1:6768`.
-- `npm run dev:app` runs Expo on `http://localhost:8081` and connects to the dev daemon.
+- `npm run dev:server` runs the daemon bound to `0.0.0.0:6768`.
+- `npm run dev:app` runs Expo on port `8081` and connects to the dev daemon. On a remote VM,
+  use the VM LAN address to access it.
 - The Electron desktop shell was dropped in this fork; the Tauri shell lives in `apps/desktop` (see [desktop-shell.md](desktop-shell.md)).
 
 The web dev launcher passes the current Git branch to Metro as
@@ -28,7 +29,7 @@ titlebar row. Production builds leave the variable unset and show no label.
 
 `PASEO_HOME` is the directory that holds runtime state (agents, worktrees, workspace config, sockets, daemon log). Resolution rules:
 
-- The **server itself** (e.g. when launched by the desktop app or `npm run start`) defaults to `~/.paseo` (see `packages/server/src/server/paseo-home.ts`).
+- The **server itself** (e.g. when launched by the desktop app or `npm run start`) defaults to `~/.fde` (`FDE_HOME`, then `PASEO_HOME`, can override it; see `packages/server/src/server/paseo-home.ts`).
 - **Repo dev scripts** default to `$ROOT/.dev/paseo-home`, where `$ROOT` is the current checkout or worktree root. This keeps all dev state scoped to the checkout instead of the packaged desktop app.
 - **`npm run cli -- ...`** runs through the same dev-home wrapper as the dev scripts, so the in-repo CLI automatically targets the current checkout's `.dev/paseo-home` and configured dev daemon endpoint.
 - **Paseo-created worktrees** seed `$PASEO_WORKTREE_PATH/.dev/paseo-home` from `$PASEO_SOURCE_CHECKOUT_PATH/.dev/paseo-home` by copying durable JSON metadata. Runtime files like pid files, sockets, and logs are not copied.
@@ -57,7 +58,9 @@ Route ownership, startup restore, and native blank-screen gotchas live in
 [expo-router.md](expo-router.md). Read it before changing `apps/ui/src/app`,
 startup routing, remembered workspace restore, or active workspace selection.
 
-> Note: mobile (iOS/Android) builds are not wired up in this fork; the commands below are kept for reference from upstream Paseo.
+> Android builds are wired into FDE releases; see [android.md](android.md).
+> The iOS workflows below are inherited development tooling; FDE iOS distribution
+> and device acceptance remain planned.
 
 ### iOS simulator preview service
 
