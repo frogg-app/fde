@@ -1,6 +1,10 @@
 import { Command } from "commander";
 import { createAgentCommand } from "./commands/agent/index.js";
-import { addDaemonLifecycleCommands, createAuthCommand } from "./commands/daemon/index.js";
+import {
+  addDaemonLifecycleCommands,
+  createAuthCommand,
+  createLegacyDaemonCommand,
+} from "./commands/daemon/index.js";
 import { createPermissionsCommand } from "./commands/permissions/index.js";
 import { createProviderCommand } from "./commands/provider/index.js";
 import { createPluginCommand } from "./commands/plugin/index.js";
@@ -39,6 +43,8 @@ export function createCli(): Command {
 
   // The daemon's own lifecycle, at the root: this binary is the daemon.
   addDaemonLifecycleCommands(program);
+  // Persisted service units, desktop sidecars, and updater rollback still use this namespace.
+  program.addCommand(createLegacyDaemonCommand(), { hidden: true });
 
   // Called by the agent hook installer as a shell command, never typed by a
   // person, so it stays functional but out of the help output.

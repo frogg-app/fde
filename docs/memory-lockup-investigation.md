@@ -228,3 +228,15 @@ Pending release metadata also follows the 30-minute schedule, without a separate
 source of runaway update activity and a plausible contributor to reported slowness,
 not a device-profiled attribution of the entire WebView2 memory footprint.
 The 0.2.8 build remains an unpublished draft; 0.2.9 includes this repair.
+
+## Local daemon service restart loop
+
+The installed systemd service invoked `fde daemon start --foreground`, but the
+flattened CLI no longer accepted the `daemon` namespace. Its journal recorded
+over 86,000 failed restarts with `unknown command daemon`. This is a separate
+confirmed host CPU/lifecycle defect; it does not attribute the Windows WebView2
+memory growth. Legacy command compatibility restores service, installer, and
+update-supervisor callers while keeping the visible CLI concise. The affected
+local service was corrected and the verified 0.2.9 bundle installed; plain
+`fde update`, repeat `fde start`, and daemon reachability then passed. Version
+0.2.10 includes compatibility so other existing installations recover too.
