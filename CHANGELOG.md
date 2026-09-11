@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.6 - 2026-09-11
+
+- Upgrade the OpenAI SDK to 7.8 on the supported Node 22 runtime. Adapt speech
+  response bodies to Node streams so playback cancellation releases the response;
+  verify speech requests and dictation uploads through the real SDK transport.
+
 ## 0.2.5 - 2026-09-11
 
 - Upgrade daemon UUID generation to uuid 14 and verify the production ID path
