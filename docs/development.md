@@ -558,3 +558,11 @@ Always run typecheck after changes:
 ```bash
 npm run typecheck
 ```
+
+## Starting an existing daemon
+
+`fde start` is idempotent for the selected `--home` (or default FDE home): a live
+PID file produces a single `Daemon already running (PID …).` message and success.
+A stale PID file still allows startup. A concurrent successful start is recognized
+before reporting startup failure; genuine failures retain their diagnostic output.
+Use `fde restart` to restart a running daemon with changed launch options.
