@@ -134,7 +134,9 @@ describe("release source", () => {
     const source = resolveReleaseSource({});
     const limited = () =>
       Promise.resolve(new Response("", { status: 403 })) as unknown as ReturnType<typeof fetch>;
-    await expect(fetchReleases(source, "FDE/1", limited)).rejects.toThrow(/rate limit/);
+    await expect(
+      fetchReleases(source, "FDE/1", limited, { env: {}, readGhToken: async () => null }),
+    ).rejects.toThrow(/rate limit/);
     const junk = () =>
       Promise.resolve(
         new Response(JSON.stringify({ nope: 1 }), { status: 200 }),

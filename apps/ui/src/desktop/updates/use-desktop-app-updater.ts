@@ -18,7 +18,6 @@ import {
 import { useDesktopSettings } from "@/desktop/settings/desktop-settings";
 import { useDesktopIpcErrorReporter } from "@/desktop/hooks/desktop-ipc-error";
 import {
-  PENDING_RECHECK_MS,
   createDesktopAppUpdater,
   formatStatusText,
   type DesktopAppUpdateStatus,
@@ -117,9 +116,8 @@ export function useDesktopAppUpdater(): UseDesktopAppUpdaterReturn {
     void checkForUpdates({ intent: "automatic", silent: true });
   }, [checkForUpdates, isDesktopApp]);
 
-  // The shell's own checks (every 30 min, and the cached answer to any check)
-  // announce a newer version here; an automatic re-check is served from that
-  // cache, so this only refreshes local state.
+  // Fresh shell checks announce a newer version here. The automatic re-check
+  // reads the cache without emitting again and refreshes local state.
   useEffect(() => {
     if (!isDesktopApp) {
       return undefined;
@@ -138,27 +136,13 @@ export function useDesktopAppUpdater(): UseDesktopAppUpdaterReturn {
         return;
       })
       .catch(() => {
-        // No event API on this host: polling still covers it.
+        // Hosts without events still support the mount check and manual checks.
       });
     return () => {
       disposed = true;
       unlisten?.();
     };
   }, [checkForUpdates, isDesktopApp]);
-
-  useEffect(() => {
-    if (!isDesktopApp || snapshot.status !== "pending") {
-      return undefined;
-    }
-
-    const intervalId = setInterval(() => {
-      void checkForUpdates({ intent: "automatic", silent: true });
-    }, PENDING_RECHECK_MS);
-
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, [checkForUpdates, isDesktopApp, snapshot.status]);
 
   return {
     isDesktopApp,

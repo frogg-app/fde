@@ -495,13 +495,20 @@ rather than as a rejected command, as Electron did. `FDE_UPDATE_RELEASES_URL` ov
 endpoint (tests, a mirror).
 
 **Cache and schedule** (`cache.rs`, `mod.rs`). The last result is written to
-`update-check.json` next to `desktop-settings.json`. A check with `intent: "automatic"` reuses a
+`update-check.json` next to `desktop-settings.json`, loaded into memory once at startup.
+Checks update that memory cache before attempting disk persistence, so an unwritable config
+directory cannot trigger repeated fetches from availability listeners.
+A check with `intent: "automatic"` reuses a
 cached answer younger than 30 minutes for the same channel (never a failed one); `manual` always
 asks GitHub. `updates::register` spawns a task that checks on launch and every 30 min while
 the app runs, gated on `desktopSettings.updates.autoCheck` (default `true`); a failed check
 (offline) only logs at info level. Whenever a check finds a newer version the shell emits
 `paseo:event:app-update-available` with the result, which is what makes the update notification
-appear; the UI answers it with an automatic check, served from the cache.
+appear; the UI answers it with an automatic check, served from the cache. Cached reads
+never emit another availability event: notifications belong to successful fresh checks,
+otherwise the listener and cache response would create an unbounded IPC/event loop. Results
+with errors (including a missing platform installer) return their error without broadcasting
+availability, because automatic checks do not reuse failed results.
 
 **Asset selection** (`assets.rs`). `InstallContext::detect()` maps the platform to one of the
 assets `scripts/release/collect-desktop-bundles.mjs` publishes:
@@ -555,3 +562,6 @@ The update action starts directly in the app, without a pre-install confirmation
 dialog. It immediately enters a busy state before progress-listener setup, rejects
 duplicate clicks while running, and shows download/verification/install progress or
 an actionable error. Windows executable replacement still closes and relaunches FDE.
+
+Pending update metadata uses the same 30-minute automatic polling schedule; there
+is no separate 10-second retry timer. Manual checks remain available in Settings.

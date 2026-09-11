@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { readGitHubCliToken } from "./github-auth.js";
 import { compareVersions, isNewerVersion, parseVersion } from "./semver.js";
 
 /**
@@ -60,9 +61,15 @@ export function githubHeaders(token: string | null, userAgent: string): Record<s
   };
 }
 
-function statusHint(status: number): string {
+function statusHint(status: number, headers: Headers): string {
   if (status === 403 || status === 429) {
-    return " (GitHub rate limit; set FDE_GITHUB_TOKEN to raise it)";
+    const reset = Number(headers.get("x-ratelimit-reset"));
+    const resetDate = new Date(reset * 1000);
+    const retry =
+      reset > 0 && Number.isFinite(resetDate.getTime())
+        ? `; retry after ${resetDate.toISOString()}`
+        : "; retry later";
+    return ` (GitHub rate limit or access restriction${retry}, or authenticate with gh auth login / FDE_GITHUB_TOKEN)`;
   }
   if (status === 404) {
     return " (repository or releases not found; FDE_GITHUB_TOKEN is needed for a private repository)";
@@ -74,19 +81,42 @@ export async function fetchReleases(
   source: ReleaseSource,
   userAgent: string,
   fetchImpl: typeof fetch = fetch,
+  auth: { env?: NodeJS.ProcessEnv; readGhToken?: () => Promise<string | null> } = {},
 ): Promise<GitHubRelease[]> {
   const separator = source.apiUrl.includes("?") ? "&" : "?";
   const url = `${source.apiUrl}${separator}per_page=${RELEASES_PER_PAGE}`;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
-    const response = await fetchImpl(url, {
+    let response = await fetchImpl(url, {
       headers: githubHeaders(source.token, userAgent),
       signal: controller.signal,
     });
+    // Ambient credentials are only for the built-in public API. Keep them out of
+    // ReleaseSource so asset download and mirror requests cannot inherit them.
+    if (
+      !source.token &&
+      source.apiUrl === DEFAULT_RELEASES_API &&
+      !source.releaseBaseOverridden &&
+      (response.status === 403 || response.status === 429)
+    ) {
+      const env = auth.env ?? process.env;
+      const token =
+        env.GH_TOKEN?.trim() ||
+        env.GITHUB_TOKEN?.trim() ||
+        (await (auth.readGhToken ?? readGitHubCliToken)());
+      if (token && !controller.signal.aborted) {
+        await response.body?.cancel();
+        response = await fetchImpl(url, {
+          headers: githubHeaders(token, userAgent),
+          signal: controller.signal,
+          redirect: "error",
+        });
+      }
+    }
     if (!response.ok) {
       throw new Error(
-        `release check failed: HTTP ${response.status}${statusHint(response.status)}`,
+        `release check failed: HTTP ${response.status}${statusHint(response.status, response.headers)}`,
       );
     }
     const parsed = z.array(ReleaseSchema).safeParse(await response.json());

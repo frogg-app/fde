@@ -210,3 +210,21 @@ Two subprocess regressions cover a hung helper and excessive output; existing li
 tests cover stop policy. This does not establish the cause of the surviving WebView2
 processes or failed relaunch: the single-instance mutex is released before the app exit
 callback. Windows process attribution and close/relaunch verification remain open.
+
+## Confirmed update notification feedback loop
+
+A cached automatic desktop update check emitted `app-update-available` again.
+The UI's availability listener responds by issuing an automatic check, which
+returned the same cache and emitted again. While an update was available, this
+created a self-sustaining stream of bridge calls/events and UI state updates.
+
+Cached reads now return without emitting. Successful fresh checks still notify;
+missing platform assets do not trigger repeated checks. Results are cached in memory
+before disk persistence, so an unwritable config directory cannot restart the loop.
+The loop regressions first failed on the old behavior, then passed with the repair;
+all 133 Rust library tests passed (one subprocess fixture intentionally ignored).
+Pending release metadata also follows the 30-minute schedule, without a separate
+10-second retry timer. This is a concrete
+source of runaway update activity and a plausible contributor to reported slowness,
+not a device-profiled attribution of the entire WebView2 memory footprint.
+The 0.2.8 build remains an unpublished draft; 0.2.9 includes this repair.
