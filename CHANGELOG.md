@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.3 - 2026-09-11
+
+- Upgrade desktop ZIP extraction to zip 8.6.0 and align the declared Rust minimum
+  and development toolchain with its Rust 1.88 requirement.
+
 ## 0.2.2 - 2026-09-11
 
 - Native desktop update checks run on launch and every 30 minutes, matching the UI
