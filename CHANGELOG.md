@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.5 - 2026-09-11
+
+- Upgrade daemon UUID generation to uuid 14 and verify the production ID path
+  against the Node 22 crypto APIs used by the bundled runtime.
+
 ## 0.2.4 - 2026-09-11
 
 - Upgrade desktop SHA-256 verification to sha2 0.11, replacing its removed I/O
