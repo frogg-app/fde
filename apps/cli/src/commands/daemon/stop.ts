@@ -57,9 +57,29 @@ function parseSecondsOption(raw: unknown, fallbackMs: number, label: string): nu
   return Math.ceil(seconds * 1000);
 }
 
+export interface StopDependencies {
+  stopGateway: typeof stopLocalDaemon;
+  stopExecution: typeof stopExecutionService;
+}
+
+const defaultDependencies: StopDependencies = {
+  stopGateway: stopLocalDaemon,
+  stopExecution: stopExecutionService,
+};
+
+export function runStopCommand(
+  options: CommandOptions,
+  command: Command,
+  dependencies: StopDependencies,
+): Promise<StopCommandResult>;
+export function runStopCommand(
+  options: CommandOptions,
+  command: Command,
+): Promise<StopCommandResult>;
 export async function runStopCommand(
   options: CommandOptions,
   _command: Command,
+  dependencies: StopDependencies = defaultDependencies,
 ): Promise<StopCommandResult> {
   const home = typeof options.home === "string" ? options.home : undefined;
   const force = options.force === true;
@@ -71,14 +91,16 @@ export async function runStopCommand(
   );
 
   try {
-    const result = await stopLocalDaemon({
+    const result = await dependencies.stopGateway({
       home,
       force,
       timeoutMs,
       killTimeoutMs,
     });
     const execution =
-      options.all === true ? await stopExecutionService({ home: result.home, force: true }) : null;
+      options.all === true
+        ? await dependencies.stopExecution({ home: result.home, force: true })
+        : null;
     const executionStopped = execution?.stopped ?? null;
     const message = execution
       ? `${result.message}. Independent execution ${

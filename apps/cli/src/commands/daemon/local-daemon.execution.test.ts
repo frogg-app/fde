@@ -4,7 +4,6 @@ import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { expect, test, vi } from "vitest";
-vi.mock("../../utils/client.js", () => ({ tryConnectToDaemon: async () => null }));
 import { stopLocalDaemon } from "./local-daemon.js";
 
 test("forced gateway stop preserves detached execution descendants with no opt-in environment", async () => {

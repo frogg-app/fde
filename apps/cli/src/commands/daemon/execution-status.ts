@@ -27,12 +27,34 @@ const schema: OutputSchema<ExecutionStatusResult> = {
   ],
 };
 
+export interface ExecutionStatusDependencies {
+  resolveHome: typeof resolveLocalPaseoHome;
+  getStatus: typeof getExecutionServiceStatus;
+}
+
+const defaultDependencies: ExecutionStatusDependencies = {
+  resolveHome: resolveLocalPaseoHome,
+  getStatus: getExecutionServiceStatus,
+};
+
+export function runExecutionStatusCommand(
+  options: CommandOptions,
+  command: Command,
+  dependencies: ExecutionStatusDependencies,
+): Promise<SingleResult<ExecutionStatusResult>>;
+export function runExecutionStatusCommand(
+  options: CommandOptions,
+  command: Command,
+): Promise<SingleResult<ExecutionStatusResult>>;
 export async function runExecutionStatusCommand(
   options: CommandOptions,
   _command: Command,
+  dependencies: ExecutionStatusDependencies = defaultDependencies,
 ): Promise<SingleResult<ExecutionStatusResult>> {
-  const home = resolveLocalPaseoHome(typeof options.home === "string" ? options.home : undefined);
-  const execution = await getExecutionServiceStatus(home);
+  const home = dependencies.resolveHome(
+    typeof options.home === "string" ? options.home : undefined,
+  );
+  const execution = await dependencies.getStatus(home);
   const packageJson: { version: string } = require("../../../package.json");
   const message = execution
     ? "Execution survives gateway stop/restart. Resident agents retain this backend version; use stop --all to stop execution."
