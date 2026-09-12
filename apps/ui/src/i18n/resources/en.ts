@@ -2558,6 +2558,8 @@ export const en = {
         openCli: "Open CLI documentation",
       },
       commandLine: {
+        installedPath:
+          "Installed at {{path}}. Add its directory to PATH if needed, then open a new terminal.",
         title: "Command line",
         description: "Control and script agents from your terminal",
       },

@@ -50,7 +50,10 @@ export function IntegrationsSection() {
   );
   if (!showSection) return null;
   return (
-    <SettingsSection title={t("settings.integrations.title")} trailing={trailing}>
+    <SettingsSection
+      title={t("settings.integrations.title")}
+      trailing={CLI_DOCS_URL ? trailing : undefined}
+    >
       <View style={settingsStyles.card}>
         <View style={settingsStyles.row}>
           <View style={settingsStyles.rowContent}>
@@ -63,6 +66,11 @@ export function IntegrationsSection() {
             <Text style={settingsStyles.rowHint}>
               {t("settings.integrations.commandLine.description")}
             </Text>
+            {status?.installed && status.path ? (
+              <Text selectable style={settingsStyles.rowHint}>
+                {t("settings.integrations.commandLine.installedPath", { path: status.path })}
+              </Text>
+            ) : null}
           </View>
           {status?.installed ? (
             <View style={styles.installedLabel}>

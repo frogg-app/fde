@@ -1,6 +1,4 @@
-//! CLI install and the legacy skill-selection file. The bundled CLI shim is
-//! part of the sidecar (milestone 3), so install reports "not available"; the
-//! legacy skill selection mirrors Electron's `legacy-skill-selection.ts`.
+//! Legacy skill selection mirrors Electron's `legacy-skill-selection.ts`.
 
 use std::fs;
 use std::path::PathBuf;
@@ -9,16 +7,6 @@ use serde_json::{json, Value};
 use tauri::{AppHandle, Manager, Runtime};
 
 const LEGACY_SKILL_SELECTION_FILENAME: &str = "skill-selection.json";
-
-/// `get_cli_install_status`: `{installed}`.
-pub fn cli_install_status() -> Value {
-    json!({ "installed": false })
-}
-
-/// `install_cli`.
-pub fn install_cli() -> Result<Value, String> {
-    Err("The FDE CLI is not available in this build yet; it ships with the local daemon.".into())
-}
 
 fn legacy_selection_path<R: Runtime>(app: &AppHandle<R>) -> Option<PathBuf> {
     app.path()

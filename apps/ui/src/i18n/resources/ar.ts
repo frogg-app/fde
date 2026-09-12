@@ -2455,6 +2455,8 @@ export const ar: TranslationResources = {
         openCli: "افتح وثائق CLI",
       },
       commandLine: {
+        installedPath:
+          "تم التثبيت في {{path}}. أضف المجلد إلى PATH عند الحاجة، ثم افتح نافذة طرفية جديدة.",
         title: "سطر الأوامر",
         description: "وكلاء التحكم والبرنامج النصي من المحطة الطرفية الخاصة بك",
       },

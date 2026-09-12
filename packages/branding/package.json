@@ -1,6 +1,6 @@
 {
   "name": "@fde/branding",
-  "version": "0.2.20",
+  "version": "0.2.21",
   "description": "Build-time product identity for FDE distributions",
   "license": "Apache-2.0",
   "files": [
@@ -31,6 +31,11 @@
       "types": "./dist/installers.d.ts",
       "source": "./src/installers.ts",
       "default": "./dist/installers.js"
+    },
+    "./skills": {
+      "types": "./dist/skills.d.ts",
+      "source": "./src/skills.ts",
+      "default": "./dist/skills.js"
     }
   },
   "scripts": {

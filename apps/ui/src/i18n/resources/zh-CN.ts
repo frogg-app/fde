@@ -2425,6 +2425,7 @@ export const zhCN: TranslationResources = {
         openCli: "打开 CLI 文档",
       },
       commandLine: {
+        installedPath: "已安装到 {{path}}。如有需要，请将其目录添加到 PATH，然后打开新终端。",
         title: "命令行",
         description: "从终端控制 Agent 并运行脚本",
       },

@@ -2499,6 +2499,8 @@ export const ptBR: TranslationResources = {
         openCli: "Abrir documentação da CLI",
       },
       commandLine: {
+        installedPath:
+          "Instalado em {{path}}. Adicione o diretório ao PATH se necessário e abra um novo terminal.",
         title: "Linha de comando",
         description: "Controle agentes e execute scripts pelo terminal",
       },

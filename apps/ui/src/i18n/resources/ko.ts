@@ -2469,6 +2469,8 @@ export const ko: TranslationResources = {
         openCli: "CLI 문서 열기",
       },
       commandLine: {
+        installedPath:
+          "{{path}}에 설치되었습니다. 필요하면 디렉터리를 PATH에 추가한 후 새 터미널을 여세요.",
         title: "명령줄",
         description: "터미널에서 에이전트를 제어하고 스크립팅합니다",
       },

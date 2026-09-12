@@ -40,7 +40,7 @@ export async function generateInstallers(build: BrandBuild): Promise<void> {
     await writeFile(path.join(outputRoot, "scripts", file), scripts[`/${file}`]);
   }
   const probe = (await readFile(path.join(root, "deploy/probe.sh.in"), "utf8")).replace(
-    /@(ID|ENV_PREFIX|CLI|SERVICE)@/g,
+    /@(ID|ENV_PREFIX|CLI|SERVICE|APPLICATION_ID|LEGACY)@/g,
     (_match, key: keyof typeof fields) => fields[key],
   );
   await writeFile(path.join(outputRoot, "scripts/probe.sh"), probe);

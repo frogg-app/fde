@@ -2483,6 +2483,8 @@ export const ja: TranslationResources = {
         openCli: "CLIドキュメントを開く",
       },
       commandLine: {
+        installedPath:
+          "{{path}} にインストール済み。必要に応じてディレクトリを PATH に追加し、新しいターミナルを開いてください。",
         title: "コマンドライン",
         description: "ターミナルからエージェントを制御し、スクリプトで操作",
       },

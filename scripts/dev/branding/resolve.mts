@@ -28,7 +28,8 @@ export function resolveBrand(directory?: string) {
       [".fde", ".paseo"].includes(brand.homeDir) ||
       ["FDE", "PASEO"].includes(brand.envPrefix) ||
       brand.applicationId.startsWith("app.frogg.") ||
-      ["fde-daemon", "paseo"].includes(brand.serviceName))
+      ["fde-daemon", "paseo"].includes(brand.serviceName) ||
+      ["app.frogg.fde", "sh.paseo.daemon"].includes(brand.launchdLabel))
   ) {
     throw new Error(
       "Custom brands must use independent identities; FDE/Paseo identities are reserved",
@@ -36,7 +37,7 @@ export function resolveBrand(directory?: string) {
   }
   const hash = createHash("sha256");
   hash.update("fde-brand-generator-v1\0");
-  hash.update(JSON.stringify(manifest));
+  hash.update(JSON.stringify({ ...manifest, assets: Object.keys(manifest.assets).sort() }));
   const assetFiles: Record<string, string> = {};
   for (const [key, value] of Object.entries(manifest.assets)) {
     const file = path.resolve(selected, value);
@@ -48,7 +49,19 @@ export function resolveBrand(directory?: string) {
     .sort()) {
     hash.update(readFileSync(new URL(file, import.meta.url)));
   }
-  hash.update(readFileSync(path.join(root, "packages/branding/src/schema.ts")));
+  function hashTree(directory: string): void {
+    for (const entry of readdirSync(path.join(root, directory), { withFileTypes: true }).sort(
+      (a, b) => a.name.localeCompare(b.name),
+    )) {
+      if (entry.name === "generated") continue;
+      const file = path.join(directory, entry.name);
+      hash.update(file);
+      if (entry.isDirectory()) hashTree(file);
+      else if (entry.isFile()) hash.update(readFileSync(path.join(root, file)));
+    }
+  }
+  hashTree("packages/branding/src");
+  hashTree("skills");
   const version: string = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8")).version;
   hash.update(version);
   for (const file of [

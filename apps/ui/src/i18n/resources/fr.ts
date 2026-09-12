@@ -2518,6 +2518,8 @@ export const fr: TranslationResources = {
         openCli: "Ouvrir la documentationCLI",
       },
       commandLine: {
+        installedPath:
+          "Installé dans {{path}}. Ajoutez son dossier au PATH si nécessaire, puis ouvrez un nouveau terminal.",
         title: "Ligne de commande",
         description: "Agents de contrôle et de script depuis votre terminal",
       },

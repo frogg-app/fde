@@ -89,6 +89,17 @@ if [ "${FDE_NO_PULL}" != "1" ]; then
   docker pull "${FDE_IMAGE}"
 fi
 
+# Inspect the shipped manifest before stopping or replacing any existing container.
+if ! docker run --rm --entrypoint /opt/fde/node/bin/node "$FDE_IMAGE" -e '
+const fs = require("fs");
+const m = JSON.parse(fs.readFileSync("/opt/fde/manifest.json", "utf8"));
+const [id, applicationId, legacy] = process.argv.slice(1);
+if (!(m.brand?.id === id && m.brand?.applicationId === applicationId) && !(legacy === "true" && !m.brand)) process.exit(1);
+' "$BRAND_ID" "$BRAND_APPLICATION_ID" "$BRAND_LEGACY"; then
+  die "Image belongs to another product or has no valid distribution metadata"
+fi
+
+
 PREVIOUS_CONTAINER="${FDE_CONTAINER}-previous"
 
 container_exists() {

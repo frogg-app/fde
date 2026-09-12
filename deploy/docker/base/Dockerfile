@@ -11,6 +11,9 @@
 ARG BUILD_NODE_IMAGE=node:22-bookworm-slim
 FROM --platform=$BUILDPLATFORM ${BUILD_NODE_IMAGE} AS bundle
 
+ARG FDE_BRAND_DIR=brands/fde
+ARG FDE_SOURCE_REVISION=unknown
+ENV FDE_BRAND_DIR=${FDE_BRAND_DIR} FDE_SOURCE_REVISION=${FDE_SOURCE_REVISION}
 ARG FDE_VERSION
 ARG TARGETOS
 ARG TARGETARCH
@@ -37,15 +40,12 @@ RUN set -eux; \
     esac; \
     node scripts/release/build-daemon-bundle.mjs --target "${TARGETOS}-${arch}" --out-dir /bundles; \
     mkdir -p /opt/fde; \
-    tar -xzf /bundles/fde-daemon-*.tar.gz --strip-components=1 -C /opt/fde; \
+    tar -xzf /bundles/*-daemon-*.tar.gz --strip-components=1 -C /opt/fde; \
     rm -rf /bundles
 
 FROM debian:bookworm-slim
 
 ENV HOME=/home/fde \
-    FDE_DOCKER=1 \
-    FDE_HOME=/home/fde/.fde \
-    PASEO_LISTEN=0.0.0.0:9999 \
     PASEO_WEB_UI_ENABLED=true \
     PASEO_LOG_FORMAT=json \
     PASEO_LOG_LEVEL=info \
@@ -72,9 +72,8 @@ RUN set -eux; \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=bundle /opt/fde /opt/fde
+COPY --from=bundle /src/.generated/branding/deploy/runtime.sh /opt/fde/brand.sh
 RUN set -eux; \
-    ln -s /opt/fde/bin/fde /usr/local/bin/fde; \
-    ln -s /opt/fde/bin/paseo /usr/local/bin/paseo; \
     test -f /opt/fde/daemon/packages/server/dist/scripts/supervisor-entrypoint.js; \
     /opt/fde/node/bin/node --version
 
@@ -83,7 +82,6 @@ RUN set -eux; \
     useradd --uid 1000 --gid fde --create-home --home-dir /home/fde --shell /bin/bash fde; \
     mkdir -p \
       /workspace \
-      "$FDE_HOME" \
       "$CLAUDE_CONFIG_DIR" \
       "$CODEX_HOME" \
       "$XDG_CONFIG_HOME" \
@@ -97,10 +95,9 @@ RUN chmod +x /usr/local/bin/fde-docker-entrypoint
 
 WORKDIR /workspace
 
-EXPOSE 9999
-VOLUME ["/home/fde/.fde"]
+
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-  CMD curl -fsS http://127.0.0.1:9999/api/health >/dev/null || exit 1
+  CMD bash -c 'source /opt/fde/brand.sh; port="${PASEO_LISTEN:-$BRAND_PORT}"; curl -fsS "http://127.0.0.1:${port##*:}/api/health" >/dev/null' || exit 1
 
 ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/fde-docker-entrypoint"]

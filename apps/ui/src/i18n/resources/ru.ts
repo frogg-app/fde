@@ -2500,6 +2500,8 @@ export const ru: TranslationResources = {
         openCli: "Открыть документацию CLI",
       },
       commandLine: {
+        installedPath:
+          "Установлено в {{path}}. При необходимости добавьте каталог в PATH и откройте новый терминал.",
         title: "Командная строка",
         description: "Управляйте агентами и автоматизируйте их работу из терминала",
       },

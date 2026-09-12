@@ -1,3 +1,4 @@
+import { stageBrand } from "./branding/stage.mjs";
 import { parseArgs } from "node:util";
 import { mkdir, copyFile, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -53,6 +54,8 @@ if (command === "init") {
 } else if (command === "prepare") {
   const build = await prepareBrand(values.brand);
   process.stdout.write(`Brand prepared: ${build.brand.name} (${build.fingerprint.slice(0, 12)})\n`);
+} else if (command === "stage") {
+  process.stdout.write((await stageBrand(values.brand)) + "\n");
 } else if (command === "schema") {
   await writeFile(
     path.join(root, "packages/branding/brand.schema.json"),

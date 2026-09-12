@@ -10,15 +10,18 @@ if command -v curl >/dev/null 2>&1; then curl=true; fi
 installed=false; version=""
 root="${@ENV_PREFIX@_INSTALL_DIR:-$HOME/.local/share/@ID@}"
 if [ -x "$root/current/bin/@CLI@" ]; then
-  installed=true
+  if [ "@LEGACY@" = true ] || [ "$(cat "$root/.brand-identity" 2>/dev/null)" = '@ID@:@APPLICATION_ID@' ]; then installed=true; fi
   if [ -f "$root/current/manifest.json" ]; then
     version=$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' "$root/current/manifest.json" | head -n 1)
   fi
-elif command -v @CLI@ >/dev/null 2>&1; then
+elif [ "@LEGACY@" = true ] && command -v @CLI@ >/dev/null 2>&1; then
   installed=true
   version=$(@CLI@ --version 2>/dev/null | head -n 1)
 fi
 container=false
-if [ "$docker" = true ] && docker container inspect "${@ENV_PREFIX@_CONTAINER:-@SERVICE@}" >/dev/null 2>&1; then container=true; fi
+if [ "$docker" = true ] && docker container inspect "${@ENV_PREFIX@_CONTAINER:-@SERVICE@}" >/dev/null 2>&1; then
+  owner=$(docker inspect --format '{{ index .Config.Labels "app.brand.application-id" }}' "${@ENV_PREFIX@_CONTAINER:-@SERVICE@}" 2>/dev/null)
+  if [ "$owner" = '@APPLICATION_ID@' ] || { [ "@LEGACY@" = true ] && [ -z "$owner" ]; }; then container=true; fi
+fi
 printf 'FDE_PROBE {"os":"%s","arch":"%s","hasDocker":%s,"hasSystemdUser":%s,"hasCurl":%s,"hasFde":{"installed":%s,"version":"%s"},"hasDockerContainer":%s,"homeDir":"%s"}\n' \
   "$(esc "$os")" "$(esc "$arch")" "$docker" "$systemd" "$curl" "$installed" "$(esc "$version")" "$container" "$(esc "$HOME")"
