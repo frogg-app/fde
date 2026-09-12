@@ -142,8 +142,8 @@ suitable runner. Distinguish compilation from interactive/device acceptance.
 ## Delivery checkpoints
 
 - [x] New worktree from fresh main; recorded baseline.
-- [ ] Commit and push this plan before implementation (with patch version synchronization).
-- [ ] Foundation: schema, resolver, presets, generation, commands and tests.
+- [x] Commit and push this plan before implementation (with patch version synchronization).
+- [x] Foundation: schema, resolver, presets, generation, commands and tests.
 - [ ] Presentation: UI, translations, assets, themes, desktop and mobile configuration.
 - [ ] Identity: runtime, pairing, CLI/services, persistence and provider ownership.
 - [ ] Distribution: installers, updates, SSH, Docker/Nix, pairing and fork-aware CI.
@@ -154,3 +154,10 @@ suitable runner. Distinguish compilation from interactive/device acceptance.
 Every coherent implementation commit includes the required patch bump. No production
 release, store submission, infrastructure deployment or automatic merge is implied.
 Record verification evidence and remaining platform limitations here as work proceeds.
+
+### Foundation evidence
+
+The official and Acme presets both generate native/web artwork, runtime exports,
+Tauri/EAS inputs and provenance. Six behavior tests cover neutral defaults, validation,
+update configuration, home isolation, management identity and artifact names. The
+branding library and build scripts pass TypeScript and lint checks.

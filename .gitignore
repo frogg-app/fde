@@ -31,3 +31,7 @@ google-services*.json
 
 # Vitest browser-mode attachment output.
 apps/ui/.vitest-attachments/
+
+# Brand build inputs; manifests and original artwork remain versioned.
+.generated/
+packages/branding/src/generated/

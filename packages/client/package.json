@@ -1,6 +1,6 @@
 {
   "name": "@fde/client",
-  "version": "0.2.15",
+  "version": "0.2.16",
   "description": "Paseo client SDK package",
   "files": [
     "dist",
@@ -39,8 +39,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@fde/protocol": "0.2.15",
-    "@fde/relay": "0.2.15",
+    "@fde/protocol": "0.2.16",
+    "@fde/relay": "0.2.16",
     "zod": "^4.4.3"
   },
   "devDependencies": {

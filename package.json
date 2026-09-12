@@ -1,6 +1,6 @@
 {
   "name": "fde",
-  "version": "0.2.15",
+  "version": "0.2.16",
   "private": true,
   "description": "FDE (Frogg Development Environment): Tauri desktop client for local and remote AI coding agents (fork of Paseo)",
   "license": "Apache-2.0",
@@ -21,7 +21,7 @@
     "dev:app": "cross-env PASEO_LISTEN=0.0.0.0:6768 EXPO_PORT=8081 ./scripts/dev/dev-app.sh",
     "dev:ui": "npm run dev:app",
     "dev:desktop": "npm run dev --workspace=@fde/desktop",
-    "postinstall": "node scripts/ci/postinstall-patches.mjs",
+    "postinstall": "node scripts/ci/postinstall-patches.mjs && npm run brand:prepare",
     "prepare": "node scripts/ci/prepare.mjs",
     "build": "npm run build --workspaces --if-present",
     "build:highlight": "npm run build --workspace=@fde/highlight",
@@ -46,7 +46,7 @@
     "build:desktop:win": "npm run build:ui && npm run build:win --workspace=@fde/desktop && npm run build:win:zips --workspace=@fde/desktop",
     "watch:protocol": "npm run watch --workspace=@fde/protocol",
     "watch:client": "tsc -p packages/client/tsconfig.json --watch --preserveWatchOutput",
-    "pretypecheck": "npm run build --workspace=@fde/expo-two-way-audio",
+    "pretypecheck": "npm run brand:prepare && npm run build --workspace=@fde/expo-two-way-audio",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "typecheck:server": "npm run typecheck --workspace=@fde/relay && npm run typecheck --workspace=@fde/protocol && npm run typecheck --workspace=@fde/client && npm run typecheck --workspace=@fde/server && npm run typecheck --workspace=@fde/cli",
     "test": "npm run test --workspaces --if-present",
@@ -83,7 +83,12 @@
     "release:major": "npm run release:check && npm run version:all:major && npm run release:push",
     "build:daemon-bundle": "node scripts/release/build-daemon-bundle.mjs",
     "verify": "node scripts/ci/verify.mjs",
-    "worktree:status": "node scripts/dev/worktree-status.mjs"
+    "worktree:status": "node scripts/dev/worktree-status.mjs",
+    "brand:init": "node --import tsx scripts/dev/brand.mts init",
+    "brand:check": "node --import tsx scripts/dev/brand.mts check",
+    "brand:prepare": "node --import tsx scripts/dev/brand.mts prepare",
+    "prebuild:server-deps": "npm run brand:prepare",
+    "prebuild:app-deps": "npm run brand:prepare"
   },
   "devDependencies": {
     "@types/ws": "^8.5.14",
@@ -99,6 +104,8 @@
     "oxlint-tsgolint": "^0.22.1",
     "patch-package": "^8.0.1",
     "playwright": "^1.63.0",
+    "sharp": "0.35.2",
+    "tsx": "^4.6.0",
     "typescript": "^5.9.3",
     "ws": "^8.20.0"
   },

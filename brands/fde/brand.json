@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "id": "fde",
+  "name": "FDE",
+  "fullName": "Frogg Development Environment",
+  "publisher": "Frogg App",
+  "description": "Frogg Development Environment: desktop client for local and remote AI coding agents.",
+  "applicationId": "app.frogg.fde",
+  "daemonPort": 9999,
+  "scheme": "paseo",
+  "artifactPrefix": "FDE",
+  "assets": {
+    "icon": "../../apps/ui/assets/images/icon.png",
+    "ios": "../../apps/ui/assets/images/icon-ios.png",
+    "foreground": "../../apps/ui/assets/images/android-icon-foreground.png",
+    "notification": "../../apps/ui/assets/images/notification-icon.png",
+    "splash": "../../apps/ui/assets/images/splash-icon.png"
+  },
+  "colors": {
+    "light": {
+      "accent": "#045B9D",
+      "accentBright": "#0A78C9",
+      "accentForeground": "#ffffff",
+      "background": "#ffffff",
+      "foreground": "#18181b"
+    },
+    "dark": {
+      "accent": "#25B5C8",
+      "accentBright": "#7FD9E6",
+      "accentForeground": "#07222b",
+      "background": "#181b1a",
+      "foreground": "#fafafa"
+    }
+  },
+  "links": {
+    "website": "https://frogg.app",
+    "source": "https://github.com/frogg-app/fde",
+    "docs": "https://paseo.sh/docs",
+    "support": "https://github.com/frogg-app/fde/issues",
+    "installer": "https://frogg.app/install.sh"
+  },
+  "services": {
+    "pairingUrl": "https://pair.frogg.app",
+    "relayEndpoint": "relay.paseo.sh:443",
+    "allowedOrigins": ["https://app.paseo.sh"]
+  },
+  "distribution": {
+    "repository": "frogg-app/fde",
+    "updates": "github-release",
+    "dockerImage": "froggapp/fde",
+    "pairingImage": "froggapp/fde-pair-page"
+  }
+}

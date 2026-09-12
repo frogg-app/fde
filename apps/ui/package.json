@@ -1,6 +1,6 @@
 {
   "name": "@fde/app",
-  "version": "0.2.15",
+  "version": "0.2.16",
   "private": true,
   "main": "index.ts",
   "scripts": {
@@ -47,6 +47,7 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
+    "@fde/branding": "*",
     "@fde/client": "*",
     "@fde/expo-two-way-audio": "*",
     "@fde/highlight": "*",
