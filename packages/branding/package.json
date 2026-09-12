@@ -1,6 +1,6 @@
 {
   "name": "@fde/branding",
-  "version": "0.2.28",
+  "version": "0.2.29",
   "description": "Build-time product identity for FDE distributions",
   "license": "Apache-2.0",
   "files": [

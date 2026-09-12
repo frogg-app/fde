@@ -262,3 +262,5 @@ Implementation is complete. The final documentation milestone changes no brandin
 | Fork lifecycle       | An external branding repository remained unchanged after an upstream feature merge and rebuild. The shared feature alone cherry-picked onto the baseline rebuilt default FDE.                                                                      |
 
 Runner evidence is retained in [branding acceptance](https://github.com/frogg-app/fde/actions/runs/34675136030), the [current implementation acceptance run](https://github.com/frogg-app/fde/actions/runs/34676774571), and [standard implementation CI](https://github.com/frogg-app/fde/actions/runs/34676773332). The PR shows any subsequent verification of the documentation/version milestone. Native builds and package inspection establish automated acceptance; they do not claim interactive OS installation, production signing, physical-device testing, or store publication.
+
+The final integration also merges upstream `daaa4c6` (the host-picker scope and translated Add host fix). Its UI and browser-test changes are retained unchanged; version conflicts are resolved through the shared version synchronizer.

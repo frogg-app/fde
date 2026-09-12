@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.29 - 2026-09-12
+
+- Integrate the upstream host-picker scope and translated Add host fix while
+  preserving the branding implementation and synchronized distribution versions.
+
 ## 0.2.28 - 2026-09-12
 
 - Complete the branding delivery record with two-product runtime, upgrade, fork,
@@ -40,6 +45,12 @@
   legacy identity and compatibility. See [the rebranding guide](docs/branding.md).
 - Add both-brand generation, browser, runtime, and native packaging CI. Platform
   compilation and device acceptance are recorded separately in the branding plan.
+
+## 0.2.15 - 2026-09-12
+
+- Keep the Settings host picker focused on switching hosts. Host creation remains
+  in the main sidebar, whose Add host action now renders its translated label
+  instead of the missing translation key.
 
 ## 0.2.11 - 2026-09-11
 
