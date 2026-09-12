@@ -140,9 +140,12 @@ pub async fn desktop_invoke(
             })
             .await
         }
-        "garbage_collect_attachment_files" => app
-            .state::<attachments::AttachmentStore>()
-            .garbage_collect(&args),
+        "garbage_collect_attachment_files" => {
+            run_blocking(app.state::<attachments::AttachmentStore>().inner().clone(), args, |store, args| {
+                store.garbage_collect(&args)
+            })
+            .await
+        }
         // Pairing deep links (`paseo://pair#offer=…`, see `launch.rs`): the page
         // calls this after registering its `open-pairing-offer` listener.
         "pairing_offer_ready" => Ok(serde_json::to_value(

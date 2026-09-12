@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { usePendingArchiveAgentIds } from "@/hooks/use-archive-agent";
 import equal from "fast-deep-equal";
 import { useStoreWithEqualityFn } from "zustand/traditional";
@@ -122,19 +122,28 @@ export function selectProviderSubagentsForParent(
 
 export function useSubagentsForParent(params: SelectSubagentsParams): SubagentRow[] {
   const pendingArchiveIds = usePendingArchiveAgentIds(params.serverId);
-  const paseoRows = useStoreWithEqualityFn(
-    useSessionStore,
-    (state) => selectSubagentsForParent(state, params, pendingArchiveIds),
-    equal,
-  );
   const supported = useSessionStore(
     (state) => state.sessions[params.serverId]?.serverInfo?.features?.providerSubagents === true,
   );
-  const providerRows = useStoreWithEqualityFn(
-    useProviderSubagentStore,
-    (state) => selectProviderSubagentsForParent(state, params, supported),
-    equal,
+  // useSyncExternalStoreWithSelector memoizes on the selector's identity, so an inline
+  // arrow re-runs the whole selection on every render of this component rather than only
+  // when the store changes. Both selectors walk every agent on the server and sort, then
+  // deep-compare the result, so that is real work on an unrelated render -- a keystroke,
+  // for instance. The params object is destructured so a fresh literal at the call site
+  // does not defeat this either.
+  const { serverId, parentAgentId } = params;
+  const selectPaseoRows = useCallback(
+    (state: SessionStoreSnapshot) =>
+      selectSubagentsForParent(state, { serverId, parentAgentId }, pendingArchiveIds),
+    [serverId, parentAgentId, pendingArchiveIds],
   );
+  const selectProviderRows = useCallback(
+    (state: ProviderSubagentStoreSnapshot) =>
+      selectProviderSubagentsForParent(state, { serverId, parentAgentId }, supported),
+    [serverId, parentAgentId, supported],
+  );
+  const paseoRows = useStoreWithEqualityFn(useSessionStore, selectPaseoRows, equal);
+  const providerRows = useStoreWithEqualityFn(useProviderSubagentStore, selectProviderRows, equal);
   const client = useSessionStore((state) => state.sessions[params.serverId]?.client ?? null);
 
   useEffect(() => {

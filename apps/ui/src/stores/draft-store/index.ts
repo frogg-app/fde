@@ -214,20 +214,46 @@ function collectStreamUserImageIds(
   }
 }
 
+/**
+ * Idle delay before collecting unreferenced attachments.
+ *
+ * Collection is housekeeping: it scans every stream item of every agent to build the
+ * referenced set, then hits the filesystem. It used to be scheduled on a microtask, and
+ * because `gcScheduled` clears when the run starts, that meant one full collection per
+ * keystroke -- each queued behind the last on `garbageCollectionTail`, so a typing burst
+ * built a backlog that kept draining after the typing stopped. Nothing here needs to be
+ * prompt; waiting for a pause coalesces a whole burst into one run.
+ */
+const ATTACHMENT_GC_IDLE_MS = 2_000;
+
+let gcTimer: ReturnType<typeof setTimeout> | null = null;
+
 function scheduleAttachmentGc(): void {
-  if (gcScheduled) {
-    return;
-  }
   gcScheduled = true;
-  if (typeof queueMicrotask === "function") {
-    queueMicrotask(() => {
-      void runAttachmentGc();
-    });
+  if (gcTimer !== null) {
+    clearTimeout(gcTimer);
+  }
+  gcTimer = setTimeout(() => {
+    gcTimer = null;
+    void runAttachmentGc();
+  }, ATTACHMENT_GC_IDLE_MS);
+}
+
+/**
+ * Run any pending collection now instead of waiting out the idle delay.
+ *
+ * For teardown and for tests, which should not have to advance timers to observe
+ * collection.
+ */
+export async function flushAttachmentGc(): Promise<void> {
+  if (gcTimer !== null) {
+    clearTimeout(gcTimer);
+    gcTimer = null;
+  }
+  if (!gcScheduled) {
     return;
   }
-  setTimeout(() => {
-    void runAttachmentGc();
-  }, 0);
+  await runAttachmentGc();
 }
 
 async function migrateAllLegacyDrafts(): Promise<void> {

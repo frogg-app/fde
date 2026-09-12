@@ -398,6 +398,16 @@ function WebStreamViewport(props: StreamRenderInput & { isMobileBreakpoint: bool
     scrollMargin: VIRTUALIZER_SCROLL_MARGIN_PX,
     useAnimationFrameWithResizeObserver: true,
     overscan: 8,
+    // Re-render on React's schedule rather than inside flushSync.
+    //
+    // The library flushes synchronously by default, so every scroll offset change and
+    // every row measurement forced an uninterruptible re-render of the whole viewport.
+    // While pages were loading that was measured at 26% of total time, and a keystroke
+    // arriving mid-flush waits for it -- about seven queue up behind one, which is what
+    // made typing lag and then catch up. Scroll anchoring does not depend on it: the
+    // prepend anchor and settle scheduler own that, and both run off measured geometry
+    // rather than off this render completing synchronously.
+    useFlushSync: false,
   });
   useEffect(() => {
     rowVirtualizer.shouldAdjustScrollPositionOnItemSizeChange = (item, _delta, instance) => {

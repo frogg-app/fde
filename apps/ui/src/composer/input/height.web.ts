@@ -42,6 +42,7 @@ export function useComposerHeight({
   const paramsRef = useRef({ value, minHeight, maxHeight });
   paramsRef.current = { value, minHeight, maxHeight };
   const mirrorRef = useRef<HTMLTextAreaElement | null>(null);
+  const lastMeasuredRef = useRef<{ text: string; width: number } | null>(null);
 
   const setBoundedHeight = useCallback((nextHeight: number) => {
     const { minHeight: currentMin, maxHeight: currentMax } = paramsRef.current;
@@ -58,6 +59,20 @@ export function useComposerHeight({
       if (!mirror || !source || typeof window === "undefined") return;
       const sourceWidth = source.clientWidth;
       if (sourceWidth <= 0) return;
+
+      // Each keystroke measures twice: once synchronously from the change handler, then
+      // again from the layout effect once the draft store publishes the same text. The
+      // second pass reads computed style and scrollHeight for an answer that cannot have
+      // changed, and each pass is a write-then-read against the mirror -- a forced reflow.
+      const lastMeasured = lastMeasuredRef.current;
+      if (
+        lastMeasured !== null &&
+        lastMeasured.text === text &&
+        lastMeasured.width === sourceWidth
+      ) {
+        return;
+      }
+      lastMeasuredRef.current = { text, width: sourceWidth };
 
       const computedStyle = window.getComputedStyle(source);
       for (const property of COPIED_STYLES) {
@@ -96,6 +111,7 @@ export function useComposerHeight({
     return () => {
       mirror.remove();
       mirrorRef.current = null;
+      lastMeasuredRef.current = null;
     };
   }, [measure]);
 

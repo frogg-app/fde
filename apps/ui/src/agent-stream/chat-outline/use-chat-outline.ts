@@ -64,9 +64,14 @@ export function useChatOutline({
   const nextIndexRequestIdRef = useRef(0);
   const loadedItems = useMemo(() => [...tail, ...(head ?? NO_STREAM_ITEMS)], [head, tail]);
   // Looked up once per scroll event, so a linear scan would cost more the further back
-  // the reader has scrolled -- exactly the direction that already hurts.
+  // the reader has scrolled -- exactly the direction that already hurts. Built only when
+  // the outline is on: the index is rebuilt whenever the tail changes, which is every
+  // stream tick, and nothing reads it with the outline off.
   const loadedItemSeqById = useMemo(() => {
     const seqById = new Map<string, number>();
+    if (!enabled) {
+      return seqById;
+    }
     for (const item of loadedItems) {
       const seq = item.timelineCursor?.seq;
       if (seq !== undefined) {
@@ -74,7 +79,7 @@ export function useChatOutline({
       }
     }
     return seqById;
-  }, [loadedItems]);
+  }, [enabled, loadedItems]);
   const prompts = enabled ? (index?.prompts ?? NO_PROMPTS) : NO_PROMPTS;
 
   useEffect(() => {
