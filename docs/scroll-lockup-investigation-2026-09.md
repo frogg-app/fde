@@ -15,6 +15,60 @@ older page loads._ That document should be read alongside this one; several of t
 mechanisms here produce the allocation-churn shape it describes, though none of them
 have been tied to the reported RSS figures by measurement.
 
+## Measured update, 2026-09-12
+
+The audit below is source reading. It was afterwards **measured**, and the measurement
+contradicts part of it. Read this section first.
+
+A Playwright harness on the e2e fixtures typed 600 keystrokes against a 660-row
+conversation in three states, with CPU profiles (headless Linux, Metro dev build, so
+absolute times are pessimistic and the ratios are what carry):
+
+| state                    | p50     | p95     | keys >50ms |
+| ------------------------ | ------- | ------- | ---------- |
+| fresh, at bottom         | 5.4 ms  | 15.0 ms | 0          |
+| while pages are loading  | 12.4 ms | 75.0 ms | 61         |
+| settled, 660 rows loaded | 7.7 ms  | 15.6 ms | 0          |
+
+**Cost is not proportional to how much history is loaded.** With the whole conversation
+loaded and pagination finished, typing is indistinguishable from the bottom of the
+stream. A separate run stepping depth from 1 to 6 pages saw p50 move 7.0 → 7.4 ms with
+p95 flat. The cost tracks pagination being _in flight_, not scroll depth. Any reasoning
+below that assumes depth-proportional cost is wrong, and so was the initial theory that a
+monotonically growing render window leaves the app permanently slower.
+
+**The dominant cost was not any of the nine defects below.** In the profile of the slow
+state, `Virtualizer.notify → onChange → flushSync` is 2,766 ms, 26% of total, and absent
+entirely at the bottom; idle time falls from 28.6% to 7.2%. `@tanstack/react-virtual`
+re-renders inside `flushSync` by default and `strategy-web.tsx` never overrode it, so
+every scroll offset change and row measurement forced an uninterruptible re-render of
+the whole viewport. A keystroke arriving mid-flush waits for it and about seven queue up
+behind one — the reported lag-then-catch-up. Fixed with `useFlushSync: false`.
+
+Compounding it, `settleHistoryStartPagination` re-requested a page whenever the reader
+was still within the history-start threshold, which the prepend anchor guarantees. One
+sustained scroll pulled 13 pages over 22.7s, so the flush storm outlived the gesture by
+far. That auto-continue is deliberate — a page shorter than the viewport must not strand
+the reader at a dead history start — so it is bounded to `MAX_AUTO_CONTINUED_PAGES`
+rather than removed.
+
+Separately, and off the scroll path entirely: every keystroke scheduled a full attachment
+garbage collection, each walking every stream item of every agent and then the
+filesystem, each queued behind the last on a promise chain. It now waits for a 2s pause.
+On desktop it reached `garbage_collect_attachment_files`, the one attachment command the
+first round of fixes failed to move off the runtime that pumps every daemon transport
+session.
+
+**The nine defects below are still real and all are fixed**, and the fixes hold — the
+height estimator and markdown split together total 62 ms of a 10.6 s profile now. But
+they were ranked by reading rather than by measurement, and the ranking was wrong. The
+lesson worth keeping: source reading found real defects and could not tell which one
+mattered.
+
+Also refuted by measurement: **the agent stream does not re-render on keystrokes.** Both
+`AgentStreamSection` and `AgentStreamView` have memo boundaries and no subscriber under
+`agent-stream/` reads the draft store.
+
 ## Summary
 
 There is no single defect. Scrolling up crosses four independent cost multipliers that
