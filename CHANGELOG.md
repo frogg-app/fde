@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.15 - 2026-09-12
+
+- Keep the Settings host picker focused on switching hosts. Host creation remains
+  in the main sidebar, whose Add host action now renders its translated label
+  instead of the missing translation key.
+
 ## 0.2.11 - 2026-09-11
 
 - Fix local speech loading when npm hoists the native Sherpa library away from
