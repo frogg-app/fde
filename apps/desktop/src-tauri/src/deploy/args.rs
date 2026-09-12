@@ -126,7 +126,7 @@ pub fn validate_listen(raw: &str) -> Result<String, String> {
     Ok(listen.to_string())
 }
 
-/// Splits `host:port` at the last colon (so `[::1]:6767` keeps its host).
+/// Splits `host:port` at the last colon (so `[::1]:9999` keeps its host).
 pub fn split_listen(listen: &str) -> Option<(&str, u16)> {
     let (host, port) = listen.rsplit_once(':')?;
     let port: u16 = port.parse().ok()?;
@@ -275,7 +275,7 @@ mod tests {
 
         let parsed = parse_deploy_request(
             &json!({ "host": "box", "sshPort": 2222, "method": "docker", "version": "v1.2.3",
-                     "listen": "0.0.0.0:6767", "bundleUrl": "https://x.y/z.tar.gz" }),
+                     "listen": "0.0.0.0:9999", "bundleUrl": "https://x.y/z.tar.gz" }),
             "0.1.6",
         )
         .unwrap();
@@ -306,8 +306,8 @@ mod tests {
 
     #[test]
     fn listen_split_keeps_ipv6_host() {
-        assert_eq!(split_listen("[::1]:6767"), Some(("[::1]", 6767)));
-        assert_eq!(split_listen("6767"), None);
-        assert!(validate_listen("[::1]:6767").is_ok());
+        assert_eq!(split_listen("[::1]:9999"), Some(("[::1]", 9999)));
+        assert_eq!(split_listen("9999"), None);
+        assert!(validate_listen("[::1]:9999").is_ok());
     }
 }

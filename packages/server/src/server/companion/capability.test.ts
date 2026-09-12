@@ -37,7 +37,7 @@ describe("resolveCompanionCapability", () => {
   test("the voice umbrella turns the Companion off even when its own flag is on", () => {
     expect(
       resolve({
-        env: { ANTHROPIC_API_KEY: "key", PASEO_VOICE: "0", PASEO_COMPANION_ENABLED: "1" },
+        env: { ANTHROPIC_API_KEY: "key", FDE_VOICE: "0", FDE_COMPANION_ENABLED: "1" },
       }),
     ).toEqual({ enabled: false, reason: DISABLED_REASON });
   });
@@ -45,12 +45,12 @@ describe("resolveCompanionCapability", () => {
   test("the fine-grained flag wins over the umbrella", () => {
     expect(
       resolve({
-        env: { ANTHROPIC_API_KEY: "key", PASEO_COMPANION_ENABLED: "0", PASEO_VOICE: "1" },
+        env: { ANTHROPIC_API_KEY: "key", FDE_COMPANION_ENABLED: "0", FDE_VOICE: "1" },
       }),
     ).toEqual({ enabled: false, reason: DISABLED_REASON });
     expect(
       resolve({
-        env: { ANTHROPIC_API_KEY: "key", PASEO_COMPANION_ENABLED: "1" },
+        env: { ANTHROPIC_API_KEY: "key", FDE_COMPANION_ENABLED: "1" },
         localRuntimeAvailable: false,
       }),
     ).toEqual({ enabled: true, reason: "" });
@@ -59,7 +59,7 @@ describe("resolveCompanionCapability", () => {
   test("the env flag wins over the persisted flag", () => {
     expect(
       resolve({
-        env: { ANTHROPIC_API_KEY: "key", PASEO_COMPANION_ENABLED: "0" },
+        env: { ANTHROPIC_API_KEY: "key", FDE_COMPANION_ENABLED: "0" },
         persisted: { features: { companion: { enabled: true } } },
       }),
     ).toEqual({ enabled: false, reason: DISABLED_REASON });
@@ -73,7 +73,7 @@ describe("resolveCompanionCapability", () => {
   });
 
   test("a disabled Companion reports the disabled reason ahead of the missing backend", () => {
-    expect(resolve({ env: { PASEO_COMPANION_ENABLED: "0" } })).toEqual({
+    expect(resolve({ env: { FDE_COMPANION_ENABLED: "0" } })).toEqual({
       enabled: false,
       reason: DISABLED_REASON,
     });

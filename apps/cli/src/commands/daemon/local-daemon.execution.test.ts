@@ -32,7 +32,7 @@ test("forced gateway stop preserves detached execution descendants with no opt-i
     expect(Number.isInteger(descendant)).toBe(true);
     await mkdir(path.join(home, "execution-service"));
     await writeFile(
-      path.join(home, "paseo.pid"),
+      path.join(home, "fde.pid"),
       JSON.stringify({ pid: owner.pid, listen: "127.0.0.1:1" }),
     );
     const result = await stopLocalDaemon({

@@ -27,7 +27,7 @@ export function createPluginCapabilities(
   navigation: PluginNavigation,
 ): PluginCommandCapabilities {
   return {
-    paseo: runtime.paseo,
+    fde: runtime.fde,
     rpc: (contract, input) => callPluginRpc(contract, runtime.invoke, input),
     openSurface(surfaceId) {
       if (!plugin.surfaces.some((surface) => surface.id === surfaceId)) {

@@ -5,7 +5,7 @@ import { setUpLocalDaemon, type LocalDaemonSetupDeps } from "./local-daemon-setu
 const running: DesktopDaemonStatus = {
   serverId: "srv",
   status: "running",
-  listen: "127.0.0.1:6767",
+  listen: "127.0.0.1:9999",
   hostname: "box",
   pid: 4,
   home: "/h",

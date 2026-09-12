@@ -35,7 +35,7 @@ describe("Hub guided setup continuation", () => {
       {
         env: {},
         credentials,
-        flow: { authorize: async () => "paseo_cli_prefix_durable-secret" },
+        flow: { authorize: async () => "fde_cli_prefix_durable-secret" },
         isInteractive: () => true,
         continueGuidedSetup: (origin) => continueHubGuidedSetup(origin, environment),
         reporter: { progress() {} },
@@ -54,7 +54,7 @@ describe("Hub guided setup continuation", () => {
     assert.deepEqual(calls, [{ operation: "token", origin: "https://hub.test" }]);
     assert.equal(daemon.connections, 1);
     assert.deepEqual(daemon.snapshotCwds, []);
-    await assert.rejects(readFile(path.join(cwd, ".paseo", "hub.yml")), { code: "ENOENT" });
+    await assert.rejects(readFile(path.join(cwd, ".fde", "hub.yml")), { code: "ENOENT" });
   });
 
   it("prints exact actionable resume commands for login continuation declines", async () => {
@@ -106,7 +106,7 @@ describe("Hub guided setup continuation", () => {
       {
         env: {},
         credentials,
-        flow: { authorize: async () => "paseo_cli_prefix_durable-secret" },
+        flow: { authorize: async () => "fde_cli_prefix_durable-secret" },
         isInteractive: () => true,
         continueGuidedSetup: (origin) =>
           continueHubGuidedSetup(
@@ -127,16 +127,16 @@ describe("Hub guided setup continuation", () => {
 
   it("keeps hub init's existing replacement confirmation", async () => {
     const cwd = await temporaryDirectory();
-    await mkdir(path.join(cwd, ".paseo"));
+    await mkdir(path.join(cwd, ".fde"));
     const prompts = new PromptAnswers([false], [], []);
 
     await assert.rejects(
       runHubGuidedSetup(
         setupEnvironment(cwd, new MemoryCredentials(), new SetupDaemon(), prompts, []),
       ),
-      /Existing .paseo\/ bundle left unchanged/u,
+      /Existing .fde\/ bundle left unchanged/u,
     );
-    assert.deepEqual(prompts.confirmations, ["Replace the existing .paseo/ Hub bundle?"]);
+    assert.deepEqual(prompts.confirmations, ["Replace the existing .fde/ Hub bundle?"]);
   });
 
   it("writes the explicitly selected Claude mode when the daemon has no default", async () => {
@@ -168,7 +168,7 @@ describe("Hub guided setup continuation", () => {
       ["Auto"],
     ]);
     assert.match(
-      await readFile(path.join(cwd, ".paseo", "hub.yml"), "utf8"),
+      await readFile(path.join(cwd, ".fde", "hub.yml"), "utf8"),
       /provider: claude\n    model: sonnet\n    mode: auto/u,
     );
     assert.deepEqual(
@@ -195,7 +195,7 @@ describe("Hub guided setup continuation", () => {
     );
 
     assert.equal(daemon.snapshotCwds.length, 0);
-    await assert.rejects(readFile(path.join(cwd, ".paseo", "hub.yml")), { code: "ENOENT" });
+    await assert.rejects(readFile(path.join(cwd, ".fde", "hub.yml")), { code: "ENOENT" });
   });
 
   it("waits for fresh-daemon provider discovery before offering runtime choices", async () => {
@@ -249,7 +249,7 @@ function setupEnvironment(
         options.setupResources ?? {
           github: [],
           discord: [],
-          slack: [{ teamId: "T123", teamName: "Paseo" }],
+          slack: [{ teamId: "T123", teamName: "Fde" }],
         }
       );
     },
@@ -283,7 +283,7 @@ function setupEnvironment(
     env: {},
     credentials,
     hub,
-    login: { authorize: async () => "paseo_cli_prefix_durable-secret" },
+    login: { authorize: async () => "fde_cli_prefix_durable-secret" },
     daemon: { connect: async () => daemon },
     reporter: { progress() {} },
     cwd: () => cwd,
@@ -441,7 +441,7 @@ function disconnectedStatus(): HubStatus {
 }
 
 async function temporaryDirectory(): Promise<string> {
-  const directory = await mkdtemp(path.join(tmpdir(), "paseo-hub-init-flow-"));
+  const directory = await mkdtemp(path.join(tmpdir(), "fde-hub-init-flow-"));
   directories.push(directory);
   return directory;
 }

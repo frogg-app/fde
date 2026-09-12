@@ -51,6 +51,6 @@ describe("daemon claim-status / reset-claim", () => {
     expect(resolveLoopbackHttpBase("[::]:9999")).toBe("http://127.0.0.1:9999");
     expect(resolveLoopbackHttpBase("192.168.1.5:9999")).toBe("http://192.168.1.5:9999");
     expect(resolveLoopbackHttpBase("9998")).toBe("http://127.0.0.1:9998");
-    expect(resolveLoopbackHttpBase("/tmp/paseo.sock")).toBeNull();
+    expect(resolveLoopbackHttpBase("/tmp/fde.sock")).toBeNull();
   });
 });

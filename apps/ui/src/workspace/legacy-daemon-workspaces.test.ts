@@ -64,7 +64,7 @@ function legacyAgent(input: {
         currentBranch: "main",
         remoteUrl: "git@example.com:repo/app.git",
         worktreeRoot: input.cwd,
-        isPaseoOwnedWorktree: false,
+        isFdeOwnedWorktree: false,
         mainRepoRoot: "/repo",
       },
     },

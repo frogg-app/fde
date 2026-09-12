@@ -22,7 +22,7 @@ test.concurrent.each(["environment", "directory"])(
       process.stdout.write('DESCENDANT=' + child.pid + '\\n');
       process.on('SIGTERM', () => {});
       process.on('message', () => {});
-      process.send({ type: 'paseo:shutdown', reason: 'force_kill_probe' });
+      process.send({ type: 'fde:shutdown', reason: 'force_kill_probe' });
       setInterval(() => {}, 1000);
     `,
     );

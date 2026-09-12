@@ -346,12 +346,12 @@ pub enum SessionMessage {
     GithubSearchResponse(GithubSearchResponse),
     #[serde(rename = "directory_suggestions_response")]
     DirectorySuggestionsResponse(DirectorySuggestionsResponse),
-    #[serde(rename = "paseo_worktree_list_response")]
-    PaseoWorktreeListResponse(PaseoWorktreeListResponse),
-    #[serde(rename = "paseo_worktree_archive_response")]
-    PaseoWorktreeArchiveResponse(PaseoWorktreeArchiveResponse),
-    #[serde(rename = "create_paseo_worktree_response")]
-    CreatePaseoWorktreeResponse(CreatePaseoWorktreeResponse),
+    #[serde(rename = "fde_worktree_list_response")]
+    FdeWorktreeListResponse(FdeWorktreeListResponse),
+    #[serde(rename = "fde_worktree_archive_response")]
+    FdeWorktreeArchiveResponse(FdeWorktreeArchiveResponse),
+    #[serde(rename = "create_fde_worktree_response")]
+    CreateFdeWorktreeResponse(CreateFdeWorktreeResponse),
     #[serde(rename = "file_explorer_response")]
     FileExplorerResponse(FileExplorerResponse),
     #[serde(rename = "fs.file.subscribe.response")]
@@ -8689,8 +8689,8 @@ pub struct StashListResponsePayloadEntriesItem {
     pub message: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub branch: Option<String>,
-    #[serde(rename = "isPaseo")]
-    pub is_paseo: bool,
+    #[serde(rename = "isFde")]
+    pub is_fde: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -8811,20 +8811,20 @@ pub enum DirectorySuggestionsResponsePayloadEntriesItemKind {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PaseoWorktreeListResponse {
-    pub payload: PaseoWorktreeListResponsePayload,
+pub struct FdeWorktreeListResponse {
+    pub payload: FdeWorktreeListResponsePayload,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PaseoWorktreeListResponsePayload {
-    pub worktrees: Vec<PaseoWorktreeListResponsePayloadWorktreesItem>,
+pub struct FdeWorktreeListResponsePayload {
+    pub worktrees: Vec<FdeWorktreeListResponsePayloadWorktreesItem>,
     pub error: serde_json::Value,
     #[serde(rename = "requestId")]
     pub request_id: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PaseoWorktreeListResponsePayloadWorktreesItem {
+pub struct FdeWorktreeListResponsePayloadWorktreesItem {
     #[serde(rename = "worktreePath")]
     pub worktree_path: String,
     #[serde(rename = "createdAt")]
@@ -8836,12 +8836,12 @@ pub struct PaseoWorktreeListResponsePayloadWorktreesItem {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PaseoWorktreeArchiveResponse {
-    pub payload: PaseoWorktreeArchiveResponsePayload,
+pub struct FdeWorktreeArchiveResponse {
+    pub payload: FdeWorktreeArchiveResponsePayload,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PaseoWorktreeArchiveResponsePayload {
+pub struct FdeWorktreeArchiveResponsePayload {
     pub success: bool,
     #[serde(rename = "removedAgents", skip_serializing_if = "Option::is_none")]
     pub removed_agents: Option<Vec<String>>,
@@ -8851,12 +8851,12 @@ pub struct PaseoWorktreeArchiveResponsePayload {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct CreatePaseoWorktreeResponse {
-    pub payload: CreatePaseoWorktreeResponsePayload,
+pub struct CreateFdeWorktreeResponse {
+    pub payload: CreateFdeWorktreeResponsePayload,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct CreatePaseoWorktreeResponsePayload {
+pub struct CreateFdeWorktreeResponsePayload {
     pub workspace: serde_json::Value,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,

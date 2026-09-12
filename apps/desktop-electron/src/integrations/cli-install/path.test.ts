@@ -7,10 +7,10 @@ describe("cli-install-path", () => {
       resolveCliInstallSourcePath({
         platform: "darwin",
         isPackaged: true,
-        executablePath: "/Applications/Paseo.app/Contents/MacOS/Paseo",
-        shimPath: "/Applications/Paseo.app/Contents/Resources/bin/paseo",
+        executablePath: "/Applications/Fde.app/Contents/MacOS/Fde",
+        shimPath: "/Applications/Fde.app/Contents/Resources/bin/fde",
       }),
-    ).toBe("/Applications/Paseo.app/Contents/Resources/bin/paseo");
+    ).toBe("/Applications/Fde.app/Contents/Resources/bin/fde");
   });
 
   it("uses the persistent bundled shim for an AppImage", () => {
@@ -18,9 +18,9 @@ describe("cli-install-path", () => {
       resolveCliInstallSourcePath({
         platform: "linux",
         isPackaged: true,
-        executablePath: "/tmp/.mount_paseo123/paseo",
+        executablePath: "/tmp/.mount_fde123/fde",
         shimPath: "/home/user/.config/FDE Electron/daemon-bundles/0.4.2/bin/fde",
-        appImagePath: "/home/user/Applications/Paseo.AppImage",
+        appImagePath: "/home/user/Applications/Fde.AppImage",
       }),
     ).toBe("/home/user/.config/FDE Electron/daemon-bundles/0.4.2/bin/fde");
   });
@@ -30,10 +30,10 @@ describe("cli-install-path", () => {
       resolveCliInstallSourcePath({
         platform: "linux",
         isPackaged: true,
-        executablePath: "/opt/Paseo/Paseo",
-        shimPath: "/opt/Paseo/resources/bin/paseo",
+        executablePath: "/opt/Fde/Fde",
+        shimPath: "/opt/Fde/resources/bin/fde",
       }),
-    ).toBe("/opt/Paseo/resources/bin/paseo");
+    ).toBe("/opt/Fde/resources/bin/fde");
   });
 
   it("falls back to the shim on windows and in development", () => {
@@ -41,18 +41,18 @@ describe("cli-install-path", () => {
       resolveCliInstallSourcePath({
         platform: "win32",
         isPackaged: true,
-        executablePath: "C:\\Users\\user\\AppData\\Local\\Programs\\Paseo\\Paseo.exe",
-        shimPath: "C:\\Users\\user\\AppData\\Local\\Programs\\Paseo\\resources\\bin\\paseo.cmd",
+        executablePath: "C:\\Users\\user\\AppData\\Local\\Programs\\Fde\\Fde.exe",
+        shimPath: "C:\\Users\\user\\AppData\\Local\\Programs\\Fde\\resources\\bin\\fde.cmd",
       }),
-    ).toBe("C:\\Users\\user\\AppData\\Local\\Programs\\Paseo\\resources\\bin\\paseo.cmd");
+    ).toBe("C:\\Users\\user\\AppData\\Local\\Programs\\Fde\\resources\\bin\\fde.cmd");
 
     expect(
       resolveCliInstallSourcePath({
         platform: "linux",
         isPackaged: false,
-        executablePath: "/opt/Paseo/paseo",
-        shimPath: "/opt/Paseo/resources/bin/paseo",
+        executablePath: "/opt/Fde/fde",
+        shimPath: "/opt/Fde/resources/bin/fde",
       }),
-    ).toBe("/opt/Paseo/resources/bin/paseo");
+    ).toBe("/opt/Fde/resources/bin/fde");
   });
 });

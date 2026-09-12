@@ -11,7 +11,7 @@ import {
 import { connectSeedClient, type SeedDaemonClient } from "./helpers/seed-client";
 import { createWithWorkspace, type WithWorkspace } from "./helpers/with-workspace";
 
-const EXTRA_HOSTS_KEY = "@paseo:e2e-extra-hosts";
+const EXTRA_HOSTS_KEY = "@fde:e2e-extra-hosts";
 
 interface TrackedProjectPickerFixture extends ProjectPickerFixture {
   rememberProjectId: (projectId: string) => void;
@@ -36,18 +36,18 @@ const daemonTest = metroTest.extend<
   { projectOwnership: void },
   {
     e2eForkProviders: string[];
-    e2eInjectPaseoTools: boolean;
+    e2eInjectFdeTools: boolean;
     e2eWorker: void;
     e2eWorkerClient: SeedDaemonClient;
   }
 >({
   e2eForkProviders: [[], { scope: "worker", option: true }],
-  e2eInjectPaseoTools: [false, { scope: "worker", option: true }],
+  e2eInjectFdeTools: [false, { scope: "worker", option: true }],
   e2eWorker: [
-    async ({ e2eForkProviders, e2eInjectPaseoTools }, provide, workerInfo) => {
+    async ({ e2eForkProviders, e2eInjectFdeTools }, provide, workerInfo) => {
       const worker = await startE2EWorker(workerInfo.workerIndex, {
         forkProviders: e2eForkProviders,
-        injectPaseoTools: e2eInjectPaseoTools,
+        injectFdeTools: e2eInjectFdeTools,
       });
       try {
         await provide();
@@ -96,14 +96,14 @@ const daemonTest = metroTest.extend<
 });
 
 const test = daemonTest.extend<{
-  paseoE2ESetup: void;
+  fdeE2ESetup: void;
   outdatedDaemon: OutdatedDaemon;
   desktopManagedOutdatedDaemon: OutdatedDaemon;
   relayConfigOutdatedDaemon: OutdatedDaemon;
   projectPickerFixture: TrackedProjectPickerFixture;
   withWorkspace: WithWorkspace;
 }>({
-  paseoE2ESetup: [
+  fdeE2ESetup: [
     async ({ page }, provide, testInfo) => {
       const daemonPort = getE2EDaemonPort();
       const metroPort = process.env.E2E_METRO_PORT;
@@ -114,9 +114,9 @@ const test = daemonTest.extend<{
       }
 
       // Hard guardrail: never allow tests to hit the developer's default daemon.
-      // This blocks both HTTP and WS attempts to :9999 (and the legacy :6767) (before any navigation).
-      await page.route(/:(9999|6767)\b/, (route) => route.abort());
-      await page.routeWebSocket(/:(9999|6767)\b/, async (ws) => {
+      // This blocks both HTTP and WS attempts to :9999 (and the legacy :9999) (before any navigation).
+      await page.route(/:(9999|9999)\b/, (route) => route.abort());
+      await page.routeWebSocket(/:(9999|9999)\b/, async (ws) => {
         await ws.close({ code: 1008, reason: "Blocked connection to localhost:9999 during e2e." });
       });
 
@@ -148,7 +148,7 @@ const test = daemonTest.extend<{
           // `addInitScript` runs on every navigation (including reloads). Some tests intentionally
           // override storage and reload; they can opt out of seeding for the *next* navigation by
           // setting this flag before the reload.
-          const disableOnceKey = "@paseo:e2e-disable-default-seed-once";
+          const disableOnceKey = "@fde:e2e-disable-default-seed-once";
           const disableValue = localStorage.getItem(disableOnceKey);
           if (disableValue) {
             localStorage.removeItem(disableOnceKey);
@@ -157,16 +157,16 @@ const test = daemonTest.extend<{
             }
           }
 
-          localStorage.setItem("@paseo:e2e", "1");
-          localStorage.setItem("@paseo:e2e-seed-nonce", nonce);
+          localStorage.setItem("@fde:e2e", "1");
+          localStorage.setItem("@fde:e2e-seed-nonce", nonce);
 
           const rawExtraHosts = localStorage.getItem(extraHostsKey);
           const extraHosts = rawExtraHosts ? JSON.parse(rawExtraHosts) : [];
 
           // Hard-reset anything that could point to a developer's real daemon.
-          localStorage.setItem("@paseo:daemon-registry", JSON.stringify([daemon, ...extraHosts]));
-          localStorage.removeItem("@paseo:settings");
-          localStorage.setItem("@paseo:create-agent-preferences", JSON.stringify(preferences));
+          localStorage.setItem("@fde:daemon-registry", JSON.stringify([daemon, ...extraHosts]));
+          localStorage.removeItem("@fde:settings");
+          localStorage.setItem("@fde:create-agent-preferences", JSON.stringify(preferences));
         },
         {
           daemon: testDaemon,

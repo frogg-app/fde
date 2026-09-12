@@ -32,7 +32,7 @@ in {
       let b = c.package.brand; in lib.nameValuePair b.serviceName {
         description = "${b.name} daemon";
         wantedBy = [ "multi-user.target" ]; after = [ "network.target" ];
-        environment = c.environment // { "${b.envPrefix}_HOME" = c.dataDir; PASEO_LISTEN = "${c.listenAddress}:${toString c.port}"; };
+        environment = c.environment // { "${b.envPrefix}_HOME" = c.dataDir; FDE_LISTEN = "${c.listenAddress}:${toString c.port}"; };
         preStart = ''
           owner=${lib.escapeShellArg "${b.id}:${b.applicationId}"}
           marker=${lib.escapeShellArg "${c.dataDir}/.brand-identity"}

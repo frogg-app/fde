@@ -23,11 +23,11 @@ export function buildAgentDeepLinkRoute(
   return `/h/${encodeURIComponent(serverId)}/agent/${encodeURIComponent(agentId)}`;
 }
 
-export function buildAgentDeepLink(target: AgentDeepLinkTarget, scheme = "paseo"): string {
+export function buildAgentDeepLink(target: AgentDeepLinkTarget, scheme = "fde"): string {
   return `${scheme}:/${buildAgentDeepLinkRoute(target)}`;
 }
 
-export function parseAgentDeepLink(input: string, scheme = "paseo"): AgentDeepLinkTarget | null {
+export function parseAgentDeepLink(input: string, scheme = "fde"): AgentDeepLinkTarget | null {
   let url: URL;
   try {
     url = new URL(input);

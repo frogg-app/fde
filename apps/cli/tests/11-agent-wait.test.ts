@@ -30,13 +30,13 @@ console.log("=== Wait Command Tests ===\n");
 
 // Get random port that's definitely not in use (never 9999)
 const port = 10000 + Math.floor(Math.random() * 50000);
-const paseoHome = await mkdtemp(join(tmpdir(), "paseo-test-home-"));
+const fdeHome = await mkdtemp(join(tmpdir(), "fde-test-home-"));
 
 try {
   // Test 1: wait --help shows options
   {
     console.log("Test 1: wait --help shows options");
-    const result = await $`npx paseo wait --help`.nothrow();
+    const result = await $`npx fde wait --help`.nothrow();
     assert.strictEqual(result.exitCode, 0, "wait --help should exit 0");
     assert(result.stdout.includes("--host"), "help should mention --host option");
     assert(result.stdout.includes("--timeout"), "help should mention --timeout option");
@@ -50,8 +50,7 @@ try {
   // Test 2: wait requires id argument
   {
     console.log("Test 2: wait requires id argument");
-    const result =
-      await $`PASEO_HOST=localhost:${port} PASEO_HOME=${paseoHome} npx paseo wait`.nothrow();
+    const result = await $`FDE_HOST=localhost:${port} FDE_HOME=${fdeHome} npx fde wait`.nothrow();
     assert.notStrictEqual(result.exitCode, 0, "should fail without id");
     const output = result.stdout + result.stderr;
     // Commander should complain about missing argument
@@ -67,7 +66,7 @@ try {
   {
     console.log("Test 3: wait handles daemon not running");
     const result =
-      await $`PASEO_HOST=localhost:${port} PASEO_HOME=${paseoHome} npx paseo wait abc123`.nothrow();
+      await $`FDE_HOST=localhost:${port} FDE_HOME=${fdeHome} npx fde wait abc123`.nothrow();
     // Should fail because daemon not running
     assert.notStrictEqual(result.exitCode, 0, "should fail when daemon not running");
     const output = result.stdout + result.stderr;
@@ -83,7 +82,7 @@ try {
   {
     console.log("Test 4: wait --timeout flag is accepted");
     const result =
-      await $`PASEO_HOME=${paseoHome} npx paseo wait --timeout 30 --host localhost:${port} abc123`.nothrow();
+      await $`FDE_HOME=${fdeHome} npx fde wait --timeout 30 --host localhost:${port} abc123`.nothrow();
     const output = result.stdout + result.stderr;
     assert(!output.includes("unknown option"), "should accept --timeout flag");
     assert(!output.includes("error: option"), "should not have option parsing error");
@@ -94,7 +93,7 @@ try {
   {
     console.log("Test 5: wait --host flag is accepted");
     const result =
-      await $`PASEO_HOME=${paseoHome} npx paseo wait --host localhost:${port} abc123`.nothrow();
+      await $`FDE_HOME=${fdeHome} npx fde wait --host localhost:${port} abc123`.nothrow();
     const output = result.stdout + result.stderr;
     assert(!output.includes("unknown option"), "should accept --host flag");
     assert(!output.includes("error: option"), "should not have option parsing error");
@@ -105,7 +104,7 @@ try {
   {
     console.log("Test 6: -q (quiet) flag is accepted with wait");
     const result =
-      await $`PASEO_HOST=localhost:${port} PASEO_HOME=${paseoHome} npx paseo -q wait abc123`.nothrow();
+      await $`FDE_HOST=localhost:${port} FDE_HOME=${fdeHome} npx fde -q wait abc123`.nothrow();
     const output = result.stdout + result.stderr;
     assert(!output.includes("unknown option"), "should accept -q flag");
     assert(!output.includes("error: option"), "should not have option parsing error");
@@ -116,7 +115,7 @@ try {
   {
     console.log("Test 7: --json flag is accepted with wait");
     const result =
-      await $`PASEO_HOST=localhost:${port} PASEO_HOME=${paseoHome} npx paseo wait abc123 --json`.nothrow();
+      await $`FDE_HOST=localhost:${port} FDE_HOME=${fdeHome} npx fde wait abc123 --json`.nothrow();
     const output = result.stdout + result.stderr;
     assert(!output.includes("unknown option"), "should accept --json flag");
     assert(!output.includes("error: option"), "should not have option parsing error");
@@ -127,26 +126,26 @@ try {
   {
     console.log("Test 8: --format yaml flag is accepted with wait");
     const result =
-      await $`PASEO_HOST=localhost:${port} PASEO_HOME=${paseoHome} npx paseo --format yaml wait abc123`.nothrow();
+      await $`FDE_HOST=localhost:${port} FDE_HOME=${fdeHome} npx fde --format yaml wait abc123`.nothrow();
     const output = result.stdout + result.stderr;
     assert(!output.includes("unknown option"), "should accept --format yaml flag");
     assert(!output.includes("error: option"), "should not have option parsing error");
     console.log("--format yaml flag is accepted with wait\n");
   }
 
-  // Test 9: paseo --help shows wait command
+  // Test 9: fde --help shows wait command
   {
-    console.log("Test 9: paseo --help shows wait command");
-    const result = await $`npx paseo --help`.nothrow();
-    assert.strictEqual(result.exitCode, 0, "paseo --help should exit 0");
+    console.log("Test 9: fde --help shows wait command");
+    const result = await $`npx fde --help`.nothrow();
+    assert.strictEqual(result.exitCode, 0, "fde --help should exit 0");
     assert(result.stdout.includes("wait"), "help should mention wait command");
-    console.log("paseo --help shows wait command\n");
+    console.log("fde --help shows wait command\n");
   }
 
   // Test 10: wait command description is helpful
   {
     console.log("Test 10: wait command description is helpful");
-    const result = await $`npx paseo wait --help`.nothrow();
+    const result = await $`npx fde wait --help`.nothrow();
     assert.strictEqual(result.exitCode, 0, "wait --help should exit 0");
     const hasDescription =
       result.stdout.toLowerCase().includes("wait") || result.stdout.toLowerCase().includes("idle");
@@ -157,7 +156,7 @@ try {
   // Test 11: ID prefix syntax is mentioned in help
   {
     console.log("Test 11: wait command mentions ID");
-    const result = await $`npx paseo wait --help`.nothrow();
+    const result = await $`npx fde wait --help`.nothrow();
     assert.strictEqual(result.exitCode, 0, "wait --help should exit 0");
     const hasIdMention =
       result.stdout.toLowerCase().includes("id") || result.stdout.toLowerCase().includes("prefix");
@@ -168,7 +167,7 @@ try {
   // Test 12: timeout option documents no default limit
   {
     console.log("Test 12: timeout option documents no default limit");
-    const result = await $`npx paseo wait --help`.nothrow();
+    const result = await $`npx fde wait --help`.nothrow();
     assert.strictEqual(result.exitCode, 0, "wait --help should exit 0");
     assert(
       result.stdout.toLowerCase().includes("default: no limit"),
@@ -178,7 +177,7 @@ try {
   }
 } finally {
   // Clean up temp directory
-  await rm(paseoHome, { recursive: true, force: true });
+  await rm(fdeHome, { recursive: true, force: true });
 }
 
 console.log("=== All wait tests passed ===");

@@ -1,7 +1,7 @@
-import { createPaseoClient, type PaseoClient } from "@fde/client";
+import { createFdeClient, type FdeClient } from "@fde/client";
 
-export function createClient(url: string): PaseoClient {
-  return createPaseoClient({
+export function createClient(url: string): FdeClient {
+  return createFdeClient({
     url,
   });
 }

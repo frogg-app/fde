@@ -7,8 +7,8 @@ describe("desktop IPC trust boundary", () => {
   const trusted = {
     registered: true,
     mainFrame: true,
-    url: "paseo://app/settings",
-    origin: "paseo://app",
+    url: "fde://app/settings",
+    origin: "fde://app",
   };
   it("accepts registered app main-frame routes", () => {
     expect(isTrustedDesktopFrame(trusted)).toBe(true);
@@ -24,7 +24,7 @@ describe("desktop IPC trust boundary", () => {
     for (const input of [
       { ...trusted, registered: false },
       { ...trusted, mainFrame: false },
-      { ...trusted, url: "paseo://other/settings" },
+      { ...trusted, url: "fde://other/settings" },
       { ...trusted, url: "https://app/settings" },
       { ...trusted, url: "about:blank" },
       { ...trusted, url: "invalid" },
@@ -37,7 +37,7 @@ describe("pairing launch inbox", () => {
   it("delivers a cold-start link once after the listener registers", () => {
     const inbox = new PairingInbox();
     const delivered: string[] = [];
-    const url = "paseo://pair#offer=secret";
+    const url = "fde://pair#offer=secret";
     expect(inbox.receive(url)).toBe(true);
     inbox.ready(1, (value) => delivered.push(value));
     inbox.ready(1, (value) => delivered.push(value));
@@ -49,10 +49,10 @@ describe("pairing launch inbox", () => {
     inbox.ready(1, (value) => delivered.push(value));
     inbox.remove(1);
     expect(inbox.receive("https://example.com/#offer=secret")).toBe(false);
-    inbox.receive("paseo://pair#offer=next");
+    inbox.receive("fde://pair#offer=next");
     expect(delivered).toEqual([]);
     inbox.ready(2, (value) => delivered.push(value));
-    expect(delivered).toEqual(["paseo://pair#offer=next"]);
+    expect(delivered).toEqual(["fde://pair#offer=next"]);
   });
 });
 

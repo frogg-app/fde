@@ -1,7 +1,7 @@
 #!/usr/bin/env npx tsx
 
 /**
- * Regression: `paseo daemon stop` must stop a reachable daemon even when the
+ * Regression: `fde daemon stop` must stop a reachable daemon even when the
  * local pid file points at a dead supervisor owner.
  */
 
@@ -18,9 +18,9 @@ $.verbose = false;
 
 const pollIntervalMs = 100;
 const testEnv = {
-  PASEO_LOCAL_SPEECH_AUTO_DOWNLOAD: process.env.PASEO_LOCAL_SPEECH_AUTO_DOWNLOAD ?? "0",
-  PASEO_DICTATION_ENABLED: process.env.PASEO_DICTATION_ENABLED ?? "0",
-  PASEO_VOICE_MODE_ENABLED: process.env.PASEO_VOICE_MODE_ENABLED ?? "0",
+  FDE_LOCAL_SPEECH_AUTO_DOWNLOAD: process.env.FDE_LOCAL_SPEECH_AUTO_DOWNLOAD ?? "0",
+  FDE_DICTATION_ENABLED: process.env.FDE_DICTATION_ENABLED ?? "0",
+  FDE_VOICE_MODE_ENABLED: process.env.FDE_VOICE_MODE_ENABLED ?? "0",
 };
 
 function sleep(ms: number): Promise<void> {
@@ -63,9 +63,9 @@ interface DaemonStatus {
   pid: number | null;
 }
 
-async function readDaemonStatus(paseoHome: string): Promise<DaemonStatus> {
+async function readDaemonStatus(fdeHome: string): Promise<DaemonStatus> {
   const result =
-    await $`PASEO_HOME=${paseoHome} PASEO_LOCAL_SPEECH_AUTO_DOWNLOAD=${testEnv.PASEO_LOCAL_SPEECH_AUTO_DOWNLOAD} PASEO_DICTATION_ENABLED=${testEnv.PASEO_DICTATION_ENABLED} PASEO_VOICE_MODE_ENABLED=${testEnv.PASEO_VOICE_MODE_ENABLED} npx paseo daemon status --home ${paseoHome} --json`.nothrow();
+    await $`FDE_HOME=${fdeHome} FDE_LOCAL_SPEECH_AUTO_DOWNLOAD=${testEnv.FDE_LOCAL_SPEECH_AUTO_DOWNLOAD} FDE_DICTATION_ENABLED=${testEnv.FDE_DICTATION_ENABLED} FDE_VOICE_MODE_ENABLED=${testEnv.FDE_VOICE_MODE_ENABLED} npx fde daemon status --home ${fdeHome} --json`.nothrow();
   if (result.exitCode !== 0) {
     return { localDaemon: null, connectedDaemon: null, pid: null };
   }
@@ -101,10 +101,10 @@ function findUnusedPid(): number {
 console.log("=== Daemon Stop (stale pid, reachable worker regression) ===\n");
 
 const port = await getAvailablePort();
-const paseoHome = await mkdtemp(join(tmpdir(), "paseo-stop-stale-reachable-"));
+const fdeHome = await mkdtemp(join(tmpdir(), "fde-stop-stale-reachable-"));
 const cliRoot = join(import.meta.dirname, "..");
 const host = `127.0.0.1:${port}`;
-const pidPath = join(paseoHome, "paseo.pid");
+const pidPath = join(fdeHome, "fde.pid");
 const stalePid = findUnusedPid();
 
 let workerProcess: ChildProcess | null = null;
@@ -135,9 +135,9 @@ try {
       env: {
         ...process.env,
         ...testEnv,
-        PASEO_HOME: paseoHome,
-        PASEO_LISTEN: host,
-        PASEO_RELAY_ENABLED: "false",
+        FDE_HOME: fdeHome,
+        FDE_LISTEN: host,
+        FDE_RELAY_ENABLED: "false",
         CI: "true",
       },
       stdio: ["ignore", "pipe", "pipe"],
@@ -146,23 +146,23 @@ try {
 
   await waitFor(
     async () => {
-      const status = await readDaemonStatus(paseoHome);
+      const status = await readDaemonStatus(fdeHome);
       return status.localDaemon === "stale_pid" && status.connectedDaemon === "reachable";
     },
     120000,
     "daemon did not enter stale_pid + reachable state in time",
   );
 
-  const statusBeforeStop = await readDaemonStatus(paseoHome);
+  const statusBeforeStop = await readDaemonStatus(fdeHome);
   assert.strictEqual(statusBeforeStop.pid, stalePid, "status should report the stale owner pid");
   assert(workerProcess.pid && isProcessRunning(workerProcess.pid), "worker should be running");
   console.log(`✓ fixture has stale pid ${stalePid} and live worker ${workerProcess.pid}\n`);
 
   console.log(
-    "Test 2: `paseo daemon stop` should stop reachable worker instead of saying not_running",
+    "Test 2: `fde daemon stop` should stop reachable worker instead of saying not_running",
   );
   const stopResult =
-    await $`PASEO_HOME=${paseoHome} PASEO_LOCAL_SPEECH_AUTO_DOWNLOAD=${testEnv.PASEO_LOCAL_SPEECH_AUTO_DOWNLOAD} PASEO_DICTATION_ENABLED=${testEnv.PASEO_DICTATION_ENABLED} PASEO_VOICE_MODE_ENABLED=${testEnv.PASEO_VOICE_MODE_ENABLED} npx paseo daemon stop --home ${paseoHome} --json`.nothrow();
+    await $`FDE_HOME=${fdeHome} FDE_LOCAL_SPEECH_AUTO_DOWNLOAD=${testEnv.FDE_LOCAL_SPEECH_AUTO_DOWNLOAD} FDE_DICTATION_ENABLED=${testEnv.FDE_DICTATION_ENABLED} FDE_VOICE_MODE_ENABLED=${testEnv.FDE_VOICE_MODE_ENABLED} npx fde daemon stop --home ${fdeHome} --json`.nothrow();
   assert.strictEqual(stopResult.exitCode, 0, `stop should succeed: ${stopResult.stderr}`);
   const stopJson = JSON.parse(stopResult.stdout) as {
     action?: unknown;
@@ -200,8 +200,8 @@ try {
     });
   }
 
-  await $`PASEO_HOME=${paseoHome} PASEO_LOCAL_SPEECH_AUTO_DOWNLOAD=${testEnv.PASEO_LOCAL_SPEECH_AUTO_DOWNLOAD} PASEO_DICTATION_ENABLED=${testEnv.PASEO_DICTATION_ENABLED} PASEO_VOICE_MODE_ENABLED=${testEnv.PASEO_VOICE_MODE_ENABLED} npx paseo daemon stop --home ${paseoHome} --force`.nothrow();
-  await rm(paseoHome, { recursive: true, force: true });
+  await $`FDE_HOME=${fdeHome} FDE_LOCAL_SPEECH_AUTO_DOWNLOAD=${testEnv.FDE_LOCAL_SPEECH_AUTO_DOWNLOAD} FDE_DICTATION_ENABLED=${testEnv.FDE_DICTATION_ENABLED} FDE_VOICE_MODE_ENABLED=${testEnv.FDE_VOICE_MODE_ENABLED} npx fde daemon stop --home ${fdeHome} --force`.nothrow();
+  await rm(fdeHome, { recursive: true, force: true });
 }
 
 console.log("=== Stale reachable stop regression test passed ===");

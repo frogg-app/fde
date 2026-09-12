@@ -73,17 +73,13 @@ afterEach(async () => {
 });
 
 describe("plugin author module externals", () => {
-  // COMPAT(plugin-sdk-scope): plugins written against the unpublished @paseo/plugin name must
-  // keep compiling. Drop that case with the specifiers in plugin-sdk-specifiers.ts.
-  it.each(["@fde/plugin", "@paseo/plugin"])(
-    "leaves %s/server external in both bundles",
-    async (sdk) => {
-      const directory = await mkdtemp(path.join(tmpdir(), "paseo-plugin-compiler-"));
-      temporaryDirectories.push(directory);
-      const entryPath = path.join(directory, "index.ts");
-      await writeFile(
-        entryPath,
-        `import type { PluginContext } from "${sdk}";
+  it.each(["@fde/plugin"])("leaves %s/server external in both bundles", async (sdk) => {
+    const directory = await mkdtemp(path.join(tmpdir(), "fde-plugin-compiler-"));
+    temporaryDirectories.push(directory);
+    const entryPath = path.join(directory, "index.ts");
+    await writeFile(
+      entryPath,
+      `import type { PluginContext } from "${sdk}";
 import { Icon } from "${sdk}/react-native";
 import { defineRpc } from "${sdk}/server";
 import { z } from "zod";
@@ -104,24 +100,23 @@ export default function contribute(plugin: PluginContext) {
   return () => undefined;
 }
 `,
-      );
+    );
 
-      const { clientBundle, serverBundle } = await compilePlugin(entryPath);
-      expect(clientBundle).toContain(`${sdk}/react-native`);
-      expect(clientBundle).toContain(`${sdk}/server`);
-      expect(serverBundle).toContain(`${sdk}/server`);
-      expect(serverBundle).not.toContain(`${sdk}/react-native`);
-      expect(clientBundle).toContain("Settings");
-      expect(serverBundle).not.toContain("Settings");
-      expect(clientBundle).not.toContain("Invalid plugin RPC method");
-      expect(serverBundle).not.toContain("Invalid plugin RPC method");
-    },
-  );
+    const { clientBundle, serverBundle } = await compilePlugin(entryPath);
+    expect(clientBundle).toContain(`${sdk}/react-native`);
+    expect(clientBundle).toContain(`${sdk}/server`);
+    expect(serverBundle).toContain(`${sdk}/server`);
+    expect(serverBundle).not.toContain(`${sdk}/react-native`);
+    expect(clientBundle).toContain("Settings");
+    expect(serverBundle).not.toContain("Settings");
+    expect(clientBundle).not.toContain("Invalid plugin RPC method");
+    expect(serverBundle).not.toContain("Invalid plugin RPC method");
+  });
 });
 
 describe("plugin contribution targets", () => {
   it("keeps client contributions out of the server bundle", async () => {
-    const directory = await mkdtemp(path.join(tmpdir(), "paseo-plugin-compiler-"));
+    const directory = await mkdtemp(path.join(tmpdir(), "fde-plugin-compiler-"));
     temporaryDirectories.push(directory);
     const entryPath = path.join(directory, "index.ts");
     await writeFile(
@@ -172,7 +167,7 @@ describe("plugin contribution targets", () => {
 
 describe("plugin client runtime syntax", () => {
   it("uses the automatic JSX runtime without a React import", async () => {
-    const directory = await mkdtemp(path.join(tmpdir(), "paseo-plugin-compiler-"));
+    const directory = await mkdtemp(path.join(tmpdir(), "fde-plugin-compiler-"));
     temporaryDirectories.push(directory);
     const entryPath = path.join(directory, "index.tsx");
     await writeFile(
@@ -196,7 +191,7 @@ export default function contribute(plugin) {
   });
 
   it("lowers async callbacks before Hermes evaluates the client bundle", async () => {
-    const directory = await mkdtemp(path.join(tmpdir(), "paseo-plugin-compiler-"));
+    const directory = await mkdtemp(path.join(tmpdir(), "fde-plugin-compiler-"));
     temporaryDirectories.push(directory);
     const entryPath = path.join(directory, "index.tsx");
     await writeFile(

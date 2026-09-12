@@ -131,7 +131,7 @@ export function registerDaemonManager(): void {
   const handlers = createDaemonCommandHandlers();
 
   handleDesktopIpc(
-    "paseo:invoke",
+    "fde:invoke",
     async (
       _event: Electron.IpcMainInvokeEvent,
       command: string,

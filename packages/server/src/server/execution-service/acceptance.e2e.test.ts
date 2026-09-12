@@ -26,12 +26,11 @@ async function prepareRuntime() {
     execArgv: ["--import", "tsx"],
     env: {
       ...process.env,
-      PASEO_HOME: home,
       FDE_HOME: home,
-      PASEO_NODE_ENV: "development",
-      PASEO_RELAY_ENABLED: "false",
-      PASEO_LISTEN: "127.0.0.1:0",
-      PASEO_SUPERVISED: "0",
+      FDE_NODE_ENV: "development",
+      FDE_RELAY_ENABLED: "false",
+      FDE_LISTEN: "127.0.0.1:0",
+      FDE_SUPERVISED: "0",
     },
   };
   return { home, options };

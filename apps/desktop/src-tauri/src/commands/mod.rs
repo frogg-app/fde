@@ -1,5 +1,5 @@
 //! `desktop_invoke` dispatch: one Tauri command, one match on the Electron
-//! command name. Unknown names fail exactly as Electron's `paseo:invoke` did.
+//! command name. Unknown names fail exactly as Electron's `fde:invoke` did.
 
 pub mod attachments;
 pub mod cli_install;
@@ -21,7 +21,7 @@ use crate::network;
 use crate::ssh_config;
 use crate::transport::{ssh_auth, EventSink, TransportManager};
 
-const TRANSPORT_EVENT: &str = "paseo:event:local-daemon-transport-event";
+const TRANSPORT_EVENT: &str = "fde:event:local-daemon-transport-event";
 
 /// Creates the per-app stores once the app paths are known.
 pub fn register_state(app: &App) -> tauri::Result<()> {
@@ -147,7 +147,7 @@ pub async fn desktop_invoke(
             })
             .await
         }
-        // Pairing deep links (`paseo://pair#offer=…`, see `launch.rs`): the page
+        // Pairing deep links (`fde://pair#offer=…`, see `launch.rs`): the page
         // calls this after registering its `open-pairing-offer` listener.
         "pairing_offer_ready" => Ok(serde_json::to_value(
             app.state::<LaunchState>().pairing_offer_ready(),

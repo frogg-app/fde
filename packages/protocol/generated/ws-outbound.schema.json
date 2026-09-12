@@ -37240,7 +37240,7 @@
                           "type": "boolean",
                           "const": false
                         },
-                        "isPaseoOwnedWorktree": {
+                        "isFdeOwnedWorktree": {
                           "type": "boolean",
                           "const": false
                         },
@@ -37277,7 +37277,7 @@
                         "error",
                         "requestId",
                         "isGit",
-                        "isPaseoOwnedWorktree",
+                        "isFdeOwnedWorktree",
                         "repoRoot",
                         "currentBranch",
                         "isDirty",
@@ -37338,7 +37338,7 @@
                           "type": "boolean",
                           "const": true
                         },
-                        "isPaseoOwnedWorktree": {
+                        "isFdeOwnedWorktree": {
                           "type": "boolean",
                           "const": false
                         },
@@ -37417,7 +37417,7 @@
                         "error",
                         "requestId",
                         "isGit",
-                        "isPaseoOwnedWorktree",
+                        "isFdeOwnedWorktree",
                         "repoRoot",
                         "mainRepoRoot",
                         "currentBranch",
@@ -37479,7 +37479,7 @@
                           "type": "boolean",
                           "const": true
                         },
-                        "isPaseoOwnedWorktree": {
+                        "isFdeOwnedWorktree": {
                           "type": "boolean",
                           "const": true
                         },
@@ -37551,7 +37551,7 @@
                         "error",
                         "requestId",
                         "isGit",
-                        "isPaseoOwnedWorktree",
+                        "isFdeOwnedWorktree",
                         "repoRoot",
                         "mainRepoRoot",
                         "currentBranch",
@@ -37946,7 +37946,7 @@
                           "type": "boolean",
                           "const": false
                         },
-                        "isPaseoOwnedWorktree": {
+                        "isFdeOwnedWorktree": {
                           "type": "boolean",
                           "const": false
                         },
@@ -37983,7 +37983,7 @@
                         "error",
                         "requestId",
                         "isGit",
-                        "isPaseoOwnedWorktree",
+                        "isFdeOwnedWorktree",
                         "repoRoot",
                         "currentBranch",
                         "isDirty",
@@ -38359,7 +38359,7 @@
                           "type": "boolean",
                           "const": true
                         },
-                        "isPaseoOwnedWorktree": {
+                        "isFdeOwnedWorktree": {
                           "type": "boolean",
                           "const": false
                         },
@@ -38438,7 +38438,7 @@
                         "error",
                         "requestId",
                         "isGit",
-                        "isPaseoOwnedWorktree",
+                        "isFdeOwnedWorktree",
                         "repoRoot",
                         "mainRepoRoot",
                         "currentBranch",
@@ -38815,7 +38815,7 @@
                           "type": "boolean",
                           "const": true
                         },
-                        "isPaseoOwnedWorktree": {
+                        "isFdeOwnedWorktree": {
                           "type": "boolean",
                           "const": true
                         },
@@ -38887,7 +38887,7 @@
                         "error",
                         "requestId",
                         "isGit",
-                        "isPaseoOwnedWorktree",
+                        "isFdeOwnedWorktree",
                         "repoRoot",
                         "mainRepoRoot",
                         "currentBranch",
@@ -41950,7 +41950,7 @@
                               "null"
                             ]
                           },
-                          "isPaseo": {
+                          "isFde": {
                             "type": "boolean"
                           }
                         },
@@ -41958,7 +41958,7 @@
                           "index",
                           "message",
                           "branch",
-                          "isPaseo"
+                          "isFde"
                         ],
                         "additionalProperties": false
                       }
@@ -42288,7 +42288,7 @@
               "properties": {
                 "type": {
                   "type": "string",
-                  "const": "paseo_worktree_list_response"
+                  "const": "fde_worktree_list_response"
                 },
                 "payload": {
                   "type": "object",
@@ -42376,7 +42376,7 @@
               "properties": {
                 "type": {
                   "type": "string",
-                  "const": "paseo_worktree_archive_response"
+                  "const": "fde_worktree_archive_response"
                 },
                 "payload": {
                   "type": "object",
@@ -42442,7 +42442,7 @@
               "properties": {
                 "type": {
                   "type": "string",
-                  "const": "create_paseo_worktree_response"
+                  "const": "create_fde_worktree_response"
                 },
                 "payload": {
                   "type": "object",

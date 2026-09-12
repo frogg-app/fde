@@ -2,9 +2,9 @@ import { Command } from "commander";
 import { resolveHookActivity, type AgentHookActivityState } from "@fde/server/agent-hooks";
 
 interface HookEnvironment {
-  PASEO_TERMINAL_ID?: string;
-  PASEO_ACTIVITY_TOKEN?: string;
-  PASEO_TERMINAL_ACTIVITY_URL?: string;
+  FDE_TERMINAL_ID?: string;
+  FDE_ACTIVITY_TOKEN?: string;
+  FDE_TERMINAL_ACTIVITY_URL?: string;
 }
 
 interface HookInput {
@@ -52,9 +52,9 @@ export async function runHooksCommand(
 }
 
 function resolveTarget(env: HookEnvironment) {
-  const terminalId = env.PASEO_TERMINAL_ID;
-  const token = env.PASEO_ACTIVITY_TOKEN;
-  const url = env.PASEO_TERMINAL_ACTIVITY_URL;
+  const terminalId = env.FDE_TERMINAL_ID;
+  const token = env.FDE_ACTIVITY_TOKEN;
+  const url = env.FDE_TERMINAL_ACTIVITY_URL;
 
   if (!terminalId || !token || !url) return null;
   return { terminalId, token, url };

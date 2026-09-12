@@ -12,26 +12,26 @@ import log from "electron-log/main";
 import { createBrowserCaptureService } from "./features/browser-capture.js";
 import { BrowserKeyboard } from "./features/browser-keyboard/index.js";
 import {
-  clearPaseoBrowserProfile,
-  getLegacyPaseoBrowserProfileSession,
-  getPaseoBrowserProfileSession,
-  getPaseoBrowserProfileSessions,
-  listPaseoBrowserProfileGuests,
-  PASEO_BROWSER_PROFILE_PARTITION,
-  readLegacyPaseoBrowserIds,
+  clearFdeBrowserProfile,
+  getLegacyFdeBrowserProfileSession,
+  getFdeBrowserProfileSession,
+  getFdeBrowserProfileSessions,
+  listFdeBrowserProfileGuests,
+  FDE_BROWSER_PROFILE_PARTITION,
+  readLegacyFdeBrowserIds,
 } from "./features/browser-profile.js";
 import {
   BROWSER_NEW_TAB_REQUEST_EVENT,
   decideBrowserWindowOpenRequest,
-  getPaseoBrowserIdForWebContents,
-  getPaseoBrowserWebContentsForHostWindow,
-  getPaseoBrowserWebviewRegistry,
-  listRegisteredPaseoBrowserIds,
+  getFdeBrowserIdForWebContents,
+  getFdeBrowserWebContentsForHostWindow,
+  getFdeBrowserWebviewRegistry,
+  listRegisteredFdeBrowserIds,
   PendingBrowserWindowOpenRequests,
-  registerAttachedPaseoBrowser,
+  registerAttachedFdeBrowser,
   registerBrowserWebviewNavigationGuards,
-  setWorkspaceActivePaseoBrowserId,
-  unregisterPaseoBrowserFromHost,
+  setWorkspaceActiveFdeBrowserId,
+  unregisterFdeBrowserFromHost,
 } from "./features/browser-webviews/index.js";
 import { handleDesktopIpc } from "./ipc-security.js";
 import { buildStandardContextMenuItems } from "./window/window-manager.js";
@@ -85,7 +85,7 @@ function readActiveBrowserInput(
   };
 }
 
-export const browserKeyboard = new BrowserKeyboard(getPaseoBrowserWebviewRegistry());
+export const browserKeyboard = new BrowserKeyboard(getFdeBrowserWebviewRegistry());
 browserKeyboard.registerIpc();
 
 export function showBrowserWebviewContextMenu(
@@ -104,7 +104,7 @@ export function showBrowserWebviewContextMenu(
             click: () => {
               log.info("[browser-devtools] inspect-element.request", {
                 webContentsId: contents.id,
-                browserId: getPaseoBrowserIdForWebContents(contents),
+                browserId: getFdeBrowserIdForWebContents(contents),
                 x: params.x,
                 y: params.y,
                 isDevToolsOpened: contents.isDevToolsOpened(),
@@ -130,7 +130,7 @@ function getBrowserPopupWindowOptions(
     show: true,
     autoHideMenuBar: true,
     webPreferences: {
-      partition: PASEO_BROWSER_PROFILE_PARTITION,
+      partition: FDE_BROWSER_PROFILE_PARTITION,
       nodeIntegration: false,
       nodeIntegrationInSubFrames: false,
       nodeIntegrationInWorker: false,
@@ -169,7 +169,7 @@ export function installBrowserWindowOpenHandler(input: {
       };
     }
 
-    const sourceBrowserId = getPaseoBrowserIdForWebContents(sourceContents);
+    const sourceBrowserId = getFdeBrowserIdForWebContents(sourceContents);
     if (sourceBrowserId) {
       mainWindow.webContents.send(BROWSER_NEW_TAB_REQUEST_EVENT, {
         sourceBrowserId,
@@ -195,15 +195,15 @@ export function installBrowserWindowOpenHandler(input: {
   });
 }
 
-handleDesktopIpc("paseo:browser:register-attached", (event, rawInput: unknown) => {
+handleDesktopIpc("fde:browser:register-attached", (event, rawInput: unknown) => {
   const input = readAttachedBrowserInput(rawInput);
   if (!input) {
     throw new Error("Invalid attached browser registration");
   }
-  const registered = registerAttachedPaseoBrowser({
+  const registered = registerAttachedFdeBrowser({
     ...input,
     sender: event.sender,
-    profileSession: getPaseoBrowserProfileSession(session),
+    profileSession: getFdeBrowserProfileSession(session),
     findWebContents: (webContentsId) => webContents.fromId(webContentsId) ?? null,
   });
   if (!registered) {
@@ -217,7 +217,7 @@ handleDesktopIpc("paseo:browser:register-attached", (event, rawInput: unknown) =
   log.info("[browser-webview] registered", {
     browserId: input.browserId,
     webContentsId: input.webContentsId,
-    registeredBrowserIds: listRegisteredPaseoBrowserIds(),
+    registeredBrowserIds: listRegisteredFdeBrowserIds(),
   });
   for (const url of pendingBrowserWindowOpenRequests.take(input.webContentsId)) {
     event.sender.send(BROWSER_NEW_TAB_REQUEST_EVENT, {
@@ -227,53 +227,50 @@ handleDesktopIpc("paseo:browser:register-attached", (event, rawInput: unknown) =
   }
 });
 
-handleDesktopIpc(
-  "paseo:browser:unregister-workspace-browser",
-  async (event, browserId: unknown) => {
-    if (typeof browserId === "string" && browserId.trim().length > 0) {
-      const normalizedBrowserId = browserId.trim();
-      const hasOtherHost = getPaseoBrowserWebviewRegistry().hasBrowserInOtherHostWindow(
-        event.sender.id,
-        normalizedBrowserId,
-      );
-      unregisterPaseoBrowserFromHost(event.sender.id, normalizedBrowserId);
-      // COMPAT(browserProfile): added in v0.1.108; remove after 2027-01-15.
-      const legacyProfile = hasOtherHost
-        ? null
-        : getLegacyPaseoBrowserProfileSession(session, normalizedBrowserId);
-      if (legacyProfile) {
-        try {
-          await clearPaseoBrowserProfile({
-            profileSessions: [legacyProfile],
-            listGuests: () => [],
-            logReloadError: () => {},
-          });
-        } catch (error) {
-          log.warn("[browser-profile] failed to clear legacy tab profile", {
-            browserId: normalizedBrowserId,
-            error,
-          });
-        }
+handleDesktopIpc("fde:browser:unregister-workspace-browser", async (event, browserId: unknown) => {
+  if (typeof browserId === "string" && browserId.trim().length > 0) {
+    const normalizedBrowserId = browserId.trim();
+    const hasOtherHost = getFdeBrowserWebviewRegistry().hasBrowserInOtherHostWindow(
+      event.sender.id,
+      normalizedBrowserId,
+    );
+    unregisterFdeBrowserFromHost(event.sender.id, normalizedBrowserId);
+    // COMPAT(browserProfile): added in v0.1.108; remove after 2027-01-15.
+    const legacyProfile = hasOtherHost
+      ? null
+      : getLegacyFdeBrowserProfileSession(session, normalizedBrowserId);
+    if (legacyProfile) {
+      try {
+        await clearFdeBrowserProfile({
+          profileSessions: [legacyProfile],
+          listGuests: () => [],
+          logReloadError: () => {},
+        });
+      } catch (error) {
+        log.warn("[browser-profile] failed to clear legacy tab profile", {
+          browserId: normalizedBrowserId,
+          error,
+        });
       }
     }
-  },
-);
+  }
+});
 
-handleDesktopIpc("paseo:browser:set-workspace-active-browser", (event, rawInput: unknown) => {
+handleDesktopIpc("fde:browser:set-workspace-active-browser", (event, rawInput: unknown) => {
   const input = readActiveBrowserInput(rawInput);
   if (input) {
-    setWorkspaceActivePaseoBrowserId({
+    setWorkspaceActiveFdeBrowserId({
       ...input,
       hostWebContentsId: event.sender.id,
     });
   }
 });
 
-handleDesktopIpc("paseo:browser:focus", (event, browserId: unknown): boolean => {
+handleDesktopIpc("fde:browser:focus", (event, browserId: unknown): boolean => {
   if (typeof browserId !== "string" || browserId.trim().length === 0) {
     return false;
   }
-  const contents = getPaseoBrowserWebContentsForHostWindow(browserId, event.sender.id);
+  const contents = getFdeBrowserWebContentsForHostWindow(browserId, event.sender.id);
   if (!contents) {
     return false;
   }
@@ -281,24 +278,24 @@ handleDesktopIpc("paseo:browser:focus", (event, browserId: unknown): boolean => 
   return true;
 });
 
-handleDesktopIpc("paseo:browser:open-devtools", (event, browserId: unknown) => {
+handleDesktopIpc("fde:browser:open-devtools", (event, browserId: unknown) => {
   if (typeof browserId !== "string" || browserId.trim().length === 0) {
     const result = {
       ok: false,
       reason: "invalid-browser-id",
       browserId,
-      registeredBrowserIds: listRegisteredPaseoBrowserIds(),
+      registeredBrowserIds: listRegisteredFdeBrowserIds(),
     };
     log.warn("[browser-devtools] open-devtools.invalid", result);
     return result;
   }
-  const contents = getPaseoBrowserWebContentsForHostWindow(browserId, event.sender.id);
+  const contents = getFdeBrowserWebContentsForHostWindow(browserId, event.sender.id);
   if (!contents) {
     const result = {
       ok: false,
       reason: "browser-webcontents-not-found",
       browserId,
-      registeredBrowserIds: listRegisteredPaseoBrowserIds(),
+      registeredBrowserIds: listRegisteredFdeBrowserIds(),
     };
     log.warn("[browser-devtools] open-devtools.not-found", result);
     return result;
@@ -308,7 +305,7 @@ handleDesktopIpc("paseo:browser:open-devtools", (event, browserId: unknown) => {
     webContentsId: contents.id,
     isDestroyed: contents.isDestroyed(),
     isDevToolsOpened: contents.isDevToolsOpened(),
-    registeredBrowserIds: listRegisteredPaseoBrowserIds(),
+    registeredBrowserIds: listRegisteredFdeBrowserIds(),
   });
   contents.openDevTools({ mode: "detach" });
   const result = {
@@ -322,16 +319,16 @@ handleDesktopIpc("paseo:browser:open-devtools", (event, browserId: unknown) => {
   return result;
 });
 
-handleDesktopIpc("paseo:browser:clear-profile", async (_event, rawLegacyBrowserIds: unknown) => {
-  const profileSessions = getPaseoBrowserProfileSessions(
+handleDesktopIpc("fde:browser:clear-profile", async (_event, rawLegacyBrowserIds: unknown) => {
+  const profileSessions = getFdeBrowserProfileSessions(
     session,
-    readLegacyPaseoBrowserIds(rawLegacyBrowserIds),
+    readLegacyFdeBrowserIds(rawLegacyBrowserIds),
   );
   const profileSession = profileSessions[0];
-  await clearPaseoBrowserProfile({
+  await clearFdeBrowserProfile({
     profileSessions,
     listGuests: () =>
-      listPaseoBrowserProfileGuests({
+      listFdeBrowserProfileGuests({
         profileSession,
         webContents: webContents.getAllWebContents(),
       }),
@@ -345,7 +342,7 @@ handleDesktopIpc("paseo:browser:clear-profile", async (_event, rawLegacyBrowserI
 });
 
 const browserCapture = createBrowserCaptureService<Electron.NativeImage>({
-  findGuest: getPaseoBrowserWebContentsForHostWindow,
+  findGuest: getFdeBrowserWebContentsForHostWindow,
   decodeImage: (dataUrl) => nativeImage.createFromDataURL(dataUrl),
   clipboard: {
     write: ({ text, image }) =>
@@ -370,7 +367,7 @@ const browserCapture = createBrowserCaptureService<Electron.NativeImage>({
   warn: (event, details) => log.warn(`[browser-capture] ${event}`, details),
 });
 
-handleDesktopIpc("paseo:browser:capture-element", (event, browserId: unknown, rect: unknown) =>
+handleDesktopIpc("fde:browser:capture-element", (event, browserId: unknown, rect: unknown) =>
   browserCapture.capture({
     browserId,
     hostWebContentsId: event.sender.id,
@@ -378,6 +375,6 @@ handleDesktopIpc("paseo:browser:capture-element", (event, browserId: unknown, re
   }),
 );
 
-handleDesktopIpc("paseo:browser:copy-element", (_event, payload: unknown) =>
+handleDesktopIpc("fde:browser:copy-element", (_event, payload: unknown) =>
   browserCapture.copy(payload),
 );

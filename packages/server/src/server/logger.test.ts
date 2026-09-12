@@ -14,7 +14,7 @@ const repoRoot = path.resolve(fileURLToPath(new URL("../../../..", import.meta.u
 const loggerModuleUrl = new URL("./logger.ts", import.meta.url).href;
 
 async function runLoggerFixture(source: string): Promise<{ stdout: string; stderr: string }> {
-  const tempDir = await mkdtemp(path.join(tmpdir(), "paseo-logger-fixture-"));
+  const tempDir = await mkdtemp(path.join(tmpdir(), "fde-logger-fixture-"));
   const runnerPath = path.join(tempDir, "runner.mjs");
   await writeFile(
     runnerPath,
@@ -51,10 +51,10 @@ async function runLoggerFixture(source: string): Promise<{ stdout: string; stder
 }
 
 describe("resolveLogConfig", () => {
-  const paseoHome = "/tmp/paseo-logger-tests";
+  const fdeHome = "/tmp/fde-logger-tests";
 
   it("defaults to stdout JSON without file logging", () => {
-    const result = resolveLogConfig(undefined, { paseoHome });
+    const result = resolveLogConfig(undefined, { fdeHome });
 
     expect(result).toEqual({
       level: "info",
@@ -66,7 +66,7 @@ describe("resolveLogConfig", () => {
   });
 
   it("keeps legacy level and format as stdout configuration", () => {
-    const result = resolveLogConfig({ level: "warn", format: "pretty" }, { paseoHome });
+    const result = resolveLogConfig({ level: "warn", format: "pretty" }, { fdeHome });
 
     expect(result).toEqual({
       level: "warn",
@@ -95,7 +95,7 @@ describe("resolveLogConfig", () => {
       },
     };
 
-    expect(resolveLogConfig(config, { paseoHome })).toEqual({
+    expect(resolveLogConfig(config, { fdeHome })).toEqual({
       level: "debug",
       console: {
         level: "warn",
@@ -103,7 +103,7 @@ describe("resolveLogConfig", () => {
       },
       file: {
         level: "debug",
-        path: path.resolve(paseoHome, "logs", "programmatic.log"),
+        path: path.resolve(fdeHome, "logs", "programmatic.log"),
       },
     });
   });
@@ -120,7 +120,7 @@ describe("resolveLogConfig", () => {
       },
     };
 
-    expect(resolveLogConfig(config, { paseoHome })).toEqual({
+    expect(resolveLogConfig(config, { fdeHome })).toEqual({
       level: "info",
       console: {
         level: "warn",
@@ -128,7 +128,7 @@ describe("resolveLogConfig", () => {
       },
       file: {
         level: "info",
-        path: path.resolve(paseoHome, "daemon.log"),
+        path: path.resolve(fdeHome, "daemon.log"),
       },
     });
   });
@@ -136,29 +136,29 @@ describe("resolveLogConfig", () => {
 
 describe("loadConfig logger config", () => {
   it("applies log format env at the config boundary", async () => {
-    const root = await mkdtemp(path.join(tmpdir(), "paseo-logger-config-"));
-    const paseoHome = path.join(root, ".paseo");
-    await mkdir(paseoHome, { recursive: true });
+    const root = await mkdtemp(path.join(tmpdir(), "fde-logger-config-"));
+    const fdeHome = path.join(root, ".fde");
+    await mkdir(fdeHome, { recursive: true });
     await writeFile(
-      path.join(paseoHome, "config.json"),
+      path.join(fdeHome, "config.json"),
       JSON.stringify({ version: 1, log: { format: "json" } }),
     );
 
-    const config = loadConfig(paseoHome, {
-      env: { PASEO_LOG_FORMAT: "pretty" },
+    const config = loadConfig(fdeHome, {
+      env: { FDE_LOG_FORMAT: "pretty" },
     });
 
     expect(config.log?.format).toBe("pretty");
-    expect(resolveLogConfig(config, { paseoHome }).console.format).toBe("pretty");
+    expect(resolveLogConfig(config, { fdeHome }).console.format).toBe("pretty");
   });
 });
 
 describe("createRootLogger", () => {
   it("includes the daemon version in child logger entries", async () => {
-    const paseoHome = await mkdtemp(path.join(tmpdir(), "paseo-logger-version-"));
+    const fdeHome = await mkdtemp(path.join(tmpdir(), "fde-logger-version-"));
 
     const { stdout } = await runLoggerFixture(`
-      const logger = createRootLogger(undefined, { paseoHome: ${JSON.stringify(paseoHome)} });
+      const logger = createRootLogger(undefined, { fdeHome: ${JSON.stringify(fdeHome)} });
       logger.child({ name: "fixture" }).info("versioned child logger");
       logger.flush();
     `);
@@ -173,29 +173,29 @@ describe("createRootLogger", () => {
   });
 
   it("writes JSON to stdout by default and does not initialize file logging", async () => {
-    const paseoHome = await mkdtemp(path.join(tmpdir(), "paseo-logger-default-"));
-    const missingLogDir = path.join(paseoHome, "logs");
+    const fdeHome = await mkdtemp(path.join(tmpdir(), "fde-logger-default-"));
+    const missingLogDir = path.join(fdeHome, "logs");
 
     const { stdout } = await runLoggerFixture(`
-      const logger = createRootLogger(undefined, { paseoHome: ${JSON.stringify(paseoHome)} });
+      const logger = createRootLogger(undefined, { fdeHome: ${JSON.stringify(fdeHome)} });
       logger.info({ proof: "stdout-default" }, "default logger");
       logger.flush();
     `);
 
     expect(stdout).toContain('"proof":"stdout-default"');
     expect(stdout).toContain('"msg":"default logger"');
-    expect(existsSync(path.join(paseoHome, "daemon.log"))).toBe(false);
+    expect(existsSync(path.join(fdeHome, "daemon.log"))).toBe(false);
     expect(existsSync(missingLogDir)).toBe(false);
   });
 
   it("writes to an explicit file target without creating rotation files", async () => {
-    const paseoHome = await mkdtemp(path.join(tmpdir(), "paseo-logger-file-"));
-    const logPath = path.join(paseoHome, "logs", "programmatic.log");
+    const fdeHome = await mkdtemp(path.join(tmpdir(), "fde-logger-file-"));
+    const logPath = path.join(fdeHome, "logs", "programmatic.log");
 
     await runLoggerFixture(`
       const logger = createRootLogger(
         { log: { file: { path: ${JSON.stringify(logPath)} } } },
-        { paseoHome: ${JSON.stringify(paseoHome)} },
+        { fdeHome: ${JSON.stringify(fdeHome)} },
       );
       logger.info({ proof: "file-explicit" }, "explicit file logger");
       logger.flush();
@@ -210,13 +210,13 @@ describe("createRootLogger", () => {
   });
 
   it("can disable file output for supervised workers", async () => {
-    const paseoHome = await mkdtemp(path.join(tmpdir(), "paseo-logger-no-worker-file-"));
-    const logPath = path.join(paseoHome, "daemon.log");
+    const fdeHome = await mkdtemp(path.join(tmpdir(), "fde-logger-no-worker-file-"));
+    const logPath = path.join(fdeHome, "daemon.log");
 
     const { stdout } = await runLoggerFixture(`
       const logger = createRootLogger(
         { log: { file: { path: ${JSON.stringify(logPath)} } } },
-        { paseoHome: ${JSON.stringify(paseoHome)}, file: false },
+        { fdeHome: ${JSON.stringify(fdeHome)}, file: false },
       );
       logger.info({ proof: "stdout-only" }, "worker logger");
       logger.flush();
@@ -228,11 +228,11 @@ describe("createRootLogger", () => {
   });
 
   it("keeps pretty output available as a format choice", async () => {
-    const paseoHome = await mkdtemp(path.join(tmpdir(), "paseo-logger-pretty-"));
+    const fdeHome = await mkdtemp(path.join(tmpdir(), "fde-logger-pretty-"));
 
     const { stdout } = await runLoggerFixture(`
       const logger = createRootLogger({ level: "info", format: "pretty" }, {
-        paseoHome: ${JSON.stringify(paseoHome)},
+        fdeHome: ${JSON.stringify(fdeHome)},
       });
       logger.info("pretty logger");
       logger.flush();

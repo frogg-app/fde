@@ -1,31 +1,28 @@
 import { join } from "node:path";
 
-import { getPaseoWorktreesRoot, isPaseoOwnedWorktreeCwd } from "../../utils/worktree.js";
+import { getFdeWorktreesRoot, isFdeOwnedWorktreeCwd } from "../../utils/worktree.js";
 import {
   archiveByScope,
   resolveWorkspaceIdAtPath,
   type ArchiveDependencies,
   type ArchiveScope,
 } from "../workspace-archive-service.js";
-import type {
-  CreatePaseoWorktreeInput,
-  CreatePaseoWorktreeResult,
-} from "../paseo-worktree-service.js";
+import type { CreateFdeWorktreeInput, CreateFdeWorktreeResult } from "../fde-worktree-service.js";
 import { toWorktreeWireError, type WorktreeWireError } from "../worktree-errors.js";
 import type { WorkspaceGitService, WorkspaceGitWorktreeInfo } from "../workspace-git-service.js";
 
-export interface ListPaseoWorktreesCommandDependencies {
+export interface ListFdeWorktreesCommandDependencies {
   workspaceGitService: Pick<WorkspaceGitService, "listWorktrees">;
 }
 
-export interface ListPaseoWorktreesCommandInput {
+export interface ListFdeWorktreesCommandInput {
   cwd: string;
   reason?: string;
 }
 
-export async function listPaseoWorktreesCommand(
-  dependencies: ListPaseoWorktreesCommandDependencies,
-  input: ListPaseoWorktreesCommandInput,
+export async function listFdeWorktreesCommand(
+  dependencies: ListFdeWorktreesCommandDependencies,
+  input: ListFdeWorktreesCommandInput,
 ): Promise<WorkspaceGitWorktreeInfo[]> {
   if (input.reason) {
     return dependencies.workspaceGitService.listWorktrees(input.cwd, { reason: input.reason });
@@ -33,27 +30,24 @@ export async function listPaseoWorktreesCommand(
   return dependencies.workspaceGitService.listWorktrees(input.cwd);
 }
 
-type CreatePaseoWorktreeWorkflow<Result extends CreatePaseoWorktreeResult> = (
-  input: CreatePaseoWorktreeInput,
+type CreateFdeWorktreeWorkflow<Result extends CreateFdeWorktreeResult> = (
+  input: CreateFdeWorktreeInput,
 ) => Promise<Result>;
 
-export interface CreatePaseoWorktreeCommandDependencies<
-  Result extends CreatePaseoWorktreeResult = CreatePaseoWorktreeResult,
+export interface CreateFdeWorktreeCommandDependencies<
+  Result extends CreateFdeWorktreeResult = CreateFdeWorktreeResult,
 > {
-  paseoHome?: string;
+  fdeHome?: string;
   worktreesRoot?: string;
-  createPaseoWorktreeWorkflow?: CreatePaseoWorktreeWorkflow<Result>;
+  createFdeWorktreeWorkflow?: CreateFdeWorktreeWorkflow<Result>;
 }
 
-export type CreatePaseoWorktreeCommandInput = Omit<
-  CreatePaseoWorktreeInput,
-  "paseoHome" | "runSetup"
-> & {
-  paseoHome?: string;
+export type CreateFdeWorktreeCommandInput = Omit<CreateFdeWorktreeInput, "fdeHome" | "runSetup"> & {
+  fdeHome?: string;
   worktreesRoot?: string;
 };
 
-export type CreatePaseoWorktreeCommandResult<Result extends CreatePaseoWorktreeResult> =
+export type CreateFdeWorktreeCommandResult<Result extends CreateFdeWorktreeResult> =
   | {
       ok: true;
       createdWorktree: Result;
@@ -64,19 +58,19 @@ export type CreatePaseoWorktreeCommandResult<Result extends CreatePaseoWorktreeR
       cause: unknown;
     };
 
-export async function createPaseoWorktreeCommand<Result extends CreatePaseoWorktreeResult>(
-  dependencies: CreatePaseoWorktreeCommandDependencies<Result>,
-  input: CreatePaseoWorktreeCommandInput,
-): Promise<CreatePaseoWorktreeCommandResult<Result>> {
+export async function createFdeWorktreeCommand<Result extends CreateFdeWorktreeResult>(
+  dependencies: CreateFdeWorktreeCommandDependencies<Result>,
+  input: CreateFdeWorktreeCommandInput,
+): Promise<CreateFdeWorktreeCommandResult<Result>> {
   try {
-    if (!dependencies.createPaseoWorktreeWorkflow) {
+    if (!dependencies.createFdeWorktreeWorkflow) {
       throw new Error("FDE worktree service is not configured");
     }
 
-    const createdWorktree = await dependencies.createPaseoWorktreeWorkflow({
+    const createdWorktree = await dependencies.createFdeWorktreeWorkflow({
       ...input,
       runSetup: false,
-      paseoHome: input.paseoHome ?? dependencies.paseoHome,
+      fdeHome: input.fdeHome ?? dependencies.fdeHome,
       worktreesRoot: input.worktreesRoot ?? dependencies.worktreesRoot,
     });
     return { ok: true, createdWorktree };
@@ -124,9 +118,9 @@ export async function archiveCommand(
 ): Promise<ArchiveCommandResult> {
   const targetPath = await resolveArchiveTarget(dependencies, input);
   const scope = input.scope ?? "workspace";
-  const ownership = await isPaseoOwnedWorktreeCwd(targetPath, {
-    paseoHome: dependencies.paseoHome,
-    worktreesRoot: dependencies.paseoWorktreesBaseRoot,
+  const ownership = await isFdeOwnedWorktreeCwd(targetPath, {
+    fdeHome: dependencies.fdeHome,
+    worktreesRoot: dependencies.fdeWorktreesBaseRoot,
   });
 
   if (scope === "worktree") {
@@ -208,10 +202,10 @@ async function resolveWorktreeSlugPath(
   repoRoot: string,
   worktreeSlug: string,
 ): Promise<string> {
-  const worktreesRoot = await getPaseoWorktreesRoot(
+  const worktreesRoot = await getFdeWorktreesRoot(
     repoRoot,
-    dependencies.paseoHome,
-    dependencies.paseoWorktreesBaseRoot,
+    dependencies.fdeHome,
+    dependencies.fdeWorktreesBaseRoot,
   );
   return join(worktreesRoot, worktreeSlug);
 }

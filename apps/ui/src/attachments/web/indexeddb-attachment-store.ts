@@ -19,7 +19,7 @@ interface StoredBlobRecord {
   fileName: string | null;
 }
 
-const DB_NAME = storageKey(brand, "paseo-attachment-bytes");
+const DB_NAME = storageKey(brand, "fde-attachment-bytes");
 const STORE_NAME = "attachments";
 const DB_VERSION = 1;
 

@@ -2,7 +2,7 @@ import { createRequire } from "node:module";
 import type { Command } from "commander";
 import { getExecutionServiceStatus } from "@fde/server";
 import type { CommandOptions, OutputSchema, SingleResult } from "../../output/index.js";
-import { resolveLocalPaseoHome } from "./local-daemon.js";
+import { resolveLocalFdeHome } from "./local-daemon.js";
 
 interface ExecutionStatusResult {
   status: "running" | "stopped";
@@ -28,12 +28,12 @@ const schema: OutputSchema<ExecutionStatusResult> = {
 };
 
 export interface ExecutionStatusDependencies {
-  resolveHome: typeof resolveLocalPaseoHome;
+  resolveHome: typeof resolveLocalFdeHome;
   getStatus: typeof getExecutionServiceStatus;
 }
 
 const defaultDependencies: ExecutionStatusDependencies = {
-  resolveHome: resolveLocalPaseoHome,
+  resolveHome: resolveLocalFdeHome,
   getStatus: getExecutionServiceStatus,
 };
 

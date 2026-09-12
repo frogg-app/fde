@@ -1,7 +1,7 @@
-typeset -g PASEO_SHELL_INTEGRATION_DIR="${${(%):-%N}:A:h}"
+typeset -g FDE_SHELL_INTEGRATION_DIR="${${(%):-%N}:A:h}"
 
-if [[ -n "${PASEO_ZSH_ZDOTDIR-}" ]]; then
-  export ZDOTDIR="${PASEO_ZSH_ZDOTDIR}"
+if [[ -n "${FDE_ZSH_ZDOTDIR-}" ]]; then
+  export ZDOTDIR="${FDE_ZSH_ZDOTDIR}"
 else
   unset ZDOTDIR
 fi
@@ -14,4 +14,4 @@ elif [[ -f "${HOME}/.zshenv" ]]; then
   source "${HOME}/.zshenv"
 fi
 
-source "${PASEO_SHELL_INTEGRATION_DIR}/paseo-integration.zsh"
+source "${FDE_SHELL_INTEGRATION_DIR}/fde-integration.zsh"

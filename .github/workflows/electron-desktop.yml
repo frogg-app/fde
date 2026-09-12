@@ -1,4 +1,4 @@
-name: Electron desktop comparison
+name: Electron desktop
 on:
   workflow_dispatch:
   pull_request:
@@ -48,7 +48,7 @@ jobs:
       - name: Smoke Electron startup and relaunch
         if: runner.os == 'Linux'
         run: |
-          binary=$(node -p "require('./.generated/branding/brand.json').id + '-electron'")
+          binary=$(node -p "require('./.generated/branding/brand.json').id")
           FDE_ELECTRON_SMOKE_EXECUTABLE="$PWD/apps/desktop-electron/release/linux-unpacked/$binary" \
             xvfb-run -a npm run test:smoke --workspace=@fde/desktop-electron
         env:

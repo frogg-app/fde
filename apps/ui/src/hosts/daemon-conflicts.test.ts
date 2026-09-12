@@ -29,9 +29,9 @@ function profile(serverId: string, connections: HostConnection[]): HostProfile {
 describe("connectionNetworkHost", () => {
   test("extracts the machine from network connections", () => {
     expect(connectionNetworkHost(tcp("192.168.1.17:6789"))).toBe("192.168.1.17");
-    expect(connectionNetworkHost(tcp("[2001:db8::1]:6767"))).toBe("2001:db8::1");
+    expect(connectionNetworkHost(tcp("[2001:db8::1]:9999"))).toBe("2001:db8::1");
     expect(
-      connectionNetworkHost({ id: "s", type: "remoteSsh", host: "Devbox", daemonPort: 6767 }),
+      connectionNetworkHost({ id: "s", type: "remoteSsh", host: "Devbox", daemonPort: 9999 }),
     ).toBe("devbox");
   });
 
@@ -132,8 +132,8 @@ describe("describeConnectionEndpoint", () => {
   test("renders each connection type", () => {
     expect(describeConnectionEndpoint(tcp("192.168.1.17:6789"))).toBe("192.168.1.17:6789");
     expect(
-      describeConnectionEndpoint({ id: "s", type: "remoteSsh", host: "box", daemonPort: 6767 }),
-    ).toBe("box:6767");
+      describeConnectionEndpoint({ id: "s", type: "remoteSsh", host: "box", daemonPort: 9999 }),
+    ).toBe("box:9999");
     expect(describeConnectionEndpoint({ id: "s", type: "remoteSsh", host: "box" })).toBe("box");
     expect(
       describeConnectionEndpoint({ id: "p", type: "directPipe", path: "\\\\.\\pipe\\x" }),

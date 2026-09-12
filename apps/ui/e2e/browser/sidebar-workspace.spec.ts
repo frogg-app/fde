@@ -57,14 +57,14 @@ async function openWorkspaceHoverCard(page: import("@playwright/test").Page, wor
   return hoverCard;
 }
 
-interface PaseoOwnedWorktree {
+interface FdeOwnedWorktree {
   projectName: string;
   workspaceId: string;
   worktreeSlug: string;
 }
 
-async function withPaseoOwnedWorktree(
-  run: (workspace: PaseoOwnedWorktree) => Promise<void>,
+async function withFdeOwnedWorktree(
+  run: (workspace: FdeOwnedWorktree) => Promise<void>,
 ): Promise<void> {
   const project = await seedWorkspace({ repoPrefix: "sidebar-hover-owned-worktree-" });
   const worktreeSlug = "hover-card-owned-worktree";
@@ -79,7 +79,7 @@ async function withPaseoOwnedWorktree(
       },
     });
     if (!created.workspace) {
-      throw new Error(created.error ?? "Failed to create Paseo-owned worktree");
+      throw new Error(created.error ?? "Failed to create Fde-owned worktree");
     }
     expect(path.basename(created.workspace.workspaceDirectory)).toBe(worktreeSlug);
 
@@ -187,8 +187,8 @@ test.describe("Sidebar workspace list", () => {
     }
   });
 
-  test("Paseo-owned worktree hover card shows the worktree directory name", async ({ page }) => {
-    await withPaseoOwnedWorktree(async ({ projectName, workspaceId, worktreeSlug }) => {
+  test("Fde-owned worktree hover card shows the worktree directory name", async ({ page }) => {
+    await withFdeOwnedWorktree(async ({ projectName, workspaceId, worktreeSlug }) => {
       await gotoAppShell(page);
       await waitForSidebarProject(page, projectName);
       await openWorkspaceHoverCard(page, workspaceId);

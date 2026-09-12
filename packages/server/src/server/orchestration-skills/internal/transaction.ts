@@ -54,17 +54,17 @@ interface CapturedDirectory {
 }
 
 const MANIFEST_OWNER = brand.legacyFde
-  ? "paseo-skills-transaction"
+  ? "fde-skills-transaction"
   : `${brand.applicationId}-skills-transaction`;
 const MANIFEST_FILENAME = "transaction.json";
 const TRANSACTION_PREFIX = brand.legacyFde
-  ? ".paseo-skills-transaction-"
+  ? ".fde-skills-transaction-"
   : `.${brand.id}-skills-transaction-`;
 const RECOVERED_PREFIX = brand.legacyFde
-  ? ".paseo-skills-recovered-"
+  ? ".fde-skills-recovered-"
   : `.${brand.id}-skills-recovered-`;
 const BACKUP_DIRNAME = "backup";
-const MANAGED_FILES_MANIFEST = ".paseo-managed-files.json";
+const MANAGED_FILES_MANIFEST = ".fde-managed-files.json";
 
 async function isDirectory(target: string): Promise<boolean> {
   const info = await stat(target).catch(() => null);

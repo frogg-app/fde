@@ -48,9 +48,9 @@ RUN set -eux; \
 FROM debian:bookworm-slim
 
 ENV HOME=/home/fde \
-    PASEO_WEB_UI_ENABLED=true \
-    PASEO_LOG_FORMAT=json \
-    PASEO_LOG_LEVEL=info \
+    FDE_WEB_UI_ENABLED=true \
+    FDE_LOG_FORMAT=json \
+    FDE_LOG_LEVEL=info \
     CLAUDE_CONFIG_DIR=/home/fde/.claude \
     CODEX_HOME=/home/fde/.codex \
     XDG_CONFIG_HOME=/home/fde/.config \
@@ -100,6 +100,6 @@ WORKDIR /workspace
 
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-  CMD bash -c 'source /opt/fde/brand.sh; port="${PASEO_LISTEN:-$BRAND_PORT}"; curl -fsS "http://127.0.0.1:${port##*:}/api/health" >/dev/null' || exit 1
+  CMD bash -c 'source /opt/fde/brand.sh; port="${FDE_LISTEN:-$BRAND_PORT}"; curl -fsS "http://127.0.0.1:${port##*:}/api/health" >/dev/null' || exit 1
 
 ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/fde-docker-entrypoint"]

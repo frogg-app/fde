@@ -32,7 +32,7 @@ interface CleanupTask {
 }
 
 const cleanupTasks: CleanupTask[] = [];
-const APP_SETTINGS_KEY = "@paseo:app-settings";
+const APP_SETTINGS_KEY = "@fde:app-settings";
 
 function changesTree(page: Page) {
   return page.getByTestId("changes-file-tree").filter({ visible: true });
@@ -85,7 +85,7 @@ async function failNextDiscardRequest(page: Page): Promise<void> {
   });
 }
 
-const CHANGES_PREFERENCES_KEY = "@paseo:changes-preferences";
+const CHANGES_PREFERENCES_KEY = "@fde:changes-preferences";
 
 const BEFORE = `import { useLayoutEffect, useMemo, useRef, useState } from "react";
 
@@ -1366,7 +1366,7 @@ async function holdBrowserFontLoads(page: Page): Promise<void> {
       },
     });
     Object.assign(window, {
-      __releasePaseoDiffFontLoads() {
+      __releaseFdeDiffFontLoads() {
         for (const release of pending.splice(0)) release();
       },
     });
@@ -1376,8 +1376,8 @@ async function holdBrowserFontLoads(page: Page): Promise<void> {
 async function releaseBrowserFontLoads(page: Page): Promise<void> {
   await page.evaluate(() => {
     (
-      window as typeof window & { __releasePaseoDiffFontLoads: () => void }
-    ).__releasePaseoDiffFontLoads();
+      window as typeof window & { __releaseFdeDiffFontLoads: () => void }
+    ).__releaseFdeDiffFontLoads();
   });
 }
 

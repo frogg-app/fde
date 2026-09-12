@@ -16,7 +16,7 @@ const FILE_PATH =
 const FILE_NAME = "needle-layout-stability-command-center.tsx";
 const FILE_DIRECTORY = "apps/ui/src/command-center/features/workspace-file-search/layout-stability";
 
-function paseoSizedFiles(): Array<{ path: string; content: string }> {
+function fdeSizedFiles(): Array<{ path: string; content: string }> {
   const files = Array.from({ length: 120 }, (_, index) => ({
     path: `apps/ui/src/features/feature-${String(index).padStart(3, "0")}/index.ts`,
     content: `export const feature${index} = ${index};\n`,
@@ -47,8 +47,8 @@ test("workspace file search stays geometrically stable through delayed loading a
   test.setTimeout(120_000);
   const seeded = await seedWorkspace({
     repoPrefix: "command-center-file-search-",
-    title: "Paseo-shaped file search",
-    repo: { files: paseoSizedFiles() },
+    title: "Fde-shaped file search",
+    repo: { files: fdeSizedFiles() },
   });
 
   try {

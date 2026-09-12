@@ -249,7 +249,7 @@ function filterEntrypoint(source: string, target: PluginBuildTarget): string {
 
 function createRuntimeBoundaryPlugin(target: PluginBuildTarget): Plugin {
   return {
-    name: `paseo-plugin-${target}-runtime-boundary`,
+    name: `fde-plugin-${target}-runtime-boundary`,
     setup(buildContext) {
       buildContext.onResolve({ filter: /\.(?:client|server)(?:\.[cm]?[jt]sx?)?$/ }, (args) => {
         const importedTarget = moduleTarget(args.path);
@@ -296,14 +296,14 @@ function createUnusedPlatformModulePlugin(target: PluginBuildTarget): Plugin {
         ])
       : /^node:/;
   return {
-    name: `paseo-plugin-${target}-unused-platform-modules`,
+    name: `fde-plugin-${target}-unused-platform-modules`,
     setup(buildContext) {
       buildContext.onResolve({ filter }, (args) => ({
         path: args.path,
-        namespace: "paseo-unused-platform-module",
+        namespace: "fde-unused-platform-module",
         sideEffects: false,
       }));
-      buildContext.onLoad({ filter: /.*/, namespace: "paseo-unused-platform-module" }, () => ({
+      buildContext.onLoad({ filter: /.*/, namespace: "fde-unused-platform-module" }, () => ({
         contents: "module.exports = {};",
         loader: "js",
       }));

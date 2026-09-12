@@ -1,4 +1,4 @@
-import type { CreatePaseoWorktreeInput } from "@fde/client/internal/daemon-client";
+import type { CreateFdeWorktreeInput } from "@fde/client/internal/daemon-client";
 import type { ForgeSearchItem } from "@fde/protocol/messages";
 import type { ComboboxOptionModel } from "@/components/ui/combobox-options";
 import { getForgePresentation } from "@/git/forge";
@@ -27,7 +27,7 @@ export type PickerItem =
     };
 
 export type PickerCheckoutRequest = Pick<
-  CreatePaseoWorktreeInput,
+  CreateFdeWorktreeInput,
   "action" | "refName" | "checkoutSource" | "githubPrNumber"
 >;
 

@@ -32,9 +32,7 @@ function scratch() {
 }
 
 test("homes, commands, artifacts and services use the independent identity", () => {
-  expect(
-    resolveFdeHomePath({ FDE_HOME: "/foreign", PASEO_HOME: "/legacy", ACME_HOME: "/own" }),
-  ).toBe("/own");
+  expect(resolveFdeHomePath({ FDE_HOME: "/foreign", ACME_HOME: "/own" })).toBe("/own");
   expect(resolveInstallDir({ FDE_INSTALL_DIR: "/foreign", ACME_INSTALL_DIR: "/own" })).toBe("/own");
   expect(bundleAssetName("1.2.3", { platform: "linux", arch: "x64" })).toBe(
     "acme-daemon-1.2.3-linux-x64.tar.gz",

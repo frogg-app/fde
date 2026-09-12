@@ -39,8 +39,8 @@ export async function connectDaemonWebAppOnlyThroughRelay(
     updatedAt: now,
   };
 
-  await page.route(/:(9999|6767)\b/, (route) => route.abort());
-  await page.routeWebSocket(/:(9999|6767)\b/, async (socket) => {
+  await page.route(/:(9999|9999)\b/, (route) => route.abort());
+  await page.routeWebSocket(/:(9999|9999)\b/, async (socket) => {
     await socket.close({ code: 1008, reason: "Blocked developer daemon during relay E2E" });
   });
   await page.route("**/*", async (route) => {
@@ -52,13 +52,13 @@ export async function connectDaemonWebAppOnlyThroughRelay(
     const html = await response.text();
     await route.fulfill({
       response,
-      body: html.replace(/<script>window\.__PASEO_INITIAL_DAEMON_CONNECTION__=.*?<\/script>/, ""),
+      body: html.replace(/<script>window\.__FDE_INITIAL_DAEMON_CONNECTION__=.*?<\/script>/, ""),
     });
   });
   await page.addInitScript(
     ({ storedHost, preferences }) => {
-      localStorage.setItem("@paseo:daemon-registry", JSON.stringify([storedHost]));
-      localStorage.setItem("@paseo:create-agent-preferences", JSON.stringify(preferences));
+      localStorage.setItem("@fde:daemon-registry", JSON.stringify([storedHost]));
+      localStorage.setItem("@fde:create-agent-preferences", JSON.stringify(preferences));
     },
     { storedHost: host, preferences: buildCreateAgentPreferences() },
   );

@@ -80,7 +80,7 @@ export function createNodeEntrypointInvocation(input: {
 }): NodeEntrypointInvocation {
   const env: NodeJS.ProcessEnv = {
     ...input.baseEnv,
-    PASEO_NODE_ENV: app.isPackaged ? "production" : "development",
+    FDE_NODE_ENV: app.isPackaged ? "production" : "development",
   };
   delete env.ELECTRON_RUN_AS_NODE;
   return {

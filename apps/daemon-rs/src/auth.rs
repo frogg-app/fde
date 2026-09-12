@@ -102,13 +102,13 @@ fn hex_decode(value: &str) -> Result<Vec<u8>, ()> {
 }
 
 /// `extractWsBearerProtocol` + `extractWsBearerToken`: the token rides in
-/// `Sec-WebSocket-Protocol` as `paseo.bearer.<token>`.
+/// `Sec-WebSocket-Protocol` as `fde.bearer.<token>`.
 pub fn extract_ws_bearer_token(header: Option<&str>) -> Option<String> {
     let header = header?;
     for protocol in header.split(',') {
         let trimmed = protocol.trim();
         let mut segments = trimmed.split('.');
-        if segments.next() == Some("paseo") && segments.next() == Some("bearer") {
+        if segments.next() == Some("fde") && segments.next() == Some("bearer") {
             let rest: Vec<&str> = segments.collect();
             if !rest.is_empty() {
                 // The token may itself contain dots; rejoin them.
@@ -186,15 +186,15 @@ mod tests {
     #[test]
     fn extracts_a_ws_bearer_token() {
         assert_eq!(
-            extract_ws_bearer_token(Some("paseo.bearer.abc123")).as_deref(),
+            extract_ws_bearer_token(Some("fde.bearer.abc123")).as_deref(),
             Some("abc123")
         );
         // Tokens containing dots (e.g. JWTs) must survive rejoining.
         assert_eq!(
-            extract_ws_bearer_token(Some("other, paseo.bearer.a.b.c")).as_deref(),
+            extract_ws_bearer_token(Some("other, fde.bearer.a.b.c")).as_deref(),
             Some("a.b.c")
         );
-        assert_eq!(extract_ws_bearer_token(Some("paseo.bearer")), None);
+        assert_eq!(extract_ws_bearer_token(Some("fde.bearer")), None);
         assert_eq!(extract_ws_bearer_token(None), None);
     }
 

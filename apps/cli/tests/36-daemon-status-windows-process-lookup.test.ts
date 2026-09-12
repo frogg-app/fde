@@ -15,7 +15,7 @@ interface CommandResult {
   stderr: string;
 }
 
-function runLocalPaseo(args: string[], env: NodeJS.ProcessEnv): Promise<CommandResult> {
+function runLocalFde(args: string[], env: NodeJS.ProcessEnv): Promise<CommandResult> {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, [CLI_ENTRY, ...args], {
       env: { ...process.env, ...env },
@@ -45,27 +45,24 @@ if (process.platform !== "win32") {
 
 console.log("=== Windows Daemon Status Process Lookup ===\n");
 
-const paseoHome = await mkdtemp(join(tmpdir(), "paseo-windows-status-home-"));
+const fdeHome = await mkdtemp(join(tmpdir(), "fde-windows-status-home-"));
 const port = await getAvailablePort();
 const env = {
-  PASEO_HOME: paseoHome,
-  PASEO_LOCAL_SPEECH_AUTO_DOWNLOAD: "0",
-  PASEO_DICTATION_ENABLED: "0",
-  PASEO_VOICE_MODE_ENABLED: "0",
+  FDE_HOME: fdeHome,
+  FDE_LOCAL_SPEECH_AUTO_DOWNLOAD: "0",
+  FDE_DICTATION_ENABLED: "0",
+  FDE_VOICE_MODE_ENABLED: "0",
 };
 
 try {
-  const start = await runLocalPaseo(["daemon", "restart", "--port", String(port)], env);
+  const start = await runLocalFde(["daemon", "restart", "--port", String(port)], env);
   assert.strictEqual(
     start.exitCode,
     0,
     `daemon restart should succeed:\nstdout:\n${start.stdout}\nstderr:\n${start.stderr}`,
   );
 
-  const statusResult = await runLocalPaseo(
-    ["daemon", "status", "--home", paseoHome, "--json"],
-    env,
-  );
+  const statusResult = await runLocalFde(["daemon", "status", "--home", fdeHome, "--json"], env);
   assert.strictEqual(
     statusResult.exitCode,
     0,
@@ -90,8 +87,8 @@ try {
   );
   console.log("✓ daemon status resolves daemonNode on Windows\n");
 } finally {
-  await runLocalPaseo(["daemon", "stop", "--home", paseoHome, "--force"], env);
-  await rm(paseoHome, { recursive: true, force: true });
+  await runLocalFde(["daemon", "stop", "--home", fdeHome, "--force"], env);
+  await rm(fdeHome, { recursive: true, force: true });
 }
 
 console.log("=== Windows daemon status process lookup passed ===");

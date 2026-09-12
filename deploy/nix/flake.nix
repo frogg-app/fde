@@ -1,5 +1,5 @@
 {
-  description = "Paseo - self-hosted daemon for AI coding agents";
+  description = "Fde - self-hosted daemon for AI coding agents";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -25,21 +25,21 @@
         system:
         let
           pkgs = pkgsFor system;
-          paseo = pkgs.callPackage ./package.nix { };
+          fde = pkgs.callPackage ./package.nix { };
         in
         {
-          default = paseo;
-          paseo = paseo;
-          fde = paseo;
+          default = fde;
+          fde = fde;
+          fde = fde;
         }
       );
 
-      nixosModules.default = self.nixosModules.paseo;
-      nixosModules.paseo =
+      nixosModules.default = self.nixosModules.fde;
+      nixosModules.fde =
         { pkgs, lib, ... }:
         {
           imports = [ ./module.nix ./branded-module.nix ];
-          services.paseo.package = lib.mkDefault self.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          services.fde.package = lib.mkDefault self.packages.${pkgs.stdenv.hostPlatform.system}.default;
         };
 
       devShells = forAllSystems (

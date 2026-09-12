@@ -4,9 +4,9 @@ import type { BrowserToolsBroker, BrowserToolsExecuteInput } from "./broker.js";
 import type { BrowserToolsResponsePayload } from "./errors.js";
 import { registerBrowserTools, type RegisterBrowserToolsOptions } from "./tools.js";
 import type {
-  PaseoToolConfig,
-  PaseoToolExecutionContext,
-  PaseoToolResult,
+  FdeToolConfig,
+  FdeToolExecutionContext,
+  FdeToolResult,
 } from "../agent/tools/types.js";
 
 const BROWSER_ID = "11111111-1111-4111-8111-111111111111";
@@ -18,8 +18,8 @@ const WORKSPACE_CONTEXT_MESSAGE =
   "This browser tool needs a workspace. Start the agent from an FDE workspace before calling browser_new_tab or browser_list_tabs.";
 
 interface RegisteredTool {
-  config: PaseoToolConfig;
-  handler: (args: unknown, context: PaseoToolExecutionContext) => Promise<PaseoToolResult>;
+  config: FdeToolConfig;
+  handler: (args: unknown, context: FdeToolExecutionContext) => Promise<FdeToolResult>;
 }
 
 class FakeBrowserBroker {
@@ -63,7 +63,7 @@ class BrowserToolHarness {
     return schemaFor(this.get(name).config.inputSchema).safeParse(input);
   }
 
-  public async execute(name: string, input: unknown): Promise<PaseoToolResult> {
+  public async execute(name: string, input: unknown): Promise<FdeToolResult> {
     const parsed = schemaFor(this.get(name).config.inputSchema).parse(input);
     return this.get(name).handler(parsed, {});
   }
@@ -81,7 +81,7 @@ class BrowserToolHarness {
   }
 }
 
-function schemaFor(inputSchema: PaseoToolConfig["inputSchema"]): z.ZodType {
+function schemaFor(inputSchema: FdeToolConfig["inputSchema"]): z.ZodType {
   if (!inputSchema) {
     return z.object({}).passthrough();
   }
@@ -468,7 +468,7 @@ const routedToolCases = [
   input: Record<string, unknown>;
   command: BrowserToolsExecuteInput["command"];
   payload: Extract<BrowserToolsResponsePayload, { ok: true }>;
-  content: PaseoToolResult["content"];
+  content: FdeToolResult["content"];
 }>;
 
 const brokerErrorCases = [
@@ -529,7 +529,7 @@ const brokerErrorCases = [
   toolName: string;
   input: Record<string, unknown>;
   payload: Extract<BrowserToolsResponsePayload, { ok: false }>;
-  content: PaseoToolResult["content"];
+  content: FdeToolResult["content"];
   context: Record<string, unknown>;
 }>;
 

@@ -66,7 +66,7 @@ export async function removeExecutionDescriptor(home: string, instanceId: string
 
 /** A live unpublished owner is initializing, not permission to create a second writer. */
 export async function hasLiveExecutionOwner(home: string): Promise<boolean> {
-  const filename = path.join(executionDirectory(home), "paseo.pid");
+  const filename = path.join(executionDirectory(home), "fde.pid");
   for (let attempt = 0; attempt < 10; attempt++) {
     let raw: string;
     try {

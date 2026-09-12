@@ -10,7 +10,7 @@ builds the small service that answers that hostname.
 The code in the URL **is** the offer: `{ serverId, hostname, daemonPublicKeyB64,
 direct.endpoints, claim: { token, expiresAt } }`, base64url-encoded. So the page
 needs nothing but the URL. The service decodes the code, renders the QR, the
-`paseo://pair#offer=…` deep link and the raw code, and the FDE app does the
+`fde://pair#offer=…` deep link and the raw code, and the FDE app does the
 pairing from there — directly against the daemon that issued the code.
 
 That means one deployment of this service serves **everyone's** daemons: it never

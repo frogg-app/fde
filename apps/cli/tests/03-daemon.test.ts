@@ -3,7 +3,7 @@
 /**
  * Phase 2: Daemon Command Tests
  *
- * Tests daemon commands with an isolated PASEO_HOME.
+ * Tests daemon commands with an isolated FDE_HOME.
  *
  * Tests:
  * - daemon --help shows subcommands
@@ -24,17 +24,17 @@ import { mkdtemp, readFile, rm, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import { dirname, join } from "path";
 import YAML from "yaml";
-import { runLocalPaseo } from "./helpers/local-cli.ts";
+import { runLocalFde } from "./helpers/local-cli.ts";
 
 console.log("=== Daemon Commands ===\n");
 
 // Keep restart off default 9999 to avoid collisions with any existing daemon.
 const port = 10000 + Math.floor(Math.random() * 50000);
-const paseoHome = await mkdtemp(join(tmpdir(), "paseo-test-home-"));
+const fdeHome = await mkdtemp(join(tmpdir(), "fde-test-home-"));
 const require = createRequire(import.meta.url);
 
 function daemonCommand(args: string[]) {
-  return runLocalPaseo(["daemon", ...args], { PASEO_HOME: paseoHome });
+  return runLocalFde(["daemon", ...args], { FDE_HOME: fdeHome });
 }
 
 async function stopChildProcess(child: ChildProcess): Promise<void> {
@@ -78,7 +78,7 @@ function resolveDaemonWorkerEntry(): string {
 
 async function tailDaemonLog(): Promise<string> {
   try {
-    const log = await readFile(join(paseoHome, "daemon.log"), "utf-8");
+    const log = await readFile(join(fdeHome, "daemon.log"), "utf-8");
     return log.split("\n").slice(-30).join("\n");
   } catch {
     return "<daemon log unavailable>";
@@ -111,7 +111,7 @@ try {
   // Test 1: daemon --help shows subcommands
   {
     console.log("Test 1: daemon --help shows subcommands");
-    const result = await runLocalPaseo(["daemon", "--help"]);
+    const result = await runLocalFde(["daemon", "--help"]);
     assert.strictEqual(result.exitCode, 0, "daemon --help should exit 0");
     assert(result.stdout.includes("start"), "help should mention start");
     assert(result.stdout.includes("status"), "help should mention status");
@@ -166,7 +166,7 @@ try {
     const status = JSON.parse(result.stdout);
     assert.strictEqual(typeof status.serverId, "string", "json status should include serverId");
     assert.strictEqual(status.localDaemon, "stopped", "json status should report stopped");
-    assert.strictEqual(status.home, paseoHome, "json status should reflect the isolated home");
+    assert.strictEqual(status.home, fdeHome, "json status should reflect the isolated home");
     assert.strictEqual(
       status.hostname,
       null,
@@ -206,9 +206,9 @@ try {
     console.log("Test 8: daemon status probes live relay state over local IPC");
     const listen =
       process.platform === "win32"
-        ? `\\\\.\\pipe\\paseo-status-${process.pid}-${Date.now()}`
-        : join(paseoHome, "status.sock");
-    const configPath = join(paseoHome, "config.json");
+        ? `\\\\.\\pipe\\fde-status-${process.pid}-${Date.now()}`
+        : join(fdeHome, "status.sock");
+    const configPath = join(fdeHome, "config.json");
     const config = JSON.parse(await readFile(configPath, "utf-8"));
     config.daemon = {
       ...config.daemon,
@@ -216,7 +216,7 @@ try {
       relay: { ...config.daemon?.relay, enabled: false },
     };
     await writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`, "utf-8");
-    // A supervised daemon owns and heartbeats paseo.pid. Launch the worker
+    // A supervised daemon owns and heartbeats fde.pid. Launch the worker
     // directly so this fixture naturally has a reachable daemon without a PID file.
     const workerEntry = resolveDaemonWorkerEntry();
     const workerArgs = workerEntry.endsWith(".ts")
@@ -226,11 +226,11 @@ try {
       cwd: join(import.meta.dirname, ".."),
       env: {
         ...process.env,
-        PASEO_HOME: paseoHome,
-        PASEO_LISTEN: listen,
-        PASEO_LOCAL_SPEECH_AUTO_DOWNLOAD: "0",
-        PASEO_DICTATION_ENABLED: "0",
-        PASEO_VOICE_MODE_ENABLED: "0",
+        FDE_HOME: fdeHome,
+        FDE_LISTEN: listen,
+        FDE_LOCAL_SPEECH_AUTO_DOWNLOAD: "0",
+        FDE_DICTATION_ENABLED: "0",
+        FDE_VOICE_MODE_ENABLED: "0",
         CI: "true",
       },
       stdio: "ignore",
@@ -294,8 +294,8 @@ try {
 
       reloadConfig.daemon.browserTools.enabled = false;
       await writeFile(configPath, `${JSON.stringify(reloadConfig, null, 2)}\n`, "utf-8");
-      const aliasReload = await runLocalPaseo(["reload", "--host", listen, "--json"], {
-        PASEO_HOME: paseoHome,
+      const aliasReload = await runLocalFde(["reload", "--host", listen, "--json"], {
+        FDE_HOME: fdeHome,
       });
       assert.strictEqual(aliasReload.exitCode, 0, aliasReload.stderr);
       assert.deepStrictEqual(JSON.parse(aliasReload.stdout), {
@@ -315,7 +315,7 @@ try {
       const humanReload = await daemonCommand(["reload", "--host", listen]);
       assert.match(humanReload.stdout, /Configuration reloaded\./);
 
-      const foreignHome = await mkdtemp(join(tmpdir(), "paseo-test-foreign-home-"));
+      const foreignHome = await mkdtemp(join(tmpdir(), "fde-test-foreign-home-"));
       try {
         await writeFile(
           join(foreignHome, "config.json"),
@@ -325,10 +325,10 @@ try {
         const foreignPairing = await retryWhileWorkerRuns(
           worker,
           () =>
-            runLocalPaseo(["daemon", "pair", "--home", foreignHome, "--json"], {
-              PASEO_HOME: foreignHome,
+            runLocalFde(["daemon", "pair", "--home", foreignHome, "--json"], {
+              FDE_HOME: foreignHome,
             }),
-          (result) => result.stderr.includes("different Paseo home"),
+          (result) => result.stderr.includes("different Fde home"),
           (result) => `Pairing did not report the daemon identity mismatch: ${result.stderr}`,
         );
         assert.notStrictEqual(
@@ -337,7 +337,7 @@ try {
           "pairing should reject a daemon owned by another home",
         );
         assert(
-          foreignPairing.stderr.includes("different Paseo home"),
+          foreignPairing.stderr.includes("different Fde home"),
           "pairing should explain the daemon identity mismatch",
         );
         assert(
@@ -356,7 +356,7 @@ try {
   // Test 9: --relay accepts an already-enabled persisted relay while stopped
   {
     console.log("Test 9: daemon pair --relay accepts persisted relay while stopped");
-    const configPath = join(paseoHome, "config.json");
+    const configPath = join(fdeHome, "config.json");
     const config = JSON.parse(await readFile(configPath, "utf-8"));
     config.daemon = {
       ...config.daemon,
@@ -380,7 +380,7 @@ try {
   // Best-effort daemon cleanup in case assertions fail before explicit stop.
   await daemonCommand(["stop", "--force"]);
   // Clean up temp directory
-  await rm(paseoHome, { recursive: true, force: true });
+  await rm(fdeHome, { recursive: true, force: true });
 }
 
 console.log("=== All daemon tests passed ===");

@@ -10,17 +10,17 @@ page documents spoken alerts and the settings that govern all three.
 The daemon resolves every voice feature the same way (`server/speech/speech-config-resolver.ts`,
 `resolveVoiceFeatureEnabled`):
 
-1. `PASEO_VOICE=0` or `features.voice.enabled=false` turns everything off.
+1. `FDE_VOICE=0` or `features.voice.enabled=false` turns everything off.
 2. The feature's own key wins next.
-3. `PASEO_VOICE=1` / `features.voice.enabled=true` turns the feature on.
+3. `FDE_VOICE=1` / `features.voice.enabled=true` turns the feature on.
 4. Otherwise the feature is on when the local speech runtime (`sherpa-onnx-<platform>`) is present.
 
-| Feature       | `config.json`                          | Environment                 |
-| ------------- | -------------------------------------- | --------------------------- |
-| Everything    | `features.voice.enabled`               | `PASEO_VOICE`               |
-| Dictation     | `features.dictation.enabled`           | `PASEO_DICTATION_ENABLED`   |
-| Voice mode    | `features.voiceMode.enabled`           | `PASEO_VOICE_MODE_ENABLED`  |
-| Spoken alerts | `features.voice.notifications.enabled` | `PASEO_VOICE_NOTIFICATIONS` |
+| Feature       | `config.json`                          | Environment               |
+| ------------- | -------------------------------------- | ------------------------- |
+| Everything    | `features.voice.enabled`               | `FDE_VOICE`               |
+| Dictation     | `features.dictation.enabled`           | `FDE_DICTATION_ENABLED`   |
+| Voice mode    | `features.voiceMode.enabled`           | `FDE_VOICE_MODE_ENABLED`  |
+| Spoken alerts | `features.voice.notifications.enabled` | `FDE_VOICE_NOTIFICATIONS` |
 
 Spoken alerts also need a text-to-speech provider: the local Kokoro model by default, or
 OpenAI when `features.voiceMode.tts.provider` is `openai`. When TTS is not ready the daemon
@@ -43,7 +43,7 @@ alerts on it also composes a spoken line (`server/notifications/spoken-text.ts`)
 
 Synthesis runs in the background (`server/notifications/spoken-alerts.ts`); the notification
 is sent immediately with a fresh `id`, the `spokenText`, and `audioUrl` set to
-`/api/notifications/<id>/audio`. The audio lands in `$PASEO_HOME/tts-cache/<sha256>.wav`
+`/api/notifications/<id>/audio`. The audio lands in `$FDE_HOME/tts-cache/<sha256>.wav`
 (raw PCM gets a WAV header; codec output such as OpenAI's mp3 is stored as-is). The cache is
 least-recently-used and capped at 50 MB (`server/notifications/tts-cache.ts`). A request for
 audio that is still being synthesised waits for it; one for audio that failed or was evicted

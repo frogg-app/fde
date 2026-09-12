@@ -85,7 +85,7 @@ launch(
 const deadline = Date.now() + 120000;
 while (!stopping) {
   try {
-    if ((await fetch(env.PASEO_DESKTOP_DEV_URL)).ok) break;
+    if ((await fetch(env.FDE_DESKTOP_DEV_URL)).ok) break;
   } catch {}
   if (Date.now() > deadline) {
     console.error("Electron UI did not become ready within two minutes.");

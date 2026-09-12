@@ -1,7 +1,7 @@
 //! Installing a bundle: download the archive and its `.sha256`, verify,
 //! extract into a staging directory, validate, rename into place, flip the
 //! `current` marker. Progress reaches the webview as
-//! `paseo:event:local-daemon-install-event`.
+//! `fde:event:local-daemon-install-event`.
 
 use std::fs;
 use std::path::Path;

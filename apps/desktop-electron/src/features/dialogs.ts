@@ -29,7 +29,7 @@ function resolveDialogType(kind: AskOptions["kind"]): "warning" | "error" | "que
 }
 
 export function registerDialogHandlers(): void {
-  handleDesktopIpc("paseo:dialog:ask", async (event, message: string, options?: AskOptions) => {
+  handleDesktopIpc("fde:dialog:ask", async (event, message: string, options?: AskOptions) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     const result = await dialog.showMessageBox(win ?? BrowserWindow.getFocusedWindow()!, {
       type: resolveDialogType(options?.kind),
@@ -43,7 +43,7 @@ export function registerDialogHandlers(): void {
   });
 
   handleDesktopIpc(
-    "paseo:dialog:askWithCheckbox",
+    "fde:dialog:askWithCheckbox",
     async (event, message: string, options: AskWithCheckboxOptions) => {
       const win = BrowserWindow.fromWebContents(event.sender);
       const result = await dialog.showMessageBox(win ?? BrowserWindow.getFocusedWindow()!, {
@@ -63,7 +63,7 @@ export function registerDialogHandlers(): void {
     },
   );
 
-  handleDesktopIpc("paseo:dialog:open", async (event, options?: OpenOptions) => {
+  handleDesktopIpc("fde:dialog:open", async (event, options?: OpenOptions) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     const properties: Electron.OpenDialogOptions["properties"] = [];
     if (options?.directory) properties.push("openDirectory");

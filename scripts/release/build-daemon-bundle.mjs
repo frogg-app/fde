@@ -10,8 +10,8 @@
 //   daemon/    packages/server, apps/cli and the workspace libraries they need,
 //              plus a production node_modules resolved for the target platform
 //   bin/fde    launcher: exec node/bin/node daemon/apps/cli/dist/index.js "$@"
-//   bin/paseo  same launcher under the upstream name
-//              (bin/fde.cmd and bin/paseo.cmd on Windows; the zip holds no symlinks)
+//   bin/fde  same launcher under the upstream name
+//              (bin/fde.cmd and bin/fde.cmd on Windows; the zip holds no symlinks)
 //   manifest.json
 //
 // The launcher runs the CLI, and the CLI starts the daemon through
@@ -103,19 +103,19 @@ while [ -L "$self" ]; do
   esac
 done
 root="$(cd "$(dirname "$self")/.." && pwd)"
-PASEO_NODE_ENV="\${PASEO_NODE_ENV:-production}"
-export PASEO_NODE_ENV
+FDE_NODE_ENV="\${FDE_NODE_ENV:-production}"
+export FDE_NODE_ENV
 exec "$root/node/bin/node" --disable-warning=DEP0040 "$root/daemon/apps/cli/dist/index.js" "$@"
 `;
 
 // Windows launcher. %~dp0 is the directory of the script with a trailing
 // backslash. The desktop app does not go through this file (it runs node.exe
-// directly); it exists for humans and for PASEO_CLI.
+// directly); it exists for humans and for FDE_CLI.
 export const WINDOWS_LAUNCHER = [
   "@echo off",
   "setlocal",
   'set "FDE_ROOT=%~dp0.."',
-  'if not defined PASEO_NODE_ENV set "PASEO_NODE_ENV=production"',
+  'if not defined FDE_NODE_ENV set "FDE_NODE_ENV=production"',
   '"%FDE_ROOT%\\node\\node.exe" --disable-warning=DEP0040 "%FDE_ROOT%\\daemon\\apps\\cli\\dist\\index.js" %*',
   "",
 ].join("\r\n");
@@ -262,7 +262,7 @@ async function applyDependencyPatches(daemonDir) {
 async function writeLaunchers(stagingDir, isWindows) {
   const binDir = path.join(stagingDir, "bin");
   await mkdir(binDir, { recursive: true });
-  for (const name of brand.legacyFde ? [brand.cliName, "paseo"] : [brand.cliName]) {
+  for (const name of brand.legacyFde ? [brand.cliName, "fde"] : [brand.cliName]) {
     if (isWindows) {
       await writeFile(path.join(binDir, `${name}.cmd`), WINDOWS_LAUNCHER);
       continue;

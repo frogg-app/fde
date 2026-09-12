@@ -42,7 +42,7 @@ export async function generateDeployment({
         ports: [`${b.daemonPort}:${b.daemonPort}`],
         environment: {
           [`${b.envPrefix}_HOME`]: `/home/fde/${b.homeDir}`,
-          PASEO_LISTEN: `0.0.0.0:${b.daemonPort}`,
+          FDE_LISTEN: `0.0.0.0:${b.daemonPort}`,
         },
         volumes: [`./${b.id}-state:/home/fde/${b.homeDir}`],
         labels: { "app.brand.id": b.id, "app.brand.application-id": b.applicationId },

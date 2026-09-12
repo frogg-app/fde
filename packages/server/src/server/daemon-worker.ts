@@ -1,12 +1,12 @@
 import { brand } from "@fde/branding";
 import { appendFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
-import { createPaseoDaemon } from "./bootstrap.js";
+import { createFdeDaemon } from "./bootstrap.js";
 import { loadConfig } from "./config.js";
 import { applyCliFlagOverrides } from "./daemon-cli-overrides.js";
 import { getExecutionServiceStatus } from "./execution-service/client.js";
 import { createGatewayDaemon } from "./execution-service/gateway-daemon.js";
-import { consumeHomeMigrationNotice, resolveFdeHome } from "./paseo-home.js";
+import { resolveFdeHome } from "./fde-home.js";
 import { createRootLogger } from "./logger.js";
 import type { DaemonLifecycleIntent } from "./bootstrap.js";
 import { getProcessDiagnostics } from "./process-diagnostics.js";
@@ -15,20 +15,20 @@ process.title = `${brand.name} Daemon`;
 
 type SupervisorLifecycleMessage =
   | {
-      type: "paseo:shutdown";
+      type: "fde:shutdown";
       reason: string;
     }
   | {
-      type: "paseo:ready";
+      type: "fde:ready";
       listen: string;
     }
   | {
-      type: "paseo:restart";
+      type: "fde:restart";
       reason?: string;
     };
 
 interface BootstrapResult {
-  paseoHome: string;
+  fdeHome: string;
   logger: ReturnType<typeof createRootLogger>;
   config: ReturnType<typeof loadConfig>;
 }
@@ -46,12 +46,12 @@ function isPidAlive(pid: number): boolean {
 }
 
 function writeWorkerLifecycleLog(
-  paseoHome: string,
+  fdeHome: string,
   message: string,
   fields: Record<string, unknown> = {},
 ): void {
   try {
-    const logPath = path.join(paseoHome, "daemon.log");
+    const logPath = path.join(fdeHome, "daemon.log");
     mkdirSync(path.dirname(logPath), { recursive: true });
     appendFileSync(
       logPath,
@@ -72,20 +72,10 @@ function writeWorkerLifecycleLog(
 
 function bootstrapFromEnvironment(): BootstrapResult {
   try {
-    const paseoHome = resolveFdeHome();
-    const config = loadConfig(paseoHome);
-    const logger = createRootLogger({ log: config.log }, { paseoHome, file: false });
-    // Logged once, on the first start after the home moved from ~/.paseo to ~/.fde.
-    const migration = consumeHomeMigrationNotice();
-    if (migration) {
-      logger.info(
-        migration,
-        migration.mode === "renamed"
-          ? `Moved the FDE home from ${migration.from} to ${migration.to}`
-          : `Copied the FDE home from ${migration.from} to ${migration.to} (original left in place)`,
-      );
-    }
-    return { paseoHome, logger, config };
+    const fdeHome = resolveFdeHome();
+    const config = loadConfig(fdeHome);
+    const logger = createRootLogger({ log: config.log }, { fdeHome, file: false });
+    return { fdeHome, logger, config };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     process.stderr.write(`${message}\n`);
@@ -94,9 +84,9 @@ function bootstrapFromEnvironment(): BootstrapResult {
 }
 
 async function main() {
-  const { paseoHome, logger, config } = bootstrapFromEnvironment();
+  const { fdeHome, logger, config } = bootstrapFromEnvironment();
   let daemon: Pick<
-    Awaited<ReturnType<typeof createPaseoDaemon>>,
+    Awaited<ReturnType<typeof createFdeDaemon>>,
     "start" | "stop" | "getListenTarget"
   > | null = null;
   let shutdownPromise: Promise<number> | null = null;
@@ -182,7 +172,7 @@ async function main() {
         { clientId: intent.clientId, requestId: intent.requestId, reason: intent.reason },
         "Shutdown requested via websocket",
       );
-      if (sendSupervisorLifecycleMessage({ type: "paseo:shutdown", reason: intent.reason })) {
+      if (sendSupervisorLifecycleMessage({ type: "fde:shutdown", reason: intent.reason })) {
         return;
       }
       beginShutdown("shutdown lifecycle intent", { reason: intent.reason });
@@ -195,7 +185,7 @@ async function main() {
     );
     if (
       sendSupervisorLifecycleMessage({
-        type: "paseo:restart",
+        type: "fde:restart",
         ...(intent.reason ? { reason: intent.reason } : {}),
       })
     ) {
@@ -221,7 +211,7 @@ async function main() {
       }
       supervisorExitRequested = true;
 
-      writeWorkerLifecycleLog(paseoHome, "Supervisor liveness lost; worker exiting", {
+      writeWorkerLifecycleLog(fdeHome, "Supervisor liveness lost; worker exiting", {
         reason,
         ...getProcessDiagnostics(),
         supervisorPid,
@@ -241,11 +231,11 @@ async function main() {
         return;
       }
       const type = (message as { type?: unknown }).type;
-      if (type === "paseo:supervisor-heartbeat") {
+      if (type === "fde:supervisor-heartbeat") {
         lastSupervisorHeartbeatAt = Date.now();
         return;
       }
-      if (type === "paseo:graceful-shutdown") {
+      if (type === "fde:graceful-shutdown") {
         const reason = (message as { reason?: unknown }).reason;
         beginShutdown("Supervisor shutdown request", {
           reason: typeof reason === "string" ? reason : "supervisor_requested_shutdown",
@@ -280,10 +270,10 @@ async function main() {
     // Retained execution remains authoritative even if a subsequent launcher omits the opt-in.
     const independent =
       process.env.FDE_EXECUTION_SERVICE === "1" ||
-      (await getExecutionServiceStatus(paseoHome)) !== null;
+      (await getExecutionServiceStatus(fdeHome)) !== null;
     daemon = independent
       ? await createGatewayDaemon(config, logger, handleLifecycleIntent)
-      : await createPaseoDaemon(
+      : await createFdeDaemon(
           {
             ...config,
             onLifecycleIntent: handleLifecycleIntent,
@@ -305,7 +295,7 @@ async function main() {
     if (!listen) {
       throw new Error("Daemon did not expose a listen target after startup");
     }
-    sendSupervisorLifecycleMessage({ type: "paseo:ready", listen });
+    sendSupervisorLifecycleMessage({ type: "fde:ready", listen });
   } catch (err) {
     logger.fatal({ err }, "Daemon failed to start listening");
     throw err;

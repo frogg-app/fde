@@ -1,10 +1,9 @@
 {
   "name": "@fde/cli",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "FDE (Frogg Development Environment) CLI - control your AI coding agents from the command line",
   "bin": {
-    "fde": "bin/paseo",
-    "paseo": "bin/paseo"
+    "fde": "bin/fde"
   },
   "files": [
     "bin",
@@ -29,10 +28,10 @@
   },
   "dependencies": {
     "@clack/prompts": "1.1.0",
-    "@fde/branding": "0.5.1",
-    "@fde/client": "0.5.1",
-    "@fde/protocol": "0.5.1",
-    "@fde/server": "0.5.1",
+    "@fde/branding": "0.6.0",
+    "@fde/client": "0.6.0",
+    "@fde/protocol": "0.6.0",
+    "@fde/server": "0.6.0",
     "chalk": "^5.3.0",
     "commander": "^12.0.0",
     "mime-types": "^3.0.2",

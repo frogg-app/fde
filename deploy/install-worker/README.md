@@ -29,7 +29,7 @@ something that does not start with `#!`, the Worker returns a `502` with a plain
 text body. `curl -f` suppresses the body on a non-2xx and exits non-zero, so a
 broken fetch delivers nothing to `bash` rather than delivering half a script.
 
-Every successful response carries `X-Fde-Source: <repo>@<ref>/<path>`, so
+Every successful response carries `X-FDE-Source: <repo>@<ref>/<path>`, so
 someone debugging a bad install can see exactly what they ran:
 
 ```bash

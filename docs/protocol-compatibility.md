@@ -1,12 +1,19 @@
 # Protocol Compatibility
 
-The app and the daemon are separate products that ship separately. A user updates the app from an app store or a desktop auto-update; they update the daemon when they feel like it. Every combination happens in the wild: new app against an old daemon, old app against a new daemon, and both sides months apart.
+The app and the daemon are separate products that ship separately. A user updates the app from an app store or a desktop auto-update; they update the daemon when they feel like it. Different versions can coexist only within a supported namespace; 0.6 requires a coordinated upgrade from older naming.
 
 In development both sides are always the same version, which is why this is the constraint contributors miss most often.
 
 Two contracts follow from it.
 
-## The protocol contract: always compatible
+## The 0.6 namespace boundary
+
+Version 0.6 deliberately migrates environment, wire, storage, plugin and desktop
+identifiers to FDE. Upgrade clients and daemons together; older namespace aliases
+are not promised. See [upgrade notes](upgrade-0.6.md). The additive rules below
+apply within the current namespace, not across that breaking release boundary.
+
+## The protocol contract within a supported namespace
 
 A schema change must not break parsing in either direction. An old app still parses messages from a new daemon. A new daemon still parses messages from an old app.
 
@@ -19,8 +26,8 @@ A schema change must not break parsing in either direction. An old app still par
 
 Two questions to ask before you commit a schema change:
 
-1. Does a six-month-old app still parse this message?
-2. Does a six-month-old daemon still send something this app accepts?
+1. Does an older app in the supported namespace still parse this message?
+2. Does an older daemon in the supported namespace still send something this app accepts?
 
 If you can't answer both with yes, the change isn't done.
 

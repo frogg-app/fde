@@ -51,7 +51,7 @@ export function useLocalDaemonBundle(options?: {
   }, [queryClient]);
 
   // Install events only matter while an install runs; the shell emits them
-  // on `paseo:event:local-daemon-install-event`.
+  // on `fde:event:local-daemon-install-event`.
   const { mutateAsync, isPending: isInstalling } = useMutation<DesktopDaemonStatus, Error>({
     mutationFn: async () => {
       const installed = query.data?.installed === true;

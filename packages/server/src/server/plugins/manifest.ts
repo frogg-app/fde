@@ -3,7 +3,7 @@ import path from "node:path";
 import { z } from "zod";
 import { PluginIdSchema } from "@fde/protocol/messages";
 
-const MANIFEST_FILENAME = "paseo-plugin.json";
+const MANIFEST_FILENAME = "fde-plugin.json";
 const PluginBuildCommandSchema = z
   .array(z.string().refine((argument) => argument.trim().length > 0))
   .min(1);

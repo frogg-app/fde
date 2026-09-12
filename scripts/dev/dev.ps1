@@ -8,25 +8,25 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 $brand = Get-Content -LiteralPath "$RepoRoot\.generated\branding\brand.json" -Raw | ConvertFrom-Json
 $homeKey = "$($brand.envPrefix)_HOME"
 $stateHome = [Environment]::GetEnvironmentVariable($homeKey)
-if (-not $stateHome -and $brand.legacyFde) { $stateHome = $env:PASEO_HOME }
+if (-not $stateHome -and $brand.legacyFde) { $stateHome = $env:FDE_HOME }
 if (-not $stateHome) {
-    $stateName = if ($brand.legacyFde) { "paseo-home" } else { "$($brand.id)-home" }
+    $stateName = if ($brand.legacyFde) { "fde-home" } else { "$($brand.id)-home" }
     $stateHome = Join-Path "$RepoRoot\.dev" $stateName
 }
 [Environment]::SetEnvironmentVariable($homeKey, $stateHome, "Process")
-$env:PASEO_HOME = $stateHome
+$env:FDE_HOME = $stateHome
 New-Item -ItemType Directory -Force -Path $stateHome | Out-Null
-if (-not $env:PASEO_LOCAL_MODELS_DIR) { $env:PASEO_LOCAL_MODELS_DIR = Join-Path $stateHome "models\local-speech" }
+if (-not $env:FDE_LOCAL_MODELS_DIR) { $env:FDE_LOCAL_MODELS_DIR = Join-Path $stateHome "models\local-speech" }
 $port = if ($brand.legacyFde) { 6768 } else { $brand.daemonPort }
 $metroPort = if ($brand.legacyFde) { 8081 } elseif ($port -eq 65535) { 65534 } else { $port + 1 }
-if (-not $env:PASEO_LISTEN) { $env:PASEO_LISTEN = "0.0.0.0:$port" }
+if (-not $env:FDE_LISTEN) { $env:FDE_LISTEN = "0.0.0.0:$port" }
 if (-not $env:EXPO_PORT) { $env:EXPO_PORT = "$metroPort" }
 $env:APP_VARIANT = "development"
-$env:EXPO_PUBLIC_LOCAL_DAEMON = if ($env:PASEO_DEV_DAEMON_ENDPOINT) { $env:PASEO_DEV_DAEMON_ENDPOINT } else { $env:PASEO_LISTEN -replace '^0\.0\.0\.0:', 'localhost:' }
-$env:EXPO_PUBLIC_PASEO_DEV_BUILD_LABEL = (git branch --show-current).Trim()
+$env:EXPO_PUBLIC_LOCAL_DAEMON = if ($env:FDE_DEV_DAEMON_ENDPOINT) { $env:FDE_DEV_DAEMON_ENDPOINT } else { $env:FDE_LISTEN -replace '^0\.0\.0\.0:', 'localhost:' }
+$env:EXPO_PUBLIC_FDE_DEV_BUILD_LABEL = (git branch --show-current).Trim()
 $env:BROWSER = "none"
-$env:PASEO_CORS_ORIGINS = "*"
-Write-Host "$($brand.name) development | state: $stateHome | daemon: $env:PASEO_LISTEN | Metro: $env:EXPO_PORT"
+$env:FDE_CORS_ORIGINS = "*"
+Write-Host "$($brand.name) development | state: $stateHome | daemon: $env:FDE_LISTEN | Metro: $env:EXPO_PORT"
 npm run build:server-deps
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 npm run build:app-deps

@@ -1,10 +1,11 @@
 # Memory growth and lockup investigation
 
-Opened 2026-09-11 after reports of substantial app memory growth and intermittent
-lockups. The user confirms both desktop and Android are affected, with Android
-noticeably worse after voice operations. App versions, the growing process, and an
-exact reproduction sequence have not yet been established. Keep the reported issue open until an
-on-device reproduction and a fixed-build comparison establish its cause.
+> Historical investigation of the retired native shell. Source paths below refer to inactive reference code; they are not production Electron build instructions. Current acceptance is tracked in [electron-desktop.md](electron-desktop.md).
+> Opened 2026-09-11 after reports of substantial app memory growth and intermittent
+> lockups. The user confirms both desktop and Android are affected, with Android
+> noticeably worse after voice operations. App versions, the growing process, and an
+> exact reproduction sequence have not yet been established. Keep the reported issue open until an
+> on-device reproduction and a fixed-build comparison establish its cause.
 
 **Update 2026-09-12:** a user report of the whole app locking up while scrolling up
 through conversation history is a candidate for the missing reproduction sequence. A
@@ -176,7 +177,7 @@ same workload on the baseline and patched revisions.
 | Voice start/interruption/stop cycles                          | Separate speech-worker footprint from retained app/daemon resources.                 |
 
 Existing browser diagnostic: `apps/ui/e2e/browser/idle-leak-probe.spec.ts`, enabled
-with `PASEO_IDLE_LEAK_PROBE=1`. It samples heap, DOM, listeners, and incoming frames
+with `FDE_IDLE_LEAK_PROBE=1`. It samples heap, DOM, listeners, and incoming frames
 under a mock stream. It is a diagnostic, not a memory acceptance assertion, and
 requires a browser-capable test environment. Companion and terminal cases need
 separate runs; a growing conversation legitimately retains additional history.

@@ -7,7 +7,7 @@ import { DeployManager } from "./manager.js";
 import { buildProbeScript } from "./probe.js";
 import { deployScript } from "./scripts.js";
 
-export const DEPLOY_EVENT = "paseo:event:ssh-deploy-event";
+export const DEPLOY_EVENT = "fde:event:ssh-deploy-event";
 let manager: DeployManager | undefined;
 export function createSshDeployCommandHandlers(): Record<string, DesktopCommandHandler> {
   if (!manager) {

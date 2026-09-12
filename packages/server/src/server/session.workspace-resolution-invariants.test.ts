@@ -60,7 +60,7 @@ function createHarness(input: {
           currentBranch: null,
           remoteUrl: null,
           worktreeRoot: null,
-          isPaseoOwnedWorktree: false,
+          isFdeOwnedWorktree: false,
           mainRepoRoot: null,
         };
       }
@@ -70,7 +70,7 @@ function createHarness(input: {
         currentBranch: "main",
         remoteUrl: null,
         worktreeRoot: root,
-        isPaseoOwnedWorktree: false,
+        isFdeOwnedWorktree: false,
         mainRepoRoot: null,
       };
     },
@@ -95,7 +95,7 @@ function createHarness(input: {
     logger: createStub<SessionOptions["logger"]>(logger),
     downloadTokenStore: createStub<SessionOptions["downloadTokenStore"]>({}),
     pushNotifications: createStub<SessionOptions["pushNotifications"]>({}),
-    paseoHome: mkdtempSync(path.join(tmpdir(), "paseo-invariant-test-")),
+    fdeHome: mkdtempSync(path.join(tmpdir(), "fde-invariant-test-")),
     agentManager: createStub<SessionOptions["agentManager"]>({
       subscribe: () => () => {},
       listAgents: () => [],

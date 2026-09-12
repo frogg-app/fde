@@ -49,14 +49,14 @@ export type ConnectionState =
   | { status: "disconnected"; reason?: string }
   | { status: "disposed" };
 
-export interface PaseoLogger {
+export interface FdeLogger {
   debug(obj: object, msg?: string): void;
   info(obj: object, msg?: string): void;
   warn(obj: object, msg?: string): void;
   error(obj: object, msg?: string): void;
 }
 
-export interface PaseoClientConfig {
+export interface FdeClientConfig {
   url: string;
   clientId?: string;
   appVersion?: string;
@@ -64,7 +64,7 @@ export interface PaseoClientConfig {
   password?: string;
   authHeader?: string;
   suppressSendErrors?: boolean;
-  logger?: PaseoLogger;
+  logger?: FdeLogger;
   connectTimeoutMs?: number;
   e2ee?: {
     enabled?: boolean;
@@ -79,126 +79,120 @@ export interface PaseoClientConfig {
   runtimeMetricsWindowMs?: number;
 }
 
-export type PaseoWorkspace = WorkspaceDescriptorPayload;
-export type PaseoAgent = AgentSnapshotPayload;
-export type PaseoAgentListOptions = FetchAgentsOptions;
-export type PaseoProject = WorkspaceProjectDescriptorPayload;
-export type PaseoProjectListOptions = Omit<ProjectListRequestMessage, "type" | "requestId"> & {
+export type FdeWorkspace = WorkspaceDescriptorPayload;
+export type FdeAgent = AgentSnapshotPayload;
+export type FdeAgentListOptions = FetchAgentsOptions;
+export type FdeProject = WorkspaceProjectDescriptorPayload;
+export type FdeProjectListOptions = Omit<ProjectListRequestMessage, "type" | "requestId"> & {
   requestId?: string;
 };
-export type PaseoProjectListResult = ProjectListResponseMessage["payload"];
+export type FdeProjectListResult = ProjectListResponseMessage["payload"];
 
-export interface PaseoAgentListResult {
+export interface FdeAgentListResult {
   requestId: string;
   subscriptionId?: string | null;
   entries: FetchAgentsEntry[];
   pageInfo: FetchAgentsPageInfo;
 }
-export type PaseoWorkspaceListOptions = Omit<
-  FetchWorkspacesRequestMessage,
-  "type" | "requestId"
-> & {
+export type FdeWorkspaceListOptions = Omit<FetchWorkspacesRequestMessage, "type" | "requestId"> & {
   requestId?: string;
 };
 
-export interface PaseoWorkspaceListResult {
+export interface FdeWorkspaceListResult {
   requestId: string;
   subscriptionId?: string | null;
-  entries: PaseoWorkspace[];
+  entries: FdeWorkspace[];
   pageInfo: FetchWorkspacesResponseMessage["payload"]["pageInfo"];
 }
 
-export interface PaseoWorkspaceOpenOptions {
+export interface FdeWorkspaceOpenOptions {
   cwd: string;
   requestId?: string;
 }
 
-export type PaseoWorkspaceCreateOptions = Omit<WorkspaceCreateRequest, "type" | "requestId"> & {
+export type FdeWorkspaceCreateOptions = Omit<WorkspaceCreateRequest, "type" | "requestId"> & {
   requestId?: string;
 };
 
-export interface PaseoWorkspaceArchiveResult {
+export interface FdeWorkspaceArchiveResult {
   requestId: string;
   workspaceId: string;
   archivedAt: string | null;
   error: string | null;
 }
 
-export type PaseoWorkspaceUpdate = Extract<
+export type FdeWorkspaceUpdate = Extract<
   SessionOutboundMessage,
   { type: "workspace_update" }
 >["payload"];
 
-export type PaseoWorkspaceUpdateHandler = (update: PaseoWorkspaceUpdate) => void;
+export type FdeWorkspaceUpdateHandler = (update: FdeWorkspaceUpdate) => void;
 
-export interface PaseoWorkspaceHandle {
+export interface FdeWorkspaceHandle {
   readonly id: string;
   readonly projectId: string | null;
   readonly directory: string | null;
   readonly name: string | null;
-  readonly status: PaseoWorkspace["status"] | null;
+  readonly status: FdeWorkspace["status"] | null;
   readonly agents: {
-    create(options: PaseoWorkspaceAgentCreateOptions): Promise<PaseoAgentHandle>;
+    create(options: FdeWorkspaceAgentCreateOptions): Promise<FdeAgentHandle>;
   };
-  current(): PaseoWorkspace | null;
-  refresh(options?: { requestId?: string }): Promise<PaseoWorkspace | null>;
+  current(): FdeWorkspace | null;
+  refresh(options?: { requestId?: string }): Promise<FdeWorkspace | null>;
   setTitle(title: string | null, requestId?: string): Promise<{ title: string | null }>;
-  archive(requestId?: string): Promise<PaseoWorkspaceArchiveResult>;
+  archive(requestId?: string): Promise<FdeWorkspaceArchiveResult>;
   /**
    * Subscribes to already-emitted daemon workspace_update events for this id.
    * This returns a local unsubscribe function; it does not own app cache state or
    * send a daemon unsubscribe RPC. Call `workspaces.list({ subscribe: {} })` when
    * the daemon should start streaming workspace directory updates.
    */
-  subscribe(handler: (update: PaseoWorkspaceUpdate) => void): () => void;
+  subscribe(handler: (update: FdeWorkspaceUpdate) => void): () => void;
 }
 
-export interface PaseoProjectActions {
-  list(options?: PaseoProjectListOptions): Promise<PaseoProjectListResult>;
+export interface FdeProjectActions {
+  list(options?: FdeProjectListOptions): Promise<FdeProjectListResult>;
 }
 
-export interface PaseoWorkspaceActions {
-  list(options?: PaseoWorkspaceListOptions): Promise<PaseoWorkspaceListResult>;
-  ref(workspace: string | PaseoWorkspace): PaseoWorkspaceHandle;
-  open(
-    input: string | PaseoWorkspaceOpenOptions,
-    requestId?: string,
-  ): Promise<PaseoWorkspaceHandle>;
-  create(options: PaseoWorkspaceCreateOptions): Promise<PaseoWorkspaceHandle>;
+export interface FdeWorkspaceActions {
+  list(options?: FdeWorkspaceListOptions): Promise<FdeWorkspaceListResult>;
+  ref(workspace: string | FdeWorkspace): FdeWorkspaceHandle;
+  open(input: string | FdeWorkspaceOpenOptions, requestId?: string): Promise<FdeWorkspaceHandle>;
+  create(options: FdeWorkspaceCreateOptions): Promise<FdeWorkspaceHandle>;
   archive(
-    workspace: string | PaseoWorkspaceHandle,
+    workspace: string | FdeWorkspaceHandle,
     requestId?: string,
-  ): Promise<PaseoWorkspaceArchiveResult>;
+  ): Promise<FdeWorkspaceArchiveResult>;
   /**
    * Local event subscription over the low-level driver's workspace_update stream.
    * The returned function only removes this SDK listener.
    */
-  subscribe(handler: PaseoWorkspaceUpdateHandler): () => void;
+  subscribe(handler: FdeWorkspaceUpdateHandler): () => void;
 }
 
-type PaseoAgentSessionConfig = CreateAgentRequestMessage["config"];
-export type PaseoAgentProvider = PaseoAgentSessionConfig["provider"];
+type FdeAgentSessionConfig = CreateAgentRequestMessage["config"];
+export type FdeAgentProvider = FdeAgentSessionConfig["provider"];
 
-export type PaseoProviderFeatureValues = Record<string, unknown>;
+export type FdeProviderFeatureValues = Record<string, unknown>;
 
-export interface PaseoAgentConfig {
+export interface FdeAgentConfig {
   /** Provider and model in `provider/model` format. */
   provider: string;
-  modeId?: PaseoAgentSessionConfig["modeId"];
-  thinkingOptionId?: PaseoAgentSessionConfig["thinkingOptionId"];
-  featureValues?: PaseoProviderFeatureValues;
+  modeId?: FdeAgentSessionConfig["modeId"];
+  thinkingOptionId?: FdeAgentSessionConfig["thinkingOptionId"];
+  featureValues?: FdeProviderFeatureValues;
   /** JSON-safe provider-native settings, validated by the selected provider. */
-  options?: PaseoAgentSessionConfig["providerOptions"];
-  systemPrompt?: PaseoAgentSessionConfig["systemPrompt"];
-  toolPolicy?: PaseoAgentSessionConfig["toolPolicy"];
-  mcpServers?: PaseoAgentSessionConfig["mcpServers"];
+  options?: FdeAgentSessionConfig["providerOptions"];
+  systemPrompt?: FdeAgentSessionConfig["systemPrompt"];
+  toolPolicy?: FdeAgentSessionConfig["toolPolicy"];
+  mcpServers?: FdeAgentSessionConfig["mcpServers"];
 }
 
-export interface PaseoAgentCreateOptions {
-  config: PaseoAgentConfig;
+export interface FdeAgentCreateOptions {
+  config: FdeAgentConfig;
   cwd: string;
-  parent?: string | PaseoAgentHandle;
-  title?: PaseoAgentSessionConfig["title"];
+  parent?: string | FdeAgentHandle;
+  title?: FdeAgentSessionConfig["title"];
   env?: CreateAgentRequestMessage["env"];
   prompt?: string;
   clientMessageId?: string;
@@ -212,14 +206,14 @@ export interface PaseoAgentCreateOptions {
   labels?: Record<string, string>;
 }
 
-export type PaseoWorkspaceAgentCreateOptions = Omit<PaseoAgentCreateOptions, "cwd">;
+export type FdeWorkspaceAgentCreateOptions = Omit<FdeAgentCreateOptions, "cwd">;
 
-export interface PaseoAgentRefetchResult {
-  agent: PaseoAgent;
+export interface FdeAgentRefetchResult {
+  agent: FdeAgent;
   project: ProjectPlacementPayload | null;
 }
 
-export interface PaseoAgentTimelineRefetchOptions {
+export interface FdeAgentTimelineRefetchOptions {
   direction?: FetchAgentTimelineDirection;
   cursor?: FetchAgentTimelineCursor;
   limit?: number;
@@ -227,46 +221,46 @@ export interface PaseoAgentTimelineRefetchOptions {
   requestId?: string;
 }
 
-export interface PaseoAgentSendOptions {
+export interface FdeAgentSendOptions {
   messageId?: string;
   images?: Array<{ data: string; mimeType: string }>;
   attachments?: SendAgentMessageRequest["attachments"];
 }
 
-export interface PaseoAgentRunOptions extends PaseoAgentSendOptions {
+export interface FdeAgentRunOptions extends FdeAgentSendOptions {
   timeoutMs?: number;
 }
 
-export type PaseoAgentRunResult = WaitForFinishResult;
+export type FdeAgentRunResult = WaitForFinishResult;
 
-export interface PaseoAgentCommandsOptions {
+export interface FdeAgentCommandsOptions {
   requestId?: string;
 }
 
-export type PaseoAgentCommandsResult = ListCommandsResponse["payload"];
+export type FdeAgentCommandsResult = ListCommandsResponse["payload"];
 
-export type PaseoAgentUpdate = Extract<SessionOutboundMessage, { type: "agent_update" }>["payload"];
+export type FdeAgentUpdate = Extract<SessionOutboundMessage, { type: "agent_update" }>["payload"];
 
-export type PaseoAgentStream = Extract<SessionOutboundMessage, { type: "agent_stream" }>["payload"];
+export type FdeAgentStream = Extract<SessionOutboundMessage, { type: "agent_stream" }>["payload"];
 
-export type PaseoAgentUpdateHandler = (update: PaseoAgentUpdate) => void;
+export type FdeAgentUpdateHandler = (update: FdeAgentUpdate) => void;
 
-export interface PaseoAgentTimelineHandle {
+export interface FdeAgentTimelineHandle {
   append(item: Omit<PluginTimelineItem, "pluginId">): Promise<{ seq: number; epoch: string }>;
   /**
    * Fetches a fresh timeline page through the existing daemon RPC. If the daemon
    * includes an agent snapshot in the response, the parent handle is updated to
    * that value.
    */
-  refetch(options?: PaseoAgentTimelineRefetchOptions): Promise<FetchAgentTimelinePayload>;
+  refetch(options?: FdeAgentTimelineRefetchOptions): Promise<FetchAgentTimelinePayload>;
   /**
    * Local listener for agent_stream events matching this handle id. It does not
    * retain timeline entries or own application cache state.
    */
-  subscribe(handler: (event: PaseoAgentStream) => void): () => void;
+  subscribe(handler: (event: FdeAgentStream) => void): () => void;
 }
 
-export interface PaseoAgentHandle {
+export interface FdeAgentHandle {
   readonly id: string;
   /**
    * `workspaceId` through `archivedAt` mirror the last snapshot this handle
@@ -277,24 +271,24 @@ export interface PaseoAgentHandle {
    */
   readonly workspaceId: string | null;
   readonly cwd: string | null;
-  readonly status: PaseoAgent["status"] | null;
-  readonly capabilities: PaseoAgent["capabilities"] | null;
-  readonly availableModes: PaseoAgent["availableModes"] | null;
-  readonly pendingPermissions: PaseoAgent["pendingPermissions"] | null;
-  readonly activeTurn: NonNullable<PaseoAgent["activeTurn"]> | null;
-  readonly lastUsage: NonNullable<PaseoAgent["lastUsage"]> | null;
-  readonly lastError: NonNullable<PaseoAgent["lastError"]> | null;
-  readonly features: NonNullable<PaseoAgent["features"]> | null;
-  readonly runtimeInfo: NonNullable<PaseoAgent["runtimeInfo"]> | null;
-  readonly archivedAt: NonNullable<PaseoAgent["archivedAt"]> | null;
-  readonly timeline: PaseoAgentTimelineHandle;
-  current(): PaseoAgent | null;
-  refresh(requestId?: string): Promise<PaseoAgentRefetchResult | null>;
-  send(text: string, options?: PaseoAgentSendOptions): Promise<void>;
+  readonly status: FdeAgent["status"] | null;
+  readonly capabilities: FdeAgent["capabilities"] | null;
+  readonly availableModes: FdeAgent["availableModes"] | null;
+  readonly pendingPermissions: FdeAgent["pendingPermissions"] | null;
+  readonly activeTurn: NonNullable<FdeAgent["activeTurn"]> | null;
+  readonly lastUsage: NonNullable<FdeAgent["lastUsage"]> | null;
+  readonly lastError: NonNullable<FdeAgent["lastError"]> | null;
+  readonly features: NonNullable<FdeAgent["features"]> | null;
+  readonly runtimeInfo: NonNullable<FdeAgent["runtimeInfo"]> | null;
+  readonly archivedAt: NonNullable<FdeAgent["archivedAt"]> | null;
+  readonly timeline: FdeAgentTimelineHandle;
+  current(): FdeAgent | null;
+  refresh(requestId?: string): Promise<FdeAgentRefetchResult | null>;
+  send(text: string, options?: FdeAgentSendOptions): Promise<void>;
   /** Sends a prompt and resolves when that turn finishes or needs attention. */
-  run(text: string, options?: PaseoAgentRunOptions): Promise<PaseoAgentRunResult>;
+  run(text: string, options?: FdeAgentRunOptions): Promise<FdeAgentRunResult>;
   /** Waits for the current turn, including one started with `prompt`. */
-  waitForFinish(timeoutMs?: number): Promise<PaseoAgentRunResult>;
+  waitForFinish(timeoutMs?: number): Promise<FdeAgentRunResult>;
   /**
    * Asks the running session for the slash commands and skills it actually
    * loaded. Providers answer from the live session, so this sees built-in and
@@ -302,84 +296,84 @@ export interface PaseoAgentHandle {
    * `error` string; a provider that cannot answer reports it there rather than
    * rejecting.
    */
-  commands(options?: PaseoAgentCommandsOptions): Promise<PaseoAgentCommandsResult>;
+  commands(options?: FdeAgentCommandsOptions): Promise<FdeAgentCommandsResult>;
   archive(): Promise<{ archivedAt: string }>;
   detach(): Promise<void>;
-  subscribe(handler: (update: PaseoAgentUpdate) => void): () => void;
+  subscribe(handler: (update: FdeAgentUpdate) => void): () => void;
 }
 
-export interface PaseoAgentActions {
-  list(options?: PaseoAgentListOptions): Promise<PaseoAgentListResult>;
-  ref(agent: string | PaseoAgent): PaseoAgentHandle;
-  create(options: PaseoAgentCreateOptions): Promise<PaseoAgentHandle>;
+export interface FdeAgentActions {
+  list(options?: FdeAgentListOptions): Promise<FdeAgentListResult>;
+  ref(agent: string | FdeAgent): FdeAgentHandle;
+  create(options: FdeAgentCreateOptions): Promise<FdeAgentHandle>;
   /**
    * Local event subscription over the low-level driver's agent_update stream.
    * The returned function only removes this SDK listener.
    */
-  subscribe(handler: PaseoAgentUpdateHandler): () => void;
+  subscribe(handler: FdeAgentUpdateHandler): () => void;
 }
 
-export type PaseoProviderModelsResult = ListProviderModelsResponseMessage["payload"];
-export type PaseoProviderModesResult = ListProviderModesResponseMessage["payload"];
-type PaseoProviderFeaturesDraft = ListProviderFeaturesRequestMessage["draftConfig"];
-export interface PaseoProviderFeaturesInput extends Omit<
-  PaseoProviderFeaturesDraft,
+export type FdeProviderModelsResult = ListProviderModelsResponseMessage["payload"];
+export type FdeProviderModesResult = ListProviderModesResponseMessage["payload"];
+type FdeProviderFeaturesDraft = ListProviderFeaturesRequestMessage["draftConfig"];
+export interface FdeProviderFeaturesInput extends Omit<
+  FdeProviderFeaturesDraft,
   "provider" | "model"
 > {
   /** Provider and model in `provider/model` format. */
   provider: string;
 }
-export type PaseoProviderFeaturesResult = ListProviderFeaturesResponseMessage["payload"];
-export type PaseoProviderAvailabilityResult = ListAvailableProvidersResponse["payload"];
-export type PaseoProviderSnapshotResult = GetProvidersSnapshotResponseMessage["payload"];
-export type PaseoProviderSnapshotUpdate = Extract<
+export type FdeProviderFeaturesResult = ListProviderFeaturesResponseMessage["payload"];
+export type FdeProviderAvailabilityResult = ListAvailableProvidersResponse["payload"];
+export type FdeProviderSnapshotResult = GetProvidersSnapshotResponseMessage["payload"];
+export type FdeProviderSnapshotUpdate = Extract<
   SessionOutboundMessage,
   { type: "providers_snapshot_update" }
 >["payload"];
-export type PaseoProviderRefreshResult = RefreshProvidersSnapshotResponseMessage["payload"];
-export type PaseoProviderDiagnosticResult = ProviderDiagnosticResponseMessage["payload"];
+export type FdeProviderRefreshResult = RefreshProvidersSnapshotResponseMessage["payload"];
+export type FdeProviderDiagnosticResult = ProviderDiagnosticResponseMessage["payload"];
 
-export interface PaseoProviderListOptions {
+export interface FdeProviderListOptions {
   cwd?: string;
   requestId?: string;
 }
 
-export interface PaseoProviderRefreshOptions {
+export interface FdeProviderRefreshOptions {
   cwd?: string;
-  providers?: PaseoAgentProvider[];
+  providers?: FdeAgentProvider[];
   requestId?: string;
 }
 
-export interface PaseoProviderWaitOptions extends PaseoProviderListOptions {
+export interface FdeProviderWaitOptions extends FdeProviderListOptions {
   timeoutMs?: number;
 }
 
-export interface PaseoProviderActions {
+export interface FdeProviderActions {
   listModels(
-    provider: PaseoAgentProvider,
-    options?: PaseoProviderListOptions,
-  ): Promise<PaseoProviderModelsResult>;
+    provider: FdeAgentProvider,
+    options?: FdeProviderListOptions,
+  ): Promise<FdeProviderModelsResult>;
   listModes(
-    provider: PaseoAgentProvider,
-    options?: PaseoProviderListOptions,
-  ): Promise<PaseoProviderModesResult>;
+    provider: FdeAgentProvider,
+    options?: FdeProviderListOptions,
+  ): Promise<FdeProviderModesResult>;
   listFeatures(
-    draftConfig: PaseoProviderFeaturesInput,
+    draftConfig: FdeProviderFeaturesInput,
     options?: { requestId?: string },
-  ): Promise<PaseoProviderFeaturesResult>;
-  listAvailable(options?: { requestId?: string }): Promise<PaseoProviderAvailabilityResult>;
-  snapshot(options?: PaseoProviderListOptions): Promise<PaseoProviderSnapshotResult>;
+  ): Promise<FdeProviderFeaturesResult>;
+  listAvailable(options?: { requestId?: string }): Promise<FdeProviderAvailabilityResult>;
+  snapshot(options?: FdeProviderListOptions): Promise<FdeProviderSnapshotResult>;
   /** Resolves after the daemon's lazy provider discovery has finished. */
-  waitForReady(options?: PaseoProviderWaitOptions): Promise<PaseoProviderSnapshotResult>;
-  refresh(options?: PaseoProviderRefreshOptions): Promise<PaseoProviderRefreshResult>;
+  waitForReady(options?: FdeProviderWaitOptions): Promise<FdeProviderSnapshotResult>;
+  refresh(options?: FdeProviderRefreshOptions): Promise<FdeProviderRefreshResult>;
   diagnostic(
-    provider: PaseoAgentProvider,
+    provider: FdeAgentProvider,
     options?: { requestId?: string },
-  ): Promise<PaseoProviderDiagnosticResult>;
-  subscribe(handler: (update: PaseoProviderSnapshotUpdate) => void): () => void;
+  ): Promise<FdeProviderDiagnosticResult>;
+  subscribe(handler: (update: FdeProviderSnapshotUpdate) => void): () => void;
 }
 
-export interface PaseoConfigActions {
+export interface FdeConfigActions {
   /**
    * Reads daemon config through the existing config RPC. Provider profiles,
    * custom provider entries, keys/env, custom binaries, and provider enablement
@@ -399,29 +393,29 @@ export interface PaseoConfigActions {
   ): Promise<{ requestId: string; config: MutableDaemonConfig }>;
 }
 
-export interface PaseoApi {
-  readonly workspaces: PaseoWorkspaceActions;
-  readonly projects: PaseoProjectActions;
-  readonly agents: PaseoAgentActions;
-  readonly providers: PaseoProviderActions;
-  readonly config: PaseoConfigActions;
+export interface FdeApi {
+  readonly workspaces: FdeWorkspaceActions;
+  readonly projects: FdeProjectActions;
+  readonly agents: FdeAgentActions;
+  readonly providers: FdeProviderActions;
+  readonly config: FdeConfigActions;
 }
 
-export interface PaseoClient extends PaseoApi {
+export interface FdeClient extends FdeApi {
   connect(): Promise<void>;
   close(): Promise<void>;
   ensureConnected(): void;
   getConnectionState(): ConnectionState;
 }
 
-export function createPaseoClient(config: PaseoClientConfig): PaseoClient {
+export function createFdeClient(config: FdeClientConfig): FdeClient {
   const daemonClient = new DaemonClient({
     ...config,
     clientId: config.clientId ?? createGeneratedClientId(),
     clientType: "cli",
   });
   return {
-    ...createPaseoApi(daemonClient),
+    ...createFdeApi(daemonClient),
     connect: () => daemonClient.connect(),
     close: () => daemonClient.close(),
     ensureConnected: () => daemonClient.ensureConnected(),
@@ -429,10 +423,10 @@ export function createPaseoClient(config: PaseoClientConfig): PaseoClient {
   };
 }
 
-export function createPaseoApi(daemonClient: DaemonClient): PaseoApi {
+export function createFdeApi(daemonClient: DaemonClient): FdeApi {
   const createAgentHandle = createAgentHandleFactory(daemonClient);
   const createAgent = async (
-    options: PaseoAgentCreateOptions,
+    options: FdeAgentCreateOptions,
     placement?: { workspaceId: string; cwd: string },
   ) => {
     const { config: agentConfig, cwd, parent, title, prompt, ...requestOptions } = options;
@@ -513,12 +507,12 @@ export function createPaseoApi(daemonClient: DaemonClient): PaseoApi {
   };
 }
 
-type WorkspaceHandleFactory = (workspace: string | PaseoWorkspace) => PaseoWorkspaceHandle;
-type AgentHandleFactory = (agent: string | PaseoAgent) => PaseoAgentHandle;
+type WorkspaceHandleFactory = (workspace: string | FdeWorkspace) => FdeWorkspaceHandle;
+type AgentHandleFactory = (agent: string | FdeAgent) => FdeAgentHandle;
 type CreateAgent = (
-  options: PaseoAgentCreateOptions,
+  options: FdeAgentCreateOptions,
   placement?: { workspaceId: string; cwd: string },
-) => Promise<PaseoAgentHandle>;
+) => Promise<FdeAgentHandle>;
 
 function createWorkspaceHandleFactory(
   daemonClient: DaemonClient,
@@ -605,7 +599,7 @@ function createAgentHandleFactory(daemonClient: DaemonClient): AgentHandleFactor
     const id = typeof agent === "string" ? agent : agent.id;
     let current = typeof agent === "string" ? null : agent;
 
-    const handle: PaseoAgentHandle = {
+    const handle: FdeAgentHandle = {
       id,
       timeline: {
         append: (item) => daemonClient.appendAgentTimelineItem(id, item),
@@ -722,9 +716,9 @@ function createAgentHandleFactory(daemonClient: DaemonClient): AgentHandleFactor
 async function openWorkspace(
   daemonClient: DaemonClient,
   createWorkspaceHandle: WorkspaceHandleFactory,
-  input: string | PaseoWorkspaceOpenOptions,
+  input: string | FdeWorkspaceOpenOptions,
   requestId?: string,
-): Promise<PaseoWorkspaceHandle> {
+): Promise<FdeWorkspaceHandle> {
   const options = typeof input === "string" ? { cwd: input, requestId } : input;
   const result = await daemonClient.openProject(options.cwd, options.requestId);
   if (result.error || !result.workspace) {
@@ -733,11 +727,11 @@ async function openWorkspace(
   return createWorkspaceHandle(result.workspace);
 }
 
-function resolveWorkspaceId(workspace: string | PaseoWorkspaceHandle): string {
+function resolveWorkspaceId(workspace: string | FdeWorkspaceHandle): string {
   return typeof workspace === "string" ? workspace : workspace.id;
 }
 
-function resolveAgentId(agent: string | PaseoAgentHandle): string {
+function resolveAgentId(agent: string | FdeAgentHandle): string {
   return typeof agent === "string" ? agent : agent.id;
 }
 
@@ -754,8 +748,8 @@ function parseProviderModel(selection: string): { provider: string; model: strin
 
 function waitForProvidersReady(
   daemonClient: DaemonClient,
-  options: PaseoProviderWaitOptions = {},
-): Promise<PaseoProviderSnapshotResult> {
+  options: FdeProviderWaitOptions = {},
+): Promise<FdeProviderSnapshotResult> {
   // COMPAT(providersSnapshotCwd): added in v0.3.2, remove gate after 2027-02-10.
   if (daemonClient.getLastServerInfoMessage()?.features?.providersSnapshotCwd !== true) {
     return Promise.reject(new Error("Update the host to wait for provider discovery."));
@@ -767,14 +761,14 @@ function waitForProvidersReady(
     let settled = false;
     let requestId: string | null = null;
     let snapshotCwd: string | undefined;
-    const pendingUpdates = new Map<string | undefined, PaseoProviderSnapshotUpdate>();
-    let latestEntries: PaseoProviderSnapshotResult["entries"] = [];
+    const pendingUpdates = new Map<string | undefined, FdeProviderSnapshotUpdate>();
+    let latestEntries: FdeProviderSnapshotResult["entries"] = [];
 
     const cleanup = () => {
       clearTimeout(timeout);
       unsubscribe();
     };
-    const finish = (snapshot: PaseoProviderSnapshotResult) => {
+    const finish = (snapshot: FdeProviderSnapshotResult) => {
       if (settled) return;
       settled = true;
       cleanup();
@@ -786,7 +780,7 @@ function waitForProvidersReady(
       cleanup();
       reject(error instanceof Error ? error : new Error(String(error)));
     };
-    const updateMatches = (update: PaseoProviderSnapshotUpdate) => update.cwd === snapshotCwd;
+    const updateMatches = (update: FdeProviderSnapshotUpdate) => update.cwd === snapshotCwd;
 
     const unsubscribe = daemonClient.on("providers_snapshot_update", (message) => {
       const update = message.payload;
@@ -839,5 +833,5 @@ function createGeneratedClientId(): string {
     typeof globalThis.crypto?.randomUUID === "function"
       ? globalThis.crypto.randomUUID()
       : Math.random().toString(36).slice(2);
-  return `paseo-sdk-${randomId}`;
+  return `fde-sdk-${randomId}`;
 }

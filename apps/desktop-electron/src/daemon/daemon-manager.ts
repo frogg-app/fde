@@ -7,7 +7,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { app } from "electron";
 import log from "electron-log/main";
-import { resolvePaseoHome, spawnProcess } from "./process-runtime.js";
+import { resolveFdeHome, spawnProcess } from "./process-runtime.js";
 import { getBundledCliShimPath } from "../integrations/cli-install/index.js";
 import { createNodeEntrypointInvocation, resolveDaemonRunnerEntrypoint } from "./runtime-paths.js";
 import { runExternalCliJsonCommand, runExternalCliTextCommand } from "./cli/external.js";
@@ -73,17 +73,17 @@ export function parseDesktopDaemonStopReason(
 // Utilities
 // ---------------------------------------------------------------------------
 
-function getPaseoHome(): string {
-  return resolvePaseoHome(process.env);
+function getFdeHome(): string {
+  return resolveFdeHome(process.env);
 }
 
 function logFilePath(): string {
-  return path.join(getPaseoHome(), DAEMON_LOG_FILENAME);
+  return path.join(getFdeHome(), DAEMON_LOG_FILENAME);
 }
 
 export function isDesktopManagedDaemonRunningSync(): boolean {
   try {
-    const raw = readFileSync(path.join(getPaseoHome(), "paseo.pid"), "utf-8");
+    const raw = readFileSync(path.join(getFdeHome(), "fde.pid"), "utf-8");
     const lock = JSON.parse(raw) as { pid?: unknown; desktopManaged?: unknown };
     if (!daemonOwnership.owns(lock)) return false;
     if (typeof lock.pid !== "number" || !Number.isInteger(lock.pid)) return false;
@@ -201,7 +201,7 @@ export function resolveDesktopAppVersion(): string {
 // ---------------------------------------------------------------------------
 
 export async function resolveDesktopDaemonStatus(): Promise<DesktopDaemonStatus> {
-  const home = getPaseoHome();
+  const home = getFdeHome();
 
   try {
     const payload = (await runExternalCliJsonCommand(["daemon", "status", "--json"])) as Record<
@@ -366,9 +366,9 @@ export async function startDaemon(): Promise<DesktopDaemonStatus> {
     envMode: "internal",
     env: invocation.env,
     envOverlay: {
-      PASEO_DESKTOP_MANAGED: "1",
-      PASEO_CLI: getBundledCliShimPath(),
-      PASEO_WEB_UI_ENABLED: "false",
+      FDE_DESKTOP_MANAGED: "1",
+      FDE_CLI: getBundledCliShimPath(),
+      FDE_WEB_UI_ENABLED: "false",
     },
     stdio: ["ignore", "ignore", "ignore"],
   });

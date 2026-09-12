@@ -28,7 +28,7 @@ acceptance criteria for this first boundary.
 `bootstrap.ts` currently closes all agents and shuts down all providers during
 stop. `daemon-worker.ts` also exits when its supervisor disappears. Simply
 removing those calls leaves provider transports, pending callbacks, and native
-Paseo tool handlers in a dead process. Moving provider subprocesses alone would
+FDE tool handlers in a dead process. Moving provider subprocesses alone would
 require a new durable event protocol and recovery semantics for every provider.
 Keeping execution and its tool dependencies together preserves existing provider
 semantics and gives us a testable restart boundary without replaying prompts.

@@ -1,7 +1,7 @@
-import type { PaseoAgentHandle, PaseoClient } from "@fde/client";
+import type { FdeAgentHandle, FdeClient } from "@fde/client";
 
-export async function reviewInParallel(client: PaseoClient, cwd: string): Promise<string[]> {
-  const agents: PaseoAgentHandle[] = [];
+export async function reviewInParallel(client: FdeClient, cwd: string): Promise<string[]> {
+  const agents: FdeAgentHandle[] = [];
 
   try {
     agents.push(

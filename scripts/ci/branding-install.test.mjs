@@ -27,7 +27,7 @@ test(
       mkdirSync(path.join(bundle, "node/bin"), { recursive: true });
       mkdirSync(path.join(bundle, "bin"));
       symlinkSync(process.execPath, path.join(bundle, "node/bin/node"));
-      const commands = brand.legacyFde ? [brand.cliName, "paseo"] : [brand.cliName];
+      const commands = brand.legacyFde ? [brand.cliName, "fde"] : [brand.cliName];
       for (const name of commands)
         writeFileSync(path.join(bundle, "bin", name), "#!/bin/sh\nexit 0\n", { mode: 0o755 });
       writeFileSync(
@@ -70,7 +70,7 @@ test(
       );
       if (!brand.legacyFde) {
         assert.equal(existsSync(path.join(bin, "fde")), false);
-        assert.equal(existsSync(path.join(bin, "paseo")), false);
+        assert.equal(existsSync(path.join(bin, "fde")), false);
       }
       const manifestPath = path.join(bundle, "manifest.json");
       const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));

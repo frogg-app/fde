@@ -68,7 +68,9 @@ describe("SSH deployment validation and scripts", () => {
     expect(deployScript("native")).toContain("validate_bundle_identity");
     expect(deployScript("docker", true)).toContain("app.brand.application-id");
     expect(deployScript("docker", true)).toContain("mounted state retained");
-    expect(PROBE_TEMPLATE).toBe(readFileSync("deploy/probe.sh.in", "utf8"));
+    expect(PROBE_TEMPLATE).toBe(
+      readFileSync(new URL("../../../../deploy/probe.sh.in", import.meta.url), "utf8"),
+    );
     expect(buildProbeScript(brand)).not.toMatch(/@[A-Z_]+@/u);
     expect(buildProbeScript(brand)).toContain(brand.applicationId);
   });

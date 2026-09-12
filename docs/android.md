@@ -12,7 +12,7 @@ Store, EAS or F-Droid pipeline.
 | `production` (default)  | FDE       | `app.frogg.fde`       | `release`      |
 | `development`           | FDE Debug | `app.frogg.fde.debug` | `debug`        |
 
-Both come from `apps/ui/app.config.js`. The deep-link scheme stays `paseo://` for daemon
+Both come from `apps/ui/app.config.js`. The deep-link scheme stays `fde://` for daemon
 compatibility (see ROADMAP.md). Icons are `apps/ui/assets/images/icon.png` and
 `android-icon-foreground.png`.
 
@@ -29,7 +29,7 @@ versionCode = major * 1_000_000 + minor * 1_000 + patch      # 0.1.9 -> 1009
 Bumping the version (see docs/ci.md "Cutting a release") therefore bumps the version
 code; nothing is hand-maintained. Minor and patch each get three digits; change the
 formula before either reaches `1000`. The F-Droid plugin (`plugins/with-fdroid-autolinking.js`,
-only active with `PASEO_FDROID_BUILD=1`) multiplies it by 10 plus an ABI digit for
+only active with `FDE_FDROID_BUILD=1`) multiplies it by 10 plus an ABI digit for
 single-ABI builds; the normal release build keeps the base value for every ABI.
 
 ## Building the APK
@@ -133,7 +133,7 @@ machine. For the dev client (`npm run android` in `apps/ui`) also set
 
 - `apps/ui/eas.json` and the `eas-cli` dev dependency are upstream leftovers; nothing here
   uses EAS.
-- `PASEO_FDROID_BUILD=1` still selects upstream's source-only profile (no camera,
+- `FDE_FDROID_BUILD=1` still selects upstream's source-only profile (no camera,
   notifications or dev client; every Expo module built from source). It is not used
   for FDE releases and needs far more memory.
 - Keep `react`/`react-dom` at the version React Native embeds (`19.1.0` for RN 0.81):

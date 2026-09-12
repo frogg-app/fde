@@ -20,11 +20,11 @@ The image:
   agent CLIs
 
 Open the container's HTTP origin, for example `http://<host>:9999`. Until a
-device has paired (or `PASEO_PASSWORD` is set) it shows the "Claim this FDE
+device has paired (or `FDE_PASSWORD` is set) it shows the "Claim this FDE
 daemon" page with a QR code; pair from the FDE app and the page turns into the
 web UI. Static UI files load without daemon auth; API and WebSocket requests
 from outside the container need the paired device credential or
-`PASEO_PASSWORD`. See [install.md](install.md#first-run-install-then-pair).
+`FDE_PASSWORD`. See [install.md](install.md#first-run-install-then-pair).
 
 ## Quick start
 
@@ -37,7 +37,7 @@ or by hand:
 ```bash
 docker run -d --name fde-daemon --restart unless-stopped \
   -p 0.0.0.0:9999:9999 \
-  -e PASEO_PASSWORD=change-me \
+  -e FDE_PASSWORD=change-me \
   -v "$HOME/.fde:/home/fde/.fde" \
   -v "$PWD:/workspace" \
   froggapp/fde:0.1.6
@@ -52,7 +52,7 @@ Use [`deploy/docker/docker-compose.example.yml`](../deploy/docker/docker-compose
 
 ```bash
 cp deploy/docker/docker-compose.example.yml compose.yaml
-$EDITOR compose.yaml     # set PASEO_PASSWORD, pin the version
+$EDITOR compose.yaml     # set FDE_PASSWORD, pin the version
 docker compose up -d
 ```
 
@@ -94,19 +94,19 @@ or Compose `environment:`; the daemon forwards them to launched agents.
 | `/home/fde`      | Mount the whole home instead to persist agent config as well |
 | `/workspace`     | Code that the daemon and launched agents read and write      |
 
-| Variable               | Default          |
-| ---------------------- | ---------------- |
-| `PASEO_HOME`           | `/home/fde/.fde` |
-| `PASEO_LISTEN`         | `0.0.0.0:9999`   |
-| `PASEO_WEB_UI_ENABLED` | `true`           |
-| `PASEO_LOG_FORMAT`     | `json`           |
-| `PASEO_PASSWORD`       | unset            |
-| `PASEO_HOSTNAMES`      | unset            |
-| `PASEO_VOICE`          | unset (voice on) |
+| Variable             | Default          |
+| -------------------- | ---------------- |
+| `FDE_HOME`           | `/home/fde/.fde` |
+| `FDE_LISTEN`         | `0.0.0.0:9999`   |
+| `FDE_WEB_UI_ENABLED` | `true`           |
+| `FDE_LOG_FORMAT`     | `json`           |
+| `FDE_PASSWORD`       | unset            |
+| `FDE_HOSTNAMES`      | unset            |
+| `FDE_VOICE`          | unset (voice on) |
 
 The image ships the local speech runtime, so dictation and voice mode are on by
 default and download their models into the state volume on first use.
-`PASEO_VOICE=0` turns both off.
+`FDE_VOICE=0` turns both off.
 
 Bind-mounted directories must be writable by uid/gid `1000:1000`; the
 entrypoint chowns mounts that are still root-owned on first start.
@@ -126,14 +126,14 @@ location / {
 }
 ```
 
-When reaching the daemon by DNS name, set `PASEO_HOSTNAMES` (for example
+When reaching the daemon by DNS name, set `FDE_HOSTNAMES` (for example
 `fde.example.com,.lan`) so host-header validation allows it. IPs and
 `localhost` are allowed by default.
 
 ## Security
 
 - A published port starts unclaimed: the first device to pair owns the daemon.
-  Pair right after starting the container, or set `PASEO_PASSWORD` instead.
+  Pair right after starting the container, or set `FDE_PASSWORD` instead.
   `docker exec fde-daemon fde daemon claim-status` shows who has paired and
   `reset-claim` forgets them.
 - Put HTTPS in front for direct browser access.
@@ -158,12 +158,12 @@ unpacks it under `/opt/fde`.
 
 ## Troubleshooting
 
-- **The web UI loads but cannot connect**: with `PASEO_PASSWORD` set, add a
+- **The web UI loads but cannot connect**: with `FDE_PASSWORD` set, add a
   direct connection using that password.
 - **The pairing page keeps showing**: no device has completed pairing yet, or
   the code expired (reload for a new one). `docker exec fde-daemon fde daemon
 claim-status --json` reports the state.
-- **403 Host not allowed**: set `PASEO_HOSTNAMES`.
+- **403 Host not allowed**: set `FDE_HOSTNAMES`.
 - **Provider not available**: install that agent CLI in a child image.
 - **Permission errors in `/workspace`**: make the directory writable by
   `1000:1000`, or run the container with `--user`.

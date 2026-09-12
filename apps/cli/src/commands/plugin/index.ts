@@ -219,7 +219,7 @@ export function createPluginCommand(): Command {
       .alias("add")
       .description("Trust and install a plugin from a directory or Git repository")
       .argument("<source>", "Host directory, Git source, or Git source:plugin/path")
-      .option("--id <id>", "Runtime plugin ID (defaults to paseo-plugin.json id)")
+      .option("--id <id>", "Runtime plugin ID (defaults to fde-plugin.json id)")
       .option("--ref <ref>", "Git branch, tag, or commit")
       .option("--path <path>", "Legacy form of the :plugin/path source suffix"),
   ).action(withOutput(install));

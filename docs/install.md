@@ -34,7 +34,7 @@ is built from the same bundle.
    (a stateless service built from the same route, `deploy/pair`); you can also point that
    hostname at your own daemon, which serves the same page from `GET /code/<code>` (and
    `GET /pair?code=<code>`). The same offer is also available as
-   `paseo://pair#offer=<code>` (the page's "Open in FDE" button, `deepLink` in
+   `fde://pair#offer=<code>` (the page's "Open in FDE" button, `deepLink` in
    `fde daemon pair --json`), which opens the installed desktop app directly. The code is
    single-use and expires after ten minutes; reload the page or re-run the command for a
    new one.
@@ -55,17 +55,17 @@ are never gated; see [permissions.md](permissions.md#claimed-state) for the exac
 
 Voice (dictation and voice mode) is on by default because the bundle ships the local
 speech runtime; models download in the background on first use and the app shows
-"downloading models" until they are ready. Opt out with `PASEO_VOICE=0` or
+"downloading models" until they are ready. Opt out with `FDE_VOICE=0` or
 `"features": { "voice": { "enabled": false } }` in `config.json`.
 
 ## Where the daemon keeps its state
 
-The FDE home is `~/.fde`. Set `FDE_HOME` to move it; the older `PASEO_HOME` still works and
-`FDE_HOME` wins when both are set. On a machine that still has `~/.paseo` and no `~/.fde`,
+The FDE home is `~/.fde`. Set `FDE_HOME` to move it; the older `FDE_HOME` still works and
+`FDE_HOME` wins when both are set. On a machine that still has `~/.fde` and no `~/.fde`,
 the next daemon or CLI start moves it once — a rename, or a copy that leaves the original
 when the rename would cross devices — and logs the move; a home a daemon is still running
 from is left alone until that daemon stops. Nothing inside the directory is renamed:
-`config.json`, `paseo.pid`, `daemon.log`, `principals.json` keep their names.
+`config.json`, `fde.pid`, `daemon.log`, `principals.json` keep their names.
 `fde daemon status` and onboarding both print the home in use.
 
 ## Start the daemon at login
@@ -125,13 +125,13 @@ What it does:
 2. Unpacks it into `~/.local/share/fde/versions/<version>/` and points the
    `~/.local/share/fde/current` symlink at it (the swap is atomic, so a running
    `fde` keeps resolving a complete tree).
-3. Links `fde` and `paseo` into `~/.local/bin` and configures PATH in the
+3. Links `fde` and `fde` into `~/.local/bin` and configures PATH in the
    user’s Bash, Zsh, Fish, or POSIX login profile. Open a new terminal after
    installation, or run the printed PATH command to use the CLI in the current
    terminal. Re-running the installer does not duplicate its PATH entries.
    Unsupported shells get a manual PATH reminder.
 4. Installs a service that runs `fde daemon start --foreground` with
-   `PASEO_LISTEN` and `PASEO_WEB_UI_ENABLED=true`:
+   `FDE_LISTEN` and `FDE_WEB_UI_ENABLED=true`:
    - Linux: systemd user unit `~/.config/systemd/user/fde-daemon.service`,
      enabled and started with `systemctl --user`. When that user session is not
      available (common in a newly opened SSH terminal), the installer starts a
@@ -155,7 +155,7 @@ versions can still supply code to independent execution services.
 | -------------------- | ------------------------------------------- | -------------------------------------------------------------- |
 | `FDE_VERSION`        | latest release                              | Exact version to install, e.g. `0.1.7`                         |
 | `FDE_INSTALL_DIR`    | `~/.local/share/fde`                        | Install root (`versions/`, `current`)                          |
-| `FDE_BIN_DIR`        | `~/.local/bin`                              | Where `fde`/`paseo` are linked                                 |
+| `FDE_BIN_DIR`        | `~/.local/bin`                              | Where `fde`/`fde` are linked                                   |
 | `FDE_RELEASE_BASE`   | `https://github.com/frogg-app/fde/releases` | Release download base                                          |
 | `FDE_BUNDLE_URL`     | unset                                       | Download this exact tarball (+ `.sha256`) instead of a release |
 | `FDE_BUNDLE_FILE`    | unset                                       | Install this local tarball instead of downloading              |
@@ -244,8 +244,7 @@ from `last-update.json`. The RPCs are `daemon.update.check`, `daemon.update.star
 and `daemon.update.get_status` (all need the `daemon.manage` permission); progress is
 broadcast as `daemon.update.run.progress`. The daemon runs its own bundled CLI for
 the work, so the client never needs shell access. A daemon that is not a versioned
-install answers `updatable: false` with the reason: a dev checkout, the desktop
-app's sidecar (the app updates it), or Docker, where the hint is to pull the new
+install answers `updatable: false` with the reason: a dev checkout or Docker, where the hint is to pull the new
 image (`install-docker.sh --update`, below).
 
 ### Automatically
@@ -258,7 +257,7 @@ Off by default. Enable it from the same settings section, in `config.json`:
 }
 ```
 
-or with `PASEO_AUTO_UPDATE=1` in the service environment. The daemon checks the
+or with `FDE_AUTO_UPDATE=1` in the service environment. The daemon checks the
 channel on the interval (first check five minutes after start) and updates when
 no agent is running; while agents run it retries every fifteen minutes.
 `quietHours` is a local `[start, end)` window in which nothing is applied.
@@ -290,7 +289,7 @@ one is started again; the script exits non-zero so a caller notices.
 | `<install dir>/last-update.json` | Outcome of the last run; what the app shows           |
 | `<install dir>/previous`         | Version `current` pointed to before the last flip     |
 | `<install dir>/versions/<v>/`    | Installed versions; a failed one stays for inspection |
-| `$PASEO_HOME/daemon.log`         | The daemon's own log around the restart               |
+| `$FDE_HOME/daemon.log`           | The daemon's own log around the restart               |
 
 `scripts/dev/self-update-rollback-test.sh <bundle.tar.gz>` runs the whole path on a
 scratch install: it derives a deliberately broken bundle, proves the rollback, then
@@ -307,20 +306,20 @@ Pulls `froggapp/fde:<version>` and starts a container named `fde-daemon` with
 on the host under `~/.fde`. Re-running replaces the container (state is kept),
 which is how you upgrade.
 
-| Variable        | Default                     | Purpose                                            |
-| --------------- | --------------------------- | -------------------------------------------------- |
-| `FDE_VERSION`   | `latest`                    | Image tag                                          |
-| `FDE_IMAGE`     | `froggapp/fde:$FDE_VERSION` | Full image reference                               |
-| `FDE_HOME`      | `~/.fde`                    | Host directory mounted at `/home/fde/.fde`         |
-| `FDE_PORT`      | `9999`                      | Host port published to the daemon                  |
-| `FDE_BIND`      | `0.0.0.0`                   | Host address the port is published on              |
-| `FDE_WORKSPACE` | unset                       | Host directory mounted at `/workspace`             |
-| `FDE_PASSWORD`  | unset                       | Sets `PASEO_PASSWORD` (do this on shared networks) |
-| `FDE_CONTAINER` | `fde-daemon`                | Container name                                     |
-| `FDE_NO_PULL`   | `0`                         | `1` skips `docker pull` (locally built image)      |
+| Variable        | Default                     | Purpose                                          |
+| --------------- | --------------------------- | ------------------------------------------------ |
+| `FDE_VERSION`   | `latest`                    | Image tag                                        |
+| `FDE_IMAGE`     | `froggapp/fde:$FDE_VERSION` | Full image reference                             |
+| `FDE_HOME`      | `~/.fde`                    | Host directory mounted at `/home/fde/.fde`       |
+| `FDE_PORT`      | `9999`                      | Host port published to the daemon                |
+| `FDE_BIND`      | `0.0.0.0`                   | Host address the port is published on            |
+| `FDE_WORKSPACE` | unset                       | Host directory mounted at `/workspace`           |
+| `FDE_PASSWORD`  | unset                       | Sets `FDE_PASSWORD` (do this on shared networks) |
+| `FDE_CONTAINER` | `fde-daemon`                | Container name                                   |
+| `FDE_NO_PULL`   | `0`                         | `1` skips `docker pull` (locally built image)    |
 
 `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_BASE_URL`, `OPENAI_BASE_URL`
-and `PASEO_HOSTNAMES` are passed into the container when set. See
+and `FDE_HOSTNAMES` are passed into the container when set. See
 [docker.md](docker.md) for the image itself, agent CLIs, and reverse proxies.
 
 ## The daemon bundle
@@ -339,7 +338,7 @@ Inside the tarball:
 fde-daemon-<v>-<platform>-<arch>/
   node/            official Node 22 runtime, verified against SHASUMS256.txt
   daemon/          packages/server, apps/cli, workspace libs, production node_modules
-  bin/fde, bin/paseo   launchers: node --disable-warning=DEP0040 daemon/apps/cli/dist/index.js
+  bin/fde, bin/fde   launchers: node --disable-warning=DEP0040 daemon/apps/cli/dist/index.js
   manifest.json    {version, platform, arch, node, builtAt}
 ```
 
@@ -363,7 +362,7 @@ fde-daemon-<v>-win-<arch>/
   node/node.exe, node/npm.cmd, ...   official Windows runtime from node-v22-win-<arch>.zip
   daemon/apps/cli/dist/index.js      the launch entry, as on the other platforms
   daemon/node_modules/@fde/*         workspace libraries as real directories
-  bin/fde.cmd, bin/paseo.cmd         launchers: "%~dp0..\node\node.exe" ... index.js %*
+  bin/fde.cmd, bin/fde.cmd         launchers: "%~dp0..\node\node.exe" ... index.js %*
   manifest.json                      {"platform": "win", ...}
 ```
 
@@ -381,17 +380,12 @@ a temp dir, starts the daemon, checks the web UI answers, and stops it.
 
 ## Deploying from the desktop app
 
-## The desktop app's local daemon
+The Electron desktop app is app-only. It does not install or supervise a daemon
+on its own machine. Use the independent native/Docker installation described above
+for a local host, then add its address in the app. Closing or updating the app
+leaves that host running. See [desktop shell](desktop-shell.md).
 
-The desktop app installs the same bundle for the machine it runs on into its
-app data directory (`daemon/<version>/`, `current` marker) when the user
-chooses "Run agents on this machine" or presses "Install local daemon" in the
-daemon settings, verifying the `.sha256` sidecar, and supervises it through
-the bundled CLI. `FDE_DAEMON_BUNDLE_URL` (a `file://` or http URL of the
-archive, with the checksum at the same URL plus `.sha256`) points it at a
-local build for testing. See `docs/desktop-shell.md`.
-
-## How the desktop app will deploy over SSH
+## How the desktop app deploys over SSH
 
 A Remote SSH host's settings page has a **Daemon on this host** card that runs
 these same scripts over SSH: it probes the host (platform, Docker, systemd

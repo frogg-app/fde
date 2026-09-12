@@ -8,7 +8,7 @@ import {
 import { clearSessionSshPasswords, rememberSessionSshPassword } from "./ssh-session-passwords";
 import { createFakeLocalDaemonTransportRpc } from "./test-local-daemon-transport-rpc";
 
-const LOCAL_URL = "paseo+desktop://socket?path=%2Ftmp%2Fpaseo.sock";
+const LOCAL_URL = "fde+desktop://socket?path=%2Ftmp%2Ffde.sock";
 
 describe("desktop-daemon-transport", () => {
   it("uses the main-process event as readiness when it races registration", async () => {
@@ -109,7 +109,7 @@ describe("desktop-daemon-transport", () => {
       });
       // The ssh password never travels in the URL.
       expect(url).not.toContain("hunter2");
-      transportFactory!({ url, protocols: ["paseo.bearer.daemon-pw"] });
+      transportFactory!({ url, protocols: ["fde.bearer.daemon-pw"] });
       rpc.resolveListen(vi.fn());
       await Promise.resolve();
 
@@ -121,7 +121,7 @@ describe("desktop-daemon-transport", () => {
           sshPort: 2222,
           sshPassword: "hunter2",
         },
-        protocols: ["paseo.bearer.daemon-pw"],
+        protocols: ["fde.bearer.daemon-pw"],
       });
     } finally {
       clearSessionSshPasswords();
@@ -139,7 +139,7 @@ describe("desktop-daemon-transport", () => {
     ).toEqual({ sessionId: "s", target: { transportType: "ssh", host: "box" } });
     expect(
       buildOpenSessionInput({ sessionId: "s", url: LOCAL_URL, protocols: ["x"] }).target,
-    ).toEqual({ transportType: "socket", transportPath: "/tmp/paseo.sock" });
+    ).toEqual({ transportType: "socket", transportPath: "/tmp/fde.sock" });
   });
 
   it("hands structured error details to the client as an Error", async () => {

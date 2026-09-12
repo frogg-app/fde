@@ -6,7 +6,7 @@ import {
   generateLocalPairingOffer,
   getOrCreateServerId,
   loadConfig,
-  resolvePaseoHome,
+  resolveFdeHome,
 } from "@fde/server";
 import { resolveDaemonPassword, tryConnectToDaemon } from "../../utils/client.js";
 import { daemonHttpJson, resolveLoopbackHttpBase } from "./daemon-http.js";
@@ -78,9 +78,9 @@ function createProcessOutput(): PairCommandOutput {
   };
 }
 
-/** `PASEO_PAIRING_QR=0` suppresses the terminal QR (CI, logs, narrow terminals). */
+/** `FDE_PAIRING_QR=0` suppresses the terminal QR (CI, logs, narrow terminals). */
 export function pairingQrEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
-  const raw = env.PASEO_PAIRING_QR?.trim().toLowerCase();
+  const raw = env.FDE_PAIRING_QR?.trim().toLowerCase();
   if (raw === undefined || raw === "") return true;
   return !["0", "false", "no", "off"].includes(raw);
 }
@@ -105,10 +105,10 @@ export function pairCommand(): Command {
 }
 
 export async function resolveLocalPairingOffer(options: {
-  paseoHome: string;
+  fdeHome: string;
   enableRelay?: boolean;
 }): Promise<PairingOffer> {
-  const state = resolveLocalDaemonState({ home: options.paseoHome });
+  const state = resolveLocalDaemonState({ home: options.fdeHome });
   const serverId = getOrCreateServerId(state.home);
   const daemonOffer = await resolveDaemonPairingOffer(state.listen, serverId, options.enableRelay);
   if (daemonOffer) return daemonOffer;
@@ -119,13 +119,13 @@ export async function resolveLocalPairingOffer(options: {
     );
   }
 
-  const config = loadConfig(options.paseoHome);
+  const config = loadConfig(options.fdeHome);
   if (options.enableRelay && !config.relayEnabled) {
     throw new Error("Start the daemon before enabling relay for pairing.");
   }
 
   return generateLocalPairingOffer({
-    paseoHome: options.paseoHome,
+    fdeHome: options.fdeHome,
     relayEnabled: config.relayEnabled,
     relayEndpoint: config.relayEndpoint,
     relayPublicEndpoint: config.relayPublicEndpoint,
@@ -244,9 +244,9 @@ export async function runPairCommand(
     ...dependencyOverrides,
   };
 
-  const paseoHome = resolvePaseoHome();
+  const fdeHome = resolveFdeHome();
   let pairing = await dependencies.resolveOffer({
-    paseoHome,
+    fdeHome,
     enableRelay: options.relay === true,
   });
 
@@ -260,7 +260,7 @@ export async function runPairCommand(
       dependencies.output.setExitCode(1);
       return;
     }
-    pairing = await dependencies.resolveOffer({ paseoHome, enableRelay: true });
+    pairing = await dependencies.resolveOffer({ fdeHome, enableRelay: true });
     dependencies.output.success("Relay enabled");
   }
 

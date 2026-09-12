@@ -19,7 +19,7 @@ for brand in fde example; do
   "$output/bin/$cli" --help > ".generated/nix-acceptance/$brand-help.txt"
   if [ "$brand" != fde ]; then
     test ! -e "$output/bin/fde"
-    test ! -e "$output/bin/paseo"
+    test ! -e "$output/bin/fde"
   fi
   printf '%s\n' "$output" > ".generated/nix-acceptance/$brand-store-path.txt"
 done

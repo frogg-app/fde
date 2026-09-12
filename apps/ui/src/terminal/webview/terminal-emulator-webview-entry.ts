@@ -91,8 +91,8 @@ declare global {
     ReactNativeWebView?: {
       postMessage?: (data: string) => void;
     };
-    __PASEO_TERMINAL_WEBVIEW_RECEIVE__?: (message: InboundMessage) => void;
-    __PASEO_TERMINAL_WEBVIEW_BLUR__?: () => void;
+    __FDE_TERMINAL_WEBVIEW_RECEIVE__?: (message: InboundMessage) => void;
+    __FDE_TERMINAL_WEBVIEW_BLUR__?: () => void;
   }
 }
 
@@ -100,7 +100,7 @@ const sendToNative = (message: OutboundMessage): void => {
   window.ReactNativeWebView?.postMessage?.(JSON.stringify(message));
 };
 
-const TERMINAL_BACKGROUND_CSS_VAR = "--paseo-terminal-background";
+const TERMINAL_BACKGROUND_CSS_VAR = "--fde-terminal-background";
 const DEFAULT_TERMINAL_BACKGROUND = "#0b0b0b";
 const TERMINAL_TAP_MOVE_TOLERANCE_PX = 8;
 
@@ -542,6 +542,6 @@ root.appendChild(host);
 document.body.appendChild(root);
 
 const bridge = new TerminalWebViewBridge(root, host);
-window.__PASEO_TERMINAL_WEBVIEW_RECEIVE__ = bridge.receive;
-window.__PASEO_TERMINAL_WEBVIEW_BLUR__ = bridge.blur;
+window.__FDE_TERMINAL_WEBVIEW_RECEIVE__ = bridge.receive;
+window.__FDE_TERMINAL_WEBVIEW_BLUR__ = bridge.blur;
 sendToNative({ type: "bridgeReady" });

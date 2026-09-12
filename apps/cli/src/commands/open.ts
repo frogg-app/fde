@@ -12,7 +12,7 @@ function findDesktopApp(): string | null {
       `/Applications/${installName}.app`,
       path.join(homedir(), "Applications", `${installName}.app`),
       ...(brand.legacyFde
-        ? ["/Applications/Paseo.app", path.join(homedir(), "Applications", "Paseo.app")]
+        ? ["/Applications/Fde.app", path.join(homedir(), "Applications", "Fde.app")]
         : []),
     ];
 
@@ -30,11 +30,7 @@ function findDesktopApp(): string | null {
       `/usr/bin/${brand.desktopBinaryName}`,
       path.join(homedir(), "Applications", `${installName}.AppImage`),
       ...(brand.legacyFde
-        ? [
-            "/usr/bin/Paseo",
-            "/opt/Paseo/Paseo",
-            path.join(homedir(), "Applications", "Paseo.AppImage"),
-          ]
+        ? ["/usr/bin/Fde", "/opt/Fde/Fde", path.join(homedir(), "Applications", "Fde.AppImage")]
         : []),
     ];
 
@@ -65,7 +61,7 @@ function findDesktopApp(): string | null {
         brand.legacyFde ? brand.name : brand.applicationId,
         `${brand.desktopBinaryName}.exe`,
       ),
-      ...(brand.legacyFde ? [path.join(localAppData, "Programs", "Paseo", "Paseo.exe")] : []),
+      ...(brand.legacyFde ? [path.join(localAppData, "Programs", "Fde", "Fde.exe")] : []),
     ];
     return candidates.find((candidate) => existsSync(candidate)) ?? null;
   }
@@ -80,7 +76,7 @@ function cleanEnvForDesktopLaunch(): NodeJS.ProcessEnv {
   // desktop app would start as a bare Node process instead of Electron.
   delete env.ELECTRON_RUN_AS_NODE;
   delete env.ELECTRON_NO_ATTACH_CONSOLE;
-  delete env.PASEO_NODE_ENV;
+  delete env.FDE_NODE_ENV;
   return env;
 }
 
@@ -93,7 +89,7 @@ function spawnDetached(command: string, args: string[]): void {
 }
 
 function launchDesktop(args: string[]): void {
-  if (process.env.PASEO_DESKTOP_CLI === "1") {
+  if (process.env.FDE_DESKTOP_CLI === "1") {
     throw new Error(
       `Cannot open ${brand.name} Desktop while running in desktop CLI passthrough mode.`,
     );

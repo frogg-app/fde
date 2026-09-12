@@ -23,7 +23,7 @@ use crate::commands::settings::SettingsStore;
 use bundle::BundleStore;
 pub use lifecycle::{LaunchConfig, NOT_INSTALLED};
 
-pub const INSTALL_EVENT: &str = "paseo:event:local-daemon-install-event";
+pub const INSTALL_EVENT: &str = "fde:event:local-daemon-install-event";
 pub const DEFAULT_PORT: u16 = crate::branding::DEFAULT_PORT;
 
 pub type EventSink = Arc<dyn Fn(Value) + Send + Sync>;
@@ -111,8 +111,8 @@ pub fn register(app: &App) -> tauri::Result<()> {
     Ok(())
 }
 
-/// `$FDE_HOME`, the legacy `$PASEO_HOME`, or `~/.fde`, as the daemon resolves it.
-pub fn paseo_home<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
+/// `$FDE_HOME`, the legacy `$FDE_HOME`, or `~/.fde`, as the daemon resolves it.
+pub fn fde_home<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
     crate::branding::home_path(app.path().home_dir().unwrap_or_default())
 }
 
@@ -134,7 +134,7 @@ pub fn launch_config<R: Runtime>(app: &AppHandle<R>) -> LaunchConfig {
         .filter(|p| (1..=65535).contains(p))
         .unwrap_or(DEFAULT_PORT as u64);
     LaunchConfig {
-        home: paseo_home(app),
+        home: fde_home(app),
         listen: format!("127.0.0.1:{port}"),
         manage_enabled: daemon.get("manageBuiltInDaemon") == Some(&json!(true)),
     }
@@ -144,5 +144,5 @@ pub fn launch_config<R: Runtime>(app: &AppHandle<R>) -> LaunchConfig {
 pub fn stop_on_exit<R: Runtime>(app: &AppHandle<R>) {
     let keep_running = daemon_settings(app).get("keepRunningAfterQuit") == Some(&json!(true));
     let sidecar = app.state::<Sidecar>();
-    lifecycle::stop_on_exit(&sidecar, &paseo_home(app), keep_running);
+    lifecycle::stop_on_exit(&sidecar, &fde_home(app), keep_running);
 }

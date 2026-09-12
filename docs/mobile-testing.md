@@ -1,6 +1,6 @@
 # Mobile Testing
 
-> Note: mobile (iOS/Android) builds are not wired up in this fork; the commands below are kept for reference from upstream Paseo.
+> Android has a release pipeline. iOS development tooling remains available, but no iOS store release pipeline is present. Physical-device acceptance is separate from build success.
 
 ## Agent Device
 
@@ -9,7 +9,7 @@ Agent Device `.ad` scripts are the primary mobile E2E format. An agent discovers
 Record a flow while driving the app normally:
 
 ```bash
-agent-device open sh.paseo.debug \
+agent-device open sh.fde.debug \
   --platform ios \
   --session terminal-author \
   --save-script ./apps/ui/e2e/mobile/agent-device/terminal.ios.ad
@@ -21,7 +21,7 @@ agent-device close --session terminal-author
 
 `close` writes the script. Keep selectors based on stable app IDs. Keep assertions as `wait`, `get`, `is`, or `find` commands; screenshots are evidence, not assertions.
 
-Run the Paseo mobile suite:
+Run the FDE mobile suite:
 
 ```bash
 npm run test:e2e:mobile
@@ -29,10 +29,10 @@ npm run test:e2e:mobile
 
 The runner uses an isolated Agent Device state directory, verifies or starts Metro for this checkout, prewarms the iOS runner, discovers each script's platform from its `context` header, and cleans its sessions, runner lease, daemon, and any Metro process it started. Attempt results, timings, logs, and failure artifacts go under `.dev/agent-device-artifacts`.
 
-Set `PASEO_MOBILE_E2E_METRO_PORT` when this worktree already has Metro on a non-default port:
+Set `FDE_MOBILE_E2E_METRO_PORT` when this worktree already has Metro on a non-default port:
 
 ```bash
-PASEO_MOBILE_E2E_METRO_PORT=62093 npm run test:e2e:mobile
+FDE_MOBILE_E2E_METRO_PORT=62093 npm run test:e2e:mobile
 ```
 
 [native-terminal-basic.ios.ad](../apps/ui/e2e/mobile/agent-device/native-terminal-basic.ios.ad) and [native-terminal-basic.android.ad](../apps/ui/e2e/mobile/agent-device/native-terminal-basic.android.ad) are the smallest examples. Each opens a fresh terminal, types a command at zero delay, submits it, and asserts its distinct output. The app must be connected to a daemon with an active workspace.
@@ -135,7 +135,7 @@ For async elements, use `extendedWaitUntil`:
 
 Two reusable flows handle Expo dev client screens after launch:
 
-- `flows/launch.yaml` — handles dev launcher, dismisses dev menu, asserts "Welcome to Paseo"
+- `flows/launch.yaml` — handles dev launcher, dismisses dev menu, asserts "Welcome to FDE"
 - `flows/dev-client.yaml` — same but without asserting a particular app route
 
 ### Reach the composer
@@ -143,7 +143,7 @@ Two reusable flows handle Expo dev client screens after launch:
 `flows/land-in-chat.yaml` is the canonical "get into a chat" primitive. It `clearState`s, runs `launch.yaml`, taps the welcome screen's direct-connection option, types `127.0.0.1:9999`, submits, and waits for `message-input-root`. Compose any composer-level fixture on top of it:
 
 ```yaml
-appId: sh.paseo
+appId: sh.fde
 ---
 - runFlow: flows/land-in-chat.yaml
 # ...your scenario here, starting from a ready composer
@@ -178,7 +178,7 @@ New workspace scenarios should compose the reusable subflows in `apps/ui/maestro
 - `new-workspace-select-codex-gpt54.yaml`
 - `new-workspace-submit-and-assert-created.yaml`
 
-The workspace-create shell scripts render those subflows into a temp directory before running Maestro, which keeps nested `runFlow` paths and `${PASEO_MAESTRO_*}` placeholders working together.
+The workspace-create shell scripts render those subflows into a temp directory before running Maestro, which keeps nested `runFlow` paths and `${FDE_MAESTRO_*}` placeholders working together.
 
 ### Inputs that Maestro types into
 
@@ -246,17 +246,17 @@ done
 Voice mode uses the custom `expo-two-way-audio` Android module, so incoming calls and other system audio owners must be tested with emulator/system commands, not a JS-only test. To verify that voice resume handles denied audio focus without crashing:
 
 ```bash
-adb shell am start -n sh.paseo/.MainActivity
-# Start voice mode in an existing composer, then background Paseo with Home.
+adb shell am start -n sh.fde/.MainActivity
+# Start voice mode in an existing composer, then background FDE with Home.
 adb emu gsm call 5551234
-# Foreground Paseo while the call is still ringing.
+# Foreground FDE while the call is still ringing.
 ```
 
-Expected result: Paseo does not throw `RuntimeException: Audio focus request failed`; native audio reports an interruption and voice mode stops or pauses coherently.
+Expected result: FDE does not throw `RuntimeException: Audio focus request failed`; native audio reports an interruption and voice mode stops or pauses coherently.
 
 ### Releasing the audio session when idle
 
-Paseo must not hold the OS audio session once it is neither capturing nor playing, or the user's
+FDE must not hold the OS audio session once it is neither capturing nor playing, or the user's
 background music stays paused. On iOS this is not just a "while recording" problem: the
 `.playAndRecord`/`.voiceChat` category is non-mixing and survives backgrounding, and iOS re-asserts
 it every time the app returns to the foreground — so one dictation turn kills music for the life of
@@ -272,7 +272,7 @@ also releases on `OnAppEntersBackground`. The native side re-guards on `isRecord
 wrappers (voice provider + dictation) and only it knows the true state.
 
 This cannot be validated by a JS test — verify on a device: play music through Bluetooth earbuds,
-open Paseo, use dictation once, stop, and confirm the music resumes at full quality; then
+open FDE, use dictation once, stop, and confirm the music resumes at full quality; then
 background/foreground the app and confirm it keeps playing at full quality.
 
 ## Unistyles + Reanimated
@@ -368,8 +368,8 @@ APP_VARIANT=development npx expo run:ios --device
 ```
 
 `APP_VARIANT=development` is required. The `ios` npm script does not set it, and `app.config.js` defaults
-to `production` — so a bare `npm run ios` builds `sh.paseo` and collides with the App Store install instead
-of the `sh.paseo.debug` dev client. Ignore prebuild's `--non-interactive is not supported` warning; use
+to `production` — so a bare `npm run ios` builds `sh.fde` and collides with the App Store install instead
+of the `sh.fde.debug` dev client. Ignore prebuild's `--non-interactive is not supported` warning; use
 `CI=1` if you need non-interactive.
 
 ### Signing needs a working Apple ID token in Xcode
@@ -433,7 +433,7 @@ To verify only that native Swift compiles, skip signing entirely — the pods ha
 
 ```bash
 cd apps/ui/ios
-xcodebuild -workspace PaseoDebug.xcworkspace -scheme ExpoTwoWayAudio \
+xcodebuild -workspace FdeDebug.xcworkspace -scheme ExpoTwoWayAudio \
   -sdk iphoneos -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build
 ```
 
@@ -460,4 +460,4 @@ xcrun simctl ui booted appearance dark     # set dark
 xcrun simctl ui booted appearance light    # set light
 ```
 
-Expo dev server logs are in the tmux pane running `npm run dev`. Daemon logs are at `$PASEO_HOME/daemon.log` (see [development.md](development.md)).
+Expo dev server logs are in the tmux pane running `npm run dev`. Daemon logs are at `$FDE_HOME/daemon.log` (see [development.md](development.md)).

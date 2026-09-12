@@ -6,8 +6,8 @@ import { useSessionStore, type Agent } from "@/stores/session-store";
 import { refreshProviderSubagents, useProviderSubagentStore } from "./provider-store";
 import type { ProviderSubagentDescriptorPayload } from "@fde/protocol/messages";
 
-export interface PaseoSubagentRow {
-  kind: "paseo";
+export interface FdeSubagentRow {
+  kind: "fde";
   id: Agent["id"];
   provider: Agent["provider"];
   title: Agent["title"];
@@ -36,7 +36,7 @@ export interface ProviderSubagentRow {
   createdAt: Date;
 }
 
-export type SubagentRow = PaseoSubagentRow | ProviderSubagentRow;
+export type SubagentRow = FdeSubagentRow | ProviderSubagentRow;
 
 type SessionStoreSnapshot = ReturnType<typeof useSessionStore.getState>;
 type ProviderSubagentStoreSnapshot = ReturnType<typeof useProviderSubagentStore.getState>;
@@ -51,7 +51,7 @@ const EMPTY_PROVIDER_SUBAGENT_ROWS: ProviderSubagentRow[] = [];
 
 function toSubagentRow(agent: Agent): SubagentRow {
   return {
-    kind: "paseo",
+    kind: "fde",
     id: agent.id,
     provider: agent.provider,
     title: agent.title,
@@ -132,7 +132,7 @@ export function useSubagentsForParent(params: SelectSubagentsParams): SubagentRo
   // for instance. The params object is destructured so a fresh literal at the call site
   // does not defeat this either.
   const { serverId, parentAgentId } = params;
-  const selectPaseoRows = useCallback(
+  const selectFdeRows = useCallback(
     (state: SessionStoreSnapshot) =>
       selectSubagentsForParent(state, { serverId, parentAgentId }, pendingArchiveIds),
     [serverId, parentAgentId, pendingArchiveIds],
@@ -142,7 +142,7 @@ export function useSubagentsForParent(params: SelectSubagentsParams): SubagentRo
       selectProviderSubagentsForParent(state, { serverId, parentAgentId }, supported),
     [serverId, parentAgentId, supported],
   );
-  const paseoRows = useStoreWithEqualityFn(useSessionStore, selectPaseoRows, equal);
+  const fdeRows = useStoreWithEqualityFn(useSessionStore, selectFdeRows, equal);
   const providerRows = useStoreWithEqualityFn(useProviderSubagentStore, selectProviderRows, equal);
   const client = useSessionStore((state) => state.sessions[params.serverId]?.client ?? null);
 
@@ -154,9 +154,9 @@ export function useSubagentsForParent(params: SelectSubagentsParams): SubagentRo
   }, [client, params.parentAgentId, params.serverId, supported]);
 
   return useMemo(() => {
-    if (providerRows.length === 0) return paseoRows;
-    const rows = [...paseoRows, ...providerRows];
+    if (providerRows.length === 0) return fdeRows;
+    const rows = [...fdeRows, ...providerRows];
     rows.sort((left, right) => left.createdAt.getTime() - right.createdAt.getTime());
     return rows;
-  }, [paseoRows, providerRows]);
+  }, [fdeRows, providerRows]);
 }

@@ -6,11 +6,11 @@ import { BrowserAutomationExecuteRequestSchema } from "@fde/protocol/browser-aut
 import type { Rectangle } from "electron";
 import { ipcMain } from "electron";
 import {
-  getPaseoBrowserWebContentsForHostWindow,
-  getPaseoBrowserWorkspaceId,
-  getWorkspaceActivePaseoBrowserIdForHostWindow,
-  listRegisteredPaseoBrowserIds,
-  listRegisteredPaseoBrowserIdsForWorkspace,
+  getFdeBrowserWebContentsForHostWindow,
+  getFdeBrowserWorkspaceId,
+  getWorkspaceActiveFdeBrowserIdForHostWindow,
+  listRegisteredFdeBrowserIds,
+  listRegisteredFdeBrowserIdsForWorkspace,
 } from "../browser-webviews/index.js";
 import { CdpSessionQueue } from "./cdp-session-queue.js";
 import {
@@ -386,15 +386,15 @@ function normalizeConsoleMessage(input: {
 
 function createRegistry(hostWebContentsId: number): BrowserRegistry {
   return {
-    listRegisteredBrowserIds: listRegisteredPaseoBrowserIds,
-    listRegisteredBrowserIdsForWorkspace: listRegisteredPaseoBrowserIdsForWorkspace,
+    listRegisteredBrowserIds: listRegisteredFdeBrowserIds,
+    listRegisteredBrowserIdsForWorkspace: listRegisteredFdeBrowserIdsForWorkspace,
     getTabContents(browserId: string): TabContents | null {
-      const contents = getPaseoBrowserWebContentsForHostWindow(browserId, hostWebContentsId);
+      const contents = getFdeBrowserWebContentsForHostWindow(browserId, hostWebContentsId);
       return contents ? adaptWebContents(contents) : null;
     },
-    getBrowserWorkspaceId: getPaseoBrowserWorkspaceId,
+    getBrowserWorkspaceId: getFdeBrowserWorkspaceId,
     getWorkspaceActiveBrowserId(workspaceId: string): string | null {
-      return getWorkspaceActivePaseoBrowserIdForHostWindow(workspaceId, hostWebContentsId);
+      return getWorkspaceActiveFdeBrowserIdForHostWindow(workspaceId, hostWebContentsId);
     },
   };
 }
@@ -402,7 +402,7 @@ function createRegistry(hostWebContentsId: number): BrowserRegistry {
 export function registerBrowserAutomationIpc(options?: { ipc?: IpcHandlerRegistry }): void {
   const ipc = options?.ipc ?? ipcMain;
 
-  ipc.handle("paseo:browser:execute-automation-command", async (event, rawRequest: unknown) => {
+  ipc.handle("fde:browser:execute-automation-command", async (event, rawRequest: unknown) => {
     const hostContents = (event as { sender?: HostWebContents }).sender;
     const hostWebContentsId = hostContents?.id;
     if (!hostContents || typeof hostWebContentsId !== "number") {

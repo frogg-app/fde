@@ -46,7 +46,7 @@ export async function runCreateCommand(
   }
 
   try {
-    const response = await client.createPaseoWorktree(request);
+    const response = await client.createFdeWorktree(request);
 
     const workspace = response.workspace;
     if (!workspace || response.error) {

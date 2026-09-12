@@ -60,8 +60,8 @@ export interface PairLinkModalProps {
 
 /**
  * "Paste pairing link": accepts `https://pair.frogg.app/code/<code>`, a
- * `?code=` link, `paseo://pair#offer=…`, Paseo's
- * `https://app.paseo.sh/#offer=…`, or a bare `#offer=` fragment. A relay (v2) offer pairs and closes as before; a claim
+ * `?code=` link, `fde://pair#offer=…`, Fde's
+ * `https://app.example.com/#offer=…`, or a bare `#offer=` fragment. A relay (v2) offer pairs and closes as before; a claim
  * (v3) offer runs the claim flow and shows its outcome before closing.
  */
 export function PairLinkModal({ visible, onClose, onCancel, onSaved }: PairLinkModalProps) {

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, expect, test } from "vitest";
 import { CLIENT_CAPS } from "@fde/protocol/client-capabilities";
 import type { SessionOutboundMessage } from "@fde/protocol/messages";
 import { DaemonClient } from "./test-utils/daemon-client.js";
-import { createTestPaseoDaemon, type TestPaseoDaemon } from "./test-utils/paseo-daemon.js";
+import { createTestFdeDaemon, type TestFdeDaemon } from "./test-utils/fde-daemon.js";
 import { MockLoadTestAgentClient } from "./agent/providers/mock-load-test-agent.js";
 
 interface MessageWaiter {
@@ -109,11 +109,11 @@ function legacyAttentionResult(message: SessionOutboundMessage) {
   };
 }
 
-let daemon: TestPaseoDaemon;
+let daemon: TestFdeDaemon;
 const clients: ConnectedClient[] = [];
 
 beforeEach(async () => {
-  daemon = await createTestPaseoDaemon();
+  daemon = await createTestFdeDaemon();
 });
 
 afterEach(async () => {
@@ -149,7 +149,7 @@ async function connect(input: {
 
 test("rewind routes replacement completion by source capability and subscription", async () => {
   await daemon.close();
-  daemon = await createTestPaseoDaemon({
+  daemon = await createTestFdeDaemon({
     isDev: true,
     agentClients: { mock: new MockLoadTestAgentClient() },
   });

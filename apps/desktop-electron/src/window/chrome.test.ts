@@ -62,7 +62,7 @@ describe("desktop window chrome", () => {
 
   it("serializes the validated mode for preload", () => {
     expect(windowChromeModeArgument("custom-windows")).toBe(
-      "--paseo-window-chrome-mode=custom-windows",
+      "--fde-window-chrome-mode=custom-windows",
     );
   });
 });

@@ -22,19 +22,19 @@ import storage from "./brand-storage";
 describe("brand storage", () => {
   beforeEach(() => {
     state.rows.clear();
-    state.rows.set("@paseo:settings", "official");
-    state.rows.set("com.other.studio:@paseo:settings", "other");
+    state.rows.set("@fde:settings", "official");
+    state.rows.set("com.other.studio:@fde:settings", "other");
   });
   it("reads and writes only this product's key namespace", async () => {
-    expect(await storage.getItem("@paseo:settings")).toBeNull();
-    await storage.setItem("@paseo:settings", "custom");
-    expect(state.rows.get("@paseo:settings")).toBe("official");
-    expect(await storage.getItem("@paseo:settings")).toBe("custom");
-    expect(await storage.getAllKeys()).toEqual(["@paseo:settings"]);
-    expect(await storage.multiGet(["@paseo:settings"])).toEqual([["@paseo:settings", "custom"]]);
+    expect(await storage.getItem("@fde:settings")).toBeNull();
+    await storage.setItem("@fde:settings", "custom");
+    expect(state.rows.get("@fde:settings")).toBe("official");
+    expect(await storage.getItem("@fde:settings")).toBe("custom");
+    expect(await storage.getAllKeys()).toEqual(["@fde:settings"]);
+    expect(await storage.multiGet(["@fde:settings"])).toEqual([["@fde:settings", "custom"]]);
   });
   it("cache cleanup cannot delete FDE or another brand", async () => {
-    await storage.setItem("@paseo:settings", "custom");
+    await storage.setItem("@fde:settings", "custom");
     await storage.multiRemove(await storage.getAllKeys());
     expect([...state.rows.values()]).toEqual(["official", "other"]);
   });

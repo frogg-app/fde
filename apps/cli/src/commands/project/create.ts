@@ -32,7 +32,7 @@ export async function runCreateCommand(
   const projectPath = resolveProjectPath({
     pathArg,
     cwd: process.cwd(),
-    daemonTarget: options.host ?? process.env.PASEO_HOST,
+    daemonTarget: options.host ?? process.env.FDE_HOST,
   });
   const client = await connectToDaemon({ host: options.host }).catch((error: unknown) => {
     throw buildDaemonConnectionCommandError({ host: options.host, error });

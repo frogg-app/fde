@@ -60,7 +60,7 @@ function firstDefined(values: Array<string | undefined>): string | undefined {
 export function resolveCompanionModel(inputs: CompanionModelInputs): string {
   const configured = firstDefined([
     inputs.persisted.features?.companion?.model,
-    inputs.env.PASEO_COMPANION_MODEL,
+    inputs.env.FDE_COMPANION_MODEL,
   ]);
   return configured ?? DEFAULT_COMPANION_MODEL;
 }

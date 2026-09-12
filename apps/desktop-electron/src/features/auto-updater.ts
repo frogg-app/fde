@@ -1,5 +1,6 @@
 import { brand } from "@fde/branding";
-import { writeElectronUpdateConfig } from "./app-update-config.js";
+import { resolveElectronUpdateFeed } from "./app-update-config.js";
+import { writeElectronUpdateConfig, resolveElectronUpdateUrl } from "./app-update-config.js";
 import { existsSync } from "node:fs";
 import { randomBytes } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -101,9 +102,11 @@ export function shouldInstallAppUpdateOnQuit(input: {
 
 class ElectronAppUpdateRuntime implements AppUpdateRuntime {
   private configured = false;
+  private releaseChannel: AppReleaseChannel = "stable";
 
   configure(input: AppUpdateRuntimeConfiguration): void {
-    const updateUrl = process.env.FDE_ELECTRON_UPDATE_URL;
+    this.releaseChannel = input.releaseChannel;
+    const updateUrl = resolveUpdateUrl();
     if (updateUrl && !this.configured) {
       autoUpdater.updateConfigPath = writeElectronUpdateConfig(
         app.getPath("userData"),
@@ -114,7 +117,7 @@ class ElectronAppUpdateRuntime implements AppUpdateRuntime {
     }
     autoUpdater.autoDownload = true;
     autoUpdater.autoRunAppAfterInstall = true;
-    // Paseo revalidates the current manifest before explicitly installing on quit.
+    // Fde revalidates the current manifest before explicitly installing on quit.
     // Electron's built-in handler would install an older download without checking
     // whether a newer release has superseded it.
     autoUpdater.autoInstallOnAppQuit = false;
@@ -133,7 +136,7 @@ class ElectronAppUpdateRuntime implements AppUpdateRuntime {
     this.configured = true;
 
     // electron-updater logs every emitted error before consumers can classify it.
-    // Paseo reports genuine check, runtime, and install failures through the
+    // Fde reports genuine check, runtime, and install failures through the
     // callbacks below, so leave internal error logging disabled to avoid both
     // duplicate logs and expected missing-channel noise.
     const updaterLogger = autoUpdater.logger;
@@ -158,6 +161,20 @@ class ElectronAppUpdateRuntime implements AppUpdateRuntime {
 
   async checkForUpdates(): Promise<RuntimeUpdateCheckResult | null> {
     try {
+      const feed = await resolveElectronUpdateFeed({
+        override: process.env.FDE_ELECTRON_UPDATE_URL,
+        releaseBase: brand.distribution.releaseBase,
+        releaseChannel: this.releaseChannel,
+      });
+      if (feed) {
+        autoUpdater.updateConfigPath = writeElectronUpdateConfig(
+          app.getPath("userData"),
+          feed.url,
+          `${brand.id}-electron-updater`,
+        );
+        autoUpdater.setFeedURL({ provider: "generic", url: feed.url });
+        autoUpdater.channel = feed.channel;
+      }
       const result = await autoUpdater.checkForUpdates();
       if (!result) return null;
       return {
@@ -282,10 +299,16 @@ export async function installAppUpdateOnQuit({
   });
 }
 
+function resolveUpdateUrl(): string | null {
+  return resolveElectronUpdateUrl(
+    process.env.FDE_ELECTRON_UPDATE_URL,
+    brand.distribution.releaseBase,
+  );
+}
+
 export function getAppUpdateStrategy(): "disabled" | "github-release" {
   return app.isPackaged &&
-    (process.env.FDE_ELECTRON_UPDATE_URL ||
-      existsSync(path.join(process.resourcesPath, "app-update.yml")))
+    (resolveUpdateUrl() || existsSync(path.join(process.resourcesPath, "app-update.yml")))
     ? "github-release"
     : "disabled";
 }

@@ -7,16 +7,16 @@ source /opt/fde/brand.sh
 home_key="${BRAND_ENV_PREFIX}_HOME"
 state_home="${!home_key:-}"
 if [[ -z "$state_home" && "$BRAND_LEGACY_FDE" == "1" ]]; then
-  state_home="${PASEO_HOME:-}"
+  state_home="${FDE_HOME:-}"
 fi
 state_home="${state_home:-${HOME:-/home/fde}/${BRAND_HOME}}"
 export "$home_key=$state_home" "${BRAND_ENV_PREFIX}_DOCKER=1"
 
 : "${HOME:=/home/fde}"
-: "${PASEO_LISTEN:=0.0.0.0:${BRAND_PORT}}"
-: "${PASEO_WEB_UI_ENABLED:=true}"
-: "${PASEO_LOG_LEVEL:=info}"
-: "${PASEO_LOG_FORMAT:=json}"
+: "${FDE_LISTEN:=0.0.0.0:${BRAND_PORT}}"
+: "${FDE_WEB_UI_ENABLED:=true}"
+: "${FDE_LOG_LEVEL:=info}"
+: "${FDE_LOG_FORMAT:=json}"
 : "${CLAUDE_CONFIG_DIR:=${HOME}/.claude}"
 : "${CODEX_HOME:=${HOME}/.codex}"
 : "${XDG_CONFIG_HOME:=${HOME}/.config}"
@@ -24,7 +24,7 @@ export "$home_key=$state_home" "${BRAND_ENV_PREFIX}_DOCKER=1"
 : "${XDG_STATE_HOME:=${HOME}/.local/state}"
 : "${XDG_CACHE_HOME:=${HOME}/.cache}"
 
-export HOME PASEO_LISTEN PASEO_WEB_UI_ENABLED PASEO_LOG_LEVEL PASEO_LOG_FORMAT
+export HOME FDE_LISTEN FDE_WEB_UI_ENABLED FDE_LOG_LEVEL FDE_LOG_FORMAT
 export CLAUDE_CONFIG_DIR CODEX_HOME XDG_CONFIG_HOME XDG_DATA_HOME XDG_STATE_HOME XDG_CACHE_HOME
 
 ensure_dir() {
@@ -47,16 +47,16 @@ if [[ "$#" -gt 0 ]]; then
   exec "$@"
 fi
 
-if [[ -z "${PASEO_PASSWORD:-}" ]] && [[ ! -s "${state_home}/principals.json" ]]; then
+if [[ -z "${FDE_PASSWORD:-}" ]] && [[ ! -s "${state_home}/principals.json" ]]; then
   {
     echo "[${BRAND_ID}] No password and no paired device yet: the daemon is unclaimed."
-    echo "[${BRAND_ID}] Open http://<host>:${PASEO_LISTEN##*:}/ from another machine (or run '${BRAND_CLI} daemon pair' here)"
+    echo "[${BRAND_ID}] Open http://<host>:${FDE_LISTEN##*:}/ from another machine (or run '${BRAND_CLI} daemon pair' here)"
     echo "[${BRAND_ID}] and pair from the ${BRAND_NAME} app; the first device to pair owns this daemon."
-    echo "[${BRAND_ID}] Set PASEO_PASSWORD instead if you prefer a shared password."
+    echo "[${BRAND_ID}] Set FDE_PASSWORD instead if you prefer a shared password."
   } >&2
 fi
 
-echo "[${BRAND_ID}] starting daemon on ${PASEO_LISTEN} with web UI ${PASEO_WEB_UI_ENABLED}"
+echo "[${BRAND_ID}] starting daemon on ${FDE_LISTEN} with web UI ${FDE_WEB_UI_ENABLED}"
 if [[ "$(id -u)" == "0" ]]; then
   exec gosu fde "$BRAND_CLI" daemon start --foreground
 fi

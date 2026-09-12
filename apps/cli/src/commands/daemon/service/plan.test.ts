@@ -51,7 +51,7 @@ describe("systemd user unit", () => {
     expect(plan.file?.contents).toContain(
       'ExecStart="/opt/fde/bin/fde" "daemon" "start" "--foreground"',
     );
-    expect(plan.file?.contents).toContain("Environment=PASEO_LISTEN=127.0.0.1:9991");
+    expect(plan.file?.contents).toContain("Environment=FDE_LISTEN=127.0.0.1:9991");
     expect(plan.file?.contents).toContain(`Environment="FDE_HOME=${HOME_DIR}/.fde"`);
     expect(plan.file?.contents).toContain('Environment="PATH=/opt/fde/bin:/usr/bin:/bin"');
     expect(plan.file?.contents).toContain("WantedBy=default.target");
@@ -88,7 +88,7 @@ describe("launchd agent", () => {
     expect(contents).toContain(`<key>Label</key><string>${LAUNCHD_LABEL}</string>`);
     expect(contents).toContain("<string>/opt/fde/bin/fde</string>");
     expect(contents).toContain("<string>--foreground</string>");
-    expect(contents).toContain("<key>PASEO_LISTEN</key><string>127.0.0.1:9991</string>");
+    expect(contents).toContain("<key>FDE_LISTEN</key><string>127.0.0.1:9991</string>");
     expect(contents).toContain(`<key>FDE_HOME</key><string>${HOME_DIR}/.fde</string>`);
     expect(contents).toContain("<key>RunAtLoad</key><true/>");
     expect(plan.install.at(-1)).toEqual({

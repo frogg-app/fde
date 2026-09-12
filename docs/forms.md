@@ -1,22 +1,8 @@
 # Forms
 
-The paved road for building forms in the app. The schedule form was the golden
-example; when building or fixing any form, copy its shape, not the shape of
-whatever screen you happen to be near.
-
-> The schedule form was removed from the product along with the Schedules
-> screen. The files below no longer exist in this repo; read them in the
-> upstream Paseo checkout at `/home/frogg/projects/paseo/apps/ui`. The agent
-> profile form (`apps/ui/src/agent-profiles/`) is the closest surviving example.
-
-Golden example files (upstream):
-
-- `apps/ui/src/schedules/schedule-form-model.ts` (+ `.test.ts`) — the model
-- `apps/ui/src/schedules/use-schedule-form-model.ts` — model lifetime adapter
-- `apps/ui/src/schedules/use-schedule-form-provider-snapshot.ts` — async input adapter
-- `apps/ui/src/components/schedules/schedule-form-sheet.tsx` — render + intent dispatch
-- `apps/ui/src/schedules/aggregated-schedules.ts` / `hooks/use-schedules.ts` — load-state gating
-- `apps/ui/e2e/schedules-*.spec.ts` — the behavioral contract
+Use the agent profile form (`apps/ui/src/agent-profiles/`) as the current local
+example when building or fixing forms. Keep form state and validation separate
+from rendering, following the conventions below.
 
 ## The form model
 

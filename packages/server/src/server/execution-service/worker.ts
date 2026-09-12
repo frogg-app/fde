@@ -1,10 +1,10 @@
 import { brand } from "@fde/branding";
 import { randomUUID } from "node:crypto";
-import { createPaseoDaemon, type DaemonLifecycleIntent } from "../bootstrap.js";
+import { createFdeDaemon, type DaemonLifecycleIntent } from "../bootstrap.js";
 import { loadConfig } from "../config.js";
 import { applyCliFlagOverrides } from "../daemon-cli-overrides.js";
 import { createRootLogger } from "../logger.js";
-import { resolveFdeHome } from "../paseo-home.js";
+import { resolveFdeHome } from "../fde-home.js";
 import { acquirePidLock, releasePidLock, startPidLockHeartbeat } from "../pid-lock.js";
 import { createExecutionControlServer, publicExecutionStatus } from "./control-server.js";
 import {
@@ -32,13 +32,13 @@ async function main(): Promise<void> {
   });
   const config = loadConfig(home);
   applyCliFlagOverrides(config);
-  const logger = createRootLogger({ log: config.log }, { paseoHome: directory, file: false });
+  const logger = createRootLogger({ log: config.log }, { fdeHome: directory, file: false });
   const instanceId = randomUUID();
   const token = randomUUID() + randomUUID();
   const startedAt = new Date().toISOString();
   let publicListen = config.listen;
   let descriptor: ExecutionServiceDescriptor | null = null;
-  let daemon: Awaited<ReturnType<typeof createPaseoDaemon>> | null = null;
+  let daemon: Awaited<ReturnType<typeof createFdeDaemon>> | null = null;
   let control: Awaited<ReturnType<typeof createExecutionControlServer>> | null = null;
   let stopping = false;
   let sequence = 0;
@@ -67,7 +67,7 @@ async function main(): Promise<void> {
   process.on("SIGTERM", () => void shutdown());
   process.on("SIGINT", () => void shutdown());
   try {
-    daemon = await createPaseoDaemon(
+    daemon = await createFdeDaemon(
       {
         ...config,
         listen: "127.0.0.1:0",

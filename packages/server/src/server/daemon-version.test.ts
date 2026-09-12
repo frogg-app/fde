@@ -8,7 +8,7 @@ import { DaemonVersionResolutionError, resolveDaemonVersion } from "./daemon-ver
 const createdDirs: string[] = [];
 
 function createTempDir(): string {
-  const dir = mkdtempSync(path.join(tmpdir(), "paseo-daemon-version-"));
+  const dir = mkdtempSync(path.join(tmpdir(), "fde-daemon-version-"));
   createdDirs.push(dir);
   return dir;
 }
@@ -38,7 +38,7 @@ describe("resolveDaemonVersion", () => {
     const root = createTempDir();
     writeFileSync(
       path.join(root, "package.json"),
-      JSON.stringify({ name: "not-getpaseo-server", version: "1.2.3" }),
+      JSON.stringify({ name: "not-frogg-app-server", version: "1.2.3" }),
       "utf8",
     );
     const nestedDir = path.join(root, "dist", "server");

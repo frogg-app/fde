@@ -1,172 +1,76 @@
-# Electron desktop migration
+# Electron desktop
 
-The Electron shell lives in `apps/desktop-electron`. It uses the current Expo web
-export and the `window.paseoDesktop` bridge, retaining the current daemon, protocol,
-client and UI. The Tauri shell remains in `apps/desktop` for comparison while the
-Windows reliability investigation continues.
+The production desktop app lives in `apps/desktop-electron` and loads the shared
+Expo UI. Its native bridge is `window.fdeDesktop`; the app origin is `fde://app`.
+FDE 0.6 retires the previous native shell and experimental Rust daemon from production builds; their sources remain inactive references.
 
-The migration branch changes the default desktop commands to Electron and retains
-explicit Tauri commands. It does not publish a release or replace an installed
-Tauri application merely by building the branch.
+## App-only distribution
 
-## Scope and compatibility
+The package contains the application and Electron runtime. It does not bundle,
+install, start, supervise, or stop a local daemon. Install the Node daemon
+separately, then add or pair its host. Direct, relay, SSH, socket and named-pipe
+connections remain available. Remote SSH deployment installs and manages the
+daemon on the explicitly selected remote host.
 
-The desktop boundary owns windows, native dialogs and notifications, deep links,
-attachments, desktop settings, SSH/socket/pipe connections, remote SSH deployment,
-and application updates. Direct WebSocket and relay connections continue through
-the shared client. The packaged renderer keeps the `paseo://app` origin accepted
-by the daemon; legacy wire and deep-link names remain intentional compatibility.
+`supportsLocalDaemon: false` keeps local server setup and management controls out
+of the desktop UI. Old local-management commands reject, and imported desktop
+settings cannot start a server. Closing or updating the app leaves independent
+servers and their agent execution alone.
 
-The renderer uses context isolation and a sandboxed preload. Native capabilities
-cross the existing bridge rather than exposing Node to the page. The UI uses its
-ordinary web export, keeping the current browser-pane behavior during comparison.
+The renderer uses a sandboxed preload and context isolation. Native IPC accepts
+only trusted application frames and validates arguments. File access, clipboard,
+notifications, network discovery and SSH remain behind the native boundary.
 
-Electron has a separate application identity and renderer profile. Saved hosts,
-credentials and UI preferences held by Tauri's browser storage are not shared with
-Electron: add or pair hosts in the new application. Agent history and workspaces
-remain on the connected daemon. Do not copy a live WebView2 or Chromium profile
-between applications. Retain the Tauri installation and its state until device
-acceptance is complete.
+The production product is FDE (`app.frogg.fde`), with artifacts named
+`FDE-${version}-${os}-${arch}`. The tested FDE Electron profile remains in use for
+0.4.x continuity. The retired shell requires manual reinstall and host pairing.
 
-## Verification and acceptance
+## Development
 
-A build or a unit test does not establish that Electron resolves the reported
-Windows lockups. Compare both applications on the same machine, against the same
-daemon and workload, recording exact application versions and elapsed time.
+Install workspaces with root `npm ci`, then use `npm run dev:desktop`. The launcher
+uses isolated state under `.dev/electron`, a separate Expo port, and services bound
+to `0.0.0.0`. `FDE_ELECTRON_UI_PORT` overrides that port.
+`FDE_ELECTRON_USER_DATA_DIR` selects an isolated profile for diagnostic launches;
+`FDE_ELECTRON_UI_DIR` serves an existing UI export without Metro.
 
-1. Open the same host, workspace and conversation; check direct, relay and SSH
-   connections as applicable, including reconnect after a network interruption.
-2. Stream a long reply, scroll its history, switch workspaces and terminals, and
-   check input, hover and titlebar responsiveness. Repeat after sustained use.
-3. Exercise microphone input, spoken replies and Companion interruption; repeat
-   after stopping voice. Record total memory across the application's process tree,
-   rather than comparing only one renderer process.
-4. Close the application during idle, streaming and voice playback. Confirm its
-   owned processes exit and it relaunches immediately. Confirm an independently
-   running daemon stays running. The app never owns a local daemon.
-5. Check attachment selection/drop, native notifications, opening a project in an
-   editor, a second window, and a deep link to an existing agent.
-6. On each packaging platform, verify install, launch, update failure feedback,
-   update hand-off and relaunch. Keep installer and portable cases separate.
+Build with `npm run build:desktop -- --target win-x64` or a supported Linux/macOS
+target. See [building](building.md) for platform prerequisites and artifact checks.
+The app itself requires no system Node installation.
 
-Device evidence is required before claiming improved memory use, responsiveness,
-or successful Windows/macOS installation and update behavior. Automated checks
-and artifacts are recorded separately below as the migration is validated.
+## Updates and upgrades
 
-## Development and packaging
+Desktop updates use an Electron update feed and Electron platform artifacts.
+The feed must have the expected channel metadata and checksums; an arbitrary
+GitHub asset directory is insufficient. An unconfigured feed reports updates as
+disabled. A configured feed must report check, download and installation failures
+without claiming success. Release publication and signing follow [release](release.md).
 
-Use Node 22.12 or newer and install all workspaces with root `npm ci`.
-Electron 44's npm package requires an explicit binary download; the development
-launcher and artifact workflow run `npm run install:electron` in its workspace.
+Browser profiles from the retired shell are not interchangeable with Chromium
+profiles. Do not copy a live browser profile. Re-add or pair hosts as needed; agent
+history and workspaces remain on the daemon. The namespace changes in 0.6 also
+require [coordinated upgrades](upgrade-0.6.md).
 
-```bash
-npm run dev:desktop                 # Electron: isolated .dev/electron state
-npm run dev:desktop:tauri           # Existing Tauri development loop
-npm run build:desktop -- --target linux-x64
-npm run build:desktop -- --target win-x64
-npm run build:desktop -- --target darwin-arm64  # Run on macOS
-npm run build:desktop -- --target darwin-x64   # Run on macOS
-npm run build:desktop:tauri          # Existing Tauri packaging
-```
+## Verification
 
-The Electron development launcher reserves its own Expo port, uses a separate
-profile and attachment state below `.dev/electron`, and binds its dev services to
-`0.0.0.0`. Override `FDE_ELECTRON_UI_PORT` if the chosen port is in use. It stops
-only the processes it launched. `FDE_ELECTRON_USER_DATA_DIR` selects a separate
-profile for direct smoke or diagnostic launches; `FDE_ELECTRON_UI_DIR` serves an
-explicit exported UI through the packaged app protocol without starting Metro.
-
-Packages are written under `apps/desktop-electron/release`, with `Electron` in
-the artifact name and checksums in `SHA256SUMS`. The application identifier is
-`<brand.applicationId>.electron`, and its profile name is `<brand.name> Electron`.
-Comparison packages do not register over Tauri's operating-system deep-link
-handler. They can still consume a link passed on their command line. The manual
-and PR workflow uploads build artifacts without publishing a release.
-
-The Electron package is app-only: it contains the renderer and Electron runtime,
-without a daemon, separate Node executable, CLI, or provider binaries. Install the
-daemon independently on the same machine or a remote host, then connect the app.
-The existing daemon release packages remain separate. SSH deployment still installs
-and manages the daemon on the selected remote host; it does not require a bundled
-local server. The app itself requires no system Node installation.
-
-The preload advertises `supportsLocalDaemon: false`. Local setup and management
-controls are hidden, legacy local-management commands reject, and old desktop
-settings cannot start a server. Closing or updating the app leaves independently
-managed servers alone. Application preferences can still migrate from Tauri;
-browser storage is not imported.
-
-## Application updates
-
-Comparison packages have no automatic release feed. Settings reports updates as
-disabled until `FDE_ELECTRON_UPDATE_URL` is configured with a dedicated HTTPS
-Electron feed. That feed must provide `electron-latest` / `electron-beta` metadata
-and Electron artifacts for the target platform; a Tauri release directory is not
-an Electron feed. The build workflow does not create or publish that feed.
-
-Release cutover requires deciding the permanent app identity, signing/notarizing
-the distribution, publishing appropriate update metadata and exercising an actual
-old-to-new update on each target. Do not point the existing Tauri update channel
-at these comparison artifacts.
-
-## Automated smoke
-
-Build the UI and Electron main first, then run:
+Run the desktop workspace tests and typecheck, then the real app-only smoke:
 
 ```bash
 npm run install:electron --workspace=@fde/desktop-electron
 npm run test:smoke --workspace=@fde/desktop-electron
-# Headless Linux:
-xvfb-run -a npm run test:smoke --workspace=@fde/desktop-electron
 ```
 
-Set `FDE_ELECTRON_SMOKE_EXECUTABLE` to test an unpacked application executable.
-Set `FDE_ELECTRON_SMOKE_OUTPUT` to retain its screenshot and JSON report. On a
-restricted CI/VM host that cannot create Chromium namespaces,
-`FDE_ELECTRON_SMOKE_NO_SANDBOX=1` is an explicit test-only launch override; the
-production launcher does not disable Chromium's sandbox.
+Headless Linux may use `xvfb-run -a`. `FDE_ELECTRON_SMOKE_EXECUTABLE` selects an
+unpacked app; `FDE_ELECTRON_SMOKE_OUTPUT` retains its report and screenshot.
+`FDE_ELECTRON_SMOKE_NO_SANDBOX=1` is a restricted-host test override, not a
+production launcher default.
 
-The smoke uses a temporary profile seeded with legacy local-daemon settings. It
-checks app-only capability, hidden local setup, available direct/SSH connection
-controls, rejected local commands, renderer security, preferences across relaunch,
-and absence of daemon state. It requires no server build or provider credentials.
-Microphone hardware, actual SSH hosts and updater hand-off still need device
-acceptance.
+The automated smoke checks renderer security, settings, connection controls,
+absence of local daemon setup, and close/relaunch without starting a server.
+The user reported scrolling fixed in the 0.4.2 Windows build. That report does
+not establish sustained memory, voice, installer, signing, or updater acceptance.
 
-## App-only validation (0.4.3)
-
-The user confirmed the 0.4.2 Windows Electron build has no scrolling issue. Version
-0.4.3 removes the bundled server. Full repository typecheck, 361 runtime tests,
-60 focused UI tests, packaging checks and the Linux packaged startup/relaunch
-smoke pass. Both smoke launches report zero renderer errors and no daemon state;
-legacy settings remain disabled while app preferences persist. Package measurements
-are recorded with the local build artifacts. Windows device acceptance of this
-new package remains separate from the earlier scrolling result.
-
-## Validation record (0.4.2)
-
-- Full repository typecheck and migration lint pass.
-- Restored runtime/service tests and focused regressions cover window ownership,
-  bridge security, transports, settings, SSH deployment, updater configuration,
-  CLI installation and persistent bundle staging. Dependency coverage checks that
-  the main process imports only declared production packages.
-- The real source-build smoke and Linux unpacked-package smoke pass. Each opens
-  the actual UI, starts a real isolated daemon, closes and relaunches the app with
-  settings preserved, and confirms a separately started daemon survives app exit.
-  Both runs recorded zero renderer errors. The packaged run uses its own UI and
-  Node resources, not files from the source checkout.
-- The headless VM requires the explicit test-only `--no-sandbox` launch override.
-  Production settings retain renderer sandboxing and context isolation; normal
-  OS-level Chromium sandbox startup remains a device acceptance item.
-- Windows artifacts are built locally for device testing. Windows runtime/voice,
-  installer hand-off and update acceptance are not established by cross-building.
-  macOS build and device validation remain assigned to the artifact workflow and
-  a macOS machine; they were not run on this Linux VM.
-
-The packaged smoke caught an undeclared server import in attachment storage and
-CLI routing of Electron debugging switches. Both failures were fixed and covered
-by regressions before producing the Windows comparison build.
-
-For optional React DevTools in development, set
-`PASEO_ELECTRON_REACT_DEVTOOLS=1` and point `FDE_ELECTRON_REACT_DEVTOOLS_DIR` to an
-unpacked extension. Startup does not download browser extensions.
+On each target, exercise sustained streaming and scrolling, terminals, microphone
+and spoken playback, native notifications, attachments, SSH authentication and
+reconnect, close/relaunch, and an actual installed update. Record exact versions,
+elapsed time and process-tree memory. Build success alone does not close these
+platform acceptance gaps.

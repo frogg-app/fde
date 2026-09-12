@@ -33,7 +33,7 @@ export type SpawnUpdateCli = (
 export interface DaemonUpdateServiceOptions {
   install: DaemonInstallInfo;
   daemonVersion: string;
-  paseoHome: string;
+  fdeHome: string;
   listen: string | null;
   getListen?: () => string | null;
   retainAcrossGatewayRestart?: boolean;
@@ -92,7 +92,7 @@ const defaultSpawnCli: SpawnUpdateCli = (command, args, options) =>
 export class DaemonUpdateService {
   private readonly install: DaemonInstallInfo;
   private readonly daemonVersion: string;
-  private readonly paseoHome: string;
+  private readonly fdeHome: string;
   private readonly listen: string | null;
   private readonly getListen: (() => string | null) | undefined;
   private readonly retainAcrossGatewayRestart: boolean;
@@ -108,7 +108,7 @@ export class DaemonUpdateService {
   constructor(options: DaemonUpdateServiceOptions) {
     this.install = options.install;
     this.daemonVersion = options.daemonVersion;
-    this.paseoHome = options.paseoHome;
+    this.fdeHome = options.fdeHome;
     this.listen = options.listen;
     this.getListen = options.getListen;
     this.retainAcrossGatewayRestart = options.retainAcrossGatewayRestart === true;
@@ -273,7 +273,7 @@ export class DaemonUpdateService {
       "self-update",
       "--json",
       "--home",
-      this.paseoHome,
+      this.fdeHome,
       "--install-dir",
       this.install.installDir,
       ...extraArgs,
@@ -281,11 +281,11 @@ export class DaemonUpdateService {
     const listen = this.getListen ? this.getListen() : this.listen;
     const env: NodeJS.ProcessEnv = {
       ...this.env,
-      [`${brand.envPrefix}_HOME`]: this.paseoHome,
+      [`${brand.envPrefix}_HOME`]: this.fdeHome,
       FDE_INSTALL_DIR: this.install.installDir,
-      ...(listen ? { PASEO_LISTEN: listen } : {}),
+      ...(listen ? { FDE_LISTEN: listen } : {}),
     };
-    if (this.getListen && !listen) delete env.PASEO_LISTEN;
+    if (this.getListen && !listen) delete env.FDE_LISTEN;
     this.logger.info({ launcher, args: extraArgs, runId }, "running fde daemon self-update");
     return new Promise((resolve, reject) => {
       const child = this.spawnCli(launcher, args, { env });

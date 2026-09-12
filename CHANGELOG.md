@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.6.0 - 2026-09-12
+
+- Make Electron the production app-only desktop on Windows, macOS and Linux.
+  Retire the previous native shell and experimental Rust backend from active builds;
+  their sources remain inactive references. Desktop downloads contain no local
+  daemon, CLI, separate Node runtime or provider binaries.
+- Keep Node daemon packages independent, retain remote SSH deployment, and leave
+  connected daemons running when the desktop app closes or updates. Preserve the
+  0.5 opt-in independent execution service and its documented validation limits.
+- Standardize environment, wire, storage, plugin, skill and desktop names on FDE:
+  `FDE_*`, `fde://`, `window.fdeDesktop`, and `FDE` client symbols. This requires
+  coordinated client/server upgrades; legacy naming is not transparently supported.
+- Use production FDE application/artifact identity while retaining the tested
+  FDE Electron profile for 0.4.x continuity. Users of the retired shell must
+  manually install the new app and add or pair hosts.
+- Remove the default hosted relay endpoint. Configure a relay you operate or use
+  direct/SSH connections; existing relay-dependent pairing needs reconfiguration.
+- Replace obsolete native/Rust migration and upstream release instructions with
+  current architecture, distribution and [upgrade notes](docs/upgrade-0.6.md).
+  Default daemon port remains 9999. Android remains a separate release target;
+  no iOS store release pipeline is present.
+- Keep platform installation, signing, sustained memory/voice and actual updater
+  acceptance distinct from automated build and test results. Independent execution
+  remains opt-in; real-provider background work, Windows/macOS lifecycle and full
+  installed-update acceptance remain unverified.
+
 ## 0.5.0 - 2026-09-12
 
 - Show Connecting while sidebar agent hosts are reconnecting or not yet initialized,
@@ -387,7 +413,7 @@ Includes the previously unpublished 0.2.1–0.2.6 maintenance fixes.
 - Settings: host settings sit above app settings, and the app group is anchored to the bottom.
 - Windows releases ship only as zips: the NSIS installer is published as `FDE-<ver>-x64-setup.zip` next to `FDE-<ver>-x64-portable.zip`. GitHub rejects raw `.exe` release assets, so the installer upload used to fail. Both updaters unpack the zip before running the installer, and the updater signature now covers the zip.
 - The public pairing page also deploys as a Cloudflare Worker (`deploy/pair-worker`), so `pair.frogg.app` can run with no host, no origin and no reverse proxy. It shares every module that decides what a visitor sees with the daemon's own `GET /code/:code` route — the code decoder, both page renderers, the QR and the CSP — and reimplements only the transport; a test asserts the Worker and the express service return byte-identical HTML. Deployment notes in [deploy/pair-worker/README.md](deploy/pair-worker/README.md).
-- `https://frogg.app/install.sh`, `/uninstall.sh` and `/install-docker.sh` are live, served by a Cloudflare Worker (`deploy/install-worker`) that proxies the scripts out of `deploy/` in the public repository. It answers a fixed allowlist of three paths, fails closed with a 502 when the source is unreachable or does not look like a shell script (so `curl -f` pipes nothing to `bash`), and names the ref it served in `X-Fde-Source`.
+- `https://frogg.app/install.sh`, `/uninstall.sh` and `/install-docker.sh` are live, served by a Cloudflare Worker (`deploy/install-worker`) that proxies the scripts out of `deploy/` in the public repository. It answers a fixed allowlist of three paths, fails closed with a 502 when the source is unreachable or does not look like a shell script (so `curl -f` pipes nothing to `bash`), and names the ref it served in `X-FDE-Source`.
 - `scripts/release/verify-install-routes.sh` smoke-tests those routes after a deploy: it checks all three, then runs a real install and uninstall against them in a throwaway container and asserts the result.
 
 ## 0.1.18
@@ -412,7 +438,7 @@ Includes the previously unpublished 0.2.1–0.2.6 maintenance fixes.
 - Windows portable build is published only as a zip.
 - Daemon self-update with automatic rollback: `fde daemon self-update [--to <v>|--channel stable|beta] [--check] [--json]` installs a release from the GitHub releases next to the running version and a detached supervisor flips `current`, restarts the service (systemd user unit, launchd agent, or the CLI's own stop/start), verifies `/api/identity` and `/api/health`, and reverts to `previous` when the new daemon does not come up. Outcome in `<install dir>/last-update.json`, steps in `self-update.log`; at most three versions are kept.
 - From a client: every host's settings page has a "Daemon updates" section (version, check, update with progress, applied/rolled-back outcome, auto-update toggle and channel) backed by the `daemon.update.check/start/get_status` RPCs (`daemon.manage`) and the `daemon.update.run.progress` broadcast. Dev checkouts, the desktop sidecar, and Docker report why they cannot self-update.
-- Opt-in automatic updates: `daemon.autoUpdate` in `config.json` or `PASEO_AUTO_UPDATE=1`; checks on an interval, waits for agents to go idle, honours quiet hours.
+- Opt-in automatic updates: `daemon.autoUpdate` in `config.json` or `FDE_AUTO_UPDATE=1`; checks on an interval, waits for agents to go idle, honours quiet hours.
 - Installer writes `FDE_INSTALL_DIR` and `FDE_HOME` into the service environment and records `previous`; `install-docker.sh --update` swaps the container and restores the old one if the health check fails.
 
 ## 0.1.13
@@ -422,21 +448,21 @@ Includes the previously unpublished 0.2.1–0.2.6 maintenance fixes.
 ## 0.1.12
 
 - Default daemon port is now 9999 (explicit 6767 still works). Installer, Docker image, docs, CLI, and the app defaults all follow.
-- No more Paseo marks: every icon, favicon, PWA icon, and the startup splash use the FDE frog; icons are larger with transparent backgrounds (dark surface on iOS); the window paints dark instead of white while loading.
+- No more FDE marks: every icon, favicon, PWA icon, and the startup splash use the FDE frog; icons are larger with transparent backgrounds (dark surface on iOS); the window paints dark instead of white while loading.
 - Window dragging on Windows/Linux via the title strip; drag surfaces no longer select text.
 - Direct connection field accepts `host:port`, `http(s)://`, `ws(s)://`, and legacy `tcp://` forms and shows the resolved WebSocket URL.
 - "Servers on your network": the app scans local /24 subnets for daemons on port 9999 (`/api/identity`), resolves hostnames, and offers one-click connect; daemons that still need pairing are flagged.
 - Remote SSH hosts: daemon password field (clearly labelled as the daemon's, not ssh's); ssh password authentication via askpass when a host offers it, remembered for the session only.
-- Voice (dictation, voice mode, TTS) is on by default when the bundled speech runtime is present; opt out with `features.voice.enabled=false` or `PASEO_VOICE=0`. Daemon bundles now include the sherpa-onnx runtime.
-- First-run pairing: an unclaimed daemon reachable from the network serves a "Claim this FDE daemon" page with a single-use pairing link and QR until the first client pairs; `fde daemon claim-status` / `reset-claim`. Pairing links are `https://frogg.app/pair#offer=…` with a `paseo://pair` deep link; the app claims the daemon and stores the credential.
+- Voice (dictation, voice mode, TTS) is on by default when the bundled speech runtime is present; opt out with `features.voice.enabled=false` or `FDE_VOICE=0`. Daemon bundles now include the sherpa-onnx runtime.
+- First-run pairing: an unclaimed daemon reachable from the network serves a "Claim this FDE daemon" page with a single-use pairing link and QR until the first client pairs; `fde daemon claim-status` / `reset-claim`. Pairing links are `https://frogg.app/pair#offer=…` with a `fde://pair` deep link; the app claims the daemon and stores the credential.
 - Updates: the app checks GitHub releases (every 6 h and on demand), shows release notes, downloads the matching asset with checksum verification, and installs it (silent installer or portable swap on Windows, AppImage swap on Linux, DMG on macOS). Signed Tauri updates take over automatically once a signing key is configured.
-- Daemon: `GET /api/identity`; Paseo-era client version gates removed.
+- Daemon: `GET /api/identity`; FDE-era client version gates removed.
 - Release assets carry `.sha256` sidecars; Windows signing hook for Azure Trusted Signing; `frogg.de` links renamed to `frogg.app`.
 
 ## 0.1.10
 
-- Daemon: removed the Paseo-era client version gates. FDE clients (version 0.1.x) were treated as
-  legacy Paseo clients, which hid every provider except Claude, Codex, and OpenCode and forced the
+- Daemon: removed the FDE-era client version gates. FDE clients (version 0.1.x) were treated as
+  legacy FDE clients, which hid every provider except Claude, Codex, and OpenCode and forced the
   legacy workspace restore path. All providers are visible again.
 - Lockfile regenerated with every platform's optional binaries so macOS and Windows CI jobs install
   cleanly.
@@ -460,7 +486,7 @@ Includes the previously unpublished 0.2.1–0.2.6 maintenance fixes.
   its platform from the GitHub release (`Install local daemon (~180 MB)` in the daemon settings,
   or "Run agents on this machine" on the welcome screen), verify its checksum, unpack it into
   the app data dir, and start/stop/restart it through the bundled CLI exactly as Electron
-  managed its packaged daemon (`PASEO_DESKTOP_MANAGED=1`, status polling, forced stop, stop on
+  managed its packaged daemon (`FDE_DESKTOP_MANAGED=1`, status polling, forced stop, stop on
   quit unless "keep running after quit"). No Node on the machine is needed. Thin clients
   without a bundle never try to start a daemon.
 - Daemon bundle targets `win-x64` and `win-arm64` (`fde-daemon-<v>-win-<arch>.zip`, no
@@ -470,7 +496,7 @@ Includes the previously unpublished 0.2.1–0.2.6 maintenance fixes.
 
 ## 0.1.6
 
-- Settings opens as a large modal on wide layouts (VS Code style); Help & Support menu removed, Keyboard shortcuts live in Settings; Schedules removed; Star/Sponsor/Community links removed; About credits Paseo.
+- Settings opens as a large modal on wide layouts (VS Code style); Help & Support menu removed, Keyboard shortcuts live in Settings; Schedules removed; Star/Sponsor/Community links removed; About credits FDE.
 - Daemon install story: self-contained daemon bundle, `deploy/install.sh` (systemd/launchd service), `deploy/install-docker.sh`, Docker image built from the bundle. See docs/install.md.
 
 - Accent colour changed from green to the logo cyan/blue; success colours stay green.
@@ -525,11 +551,11 @@ Includes the previously unpublished 0.2.1–0.2.6 maintenance fixes.
 
 ## 0.1.3
 
-- Rebrand to FDE (Frogg Development Environment): `@fde/*` package scope, new origami frog logo and icons, `fde` binary and CLI alias. Wire-level Paseo names kept for compatibility.
+- Rebrand to FDE (Frogg Development Environment): `@fde/*` package scope, new origami frog logo and icons, `fde` binary and CLI alias. Wire-level FDE names kept for compatibility.
 - Portable Windows zip published alongside the installer.
 - ROADMAP.md added.
 
-- Rebranded the product to FDE (Frogg Development Environment): npm scope `@fde/*`, desktop productName/window title "FDE", bundle identifier `app.frogg.fde`, binary `fde`, new logo, `fde` CLI alias. Wire-level names (`paseo://`, `PASEO_*`, `~/.paseo`, the `paseo` CLI) are unchanged for daemon compatibility.
+- Rebranded the product to FDE (Frogg Development Environment): npm scope `@fde/*`, desktop productName/window title "FDE", bundle identifier `app.frogg.fde`, binary `fde`, new logo, `fde` CLI alias. Wire-level names (`fde://`, `FDE_*`, `~/.fde`, the `fde` CLI) are unchanged for daemon compatibility.
 - Fork from Paseo v0.7.2 (commit 77aff0f). New repository, Tauri desktop shell rewrite begins.
 - Repo reorganised into apps/ and packages/; Electron shell and website dropped.
 - New Tauri v2 desktop shell (apps/desktop): window, bridge, settings, attachments, dialogs, notifications, deep links. Remote hosts only; no local daemon yet.

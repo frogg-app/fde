@@ -1,5 +1,5 @@
 //! End-to-end: install a real linux bundle from a `file://` URL, start the
-//! daemon on a spare port with a scratch `PASEO_HOME`, check the status the
+//! daemon on a spare port with a scratch `FDE_HOME`, check the status the
 //! UI would see, stop it. Needs `npm run build:daemon-bundle -- --target
 //! linux-x64` to have produced `dist/bundles/FDE-<version>-linux-x86_64-daemon.tar.gz`
 //! (or `FDE_TEST_DAEMON_BUNDLE=<path>`); skips otherwise.

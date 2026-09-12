@@ -1,10 +1,10 @@
-export const MARKDOWN_COPY_TAG_ATTRIBUTE = "data-paseo-markdown-tag";
-export const MARKDOWN_COPY_IGNORE_ATTRIBUTE = "data-paseo-markdown-ignore";
-export const MARKDOWN_COPY_LIST_MARKER_ATTRIBUTE = "data-paseo-markdown-list-marker";
-export const MARKDOWN_COPY_UNWRAP_ATTRIBUTE = "data-paseo-markdown-unwrap";
-export const MARKDOWN_COPY_LIST_START_ATTRIBUTE = "data-paseo-markdown-list-start";
-export const MARKDOWN_COPY_LANGUAGE_ATTRIBUTE = "data-paseo-markdown-language";
-export const MARKDOWN_COPY_ALIGN_ATTRIBUTE = "data-paseo-markdown-align";
+export const MARKDOWN_COPY_TAG_ATTRIBUTE = "data-fde-markdown-tag";
+export const MARKDOWN_COPY_IGNORE_ATTRIBUTE = "data-fde-markdown-ignore";
+export const MARKDOWN_COPY_LIST_MARKER_ATTRIBUTE = "data-fde-markdown-list-marker";
+export const MARKDOWN_COPY_UNWRAP_ATTRIBUTE = "data-fde-markdown-unwrap";
+export const MARKDOWN_COPY_LIST_START_ATTRIBUTE = "data-fde-markdown-list-start";
+export const MARKDOWN_COPY_LANGUAGE_ATTRIBUTE = "data-fde-markdown-language";
+export const MARKDOWN_COPY_ALIGN_ATTRIBUTE = "data-fde-markdown-align";
 
 /**
  * Trailing line breaks, with any indentation that followed the last one.
@@ -17,33 +17,33 @@ export const MARKDOWN_COPY_ALIGN_ATTRIBUTE = "data-paseo-markdown-align";
 export const TRAILING_CODE_LINE_BREAKS = /(\r?\n[ \t]*)+$/;
 
 export const markdownCopyDataSet = {
-  blockquote: { paseoMarkdownTag: "blockquote" },
-  br: { paseoMarkdownTag: "br" },
-  code: { paseoMarkdownTag: "code" },
-  h1: { paseoMarkdownTag: "h1" },
-  h2: { paseoMarkdownTag: "h2" },
-  h3: { paseoMarkdownTag: "h3" },
-  h4: { paseoMarkdownTag: "h4" },
-  h5: { paseoMarkdownTag: "h5" },
-  h6: { paseoMarkdownTag: "h6" },
-  hr: { paseoMarkdownTag: "hr" },
-  ignore: { paseoMarkdownIgnore: "true" },
-  li: { paseoMarkdownTag: "li" },
-  listMarker: { paseoMarkdownIgnore: "true", paseoMarkdownListMarker: "true" },
-  ol: { paseoMarkdownTag: "ol" },
-  p: { paseoMarkdownTag: "p" },
-  pre: { paseoMarkdownTag: "pre" },
-  s: { paseoMarkdownTag: "s" },
-  strong: { paseoMarkdownTag: "strong" },
-  em: { paseoMarkdownTag: "em" },
-  table: { paseoMarkdownTag: "table" },
-  tbody: { paseoMarkdownTag: "tbody" },
-  td: { paseoMarkdownTag: "td" },
-  th: { paseoMarkdownTag: "th" },
-  thead: { paseoMarkdownTag: "thead" },
-  tr: { paseoMarkdownTag: "tr" },
-  ul: { paseoMarkdownTag: "ul" },
-  unwrap: { paseoMarkdownUnwrap: "true" },
+  blockquote: { fdeMarkdownTag: "blockquote" },
+  br: { fdeMarkdownTag: "br" },
+  code: { fdeMarkdownTag: "code" },
+  h1: { fdeMarkdownTag: "h1" },
+  h2: { fdeMarkdownTag: "h2" },
+  h3: { fdeMarkdownTag: "h3" },
+  h4: { fdeMarkdownTag: "h4" },
+  h5: { fdeMarkdownTag: "h5" },
+  h6: { fdeMarkdownTag: "h6" },
+  hr: { fdeMarkdownTag: "hr" },
+  ignore: { fdeMarkdownIgnore: "true" },
+  li: { fdeMarkdownTag: "li" },
+  listMarker: { fdeMarkdownIgnore: "true", fdeMarkdownListMarker: "true" },
+  ol: { fdeMarkdownTag: "ol" },
+  p: { fdeMarkdownTag: "p" },
+  pre: { fdeMarkdownTag: "pre" },
+  s: { fdeMarkdownTag: "s" },
+  strong: { fdeMarkdownTag: "strong" },
+  em: { fdeMarkdownTag: "em" },
+  table: { fdeMarkdownTag: "table" },
+  tbody: { fdeMarkdownTag: "tbody" },
+  td: { fdeMarkdownTag: "td" },
+  th: { fdeMarkdownTag: "th" },
+  thead: { fdeMarkdownTag: "thead" },
+  tr: { fdeMarkdownTag: "tr" },
+  ul: { fdeMarkdownTag: "ul" },
+  unwrap: { fdeMarkdownUnwrap: "true" },
 } as const;
 
 export type MarkdownCopyInlineTag = "br" | "code" | "em" | "s" | "strong";
@@ -51,7 +51,7 @@ export type MarkdownCopyInlineTag = "br" | "code" | "em" | "s" | "strong";
 export function markdownCopyOrderedListDataSet(start: unknown) {
   return {
     ...markdownCopyDataSet.ol,
-    paseoMarkdownListStart: String(start ?? 1),
+    fdeMarkdownListStart: String(start ?? 1),
   } as const;
 }
 
@@ -59,7 +59,7 @@ export function markdownCopyCodeBlockDataSet(language: string | null | undefined
   const fenceLanguage = language?.trim().split(/\s+/)[0];
   return {
     ...markdownCopyDataSet.pre,
-    ...(fenceLanguage ? { paseoMarkdownLanguage: fenceLanguage } : {}),
+    ...(fenceLanguage ? { fdeMarkdownLanguage: fenceLanguage } : {}),
   } as const;
 }
 
@@ -70,6 +70,6 @@ export function markdownCopyTableCellDataSet(tag: "td" | "th", style: unknown) {
       : null;
   return {
     ...markdownCopyDataSet[tag],
-    ...(alignment ? { paseoMarkdownAlign: alignment.toLowerCase() } : {}),
+    ...(alignment ? { fdeMarkdownAlign: alignment.toLowerCase() } : {}),
   } as const;
 }

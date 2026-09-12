@@ -37,7 +37,7 @@ function prStatus(overrides: Partial<CheckoutPrStatus> = {}): CheckoutPrStatus {
   return {
     forge: "github",
     number: 42,
-    url: "https://github.com/getpaseo/paseo/pull/42",
+    url: "https://github.com/frogg-app/fde/pull/42",
     title: "Wire real PR pane data",
     state: "open",
     baseRefName: "main",
@@ -47,8 +47,8 @@ function prStatus(overrides: Partial<CheckoutPrStatus> = {}): CheckoutPrStatus {
     mergeable: "UNKNOWN",
     checks: [],
     reviewDecision: null,
-    repoOwner: "getpaseo",
-    repoName: "paseo",
+    repoOwner: "frogg-app",
+    repoName: "fde",
     github: githubStatus,
     ...overrides,
   };
@@ -115,8 +115,8 @@ describe("extractPrRepoIdentity", () => {
   it("reads the PR number, owner, and name from a status payload", () => {
     expect(extractPrRepoIdentity(prStatus())).toEqual({
       prNumber: 42,
-      repoOwner: "getpaseo",
-      repoName: "paseo",
+      repoOwner: "frogg-app",
+      repoName: "fde",
     });
   });
 
@@ -149,7 +149,7 @@ describe("shouldFetchTimelineFrom", () => {
     timelineEnabled: true,
     githubFeaturesEnabled: true,
     cwd: "/repo",
-    identity: { prNumber: 42, repoOwner: "getpaseo", repoName: "paseo" },
+    identity: { prNumber: 42, repoOwner: "frogg-app", repoName: "fde" },
     timelineUnsupported: false,
   };
 
@@ -209,12 +209,12 @@ describe("fetchPrPaneTimelinePage", () => {
       serverId: "host",
       cwd: "/repo",
       prNumber: 42,
-      repoOwner: "getpaseo",
-      repoName: "paseo",
+      repoOwner: "frogg-app",
+      repoName: "fde",
     });
 
     expect(client.calls).toEqual([
-      { cwd: "/repo", prNumber: 42, repoOwner: "getpaseo", repoName: "paseo" },
+      { cwd: "/repo", prNumber: 42, repoOwner: "frogg-app", repoName: "fde" },
     ]);
   });
 
@@ -227,7 +227,7 @@ describe("fetchPrPaneTimelinePage", () => {
           author: "octocat",
           body: "Looks good",
           createdAt: Date.now(),
-          url: "https://github.com/getpaseo/paseo/pull/42#c1",
+          url: "https://github.com/frogg-app/fde/pull/42#c1",
         },
       ],
     });
@@ -240,8 +240,8 @@ describe("fetchPrPaneTimelinePage", () => {
       serverId: "host",
       cwd: "/repo",
       prNumber: 42,
-      repoOwner: "getpaseo",
-      repoName: "paseo",
+      repoOwner: "frogg-app",
+      repoName: "fde",
     });
 
     expect(result).toBe(payload);
@@ -261,8 +261,8 @@ describe("fetchPrPaneTimelinePage", () => {
         serverId: "host",
         cwd: "/repo",
         prNumber: 99,
-        repoOwner: "getpaseo",
-        repoName: "paseo",
+        repoOwner: "frogg-app",
+        repoName: "fde",
       }),
     ).rejects.toBe(error);
 
@@ -285,8 +285,8 @@ describe("fetchPrPaneTimelinePage", () => {
         serverId: "host",
         cwd: "/repo",
         prNumber: 99,
-        repoOwner: "getpaseo",
-        repoName: "paseo",
+        repoOwner: "frogg-app",
+        repoName: "fde",
       }),
     ).rejects.toBe(error);
 
@@ -311,8 +311,8 @@ describe("fetchPrPaneTimelinePage", () => {
         serverId: "host",
         cwd: "/repo-a",
         prNumber: 1,
-        repoOwner: "getpaseo",
-        repoName: "paseo",
+        repoOwner: "frogg-app",
+        repoName: "fde",
       }),
     ).rejects.toThrow();
 
@@ -322,8 +322,8 @@ describe("fetchPrPaneTimelinePage", () => {
       serverId: "host",
       cwd: "/repo-b",
       prNumber: 2,
-      repoOwner: "getpaseo",
-      repoName: "paseo",
+      repoOwner: "frogg-app",
+      repoName: "fde",
     });
 
     expect(result.prNumber).toBe(2);
@@ -428,7 +428,7 @@ describe("selectPrPaneState", () => {
             author: "octocat",
             body: "Belongs to another PR",
             createdAt: Date.now(),
-            url: "https://github.com/getpaseo/paseo/pull/41#c1",
+            url: "https://github.com/frogg-app/fde/pull/41#c1",
           },
         ],
       }),

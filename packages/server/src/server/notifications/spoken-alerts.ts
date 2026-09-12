@@ -1,7 +1,7 @@
 import type { Readable } from "node:stream";
 import type { Logger } from "pino";
 
-import type { PaseoSpeechConfig } from "../bootstrap.js";
+import type { FdeSpeechConfig } from "../bootstrap.js";
 
 import { encodePcm16MonoWav, parsePcmRateFromFormat } from "../speech/audio.js";
 import type { TextToSpeechProvider } from "../speech/speech-provider.js";
@@ -77,7 +77,7 @@ async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): P
   }
 }
 
-export function isSpokenNotificationsEnabled(speech: PaseoSpeechConfig | undefined): boolean {
+export function isSpokenNotificationsEnabled(speech: FdeSpeechConfig | undefined): boolean {
   return speech?.notifications?.enabled === true;
 }
 

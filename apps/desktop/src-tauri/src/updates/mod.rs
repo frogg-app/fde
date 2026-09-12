@@ -35,8 +35,8 @@ use cache::LastCheck;
 use check::CheckResult;
 use release::Channel;
 
-pub const AVAILABLE_EVENT: &str = "paseo:event:app-update-available";
-pub const PROGRESS_EVENT: &str = "paseo:event:app-update-progress";
+pub const AVAILABLE_EVENT: &str = "fde:event:app-update-available";
+pub const PROGRESS_EVENT: &str = "fde:event:app-update-progress";
 const DOWNLOAD_DIRNAME: &str = "updates";
 /// Automatic checks reuse a cached answer younger than this.
 const AUTOMATIC_CACHE_TTL_MS: u64 = 30 * 60 * 1000;

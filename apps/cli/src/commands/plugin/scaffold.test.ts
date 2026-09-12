@@ -44,7 +44,7 @@ describe("plugin scaffold", () => {
         ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"),
       ),
     ).toEqual([]);
-    expect(JSON.parse(await readFile(path.join(directory, "paseo-plugin.json"), "utf8"))).toEqual({
+    expect(JSON.parse(await readFile(path.join(directory, "fde-plugin.json"), "utf8"))).toEqual({
       id: "hello-plugin",
     });
     const cliPackageJson = JSON.parse(
@@ -65,7 +65,7 @@ describe("plugin scaffold", () => {
         zod: "^4.4.3",
       },
     });
-    expect(await readdir(directory)).not.toContain("paseo-plugin.d.ts");
+    expect(await readdir(directory)).not.toContain("fde-plugin.d.ts");
     await expect(readFile(path.join(directory, "index.ts"), "utf8")).resolves.toContain(
       'from "./main.client"',
     );
@@ -74,9 +74,9 @@ describe("plugin scaffold", () => {
     );
   }, 20_000);
 
-  it("typechecks client and server Paseo API access", async () => {
+  it("typechecks client and server Fde API access", async () => {
     const parent = await makeScaffoldParent();
-    const directory = path.join(parent, "paseo-api-plugin");
+    const directory = path.join(parent, "fde-api-plugin");
     await scaffoldPluginDirectory(directory);
     await Promise.all([
       writeFile(
@@ -99,9 +99,9 @@ import { inspect } from "./inspect.shared";
 
 export async function inspectConfig(
   _input: ZodOutput<typeof inspect.input>,
-  { paseo }: PluginHandlerContext,
+  { fde }: PluginHandlerContext,
 ) {
-  return { configured: Boolean((await paseo.config.get()).config) };
+  return { configured: Boolean((await fde.config.get()).config) };
 }
 `,
       ),
@@ -116,21 +116,21 @@ import {
   type PluginComposerPillProps,
   type PluginSurfaceProps,
   useAgent,
-  usePaseo,
+  useFde,
   useWorkspace,
 } from "@fde/plugin";
 import { inspect } from "./inspect.shared";
 
 export function Surface({ navigation }: PluginSurfaceProps) {
-  const paseo = usePaseo();
+  const fde = useFde();
   const toast = useToast();
-  const createWorkspace = () => paseo.workspaces.create({
+  const createWorkspace = () => fde.workspaces.create({
     source: { kind: "directory", path: "/repo" },
   });
   navigation?.openAgent({ agentId: "agent-1" });
   navigation?.openWorkspace({ workspaceId: "workspace-1" });
   void createWorkspace;
-  return <><Icon name="Settings" size={18} color="#123456" /><Text onPress={() => toast.show("Ready")}>Paseo API</Text><Modal title="Example" icon={<Icon name="Settings" />} open={false} onOpenChange={() => {}}><Modal.Content><Text>Modal</Text></Modal.Content></Modal></>;
+  return <><Icon name="Settings" size={18} color="#123456" /><Text onPress={() => toast.show("Ready")}>Fde API</Text><Modal title="Example" icon={<Icon name="Settings" />} open={false} onOpenChange={() => {}}><Modal.Content><Text>Modal</Text></Modal.Content></Modal></>;
 }
 
 export function AgentPanel({ workspaceId, agentId }: PluginAgentPanelProps) {
@@ -188,8 +188,8 @@ export default function contribute(plugin: PluginContext) {
     title: "Open review",
     icon: "Scan",
     context: "agent",
-    async onSelect({ paseo, rpc, workspace, openPanel }) {
-      await paseo.workspaces.ref(workspace.id).setTitle("Review");
+    async onSelect({ fde, rpc, workspace, openPanel }) {
+      await fde.workspaces.ref(workspace.id).setTitle("Review");
       await rpc(inspect, {});
       openPanel("review");
     },
@@ -216,7 +216,7 @@ export default function contribute(plugin: PluginContext) {
   }, 20_000);
 
   it("refuses to write into a non-empty directory", async () => {
-    const directory = await mkdtemp(path.join(tmpdir(), "paseo-plugin-scaffold-"));
+    const directory = await mkdtemp(path.join(tmpdir(), "fde-plugin-scaffold-"));
     directories.push(directory);
     await writeFile(path.join(directory, "notes.txt"), "keep me");
 

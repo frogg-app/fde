@@ -4,10 +4,10 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { AgentNavigationInbox } from "./agent-navigation.js";
 import {
-  isPaseoBrowserWebviewAttach,
-  preparePaseoBrowserWebContents,
+  isFdeBrowserWebviewAttach,
+  prepareFdeBrowserWebContents,
   registerBrowserWebviewNavigationGuards,
-  unregisterPaseoBrowserHost,
+  unregisterFdeBrowserHost,
 } from "./features/browser-webviews/index.js";
 import { resolveAppIconPath } from "./features/stamped-icon.js";
 import { registerTrustedRenderer } from "./ipc-security.js";
@@ -98,7 +98,7 @@ export function createWindowRuntime({
     if (app.isPackaged) {
       return null;
     }
-    return process.env.EXPO_PUBLIC_PASEO_DEV_BUILD_LABEL?.trim() || null;
+    return process.env.EXPO_PUBLIC_FDE_DEV_BUILD_LABEL?.trim() || null;
   }
 
   let cachedEffectiveIconPath: string | null = null;
@@ -177,7 +177,7 @@ export function createWindowRuntime({
     mainWindow.on("closed", () => {
       options.onClosed?.(webContentsId);
       agentNavigationInbox.removeWindow(webContentsId);
-      unregisterPaseoBrowserHost(webContentsId);
+      unregisterFdeBrowserHost(webContentsId);
       browserKeyboard.detachHost(webContentsId);
     });
   }
@@ -248,7 +248,7 @@ export function createWindowRuntime({
     setupDefaultContextMenu(mainWindow);
     setupDragDropPrevention(mainWindow);
     mainWindow.webContents.on("will-attach-webview", (event, webPreferences, params) => {
-      if (!isPaseoBrowserWebviewAttach(params)) {
+      if (!isFdeBrowserWebviewAttach(params)) {
         event.preventDefault();
         return;
       }
@@ -269,7 +269,7 @@ export function createWindowRuntime({
       webPreferences.preload = getBrowserKeyboardPreloadPath();
     });
     mainWindow.webContents.on("did-attach-webview", (_event, contents) => {
-      preparePaseoBrowserWebContents(contents);
+      prepareFdeBrowserWebContents(contents);
       contents.once("destroyed", () => {
         pendingBrowserWindowOpenRequests.delete(contents.id);
       });
@@ -290,7 +290,7 @@ export function createWindowRuntime({
 
     if (!app.isPackaged && !process.env.FDE_ELECTRON_UI_DIR) {
       const { loadReactDevTools } = await import("./features/react-devtools.js");
-      if (process.env.PASEO_ELECTRON_REACT_DEVTOOLS === "1") {
+      if (process.env.FDE_ELECTRON_REACT_DEVTOOLS === "1") {
         void loadReactDevTools().catch((error) =>
           log.warn("[DevTools] Failed to initialize", error),
         );

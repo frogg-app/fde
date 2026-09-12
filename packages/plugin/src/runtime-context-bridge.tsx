@@ -1,17 +1,17 @@
 import { useCallback, type ReactNode } from "react";
 import { PluginClientStateProvider, usePluginClientStateSource } from "./client-state.js";
-import { PaseoApiProvider, usePaseoContextValue } from "./paseo-context.js";
+import { FdeApiProvider, useFdeContextValue } from "./fde-context.js";
 import { PluginRpcProvider, usePluginRpcContextValue } from "./rpc-context.js";
 
 export type PluginRuntimeContextBridge = (children: ReactNode) => ReactNode;
 
 /** Rebuilds plugin runtime contexts inside React Native portal hosts. */
 export function usePluginRuntimeContextBridge(): PluginRuntimeContextBridge {
-  const paseo = usePaseoContextValue();
+  const fde = useFdeContextValue();
   const rpc = usePluginRpcContextValue();
   const state = usePluginClientStateSource();
 
-  if (!paseo || !rpc) {
+  if (!fde || !rpc) {
     throw new Error("Plugin UI must run inside a contributed plugin surface");
   }
 
@@ -23,11 +23,11 @@ export function usePluginRuntimeContextBridge(): PluginRuntimeContextBridge {
         children
       );
       return (
-        <PaseoApiProvider paseo={paseo}>
+        <FdeApiProvider fde={fde}>
           <PluginRpcProvider invoke={rpc.invoke}>{content}</PluginRpcProvider>
-        </PaseoApiProvider>
+        </FdeApiProvider>
       );
     },
-    [paseo, rpc, state],
+    [fde, rpc, state],
   );
 }

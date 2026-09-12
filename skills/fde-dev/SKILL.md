@@ -1,6 +1,6 @@
 ---
 name: fde-dev
-description: Build, run, and test the FDE monorepo. Use when starting the dev daemon or the Expo client, when a build or typecheck fails with stale or missing types, when deciding which tests to run, when setting up a fresh worktree, or when asked to "run the app", "start the server", "build it", or "check my change". Covers the workspace build order, the dev daemon on this headless VM, PASEO_HOME dev state, and the fast verification loop.
+description: Build, run, and test the FDE monorepo. Use when starting the dev daemon or the Expo client, when a build or typecheck fails with stale or missing types, when deciding which tests to run, when setting up a fresh worktree, or when asked to "run the app", "start the server", "build it", or "check my change". Covers the workspace build order, the dev daemon on this headless VM, FDE_HOME dev state, and the fast verification loop.
 ---
 
 # Working in the FDE monorepo
@@ -38,7 +38,7 @@ npm run build:client        # implies protocol must be current
 npm run build:server        # server-deps + server + cli, the whole chain
 npm run build:app-deps      # highlight + client + plugin, what apps/ui needs
 npm run build:ui            # Expo web build
-npm run build:desktop       # build:ui, then the Tauri shell
+npm run build:desktop       # shared UI, then the Electron app-only shell
 ```
 
 Add `:clean` to any of these (`npm run build:server:clean`) to drop stale `dist/` first.
@@ -51,7 +51,7 @@ protocol) before believing the error.
 ## Running the daemon and the client
 
 ```bash
-npm run dev:server   # daemon; pins PASEO_LISTEN=0.0.0.0:6768
+npm run dev:server   # daemon; pins FDE_LISTEN=0.0.0.0:6768
 npm run dev:app      # Expo on 8081, pointed at the dev daemon
 ```
 
@@ -61,7 +61,7 @@ Two terminals — this split is intentional. `npm run dev` is only an alias for 
 concurrently. If the deps are already built and you just want the watchers:
 
 ```bash
-PASEO_SKIP_DEV_SERVER_BUILD=1 npm run dev:server
+FDE_SKIP_DEV_SERVER_BUILD=1 npm run dev:server
 ```
 
 ### This VM is headless and shared
@@ -71,7 +71,7 @@ PASEO_SKIP_DEV_SERVER_BUILD=1 npm run dev:server
 - There is no browser here. Never hand out a `localhost` URL. Surface links as
   `http://$(hostname -I | awk '{print $1}'):PORT`.
 - Do not kill processes or free ports you did not start. Another agent's daemon may be on
-  6768; start yours on a different port with `PASEO_LISTEN=0.0.0.0:<free port>` instead.
+  6768; start yours on a different port with `FDE_LISTEN=0.0.0.0:<free port>` instead.
 
 ### Ports
 
@@ -81,19 +81,19 @@ PASEO_SKIP_DEV_SERVER_BUILD=1 npm run dev:server
 | 6768 | Root-checkout dev daemon (`npm run dev:server`)                 |
 | 8081 | Expo for `npm run dev:app`                                      |
 
-Inside a Paseo-managed worktree service, read the injected service environment
-(`PASEO_SERVICE_DAEMON_PORT`, `PASEO_PORT`) instead of hardcoding these.
+Inside a FDE-managed worktree service, read the injected service environment
+(`FDE_SERVICE_DAEMON_PORT`, `FDE_PORT`) instead of hardcoding these.
 
 ### Dev state lives in the checkout
 
-`PASEO_HOME` holds agents, worktrees, sockets, and the daemon log. The repo dev scripts point
-it at `$ROOT/.dev/paseo-home`, so dev state is scoped to the checkout and never touches the
+`FDE_HOME` holds agents, worktrees, sockets, and the daemon log. The repo dev scripts point
+it at `$ROOT/.dev/fde-home`, so dev state is scoped to the checkout and never touches the
 packaged app's `~/.fde`. The in-repo CLI goes through the same wrapper:
 
 ```bash
 npm run cli -- <args>                          # targets this checkout's dev home and daemon
-PASEO_HOME=~/.paseo-blue npm run dev:server    # explicit home
-PASEO_DEV_RESET_HOME=1 npm run dev:server      # clear and reseed the derived worktree home
+FDE_HOME=~/.fde-blue npm run dev:server    # explicit home
+FDE_DEV_RESET_HOME=1 npm run dev:server      # clear and reseed the derived worktree home
 ```
 
 ## Checking a change
@@ -141,7 +141,7 @@ npx vitest run <path> --bail=1 > /tmp/t.log 2>&1   # broad sweep, then read the 
 
 ## Where things live
 
-- `apps/` holds deliverables: `desktop` (Tauri v2 + Rust), `ui` (Expo client, `@fde/app`), `cli`.
+- `apps/` holds deliverables: `desktop-electron` (Electron app-only), `ui` (Expo client, `@fde/app`), `cli`.
 - `packages/` holds libraries only: `protocol`, `client`, `server`, `relay`, `highlight`, `plugin`.
 - `scripts/` splits into `dev/`, `release/`, `ci/`. New scripts go in one of those, not the root.
 - `docs/` is the source of truth for system knowledge. Read the relevant page before non-trivial

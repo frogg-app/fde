@@ -1,8 +1,8 @@
-import { createPaseoApi, type PaseoApi } from "@fde/client";
+import { createFdeApi, type FdeApi } from "@fde/client";
 import type { DaemonClient } from "@fde/client/internal/daemon-client";
 
 export interface PluginSurfaceRuntime {
-  paseo: PaseoApi;
+  fde: FdeApi;
   invoke(method: string, input: unknown): Promise<unknown>;
 }
 
@@ -12,7 +12,7 @@ export function createPluginSurfaceRuntime(
 ): PluginSurfaceRuntime | null {
   if (!client) return null;
   return {
-    paseo: createPaseoApi(client),
+    fde: createFdeApi(client),
     invoke: (method, input) => client.invokePluginRpc(pluginId, method, input),
   };
 }

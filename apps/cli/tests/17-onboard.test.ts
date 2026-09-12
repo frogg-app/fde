@@ -11,14 +11,14 @@ $.verbose = false;
 
 console.log("=== Onboarding Command ===\n");
 
-const paseoHome = await mkdtemp(join(tmpdir(), "paseo-onboard-home-"));
+const fdeHome = await mkdtemp(join(tmpdir(), "fde-onboard-home-"));
 const port = await getAvailablePort();
 
 try {
-  console.log("Test 1: `paseo` runs blocking onboarding without implicit relay pairing");
+  console.log("Test 1: `fde` runs blocking onboarding without implicit relay pairing");
   // Voice is on by default (and would download speech models); opt out to keep the test hermetic.
   const onboard =
-    await $`PASEO_HOME=${paseoHome} PASEO_LISTEN=127.0.0.1:${port} PASEO_VOICE=0 npx paseo`.nothrow();
+    await $`FDE_HOME=${fdeHome} FDE_LISTEN=127.0.0.1:${port} FDE_VOICE=0 npx fde`.nothrow();
 
   assert.strictEqual(
     onboard.exitCode,
@@ -42,7 +42,7 @@ try {
     "the direct offer should list the daemon endpoint",
   );
   assert(
-    !onboard.stdout.includes("relay.paseo.sh"),
+    !onboard.stdout.includes("relay.example.test"),
     "onboard output should not include a relay pairing offer",
   );
   assert(
@@ -57,7 +57,7 @@ try {
   );
   assert(onboard.stdout.includes("fde status"), "onboard output should include status shortcut");
   assert(
-    onboard.stdout.includes(join(paseoHome, "daemon.log")),
+    onboard.stdout.includes(join(fdeHome, "daemon.log")),
     "onboard output should include daemon log path",
   );
   assert(
@@ -69,24 +69,23 @@ try {
     "onboard output should state who can connect right now",
   );
   assert(
-    onboard.stdout.includes(`FDE home: ${paseoHome}`),
+    onboard.stdout.includes(`FDE home: ${fdeHome}`),
     "onboard output should print the FDE home in use",
   );
 
-  const status =
-    await $`PASEO_HOME=${paseoHome} npx paseo daemon status --home ${paseoHome}`.nothrow();
+  const status = await $`FDE_HOME=${fdeHome} npx fde daemon status --home ${fdeHome}`.nothrow();
   assert.strictEqual(status.exitCode, 0, `daemon status should succeed: ${status.stderr}`);
   assert(status.stdout.includes("running"), "daemon should be running when onboarding exits");
   console.log("✓ onboarding keeps relay disabled and waits for daemon readiness\n");
 
   console.log("Test 2: --no-relay suppresses pairing for an already-running daemon");
   const enableRelay =
-    await $`PASEO_HOME=${paseoHome} npx paseo daemon pair --home ${paseoHome} --relay`.nothrow();
+    await $`FDE_HOME=${fdeHome} npx fde daemon pair --home ${fdeHome} --relay`.nothrow();
   assert.strictEqual(enableRelay.exitCode, 0, `relay enable should succeed: ${enableRelay.stderr}`);
   assert(enableRelay.stdout.includes("#offer="), "relay enable should produce a pairing offer");
 
   const noRelayOnboard =
-    await $`PASEO_HOME=${paseoHome} PASEO_LISTEN=127.0.0.1:${port} npx paseo --no-relay`.nothrow();
+    await $`FDE_HOME=${fdeHome} FDE_LISTEN=127.0.0.1:${port} npx fde --no-relay`.nothrow();
   assert.strictEqual(
     noRelayOnboard.exitCode,
     0,
@@ -98,8 +97,8 @@ try {
   );
   console.log("✓ --no-relay suppresses pairing for an already-running daemon\n");
 
-  console.log("Test 3: PASEO_VOICE=0 persists the voice opt-out in config");
-  const configRaw = await readFile(join(paseoHome, "config.json"), "utf-8");
+  console.log("Test 3: FDE_VOICE=0 persists the voice opt-out in config");
+  const configRaw = await readFile(join(fdeHome, "config.json"), "utf-8");
   const config = JSON.parse(configRaw) as {
     features?: {
       dictation?: { enabled?: boolean };
@@ -117,15 +116,15 @@ try {
     false,
     "voiceMode.enabled should be false",
   );
-  const daemonLog = await readFile(join(paseoHome, "daemon.log"), "utf-8");
+  const daemonLog = await readFile(join(fdeHome, "daemon.log"), "utf-8");
   assert(
     !daemonLog.includes("Ensuring local speech models"),
     "daemon should not attempt local speech model setup when voice is disabled",
   );
-  console.log("✓ PASEO_VOICE=0 persisted the voice opt-out\n");
+  console.log("✓ FDE_VOICE=0 persisted the voice opt-out\n");
 } finally {
-  await $`PASEO_HOME=${paseoHome} npx paseo daemon stop --home ${paseoHome} --force`.nothrow();
-  await rm(paseoHome, { recursive: true, force: true });
+  await $`FDE_HOME=${fdeHome} npx fde daemon stop --home ${fdeHome} --force`.nothrow();
+  await rm(fdeHome, { recursive: true, force: true });
 }
 
 console.log("=== Onboarding tests passed ===");

@@ -78,7 +78,7 @@ function contributeClient(client) {
     pills.get(agentId)?.();
     pills.delete(agentId);
   };
-  const unsubscribe = client.paseo.agents.subscribe((update) => {
+  const unsubscribe = client.fde.agents.subscribe((update) => {
     if (update.kind === "remove") {
       remove(update.agentId);
       return;
@@ -112,8 +112,8 @@ function contributeClient(client) {
 }
 
 export default function contribute(plugin) {
-  plugin.handle(recordComposerOpen, async ({ workspaceId }, { paseo }) => {
-    await paseo.workspaces.ref(workspaceId).setTitle("Opened from composer pill");
+  plugin.handle(recordComposerOpen, async ({ workspaceId }, { fde }) => {
+    await fde.workspaces.ref(workspaceId).setTitle("Opened from composer pill");
     return { opened: true };
   });
   plugin.addSurface("collision", DirectCollisionSurface);
@@ -171,7 +171,7 @@ test.describe("plugin workspace panels and Command Center", () => {
   test("follows workspace, agent, host, compact, and unavailable state", async ({
     page,
   }, testInfo) => {
-    const directory = await mkdtemp(path.join(tmpdir(), "paseo-plugin-workspace-panel-e2e-"));
+    const directory = await mkdtemp(path.join(tmpdir(), "fde-plugin-workspace-panel-e2e-"));
     const primaryClient = await connectNewWorkspaceDaemonClient({ ownProjects: false });
     const previousConfig = await primaryClient.getDaemonConfig();
     const primary = await seedWorkspace({ repoPrefix: "plugin-panel-primary-" });
@@ -180,7 +180,7 @@ test.describe("plugin workspace panels and Command Center", () => {
       repoPrefix: "plugin-panel-secondary-",
       port: secondaryDaemon.port,
     });
-    await writeFile(path.join(directory, "paseo-plugin.json"), JSON.stringify({ id: PLUGIN_ID }));
+    await writeFile(path.join(directory, "fde-plugin.json"), JSON.stringify({ id: PLUGIN_ID }));
     await writeFile(
       path.join(directory, "index.tsx"),
       pluginSource({ workspaceId: primary.workspaceId, agentId: "missing-agent" }),

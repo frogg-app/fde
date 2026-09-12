@@ -22,7 +22,7 @@ BRAND_PORT='9999'
 BRAND_RELEASE_BASE='https://github.com/frogg-app/fde/releases'
 BRAND_DOCKER_IMAGE='froggapp/fde'
 BRAND_LEGACY='true'
-BRAND_COMMANDS=(fde paseo)
+BRAND_COMMANDS=(fde fde)
 # END BRAND DEFAULTS
 
 # Environment names inside this script remain implementation details. Only the
@@ -36,7 +36,7 @@ fi
 
 FDE_INSTALL_DIR="${FDE_INSTALL_DIR:-${HOME}/.local/share/${BRAND_ID}}"
 FDE_BIN_DIR="${FDE_BIN_DIR:-${HOME}/.local/bin}"
-if [ "${BRAND_LEGACY}" = "true" ]; then FDE_HOME="${FDE_HOME:-${PASEO_HOME:-${HOME}/${BRAND_HOME}}}"; else FDE_HOME="${FDE_HOME:-${HOME}/${BRAND_HOME}}"; fi
+if [ "${BRAND_LEGACY}" = "true" ]; then FDE_HOME="${FDE_HOME:-${FDE_HOME:-${HOME}/${BRAND_HOME}}}"; else FDE_HOME="${FDE_HOME:-${HOME}/${BRAND_HOME}}"; fi
 FDE_PURGE="${FDE_PURGE:-0}"
 
 SERVICE_NAME="${BRAND_SERVICE}"

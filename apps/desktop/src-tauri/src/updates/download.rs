@@ -1,5 +1,5 @@
 //! Downloading the chosen release asset into `<app cache dir>/updates/` with
-//! `paseo:event:app-update-progress` events, then verifying the `.sha256`
+//! `fde:event:app-update-progress` events, then verifying the `.sha256`
 //! sidecar when the release carries one. Reuses the sidecar bundle fetcher.
 
 use std::path::PathBuf;

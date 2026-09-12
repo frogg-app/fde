@@ -1,7 +1,8 @@
 # Scroll-back lockup investigation
 
-Opened 2026-09-12 after a report that scrolling up through conversation history locks
-up the whole app on Windows, with no reproduction on mobile and web untested.
+> Historical investigation of the retired native shell. Source paths below refer to inactive reference code; they are not production Electron build instructions. Current acceptance is tracked in [electron-desktop.md](electron-desktop.md).
+> Opened 2026-09-12 after a report that scrolling up through conversation history locks
+> up the whole app on Windows, with no reproduction on mobile and web untested.
 
 This is a source-level audit. Every claim below is marked **verified** (read in the
 code in this worktree, or demonstrated with a harness against the vendored library) or
@@ -300,7 +301,7 @@ That connection detail removes most of the platform reasoning below:
 - **The Rust transport is not involved.** `host-runtime.ts:560-571` routes `directTcp`
   through `createAppWebSocketFactory`, and `runtime/websocket-factory.web.ts` returns
   `defaultWebSocketFactory` — a plain browser `WebSocket` in the webview. The
-  `paseo+desktop:` transport, `app.emit` and the batching in `transport/task.rs` are all
+  `fde+desktop:` transport, `app.emit` and the batching in `transport/task.rs` are all
   bypassed. The #7 "blocking attachment reads starve transport pumping" inference cannot
   apply, because there is no transport session to starve.
 - **The daemon is the same daemon in both cases**, on the same server, so #5 costs the
@@ -420,7 +421,7 @@ Recording these so they are not re-investigated:
 2. **Does `eventLoopDelay` spike on scroll-back?** Confirms or kills #5 against an
    isolated dev daemon. Do not read or restart a production daemon for this.
 3. **Is the daemon local or remote in the reported session?** The Rust transport is
-   used only for the `paseo+desktop:` scheme (ssh/socket/pipe) and bypassed for plain
+   used only for the `fde+desktop:` scheme (ssh/socket/pipe) and bypassed for plain
    `ws://`, so the #7 starvation prediction says a local daemon should be measurably
    worse than a remote one on the same box.
 4. **What is the real agent-pane width?** Decides whether the #4 cache can ever hit.

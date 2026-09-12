@@ -1,105 +1,59 @@
 # FDE (Frogg Development Environment)
 
-A desktop client for local and remote AI coding agents, forked from
-[Paseo](https://github.com/getpaseo/paseo). This branch restores Electron alongside
-the Tauri shell to compare desktop reliability. See the
-[Electron migration guide](docs/electron-desktop.md).
+FDE is a self-hosted interface for running and monitoring coding agents across
+Electron desktop, mobile, web and CLI clients. It was forked from
+[Paseo](https://github.com/getpaseo/paseo) v0.7.2 and is maintained independently.
+Credit for the original work goes to Mohamed Boudra and the Paseo contributors;
+see [NOTICE](NOTICE) and [LICENSE](LICENSE).
 
-## Why a fork
+The desktop app connects to independently installed Node daemons. It includes no
+local server, separate Node executable, CLI or provider binaries. Install a daemon
+on your machine or a remote host, then connect directly or through SSH. Remote
+SSH deployment remains available. A self-hosted relay can be configured, but no
+relay service is provided by default. The daemon's default port is **9999**.
 
-Paseo's chat interface for Claude Code, Codex, Copilot, OpenCode, and Pi (no API
-keys required), its project and subagent views, session resume, desktop
-notifications, and its remotely hostable daemon are excellent. FDE keeps all of
-that, supports Windows, macOS and Linux, and connects to local or remote hosts
-where the agent CLIs live. The Electron package includes a separate Node daemon
-runtime; the Tauri shell downloads its optional daemon bundle.
+FDE supports agent conversations, projects and isolated workspaces, terminals,
+multiple providers, permissions, notifications, voice replies and Companion.
+Agents belong to the daemon and keep running when you close the desktop client.
+The independent execution service introduced in 0.5 remains opt-in.
 
-On top of that, an FDE reads agent notifications aloud and lets you answer by voice: when an
-agent finishes, asks a question, or needs a permission, the daemon synthesises a short spoken
-alert you can play from the app or from the push notification on your phone, and "Reply by
-voice" dictates the next message or the permission decision. See
-[docs/voice.md](docs/voice.md).
+## Upgrading to 0.6
 
-FDE diverged from Paseo at v0.7.2 and is maintained independently. Credit for
-the original work goes to Mohamed Boudra and the Paseo contributors; see
-[NOTICE](NOTICE).
+Upgrade clients and daemons together. Environment, wire, storage, plugin and skill
+names now use the FDE namespace; links use `fde://` and the desktop bridge is
+`window.fdeDesktop`. This is not a transparent backwards-compatible upgrade.
+Read [upgrade notes](docs/upgrade-0.6.md) before replacing an existing installation.
 
-## Rebranding a fork
+## Development
 
-Supply a manifest and artwork, then select them with `FDE_BRAND_DIR`. Desktop,
-mobile, web, CLI, and daemon distributions use that product's identity while
-keeping shared internals and upstream feature commits independent of branding.
-Start with the [rebranding guide](docs/branding.md) and
-[manifest reference](docs/branding-reference.md).
+```bash
+npm ci
+npm run dev:server
+npm run dev:app
+npm run dev:desktop
+```
+
+Run the needed development processes in separate terminals. Use isolated ports
+and state when working in parallel. See [development](docs/development.md),
+[building](docs/building.md), and [testing](docs/testing.md).
 
 ## Layout
 
-```
-apps/
-  desktop-electron/ Electron desktop shell and bundled daemon
-  desktop/   Tauri desktop shell retained for comparison
-  ui/        Web UI (Expo web export) loaded by the shell
-  cli/       Command-line client and daemon launcher
-packages/
-  branding/  Shared branding contract and generated product identity
-  server/    The daemon: agent lifecycle, WebSocket API, MCP server
-  protocol/  Shared WebSocket message schemas
-  client/    Client library used by the UI and CLI
-  relay/     End-to-end encrypted relay for remote access
-  highlight/ Syntax highlighting
-  plugin/    Plugin SDK
-deploy/      Docker and Nix packaging for the daemon
-docs/        Internal engineering docs (source of truth)
-scripts/     dev/, release/, ci/ helpers
-```
+| Path                                   | Responsibility                                    |
+| -------------------------------------- | ------------------------------------------------- |
+| `apps/desktop-electron`                | Production Electron app-only shell                |
+| `apps/ui`                              | Shared Expo desktop/web/mobile UI                 |
+| `apps/cli`                             | CLI and daemon launcher                           |
+| `packages/server`                      | Node daemon, providers, agents, execution and API |
+| `packages/client`, `packages/protocol` | Client library and shared wire contract           |
+| `packages/branding`, `packages/plugin` | Product identity and plugin SDK                   |
+| `deploy`, `scripts`, `docs`            | Distribution, tooling and engineering knowledge   |
 
-## Getting started
+The retired native shell and Rust backend remain inactive references, excluded
+from production releases. Desktop Windows/macOS/Linux, separate daemon targets
+and Android have release workflows; no iOS store release pipeline is present.
+For custom products, start with the [branding guide](docs/branding.md).
 
-Install the desktop app from the releases page (Linux deb/AppImage, Windows installer or
-portable exe, macOS dmg) or the Android APK (`FDE-<version>-android-arm64-v8a.apk`,
-sideload; see [docs/android.md](docs/android.md)), then put the daemon on the machine
-where your code and agent CLIs live. No Node or npm needed on the host:
-
-```bash
-# native install: versioned bundle in ~/.local/share/fde + systemd/launchd service
-curl -fsSL https://frogg.app/install.sh | bash
-
-# or run it in Docker: froggapp/fde with the state in ~/.fde, port 9999
-curl -fsSL https://frogg.app/install-docker.sh | bash
-```
-
-Then connect: devices on the same private network reach the daemon straight away, no
-pairing or password (`fde daemon set-password` adds a password for everyone,
-`fde daemon trust-lan off` makes the LAN pair too). From anywhere else, open
-`http://<host>:9999/` (or run `fde pair` on the host, which prints a
-`https://pair.frogg.app/code/<code>` link, a QR, and the app deep link) and scan the code
-from the FDE app; the first device to pair claims the daemon. The daemon keeps its state in
-`~/.fde` (`FDE_HOME`; an existing `~/.paseo` is moved there once), and
-`fde daemon install-service` starts it whenever you log in. Voice (dictation and voice
-mode) is on out of the box; `PASEO_VOICE=0` turns it off.
-
-Both scripts are non-interactive and safe to re-run for upgrades. See
-[docs/install.md](docs/install.md) for the environment overrides and
-[docs/docker.md](docs/docker.md) for the image.
-
-## Docs
-
-| Doc                                                | What it covers                                                    |
-| -------------------------------------------------- | ----------------------------------------------------------------- |
-| [docs/architecture.md](docs/architecture.md)       | System overview: daemon, clients, protocol                        |
-| [docs/development.md](docs/development.md)         | Day-to-day development of the daemon and web UI                   |
-| [docs/desktop-shell.md](docs/desktop-shell.md)     | Tauri shell design: bridge contract, commands, plans              |
-| [docs/building.md](docs/building.md)               | Building the desktop app on Linux and cross-building for Windows  |
-| [docs/install.md](docs/install.md)                 | Installing the daemon on remote hosts: bundle, installer, Docker  |
-| [docs/pairing-service.md](docs/pairing-service.md) | Deploying the public pairing page behind `pair.frogg.app`         |
-| [docs/ci.md](docs/ci.md)                           | GitHub Actions: CI checks, release builds, secrets, cutting a tag |
-
-## Status
-
-Early development. Latest published release: **0.2.0**. See
-[CHANGELOG.md](CHANGELOG.md) for implemented changes and [ROADMAP.md](ROADMAP.md)
-for remaining work and platform verification gaps.
-
-## License
-
-Apache License 2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
+See [roadmap](ROADMAP.md), [changelog](CHANGELOG.md), [product](docs/product.md),
+and [architecture](docs/architecture.md). Builds and automated tests do not replace
+physical-device voice, sustained memory, signing or installed-update acceptance.

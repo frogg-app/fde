@@ -22,7 +22,7 @@ function state(running: boolean, pid: number | null = null): LocalDaemonState {
     relayUseTls: false,
     relayPublicUseTls: false,
     logPath: "/test/fde/daemon.log",
-    pidPath: "/test/fde/paseo.pid",
+    pidPath: "/test/fde/fde.pid",
     pidInfo: pid === null ? null : { pid },
     running,
     stalePidFile: pid !== null && !running,

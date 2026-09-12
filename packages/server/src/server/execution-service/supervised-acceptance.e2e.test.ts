@@ -18,13 +18,12 @@ function startSupervisor(home: string, enable: boolean): Supervisor {
   const env: NodeJS.ProcessEnv = {
     ...process.env,
     FDE_HOME: home,
-    PASEO_HOME: home,
-    PASEO_LISTEN: "127.0.0.1:0",
-    PASEO_NODE_ENV: "development",
-    PASEO_NODE_INSPECT: "0",
-    PASEO_RELAY_ENABLED: "false",
+    FDE_LISTEN: "127.0.0.1:0",
+    FDE_NODE_ENV: "development",
+    FDE_NODE_INSPECT: "0",
+    FDE_RELAY_ENABLED: "false",
   };
-  delete env.PASEO_SUPERVISED;
+  delete env.FDE_SUPERVISED;
   delete env.FDE_EXECUTION_SERVICE;
   if (enable) env.FDE_EXECUTION_SERVICE = "1";
   const child = spawn(
@@ -59,7 +58,7 @@ async function connectSupervisor(home: string, supervisor: Supervisor): Promise<
         if (supervisor.process.exitCode !== null || supervisor.process.signalCode !== null) {
           throw new Error(`Supervisor exited before readiness: ${supervisor.output()}`);
         }
-        const raw = await readFile(path.join(home, "paseo.pid"), "utf8").catch(() => "null");
+        const raw = await readFile(path.join(home, "fde.pid"), "utf8").catch(() => "null");
         const parsed = pidLockInfoSchema.safeParse(JSON.parse(raw));
         listen =
           parsed.success && parsed.data.pid === supervisor.process.pid ? parsed.data.listen : null;

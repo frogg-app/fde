@@ -22,7 +22,7 @@ The contract is `packages/branding/brand.schema.json`, version `1`. Unknown prop
 | `launchdLabel`      | Defaults to `<applicationId>-daemon`                                   |
 | `artifactPrefix`    | Defaults to `id`                                                       |
 
-The official preset preserves historical FDE naming where it differs, including the `paseo` URL scheme and legacy command alias. FDE/Paseo installation identities are reserved for the official preset. Internal package names, protocol messages, bridge events, SDK symbols, and project files such as `paseo.json` are compatibility contracts and are not manifest options.
+The official preset uses the `fde` URL scheme and production FDE identity. Legacy namespace aliases are not promised in 0.6. Internal package names, protocol messages, bridge events, SDK symbols, and project files such as `fde.json` are compatibility contracts and are not manifest options.
 
 ## Artwork and colors
 
@@ -47,16 +47,15 @@ A custom brand inherits none of FDE's pairing, relay, installer, or hosted-app e
 
 `distribution` accepts:
 
-| Field              | Purpose                                                       |
-| ------------------ | ------------------------------------------------------------- |
-| `repository`       | GitHub `owner/repository` used by release consumers           |
-| `updates`          | `disabled`, `github-release`, or `tauri-signed`               |
-| `updaterPublicKey` | Public Tauri updater signing key; required for `tauri-signed` |
-| `dockerImage`      | Daemon container repository without a version tag             |
-| `pairingImage`     | Pairing container repository without a version tag            |
-| `iosStoreId`       | Your numeric App Store application ID                         |
-| `expoProjectId`    | Your EAS project UUID                                         |
+| Field           | Purpose                                             |
+| --------------- | --------------------------------------------------- |
+| `repository`    | GitHub `owner/repository` used by release consumers |
+| `updates`       | Use the production Electron update configuration    |
+| `dockerImage`   | Daemon container repository without a version tag   |
+| `pairingImage`  | Pairing container repository without a version tag  |
+| `iosStoreId`    | Your numeric App Store application ID               |
+| `expoProjectId` | Your EAS project UUID                               |
 
-Without a repository, updates default to disabled. With a repository, they default to `github-release`; explicit `disabled` remains available. Enabled updates require a repository. Tauri signed mode requires the public key. Never put private keys or credentials here.
+Without a repository, updates default to disabled. With a repository, they default to `github-release`; explicit `disabled` remains available. Enabled updates require a repository. Never put private keys or credentials here.
 
 Resolved public output additionally contains release URLs, artifact prefixes, persistence namespaces, compatibility policy, and generated provenance. These derived outputs are not accepted as input manifest keys. Schema changes must preserve the behavior of existing version-1 manifests or introduce a deliberate new schema version.

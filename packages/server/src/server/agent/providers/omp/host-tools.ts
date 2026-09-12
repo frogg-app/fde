@@ -2,9 +2,9 @@ import type { Logger } from "pino";
 
 import {
   addModelVisibleStructuredContent,
-  serializePaseoToolInputParameters,
-} from "../../tools/paseo-tool-serialization.js";
-import type { PaseoToolCatalog, PaseoToolResult } from "../../tools/types.js";
+  serializeFdeToolInputParameters,
+} from "../../tools/fde-tool-serialization.js";
+import type { FdeToolCatalog, FdeToolResult } from "../../tools/types.js";
 import type { OmpRuntimeSession } from "./runtime.js";
 import {
   OmpRpcHostToolCallRequestSchema,
@@ -24,19 +24,19 @@ interface PendingOmpHostToolCall {
 
 interface OmpHostToolRouterInput {
   runtimeSession: OmpRuntimeSession;
-  catalog: PaseoToolCatalog;
+  catalog: FdeToolCatalog;
   logger: Logger;
 }
 
 const routersByRuntimeSession = new WeakMap<OmpRuntimeSession, OmpHostToolRouter>();
 
-export function serializeOmpHostTools(catalog: PaseoToolCatalog): OmpRpcHostToolDefinition[] {
+export function serializeOmpHostTools(catalog: FdeToolCatalog): OmpRpcHostToolDefinition[] {
   return [...catalog.tools.values()].map((tool) => {
     const definition: OmpRpcHostToolDefinition = {
       name: tool.name,
       description: tool.description,
       loadMode: "essential",
-      parameters: serializePaseoToolInputParameters(tool),
+      parameters: serializeFdeToolInputParameters(tool),
     };
     if (tool.title) {
       definition.label = tool.title;
@@ -47,7 +47,7 @@ export function serializeOmpHostTools(catalog: PaseoToolCatalog): OmpRpcHostTool
 
 export async function setOmpHostTools(
   runtimeSession: OmpRuntimeSession,
-  catalog: PaseoToolCatalog,
+  catalog: FdeToolCatalog,
 ): Promise<string[]> {
   return await runtimeSession.setHostTools(serializeOmpHostTools(catalog));
 }
@@ -56,7 +56,7 @@ export function handleOmpHostToolRuntimeEvent(
   event: unknown,
   input: {
     runtimeSession: OmpRuntimeSession;
-    paseoTools?: PaseoToolCatalog;
+    fdeTools?: FdeToolCatalog;
     logger: Logger;
   },
 ): boolean {
@@ -106,10 +106,10 @@ export async function waitForOmpHostToolsIdle(runtimeSession: OmpRuntimeSession)
 
 function getRouter(input: {
   runtimeSession: OmpRuntimeSession;
-  paseoTools?: PaseoToolCatalog;
+  fdeTools?: FdeToolCatalog;
   logger: Logger;
 }): OmpHostToolRouter | null {
-  if (!input.paseoTools) {
+  if (!input.fdeTools) {
     return null;
   }
   const existing = routersByRuntimeSession.get(input.runtimeSession);
@@ -118,7 +118,7 @@ function getRouter(input: {
   }
   const router = new OmpHostToolRouter({
     runtimeSession: input.runtimeSession,
-    catalog: input.paseoTools,
+    catalog: input.fdeTools,
     logger: input.logger,
   });
   routersByRuntimeSession.set(input.runtimeSession, router);
@@ -143,7 +143,7 @@ function isOmpHostToolEventType(type: string): boolean {
 
 class OmpHostToolRouter {
   private readonly runtimeSession: OmpRuntimeSession;
-  private readonly catalog: PaseoToolCatalog;
+  private readonly catalog: FdeToolCatalog;
   private readonly logger: Logger;
   private readonly pendingCalls = new Map<string, PendingOmpHostToolCall>();
   private readonly idleWaiters = new Set<() => void>();
@@ -223,7 +223,7 @@ class OmpHostToolRouter {
     this.idleWaiters.clear();
   }
 
-  private sendUpdate(callId: string, result: PaseoToolResult): void {
+  private sendUpdate(callId: string, result: FdeToolResult): void {
     const update: OmpRpcHostToolUpdate = {
       type: "host_tool_update",
       id: callId,
@@ -233,7 +233,7 @@ class OmpHostToolRouter {
   }
 }
 
-function toOmpHostToolResult(id: string, result: PaseoToolResult): OmpRpcHostToolResult {
+function toOmpHostToolResult(id: string, result: FdeToolResult): OmpRpcHostToolResult {
   const modelVisibleResult = addModelVisibleStructuredContent(result);
   const mappedResult = toOmpAgentToolResult(modelVisibleResult);
   return {
@@ -257,7 +257,7 @@ function toOmpHostToolErrorResult(id: string, error: unknown): OmpRpcHostToolRes
   };
 }
 
-function toOmpAgentToolResult(result: PaseoToolResult): OmpAgentToolResult {
+function toOmpAgentToolResult(result: FdeToolResult): OmpAgentToolResult {
   const mapped: OmpAgentToolResult = {
     content: result.content.map((item) => ({ ...item })),
   };

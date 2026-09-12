@@ -37,7 +37,7 @@ import type { AppReleaseChannel } from "./features/auto-updater.js";
 
 function unsupportedLocalServerCommand(): never {
   throw new Error(
-    "FDE Electron is a client app. Install and manage the FDE server and CLI separately, then add a server connection in the app.",
+    "FDE is a client app. Install and manage the FDE server and CLI separately, then add a server connection in the app.",
   );
 }
 
@@ -122,7 +122,7 @@ export function registerDesktopCommands(): void {
   const handlers = createDesktopCommandHandlers();
 
   handleDesktopIpc(
-    "paseo:invoke",
+    "fde:invoke",
     async (
       _event: Electron.IpcMainInvokeEvent,
       command: string,

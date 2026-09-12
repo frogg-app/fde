@@ -17,7 +17,7 @@ import { lstat, mkdir, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import type { Command } from "commander";
-import { DEFAULT_HUB_ORIGIN, resolveHubCredential } from "./authority.js";
+import { resolveHubCredential } from "./authority.js";
 import type { HubCredentialStore } from "./credentials.js";
 import type { HubDaemonConnection } from "./daemon-client.js";
 import { withHubDaemon } from "./daemon-client.js";
@@ -124,13 +124,13 @@ export async function runHubGuidedSetup(
   const activeLogin = environment.credentials.active();
   const opening = planHubInitOpening({
     loggedIn: activeLogin !== null,
-    paseoDirectoryExists: await pathExists(path.join(cwd, ".paseo")),
+    fdeDirectoryExists: await pathExists(path.join(cwd, ".fde")),
   });
   if (
     opening.replaceExisting &&
-    !(await requiredConfirm(environment, "Replace the existing .paseo/ Hub bundle?", false))
+    !(await requiredConfirm(environment, "Replace the existing .fde/ Hub bundle?", false))
   ) {
-    throw new HubInitCancelledError("Existing .paseo/ bundle left unchanged.");
+    throw new HubInitCancelledError("Existing .fde/ bundle left unchanged.");
   }
 
   const origin = state.origin ?? (await ensureLogin(activeLogin?.origin, environment));
@@ -165,7 +165,7 @@ export async function runHubGuidedSetup(
   });
   log.success("Dry run passed");
   await writeScaffold(cwd, scaffold, opening.replaceExisting);
-  log.success(`Created .paseo/hub.yml and ${scaffold.workflowPath}`);
+  log.success(`Created .fde/hub.yml and ${scaffold.workflowPath}`);
 
   const deploy = state.deploy ?? (await requiredConfirm(environment, "Deploy now?", true));
   if (deploy) {
@@ -254,33 +254,18 @@ async function ensureLogin(
   activeOrigin: string | undefined,
   environment: HubGuidedSetupEnvironment,
 ): Promise<string> {
-  const endpoint = await requiredSelect(environment, {
-    message: "Hub endpoint",
-    initialValue:
-      activeOrigin === undefined || activeOrigin === DEFAULT_HUB_ORIGIN ? "hosted" : "custom",
-    options: [
-      { value: "hosted", label: "hub.paseo.sh" },
-      { value: "custom", label: "Custom endpoint…" },
-    ],
+  const origin = await requiredText(environment, {
+    message: "Hub URL",
+    initialValue: activeOrigin ?? environment.env.FDE_HUB_URL,
+    validate(value) {
+      try {
+        normalizeHubOrigin(value ?? "");
+      } catch {
+        return "Enter a valid Hub URL";
+      }
+      return undefined;
+    },
   });
-  const origin =
-    endpoint === "hosted"
-      ? DEFAULT_HUB_ORIGIN
-      : await requiredText(environment, {
-          message: "Custom Hub URL",
-          initialValue:
-            activeOrigin === undefined || activeOrigin === DEFAULT_HUB_ORIGIN
-              ? environment.env.PASEO_HUB_URL
-              : activeOrigin,
-          validate(value) {
-            try {
-              normalizeHubOrigin(value ?? "");
-            } catch {
-              return "Enter a valid Hub URL";
-            }
-            return undefined;
-          },
-        });
   const normalizedOrigin = normalizeHubOrigin(origin);
   if (environment.credentials.get(normalizedOrigin) !== null) {
     log.success(`Logged in to ${normalizedOrigin}`);
@@ -674,9 +659,9 @@ async function writeScaffold(
   scaffold: ReturnType<typeof createHubInitScaffold>,
   replaceExisting: boolean,
 ): Promise<void> {
-  const root = path.join(cwd, ".paseo");
-  const staging = path.join(cwd, `.paseo-init-${randomUUID()}`);
-  const backup = path.join(cwd, `.paseo-backup-${randomUUID()}`);
+  const root = path.join(cwd, ".fde");
+  const staging = path.join(cwd, `.fde-init-${randomUUID()}`);
+  const backup = path.join(cwd, `.fde-backup-${randomUUID()}`);
   let movedExisting = false;
   try {
     await mkdir(path.join(staging, "workflows"), { recursive: true });

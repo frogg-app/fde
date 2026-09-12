@@ -17,7 +17,7 @@ import {
   PluginSourceSchema,
   TerminalProfileSchema,
 } from "@fde/protocol/messages";
-import { PaseoServicePortAllocationSchema } from "@fde/protocol/paseo-config-schema";
+import { FdeServicePortAllocationSchema } from "@fde/protocol/fde-config-schema";
 
 export const LogLevelSchema = z.enum(["trace", "debug", "info", "warn", "error", "fatal"]);
 export const LogFormatSchema = z.enum(["pretty", "json"]);
@@ -93,7 +93,7 @@ const ProvidersSchema = z
 const WorktreesConfigSchema = z
   .object({
     root: z.string().min(1).optional(),
-    servicePorts: PaseoServicePortAllocationSchema.optional(),
+    servicePorts: FdeServicePortAllocationSchema.optional(),
   })
   .strict();
 
@@ -408,8 +408,8 @@ interface LoggerLike {
   info(...args: unknown[]): void;
 }
 
-function getConfigPath(paseoHome: string): string {
-  return path.join(paseoHome, CONFIG_FILENAME);
+function getConfigPath(fdeHome: string): string {
+  return path.join(fdeHome, CONFIG_FILENAME);
 }
 
 function getLogger(logger: LoggerLike | undefined): LoggerLike | undefined {
@@ -455,9 +455,9 @@ function stripRemovedConfigFields(parsed: unknown): unknown {
   return root;
 }
 
-export function loadPersistedConfig(paseoHome: string, logger?: LoggerLike): PersistedConfig {
+export function loadPersistedConfig(fdeHome: string, logger?: LoggerLike): PersistedConfig {
   const log = getLogger(logger);
-  const configPath = getConfigPath(paseoHome);
+  const configPath = getConfigPath(fdeHome);
 
   if (!existsSync(configPath)) {
     try {
@@ -507,12 +507,12 @@ export function loadPersistedConfig(paseoHome: string, logger?: LoggerLike): Per
 }
 
 export function savePersistedConfig(
-  paseoHome: string,
+  fdeHome: string,
   config: PersistedConfig,
   logger?: LoggerLike,
 ): void {
   const log = getLogger(logger);
-  const configPath = getConfigPath(paseoHome);
+  const configPath = getConfigPath(fdeHome);
 
   const result = PersistedConfigSchema.safeParse(config);
   if (!result.success) {

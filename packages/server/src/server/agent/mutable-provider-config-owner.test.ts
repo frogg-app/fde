@@ -88,7 +88,7 @@ function mutableConfig(persisted: PersistedConfig): MutableDaemonConfig {
       maxProcessesPerSecond: persisted.daemon?.git?.maxProcessesPerSecond ?? 64,
       maxProcessConcurrency: persisted.daemon?.git?.maxProcessConcurrency ?? 8,
     },
-    app: { baseUrl: persisted.app?.baseUrl ?? "https://app.paseo.sh" },
+    app: { baseUrl: persisted.app?.baseUrl ?? "https://app.example.test" },
   };
 }
 
@@ -98,9 +98,9 @@ afterEach(() => {
 
 describe("mutable provider config owner", () => {
   test("publishes provider changes after commit and emits nothing on rollback", () => {
-    const paseoHome = mkdtempSync(path.join(tmpdir(), "paseo-provider-config-owner-"));
-    tempDirs.push(paseoHome);
-    const store = new DaemonConfigStore(paseoHome, mutableConfig({ version: 1 }));
+    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-provider-config-owner-"));
+    tempDirs.push(fdeHome);
+    const store = new DaemonConfigStore(fdeHome, mutableConfig({ version: 1 }));
     const manager = new ProviderSnapshotManager({
       logger: createTestLogger(),
       providerOverrides: { codex: { enabled: true } },
@@ -149,8 +149,8 @@ describe("mutable provider config owner", () => {
   });
 
   test("does no provider work for unrelated CORS, Git, and app URL reloads", () => {
-    const paseoHome = mkdtempSync(path.join(tmpdir(), "paseo-provider-config-owner-"));
-    tempDirs.push(paseoHome);
+    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-provider-config-owner-"));
+    tempDirs.push(fdeHome);
     const initial: PersistedConfig = {
       version: 1,
       daemon: {
@@ -160,9 +160,9 @@ describe("mutable provider config owner", () => {
       app: { baseUrl: "https://before.example.test" },
       agents: { providers: { codex: { enabled: true } } },
     };
-    const configPath = path.join(paseoHome, "config.json");
+    const configPath = path.join(fdeHome, "config.json");
     writeFileSync(configPath, `${JSON.stringify(initial, null, 2)}\n`, "utf-8");
-    const store = new DaemonConfigStore(paseoHome, mutableConfig(initial), undefined, {
+    const store = new DaemonConfigStore(fdeHome, mutableConfig(initial), undefined, {
       startupPersisted: initial,
       reloadSource: {
         resolve: (persisted) => ({
@@ -217,9 +217,9 @@ describe("mutable provider config owner", () => {
   });
 
   test("replaces an in-flight catalog after provider config commits", async () => {
-    const paseoHome = mkdtempSync(path.join(tmpdir(), "paseo-provider-config-owner-"));
-    tempDirs.push(paseoHome);
-    const store = new DaemonConfigStore(paseoHome, mutableConfig({ version: 1 }));
+    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-provider-config-owner-"));
+    tempDirs.push(fdeHome);
+    const store = new DaemonConfigStore(fdeHome, mutableConfig({ version: 1 }));
     const catalogResolvers: Array<(value: Catalog) => void> = [];
     const manager = new ProviderSnapshotManager({
       logger: createTestLogger(),
@@ -266,9 +266,9 @@ describe("mutable provider config owner", () => {
   });
 
   test("lets the original in-flight catalog publish after provider config rolls back", async () => {
-    const paseoHome = mkdtempSync(path.join(tmpdir(), "paseo-provider-config-owner-"));
-    tempDirs.push(paseoHome);
-    const store = new DaemonConfigStore(paseoHome, mutableConfig({ version: 1 }));
+    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-provider-config-owner-"));
+    tempDirs.push(fdeHome);
+    const store = new DaemonConfigStore(fdeHome, mutableConfig({ version: 1 }));
     const catalogResolvers: Array<(value: Catalog) => void> = [];
     const manager = new ProviderSnapshotManager({
       logger: createTestLogger(),

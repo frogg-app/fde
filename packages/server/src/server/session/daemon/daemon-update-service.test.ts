@@ -83,7 +83,7 @@ function makeService(
   const service = new DaemonUpdateService({
     install: updatableInstall(installDir),
     daemonVersion: "0.1.13",
-    paseoHome: path.join(installDir, "home"),
+    fdeHome: path.join(installDir, "home"),
     listen,
     logger: pino({ level: "silent" }),
     env: { PATH: "/usr/bin" },
@@ -203,7 +203,7 @@ describe("DaemonUpdateService", () => {
     expect(calls[0]?.env).toMatchObject({
       FDE_HOME: path.join(installDir, "home"),
       FDE_INSTALL_DIR: installDir,
-      PASEO_LISTEN: "0.0.0.0:9993",
+      FDE_LISTEN: "0.0.0.0:9993",
     });
   });
 
@@ -278,7 +278,7 @@ describe("DaemonUpdateService", () => {
         cliLauncher: null,
       },
       daemonVersion: "0.1.13",
-      paseoHome: installDir,
+      fdeHome: installDir,
       listen: null,
       logger: pino({ level: "silent" }),
     });
@@ -384,10 +384,6 @@ describe("retained execution updates", () => {
       fake.finish(0);
       await pending;
     }
-    expect(calls.map((env) => env.PASEO_LISTEN)).toEqual([
-      "0.0.0.0:9993",
-      "0.0.0.0:9994",
-      undefined,
-    ]);
+    expect(calls.map((env) => env.FDE_LISTEN)).toEqual(["0.0.0.0:9993", "0.0.0.0:9994", undefined]);
   });
 });

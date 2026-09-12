@@ -50,14 +50,16 @@ import { brand } from "@fde/branding";
 import { createWindowRuntime } from "./window-runtime.js";
 
 const DEV_SERVER_URL =
-  process.env.PASEO_DESKTOP_DEV_URL ?? process.env.EXPO_DEV_URL ?? "http://localhost:8081";
-const APP_SCHEME = "paseo";
-const PASEO_DEBUG = process.env.PASEO_DEBUG === "1";
-const DISABLE_SINGLE_INSTANCE_LOCK = process.env.PASEO_DISABLE_SINGLE_INSTANCE_LOCK === "1";
-const APP_NAME = process.env.PASEO_TEST_APP_NAME?.trim() || `${brand.name} Electron`;
+  process.env.FDE_DESKTOP_DEV_URL ?? process.env.EXPO_DEV_URL ?? "http://localhost:8081";
+const APP_SCHEME = brand.scheme;
+const FDE_DEBUG = process.env.FDE_DEBUG === "1";
+const DISABLE_SINGLE_INSTANCE_LOCK = process.env.FDE_DISABLE_SINGLE_INSTANCE_LOCK === "1";
+const APP_NAME = process.env.FDE_TEST_APP_NAME?.trim() || brand.name;
+// Keep the tested Electron profile while presenting the production FDE identity.
+const PROFILE_NAME = process.env.FDE_TEST_APP_NAME?.trim() || `${brand.name} Electron`;
 const DESKTOP_WINDOW_CHROME_MODE = resolveDesktopWindowChromeMode({
   platform: process.platform,
-  override: process.env.PASEO_DESKTOP_WINDOW_CONTROLS,
+  override: process.env.FDE_DESKTOP_WINDOW_CONTROLS,
   isPackaged: app.isPackaged,
 });
 const UPDATE_QUIT_DEADLINE_MS = 5_000;
@@ -72,7 +74,7 @@ const bootstrapComplete = new Promise<void>((resolve) => {
 });
 let bootstrapIsComplete = false;
 
-const devWorktreeName = configureDesktopProcess(APP_NAME);
+const devWorktreeName = configureDesktopProcess(APP_NAME, PROFILE_NAME);
 log.transports.console.level = "info";
 log.initialize({ spyRendererConsole: true });
 
@@ -89,7 +91,7 @@ for (const arg of process.argv) pairingInbox.receive(arg);
 // racing a global.
 let desktopWindowOwner: DesktopWindowOwner<AgentDeepLinkTarget>;
 
-if (PASEO_DEBUG) {
+if (FDE_DEBUG) {
   log.info("[open-project] argv:", process.argv);
   log.info("[open-project] isDefaultApp:", process.defaultApp);
   log.info("[open-project] pendingOpenProjectPath:", pendingOpenProjectPath);
@@ -97,7 +99,7 @@ if (PASEO_DEBUG) {
 
 // The renderer pulls the pending path on mount via IPC — this avoids
 // a race where the push event arrives before React registers its listener.
-handleDesktopIpc("paseo:get-pending-open-project", (event) => {
+handleDesktopIpc("fde:get-pending-open-project", (event) => {
   const webContentsId = event.sender.id;
   const result = desktopWindowOwner.takePendingProject(webContentsId);
   log.info("[open-project] renderer requested pending path:", {
@@ -107,7 +109,7 @@ handleDesktopIpc("paseo:get-pending-open-project", (event) => {
   return result;
 });
 
-handleDesktopIpc("paseo:agent-navigation:ready", (event) => {
+handleDesktopIpc("fde:agent-navigation:ready", (event) => {
   return agentNavigationInbox.windowReady(event.sender.id);
 });
 
@@ -140,7 +142,7 @@ function ownedDesktopWindow(win: BrowserWindow): OwnedDesktopWindow<AgentDeepLin
     restore: () => win.restore(),
     show: () => win.show(),
     focus: () => win.focus(),
-    sendAgent: (target) => win.webContents.send("paseo:event:open-agent", target),
+    sendAgent: (target) => win.webContents.send("fde:event:open-agent", target),
   };
 }
 
@@ -202,7 +204,7 @@ app.on("open-url", (event, url) => {
 
 function setupSingleInstanceLock(): boolean {
   if (DISABLE_SINGLE_INSTANCE_LOCK) {
-    log.info("[single-instance] disabled by PASEO_DISABLE_SINGLE_INSTANCE_LOCK");
+    log.info("[single-instance] disabled by FDE_DISABLE_SINGLE_INSTANCE_LOCK");
     return true;
   }
 
@@ -232,7 +234,7 @@ function setupSingleInstanceLock(): boolean {
       isDefaultApp: false,
     });
     log.info("[open-project] second-instance openProjectPath:", openProjectPath);
-    // Relaunching the app (CLI `paseo [path]`, double-click, etc.) opens a new
+    // Relaunching the app (CLI `fde [path]`, double-click, etc.) opens a new
     // window rather than focusing the existing one. Wait for bootstrap (not just
     // app.whenReady) so the protocol + IPC handlers exist before the window loads.
     void bootstrapComplete
@@ -298,13 +300,13 @@ async function bootstrap(): Promise<void> {
   registerDialogHandlers();
   registerNotificationHandlers();
   const openExternalUrl = createExternalUrlOpener({ open: shell.openExternal });
-  handleDesktopIpc("paseo:opener:openUrl", (_event, value: unknown) => openExternalUrl(value));
+  handleDesktopIpc("fde:opener:openUrl", (_event, value: unknown) => openExternalUrl(value));
   registerEditorTargetHandlers();
   registerBrowserAutomationIpc();
 
   // In-app "Open in new window": opens a window that lands on the given project
   // via the same open-project flow as a CLI launch (no move, no ownership).
-  handleDesktopIpc("paseo:window:openNew", async (_event, options?: unknown) => {
+  handleDesktopIpc("fde:window:openNew", async (_event, options?: unknown) => {
     const pendingPath =
       options && typeof options === "object" && "pendingOpenProjectPath" in options
         ? (options as { pendingOpenProjectPath?: unknown }).pendingOpenProjectPath

@@ -275,12 +275,12 @@ resolution is not.
 
 Config keys, following the existing table in [voice.md](voice.md):
 
-| Feature   | `config.json`                 | Environment               |
-| --------- | ----------------------------- | ------------------------- |
-| Companion | `features.companion.enabled`  | `PASEO_COMPANION_ENABLED` |
-| Model     | `features.companion.model`    | `PASEO_COMPANION_MODEL`   |
-| API key   | `providers.anthropic.apiKey`  | `ANTHROPIC_API_KEY`       |
-| Base URL  | `providers.anthropic.baseUrl` | `ANTHROPIC_BASE_URL`      |
+| Feature   | `config.json`                 | Environment             |
+| --------- | ----------------------------- | ----------------------- |
+| Companion | `features.companion.enabled`  | `FDE_COMPANION_ENABLED` |
+| Model     | `features.companion.model`    | `FDE_COMPANION_MODEL`   |
+| API key   | `providers.anthropic.apiKey`  | `ANTHROPIC_API_KEY`     |
+| Base URL  | `providers.anthropic.baseUrl` | `ANTHROPIC_BASE_URL`    |
 
 With no API key the Companion uses the Claude Code CLI, which brings its own
 authentication; nothing else needs configuring.

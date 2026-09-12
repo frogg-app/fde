@@ -5,7 +5,7 @@ import {
   type DaemonSelfUpdateRuntime,
   type DaemonSelfUpdatePhase,
 } from "./daemon-self-updater.js";
-import type { CommandResult, NpmGlobalPaseoInstall } from "./npm-global-cli.js";
+import type { CommandResult, NpmGlobalFdeInstall } from "./npm-global-cli.js";
 
 interface TestLogger {
   errors: Array<{ obj: object; msg?: string }>;
@@ -14,7 +14,7 @@ interface TestLogger {
   warn(obj: object, msg?: string): void;
 }
 
-type Inspection = NpmGlobalPaseoInstall | Error;
+type Inspection = NpmGlobalFdeInstall | Error;
 type RuntimeCall = "inspect" | "installLatest";
 
 const globalRoot = "/global/lib";
@@ -23,10 +23,7 @@ const cliPackagePath = `${globalNodeModules}/@fde/cli`;
 const npmServerPackageRoot = `${cliPackagePath}/node_modules/@fde/server`;
 const sourceServerPackageRoot = "/repo/packages/server";
 
-function npmGlobalPaseoInstall(
-  version: string,
-  options?: { linked?: boolean },
-): NpmGlobalPaseoInstall {
+function npmGlobalFdeInstall(version: string, options?: { linked?: boolean }): NpmGlobalFdeInstall {
   return {
     version,
     packagePath: cliPackagePath,
@@ -119,7 +116,7 @@ describe("DaemonSelfUpdater", () => {
     const calls: RuntimeCall[] = [];
     const runtime = createRuntime({
       calls,
-      inspections: [npmGlobalPaseoInstall("0.1.15"), npmGlobalPaseoInstall("0.1.96")],
+      inspections: [npmGlobalFdeInstall("0.1.15"), npmGlobalFdeInstall("0.1.96")],
     });
 
     const { result, phases } = await runUpdate({ runtime });
@@ -152,7 +149,7 @@ describe("DaemonSelfUpdater", () => {
     const calls: RuntimeCall[] = [];
     const runtime = createRuntime({
       calls,
-      inspections: [npmGlobalPaseoInstall("0.1.15")],
+      inspections: [npmGlobalFdeInstall("0.1.15")],
     });
 
     const { result } = await runUpdate({ runtime, daemonVersion: "0.1.96" });
@@ -171,7 +168,7 @@ describe("DaemonSelfUpdater", () => {
     const runtime = createRuntime({
       calls,
       currentServerPackageRoot: sourceServerPackageRoot,
-      inspections: [npmGlobalPaseoInstall("0.1.15")],
+      inspections: [npmGlobalFdeInstall("0.1.15")],
     });
 
     const { result } = await runUpdate({ runtime });
@@ -186,7 +183,7 @@ describe("DaemonSelfUpdater", () => {
 
   test("does not update linked global installs", async () => {
     const runtime = createRuntime({
-      inspections: [npmGlobalPaseoInstall("0.1.15", { linked: true })],
+      inspections: [npmGlobalFdeInstall("0.1.15", { linked: true })],
     });
 
     const { result } = await runUpdate({ runtime });
@@ -210,7 +207,7 @@ describe("DaemonSelfUpdater", () => {
       npm: {
         async inspect() {
           calls.push("inspect");
-          return npmGlobalPaseoInstall("0.1.15");
+          return npmGlobalFdeInstall("0.1.15");
         },
         async installLatest() {
           calls.push("installLatest");

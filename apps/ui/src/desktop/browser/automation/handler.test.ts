@@ -581,7 +581,7 @@ describe("mountBrowserAutomationHandler", () => {
   test("unimplemented preload IPC reports browser_unsupported", async () => {
     const browser = new BrowserAutomationHandlerHarness();
     browser.browser.thrownError = new Error(
-      'No handler registered for "paseo:browser:execute-automation-command"',
+      'No handler registered for "fde:browser:execute-automation-command"',
     );
     browser.mount();
 

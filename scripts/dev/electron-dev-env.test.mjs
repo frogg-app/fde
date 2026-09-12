@@ -14,7 +14,7 @@ test("custom-brand daemon overrides inherited live state and ports", () => {
   assert.equal(env.ACME_HOME, path.join(state, "daemon"));
   assert.equal(env.ACME_LISTEN, "0.0.0.0:0");
   assert.equal(env.FDE_HOME, env.ACME_HOME);
-  assert.equal(env.PASEO_HOME, env.ACME_HOME);
+  assert.equal(env.FDE_HOME, env.ACME_HOME);
   assert.equal(env.FDE_ELECTRON_USER_DATA_DIR, path.join(state, "profile"));
   assert.equal(env.PATH, "/test/bin");
 });
@@ -27,5 +27,5 @@ test("official-brand daemon also overrides inherited primary listen variable", (
     env: { FDE_LISTEN: "0.0.0.0:9999" },
   });
   assert.equal(env.FDE_LISTEN, "0.0.0.0:0");
-  assert.equal(env.PASEO_LISTEN, "0.0.0.0:0");
+  assert.equal(env.FDE_LISTEN, "0.0.0.0:0");
 });

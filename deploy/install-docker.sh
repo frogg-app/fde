@@ -44,7 +44,7 @@ BRAND_PORT='9999'
 BRAND_RELEASE_BASE='https://github.com/frogg-app/fde/releases'
 BRAND_DOCKER_IMAGE='froggapp/fde'
 BRAND_LEGACY='true'
-BRAND_COMMANDS=(fde paseo)
+BRAND_COMMANDS=(fde fde)
 # END BRAND DEFAULTS
 
 # Environment names inside this script remain implementation details. Only the
@@ -121,18 +121,18 @@ start_container() {
     --restart unless-stopped
     -p "${FDE_BIND}:${FDE_PORT}:${BRAND_PORT}"
     -v "${FDE_HOME}:/home/fde/${BRAND_HOME}"
-    -e PASEO_LISTEN=0.0.0.0:${BRAND_PORT}
-    -e PASEO_WEB_UI_ENABLED=true
+    -e FDE_LISTEN=0.0.0.0:${BRAND_PORT}
+    -e FDE_WEB_UI_ENABLED=true
   )
   if [ -n "${FDE_WORKSPACE}" ]; then
     mkdir -p "${FDE_WORKSPACE}"
     run_args+=(-v "${FDE_WORKSPACE}:/workspace")
   fi
   if [ -n "${FDE_PASSWORD}" ]; then
-    run_args+=(-e "PASEO_PASSWORD=${FDE_PASSWORD}")
+    run_args+=(-e "FDE_PASSWORD=${FDE_PASSWORD}")
   fi
   local var
-  for var in ANTHROPIC_API_KEY OPENAI_API_KEY ANTHROPIC_BASE_URL OPENAI_BASE_URL PASEO_HOSTNAMES; do
+  for var in ANTHROPIC_API_KEY OPENAI_API_KEY ANTHROPIC_BASE_URL OPENAI_BASE_URL FDE_HOSTNAMES; do
     if [ -n "${!var:-}" ]; then
       run_args+=(-e "${var}=${!var}")
     fi

@@ -660,7 +660,7 @@ test.describe("Composer autocomplete", () => {
     test("keeps the mobile agent sidebar above autocomplete", async ({ page }) => {
       // Quarantined: fails deterministically on this build (the autocomplete
       // floating-panel portal wins document.elementFromPoint over the open
-      // compact sidebar). The layering code matches upstream Paseo; needs a
+      // compact sidebar). The layering code matches upstream Fde; needs a
       // product investigation, not a test change.
       test.fixme();
       await installListCommandsStub(page);

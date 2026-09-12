@@ -22,7 +22,7 @@ function candidate(input: {
     },
     project: {
       projectKey: "key",
-      projectName: input.projectName ?? "getpaseo/paseo",
+      projectName: input.projectName ?? "frogg-app/fde",
       workspaceName: input.workspaceName ?? null,
       checkout: {
         cwd: "/tmp/repo",
@@ -30,7 +30,7 @@ function candidate(input: {
         currentBranch: branch,
         remoteUrl: null,
         worktreeRoot: "/tmp/repo",
-        isPaseoOwnedWorktree: false,
+        isFdeOwnedWorktree: false,
         mainRepoRoot: null,
       },
     },
@@ -65,7 +65,7 @@ describe("scoreAgentHistoryCandidate", () => {
 
   it("matches the project name", () => {
     expect(
-      scoreAgentHistoryCandidate("paseo", candidate({ projectName: "getpaseo/paseo" })),
+      scoreAgentHistoryCandidate("fde", candidate({ projectName: "frogg-app/fde" })),
     ).not.toBeNull();
   });
 
@@ -115,14 +115,14 @@ describe("rankAgentHistoryCandidates", () => {
 
   it("ranks the workspace name above the project name that every session shares", () => {
     const ranked = rankAgentHistoryCandidates(
-      "paseo",
+      "fde",
       [
-        candidate({ title: "unrelated work", projectName: "getpaseo/paseo" }),
-        candidate({ workspaceName: "paseo", projectName: "getpaseo/paseo" }),
+        candidate({ title: "unrelated work", projectName: "frogg-app/fde" }),
+        candidate({ workspaceName: "fde", projectName: "frogg-app/fde" }),
       ],
       byUpdatedAtDesc,
     );
-    expect(ranked[0].candidate.project.workspaceName).toBe("paseo");
+    expect(ranked[0].candidate.project.workspaceName).toBe("fde");
   });
 
   it("ranks every exact hit above a typo hit", () => {

@@ -1,7 +1,7 @@
 import type { ToolCallDetail, ToolCallIconName } from "@fde/protocol/agent-types";
-import { isPaseoToolName } from "@fde/protocol/tool-name-normalization";
+import { isFdeToolName } from "@fde/protocol/tool-name-normalization";
 
-export type ToolCallIcon = ToolCallIconName | "paseo";
+export type ToolCallIcon = ToolCallIconName | "fde";
 
 const TOOL_DETAIL_ICON_NAMES: Record<ToolCallDetail["type"], ToolCallIcon> = {
   shell: "square_terminal",
@@ -31,8 +31,8 @@ export function resolveToolCallIconName(toolName: string, detail?: ToolCallDetai
   if (lowerName === "speak") {
     return "mic_vocal";
   }
-  if (isPaseoToolName(lowerName)) {
-    return "paseo";
+  if (isFdeToolName(lowerName)) {
+    return "fde";
   }
   if (lowerName === "task") {
     return "bot";

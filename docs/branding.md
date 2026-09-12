@@ -15,9 +15,9 @@ FDE_BRAND_DIR=brands/example npm run build:ui
 FDE_BRAND_DIR=brands/example npm run build:desktop
 ```
 
-Use the npm desktop entrypoints so the Tauri CLI and Rust receive the same generated configuration. Raw custom Tauri builds without that overlay fail with an actionable message; release builds also reject missing/stale web branding and native version drift. Direct `cargo check` and `cargo test` remain available.
+Use the npm desktop entrypoints so Electron and the shared UI receive the same generated product configuration. Build the app and daemon as separate distributions.
 
-On Linux, `npm run build:desktop -- --bundles deb,appimage` builds the formats shipped by the release workflow. RPM remains available through Tauri when needed; its compression can take substantially longer with an embedded daemon.
+Build Linux desktop artifacts through `npm run build:desktop -- --target linux-x64`; the application contains no embedded daemon.
 
 Desktop builds require the native prerequisites in [building.md](building.md). Windows builds on Linux use `npm run build:desktop:win`; native Windows and macOS runners use `build:desktop`. The selected identity supplies the executable name, icons, installer inputs, application identifier, URL handler, and runtime defaults.
 
@@ -90,7 +90,7 @@ Generated output lives in `.generated/branding`, `apps/ui/.generated/branding`, 
 
 Build and development wrappers hold a worktree lease. A conflicting brand build fails with an actionable error. Use separate worktrees for concurrent products. A running development server cannot safely change its brand; stop that server and start it with the new selection.
 
-Development uses `npm run dev:server` and `npm run dev:app` (`dev:win` starts both on Windows). Custom products use their daemon port and the next port for Metro (65534 when the daemon uses 65535); FDE keeps development ports 6768/8081. Set `PASEO_LISTEN`, `EXPO_PORT`, or `PASEO_DEV_DAEMON_ENDPOINT` explicitly when running several worktrees of the same product. Development daemon state stays inside the worktree unless its own home override is supplied.
+Development uses `npm run dev:server` and `npm run dev:app` (`dev:win` starts both on Windows). Custom products use their daemon port and the next port for Metro (65534 when the daemon uses 65535); FDE keeps development ports 6768/8081. Set `FDE_LISTEN`, `EXPO_PORT`, or `FDE_DEV_DAEMON_ENDPOINT` explicitly when running several worktrees of the same product. Development daemon state stays inside the worktree unless its own home override is supplied.
 
 Use `npm run build:server`, `build:daemon-web-ui`, and `build:daemon-bundle -- --target linux-x64` for standalone daemon distribution. Supported targets also include Linux arm64, macOS x64/arm64, and Windows x64/arm64. The bundle includes Node, the daemon, the web client, branded CLI launchers, and provenance metadata. Shared npm package names remain `@fde/*`; custom public commands come from the daemon bundle.
 
@@ -115,21 +115,21 @@ For the minimal Atlas manifest, defaults are:
 
 Choose distinct IDs, application IDs, service names, schemes, and ports for products that coexist. Override identity defaults in the manifest only when needed, and keep them stable after shipping. Cosmetic names, publishers, colors, links, and artwork can change without changing installation identity. Custom native package and `.app` filenames use the stable brand ID; desktop entries, window titles, macOS display metadata, and Windows installer copy use the public name. Windows install paths and registry keys use the application ID.
 
-Identity-sensitive environment overrides use the selected prefix, for example `ATLAS_HOME`, `ATLAS_INSTALL_DIR`, `ATLAS_BIN_DIR`, and `ATLAS_DAEMON_BUNDLE_URL`. Existing low-level interfaces such as `PASEO_LISTEN` remain compatible. The official preset alone accepts legacy FDE/Paseo identity aliases and home migration. Custom builds do not automatically import `.fde` or `.paseo` state.
+Identity-sensitive environment overrides use the selected prefix, for example `ATLAS_HOME`, `ATLAS_INSTALL_DIR`, `ATLAS_BIN_DIR`, and `ATLAS_DAEMON_BUNDLE_URL`. Existing low-level interfaces such as `FDE_LISTEN` remain compatible. The 0.6 namespace migration requires updating environment and persisted references explicitly. Custom builds do not import another product's state.
 
 A port conflict is an error, not permission to adopt or stop another daemon. Local management checks matching brand metadata. Existing unbranded installation metadata is accepted only for FDE. Explicit pairing with another compatible product remains supported: the protocol family is still `product: "fde"`, while discovery also reports public brand metadata.
 
-Provider skill selection uses logical names for compatibility. Physical directories and generated references belong to the product. Sync, uninstall, transaction rollback, and recovery check ownership and leave other products' files alone. FDE's existing legacy skill paths remain supported.
+Provider skill selection uses logical names for compatibility. Physical directories and generated references belong to the product. Sync, uninstall, transaction rollback, and recovery check ownership and leave other products' files alone. The 0.6 skill paths use the fde namespace; update legacy references during the coordinated upgrade.
 
 ## Releases and updates
 
 Set `distribution.repository` to your GitHub `owner/repository`, then choose an update mode. Custom products default to disabled updates without a repository. Missing custom release assets never redirect to FDE releases.
 
-FDE releases from 0.2.16 use explicit platform names in public artifacts. Earlier releases remain addressable by their historical names. New FDE releases also publish byte-identical legacy aliases and checksum/signature sidecars so existing clients can update. Custom daemon prefixes retain their own naming contract; no FDE aliases are published for custom products.
+FDE 0.6 uses production artifacts named `FDE-${version}-${os}-${arch}`. Custom products use their selected identity. Do not promise legacy artifact aliases or automatic namespace migration.
 
 The generator supplies artifact prefixes and release locations to both publishers and consumers. Daemon bundles include `manifest.json`; desktop assets have `.metadata.json` sidecars containing product identity, version, source revision, configuration fingerprint, asset name, and checksum. Cosmetic fingerprint changes are allowed across upgrades; a different product identity is rejected.
 
-Use `github-release` for the existing GitHub release/checksum update path. `tauri-signed` requires a Tauri updater public key and signed desktop updater artifacts. Signing failure does not switch a custom desktop to an unsigned update path. Private signing material remains in runner secrets. Review [release.md](release.md) for platform signing and artifact publication.
+Configure the Electron update feed and platform signing through the current release workflow. Missing configuration must report disabled updates; failed signing must not be described as signed. Review [release.md](release.md).
 
 Repository CI variables select the product without editing shared workflows:
 
@@ -156,7 +156,7 @@ docker compose -f .generated/branding/deploy/compose.json config
 
 The Docker wrapper stages external artwork and supplies the selected build argument. Generated Compose pins the source version and product state, service, and port. `install-docker.sh` checks the shipped image identity before replacing a container and uses ownership labels for uninstall. The image's internal Linux user and `/opt/fde` directory are implementation details within an isolated container.
 
-For Nix, call `deploy/nix/package.nix` with a pinned, self-contained `brandSource` directory and the appropriate `npmDepsHash`. The package exposes its resolved identity to `deploy/nix/branded-module.nix`. Configure `services.fde.instances.<name>` with that package to run independent services. Existing official `services.paseo` configuration remains available through the flake. Nix dependency hashes must be refreshed when the lockfile changes.
+For Nix, call `deploy/nix/package.nix` with a pinned, self-contained `brandSource` directory and the appropriate `npmDepsHash`. The package exposes its resolved identity to `deploy/nix/branded-module.nix`. Configure `services.fde.instances.<name>` with that package to run independent services. Existing official `services.fde` configuration remains available through the flake. Nix dependency hashes must be refreshed when the lockfile changes.
 
 Pairing service URLs and relay endpoints are optional. Without them, local/direct pairing remains available and links use the selected native scheme. A custom hosted pairing service uses the shared `deploy/pair/Dockerfile` with its selected build input. Configure your own `distribution.pairingImage` for the Docker release wrapper.
 
@@ -175,7 +175,7 @@ FDE_BRAND_DIR=../company-brand npm run brand:eas -- --prepare-only
 FDE_BRAND_DIR=../company-brand npm run brand:eas -- build --platform android --profile production-apk
 ```
 
-EAS requires a project-local `eas.json`. The wrapper therefore creates a disposable source export, overlays the generated configuration, includes staged branding, and runs EAS from that export. It prints the export path for inspection. The original checkout's tracked configuration stays unchanged. Build profiles preserve the selection on the remote runner. Set your own `distribution.expoProjectId` and `distribution.iosStoreId` when publishing; omitted values do not inherit an FDE/Paseo store application.
+EAS requires a project-local `eas.json`. The wrapper therefore creates a disposable source export, overlays the generated configuration, includes staged branding, and runs EAS from that export. It prints the export path for inspection. The original checkout's tracked configuration stays unchanged. Build profiles preserve the selection on the remote runner. Set your own `distribution.expoProjectId` and `distribution.iosStoreId` when publishing; omitted values do not inherit an FDE/FDE store application.
 
 ## Troubleshooting and validation
 
@@ -187,4 +187,4 @@ EAS requires a project-local `eas.json`. The wrapper therefore creates a disposa
 - **CLI not found after installation:** add the reported launcher directory to `PATH` and open a new shell. The desktop action refuses to replace an unrelated command.
 - **Official preset change rejected in CI:** intentional FDE identity/artwork changes need the `branding:official` review label. Custom branding belongs in its own directory.
 
-Run `node scripts/ci/branding-acceptance.mjs`, `node scripts/ci/branding-contribution.mjs`, the branding package tests, and both-brand installer tests for branding changes. Full workspace typecheck, lint/format, Rust/bridge tests, and platform CI remain required gates. Browser tests run on a suitable CI runner, not by installing a browser on the shared development VM. Package compilation is separate from interactive installation, real-device acceptance, and store publication.
+Run `node scripts/ci/branding-acceptance.mjs`, `node scripts/ci/branding-contribution.mjs`, the branding package tests, and both-brand installer tests for branding changes. Full workspace typecheck, lint/format, Electron/native bridge tests, and platform CI remain required gates. Browser tests run on a suitable CI runner, not by installing a browser on the shared development VM. Package compilation is separate from interactive installation, real-device acceptance, and store publication.

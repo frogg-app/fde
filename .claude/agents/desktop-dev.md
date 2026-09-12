@@ -1,44 +1,27 @@
 ---
 name: desktop-dev
-description: Implement FDE Tauri desktop and native integration features, including Rust commands, the TypeScript bridge, local daemon supervision, SSH/socket/pipe transports, deep links, notifications, installers, and updates. Use for Windows, macOS, and Linux shell behavior; coordinate shared UI with client-dev and daemon behavior with daemon-dev.
+description: Implement the FDE Electron app-only desktop shell, native bridge, SSH transports and deployment, windows, notifications, attachments, installers and updates across Windows, macOS and Linux.
 ---
 
 # FDE desktop development
 
-Deliver the assigned native feature through implementation, behavioral coverage,
-and relevant documentation. Follow root and scoped `AGENTS.md` instructions and
-the shared delegation workflow in the root file.
+Own `apps/desktop-electron`; coordinate shared UI and protocol changes with their
+owners. Read root instructions, `docs/desktop-shell.md`, `docs/building.md`,
+`docs/coding-standards.md`, and `docs/testing.md` before changing the boundary.
 
-## Scope
+The production app is app-only. It never bundles, starts, supervises or stops a
+local daemon. Preserve connections to separately installed local/remote Node
+daemons and remote SSH deployment. Closing the app must leave those servers alone.
 
-- Primary: `apps/desktop/`, including the Rust core and TypeScript bridge.
-- Packaging changes may touch related `scripts/release/` and CI files; coordinate
-  shared build tooling with `dev-tooling`.
-- Work with `client-dev` on UI/bridge callers and `daemon-dev` on transport and
-  daemon lifecycle contracts. The experimental Rust daemon is a separate app.
+Keep the renderer sandboxed and context isolated. Expose validated native
+capabilities through `window.fdeDesktop`; restrict IPC to trusted app frames.
+Use the 0.6 FDE namespace and coordinate client/server upgrades when changing it.
 
-## Read for the task
+Run focused behavioral tests, affected typechecks and the real app-only renderer
+smoke. Test shutdown/relaunch and transport cancellation with resources owned by
+the test. Treat Windows, macOS and Linux as first-class; record installer, signing,
+voice and updater device acceptance separately from build success. Keep generated
+outputs and synchronized versions under their documented scripts.
 
-Start with `docs/desktop-shell.md`, `docs/building.md`, and
-`docs/coding-standards.md`; consult `ROADMAP.md` for planned work and platform gaps.
-Read `docs/install.md`, `docs/ci.md`, and `docs/release.md` for packaging or updater
-work, and `docs/permissions.md` plus `docs/protocol-compatibility.md` for connection
-and authentication changes. Use `docs/testing.md` to select behavioral coverage.
-
-## Implementation and verification
-
-- Keep the Tauri shell small, with no Node runtime embedded in the shell. The
-  local Node daemon runs separately; remote connections must remain supported.
-- Preserve bridge compatibility and validate IPC inputs. Keep platform-specific
-  behavior behind the existing native boundary rather than duplicating UI policy.
-- Respect daemon ownership: clean up resources the app owns without stopping
-  independently managed daemons. Cover startup failure, shutdown, and reconnect
-  when changing supervision or transport behavior.
-- Treat Windows, macOS, and Linux as first-class. Use documented cargo-xwin/NSIS
-  tooling for Windows cross-builds; do not infer runtime acceptance from a build.
-- Run relevant bridge tests and Rust tests. The desktop workspace's `test` script
-  builds the bridge and runs both; use narrower existing targets for focused work.
-  Run affected typechecks and builds when the changed boundary requires them.
-- Do not hand-edit generated bridge output or synced versions; use the documented
-  build/version scripts. Report platform checks actually performed and leave
-  device-only installer/updater validation gaps visible in the handoff.
+Inactive native-shell and Rust-backend reference sources are not production work
+areas. Do not revive their migration plans or add them to release builds.

@@ -31,13 +31,10 @@ const env = {
   FDE_ELECTRON_USER_DATA_DIR: profile,
   FDE_ELECTRON_UI_DIR: path.join(root, "apps/ui/dist"),
   FDE_HOME: path.join(state, "daemon"),
-  PASEO_HOME: path.join(state, "daemon"),
-  PASEO_LISTEN: "0.0.0.0:0",
   FDE_LISTEN: "0.0.0.0:0",
-  PASEO_RELAY_ENABLED: "false",
   FDE_RELAY_ENABLED: "false",
-  PASEO_DISABLE_SINGLE_INSTANCE_LOCK: "1",
-  PASEO_ENABLE_REACT_DEVTOOLS: "0",
+  FDE_DISABLE_SINGLE_INSTANCE_LOCK: "1",
+  FDE_ENABLE_REACT_DEVTOOLS: "0",
 };
 delete env.ELECTRON_RUN_AS_NODE;
 const args = process.env.FDE_ELECTRON_SMOKE_NO_SANDBOX === "1" ? ["--no-sandbox"] : [];
@@ -69,12 +66,12 @@ try {
     await page.waitForFunction(() => document.body.innerText.trim().length > 20);
     await page.evaluate(() => {
       localStorage.clear();
-      localStorage.setItem("@paseo:e2e", "1");
+      localStorage.setItem("@fde:e2e", "1");
     });
-    await page.goto("paseo://app/welcome");
+    await page.goto("fde://app/welcome");
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
-    await page.waitForFunction(() => Boolean(window.paseoDesktop?.invoke));
+    await page.waitForFunction(() => Boolean(window.fdeDesktop?.invoke));
     await page.waitForFunction(() => document.body.innerText.trim().length > 20);
     const security = await application.evaluate(({ BrowserWindow }) => {
       const preferences = BrowserWindow.getAllWindows()[0].webContents.getLastWebPreferences();
@@ -86,35 +83,33 @@ try {
     });
     assert.deepEqual(security, { sandbox: true, contextIsolation: true, nodeIntegration: false });
     assert.equal(await page.evaluate(() => typeof window.require), "undefined");
-    const runtime = await page.evaluate(() =>
-      window.paseoDesktop.invoke("desktop_get_runtime_info"),
-    );
+    const runtime = await page.evaluate(() => window.fdeDesktop.invoke("desktop_get_runtime_info"));
     assert.equal(typeof runtime.appVersion, "string");
-    const settings = await page.evaluate(() => window.paseoDesktop.invoke("get_desktop_settings"));
+    const settings = await page.evaluate(() => window.fdeDesktop.invoke("get_desktop_settings"));
     assert.equal(settings.daemon.manageBuiltInDaemon, false);
     assert.equal(settings.daemon.keepRunningAfterQuit, false);
-    assert.equal(await page.evaluate(() => window.paseoDesktop.supportsLocalDaemon), false);
+    assert.equal(await page.evaluate(() => window.fdeDesktop.supportsLocalDaemon), false);
     assert.equal(settings.notifications.playSound, launch === 0);
     if (launch === 0) {
       const patched = await page.evaluate(() =>
-        window.paseoDesktop.invoke("patch_desktop_settings", {
+        window.fdeDesktop.invoke("patch_desktop_settings", {
           notifications: { playSound: false },
         }),
       );
       assert.equal(patched.notifications.playSound, false);
     }
     await assert.rejects(
-      page.evaluate(() => window.paseoDesktop.invoke("smoke_unknown_command")),
+      page.evaluate(() => window.fdeDesktop.invoke("smoke_unknown_command")),
       /Unknown desktop command/,
     );
-    const addresses = await page.evaluate(() => window.paseoDesktop.network.localAddresses());
+    const addresses = await page.evaluate(() => window.fdeDesktop.network.localAddresses());
     assert.equal(Array.isArray(addresses), true);
     assert.equal(
-      await page.evaluate(() => window.paseoDesktop.window.getCurrentWindow().isFullscreen()),
+      await page.evaluate(() => window.fdeDesktop.window.getCurrentWindow().isFullscreen()),
       false,
     );
     for (const command of ["start_desktop_daemon", "install_local_daemon_bundle", "install_cli"]) {
-      await assert.rejects(page.evaluate((name) => window.paseoDesktop.invoke(name), command));
+      await assert.rejects(page.evaluate((name) => window.fdeDesktop.invoke(name), command));
     }
     assert.equal(await page.getByText("Run agents on this machine", { exact: true }).count(), 0);
     await page.getByTestId("welcome-remote-ssh").waitFor();

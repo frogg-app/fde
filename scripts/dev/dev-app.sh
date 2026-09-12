@@ -7,7 +7,7 @@ export PATH="$ROOT_DIR/node_modules/.bin:$PATH"
 
 source "$SCRIPT_DIR/dev-home.sh"
 
-configure_dev_paseo_home
+configure_dev_fde_home
 
 EXPO_PORT="${EXPO_PORT:-8081}"
 DAEMON_ENDPOINT="$(resolve_dev_daemon_endpoint)"
@@ -18,12 +18,12 @@ echo "  ${FDE_DEV_PRODUCT_NAME} App Dev"
 echo "══════════════════════════════════════════════════════"
 echo "  Metro:   http://localhost:${EXPO_PORT}"
 echo "  Daemon:  ${DAEMON_ENDPOINT}"
-echo "  Home:    ${PASEO_HOME}"
+echo "  Home:    ${FDE_HOME}"
 echo "══════════════════════════════════════════════════════"
 
 exec cross-env \
   BROWSER="${BROWSER:-none}" \
   APP_VARIANT=development \
-  EXPO_PUBLIC_PASEO_DEV_BUILD_LABEL="$DEV_BUILD_LABEL" \
+  EXPO_PUBLIC_FDE_DEV_BUILD_LABEL="$DEV_BUILD_LABEL" \
   EXPO_PUBLIC_LOCAL_DAEMON="$DAEMON_ENDPOINT" \
   npm run start:expo --workspace=@fde/app -- --port "$EXPO_PORT"

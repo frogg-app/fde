@@ -116,8 +116,8 @@ Wants=network-online.target
 [Service]
 Type=simple
 ExecStart=${exec}
-${stop}Environment=PASEO_LISTEN=${input.listen}
-Environment=PASEO_WEB_UI_ENABLED=true
+${stop}Environment=FDE_LISTEN=${input.listen}
+Environment=FDE_WEB_UI_ENABLED=true
 Environment=${unitQuote(`PATH=${servicePath(input)}`)}
 ${home}${executionEnv}Restart=on-failure
 RestartSec=5
@@ -149,8 +149,8 @@ ${programArguments}
   </array>
   <key>EnvironmentVariables</key>
   <dict>
-${plistEntry("PASEO_LISTEN", input.listen)}${plistEntry(
-    "PASEO_WEB_UI_ENABLED",
+${plistEntry("FDE_LISTEN", input.listen)}${plistEntry(
+    "FDE_WEB_UI_ENABLED",
     "true",
   )}${plistEntry("PATH", servicePath(input))}${
     input.fdeHome ? plistEntry(`${brand.envPrefix}_HOME`, input.fdeHome) : ""

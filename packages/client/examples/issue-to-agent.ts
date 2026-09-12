@@ -1,4 +1,4 @@
-import { createPaseoClient, type PaseoClient } from "@fde/client";
+import { createFdeClient, type FdeClient } from "@fde/client";
 
 interface Issue {
   id: string;
@@ -7,7 +7,7 @@ interface Issue {
   repositoryPath: string;
 }
 
-export async function startIssue(client: PaseoClient, issue: Issue) {
+export async function startIssue(client: FdeClient, issue: Issue) {
   const workspace = await client.workspaces.open(issue.repositoryPath);
   const agent = await workspace.agents.create({
     config: {
@@ -30,6 +30,6 @@ export async function startIssue(client: PaseoClient, issue: Issue) {
   return { workspaceId: workspace.id, agentId: agent.id };
 }
 
-export function createClient(url: string): PaseoClient {
-  return createPaseoClient({ url });
+export function createClient(url: string): FdeClient {
+  return createFdeClient({ url });
 }

@@ -28,9 +28,9 @@ export function handleDesktopIpc<Args extends unknown[], Result>(
 ): void {
   ipcMain.handle(channel, (event, ...args: Args) => {
     if (!isTrustedRenderer(event)) throw new Error("Untrusted desktop IPC sender");
-    if (channel === "paseo:invoke" && args[0] === "pairing_offer_ready") {
+    if (channel === "fde:invoke" && args[0] === "pairing_offer_ready") {
       return pairingInbox.ready(event.sender.id, (url) => {
-        event.sender.send("paseo:event:open-pairing-offer", { url });
+        event.sender.send("fde:event:open-pairing-offer", { url });
       });
     }
     return handler(event, ...args);

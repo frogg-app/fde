@@ -248,7 +248,7 @@ async function installCandidate(
 }
 
 function resolveHttpBase(options: SelfUpdateOptions, env: NodeJS.ProcessEnv): string | null {
-  const listen = env.PASEO_LISTEN?.trim() || resolveLocalDaemonState({ home: options.home }).listen;
+  const listen = env.FDE_LISTEN?.trim() || resolveLocalDaemonState({ home: options.home }).listen;
   return resolveLoopbackHttpBase(listen);
 }
 

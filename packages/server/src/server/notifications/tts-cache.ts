@@ -48,7 +48,7 @@ function resolveMimeType(fileName: string): string {
 }
 
 /**
- * Synthesised alert audio, one file per notification under `$PASEO_HOME/tts-cache`.
+ * Synthesised alert audio, one file per notification under `$FDE_HOME/tts-cache`.
  *
  * The index is rebuilt from the directory on first use so a daemon restart keeps serving audio
  * for pushes that are still sitting on a phone. Eviction is least-recently-used by file mtime,

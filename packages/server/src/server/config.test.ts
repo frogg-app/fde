@@ -14,63 +14,63 @@ describe("server config", () => {
     await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
   });
 
-  test("records when the daemon is managed by Paseo Desktop", async () => {
-    const paseoHome = await mkdtemp(path.join(os.tmpdir(), "paseo-config-desktop-managed-"));
-    roots.push(paseoHome);
+  test("records when the daemon is managed by Fde Desktop", async () => {
+    const fdeHome = await mkdtemp(path.join(os.tmpdir(), "fde-config-desktop-managed-"));
+    roots.push(fdeHome);
 
-    const desktopConfig = loadConfig(paseoHome, {
-      env: { PASEO_DESKTOP_MANAGED: "1" },
+    const desktopConfig = loadConfig(fdeHome, {
+      env: { FDE_DESKTOP_MANAGED: "1" },
     });
-    const standaloneConfig = loadConfig(paseoHome, { env: {} });
+    const standaloneConfig = loadConfig(fdeHome, { env: {} });
 
     expect(desktopConfig.desktopManaged).toBe(true);
     expect(standaloneConfig.desktopManaged).toBe(false);
   });
 
   test("loads the provider catalog refresh timeout", async () => {
-    const paseoHome = await mkdtemp(path.join(os.tmpdir(), "paseo-config-provider-timeout-"));
-    roots.push(paseoHome);
+    const fdeHome = await mkdtemp(path.join(os.tmpdir(), "fde-config-provider-timeout-"));
+    roots.push(fdeHome);
     await writeFile(
-      path.join(paseoHome, "config.json"),
+      path.join(fdeHome, "config.json"),
       JSON.stringify({ agents: { catalogRefreshTimeoutMs: 180_000 } }),
     );
 
-    const config = loadConfig(paseoHome, { env: {} });
+    const config = loadConfig(fdeHome, { env: {} });
 
     expect(config.providerCatalogRefreshTimeoutMs).toBe(180_000);
   });
 
   test("resolves reload state from the supplied validated snapshot", async () => {
-    const paseoHome = await mkdtemp(path.join(os.tmpdir(), "paseo-config-snapshot-"));
-    roots.push(paseoHome);
-    const snapshot = loadPersistedConfig(paseoHome);
+    const fdeHome = await mkdtemp(path.join(os.tmpdir(), "fde-config-snapshot-"));
+    roots.push(fdeHome);
+    const snapshot = loadPersistedConfig(fdeHome);
     await writeFile(
-      path.join(paseoHome, "config.json"),
+      path.join(fdeHome, "config.json"),
       JSON.stringify({
         ...snapshot,
         daemon: { ...snapshot.daemon, browserTools: { enabled: true } },
       }),
     );
 
-    expect(resolveConfigFromPersisted(paseoHome, snapshot, { env: {} }).browserToolsEnabled).toBe(
+    expect(resolveConfigFromPersisted(fdeHome, snapshot, { env: {} }).browserToolsEnabled).toBe(
       false,
     );
-    expect(loadConfig(paseoHome, { env: {} }).browserToolsEnabled).toBe(true);
+    expect(loadConfig(fdeHome, { env: {} }).browserToolsEnabled).toBe(true);
   });
 
   test("records mutable and startup launch overrides by persisted leaf", async () => {
-    const paseoHome = await mkdtemp(path.join(os.tmpdir(), "paseo-config-overrides-"));
-    roots.push(paseoHome);
-    const config = loadConfig(paseoHome, {
+    const fdeHome = await mkdtemp(path.join(os.tmpdir(), "fde-config-overrides-"));
+    roots.push(fdeHome);
+    const config = loadConfig(fdeHome, {
       env: {
-        PASEO_LISTEN: "127.0.0.1:7000",
-        PASEO_PASSWORD: "secret",
-        PASEO_RELAY_ENDPOINT: "relay.example.test:443",
-        PASEO_TRUSTED_PROXIES: "true",
-        PASEO_TRUST_LAN: "0",
-        PASEO_WEB_UI_ENABLED: "true",
-        PASEO_LOG_FILE_PATH: "custom.log",
-        PASEO_VOICE_LLM_PROVIDER: "codex",
+        FDE_LISTEN: "127.0.0.1:7000",
+        FDE_PASSWORD: "secret",
+        FDE_RELAY_ENDPOINT: "relay.example.test:443",
+        FDE_TRUSTED_PROXIES: "true",
+        FDE_TRUST_LAN: "0",
+        FDE_WEB_UI_ENABLED: "true",
+        FDE_LOG_FILE_PATH: "custom.log",
+        FDE_VOICE_LLM_PROVIDER: "codex",
       },
       cli: { relayUseTls: false },
     });
@@ -93,24 +93,23 @@ describe("server config", () => {
     expect(config.voiceLlmProvider).toBe("codex");
   });
 
-  test("trusts the LAN by default, honors daemon.auth.trustLan, and lets PASEO_TRUST_LAN win", async () => {
-    const paseoHome = await mkdtemp(path.join(os.tmpdir(), "paseo-config-trust-lan-"));
-    roots.push(paseoHome);
+  test("trusts the LAN by default, honors daemon.auth.trustLan, and lets FDE_TRUST_LAN win", async () => {
+    const fdeHome = await mkdtemp(path.join(os.tmpdir(), "fde-config-trust-lan-"));
+    roots.push(fdeHome);
 
-    expect(loadConfig(paseoHome, { env: {} }).trustLan).toBe(true);
+    expect(loadConfig(fdeHome, { env: {} }).trustLan).toBe(true);
 
     await writeFile(
-      path.join(paseoHome, "config.json"),
+      path.join(fdeHome, "config.json"),
       JSON.stringify({ version: 1, daemon: { auth: { trustLan: false } } }),
     );
-    expect(loadConfig(paseoHome, { env: {} }).trustLan).toBe(false);
-    expect(loadConfig(paseoHome, { env: { PASEO_TRUST_LAN: "1" } }).trustLan).toBe(true);
-    expect(loadConfig(paseoHome, { env: { PASEO_TRUST_LAN: "off" } }).trustLan).toBe(false);
+    expect(loadConfig(fdeHome, { env: {} }).trustLan).toBe(false);
+    expect(loadConfig(fdeHome, { env: { FDE_TRUST_LAN: "1" } }).trustLan).toBe(true);
+    expect(loadConfig(fdeHome, { env: { FDE_TRUST_LAN: "off" } }).trustLan).toBe(false);
     expect(
-      loadConfig(paseoHome, { env: { PASEO_TRUST_LAN: "1" } }).configReload
-        ?.overrideControlledPaths,
+      loadConfig(fdeHome, { env: { FDE_TRUST_LAN: "1" } }).configReload?.overrideControlledPaths,
     ).toEqual(["daemon.auth.trustLan"]);
-    expect(loadConfig(paseoHome, { env: {} }).configReload?.overrideControlledPaths).toEqual([]);
+    expect(loadConfig(fdeHome, { env: {} }).configReload?.overrideControlledPaths).toEqual([]);
   });
 
   test.each([
@@ -146,7 +145,7 @@ describe("server config", () => {
     },
   ])("classifies speech overrides for $name", ({ providers, expected }) => {
     const config = resolveConfigFromPersisted(
-      "/tmp/paseo-speech-override-classification",
+      "/tmp/fde-speech-override-classification",
       {
         version: 1,
         features: {
@@ -161,9 +160,9 @@ describe("server config", () => {
       {
         env: {
           OPENAI_API_KEY: "test-api-key",
-          PASEO_DICTATION_LOCAL_STT_MODEL: "parakeet-tdt-0.6b-v2-int8",
-          PASEO_VOICE_LOCAL_STT_MODEL: "parakeet-tdt-0.6b-v2-int8",
-          PASEO_VOICE_LOCAL_TTS_MODEL: "kokoro-en-v0_19",
+          FDE_DICTATION_LOCAL_STT_MODEL: "parakeet-tdt-0.6b-v2-int8",
+          FDE_VOICE_LOCAL_STT_MODEL: "parakeet-tdt-0.6b-v2-int8",
+          FDE_VOICE_LOCAL_TTS_MODEL: "kokoro-en-v0_19",
           STT_CONFIDENCE_THRESHOLD: "0.5",
           STT_MODEL: "whisper-1",
           TTS_MODEL: "tts-1",
@@ -187,7 +186,7 @@ describe("server config", () => {
   });
 
   test("resolves bundled web UI path from globally installed compiled modules", async () => {
-    const packageRoot = await mkdtemp(path.join(os.tmpdir(), "paseo-config-compiled-"));
+    const packageRoot = await mkdtemp(path.join(os.tmpdir(), "fde-config-compiled-"));
     roots.push(packageRoot);
     await mkdir(path.join(packageRoot, "dist", "server", "web-ui"), { recursive: true });
 
@@ -199,7 +198,7 @@ describe("server config", () => {
   });
 
   test("resolves packaged desktop web UI path from resources app-dist", async () => {
-    const packageRoot = await mkdtemp(path.join(os.tmpdir(), "paseo-config-packaged-"));
+    const packageRoot = await mkdtemp(path.join(os.tmpdir(), "fde-config-packaged-"));
     roots.push(packageRoot);
     await mkdir(path.join(packageRoot, "app-dist"), { recursive: true });
 

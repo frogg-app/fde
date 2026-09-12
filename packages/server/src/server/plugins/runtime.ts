@@ -53,7 +53,7 @@ interface LoadedPlugin {
 
 interface PluginRuntimeDependencies {
   spawnChild?: () => PluginChild;
-  sessionHost?: PluginPaseoSessionHost;
+  sessionHost?: PluginFdeSessionHost;
 }
 
 interface PluginLogTail {
@@ -129,7 +129,7 @@ class PluginOutputCapture {
   }
 }
 
-export interface PluginPaseoSessionHost {
+export interface PluginFdeSessionHost {
   attachPluginSocket(
     pluginId: string,
     socket: PluginSessionSocket,
@@ -201,7 +201,7 @@ export class PluginRuntime {
   private readonly logTails = new Map<string, PluginLogTail>();
   private readonly logger: pino.Logger;
   private readonly spawnChild: () => PluginChild;
-  private sessionHost: PluginPaseoSessionHost | null;
+  private sessionHost: PluginFdeSessionHost | null;
   private readonly listeners = new Set<(pluginId: string, error?: string) => void>();
 
   constructor(
@@ -214,7 +214,7 @@ export class PluginRuntime {
     this.sessionHost = dependencies.sessionHost ?? null;
   }
 
-  bindPaseoSessionHost(sessionHost: PluginPaseoSessionHost): void {
+  bindFdeSessionHost(sessionHost: PluginFdeSessionHost): void {
     if (this.plugins.size > 0)
       throw new Error("Cannot replace the plugin session host while running");
     this.sessionHost = sessionHost;
@@ -231,9 +231,9 @@ export class PluginRuntime {
     canPublish: () => boolean = () => true,
   ): Promise<void> {
     if (this.plugins.has(pluginId)) throw new Error(`Plugin is already running: ${pluginId}`);
-    this.appendLog(pluginId, "stdout", "[paseo] Loading plugin");
+    this.appendLog(pluginId, "stdout", "[fde] Loading plugin");
     const loaded = await this.loadDirectoryPlugin(pluginId, configuredPath).catch((error) => {
-      this.appendLog(pluginId, "stderr", `[paseo] Plugin failed to load: ${describeError(error)}`);
+      this.appendLog(pluginId, "stderr", `[fde] Plugin failed to load: ${describeError(error)}`);
       throw error;
     });
     if (!canPublish()) {
@@ -241,7 +241,7 @@ export class PluginRuntime {
       throw new Error(`Plugin start cancelled: ${pluginId}`);
     }
     this.plugins.set(pluginId, loaded);
-    this.appendLog(pluginId, "stdout", "[paseo] Plugin ready");
+    this.appendLog(pluginId, "stdout", "[fde] Plugin ready");
   }
 
   async validatePlugin(configuredPath: string): Promise<void> {
@@ -348,9 +348,9 @@ export class PluginRuntime {
           reject(error);
         };
         child.on("message", (message) => {
-          if (message.type === "paseo_frame") {
+          if (message.type === "fde_frame") {
             sessionSocket.receive(message.data, message.isBinary);
-          } else if (message.type === "paseo_close") {
+          } else if (message.type === "fde_close") {
             sessionSocket.peerClosed();
           } else if (message.type === "ready") {
             if (settled) return;
@@ -420,11 +420,11 @@ export class PluginRuntime {
   }
 
   private async stopPlugin(loaded: LoadedPlugin): Promise<void> {
-    this.appendLog(loaded.id, "stdout", "[paseo] Stopping plugin");
+    this.appendLog(loaded.id, "stdout", "[fde] Stopping plugin");
     if (loaded.child.killed) {
       loaded.sessionSocket.peerClosed();
       await loaded.sessionClosed;
-      this.appendLog(loaded.id, "stdout", "[paseo] Plugin stopped");
+      this.appendLog(loaded.id, "stdout", "[fde] Plugin stopped");
       return;
     }
     const closed = new Promise<void>((resolve) =>
@@ -438,7 +438,7 @@ export class PluginRuntime {
     await closed;
     loaded.sessionSocket.peerClosed();
     await loaded.sessionClosed;
-    this.appendLog(loaded.id, "stdout", "[paseo] Plugin stopped");
+    this.appendLog(loaded.id, "stdout", "[fde] Plugin stopped");
   }
 
   private rejectPending(loaded: LoadedPlugin, message: string): void {

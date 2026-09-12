@@ -4,7 +4,7 @@
 #   installer="$(mktemp)" && curl -fsSL https://frogg.app/install.sh -o "${installer}" && bash "${installer}"; rm -f "${installer}"
 #
 # Installs a self-contained daemon bundle (Node runtime + daemon + CLI) into a
-# versioned directory, links `fde` and `paseo` into a bin directory, and
+# versioned directory, links `fde` and `fde` into a bin directory, and
 # registers a systemd user service (Linux) or launchd agent (macOS) that keeps
 # the daemon running. The service inherits the PATH of the shell that ran the
 # installer, so agent CLIs visible here are visible to the daemon.
@@ -17,7 +17,7 @@
 # Environment overrides:
 #   FDE_VERSION       release to install (default: latest GitHub release)
 #   FDE_INSTALL_DIR   install root (default: ~/.local/share/fde)
-#   FDE_BIN_DIR       where fde/paseo are linked (default: ~/.local/bin)
+#   FDE_BIN_DIR       where fde/fde are linked (default: ~/.local/bin)
 #   FDE_RELEASE_BASE  release download base (default: GitHub releases)
 #   FDE_BUNDLE_URL    download this exact bundle URL (plus its .sha256 sidecar)
 #                     instead of resolving one from FDE_RELEASE_BASE
@@ -45,7 +45,7 @@ BRAND_PORT='9999'
 BRAND_RELEASE_BASE='https://github.com/frogg-app/fde/releases'
 BRAND_DOCKER_IMAGE='froggapp/fde'
 BRAND_LEGACY='true'
-BRAND_COMMANDS=(fde paseo)
+BRAND_COMMANDS=(fde fde)
 # END BRAND DEFAULTS
 
 # Environment names inside this script remain implementation details. Only the
@@ -303,8 +303,8 @@ Wants=network-online.target
 [Service]
 Type=simple
 ExecStart=$(systemd_quote "${FDE_INSTALL_DIR}/current/bin/${BRAND_CLI}") daemon start --foreground
-Environment=PASEO_LISTEN=${FDE_LISTEN}
-Environment=PASEO_WEB_UI_ENABLED=true
+Environment=FDE_LISTEN=${FDE_LISTEN}
+Environment=FDE_WEB_UI_ENABLED=true
 Environment=$(systemd_quote "PATH=${FDE_BIN_DIR}:${PATH}")
 Environment=$(systemd_quote "${BRAND_ENV_PREFIX}_INSTALL_DIR=${FDE_INSTALL_DIR}")
 ${FDE_HOME:+Environment=$(systemd_quote "${BRAND_ENV_PREFIX}_HOME=${FDE_HOME}")}
@@ -347,10 +347,10 @@ start_detached_daemon() {
   log_dir="${FDE_INSTALL_DIR}/logs"
   mkdir -p "${log_dir}"
   if [ -n "${FDE_HOME}" ]; then
-    nohup env PASEO_LISTEN="${FDE_LISTEN}" PASEO_WEB_UI_ENABLED=true FDE_INSTALL_DIR="${FDE_INSTALL_DIR}" "${BRAND_ENV_PREFIX}_HOME=${FDE_HOME}" \
+    nohup env FDE_LISTEN="${FDE_LISTEN}" FDE_WEB_UI_ENABLED=true FDE_INSTALL_DIR="${FDE_INSTALL_DIR}" "${BRAND_ENV_PREFIX}_HOME=${FDE_HOME}" \
       "${FDE_INSTALL_DIR}/current/bin/${BRAND_CLI}" daemon start --foreground >> "${log_dir}/fallback-daemon.log" 2>&1 < /dev/null &
   else
-    nohup env PASEO_LISTEN="${FDE_LISTEN}" PASEO_WEB_UI_ENABLED=true FDE_INSTALL_DIR="${FDE_INSTALL_DIR}" \
+    nohup env FDE_LISTEN="${FDE_LISTEN}" FDE_WEB_UI_ENABLED=true FDE_INSTALL_DIR="${FDE_INSTALL_DIR}" \
       "${FDE_INSTALL_DIR}/current/bin/${BRAND_CLI}" daemon start --foreground >> "${log_dir}/fallback-daemon.log" 2>&1 < /dev/null &
   fi
   log "started the daemon for this login; its fallback log is ${log_dir}/fallback-daemon.log"
@@ -376,8 +376,8 @@ write_launchd_plist() {
   </array>
   <key>EnvironmentVariables</key>
   <dict>
-    <key>PASEO_LISTEN</key><string>${FDE_LISTEN}</string>
-    <key>PASEO_WEB_UI_ENABLED</key><string>true</string>
+    <key>FDE_LISTEN</key><string>${FDE_LISTEN}</string>
+    <key>FDE_WEB_UI_ENABLED</key><string>true</string>
     <key>PATH</key><string>$(xml "${FDE_BIN_DIR}:${PATH}")</string>
     <key>FDE_INSTALL_DIR</key><string>$(xml "${FDE_INSTALL_DIR}")</string>
 ${FDE_HOME:+    <key>${BRAND_ENV_PREFIX}_HOME</key><string>$(xml "${FDE_HOME}")</string>}

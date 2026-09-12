@@ -93,10 +93,9 @@ async function launchExecutionService(
         env: {
           ...(options.env ?? process.env),
           FDE_HOME: options.home,
-          PASEO_HOME: options.home,
           FDE_EXECUTION_SERVICE: "0",
           FDE_EXECUTION_VERSION: options.version,
-          PASEO_SUPERVISED: "0",
+          FDE_SUPERVISED: "0",
         },
       },
     );

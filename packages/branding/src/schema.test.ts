@@ -71,12 +71,12 @@ test("updates require a source and signed mode requires a public key", () => {
   const brand = resolveBrandManifest({ ...minimal, distribution: { repository: "acme/studio" } });
   assert.equal(brand.distribution.releasesApi, "https://api.github.com/repos/acme/studio/releases");
 });
-test("custom home selection ignores inherited FDE and Paseo homes", () => {
+test("custom home selection ignores inherited FDE homes", () => {
   const brand = resolveBrandManifest(minimal);
-  assert.equal(brandEnv(brand, { FDE_HOME: "/fde", PASEO_HOME: "/paseo" }, "HOME"), undefined);
+  assert.equal(brandEnv(brand, { FDE_HOME: "/fde" }, "HOME"), undefined);
   assert.equal(brandEnv(brand, { ACME_HOME: " /acme " }, "HOME"), "/acme");
-  const official = resolveBrandManifest({ ...minimal, id: "fde" });
-  assert.equal(brandEnv(official, { PASEO_HOME: "/legacy" }, "HOME"), "/legacy");
+  const official = resolveBrandManifest({ ...minimal, id: "fde", envPrefix: "FDE" });
+  assert.equal(brandEnv(official, { FDE_HOME: "/official" }, "HOME"), "/official");
 });
 test("management accepts legacy metadata only for FDE and rejects other products", () => {
   const brand = resolveBrandManifest(minimal);

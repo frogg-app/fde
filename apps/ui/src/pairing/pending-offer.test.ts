@@ -6,7 +6,7 @@ describe("extractOfferLink", () => {
     expect(extractOfferLink("https://frogg.app/pair#offer=abc")).toBe(
       "https://frogg.app/pair#offer=abc",
     );
-    expect(extractOfferLink("paseo://pair#offer=abc")).toBe("paseo://pair#offer=abc");
+    expect(extractOfferLink("fde://pair#offer=abc")).toBe("fde://pair#offer=abc");
     expect(extractOfferLink("http://192.168.1.5:8081/?offer=abc&x=1")).toBe("#offer=abc");
     expect(extractOfferLink("http://192.168.1.5:8081/?offer=abc#/welcome")).toBe("#offer=abc");
   });
@@ -30,8 +30,8 @@ describe("extractOfferLink", () => {
 
 describe("pending offer", () => {
   it("is taken once", () => {
-    setPendingOfferUrl("paseo://pair#offer=abc");
-    expect(takePendingOfferUrl()).toBe("paseo://pair#offer=abc");
+    setPendingOfferUrl("fde://pair#offer=abc");
+    expect(takePendingOfferUrl()).toBe("fde://pair#offer=abc");
     expect(takePendingOfferUrl()).toBeNull();
   });
 });

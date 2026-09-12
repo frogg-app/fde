@@ -256,7 +256,7 @@ class ObservedPlacements {
       currentBranch: branch,
       remoteUrl: null,
       worktreeRoot: rootPath,
-      isPaseoOwnedWorktree: false,
+      isFdeOwnedWorktree: false,
       mainRepoRoot: null,
     });
   }
@@ -371,7 +371,7 @@ class ObservedPlacements {
         currentBranch: null,
         remoteUrl: null,
         worktreeRoot: null,
-        isPaseoOwnedWorktree: false,
+        isFdeOwnedWorktree: false,
         mainRepoRoot: null,
       }
     );

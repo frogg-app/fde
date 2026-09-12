@@ -1,4 +1,4 @@
-import { resolvePaseoHome } from "../integrations/storage-paths.js";
+import { resolveFdeHome } from "../integrations/storage-paths.js";
 import { copyFile, mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -12,7 +12,7 @@ interface AttachmentFileResult {
 }
 
 function attachmentsDirPath(): string {
-  return path.join(resolvePaseoHome(process.env), ATTACHMENTS_DIRNAME);
+  return path.join(resolveFdeHome(process.env), ATTACHMENTS_DIRNAME);
 }
 
 async function ensureAttachmentsDir(): Promise<string> {

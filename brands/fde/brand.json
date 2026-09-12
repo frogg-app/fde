@@ -7,7 +7,7 @@
   "description": "Frogg Development Environment: desktop client for local and remote AI coding agents.",
   "applicationId": "app.frogg.fde",
   "daemonPort": 9999,
-  "scheme": "paseo",
+  "scheme": "fde",
   "artifactPrefix": "FDE",
   "assets": {
     "icon": "../../apps/ui/assets/images/icon.png",
@@ -35,14 +35,13 @@
   "links": {
     "website": "https://frogg.app",
     "source": "https://github.com/frogg-app/fde",
-    "docs": "https://paseo.sh/docs",
+    "docs": "https://github.com/frogg-app/fde/tree/main/docs",
     "support": "https://github.com/frogg-app/fde/issues",
     "installer": "https://frogg.app/install.sh"
   },
   "services": {
     "pairingUrl": "https://pair.frogg.app",
-    "relayEndpoint": "relay.paseo.sh:443",
-    "allowedOrigins": ["https://app.paseo.sh"]
+    "allowedOrigins": []
   },
   "distribution": {
     "repository": "frogg-app/fde",

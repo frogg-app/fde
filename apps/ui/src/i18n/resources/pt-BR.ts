@@ -712,7 +712,7 @@ export const ptBR: TranslationResources = {
       },
       routes: {
         public: "Proxy reverso",
-        paseo: "Memorable",
+        fde: "Memorable",
         direct: "Direta",
       },
       states: {
@@ -1987,7 +1987,7 @@ export const ptBR: TranslationResources = {
   serviceUrl: {
     title: "Abrir URL do serviço",
     message: "Abrir {{url}}?",
-    inPaseo: "No {{brandName}}",
+    inFde: "No {{brandName}}",
     externalBrowser: "Navegador externo",
     dontAskAgain: "Não perguntar novamente",
   },
@@ -2113,7 +2113,7 @@ export const ptBR: TranslationResources = {
       one: "usou {{count}} outra ferramenta",
       other: "usou {{count}} outras ferramentas",
     },
-    paseoCalls: {
+    fdeCalls: {
       one: "chamou o {{brandName}} {{count}} vez",
       other: "chamou o {{brandName}} {{count}} vezes",
     },
@@ -2654,7 +2654,7 @@ export const ptBR: TranslationResources = {
         uninstall: {
           title: "Desinstalar o daemon?",
           message:
-            "Para o serviço e remove a instalação do {{brandName}} de {{host}}. O estado do daemon (~/.paseo) é mantido.",
+            "Para o serviço e remove a instalação do {{brandName}} de {{host}}. O estado do daemon (~/.fde) é mantido.",
         },
         log: {
           running: "Executando em {{host}}...",
@@ -2998,13 +2998,13 @@ export const ptBR: TranslationResources = {
         savedToast: "Projeto atualizado",
       },
       readFailures: {
-        invalidTitle: "Não foi possível analisar paseo.json",
+        invalidTitle: "Não foi possível analisar fde.json",
         invalidDescription: "Corrija o arquivo no disco e recarregue.",
         missingTitle: "Este host não tem este projeto",
         missingSingleHost: "O host selecionado não tem registro deste projeto.",
-        transportTitle: "Não foi possível carregar paseo.json",
+        transportTitle: "Não foi possível carregar fde.json",
         transportFallback: "O host não respondeu.",
-        failedTitle: "Não foi possível carregar paseo.json",
+        failedTitle: "Não foi possível carregar fde.json",
         failedDescription: "Recarregue para tentar novamente.",
       },
       worktree: {
@@ -3015,7 +3015,7 @@ export const ptBR: TranslationResources = {
           "Veja a documentação para mais detalhes e as variáveis de ambiente disponíveis para estes comandos",
         setup: "Configuração",
         setupAccessibility: "Comandos de configuração do worktree",
-        uncommittedTitle: "Faça commit das alterações no paseo.json",
+        uncommittedTitle: "Faça commit das alterações no fde.json",
         uncommittedDescription:
           "Novos worktrees usam o script de configuração do branch base selecionado.",
         teardown: "Desmontagem",
@@ -3040,7 +3040,7 @@ export const ptBR: TranslationResources = {
         newScript: "Novo script",
         editScript: "Editar {{name}}",
         runAsService: "Executar como serviço",
-        serviceHint: "O {{brandName}} supervisiona o processo e atribui uma porta via $PASEO_PORT",
+        serviceHint: "O {{brandName}} supervisiona o processo e atribui uma porta via $FDE_PORT",
         actions: {
           add: "Adicionar script",
           edit: "Editar",
@@ -3059,8 +3059,8 @@ export const ptBR: TranslationResources = {
       },
       writeFailures: {
         staleTitle: "Configuração alterada no disco",
-        staleDescription: "Recarregue para buscar o paseo.json mais recente antes de salvar.",
-        failedTitle: "Não foi possível salvar paseo.json",
+        staleDescription: "Recarregue para buscar o fde.json mais recente antes de salvar.",
+        failedTitle: "Não foi possível salvar fde.json",
         failedDescription: "Tente novamente ou recarregue a versão mais recente do disco.",
       },
       actions: {

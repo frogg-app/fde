@@ -366,12 +366,12 @@ pub enum SessionMessage {
     GithubSearchRequest(GithubSearchRequest),
     #[serde(rename = "directory_suggestions_request")]
     DirectorySuggestionsRequest(DirectorySuggestionsRequest),
-    #[serde(rename = "paseo_worktree_list_request")]
-    PaseoWorktreeListRequest(PaseoWorktreeListRequest),
-    #[serde(rename = "paseo_worktree_archive_request")]
-    PaseoWorktreeArchiveRequest(PaseoWorktreeArchiveRequest),
-    #[serde(rename = "create_paseo_worktree_request")]
-    CreatePaseoWorktreeRequest(CreatePaseoWorktreeRequest),
+    #[serde(rename = "fde_worktree_list_request")]
+    FdeWorktreeListRequest(FdeWorktreeListRequest),
+    #[serde(rename = "fde_worktree_archive_request")]
+    FdeWorktreeArchiveRequest(FdeWorktreeArchiveRequest),
+    #[serde(rename = "create_fde_worktree_request")]
+    CreateFdeWorktreeRequest(CreateFdeWorktreeRequest),
     #[serde(rename = "workspace_setup_status_request")]
     WorkspaceSetupStatusRequest(WorkspaceSetupStatusRequest),
     #[serde(rename = "list_available_editors_request")]
@@ -2585,8 +2585,8 @@ pub struct StashPopRequest {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct StashListRequest {
     pub cwd: String,
-    #[serde(rename = "paseoOnly", skip_serializing_if = "Option::is_none")]
-    pub paseo_only: Option<bool>,
+    #[serde(rename = "fdeOnly", skip_serializing_if = "Option::is_none")]
+    pub fde_only: Option<bool>,
     #[serde(rename = "requestId")]
     pub request_id: String,
 }
@@ -2689,7 +2689,7 @@ pub enum DirectorySuggestionsRequestMatchMode {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PaseoWorktreeListRequest {
+pub struct FdeWorktreeListRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cwd: Option<String>,
     #[serde(rename = "repoRoot", skip_serializing_if = "Option::is_none")]
@@ -2699,7 +2699,7 @@ pub struct PaseoWorktreeListRequest {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PaseoWorktreeArchiveRequest {
+pub struct FdeWorktreeArchiveRequest {
     #[serde(rename = "worktreePath", skip_serializing_if = "Option::is_none")]
     pub worktree_path: Option<String>,
     #[serde(rename = "repoRoot", skip_serializing_if = "Option::is_none")]
@@ -2709,7 +2709,7 @@ pub struct PaseoWorktreeArchiveRequest {
     #[serde(rename = "workspaceId", skip_serializing_if = "Option::is_none")]
     pub workspace_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub scope: Option<PaseoWorktreeArchiveRequestScope>,
+    pub scope: Option<FdeWorktreeArchiveRequestScope>,
     #[serde(
         rename = "deleteWorktreeFromDisk",
         skip_serializing_if = "Option::is_none"
@@ -2720,7 +2720,7 @@ pub struct PaseoWorktreeArchiveRequest {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum PaseoWorktreeArchiveRequestScope {
+pub enum FdeWorktreeArchiveRequestScope {
     #[serde(rename = "workspace")]
     Workspace,
     #[serde(rename = "worktree")]
@@ -2728,7 +2728,7 @@ pub enum PaseoWorktreeArchiveRequestScope {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct CreatePaseoWorktreeRequest {
+pub struct CreateFdeWorktreeRequest {
     pub cwd: String,
     #[serde(rename = "projectId", skip_serializing_if = "Option::is_none")]
     pub project_id: Option<String>,
@@ -2739,13 +2739,13 @@ pub struct CreatePaseoWorktreeRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub attachments: Option<serde_json::Value>,
     #[serde(rename = "firstAgentContext", skip_serializing_if = "Option::is_none")]
-    pub first_agent_context: Option<CreatePaseoWorktreeRequestFirstAgentContext>,
+    pub first_agent_context: Option<CreateFdeWorktreeRequestFirstAgentContext>,
     #[serde(rename = "refName", skip_serializing_if = "Option::is_none")]
     pub ref_name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub action: Option<CreatePaseoWorktreeRequestAction>,
+    pub action: Option<CreateFdeWorktreeRequestAction>,
     #[serde(rename = "checkoutSource", skip_serializing_if = "Option::is_none")]
-    pub checkout_source: Option<CreatePaseoWorktreeRequestCheckoutSource>,
+    pub checkout_source: Option<CreateFdeWorktreeRequestCheckoutSource>,
     #[serde(rename = "githubPrNumber", skip_serializing_if = "Option::is_none")]
     pub github_pr_number: Option<i64>,
     #[serde(rename = "requestId")]
@@ -2753,7 +2753,7 @@ pub struct CreatePaseoWorktreeRequest {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct CreatePaseoWorktreeRequestFirstAgentContext {
+pub struct CreateFdeWorktreeRequestFirstAgentContext {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub prompt: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -2761,7 +2761,7 @@ pub struct CreatePaseoWorktreeRequestFirstAgentContext {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum CreatePaseoWorktreeRequestAction {
+pub enum CreateFdeWorktreeRequestAction {
     #[serde(rename = "branch-off")]
     BranchOff,
     #[serde(rename = "checkout")]
@@ -2769,7 +2769,7 @@ pub enum CreatePaseoWorktreeRequestAction {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct CreatePaseoWorktreeRequestCheckoutSource {
+pub struct CreateFdeWorktreeRequestCheckoutSource {
     pub kind: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub forge: Option<String>,

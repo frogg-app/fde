@@ -14,45 +14,45 @@ npm run dev:app
 
 Root checkout dev is intentionally split across terminals:
 
-- `npm run dev:server` runs the daemon bound to `0.0.0.0:6768`.
+- `npm run dev:server` runs the daemon bound to `0.0.0.0:9999`.
 - `npm run dev:app` runs Expo on port `8081` and connects to the dev daemon. On a remote VM,
   use the VM LAN address to access it.
 - `npm run dev:desktop` starts the Electron shell with isolated state and ports.
-  `npm run dev:desktop:tauri` starts the retained Tauri shell. See
-  [electron-desktop.md](electron-desktop.md) for the migration workflow.
+  See
+  [electron-desktop.md](electron-desktop.md) for the production desktop workflow.
 
 The web dev launcher passes the current Git branch to Metro as
-`EXPO_PUBLIC_PASEO_DEV_BUILD_LABEL`. The expanded sidebar shows it in the
+`EXPO_PUBLIC_FDE_DEV_BUILD_LABEL`. The expanded sidebar shows it in the
 titlebar row. Production builds leave the variable unset and show no label.
 
-`npm run dev` is only a shorthand for `npm run dev:server`. Keep `127.0.0.1:9999` (the default daemon port since 0.1.11; upstream Paseo used 6767, and a `config.json` that still says `daemon.listen: "127.0.0.1:6767"` keeps working) for the packaged app and production-style `~/.fde` state.
+`npm run dev` is only a shorthand for `npm run dev:server`. Keep `127.0.0.1:9999` (the default daemon port since 0.1.11; the upstream project used 6767, and a `config.json` that still says `daemon.listen: "127.0.0.1:6767"` keeps working) for the packaged app and production-style `~/.fde` state.
 
-### PASEO_HOME
+### FDE_HOME
 
-`PASEO_HOME` is the directory that holds runtime state (agents, worktrees, workspace config, sockets, daemon log). Resolution rules:
+`FDE_HOME` is the directory that holds runtime state (agents, worktrees, workspace config, sockets, daemon log). Resolution rules:
 
-- The **server itself** (e.g. when launched by the desktop app or `npm run start`) defaults to `~/.fde` (`FDE_HOME`, then `PASEO_HOME`, can override it; see `packages/server/src/server/paseo-home.ts`).
-- **Repo dev scripts** default to `$ROOT/.dev/paseo-home`, where `$ROOT` is the current checkout or worktree root. This keeps all dev state scoped to the checkout instead of the packaged desktop app.
-- **`npm run cli -- ...`** runs through the same dev-home wrapper as the dev scripts, so the in-repo CLI automatically targets the current checkout's `.dev/paseo-home` and configured dev daemon endpoint.
-- **Paseo-created worktrees** seed `$PASEO_WORKTREE_PATH/.dev/paseo-home` from `$PASEO_SOURCE_CHECKOUT_PATH/.dev/paseo-home` by copying durable JSON metadata. Runtime files like pid files, sockets, and logs are not copied.
+- The **server itself** (e.g. when launched by the desktop app or `npm run start`) defaults to `~/.fde` (`FDE_HOME`, then `FDE_HOME`, can override it; see `packages/server/src/server/fde-home.ts`).
+- **Repo dev scripts** default to `$ROOT/.dev/fde-home`, where `$ROOT` is the current checkout or worktree root. This keeps all dev state scoped to the checkout instead of the packaged desktop app.
+- **`npm run cli -- ...`** runs through the same dev-home wrapper as the dev scripts, so the in-repo CLI automatically targets the current checkout's `.dev/fde-home` and configured dev daemon endpoint.
+- **FDE-created worktrees** seed `$FDE_WORKTREE_PATH/.dev/fde-home` from `$FDE_SOURCE_CHECKOUT_PATH/.dev/fde-home` by copying durable JSON metadata. Runtime files like pid files, sockets, and logs are not copied.
 - **This repo's worktree setup** also best-effort seeds `apps/ui/ios` and the newest `.dev/ios-build` entry from the source checkout so iOS simulator services can reuse native project and Xcode cache state when it is safe enough to do so.
 
 Override knobs:
 
 ```bash
-PASEO_HOME=~/.paseo-blue npm run dev          # explicit home
-PASEO_DEV_SEED_HOME=/path/to/home npm run dev # seed from a different source home
-PASEO_DEV_RESET_HOME=1 npm run dev            # clear and reseed the derived worktree home
+FDE_HOME=~/.fde-blue npm run dev          # explicit home
+FDE_DEV_SEED_HOME=/path/to/home npm run dev # seed from a different source home
+FDE_DEV_RESET_HOME=1 npm run dev            # clear and reseed the derived worktree home
 ```
 
 ### Daemon endpoints
 
 - Stable daemon launched by the desktop app: `localhost:9999`.
-- Root checkout dev daemon: `localhost:6768` (`npm run dev:server` pins `PASEO_LISTEN=0.0.0.0:6768` so it never collides with the packaged daemon on 9999).
+- Root checkout dev daemon: `localhost:6768` (`npm run dev:server` pins `FDE_LISTEN=0.0.0.0:6768` so it never collides with the packaged daemon on 9999).
 - Root checkout desktop dev Expo: first free port from `8082` through `8089`.
 - `npm run dev` (Windows): `localhost:9999` for the daemon.
 
-In Paseo-managed worktree services, use the injected service environment rather than hardcoded root checkout ports.
+In FDE-managed worktree services, use the injected service environment rather than hardcoded root checkout ports.
 
 ### Expo Router
 
@@ -66,21 +66,21 @@ startup routing, remembered workspace restore, or active workspace selection.
 
 ### iOS simulator preview service
 
-Paseo worktrees expose the native iOS dev app through the `ios-simulator` service in `paseo.json`. The service URL serves the simulator preview at `/.sim`, so the preview link is `${PASEO_URL}/.sim`.
+FDE worktrees expose the native iOS dev app through the `ios-simulator` service in `fde.json`. The service URL serves the simulator preview at `/.sim`, so the preview link is `${FDE_URL}/.sim`.
 
 **Prerequisites (macOS only).** The service shells out to the Apple toolchain, so beyond the `npm ci` that worktree setup runs you must install:
 
 - **Xcode** (the full app, not just the Command Line Tools) — install it from the Mac App Store, or from `developer.apple.com/download` for a specific version. It provides `xcodebuild` and `xcrun simctl`; accept its license and let first-run component installation finish before starting the service.
-- **An iOS Simulator runtime with at least one iPhone device type**. Recent Xcode versions may not bundle a runtime — add one via Xcode → Settings → Components (older Xcode: "Platforms"). The service targets `iPhone 16 Pro` by default (override with `PASEO_IOS_DEVICE_TYPE`) and falls back to any iPhone; it fails with `No iPhone simulator device type is installed` when none exist.
+- **An iOS Simulator runtime with at least one iPhone device type**. Recent Xcode versions may not bundle a runtime — add one via Xcode → Settings → Components (older Xcode: "Platforms"). The service targets `iPhone 16 Pro` by default (override with `FDE_IOS_DEVICE_TYPE`) and falls back to any iPhone; it fails with `No iPhone simulator device type is installed` when none exist.
 - **Homebrew** — CocoaPods itself installs automatically: `expo prebuild` runs `pod install` on a cold worktree, and when the CocoaPods CLI is missing the runner installs it for you. It tries `gem install cocoapods` first and falls back to Homebrew (`brew install cocoapods`), so having Homebrew available lets that fallback succeed without a manual step.
 
 `serve-sim`, Expo, and Metro come from `npm ci`, and CocoaPods installs itself on the first prebuild as described above.
 
-The service is designed for concurrent worktrees: it derives a deterministic simulator identity from the worktree path, uses the worktree's assigned `PASEO_PORT`, pins `serve-sim` to that simulator UDID, and only tears down that worktree's helper/simulator state. It must not rely on the globally booted simulator or any fixed Metro port.
+The service is designed for concurrent worktrees: it derives a deterministic simulator identity from the worktree path, uses the worktree's assigned `FDE_PORT`, pins `serve-sim` to that simulator UDID, and only tears down that worktree's helper/simulator state. It must not rely on the globally booted simulator or any fixed Metro port.
 
 Worktree setup best-effort seeds the generated iOS project and newest native build cache from the source checkout before the service runs. The service still validates the native project by running Expo prebuild and Xcode; the seed only avoids paying all setup/build cost from a cold worktree every time.
 
-Starting the service must not create, focus, reveal, or leave behind macOS Simulator.app windows — a guard hides Simulator.app every 250ms, so the native window vanishes if you focus it. The user-visible surface is the interactive `/.sim` preview: a `serve-sim` stream (60 FPS MJPEG + a WebSocket control channel) that Metro mounts at `basePath: "/.sim"` (`apps/ui/metro.config.cjs`) and that forwards taps and gestures, so first-launch prompts like "Open in PaseoDebug?" are answered there, not in the native window. Open the `${PASEO_URL}/.sim` link the service prints — not `serve-sim`'s raw stream port (`:3100`), which is view-only. Because the stream sits behind the daemon proxy it is convenient for remote viewing but laggy up close; for fast local dev at the Mac, use the native simulator path below.
+Starting the service must not create, focus, reveal, or leave behind macOS Simulator.app windows — a guard hides Simulator.app every 250ms, so the native window vanishes if you focus it. The user-visible surface is the interactive `/.sim` preview: a `serve-sim` stream (60 FPS MJPEG + a WebSocket control channel) that Metro mounts at `basePath: "/.sim"` (`apps/ui/metro.config.cjs`) and that forwards taps and gestures, so first-launch prompts like "Open in FdeDebug?" are answered there, not in the native window. Open the `${FDE_URL}/.sim` link the service prints — not `serve-sim`'s raw stream port (`:3100`), which is view-only. Because the stream sits behind the daemon proxy it is convenient for remote viewing but laggy up close; for fast local dev at the Mac, use the native simulator path below.
 
 **Troubleshooting.** If `xcrun simctl` fails with `unable to find utility "simctl"`, the active developer directory is still the Command Line Tools even though Xcode is installed. Point it at Xcode: `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`, then confirm with `xcrun --find simctl`.
 
@@ -97,7 +97,7 @@ npm run ios        # → expo run:ios (apps/ui): builds and launches the app in 
 **Pointing the app at a daemon.** The client resolves its local daemon from `EXPO_PUBLIC_LOCAL_DAEMON` (`apps/ui/src/runtime/host-runtime.ts`); when unset it falls back to `localhost:9999`, the production `~/.fde` daemon. To target a worktree's dev daemon instead, set it on the build command:
 
 ```bash
-EXPO_PUBLIC_LOCAL_DAEMON=localhost:${PASEO_SERVICE_DAEMON_PORT} npm run ios   # worktree daemon running as a Paseo service
+EXPO_PUBLIC_LOCAL_DAEMON=localhost:${FDE_SERVICE_DAEMON_PORT} npm run ios   # worktree daemon running as a FDE service
 EXPO_PUBLIC_LOCAL_DAEMON=localhost:6768 npm run ios                          # standalone `npm run dev:server`
 ```
 
@@ -113,11 +113,11 @@ to measure with `RenderProfile`, then open the app with `?renderProfile=1`. When
 the query param is absent, `RenderProfile` returns children directly and records
 nothing.
 
-Captured samples are exposed on `globalThis.__PASEO_RENDER_PROFILE__`. Call
-`globalThis.__PASEO_RESET_RENDER_PROFILE__?.()` after warm-up and before the
+Captured samples are exposed on `globalThis.__FDE_RENDER_PROFILE__`. Call
+`globalThis.__FDE_RESET_RENDER_PROFILE__?.()` after warm-up and before the
 interaction you want to measure. If a memo comparator or subscription boundary
 needs explanation, call `recordRenderProfileReasons(id, reasons)` while profiling;
-reason counts are exposed on `globalThis.__PASEO_RENDER_PROFILE_REASONS__`.
+reason counts are exposed on `globalThis.__FDE_RENDER_PROFILE_REASONS__`.
 
 Use this workflow for any render investigation:
 
@@ -150,9 +150,9 @@ Existing scenario script: workspace agent/terminal tab switching. Start Expo on
 web, keep a daemon available, then run:
 
 ```bash
-PASEO_PROFILE_SERVER_ID=<server-id> \
-PASEO_PROFILE_WORKSPACE_ID=<workspace-path> \
-PASEO_PROFILE_AGENT_ID=<agent-id> \
+FDE_PROFILE_SERVER_ID=<server-id> \
+FDE_PROFILE_WORKSPACE_ID=<workspace-path> \
+FDE_PROFILE_AGENT_ID=<agent-id> \
   npm run profile:workspace-tabs --workspace=@fde/app
 ```
 
@@ -162,36 +162,36 @@ Profiler timings, then removes the temporary terminal. It is an example of the
 workflow above, not the only way to use the profiler. Useful knobs:
 
 ```bash
-PASEO_PROFILE_APP_URL=http://localhost:19010 # Expo web URL
-PASEO_PROFILE_SWITCH_COUNT=1                # number of agent/terminal switch pairs
-PASEO_PROFILE_SWITCH_WAIT_MS=250            # delay after each click
-PASEO_PROFILE_IDLE_WAIT_MS=3000             # idle baseline before switching
-PASEO_PROFILE_DUMP_COMMITS=1                # include per-commit profiler samples
+FDE_PROFILE_APP_URL=http://localhost:19010 # Expo web URL
+FDE_PROFILE_SWITCH_COUNT=1                # number of agent/terminal switch pairs
+FDE_PROFILE_SWITCH_WAIT_MS=250            # delay after each click
+FDE_PROFILE_IDLE_WAIT_MS=3000             # idle baseline before switching
+FDE_PROFILE_DUMP_COMMITS=1                # include per-commit profiler samples
 ```
 
 For warm workspace switching, point the benchmark at an app backed by seeded
 daemon state:
 
 ```bash
-PASEO_PROFILE_APP_URL=http://localhost:19010 \
+FDE_PROFILE_APP_URL=http://localhost:19010 \
   npm run profile:workspace-switching --workspace=@fde/app
 ```
 
 The benchmark first warms `Cmd+1` through `Cmd+7`, then records a rapid seven-workspace
 burst. It separately warms the three-entry workspace deck LRU and records `Cmd+1` through
 `Cmd+3` without waits between keys. Both scenarios report keydown-to-activation latency and
-React commits on the same browser clock. Set `PASEO_PROFILE_WORKSPACE_DIGITS`,
-`PASEO_PROFILE_WORKSPACE_LRU_SIZE`, or `PASEO_PROFILE_WARM_QUIET_MS` to change the shape. Set
-`PASEO_PROFILE_DUMP_COMMITS=1` to include the nested component breakdown for every commit.
-Set `PASEO_PROFILE_RETAINED_REPEATS=5` to repeat the retained-LRU burst for a less noisy sample.
-Set `PASEO_PROFILE_CPU_PATH=/tmp/workspace-switch.cpuprofile` to run a separate retained-LRU
+React commits on the same browser clock. Set `FDE_PROFILE_WORKSPACE_DIGITS`,
+`FDE_PROFILE_WORKSPACE_LRU_SIZE`, or `FDE_PROFILE_WARM_QUIET_MS` to change the shape. Set
+`FDE_PROFILE_DUMP_COMMITS=1` to include the nested component breakdown for every commit.
+Set `FDE_PROFILE_RETAINED_REPEATS=5` to repeat the retained-LRU burst for a less noisy sample.
+Set `FDE_PROFILE_CPU_PATH=/tmp/workspace-switch.cpuprofile` to run a separate retained-LRU
 capture after the latency scenarios and write a raw CDP CPU profile without contaminating their
 timings.
-Set `PASEO_PROFILE_TRACE_PATH=/tmp/workspace-switch.trace.json` to run another separate retained-LRU
+Set `FDE_PROFILE_TRACE_PATH=/tmp/workspace-switch.trace.json` to run another separate retained-LRU
 capture and write a Chromium Performance trace with User Timing marks and screenshots. Open the
-trace in the Chrome DevTools Performance panel. Set `PASEO_PROFILE_TRACE_INVALIDATIONS=1` only for a
+trace in the Chrome DevTools Performance panel. Set `FDE_PROFILE_TRACE_INVALIDATIONS=1` only for a
 focused invalidation capture; React Native's generated stacks make that mode highly intrusive.
-Set `PASEO_PROFILE_TRACE_FOCUS=1` to include focus targets, durations, and JavaScript call stacks in
+Set `FDE_PROFILE_TRACE_FOCUS=1` to include focus targets, durations, and JavaScript call stacks in
 the scenario report. This mode wraps `HTMLElement.focus`, so use it only for diagnosis.
 
 For the desktop Explorer sidebar toggle, run the app against the root checkout's daemon and use:
@@ -200,18 +200,18 @@ For the desktop Explorer sidebar toggle, run the app against the root checkout's
 npm run profile:explorer-toggle --workspace=@fde/app
 ```
 
-The harness verifies port `6768`, opens the Paseo workspace, creates and warms the Explorer pane,
+The harness verifies port `6768`, opens the FDE workspace, creates and warms the Explorer pane,
 records an idle control, then measures settled and 50 ms burst Cmd+E toggles. It reports
 input-to-DOM and input-to-paint latency, React commits, mounts, unmounts, and DOM mutations. Set
-`PASEO_PROFILE_TRACE_PATH=/tmp/explorer-toggle.trace.json` or
-`PASEO_PROFILE_CPU_PATH=/tmp/explorer-toggle.cpuprofile` for separate Chromium captures. Override
-the app URL, daemon port, workspace, or server with the corresponding `PASEO_PROFILE_*` variables.
+`FDE_PROFILE_TRACE_PATH=/tmp/explorer-toggle.trace.json` or
+`FDE_PROFILE_CPU_PATH=/tmp/explorer-toggle.cpuprofile` for separate Chromium captures. Override
+the app URL, daemon port, workspace, or server with the corresponding `FDE_PROFILE_*` variables.
 
 For sustained composer typing, run the paired composer-versus-textarea benchmark against a seeded
 daemon:
 
 ```bash
-PASEO_PROFILE_APP_URL=http://localhost:19010 \
+FDE_PROFILE_APP_URL=http://localhost:19010 \
   npm run profile:composer-typing --workspace=@fde/app
 ```
 
@@ -220,12 +220,12 @@ keys at a fixed 16 ms cadence without waiting for each key to paint. It measures
 `keydown` to the next paint opportunity, verifies that every character survived, alternates the
 composer and plain-textarea control across three runs, then restores the original draft. The report
 includes percentiles, frame coalescing, input processing, React work, long tasks, slow samples, and
-Playwright dispatch lateness. Set `PASEO_PROFILE_TYPING_KEYS`, `PASEO_PROFILE_TYPING_CADENCE_MS`,
-`PASEO_PROFILE_TYPING_REPEATS`, or `PASEO_PROFILE_WORKSPACE_DIGIT` to change the scenario. Optional
-`PASEO_PROFILE_CPU_PATH` and `PASEO_PROFILE_TRACE_PATH` captures run separately after the latency
+Playwright dispatch lateness. Set `FDE_PROFILE_TYPING_KEYS`, `FDE_PROFILE_TYPING_CADENCE_MS`,
+`FDE_PROFILE_TYPING_REPEATS`, or `FDE_PROFILE_WORKSPACE_DIGIT` to change the scenario. Optional
+`FDE_PROFILE_CPU_PATH` and `FDE_PROFILE_TRACE_PATH` captures run separately after the latency
 measurements so profiling overhead does not contaminate them.
 
-Set `PASEO_PROFILE_TYPING_SCENARIO=height-growth` to alternate `Shift+Enter` and printable input.
+Set `FDE_PROFILE_TYPING_SCENARIO=height-growth` to alternate `Shift+Enter` and printable input.
 That report includes input and composer height changes plus React work grouped into composer,
 stream, and ancestor/root scopes. Ancestor/root timings include descendant work because the Profiler
 boundaries are nested. A printable key after an empty newline should not change either height.
@@ -233,12 +233,12 @@ boundaries are nested. A printable key after an empty newline should not change 
 ### Daemon logs
 
 Check `$FDE_HOME/daemon.log` for daemon logs. The default level is `info`; set
-`PASEO_LOG_LEVEL=trace` before launching the daemon when you need full provider,
+`FDE_LOG_LEVEL=trace` before launching the daemon when you need full provider,
 session, and agent-manager traces for stuck-state debugging.
 
 The supervisor rotates `daemon.log`. Persisted `log.file.rotate` settings in
 `$FDE_HOME/config.json` win first. Without persisted config, the optional
-`PASEO_LOG_ROTATE_SIZE` and `PASEO_LOG_ROTATE_COUNT` env vars override the
+`FDE_LOG_ROTATE_SIZE` and `FDE_LOG_ROTATE_COUNT` env vars override the
 defaults. The default rotation is `10m` x `3` files everywhere.
 
 ### Git process pressure
@@ -257,14 +257,14 @@ the daemon-global Git process limits in `$FDE_HOME/config.json`:
 }
 ```
 
-Reload the daemon with `paseo reload`. Environment-variable overrides still require a restart because
+Reload the daemon with `fde reload`. Environment-variable overrides still require a restart because
 the launch environment remains authoritative. Lower values reduce machine pressure but make Git-backed workspace state and
 Git RPCs wait longer. See [Git process limits](data-model.md#git-process-limits) for defaults,
 semantics, and environment-variable overrides.
 
 ### Agent Tool Catalog Measurement
 
-Measure the MCP `tools/list` payload that Paseo injects into agents with:
+Measure the MCP `tools/list` payload that FDE injects into agents with:
 
 ```bash
 npm run measure:agent-tools --workspace=@fde/server
@@ -290,14 +290,14 @@ exact ref also resolves through its stored branch name.
 
 Worktrees inherit committed Git state only; uncommitted source-checkout changes are not copied.
 
-## paseo.json service scripts
+## fde.json service scripts
 
 `worktree.setup` and `worktree.teardown` accept either a multiline shell script or an array
 of commands. Both run sequentially.
 
 Lifecycle commands run in the worktree through a stable script shell: `bash`
 resolved from `PATH` on macOS/Linux, and PowerShell with `-NoProfile` on
-Windows. They inherit the daemon environment plus Paseo's lifecycle variables;
+Windows. They inherit the daemon environment plus FDE's lifecycle variables;
 login and interactive shell startup files are not loaded, and Bash's `BASH_ENV`
 hook is unset. ACP single-string terminal commands use the same non-login Bash
 behavior on macOS/Linux, but preserve their existing `cmd.exe /c` string semantics
@@ -315,7 +315,7 @@ that reads what it needs from `process.env` and invoke it as
 ```json
 {
   "worktree": {
-    "setup": "npm ci\ncp \"$PASEO_SOURCE_CHECKOUT_PATH/.env\" .env\nnpm run db:migrate",
+    "setup": "npm ci\ncp \"$FDE_SOURCE_CHECKOUT_PATH/.env\" .env\nnpm run db:migrate",
     "teardown": "npm run db:drop || true"
   }
 }
@@ -323,13 +323,13 @@ that reads what it needs from `process.env` and invoke it as
 
 Every `scripts` entry with `"type": "service"` receives these environment variables:
 
-| Variable                    | Value                                                                                                                     |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `PASEO_SERVICE_<NAME>_URL`  | Proxied URL for a declared peer service. Prefer this for peer discovery; it survives peer restarts.                       |
-| `PASEO_SERVICE_<NAME>_PORT` | Raw ephemeral port for a declared peer service. Use only as a bypass escape hatch; it can go stale if that peer restarts. |
-| `PASEO_URL`                 | Self alias for `PASEO_SERVICE_<SELF>_URL`.                                                                                |
-| `PASEO_PORT`                | Self alias for `PASEO_SERVICE_<SELF>_PORT`.                                                                               |
-| `HOST`                      | Bind host for the service process.                                                                                        |
+| Variable                  | Value                                                                                                                     |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `FDE_SERVICE_<NAME>_URL`  | Proxied URL for a declared peer service. Prefer this for peer discovery; it survives peer restarts.                       |
+| `FDE_SERVICE_<NAME>_PORT` | Raw ephemeral port for a declared peer service. Use only as a bypass escape hatch; it can go stale if that peer restarts. |
+| `FDE_URL`                 | Self alias for `FDE_SERVICE_<SELF>_URL`.                                                                                  |
+| `FDE_PORT`                | Self alias for `FDE_SERVICE_<SELF>_PORT`.                                                                                 |
+| `HOST`                    | Bind host for the service process.                                                                                        |
 
 Service proxy hostnames use the double-dash shape: `web--feature-auth--project.localhost` or, on the default branch, `web--project.localhost`. Optional public aliases use the same leftmost label under the configured public base host.
 
@@ -342,7 +342,7 @@ Service proxy hostnames use the double-dash shape: `web--feature-auth--project.l
   "scripts": {
     "web": {
       "type": "service",
-      "command": "PORT=$PASEO_PORT npm run dev:web"
+      "command": "PORT=$FDE_PORT npm run dev:web"
     }
   }
 }
@@ -350,29 +350,29 @@ Service proxy hostnames use the double-dash shape: `web--feature-auth--project.l
 
 Service ports use OS ephemeral allocation by default. Set `worktrees.servicePorts` in
 `$FDE_HOME/config.json`, or replace it for one project with `worktree.servicePorts` in
-`paseo.json`. The block accepts an inclusive `range` such as `"3000-4000"` or a `portScript`
+`fde.json`. The block accepts an inclusive `range` such as `"3000-4000"` or a `portScript`
 executable. Since `portScript` is executed directly without a shell, it must point to a real executable (e.g., a binary or a script with a proper shebang like `#!/bin/sh`) rather than an inline shell command or shell pipeline. For inline shell commands or pipelines, wrap them in a small script. `portScript` runs in the workspace directory with four arguments: service name,
 workspace ID, branch name, and worktree path. A missing branch is passed as an empty string. The same
-values are available as `PASEO_SCRIPTNAME`, `PASEO_WORKSPACE_ID`, `PASEO_BRANCH_NAME`, and
-`PASEO_WORKTREE_PATH`. The script must print one valid TCP port. Paseo trusts the external allocator,
+values are available as `FDE_SCRIPTNAME`, `FDE_WORKSPACE_ID`, `FDE_BRANCH_NAME`, and
+`FDE_WORKTREE_PATH`. The script must print one valid TCP port. FDE trusts the external allocator,
 so the port may already be bound. `portScript` takes precedence when both values are present.
 
 ## Bundled daemon web UI
 
-> The user-facing guide for this feature (enabling it, reverse proxy, TLS, tunnels, security) lives at [public-docs/web-ui.md](../public-docs/web-ui.md). This section is the contributor/build reference: how the artifact is produced, bundled, and excluded from desktop packaging.
+> The user-facing guide for this feature (enabling it, reverse proxy, TLS, tunnels, security) lives at [daemon installation](install.md). This section is the contributor/build reference: how the artifact is produced, bundled, and excluded from desktop packaging.
 
 The daemon can optionally serve the browser web client from the same HTTP server. This is disabled by default.
 
 Enable it for a running daemon with:
 
 ```bash
-paseo daemon start --web-ui
+fde daemon start --web-ui
 ```
 
 Or set the environment variable:
 
 ```bash
-PASEO_WEB_UI_ENABLED=true paseo daemon start
+FDE_WEB_UI_ENABLED=true fde daemon start
 ```
 
 Or persist it in `config.json`:
@@ -405,7 +405,7 @@ Measured bundle size for a standard Expo web export:
 - gzip: 2.55 MiB
 - brotli: 1.93 MiB
 
-The desktop-managed daemon disables the bundled web UI by default (`PASEO_WEB_UI_ENABLED=false`) because the desktop app already ships the renderer as `app-dist`. Shipping the same assets again inside `@fde/server` would duplicate the ~10.8 MiB install. Desktop packaging also excludes `node_modules/@fde/server/dist/server/web-ui/**` from the packaged app.
+The desktop-managed daemon disables the bundled web UI by default (`FDE_WEB_UI_ENABLED=false`) because the desktop app already ships the renderer as `app-dist`. Shipping the same assets again inside `@fde/server` would duplicate the ~10.8 MiB install. Desktop packaging also excludes `node_modules/@fde/server/dist/server/web-ui/**` from the packaged app.
 
 ## Built workspace packages
 
@@ -461,16 +461,16 @@ install.
 
 ## CLI reference
 
-Use `npm run cli` to run the in-repo CLI from source (`npx tsx apps/cli/src/index.ts`). The script wraps the CLI with `scripts/dev/dev-home.sh`, so it automatically uses this checkout's `.dev/paseo-home` and dev daemon endpoint unless you pass an explicit override. The globally installed `paseo` binary on macOS is a symlink into the installed Paseo desktop app, not this checkout — use it to drive the desktop's built-in daemon, but use `npm run cli` when you want to talk to the CLI you are editing.
+Use `npm run cli` to run the in-repo CLI from source (`npx tsx apps/cli/src/index.ts`). The script wraps the CLI with `scripts/dev/dev-home.sh`, so it automatically uses this checkout's `.dev/fde-home` and dev daemon endpoint unless you pass an explicit override. The globally installed `fde` binary on macOS is a symlink into the installed FDE desktop app, not this checkout — use it to drive the desktop's built-in daemon, but use `npm run cli` when you want to talk to the CLI you are editing.
 
-Canonical automation uses `paseo project create/ls/rename/delete`, `paseo workspace create/ls/rename/archive`, `paseo heartbeat create/update/delete`, and the full `paseo schedule` group. MCP heartbeat automation is intentionally smaller: create and delete only. Detach remains an explicit user lifecycle action rather than an agent tool. `paseo run --new-workspace local|worktree` composes workspace creation with agent creation. The old `paseo worktree` and `paseo run --worktree` forms are hidden compatibility aliases.
+Canonical automation uses `fde project create/ls/rename/delete`, `fde workspace create/ls/rename/archive`, `fde heartbeat create/update/delete`, and the full `fde schedule` group. MCP heartbeat automation is intentionally smaller: create and delete only. Detach remains an explicit user lifecycle action rather than an agent tool. `fde run --new-workspace local|worktree` composes workspace creation with agent creation. The old `fde worktree` and `fde run --worktree` forms are hidden compatibility aliases.
 
 ```bash
 npm run cli -- ls -a -g              # List all agents globally
 npm run cli -- ls -a -g --json       # Same, as JSON
 npm run cli -- inspect <id>          # Show detailed agent info
 npm run cli -- logs <id>             # View agent timeline
-npm run cli -- agent open <id>       # Focus an existing agent in Paseo Desktop
+npm run cli -- agent open <id>       # Focus an existing agent in FDE Desktop
 npm run cli -- daemon status         # Check daemon status
 npm run cli -- clone owner/repo --dir ~/workspace # Clone GitHub repo and register project
 ```
@@ -482,11 +482,11 @@ npm run cli -- ls -a --host localhost:7777
 npm run cli -- ls -a --host ssh://user@host
 ```
 
-In an SSH URI, the URL port is the SSH server port. The remote daemon defaults to `127.0.0.1:9999`; use `?daemonPort=7777` to override it. The transport runs non-interactively through the local OpenSSH client and never installs, starts, or configures the remote daemon. User-facing setup and troubleshooting live in [public-docs/connectivity.md](../public-docs/connectivity.md#ssh).
+In an SSH URI, the URL port is the SSH server port. The remote daemon defaults to `127.0.0.1:9999`; use `?daemonPort=7777` to override it. The transport runs non-interactively through the local OpenSSH client and never installs, starts, or configures the remote daemon. User-facing setup and troubleshooting live in [SSH deployment](install.md#how-the-desktop-app-deploys-over-ssh).
 
 Desktop integrations can focus an existing agent without creating one or
-sending a message. Use `paseo://h/<server-id>/agent/<agent-id>`, or run
-`paseo agent open <agent-id>`. The CLI reads the local daemon's server ID by
+sending a message. Use `fde://h/<server-id>/agent/<agent-id>`, or run
+`fde agent open <agent-id>`. The CLI reads the local daemon's server ID by
 default; pass `--server <server-id>` when targeting another server.
 
 ## Agent state
@@ -527,7 +527,7 @@ Get the session ID from the agent JSON (`persistence.sessionId`), then:
 
 ## Testing with Playwright MCP
 
-Point Playwright MCP at the running Expo web target. For root checkout dev, `npm run dev:app` reserves `http://localhost:8081`. For Paseo-managed worktree app services, use the service URL or port shown by Paseo for that worktree.
+Point Playwright MCP at the running Expo web target. For root checkout dev, `npm run dev:app` reserves `http://localhost:8081`. For FDE-managed worktree app services, use the service URL or port shown by FDE for that worktree.
 
 Do NOT use browser history (back/forward). Always navigate by clicking UI elements or using `browser_navigate` with the full URL — the app uses client-side routing and browser history breaks state.
 
@@ -540,7 +540,7 @@ PWA install metadata lives in `apps/ui/public/manifest.json` and is linked
 from `apps/ui/public/index.html`. Keep the install icons in `public/` so
 Cloudflare serves them from stable root URLs after `expo export`.
 
-Do not add service-worker caching casually. Paseo is a live control surface for
+Do not add service-worker caching casually. FDE is a live control surface for
 agents, and an aggressive service worker can strand installed users on stale web
 code. If offline behavior becomes a product requirement, add it deliberately
 with an update strategy and test the installed-app upgrade path.

@@ -2,7 +2,7 @@
 //! A port of Electron's `daemon/cli/external.ts`. The shell runs the bundle's
 //! own Node binary on the CLI entrypoint directly rather than the `bin/fde`
 //! launcher, which sidesteps `cmd.exe` quoting on Windows and shell lookups
-//! everywhere else; the launchers stay for humans and `PASEO_CLI`.
+//! everywhere else; the launchers stay for humans and `FDE_CLI`.
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -47,21 +47,21 @@ impl CliInvocation {
 
     fn base_env(bundle_launcher: &Path) -> BTreeMap<String, String> {
         let mut env = BTreeMap::new();
-        env.insert("PASEO_NODE_ENV".into(), "production".into());
+        env.insert("FDE_NODE_ENV".into(), "production".into());
         env.insert(
             crate::branding::env_key("CLI"),
             bundle_launcher.to_string_lossy().into_owned(),
         );
-        // Provider/tool contracts still consume the internal PASEO_CLI key.
+        // Provider/tool contracts still consume the internal FDE_CLI key.
         env.insert(
-            "PASEO_CLI".into(),
+            "FDE_CLI".into(),
             bundle_launcher.to_string_lossy().into_owned(),
         );
         env
     }
 
     /// Environment for status/stop probes: production mode and the launcher
-    /// path, plus the daemon home so the CLI looks at the same `paseo.pid`.
+    /// path, plus the daemon home so the CLI looks at the same `fde.pid`.
     pub fn probe_env(bundle: &InstalledBundle, home: &Path) -> BTreeMap<String, String> {
         let mut env = Self::base_env(&bundle.launcher());
         env.insert(
@@ -326,9 +326,9 @@ mod tests {
         assert_eq!(invocation.args[1], bundle().cli_entry().to_string_lossy());
         assert_eq!(&invocation.args[2..], ["daemon", "status", "--json"]);
         let env = CliInvocation::probe_env(&bundle(), Path::new("/home/u/.fde"));
-        assert_eq!(env["PASEO_NODE_ENV"], "production");
+        assert_eq!(env["FDE_NODE_ENV"], "production");
         assert_eq!(env["FDE_HOME"], "/home/u/.fde");
-        assert_eq!(env["PASEO_CLI"], bundle().launcher().to_string_lossy());
+        assert_eq!(env["FDE_CLI"], bundle().launcher().to_string_lossy());
     }
 
     #[test]

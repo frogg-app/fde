@@ -1,15 +1,15 @@
 # @fde/client
 
-TypeScript SDK for building integrations on top of a Paseo daemon.
+TypeScript SDK for building integrations on top of a FDE daemon.
 
 ```bash
 npm install @fde/client
 ```
 
 ```ts
-import { createPaseoClient } from "@fde/client";
+import { createFdeClient } from "@fde/client";
 
-const client = createPaseoClient({ url: "ws://127.0.0.1:9999/ws" });
+const client = createFdeClient({ url: "ws://127.0.0.1:9999/ws" });
 await client.connect();
 
 const agent = await client.agents.create({
@@ -24,9 +24,9 @@ console.log(result.lastMessage);
 await client.close();
 ```
 
-The public API is the package root. Imports under `@fde/client/internal/*` are unsupported implementation details used by Paseo's own packages.
+The public API is the package root. Imports under `@fde/client/internal/*` are unsupported implementation details used by FDE's own packages.
 
-Read the [SDK documentation](https://paseo.sh/docs/sdk) for agents, workspaces, provider discovery, events, recipes, and the API reference. Runnable TypeScript patterns also live in [`examples/`](./examples/README.md).
+Read the [SDK documentation](https://frogg.app/docs/sdk) for agents, workspaces, provider discovery, events, recipes, and the API reference. Runnable TypeScript patterns also live in [`examples/`](./examples/README.md).
 
 ## Runtime
 

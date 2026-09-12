@@ -9,7 +9,7 @@ import pino from "pino";
 import { OpenCodeAgentClient } from "../agent/providers/opencode-agent.js";
 import { OpenCodeServerManager } from "../agent/providers/opencode/server-manager.js";
 import { terminateWithTreeKill } from "../../utils/tree-kill.js";
-import { createTestPaseoDaemon, type TestPaseoDaemon } from "../test-utils/paseo-daemon.js";
+import { createTestFdeDaemon, type TestFdeDaemon } from "../test-utils/fde-daemon.js";
 import { DaemonClient } from "../test-utils/daemon-client.js";
 
 const PINNED_OPENCODE_VERSION = "1.18.9";
@@ -21,7 +21,7 @@ const COMMAND_TIMEOUT_MS = 180_000;
 interface RuntimePaths {
   root: string;
   home: string;
-  paseoHomeRoot: string;
+  fdeHomeRoot: string;
   xdgConfig: string;
   xdgData: string;
   xdgCache: string;
@@ -45,7 +45,7 @@ interface CommandInput {
 
 export interface OpenCodeOmoRealRuntime {
   client: DaemonClient;
-  daemon: TestPaseoDaemon;
+  daemon: TestFdeDaemon;
   model: string;
   workspace: string;
   artifacts: string;
@@ -54,9 +54,8 @@ export interface OpenCodeOmoRealRuntime {
 
 export async function createOpenCodeOmoRealRuntime(): Promise<OpenCodeOmoRealRuntime> {
   const paths = createRuntimePaths();
-  const openCodeVersion =
-    process.env.PASEO_REAL_OPENCODE_VERSION?.trim() || PINNED_OPENCODE_VERSION;
-  const omoVersion = process.env.PASEO_REAL_OMO_VERSION?.trim() || PINNED_OMO_VERSION;
+  const openCodeVersion = process.env.FDE_REAL_OPENCODE_VERSION?.trim() || PINNED_OPENCODE_VERSION;
+  const omoVersion = process.env.FDE_REAL_OMO_VERSION?.trim() || PINNED_OMO_VERSION;
   const openRouterApiKey = process.env.OPENROUTER_API_KEY?.trim() || null;
   const model = resolveModel(openRouterApiKey);
   const secrets = collectEnvironmentSecrets(openRouterApiKey);
@@ -137,24 +136,24 @@ export async function createOpenCodeOmoRealRuntime(): Promise<OpenCodeOmoRealRun
   if (model === NO_AUTH_MODEL) {
     await runCommand({
       command: openCodeCommand,
-      args: ["run", "--model", model, "Reply with exactly: PASEO_BIG_PICKLE_PROBE_OK"],
+      args: ["run", "--model", model, "Reply with exactly: FDE_BIG_PICKLE_PROBE_OK"],
       cwd: paths.workspace,
       env: runtimeEnv,
       artifactName: "big-pickle-probe.log",
       artifacts: paths.artifacts,
       secrets,
-      requiredOutput: "PASEO_BIG_PICKLE_PROBE_OK",
+      requiredOutput: "FDE_BIG_PICKLE_PROBE_OK",
     });
   }
 
-  const previousPaseoHome = process.env.PASEO_HOME;
+  const previousFdeHome = process.env.FDE_HOME;
   let traceDestination: ReturnType<typeof pino.destination> | null = null;
   let closeTrace: (() => void) | null = null;
   let serverManager: OpenCodeServerManager | null = null;
-  let daemon: TestPaseoDaemon | null = null;
+  let daemon: TestFdeDaemon | null = null;
   let client: DaemonClient | null = null;
   try {
-    process.env.PASEO_HOME = path.join(paths.paseoHomeRoot, ".paseo");
+    process.env.FDE_HOME = path.join(paths.fdeHomeRoot, ".fde");
     traceDestination = pino.destination({
       dest: path.join(paths.artifacts, "daemon.log"),
       sync: true,
@@ -178,10 +177,10 @@ export async function createOpenCodeOmoRealRuntime(): Promise<OpenCodeOmoRealRun
       resolveHomeDir: () => paths.home,
     });
     const openCodeClient = new OpenCodeAgentClient(logger, runtimeSettings, { serverManager });
-    daemon = await createTestPaseoDaemon({
+    daemon = await createTestFdeDaemon({
       agentClients: { opencode: openCodeClient },
       logger,
-      paseoHomeRoot: paths.paseoHomeRoot,
+      fdeHomeRoot: paths.fdeHomeRoot,
       staticDir: path.join(paths.root, "static"),
       cleanup: false,
     });
@@ -205,7 +204,7 @@ export async function createOpenCodeOmoRealRuntime(): Promise<OpenCodeOmoRealRun
             rmSync(paths.root, { recursive: true, force: true });
           }
         } finally {
-          restoreEnvironment("PASEO_HOME", previousPaseoHome);
+          restoreEnvironment("FDE_HOME", previousFdeHome);
         }
       },
     };
@@ -220,18 +219,18 @@ export async function createOpenCodeOmoRealRuntime(): Promise<OpenCodeOmoRealRun
         traceDestination?.end();
       }
     } finally {
-      restoreEnvironment("PASEO_HOME", previousPaseoHome);
+      restoreEnvironment("FDE_HOME", previousFdeHome);
     }
     throw withArtifactLocation(error, paths.artifacts);
   }
 }
 
 function createRuntimePaths(): RuntimePaths {
-  const root = mkdtempSync(path.join(tmpdir(), "paseo-real-opencode-omo-"));
+  const root = mkdtempSync(path.join(tmpdir(), "fde-real-opencode-omo-"));
   const paths: RuntimePaths = {
     root,
     home: path.join(root, "home"),
-    paseoHomeRoot: path.join(root, "paseo-home"),
+    fdeHomeRoot: path.join(root, "fde-home"),
     xdgConfig: path.join(root, "xdg", "config"),
     xdgData: path.join(root, "xdg", "data"),
     xdgCache: path.join(root, "xdg", "cache"),
@@ -253,7 +252,7 @@ function createRuntimePaths(): RuntimePaths {
 }
 
 function resolveModel(openRouterApiKey: string | null): string {
-  const explicitModel = process.env.PASEO_REAL_OPENCODE_MODEL?.trim();
+  const explicitModel = process.env.FDE_REAL_OPENCODE_MODEL?.trim();
   if (explicitModel) {
     return explicitModel;
   }
@@ -273,7 +272,7 @@ function buildRuntimeEnv(paths: RuntimePaths, openRouterApiKey: string | null): 
     SSL_CERT_DIR: process.env.SSL_CERT_DIR,
     HOME: paths.home,
     ...(process.platform === "win32" ? resolveWindowsHomeEnv(paths.home, paths.temporary) : {}),
-    PASEO_HOME: path.join(paths.paseoHomeRoot, ".paseo"),
+    FDE_HOME: path.join(paths.fdeHomeRoot, ".fde"),
     XDG_CONFIG_HOME: paths.xdgConfig,
     XDG_DATA_HOME: paths.xdgData,
     XDG_CACHE_HOME: paths.xdgCache,

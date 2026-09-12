@@ -146,15 +146,15 @@ export function applyMacWindowControlsUpdate(input: {
 }
 
 export function registerWindowManager(input: { mode: DesktopWindowChromeMode }): void {
-  handleDesktopIpc("paseo:window:minimize", (event) => {
+  handleDesktopIpc("fde:window:minimize", (event) => {
     BrowserWindow.fromWebContents(event.sender)?.minimize();
   });
 
-  handleDesktopIpc("paseo:window:close", (event) => {
+  handleDesktopIpc("fde:window:close", (event) => {
     BrowserWindow.fromWebContents(event.sender)?.close();
   });
 
-  handleDesktopIpc("paseo:window:toggleMaximize", (event) => {
+  handleDesktopIpc("fde:window:toggleMaximize", (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (!win) return;
     if (win.isMaximized()) {
@@ -164,21 +164,21 @@ export function registerWindowManager(input: { mode: DesktopWindowChromeMode }):
     }
   });
 
-  handleDesktopIpc("paseo:window:isFullscreen", (event) => {
+  handleDesktopIpc("fde:window:isFullscreen", (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     return win?.isFullScreen() ?? false;
   });
 
-  handleDesktopIpc("paseo:window:isMaximized", (event) => {
+  handleDesktopIpc("fde:window:isMaximized", (event) => {
     return BrowserWindow.fromWebContents(event.sender)?.isMaximized() ?? false;
   });
 
-  handleDesktopIpc("paseo:window:setFullscreen", (event, fullscreen: unknown) => {
+  handleDesktopIpc("fde:window:setFullscreen", (event, fullscreen: unknown) => {
     if (typeof fullscreen !== "boolean") return;
     BrowserWindow.fromWebContents(event.sender)?.setFullScreen(fullscreen);
   });
 
-  handleDesktopIpc("paseo:window:setBadgeCount", (_event, count?: unknown) => {
+  handleDesktopIpc("fde:window:setBadgeCount", (_event, count?: unknown) => {
     if (process.platform === "darwin" || process.platform === "linux") {
       const badgeCount = readBadgeCount(count);
       try {
@@ -193,7 +193,7 @@ export function registerWindowManager(input: { mode: DesktopWindowChromeMode }):
     }
   });
 
-  handleDesktopIpc("paseo:window:updateChrome", (event, update?: unknown) => {
+  handleDesktopIpc("fde:window:updateChrome", (event, update?: unknown) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (!win) {
       return;
@@ -222,7 +222,7 @@ export function setupWindowResizeEvents(win: BrowserWindow): void {
     if (win.isDestroyed() || win.webContents.isDestroyed()) {
       return;
     }
-    win.webContents.send("paseo:window:resized", {});
+    win.webContents.send("fde:window:resized", {});
   };
 
   win.on("resize", notifyResized);
