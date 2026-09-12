@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.28 - 2026-09-12
+
+- Complete the branding delivery record with two-product runtime, upgrade, fork,
+  platform packaging, browser, and Nix evidence and explicit operator acceptance limits.
+
 ## 0.2.27 - 2026-09-12
 
 - Escape generated skill descriptions for Unicode product names containing colons

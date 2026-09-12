@@ -147,7 +147,7 @@ suitable runner. Distinguish compilation from interactive/device acceptance.
 - [x] Presentation: UI, translations, assets, themes, desktop and mobile configuration.
 - [x] Identity: runtime, pairing, CLI/services, persistence and provider ownership.
 - [x] Distribution: installers, updates, SSH, Docker/Nix, pairing and fork-aware CI.
-- [ ] Validation: two brands, isolation/upgrades, packaging and upstream contribution.
+- [x] Validation: two brands, isolation/upgrades, packaging and upstream contribution.
 - [x] Documentation: docs/branding.md tutorial/reference/releases/troubleshooting;
       update roadmap/changelog, push milestones and open a reviewable PR.
 
@@ -244,3 +244,21 @@ Interactive OS installation/update dialogs, signed production releases, physical
 A custom `cargo check` succeeds without a packaging wrapper. Simulating a raw Tauri CLI invocation without the generated overlay fails with the documented build command, rather than letting the parent CLI package FDE identity around custom internals. A release check with a deliberately incorrect web fingerprint also fails before packaging. The native build compares application ID, package/executable names, and version with the resolved inputs. Desktop Rust tests still pass 136 cases with one existing ignored test.
 
 The Acme Linux AppImage and unsigned iOS simulator jobs completed successfully on the 0.2.24 milestone. Its sole failing platform job was the custom Windows npm invocation subsequently fixed in 0.2.25. The 0.2.26 FDE Debian package was rebuilt and inspected: its desktop entry launches `/usr/bin/fde` and forwards pairing URLs with `%U`. Current native package inspection is part of CI, including both products' macOS bundle metadata and Windows filenames.
+
+### Delivery evidence
+
+Implementation is complete. The final documentation milestone changes no branding behavior; it synchronizes the required patch version and Nix dependency hash. The detailed milestone entries above are historical observations, not outstanding implementation tasks.
+
+| Acceptance area      | Evidence                                                                                                                                                                                                                                           |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Shared checks        | Full local workspace typecheck, lint, tooling TypeScript checks, and all 48 script tests passed at 0.2.27. Standard CI covers the complete library/CLI, server, UI, browser, and experimental Rust suites.                                         |
+| Generation           | Default/example generation and a third Unicode product containing colons and quotes passed; repeated output, artwork invalidation, source cleanliness, and cosmetic identity stability are checked automatically.                                  |
+| Runtime and upgrades | Actual FDE/Acme archives ran concurrently; cross-brand stop was rejected and stopping one left the other reachable. This also passed on CI. Installer fixtures verify same-brand cosmetic upgrades and reject foreign archives before replacement. |
+| Linux                | Both products built native packages. Acme's Debian package and embedded daemon were inspected locally; its AppImage built on CI. FDE's 0.2.27 Debian package passed the current executable, desktop-entry, scheme, and identity inspection.        |
+| Windows              | FDE and Acme installer builds passed on Windows runners after the npm portability correction. The workflow also checks development-script syntax, literal subprocess arguments, package filenames, and owned CLI integration.                      |
+| macOS                | Both products built on macOS runners. The current workflow additionally inspects bundle identity, display name, and executable.                                                                                                                    |
+| Mobile               | Acme Android and an unsigned iOS simulator app built on their platform runners. EAS source export includes selected branding and excludes inherited store identifiers.                                                                             |
+| Deployment           | Acme pairing Docker image built and served branded HTML. Both Nix products built, completed native dependency fixup, and ran their own packaged CLI locally and on CI.                                                                             |
+| Fork lifecycle       | An external branding repository remained unchanged after an upstream feature merge and rebuild. The shared feature alone cherry-picked onto the baseline rebuilt default FDE.                                                                      |
+
+Runner evidence is retained in [branding acceptance](https://github.com/frogg-app/fde/actions/runs/34675136030), the [current implementation acceptance run](https://github.com/frogg-app/fde/actions/runs/34676774571), and [standard implementation CI](https://github.com/frogg-app/fde/actions/runs/34676773332). The PR shows any subsequent verification of the documentation/version milestone. Native builds and package inspection establish automated acceptance; they do not claim interactive OS installation, production signing, physical-device testing, or store publication.
