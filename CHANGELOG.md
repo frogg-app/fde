@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.1 - 2026-09-12
+
+- Build daemon packages independently of Android and desktop releases. Compile the
+  server and package the exported web UI once, then share that output across all
+  six daemon targets.
+- Add `npm run build:local` for Windows/Linux desktop iteration with preserved
+  compiler caches, bounded concurrency, package checksums, and per-stage timings.
+- Refresh the Nix dependency hash for the synchronized package lockfile.
+
 ## 0.4.0 - 2026-09-12
 
 - Merge fork-friendly branding across desktop, web, mobile, CLI, daemon,

@@ -370,11 +370,58 @@ jobs:
           path: release-assets
           retention-days: 7
 
+  daemon-build:
+    name: shared daemon build
+    needs: [meta, ui]
+    if: inputs.only != 'android'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+
+      - uses: ./.github/actions/select-brand
+        with:
+          directory: ${{ vars.FDE_BRAND_DIR }}
+          repository: ${{ vars.FDE_BRAND_REPOSITORY }}
+          revision: ${{ vars.FDE_BRAND_REVISION }}
+          subdirectory: ${{ vars.FDE_BRAND_SUBDIR }}
+          token: ${{ secrets.BRANDING_READ_TOKEN }}
+
+      - uses: ./.github/actions/setup-node-deps
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: ui-dist
+          path: apps/ui/dist
+
+      - name: Build daemon with the shared web UI
+        run: npm run build:server && npm run build:daemon-web-ui -- --skip-export
+
+      # Compiled JS and web assets are platform-independent. Target-specific
+      # native packages are still installed by each bundle job.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: daemon-dist
+          path: |
+            apps/cli/dist
+            packages/branding/dist
+            packages/protocol/dist
+            packages/client/dist
+            packages/relay/dist
+            packages/highlight/dist
+            packages/plugin/dist
+            packages/server/dist
+          include-hidden-files: true
+          retention-days: 7
+          if-no-files-found: error
+
   daemon-bundle:
     name: daemon bundle ${{ matrix.target }}
-    # Android and desktop are the priority release tier. Keep daemon packaging
-    # from consuming runners until the APK and Windows setup build have finished.
-    needs: [meta, android, desktop]
+    # Package as soon as the shared build is ready; Android and desktop do not
+    # gate daemon availability or failures.
+    needs: [meta, daemon-build]
     if: inputs.only != 'android'
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
@@ -426,9 +473,11 @@ jobs:
         if: steps.script.outputs.present == 'true'
         run: node scripts/ci/npm-retry.mjs ci
 
-      - name: Build daemon and its web UI
+      - uses: actions/download-artifact@v8
         if: steps.script.outputs.present == 'true'
-        run: npm run build:server && npm run build:daemon-web-ui
+        with:
+          name: daemon-dist
+          path: .
 
       - name: Build daemon bundle
         if: steps.script.outputs.present == 'true'

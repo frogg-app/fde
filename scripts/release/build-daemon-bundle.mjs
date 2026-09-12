@@ -77,7 +77,7 @@ export const SUPPORTED_TARGETS = [
 
 // Workspaces that make up the daemon. Order does not matter for the copy;
 // npm resolves them from the narrowed root package.json written below.
-const DAEMON_WORKSPACES = [
+export const DAEMON_WORKSPACES = [
   "packages/branding",
   "packages/protocol",
   "packages/client",

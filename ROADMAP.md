@@ -11,6 +11,10 @@ preserved work outside this checkout.
 
 ## Implemented baseline
 
+- Independent desktop/daemon release paths, shared daemon build artifacts, and a
+  timed local desktop build command. See [building](docs/building.md#timed-local-desktop-builds).
+  Guarded Android native-output reuse remains a follow-up.
+
 - Expandable sidebar agent/subagent trees with direct live transcript access,
   runtime identity preservation, and reconnect/retry states. Single-agent workspaces
   avoid duplicate rows; disclosure contains only active subagents. See
