@@ -6,6 +6,15 @@ noticeably worse after voice operations. App versions, the growing process, and 
 exact reproduction sequence have not yet been established. Keep the reported issue open until an
 on-device reproduction and a fixed-build comparison establish its cause.
 
+**Update 2026-09-12:** a user report of the whole app locking up while scrolling up
+through conversation history is a candidate for the missing reproduction sequence. A
+source-level audit of that path found nine compounding defects, four of which fire once
+per loaded history page and would produce this document's allocation-churn shape. See
+[scroll-lockup-investigation-2026-09.md](scroll-lockup-investigation-2026-09.md). That
+audit also **rules out leaked stream rows** as an explanation for the renderer growth
+recorded below: rows are correctly unmounted and no observer or node accumulation was
+found. It remains source evidence, not a device profile.
+
 ## Windows process evidence and failure to exit
 
 User-provided Task Manager screenshots from the old installed build (2026-09-11):

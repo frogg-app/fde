@@ -7,6 +7,12 @@ For terminal output, which is a separate pipeline with separate budgets, see [te
 A source-level audit of this pipeline plus the desktop transport, covering the findings behind the
 invariants below, is in [performance-investigation-2026-09.html](performance-investigation-2026-09.html).
 
+The invariants below cover the *streaming* path. Scrolling back through history is a
+separate hot path with its own defects, audited in
+[scroll-lockup-investigation-2026-09.md](scroll-lockup-investigation-2026-09.md) --
+including a reintroduction of the uncached `splitMarkdownBlocks` parse, this time from
+the web virtualizer's height estimator rather than the reveal.
+
 ## The pipeline
 
 ```
