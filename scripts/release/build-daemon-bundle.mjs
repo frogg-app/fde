@@ -155,6 +155,7 @@ function parseCli() {
 function assertBuilt() {
   const required = [
     "packages/server/dist/scripts/supervisor-entrypoint.js",
+    "packages/server/dist/server/server/execution-service/worker.js",
     "apps/cli/dist/index.js",
     "packages/protocol/dist",
     "packages/client/dist",

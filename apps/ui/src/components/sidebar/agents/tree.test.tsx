@@ -86,7 +86,7 @@ describe("sidebar subagent interaction", () => {
         <SidebarAgentBranch
           node={parent}
           discovery={new Map()}
-          offline={false}
+          connectionStatus="online"
           selectedTarget={child.target}
           onOpen={onOpen}
         />
@@ -112,7 +112,7 @@ describe("sidebar subagent interaction", () => {
         <SidebarAgentBranch
           node={node}
           discovery={new Map()}
-          offline={false}
+          connectionStatus="online"
           selectedTarget={null}
           onOpen={onOpen}
         />
@@ -141,7 +141,7 @@ describe("sidebar subagent interaction", () => {
         <SidebarAgentBranch
           node={parent}
           discovery={discovery}
-          offline={false}
+          connectionStatus="online"
           selectedTarget={null}
           onOpen={onOpen}
         />
@@ -158,7 +158,7 @@ describe("sidebar subagent interaction", () => {
         <SidebarAgentBranch
           node={parent}
           discovery={new Map()}
-          offline
+          connectionStatus="offline"
           selectedTarget={null}
           onOpen={vi.fn()}
         />
@@ -253,7 +253,7 @@ describe("workspace agent disclosure", () => {
           <SidebarAgentBranch
             node={node}
             discovery={discovery}
-            offline={false}
+            connectionStatus="online"
             selectedTarget={null}
             onOpen={vi.fn()}
           />

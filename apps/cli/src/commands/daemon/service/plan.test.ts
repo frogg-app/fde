@@ -16,7 +16,10 @@ function planInput(overrides: Partial<ServicePlanInput> = {}): ServicePlanInput 
     platform: "linux",
     homeDir: HOME_DIR,
     env: { PATH: "/usr/bin:/bin" },
-    command: { program: "/opt/fde/bin/fde", args: ["daemon", "start", "--foreground"] },
+    command: {
+      program: "/opt/fde/bin/fde",
+      args: ["daemon", "start", "--foreground"],
+    },
     listen: "127.0.0.1:9991",
     fdeHome: path.join(HOME_DIR, ".fde"),
     pathPrepend: "/opt/fde/bin",
@@ -25,9 +28,23 @@ function planInput(overrides: Partial<ServicePlanInput> = {}): ServicePlanInput 
 }
 
 describe("systemd user unit", () => {
+  test("preserves execution descendants only when explicitly opted in", () => {
+    const legacy = resolveServicePlan(planInput());
+    expect(legacy.file?.contents).toContain("KillMode=mixed");
+    expect(legacy.file?.contents).not.toContain("FDE_EXECUTION_SERVICE");
+    const independent = resolveServicePlan(planInput({ env: { FDE_EXECUTION_SERVICE: "1" } }));
+    expect(independent.file?.contents).toContain("KillMode=process");
+    expect(independent.file?.contents).toContain(
+      'ExecStop="/opt/fde/bin/fde" "daemon" "stop" "--force"',
+    );
+    expect(independent.file?.contents).toContain("Environment=FDE_EXECUTION_SERVICE=1");
+  });
+
   test("is written under XDG_CONFIG_HOME and starts the daemon in the foreground", () => {
     const plan = resolveServicePlan(
-      planInput({ env: { PATH: "/usr/bin:/bin", XDG_CONFIG_HOME: "/scratch/config" } }),
+      planInput({
+        env: { PATH: "/usr/bin:/bin", XDG_CONFIG_HOME: "/scratch/config" },
+      }),
     );
 
     expect(plan.file?.path).toBe(`/scratch/config/systemd/user/${SERVICE_NAME}.service`);
@@ -111,7 +128,10 @@ describe("Windows logon task", () => {
       ],
     });
     expect(plan.uninstall).toEqual([
-      { program: "schtasks", args: ["/Delete", "/TN", WINDOWS_TASK_NAME, "/F"] },
+      {
+        program: "schtasks",
+        args: ["/Delete", "/TN", WINDOWS_TASK_NAME, "/F"],
+      },
     ]);
   });
 });

@@ -32,7 +32,10 @@ export interface UnmanagedServiceOptions {
 }
 
 function run(command: string, args: string[]): { status: number | null; stderr: string } {
-  const result = spawnSync(command, args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+  const result = spawnSync(command, args, {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
   if (result.error) return { status: null, stderr: result.error.message };
   return { status: result.status, stderr: result.stderr ?? "" };
 }
@@ -171,6 +174,7 @@ export function detectServiceManager(options: UnmanagedServiceOptions): ServiceM
 }
 
 const SUPERVISOR_ENV_KEYS = [
+  "FDE_EXECUTION_SERVICE",
   ...["HOME", "INSTALL_DIR", "RELEASE_BASE", "RELEASES_API", "GITHUB_TOKEN"].map(
     (key) => `${brand.envPrefix}_${key}`,
   ),

@@ -1,6 +1,6 @@
 {
   "name": "fde",
-  "version": "0.4.3",
+  "version": "0.5.1",
   "private": true,
   "description": "FDE (Frogg Development Environment): desktop client for local and remote AI coding agents (fork of Paseo)",
   "license": "Apache-2.0",

@@ -11,10 +11,9 @@ import type { Logger } from "pino";
 import { z } from "zod";
 import { createBranchChangeRouteHandler } from "./script-route-branch-handler.js";
 
-export type ListenTarget =
-  | { type: "tcp"; host: string; port: number }
-  | { type: "socket"; path: string }
-  | { type: "pipe"; path: string };
+import { parseListenString, type ListenTarget } from "./listen-target.js";
+export { parseListenString, type ListenTarget } from "./listen-target.js";
+import { createExecutionHttpServer } from "./execution-service/http-server.js";
 
 function resolveBoundListenTarget(
   listenTarget: ListenTarget,
@@ -34,50 +33,6 @@ function resolveBoundListenTarget(
     host: listenTarget.host,
     port: address.port,
   };
-}
-
-// Matches a Windows drive-letter path like C:\ or D:\
-const WINDOWS_DRIVE_RE = /^[A-Za-z]:\\/;
-
-export function parseListenString(listen: string): ListenTarget {
-  // 1. Windows named pipes: \\.\pipe\... or pipe://...
-  if (listen.startsWith("\\\\.\\pipe\\") || listen.startsWith("pipe://")) {
-    return {
-      type: "pipe",
-      path: listen.startsWith("pipe://") ? listen.slice("pipe://".length) : listen,
-    };
-  }
-  // 2. Explicit unix:// prefix
-  if (listen.startsWith("unix://")) {
-    return { type: "socket", path: listen.slice(7) };
-  }
-  // 3. Reject Windows absolute drive paths — they are not Unix sockets
-  if (WINDOWS_DRIVE_RE.test(listen)) {
-    throw new Error(`Invalid listen string (Windows path is not a valid listen target): ${listen}`);
-  }
-  // 4. POSIX absolute path (/ or ~) — Unix socket
-  if (listen.startsWith("/") || listen.startsWith("~")) {
-    return { type: "socket", path: listen };
-  }
-  // 5. Pure numeric — TCP port on 127.0.0.1
-  const trimmed = listen.trim();
-  if (/^\d+$/.test(trimmed)) {
-    const port = parseInt(trimmed, 10);
-    return { type: "tcp", host: "127.0.0.1", port };
-  }
-  // 6. host:port — TCP
-  if (listen.includes(":")) {
-    const lastColonIdx = listen.lastIndexOf(":");
-    const host = listen.slice(0, lastColonIdx);
-    const portStr = listen.slice(lastColonIdx + 1);
-    const parsedPort = parseInt(portStr, 10);
-    if (!Number.isFinite(parsedPort)) {
-      throw new Error(`Invalid port in listen string: ${listen}`);
-    }
-    const cleanHost = host.startsWith("[") && host.endsWith("]") ? host.slice(1, -1) : host;
-    return { type: "tcp", host: cleanHost || "127.0.0.1", port: parsedPort };
-  }
-  throw new Error(`Invalid listen string: ${listen}`);
 }
 
 function formatListenTarget(listenTarget: ListenTarget | null): string | null {
@@ -423,6 +378,8 @@ export type DaemonLifecycleIntent =
     };
 
 export interface PaseoDaemonConfig {
+  /** Internal transport boundary; never persisted or accepted from remote clients. */
+  executionService?: { token: string; getPublicListen(): string };
   listen: string;
   paseoHome: string;
   daemonVersion?: string;
@@ -754,6 +711,28 @@ export async function createPaseoDaemon(
   const agentMcpAuthToken = randomUUID();
 
   const listenTarget = parseListenString(config.listen);
+  const publicListenTarget = () =>
+    config.executionService
+      ? parseListenString(config.executionService.getPublicListen())
+      : (boundListenTarget ?? listenTarget);
+  const publicTcpPort = () => {
+    const target = publicListenTarget();
+    return target.type === "tcp" ? target.port : null;
+  };
+  const publicTcpHost = () => {
+    const target = publicListenTarget();
+    return target.type === "tcp" ? target.host : null;
+  };
+  const publicOrigins = () => {
+    const target = publicListenTarget();
+    return target.type === "tcp"
+      ? [
+          `http://${formatHostForHttpUrl(target.host)}:${target.port}`,
+          `http://localhost:${target.port}`,
+          `http://127.0.0.1:${target.port}`,
+        ]
+      : [];
+  };
 
   const app = express();
   app.set("trust proxy", resolveExpressTrustProxySetting(config));
@@ -807,7 +786,7 @@ export async function createPaseoDaemon(
         })) ?? [],
       serviceProxy,
       runtimeStore: scriptRuntimeStore,
-      daemonPort: () => (boundListenTarget?.type === "tcp" ? boundListenTarget.port : null),
+      daemonPort: publicTcpPort,
       resolveWorkspaceDirectory: async (workspaceId) =>
         (await workspaceRegistry?.get(workspaceId))?.cwd ?? null,
       logger,
@@ -832,7 +811,10 @@ export async function createPaseoDaemon(
   if (listenTarget.type === "tcp") {
     app.use((req, res, next) => {
       const hostHeader = typeof req.headers.host === "string" ? req.headers.host : undefined;
-      if (!isHostnameAllowed(hostHeader, configuredHostnames)) {
+      if (
+        publicListenTarget().type === "tcp" &&
+        !isHostnameAllowed(hostHeader, configuredHostnames)
+      ) {
         res.status(403).json({ error: "Invalid Host header" });
         return;
       }
@@ -868,7 +850,10 @@ export async function createPaseoDaemon(
 
   app.use((req, res, next) => {
     const origin = req.headers.origin;
-    if (origin && (allowedOrigins.has("*") || allowedOrigins.has(origin))) {
+    if (
+      origin &&
+      (allowedOrigins.has("*") || allowedOrigins.has(origin) || publicOrigins().includes(origin))
+    ) {
       res.setHeader("Access-Control-Allow-Origin", origin);
       res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
       res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
@@ -897,7 +882,7 @@ export async function createPaseoDaemon(
     hostname: getHostname(),
     daemonPublicKeyB64: daemonKeyPair.publicKeyB64,
     appBaseUrl: () => appBaseUrl,
-    listenTarget: () => boundListenTarget ?? listenTarget,
+    listenTarget: publicListenTarget,
     relay: () => {
       const live = relayRuntime?.getConfig();
       return {
@@ -949,7 +934,7 @@ export async function createPaseoDaemon(
       serverId,
       version: daemonVersion,
       hostname: getHostname,
-      listen: () => formatListenTarget(boundListenTarget ?? listenTarget),
+      listen: () => formatListenTarget(publicListenTarget()),
       isClaimed: () => claimStore.isClaimed() || Boolean(config.auth?.password),
       trustLan: () => authConfig.access?.trustLan() ?? DEFAULT_TRUST_LAN,
       isTrustedClient: (req) => authConfig.access?.isTrustedClient(req) ?? false,
@@ -968,7 +953,7 @@ export async function createPaseoDaemon(
       serverId,
       hostname: getHostname(),
       version: daemonVersion,
-      listen: formatListenTarget(boundListenTarget ?? listenTarget),
+      listen: formatListenTarget(publicListenTarget()),
     });
   });
 
@@ -1028,7 +1013,7 @@ export async function createPaseoDaemon(
     void handleFileDownload(req, res);
   });
 
-  const httpServer = createHTTPServer(app);
+  const httpServer = createExecutionHttpServer(app, config.executionService);
 
   // Script proxy WebSocket upgrade handler — must be registered before the
   // VoiceAssistantWebSocketServer attaches its own "upgrade" listener so that
@@ -1314,8 +1299,8 @@ export async function createPaseoDaemon(
         archiveWorkspaceRecord: archiveWorkspaceRecordExternal,
         serviceProxy,
         scriptRuntimeStore,
-        getDaemonTcpPort: () => (boundListenTarget?.type === "tcp" ? boundListenTarget.port : null),
-        getDaemonTcpHost: () => (boundListenTarget?.type === "tcp" ? boundListenTarget.host : null),
+        getDaemonTcpPort: publicTcpPort,
+        getDaemonTcpHost: publicTcpHost,
         serviceProxyPublicBaseUrl,
         onScriptsChanged: null,
       },
@@ -1525,7 +1510,7 @@ export async function createPaseoDaemon(
     agentManager,
     agentStorage,
     terminalManager,
-    getDaemonTcpPort: () => (boundListenTarget?.type === "tcp" ? boundListenTarget.port : null),
+    getDaemonTcpPort: publicTcpPort,
     scheduleService,
     providerSnapshotManager,
     daemonConfigStore,
@@ -1553,8 +1538,8 @@ export async function createPaseoDaemon(
       workspaceRegistry,
       projectRegistry,
       workspaceGitService,
-      getDaemonTcpPort: () => (boundListenTarget?.type === "tcp" ? boundListenTarget.port : null),
-      getDaemonTcpHost: () => (boundListenTarget?.type === "tcp" ? boundListenTarget.host : null),
+      getDaemonTcpPort: publicTcpPort,
+      getDaemonTcpHost: publicTcpHost,
       serviceProxyPublicBaseUrl,
       resolveScriptHealth: (hostname) => scriptHealthMonitor.getHealthForHostname(hostname),
       logger,
@@ -1861,13 +1846,16 @@ export async function createPaseoDaemon(
               install: describeDaemonInstall({ desktopManaged: config.desktopManaged === true }),
               daemonVersion,
               paseoHome: config.paseoHome,
-              listen: formatListenTarget(boundListenTarget ?? listenTarget),
+              listen: formatListenTarget(publicListenTarget()),
+              getListen: () => formatListenTarget(publicListenTarget()),
+              retainAcrossGatewayRestart: Boolean(config.executionService),
               logger,
             });
             autoUpdater = new DaemonAutoUpdater({
               service: updateService,
               getConfig: () => daemonConfigStore.get().autoUpdate,
               hasRunningAgents: () =>
+                !config.executionService &&
                 agentManager.listAgents().some((agent) => agent.lifecycle === "running"),
               logger,
             });
@@ -1883,7 +1871,7 @@ export async function createPaseoDaemon(
               daemonConfigStore,
               mcpBaseUrl,
               {
-                getAllowedOrigins: () => allowedOrigins,
+                getAllowedOrigins: () => new Set([...allowedOrigins, ...publicOrigins()]),
                 getHostnames: () => configuredHostnames,
                 daemonStatusRpc: dependencies.serverFeatureOverrides?.daemonStatusRpc,
                 relayConfig: dependencies.serverFeatureOverrides?.relayConfig,
@@ -1911,15 +1899,17 @@ export async function createPaseoDaemon(
               serviceProxy,
               scriptRuntimeStore,
               handleBranchChange,
-              () => (boundListenTarget?.type === "tcp" ? boundListenTarget.port : null),
-              () => (boundListenTarget?.type === "tcp" ? boundListenTarget.host : null),
+              publicTcpPort,
+              publicTcpHost,
               (hostname) => scriptHealthMonitor.getHealthForHostname(hostname),
               workspaceGitService,
               github,
               config.pushNotificationSender,
               providerSnapshotManager,
               {
-                listen: formatListenTarget(boundListenTarget ?? listenTarget),
+                get listen() {
+                  return formatListenTarget(publicListenTarget());
+                },
                 worktreesRoot: config.worktreesRoot,
                 get appBaseUrl() {
                   return appBaseUrl;

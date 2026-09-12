@@ -414,6 +414,24 @@ $FDE_HOME/
 └── daemon.log                                  # Daemon trace logs (rotated)
 ```
 
+## Independent execution (opt-in)
+
+`FDE_EXECUTION_SERVICE=1` selects a persistent execution process behind the existing
+supervised daemon. `execution-service/gateway-daemon.ts` reconnects to the authenticated
+owner described under `$FDE_HOME/execution-service/`; `worker.ts` runs the existing
+backend, AgentManager, providers, MCP, relay, terminals, and workspace services.
+HTTP and WebSocket forwarding restores the original client's identity before
+access policy runs. Gateway stop drops public connections without closing agents.
+Retained execution stays authoritative if a later launcher omits the opt-in flag.
+
+Installed gateway and running backend versions can differ. Runtime replacement is
+allowed on a subsequent start only when no agents are resident or starting; idle
+agents may still own background work. `stop --all` is the explicit destructive
+execution stop. Existing runtime code is retained on disk. The mode remains opt-in
+pending native service-manager and real-provider acceptance; it does not preserve
+processes across a reboot or container replacement. See the
+[specification and validation record](plans/independent-execution-service.md).
+
 ## Deployment models
 
 1. **Local daemon** (default): `paseo daemon start` on `127.0.0.1:9999` (6767 was the upstream default and still works when configured explicitly)

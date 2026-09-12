@@ -28,6 +28,7 @@ export interface DaemonHttpRequest {
   body?: unknown;
   bearer?: string;
   timeoutMs?: number;
+  onResponse?: (response: Response) => void;
 }
 
 export async function daemonHttpJson<T>(request: DaemonHttpRequest): Promise<T> {
@@ -46,6 +47,7 @@ export async function daemonHttpJson<T>(request: DaemonHttpRequest): Promise<T> 
     if (!response.ok) {
       throw new Error(`${request.method ?? "GET"} ${request.path} failed with ${response.status}`);
     }
+    request.onResponse?.(response);
     return (await response.json()) as T;
   } finally {
     clearTimeout(timer);

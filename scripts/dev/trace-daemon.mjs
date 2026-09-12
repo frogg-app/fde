@@ -34,6 +34,7 @@ const { sherpaPlatformPackageName } = await import(
 const entries = [
   "apps/cli/dist/index.js",
   "packages/server/dist/scripts/supervisor-entrypoint.js",
+  "packages/server/dist/server/server/execution-service/worker.js",
   "packages/server/dist/server/terminal/terminal-worker-process.js",
   "packages/server/dist/server/server/speech/providers/local/worker-process.js",
 ];

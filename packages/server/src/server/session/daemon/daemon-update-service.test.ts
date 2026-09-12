@@ -13,7 +13,11 @@ import {
   readLastUpdateResult,
   type DaemonInstallInfo,
 } from "./daemon-update-install.js";
-import { DaemonUpdateService, type SpawnUpdateCli } from "./daemon-update-service.js";
+import {
+  DaemonUpdateService,
+  type SpawnUpdateCli,
+  type DaemonUpdateServiceOptions,
+} from "./daemon-update-service.js";
 
 const dirs: string[] = [];
 function makeDir(): string {
@@ -69,7 +73,12 @@ function updatableInstall(installDir: string): DaemonInstallInfo {
   };
 }
 
-function makeService(installDir: string, spawnCli: SpawnUpdateCli, listen = "0.0.0.0:9993") {
+function makeService(
+  installDir: string,
+  spawnCli: SpawnUpdateCli,
+  listen: string | null = "0.0.0.0:9993",
+  retained: Pick<DaemonUpdateServiceOptions, "getListen" | "retainAcrossGatewayRestart"> = {},
+) {
   const emitted: SessionOutboundMessage[] = [];
   const service = new DaemonUpdateService({
     install: updatableInstall(installDir),
@@ -80,6 +89,7 @@ function makeService(installDir: string, spawnCli: SpawnUpdateCli, listen = "0.0
     env: { PATH: "/usr/bin" },
     spawnCli,
     checkTimeoutMs: 2000,
+    ...retained,
   });
   service.setBroadcaster((msg) => emitted.push(msg));
   return { service, emitted };
@@ -279,5 +289,105 @@ describe("DaemonUpdateService", () => {
       error: "dev checkout",
     });
     expect(await service.check()).toMatchObject({ updatable: false, reason: "dev checkout" });
+  });
+});
+
+describe("retained execution updates", () => {
+  test("legacy execution keeps handoff active until its backend restarts", async () => {
+    const installDir = makeDir();
+    const fake = fakeChild();
+    const { service } = makeService(installDir, () => fake.child);
+    await service.start({ version: "0.1.14" });
+    fake.stdout.write('{"event":"result","status":"handoff","targetVersion":"0.1.14"}\n');
+    fake.finish(0);
+    await flush();
+    writeFileSync(
+      path.join(installDir, "last-update.json"),
+      JSON.stringify({ to: "0.1.14", at: new Date().toISOString(), status: "applied" }),
+    );
+    expect(service.status().run?.phase).toBe("restart");
+    expect((await service.start()).accepted).toBe(false);
+  });
+
+  test.each(["applied", "rolled_back", "failed"])(
+    "reconciles %s only after a matching fresh handoff result",
+    async (status) => {
+      const installDir = makeDir();
+      const fake = fakeChild();
+      const { service } = makeService(installDir, () => fake.child, "0.0.0.0:9993", {
+        retainAcrossGatewayRestart: true,
+      });
+      await service.start({ version: "0.1.14" });
+      const startedAt = service.currentRun()?.at;
+      expect(typeof startedAt).toBe("string");
+      const writeResult = (to: string, at: string) =>
+        writeFileSync(
+          path.join(installDir, "last-update.json"),
+          JSON.stringify({ from: "0.1.13", to, at, status, reason: null }),
+        );
+      writeResult("0.1.14", "2000-01-01T00:00:00.000Z");
+      fake.stdout.write('{"event":"result","status":"handoff","targetVersion":"0.1.14"}\n');
+      fake.finish(0);
+      await flush();
+      expect(service.currentRun()?.phase).toBe("restart");
+      writeResult("0.1.15", new Date().toISOString());
+      expect(service.status().run?.phase).toBe("restart");
+      writeResult("0.1.14", "invalid-time");
+      expect((await service.start()).accepted).toBe(false);
+      writeResult("0.1.14", new Date().toISOString());
+      expect(service.status()).toMatchObject({
+        run: null,
+        currentVersion: "0.1.13",
+        lastResult: { status, to: "0.1.14" },
+      });
+      expect((await service.start({ version: "0.1.15" })).accepted).toBe(true);
+    },
+  );
+
+  test("does not reconcile before handoff, and start itself reconciles completed handoff", async () => {
+    const installDir = makeDir();
+    const fake = fakeChild();
+    const { service } = makeService(installDir, () => fake.child, null, {
+      retainAcrossGatewayRestart: true,
+    });
+    await service.start({ version: "0.1.14" });
+    writeFileSync(
+      path.join(installDir, "last-update.json"),
+      JSON.stringify({ to: "0.1.14", at: new Date().toISOString(), status: "applied" }),
+    );
+    expect(service.currentRun()?.phase).toBe("check");
+    fake.stdout.write('{"event":"result","status":"handoff","targetVersion":"0.1.14"}\n');
+    fake.finish(0);
+    await flush();
+    expect((await service.start({ version: "0.1.15" })).accepted).toBe(true);
+  });
+
+  test("resolves the public listen endpoint for each CLI invocation", async () => {
+    const installDir = makeDir();
+    const calls: NodeJS.ProcessEnv[] = [];
+    let listen: string | null = "0.0.0.0:9993";
+    let fake = fakeChild();
+    const { service } = makeService(
+      installDir,
+      (_command, _args, options) => {
+        calls.push(options.env);
+        return fake.child;
+      },
+      "127.0.0.1:1",
+      { getListen: () => listen },
+    );
+    for (const next of ["0.0.0.0:9993", "0.0.0.0:9994", null]) {
+      listen = next;
+      fake = fakeChild();
+      const pending = service.check();
+      fake.stdout.write('{"event":"result","status":"check"}\n');
+      fake.finish(0);
+      await pending;
+    }
+    expect(calls.map((env) => env.PASEO_LISTEN)).toEqual([
+      "0.0.0.0:9993",
+      "0.0.0.0:9994",
+      undefined,
+    ]);
   });
 });
