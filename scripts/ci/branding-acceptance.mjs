@@ -63,6 +63,10 @@ try {
   assert.ok(installer.includes("Uninstall\\${BUNDLEID}"));
   assert.ok(installer.includes("$LOCALAPPDATA\\${BUNDLEID}"));
   assert.equal(nativeAfter.bundle.shortDescription, manifest.name);
+  const desktopEntry = await readFile(Object.values(nativeAfter.bundle.linux.deb.files)[0], "utf8");
+  assert.ok(desktopEntry.includes(`Exec=/usr/bin/${nativeAfter.mainBinaryName} %U\n`));
+  const portableEntry = await readFile(nativeAfter.bundle.linux.deb.desktopTemplate, "utf8");
+  assert.ok(portableEntry.includes("Exec={{exec}} %U"), "AppImage remains relocatable");
   const previous = await fingerprint();
   const artwork = await readFile(path.join(scratch, "icon.svg"), "utf8");
   await writeFile(

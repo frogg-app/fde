@@ -30,7 +30,7 @@ visible until device or deployment evidence closes them.
 
 ## Active feature work
 
-- [ ] **Fork-friendly branding.** Implementation is on `feature/modular-branding`; see the [rebranding guide](docs/branding.md) and [validation record](docs/branding-plan.md). Final platform acceptance is in progress.
+- [x] **Fork-friendly branding.** Implemented on [PR #49](https://github.com/frogg-app/fde/pull/49). See the [rebranding guide](docs/branding.md), [manifest reference](docs/branding-reference.md), and [validation record](docs/branding-plan.md). The PR carries current platform build results; interactive device acceptance remains separate.
 
 ## Next: establish reliable everyday use
 

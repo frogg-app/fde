@@ -146,7 +146,7 @@ suitable runner. Distinguish compilation from interactive/device acceptance.
 - [x] Foundation: schema, resolver, presets, generation, commands and tests.
 - [x] Presentation: UI, translations, assets, themes, desktop and mobile configuration.
 - [x] Identity: runtime, pairing, CLI/services, persistence and provider ownership.
-- [ ] Distribution: installers, updates, SSH, Docker/Nix, pairing and fork-aware CI.
+- [x] Distribution: installers, updates, SSH, Docker/Nix, pairing and fork-aware CI.
 - [ ] Validation: two brands, isolation/upgrades, packaging and upstream contribution.
 - [x] Documentation: docs/branding.md tutorial/reference/releases/troubleshooting;
       update roadmap/changelog, push milestones and open a reviewable PR.
@@ -230,3 +230,11 @@ The official Nix package built through fixup with zero unresolved native depende
 An audit found the old Windows development script and an SSH fallback still using inherited defaults. Windows and Unix development now use the selected home/ports, and custom Tauri dev URLs follow Metro. Scratch development-environment checks passed for FDE (6768/8081) and Acme (10099/10100). Windows npm subprocesses use the npm JavaScript entry point through Node rather than cmd.exe; regression tests preserve spaces, percent signs, and ampersands as literal arguments.
 
 Long-running native jobs are allowed to finish when another milestone is pushed, so their compilation and simulator evidence is retained instead of repeatedly cancelled. No generated product output or private branding directory is committed.
+
+### Packaging completion and review gates
+
+Both Nix packages completed native dependency fixup with zero unresolved libraries and ran their packaged CLI successfully. Acme exposes only its own public commands. The iOS unsigned simulator app passed on macOS. The two-brand runtime, fork-lifecycle, generation, installer-upgrade, browser, and native unit checks described above provide reproducible acceptance evidence. Current platform builds, logs, screenshots, and downloadable test artifacts are attached to [PR #49](https://github.com/frogg-app/fde/pull/49); check its latest run rather than interpreting a historical milestone failure as the current result.
+
+Linux package inspection also revealed that an installed desktop entry could resolve an identically named CLI earlier on PATH. Generated Debian/RPM entries now launch the absolute desktop executable and pass `%U` for pairing URLs. AppImage entries keep a relative command and the URL placeholder so they remain portable. Package acceptance inspects actual Debian contents, embedded daemon identity, macOS bundle identifiers/display metadata, and Windows installer/executable names.
+
+Interactive OS installation/update dialogs, signed production releases, physical mobile devices, store submission, and production infrastructure deployment remain separate operator acceptance. This work does not publish, deploy, or merge the product. The pinned NSIS template must be reviewed when upgrading the Tauri bundler; preparation rejects missing identity patch anchors.

@@ -5,17 +5,40 @@ import { outputRoot, root, type BrandBuild } from "./resolve.mjs";
 
 /** Stable package/path identities with independently editable display labels. */
 export async function nativePresentation({ brand }: BrandBuild) {
-  if (brand.legacyFde) return { bundle: {}, nsis: {} };
+  const packageEntry = path.join(outputRoot, "package.desktop");
+  const rpmTemplate = path.join(outputRoot, "package.desktop.hbs");
+  const installName = brand.legacyFde ? brand.name : brand.id;
+  // Installed desktop entries must bypass a same-named CLI earlier on PATH.
+  const fields = `Type=Application\nIcon=${brand.desktopBinaryName}\nCategories=Development;\nTerminal=false\nMimeType=x-scheme-handler/${brand.scheme};\n`;
+  await writeFile(
+    packageEntry,
+    `[Desktop Entry]\nName=${brand.name.replaceAll("\\", "\\\\")}\nExec=/usr/bin/${brand.desktopBinaryName} %U\nStartupWMClass=${brand.desktopBinaryName}\n${fields}`,
+  );
+  await writeFile(
+    rpmTemplate,
+    `[Desktop Entry]\nName={{comment}}\nExec=/usr/bin/{{exec}} %U\nStartupWMClass={{exec}}\n${fields}`,
+  );
+  const debFiles = { [`/usr/share/applications/${installName}.desktop`]: packageEntry };
   const desktop = path.join(outputRoot, "app.desktop");
+  // Desktop values are single lines; backslashes have defined escaping semantics.
+  await writeFile(
+    desktop,
+    `[Desktop Entry]\nType=Application\nName={{comment}}\nExec={{exec}} %U\nIcon={{icon}}\nStartupWMClass={{exec}}\nCategories={{categories}}\nTerminal=false\n{{#if mime_type}}\nMimeType={{mime_type}}\n{{/if}}\n`,
+  );
+  if (brand.legacyFde)
+    return {
+      bundle: {
+        linux: {
+          deb: { files: debFiles, desktopTemplate: desktop },
+          rpm: { desktopTemplate: rpmTemplate },
+        },
+      },
+      nsis: {},
+    };
   const plist = path.join(outputRoot, "Info.plist");
   const installer = path.join(outputRoot, "installer.nsi");
   const xml = (value: string) =>
     value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
-  // Desktop values are single lines; backslashes have defined escaping semantics.
-  await writeFile(
-    desktop,
-    `[Desktop Entry]\nType=Application\nName={{comment}}\nExec={{exec}}\nIcon={{icon}}\nStartupWMClass={{exec}}\nCategories={{categories}}\nTerminal=false\n{{#if mime_type}}\nMimeType={{mime_type}}\n{{/if}}\n`,
-  );
   await writeFile(
     plist,
     `<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n<plist version="1.0"><dict><key>CFBundleDisplayName</key><string>${xml(brand.name)}</string></dict></plist>\n`,
@@ -48,7 +71,10 @@ export async function nativePresentation({ brand }: BrandBuild) {
   await writeFile(installer, template);
   return {
     bundle: {
-      linux: { deb: { desktopTemplate: desktop }, rpm: { desktopTemplate: desktop } },
+      linux: {
+        deb: { desktopTemplate: desktop, files: debFiles },
+        rpm: { desktopTemplate: rpmTemplate },
+      },
       macOS: { bundleName: brand.name, infoPlist: plist },
     },
     nsis: { template: installer },

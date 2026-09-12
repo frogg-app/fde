@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.26 - 2026-09-12
+
+- Make Linux desktop entries launch the installed GUI directly and forward
+  pairing URLs, while keeping AppImage entries relocatable. Inspect actual
+  native package identities in both-brand CI.
+- Record successful fork-lifecycle, concurrent-daemon, Nix, browser, and
+  simulator acceptance and retain test artifacts on the feature PR.
+
 ## 0.2.25 - 2026-09-12
 
 - Verify concurrent products and cross-brand management rejection using real
