@@ -1855,6 +1855,17 @@ export const ru: TranslationResources = {
   },
   companion: {
     title: "Компаньон",
+    setup: {
+      disabled: "Выключено",
+      required: "Требуется настройка",
+      ready: "Готово",
+      active: "Разговор активен",
+      unknown: "Модель для разговора не выбрана",
+      providers: "Настройка провайдера",
+      subscription:
+        "Используется лимит вашей подписки. Остаток доступен в настройках использования сервера. Автоматического перехода на оплату API нет.",
+      api: "На сервере выбран API. Токены разговора оплачиваются отдельно.",
+    },
     status: {
       connecting: "Подключение…",
     },
@@ -1865,6 +1876,10 @@ export const ru: TranslationResources = {
       speaking: "Говорит",
     },
     actions: {
+      start: "Запустить Companion",
+      minimize: "Свернуть",
+      resume: "Открыть разговор",
+
       mute: "Выключить микрофон",
       unmute: "Включить микрофон",
       stop: "Остановить",
@@ -1882,22 +1897,36 @@ export const ru: TranslationResources = {
       sendFailed: "Сообщение не отправлено",
     },
     reason: {
+      companion_speech_unavailable:
+        "Локальная речь не готова. Проверьте модели и настройки речи на сервере.",
+      companion_native_unavailable:
+        "Не удалось подключить пробную голосовую функцию Codex. Проверьте вход в ChatGPT, доступность для аккаунта и настройки сервера.",
+      companion_connection_failed:
+        "Не удалось подключиться к серверу. Проверьте соединение и повторите попытку.",
+      companion_update_required: "Обновите сервер для поддержки текущего протокола разговора.",
       unknown: "Демон не сообщил причину.",
-      companion_backend_missing: "На этом демоне нет ни ключа API Anthropic, ни CLI Claude Code.",
+      companion_backend_missing: "Войдите в Claude Code или Codex на этом сервере.",
       companion_backend_failed: "Не удалось запустить сеанс модели Companion.",
       companion_disabled: "Компаньон отключён на этом демоне.",
       companion_microphone_unavailable: "Микрофон недоступен.",
       companion_session_closed: "Сессия Компаньона закрыта.",
-      companion_busy: "Компаньон занят другим ходом.",
+      companion_busy:
+        "Другое устройство использует Companion на этом сервере. Сначала завершите тот разговор.",
     },
     unavailable: {
       title: "Компаньон недоступен",
       description: "Этот демон не предоставляет Компаньона.",
     },
     settings: {
-      autoStart: {
-        label: "Начинать разговор сразу",
-        description: "Открывать сессию сразу при открытии Компаньона, не дожидаясь нажатия.",
+      nativeVoice: {
+        label: "Голос Codex (предварительная версия)",
+        description:
+          "Требуется вход в ChatGPT и включение предварительной версии на сервере. Доступность зависит от аккаунта.",
+      },
+      enabled: {
+        label: "Включить Companion",
+        description:
+          "Разговаривайте с агентами во время их работы. Начинайте разговор, когда это нужно.",
       },
       replyText: {
         label: "Показывать текст ответа",

@@ -50,6 +50,7 @@ node scripts/release/build-android-apk.mjs                          # arm64-v8a,
 node scripts/release/build-android-apk.mjs --abi universal          # all four ABIs in one APK
 node scripts/release/build-android-apk.mjs --variant debug          # assembleDebug, app.frogg.fde.debug
 node scripts/release/build-android-apk.mjs --skip-deps --skip-prebuild --serial
+node scripts/release/build-android-apk.mjs --app-variant development --low-memory
 ```
 
 `--abi` accepts `arm64-v8a` (default, every phone since 2017), `armeabi-v7a`, `x86`,
@@ -58,6 +59,14 @@ node scripts/release/build-android-apk.mjs --skip-deps --skip-prebuild --serial
 build compiles the native ABIs and runs the Hermes bundle in one Gradle invocation and
 is otherwise OOM-killed ("Gradle build daemon disappeared", exit 137). `--workers N` only
 caps the worker count.
+`--low-memory` also selects serial mode and compiles Hermes bytecode with `-O0`
+instead of expensive `-O` optimizations. It is an explicit test-build option for
+hosts where the full compiler exceeds available memory. Normal releases keep `-O`.
+`--app-variant development` selects `FDE Debug` / `app.frogg.fde.debug` independently
+of the Gradle variant. Combined with the default `release` variant it produces a
+self-contained test APK with embedded JavaScript, installed alongside production
+FDE. Its filename includes `-development`; a missing release keystore still adds
+`-unsigned` even though the APK is signed with the development key.
 `--skip-deps` / `--skip-prebuild` reuse the previous run's `dist/` and `android/`.
 
 No `google-services.json` is needed or used: the config only wires Firebase when

@@ -1,12 +1,12 @@
 /**
  * The seam between the Companion's turn loop and whatever is actually
- * generating the words. Two things sit under it: the Anthropic Messages API,
- * and a Claude Code CLI session driven through the agent SDK. It is stated in
+ * generating the words. It supports subscription Claude SDK and Codex app-server sessions,
+ * plus an explicitly selected Anthropic Messages API backend. It is stated in
  * the Companion's own vocabulary — text deltas, tool calls, tool results — so
  * neither backend's wire format leaks upwards.
  */
 
-export type CompanionBackendKind = "api" | "cli";
+export type CompanionBackendKind = "api" | "cli" | "codex";
 
 export interface CompanionTurnMessage {
   role: "user" | "assistant";
@@ -42,6 +42,7 @@ export interface CompanionBackendResponse {
 export interface CompanionBackendTurnInput {
   /** The user text for this turn, notebook preamble already applied. */
   text: string;
+  signal?: AbortSignal;
   /** Prior turns, oldest first. Backends that hold their own session ignore it. */
   history: readonly CompanionTurnMessage[];
 }

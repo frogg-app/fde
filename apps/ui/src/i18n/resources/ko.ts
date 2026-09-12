@@ -1835,6 +1835,17 @@ export const ko: TranslationResources = {
   },
   companion: {
     title: "컴패니언",
+    setup: {
+      disabled: "사용 안 함",
+      required: "설정 필요",
+      ready: "준비됨",
+      active: "대화 중",
+      unknown: "대화 모델이 선택되지 않았습니다",
+      providers: "공급자 설정",
+      subscription:
+        "로그인한 구독의 사용량을 소모합니다. 남은 사용량은 호스트 사용량 설정에서 확인하세요. API 결제로 자동 전환하지 않습니다.",
+      api: "이 호스트는 API를 사용합니다. 대화 토큰은 별도로 청구됩니다.",
+    },
     status: {
       connecting: "연결 중…",
     },
@@ -1845,6 +1856,10 @@ export const ko: TranslationResources = {
       speaking: "말하는 중",
     },
     actions: {
+      start: "Companion 시작",
+      minimize: "최소화",
+      resume: "대화 열기",
+
       mute: "음소거",
       unmute: "음소거 해제",
       stop: "중지",
@@ -1862,22 +1877,34 @@ export const ko: TranslationResources = {
       sendFailed: "메시지를 보내지 못했습니다",
     },
     reason: {
+      companion_speech_unavailable:
+        "로컬 음성이 준비되지 않았습니다. 호스트의 모델과 음성 설정을 확인하세요.",
+      companion_native_unavailable:
+        "Codex 음성 미리보기에 연결하지 못했습니다. ChatGPT 로그인, 계정 지원 여부, 호스트 설정을 확인하세요.",
+      companion_connection_failed: "호스트에 연결하지 못했습니다. 연결을 확인하고 다시 시도하세요.",
+      companion_update_required: "현재 대화 프로토콜을 사용하려면 호스트를 업데이트하세요.",
       unknown: "데몬이 이유를 알려주지 않았습니다.",
-      companion_backend_missing: "이 데몬에는 Anthropic API 키도 Claude Code CLI도 없습니다.",
+      companion_backend_missing: "이 호스트에서 Claude Code 또는 Codex에 로그인하세요.",
       companion_backend_failed: "컴패니언의 모델 세션을 시작하지 못했습니다.",
       companion_disabled: "이 데몬에서 컴패니언이 꺼져 있습니다.",
       companion_microphone_unavailable: "마이크를 사용할 수 없습니다.",
       companion_session_closed: "컴패니언 세션이 닫혔습니다.",
-      companion_busy: "컴패니언이 다른 차례를 처리 중입니다.",
+      companion_busy:
+        "다른 기기가 이 호스트의 Companion을 사용 중입니다. 먼저 해당 대화를 종료하세요.",
     },
     unavailable: {
       title: "컴패니언을 사용할 수 없습니다",
       description: "이 데몬은 컴패니언을 제공하지 않습니다.",
     },
     settings: {
-      autoStart: {
-        label: "바로 대화 시작",
-        description: "탭을 기다리지 않고 컴패니언이 열리는 즉시 세션을 시작합니다.",
+      nativeVoice: {
+        label: "Codex 음성 (미리보기)",
+        description:
+          "ChatGPT 로그인과 호스트의 미리보기 활성화가 필요합니다. 사용 가능 여부는 계정에 따라 다릅니다.",
+      },
+      enabled: {
+        label: "Companion 활성화",
+        description: "에이전트가 작업하는 동안 대화하세요. 필요할 때 대화를 시작하세요.",
       },
       replyText: {
         label: "응답 텍스트 표시",

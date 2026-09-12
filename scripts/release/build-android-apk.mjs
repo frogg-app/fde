@@ -27,16 +27,17 @@ const ANDROID_DIR = path.join(UI_DIR, "android");
 const KNOWN_ABIS = ["armeabi-v7a", "arm64-v8a", "x86", "x86_64"];
 
 /** Pure: the asset name for a build; exported for the test. */
-export function apkAssetName({ version, abi, signed, variant = "release" }) {
+export function apkAssetName({ version, abi, signed, variant = "release", appVariant }) {
   let suffix = `-${variant}`;
   if (variant === "release") {
     suffix = signed ? "" : "-unsigned";
   }
-  return `FDE-${version}-android-${abi}${suffix}.apk`;
+  const identity = appVariant === "development" && variant === "release" ? "-development" : "";
+  return `FDE-${version}-android-${abi}${identity}${suffix}.apk`;
 }
 
 /** Pure: Gradle arguments for an ABI; `universal` keeps the default (all four). */
-export function gradleArgsFor({ abi, variant, serial, workers }) {
+export function gradleArgsFor({ abi, variant, serial, workers, lowMemory }) {
   const task = variant === "release" ? "assembleRelease" : "assembleDebug";
   const args = [task, "--no-daemon"];
   if (abi !== "universal") {
@@ -45,7 +46,7 @@ export function gradleArgsFor({ abi, variant, serial, workers }) {
     }
     args.push(`-PreactNativeArchitectures=${abi}`);
   }
-  if (serial) {
+  if (serial || lowMemory) {
     // Small-machine mode: one worker and heaps well below the 4 GB that
     // expo-gradle-jvmargs writes into gradle.properties (-D on the command line
     // wins), so an 8 GB host is not OOM-killed during the native build.
@@ -58,6 +59,7 @@ export function gradleArgsFor({ abi, variant, serial, workers }) {
   } else if (workers) {
     args.push(`--max-workers=${workers}`);
   }
+  if (lowMemory) args.push("--init-script", path.join(here, "android-low-memory.gradle"));
   return args;
 }
 
@@ -93,11 +95,21 @@ function reportSigning({ signed, variant }) {
   );
 }
 
+function resolveAppVariant(values) {
+  const appVariant =
+    values["app-variant"] ?? (values.variant === "release" ? "production" : "development");
+  if (!["production", "development"].includes(appVariant))
+    throw new Error("--app-variant must be production or development");
+  return appVariant;
+}
+
 function main() {
   const { values } = parseArgs({
     options: {
       abi: { type: "string", default: "arm64-v8a" },
       variant: { type: "string", default: "release" },
+      "app-variant": { type: "string" },
+      "low-memory": { type: "boolean", default: false },
       "out-dir": { type: "string", default: "release-assets" },
       "skip-prebuild": { type: "boolean", default: false },
       "skip-deps": { type: "boolean", default: false },
@@ -113,6 +125,9 @@ function main() {
   if (variant !== "release" && variant !== "debug") {
     throw new Error(`--variant must be release or debug, got "${variant}"`);
   }
+  const appVariant = resolveAppVariant(values);
+  if (values["low-memory"])
+    console.log("Low-memory test build: Hermes expensive optimizations are disabled (-O0).");
   const version = JSON.parse(readFileSync(path.join(REPO_ROOT, "package.json"), "utf8")).version;
   const signed = variant === "release" && Boolean(process.env.FDE_ANDROID_KEYSTORE);
 
@@ -124,7 +139,7 @@ function main() {
   const env = {
     ...process.env,
     CI: "1",
-    APP_VARIANT: variant === "release" ? "production" : "development",
+    APP_VARIANT: appVariant,
   };
   const npm = process.platform === "win32" ? "npm.cmd" : "npm";
   if (!values["skip-deps"] && variant === "release") {
@@ -135,13 +150,16 @@ function main() {
     run("npx", ["expo", "prebuild", "--platform", "android", "--clean"], { cwd: UI_DIR, env });
   }
   const gradlew = process.platform === "win32" ? "gradlew.bat" : "./gradlew";
-  run(gradlew, gradleArgsFor({ abi, variant, serial, workers }), { cwd: ANDROID_DIR, env });
+  run(gradlew, gradleArgsFor({ abi, variant, serial, workers, lowMemory: values["low-memory"] }), {
+    cwd: ANDROID_DIR,
+    env,
+  });
 
   const built = path.join(ANDROID_DIR, `app/build/outputs/apk/${variant}/app-${variant}.apk`);
   if (!existsSync(built)) throw new Error(`Gradle finished but ${built} is missing`);
   const outDir = path.resolve(REPO_ROOT, values["out-dir"]);
   mkdirSync(outDir, { recursive: true });
-  const target = path.join(outDir, apkAssetName({ version, abi, signed, variant }));
+  const target = path.join(outDir, apkAssetName({ version, abi, signed, variant, appVariant }));
   copyFileSync(built, target);
   const mb = (statSync(target).size / 1024 / 1024).toFixed(1);
   console.log(`\nAPK: ${target} (${mb} MB, ${signed ? "release-signed" : "debug-signed"})`);

@@ -5,6 +5,7 @@ import type { AgentManager, ManagedAgent } from "../../agent/agent-manager.js";
 import type { AgentStorage } from "../../agent/agent-storage.js";
 import { sendPromptToAgent, startCreatedAgentInitialPrompt } from "../../agent/agent-prompt.js";
 import type { WorkspaceRegistry } from "../../workspace-registry.js";
+import type { CompanionDeferredJobs } from "../deferred-jobs.js";
 import { defineCompanionTool, type CompanionTool } from "./index.js";
 
 /**
@@ -16,6 +17,8 @@ export interface CompanionAgentToolDependencies {
   agentStorage: AgentStorage;
   workspaceRegistry: Pick<WorkspaceRegistry, "list" | "get">;
   logger: Logger;
+  deferredJobs?: CompanionDeferredJobs;
+  conversationId?: string;
 }
 
 interface CompanionAgentSummary {
@@ -62,6 +65,26 @@ export class CompanionToolTargetError extends Error {
 
 export function createCompanionAgentTools(deps: CompanionAgentToolDependencies): CompanionTool[] {
   return [
+    defineCompanionTool({
+      name: "respond_to_permission",
+      description:
+        "Answer one specific pending permission after the user explicitly approves or denies it. Always identify the agent and request; an ambiguous yes is not permission.",
+      deferred: false,
+      schema: z.object({
+        agentId: z.string().min(1),
+        requestId: z.string().min(1),
+        decision: z.enum(["allow", "deny"]),
+      }),
+      handler: async (input) => {
+        const agent = requireAgent(deps, input.agentId);
+        if (!agent.pendingPermissions.has(input.requestId))
+          throw new CompanionToolTargetError("That permission request is no longer pending.");
+        await deps.agentManager.respondToPermission(agent.id, input.requestId, {
+          behavior: input.decision,
+        });
+        return { status: "resolved", requestId: input.requestId };
+      },
+    }),
     defineCompanionTool({
       name: "list_workspaces",
       description:
@@ -115,7 +138,13 @@ export function createCompanionAgentTools(deps: CompanionAgentToolDependencies):
           model: agent.config.model ?? null,
           modeId: agent.currentModeId,
           hasActiveTurn: agent.activeTurnId !== null,
-          pendingPermissions: agent.pendingPermissions.size,
+          pendingPermissions: Array.from(agent.pendingPermissions.values()).map((request) => ({
+            requestId: request.id,
+            name: request.name,
+            title: request.title,
+            description: request.description,
+            kind: request.kind,
+          })),
           lastError: agent.lifecycle === "error" ? (agent.lastError ?? null) : null,
         };
       },
@@ -132,14 +161,30 @@ export function createCompanionAgentTools(deps: CompanionAgentToolDependencies):
       }),
       handler: async (input) => {
         const agent = requireAgent(deps, input.agentId);
-        const dispatch = await sendPromptToAgent({
-          agentManager: deps.agentManager,
-          agentStorage: deps.agentStorage,
-          agentId: agent.id,
-          prompt: input.prompt,
-          logger: deps.logger,
-        });
-        return { agentId: agent.id, disposition: dispatch.disposition };
+        const dispatch = async (jobId?: string) => {
+          await sendPromptToAgent({
+            agentManager: deps.agentManager,
+            agentStorage: deps.agentStorage,
+            agentId: agent.id,
+            prompt: input.prompt,
+            logger: deps.logger,
+          });
+          if (jobId) deps.deferredJobs?.attachAgent(jobId, requireAgent(deps, agent.id));
+        };
+        if (deps.deferredJobs)
+          return deps.deferredJobs.start(
+            {
+              conversationId: deps.conversationId,
+              kind: "agent",
+              label: agent.config.title ?? "Agent task",
+              question: input.prompt,
+              agentId: agent.id,
+              workspaceId: agent.workspaceId ?? undefined,
+            },
+            dispatch,
+          );
+        await dispatch();
+        return { agentId: agent.id, disposition: "dispatched" };
       },
     }),
 
@@ -159,19 +204,37 @@ export function createCompanionAgentTools(deps: CompanionAgentToolDependencies):
         if (!workspace || workspace.archivedAt) {
           throw new CompanionToolTargetError(`No active workspace with id ${input.workspaceId}`);
         }
-        const created = await deps.agentManager.createAgent(
-          { provider: input.provider, cwd: workspace.cwd, title: input.title },
-          undefined,
-          { workspaceId: workspace.workspaceId, initialTitle: input.title },
-        );
-        await startCreatedAgentInitialPrompt({
-          agentManager: deps.agentManager,
-          agentId: created.id,
-          snapshot: created,
-          prompt: input.prompt,
-          logger: deps.logger,
-        });
-        return { agentId: created.id, workspaceId: workspace.workspaceId };
+        const dispatch = async (jobId?: string) => {
+          const created = await deps.agentManager.createAgent(
+            { provider: input.provider, cwd: workspace.cwd, title: input.title },
+            undefined,
+            { workspaceId: workspace.workspaceId, initialTitle: input.title },
+          );
+          await startCreatedAgentInitialPrompt({
+            agentManager: deps.agentManager,
+            agentId: created.id,
+            snapshot: created,
+            prompt: input.prompt,
+            logger: deps.logger,
+          });
+          if (jobId) deps.deferredJobs?.attachAgent(jobId, requireAgent(deps, created.id));
+          return { agentId: created.id, workspaceId: workspace.workspaceId };
+        };
+        if (deps.deferredJobs)
+          return deps.deferredJobs.start(
+            {
+              conversationId: deps.conversationId,
+              kind: "agent",
+              label: input.title ?? "New agent task",
+              question: input.prompt,
+              agentId: null,
+              workspaceId: workspace.workspaceId,
+            },
+            async (jobId) => {
+              await dispatch(jobId);
+            },
+          );
+        return dispatch();
       },
     }),
 

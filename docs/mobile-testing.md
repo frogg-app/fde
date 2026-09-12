@@ -1,6 +1,9 @@
 # Mobile Testing
 
-> Note: mobile (iOS/Android) builds are not wired up in this fork; the commands below are kept for reference from upstream Paseo.
+Android builds are supported; see [Android builds](android.md) for the current
+APK commands and application IDs. The upstream examples below may require ID
+updates. Companion's physical-device acceptance matrix is tracked in
+[Companion validation](companion-validation.md).
 
 ## Agent Device
 

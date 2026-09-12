@@ -1796,6 +1796,17 @@ export const zhCN: TranslationResources = {
   },
   companion: {
     title: "伙伴",
+    setup: {
+      disabled: "已关闭",
+      required: "需要设置",
+      ready: "已就绪",
+      active: "正在对话",
+      unknown: "尚未选择对话模型",
+      providers: "提供商设置",
+      subscription:
+        "使用已登录订阅的额度。剩余额度可在主机用量设置中查看。不会自动切换到 API 计费。",
+      api: "此主机选择了 API。对话令牌将单独计费。",
+    },
     status: {
       connecting: "连接中…",
     },
@@ -1806,6 +1817,10 @@ export const zhCN: TranslationResources = {
       speaking: "正在说话",
     },
     actions: {
+      start: "启动 Companion",
+      minimize: "最小化",
+      resume: "打开对话",
+
       mute: "静音",
       unmute: "取消静音",
       stop: "停止",
@@ -1823,22 +1838,31 @@ export const zhCN: TranslationResources = {
       sendFailed: "消息未发送",
     },
     reason: {
+      companion_speech_unavailable: "本地语音尚未就绪。请检查主机上的模型和语音设置。",
+      companion_native_unavailable:
+        "无法连接 Codex 语音预览。请检查 ChatGPT 登录、账户支持情况和主机设置。",
+      companion_connection_failed: "无法连接主机。请检查连接后重试。",
+      companion_update_required: "请更新主机以使用当前对话协议。",
       unknown: "守护进程未说明原因。",
-      companion_backend_missing: "此守护进程既没有 Anthropic API 密钥，也没有 Claude Code CLI。",
+      companion_backend_missing: "请在此主机上登录 Claude Code 或 Codex。",
       companion_backend_failed: "无法启动伴侣的模型会话。",
       companion_disabled: "此守护进程已关闭伙伴。",
       companion_microphone_unavailable: "麦克风不可用。",
       companion_session_closed: "伙伴会话已关闭。",
-      companion_busy: "伙伴正在处理另一轮对话。",
+      companion_busy: "另一台设备正在使用此主机的 Companion。请先结束该对话。",
     },
     unavailable: {
       title: "伙伴不可用",
       description: "此守护进程不提供伙伴。",
     },
     settings: {
-      autoStart: {
-        label: "立即开始对话",
-        description: "打开伙伴时立即开始会话，而不是等待点按。",
+      nativeVoice: {
+        label: "Codex 语音（预览）",
+        description: "需要登录 ChatGPT 并在主机上启用语音预览。可用性取决于您的账户。",
+      },
+      enabled: {
+        label: "启用 Companion",
+        description: "在代理工作时与它们交谈。需要时开始对话。",
       },
       replyText: {
         label: "显示回复文本",

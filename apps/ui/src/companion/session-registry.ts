@@ -33,6 +33,7 @@ export function getCompanionRuntime(): CompanionRuntime {
   created = createCompanionRuntime({
     engine,
     sink: {
+      sessionReconnecting: () => useCompanionStore.getState().sessionReconnecting(),
       sessionStarted: () => useCompanionStore.getState().sessionStarted(),
       sessionFailed: (input) => useCompanionStore.getState().sessionFailed(input),
       sessionStopped: () => useCompanionStore.getState().sessionStopped(),
@@ -60,7 +61,9 @@ export function getCompanionRuntime(): CompanionRuntime {
 export function registerCompanionSession(adapter: CompanionSessionAdapter): () => void {
   adapters.set(adapter.serverId, adapter);
   return () => {
+    if (adapters.get(adapter.serverId) !== adapter) return;
     adapters.delete(adapter.serverId);
+    if (runtime?.belongsTo(adapter.serverId)) void runtime.stop();
   };
 }
 

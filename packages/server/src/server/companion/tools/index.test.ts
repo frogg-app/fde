@@ -50,6 +50,7 @@ describe("companion tools", () => {
           type: "object",
           required: ["question", "label"],
           properties: {
+            workspaceId: { type: "string", minLength: 1 },
             question: { type: "string", minLength: 1 },
             label: {
               type: "string",
@@ -67,6 +68,7 @@ describe("companion tools", () => {
           type: "object",
           required: ["agentId", "question", "label"],
           properties: {
+            workspaceId: { type: "string", minLength: 1 },
             agentId: { type: "string", minLength: 1 },
             question: { type: "string", minLength: 1 },
             label: { type: "string", minLength: 1 },
@@ -81,6 +83,7 @@ describe("companion tools", () => {
           type: "object",
           required: ["question", "label"],
           properties: {
+            workspaceId: { type: "string", minLength: 1 },
             question: { type: "string", minLength: 1 },
             label: { type: "string", minLength: 1 },
           },

@@ -4,7 +4,7 @@ import { PersistedConfigSchema } from "../persisted-config.js";
 import { resolveCompanionCapability } from "./capability.js";
 
 const BACKEND_MISSING_REASON =
-  "The Companion needs an Anthropic API key or the Claude Code CLI. Set providers.anthropic.apiKey or ANTHROPIC_API_KEY, or install and sign in to Claude Code.";
+  "Sign in to Claude Code or Codex on this daemon. API usage requires explicitly selecting the API backend.";
 const DISABLED_REASON = "The Companion is turned off on this daemon.";
 
 function resolve(params: {
@@ -23,7 +23,10 @@ function resolve(params: {
 
 describe("resolveCompanionCapability", () => {
   test("is enabled with no reason when the flag defaults on and a key resolves", () => {
-    expect(resolve({ env: { ANTHROPIC_API_KEY: "key" } })).toEqual({ enabled: true, reason: "" });
+    expect(resolve({ env: { PASEO_COMPANION_BACKEND: "api", ANTHROPIC_API_KEY: "key" } })).toEqual({
+      enabled: true,
+      reason: "",
+    });
   });
 
   test("is disabled only when neither an Anthropic key nor the Claude Code CLI is there", () => {
@@ -37,7 +40,12 @@ describe("resolveCompanionCapability", () => {
   test("the voice umbrella turns the Companion off even when its own flag is on", () => {
     expect(
       resolve({
-        env: { ANTHROPIC_API_KEY: "key", PASEO_VOICE: "0", PASEO_COMPANION_ENABLED: "1" },
+        env: {
+          PASEO_COMPANION_BACKEND: "api",
+          ANTHROPIC_API_KEY: "key",
+          PASEO_VOICE: "0",
+          PASEO_COMPANION_ENABLED: "1",
+        },
       }),
     ).toEqual({ enabled: false, reason: DISABLED_REASON });
   });
@@ -45,12 +53,21 @@ describe("resolveCompanionCapability", () => {
   test("the fine-grained flag wins over the umbrella", () => {
     expect(
       resolve({
-        env: { ANTHROPIC_API_KEY: "key", PASEO_COMPANION_ENABLED: "0", PASEO_VOICE: "1" },
+        env: {
+          PASEO_COMPANION_BACKEND: "api",
+          ANTHROPIC_API_KEY: "key",
+          PASEO_COMPANION_ENABLED: "0",
+          PASEO_VOICE: "1",
+        },
       }),
     ).toEqual({ enabled: false, reason: DISABLED_REASON });
     expect(
       resolve({
-        env: { ANTHROPIC_API_KEY: "key", PASEO_COMPANION_ENABLED: "1" },
+        env: {
+          PASEO_COMPANION_BACKEND: "api",
+          ANTHROPIC_API_KEY: "key",
+          PASEO_COMPANION_ENABLED: "1",
+        },
         localRuntimeAvailable: false,
       }),
     ).toEqual({ enabled: true, reason: "" });
@@ -59,14 +76,23 @@ describe("resolveCompanionCapability", () => {
   test("the env flag wins over the persisted flag", () => {
     expect(
       resolve({
-        env: { ANTHROPIC_API_KEY: "key", PASEO_COMPANION_ENABLED: "0" },
+        env: {
+          PASEO_COMPANION_BACKEND: "api",
+          ANTHROPIC_API_KEY: "key",
+          PASEO_COMPANION_ENABLED: "0",
+        },
         persisted: { features: { companion: { enabled: true } } },
       }),
     ).toEqual({ enabled: false, reason: DISABLED_REASON });
   });
 
   test("falls back to the local speech runtime when nothing is configured", () => {
-    expect(resolve({ env: { ANTHROPIC_API_KEY: "key" }, localRuntimeAvailable: false })).toEqual({
+    expect(
+      resolve({
+        env: { PASEO_COMPANION_BACKEND: "api", ANTHROPIC_API_KEY: "key" },
+        localRuntimeAvailable: false,
+      }),
+    ).toEqual({
       enabled: false,
       reason: DISABLED_REASON,
     });

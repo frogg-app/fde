@@ -3674,11 +3674,14 @@ export class DaemonClient {
   // Companion
   // ============================================================================
 
-  async startCompanionSession(): Promise<CompanionSessionStartResponse["payload"]> {
+  async startCompanionSession(voiceTransport?: {
+    kind: "codex-webrtc";
+    sdp: string;
+  }): Promise<CompanionSessionStartResponse["payload"]> {
     const requestId = this.createRequestId();
     return this.sendRequest({
       requestId,
-      message: { type: "companion.session.start.request", requestId },
+      message: { type: "companion.session.start.request", requestId, voiceTransport },
       select: (msg) => {
         if (msg.type !== "companion.session.start.response") return null;
         if (msg.payload.requestId !== requestId) return null;
@@ -3708,8 +3711,7 @@ export class DaemonClient {
     this.sendSessionMessage({ type: "companion.audio.played", id });
   }
 
-  async sendCompanionMessage(text: string): Promise<void> {
-    const requestId = this.createRequestId();
+  async sendCompanionMessage(text: string, requestId = this.createRequestId()): Promise<void> {
     const response = await this.sendRequest({
       requestId,
       message: { type: "companion.message.send.request", requestId, text },

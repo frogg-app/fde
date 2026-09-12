@@ -29,6 +29,7 @@ export interface CompanionModelSettings {
 
 export interface CompanionModelStream extends AsyncIterable<Anthropic.MessageStreamEvent> {
   finalMessage: () => Promise<Anthropic.Message>;
+  abort?: () => void;
 }
 
 /** The Anthropic half of the seam. `client.messages` satisfies it directly. */
@@ -130,6 +131,9 @@ export function createCompanionApiBackend(options: CompanionApiBackendOptions): 
         messages,
       });
 
+      const abort = () => stream.abort?.();
+      input.signal?.addEventListener("abort", abort, { once: true });
+      if (input.signal?.aborted) abort();
       let message: Anthropic.Message;
       try {
         for await (const event of stream) {
@@ -139,7 +143,11 @@ export function createCompanionApiBackend(options: CompanionApiBackendOptions): 
         }
         message = await stream.finalMessage();
       } catch (error) {
+        if (input.signal?.aborted) return { toolCalls: [] };
         throw toTurnError(error);
+      } finally {
+        input.signal?.removeEventListener("abort", abort);
+        stream.abort?.();
       }
       messages.push({ role: "assistant", content: message.content });
       return { toolCalls: toToolCalls(message) };

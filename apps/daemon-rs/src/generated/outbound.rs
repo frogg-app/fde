@@ -2254,12 +2254,18 @@ pub struct CompanionSessionStartResponse {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CompanionSessionStartResponsePayload {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sdp: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub backend: Option<String>,
     #[serde(rename = "requestId")]
     pub request_id: String,
     pub accepted: bool,
     #[serde(rename = "reasonCode", skip_serializing_if = "Option::is_none")]
     pub reason_code: Option<String>,
     pub retryable: bool,
+    #[serde(rename = "sessionId", skip_serializing_if = "Option::is_none")]
+    pub session_id: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -2302,6 +2308,10 @@ pub struct CompanionAudioOutputPayload {
     pub group_id: String,
     #[serde(rename = "isLastChunk")]
     pub is_last_chunk: bool,
+    #[serde(rename = "sessionId", skip_serializing_if = "Option::is_none")]
+    pub session_id: Option<String>,
+    #[serde(rename = "turnId", skip_serializing_if = "Option::is_none")]
+    pub turn_id: Option<i64>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -2311,8 +2321,14 @@ pub struct CompanionInputState {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CompanionInputStatePayload {
+    #[serde(rename = "sessionId", skip_serializing_if = "Option::is_none")]
+    pub session_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ended: Option<bool>,
     #[serde(rename = "isSpeaking")]
     pub is_speaking: bool,
+    #[serde(rename = "turnId", skip_serializing_if = "Option::is_none")]
+    pub turn_id: Option<i64>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -2322,9 +2338,13 @@ pub struct CompanionTranscript {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CompanionTranscriptPayload {
+    #[serde(rename = "sessionId", skip_serializing_if = "Option::is_none")]
+    pub session_id: Option<String>,
     pub text: String,
     #[serde(rename = "isFinal")]
     pub is_final: bool,
+    #[serde(rename = "turnId", skip_serializing_if = "Option::is_none")]
+    pub turn_id: Option<i64>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -2334,9 +2354,13 @@ pub struct CompanionReply {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CompanionReplyPayload {
+    #[serde(rename = "sessionId", skip_serializing_if = "Option::is_none")]
+    pub session_id: Option<String>,
     pub text: String,
     #[serde(rename = "isFinal")]
     pub is_final: bool,
+    #[serde(rename = "turnId", skip_serializing_if = "Option::is_none")]
+    pub turn_id: Option<i64>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

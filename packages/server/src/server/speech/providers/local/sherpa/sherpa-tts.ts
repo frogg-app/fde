@@ -6,7 +6,7 @@ import type { SpeechStreamResult, TextToSpeechProvider } from "../../../speech-p
 import { chunkBuffer, float32ToPcm16le } from "../../../audio.js";
 import { loadSherpaOnnxNode } from "./sherpa-onnx-node-loader.js";
 
-export type SherpaTtsPreset = "kokoro-en-v0_19";
+export type SherpaTtsPreset = "kokoro-en-v0_19" | "piper-ljspeech-medium";
 
 export interface SherpaTtsConfig {
   preset: SherpaTtsPreset;
@@ -50,25 +50,35 @@ export class SherpaOnnxTTS implements TextToSpeechProvider {
       throw new Error("sherpa-onnx-node OfflineTts is unavailable");
     }
 
-    const modelPath = `${config.modelDir}/model.onnx`;
+    const isPiper = config.preset === "piper-ljspeech-medium";
+    const modelPath = `${config.modelDir}/${isPiper ? "en_US-ljspeech-medium.onnx" : "model.onnx"}`;
     const voicesPath = `${config.modelDir}/voices.bin`;
     const tokensPath = `${config.modelDir}/tokens.txt`;
     const dataDir = `${config.modelDir}/espeak-ng-data`;
 
     assertFileExists(modelPath, "TTS model");
-    assertFileExists(voicesPath, "TTS voices");
+    if (!isPiper) assertFileExists(voicesPath, "TTS voices");
     assertFileExists(tokensPath, "TTS tokens");
     assertFileExists(dataDir, "TTS espeak-ng dataDir");
 
-    const modelConfig = {
-      kokoro: {
-        model: modelPath,
-        voices: voicesPath,
-        tokens: tokensPath,
-        dataDir,
-        lengthScale: config.lengthScale ?? 1.0,
-      },
-    };
+    const modelConfig = isPiper
+      ? {
+          vits: {
+            model: modelPath,
+            tokens: tokensPath,
+            dataDir,
+            lengthScale: config.lengthScale ?? 1.0,
+          },
+        }
+      : {
+          kokoro: {
+            model: modelPath,
+            voices: voicesPath,
+            tokens: tokensPath,
+            dataDir,
+            lengthScale: config.lengthScale ?? 1.0,
+          },
+        };
 
     const offlineTtsConfig = {
       model: modelConfig,

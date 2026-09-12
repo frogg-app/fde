@@ -32,6 +32,16 @@ export const SHERPA_ONNX_MODEL_CATALOG = {
     description:
       "NVIDIA Parakeet TDT v3 (offline NeMo transducer, 25 European languages, auto-detected).",
   },
+  "piper-ljspeech-medium": {
+    kind: "tts",
+    archiveUrl:
+      "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-en_US-ljspeech-medium.tar.bz2",
+    extractedDir: "vits-piper-en_US-ljspeech-medium",
+    requiredFiles: ["en_US-ljspeech-medium.onnx", "tokens.txt", "espeak-ng-data"],
+    description:
+      "Piper LJSpeech (fast English voice; public-domain dataset, MIT model repository).",
+    defaultFor: "tts",
+  },
   "kokoro-en-v0_19": {
     kind: "tts",
     archiveUrl:
@@ -39,7 +49,6 @@ export const SHERPA_ONNX_MODEL_CATALOG = {
     extractedDir: "kokoro-en-v0_19",
     requiredFiles: ["model.onnx", "voices.bin", "tokens.txt", "espeak-ng-data"],
     description: "Kokoro TTS (higher quality; larger).",
-    defaultFor: "tts",
   },
 } as const satisfies Record<string, SherpaOnnxCatalogEntry>;
 

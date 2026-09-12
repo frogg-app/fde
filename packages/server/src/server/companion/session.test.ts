@@ -262,6 +262,7 @@ function createHarness(options: HarnessOptions = {}) {
   });
 
   return {
+    runtime,
     session,
     emitted,
     tts,
@@ -347,7 +348,7 @@ describe("CompanionSession turns", () => {
     gate.open();
     await turn;
 
-    expect(harness.of("companion.reply").at(-1)!.payload).toEqual({
+    expect(harness.of("companion.reply").at(-1)!.payload).toMatchObject({
       text: "I had a look at the flaky push test just now. It only fails on Windows.",
       isFinal: true,
     });
@@ -503,5 +504,73 @@ describe("CompanionSession turns", () => {
     await settle();
     expect(harness.of("companion.input.state").at(-1)!.payload.isSpeaking).toBe(false);
     await harness.session.cleanup();
+  });
+});
+
+describe("companion message acknowledgements", () => {
+  it("acknowledges before generation completes and deduplicates retries", async () => {
+    const gate = createGate();
+    const harness = createHarness({
+      turns: [{ deltas: ["I am checking the task now.", " It is running."], gate: gate.promise }],
+    });
+    await harness.start();
+    const first = harness.typed("Check my task");
+    await settle();
+    expect(harness.of("companion.message.send.response").at(-1)?.payload).toEqual({
+      requestId: "r2",
+      accepted: true,
+      reasonCode: null,
+    });
+    await harness.typed("Check my task");
+    expect(harness.of("companion.transcript")).toHaveLength(1);
+    gate.open();
+    await first;
+    await harness.session.cleanup();
+  });
+
+  it("rejects typed input when closed", async () => {
+    const harness = createHarness({});
+    await harness.typed("Check my task");
+    expect(harness.of("companion.message.send.response").at(-1)?.payload).toEqual({
+      requestId: "r2",
+      accepted: false,
+      reasonCode: "companion_session_closed",
+    });
+    await harness.session.cleanup();
+  });
+  it("releases a session stopped while its backend is warming", async () => {
+    const harness = createHarness();
+    let release: () => void = () => {};
+    let closed = 0;
+    harness.runtime.createBackend = () => ({
+      kind: "cli",
+      warm: () =>
+        new Promise<void>((resolve) => {
+          release = resolve;
+        }),
+      close: async () => {
+        closed += 1;
+        release();
+      },
+      beginTurn: () => {
+        throw new Error("No turn should run");
+      },
+    });
+    const starting = harness.session.handleSessionStart({
+      type: "companion.session.start.request",
+      requestId: "start-race",
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+    await harness.session.cleanup();
+    await starting;
+    expect(closed).toBeGreaterThan(0);
+    expect(harness.runtime.activeSession).toBeUndefined();
+    expect(harness.emitted).toContainEqual(
+      expect.objectContaining({
+        type: "companion.session.start.response",
+        payload: expect.objectContaining({ accepted: false }),
+      }),
+    );
   });
 });

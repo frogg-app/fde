@@ -1,3 +1,4 @@
+import { withAudioOwnership } from "./audio-ownership";
 import * as native from "@fde/expo-two-way-audio";
 import type {
   AudioEngine,
@@ -67,7 +68,7 @@ function resamplePcm16(pcm: Uint8Array, fromRate: number, toRate: number): Uint8
   return out;
 }
 
-export function createAudioEngine(
+function createUnownedAudioEngine(
   callbacks: AudioEngineCallbacks,
   _options?: AudioEngineTraceOptions,
 ): AudioEngine {
@@ -372,3 +373,6 @@ export function createAudioEngine(
     },
   };
 }
+
+export const createAudioEngine: typeof createUnownedAudioEngine = (...args) =>
+  withAudioOwnership(createUnownedAudioEngine(...args));

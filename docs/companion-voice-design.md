@@ -17,19 +17,23 @@ Companion release in 0.2.0; they do not establish end-to-end voice quality.
 Regression coverage lives in the Companion session, orchestrator, speech-stream,
 and client runtime tests, plus `apps/ui/src/voice/speaking-level.test.ts`.
 
+## Current lifecycle implementation (2026-09-12)
+
+Backend abort now propagates to Claude SDK interrupt, Codex turn interrupt and
+API request abort. Session generations reject late startup/audio; shutdown is
+bounded. Canonical history credits completely played segments, with provider
+context reconstructed after interruption. Local synthesis prepares the next
+segment while playback continues. See [Companion](companion.md).
+
 ## Remaining limitations
 
-- The session abort signal does not cancel the in-flight backend request. The
-  turn queue can still wait for the model to yield before it accepts a new turn.
-- Interrupted history uses text handed to TTS as an approximation of what was
-  heard. It has no playback-position reconciliation: failed synthesis, queued
-  segments, and partially played segments can overstate what reached the user.
-  A model turn completed before playback interruption retains the full reply.
-- Reply loudness is sampled per chunk, not from the output device's audio clock.
-  Verify supported audio formats and smooth the level only if device testing
-  demonstrates a visual problem.
-- Echo cancellation, interruption latency, and microphone-to-speaker latency
-  need testing on real devices. Backend-only timing is not a full-loop measure.
+- Partial segments are omitted conservatively; there is no word-level playback
+  reconciliation or physical device audio-clock acknowledgement.
+- Native voice result delivery is not yet correlated to individual durable jobs,
+  so unconfirmed results may repeat after reconnect.
+- Echo cancellation, interruption latency and microphone-to-speaker latency need
+  physical-device tests. Native background declarations/service code are not
+  device qualification. See [validation](companion-validation.md).
 
 ## Next acceptance pass
 

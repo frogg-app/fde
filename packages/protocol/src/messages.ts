@@ -963,6 +963,9 @@ export const AudioPlayedMessageSchema = z.object({
 export const CompanionSessionStartRequestSchema = z.object({
   type: z.literal("companion.session.start.request"),
   requestId: z.string(),
+  voiceTransport: z
+    .object({ kind: z.literal("codex-webrtc"), sdp: z.string().min(1).max(65536) })
+    .optional(),
 });
 
 export const CompanionSessionStopRequestSchema = z.object({
@@ -3394,10 +3397,13 @@ export const VoiceInputStateMessageSchema = z.object({
 export const CompanionSessionStartResponseSchema = z.object({
   type: z.literal("companion.session.start.response"),
   payload: z.object({
+    sdp: z.string().optional(),
+    backend: z.string().optional(),
     requestId: z.string(),
     accepted: z.boolean(),
     reasonCode: z.string().nullable(),
     retryable: z.boolean(),
+    sessionId: z.string().optional(),
   }),
 });
 
@@ -3429,29 +3435,38 @@ export const CompanionAudioOutputMessageSchema = z.object({
     id: z.string(),
     groupId: z.string(),
     isLastChunk: z.boolean(),
+    sessionId: z.string().optional(),
+    turnId: z.number().int().nonnegative().optional(),
   }),
 });
 
 export const CompanionInputStateMessageSchema = z.object({
   type: z.literal("companion.input.state"),
   payload: z.object({
+    sessionId: z.string().optional(),
+    ended: z.boolean().optional(),
     isSpeaking: z.boolean(),
+    turnId: z.number().int().nonnegative().optional(),
   }),
 });
 
 export const CompanionTranscriptMessageSchema = z.object({
   type: z.literal("companion.transcript"),
   payload: z.object({
+    sessionId: z.string().optional(),
     text: z.string(),
     isFinal: z.boolean(),
+    turnId: z.number().int().nonnegative().optional(),
   }),
 });
 
 export const CompanionReplyMessageSchema = z.object({
   type: z.literal("companion.reply"),
   payload: z.object({
+    sessionId: z.string().optional(),
     text: z.string(),
     isFinal: z.boolean(),
+    turnId: z.number().int().nonnegative().optional(),
   }),
 });
 
@@ -3561,6 +3576,15 @@ export const ServerCapabilitiesSchema = z
   .object({
     voice: ServerVoiceCapabilitiesSchema.optional(),
     companion: ServerCapabilityStateSchema.optional(),
+    companionDetails: z
+      .object({
+        protocolVersion: z.literal(2),
+        backend: z.enum(["cli", "codex", "api"]).nullable(),
+        model: z.string().nullable(),
+        localSpeechReady: z.boolean(),
+        nativeVoicePreview: z.boolean(),
+      })
+      .optional(),
   })
   .passthrough();
 

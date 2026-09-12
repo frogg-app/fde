@@ -260,6 +260,11 @@ export class CodexAppServerClient {
     if (this.disposed) return;
     this.disposed = true;
     this.unexpectedTerminationHandler = null;
+    for (const pending of this.pending.values()) {
+      clearTimeout(pending.timer);
+      pending.reject(new Error("Codex app-server client is closed"));
+    }
+    this.pending.clear();
     this.rl.close();
     try {
       this.child.stdin.end();

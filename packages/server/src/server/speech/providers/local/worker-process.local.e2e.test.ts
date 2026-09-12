@@ -30,7 +30,17 @@ function hasParakeetModel(dir: string): boolean {
 }
 
 function fixturePath(fileName: string): string {
-  return path.resolve(process.cwd(), "..", "app", "e2e", "fixtures", fileName);
+  return path.resolve(
+    process.cwd(),
+    "..",
+    "..",
+    "apps",
+    "ui",
+    "e2e",
+    "support",
+    "fixtures",
+    fileName,
+  );
 }
 
 function resolveWorkerUrl(): URL {

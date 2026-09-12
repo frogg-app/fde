@@ -1,3 +1,5 @@
+import android.content.Intent
+import expo.modules.twowayaudio.VoiceCaptureService
 import android.annotation.SuppressLint
 import android.content.Context
 import android.media.AudioAttributes
@@ -21,6 +23,7 @@ import kotlin.math.pow
 
 
 class AudioEngine (context: Context) {
+    private val applicationContext = context.applicationContext
     private val SAMPLE_RATE = 16000
     private val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
     private val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
@@ -357,6 +360,10 @@ class AudioEngine (context: Context) {
                 }
             }
 
+            VoiceCaptureService.requested = true
+            val serviceIntent = Intent(applicationContext, VoiceCaptureService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) applicationContext.startForegroundService(serviceIntent)
+            else applicationContext.startService(serviceIntent)
             recorder.startRecording()
             isRecording = true
             startMicSampleTap(recorder)
@@ -402,6 +409,8 @@ class AudioEngine (context: Context) {
 
     @Synchronized
     private fun stopRecording() {
+        VoiceCaptureService.requested = false
+        applicationContext.stopService(Intent(applicationContext, VoiceCaptureService::class.java))
         isRecording = false
         val recorder = audioRecord
         audioRecord = null

@@ -1,3 +1,4 @@
+import { createCompanionNativeAudio, type CompanionNativeAudio } from "./native-audio";
 import { Buffer } from "buffer";
 import type { CompanionAudioOutputMessage, CompanionNotebookEntry } from "@fde/protocol/messages";
 import type { AudioEngine, AudioPlaybackSource } from "@/voice/audio-engine-types";
@@ -13,17 +14,22 @@ const PCM_MIME_TYPE = "audio/pcm;rate=16000;bits=16";
  */
 export interface CompanionSessionAdapter {
   serverId: string;
-  startSession(): Promise<CompanionSessionStartResult>;
+  startSession(voiceTransport?: {
+    kind: "codex-webrtc";
+    sdp: string;
+  }): Promise<CompanionSessionStartResult>;
   stopSession(): Promise<void>;
   sendAudioChunk(audio: string, format: string): Promise<void>;
   audioPlayed(id: string): Promise<void>;
-  sendMessage(text: string): Promise<void>;
+  sendMessage(text: string, requestId?: string): Promise<void>;
 }
 
 export interface CompanionSessionStartResult {
   accepted: boolean;
   reasonCode: string | null;
   retryable: boolean;
+  sessionId?: string;
+  sdp?: string;
 }
 
 /**
@@ -31,6 +37,7 @@ export interface CompanionSessionStartResult {
  * runtime can be driven and asserted without React.
  */
 export interface CompanionRuntimeSink {
+  sessionReconnecting(): void;
   sessionStarted(): void;
   sessionFailed(input: { reasonCode: string | null; retryable: boolean }): void;
   sessionStopped(): void;
@@ -72,19 +79,26 @@ interface RuntimeState {
   volume: number;
 }
 
+export interface CompanionConnectionState {
+  serverId: string;
+  isConnected: boolean;
+}
+
 export interface CompanionRuntime {
-  start(adapter: CompanionSessionAdapter): Promise<void>;
+  start(adapter: CompanionSessionAdapter, nativeVoice?: boolean): Promise<void>;
+  connectionChanged(connection: CompanionConnectionState): Promise<void>;
   stop(): Promise<void>;
   toggleMute(): void;
   sendMessage(text: string): Promise<void>;
   handleCapturePcm(chunk: Uint8Array): void;
   handleCaptureVolume(level: number): void;
   handleAudioOutput(payload: CompanionAudioOutputMessage["payload"]): void;
-  handleInputState(isSpeaking: boolean): void;
+  handleInputState(isSpeaking: boolean, nextTurnId?: number): void;
   handleTranscript(input: { text: string; isFinal: boolean }): void;
   handleReply(input: { text: string; isFinal: boolean }): void;
   handleNotebook(entries: readonly CompanionNotebookEntry[]): void;
   isActive(): boolean;
+  belongsTo(serverId: string, receivedSessionId?: string): boolean;
 }
 
 /**
@@ -107,6 +121,16 @@ export function createCompanionRuntime(deps: CompanionRuntimeDeps): CompanionRun
   const groups = new Map<string, PlaybackGroup>();
   const groupOrder: string[] = [];
   let draining = false;
+  let requestSequence = 0;
+  let pendingMessage: { text: string; id: string } | null = null;
+  let sessionId: string | undefined;
+  let nativeAudio: CompanionNativeAudio | null = null;
+  let usingNativeVoice = false;
+  let reconnect: { nativeVoice: boolean; muted: boolean } | null = null;
+  let turnId = 0;
+  let userSpeaking = false;
+  let nativeSpeaking = false;
+  let starting: Promise<void> | null = null;
 
   function resetPlayback(): void {
     groups.clear();
@@ -151,6 +175,9 @@ export function createCompanionRuntime(deps: CompanionRuntimeDeps): CompanionRun
       }
     } finally {
       draining = false;
+      if (generation !== state.generation && state.isActive && state.adapter && groupOrder.length) {
+        drainPlayback(state.generation, state.adapter);
+      }
       if (announcedStart && generation === state.generation) {
         deps.sink.setSpeakingVolume(0);
         deps.sink.companionAudioFinished();
@@ -158,62 +185,154 @@ export function createCompanionRuntime(deps: CompanionRuntimeDeps): CompanionRun
     }
   }
 
+  function drainPlayback(generation: number, adapter: CompanionSessionAdapter): void {
+    void drain(generation, adapter).catch(() => {
+      if (generation !== state.generation) return;
+      resetPlayback();
+      deps.sink.companionAudioFinished();
+    });
+  }
+
   const runtime: CompanionRuntime = {
-    async start(adapter) {
-      const generation = state.generation + 1;
-      state.generation = generation;
+    async start(adapter, nativeVoice = false) {
+      if (starting) {
+        const requestedGeneration = state.generation;
+        await starting;
+        if (requestedGeneration === state.generation) await runtime.start(adapter, nativeVoice);
+        return;
+      }
+      if (state.isActive) return;
+      usingNativeVoice = nativeVoice;
+      const generation = ++state.generation;
       state.adapter = adapter;
-
-      const result = await adapter.startSession();
-      if (generation !== state.generation) return;
-      if (!result.accepted) {
-        state.adapter = null;
-        deps.sink.sessionFailed({
-          reasonCode: result.reasonCode,
-          retryable: result.retryable,
-        });
-        return;
-      }
-
+      starting = (async () => {
+        let reasonCode = "companion_connection_failed";
+        try {
+          if (nativeVoice) reasonCode = "companion_native_unavailable";
+          if (nativeVoice)
+            nativeAudio = createCompanionNativeAudio(
+              () => {
+                void runtime.stop();
+              },
+              (level) => {
+                if (!state.isActive) return;
+                deps.sink.setSpeakingVolume(level);
+                const speaking = level > 0.01;
+                if (speaking !== nativeSpeaking) {
+                  nativeSpeaking = speaking;
+                  if (speaking) deps.sink.companionAudioStarted();
+                  else deps.sink.companionAudioFinished();
+                }
+              },
+            );
+          const offer = nativeAudio ? await nativeAudio.prepare() : undefined;
+          if (generation !== state.generation) return;
+          const result = await adapter.startSession(
+            offer ? { kind: "codex-webrtc", sdp: offer } : undefined,
+          );
+          if (generation !== state.generation) {
+            await adapter.stopSession().catch(() => undefined);
+            return;
+          }
+          if (!result.accepted) {
+            nativeAudio?.close();
+            nativeAudio = null;
+            await deps.engine.stopCapture().catch(() => undefined);
+            state.adapter = null;
+            deps.sink.sessionFailed(result);
+            return;
+          }
+          sessionId = result.sessionId;
+          turnId = 0;
+          userSpeaking = false;
+          nativeSpeaking = false;
+          if (nativeAudio) {
+            if (!result.sdp) throw new Error("The daemon does not support native voice");
+            await nativeAudio.connect(result.sdp);
+          } else {
+            reasonCode = "companion_microphone_unavailable";
+            await deps.engine.initialize();
+            if (generation !== state.generation) return;
+            await deps.engine.startCapture();
+            if (generation !== state.generation) {
+              await deps.engine.stopCapture().catch(() => undefined);
+              return;
+            }
+          }
+          if (generation !== state.generation) return;
+          state.isActive = true;
+          state.isMuted = nativeVoice ? false : deps.engine.isMuted();
+          state.volume = 0;
+          state.lastVolumePublishMs = 0;
+          deps.sink.sessionStarted();
+          deps.sink.setMuted(state.isMuted);
+        } catch {
+          if (generation !== state.generation) return;
+          nativeAudio?.close();
+          nativeAudio = null;
+          await deps.engine.stopCapture().catch(() => undefined);
+          await adapter.stopSession().catch(() => undefined);
+          if (generation === state.generation) {
+            state.adapter = null;
+            deps.sink.sessionFailed({ reasonCode, retryable: true });
+          }
+        }
+      })();
       try {
-        await deps.engine.initialize();
-        if (generation !== state.generation) return;
-        await deps.engine.startCapture();
-      } catch {
-        if (generation !== state.generation) return;
-        state.adapter = null;
-        await adapter.stopSession().catch(() => undefined);
-        deps.sink.sessionFailed({
-          reasonCode: "companion_microphone_unavailable",
-          retryable: true,
-        });
-        return;
+        await starting;
+      } finally {
+        starting = null;
       }
-      if (generation !== state.generation) return;
-
-      state.isActive = true;
-      state.isMuted = deps.engine.isMuted();
-      state.volume = 0;
-      state.lastVolumePublishMs = 0;
-      deps.sink.sessionStarted();
-      deps.sink.setMuted(state.isMuted);
     },
 
     async stop() {
+      reconnect = null;
       const adapter = state.adapter;
+      if (!adapter && !state.isActive && !starting) return;
       state.generation += 1;
       state.isActive = false;
       state.adapter = null;
+      sessionId = undefined;
+      nativeAudio?.close();
+      nativeAudio = null;
       resetPlayback();
-      await deps.engine.stopCapture();
-      if (adapter) {
-        await adapter.stopSession();
-      }
+      // Local capture release never depends on a successful remote acknowledgement.
+      await deps.engine.stopCapture().catch(() => undefined);
       deps.sink.sessionStopped();
+      if (adapter) await adapter.stopSession().catch(() => undefined);
+    },
+
+    async connectionChanged({ serverId, isConnected }) {
+      const adapter = state.adapter;
+      if (!adapter || adapter.serverId !== serverId) return;
+      if (!isConnected) {
+        if (reconnect || (!state.isActive && !starting)) return;
+        reconnect = { nativeVoice: usingNativeVoice, muted: state.isMuted };
+        state.generation += 1;
+        state.isActive = false;
+        sessionId = undefined;
+        nativeAudio?.close();
+        nativeAudio = null;
+        resetPlayback();
+        // Retain local capture's foreground audio session across network changes.
+        // Frames are discarded until the new daemon session is ready.
+        deps.sink.sessionReconnecting();
+        return;
+      }
+      if (!reconnect) return;
+      const intent = reconnect;
+      reconnect = null;
+      const expectedGeneration = state.generation + 1;
+      await runtime.start(adapter, intent.nativeVoice);
+      if (state.generation !== expectedGeneration || !state.isActive) return;
+      if (state.isMuted !== intent.muted) runtime.toggleMute();
     },
 
     toggleMute() {
-      state.isMuted = deps.engine.toggleMute();
+      if (nativeAudio) {
+        state.isMuted = !state.isMuted;
+        nativeAudio.mute(state.isMuted);
+      } else state.isMuted = deps.engine.toggleMute();
       deps.sink.setMuted(state.isMuted);
     },
 
@@ -225,7 +344,12 @@ export function createCompanionRuntime(deps: CompanionRuntimeDeps): CompanionRun
         return;
       }
       try {
-        await adapter.sendMessage(text);
+        pendingMessage =
+          pendingMessage?.text === text
+            ? pendingMessage
+            : { text, id: `companion-${Date.now()}-${++requestSequence}` };
+        await adapter.sendMessage(text, pendingMessage.id);
+        pendingMessage = null;
         deps.sink.sendSucceeded();
       } catch (error) {
         deps.sink.sendFailed(reasonCodeOf(error));
@@ -260,7 +384,10 @@ export function createCompanionRuntime(deps: CompanionRuntimeDeps): CompanionRun
 
     handleAudioOutput(payload) {
       const adapter = state.adapter;
-      if (!state.isActive || !adapter) return;
+      if (!state.isActive || !adapter || userSpeaking) return;
+      if (sessionId && payload.sessionId !== sessionId) return;
+      if (payload.turnId !== undefined && payload.turnId < turnId) return;
+      turnId = payload.turnId ?? turnId;
 
       let group = groups.get(payload.groupId);
       if (!group) {
@@ -274,14 +401,17 @@ export function createCompanionRuntime(deps: CompanionRuntimeDeps): CompanionRun
       group.levels.push(pcm16Rms(bytes));
       group.isComplete = group.isComplete || payload.isLastChunk;
 
-      void drain(state.generation, adapter);
+      drainPlayback(state.generation, adapter);
     },
 
     // Barge-in is the primary interaction: the daemon telling us the user has
     // started speaking ends the Companion's turn here, before its own stream does.
-    handleInputState(isSpeaking) {
+    handleInputState(isSpeaking, nextTurnId) {
+      userSpeaking = isSpeaking;
+      const invalidatesPlayback = nextTurnId !== undefined && nextTurnId > turnId;
+      if (nextTurnId !== undefined) turnId = Math.max(turnId, nextTurnId);
       if (!state.isActive) return;
-      if (isSpeaking) {
+      if (isSpeaking || invalidatesPlayback) {
         state.generation += 1;
         resetPlayback();
       }
@@ -300,6 +430,13 @@ export function createCompanionRuntime(deps: CompanionRuntimeDeps): CompanionRun
 
     handleNotebook(entries) {
       deps.sink.notebookReceived(entries);
+    },
+
+    belongsTo(serverId, receivedSessionId) {
+      return (
+        state.adapter?.serverId === serverId &&
+        (receivedSessionId === undefined || receivedSessionId === sessionId)
+      );
     },
 
     isActive() {

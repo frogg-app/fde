@@ -1,0 +1,204 @@
+# Companion implementation validation
+
+Recorded 2026-09-12 on the shared headless Linux VM. No API keys were used for
+subscription probes. These results qualify the tested configuration only.
+The final Codex probe reported Linux x64, a QEMU Virtual CPU version 2.5+,
+9 GiB RAM and Node v22.23.2; the host is shared, so load is not controlled.
+
+## Measurements
+
+| Probe                                                                        |                         Samples | Result                                                                                                   |
+| ---------------------------------------------------------------------------- | ------------------------------: | -------------------------------------------------------------------------------------------------------- |
+| Claude Haiku subscription, Piper LJSpeech                                    | 30 warm questions + status tool | Passed; first text median 1.367 s / p95 3.569 s; first PCM median 1.620 s / p95 3.806 s; startup 2.990 s |
+| Codex Luna, low reasoning, bounded thread reuse, Piper                       | 30 warm questions + status tool | Passed; first text median 1.593 s / p95 3.596 s; first PCM median 1.852 s / p95 3.919 s; startup 0.269 s |
+| Codex after restricting built-in router tools                                |       3 questions + status tool | Passed; first PCM median 4.030 s / max 4.499 s; small sample, shared-host variance                       |
+| Native Codex voice → real Claude Sonnet → spoken result                      |             1 immediate handoff | Passed; worker returned 391, assistant said “Three hundred ninety-one”; nonzero returned audio           |
+| Native Codex voice → durable-style immediate receipt → delayed Claude result |               1 delayed handoff | Passed; worker returned 391 and result was spoken after a five-second deferred return                    |
+| Real local recognition worker using repaired fixture path                    |     1 existing integration test | Passed, 5.324 s total test time                                                                          |
+
+Final Codex router configuration: **30 questions plus the status-tool check**
+passed, with first text median **1.597 s** / p95 **3.519 s**, first PCM median
+**1.914 s** / p95 **3.814 s**, and startup **0.352 s**. Cleanup exposed the defect
+described below after those measurements completed.
+
+CLI versions during research and implementation probes: Codex **0.154.0**, Claude
+Code **2.1.269**. The benchmark now prints versions, Node version, CPU, memory,
+platform and sample count on each run. The account used for Codex is not evidence
+of ordinary Plus/Pro entitlement. Claude was authenticated with an existing Max
+subscription; other tiers are not claimed as tested.
+
+Text-to-PCM timings exclude recognition, endpointing, transport and device
+playback. They use short acknowledgements, not a diverse conversational workload.
+Startup values are harness startup, not full cold microphone-to-audio latency.
+These are not release SLO measurements. The 3-second median / 6-second p95 target
+for first meaningful audible response and 200 ms p95 interruption target remain
+physical end-to-end acceptance gates.
+
+The final 30-turn Codex probe exposed an existing app-server transport disposal
+bug: an outstanding RPC retained its timeout after the child process exited,
+keeping the benchmark process alive. Only that completed benchmark process was
+terminated. Disposal now rejects pending RPCs and clears their timers. A regression
+test reproduced the leak before the fix; a subsequent three-turn subscription
+probe passed its status-tool check and exited naturally with code 0. No shared
+daemon was restarted or stopped during this work.
+
+The native harness uses the production `native-audio.ts` and `native-voice.ts`
+adapters with headless Chromium and a real subscription worker. A zero-gain source
+keeps the synthetic microphone clock active with exact silence after the spoken
+question. It does not add noise. Both returned transcript and nonzero received
+audio are required; RPC success alone is insufficient. A first delayed probe
+returned “three ninety-one” correctly but failed an overly narrow transcript
+assertion; the assertion now accepts that valid spoken rendering and the rerun
+passed.
+
+## Reproduce
+
+From `packages/server`, after installing workspaces and downloading/extracting the
+[Piper LJSpeech package](https://k2-fsa.github.io/sherpa/onnx/tts/all/English/vits-piper-en_US-ljspeech-medium.html):
+
+```sh
+PASEO_COMPANION_BENCH=1 \
+PASEO_COMPANION_BENCH_TTS_DIR=/path/to/vits-piper-en_US-ljspeech-medium \
+npx tsx scripts/benchmark-companion.ts --provider=claude --turns=30
+
+PASEO_COMPANION_BENCH=1 \
+PASEO_COMPANION_BENCH_TTS_DIR=/path/to/vits-piper-en_US-ljspeech-medium \
+npx tsx scripts/benchmark-companion.ts --provider=codex --turns=30
+
+PASEO_COMPANION_BENCH=1 \
+PASEO_COMPANION_BENCH_TTS_DIR=/path/to/vits-piper-en_US-ljspeech-medium \
+npx tsx scripts/benchmark-companion-native.ts
+
+PASEO_COMPANION_BENCH=1 \
+PASEO_COMPANION_BENCH_TTS_DIR=/path/to/vits-piper-en_US-ljspeech-medium \
+npx tsx scripts/benchmark-companion-native.ts --deferred
+```
+
+These opt-in commands consume subscription allowance. Native probes require both
+Codex and Claude subscription authentication and Playwright Chromium. They create
+isolated temporary working directories, use read-only arithmetic/status tasks,
+print explicit pass/failure output and remove their temporary files/processes.
+
+Run regression suites from their package directories:
+
+```sh
+# packages/server
+npx vitest run src/server/companion src/server/speech/speech-config-resolver.test.ts
+PASEO_LOCAL_MODELS_DIR=/path/to/models/local-speech \
+npx vitest run src/server/speech/providers/local/worker-process.local.e2e.test.ts
+
+# apps/ui
+npx vitest run src/companion/runtime.test.ts src/companion/store.test.ts \
+  src/voice/voice-runtime.test.ts src/voice/audio-engine.web.test.ts \
+  src/voice/audio-engine.native.test.ts src/hooks/use-settings/storage.test.ts
+
+# repository root
+npm run typecheck
+npm run build:server
+```
+
+The final muted delayed-return probe used a normal Claude Sonnet SDK worker with
+its own calculation instructions. It returned 391, the voice said “three nine
+one”, and measured output energy increased after handoff while the microphone
+track was disabled. Earlier harness versions incorrectly reused the Companion
+orchestrator prompt for the worker; this sometimes caused refusal to calculate.
+The harness now separates worker and conversation roles and asks for a private
+worker result, preventing the voice model from satisfying the test by doing the
+arithmetic itself.
+
+Add `--deferred --mute` to the native command to reproduce this case. One muted
+return does not establish prolonged mute/unmute or mobile reliability.
+
+## Build and regression checks
+
+- 103 Companion/server/speech tests across 16 files passed, including a real agent-manager permission lifecycle using the deterministic test provider.
+- Final delivery review: 109 tests across 15 files passed (Companion, TTS manager
+  and speech configuration, excluding real-provider tests). Eight added regressions
+  cover failed/empty synthesis, failed/silent model responses, acknowledgement of
+  every segment, interruption and late audio acknowledgements, persistence failure,
+  user priority, and replay without rerunning workers. These suites overlap the
+  earlier 103-test run and must not be summed.
+- 160 UI/voice/settings tests across 7 files passed, including four reconnect
+  cases (mute/capture retention, explicit End, refusal, and End during a pending
+  acknowledgement) and six additional
+  audio-ownership cases covering capture/playback exclusion, failed startup,
+  pending-request reuse, late failure and teardown.
+- 231 Codex provider/transport tests across 7 files passed after the pending-RPC
+  disposal fix. The Sherpa synthesis unit test also passed.
+- 126 client/transport tests and 30 protocol compatibility tests passed.
+- Real local speech integration passed using the existing downloaded Parakeet model.
+- Full repository typecheck and server/CLI build passed again after the delivery
+  correction; server build and full typecheck were repeated successfully after
+  the transport disposal fix. Lint passed on all 72 changed JavaScript/TypeScript
+  files outside generated code.
+- Expo Android prebuild and `:fde-expo-two-way-audio:compileDebugKotlin` passed
+  against the installed SDK (45 Gradle tasks, approximately 80 seconds). This is a
+  native-module compile, not an installed APK or a physical-device workflow test.
+- Final packaging check: 113 Companion/server/TTS/configuration tests across 16
+  files passed, including cancellation during Codex authentication/native startup, missing SDP timeout and
+  stale transcript rejection. Full repository typecheck passed. Six Android and
+  daemon packaging-script tests passed.
+- Standalone Android ARM64 APK built successfully (1,270 Gradle tasks), with
+  package `app.frogg.fde.debug`, version 0.2.14 / code 2014, minimum Android 10,
+  target SDK 36. APK v2 signature verification passed. Inspection confirmed
+  embedded Hermes bytecode, the microphone foreground service and permissions.
+  The APK uses debug signing and Hermes `-O0`; the normal optimized build exceeded
+  this VM's memory and was terminated by earlyoom. No physical device was attached.
+- Linux x64 daemon archive built with Node 22.23.2 and the browser UI. An extracted
+  copy started with isolated state and a separate port; HTML served successfully.
+  Packaged Claude and Codex subscription paths both accepted typed messages and
+  returned the expected reply with non-silent Piper PCM. The final Codex archive
+  probe returned 104,154 PCM bytes. Playback acknowledgements were simulated by
+  the probe; this verifies packaging/transport/synthesis, not a real speaker.
+  Only the isolated smoke daemon was stopped, gracefully. See
+  [artifacts and deployment](companion-test-builds.md).
+
+## Release gates still open
+
+- Diverse 30-turn microphone-to-speaker runs and cold starts per supported
+  provider, actual interruption timing, battery and resource measurements.
+- Ordinary ChatGPT Plus/Pro and Claude Pro accounts; expired login, unavailable
+  models, exhausted quota and paid-overage configuration scenarios.
+- Native per-job playback receipts and announcement deduplication across
+  reconnect; results arriving during user speech; prolonged mute/unmute and
+  extended silence; real Codex worker delegation in the native transport.
+- Native mobile WebRTC transport is not implemented; local speech is its baseline.
+- Physical iOS/Android: 30-minute screen-locked sessions, Bluetooth/headset changes,
+  incoming calls, audio focus, network loss/recovery and spoken permission replies.
+- Windows/macOS daemon coverage and iOS application build checks.
+- Full hands-free scenario: start, choose a project by voice, dispatch a change,
+  pocket the phone, converse during work, resolve the exact permission, hear the
+  result, then end by voice.
+
+## Subscription and platform evidence
+
+Anthropic's current notice says the proposed separate SDK-credit change was
+paused and SDK/CLI usage continues against subscription limits; the historical
+announcement below it must not be treated as current policy.
+[Claude subscription notice](https://support.claude.com/en/articles/15036540-use-the-claude-agent-sdk-with-your-claude-plan),
+[Claude integration requirements](https://code.claude.com/docs/en/legal-and-compliance).
+
+Codex supports ChatGPT authentication and an app-server integration surface.
+Experimental realtime availability is discovered through actual negotiation;
+successful text login does not establish native voice entitlement.
+[Codex authentication](https://learn.chatgpt.com/docs/auth),
+[App Server](https://learn.chatgpt.com/docs/app-server).
+
+The architecture follows the separation between realtime conversation and backend
+work described for GPT-Live. Public separately billed voice is an optional future
+path, not required for the subscription baseline.
+[Voice](https://learn.chatgpt.com/docs/features/voice),
+[GPT-Live delegation](https://developers.openai.com/api/docs/guides/live-delegation).
+
+The installed Codex 0.154.0 `thread/realtime/appendSpeech` interface accepts only
+thread ID and text and returns an empty acknowledgement. It provides no per-job
+playback receipt. GPT-Live's documentation also distinguishes commentary acceptance
+and transcript arrival from actual speech playback. FDE therefore cannot safely
+mark native jobs heard from RPC success or transcript text. This is an upstream
+interface limitation of the preview, not an unrun local-speech test.
+[Commentary handoff semantics](https://developers.openai.com/api/docs/guides/live-delegation),
+[Speech and transcript delivery](https://developers.openai.com/api/docs/guides/live-conversations).
+
+Background capture requires native platform behavior beyond a UI preference.
+[Android microphone foreground services](https://developer.android.com/develop/background-work/services/fgs/service-types),
+[Apple background modes](https://developer.apple.com/documentation/bundleresources/information-property-list/uibackgroundmodes).

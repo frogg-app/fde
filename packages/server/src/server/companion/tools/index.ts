@@ -13,9 +13,13 @@ export const COMPANION_TOOL_NAMES = [
   "list_workspaces",
   "list_agents",
   "get_agent_status",
+  "list_jobs",
+  "get_job_result",
   "send_agent_prompt",
   "create_agent",
   "cancel_agent",
+  "respond_to_permission",
+  "end_conversation",
   "note",
   "think",
   "read_timeline",
@@ -87,8 +91,9 @@ export function defineCompanionTool<Schema extends z.ZodObject>(
 }
 
 export interface CompanionToolDependencies
-  extends CompanionAgentToolDependencies, CompanionThinkingToolDependencies {
+  extends Omit<CompanionAgentToolDependencies, "deferredJobs">, CompanionThinkingToolDependencies {
   notebook: CompanionNotebookStore;
+  endConversation?: () => void;
 }
 
 export function createCompanionNotebookTool(notebook: CompanionNotebookStore): CompanionTool {
@@ -113,6 +118,51 @@ export function createCompanionNotebookTool(notebook: CompanionNotebookStore): C
 
 export function createCompanionTools(deps: CompanionToolDependencies): CompanionTool[] {
   return [
+    defineCompanionTool({
+      name: "list_jobs",
+      description:
+        "Read the latest twenty durable task receipts, including work from earlier conversations. Never poll repeatedly.",
+      deferred: false,
+      schema: z.object({}),
+      handler: async () =>
+        deps.deferredJobs
+          .list()
+          .slice(-20)
+          .map((job) => ({
+            jobId: job.jobId,
+            label: job.label,
+            status: job.status,
+            agentId: job.agentId,
+            workspaceId: job.workspaceId,
+          })),
+    }),
+    defineCompanionTool({
+      name: "get_job_result",
+      description:
+        "Read the saved result of one durable task receipt without rerunning it. An accepted or running task has not completed.",
+      deferred: false,
+      schema: z.object({ jobId: z.string().min(1) }),
+      handler: async ({ jobId }) => {
+        const job = deps.deferredJobs.get(jobId);
+        if (!job) throw new Error("That task receipt was not found. Use list_jobs to identify it.");
+        return job;
+      },
+    }),
+    ...(deps.endConversation
+      ? [
+          defineCompanionTool({
+            name: "end_conversation",
+            description:
+              "End the voice conversation when the user asks to stop talking. Running tasks continue.",
+            deferred: false,
+            schema: z.object({}),
+            handler: async () => {
+              deps.endConversation?.();
+              return { status: "ended" };
+            },
+          }),
+        ]
+      : []),
     ...createCompanionAgentTools(deps),
     createCompanionNotebookTool(deps.notebook),
     ...createCompanionThinkingTools(deps),

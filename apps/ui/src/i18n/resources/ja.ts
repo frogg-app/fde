@@ -1843,6 +1843,17 @@ export const ja: TranslationResources = {
   },
   companion: {
     title: "コンパニオン",
+    setup: {
+      disabled: "無効",
+      required: "設定が必要",
+      ready: "準備完了",
+      active: "会話中",
+      unknown: "会話モデルが未選択です",
+      providers: "プロバイダー設定",
+      subscription:
+        "ログイン済みのサブスクリプション枠を使用します。残量はホストの使用量設定で確認できます。API課金への自動切り替えはありません。",
+      api: "このホストではAPIが選択されています。会話トークンは別途課金されます。",
+    },
     status: {
       connecting: "接続中…",
     },
@@ -1853,6 +1864,10 @@ export const ja: TranslationResources = {
       speaking: "話しています",
     },
     actions: {
+      start: "Companionを開始",
+      minimize: "最小化",
+      resume: "会話を開く",
+
       mute: "ミュート",
       unmute: "ミュート解除",
       stop: "停止",
@@ -1870,23 +1885,35 @@ export const ja: TranslationResources = {
       sendFailed: "メッセージを送信できませんでした",
     },
     reason: {
+      companion_speech_unavailable:
+        "ローカル音声の準備ができていません。ホストのモデルと音声設定を確認してください。",
+      companion_native_unavailable:
+        "Codex音声プレビューに接続できませんでした。ChatGPTへのログイン、アカウントの対応状況、ホスト設定を確認してください。",
+      companion_connection_failed:
+        "ホストに接続できませんでした。接続を確認して再試行してください。",
+      companion_update_required: "現在の会話プロトコルを使うにはホストを更新してください。",
       unknown: "デーモンは理由を返しませんでした。",
-      companion_backend_missing:
-        "このデーモンには Anthropic API キーも Claude Code CLI もありません。",
+      companion_backend_missing: "このホストのClaude CodeまたはCodexにログインしてください。",
       companion_backend_failed: "コンパニオンのモデルセッションを開始できませんでした。",
       companion_disabled: "このデーモンではコンパニオンが無効です。",
       companion_microphone_unavailable: "マイクを利用できません。",
       companion_session_closed: "コンパニオンのセッションは終了しています。",
-      companion_busy: "コンパニオンは別のターンを処理中です。",
+      companion_busy:
+        "別の端末がこのホストのCompanionを使用しています。先にその会話を終了してください。",
     },
     unavailable: {
       title: "コンパニオンを利用できません",
       description: "このデーモンはコンパニオンを提供していません。",
     },
     settings: {
-      autoStart: {
-        label: "すぐに話し始める",
-        description: "タップを待たず、コンパニオンを開いた時点でセッションを開始します。",
+      nativeVoice: {
+        label: "Codex音声（プレビュー）",
+        description:
+          "ChatGPTへのログインとホスト側のプレビュー有効化が必要です。対応状況はアカウントによって異なります。",
+      },
+      enabled: {
+        label: "Companionを有効にする",
+        description: "エージェントの作業中に話しかけられます。必要なときに会話を開始してください。",
       },
       replyText: {
         label: "返答テキストを表示",

@@ -142,6 +142,24 @@
                 },
                 "requestId": {
                   "type": "string"
+                },
+                "voiceTransport": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "codex-webrtc"
+                    },
+                    "sdp": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 65536
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "sdp"
+                  ]
                 }
               },
               "required": [

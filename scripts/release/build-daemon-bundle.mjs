@@ -85,7 +85,15 @@ const DAEMON_WORKSPACES = [
 ];
 
 // Files inside a workspace that are needed at runtime.
-const WORKSPACE_KEEP = ["package.json", "dist", "bin", ".env.example", "README.md"];
+const WORKSPACE_KEEP = [
+  "package.json",
+  "dist",
+  "bin",
+  ".env.example",
+  "README.md",
+  "LICENSE",
+  "NOTICE",
+];
 
 const LAUNCHER = `#!/bin/sh
 # FDE daemon bundle launcher. Resolves its own location through symlinks so
@@ -179,6 +187,9 @@ function excludeBuildArtifacts(relativePath) {
 }
 
 async function stageWorkspaces(daemonDir, rootPackage) {
+  for (const notice of ["LICENSE", "NOTICE", "docs/speech-model-notices.md"]) {
+    await copyFile(path.join(REPO_ROOT, notice), path.join(daemonDir, path.basename(notice)));
+  }
   for (const workspace of DAEMON_WORKSPACES) {
     const source = path.join(REPO_ROOT, workspace);
     const target = path.join(daemonDir, workspace);

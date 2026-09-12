@@ -1,5 +1,41 @@
 # Changelog
 
+## Unreleased
+
+- Make Companion optional and off by default on each device. Add explicit Start,
+  Mute, End and Minimize controls with a persistent active indicator; disabling it
+  removes launch controls and releases audio without stopping coding tasks.
+- Add Codex subscription orchestration alongside Claude, with explicit API opt-in,
+  live authentication/readiness checks and bounded conversation context.
+- Use Piper LJSpeech as the default local English voice, separate recognition and
+  synthesis workers, and prepare the next segment during playback. Preserve
+  explicitly selected Kokoro voices.
+- Fix startup/stop races, typed-message acknowledgement and retry deduplication,
+  backend cancellation, stale audio and playback-based conversation history.
+- Resume active Companion conversations after daemon reconnection, retaining local
+  foreground capture and mute state. End during an outage or pending reconnect
+  cancels resumption. Bound Codex control requests and reject native voice startup
+  after cancellation.
+- Persist delegated job receipts/results and follow worker/permission events across
+  reconnects. Add voice access to existing permission decisions and conversation End.
+- Keep unheard local Companion results pending after model, synthesis, playback or
+  receipt-write failure. Retry on user input or reconnect without rerunning workers
+  or continuously consuming subscription allowance.
+- Reject outstanding Codex RPCs and clear their timers when disposing the transport,
+  so an interrupted request cannot keep a completed Companion process alive.
+- Add an explicit Codex WebRTC voice preview and reproducible subscription probes.
+  Immediate and delayed Claude worker results returned spoken audio on the tested
+  Linux account. Native delivery receipts and broader account/device qualification
+  remain open.
+- Add iOS background-audio configuration and Android microphone foreground service
+  with an End notification action. Native app rebuilds and physical-device validation
+  are required; this does not establish phone-in-pocket reliability.
+- Record implementation, measurements and remaining release gates in
+  [Companion validation](docs/companion-validation.md).
+- Add an Android low-memory test build option and independent development app ID
+  for a standalone APK that can coexist with production. Preserve license and
+  speech-model notices in standalone daemon bundles.
+
 ## 0.2.11 - 2026-09-11
 
 - Fix local speech loading when npm hoists the native Sherpa library away from

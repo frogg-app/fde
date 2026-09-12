@@ -1,3 +1,5 @@
+import { createCompanionNativeVoice, type CompanionNativeVoice } from "./native-voice.js";
+import { randomUUID } from "node:crypto";
 import type { Logger } from "pino";
 import type {
   CompanionNotebook as CompanionNotebookPayload,
@@ -18,6 +20,7 @@ import {
   COMPANION_BACKEND_MISSING_REASON_CODE,
   type CompanionApiModelConfig,
   type CompanionCliModelConfig,
+  type CompanionCodexModelConfig,
   type CompanionModelConfig,
 } from "./model-config.js";
 import {
@@ -64,9 +67,14 @@ export interface CompanionSessionHost {
 export interface CompanionToolFactoryInput {
   deferredJobs: CompanionDeferredJobs;
   logger: Logger;
+  conversationId?: string;
+  endConversation?: () => void;
 }
 
-export type CompanionAvailableModelConfig = CompanionApiModelConfig | CompanionCliModelConfig;
+export type CompanionAvailableModelConfig =
+  | CompanionApiModelConfig
+  | CompanionCliModelConfig
+  | CompanionCodexModelConfig;
 
 export interface CompanionBackendFactoryInput {
   config: CompanionAvailableModelConfig;
@@ -82,6 +90,14 @@ export interface CompanionBackendFactoryInput {
  */
 export interface CompanionRuntime {
   capability: ServerCapabilityState;
+  refresh?: () => Promise<void>;
+  nativeVoicePreview?: boolean;
+  cwd?: string;
+  onCapabilityChange?: () => void;
+  jobs?: CompanionDeferredJobs;
+  acceptedMessages?: Pick<Set<string>, "has"> & { add(id: string): void };
+  activeSession?: string;
+  speechReadiness?: () => { available: boolean; reasonCode: string; retryable: boolean };
   modelConfig: CompanionModelConfig;
   notebook: CompanionNotebookStore;
   fillers: CompanionFillerBank;
@@ -115,6 +131,7 @@ export function emitCompanionStartResponse(
   emit: (msg: SessionOutboundMessage) => void,
   requestId: string,
   refusal: CompanionStartRefusal | null,
+  sessionId?: string,
 ): void {
   emit({
     type: "companion.session.start.response",
@@ -123,6 +140,7 @@ export function emitCompanionStartResponse(
       accepted: refusal === null,
       reasonCode: refusal?.reasonCode ?? null,
       retryable: refusal?.retryable ?? false,
+      ...(refusal === null && sessionId ? { sessionId } : {}),
     },
   });
 }
@@ -152,17 +170,40 @@ function toNotebookPayload(notebook: CompanionNotebook): CompanionNotebookPayloa
  * state, and barge-in. Speech input reuses the voice-mode turn controller
  * wholesale — VAD, streaming STT and endpointing are the same problem there.
  */
+interface NativeVoiceStartInput {
+  requestId: string;
+  sdp: string;
+  tools: CompanionTool[];
+  deferredJobs: CompanionDeferredJobs;
+  generation: number;
+}
+
+type CompanionTurnOutcome = "delivered" | "interrupted" | "failed" | "silent";
+
 export class CompanionSession {
   private readonly host: CompanionSessionHost;
   private readonly logger: Logger;
   private readonly runtime: CompanionRuntime;
+  private readonly resolveTts: () => TextToSpeechProvider | null;
   private readonly resolveStt: () => SpeechToTextProvider | null;
   private readonly resolveTurnDetection: () => TurnDetectionProvider | null;
   private readonly sttLanguage: string;
   private readonly ttsManager: TTSManager;
   private readonly stallGuard: CompanionStallGuard;
 
+  private readonly ownerId = randomUUID();
+  private nativeVoice: CompanionNativeVoice | null = null;
   private started = false;
+  private generation = 0;
+  private wireSessionId = randomUUID();
+  private wireTurnId = 0;
+  private runningTurn = false;
+  private readonly nativeJobHandoffs = new Set<string>();
+  private readonly pendingJobs = new Map<string, CompanionDeferredJob>();
+  /** Retry unheard updates after user input, without an inference retry loop. */
+  private readonly retryJobs = new Map<string, CompanionDeferredJob>();
+  private readonly acceptedMessages: Pick<Set<string>, "has"> & { add(id: string): void };
+  private starting: Promise<void> | null = null;
   private turnController: VoiceTurnController | null = null;
   private orchestrator: CompanionOrchestrator | null = null;
   private backend: CompanionBackend | null = null;
@@ -184,7 +225,9 @@ export class CompanionSession {
     this.host = options.host;
     this.logger = options.logger.child({ module: "companion", sessionId: options.sessionId });
     this.runtime = options.runtime;
+    this.acceptedMessages = options.runtime.acceptedMessages ?? new Set<string>();
     this.resolveStt = toResolver(options.stt);
+    this.resolveTts = toResolver(options.tts);
     this.resolveTurnDetection = toResolver(options.turnDetection);
     this.sttLanguage = options.sttLanguage;
     this.ttsManager = new TTSManager(options.sessionId, this.logger, options.tts);
@@ -205,37 +248,113 @@ export class CompanionSession {
       return;
     }
 
-    const refusal = this.refuseStart();
+    if (this.runtime.activeSession && this.runtime.activeSession !== this.ownerId) {
+      this.emitStartResponse(msg.requestId, { reasonCode: "companion_busy", retryable: true });
+      return;
+    }
+    this.runtime.activeSession = this.ownerId;
+    if (this.starting) {
+      await this.starting;
+      this.emitStartResponse(
+        msg.requestId,
+        this.started ? null : { reasonCode: COMPANION_BACKEND_FAILED_REASON_CODE, retryable: true },
+      );
+      return;
+    }
+    this.starting = this.startSession(msg.requestId, msg.voiceTransport?.sdp);
+    try {
+      await this.starting;
+    } finally {
+      this.starting = null;
+      if (!this.started && this.runtime.activeSession === this.ownerId)
+        this.runtime.activeSession = undefined;
+    }
+  }
+
+  private async startSession(requestId: string, sdp?: string): Promise<void> {
+    const generation = ++this.generation;
+    this.wireSessionId = randomUUID();
+    this.wireTurnId = 0;
+    try {
+      await this.runtime.refresh?.();
+    } catch (error) {
+      this.logger.warn({ err: error }, "Companion readiness refresh failed");
+      this.emitStartResponse(requestId, {
+        reasonCode: COMPANION_BACKEND_FAILED_REASON_CODE,
+        retryable: true,
+      });
+      return;
+    }
+    if (generation !== this.generation) {
+      this.emitStartResponse(requestId, {
+        reasonCode: "companion_session_closed",
+        retryable: true,
+      });
+      return;
+    }
+    this.runtime.onCapabilityChange?.();
+    let refusal = this.refuseStart();
+    if (sdp) {
+      refusal = null;
+      if (!this.runtime.nativeVoicePreview || !this.runtime.capability.enabled)
+        refusal = { reasonCode: "companion_native_unavailable", retryable: false };
+    }
     if (refusal) {
       this.logger.info({ reasonCode: refusal.reasonCode }, "Companion session start refused");
-      this.emitStartResponse(msg.requestId, refusal);
+      this.emitStartResponse(requestId, refusal);
       return;
     }
 
+    const deferredJobs =
+      this.runtime.jobs ??
+      new CompanionDeferredJobs({
+        run: this.runtime.runDeferredJob,
+        logger: this.logger,
+      });
+    const tools = this.runtime.createTools({
+      deferredJobs,
+      conversationId: this.wireSessionId,
+      logger: this.logger,
+      endConversation: () => {
+        this.host.emit({
+          type: "companion.input.state",
+          payload: { isSpeaking: false, ended: true, sessionId: this.wireSessionId },
+        });
+        void this.shutdown();
+      },
+    });
+    if (sdp) {
+      await this.startNativeVoice({ requestId, sdp, tools, deferredJobs, generation });
+      return;
+    }
     const model = this.runtime.modelConfig;
     if (model.status !== "available") {
-      this.emitStartResponse(msg.requestId, {
+      this.emitStartResponse(requestId, {
         reasonCode: model.reasonCode,
         retryable: false,
       });
       return;
     }
 
-    const deferredJobs = new CompanionDeferredJobs({
-      run: this.runtime.runDeferredJob,
-      logger: this.logger,
-    });
-    const tools = this.runtime.createTools({ deferredJobs, logger: this.logger });
     const backend = this.runtime.createBackend({ config: model, tools, logger: this.logger });
 
+    this.backend = backend;
     // The CLI backend spends seconds spawning a process and initialising its
     // harness. Opening the session pays that, so no conversational turn does.
     try {
       await backend.warm();
+      if (generation !== this.generation) {
+        await backend.close();
+        this.emitStartResponse(requestId, {
+          reasonCode: "companion_session_closed",
+          retryable: true,
+        });
+        return;
+      }
     } catch (error) {
       this.logger.error({ err: error }, "Companion backend failed to warm");
       await backend.close();
-      this.emitStartResponse(msg.requestId, {
+      this.emitStartResponse(requestId, {
         reasonCode: COMPANION_BACKEND_FAILED_REASON_CODE,
         retryable: true,
       });
@@ -250,10 +369,91 @@ export class CompanionSession {
       notebook: this.runtime.notebook,
     });
 
-    await this.startTurnController();
+    try {
+      await this.startTurnController();
+    } catch (error) {
+      await this.shutdown();
+      this.logger.warn({ err: error }, "Companion microphone setup failed");
+      this.emitStartResponse(requestId, {
+        reasonCode: COMPANION_SPEECH_UNAVAILABLE_REASON_CODE,
+        retryable: true,
+      });
+      return;
+    }
+    if (generation !== this.generation) {
+      await this.turnController?.stop();
+      this.turnController = null;
+      this.emitStartResponse(requestId, {
+        reasonCode: "companion_session_closed",
+        retryable: true,
+      });
+      return;
+    }
     this.started = true;
-    this.emitStartResponse(msg.requestId, null);
+    this.emitStartResponse(requestId, null);
     await this.emitNotebook();
+    for (const job of deferredJobs.list())
+      if (job.status !== "running" && !job.announced) this.handleDeferredJob(job);
+  }
+
+  private async startNativeVoice(input: NativeVoiceStartInput): Promise<void> {
+    const { requestId, sdp, tools, deferredJobs, generation } = input;
+    const native = createCompanionNativeVoice({
+      model: "gpt-5.6-luna",
+      tools,
+      cwd: this.runtime.cwd ?? process.cwd(),
+      logger: this.logger,
+      onTranscript: (role, text, isFinal) => {
+        if (generation !== this.generation) return;
+        if (role === "user") this.emitTranscript(text, isFinal);
+        else this.emitReply(text, isFinal);
+      },
+      onError: (error) => {
+        if (generation !== this.generation) return;
+        this.logger.warn({ err: error }, "Companion native voice failed");
+        this.host.emit({
+          type: "companion.input.state",
+          payload: { isSpeaking: false, ended: true, sessionId: this.wireSessionId },
+        });
+        void this.shutdown();
+      },
+    });
+    this.nativeVoice = native;
+    try {
+      const answer = await native.start(sdp);
+      if (generation !== this.generation) {
+        await native.close();
+        this.emitStartResponse(requestId, {
+          reasonCode: "companion_session_closed",
+          retryable: true,
+        });
+        return;
+      }
+      this.started = true;
+      this.unsubscribeJobs = deferredJobs.subscribe((job) => this.handleDeferredJob(job));
+      this.host.emit({
+        type: "companion.session.start.response",
+        payload: {
+          requestId,
+          accepted: true,
+          reasonCode: null,
+          retryable: false,
+          sessionId: this.wireSessionId,
+          sdp: answer,
+          backend: "codex-webrtc",
+        },
+      });
+      await this.emitNotebook();
+      for (const job of deferredJobs.list())
+        if (job.status !== "running" && !job.announced) this.handleDeferredJob(job);
+    } catch (error) {
+      this.logger.warn({ err: error }, "Native Companion failed to start");
+      await native.close();
+      this.emitStartResponse(requestId, {
+        reasonCode: "companion_native_unavailable",
+        retryable: true,
+      });
+    }
   }
 
   async handleSessionStop(
@@ -287,12 +487,40 @@ export class CompanionSession {
     msg: Extract<SessionInboundMessage, { type: "companion.message.send.request" }>,
   ): Promise<void> {
     const text = msg.text.trim();
-    if (!this.orchestrator || !text) {
-      return;
+    const duplicate = this.acceptedMessages.has(msg.requestId);
+    let reasonCode: string | null = null;
+    if (!duplicate) {
+      if (!this.started || !this.orchestrator) reasonCode = "companion_session_closed";
+      else if (!text) reasonCode = "companion_message_empty";
     }
+    if (!reasonCode && !duplicate) {
+      try {
+        this.acceptedMessages.add(msg.requestId);
+      } catch (error) {
+        this.logger.error({ err: error }, "Companion acceptance could not be persisted");
+        this.host.emit({
+          type: "companion.message.send.response",
+          payload: {
+            requestId: msg.requestId,
+            accepted: false,
+            reasonCode: "companion_receipt_failed",
+          },
+        });
+        return;
+      }
+    }
+    this.host.emit({
+      type: "companion.message.send.response",
+      payload: { requestId: msg.requestId, accepted: reasonCode === null, reasonCode },
+    });
+    if (reasonCode || duplicate) return;
     this.emitTranscript(text, true);
+    this.bargeIn();
+    this.emitInputState(false);
     this.stallGuard.arm();
-    await this.enqueueTurn(text);
+    await this.enqueueTurn(text).catch((error) =>
+      this.logger.warn({ err: error }, "Companion message failed"),
+    );
   }
 
   async handleNotebookFetch(
@@ -317,14 +545,25 @@ export class CompanionSession {
     if (!this.runtime.capability.enabled) {
       return { reasonCode: COMPANION_DISABLED_REASON_CODE, retryable: false };
     }
-    if (!this.resolveStt() || !this.resolveTurnDetection()) {
+    const readiness = this.runtime.speechReadiness?.();
+    if (readiness && !readiness.available)
+      return {
+        reasonCode: COMPANION_SPEECH_UNAVAILABLE_REASON_CODE,
+        retryable: readiness.retryable,
+      };
+    if (!this.resolveTts() || !this.resolveStt() || !this.resolveTurnDetection()) {
       return { reasonCode: COMPANION_SPEECH_UNAVAILABLE_REASON_CODE, retryable: true };
     }
     return null;
   }
 
   private emitStartResponse(requestId: string, refusal: CompanionStartRefusal | null): void {
-    emitCompanionStartResponse((msg) => this.host.emit(msg), requestId, refusal);
+    emitCompanionStartResponse(
+      (msg) => this.host.emit(msg),
+      requestId,
+      refusal,
+      this.wireSessionId,
+    );
   }
 
   private async startTurnController(): Promise<void> {
@@ -334,6 +573,7 @@ export class CompanionSession {
       throw new Error("Companion speech providers disappeared between the check and the start");
     }
 
+    const generation = this.generation;
     const controller = createVoiceTurnController({
       logger: this.logger.child({ component: "voice-turn-controller" }),
       turnDetection,
@@ -346,22 +586,24 @@ export class CompanionSession {
         // user for the best part of a second -- and never stop at all when the
         // recogniser returned nothing usable.
         onSpeechStarted: async () => {
+          if (generation !== this.generation) return;
           this.logger.debug("Companion VAD speech_started");
           this.isUserSpeaking = true;
-          this.emitInputState(true);
           this.bargeIn();
+          this.emitInputState(true);
         },
         onPartialTranscript: async ({ transcript }) => {
-          this.emitInputState(true);
+          if (generation !== this.generation) return;
           this.emitTranscript(transcript, false);
-          this.bargeIn();
         },
         onSpeechStopped: async () => {
+          if (generation !== this.generation) return;
           this.isUserSpeaking = false;
           this.emitInputState(false);
           this.stallGuard.arm();
         },
         onFinalTranscript: async ({ transcript, isLowConfidence }) => {
+          if (generation !== this.generation) return;
           const text = isLowConfidence ? "" : transcript.trim();
           if (!text) {
             this.stallGuard.cancel();
@@ -376,8 +618,9 @@ export class CompanionSession {
       },
     });
 
-    await controller.start();
     this.turnController = controller;
+    await controller.start();
+    if (generation !== this.generation) await controller.stop();
   }
 
   /**
@@ -386,35 +629,66 @@ export class CompanionSession {
    */
   private bargeIn(): void {
     this.stallGuard.cancel();
+    this.wireTurnId += 1;
     this.turnAbort.abort();
     this.ttsManager.cancelPendingPlaybacks("companion barge-in");
   }
 
-  private enqueueTurn(text: string): Promise<void> {
-    const next = this.turnQueue.then(
-      () => this.runTurn(text),
-      () => this.runTurn(text),
+  private enqueueTurn(
+    text: string,
+    origin: "user" | "announcement" = "user",
+  ): Promise<CompanionTurnOutcome> {
+    const generation = this.generation;
+    const turnId = this.wireTurnId;
+    const run = (): Promise<CompanionTurnOutcome> => {
+      const superseded = origin === "announcement" && turnId !== this.wireTurnId;
+      if (generation !== this.generation || superseded) {
+        this.runningTurn = false;
+        return Promise.resolve("interrupted");
+      }
+      return this.runTurn(text);
+    };
+    const next = this.turnQueue.then(run, run);
+    this.turnQueue = next.then(
+      () => undefined,
+      () => undefined,
     );
-    this.turnQueue = next.catch(() => undefined);
+    if (origin === "user") {
+      const resumeUpdates = () => {
+        if (generation !== this.generation) return;
+        for (const [id, job] of this.retryJobs)
+          if (!this.pendingJobs.has(id)) this.pendingJobs.set(id, job);
+        this.retryJobs.clear();
+        this.flushJobs();
+      };
+      void next.then(resumeUpdates, resumeUpdates);
+    }
     return next;
   }
 
-  private async runTurn(text: string): Promise<void> {
+  private async runTurn(text: string): Promise<CompanionTurnOutcome> {
     const orchestrator = this.orchestrator;
     if (!orchestrator) {
-      return;
+      return "interrupted";
     }
 
+    const generation = this.generation;
+    this.runningTurn = true;
     this.turnAbort = new AbortController();
     const signal = this.turnAbort.signal;
+    let speechFailed = false;
+    let modelCompleted = false;
     const stream = createCompanionSpeechStream({
       sink: this.createSink(signal),
       onSpeaking: () => this.stallGuard.cancel(),
-      onError: (error) => this.logger.warn({ err: error }, "Companion segment failed to speak"),
+      onError: (error) => {
+        speechFailed = true;
+        this.logger.warn({ err: error }, "Companion segment failed to speak");
+      },
       signal,
     });
     this.spokenText = "";
-    const turn = orchestrator.turn(text, () => this.spokenText);
+    const turn = orchestrator.turn(text, () => this.spokenText, signal);
     let reply = "";
     try {
       for await (const event of turn) {
@@ -428,6 +702,7 @@ export class CompanionSession {
           continue;
         }
         if (event.type === "completed") {
+          modelCompleted = true;
           reply = event.reply;
         }
       }
@@ -436,16 +711,22 @@ export class CompanionSession {
         this.emitReply(reply, true);
       }
     } catch (error) {
+      modelCompleted = false;
       await this.speakTurnFailure(error, stream, signal);
     } finally {
       await turn.return();
       this.stallGuard.cancel();
       await stream.idle();
+      orchestrator.reconcileLastReply(this.spokenText);
+      this.runningTurn = false;
     }
 
     if (!signal.aborted) {
       await this.emitNotebook();
     }
+    if (signal.aborted || generation !== this.generation) return "interrupted";
+    if (!modelCompleted || speechFailed) return "failed";
+    return this.spokenText ? "delivered" : "silent";
   }
 
   private async speakTurnFailure(
@@ -470,19 +751,20 @@ export class CompanionSession {
   }
 
   private createSink(signal: AbortSignal): CompanionSpeechSink {
+    const forward = (msg: SessionOutboundMessage) => {
+      if (!signal.aborted) this.forwardAudio(msg);
+    };
     return {
-      speak: (text) => {
-        // Counted as heard the moment it is handed to TTS. A segment cut off
-        // part-way through playback is still mostly heard, so crediting it is
-        // closer to the truth than dropping it -- and far closer than crediting
-        // everything the model generated.
-        this.spokenText += this.spokenText ? ` ${text}` : text;
-        return this.ttsManager.generateAndWaitForPlayback(
-          text,
-          (msg) => this.forwardAudio(msg),
-          signal,
-          true,
-        );
+      prepare: async (text) => {
+        const play = await this.ttsManager.prepareSpeech(text, forward, signal);
+        return async () => {
+          await play();
+          if (!signal.aborted) this.spokenText += this.spokenText ? ` ${text}` : text;
+        };
+      },
+      speak: async (text) => {
+        await this.ttsManager.generateAndWaitForPlayback(text, forward, signal, true);
+        if (!signal.aborted) this.spokenText += this.spokenText ? ` ${text}` : text;
       },
     };
   }
@@ -509,7 +791,15 @@ export class CompanionSession {
     }
     this.host.emit({
       type: "companion.audio.output",
-      payload: { audio, format, id, groupId, isLastChunk },
+      payload: {
+        audio,
+        format,
+        id,
+        groupId,
+        isLastChunk,
+        sessionId: this.wireSessionId,
+        turnId: this.wireTurnId,
+      },
     });
   }
 
@@ -519,8 +809,10 @@ export class CompanionSession {
    * TTSManager playback, so it is swallowed rather than warned about.
    */
   private async speakFiller(): Promise<void> {
+    const signal = this.turnAbort.signal;
+    const generation = this.generation;
     const filler = await this.runtime.fillers.take();
-    if (!filler || this.turnAbort.signal.aborted || this.isUserSpeaking) {
+    if (generation !== this.generation || !filler || signal.aborted || this.isUserSpeaking) {
       return;
     }
     const groupId = `companion-filler-${Date.now()}`;
@@ -533,6 +825,8 @@ export class CompanionSession {
         id: `${groupId}:0`,
         groupId,
         isLastChunk: true,
+        sessionId: this.wireSessionId,
+        turnId: this.wireTurnId,
       },
     });
   }
@@ -547,22 +841,89 @@ export class CompanionSession {
         summary: job.summary,
       },
     });
-    if (job.status === "running") {
+    if (job.status === "running" && !job.summary) return;
+    if (this.nativeVoice) {
+      const handoffId = `${job.jobId}:${job.status}:${job.summary ?? ""}`;
+      if (this.nativeJobHandoffs.has(handoffId)) return;
+      this.nativeJobHandoffs.add(handoffId);
+      // An append acknowledgement is not proof the audio was delivered. Keep results unannounced
+      // for reconnection until native transcript/playback acknowledgement is qualified.
+      void this.nativeVoice
+        .appendSpeech(
+          job.status === "running"
+            ? `${job.summary}. Ask about this specific permission.`
+            : describeSettledJob(job),
+        )
+        .catch((error: unknown) => {
+          this.nativeJobHandoffs.delete(handoffId);
+          this.logger.warn({ err: error }, "Native result handoff failed");
+        });
       return;
     }
-    void this.enqueueTurn(describeSettledJob(job));
+    this.retryJobs.delete(job.jobId);
+    this.pendingJobs.set(job.jobId, { ...job });
+    this.flushJobs();
+  }
+
+  private flushJobs(): void {
+    if (!this.started || this.isUserSpeaking || this.runningTurn || this.pendingJobs.size === 0)
+      return;
+    const jobs = Array.from(this.pendingJobs.values()).sort(
+      (a, b) => Number(b.status === "running") - Number(a.status === "running"),
+    );
+    this.pendingJobs.clear();
+    const generation = this.generation;
+    const text = jobs
+      .map((job) =>
+        job.status === "running"
+          ? `${job.summary}. Ask the user about this specific permission.`
+          : describeSettledJob(job),
+      )
+      .join("\n");
+    this.runningTurn = true;
+    const retainUnheard = () => {
+      if (generation !== this.generation) return;
+      for (const job of jobs)
+        if (!this.pendingJobs.has(job.jobId)) this.retryJobs.set(job.jobId, job);
+    };
+    void this.enqueueTurn(text, "announcement")
+      .then((outcome) => {
+        if (outcome !== "delivered") {
+          retainUnheard();
+          return undefined;
+        }
+        for (const job of jobs) {
+          if (generation !== this.generation) continue;
+          if (job.status !== "running") this.runtime.jobs?.markAnnounced(job.jobId);
+        }
+        return undefined;
+      })
+      .catch((error: unknown) => {
+        retainUnheard();
+        this.logger.warn({ err: error }, "Companion announcement failed");
+      })
+      .finally(() => this.flushJobs());
   }
 
   private emitInputState(isSpeaking: boolean): void {
-    this.host.emit({ type: "companion.input.state", payload: { isSpeaking } });
+    this.host.emit({
+      type: "companion.input.state",
+      payload: { isSpeaking, sessionId: this.wireSessionId, turnId: this.wireTurnId },
+    });
   }
 
   private emitTranscript(text: string, isFinal: boolean): void {
-    this.host.emit({ type: "companion.transcript", payload: { text, isFinal } });
+    this.host.emit({
+      type: "companion.transcript",
+      payload: { text, isFinal, sessionId: this.wireSessionId, turnId: this.wireTurnId },
+    });
   }
 
   private emitReply(text: string, isFinal: boolean): void {
-    this.host.emit({ type: "companion.reply", payload: { text, isFinal } });
+    this.host.emit({
+      type: "companion.reply",
+      payload: { text, isFinal, sessionId: this.wireSessionId, turnId: this.wireTurnId },
+    });
   }
 
   private async emitNotebook(): Promise<void> {
@@ -574,18 +935,32 @@ export class CompanionSession {
   }
 
   private async shutdown(): Promise<void> {
+    if (this.runtime.activeSession === this.ownerId) this.runtime.activeSession = undefined;
+    this.generation += 1;
+    const native = this.nativeVoice;
+    this.nativeVoice = null;
     this.bargeIn();
     this.unsubscribeJobs?.();
     this.unsubscribeJobs = null;
     this.orchestrator = null;
     this.started = false;
+    this.pendingJobs.clear();
+    this.retryJobs.clear();
+    this.nativeJobHandoffs.clear();
+    this.isUserSpeaking = false;
 
     const backend = this.backend;
     this.backend = null;
-    await backend?.close();
-
     const controller = this.turnController;
     this.turnController = null;
-    await controller?.stop();
+    const cleanup = Promise.allSettled([backend?.close(), controller?.stop(), native?.close()]);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    await Promise.race([
+      cleanup,
+      new Promise<void>((resolve) => {
+        timer = setTimeout(resolve, 2500);
+      }),
+    ]);
+    clearTimeout(timer);
   }
 }

@@ -22,7 +22,7 @@ The daemon resolves every voice feature the same way (`server/speech/speech-conf
 | Voice mode    | `features.voiceMode.enabled`           | `PASEO_VOICE_MODE_ENABLED`  |
 | Spoken alerts | `features.voice.notifications.enabled` | `PASEO_VOICE_NOTIFICATIONS` |
 
-Spoken alerts also need a text-to-speech provider: the local Kokoro model by default, or
+Spoken alerts also need a text-to-speech provider: local Piper LJSpeech by default, or
 OpenAI when `features.voiceMode.tts.provider` is `openai`. When TTS is not ready the daemon
 sends the ordinary text notification and advertises nothing; the app never shows a Play
 button it cannot honour. A daemon with spoken alerts available sets

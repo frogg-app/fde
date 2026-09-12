@@ -154,19 +154,22 @@ export async function initializeLocalSpeechServices(params: {
     models: localModels,
   });
 
-  const workerClient = localConfig
-    ? new LocalSpeechWorkerClient({
-        logger,
-        config: {
-          modelsDir: localConfig.modelsDir,
-          voiceSttModel: localModels.voiceLocalSttModel,
-          dictationSttModel: localModels.dictationLocalSttModel,
-          voiceTtsModel: localModels.voiceLocalTtsModel,
-          voiceTtsSpeakerId: speechConfig?.local?.models.voiceTtsSpeakerId,
-          voiceTtsSpeed: speechConfig?.local?.models.voiceTtsSpeed,
-        },
-      })
-    : null;
+  function createWorker(): LocalSpeechWorkerClient | null {
+    if (!localConfig) return null;
+    return new LocalSpeechWorkerClient({
+      logger,
+      config: {
+        modelsDir: localConfig.modelsDir,
+        voiceSttModel: localModels.voiceLocalSttModel,
+        dictationSttModel: localModels.dictationLocalSttModel,
+        voiceTtsModel: localModels.voiceLocalTtsModel,
+        voiceTtsSpeakerId: localConfig.models.voiceTtsSpeakerId,
+        voiceTtsSpeed: localConfig.models.voiceTtsSpeed,
+      },
+    });
+  }
+  const workerClient = createWorker();
+  const ttsWorkerClient = createWorker();
 
   if (isLocalProviderEnabled(providers.voiceTurnDetection)) {
     if (workerClient) {
@@ -193,8 +196,8 @@ export async function initializeLocalSpeechServices(params: {
   }
 
   if (isLocalProviderEnabled(providers.voiceTts)) {
-    if (workerClient) {
-      localVoiceTtsProvider = initializeLocalVoiceTts({ client: workerClient });
+    if (ttsWorkerClient) {
+      localVoiceTtsProvider = initializeLocalVoiceTts({ client: ttsWorkerClient });
     } else {
       warnLocalConfigMissing(logger, "voice TTS");
     }
@@ -205,6 +208,7 @@ export async function initializeLocalSpeechServices(params: {
 
   const cleanup = () => {
     workerClient?.shutdown();
+    ttsWorkerClient?.shutdown();
   };
 
   return {

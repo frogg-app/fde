@@ -27,8 +27,8 @@ export function useSidebarNavItems(): UseSidebarNavItemsReturn {
       resolveSidebarNavItems({
         pluginGroups,
         preferences,
-      }),
-    [pluginGroups, preferences],
+      }).filter((item) => item.key !== "companion" || settings.companionEnabled),
+    [pluginGroups, preferences, settings.companionEnabled],
   );
 
   const setVisible = useCallback(

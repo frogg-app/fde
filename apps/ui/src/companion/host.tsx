@@ -1,5 +1,5 @@
 import { Mic, MicOff, SendHorizontal, Square } from "lucide-react-native";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 import { StyleSheet, withUnistyles } from "react-native-unistyles";
@@ -16,7 +16,12 @@ import { navigateToAgent } from "@/utils/navigate-to-agent";
 import { buildCompanionTopicRows } from "./topic-rows";
 import { MicOrb } from "./mic-orb";
 import { getCompanionRuntime, getCompanionSession } from "./session-registry";
-import { deriveCompanionMicState, useCompanionStore } from "./store";
+import {
+  deriveCompanionMicState,
+  useCompanionStore,
+  type CompanionSession,
+  type CompanionMicState,
+} from "./store";
 import { TopicsStrip } from "./topics-strip";
 import { useCompanionHost } from "./use-companion-host";
 
@@ -40,27 +45,64 @@ const sendIcon = <ThemedSend size={16} />;
  */
 export function CompanionHost() {
   const { t } = useTranslation();
+  const enabled = useSettings((settings) => settings.companionEnabled);
+  const isMinimized = useCompanionStore((state) => state.isMinimized);
+  const session = useCompanionStore((state) => state.session);
+  const open = useCompanionStore((state) => state.open);
   const isOpen = useCompanionStore((state) => state.isOpen);
   const close = useCompanionStore((state) => state.close);
   const host = useCompanionHost();
   const header = useMemo<SheetHeader>(() => ({ title: t("companion.title") }), [t]);
 
+  useEffect(() => {
+    if (!enabled || (!isOpen && !isMinimized)) {
+      void getCompanionRuntime().stop();
+    }
+    if (!enabled && isOpen) close();
+  }, [enabled, isOpen, isMinimized, close]);
+
+  useEffect(
+    () => () => {
+      void getCompanionRuntime().stop();
+    },
+    [],
+  );
+
+  const end = useCallback(() => {
+    close();
+    void getCompanionRuntime().stop();
+  }, [close]);
+  if (!enabled) return null;
   return (
-    <AdaptiveModalSheet
-      header={header}
-      visible={isOpen}
-      onClose={close}
-      testID="companion-sheet"
-      closeButtonTestID="companion-close"
-    >
-      {isOpen ? (
-        <CompanionBody
-          serverId={host.serverId}
-          unavailableReason={host.unavailableReason}
-          isAvailable={host.isAvailable}
-        />
+    <>
+      {isMinimized && (session.status === "open" || session.status === "reconnecting") ? (
+        <View style={styles.activeIndicator} testID="companion-active-indicator">
+          <Button size="sm" onPress={open}>
+            {session.status === "reconnecting"
+              ? t("agentPanel.states.reconnecting")
+              : t("companion.actions.resume")}
+          </Button>
+          <Button size="sm" variant="ghost" onPress={end}>
+            {t("companion.actions.stop")}
+          </Button>
+        </View>
       ) : null}
-    </AdaptiveModalSheet>
+      <AdaptiveModalSheet
+        header={header}
+        visible={isOpen}
+        onClose={close}
+        testID="companion-sheet"
+        closeButtonTestID="companion-close"
+      >
+        {isOpen ? (
+          <CompanionBody
+            serverId={host.serverId}
+            unavailableReason={host.unavailableReason}
+            isAvailable={host.isAvailable}
+          />
+        ) : null}
+      </AdaptiveModalSheet>
+    </>
   );
 }
 
@@ -89,6 +131,7 @@ function CompanionBody({ serverId, isAvailable, unavailableReason }: CompanionBo
     [notebookEntries, serverId, hostSession],
   );
   const send = useCompanionStore((state) => state.send);
+  const minimize = useCompanionStore((state) => state.minimize);
   const sessionStarting = useCompanionStore((state) => state.sessionStarting);
   const sessionStopping = useCompanionStore((state) => state.sessionStopping);
   const dismissSessionError = useCompanionStore((state) => state.dismissSessionError);
@@ -100,42 +143,37 @@ function CompanionBody({ serverId, isAvailable, unavailableReason }: CompanionBo
   // value rather than writing an empty string back through the prop.
   const [draftResetKey, setDraftResetKey] = useState(0);
   const micState = deriveCompanionMicState({ session, isMuted, isSpeaking, isThinking });
-  const isBusy = session.status === "starting" || session.status === "stopping";
+  const isReconnecting = session.status === "reconnecting";
+  const isBusy = ["starting", "stopping", "reconnecting"].includes(session.status);
+  const canStop = ["open", "starting", "reconnecting"].includes(session.status);
   const isSessionOpen = session.status === "open";
 
   const start = useCallback(() => {
     if (!serverId) return;
     const adapter = getCompanionSession(serverId);
     if (!adapter) return;
-    sessionStarting();
-    void getCompanionRuntime().start(adapter);
-  }, [serverId, sessionStarting]);
+    sessionStarting(serverId);
+    void getCompanionRuntime().start(adapter, settings.companionNativeVoice);
+  }, [serverId, sessionStarting, settings.companionNativeVoice]);
 
   const stop = useCallback(() => {
     sessionStopping();
     void getCompanionRuntime().stop();
   }, [sessionStopping]);
 
-  // Opening the surface opens the conversation, because the Companion's whole
-  // premise is that you talk to it. Users who would rather press first turn this
-  // off in settings.
+  const startRequested = useRef(false);
+  // Opening is a user action. A stopped session must not restart on status changes.
   useEffect(() => {
-    if (!settings.companionAutoStart) return;
-    if (!isAvailable || session.status !== "closed") return;
-    start();
-  }, [isAvailable, session.status, settings.companionAutoStart, start]);
-
-  // The Companion stops with the surface; a session left running would keep the
-  // microphone open behind a closed sheet.
-  useEffect(() => {
-    return () => {
-      if (getCompanionRuntime().isActive()) {
-        void getCompanionRuntime().stop();
-      }
-    };
-  }, []);
+    if (startRequested.current) return;
+    startRequested.current = true;
+    if (isAvailable && useCompanionStore.getState().session.status === "closed") start();
+  }, [isAvailable, start]);
 
   const toggleMute = useCallback(() => getCompanionRuntime().toggleMute(), []);
+  const pressOrb = useCallback(() => {
+    if (isSessionOpen) toggleMute();
+    else if (!isBusy) start();
+  }, [isSessionOpen, isBusy, toggleMute, start]);
 
   const submitDraft = useCallback(() => {
     const text = draft.trim();
@@ -156,7 +194,7 @@ function CompanionBody({ serverId, isAvailable, unavailableReason }: CompanionBo
     navigateToAgent(input);
   }, []);
 
-  if (!isAvailable) {
+  if (!isAvailable && !isReconnecting) {
     return (
       <Alert
         variant="warning"
@@ -175,11 +213,11 @@ function CompanionBody({ serverId, isAvailable, unavailableReason }: CompanionBo
           volume={volume}
           speakingVolume={speakingVolume}
           accessibilityLabel={t(`companion.micState.${micState}`)}
-          onPress={isSessionOpen ? toggleMute : start}
+          onPress={pressOrb}
           testID="companion-mic-orb"
         />
         <Text style={styles.micStateLabel} testID="companion-mic-state">
-          {isBusy ? t("companion.status.connecting") : t(`companion.micState.${micState}`)}
+          {t(companionStatusLabel(session.status, micState))}
         </Text>
       </View>
 
@@ -219,6 +257,9 @@ function CompanionBody({ serverId, isAvailable, unavailableReason }: CompanionBo
       ) : null}
 
       <View style={styles.controls}>
+        <Button size="sm" variant="ghost" disabled={!isSessionOpen} onPress={minimize}>
+          {t("companion.actions.minimize")}
+        </Button>
         <Button
           size="sm"
           variant="ghost"
@@ -234,7 +275,7 @@ function CompanionBody({ serverId, isAvailable, unavailableReason }: CompanionBo
           variant="ghost"
           leftIcon={stopIcon}
           onPress={stop}
-          disabled={!isSessionOpen}
+          disabled={!canStop}
           loading={session.status === "stopping"}
           testID="companion-stop"
         >
@@ -242,28 +283,30 @@ function CompanionBody({ serverId, isAvailable, unavailableReason }: CompanionBo
         </Button>
       </View>
 
-      <View style={styles.composer}>
-        <AdaptiveTextInput
-          initialValue=""
-          resetKey={draftResetKey}
-          onChangeText={setDraft}
-          onSubmitEditing={submitDraft}
-          placeholder={t("companion.compose.placeholder")}
-          accessibilityLabel={t("companion.compose.placeholder")}
-          style={styles.composerInput}
-          testID="companion-compose-input"
-        />
-        <Button
-          size="sm"
-          variant="secondary"
-          leftIcon={sendIcon}
-          onPress={submitDraft}
-          disabled={draft.trim().length === 0 || send.status === "pending"}
-          loading={send.status === "pending"}
-          accessibilityLabel={t("companion.actions.send")}
-          testID="companion-send"
-        />
-      </View>
+      {!settings.companionNativeVoice ? (
+        <View style={styles.composer}>
+          <AdaptiveTextInput
+            initialValue=""
+            resetKey={draftResetKey}
+            onChangeText={setDraft}
+            onSubmitEditing={submitDraft}
+            placeholder={t("companion.compose.placeholder")}
+            accessibilityLabel={t("companion.compose.placeholder")}
+            style={styles.composerInput}
+            testID="companion-compose-input"
+          />
+          <Button
+            size="sm"
+            variant="secondary"
+            leftIcon={sendIcon}
+            onPress={submitDraft}
+            disabled={draft.trim().length === 0 || send.status === "pending"}
+            loading={send.status === "pending"}
+            accessibilityLabel={t("companion.actions.send")}
+            testID="companion-send"
+          />
+        </View>
+      ) : null}
 
       {send.status === "sent" ? (
         <Text style={styles.sendStatus} testID="companion-send-sent">
@@ -302,6 +345,12 @@ function CompanionBody({ serverId, isAvailable, unavailableReason }: CompanionBo
 }
 
 /** The partial is provisional, so it reads muted until the final replaces it. */
+function companionStatusLabel(status: CompanionSession["status"], micState: CompanionMicState) {
+  if (status === "reconnecting") return "agentPanel.states.reconnecting";
+  if (status === "starting" || status === "stopping") return "companion.status.connecting";
+  return `companion.micState.${micState}`;
+}
+
 function Transcript({ partial, final }: { partial: string; final: string }) {
   if (partial.length > 0) {
     return (
@@ -321,6 +370,16 @@ function Transcript({ partial, final }: { partial: string; final: string }) {
 }
 
 const styles = StyleSheet.create((theme) => ({
+  activeIndicator: {
+    position: "absolute",
+    bottom: 16,
+    right: 16,
+    zIndex: 100,
+    flexDirection: "row",
+    backgroundColor: theme.colors.surface0,
+    padding: 8,
+    borderRadius: 12,
+  },
   body: {
     gap: theme.spacing[3],
   },

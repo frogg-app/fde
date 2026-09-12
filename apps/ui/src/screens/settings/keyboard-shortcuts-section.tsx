@@ -1,3 +1,4 @@
+import { useSettings } from "@/hooks/use-settings";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { View, Text, type PressableStateCallbackType } from "react-native";
@@ -336,7 +337,15 @@ export function KeyboardShortcutsSection() {
   const isFocused = useIsFocused();
   const isMac = getShortcutOs() === "mac";
   const isDesktopApp = getIsElectronRuntime();
-  const sections = buildKeyboardShortcutHelpSections({ isMac, isDesktop: isDesktopApp });
+  const companionEnabled = useSettings((settings) => settings.companionEnabled);
+  const sections = buildKeyboardShortcutHelpSections({ isMac, isDesktop: isDesktopApp }).map(
+    (section) => ({
+      id: section.id,
+      title: section.title,
+      titleKey: section.titleKey,
+      rows: section.rows.filter((row) => companionEnabled || row.id !== "toggle-companion"),
+    }),
+  );
 
   const cancelCapture = useCallback(() => {
     setCapturedCombos([]);

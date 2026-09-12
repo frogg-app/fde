@@ -956,3 +956,10 @@ describe("parseClampedFontSize", () => {
     expect(parseClampedFontSize("abc", { min: 11, max: 24 })).toBeNull();
   });
 });
+
+it("does not enable Companion when migrating the old auto-start preference", async () => {
+  const { normalizeAppSettings } = await import("./storage");
+  expect(normalizeAppSettings({ companionAutoStart: true }).companionEnabled).toBe(false);
+  expect(normalizeAppSettings({ companionEnabled: true }).companionEnabled).toBe(true);
+  expect(normalizeAppSettings({}).companionNativeVoice).toBe(false);
+});

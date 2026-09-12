@@ -1,3 +1,5 @@
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import {
   checkProviderLaunchAvailable,
   resolveProviderLaunch,
@@ -14,6 +16,7 @@ export interface CompanionModelInputs {
   persisted: PersistedConfig;
   /** Whether the Claude Code CLI is installed and can be launched. */
   claudeCliAvailable: boolean;
+  codexCliAvailable?: boolean;
 }
 
 export interface CompanionApiModelConfig {
@@ -30,6 +33,12 @@ export interface CompanionCliModelConfig {
   model: string;
 }
 
+export interface CompanionCodexModelConfig {
+  status: "available";
+  backend: "codex";
+  model: string;
+}
+
 export interface CompanionModelUnavailable {
   status: "unavailable";
   reasonCode: typeof COMPANION_BACKEND_MISSING_REASON_CODE;
@@ -39,6 +48,7 @@ export interface CompanionModelUnavailable {
 export type CompanionModelConfig =
   | CompanionApiModelConfig
   | CompanionCliModelConfig
+  | CompanionCodexModelConfig
   | CompanionModelUnavailable;
 
 // Empty/whitespace env vars (e.g. a copied .env.example with ANTHROPIC_API_KEY=)
@@ -65,28 +75,38 @@ export function resolveCompanionModel(inputs: CompanionModelInputs): string {
   return configured ?? DEFAULT_COMPANION_MODEL;
 }
 
-/**
- * The API path wins whenever a key resolves: it answers roughly a second sooner
- * than the CLI, which pays for a local process, a harness init and no prompt
- * cache. The CLI is the fallback that lets a machine with Claude Code and no
- * key hold a conversation at all.
- */
+/** Subscription authentication is the default; API billing requires an explicit selection. */
 export function resolveCompanionModelConfig(inputs: CompanionModelInputs): CompanionModelConfig {
   const model = resolveCompanionModel(inputs);
   const anthropic = inputs.persisted.providers?.anthropic;
   const apiKey = firstDefined([anthropic?.apiKey, inputs.env.ANTHROPIC_API_KEY]);
-  if (apiKey) {
+  const selection =
+    inputs.persisted.features?.companion?.backend ??
+    inputs.env.PASEO_COMPANION_BACKEND ??
+    "subscription";
+  if (selection === "api" && apiKey) {
     const baseUrl = firstDefined([anthropic?.baseUrl, inputs.env.ANTHROPIC_BASE_URL]);
     return { status: "available", backend: "api", apiKey, baseUrl: baseUrl ?? null, model };
   }
-  if (inputs.claudeCliAvailable) {
+  if ((selection === "subscription" || selection === "claude") && inputs.claudeCliAvailable) {
     return { status: "available", backend: "cli", model };
+  }
+  if ((selection === "subscription" || selection === "codex") && inputs.codexCliAvailable) {
+    return {
+      status: "available",
+      backend: "codex",
+      model:
+        firstDefined([
+          inputs.persisted.features?.companion?.model,
+          inputs.env.PASEO_COMPANION_MODEL,
+        ]) ?? "gpt-5.6-luna",
+    };
   }
   return {
     status: "unavailable",
     reasonCode: COMPANION_BACKEND_MISSING_REASON_CODE,
     message:
-      "The Companion needs an Anthropic API key or the Claude Code CLI. Set providers.anthropic.apiKey or ANTHROPIC_API_KEY, or install and sign in to Claude Code.",
+      "Sign in to Claude Code or Codex on this daemon. API usage requires explicitly selecting the API backend.",
   };
 }
 
@@ -98,7 +118,17 @@ export async function resolveCompanionModelInputs(params: {
   env: NodeJS.ProcessEnv;
   persisted: PersistedConfig;
 }): Promise<CompanionModelInputs> {
-  return { ...params, claudeCliAvailable: await isClaudeCliAvailable() };
+  const [claudeCliAvailable, codexCliAvailable] = await Promise.all([
+    isClaudeCliAvailable(),
+    checkProviderLaunchAvailable(await resolveProviderLaunch({ defaultBinary: "codex" })).then(
+      (result) => result.available,
+    ),
+  ]);
+  const [claudeSignedIn, codexSignedIn] = await Promise.all([
+    claudeCliAvailable ? probeSubscription("claude") : false,
+    codexCliAvailable ? probeSubscription("codex") : false,
+  ]);
+  return { ...params, claudeCliAvailable: claudeSignedIn, codexCliAvailable: codexSignedIn };
 }
 
 export async function isClaudeCliAvailable(commandConfig?: ProviderCommand): Promise<boolean> {
@@ -108,4 +138,42 @@ export async function isClaudeCliAvailable(commandConfig?: ProviderCommand): Pro
   });
   const availability = await checkProviderLaunchAvailable(launch);
   return availability.available;
+}
+
+async function probeSubscription(provider: "claude" | "codex"): Promise<boolean> {
+  try {
+    const launch = await resolveProviderLaunch({ defaultBinary: provider });
+    const result = await promisify(execFile)(
+      launch.command,
+      [
+        ...launch.args,
+        ...(provider === "claude" ? ["auth", "status", "--json"] : ["login", "status"]),
+      ],
+      {
+        timeout: 5000,
+        windowsHide: true,
+        env: { ...process.env, ANTHROPIC_API_KEY: undefined, OPENAI_API_KEY: undefined },
+      },
+    );
+    if (provider === "codex") return /chatgpt/i.test(`${result.stdout} ${result.stderr}`);
+    const auth: unknown = JSON.parse(result.stdout);
+    return (
+      typeof auth === "object" &&
+      auth !== null &&
+      "loggedIn" in auth &&
+      auth.loggedIn === true &&
+      "authMethod" in auth &&
+      auth.authMethod === "claude.ai"
+    );
+  } catch {
+    return false;
+  }
+}
+
+export function isCompanionNativeVoiceEnabled(persisted: PersistedConfig): boolean {
+  return persisted.features?.companion?.nativeVoicePreview === true;
+}
+
+export function isCompanionNativeVoiceAvailable(inputs: CompanionModelInputs): boolean {
+  return isCompanionNativeVoiceEnabled(inputs.persisted) && inputs.codexCliAvailable === true;
 }

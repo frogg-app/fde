@@ -508,6 +508,14 @@ pub enum SessionMessage {
 pub struct CompanionSessionStartRequest {
     #[serde(rename = "requestId")]
     pub request_id: String,
+    #[serde(rename = "voiceTransport", skip_serializing_if = "Option::is_none")]
+    pub voice_transport: Option<CompanionSessionStartRequestVoiceTransport>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionSessionStartRequestVoiceTransport {
+    pub kind: String,
+    pub sdp: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
