@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # FDE daemon installer for Linux and macOS hosts.
 #
-#   curl -fsSL https://frogg.app/install.sh | bash
+#   installer="$(mktemp)" && curl -fsSL https://frogg.app/install.sh -o "${installer}" && bash "${installer}"; rm -f "${installer}"
 #
 # Installs a self-contained daemon bundle (Node runtime + daemon + CLI) into a
 # versioned directory, links `fde` and `paseo` into a bin directory, and
@@ -24,14 +24,14 @@
 #   FDE_BUNDLE_FILE   install from a local bundle tarball instead of downloading
 #   FDE_NO_SERVICE=1  skip service installation
 #   FDE_NO_MODIFY_PATH=1  leave shell startup files unchanged
-#   FDE_LISTEN        daemon listen address for the service (default: 127.0.0.1:9999)
+#   FDE_LISTEN        daemon listen address for the service (default: 0.0.0.0:9999)
 #   FDE_HOME          daemon state directory for the service (default: ~/.fde)
 set -euo pipefail
 
 FDE_INSTALL_DIR="${FDE_INSTALL_DIR:-${HOME}/.local/share/fde}"
 FDE_BIN_DIR="${FDE_BIN_DIR:-${HOME}/.local/bin}"
 FDE_RELEASE_BASE="${FDE_RELEASE_BASE:-https://github.com/frogg-app/fde/releases}"
-FDE_LISTEN="${FDE_LISTEN:-127.0.0.1:9999}"
+FDE_LISTEN="${FDE_LISTEN:-0.0.0.0:9999}"
 FDE_VERSION="${FDE_VERSION:-}"
 FDE_BUNDLE_FILE="${FDE_BUNDLE_FILE:-}"
 FDE_BUNDLE_URL="${FDE_BUNDLE_URL:-}"
@@ -241,6 +241,7 @@ install_systemd_service() {
   if ! systemctl --user daemon-reload >/dev/null 2>&1; then
     log "systemctl --user is not available in this session; enable the service later with:"
     log "  systemctl --user enable --now ${SERVICE_NAME}"
+    start_detached_daemon
     return
   fi
   systemctl --user enable "${SERVICE_NAME}" >/dev/null 2>&1 || true
@@ -254,6 +255,20 @@ install_systemd_service() {
   if [ "$(id -u)" != "0" ]; then
     log "to keep the daemon running after logout: sudo loginctl enable-linger $(id -un)"
   fi
+}
+
+start_detached_daemon() {
+  local log_dir
+  log_dir="${FDE_INSTALL_DIR}/logs"
+  mkdir -p "${log_dir}"
+  if [ -n "${FDE_HOME}" ]; then
+    nohup env PASEO_LISTEN="${FDE_LISTEN}" PASEO_WEB_UI_ENABLED=true FDE_INSTALL_DIR="${FDE_INSTALL_DIR}" FDE_HOME="${FDE_HOME}" \
+      "${FDE_INSTALL_DIR}/current/bin/fde" daemon start --foreground >> "${log_dir}/fallback-daemon.log" 2>&1 < /dev/null &
+  else
+    nohup env PASEO_LISTEN="${FDE_LISTEN}" PASEO_WEB_UI_ENABLED=true FDE_INSTALL_DIR="${FDE_INSTALL_DIR}" \
+      "${FDE_INSTALL_DIR}/current/bin/fde" daemon start --foreground >> "${log_dir}/fallback-daemon.log" 2>&1 < /dev/null &
+  fi
+  log "started the daemon for this login; its fallback log is ${log_dir}/fallback-daemon.log"
 }
 
 write_launchd_plist() {
@@ -353,10 +368,15 @@ print_next_steps() {
   if [ "${FDE_NO_SERVICE}" = "1" ]; then
     log "no service installed; start the daemon with: fde daemon start --listen ${FDE_LISTEN} --web-ui"
   else
-    log "web UI: http://${host}:${port}/"
     if [ "${host}" = "127.0.0.1" ] || [ "${host}" = "localhost" ]; then
+      log "web UI: http://${host}:${port}/"
       log "the daemon listens on loopback; reach it through an SSH tunnel or re-run with FDE_LISTEN=0.0.0.0:${port}"
     else
+      if [ "${host}" = "0.0.0.0" ] || [ "${host}" = "::" ]; then
+        log "web UI: http://<this-hosts-network-address>:${port}/"
+      else
+        log "web UI: http://${host}:${port}/"
+      fi
       log "the daemon is network-reachable; set a password with: fde daemon set-password"
     fi
   fi

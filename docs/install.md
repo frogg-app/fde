@@ -94,8 +94,13 @@ in?", default yes). A non-interactive run does nothing unless `FDE_AUTOSTART` is
 ## Native install
 
 ```bash
-curl -fsSL https://frogg.app/install.sh | bash
+installer="$(mktemp)" && curl -fsSL https://frogg.app/install.sh -o "${installer}" && bash "${installer}"; rm -f "${installer}"
 ```
+
+This avoids the `curl | bash` paste trap: commands pasted after a pipeline are
+read by the installer rather than your terminal shell. The installer configures
+future shells; run the PATH command it prints as a separate command when you
+want to use `fde` immediately.
 
 `frogg.app/install.sh` is served by a Cloudflare Worker
 ([deploy/install-worker](../deploy/install-worker/README.md)) that proxies this
@@ -128,8 +133,11 @@ What it does:
 4. Installs a service that runs `fde daemon start --foreground` with
    `PASEO_LISTEN` and `PASEO_WEB_UI_ENABLED=true`:
    - Linux: systemd user unit `~/.config/systemd/user/fde-daemon.service`,
-     enabled and started with `systemctl --user`. The daemon stops with your
-     session unless you run `sudo loginctl enable-linger $USER` once.
+     enabled and started with `systemctl --user`. When that user session is not
+     available (common in a newly opened SSH terminal), the installer starts a
+     detached daemon immediately and records its output in
+     `<install dir>/logs/fallback-daemon.log`. Enable the service later to keep
+     it running after logout: `systemctl --user enable --now fde-daemon`.
    - macOS: launchd agent `~/Library/LaunchAgents/app.frogg.fde-daemon.plist`,
      loaded with `launchctl bootstrap gui/$UID`.
 
@@ -154,21 +162,21 @@ service.
 | `FDE_BUNDLE_FILE`    | unset                                       | Install this local tarball instead of downloading              |
 | `FDE_NO_MODIFY_PATH` | `0`                                         | `1` leaves shell startup files unchanged                       |
 | `FDE_NO_SERVICE`     | `0`                                         | `1` skips the systemd/launchd service                          |
-| `FDE_LISTEN`         | `127.0.0.1:9999`                            | Daemon listen address written into the service                 |
+| `FDE_LISTEN`         | `0.0.0.0:9999`                              | Daemon listen address written into the service                 |
 | `FDE_HOME`           | `~/.fde`                                    | Daemon state directory written into the service (`FDE_HOME`)   |
 
-`FDE_LISTEN=0.0.0.0:9999` makes the daemon reachable from the network: devices on the
-same private network connect straight away, the first device to pair from anywhere
-else claims it (see "First run" above). Set a password with `fde daemon set-password`
-to require a login from everyone, or `fde daemon trust-lan off` to make LAN clients
-pair too. With the loopback default, reach it through an SSH tunnel or the desktop
-app's SSH connection.
+The default makes the daemon reachable from the network: devices on the same private
+network connect straight away, and the first device to pair from anywhere else claims
+it (see "First run" above). Set a password with `fde daemon set-password` to require a
+login from everyone, or `fde daemon trust-lan off` to make LAN clients pair too. Set
+`FDE_LISTEN=127.0.0.1:9999` when the daemon should accept only local or SSH-tunnel
+connections.
 
 ### Upgrade, uninstall
 
 ```bash
 fde daemon self-update                                # upgrade in place, with rollback (below)
-curl -fsSL https://frogg.app/install.sh | bash        # re-run the installer to upgrade to latest
+installer="$(mktemp)" && curl -fsSL https://frogg.app/install.sh -o "${installer}" && bash "${installer}"; rm -f "${installer}"
 FDE_VERSION=0.1.7 bash deploy/install.sh              # pin a version
 curl -fsSL https://frogg.app/uninstall.sh | bash      # remove service, links, install dir
 FDE_PURGE=1 bash deploy/uninstall.sh                  # ... and the daemon state too

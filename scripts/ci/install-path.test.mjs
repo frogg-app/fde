@@ -100,6 +100,18 @@ test("Fish honors XDG_CONFIG_HOME and does not duplicate configuration", (t) => 
   assert.equal(readFileSync(file, "utf8"), config);
 });
 
+test("the native installer listens on every network interface and starts without systemd", (t) => {
+  const f = fixture(t, "bash", { FDE_NO_SERVICE: "0" });
+  const shimDir = path.join(f.home, "shim");
+  mkdirSync(shimDir);
+  writeFileSync(path.join(shimDir, "systemctl"), "#!/bin/sh\nexit 1\n", { mode: 0o755 });
+  f.env.PATH = `${shimDir}:/usr/bin:/bin`;
+  const output = f.run();
+  const unit = readFileSync(path.join(f.home, ".config/systemd/user/fde-daemon.service"), "utf8");
+  assert.match(unit, /^Environment=PASEO_LISTEN=0\.0\.0\.0:9999$/m);
+  assert.match(output, /started the daemon for this login/);
+});
+
 for (const shell of ["bash", "fish", "unknown"]) {
   test(`${shell}: opt-out leaves startup files untouched`, (t) => {
     const f = fixture(t, shell, { FDE_NO_MODIFY_PATH: "1" });
