@@ -69,17 +69,13 @@ it("preserves HTTP identity and auth headers while replacing forged metadata", a
   const port = await listen(
     createServer((req, res) => {
       const valid = restoreExecutionRequest(req, token);
-      res
-        .writeHead(valid ? 200 : 403)
-        .end(
-          JSON.stringify({
-            peer: req.socket.remoteAddress,
-            headers: req.headers,
-            privateHeaders: req.rawHeaders.filter((header) =>
-              header.startsWith("x-fde-execution-"),
-            ),
-          }),
-        );
+      res.writeHead(valid ? 200 : 403).end(
+        JSON.stringify({
+          peer: req.socket.remoteAddress,
+          headers: req.headers,
+          privateHeaders: req.rawHeaders.filter((header) => header.startsWith("x-fde-execution-")),
+        }),
+      );
     }),
   );
   const front = await gateway(port);
@@ -263,4 +259,20 @@ it("preserves rejected upgrade authentication headers and body", async () => {
   expect(response).toBe(
     "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Bearer\r\nContent-Length: 6\r\nConnection: close\r\n\r\ndenied",
   );
+});
+
+it("cancels a streaming upstream request when its client disconnects", async () => {
+  const server = createServer();
+  const front = await gateway(await listen(server));
+  const incoming = once(server, "request");
+  const req = request({ host: "127.0.0.1", port: front.port, method: "POST" });
+  req.on("error", () => {});
+  req.write("partial upload");
+  const [upstream] = await incoming;
+  upstream.on("error", () => {});
+  upstream.resume();
+  const aborted = new Promise<void>((resolve) => upstream.once("aborted", resolve));
+  req.destroy();
+  await aborted;
+  expect(upstream.aborted).toBe(true);
 });
