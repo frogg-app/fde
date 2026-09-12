@@ -1,3 +1,5 @@
+import { lstat, unlink } from "node:fs/promises";
+import { connect } from "node:net";
 import { createServer, request, type IncomingMessage } from "node:http";
 import type { Duplex } from "node:stream";
 import { parseListenString, type ListenTarget } from "../listen-target.js";
@@ -101,6 +103,7 @@ export function createExecutionGateway({
   });
   return {
     async start(): Promise<void> {
+      if (target.type === "socket") await removeStaleSocket(target.path);
       await new Promise<void>((resolve, reject) => {
         server.once("error", reject);
         function ready() {
@@ -128,4 +131,34 @@ export function createExecutionGateway({
       return bound;
     },
   };
+}
+
+async function removeStaleSocket(path: string): Promise<void> {
+  const original = await lstat(path).catch((error: unknown) => {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") return null;
+    throw error;
+  });
+  if (!original) return;
+  if (!original.isSocket()) throw new Error(`Refusing to replace non-socket listen path: ${path}`);
+  await new Promise<void>((resolve, reject) => {
+    const socket = connect(path);
+    socket.setTimeout(1000, () => {
+      socket.destroy();
+      reject(new Error(`Cannot determine ownership of socket: ${path}`));
+    });
+    socket.once("connect", () => {
+      socket.destroy();
+      reject(new Error(`Socket already has an active listener: ${path}`));
+    });
+    socket.once("error", (error) => {
+      socket.destroy();
+      if ("code" in error && error.code === "ECONNREFUSED") resolve();
+      else reject(error);
+    });
+  });
+  const current = await lstat(path);
+  if (!current.isSocket() || current.ino !== original.ino || current.dev !== original.dev) {
+    throw new Error(`Socket ownership changed during startup: ${path}`);
+  }
+  await unlink(path);
 }
