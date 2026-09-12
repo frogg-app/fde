@@ -23,6 +23,8 @@ export function executionForwardingHeaders(
 export function restoreExecutionRequest(req: IncomingMessage, token: string): boolean {
   const physicalPeer = physicalPeers.get(req.socket) ?? req.socket.remoteAddress;
   if (!physicalPeers.has(req.socket)) physicalPeers.set(req.socket, physicalPeer);
+  // Node caches the original raw-header count for this lazy view. Materialize before filtering.
+  const distinctHeaders = req.headersDistinct;
   const privateNames = Object.keys(req.headers).filter((name) => name.startsWith(PREFIX));
   const suppliedToken = req.headers[TOKEN];
   const peer = req.headers[PEER];
@@ -34,6 +36,9 @@ export function restoreExecutionRequest(req: IncomingMessage, token: string): bo
   req.rawHeaders = req.rawHeaders.filter(
     (_, index, all) => !all[index - (index % 2)].toLowerCase().startsWith(PREFIX),
   );
+  for (const name of Object.keys(distinctHeaders)) {
+    if (name.startsWith(PREFIX)) delete distinctHeaders[name];
+  }
   Object.defineProperty(req.socket, "remoteAddress", { configurable: true, value: physicalPeer });
   if (
     physicalPeer !== "127.0.0.1" &&

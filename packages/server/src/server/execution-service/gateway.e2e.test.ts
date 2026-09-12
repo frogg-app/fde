@@ -276,3 +276,17 @@ it("cancels a streaming upstream request when its client disconnects", async () 
   await aborted;
   expect(upstream.aborted).toBe(true);
 });
+
+it("removes private credentials from an already-read distinct header view", async () => {
+  const port = await listen(
+    createServer((req, res) => {
+      const distinct = req.headersDistinct;
+      restoreExecutionRequest(req, token);
+      res.end(
+        JSON.stringify(Object.keys(distinct).filter((name) => name.startsWith("x-fde-execution-"))),
+      );
+    }),
+  );
+  const result = await get(port, { "x-fde-execution-token": token, "x-fde-execution-peer": "ipc" });
+  expect(result.body).toBe("[]");
+});
