@@ -23,6 +23,7 @@
 #                     instead of resolving one from FDE_RELEASE_BASE
 #   FDE_BUNDLE_FILE   install from a local bundle tarball instead of downloading
 #   FDE_NO_SERVICE=1  skip service installation
+#   FDE_NO_MODIFY_PATH=1  leave shell startup files unchanged
 #   FDE_LISTEN        daemon listen address for the service (default: 127.0.0.1:9999)
 #   FDE_HOME          daemon state directory for the service (default: ~/.fde)
 set -euo pipefail
@@ -35,6 +36,7 @@ FDE_VERSION="${FDE_VERSION:-}"
 FDE_BUNDLE_FILE="${FDE_BUNDLE_FILE:-}"
 FDE_BUNDLE_URL="${FDE_BUNDLE_URL:-}"
 FDE_NO_SERVICE="${FDE_NO_SERVICE:-0}"
+FDE_NO_MODIFY_PATH="${FDE_NO_MODIFY_PATH:-0}"
 FDE_HOME="${FDE_HOME:-}"
 
 SERVICE_NAME="fde-daemon"
@@ -300,6 +302,48 @@ install_launchd_agent() {
   log "started ${LAUNCHD_LABEL} (launchd agent)"
 }
 
+# Keep this inline: install.sh also runs standalone through curl | bash.
+configure_shell_path() {
+  local shell_name quoted_bin path_line file login_file
+  local files=()
+  # Single quotes protect custom paths from expansion when the shell starts.
+  quoted_bin="'$(printf '%s' "${FDE_BIN_DIR}" | sed "s/'/'\\\\''/g")'"
+  path_line="case \":\${PATH}:\" in *:${quoted_bin}:*) ;; *) export PATH=${quoted_bin}:\"\${PATH}\" ;; esac"
+  shell_name="${SHELL:-}"
+  shell_name="${shell_name##*/}"
+  PATH_COMMAND="export PATH=${quoted_bin}:\"\$PATH\""
+  case "${shell_name}" in
+    bash)
+      files=("${HOME}/.bashrc")
+      # Bash reads only the first existing login profile.
+      login_file="${HOME}/.profile"
+      for file in "${HOME}/.bash_profile" "${HOME}/.bash_login"; do
+        if [ -f "${file}" ]; then login_file="${file}"; break; fi
+      done
+      files+=("${login_file}")
+      ;;
+    zsh) files=("${ZDOTDIR:-${HOME}}/.zshrc" "${ZDOTDIR:-${HOME}}/.zprofile") ;;
+    fish)
+      # Fish single quotes also interpret backslashes, unlike POSIX shells.
+      quoted_bin="'$(printf '%s' "${FDE_BIN_DIR}" | sed "s/\\\\/\\\\\\\\/g; s/'/\\\\'/g")'"
+      path_line="contains -- ${quoted_bin} \$PATH; or set -gx PATH ${quoted_bin} \$PATH"
+      PATH_COMMAND="${path_line}"
+      files=("${XDG_CONFIG_HOME:-${HOME}/.config}/fish/config.fish")
+      ;;
+    sh|dash|ksh) files=("${HOME}/.profile") ;;
+    *) log "shell ${SHELL:-unknown} is not supported for automatic PATH setup"; return ;;
+  esac
+  [ "${FDE_NO_MODIFY_PATH}" != "1" ] || return 0
+  for file in "${files[@]}"; do
+    if [ -f "${file}" ] && grep -Fqx -- "${path_line}" "${file}"; then continue; fi
+    if mkdir -p "$(dirname "${file}")" && printf '\n# FDE CLI\n%s\n' "${path_line}" >> "${file}"; then
+      log "configured PATH in ${file}"
+    else
+      log "could not update ${file}; configure PATH manually"
+    fi
+  done
+}
+
 print_next_steps() {
   local host port
   host="${FDE_LISTEN%:*}"
@@ -321,7 +365,10 @@ print_next_steps() {
   log "update later:      fde daemon self-update   (rolls back by itself if the new version fails)"
   case ":${PATH}:" in
     *":${FDE_BIN_DIR}:"*) ;;
-    *) log "add ${FDE_BIN_DIR} to your PATH to use fde directly" ;;
+    *)
+      log "to use fde in this terminal, run:"
+      log "  ${PATH_COMMAND}"
+      ;;
   esac
 }
 
@@ -341,6 +388,7 @@ main() {
   read_bundle_version
   install_bundle
   prune_old_versions
+  configure_shell_path
 
   if [ "${FDE_NO_SERVICE}" != "1" ]; then
     case "${PLATFORM}" in
