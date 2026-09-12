@@ -5,6 +5,7 @@ import {
   type SidebarWorkspaceEntry,
   type SidebarWorkspacesListResult,
 } from "@/hooks/use-sidebar-workspaces-list";
+import { SidebarAgentsProvider } from "./agents/provider";
 import { useSidebarWorkspaceEntries } from "@/hooks/use-sidebar-workspace-entries";
 import { usePinnedSidebarKeys, type PinnedSidebarGroups } from "@/hooks/use-sidebar-pins";
 import { useSidebarCollapsedSectionsStore } from "@/stores/sidebar-collapsed-sections-store";
@@ -55,6 +56,10 @@ export function SidebarModelProvider({
   children: ReactNode;
 }) {
   const list = useSidebarWorkspacesList({ enabled: active });
+  const agentServerIds = useMemo(
+    () => Array.from(new Set(list.workspacePlacements.map((workspace) => workspace.serverId))),
+    [list.workspacePlacements],
+  );
   const groupMode = useSidebarViewStore((state) => state.groupMode);
   const labelFilter = useSidebarViewStore((state) => state.labelFilter);
   const projectFilters = useSidebarViewStore((state) => state.projectFilters);
@@ -192,7 +197,13 @@ export function SidebarModelProvider({
     ],
   );
 
-  return <SidebarModelContext.Provider value={value}>{children}</SidebarModelContext.Provider>;
+  return (
+    <SidebarModelContext.Provider value={value}>
+      <SidebarAgentsProvider serverIds={agentServerIds} active={active !== false}>
+        {children}
+      </SidebarAgentsProvider>
+    </SidebarModelContext.Provider>
+  );
 }
 
 export function useSidebarModel(): SidebarModel {

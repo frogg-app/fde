@@ -1,4 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import {
+  useProviderSubagentHistory,
+  ProviderSubagentHistoryStatus,
+} from "@/subagents/provider-history";
 import { Text, View } from "react-native";
 import { StyleSheet } from "react-native-unistyles";
 import invariant from "tiny-invariant";
@@ -12,7 +16,6 @@ import { useSessionStore } from "@/stores/session-store";
 import {
   providerSubagentKey,
   providerSubagentLifecycleStatus,
-  refreshProviderSubagents,
   useProviderSubagentStore,
 } from "@/subagents/provider-store";
 import { useTranslation } from "react-i18next";
@@ -90,24 +93,12 @@ function ProviderSubagentPanel() {
   const supported = serverInfo?.features?.providerSubagents === true;
   const [isLoadingOlder, setIsLoadingOlder] = useState(false);
 
-  useEffect(() => {
-    if (!client || !supported) return;
-    void refreshProviderSubagents(client, serverId, target.parentAgentId).catch(() => undefined);
-  }, [client, serverId, supported, target.parentAgentId]);
-
-  useEffect(() => {
-    if (!client || !supported) return;
-    void client
-      .fetchProviderSubagentTimeline(target.parentAgentId, target.subagentId, {
-        direction: "tail",
-        limit: TIMELINE_FETCH_PAGE_SIZE,
-      })
-      .then((payload) => {
-        useProviderSubagentStore.getState().replaceTimeline(serverId, payload);
-        return undefined;
-      })
-      .catch(() => undefined);
-  }, [client, serverId, supported, target.parentAgentId, target.subagentId]);
+  const history = useProviderSubagentHistory({
+    serverId,
+    parentAgentId: target.parentAgentId,
+    subagentId: target.subagentId,
+    supported,
+  });
 
   const loadOlder = useCallback((): boolean => {
     if (!client || !supported || isLoadingOlder || !timeline?.hasOlder || !timeline.epoch) {
@@ -195,6 +186,7 @@ function ProviderSubagentPanel() {
           </Text>
         </View>
       ) : null}
+      <ProviderSubagentHistoryStatus history={history} hasTimeline={timeline !== null} />
       <AgentStreamView
         agentId={streamId}
         serverId={serverId}
@@ -203,7 +195,7 @@ function ProviderSubagentPanel() {
         streamHead={timeline?.head ?? EMPTY_STREAM_ITEMS}
         turnPresentation={turnPresentation}
         pendingPermissions={EMPTY_PERMISSIONS}
-        isAuthoritativeHistoryReady
+        isAuthoritativeHistoryReady={timeline !== null}
         onOpenWorkspaceFile={openFileInWorkspace}
         readOnly
         historyPagination={historyPagination}

@@ -2015,6 +2015,11 @@ export const fr: TranslationResources = {
     backdrop: "Toile de fond du menu",
   },
   subagents: {
+    expand: "Développer les sous-agents de {{label}}",
+    collapse: "Réduire les sous-agents de {{label}}",
+    offline: "Hors ligne · activité enregistrée",
+    loadFailedRetry: "Échec du chargement des sous-agents · Réessayer",
+    activityFailedRetry: "Échec du chargement de l’activité · Réessayer",
     title: "Sous-agents",
     pillLabelOne: "1 sous-agent",
     pillLabelMany: "{{count}} sous-agents",
