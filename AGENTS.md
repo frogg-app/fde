@@ -35,7 +35,7 @@ Consult the roadmap for their priority and status before starting a planned slic
 
 ## Code map
 
-- `apps/desktop-electron/`: Electron shell, native bridge and bundled daemon; see
+- `apps/desktop-electron/`: Electron app-only shell, native bridge and SSH deployment; see
   [electron-desktop.md](docs/electron-desktop.md).
 - `apps/desktop/`: Tauri shell and native bridge; see
   [desktop-shell.md](docs/desktop-shell.md) and [building.md](docs/building.md).

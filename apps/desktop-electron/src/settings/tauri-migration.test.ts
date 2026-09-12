@@ -26,7 +26,7 @@ it("imports Tauri preferences once without altering either existing profile", as
     expect(await store.get()).toMatchObject({
       releaseChannel: "beta",
       updates: { autoCheck: false },
-      daemon: { keepRunningAfterQuit: true },
+      daemon: { manageBuiltInDaemon: false, keepRunningAfterQuit: false },
     });
     await store.patch({ updates: { autoCheck: true } });
     await migrateTauriSettings(source, target);

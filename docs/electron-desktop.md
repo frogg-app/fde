@@ -12,7 +12,7 @@ Tauri application merely by building the branch.
 ## Scope and compatibility
 
 The desktop boundary owns windows, native dialogs and notifications, deep links,
-attachments, desktop settings, SSH/socket/pipe connections, local daemon lifecycle,
+attachments, desktop settings, SSH/socket/pipe connections, remote SSH deployment,
 and application updates. Direct WebSocket and relay connections continue through
 the shared client. The packaged renderer keeps the `paseo://app` origin accepted
 by the daemon; legacy wire and deep-link names remain intentional compatibility.
@@ -43,7 +43,7 @@ daemon and workload, recording exact application versions and elapsed time.
    rather than comparing only one renderer process.
 4. Close the application during idle, streaming and voice playback. Confirm its
    owned processes exit and it relaunches immediately. Confirm an independently
-   running daemon stays running and a desktop-owned daemon follows its settings.
+   running daemon stays running. The app never owns a local daemon.
 5. Check attachment selection/drop, native notifications, opening a project in an
    editor, a second window, and a deep link to an existing agent.
 6. On each packaging platform, verify install, launch, update failure feedback,
@@ -70,7 +70,7 @@ npm run build:desktop:tauri          # Existing Tauri packaging
 ```
 
 The Electron development launcher reserves its own Expo port, uses a separate
-profile and daemon home below `.dev/electron`, and binds its dev services to
+profile and attachment state below `.dev/electron`, and binds its dev services to
 `0.0.0.0`. Override `FDE_ELECTRON_UI_PORT` if the chosen port is in use. It stops
 only the processes it launched. `FDE_ELECTRON_USER_DATA_DIR` selects a separate
 profile for direct smoke or diagnostic launches; `FDE_ELECTRON_UI_DIR` serves an
@@ -83,14 +83,18 @@ Comparison packages do not register over Tauri's operating-system deep-link
 handler. They can still consume a link passed on their command line. The manual
 and PR workflow uploads build artifacts without publishing a release.
 
-The local daemon ships inside the Electron resources, with its own Node binary,
-CLI and production dependencies. It does not depend on Electron's embedded Node
-ABI or a system Node installation. Selected branding and daemon bundle identity
-must match. AppImage builds first stage the daemon into a versioned directory under the
-Electron profile, so detached daemons and installed CLI shims survive the mount
-disappearing. CLI passthrough launches that independent Node runtime. Desktop
-settings can be copied once from the Tauri settings file;
-the original is retained and browser storage is not imported.
+The Electron package is app-only: it contains the renderer and Electron runtime,
+without a daemon, separate Node executable, CLI, or provider binaries. Install the
+daemon independently on the same machine or a remote host, then connect the app.
+The existing daemon release packages remain separate. SSH deployment still installs
+and manages the daemon on the selected remote host; it does not require a bundled
+local server. The app itself requires no system Node installation.
+
+The preload advertises `supportsLocalDaemon: false`. Local setup and management
+controls are hidden, legacy local-management commands reject, and old desktop
+settings cannot start a server. Closing or updating the app leaves independently
+managed servers alone. Application preferences can still migrate from Tauri;
+browser storage is not imported.
 
 ## Application updates
 
@@ -107,7 +111,7 @@ at these comparison artifacts.
 
 ## Automated smoke
 
-Build the server, web UI and Electron main first, then run:
+Build the UI and Electron main first, then run:
 
 ```bash
 npm run install:electron --workspace=@fde/desktop-electron
@@ -122,11 +126,22 @@ restricted CI/VM host that cannot create Chromium namespaces,
 `FDE_ELECTRON_SMOKE_NO_SANDBOX=1` is an explicit test-only launch override; the
 production launcher does not disable Chromium's sandbox.
 
-The smoke uses a temporary profile and daemon home, exercises local setup, and
-checks shutdown/relaunch plus preservation of a separately started daemon. It
-requires no live provider credentials and does not create an agent or send a
-message. Microphone hardware, actual SSH hosts and updater hand-off still need
-device acceptance.
+The smoke uses a temporary profile seeded with legacy local-daemon settings. It
+checks app-only capability, hidden local setup, available direct/SSH connection
+controls, rejected local commands, renderer security, preferences across relaunch,
+and absence of daemon state. It requires no server build or provider credentials.
+Microphone hardware, actual SSH hosts and updater hand-off still need device
+acceptance.
+
+## App-only validation (0.4.3)
+
+The user confirmed the 0.4.2 Windows Electron build has no scrolling issue. Version
+0.4.3 removes the bundled server. Full repository typecheck, 361 runtime tests,
+60 focused UI tests, packaging checks and the Linux packaged startup/relaunch
+smoke pass. Both smoke launches report zero renderer errors and no daemon state;
+legacy settings remain disabled while app preferences persist. Package measurements
+are recorded with the local build artifacts. Windows device acceptance of this
+new package remains separate from the earlier scrolling result.
 
 ## Validation record (0.4.2)
 

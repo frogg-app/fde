@@ -67,3 +67,19 @@ describe("listenToLocalTransportEvents", () => {
     );
   });
 });
+
+describe("desktop daemon capability", () => {
+  afterEach(() => {
+    hostState.host = null;
+  });
+  it.each([
+    [null, false],
+    [{}, true],
+    [{ supportsLocalDaemon: true }, true],
+    [{ supportsLocalDaemon: false }, false],
+  ])("resolves %j to %s", async (host, expected) => {
+    hostState.host = host;
+    const { shouldUseDesktopDaemon } = await import("./desktop-daemon");
+    expect(shouldUseDesktopDaemon()).toBe(expected);
+  });
+});

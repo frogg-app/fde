@@ -31,9 +31,9 @@ import {
   ProfileDraft,
   TerminalProfileEditModal,
 } from "@/screens/settings/terminal-profile-edit-modal";
-import { getIsElectron } from "@/constants/platform";
 import {
   getDesktopDaemonStatus,
+  shouldUseDesktopDaemon,
   restartDesktopDaemon,
   startDesktopDaemon,
   stopDesktopDaemon,
@@ -684,7 +684,7 @@ function RestartDaemonCard({ host }: { host: HostProfile }) {
           host.serverId,
           `settings_daemon_restart_${host.serverId}`,
           {
-            getIsElectron,
+            getIsElectron: shouldUseDesktopDaemon,
             getDesktopDaemonStatus,
             getDesktopSettings: loadDesktopSettings,
             restartDesktopDaemon,

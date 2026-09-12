@@ -1,11 +1,10 @@
 #!/usr/bin/env node
 import { spawnSync } from "node:child_process";
-import { cpSync, existsSync, readFileSync, rmSync } from "node:fs";
+import { rmSync } from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { portableCommand } from "../dev/npm-command.mjs";
 import { writeElectronChecksums } from "./electron-checksums.mjs";
-import { loadBrand } from "../dev/branding/load.cjs";
 
 const root = path.resolve(import.meta.dirname, "../..");
 const desktop = path.join(root, "apps/desktop-electron");
@@ -36,23 +35,8 @@ function run(script, args = []) {
   if (result.error) throw result.error;
   if (result.status !== 0) throw new Error(`${script} failed (${result.status})`);
 }
-const brand = loadBrand();
-const version = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8")).version;
-run("build:server");
-run("build:daemon-web-ui");
 run("build:ui");
 run("build:main", ["--workspace=@fde/desktop-electron"]);
-run("build:daemon-bundle", ["--", "--target", values.target, "--keep-staging"]);
-const staged = path.join(
-  root,
-  "dist/bundles/staging",
-  `${brand.daemonArtifactPrefix}-${version}-${platform}-${arch}`,
-);
-const cli = path.join(staged, "daemon/apps/cli/dist/index.js");
-if (!existsSync(cli)) throw new Error(`Daemon bundle missing CLI: ${cli}`);
-const resources = path.join(desktop, "resources/daemon-bundle");
-rmSync(resources, { recursive: true, force: true });
-cpSync(staged, resources, { recursive: true, dereference: true });
 const builder = path.join(root, "node_modules/electron-builder/cli.js");
 const platformFlag = platform === "darwin" ? "--mac" : `--${platform}`;
 rmSync(path.join(desktop, "release"), { recursive: true, force: true });

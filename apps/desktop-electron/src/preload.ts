@@ -36,6 +36,7 @@ contextBridge.exposeInMainWorld("paseoDesktop", {
     probeIdentity: (url: string) => ipcRenderer.invoke("paseo:network:probeIdentity", url),
   },
   platform: process.platform,
+  supportsLocalDaemon: false,
   windowChromeMode: readWindowChromeMode(),
   invoke: (command: string, args?: Record<string, unknown>) =>
     ipcRenderer.invoke("paseo:invoke", command, args),

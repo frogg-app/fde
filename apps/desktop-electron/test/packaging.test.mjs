@@ -33,7 +33,11 @@ test("comparison packages separate identity and never publish or claim Tauri lin
   assert.equal(config.win.icon, path.join(root, ".generated/branding/icons/icon.ico"));
   assert.equal(config.mac.icon, path.join(root, ".generated/branding/icons/icon.icns"));
   assert.equal(config.protocols, undefined);
-  assert.ok(config.extraResources.some((item) => item.to === "daemon-bundle"));
+  assert.deepEqual(Array.from(config.extraResources, (item) => item.to).sort(), [
+    "app-dist",
+    "brand.json",
+    "icon.png",
+  ]);
   assert.ok(config.win.target.includes("nsis"));
   assert.ok(config.win.target.includes("zip"));
   assert.ok(config.mac.target.includes("dmg"));

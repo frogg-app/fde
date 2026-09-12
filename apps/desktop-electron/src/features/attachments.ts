@@ -1,4 +1,4 @@
-import { resolvePaseoHome } from "../daemon/process-runtime.js";
+import { resolvePaseoHome } from "../integrations/storage-paths.js";
 import { copyFile, mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 

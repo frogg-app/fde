@@ -18,7 +18,6 @@ mkdirSync(state, { recursive: true });
 const env = electronDevEnvironment({ state, port, brand: loadBrand() });
 for (const args of [
   ["run", "install:electron", "--workspace=@fde/desktop-electron"],
-  ["run", "build:server"],
   ["run", "build:app-deps"],
   ["run", "build:main", "--workspace=@fde/desktop-electron"],
 ]) {

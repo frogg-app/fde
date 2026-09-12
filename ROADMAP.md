@@ -46,7 +46,9 @@ visible until device or deployment evidence closes them.
 
 - [ ] **Electron desktop migration acceptance.** Restore the current desktop
       contract in an isolated Electron package while the Tauri investigation
-      continues. Record implementation and automated evidence separately from
+      continues. App-only packaging removes the bundled daemon while retaining SSH
+      deployment. The user reports scrolling is fixed in the 0.4.2 Windows build.
+      Record implementation and automated evidence separately from
       Windows memory, voice, shutdown/relaunch and updater device acceptance. See
       [the migration guide](docs/electron-desktop.md).
 

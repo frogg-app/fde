@@ -290,7 +290,7 @@ export function setupWindowStatePersistence(win: BrowserWindow, store: WindowSta
 
   // Final synchronous flush. Runs on window close AND on app quit: the app's
   // before-quit handler calls app.exit(0), which bypasses the window close
-  // event (see daemon/quit-lifecycle.ts), so close alone would miss Cmd+Q.
+  // event (see quit-lifecycle.ts), so close alone would miss Cmd+Q.
   function flushFinal(): void {
     if (flushed) {
       return;

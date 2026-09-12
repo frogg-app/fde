@@ -29,6 +29,23 @@ function makeSources(): DesktopDiagnosticSources {
 }
 
 describe("desktop diagnostic report", () => {
+  test("collects app logs without requesting a daemon in app-only shells", async () => {
+    const result = await collectDesktopDiagnosticSections({
+      ...makeSources(),
+      supportsLocalDaemon: () => false,
+      getStatus: async () => {
+        throw new Error("must not request daemon status");
+      },
+      getDaemonLogs: async () => {
+        throw new Error("must not request daemon logs");
+      },
+    });
+    expect(result.status).toBe("done");
+    expect(result.sections).toEqual([
+      "Desktop app log tail\n  [login-shell-env] start\n  [login-shell-env] failed",
+    ]);
+  });
+
   test("starts desktop diagnostic requests together", async () => {
     const calls: string[] = [];
     let releaseAppLogs: () => void = () => {};

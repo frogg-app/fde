@@ -36,7 +36,7 @@ Your code never leaves your machine. Paseo is local-first.
 - **Daemon:** Local server that spawns and manages agent processes and exposes the WebSocket API.
 - **App:** Cross-platform Expo client for iOS, Android, web, and the shared UI used by desktop.
 - **CLI:** Terminal interface for agent workflows that can also start and manage the daemon.
-- **Desktop app:** Electron shell (`apps/desktop-electron`, see [electron-desktop.md](electron-desktop.md)) around the web app with a separately bundled Node daemon. The Tauri shell remains in `apps/desktop` for comparison.
+- **Desktop app:** Electron shell (`apps/desktop-electron`, see [electron-desktop.md](electron-desktop.md)) around the web app, connecting to independently installed local or remote daemons. The Tauri shell remains in `apps/desktop` for comparison.
 - **Relay:** Optional encrypted bridge for remote access without opening ports directly.
 
 ## Packages
@@ -185,8 +185,8 @@ authorization, ownership, persistence, and lifecycle contract is documented in [
 
 `apps/desktop-electron` restores Electron behind the shared `window.paseoDesktop`
 contract. Its sandboxed renderer uses the same Expo export; native operations and
-SSH transports run in the main process, while the daemon runs under a separately
-bundled Node executable. See [electron-desktop.md](electron-desktop.md).
+SSH transports and remote deployment run in the main process. The daemon is
+installed separately; the app does not bundle or supervise a local server. See [electron-desktop.md](electron-desktop.md).
 
 `apps/desktop` retains the Tauri implementation for the ongoing reliability
 comparison. See [desktop-shell.md](desktop-shell.md).

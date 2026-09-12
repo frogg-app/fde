@@ -1,4 +1,3 @@
-import { prepareDaemonBundle } from "./daemon/runtime-paths.js";
 import { configureDesktopProcess } from "./process-configuration.js";
 import log from "electron-log/main";
 import { handleDesktopIpc } from "./ipc-security.js";
@@ -23,18 +22,9 @@ import {
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { AgentNavigationInbox, parseAgentDeepLinkFromArgv } from "./agent-navigation.js";
-import { parsePassthroughCliArgsFromArgv, runPassthroughCli } from "./daemon/cli/passthrough.js";
-import {
-  isDesktopManagedDaemonRunningSync,
-  registerDaemonManager,
-  stopDesktopDaemonViaCli,
-} from "./daemon/daemon-manager.js";
+import { registerDesktopCommands } from "./desktop-commands.js";
 import { closeAllTransportSessions } from "./daemon/local-transport.js";
-import {
-  createQuitLifecycle,
-  registerExternalQuitSignals,
-  stopDesktopManagedDaemonOnQuitIfNeeded,
-} from "./daemon/quit-lifecycle.js";
+import { createQuitLifecycle, registerExternalQuitSignals } from "./quit-lifecycle.js";
 import { runDesktopStartup } from "./desktop-startup.js";
 import { installAppUpdateOnQuit } from "./features/auto-updater.js";
 import { registerBrowserAutomationIpc } from "./features/browser-automation/ipc.js";
@@ -259,31 +249,12 @@ function setupSingleInstanceLock(): boolean {
   return true;
 }
 
-async function runCliPassthroughIfRequested(): Promise<boolean> {
-  const cliArgs = parsePassthroughCliArgsFromArgv(process.argv);
-  if (!cliArgs) {
-    return false;
-  }
-
-  try {
-    const exitCode = await runPassthroughCli(cliArgs);
-    app.exit(exitCode);
-  } catch (error) {
-    const message = error instanceof Error ? (error.stack ?? error.message) : String(error);
-    process.stderr.write(`${message}\n`);
-    app.exit(1);
-  }
-
-  return true;
-}
-
 async function bootstrap(): Promise<void> {
   if (!setupSingleInstanceLock()) {
     return;
   }
 
   await app.whenReady();
-  await prepareDaemonBundle();
 
   const appDistDir = getAppDistDir();
   protocol.handle(APP_SCHEME, (request) => {
@@ -322,7 +293,7 @@ async function bootstrap(): Promise<void> {
   });
   ensureNotificationCenterRegistration();
   registerNetworkHandlers();
-  registerDaemonManager();
+  registerDesktopCommands();
   registerWindowManager({ mode: DESKTOP_WINDOW_CHROME_MODE });
   registerDialogHandlers();
   registerNotificationHandlers();
@@ -371,8 +342,6 @@ async function bootstrap(): Promise<void> {
 }
 
 void runDesktopStartup({
-  hasPendingGuiLaunchRequest: Boolean(pendingOpenProjectPath || pendingAgentNavigation),
-  runCliPassthroughIfRequested,
   inheritLoginShellEnv,
   bootstrapGui: bootstrap,
 }).catch((error) => {
@@ -381,22 +350,9 @@ void runDesktopStartup({
   process.exit(1);
 });
 
-function showDaemonShutdownDialog(): void {
-  for (const win of BrowserWindow.getAllWindows()) {
-    win.webContents.send("paseo:event:quitting", {});
-  }
-}
-
 const quitLifecycle = createQuitLifecycle({
   app,
   closeTransportSessions: closeAllTransportSessions,
-  stopDesktopManagedDaemonIfNeeded: () =>
-    stopDesktopManagedDaemonOnQuitIfNeeded({
-      settingsStore: getDesktopSettingsStore(),
-      isDesktopManagedDaemonRunning: isDesktopManagedDaemonRunningSync,
-      stopDaemon: () => stopDesktopDaemonViaCli("quit"),
-      showShutdownFeedback: showDaemonShutdownDialog,
-    }),
   installAppUpdateOnQuit: async (signal) => {
     const settings = await getDesktopSettingsStore().get();
     return installAppUpdateOnQuit({
@@ -406,9 +362,6 @@ const quitLifecycle = createQuitLifecycle({
     });
   },
   createUpdateDeadlineSignal: () => AbortSignal.timeout(UPDATE_QUIT_DEADLINE_MS),
-  onStopError: (error) => {
-    log.error("[desktop daemon] failed to stop managed daemon on quit", error);
-  },
   onUpdateError: (error) => {
     log.error("[auto-updater] failed to validate downloaded update on quit", error);
   },

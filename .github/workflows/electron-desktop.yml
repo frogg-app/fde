@@ -41,7 +41,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run install:electron --workspace=@fde/desktop-electron
-      - run: npm run build:server
+      - run: npm run build:app-deps
       - run: npm run typecheck --workspace=@fde/desktop-electron
       - run: npm run test --workspace=@fde/desktop-electron
       - run: npm run build:desktop:electron -- --target ${{ matrix.target }}

@@ -162,7 +162,7 @@ function parseDesktopDaemonLogs(raw: unknown): DesktopDaemonLogs {
 }
 
 export function shouldUseDesktopDaemon(): boolean {
-  return isElectronRuntime();
+  return isElectronRuntime() && getDesktopHost()?.supportsLocalDaemon !== false;
 }
 
 export async function getDesktopDaemonStatus(): Promise<DesktopDaemonStatus> {

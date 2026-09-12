@@ -38,7 +38,7 @@ export const DEFAULT_DESKTOP_SETTINGS: DesktopSettings = {
     playSound: true,
   },
   daemon: {
-    manageBuiltInDaemon: true,
+    manageBuiltInDaemon: false,
     keepRunningAfterQuit: false,
   },
 };
@@ -132,9 +132,10 @@ function toDesktopSettings(stored: StoredDesktopSettings): DesktopSettings {
     updates: { autoCheck: stored.updates.autoCheck },
     releaseChannel: stored.releaseChannel,
     notifications: { playSound: stored.notifications.playSound },
+    // Preserve the bridge shape for older profiles without advertising server ownership.
     daemon: {
-      manageBuiltInDaemon: stored.daemon.manageBuiltInDaemon,
-      keepRunningAfterQuit: stored.daemon.keepRunningAfterQuit,
+      manageBuiltInDaemon: false,
+      keepRunningAfterQuit: false,
     },
   };
 }

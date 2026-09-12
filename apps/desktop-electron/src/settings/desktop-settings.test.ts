@@ -84,7 +84,7 @@ describe("desktop-settings", () => {
       releaseChannel: "stable",
       notifications: { playSound: true },
       daemon: {
-        manageBuiltInDaemon: true,
+        manageBuiltInDaemon: false,
         keepRunningAfterQuit: false,
       },
     });
@@ -107,7 +107,7 @@ describe("desktop-settings", () => {
       releaseChannel: "beta",
       notifications: { playSound: true },
       daemon: {
-        manageBuiltInDaemon: true,
+        manageBuiltInDaemon: false,
         keepRunningAfterQuit: false,
       },
     });
@@ -226,7 +226,7 @@ describe("desktop-settings", () => {
     expect(settings.daemon.keepRunningAfterQuit).toBe(false);
   });
 
-  it("keeps an explicit keep-running choice across restarts", async () => {
+  it("disables legacy daemon management and keep-running choices across restarts", async () => {
     const userDataPath = await createTempUserDataDir();
     directories.add(userDataPath);
     await writeFile(
@@ -246,7 +246,7 @@ describe("desktop-settings", () => {
 
     const settings = await createDesktopSettingsStore({ userDataPath }).get();
 
-    expect(settings.daemon.keepRunningAfterQuit).toBe(true);
+    expect(settings.daemon).toEqual({ manageBuiltInDaemon: false, keepRunningAfterQuit: false });
   });
 
   it("migrates desktop-owned values from legacy renderer settings once", async () => {
@@ -328,7 +328,7 @@ describe("desktop-settings", () => {
       updates: { autoCheck: true },
       releaseChannel: "beta",
       notifications: { playSound: false },
-      daemon: { manageBuiltInDaemon: true, keepRunningAfterQuit: false },
+      daemon: { manageBuiltInDaemon: false, keepRunningAfterQuit: false },
     });
   });
 

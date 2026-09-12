@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 import assert from "node:assert/strict";
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
-import { mkdtemp, mkdir, writeFile, rm } from "node:fs/promises";
+import { mkdtemp, mkdir, writeFile, rm, readdir } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { _electron as electron } from "playwright";
@@ -12,11 +10,6 @@ const root = path.resolve(desktop, "../..");
 const state = await mkdtemp(path.join(os.tmpdir(), "fde-electron-smoke-"));
 const profile = path.join(state, "profile");
 await mkdir(profile);
-await mkdir(path.join(state, "daemon"));
-await writeFile(
-  path.join(state, "daemon/config.json"),
-  JSON.stringify({ daemon: { listen: "0.0.0.0:0" } }),
-);
 await writeFile(
   path.join(profile, "desktop-settings.json"),
   JSON.stringify({
@@ -24,7 +17,7 @@ await writeFile(
     settings: {
       releaseChannel: "stable",
       notifications: { playSound: true },
-      daemon: { manageBuiltInDaemon: false, keepRunningAfterQuit: false },
+      daemon: { manageBuiltInDaemon: true, keepRunningAfterQuit: true },
       updates: { autoCheck: false },
     },
     migrations: {
@@ -52,19 +45,16 @@ const executablePath = process.env.FDE_ELECTRON_SMOKE_EXECUTABLE;
 if (executablePath) delete env.FDE_ELECTRON_UI_DIR;
 const output = process.env.FDE_ELECTRON_SMOKE_OUTPUT;
 const report = { launches: [], screenshot: null };
-const execute = promisify(execFile);
-const cli = path.join(root, "apps/cli/dist/index.js");
-const cliOptions = { env, timeout: 30_000 };
 let application;
-let externalDaemonStarted = false;
-function isProcessAlive(pid) {
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch (error) {
-    if (error.code !== "ESRCH") throw error;
-    return false;
-  }
+async function assertNoServerState() {
+  const entries = await readdir(env.FDE_HOME).catch((error) => {
+    if (error.code === "ENOENT") return [];
+    throw error;
+  });
+  assert.deepEqual(
+    entries.filter((entry) => entry !== "desktop-attachments"),
+    [],
+  );
 }
 
 try {
@@ -76,6 +66,12 @@ try {
       timeout: 45_000,
     });
     const page = await application.firstWindow();
+    await page.waitForFunction(() => document.body.innerText.trim().length > 20);
+    await page.evaluate(() => {
+      localStorage.clear();
+      localStorage.setItem("@paseo:e2e", "1");
+    });
+    await page.goto("paseo://app/welcome");
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
     await page.waitForFunction(() => Boolean(window.paseoDesktop?.invoke));
@@ -95,7 +91,9 @@ try {
     );
     assert.equal(typeof runtime.appVersion, "string");
     const settings = await page.evaluate(() => window.paseoDesktop.invoke("get_desktop_settings"));
-    assert.equal(settings.daemon.manageBuiltInDaemon, launch > 0);
+    assert.equal(settings.daemon.manageBuiltInDaemon, false);
+    assert.equal(settings.daemon.keepRunningAfterQuit, false);
+    assert.equal(await page.evaluate(() => window.paseoDesktop.supportsLocalDaemon), false);
     assert.equal(settings.notifications.playSound, launch === 0);
     if (launch === 0) {
       const patched = await page.evaluate(() =>
@@ -115,28 +113,13 @@ try {
       await page.evaluate(() => window.paseoDesktop.window.getCurrentWindow().isFullscreen()),
       false,
     );
-    const bundle = await page.evaluate(() =>
-      window.paseoDesktop.invoke("local_daemon_bundle_status"),
-    );
-    assert.equal(bundle.installed, true);
-    if (launch === 0) {
-      await page.getByText("Run agents on this machine", { exact: true }).click();
+    for (const command of ["start_desktop_daemon", "install_local_daemon_bundle", "install_cli"]) {
+      await assert.rejects(page.evaluate((name) => window.paseoDesktop.invoke(name), command));
     }
-    await page.waitForFunction(
-      async () => {
-        const status = await window.paseoDesktop.invoke("desktop_daemon_status");
-        if (status.status === "errored") throw new Error(status.error);
-        return status.status === "running";
-      },
-      undefined,
-      { timeout: 60_000 },
-    );
-    const daemon = await page.evaluate(() => window.paseoDesktop.invoke("desktop_daemon_status"));
-    assert.equal(daemon.home, env.FDE_HOME);
-    assert.equal(typeof daemon.pid, "number", JSON.stringify(daemon));
-    assert.equal(daemon.desktopManaged, true);
-    assert.equal(typeof daemon.serverId, "string");
-    assert.notEqual(daemon.serverId, "");
+    assert.equal(await page.getByText("Run agents on this machine", { exact: true }).count(), 0);
+    await page.getByTestId("welcome-remote-ssh").waitFor();
+    await page.getByTestId("welcome-direct-connection").waitFor();
+    await assertNoServerState();
     if (launch === 0 && output) {
       await mkdir(output, { recursive: true });
       report.screenshot = path.join(output, "electron-smoke.png");
@@ -146,48 +129,15 @@ try {
     report.launches.push({
       runtime,
       security,
-      daemon,
+      supportsLocalDaemon: false,
       rendererErrors: errors,
       profilePersisted: launch > 0,
     });
     await application.close();
     application = null;
-    const shutdownDeadline = Date.now() + 15_000;
-    let daemonAlive = isProcessAlive(daemon.pid);
-    while (daemonAlive && Date.now() < shutdownDeadline) {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      daemonAlive = isProcessAlive(daemon.pid);
-    }
-    assert.equal(daemonAlive, false, "Desktop-owned daemon survived app close");
+    await assertNoServerState();
   }
-  await execute(
-    process.execPath,
-    [cli, "start", "--home", env.FDE_HOME, "--listen", "0.0.0.0:0", "--no-relay"],
-    cliOptions,
-  );
-  externalDaemonStarted = true;
-  application = await electron.launch({
-    ...(executablePath ? { executablePath } : {}),
-    args: [...args, ...(executablePath ? [] : [desktop])],
-    env,
-    timeout: 45_000,
-  });
-  const externalPage = await application.firstWindow();
-  await externalPage.waitForFunction(() => Boolean(window.paseoDesktop?.invoke));
-  const externalStatus = await externalPage.evaluate(() =>
-    window.paseoDesktop.invoke("desktop_daemon_status"),
-  );
-  assert.equal(externalStatus.status, "running");
-  assert.equal(externalStatus.desktopManaged, false);
-  await application.close();
-  application = null;
-  const result = await execute(
-    process.execPath,
-    [cli, "daemon", "status", "--json", "--home", env.FDE_HOME],
-    cliOptions,
-  );
-  assert.equal(JSON.parse(result.stdout).localDaemon, "running");
-  report.externalDaemonSurvivedClose = true;
+  report.daemonStateCreated = false;
   if (output)
     await writeFile(
       path.join(output, "electron-smoke.json"),
@@ -196,8 +146,5 @@ try {
   process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
 } finally {
   if (application) await application.close();
-  if (externalDaemonStarted) {
-    await execute(process.execPath, [cli, "stop", "--home", env.FDE_HOME], cliOptions);
-  }
   await rm(state, { recursive: true, force: true });
 }

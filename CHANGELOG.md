@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.3 - 2026-09-12
+
+- Package Electron as the FDE app only, removing the bundled daemon, separate Node
+  runtime, CLI and provider binaries from desktop downloads. Daemon packages and
+  SSH deployment remain available independently.
+- Hide local daemon setup and management in Electron, reject legacy local commands,
+  and prevent migrated settings from starting a server. Preserve direct, relay,
+  SSH and separately installed local server connections.
+- Verify app-only startup and relaunch without building or starting a server.
+
 ## 0.4.2 - 2026-09-12
 
 - Restore the Electron desktop shell alongside Tauri using the current UI and

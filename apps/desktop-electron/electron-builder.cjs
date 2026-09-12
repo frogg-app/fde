@@ -14,10 +14,16 @@ function createConfig(brand) {
     npmRebuild: false,
     asar: true,
     directories: { output: "release" },
-    files: ["dist/**/*", "!**/*.map", "!**/*.test.*"],
+    files: [
+      "dist/**/*",
+      "!**/*.map",
+      "!**/*.test.*",
+      "!dist/daemon/!(local-transport|transport-endpoint|ssh-password).*",
+      "!dist/integrations/cli-install/**/*",
+      "!dist/daemon/cli/**/*",
+    ],
     extraResources: [
       { from: "../ui/dist", to: "app-dist" },
-      { from: "resources/daemon-bundle", to: "daemon-bundle" },
       { from: "../../.generated/branding/brand.json", to: "brand.json" },
       { from: path.join(icons, "icon.png"), to: "icon.png" },
     ],
