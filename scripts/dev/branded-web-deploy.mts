@@ -1,3 +1,4 @@
+import { portableCommand } from "./npm-command.mjs";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { prepareBrand } from "./branding/prepare.mjs";
@@ -9,22 +10,21 @@ if (!project || !/^[a-z0-9][a-z0-9-]*$/.test(project)) {
     "Set FDE_WEB_DEPLOY_PROJECT to this product's Cloudflare Pages project before deployment.",
   );
 }
-const npm = process.platform === "win32" ? "npm.cmd" : "npm";
-const options = { cwd: root, stdio: "inherit" as const, shell: process.platform === "win32" };
-execFileSync(npm, ["run", "build:ui"], options);
-execFileSync(
-  npm,
-  [
-    "exec",
-    "--",
-    "wrangler",
-    "pages",
-    "deploy",
-    path.join(root, "apps/ui/dist"),
-    "--project-name",
-    project,
-    "--branch",
-    "main",
-  ],
-  options,
-);
+function npm(args: string[]) {
+  const invocation = portableCommand("npm", args);
+  execFileSync(invocation.command, invocation.args, options);
+}
+const options = { cwd: root, stdio: "inherit" as const, shell: false };
+npm(["run", "build:ui"]);
+npm([
+  "exec",
+  "--",
+  "wrangler",
+  "pages",
+  "deploy",
+  path.join(root, "apps/ui/dist"),
+  "--project-name",
+  project,
+  "--branch",
+  "main",
+]);

@@ -17,7 +17,7 @@ permissions:
   contents: read
 concurrency:
   group: branding-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 env:
   ONNXRUNTIME_NODE_INSTALL: skip
   CI: "true"
@@ -79,6 +79,15 @@ jobs:
         with:
           workspaces: apps/desktop/src-tauri
           shared-key: branding-${{ matrix.runner }}-${{ strategy.job-index }}
+      - if: runner.os == 'Windows'
+        name: Validate Windows development script
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD 'scripts/dev/dev.ps1'), [ref]$tokens, [ref]$errors) | Out-Null
+          if ($errors.Count) { throw ($errors | Out-String) }
+      - run: node --test scripts/dev/npm-command.test.mjs
       - run: npm run build:desktop
       - run: cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml commands::cli_install
       - uses: actions/upload-artifact@v7
@@ -146,3 +155,42 @@ jobs:
           token: ${{ secrets.BRANDING_READ_TOKEN }}
       - uses: ./.github/actions/setup-node-deps
       - run: npm run brand:check && npm run build:ui
+
+  runtime-isolation:
+    needs: web-and-runtime
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+      - uses: actions/download-artifact@v8
+        with:
+          name: branding-runtime-0
+          path: .generated/isolation-fde
+      - uses: actions/download-artifact@v8
+        with:
+          name: branding-runtime-1
+          path: .generated/isolation-custom
+      - run: node scripts/ci/branding-runtime-isolation.mjs --fde .generated/isolation-fde/dist/bundles/fde-daemon-*-linux-x64.tar.gz --custom .generated/isolation-custom/dist/bundles/acme-daemon-*-linux-x64.tar.gz
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: branding-runtime-isolation
+          path: .generated/runtime-isolation
+          include-hidden-files: true
+          retention-days: 7
+  nix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v7
+      - run: docker run --rm --cpus 2 --memory 6g -v "$PWD:/work" -w /work nixos/nix:2.31.2 sh scripts/ci/branding-nix.sh
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: branding-nix
+          path: .generated/nix-acceptance
+          include-hidden-files: true
+          retention-days: 7

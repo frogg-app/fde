@@ -1,3 +1,4 @@
+import { portableCommand } from "./npm-command.mjs";
 import { prepareEmbeddedDaemon } from "./branding/desktop-bundle.mjs";
 import { createRequire } from "node:module";
 import { checkWebBuild } from "./branding/build-output.mjs";
@@ -24,11 +25,12 @@ try {
     cwd = path.join(root, "apps/desktop");
     const action = args.shift() ?? "build";
     if (action === "build" && !(await checkWebBuild())) {
-      execFileSync(process.platform === "win32" ? "npm.cmd" : "npm", ["run", "build:ui"], {
+      const npm = portableCommand("npm", ["run", "build:ui"]);
+      execFileSync(npm.command, npm.args, {
         cwd: root,
         stdio: "inherit",
         env: process.env,
-        shell: process.platform === "win32",
+        shell: false,
       });
     }
     if (action === "build") {
@@ -45,11 +47,12 @@ try {
     command = target === "--" ? args.shift()! : target;
     if (!command) throw new Error("Missing build command");
   }
-  const child = spawn(command, args, {
+  const invocation = portableCommand(command, args);
+  const child = spawn(invocation.command, invocation.args, {
     cwd,
     stdio: "inherit",
     env: process.env,
-    shell: process.platform === "win32",
+    shell: false,
   });
   for (const signal of ["SIGINT", "SIGTERM"] as const) process.on(signal, () => child.kill(signal));
   process.exitCode = await new Promise<number>((resolve, reject) => {

@@ -28,6 +28,7 @@ export function resolveBrand(directory?: string) {
       [".fde", ".paseo"].includes(brand.homeDir) ||
       ["FDE", "PASEO"].includes(brand.envPrefix) ||
       brand.applicationId.startsWith("app.frogg.") ||
+      brand.applicationId.startsWith("sh.paseo.") ||
       ["fde-daemon", "paseo"].includes(brand.serviceName) ||
       brand.launchdLabel.startsWith("app.frogg.") ||
       brand.launchdLabel.startsWith("sh.paseo."))

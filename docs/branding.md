@@ -86,6 +86,8 @@ Generated output lives in `.generated/branding`, `apps/ui/.generated/branding`, 
 
 Build and development wrappers hold a worktree lease. A conflicting brand build fails with an actionable error. Use separate worktrees for concurrent products. A running development server cannot safely change its brand; stop that server and start it with the new selection.
 
+Development uses `npm run dev:server` and `npm run dev:app` (`dev:win` starts both on Windows). Custom products use their daemon port and the next port for Metro (65534 when the daemon uses 65535); FDE keeps development ports 6768/8081. Set `PASEO_LISTEN`, `EXPO_PORT`, or `PASEO_DEV_DAEMON_ENDPOINT` explicitly when running several worktrees of the same product. Development state stays inside the worktree unless its own home override is supplied.
+
 Use `npm run build:server`, `build:daemon-web-ui`, and `build:daemon-bundle -- --target linux-x64` for standalone daemon distribution. Supported targets also include Linux arm64, macOS x64/arm64, and Windows x64/arm64. The bundle includes Node, the daemon, the web client, branded CLI launchers, and provenance metadata. Shared npm package names remain `@fde/*`; custom public commands come from the daemon bundle.
 
 Root `package.json` remains the version source. Follow the repository's version synchronization and release procedures; branding does not establish a separate version stream inside the same checkout.

@@ -32,11 +32,14 @@ export async function generateConfig(build: BrandBuild): Promise<void> {
     }
   }
   const presentation = await nativePresentation(build);
+  let devPort = 8081;
+  if (!brand.legacyFde) devPort = brand.daemonPort === 65535 ? 65534 : brand.daemonPort + 1;
   const overlay = {
     productName: brand.legacyFde ? brand.name : brand.id,
     identifier: brand.applicationId,
     version,
     mainBinaryName: brand.desktopBinaryName,
+    build: { devUrl: `http://localhost:${process.env.EXPO_PORT ?? devPort}` },
     bundle: {
       resources,
       ...presentation.bundle,

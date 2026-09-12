@@ -8,6 +8,7 @@ import {
   symlinkSync,
   existsSync,
   readFileSync,
+  realpathSync,
   rmSync,
 } from "node:fs";
 import os from "node:os";
@@ -71,6 +72,30 @@ test(
         assert.equal(existsSync(path.join(bin, "fde")), false);
         assert.equal(existsSync(path.join(bin, "paseo")), false);
       }
+      const manifestPath = path.join(bundle, "manifest.json");
+      const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+      const repack = (fields) => {
+        writeFileSync(manifestPath, JSON.stringify({ ...manifest, ...fields }));
+        execFileSync("tar", ["-czf", archive, "-C", scratch, "bundle"]);
+      };
+      repack({ version: "1.2.4", configFingerprint: "new-cosmetic-branding" });
+      const upgraded = run("install.sh");
+      assert.equal(upgraded.status, 0, upgraded.stdout + upgraded.stderr);
+      const current = realpathSync(path.join(install, "current"));
+      assert.equal(path.basename(current), "1.2.4");
+      assert.equal(
+        existsSync(path.join(install, "versions/1.2.3")),
+        true,
+        "previous version remains available",
+      );
+      repack({ version: "1.2.5", brand: { id: "foreign", applicationId: "com.foreign.app" } });
+      const wrongAsset = run("install.sh");
+      assert.notEqual(
+        wrongAsset.status,
+        0,
+        "another product's archive cannot replace this installation",
+      );
+      assert.equal(realpathSync(path.join(install, "current")), current);
       writeFileSync(path.join(install, ".brand-identity"), "foreign:com.foreign.app\n");
       const refused = run("uninstall.sh");
       assert.notEqual(refused.status, 0);

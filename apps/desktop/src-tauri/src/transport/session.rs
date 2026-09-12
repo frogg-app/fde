@@ -10,7 +10,7 @@ use tokio_tungstenite::tungstenite::Message;
 
 use super::ssh_auth::{password_from_args, SshPassword};
 
-pub const DEFAULT_SSH_DAEMON_PORT: u16 = 9999;
+pub const DEFAULT_SSH_DAEMON_PORT: u16 = crate::branding::DEFAULT_PORT;
 pub const WS_ENDPOINT_PATH: &str = "/ws";
 
 #[derive(Debug, Clone, PartialEq, Eq)]

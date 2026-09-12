@@ -144,11 +144,11 @@ suitable runner. Distinguish compilation from interactive/device acceptance.
 - [x] New worktree from fresh main; recorded baseline.
 - [x] Commit and push this plan before implementation (with patch version synchronization).
 - [x] Foundation: schema, resolver, presets, generation, commands and tests.
-- [ ] Presentation: UI, translations, assets, themes, desktop and mobile configuration.
-- [ ] Identity: runtime, pairing, CLI/services, persistence and provider ownership.
+- [x] Presentation: UI, translations, assets, themes, desktop and mobile configuration.
+- [x] Identity: runtime, pairing, CLI/services, persistence and provider ownership.
 - [ ] Distribution: installers, updates, SSH, Docker/Nix, pairing and fork-aware CI.
 - [ ] Validation: two brands, isolation/upgrades, packaging and upstream contribution.
-- [ ] Documentation: docs/branding.md tutorial/reference/releases/troubleshooting;
+- [x] Documentation: docs/branding.md tutorial/reference/releases/troubleshooting;
       update roadmap/changelog, push milestones and open a reviewable PR.
 
 Every coherent implementation commit includes the required patch bump. No production
@@ -212,3 +212,21 @@ The first PR run exposed Windows-incompatible dynamic imports in existing protoc
 The rebranding tutorial and manifest reference now cover local inputs, pinned external repositories, fork contribution branches, CI selection, releases, Docker/Nix, Workers, and EAS source export. Native custom package filenames use the stable product ID, with public labels supplied separately. Windows registry keys and install paths use the application ID; cosmetic name/publisher changes therefore do not create a new installation identity. The pinned Tauri NSIS template remains intact under its original dual licenses; its length reflects third-party source retention, while a small generator applies explicit identity substitutions. FDE keeps its existing native packaging behavior.
 
 Both brands pass the CI browser/runtime jobs, including rendered light/dark and narrow screenshots. FDE Linux and macOS packaging and Acme Android compilation pass. The first Acme Linux package also built locally and its real bundled daemon served branded HTML, reported compatible family `fde` plus Acme identity, and responded to its own CLI in temporary state. The Windows embedded-daemon build exposed an existing npm command portability issue, now corrected. Remaining native jobs and final installation-isolation checks are still in progress.
+
+### End-to-end fork and installation acceptance
+
+At `58ef6b2` (0.2.24), a separate temporary worktree installed its own dependencies and built Acme from an independently committed branding repository. A shared source feature was committed without branding files; merging it into a fork with a dedicated branding commit preserved the resolved Acme configuration and rebuilt the web app. Cherry-picking the feature alone onto the baseline changed only its shared source file and rebuilt the default FDE app. The branding repository revision remained unchanged. Temporary test worktrees were removed.
+
+Real FDE 0.2.24 and Acme 0.2.23 Linux daemon archives ran concurrently with independent temporary homes, ports, and processes. Each served its own public brand and web HTML while preserving compatibility family `fde`. Acme management pointed at FDE's home was rejected. Stopping Acme left FDE reachable; test processes and temporary state were removed. Installer acceptance now covers same-brand upgrades with a changed cosmetic fingerprint, retained previous versions, and wrong-brand archives rejected before replacing the active version.
+
+The inspected Acme 0.2.24 Debian package has package ID `acme`, desktop executable `acme-desktop`, desktop-entry label `Acme Studio`, scheme `acme`, and an embedded Acme daemon archive. Both-brand browser runs passed, and Acme's narrow/light/dark screenshots were inspected. All standard CI jobs passed on this milestone, including full typecheck, format/lint, library/CLI, five server shards, three UI shards, browser tests, and experimental Rust tests. Local desktop tests passed 136 cases with one existing ignored test; experimental Rust passed 55; focused server/provider tests passed 104.
+
+Nix acceptance exposed a required `.env.example` excluded by the secret-file filter; the filter now retains that tracked public template while excluding actual environment files. Full Nix builds and the remaining platform packages are continuing. The Windows root build wrapper now forwards Tauri flags correctly, including `--bundles`.
+
+### Final portability and development checks
+
+The official Nix package built through fixup with zero unresolved native dependencies, and its packaged CLI returned 0.2.24. The example package is being built with a separate identity and command; Nix acceptance is now a CI job. Runtime-isolation CI consumes both actual daemon archives. Installer acceptance now permits same-brand cosmetic changes and refuses a foreign archive before changing the current version.
+
+An audit found the old Windows development script and an SSH fallback still using inherited defaults. Windows and Unix development now use the selected home/ports, and custom Tauri dev URLs follow Metro. Scratch development-environment checks passed for FDE (6768/8081) and Acme (10099/10100). Windows npm subprocesses use the npm JavaScript entry point through Node rather than cmd.exe; regression tests preserve spaces, percent signs, and ampersands as literal arguments.
+
+Long-running native jobs are allowed to finish when another milestone is pushed, so their compilation and simulator evidence is retained instead of repeatedly cancelled. No generated product output or private branding directory is committed.

@@ -1,3 +1,4 @@
+import { portableCommand } from "../dev/npm-command.mjs";
 import { spawn } from "node:child_process";
 import { createReadStream, createWriteStream } from "node:fs";
 import { cp, mkdir, readdir, rm, stat } from "node:fs/promises";
@@ -19,9 +20,10 @@ function fmtMiB(bytes) {
 
 function run(command, args, options) {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, {
+    const invocation = portableCommand(command, args);
+    const child = spawn(invocation.command, invocation.args, {
       stdio: "inherit",
-      shell: process.platform === "win32",
+      shell: false,
       ...options,
     });
     child.on("error", reject);

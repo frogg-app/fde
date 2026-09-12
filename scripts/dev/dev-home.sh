@@ -102,6 +102,13 @@ configure_dev_paseo_home() {
   brand_prefix="$(node -p 'require(process.argv[1]).envPrefix' "$brand_root/.generated/branding/brand.json")"
   brand_id="$(node -p 'require(process.argv[1]).id' "$brand_root/.generated/branding/brand.json")"
   brand_home_var="${brand_prefix}_HOME"
+  local brand_port metro_port
+  brand_port="$(node -p 'const b=require(process.argv[1]); b.legacyFde ? 6768 : b.daemonPort' "$brand_root/.generated/branding/brand.json")"
+  metro_port="$(node -p 'const b=require(process.argv[1]); b.legacyFde ? 8081 : (b.daemonPort === 65535 ? 65534 : b.daemonPort + 1)' "$brand_root/.generated/branding/brand.json")"
+  export PASEO_LISTEN="${PASEO_LISTEN:-0.0.0.0:$brand_port}"
+  export EXPO_PORT="${EXPO_PORT:-$metro_port}"
+  FDE_DEV_PRODUCT_NAME="$(node -p 'require(process.argv[1]).name' "$brand_root/.generated/branding/brand.json")"
+  export FDE_DEV_PRODUCT_NAME
   if [ "$brand_id" != "fde" ]; then
     export PASEO_HOME="${!brand_home_var:-$brand_root/.dev/$brand_id-home}"
   else
@@ -139,8 +146,6 @@ configure_dev_command_env() {
   if [ -z "${PASEO_LISTEN:-}" ]; then
     if [ -n "${PASEO_SERVICE_DAEMON_PORT:-}" ]; then
       export PASEO_LISTEN="0.0.0.0:${PASEO_SERVICE_DAEMON_PORT}"
-    else
-      export PASEO_LISTEN="127.0.0.1:6768"
     fi
   fi
 

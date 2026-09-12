@@ -1,3 +1,4 @@
+import { portableCommand } from "../npm-command.mjs";
 import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import path from "node:path";
@@ -23,11 +24,12 @@ export function prepareEmbeddedDaemon(build: BrandBuild, args: string[]): void {
   );
   if (!existsSync(archive)) {
     function run(script: string, rest: string[] = []) {
-      execFileSync(process.platform === "win32" ? "npm.cmd" : "npm", ["run", script, ...rest], {
+      const npm = portableCommand("npm", ["run", script, ...rest]);
+      execFileSync(npm.command, npm.args, {
         cwd: root,
         stdio: "inherit",
         env: process.env,
-        shell: process.platform === "win32",
+        shell: false,
       });
     }
     run("build:server");

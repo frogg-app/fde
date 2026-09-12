@@ -1,3 +1,4 @@
+import { portableCommand } from "../dev/npm-command.mjs";
 // Small filesystem/process helpers shared by the daemon bundle build scripts.
 
 import { spawn } from "node:child_process";
@@ -9,7 +10,12 @@ import { pipeline } from "node:stream/promises";
 
 export function run(command, args, options = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { stdio: "inherit", shell: false, ...options });
+    const invocation = portableCommand(command, args);
+    const child = spawn(invocation.command, invocation.args, {
+      stdio: "inherit",
+      shell: false,
+      ...options,
+    });
     child.on("error", reject);
     child.on("close", (code) => {
       if (code !== 0) {
@@ -23,7 +29,8 @@ export function run(command, args, options = {}) {
 
 export function runCapture(command, args, options = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, {
+    const invocation = portableCommand(command, args);
+    const child = spawn(invocation.command, invocation.args, {
       stdio: ["ignore", "pipe", "inherit"],
       shell: false,
       ...options,

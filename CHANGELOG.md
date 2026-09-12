@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.25 - 2026-09-12
+
+- Verify concurrent products and cross-brand management rejection using real
+  daemon archives; check cosmetic upgrades and foreign-asset rejection.
+- Validate Nix distributions in CI, preserve required public configuration
+  templates, and exclude actual environment files from Nix sources.
+- Preserve Windows npm arguments without shell parsing, fix native build flag
+  forwarding, and apply selected identities to Windows development and SSH defaults.
+
 ## 0.2.24 - 2026-09-12
 
 - Add fork-owned build-time branding across the UI, desktop/mobile packaging,
