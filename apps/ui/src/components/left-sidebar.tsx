@@ -46,7 +46,8 @@ import { usePanelStore } from "@/stores/panel-store";
 import { useOwnsWindowChromeCorner, WindowChromeSafeArea } from "@/utils/desktop-window";
 import { useCloseAgentListGesture } from "@/mobile-panels/gestures";
 import { MobilePanelOverlay } from "@/mobile-panels/presentation";
-import { buildSettingsAddHostRoute, buildSettingsRoute } from "@/utils/host-routes";
+import { buildSettingsRoute } from "@/utils/host-routes";
+import { openAddHostFlow } from "@/hosts/add-host-flow";
 import { SidebarAgentListSkeleton } from "./sidebar-agent-list-skeleton";
 import { SidebarCalloutSlot } from "./sidebar-callout-slot";
 import { SidebarWorkspaceList } from "./sidebar-workspace-list";
@@ -157,7 +158,7 @@ export const LeftSidebar = memo(function LeftSidebar({ active }: { active: boole
 
   const handleAddHost = useCallback(() => {
     if (isCompactLayout) showMobileAgent();
-    router.push(buildSettingsAddHostRoute(Date.now()));
+    openAddHostFlow();
   }, [isCompactLayout, showMobileAgent]);
 
   const labels = useMemo(
@@ -243,6 +244,7 @@ function SidebarFooter({
   labels,
 }: Pick<SidebarSharedProps, "handleOpenProject" | "handleAddHost" | "handleSettings" | "labels">) {
   const newAgentKeys = useShortcutKeys("new-agent");
+  const addHostKeys = useShortcutKeys("add-host");
   const settingsKeys = useShortcutKeys("toggle-settings");
 
   return (
@@ -260,6 +262,7 @@ function SidebarFooter({
         icon={Server}
         onPress={handleAddHost}
         label={labels.addHost}
+        shortcutKeys={addHostKeys}
         testID="sidebar-add-host"
         nativeID="sidebar-add-host"
         variant="compact"

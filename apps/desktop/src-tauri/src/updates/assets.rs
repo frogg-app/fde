@@ -3,11 +3,11 @@
 //!
 //! | kind              | asset                          |
 //! | ----------------- | ------------------------------ |
-//! | Windows installer | `FDE-<v>-x64-setup.zip`        |
-//! | Windows portable  | `FDE-<v>-x64-portable.zip`     |
-//! | Linux AppImage    | `FDE-<v>-x86_64.AppImage`      |
-//! | Linux deb         | `FDE-<v>-amd64.deb`            |
-//! | macOS             | `FDE-<v>-<aarch64|x86_64>.dmg` |
+//! | Windows installer | `FDE-<v>-win-x64-setup.zip`         |
+//! | Windows portable  | `FDE-<v>-win-x64-portable.zip`      |
+//! | Linux AppImage    | `FDE-<v>-linux-x86_64.AppImage`     |
+//! | Linux deb         | `FDE-<v>-linux-x86_64.deb`          |
+//! | macOS             | `FDE-<v>-mac-<aarch64|x86_64>.dmg` |
 
 use std::path::Path;
 
@@ -37,16 +37,18 @@ impl AssetKind {
         match self {
             // Both Windows assets are zips: GitHub rejects raw .exe release assets.
             AssetKind::WindowsInstaller => {
-                crate::branding::desktop_artifact(version, "x64-setup.zip")
+                crate::branding::desktop_artifact(version, "win-x64-setup.zip")
             }
             AssetKind::WindowsPortable => {
-                crate::branding::desktop_artifact(version, "x64-portable.zip")
+                crate::branding::desktop_artifact(version, "win-x64-portable.zip")
             }
             AssetKind::LinuxAppImage => {
-                crate::branding::desktop_artifact(version, "x86_64.AppImage")
+                crate::branding::desktop_artifact(version, "linux-x86_64.AppImage")
             }
-            AssetKind::LinuxDeb => crate::branding::desktop_artifact(version, "amd64.deb"),
-            AssetKind::MacDmg => crate::branding::desktop_artifact(version, &format!("{arch}.dmg")),
+            AssetKind::LinuxDeb => crate::branding::desktop_artifact(version, "linux-x86_64.deb"),
+            AssetKind::MacDmg => {
+                crate::branding::desktop_artifact(version, &format!("mac-{arch}.dmg"))
+            }
         }
     }
 }
@@ -163,28 +165,28 @@ mod tests {
     #[test]
     fn names_assets_like_the_release_workflow() {
         assert_eq!(
-            AssetKind::WindowsInstaller.asset_name("0.2.0", "x86_64"),
-            "FDE-0.2.0-x64-setup.zip"
+            AssetKind::WindowsInstaller.asset_name("0.2.16", "x86_64"),
+            "FDE-0.2.16-win-x64-setup.zip"
         );
         assert_eq!(
-            AssetKind::WindowsPortable.asset_name("0.2.0", "x86_64"),
-            "FDE-0.2.0-x64-portable.zip"
+            AssetKind::WindowsPortable.asset_name("0.2.16", "x86_64"),
+            "FDE-0.2.16-win-x64-portable.zip"
         );
         assert_eq!(
-            AssetKind::LinuxAppImage.asset_name("0.2.0", "x86_64"),
-            "FDE-0.2.0-x86_64.AppImage"
+            AssetKind::LinuxAppImage.asset_name("0.2.16", "x86_64"),
+            "FDE-0.2.16-linux-x86_64.AppImage"
         );
         assert_eq!(
-            AssetKind::LinuxDeb.asset_name("0.2.0", "x86_64"),
-            "FDE-0.2.0-amd64.deb"
+            AssetKind::LinuxDeb.asset_name("0.2.16", "x86_64"),
+            "FDE-0.2.16-linux-x86_64.deb"
         );
         assert_eq!(
-            AssetKind::MacDmg.asset_name("0.2.0", "aarch64"),
-            "FDE-0.2.0-aarch64.dmg"
+            AssetKind::MacDmg.asset_name("0.2.16", "aarch64"),
+            "FDE-0.2.16-mac-aarch64.dmg"
         );
         assert_eq!(
-            AssetKind::MacDmg.asset_name("0.2.0-beta.1", "x86_64"),
-            "FDE-0.2.0-beta.1-x86_64.dmg"
+            AssetKind::MacDmg.asset_name("0.2.16-beta.1", "x86_64"),
+            "FDE-0.2.16-beta.1-mac-x86_64.dmg"
         );
     }
 

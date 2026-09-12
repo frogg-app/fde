@@ -18,7 +18,7 @@ import { pipeline } from "node:stream/promises";
 /**
  * Daemon bundle acquisition: the asset naming, checksum sidecar, and archive
  * layout are the ones scripts/release/build-daemon-bundle.mjs produces and
- * deploy/install.sh consumes (`fde-daemon-<v>-<platform>-<arch>.tar.gz`, a
+ * deploy/install.sh consumes (`FDE-<v>-<platform>-<arch>-daemon.tar.gz`, a
  * `.sha256` sidecar whose first token is the digest, one top-level directory).
  */
 export type BundlePlatform = "linux" | "darwin" | "win";

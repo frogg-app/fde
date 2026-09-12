@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 // Builds a self-contained daemon bundle for one platform/arch:
 //
-//   dist/bundles/fde-daemon-<version>-<platform>-<arch>.tar.gz   (linux, darwin)
-//   dist/bundles/fde-daemon-<version>-win-<arch>.zip             (windows)
+//   dist/bundles/FDE-<version>-<platform>-<arch>-daemon.tar.gz  (Linux, macOS)
+//   dist/bundles/FDE-<version>-win-<arch>-daemon.zip            (Windows)
 //
-// Layout inside the archive (one top-level directory of the same name):
+// Layout inside the archive (one stable internal top-level directory):
 //   node/      official Node.js runtime from nodejs.org (verified, trimmed);
 //              node/bin/node on unix, node/node.exe on Windows
 //   daemon/    packages/server, apps/cli and the workspace libraries they need,
@@ -27,6 +27,7 @@
 // Every target cross-builds from Linux: the runtime and platform packages are
 // downloaded, nothing is compiled.
 
+import { daemonArtifactName } from "../../packages/branding/src/artifact-contract.mjs";
 import { existsSync } from "node:fs";
 import { loadBrand } from "../dev/branding/load.cjs";
 import {
@@ -301,8 +302,8 @@ async function materializeWorkspaceLinks(daemonDir) {
   await rm(path.join(daemonDir, "packages"), { recursive: true, force: true });
 }
 
-async function packBundle({ stagingDir, bundleName, outDir, isWindows }) {
-  const archivePath = path.join(outDir, `${bundleName}.${isWindows ? "zip" : "tar.gz"}`);
+export async function packBundle({ stagingDir, bundleName, archiveName, outDir, isWindows }) {
+  const archivePath = path.join(outDir, archiveName);
   console.log(`Packing ${path.relative(REPO_ROOT, archivePath)}...`);
   await rm(archivePath, { force: true });
   if (isWindows) {
@@ -312,7 +313,16 @@ async function packBundle({ stagingDir, bundleName, outDir, isWindows }) {
   }
   const digest = await sha256File(archivePath);
   await writeFile(`${archivePath}.sha256`, `${digest}  ${path.basename(archivePath)}\n`);
+  const legacyPath = path.join(outDir, `${bundleName}.${isWindows ? "zip" : "tar.gz"}`);
+  if (brand.legacyFde && legacyPath !== archivePath) {
+    await copyFile(archivePath, legacyPath);
+    await writeFile(`${legacyPath}.sha256`, `${digest}  ${path.basename(legacyPath)}\n`);
+  }
   return { archivePath, digest };
+}
+
+export function daemonAssetName(version, platform, arch) {
+  return daemonArtifactName(brand, version, platform, arch);
 }
 
 async function main() {
@@ -320,6 +330,7 @@ async function main() {
   const rootPackage = JSON.parse(await readFile(path.join(REPO_ROOT, "package.json"), "utf8"));
   const version = rootPackage.version;
   const bundleName = `${brand.daemonArtifactPrefix}-${version}-${platform}-${arch}`;
+  const archiveName = daemonAssetName(version, platform, arch);
   const stagingDir = path.join(outDir, "staging", bundleName);
   const daemonDir = path.join(stagingDir, "daemon");
 
@@ -372,7 +383,13 @@ async function main() {
   };
   await writeFile(path.join(stagingDir, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
 
-  const { archivePath, digest } = await packBundle({ stagingDir, bundleName, outDir, isWindows });
+  const { archivePath, digest } = await packBundle({
+    stagingDir,
+    bundleName,
+    archiveName,
+    outDir,
+    isWindows,
+  });
 
   const unpacked = await directorySize(stagingDir);
   const packed = (await readFile(archivePath)).byteLength;

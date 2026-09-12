@@ -94,7 +94,6 @@ export interface WorkspaceCommandCenterShortcuts {
   newTerminal?: ShortcutKey[][];
   splitRight?: ShortcutKey[][];
   splitDown?: ShortcutKey[][];
-  archiveWorkspace?: ShortcutKey[][];
   previousTab?: ShortcutKey[][];
   nextTab?: ShortcutKey[][];
   closeCurrentTab?: ShortcutKey[][];
@@ -155,8 +154,6 @@ function buildGitContribution(
       title: action.label,
       sectionTitle: source.labels.section,
       icon: source.icons.git?.(action),
-      shortcutKeys:
-        action.id === "archive-workspace" ? source.shortcuts.archiveWorkspace : undefined,
     },
   };
 }

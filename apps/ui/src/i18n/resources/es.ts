@@ -877,6 +877,8 @@ export const es: TranslationResources = {
           title: '¿Archivo "{{workspaceName}}"?',
           confirm: "Archivo",
           cancel: "Cancelar",
+          consequence:
+            "Esto elimina el espacio de trabajo de la barra lateral. Para restaurarlo más tarde, abre Historial.",
           uncommittedChanges: "Cambios no confirmados",
           uncommittedChangesWithDiff: "Cambios no confirmados ({{diffStat}})",
           addedLine: "Línea añadida{{count}}",

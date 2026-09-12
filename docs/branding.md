@@ -17,6 +17,8 @@ FDE_BRAND_DIR=brands/example npm run build:desktop
 
 Use the npm desktop entrypoints so the Tauri CLI and Rust receive the same generated configuration. Raw custom Tauri builds without that overlay fail with an actionable message; release builds also reject missing/stale web branding and native version drift. Direct `cargo check` and `cargo test` remain available.
 
+On Linux, `npm run build:desktop -- --bundles deb,appimage` builds the formats shipped by the release workflow. RPM remains available through Tauri when needed; its compression can take substantially longer with an embedded daemon.
+
 Desktop builds require the native prerequisites in [building.md](building.md). Windows builds on Linux use `npm run build:desktop:win`; native Windows and macOS runners use `build:desktop`. The selected identity supplies the executable name, icons, installer inputs, application identifier, URL handler, and runtime defaults.
 
 Acme has no download server. Its desktop build therefore builds and includes a daemon archive for offline first launch. Products with a release repository use the existing downloader-based packaging by default. Set `FDE_EMBED_DAEMON=1` to include a bundle for those products too, or supply an existing archive and matching `.sha256` with `FDE_EMBED_DAEMON_ARCHIVE`. Daemon archive ownership is checked before installation.
@@ -122,6 +124,8 @@ Provider skill selection uses logical names for compatibility. Physical director
 ## Releases and updates
 
 Set `distribution.repository` to your GitHub `owner/repository`, then choose an update mode. Custom products default to disabled updates without a repository. Missing custom release assets never redirect to FDE releases.
+
+FDE releases from 0.2.16 use explicit platform names in public artifacts. Earlier releases remain addressable by their historical names. New FDE releases also publish byte-identical legacy aliases and checksum/signature sidecars so existing clients can update. Custom daemon prefixes retain their own naming contract; no FDE aliases are published for custom products.
 
 The generator supplies artifact prefixes and release locations to both publishers and consumers. Daemon bundles include `manifest.json`; desktop assets have `.metadata.json` sidecars containing product identity, version, source revision, configuration fingerprint, asset name, and checksum. Cosmetic fingerprint changes are allowed across upgrades; a different product identity is rejected.
 

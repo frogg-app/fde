@@ -8,6 +8,7 @@ import {
   type WorktreeArchiveWarningLabels,
 } from "@/git/worktree-archive-warning";
 import type { WorkspaceDescriptor } from "@/stores/session-store";
+import { confirmDialog } from "@/utils/confirm-dialog";
 import { useWorkspaceLayoutStore } from "@/stores/workspace-layout-store";
 import { buildWorkspaceTabPersistenceKey } from "@/workspace-tabs/model";
 import { archiveWorkspaceOptimistically } from "@/workspace/workspace-archive";
@@ -93,6 +94,15 @@ export function useWorkspaceArchive(input: ArchiveWorkspaceInput): WorkspaceArch
         if (!confirmed) {
           return;
         }
+      } else {
+        const confirmed = await confirmDialog({
+          title: warningLabels.title(name),
+          message: warningLabels.consequence,
+          confirmLabel: warningLabels.confirm,
+          cancelLabel: warningLabels.cancel,
+          destructive: true,
+        });
+        if (!confirmed) return;
       }
       await archiveWorkspaceRecord();
     })();

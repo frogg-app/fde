@@ -36,7 +36,7 @@ fn is_windows() -> bool {
     cfg!(target_os = "windows")
 }
 
-/// `fde-daemon-<version>-<platform>-<arch>.tar.gz` (or `.zip` on Windows).
+/// `FDE-<version>-<platform>-<arch>-daemon.tar.gz` (or `.zip` on Windows).
 pub fn archive_name(version: &str) -> String {
     crate::branding::daemon_artifact(version, platform_name(), arch_name())
 }

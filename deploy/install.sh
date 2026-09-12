@@ -39,6 +39,8 @@ BRAND_HOME='.fde'
 BRAND_SERVICE='fde-daemon'
 BRAND_LAUNCHD='app.frogg.fde-daemon'
 BRAND_DAEMON_PREFIX='fde-daemon'
+BRAND_ARTIFACT_PREFIX='FDE'
+BRAND_LEGACY_ARTIFACT_CUTOFF='0.2.16'
 BRAND_PORT='9999'
 BRAND_RELEASE_BASE='https://github.com/frogg-app/fde/releases'
 BRAND_DOCKER_IMAGE='froggapp/fde'
@@ -153,8 +155,19 @@ resolve_latest_version() {
 }
 
 # Sets BUNDLE_PATH to a verified tarball, downloading it when needed.
+# Historical FDE releases use the old filenames; new releases also publish aliases
+# so existing installations can update without changing their download contract.
+brand_legacy_artifact_version() {
+  [[ "$1" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)([-+]|$) ]] || return 1
+  local major=$((10#${BASH_REMATCH[1]})) minor=$((10#${BASH_REMATCH[2]})) patch=$((10#${BASH_REMATCH[3]}))
+  local cutoff_major cutoff_minor cutoff_patch
+  IFS=. read -r cutoff_major cutoff_minor cutoff_patch <<< "$BRAND_LEGACY_ARTIFACT_CUTOFF"
+  (( major < cutoff_major || (major == cutoff_major && minor < cutoff_minor) ||
+     (major == cutoff_major && minor == cutoff_minor && patch < cutoff_patch) ))
+}
+
 acquire_bundle() {
-  local name
+  local name public_platform public_arch
   if [ -n "${FDE_BUNDLE_FILE}" ]; then
     [ -f "${FDE_BUNDLE_FILE}" ] || die "FDE_BUNDLE_FILE does not exist: ${FDE_BUNDLE_FILE}"
     BUNDLE_PATH="${FDE_BUNDLE_FILE}"
@@ -172,6 +185,13 @@ acquire_bundle() {
   else
     [ -n "${FDE_VERSION}" ] || resolve_latest_version
     name="${BRAND_DAEMON_PREFIX}-${FDE_VERSION}-${PLATFORM}-${ARCH}.tar.gz"
+    if [ "$BRAND_LEGACY" = true ] && ! brand_legacy_artifact_version "$FDE_VERSION"; then
+      public_platform="$PLATFORM"
+      public_arch="$ARCH"
+      [ "$public_platform" = "darwin" ] && public_platform="mac"
+      [ "$public_arch" = "x64" ] && public_arch="x86_64"
+      name="${BRAND_ARTIFACT_PREFIX}-${FDE_VERSION}-${public_platform}-${public_arch}-daemon.tar.gz"
+    fi
     url="${FDE_RELEASE_BASE}/download/v${FDE_VERSION}/${name}"
   fi
   BUNDLE_PATH="${WORK_DIR}/${name}"

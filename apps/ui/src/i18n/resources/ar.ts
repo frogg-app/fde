@@ -846,6 +846,8 @@ export const ar: TranslationResources = {
           title: 'الأرشيف "{{workspaceName}}"؟',
           confirm: "أرشيف",
           cancel: "يلغي",
+          consequence:
+            "سيؤدي هذا إلى إزالة مساحة العمل من الشريط الجانبي. لاستعادتها لاحقًا، افتح السجل.",
           uncommittedChanges: "تغييرات غير ملتزم بها",
           uncommittedChangesWithDiff: "التغييرات غير الملتزم بها ({{diffStat}})",
           addedLine: "تمت إضافة خط{{count}}",

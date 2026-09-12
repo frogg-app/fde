@@ -868,6 +868,8 @@ export const ptBR: TranslationResources = {
           title: 'Arquivar "{{workspaceName}}"?',
           confirm: "Arquivar",
           cancel: "Cancelar",
+          consequence:
+            "Isso remove o workspace da barra lateral. Para restaurá-lo depois, abra o Histórico.",
           uncommittedChanges: "Alterações sem commit",
           uncommittedChangesWithDiff: "Alterações sem commit ({{diffStat}})",
           addedLine: "{{count}} linha adicionada",

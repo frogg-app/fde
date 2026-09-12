@@ -853,6 +853,7 @@ export const ko: TranslationResources = {
           title: '"{{workspaceName}}"를 보관하시겠습니까?',
           confirm: "보관",
           cancel: "취소",
+          consequence: "워크스페이스가 사이드바에서 제거됩니다. 나중에 복원하려면 기록을 여세요.",
           uncommittedChanges: "커밋되지 않은 변경 사항",
           uncommittedChangesWithDiff: "커밋되지 않은 변경 사항 ({{diffStat}})",
           addedLine: "추가된 줄 {{count}}개",

@@ -36,6 +36,7 @@ import { buildOpenProjectRoute } from "@/utils/host-routes";
 import { hasActiveWebOverlay } from "@/lib/overlay-root";
 import { useCompanionStore } from "@/companion/store";
 import { useSettingsModalStore } from "@/settings-modal/store";
+import { openAddHostFlow } from "@/hosts/add-host-flow";
 import {
   type ActiveWorkspaceSelection,
   navigateToLastWorkspace,
@@ -163,6 +164,7 @@ export function useKeyboardShortcuts({
       "toggle-agent-list": toggleAgentList,
       "toggle-both-sidebars": toggleBothSidebars,
       "cycle-theme": cycleTheme,
+      "open-add-host": openAddHostFlow,
     };
 
     const performShortcutAction = (

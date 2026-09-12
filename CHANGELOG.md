@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.30 - 2026-09-12
+
+- Integrate upstream archive safety and Add host improvements, and reconcile
+  explicit release asset names with branded distributions and FDE compatibility.
+
 ## 0.2.29 - 2026-09-12
 
 - Integrate the upstream host-picker scope and translated Add host fix while
@@ -45,6 +50,17 @@
   legacy identity and compatibility. See [the rebranding guide](docs/branding.md).
 - Add both-brand generation, browser, runtime, and native packaging CI. Platform
   compilation and device acceptance are recorded separately in the branding plan.
+
+## 0.2.16 - 2026-09-12
+
+- Keep workspace archival solely in each workspace's overflow menu, remove its
+  keyboard shortcut, and require confirmation for every archive. Worktrees with
+  uncommitted or unpushed work retain their additional risk warning.
+- Open Add host directly from the sidebar instead of layering it over Settings,
+  and add `Ctrl+H` as its global shortcut.
+- Name release assets by product, version, platform, architecture, and package
+  kind. Give Android and desktop builds priority over daemon bundle jobs, with
+  Windows first in the desktop matrix.
 
 ## 0.2.15 - 2026-09-12
 

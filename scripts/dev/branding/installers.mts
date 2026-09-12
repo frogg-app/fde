@@ -1,3 +1,4 @@
+import { legacyArtifactCutoff } from "../../../packages/branding/src/artifacts.js";
 import { writeFile } from "./config.mjs";
 import { mkdir, readFile } from "node:fs/promises";
 import path from "node:path";
@@ -17,6 +18,8 @@ export async function generateInstallers(build: BrandBuild): Promise<void> {
     SERVICE: b.serviceName,
     LAUNCHD: b.launchdLabel,
     DAEMON_PREFIX: b.daemonArtifactPrefix,
+    ARTIFACT_PREFIX: b.artifactPrefix,
+    LEGACY_ARTIFACT_CUTOFF: legacyArtifactCutoff,
     PORT: String(b.daemonPort),
     RELEASE_BASE: b.distribution.releaseBase ?? "",
     DOCKER_IMAGE: b.distribution.dockerImage ?? "",

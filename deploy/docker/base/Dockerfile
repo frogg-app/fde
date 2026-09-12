@@ -40,7 +40,9 @@ RUN set -eux; \
     esac; \
     node scripts/release/build-daemon-bundle.mjs --target "${TARGETOS}-${arch}" --out-dir /bundles; \
     mkdir -p /opt/fde; \
-    tar -xzf /bundles/*-daemon-*.tar.gz --strip-components=1 -C /opt/fde; \
+    archive=$(find /bundles -maxdepth 1 -type f -name '*.tar.gz' -print -quit); \
+    test -n "$archive"; \
+    tar -xzf "$archive" --strip-components=1 -C /opt/fde; \
     rm -rf /bundles
 
 FROM debian:bookworm-slim

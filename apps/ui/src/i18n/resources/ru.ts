@@ -861,6 +861,8 @@ export const ru: TranslationResources = {
           title: "Архивировать «{{workspaceName}}»?",
           confirm: "Архивировать",
           cancel: "Отмена",
+          consequence:
+            "Рабочее пространство будет удалено с боковой панели. Чтобы восстановить его позже, откройте историю.",
           uncommittedChanges: "Незафиксированные изменения",
           uncommittedChangesWithDiff: "Незафиксированные изменения ({{diffStat}})",
           addedLine: "Добавлено строк: {{count}}",

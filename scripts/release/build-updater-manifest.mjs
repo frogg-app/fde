@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { desktopArtifactName } from "../../packages/branding/src/artifact-contract.mjs";
 // Writes the `latest.json` that tauri-plugin-updater fetches (see
 // `plugins.updater.endpoints` in apps/desktop/src-tauri/tauri.conf.json) from the
 // renamed release assets and their minisign `.sig` files.
@@ -18,11 +19,11 @@ import { parseArgs } from "node:util";
 const brand = loadBrand();
 
 export const UPDATER_ASSETS = {
-  "linux-x86_64": (v) => `${brand.artifactPrefix}-${v}-x86_64.AppImage`,
+  "linux-x86_64": (v) => desktopArtifactName(brand, v, `linux-x86_64.AppImage`),
   // Zipped NSIS installer: the plugin unpacks it (and GitHub will not take a raw .exe).
-  "windows-x86_64": (v) => `${brand.artifactPrefix}-${v}-x64-setup.zip`,
-  "darwin-aarch64": (v) => `${brand.artifactPrefix}-${v}-aarch64.app.tar.gz`,
-  "darwin-x86_64": (v) => `${brand.artifactPrefix}-${v}-x86_64.app.tar.gz`,
+  "windows-x86_64": (v) => desktopArtifactName(brand, v, `win-x64-setup.zip`),
+  "darwin-aarch64": (v) => desktopArtifactName(brand, v, `mac-aarch64.app.tar.gz`),
+  "darwin-x86_64": (v) => desktopArtifactName(brand, v, `mac-x86_64.app.tar.gz`),
 };
 
 /**

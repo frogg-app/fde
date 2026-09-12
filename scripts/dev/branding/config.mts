@@ -1,3 +1,11 @@
+import {
+  daemonArtifactName,
+  legacyDaemonArtifactName,
+  desktopArtifactName,
+  legacyDesktopSuffix,
+  desktopArtifactSuffixes,
+  legacyArtifactCutoff,
+} from "../../../packages/branding/src/artifacts.js";
 import { nativePresentation } from "./native-presentation.mjs";
 import { access, mkdir, readFile, writeFile as writeRaw } from "node:fs/promises";
 import path from "node:path";
@@ -130,6 +138,31 @@ export async function generateConfig(build: BrandBuild): Promise<void> {
     LAUNCHD_LABEL: brand.launchdLabel,
     ARTIFACT_PREFIX: brand.artifactPrefix,
     DAEMON_ARTIFACT_PREFIX: brand.daemonArtifactPrefix,
+    LEGACY_ARTIFACT_CUTOFF: legacyArtifactCutoff,
+    DAEMON_ARTIFACT_NAMES: JSON.stringify(
+      Object.fromEntries(
+        ["linux", "darwin", "win"].flatMap((platform) =>
+          ["x64", "arm64"].map((arch) => [
+            `${platform}-${arch}`,
+            {
+              current: daemonArtifactName(brand, "{version}", platform, arch),
+              legacy: legacyDaemonArtifactName(brand, "{version}", platform, arch),
+            },
+          ]),
+        ),
+      ),
+    ),
+    DESKTOP_ARTIFACT_NAMES: JSON.stringify(
+      Object.fromEntries(
+        desktopArtifactSuffixes.map((suffix) => [
+          suffix,
+          {
+            current: desktopArtifactName(brand, "{version}", suffix),
+            legacy: `${brand.artifactPrefix}-{version}-${legacyDesktopSuffix(suffix)}`,
+          },
+        ]),
+      ),
+    ),
     DEFAULT_PORT: brand.daemonPort,
     DEFAULT_LISTEN: `127.0.0.1:${brand.daemonPort}`,
     LEGACY_FDE: brand.legacyFde,

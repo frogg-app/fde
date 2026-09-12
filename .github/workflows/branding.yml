@@ -88,7 +88,11 @@ jobs:
           [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD 'scripts/dev/dev.ps1'), [ref]$tokens, [ref]$errors) | Out-Null
           if ($errors.Count) { throw ($errors | Out-String) }
       - run: node --test scripts/dev/npm-command.test.mjs
-      - run: npm run build:desktop
+      - if: runner.os == 'Linux'
+        name: Build Linux release formats
+        run: npm run build:desktop -- --bundles deb,appimage
+      - if: runner.os != 'Linux'
+        run: npm run build:desktop
       - run: node scripts/ci/branding-package-inspect.mjs
       - run: cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml commands::cli_install
       - uses: actions/upload-artifact@v7

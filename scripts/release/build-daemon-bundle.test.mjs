@@ -4,7 +4,12 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 
-import { SUPPORTED_TARGETS, WINDOWS_LAUNCHER, parseTarget } from "./build-daemon-bundle.mjs";
+import {
+  SUPPORTED_TARGETS,
+  WINDOWS_LAUNCHER,
+  daemonAssetName,
+  parseTarget,
+} from "./build-daemon-bundle.mjs";
 import { nodeArchiveName, nodeBinaryPath } from "./daemon-bundle-node-runtime.mjs";
 import { createZipFromDirectory, extractZipStripped, findSymlinks } from "./daemon-bundle-zip.mjs";
 
@@ -30,6 +35,12 @@ test("node runtime names follow nodejs.org", () => {
   assert.equal(nodeArchiveName("22.23.2", "darwin", "arm64"), "node-v22.23.2-darwin-arm64.tar.gz");
   assert.equal(nodeBinaryPath("/r", "win"), path.join("/r", "node.exe"));
   assert.equal(nodeBinaryPath("/r", "linux"), path.join("/r", "bin", "node"));
+});
+
+test("daemon assets use platform-first public names", () => {
+  assert.equal(daemonAssetName("1.2.3", "linux", "arm64"), "FDE-1.2.3-linux-arm64-daemon.tar.gz");
+  assert.equal(daemonAssetName("1.2.3", "darwin", "x64"), "FDE-1.2.3-mac-x86_64-daemon.tar.gz");
+  assert.equal(daemonAssetName("1.2.3", "win", "x64"), "FDE-1.2.3-win-x64-daemon.zip");
 });
 
 test("Windows launcher keeps the CLI launch contract", () => {
@@ -64,6 +75,35 @@ test("zip helpers round-trip a tree and refuse symlinks", async () => {
       createZipFromDirectory(source, "x", path.join(dir, "out", "bad.zip")),
       /symlinks are not allowed/,
     );
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("daemon archives preserve their internal layout and publish owned legacy aliases", async () => {
+  const { packBundle } = await import("./build-daemon-bundle.mjs");
+  const { loadBrand } = await import("../dev/branding/load.cjs");
+  const { readdir } = await import("node:fs/promises");
+  const brand = loadBrand();
+  const dir = await mkdtemp(path.join(os.tmpdir(), "brand-daemon-alias-"));
+  try {
+    const bundleName = `${brand.daemonArtifactPrefix}-1.2.3-linux-x64`;
+    const stagingDir = path.join(dir, "staging", bundleName);
+    const outDir = path.join(dir, "out");
+    await mkdir(stagingDir, { recursive: true });
+    await mkdir(outDir);
+    await writeFile(path.join(stagingDir, "manifest.json"), JSON.stringify({ version: "1.2.3" }));
+    const archiveName = daemonAssetName("1.2.3", "linux", "x64");
+    await packBundle({ stagingDir, bundleName, archiveName, outDir, isWindows: false });
+    const canonical = await readFile(path.join(outDir, archiveName));
+    if (brand.legacyFde) {
+      const legacy = `${bundleName}.tar.gz`;
+      assert.deepEqual(await readFile(path.join(outDir, legacy)), canonical);
+      const checksum = await readFile(path.join(outDir, `${legacy}.sha256`), "utf8");
+      assert.ok(checksum.endsWith(`  ${legacy}\n`));
+    } else {
+      assert.equal((await readdir(outDir)).filter((name) => name.endsWith(".tar.gz")).length, 1);
+    }
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
