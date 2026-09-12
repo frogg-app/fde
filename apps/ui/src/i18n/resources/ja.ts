@@ -857,6 +857,8 @@ export const ja: TranslationResources = {
           title: '"{{workspaceName}}"をアーカイブしますか？',
           confirm: "アーカイブ",
           cancel: "キャンセル",
+          consequence:
+            "ワークスペースがサイドバーから削除されます。後で復元するには履歴を開いてください。",
           uncommittedChanges: "未コミットの変更",
           uncommittedChangesWithDiff: "未コミットの変更（{{diffStat}}）",
           addedLine: "{{count}}行追加",

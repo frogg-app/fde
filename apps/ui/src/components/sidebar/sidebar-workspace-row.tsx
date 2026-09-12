@@ -12,8 +12,6 @@ import { useWorkspaceClipboardActions } from "@/hooks/use-workspace-clipboard-ac
 import { useToast } from "@/contexts/toast-context";
 import { toWorktreeArchiveRisk } from "@/git/worktree-archive-warning";
 import { useWorkspaceArchive } from "@/workspace/use-workspace-archive";
-import { useShortcutKeys } from "@/hooks/use-shortcut-keys";
-import { useKeyboardActionHandler } from "@/hooks/use-keyboard-action-handler";
 import { useClearWorkspaceAttention } from "@/hooks/use-clear-workspace-attention";
 import { redirectIfArchivingActiveWorkspace } from "@/utils/sidebar-workspace-archive-redirect";
 import { isNative as platformIsNative } from "@/constants/platform";
@@ -122,7 +120,6 @@ export function SidebarWorkspaceRow({
     setIsRenameOpen(false);
   }, []);
 
-  const archiveShortcutKeys = useShortcutKeys("archive-workspace");
   const { hasClearableAttention, clearAttention } = useClearWorkspaceAttention({
     serverId: workspace.serverId,
     workspaceId: workspace.workspaceId,
@@ -132,17 +129,6 @@ export function SidebarWorkspaceRow({
       toast.error(error instanceof Error ? error.message : "Failed to mark workspace as read");
     });
   }, [clearAttention, toast]);
-
-  useKeyboardActionHandler({
-    handlerId: `workspace-archive-${workspace.workspaceKey}`,
-    actions: ["workspace.archive"],
-    enabled: selected && !isArchiving,
-    priority: 0,
-    handle: () => {
-      handleArchive();
-      return true;
-    },
-  });
 
   return (
     <>
@@ -166,7 +152,7 @@ export function SidebarWorkspaceRow({
         onCopyPath={handleCopyPath}
         onRename={handleOpenRename}
         onMarkAsRead={hasClearableAttention ? handleMarkAsRead : undefined}
-        archiveShortcutKeys={selected ? archiveShortcutKeys : null}
+        archiveShortcutKeys={null}
       />
       <WorkspaceRenameModal
         visible={isRenameOpen}

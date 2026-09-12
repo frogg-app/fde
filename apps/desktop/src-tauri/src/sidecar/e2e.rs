@@ -1,7 +1,7 @@
 //! End-to-end: install a real linux bundle from a `file://` URL, start the
 //! daemon on a spare port with a scratch `PASEO_HOME`, check the status the
 //! UI would see, stop it. Needs `npm run build:daemon-bundle -- --target
-//! linux-x64` to have produced `dist/bundles/fde-daemon-<version>-linux-x64.tar.gz`
+//! linux-x64` to have produced `dist/bundles/FDE-<version>-linux-x86_64-daemon.tar.gz`
 //! (or `FDE_TEST_DAEMON_BUNDLE=<path>`); skips otherwise.
 
 use std::path::{Path, PathBuf};
@@ -18,7 +18,7 @@ fn bundle_path() -> Option<PathBuf> {
     }
     let repo_root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../..");
     let candidate = repo_root.join("dist/bundles").join(format!(
-        "fde-daemon-{}-linux-x64.tar.gz",
+        "FDE-{}-linux-x86_64-daemon.tar.gz",
         env!("CARGO_PKG_VERSION")
     ));
     candidate.is_file().then_some(candidate)

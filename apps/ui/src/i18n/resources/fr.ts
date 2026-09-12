@@ -876,6 +876,8 @@ export const fr: TranslationResources = {
           title: "Archiver «{{workspaceName}}»?",
           confirm: "Archive",
           cancel: "Annuler",
+          consequence:
+            "Cela retire l’espace de travail de la barre latérale. Pour le restaurer plus tard, ouvrez l’historique.",
           uncommittedChanges: "Modifications non validées",
           uncommittedChangesWithDiff: "Modifications non validées ({{diffStat}})",
           addedLine: "Ligne ajoutée{{count}}",

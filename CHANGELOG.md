@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.16 - 2026-09-12
+
+- Keep workspace archival solely in each workspace's overflow menu, remove its
+  keyboard shortcut, and require confirmation for every archive. Worktrees with
+  uncommitted or unpushed work retain their additional risk warning.
+- Open Add host directly from the sidebar instead of layering it over Settings,
+  and add `Ctrl+H` as its global shortcut.
+- Name release assets by product, version, platform, architecture, and package
+  kind. Give Android and desktop builds priority over daemon bundle jobs, with
+  Windows first in the desktop matrix.
+
 ## 0.2.15 - 2026-09-12
 
 - Keep the Settings host picker focused on switching hosts. Host creation remains

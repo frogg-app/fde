@@ -131,7 +131,7 @@ export default function PairScanScreen() {
 
   const navigateToPairedHost = useCallback(
     (serverId: string) => {
-      if (source === "onboarding") {
+      if (source !== "settings") {
         router.replace(buildHostRootRoute(serverId));
         return;
       }

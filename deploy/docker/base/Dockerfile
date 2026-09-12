@@ -37,7 +37,7 @@ RUN set -eux; \
     esac; \
     node scripts/release/build-daemon-bundle.mjs --target "${TARGETOS}-${arch}" --out-dir /bundles; \
     mkdir -p /opt/fde; \
-    tar -xzf /bundles/fde-daemon-*.tar.gz --strip-components=1 -C /opt/fde; \
+    tar -xzf /bundles/FDE-*-daemon.tar.gz --strip-components=1 -C /opt/fde; \
     rm -rf /bundles
 
 FROM debian:bookworm-slim

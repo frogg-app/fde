@@ -30,7 +30,16 @@ async function archiveWorkspaceFromSidebar(page: Page, workspaceId: string): Pro
 
   const archiveItem = page.getByTestId(`sidebar-workspace-menu-archive-${serverId}:${workspaceId}`);
   await expect(archiveItem).toBeVisible({ timeout: 10_000 });
+  const confirmation = new Promise<{ type: string; message: string }>((resolve) => {
+    page.once("dialog", (dialog) => {
+      resolve({ type: dialog.type(), message: dialog.message() });
+      void dialog.accept();
+    });
+  });
   await archiveItem.click();
+  const dialog = await confirmation;
+  expect(dialog.type).toBe("confirm");
+  expect(dialog.message).toContain("To restore it later, open History");
 }
 
 async function removeProjectFromSidebar(page: Page, projectViewKey: string): Promise<void> {

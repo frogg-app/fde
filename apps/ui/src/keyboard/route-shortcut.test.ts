@@ -37,7 +37,6 @@ describe("routeKeyboardShortcut — dispatch passthroughs", () => {
     ["workspace.tab.target.files", { id: "workspace.tab.target.files", scope: "workspace" }],
     ["workspace.new", { id: "workspace.new", scope: "sidebar" }],
     ["workspace.project.pick", { id: "workspace.project.pick", scope: "workspace" }],
-    ["workspace.archive", { id: "workspace.archive", scope: "sidebar" }],
     ["workspace.pin", { id: "workspace.pin", scope: "sidebar" }],
     ["worktree.new", { id: "worktree.new", scope: "sidebar" }],
     ["workspace.terminal.new", { id: "workspace.terminal.new", scope: "workspace" }],
@@ -80,6 +79,25 @@ describe("routeKeyboardShortcut — dispatch passthroughs", () => {
     ).toEqual<ShortcutAction>({
       kind: "dispatch",
       action: { id: "agent.interrupt", scope: "global" },
+    });
+  });
+});
+
+describe("routeKeyboardShortcut — host.add", () => {
+  it("opens the add-host flow without routing through settings", () => {
+    expect(routeKeyboardShortcut({ action: "host.add", payload: null }, makeCtx())).toEqual({
+      kind: "callback",
+      name: "open-add-host",
+    });
+  });
+});
+
+describe("routeKeyboardShortcut — removed archive shortcut", () => {
+  it("ignores the former workspace.archive action", () => {
+    expect(
+      routeKeyboardShortcut({ action: "workspace.archive", payload: null }, makeCtx()),
+    ).toEqual({
+      kind: "none",
     });
   });
 });

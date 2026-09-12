@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Builds a self-contained daemon bundle for one platform/arch:
 //
-//   dist/bundles/fde-daemon-<version>-<platform>-<arch>.tar.gz   (linux, darwin)
-//   dist/bundles/fde-daemon-<version>-win-<arch>.zip             (windows)
+//   dist/bundles/FDE-<version>-<platform>-<arch>-daemon.tar.gz  (Linux, macOS)
+//   dist/bundles/FDE-<version>-win-<arch>-daemon.zip            (Windows)
 //
 // Layout inside the archive (one top-level directory of the same name):
 //   node/      official Node.js runtime from nodejs.org (verified, trimmed);
@@ -298,8 +298,8 @@ async function materializeWorkspaceLinks(daemonDir) {
   await rm(path.join(daemonDir, "packages"), { recursive: true, force: true });
 }
 
-async function packBundle({ stagingDir, bundleName, outDir, isWindows }) {
-  const archivePath = path.join(outDir, `${bundleName}.${isWindows ? "zip" : "tar.gz"}`);
+async function packBundle({ stagingDir, bundleName, archiveName, outDir, isWindows }) {
+  const archivePath = path.join(outDir, archiveName);
   console.log(`Packing ${path.relative(REPO_ROOT, archivePath)}...`);
   await rm(archivePath, { force: true });
   if (isWindows) {
@@ -312,11 +312,18 @@ async function packBundle({ stagingDir, bundleName, outDir, isWindows }) {
   return { archivePath, digest };
 }
 
+export function daemonAssetName(version, platform, arch) {
+  const publicPlatform = platform === "darwin" ? "mac" : platform;
+  const publicArch = arch === "x64" && platform !== "win" ? "x86_64" : arch;
+  return `FDE-${version}-${publicPlatform}-${publicArch}-daemon.${platform === "win" ? "zip" : "tar.gz"}`;
+}
+
 async function main() {
   const { platform, arch, npmPlatform, isWindows, nodeVersion, outDir, keepStaging } = parseCli();
   const rootPackage = JSON.parse(await readFile(path.join(REPO_ROOT, "package.json"), "utf8"));
   const version = rootPackage.version;
   const bundleName = `fde-daemon-${version}-${platform}-${arch}`;
+  const archiveName = daemonAssetName(version, platform, arch);
   const stagingDir = path.join(outDir, "staging", bundleName);
   const daemonDir = path.join(stagingDir, "daemon");
 
@@ -353,7 +360,13 @@ async function main() {
   };
   await writeFile(path.join(stagingDir, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
 
-  const { archivePath, digest } = await packBundle({ stagingDir, bundleName, outDir, isWindows });
+  const { archivePath, digest } = await packBundle({
+    stagingDir,
+    bundleName,
+    archiveName,
+    outDir,
+    isWindows,
+  });
 
   const unpacked = await directorySize(stagingDir);
   const packed = (await readFile(archivePath)).byteLength;

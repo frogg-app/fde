@@ -15,11 +15,14 @@ test("linux: deb and AppImage get dashed names, signatures follow", () => {
     ],
   });
   assert.deepEqual(renames, [
-    { from: "bundle/deb/FDE_0.1.5_amd64.deb", to: "FDE-0.1.5-amd64.deb" },
-    { from: "bundle/appimage/FDE_0.1.5_amd64.AppImage", to: "FDE-0.1.5-x86_64.AppImage" },
+    { from: "bundle/deb/FDE_0.1.5_amd64.deb", to: "FDE-0.1.5-linux-x86_64.deb" },
+    {
+      from: "bundle/appimage/FDE_0.1.5_amd64.AppImage",
+      to: "FDE-0.1.5-linux-x86_64.AppImage",
+    },
     {
       from: "bundle/appimage/FDE_0.1.5_amd64.AppImage.sig",
-      to: "FDE-0.1.5-x86_64.AppImage.sig",
+      to: "FDE-0.1.5-linux-x86_64.AppImage.sig",
     },
   ]);
 });
@@ -39,7 +42,11 @@ test("windows: installer zip with its signature, and the portable zip", () => {
   });
   assert.deepEqual(
     renames.map((entry) => entry.to),
-    ["FDE-0.1.5-x64-setup.zip", "FDE-0.1.5-x64-setup.zip.sig", "FDE-0.1.5-x64-portable.zip"],
+    [
+      "FDE-0.1.5-win-x64-setup.zip",
+      "FDE-0.1.5-win-x64-setup.zip.sig",
+      "FDE-0.1.5-win-x64-portable.zip",
+    ],
   );
 });
 
@@ -51,7 +58,7 @@ test("macos: arch comes from the caller; missing kinds are skipped", () => {
     files: ["bundle/dmg/FDE_0.1.5_aarch64.dmg", "bundle/macos/FDE.app"],
   });
   assert.deepEqual(renames, [
-    { from: "bundle/dmg/FDE_0.1.5_aarch64.dmg", to: "FDE-0.1.5-aarch64.dmg" },
+    { from: "bundle/dmg/FDE_0.1.5_aarch64.dmg", to: "FDE-0.1.5-mac-aarch64.dmg" },
   ]);
 });
 
@@ -68,8 +75,14 @@ test("older builds in the target dir do not make the rename ambiguous", () => {
     ],
   });
   assert.deepEqual(renames, [
-    { from: "bundle/nsis-zip/FDE-0.1.18-x64-setup.zip", to: "FDE-0.1.18-x64-setup.zip" },
-    { from: "bundle/portable/FDE-0.1.18-x64-portable.zip", to: "FDE-0.1.18-x64-portable.zip" },
+    {
+      from: "bundle/nsis-zip/FDE-0.1.18-x64-setup.zip",
+      to: "FDE-0.1.18-win-x64-setup.zip",
+    },
+    {
+      from: "bundle/portable/FDE-0.1.18-x64-portable.zip",
+      to: "FDE-0.1.18-win-x64-portable.zip",
+    },
   ]);
 });
 

@@ -343,7 +343,7 @@ hasDockerContainer, homeDir}`. `hasDocker` means `docker info` succeeds for that
   Docker pipes `deploy/install-docker.sh` with `FDE_VERSION`, `FDE_BIND` and `FDE_PORT`
   derived from `listen`. Defaults: version = the app's own version, listen =
   `127.0.0.1:9999`. Nothing is copied with scp: the script downloads
-  `fde-daemon-<version>-<platform>-<arch>.tar.gz` and its `.sha256` from the GitHub release
+  `FDE-<version>-<platform>-<arch>-daemon.tar.gz` and its `.sha256` from the GitHub release
   on the remote itself, so **the release tagged `v<version>` must carry that bundle** (or
   `bundleUrl` must point at one plus a sidecar). The job emits
   `paseo:event:ssh-deploy-event` payloads `{jobId, kind:"log"|"done"|"error", text?, stream?,
@@ -381,7 +381,7 @@ parsers and the card's action logic.
 ## Local sidecar daemon (milestone 3)
 
 The daemon stays Node, but it is not part of the installer. The shell downloads the same
-**daemon bundle** `deploy/install.sh` uses (`fde-daemon-<version>-<platform>-<arch>.tar.gz`,
+**daemon bundle** `deploy/install.sh` uses (`FDE-<version>-<platform>-<arch>-daemon.tar.gz`,
 `.zip` on Windows: a pinned Node 22 runtime, the built daemon and CLI, production
 `node_modules`; see `docs/install.md`) from the GitHub release matching the app version and
 supervises it the way Electron supervised its packaged daemon. Everything lives in
@@ -455,7 +455,7 @@ plus `windowsHide` in `spawnProcess`) survives the CLI exiting; that `paseo.pid`
   `cargo tauri build --runner cargo-xwin --target x86_64-pc-windows-msvc`, NSIS bundle.
 - Installer icon: NSIS does _not_ fall back to `bundle.icon`. Without
   `bundle > windows > nsis > installerIcon` the bundler leaves `MUI_ICON` undefined and NSIS
-  uses its own beige default, so `FDE-<version>-x64-setup.exe` ships with a stranger's icon
+  uses its own beige default, so `FDE-<version>-win-x64-setup.exe` ships with a stranger's icon
   both in Explorer and in the installer window. `installerIcon`/`uninstallerIcon` are set to
   `icons/icon.ico` for that reason.
 - DevTools: the `devtools` Tauri feature is on, so release builds carry the inspector but keep
@@ -513,13 +513,13 @@ availability, because automatic checks do not reuse failed results.
 **Asset selection** (`assets.rs`). `InstallContext::detect()` maps the platform to one of the
 assets `scripts/release/collect-desktop-bundles.mjs` publishes:
 
-| Platform                                        | Asset                           | Install (`install.rs`)                                                                                                                                                               |
-| ----------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Windows, `uninstall.exe` next to the exe (NSIS) | `FDE-<v>-x64-setup.zip`         | the setup exe is unpacked next to the download, then a detached `cmd` helper waits for our pid, runs it with `/S` (per-user NSIS, no elevation), starts the exe again; the app exits |
-| Windows, portable                               | `FDE-<v>-x64-portable.zip`      | the exe is unpacked the same way; the helper does `move /Y` over the running exe and relaunches it; the app exits                                                                    |
-| Linux with `$APPIMAGE` set                      | `FDE-<v>-x86_64.AppImage`       | copied next to `$APPIMAGE`, `chmod 755`, renamed over it, relaunched; the app exits                                                                                                  |
-| Linux otherwise                                 | `FDE-<v>-amd64.deb`             | `xdg-open` hands the file to the package installer; the user restarts FDE afterwards                                                                                                 |
-| macOS                                           | `FDE-<v>-<aarch64\|x86_64>.dmg` | `open` mounts the image; the user drags FDE to Applications (ad-hoc signed apps cannot be replaced in place reliably)                                                                |
+| Platform                                        | Asset                               | Install (`install.rs`)                                                                                                                                                               |
+| ----------------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Windows, `uninstall.exe` next to the exe (NSIS) | `FDE-<v>-win-x64-setup.zip`         | the setup exe is unpacked next to the download, then a detached `cmd` helper waits for our pid, runs it with `/S` (per-user NSIS, no elevation), starts the exe again; the app exits |
+| Windows, portable                               | `FDE-<v>-win-x64-portable.zip`      | the exe is unpacked the same way; the helper does `move /Y` over the running exe and relaunches it; the app exits                                                                    |
+| Linux with `$APPIMAGE` set                      | `FDE-<v>-linux-x86_64.AppImage`     | copied next to `$APPIMAGE`, `chmod 755`, renamed over it, relaunched; the app exits                                                                                                  |
+| Linux otherwise                                 | `FDE-<v>-linux-x86_64.deb`          | `xdg-open` hands the file to the package installer; the user restarts FDE afterwards                                                                                                 |
+| macOS                                           | `FDE-<v>-mac-<aarch64\|x86_64>.dmg` | `open` mounts the image; the user drags FDE to Applications (ad-hoc signed apps cannot be replaced in place reliably)                                                                |
 
 **Download** (`download.rs`) reuses the sidecar bundle fetcher: the asset lands in
 `<app cache dir>/updates/<name>` (any earlier copy is removed first) with

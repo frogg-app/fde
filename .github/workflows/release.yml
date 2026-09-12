@@ -209,6 +209,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - platform: windows
+            arch: x86_64
+            runner: windows-latest
+            target: x86_64-pc-windows-msvc
+            bundles: nsis
           # ubuntu-22.04 on purpose: deb/AppImage link against the build host's glibc
           # and webkit2gtk, so older is more portable.
           - platform: linux
@@ -216,11 +221,6 @@ jobs:
             runner: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
             bundles: deb,appimage
-          - platform: windows
-            arch: x86_64
-            runner: windows-latest
-            target: x86_64-pc-windows-msvc
-            bundles: nsis
           - platform: macos
             arch: aarch64
             runner: macos-latest
@@ -345,7 +345,9 @@ jobs:
 
   daemon-bundle:
     name: daemon bundle ${{ matrix.target }}
-    needs: meta
+    # Android and desktop are the priority release tier. Keep daemon packaging
+    # from consuming runners until the APK and Windows setup build have finished.
+    needs: [meta, android, desktop]
     if: inputs.only != 'android'
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
@@ -407,9 +409,9 @@ jobs:
           if [ "$CLOBBER" = "true" ]; then flags+=(--clobber); fi
           # Linux/macOS targets produce .tar.gz, Windows targets .zip; each
           # comes with its .sha256 sidecar and nothing else matches the glob.
-          ls -l dist/bundles/fde-daemon-*
+          ls -l dist/bundles/FDE-*-daemon*
           existing=$(gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name')
-          for f in dist/bundles/fde-daemon-*; do
+          for f in dist/bundles/FDE-*-daemon*; do
             n=$(basename "$f")
             if [ "$CLOBBER" != "true" ] && grep -qx -- "$n" <<<"$existing"; then
               echo "::warning::$n already on $RELEASE_TAG; skipping"

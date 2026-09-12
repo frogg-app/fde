@@ -19,6 +19,7 @@ export type MessageInputKeyboardActionKind =
 export type KeyboardActionId =
   | "agent.interrupt"
   | "agent.new"
+  | "host.add"
   | "workspace.tab.menu.open"
   | "workspace.tab.target.agent"
   | "workspace.tab.target.browser"
@@ -52,7 +53,6 @@ export type KeyboardActionId =
   | "workspace.new"
   | "workspace.project.pick"
   | "worktree.new"
-  | "workspace.archive"
   | "workspace.pin"
   | "view.toggle.focus"
   | "theme.cycle"

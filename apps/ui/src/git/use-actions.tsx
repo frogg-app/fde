@@ -1100,6 +1100,7 @@ function getWorktreeArchiveWarningLabels(
     title: (workspaceName) => t("workspace.git.actions.archiveWarning.title", { workspaceName }),
     confirm: t("workspace.git.actions.archiveWarning.confirm"),
     cancel: t("workspace.git.actions.archiveWarning.cancel"),
+    consequence: t("workspace.git.actions.archiveWarning.consequence"),
     uncommittedChanges: t("workspace.git.actions.archiveWarning.uncommittedChanges"),
     uncommittedChangesWithDiff: (diffStat) =>
       t("workspace.git.actions.archiveWarning.uncommittedChangesWithDiff", { diffStat }),
