@@ -38,6 +38,27 @@ meta ── ui ── desktop (windows/linux/macOS) ── updater
 meta ── docker
 ```
 
+### Which platforms a run builds
+
+A **tag push always builds everything** -- that is what tagging a release means. A
+**manual dispatch defaults to the reduced set** actually used for day-to-day testing,
+because the full matrix is four desktop runners plus six daemon targets and most runs do
+not need them:
+
+|                                    | desktop                  | daemon bundles     | android   |
+| ---------------------------------- | ------------------------ | ------------------ | --------- |
+| default (manual dispatch)          | windows x86_64           | linux-x64, win-x64 | arm64-v8a |
+| `platforms: all` (or any tag push) | windows, linux, 2x macOS | six targets        | arm64-v8a |
+
+The win-x64 daemon bundle is in the default set because the Windows desktop app
+supervises a local daemon; shipping the app without it is a broken install, not a smaller
+one. Android is unchanged -- it only ever built arm64-v8a.
+
+Pick `platforms: all` on a manual dispatch to get the full matrix without tagging. The
+**updater manifest is skipped on reduced runs**: `latest.json` advertises the update for
+every platform, so generating it from a Windows-only build would point macOS and Linux
+installs at assets the release does not contain.
+
 - **meta** checks that the tag equals `v` + root `package.json` version (fails otherwise),
   extracts the `## <version>` section of `CHANGELOG.md` as release notes, and creates the
   GitHub release `FDE <version>` if it does not exist yet. Only versions with a semver `-` suffix are marked pre-release;

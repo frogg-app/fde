@@ -23,6 +23,12 @@ on:
         default: all
         type: choice
         options: [all, android]
+      platforms:
+        description: "Which platforms to build"
+        required: false
+        default: default
+        type: choice
+        options: [default, all]
 
 permissions:
   contents: write
@@ -57,6 +63,9 @@ jobs:
       signing: ${{ steps.secrets.outputs.signing }}
       docker: ${{ steps.secrets.outputs.docker }}
       android_signing: ${{ steps.secrets.outputs.android_signing }}
+      desktop_matrix: ${{ steps.platforms.outputs.desktop }}
+      daemon_matrix: ${{ steps.platforms.outputs.daemon }}
+      build_all: ${{ steps.platforms.outputs.build_all }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -114,6 +123,55 @@ jobs:
           echo "docker=$docker" >> "$GITHUB_OUTPUT"
           echo "android_signing=$android_signing" >> "$GITHUB_OUTPUT"
           echo "updater signing: $signing, docker push: $docker, android release keystore: $android_signing"
+
+      # Which platforms this run builds.
+      #
+      # A tag push is a real release and builds everything. A manual run defaults to the
+      # small set actually used for day-to-day testing -- Windows x64 desktop, the
+      # linux-x64 daemon bundle, and the arm64 Android APK -- because the full matrix is
+      # four desktop runners and six daemon targets, and most runs only need those three.
+      # Pick `platforms: all` on a manual run to get the whole matrix without a tag.
+      #
+      # The win-x64 daemon bundle rides along with the default set: the Windows desktop
+      # app supervises a local daemon, so shipping it without that bundle is a broken
+      # install rather than a smaller one.
+      - name: Resolve platform matrix
+        id: platforms
+        env:
+          PLATFORMS: ${{ github.event_name == 'workflow_dispatch' && inputs.platforms || 'all' }}
+        run: |
+          if [ "$PLATFORMS" = "all" ]; then
+            build_all=true
+            desktop='{"include":[
+              {"platform":"windows","arch":"x86_64","runner":"windows-latest","target":"x86_64-pc-windows-msvc","bundles":"nsis"},
+              {"platform":"linux","arch":"x86_64","runner":"ubuntu-22.04","target":"x86_64-unknown-linux-gnu","bundles":"deb,appimage"},
+              {"platform":"macos","arch":"aarch64","runner":"macos-latest","target":"aarch64-apple-darwin","bundles":"dmg"},
+              {"platform":"macos","arch":"x86_64","runner":"macos-latest","target":"x86_64-apple-darwin","bundles":"dmg"}
+            ]}'
+            daemon='{"include":[
+              {"runner":"ubuntu-latest","target":"linux-x64"},
+              {"runner":"ubuntu-latest","target":"linux-arm64"},
+              {"runner":"macos-latest","target":"darwin-arm64"},
+              {"runner":"macos-latest","target":"darwin-x64"},
+              {"runner":"ubuntu-latest","target":"win-x64"},
+              {"runner":"ubuntu-latest","target":"win-arm64"}
+            ]}'
+          else
+            build_all=false
+            desktop='{"include":[
+              {"platform":"windows","arch":"x86_64","runner":"windows-latest","target":"x86_64-pc-windows-msvc","bundles":"nsis"}
+            ]}'
+            daemon='{"include":[
+              {"runner":"ubuntu-latest","target":"linux-x64"},
+              {"runner":"ubuntu-latest","target":"win-x64"}
+            ]}'
+          fi
+          {
+            echo "build_all=$build_all"
+            echo "desktop=$(echo "$desktop" | tr -d '\n ')"
+            echo "daemon=$(echo "$daemon" | tr -d '\n ')"
+          } >> "$GITHUB_OUTPUT"
+          echo "platforms=$PLATFORMS (all=$build_all)"
 
       - name: Release notes from CHANGELOG.md
         env:
@@ -226,30 +284,10 @@ jobs:
     timeout-minutes: 60
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - platform: windows
-            arch: x86_64
-            runner: windows-latest
-            target: x86_64-pc-windows-msvc
-            bundles: nsis
-          # ubuntu-22.04 on purpose: deb/AppImage link against the build host's glibc
-          # and webkit2gtk, so older is more portable.
-          - platform: linux
-            arch: x86_64
-            runner: ubuntu-22.04
-            target: x86_64-unknown-linux-gnu
-            bundles: deb,appimage
-          - platform: macos
-            arch: aarch64
-            runner: macos-latest
-            target: aarch64-apple-darwin
-            bundles: dmg
-          - platform: macos
-            arch: x86_64
-            runner: macos-latest
-            target: x86_64-apple-darwin
-            bundles: dmg
+      # Built in the meta job so a manual run can trim the matrix; see the comment there.
+      # ubuntu-22.04 is deliberate for linux: deb/AppImage link against the build host's
+      # glibc and webkit2gtk, so older is more portable.
+      matrix: ${{ fromJSON(needs.meta.outputs.desktop_matrix) }}
     env:
       RELEASE_DIR: apps/desktop/src-tauri/target/${{ matrix.target }}/release
     steps:
@@ -427,17 +465,11 @@ jobs:
     timeout-minutes: 30
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          # Every target cross-builds from Linux (the script only downloads
-          # binaries); macOS runners are kept for the darwin targets so the
-          # tarballs are packed with BSD tar like the install script expects.
-          - { runner: ubuntu-latest, target: linux-x64 }
-          - { runner: ubuntu-latest, target: linux-arm64 }
-          - { runner: macos-latest, target: darwin-arm64 }
-          - { runner: macos-latest, target: darwin-x64 }
-          - { runner: ubuntu-latest, target: win-x64 }
-          - { runner: ubuntu-latest, target: win-arm64 }
+      # Built in the meta job so a manual run can trim the matrix; see the comment there.
+      # Every target cross-builds from Linux (the script only downloads binaries); macOS
+      # runners are kept for the darwin targets so the tarballs are packed with BSD tar
+      # like the install script expects.
+      matrix: ${{ fromJSON(needs.meta.outputs.daemon_matrix) }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -625,7 +657,10 @@ jobs:
   updater-manifest:
     name: updater latest.json
     needs: [meta, desktop]
-    if: inputs.only != 'android' && (needs.meta.outputs.signing == 'true')
+    # Only on a full build. The manifest advertises the update for every platform, so
+    # generating one from a Windows-only run would point macOS and Linux installs at
+    # assets this release does not contain.
+    if: inputs.only != 'android' && needs.meta.outputs.signing == 'true' && needs.meta.outputs.build_all == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
