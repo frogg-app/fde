@@ -128,7 +128,7 @@ describe("desktop-updates helpers", () => {
         body: "## Notes",
         date: "2026-09-01T00:00:00Z",
         errorMessage: null,
-        asset: { name: "FDE-0.2.0-amd64.deb", size: 12345, url: "https://x" },
+        asset: { name: "FDE-0.2.0-linux-x86_64.deb", size: 12345, url: "https://x" },
         installKind: "linux-deb",
         releaseUrl: "https://github.com/frogg-app/fde/releases/tag/v0.2.0",
         strategy: "github-release",
@@ -144,7 +144,7 @@ describe("desktop-updates helpers", () => {
       date: "2026-09-01T00:00:00Z",
       errorMessage: null,
       notes: "## Notes",
-      assetName: "FDE-0.2.0-amd64.deb",
+      assetName: "FDE-0.2.0-linux-x86_64.deb",
       assetSize: 12345,
       installKind: "linux-deb",
       releaseUrl: "https://github.com/frogg-app/fde/releases/tag/v0.2.0",
@@ -178,7 +178,7 @@ describe("desktop-updates helpers", () => {
     const { buildMacAppleSiliconDownloadUrl } = await loadModuleForPlatform("web");
 
     expect(buildMacAppleSiliconDownloadUrl("v0.1.64")).toBe(
-      "https://github.com/frogg-app/fde/releases/download/v0.1.64/FDE_0.1.64_aarch64.dmg",
+      "https://github.com/frogg-app/fde/releases/download/v0.1.64/FDE-0.1.64-aarch64.dmg",
     );
     expect(buildMacAppleSiliconDownloadUrl(null)).toBeNull();
   });

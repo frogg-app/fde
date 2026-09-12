@@ -7,19 +7,18 @@ use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, USER_AGENT}
 
 use super::release::Release;
 
-pub const RELEASES_URL: &str = "https://api.github.com/repos/frogg-app/fde/releases";
+pub const RELEASES_URL: &str = crate::branding::RELEASES_API;
 const TIMEOUT: Duration = Duration::from_secs(30);
 const PER_PAGE: u32 = 30;
 
 pub fn github_token() -> Option<String> {
-    std::env::var("FDE_GITHUB_TOKEN")
-        .ok()
+    crate::branding::env_value("GITHUB_TOKEN")
         .map(|value| value.trim().to_string())
         .filter(|value| !value.is_empty())
 }
 
 pub fn user_agent(app_version: &str) -> String {
-    format!("FDE/{app_version}")
+    format!("{}/{app_version}", crate::branding::NAME)
 }
 
 fn headers(app_version: &str, token: Option<&str>) -> Result<HeaderMap, String> {

@@ -162,12 +162,12 @@ export const SHORTCUT_HELP_ROW_ORDER: Record<ShortcutSectionId, readonly string[
   ],
   workspaces: [
     "new-agent",
+    "add-host",
     "new-workspace",
     "workspace-jump-index",
     "workspace-prev",
     "workspace-next",
     "pin-workspace",
-    "archive-workspace",
   ],
   "tabs-panes": [
     "workspace-tab-new",
@@ -211,9 +211,9 @@ export const SHORTCUT_HELP_ROW_ORDER: Record<ShortcutSectionId, readonly string[
 
 const SHORTCUT_HELP_LABEL_KEYS: Record<string, string> = {
   "new-agent": "settings.shortcuts.help.openProject",
+  "add-host": "settings.addHost",
   "new-workspace": "settings.shortcuts.help.newWorkspace",
   "switch-project": "settings.shortcuts.help.switchProject",
-  "archive-workspace": "settings.shortcuts.help.archiveWorkspace",
   "workspace-tab-new": "settings.shortcuts.help.newTab",
   "workspace-tab-target-agent": "workspace.tabs.actions.newAgent",
   "workspace-tab-target-browser": "workspace.tabs.actions.newBrowser",
@@ -291,6 +291,19 @@ const SHORTCUT_BINDINGS: readonly ShortcutBinding[] = [
     },
   },
 
+  // --- Add host ---
+  {
+    id: "host-add-ctrl-h",
+    action: "host.add",
+    combo: "Ctrl+H",
+    when: { commandCenter: false, editable: false, terminal: false },
+    help: {
+      id: "add-host",
+      section: "workspaces",
+      label: "Add host",
+    },
+  },
+
   // --- New workspace ---
   {
     id: "workspace-new-cmd-n-mac",
@@ -336,34 +349,6 @@ const SHORTCUT_BINDINGS: readonly ShortcutBinding[] = [
       id: "search-files",
       section: "general",
       label: "Search files",
-    },
-  },
-
-  // --- Archive workspace ---
-  {
-    // COMPAT(workspaceArchiveShortcutOverride): added in v0.1.106; remove after
-    // 2027-01-11 with a stored-override migration. Keeps existing custom chords.
-    id: "worktree-archive-cmd-shift-backspace-mac",
-    action: "workspace.archive",
-    combo: "Cmd+Shift+Backspace",
-    when: { mac: true, commandCenter: false },
-    help: {
-      id: "archive-workspace",
-      section: "workspaces",
-      label: "Archive workspace",
-    },
-  },
-  {
-    // COMPAT(workspaceArchiveShortcutOverride): added in v0.1.106; remove after
-    // 2027-01-11 with a stored-override migration. Keeps existing custom chords.
-    id: "worktree-archive-ctrl-shift-backspace-non-mac",
-    action: "workspace.archive",
-    combo: "Ctrl+Shift+Backspace",
-    when: { mac: false, commandCenter: false, terminal: false },
-    help: {
-      id: "archive-workspace",
-      section: "workspaces",
-      label: "Archive workspace",
     },
   },
 

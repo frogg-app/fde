@@ -1,7 +1,7 @@
+import { brand } from "@fde/branding";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { z } from "zod";
-import { DEFAULT_PAIRING_BASE_URL } from "@fde/protocol/connection-offer";
 
 import {
   AgentProviderRuntimeSettingsMapSchema,
@@ -392,16 +392,16 @@ const CONFIG_FILENAME = "config.json";
 const DEFAULT_PERSISTED_CONFIG = PersistedConfigSchema.parse({
   version: 1,
   daemon: {
-    listen: "127.0.0.1:9999",
+    listen: `127.0.0.1:${brand.daemonPort}`,
     cors: {
-      allowedOrigins: ["https://app.paseo.sh"],
+      allowedOrigins: brand.services.allowedOrigins,
     },
     relay: {
       enabled: false,
     },
   },
   app: {
-    pairingBaseUrl: DEFAULT_PAIRING_BASE_URL,
+    pairingBaseUrl: brand.services.pairingUrl ?? "",
   },
 }) as PersistedConfig;
 

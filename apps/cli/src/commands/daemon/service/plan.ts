@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import path from "node:path";
 
 /**
@@ -9,10 +10,10 @@ import path from "node:path";
  * The Linux unit is the one `deploy/install.sh` writes, ported here so a host
  * that was set up by hand gets the same service as one set up by the installer.
  */
-export const SERVICE_NAME = "fde-daemon";
-export const LAUNCHD_LABEL = "app.frogg.fde-daemon";
-export const WINDOWS_TASK_NAME = "FDE Daemon";
-export const DEFAULT_SERVICE_LISTEN = "127.0.0.1:9999";
+export const SERVICE_NAME = brand.serviceName;
+export const LAUNCHD_LABEL = brand.launchdLabel;
+export const WINDOWS_TASK_NAME = `${brand.name} Daemon`;
+export const DEFAULT_SERVICE_LISTEN = `127.0.0.1:${brand.daemonPort}`;
 
 export type ServicePlatform = "linux" | "darwin" | "win32";
 
@@ -70,11 +71,33 @@ function servicePath(input: ServicePlanInput): string {
   return prepend ? `${prepend}:${inherited}` : inherited;
 }
 
+function unitQuote(value: string): string {
+  return (
+    '"' +
+    value
+      .replaceAll("\\", "\\\\")
+      .replaceAll('"', '\\"')
+      .replaceAll("%", "%%")
+      .replaceAll("\n", "\\n")
+      .replaceAll("\r", "\\r") +
+    '"'
+  );
+}
+function xml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&apos;");
+}
 function systemdUnit(input: ServicePlanInput): string {
-  const exec = [input.command.program, ...input.command.args].join(" ");
-  const home = input.fdeHome ? `Environment=FDE_HOME=${input.fdeHome}\n` : "";
+  const exec = [input.command.program, ...input.command.args].map(unitQuote).join(" ");
+  const home = input.fdeHome
+    ? `Environment=${unitQuote(`${brand.envPrefix}_HOME=${input.fdeHome}`)}\n`
+    : "";
   return `[Unit]
-Description=FDE daemon (Frogg Development Environment)
+Description=${brand.name} daemon (${brand.fullName})
 After=network-online.target
 Wants=network-online.target
 
@@ -83,7 +106,7 @@ Type=simple
 ExecStart=${exec}
 Environment=PASEO_LISTEN=${input.listen}
 Environment=PASEO_WEB_UI_ENABLED=true
-Environment=PATH=${servicePath(input)}
+Environment=${unitQuote(`PATH=${servicePath(input)}`)}
 ${home}Restart=on-failure
 RestartSec=5
 KillMode=mixed
@@ -95,12 +118,12 @@ WantedBy=default.target
 }
 
 function plistEntry(key: string, value: string): string {
-  return `    <key>${key}</key><string>${value}</string>\n`;
+  return `    <key>${xml(key)}</key><string>${xml(value)}</string>\n`;
 }
 
 function launchdPlist(input: ServicePlanInput): string {
   const programArguments = [input.command.program, ...input.command.args]
-    .map((part) => `    <string>${part}</string>`)
+    .map((part) => `    <string>${xml(part)}</string>`)
     .join("\n");
   const logPath = path.join(input.homeDir, "Library", "Logs", `${LAUNCHD_LABEL}.log`);
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -114,11 +137,11 @@ ${programArguments}
   </array>
   <key>EnvironmentVariables</key>
   <dict>
-${plistEntry("PASEO_LISTEN", input.listen)}${plistEntry("PASEO_WEB_UI_ENABLED", "true")}${plistEntry("PATH", servicePath(input))}${input.fdeHome ? plistEntry("FDE_HOME", input.fdeHome) : ""}  </dict>
+${plistEntry("PASEO_LISTEN", input.listen)}${plistEntry("PASEO_WEB_UI_ENABLED", "true")}${plistEntry("PATH", servicePath(input))}${input.fdeHome ? plistEntry(`${brand.envPrefix}_HOME`, input.fdeHome) : ""}  </dict>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><true/>
-  <key>StandardOutPath</key><string>${logPath}</string>
-  <key>StandardErrorPath</key><string>${logPath}</string>
+  <key>StandardOutPath</key><string>${xml(logPath)}</string>
+  <key>StandardErrorPath</key><string>${xml(logPath)}</string>
 </dict>
 </plist>
 `;

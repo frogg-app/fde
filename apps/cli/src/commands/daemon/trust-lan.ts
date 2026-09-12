@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import path from "node:path";
 import type { Command } from "commander";
 import {
@@ -97,7 +98,7 @@ function describeApplied(trustLan: boolean, applied: TrustLanApplied): string {
     case "env_override":
       return `${mode}\nThe running daemon is controlled by PASEO_TRUST_LAN; unset it and restart for config.json to take effect.`;
     case "restart_required":
-      return `${mode}\nRestart the daemon for the change to take effect (${applied.reason}).\nRun: fde daemon restart`;
+      return `${mode}\nRestart the daemon for the change to take effect (${applied.reason}).\nRun: ${brand.cliName} daemon restart`;
   }
 }
 

@@ -1,7 +1,7 @@
 //! Applying a downloaded asset. Every path returns an `InstallOutcome` the
 //! webview shows and logs what it did to `fde.log`.
 //!
-//! - Windows installer: the download is `FDE-<v>-x64-setup.zip` (releases carry
+//! - Windows installer: the download is `FDE-<v>-win-x64-setup.zip` (releases carry
 //!   no bare exes); the installer is unpacked next to it, then a detached `cmd`
 //!   helper waits for this process to exit, runs it with `/S` (per-user NSIS, no
 //!   elevation) and starts the app again; the shell exits right after answering
@@ -53,7 +53,7 @@ pub fn install(
             Ok(InstallOutcome {
                 installed: true,
                 restart_required: true,
-                detail: "Installer started. FDE closes now and reopens when the update has been applied.".into(),
+                detail: format!("Installer started. {} closes now and reopens when the update has been applied.", crate::branding::NAME),
                 exit_app: true,
                 relaunch: None,
             })
@@ -71,8 +71,10 @@ pub fn install(
             Ok(InstallOutcome {
                 installed: true,
                 restart_required: true,
-                detail: "FDE closes now; the new version replaces the executable and starts again."
-                    .into(),
+                detail: format!(
+                    "{} closes now; the new version replaces the executable and starts again.",
+                    crate::branding::NAME
+                ),
                 exit_app: true,
                 relaunch: None,
             })
@@ -91,7 +93,11 @@ pub fn install(
             Ok(InstallOutcome {
                 installed: true,
                 restart_required: true,
-                detail: format!("Updated {}. FDE restarts now.", target.display()),
+                detail: format!(
+                    "Updated {}. {} restarts now.",
+                    target.display(),
+                    crate::branding::NAME
+                ),
                 exit_app: true,
                 relaunch: Some(target),
             })
@@ -102,8 +108,9 @@ pub fn install(
                 installed: true,
                 restart_required: true,
                 detail: format!(
-                    "Opened {} in the package installer. Restart FDE once it finishes.",
-                    file_name(downloaded)
+                    "Opened {} in the package installer. Restart {} once it finishes.",
+                    file_name(downloaded),
+                    crate::branding::NAME
                 ),
                 exit_app: false,
                 relaunch: None,
@@ -114,7 +121,7 @@ pub fn install(
             Ok(InstallOutcome {
                 installed: true,
                 restart_required: true,
-                detail: "Opened the disk image. Drag FDE to Applications to replace the current version, then relaunch it.".into(),
+                detail: format!("Opened the disk image. Drag {} to Applications to replace the current version, then relaunch it.", crate::branding::NAME),
                 exit_app: false,
                 relaunch: None,
             })
@@ -258,7 +265,7 @@ mod tests {
     #[test]
     fn installer_script_waits_then_runs_silent_setup_and_restarts() {
         let script = installer_script(
-            r"C:\cache\FDE-1.0.0-x64-setup.extracted\FDE-1.0.0-x64-setup.exe",
+            r"C:\cache\FDE-1.0.0-win-x64-setup.extracted\FDE-1.0.0-win-x64-setup.exe",
             r"C:\Apps\FDE\fde.exe",
             4242,
         );
@@ -266,7 +273,7 @@ mod tests {
         assert!(script.contains("tasklist /FI \"PID eq 4242\" 2>nul | find \" 4242 \" >nul"));
         assert!(script.contains("goto wait"));
         assert!(script.contains(
-            "start \"\" /wait \"C:\\cache\\FDE-1.0.0-x64-setup.extracted\\FDE-1.0.0-x64-setup.exe\" /S\r\n"
+            "start \"\" /wait \"C:\\cache\\FDE-1.0.0-win-x64-setup.extracted\\FDE-1.0.0-win-x64-setup.exe\" /S\r\n"
         ));
         assert!(script.ends_with("start \"\" \"C:\\Apps\\FDE\\fde.exe\"\r\n"));
         let wait_index = script.find(":wait").unwrap();
@@ -280,13 +287,13 @@ mod tests {
     #[test]
     fn portable_script_moves_over_the_exe_and_relaunches() {
         let script = portable_script(
-            r"C:\cache\FDE-1.0.0-x64-portable.extracted\FDE.exe",
+            r"C:\cache\FDE-1.0.0-win-x64-portable.extracted\FDE.exe",
             r"D:\Tools\fde.exe",
             7,
         );
         assert!(script.contains("find \" 7 \""));
         assert!(script.contains(
-            "move /Y \"C:\\cache\\FDE-1.0.0-x64-portable.extracted\\FDE.exe\" \"D:\\Tools\\fde.exe\" || exit /b 1\r\n"
+            "move /Y \"C:\\cache\\FDE-1.0.0-win-x64-portable.extracted\\FDE.exe\" \"D:\\Tools\\fde.exe\" || exit /b 1\r\n"
         ));
         assert!(script.ends_with("start \"\" \"D:\\Tools\\fde.exe\"\r\n"));
     }
@@ -298,13 +305,13 @@ mod tests {
         // The installer zip keeps the setup exe at the root (what
         // tauri-plugin-updater looks for); the portable zip nests it in a folder.
         let dir = tempfile::tempdir().unwrap();
-        let setup = dir.path().join("FDE-1.0.0-x64-setup.zip");
-        make_zip(&setup, &[("FDE-1.0.0-x64-setup.exe", b"MZ setup")]);
+        let setup = dir.path().join("FDE-1.0.0-win-x64-setup.zip");
+        make_zip(&setup, &[("FDE-1.0.0-win-x64-setup.exe", b"MZ setup")]);
         let found = extract_exe_from_zip(&setup).unwrap();
-        assert_eq!(found.file_name().unwrap(), "FDE-1.0.0-x64-setup.exe");
+        assert_eq!(found.file_name().unwrap(), "FDE-1.0.0-win-x64-setup.exe");
         assert_eq!(std::fs::read(&found).unwrap(), b"MZ setup");
 
-        let portable = dir.path().join("FDE-1.0.0-x64-portable.zip");
+        let portable = dir.path().join("FDE-1.0.0-win-x64-portable.zip");
         make_zip(
             &portable,
             &[
@@ -316,7 +323,7 @@ mod tests {
         assert_eq!(found.file_name().unwrap(), "FDE.exe");
         assert_eq!(std::fs::read(&found).unwrap(), b"MZ portable");
 
-        let empty = dir.path().join("FDE-1.0.0-x64-setup-empty.zip");
+        let empty = dir.path().join("FDE-1.0.0-win-x64-setup-empty.zip");
         make_zip(&empty, &[("notes.txt", b"no exe here")]);
         let error = extract_exe_from_zip(&empty).unwrap_err();
         assert!(error.contains("no .exe found"), "{error}");

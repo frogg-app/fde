@@ -1,6 +1,6 @@
+import { brand } from "@fde/branding";
 import type { Logger } from "pino";
 
-import { DEFAULT_PAIRING_BASE_URL } from "@fde/protocol/connection-offer";
 import { createConnectionOfferV2, encodeOfferToPairingUrl } from "./connection-offer.js";
 import { loadOrCreateDaemonKeyPair } from "./daemon-keypair.js";
 import { renderPairingQr } from "./pairing-qr.js";
@@ -32,11 +32,11 @@ export async function generateLocalPairingOffer(args: {
     };
   }
 
-  const relayEndpoint = args.relayEndpoint ?? "relay.paseo.sh:443";
+  const relayEndpoint = args.relayEndpoint ?? brand.services.relayEndpoint ?? "";
   const relayPublicEndpoint = args.relayPublicEndpoint ?? relayEndpoint;
-  const relayUseTls = args.relayUseTls ?? relayEndpoint === "relay.paseo.sh:443";
+  const relayUseTls = args.relayUseTls ?? relayEndpoint === (brand.services.relayEndpoint ?? "");
   const relayPublicUseTls = args.relayPublicUseTls ?? relayUseTls;
-  const appBaseUrl = args.appBaseUrl ?? DEFAULT_PAIRING_BASE_URL;
+  const appBaseUrl = args.appBaseUrl ?? brand.services.pairingUrl ?? "";
   const serverId = getOrCreateServerId(args.paseoHome, { logger: args.logger });
   const daemonKeyPair = await loadOrCreateDaemonKeyPair(args.paseoHome, args.logger);
   const offer = await createConnectionOfferV2({

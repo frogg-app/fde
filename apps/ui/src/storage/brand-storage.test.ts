@@ -1,0 +1,41 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+const state = vi.hoisted(() => ({ rows: new Map<string, string>() }));
+vi.mock("@fde/branding", () => ({ brand: { storagePrefix: "com.acme.studio:" } }));
+vi.mock("@react-native-async-storage/async-storage", () => ({
+  default: {
+    getItem: async (key: string) => state.rows.get(key) ?? null,
+    setItem: async (key: string, value: string) => {
+      state.rows.set(key, value);
+    },
+    removeItem: async (key: string) => {
+      state.rows.delete(key);
+    },
+    getAllKeys: async () => [...state.rows.keys()],
+    multiGet: async (keys: string[]) => keys.map((key) => [key, state.rows.get(key) ?? null]),
+    multiRemove: async (keys: string[]) => {
+      for (const key of keys) state.rows.delete(key);
+    },
+  },
+}));
+import storage from "./brand-storage";
+
+describe("brand storage", () => {
+  beforeEach(() => {
+    state.rows.clear();
+    state.rows.set("@paseo:settings", "official");
+    state.rows.set("com.other.studio:@paseo:settings", "other");
+  });
+  it("reads and writes only this product's key namespace", async () => {
+    expect(await storage.getItem("@paseo:settings")).toBeNull();
+    await storage.setItem("@paseo:settings", "custom");
+    expect(state.rows.get("@paseo:settings")).toBe("official");
+    expect(await storage.getItem("@paseo:settings")).toBe("custom");
+    expect(await storage.getAllKeys()).toEqual(["@paseo:settings"]);
+    expect(await storage.multiGet(["@paseo:settings"])).toEqual([["@paseo:settings", "custom"]]);
+  });
+  it("cache cleanup cannot delete FDE or another brand", async () => {
+    await storage.setItem("@paseo:settings", "custom");
+    await storage.multiRemove(await storage.getAllKeys());
+    expect([...state.rows.values()]).toEqual(["official", "other"]);
+  });
+});

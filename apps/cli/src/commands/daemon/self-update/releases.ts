@@ -1,3 +1,5 @@
+import { brand } from "@fde/branding";
+import { brandEnv } from "@fde/branding/identity";
 import { z } from "zod";
 import { readGitHubCliToken } from "./github-auth.js";
 import { compareVersions, isNewerVersion, parseVersion } from "./semver.js";
@@ -7,8 +9,8 @@ import { compareVersions, isNewerVersion, parseVersion } from "./semver.js";
  * apps/desktop/src-tauri/src/updates/github.rs: `FDE_GITHUB_TOKEN` raises the
  * rate limit and lets a private repository answer, and is never logged.
  */
-export const DEFAULT_RELEASES_API = "https://api.github.com/repos/frogg-app/fde/releases";
-export const DEFAULT_RELEASE_BASE = "https://github.com/frogg-app/fde/releases";
+export const DEFAULT_RELEASES_API = brand.distribution.releasesApi ?? "";
+export const DEFAULT_RELEASE_BASE = brand.distribution.releaseBase ?? "";
 const RELEASES_PER_PAGE = 30;
 const FETCH_TIMEOUT_MS = 30_000;
 
@@ -42,10 +44,10 @@ export interface ReleaseSource {
 }
 
 export function resolveReleaseSource(env: NodeJS.ProcessEnv = process.env): ReleaseSource {
-  const token = env.FDE_GITHUB_TOKEN?.trim() || null;
-  const releaseBase = env.FDE_RELEASE_BASE?.trim().replace(/\/+$/, "") || null;
+  const token = brandEnv(brand, env, "GITHUB_TOKEN") || null;
+  const releaseBase = brandEnv(brand, env, "RELEASE_BASE")?.replace(/\/+$/, "") || null;
   return {
-    apiUrl: env.FDE_RELEASES_API?.trim() || DEFAULT_RELEASES_API,
+    apiUrl: brandEnv(brand, env, "RELEASES_API") || DEFAULT_RELEASES_API,
     releaseBase: releaseBase ?? DEFAULT_RELEASE_BASE,
     releaseBaseOverridden: releaseBase !== null,
     token,
@@ -77,12 +79,25 @@ function statusHint(status: number, headers: Headers): string {
   return "";
 }
 
+function canUseAmbientToken(source: ReleaseSource, status: number): boolean {
+  return (
+    !source.token &&
+    source.apiUrl === DEFAULT_RELEASES_API &&
+    new URL(source.apiUrl).origin === "https://api.github.com" &&
+    !source.releaseBaseOverridden &&
+    (status === 403 || status === 429)
+  );
+}
+
 export async function fetchReleases(
   source: ReleaseSource,
   userAgent: string,
   fetchImpl: typeof fetch = fetch,
   auth: { env?: NodeJS.ProcessEnv; readGhToken?: () => Promise<string | null> } = {},
 ): Promise<GitHubRelease[]> {
+  if (brand.distribution.updateMode === "disabled")
+    throw new Error(`Updates are disabled for ${brand.name}`);
+  if (!source.apiUrl) throw new Error("No release API configured");
   const separator = source.apiUrl.includes("?") ? "&" : "?";
   const url = `${source.apiUrl}${separator}per_page=${RELEASES_PER_PAGE}`;
   const controller = new AbortController();
@@ -94,12 +109,7 @@ export async function fetchReleases(
     });
     // Ambient credentials are only for the built-in public API. Keep them out of
     // ReleaseSource so asset download and mirror requests cannot inherit them.
-    if (
-      !source.token &&
-      source.apiUrl === DEFAULT_RELEASES_API &&
-      !source.releaseBaseOverridden &&
-      (response.status === 403 || response.status === 429)
-    ) {
+    if (canUseAmbientToken(source, response.status)) {
       const env = auth.env ?? process.env;
       const token =
         env.GH_TOKEN?.trim() ||

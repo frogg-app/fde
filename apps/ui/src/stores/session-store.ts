@@ -130,6 +130,13 @@ export interface WorkspaceDescriptor {
   project?: ProjectPlacementPayload;
 }
 
+function areServerBrandsEqual(
+  a: ServerInfoStatusPayload["brand"],
+  b: ServerInfoStatusPayload["brand"],
+): boolean {
+  return a?.id === b?.id && a?.applicationId === b?.applicationId && a?.name === b?.name;
+}
+
 export function normalizeWorkspaceDescriptor(
   payload: WorkspaceDescriptorPayload,
 ): WorkspaceDescriptor {
@@ -282,6 +289,7 @@ export interface DaemonServerInfo {
   serverId: string;
   hostname: string | null;
   version: string | null;
+  brand?: ServerInfoStatusPayload["brand"];
   desktopManaged?: boolean;
   capabilities?: ServerCapabilities;
   features?: ServerInfoStatusPayload["features"];
@@ -688,6 +696,7 @@ function isSessionServerInfoUnchanged(input: {
   nextCapabilities: ServerCapabilities | undefined;
   nextFeatures: ServerInfoStatusPayload["features"] | undefined;
   nextServerId: string;
+  nextBrand: ServerInfoStatusPayload["brand"];
 }): boolean {
   const {
     currentServerInfo,
@@ -701,6 +710,7 @@ function isSessionServerInfoUnchanged(input: {
   const prevVersion = currentServerInfo?.version?.trim() || null;
   return (
     currentServerInfo?.serverId === input.nextServerId &&
+    areServerBrandsEqual(currentServerInfo?.brand, input.nextBrand) &&
     prevHostname === nextHostname &&
     prevVersion === nextVersion &&
     currentServerInfo?.desktopManaged === nextDesktopManaged &&
@@ -854,6 +864,7 @@ export const useSessionStore = create<SessionStore>()(
               nextCapabilities,
               nextFeatures,
               nextServerId: info.serverId,
+              nextBrand: info.brand,
             })
           ) {
             return prev;
@@ -868,6 +879,7 @@ export const useSessionStore = create<SessionStore>()(
                 serverInfo: {
                   serverId: info.serverId,
                   hostname: nextHostname,
+                  ...(info.brand ? { brand: info.brand } : {}),
                   version: nextVersion,
                   ...(nextDesktopManaged !== undefined
                     ? { desktopManaged: nextDesktopManaged }

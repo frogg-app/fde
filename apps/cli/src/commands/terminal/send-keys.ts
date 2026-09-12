@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import type { Command } from "commander";
 import { renderError, toCommandError } from "../../output/render.js";
 import {
@@ -47,7 +48,7 @@ async function executeSendKeysCommand(
       throw {
         code: "TERMINAL_NOT_FOUND",
         message: `No terminal found matching: ${terminalId}`,
-        details: "Use `fde terminal ls --all` to list available terminals.",
+        details: `Use \`${brand.cliName} terminal ls --all\` to list available terminals.`,
       };
     }
 

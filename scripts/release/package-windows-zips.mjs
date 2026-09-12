@@ -1,20 +1,26 @@
 #!/usr/bin/env node
+import { desktopArtifactName } from "../../packages/branding/src/artifact-contract.mjs";
 // Packages both Windows release assets as zips. GitHub rejects our uploads when a
 // raw .exe is pushed as a release asset, and Windows itself is hostile to bare
 // downloaded exes, so nothing Windows leaves the build as an .exe:
 //
-//   FDE-<version>-x64-portable.zip  FDE-<version>-portable/{FDE.exe,README.txt}
-//   FDE-<version>-x64-setup.zip     FDE-<version>-x64-setup.exe (the NSIS installer)
+//   FDE-<version>-win-x64-portable.zip  FDE-<version>-portable/{FDE.exe,README.txt}
+//   FDE-<version>-win-x64-setup.zip     FDE-<version>-win-x64-setup.exe
 //
 // The installer zip is what both updaters consume: tauri-plugin-updater unpacks a
 // zipped NSIS installer itself, and the GitHub-release path in
 // apps/desktop/src-tauri/src/updates/install.rs extracts it before running it.
 // No dependencies: the zips are written with Node's zlib (deflate + crc32).
 
+import { loadBrand } from "../dev/branding/load.cjs";
+
 import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { crc32, deflateRawSync } from "node:zlib";
+
+const brand = loadBrand();
+const portableBinaryName = brand.legacyFde ? "FDE" : brand.desktopBinaryName;
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = path.resolve(here, "../..");
@@ -32,10 +38,10 @@ function resolveReleaseDir(override) {
 
 export function buildReadme(version) {
   return [
-    `FDE ${version} (portable, Windows x64)`,
+    `${brand.name} ${version} (portable, Windows x64)`,
     "",
     "This is the portable build: no installer, no registry entries, no shortcuts.",
-    "Keep FDE.exe wherever you like and run it from there.",
+    `Keep ${portableBinaryName}.exe wherever you like and run it from there.`,
     "",
     "Requirements",
     "  - Windows 10 or 11 (64-bit).",
@@ -44,15 +50,15 @@ export function buildReadme(version) {
     "    https://developer.microsoft.com/microsoft-edge/webview2/",
     "",
     "Settings and data",
-    "  Settings, attachments and logs live under %APPDATA%\\app.frogg.fde and",
-    "  %LOCALAPPDATA%\\app.frogg.fde, shared with the installed version if you",
+    `  Settings, attachments and logs live under %APPDATA%\\${brand.applicationId} and`,
+    `  %LOCALAPPDATA%\\${brand.applicationId}, shared with the installed version if you`,
     "  also use one. Delete those folders to reset the app.",
     "",
     "SmartScreen",
     "  The binary is not code-signed yet. On first launch Windows SmartScreen may",
     '  show "Windows protected your PC": click "More info", then "Run anyway".',
     "",
-    "Source and releases: https://github.com/frogg-app/fde",
+    brand.links.source ? `Source: ${brand.links.source}` : "",
     "",
   ].join("\r\n");
 }
@@ -159,7 +165,7 @@ function readPackageVersion() {
 export function packagePortableWindows({
   version,
   releaseDir = WINDOWS_RELEASE_DIR,
-  exePath = path.join(releaseDir, "fde.exe"),
+  exePath = path.join(releaseDir, `${brand.desktopBinaryName}.exe`),
   outputDir = path.join(releaseDir, "bundle/portable"),
 } = {}) {
   const resolvedVersion = version ?? readPackageVersion();
@@ -169,22 +175,25 @@ export function packagePortableWindows({
   } catch {
     throw new Error(`Windows binary not found at ${exePath}. Run the Tauri Windows build first.`);
   }
-  const folder = `FDE-${resolvedVersion}-portable`;
+  const folder = `${brand.artifactPrefix}-${resolvedVersion}-portable`;
   const mtime = statSync(exePath).mtime;
   const zip = createZip([
-    { name: `${folder}/FDE.exe`, data: exe, mtime },
+    { name: `${folder}/${portableBinaryName}.exe`, data: exe, mtime },
     { name: `${folder}/README.txt`, data: buildReadme(resolvedVersion), mtime },
   ]);
   mkdirSync(outputDir, { recursive: true });
-  const zipPath = path.join(outputDir, `FDE-${resolvedVersion}-x64-portable.zip`);
+  const zipPath = path.join(
+    outputDir,
+    desktopArtifactName(brand, resolvedVersion, `win-x64-portable.zip`),
+  );
   writeFileSync(zipPath, zip);
   return { zipPath, byteSize: zip.length, exeByteSize: exe.length };
 }
 
 /**
  * Zips the NSIS installer Tauri wrote under `bundle/nsis/` into
- * `bundle/nsis-zip/FDE-<version>-x64-setup.zip`, holding a single entry named
- * `FDE-<version>-x64-setup.exe`. The installer's own `.sig` does not carry over:
+ * `bundle/nsis-zip/FDE-<version>-win-x64-setup.zip`, holding a single entry named
+ * `FDE-<version>-win-x64-setup.exe`. The installer's own `.sig` does not carry over:
  * the updater verifies whatever it downloads, so the zip is signed after this
  * step (see the release workflow).
  */
@@ -209,12 +218,15 @@ export function packageWindowsInstallerZip({
   }
   const installerPath = path.join(nsisDir, candidates[0]);
   const installer = readFileSync(installerPath);
-  const entryName = `FDE-${resolvedVersion}-x64-setup.exe`;
+  const entryName = desktopArtifactName(brand, resolvedVersion, `win-x64-setup.exe`);
   const zip = createZip([
     { name: entryName, data: installer, mtime: statSync(installerPath).mtime },
   ]);
   mkdirSync(outputDir, { recursive: true });
-  const zipPath = path.join(outputDir, `FDE-${resolvedVersion}-x64-setup.zip`);
+  const zipPath = path.join(
+    outputDir,
+    desktopArtifactName(brand, resolvedVersion, `win-x64-setup.zip`),
+  );
   writeFileSync(zipPath, zip);
   return { zipPath, entryName, byteSize: zip.length, installerByteSize: installer.length };
 }

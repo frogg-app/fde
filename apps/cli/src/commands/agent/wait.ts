@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import { Command } from "commander";
 import { connectToDaemon, getDaemonHost } from "../../utils/client.js";
 import type {
@@ -95,8 +96,8 @@ function buildWaitResult(args: {
 
   if (state.status === "timeout") {
     const timeoutMessage = timeoutLabel
-      ? `Agent did not finish within ${timeoutLabel}. Run \`fde wait ${resolvedAgentId}\` again to keep waiting.`
-      : `Agent wait timed out. Run \`fde wait ${resolvedAgentId}\` again to keep waiting.`;
+      ? `Agent did not finish within ${timeoutLabel}. Run \`${brand.cliName} wait ${resolvedAgentId}\` again to keep waiting.`
+      : `Agent wait timed out. Run \`${brand.cliName} wait ${resolvedAgentId}\` again to keep waiting.`;
     return {
       agentId: resolvedAgentId,
       status: "timeout",
@@ -148,7 +149,7 @@ export async function runWaitCommand(
     throw {
       code: "MISSING_AGENT_ID",
       message: "Agent ID is required",
-      details: "Usage: fde agent wait <id>",
+      details: `Usage: ${brand.cliName} agent wait <id>`,
     } satisfies CommandError;
   }
 
@@ -162,7 +163,7 @@ export async function runWaitCommand(
     const error: CommandError = {
       code: "DAEMON_NOT_RUNNING",
       message: `Cannot connect to daemon at ${host}: ${message}`,
-      details: "Start the daemon with: fde daemon start",
+      details: `Start the daemon with: ${brand.cliName} daemon start`,
     };
     throw error;
   }

@@ -3,6 +3,9 @@ const { resolve } = require("metro-resolver");
 const fs = require("fs");
 const path = require("path");
 
+const { loadBrand } = require("../../scripts/dev/branding/load.cjs");
+loadBrand();
+process.env.EXPO_PUBLIC_FOLDER = ".generated/branding/public";
 const projectRoot = __dirname;
 const appNodeModulesRoot = path.resolve(projectRoot, "node_modules");
 const appSrcRoot = path.resolve(projectRoot, "src");

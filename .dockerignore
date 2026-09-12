@@ -40,3 +40,7 @@ plan.*.log
 CLAUDE.local.md
 **/target
 .claude
+
+**/.generated
+
+.branding-source

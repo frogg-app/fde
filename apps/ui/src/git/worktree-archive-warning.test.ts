@@ -7,7 +7,7 @@ import {
 } from "@/git/worktree-archive-warning";
 
 describe("workspace archive warning for worktree backing", () => {
-  it("does not require a confirmation for clean and pushed worktrees", () => {
+  it("requires a confirmation for clean and pushed worktrees", () => {
     expect(
       buildWorktreeArchiveConfirmationMessage({
         workspaceName: "feature",
@@ -15,7 +15,7 @@ describe("workspace archive warning for worktree backing", () => {
         aheadOfOrigin: 0,
         diffStat: null,
       }),
-    ).toBeNull();
+    ).toBe("This removes the workspace from the sidebar. To restore it later, open History.");
   });
 
   it("explains uncommitted line changes", () => {
@@ -56,7 +56,9 @@ describe("workspace archive warning for worktree backing", () => {
         aheadOfOrigin: 1,
         diffStat: { additions: 1, deletions: 3 },
       }),
-    ).toBe("Uncommitted changes (1 added line, 3 deleted lines)\n1 unpushed commit");
+    ).toBe(
+      "This removes the workspace from the sidebar. To restore it later, open History.\n\nUncommitted changes (1 added line, 3 deleted lines)\n\n1 unpushed commit",
+    );
   });
 
   it("maps archive workspace fields into the shared worktree risk shape", () => {

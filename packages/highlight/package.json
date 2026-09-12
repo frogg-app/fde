@@ -1,6 +1,6 @@
 {
   "name": "@fde/highlight",
-  "version": "0.2.14",
+  "version": "0.4.1",
   "files": [
     "dist",
     "!dist/**/*.map",

@@ -22,8 +22,6 @@ export function resolveWorkspaceCommandCenterShortcuts({
       resolveShortcutKeysForAction("workspace-pane-split-right", overrides, platform) ?? undefined,
     splitDown:
       resolveShortcutKeysForAction("workspace-pane-split-down", overrides, platform) ?? undefined,
-    archiveWorkspace:
-      resolveShortcutKeysForAction("archive-workspace", overrides, platform) ?? undefined,
     previousTab:
       resolveShortcutKeysForAction("workspace-tab-prev", overrides, platform) ?? undefined,
     nextTab: resolveShortcutKeysForAction("workspace-tab-next", overrides, platform) ?? undefined,

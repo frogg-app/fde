@@ -1,8 +1,8 @@
+import { brand } from "@fde/branding";
 import type { Command } from "commander";
 
 const JSON_OPTION_DESCRIPTION = "Output in JSON format";
-const DAEMON_HOST_OPTION_DESCRIPTION =
-  "Daemon host target: host:port, tcp://host:port, or ssh://user@host (default: local socket/pipe, then localhost:9999)";
+const DAEMON_HOST_OPTION_DESCRIPTION = `Daemon host target: host:port, tcp://host:port, or ssh://user@host (default: local socket/pipe, then localhost:${brand.daemonPort})`;
 
 export function collectMultiple(value: string, previous: string[]): string[] {
   return previous.concat([value]);

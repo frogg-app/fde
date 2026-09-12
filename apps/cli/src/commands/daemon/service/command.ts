@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import type { Command } from "commander";
 
 import type { CommandOptions, OutputSchema, SingleResult } from "../../../output/index.js";
@@ -13,7 +14,7 @@ function renderHuman(result: ServiceActionResult): string {
   if (result.file) lines.push(`Service file: ${result.file}`);
   if (result.action === "installed") {
     lines.push(`Listen:       ${result.listen}`);
-    if (result.home) lines.push(`FDE home:     ${result.home}`);
+    if (result.home) lines.push(`${brand.name} home:     ${result.home}`);
     lines.push(`Command:      ${result.command}`);
   }
   for (const hint of result.hints) lines.push(hint);

@@ -38,7 +38,7 @@ test("packagePortableWindows lays out the portable folder and README", () => {
     exePath,
     outputDir: path.join(dir, "out"),
   });
-  assert.equal(path.basename(result.zipPath), "FDE-1.2.3-x64-portable.zip");
+  assert.equal(path.basename(result.zipPath), "FDE-1.2.3-win-x64-portable.zip");
   assert.equal(result.exeByteSize, 1024);
   const entries = listZip(readFileSync(result.zipPath));
   assert.deepEqual(
@@ -73,10 +73,10 @@ test("packageWindowsInstallerZip wraps the NSIS installer under its release name
     nsisDir,
     outputDir: path.join(dir, "out"),
   });
-  assert.equal(path.basename(result.zipPath), "FDE-1.2.3-x64-setup.zip");
+  assert.equal(path.basename(result.zipPath), "FDE-1.2.3-win-x64-setup.zip");
   assert.equal(result.installerByteSize, 2048);
   assert.deepEqual(listZip(readFileSync(result.zipPath)), [
-    { name: "FDE-1.2.3-x64-setup.exe", size: 2048 },
+    { name: "FDE-1.2.3-win-x64-setup.exe", size: 2048 },
   ]);
 });
 
@@ -98,7 +98,7 @@ test("packageWindowsInstallerZip picks this version, else demands exactly one", 
   });
   assert.equal(result.installerByteSize, 1);
   assert.deepEqual(listZip(readFileSync(result.zipPath)), [
-    { name: "FDE-1.2.3-x64-setup.exe", size: 1 },
+    { name: "FDE-1.2.3-win-x64-setup.exe", size: 1 },
   ]);
   // Nothing matches the version being packaged and there is more than one left.
   assert.throws(

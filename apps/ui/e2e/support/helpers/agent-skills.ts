@@ -5,14 +5,12 @@ import path from "node:path";
 import { expect, type Dialog, type Page } from "@playwright/test";
 import type { DaemonClient as InternalDaemonClient } from "@fde/client/internal/daemon-client";
 import type { AgentSkillSelection } from "@fde/protocol/messages";
-import { buildOpenProjectRoute } from "@/utils/host-routes";
-import { gotoAppShell, openSettings } from "./app";
+import { gotoAppShell } from "./app";
 import { connectDaemonClient } from "./daemon-client-loader";
 import { startIsolatedHostDaemon, type IsolatedHostDaemon } from "./isolated-host-daemon";
 import {
-  addDirectHostFromSettings,
+  addDirectHostFromSidebar,
   goBackInSettings,
-  openCompactSettings,
   openHostSection,
   selectSettingsHost,
 } from "./settings";
@@ -122,12 +120,7 @@ export async function openAgentSkillsSettings(
   options: { compact?: boolean } = {},
 ): Promise<void> {
   await gotoAppShell(page);
-  if (options.compact) {
-    await openCompactSettings(page, buildOpenProjectRoute());
-  } else {
-    await openSettings(page);
-  }
-  await addDirectHostFromSettings(page, {
+  await addDirectHostFromSidebar(page, {
     host: "127.0.0.1",
     port: sandbox.daemon.port,
   });

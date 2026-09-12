@@ -1,3 +1,5 @@
+import { brand } from "@fde/branding";
+import { brandEnv } from "@fde/branding/identity";
 import { cpSync, existsSync, readFileSync, renameSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -14,7 +16,7 @@ import { ensurePrivateDirectory } from "./private-files.js";
  * On-disk names inside the home are unchanged — `paseo.pid`, `config.json`,
  * `daemon.log`.
  */
-export const FDE_HOME_DIR_NAME = ".fde";
+export const FDE_HOME_DIR_NAME = brand.homeDir;
 export const LEGACY_HOME_DIR_NAME = ".paseo";
 
 export interface HomeMigrationNotice {
@@ -43,14 +45,9 @@ function expandHomeDir(input: string): string {
   return input;
 }
 
-function nonEmpty(value: string | undefined): string | undefined {
-  const trimmed = value?.trim();
-  return trimmed ? trimmed : undefined;
-}
-
 /** `FDE_HOME`, then `PASEO_HOME`; undefined when the caller set neither. */
 export function resolveConfiguredHome(env: NodeJS.ProcessEnv): string | undefined {
-  return nonEmpty(env.FDE_HOME) ?? nonEmpty(env.PASEO_HOME);
+  return brandEnv(brand, env, "HOME");
 }
 
 /**
@@ -121,7 +118,8 @@ export function resolveFdeHome(env: NodeJS.ProcessEnv = process.env): string {
   }
 
   const resolved = path.resolve(path.join(os.homedir(), FDE_HOME_DIR_NAME));
-  migrateLegacyHome(resolved, path.resolve(path.join(os.homedir(), LEGACY_HOME_DIR_NAME)));
+  if (brand.legacyFde)
+    migrateLegacyHome(resolved, path.resolve(path.join(os.homedir(), LEGACY_HOME_DIR_NAME)));
   ensurePrivateDirectory(resolved);
   return resolved;
 }

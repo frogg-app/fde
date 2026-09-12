@@ -30,6 +30,9 @@ import { resolveSidebarWorkspacePrimaryLabel } from "@/components/sidebar/sideba
 import { TrailingActionScrim } from "@/components/ui/trailing-action-scrim";
 import { useWorkspaceLabelDefinitions } from "@/workspace-labels";
 
+import { SidebarWorkspaceAgents } from "./agents/tree";
+import { WorkspaceAgentTreeScope, WorkspaceAgentDisclosure } from "./agents/workspace-tree";
+
 const foregroundMutedColorMapping = (theme: Theme) => ({ color: theme.colors.foregroundMuted });
 const needsInputColorMapping = (theme: Theme) => ({
   color: theme.colors.surface0,
@@ -71,19 +74,24 @@ export function SidebarWorkspaceRowFrame({
   );
 
   return (
-    <WorkspaceHoverCard
-      workspace={workspace}
-      prHint={workspace.prHint}
-      isDragging={isDragging}
-      disabled={contextMenuOpen}
-    >
-      {children({
-        isHovered: isHovered && !contextMenuOpen && !isDragging,
-        contextMenuOpen,
-        onContextMenuOpenChange: handleContextMenuOpenChange,
-        hoverHandlers,
-      })}
-    </WorkspaceHoverCard>
+    <WorkspaceAgentTreeScope serverId={workspace.serverId} workspaceId={workspace.workspaceId}>
+      <WorkspaceHoverCard
+        workspace={workspace}
+        prHint={workspace.prHint}
+        isDragging={isDragging}
+        disabled={contextMenuOpen}
+      >
+        {children({
+          isHovered: isHovered && !contextMenuOpen && !isDragging,
+          contextMenuOpen,
+          onContextMenuOpenChange: handleContextMenuOpenChange,
+          hoverHandlers,
+        })}
+      </WorkspaceHoverCard>
+      {!isDragging ? (
+        <SidebarWorkspaceAgents serverId={workspace.serverId} workspaceId={workspace.workspaceId} />
+      ) : null}
+    </WorkspaceAgentTreeScope>
   );
 }
 
@@ -138,6 +146,7 @@ export const SidebarWorkspaceRowContent = memo(function SidebarWorkspaceRowConte
   return (
     <View style={styles.workspaceRowContent}>
       <View style={styles.workspaceRowMain}>
+        <WorkspaceAgentDisclosure label={workspaceLabel} />
         {leadingProjectName ? (
           <ProjectStatusIndicator
             iconDataUri={leadingProjectIconDataUri}

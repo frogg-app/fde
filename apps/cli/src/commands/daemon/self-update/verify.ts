@@ -1,3 +1,5 @@
+import { brand } from "@fde/branding";
+import { matchesBrand, type BrandIdentity } from "@fde/branding/identity";
 import { daemonHttpJson } from "../daemon-http.js";
 
 /**
@@ -22,6 +24,7 @@ export interface VerifyDaemonOptions {
 
 interface IdentityShape {
   version?: unknown;
+  brand?: BrandIdentity;
 }
 
 interface HealthShape {
@@ -41,7 +44,7 @@ export async function probeDaemon(
   const health = await daemonHttpJson<HealthShape>({ base: httpBase, path: "/api/health" });
   return {
     version: typeof identity.version === "string" ? identity.version : "",
-    healthy: health.status === "ok",
+    healthy: health.status === "ok" && matchesBrand(brand, identity.brand),
   };
 }
 

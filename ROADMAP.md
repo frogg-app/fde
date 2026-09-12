@@ -11,6 +11,16 @@ preserved work outside this checkout.
 
 ## Implemented baseline
 
+- Independent desktop/daemon release paths, shared daemon build artifacts, and a
+  timed local desktop build command. See [building](docs/building.md#timed-local-desktop-builds).
+  Guarded Android native-output reuse remains a follow-up.
+
+- Expandable sidebar agent/subagent trees with direct live transcript access,
+  runtime identity preservation, and reconnect/retry states. Single-agent workspaces
+  avoid duplicate rows; disclosure contains only active subagents. See
+  [agent lifecycle](docs/agent-lifecycle.md#sidebar-agent-tree); desktop/mobile
+  visual and live-provider acceptance remains outstanding.
+
 - Tauri desktop shell for Windows, macOS and Linux; direct and relay connections,
   Rust SSH/socket/pipe transport, SSH config host picker, and SSH daemon deploy.
 - Optional local daemon download/supervision, run-at-login services, daemon
@@ -27,6 +37,10 @@ preserved work outside this checkout.
 
 Implementation does not imply validation on every target. Keep the gaps below
 visible until device or deployment evidence closes them.
+
+## Active feature work
+
+- [x] **Fork-friendly branding.** Implemented on [PR #49](https://github.com/frogg-app/fde/pull/49). See the [rebranding guide](docs/branding.md), [manifest reference](docs/branding-reference.md), and [validation record](docs/branding-plan.md). The PR carries current platform build results; interactive device acceptance remains separate.
 
 ## Next: establish reliable everyday use
 

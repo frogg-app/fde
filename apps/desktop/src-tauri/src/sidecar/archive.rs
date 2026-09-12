@@ -154,7 +154,7 @@ pub fn extract_bundle(archive: &Path, destination: &Path) -> Result<(), String> 
 
 /// Extracts a zip into `destination` keeping every entry path as the archive
 /// has it. The Windows release zips are not sidecar bundles: the installer zip
-/// holds `FDE-<v>-x64-setup.exe` at the root, because that is the only layout
+/// holds `FDE-<v>-win-x64-setup.exe` at the root, because that is the only layout
 /// `tauri-plugin-updater` finds an installer in, so stripping the first
 /// component the way [`extract_bundle`] does would drop the file. Entry paths
 /// are checked exactly as strictly.

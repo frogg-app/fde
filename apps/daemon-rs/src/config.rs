@@ -19,7 +19,7 @@ pub struct Config {
     pub validate_protocol: bool,
 }
 
-const DEFAULT_PORT: u16 = 9999;
+const DEFAULT_PORT: u16 = crate::branding::DEFAULT_PORT;
 
 impl Config {
     /// `persisted_listen` is `daemon.listen` from config.json; env wins over it,

@@ -36,6 +36,7 @@ import {
   type SidebarProjectEntry,
   type SidebarWorkspaceEntry,
 } from "@/hooks/use-sidebar-workspaces-list";
+import { SidebarAgentsProvider } from "@/components/sidebar/agents/provider";
 import { useSidebarModel } from "@/components/sidebar/sidebar-model";
 import type { PinnedSidebarGroups } from "@/hooks/use-sidebar-pins";
 import { RetainedPanelActivity } from "@/components/retained-panel";
@@ -46,7 +47,8 @@ import { usePanelStore } from "@/stores/panel-store";
 import { useOwnsWindowChromeCorner, WindowChromeSafeArea } from "@/utils/desktop-window";
 import { useCloseAgentListGesture } from "@/mobile-panels/gestures";
 import { MobilePanelOverlay } from "@/mobile-panels/presentation";
-import { buildSettingsAddHostRoute, buildSettingsRoute } from "@/utils/host-routes";
+import { buildSettingsRoute } from "@/utils/host-routes";
+import { openAddHostFlow } from "@/hosts/add-host-flow";
 import { SidebarAgentListSkeleton } from "./sidebar-agent-list-skeleton";
 import { SidebarCalloutSlot } from "./sidebar-callout-slot";
 import { SidebarWorkspaceList } from "./sidebar-workspace-list";
@@ -121,6 +123,10 @@ export const LeftSidebar = memo(function LeftSidebar({ active }: { active: boole
     shortcutModel,
   } = useSidebarModel();
   const { shortcutIndexByWorkspaceKey } = shortcutModel;
+  const agentServerIds = useMemo(() => {
+    const placements = projects.flatMap((project) => project.workspaces);
+    return Array.from(new Set(placements.map((workspace) => workspace.serverId)));
+  }, [projects]);
 
   const [isManualRefresh, setIsManualRefresh] = useState(false);
 
@@ -157,13 +163,13 @@ export const LeftSidebar = memo(function LeftSidebar({ active }: { active: boole
 
   const handleAddHost = useCallback(() => {
     if (isCompactLayout) showMobileAgent();
-    router.push(buildSettingsAddHostRoute(Date.now()));
+    openAddHostFlow();
   }, [isCompactLayout, showMobileAgent]);
 
   const labels = useMemo(
     (): SidebarLabels => ({
       addProject: t("sidebar.actions.addProject"),
-      addHost: t("settings.hostPicker.addHost"),
+      addHost: t("settings.addHost"),
       settings: t("sidebar.actions.settings"),
       closeSidebar: t("sidebar.actions.closeSidebar"),
     }),
@@ -192,32 +198,36 @@ export const LeftSidebar = memo(function LeftSidebar({ active }: { active: boole
 
   if (isCompactLayout) {
     return (
-      <RetainedPanelActivity active={active}>
-        <MobileSidebar
-          {...sharedProps}
-          active={active}
-          insetsTop={insets.top}
-          insetsBottom={insets.bottom}
-          closeSidebar={showMobileAgent}
-          handleOpenProject={handleOpenProjectMobile}
-          handleAddHost={handleAddHost}
-          handleSettings={handleSettingsMobile}
-        />
-      </RetainedPanelActivity>
+      <SidebarAgentsProvider serverIds={agentServerIds} active={active}>
+        <RetainedPanelActivity active={active}>
+          <MobileSidebar
+            {...sharedProps}
+            active={active}
+            insetsTop={insets.top}
+            insetsBottom={insets.bottom}
+            closeSidebar={showMobileAgent}
+            handleOpenProject={handleOpenProjectMobile}
+            handleAddHost={handleAddHost}
+            handleSettings={handleSettingsMobile}
+          />
+        </RetainedPanelActivity>
+      </SidebarAgentsProvider>
     );
   }
 
   return (
-    <RetainedPanelActivity active={active}>
-      <DesktopSidebar
-        {...sharedProps}
-        insetsTop={insets.top}
-        active={active}
-        handleOpenProject={handleOpenProjectDesktop}
-        handleAddHost={handleAddHost}
-        handleSettings={handleSettingsDesktop}
-      />
-    </RetainedPanelActivity>
+    <SidebarAgentsProvider serverIds={agentServerIds} active={active}>
+      <RetainedPanelActivity active={active}>
+        <DesktopSidebar
+          {...sharedProps}
+          insetsTop={insets.top}
+          active={active}
+          handleOpenProject={handleOpenProjectDesktop}
+          handleAddHost={handleAddHost}
+          handleSettings={handleSettingsDesktop}
+        />
+      </RetainedPanelActivity>
+    </SidebarAgentsProvider>
   );
 });
 
@@ -243,6 +253,7 @@ function SidebarFooter({
   labels,
 }: Pick<SidebarSharedProps, "handleOpenProject" | "handleAddHost" | "handleSettings" | "labels">) {
   const newAgentKeys = useShortcutKeys("new-agent");
+  const addHostKeys = useShortcutKeys("add-host");
   const settingsKeys = useShortcutKeys("toggle-settings");
 
   return (
@@ -260,6 +271,7 @@ function SidebarFooter({
         icon={Server}
         onPress={handleAddHost}
         label={labels.addHost}
+        shortcutKeys={addHostKeys}
         testID="sidebar-add-host"
         nativeID="sidebar-add-host"
         variant="compact"

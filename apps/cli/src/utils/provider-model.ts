@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import type { CommandError } from "../output/index.js";
 
 export interface ResolveProviderAndModelOptions {
@@ -21,8 +22,7 @@ export function resolveProviderAndModel(
     const error: CommandError = {
       code: "MISSING_PROVIDER",
       message: "Provider is required",
-      details:
-        "Pass --provider <provider> or --provider <provider>/<model>. Use `fde provider ls` to see providers and `fde provider models <provider>` to see models.",
+      details: `Pass --provider <provider> or --provider <provider>/<model>. Use \`${brand.cliName} provider ls\` to see providers and \`${brand.cliName} provider models <provider>\` to see models.`,
     };
     throw error;
   }

@@ -1,4 +1,6 @@
-const LEGACY_DATABASE_NAME = "paseo-replica-cache";
+import { brand } from "@fde/branding";
+import { storageKey } from "@fde/branding/identity";
+const LEGACY_DATABASE_NAME = storageKey(brand, "paseo-replica-cache");
 
 export function clearLegacyReplicaCache(): Promise<void> {
   return new Promise((resolve, reject) => {

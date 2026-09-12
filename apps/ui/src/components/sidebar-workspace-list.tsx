@@ -1,3 +1,4 @@
+import { useSidebarWorkspaceTarget } from "@/components/sidebar/agents/workspace-tree";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
   View,
@@ -123,7 +124,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Shortcut } from "@/components/ui/shortcut";
 import type { ShortcutKey } from "@/utils/format-shortcut";
 import { useShortcutKeys } from "@/hooks/use-shortcut-keys";
-import { useKeyboardActionHandler } from "@/hooks/use-keyboard-action-handler";
 import { useClearWorkspaceAttention } from "@/hooks/use-clear-workspace-attention";
 import type { PrHint } from "@/git/use-pr-status-query";
 import {
@@ -1284,7 +1284,6 @@ function WorkspaceRowWithMenu({
   }, [onToggleWorkspacePin, workspace]);
   const onTogglePin = canPin ? handleTogglePin : undefined;
 
-  const archiveShortcutKeys = useShortcutKeys("archive-workspace");
   const { hasClearableAttention, clearAttention } = useClearWorkspaceAttention({
     serverId: workspace.serverId,
     workspaceId: workspace.workspaceId,
@@ -1294,17 +1293,6 @@ function WorkspaceRowWithMenu({
       toast.error(error instanceof Error ? error.message : "Failed to mark workspace as read");
     });
   }, [clearAttention, toast]);
-
-  useKeyboardActionHandler({
-    handlerId: `workspace-archive-${workspace.workspaceKey}`,
-    actions: ["workspace.archive"],
-    enabled: selected && !isArchiving,
-    priority: 0,
-    handle: () => {
-      handleArchive();
-      return true;
-    },
-  });
 
   return (
     <>
@@ -1331,7 +1319,7 @@ function WorkspaceRowWithMenu({
         onCopyPath={handleCopyPath}
         onRename={handleOpenRename}
         onMarkAsRead={hasClearableAttention ? handleMarkAsRead : undefined}
-        archiveShortcutKeys={selected ? archiveShortcutKeys : null}
+        archiveShortcutKeys={null}
         isPinned={isPinned}
         onTogglePin={onTogglePin}
         reserveIdleStatusIndicatorSpace={reserveIdleStatusIndicatorSpace}
@@ -1387,13 +1375,18 @@ function WorkspaceRowItem({
   isDragging = false,
   dragHandleProps,
 }: WorkspaceRowItemProps) {
+  const target = useSidebarWorkspaceTarget(workspace);
   const handlePress = useCallback(() => {
     if (!workspace.serverId) {
       return;
     }
     onWorkspacePress?.();
-    navigateToWorkspace({ serverId: workspace.serverId, workspaceId: workspace.workspaceId });
-  }, [onWorkspacePress, workspace.serverId, workspace.workspaceId]);
+    navigateToWorkspace({
+      serverId: workspace.serverId,
+      workspaceId: workspace.workspaceId,
+      target,
+    });
+  }, [onWorkspacePress, workspace.serverId, workspace.workspaceId, target]);
 
   return (
     <WorkspaceRow

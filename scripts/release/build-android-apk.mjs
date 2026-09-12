@@ -14,11 +14,15 @@
 //        [--variant release|debug] [--out-dir release-assets] [--skip-prebuild]
 //        [--skip-deps] [--serial | --workers N]
 
+import { loadBrand } from "../dev/branding/load.cjs";
+
 import { spawnSync } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
+
+const brand = loadBrand();
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(here, "../..");
@@ -33,7 +37,7 @@ export function apkAssetName({ version, abi, signed, variant = "release", appVar
     suffix = signed ? "" : "-unsigned";
   }
   const identity = appVariant === "development" && variant === "release" ? "-development" : "";
-  return `FDE-${version}-android-${abi}${identity}${suffix}.apk`;
+  return `${brand.artifactPrefix}-${version}-android-${abi}${identity}${suffix}.apk`;
 }
 
 /** Pure: Gradle arguments for an ABI; `universal` keeps the default (all four). */

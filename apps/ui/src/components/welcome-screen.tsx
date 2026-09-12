@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, Text, View, ScrollView } from "react-native";
@@ -24,7 +25,7 @@ import { Button } from "@/components/ui/button";
 import { resolveAppVersion } from "@/utils/app-version";
 import { formatVersionWithPrefix } from "@/desktop/updates/desktop-updates";
 import { buildOpenProjectRoute } from "@/utils/host-routes";
-import { FdeLogo } from "@/components/icons/fde-logo";
+import { BrandLogo } from "@/components/icons/brand-logo";
 import { openExternalUrl } from "@/utils/open-external-url";
 import { isFdroidBuild } from "@/constants/build-profile";
 import { isWeb, isNative } from "@/constants/platform";
@@ -273,7 +274,7 @@ export function WelcomeScreen({ onHostAdded }: WelcomeScreenProps) {
   }, [installAndStart]);
 
   const handleOpenProjectSite = useCallback(() => {
-    void openExternalUrl("https://github.com/frogg-app/fde/releases");
+    void openExternalUrl(brand.distribution.releaseBase);
   }, []);
 
   const handleOpenSettings = useCallback(() => {
@@ -379,13 +380,13 @@ export function WelcomeScreen({ onHostAdded }: WelcomeScreenProps) {
         testID="welcome-screen"
       >
         <View style={styles.content}>
-          <FdeLogo size={96} />
+          <BrandLogo size={96} />
           <View style={styles.copyBlock}>
             <Text style={styles.title}>{t("onboarding.title")}</Text>
             <Text style={styles.subtitle}>{t("onboarding.subtitle")}</Text>
-            {isNative ? (
+            {isNative && brand.distribution.releaseBase ? (
               <Pressable style={styles.setupLink} onPress={handleOpenProjectSite}>
-                <Text style={styles.setupLinkText}>github.com/frogg-app/fde</Text>
+                <Text style={styles.setupLinkText}>{brand.links.source}</Text>
                 <ExternalLink size={14} color={theme.colors.accent} />
               </Pressable>
             ) : null}

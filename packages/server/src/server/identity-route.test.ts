@@ -1,3 +1,4 @@
+import { brandIdentity } from "@fde/branding";
 import express from "express";
 import http from "node:http";
 import { once } from "node:events";
@@ -50,6 +51,7 @@ describe("GET /api/identity", () => {
     };
     expect(describeDaemonIdentity(deps, PUBLIC_REQUEST)).toEqual({
       product: "fde",
+      brand: brandIdentity,
       serverId: "srv_test",
       hostname: "devbox",
       version: "1.2.3",
@@ -87,6 +89,7 @@ describe("GET /api/identity", () => {
     expect(response.headers.get("access-control-allow-private-network")).toBe("true");
     expect(await response.json()).toEqual({
       product: "fde",
+      brand: brandIdentity,
       serverId: "srv_test",
       hostname: "devbox",
       version: "0.0.0",

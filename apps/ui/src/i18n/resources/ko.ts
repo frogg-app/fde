@@ -823,7 +823,7 @@ export const ko: TranslationResources = {
             "이 브랜치가 이미 {{baseRef}}와 최신 상태이므로 업데이트를 사용할 수 없습니다",
           mergePrNoGithub: "GitHub가 연결되어 있지 않아 지금은 PR 병합을 사용할 수 없습니다",
           archiveNotWorktree:
-            "이 워크스페이스가 FDE 워크트리로 생성되지 않아 여기서 보관을 사용할 수 없습니다",
+            "이 워크스페이스가 {{brandName}} 워크트리로 생성되지 않아 여기서 보관을 사용할 수 없습니다",
           mergePrNoForge:
             "{{brand}}가 연결되어 있지 않기 때문에 지금은 {{noun}} 병합을 사용할 수 없습니다.",
           mergePrMissing: "아직 풀 리퀘스트가 없어 PR 병합을 사용할 수 없습니다",
@@ -853,6 +853,7 @@ export const ko: TranslationResources = {
           title: '"{{workspaceName}}"를 보관하시겠습니까?',
           confirm: "보관",
           cancel: "취소",
+          consequence: "워크스페이스가 사이드바에서 제거됩니다. 나중에 복원하려면 기록을 여세요.",
           uncommittedChanges: "커밋되지 않은 변경 사항",
           uncommittedChangesWithDiff: "커밋되지 않은 변경 사항 ({{diffStat}})",
           addedLine: "추가된 줄 {{count}}개",
@@ -1239,7 +1240,7 @@ export const ko: TranslationResources = {
       close: "창 닫기",
     },
     quitting: {
-      title: "FDE 종료 중...",
+      title: "{{brandName}} 종료 중...",
       detail: "로컬 데몬을 중지하는 중입니다.",
     },
     daemon: {
@@ -1253,19 +1254,20 @@ export const ko: TranslationResources = {
       },
       management: {
         title: "내장 데몬 관리",
-        hint: "FDE가 내장 데몬을 시작하고 중지하도록 허용합니다",
+        hint: "{{brandName}}가 내장 데몬을 시작하고 중지하도록 허용합니다",
         pauseTitle: "내장 데몬 일시 중지",
         pauseMessage:
           "내장 데몬이 즉시 중지됩니다. 내장 데몬에 연결된 실행 중인 에이전트와 터미널이 중지됩니다.",
         pauseAndStop: "일시 중지 후 중지",
         registrationFailed:
-          "내장 데몬이 시작되었지만 FDE가 localhost 연결을 저장하지 못했습니다. 데몬 관리를 껐다가 다시 켜거나 localhost를 수동으로 추가하세요.",
-        pausedStopFailed: "내장 데몬 관리가 일시 중지되었지만 FDE가 데몬을 중지하지 못했습니다.",
+          "내장 데몬이 시작되었지만 {{brandName}}가 localhost 연결을 저장하지 못했습니다. 데몬 관리를 껐다가 다시 켜거나 localhost를 수동으로 추가하세요.",
+        pausedStopFailed:
+          "내장 데몬 관리가 일시 중지되었지만 {{brandName}}가 데몬을 중지하지 못했습니다.",
         updateFailed: "내장 데몬 관리를 업데이트할 수 없습니다.",
       },
       keepRunning: {
         title: "종료 후에도 데몬 계속 실행",
-        hint: "FDE를 종료해도 데몬이 계속 실행됩니다",
+        hint: "{{brandName}}를 종료해도 데몬이 계속 실행됩니다",
       },
       logs: {
         title: "로그 파일",
@@ -1280,7 +1282,7 @@ export const ko: TranslationResources = {
       fullStatus: {
         title: "전체 상태",
         modalTitle: "데몬 상태",
-        hint: "`paseo daemon status`를 실행하고 출력을 표시합니다",
+        hint: "`{{cliName}} daemon status`를 실행하고 출력을 표시합니다",
         view: "상태 보기",
         copied: "상태가 클립보드에 복사되었습니다.",
         fetchFailed: "데몬 상태를 가져오지 못했습니다: {{message}}",
@@ -1294,7 +1296,7 @@ export const ko: TranslationResources = {
         installed: "설치됨",
         installedHint: "버전 {{version}} ({{path}})",
         notInstalledHint:
-          "이 컴퓨터에서 에이전트를 실행하려면 FDE 데몬 번들({{platform}})을 다운로드하세요.",
+          "이 컴퓨터에서 에이전트를 실행하려면 {{brandName}} 데몬 번들({{platform}})을 다운로드하세요.",
         install: "로컬 데몬 설치 (약 {{size}})",
         installing: "설치 중...",
         phaseChecksum: "체크섬 가져오는 중...",
@@ -1331,10 +1333,11 @@ export const ko: TranslationResources = {
         title: "업데이트",
         currentVersion: "현재 버전",
         strategyGithub: "업데이트는 GitHub 릴리스에서 다운로드됩니다.",
+        strategyDisabled: "이 배포판에서는 업데이트가 비활성화되어 있습니다.",
         strategySigned: "업데이트는 서명된 Tauri 업데이터로 검증됩니다.",
         autoCheck: {
           title: "자동으로 확인",
-          hint: "FDE 창이 열려 있는 동안 6시간마다 새 버전을 확인합니다.",
+          hint: "{{brandName}} 창이 열려 있는 동안 6시간마다 새 버전을 확인합니다.",
         },
         check: "업데이트 확인",
         checking: "확인 중...",
@@ -1348,15 +1351,16 @@ export const ko: TranslationResources = {
         verifying: "다운로드 검증 중...",
         installing: "설치 중...",
         installHint: {
-          "windows-installer": "설치 프로그램을 실행하고 FDE를 다시 엽니다.",
-          "windows-portable": "포터블 실행 파일을 교체하고 FDE를 다시 엽니다.",
-          "linux-appimage": "AppImage를 제자리에서 교체하고 FDE를 다시 시작합니다.",
+          "windows-installer": "설치 프로그램을 실행하고 {{brandName}}를 다시 엽니다.",
+          "windows-portable": "포터블 실행 파일을 교체하고 {{brandName}}를 다시 엽니다.",
+          "linux-appimage": "AppImage를 제자리에서 교체하고 {{brandName}}를 다시 시작합니다.",
           "linux-deb": ".deb 패키지를 패키지 설치 프로그램에서 엽니다.",
-          "macos-dmg": "디스크 이미지를 엽니다. FDE를 응용 프로그램 폴더로 끌어다 놓아 완료하세요.",
+          "macos-dmg":
+            "디스크 이미지를 엽니다. {{brandName}}를 응용 프로그램 폴더로 끌어다 놓아 완료하세요.",
           unknown: "이 플랫폼용으로 빌드된 릴리스를 다운로드합니다.",
         },
         noAsset: "이 플랫폼용 다운로드가 아직 게시되지 않았습니다.",
-        restartRequired: "업데이트를 완료하려면 FDE를 다시 시작하세요.",
+        restartRequired: "업데이트를 완료하려면 {{brandName}}를 다시 시작하세요.",
       },
       callout: {
         installingTitle: "업데이트 설치 중",
@@ -1378,7 +1382,7 @@ export const ko: TranslationResources = {
     },
     rosetta: {
       title: "Apple Silicon 빌드 다운로드",
-      runningIntel: "Apple Silicon에서 Rosetta로 FDE의 Intel 빌드를 실행하고 있습니다.",
+      runningIntel: "Apple Silicon에서 Rosetta로 {{brandName}}의 Intel 빌드를 실행하고 있습니다.",
       highCpu:
         "이로 인해 CPU 사용량이 높아집니다. 이를 해결하려면 Apple Silicon 빌드를 다운로드하세요.",
       download: "다운로드",
@@ -1421,7 +1425,7 @@ export const ko: TranslationResources = {
         microphone: "마이크 상태를 아직 확인하지 않았습니다.",
       },
       testNotification: {
-        title: "FDE 알림 테스트",
+        title: "{{brandName}} 알림 테스트",
         body: "이 메시지가 보이면 데스크톱 알림이 작동하는 것입니다.",
         notDelivered: "알림이 전달되지 않았습니다. 시스템 설정 > 알림을 확인하세요.",
         failed: "알림을 보내지 못했습니다.",
@@ -1430,12 +1434,12 @@ export const ko: TranslationResources = {
     integrations: {
       cli: {
         statusFailed: "CLI 설치 상태를 확인할 수 없습니다.",
-        installFailed: "FDE CLI를 설치할 수 없습니다.",
+        installFailed: "{{brandName}} CLI를 설치할 수 없습니다.",
       },
     },
   },
   rootError: {
-    title: "FDE에 문제가 발생했습니다.",
+    title: "{{brandName}}에 문제가 발생했습니다.",
     body: "앱을 다시 로드해 보세요. 이런 일이 계속 발생하면 신고할 때 아래 세부정보를 포함하세요.",
     details: "세부",
   },
@@ -1530,19 +1534,19 @@ export const ko: TranslationResources = {
     },
   },
   onboarding: {
-    title: "FDE에 오신 것을 환영합니다",
+    title: "{{brandName}}에 오신 것을 환영합니다",
     subtitle: "시작하려면 컴퓨터를 연결하세요",
     localDaemon: {
       title: "이 컴퓨터에서 에이전트 실행",
-      description: "로컬 FDE 데몬을 설치합니다(약 180 MB 다운로드).",
-      descriptionInstalled: "설치된 로컬 FDE 데몬을 시작합니다.",
+      description: "로컬 {{brandName}} 데몬을 설치합니다(약 180 MB 다운로드).",
+      descriptionInstalled: "설치된 로컬 {{brandName}} 데몬을 시작합니다.",
       starting: "로컬 데몬 시작 중...",
       failed: "로컬 데몬을 설정할 수 없습니다: {{message}}",
       retry: "다시 시도",
     },
     remoteHost: {
       title: "원격 호스트 사용",
-      description: "다른 컴퓨터의 FDE 데몬에 연결합니다.",
+      description: "다른 컴퓨터의 {{brandName}} 데몬에 연결합니다.",
     },
     actions: {
       settings: "설정",
@@ -1621,11 +1625,11 @@ export const ko: TranslationResources = {
       },
       scanQr: {
         title: "QR 코드 스캔",
-        description: "새 FDE 데몬을 소유하거나 암호화 릴레이로 페어링합니다.",
+        description: "새 {{brandName}} 데몬을 소유하거나 암호화 릴레이로 페어링합니다.",
       },
       pasteLink: {
         title: "페어링 링크 붙여넣기",
-        description: "새 FDE 데몬을 소유하거나 암호화 릴레이로 페어링합니다.",
+        description: "새 {{brandName}} 데몬을 소유하거나 암호화 릴레이로 페어링합니다.",
       },
     },
     networkScan: {
@@ -1634,29 +1638,28 @@ export const ko: TranslationResources = {
       diagnosticsNone: "없음",
       title: "내 네트워크의 서버",
       scanning: "주소 {{total}}개 중 {{scanned}}개 검색 중…",
-      none: "{{subnets}}에서 FDE 서버를 찾지 못했습니다.",
+      none: "{{subnets}}에서 {{brandName}} 서버를 찾지 못했습니다.",
       scanned: "{{subnets}} 검색 완료.",
       rescan: "다시 검색",
       connect: "연결",
       connecting: "연결 중…",
       needsPairing: "페어링 필요",
       pairingHint:
-        "페어링 링크 받기: 호스트에서 `fde daemon pair`를 실행하거나 웹 주소를 연 다음, 여기에서 스캔하거나 붙여넣으세요.",
+        "페어링 링크 받기: 호스트에서 `{{cliName}} daemon pair`를 실행하거나 웹 주소를 연 다음, 여기에서 스캔하거나 붙여넣으세요.",
     },
     claim: {
-      title: "FDE 데몬과 페어링",
-      thisDaemon: "이 FDE 데몬",
+      title: "{{brandName}} 데몬과 페어링",
+      thisDaemon: "이 {{brandName}} 데몬",
       claiming: "{{host}}와(과) 페어링 중…",
       explainer:
-        "이 FDE 데몬은 아직 소유자가 없습니다. 페어링하면 이 기기가 첫 번째 소유자가 됩니다.",
+        "이 {{brandName}} 데몬은 아직 소유자가 없습니다. 페어링하면 이 기기가 첫 번째 소유자가 됩니다.",
       successTitle: "페어링됨",
       successBody:
         "이 기기가 이제 {{host}}의 첫 번째 소유자입니다. 다른 기기는 새 페어링 링크가 필요합니다.",
       successRelayBody: "{{host}}을(를) 암호화 릴레이로 추가했습니다.",
-      noPendingOffer:
-        "페어링 링크(https://frogg.app/pair#offer=…)를 열거나 연결 추가에서 붙여넣으세요.",
+      noPendingOffer: "페어링 링크(a link from the daemon)를 열거나 연결 추가에서 붙여넣으세요.",
       newLinkHint:
-        "페어링 코드는 일회용이며 10분 후 만료됩니다. 새 코드 받기: 호스트에서 `fde daemon pair`를 실행하거나 웹 주소를 새로 고치세요.",
+        "페어링 코드는 일회용이며 10분 후 만료됩니다. 새 코드 받기: 호스트에서 `{{cliName}} daemon pair`를 실행하거나 웹 주소를 새로 고치세요.",
       triedEndpoints: "시도한 주소:",
       manualEndpointHelper:
         "데몬에 다른 주소(VPN, Docker, 다른 인터페이스)로 접근할 수 있다면 host:port 형식으로 입력하세요.",
@@ -1677,7 +1680,7 @@ export const ko: TranslationResources = {
     },
     direct: {
       title: "직접 연결",
-      helper: "FDE 서버의 주소를 입력하세요.",
+      helper: "{{brandName}} 서버의 주소를 입력하세요.",
       fields: {
         host: "호스트",
         port: "포트",
@@ -1691,7 +1694,7 @@ export const ko: TranslationResources = {
         show: "고급 표시",
         hide: "고급 숨기기",
         helper:
-          "어떤 형식이든 사용할 수 있습니다: 호스트, 호스트:포트, http(s)://호스트:포트, ws(s)://호스트:포트 또는 tcp://호스트:포트?ssl=true. FDE 데몬은 포트 {{port}}에서 HTTP와 WebSocket을 제공합니다.",
+          "어떤 형식이든 사용할 수 있습니다: 호스트, 호스트:포트, http(s)://호스트:포트, ws(s)://호스트:포트 또는 tcp://호스트:포트?ssl=true. {{brandName}} 데몬은 포트 {{port}}에서 HTTP와 WebSocket을 제공합니다.",
         resolved: "연결 대상",
       },
       passwordVisibility: {
@@ -1721,7 +1724,7 @@ export const ko: TranslationResources = {
     },
     remoteSsh: {
       title: "원격 SSH",
-      helper: "원격 호스트에서 실행 중인 FDE 데몬에 연결합니다.",
+      helper: "원격 호스트에서 실행 중인 {{brandName}} 데몬에 연결합니다.",
       tabs: {
         config: "SSH 설정",
         manual: "수동",
@@ -1740,7 +1743,7 @@ export const ko: TranslationResources = {
       },
       hints: {
         daemonPassword:
-          "SSH 로그인이 아니라 FDE 데몬의 비밀번호입니다. 이 호스트와 함께 저장됩니다.",
+          "SSH 로그인이 아니라 {{brandName}} 데몬의 비밀번호입니다. 이 호스트와 함께 저장됩니다.",
         sshPassword:
           "SSH 로그인에만 사용됩니다. 저장되지 않으며, 기억하는 경우 앱을 닫을 때까지 메모리에만 보관됩니다.",
       },
@@ -1756,8 +1759,8 @@ export const ko: TranslationResources = {
         invalidTarget: "유효한 ssh:// 호스트를 입력하세요",
         failedToConnect: "SSH로 연결할 수 없습니다. {{detail}}",
         daemonPasswordRequired:
-          "{{host}}의 FDE 데몬에 비밀번호가 필요합니다. 아래에 입력한 뒤 다시 연결하세요.",
-        daemonPasswordIncorrect: "{{host}}의 FDE 데몬이 비밀번호를 거부했습니다.",
+          "{{host}}의 {{brandName}} 데몬에 비밀번호가 필요합니다. 아래에 입력한 뒤 다시 연결하세요.",
+        daemonPasswordIncorrect: "{{host}}의 {{brandName}} 데몬이 비밀번호를 거부했습니다.",
         sshPasswordRequired:
           "{{host}}이(가) SSH 키를 거부했지만 비밀번호 로그인은 허용합니다. 계속하려면 SSH 비밀번호를 입력하세요.",
         sshPasswordIncorrect: "{{host}}이(가) SSH 비밀번호를 거부했습니다.",
@@ -1768,11 +1771,11 @@ export const ko: TranslationResources = {
     link: {
       title: "페어링 링크 붙여넣기",
       helper:
-        "데몬의 클레임 페이지 또는 `fde daemon pair`의 링크를 붙여넣으세요. 새 FDE 데몬은 처음 페어링한 기기가 소유합니다.",
+        "데몬의 클레임 페이지 또는 `{{cliName}} daemon pair`의 링크를 붙여넣으세요. 새 {{brandName}} 데몬은 처음 페어링한 기기가 소유합니다.",
       label: "페어링 링크",
       errors: {
         required: "페어링 링크를 붙여넣으세요 (…/pair#offer=…)",
-        missingOffer: "FDE 페어링 링크가 아닙니다",
+        missingOffer: "{{brandName}} 페어링 링크가 아닙니다",
         emptyOffer: "Offer 페이로드가 비어 있습니다",
         invalid: "잘못된 페어링 링크",
         unableToPair: "호스트를 페어링할 수 없습니다",
@@ -1808,15 +1811,15 @@ export const ko: TranslationResources = {
       enableDescription:
         "릴레이를 사용하면 이 장치를 어디에서나 연결할 수 있습니다. 페어링 트래픽은 종단 간 암호화됩니다.",
       relayDocs: "릴레이 작동 방식",
-      relayDocsAccessibility: "FDE 릴레이 작동 방식 읽기",
+      relayDocsAccessibility: "{{brandName}} 릴레이 작동 방식 읽기",
       enableRelay: "릴레이 활성화",
       enablingRelay: "활성화 중...",
       notNow: "지금은 아님",
       directConnectionHint:
         "릴레이 없이 TCP, Tailscale 또는 다른 VPN을 통해 직접 연결하세요. QR 코드가 생성되지 않습니다.",
-      updateRequired: "FDE 데스크톱에서 릴레이를 활성화하려면 호스트를 업데이트하세요.",
+      updateRequired: "{{brandName}} 데스크톱에서 릴레이를 활성화하려면 호스트를 업데이트하세요.",
       unavailable: "페어링 정보를 사용할 수 없습니다.",
-      hint: "휴대폰의 FDE로 이 QR 코드를 스캔하거나 아래 링크를 복사하세요.",
+      hint: "휴대폰의 {{brandName}}로 이 QR 코드를 스캔하거나 아래 링크를 복사하세요.",
       securityWarning:
         "이 페어링 링크는 비밀번호처럼 취급하세요. 링크를 가진 사람은 누구나 이 데몬에 접근할 수 있습니다.",
       qrUnavailable: "QR 코드를 사용할 수 없습니다.",
@@ -2002,7 +2005,7 @@ export const ko: TranslationResources = {
   serviceUrl: {
     title: "서비스 URL 열기",
     message: "{{url}}을(를) 열까요?",
-    inPaseo: "FDE에서",
+    inPaseo: "{{brandName}}에서",
     externalBrowser: "외부 브라우저",
     dontAskAgain: "다시 묻지 않기",
   },
@@ -2018,6 +2021,13 @@ export const ko: TranslationResources = {
     backdrop: "메뉴 배경",
   },
   subagents: {
+    expandWorkspace: "{{label}}의 에이전트 펼치기",
+    collapseWorkspace: "{{label}}의 에이전트 접기",
+    expand: "{{label}}의 하위 에이전트 펼치기",
+    collapse: "{{label}}의 하위 에이전트 접기",
+    offline: "오프라인 · 저장된 활동 표시",
+    loadFailedRetry: "하위 에이전트를 불러오지 못했습니다 · 다시 시도",
+    activityFailedRetry: "활동을 불러오지 못했습니다 · 다시 시도",
     title: "하위 에이전트",
     pillLabelOne: "하위 에이전트 1개",
     pillLabelMany: "하위 에이전트 {{count}}개",
@@ -2122,8 +2132,8 @@ export const ko: TranslationResources = {
       other: "기타 도구 {{count}}개 사용함",
     },
     paseoCalls: {
-      one: "FDE를 {{count}}회 호출함",
-      other: "FDE를 {{count}}회 호출함",
+      one: "{{brandName}}를 {{count}}회 호출함",
+      other: "{{brandName}}를 {{count}}회 호출함",
     },
     and: "그리고",
   },
@@ -2204,7 +2214,7 @@ export const ko: TranslationResources = {
       send: "보내기",
       sending: "보내는 중...",
       sentTitle: "테스트 알림을 보냈습니다",
-      sentDescription: "FDE가 알림을 운영 체제에 전달했습니다.",
+      sentDescription: "{{brandName}}가 알림을 운영 체제에 전달했습니다.",
       sendFailedTitle: "테스트 알림을 보낼 수 없음",
     },
     hostSections: {
@@ -2227,10 +2237,10 @@ export const ko: TranslationResources = {
       selection: "모델 선택",
       automatic: "자동",
       preferred: "수동",
-      automaticHint: "FDE가 사용 가능한 빠른 모델을 선택합니다",
-      preferredHint: "FDE에서 사용할 모델을 선택하세요",
+      automaticHint: "{{brandName}}가 사용 가능한 빠른 모델을 선택합니다",
+      preferredHint: "{{brandName}}에서 사용할 모델을 선택하세요",
       model: "모델",
-      fallbackHint: "사용할 수 없으면 FDE가 다른 사용 가능한 모델을 사용합니다",
+      fallbackHint: "사용할 수 없으면 {{brandName}}가 다른 사용 가능한 모델을 사용합니다",
       docs: "문서",
       saveError: "메타데이터 생성을 업데이트할 수 없습니다",
     },
@@ -2238,7 +2248,7 @@ export const ko: TranslationResources = {
       title: "음성 알림",
       autoPlay: {
         label: "음성 알림 자동 재생",
-        description: "FDE가 앞에 있을 때 에이전트 알림이 도착하면 바로 읽어 줍니다.",
+        description: "{{brandName}}가 앞에 있을 때 에이전트 알림이 도착하면 바로 읽어 줍니다.",
       },
       replyConfirm: {
         label: "음성 답장 확인",
@@ -2251,7 +2261,7 @@ export const ko: TranslationResources = {
       browserData: {
         title: "브라우저 데이터",
         siteData: "쿠키 및 사이트 데이터",
-        description: "브라우저 탭은 FDE 전체에서 로그인 및 사이트 데이터를 공유합니다.",
+        description: "브라우저 탭은 {{brandName}} 전체에서 로그인 및 사이트 데이터를 공유합니다.",
         clear: "브라우저 데이터 지우기",
         clearing: "삭제 중...",
         confirmTitle: "브라우저 데이터를 삭제하시겠습니까?",
@@ -2280,7 +2290,7 @@ export const ko: TranslationResources = {
         description: "실행 중인 스크립트의 URL을 열 위치",
         options: {
           ask: "물어보기",
-          inApp: "FDE에서",
+          inApp: "{{brandName}}에서",
           external: "외부 브라우저",
         },
       },
@@ -2348,7 +2358,7 @@ export const ko: TranslationResources = {
       },
     },
     about: {
-      attribution: "Frogg Development Environment는 <paseo>Paseo</paseo>를 기반으로 합니다.",
+      attribution: "{{brandFullName}}는 <paseo>Paseo</paseo>를 기반으로 합니다.",
       title: "정보",
       appVersion: "앱 버전",
       thisDevice: "이 기기",
@@ -2365,7 +2375,7 @@ export const ko: TranslationResources = {
         label: "앱 업데이트",
         readyToInstall: "설치 준비됨: {{version}}",
         installTitle: "데스크톱 업데이트 설치",
-        installMessage: "이 컴퓨터의 FDE를 업데이트합니다",
+        installMessage: "이 컴퓨터의 {{brandName}}를 업데이트합니다",
         installConfirm: "업데이트 설치",
         update: "업데이트",
         updateTo: "{{version}}(으)로 업데이트",
@@ -2512,6 +2522,8 @@ export const ko: TranslationResources = {
         openCli: "CLI 문서 열기",
       },
       commandLine: {
+        installedPath:
+          "{{path}}에 설치되었습니다. 필요하면 디렉터리를 PATH에 추가한 후 새 터미널을 여세요.",
         title: "명령줄",
         description: "터미널에서 에이전트를 제어하고 스크립팅합니다",
       },
@@ -2601,7 +2613,7 @@ export const ko: TranslationResources = {
       },
       sshDeploy: {
         title: "이 호스트의 데몬",
-        info: "수동 설치와 같은 스크립트로 SSH 호스트에 FDE 데몬을 설치합니다. 릴리스 번들은 호스트가 직접 내려받고, 앱은 SSH로 스크립트를 실행하기만 합니다.",
+        info: "수동 설치와 같은 스크립트로 SSH 호스트에 {{brandName}} 데몬을 설치합니다. 릴리스 번들은 호스트가 직접 내려받고, 앱은 SSH로 스크립트를 실행하기만 합니다.",
         status: {
           probing: "확인 중...",
           installed: "설치됨 {{version}}",
@@ -2655,7 +2667,7 @@ export const ko: TranslationResources = {
         uninstall: {
           title: "데몬을 제거할까요?",
           message:
-            "서비스를 중지하고 {{host}}에서 FDE 설치를 제거합니다. 데몬 상태(~/.paseo)는 유지됩니다.",
+            "서비스를 중지하고 {{host}}에서 {{brandName}} 설치를 제거합니다. 데몬 상태(~/.paseo)는 유지됩니다.",
         },
         log: {
           running: "{{host}}에서 실행 중...",
@@ -2666,7 +2678,7 @@ export const ko: TranslationResources = {
         offer: {
           title: "이 호스트에서 데몬을 찾을 수 없음",
           message:
-            "SSH는 동작하지만 {{host}}에 FDE 데몬이 설치되어 있지 않습니다. 지금 배포할까요? 설치가 끝나면 연결을 다시 시도합니다.",
+            "SSH는 동작하지만 {{host}}에 {{brandName}} 데몬이 설치되어 있지 않습니다. 지금 배포할까요? 설치가 끝나면 연결을 다시 시도합니다.",
         },
       },
       pairDevices: {
@@ -2680,11 +2692,11 @@ export const ko: TranslationResources = {
         title: "오케스트레이션 스킬",
         description: "CLI를 통해 에이전트가 오케스트레이션하도록 가르칩니다",
         updateAvailable: "업데이트 사용 가능",
-        updateTitle: "FDE 스킬을 업데이트할까요?",
+        updateTitle: "{{brandName}} 스킬을 업데이트할까요?",
         updateFallback: "번들된 스킬을 내 컴퓨터에 동기화합니다.",
-        uninstallTitle: "FDE 스킬을 제거할까요?",
+        uninstallTitle: "{{brandName}} 스킬을 제거할까요?",
         uninstallMessage:
-          "~/.agents, ~/.claude, ~/.codex에서 모든 FDE 오케스트레이션 스킬을 제거합니다.",
+          "~/.agents, ~/.claude, ~/.codex에서 모든 {{brandName}} 오케스트레이션 스킬을 제거합니다.",
         choose: "스킬 선택",
         chooseAll: "모든 스킬",
         chooseAllHint: "나중에 추가되는 항목을 포함하여 모든 번들 스킬을 설치된 상태로 유지합니다.",
@@ -2720,9 +2732,9 @@ export const ko: TranslationResources = {
         title: "오케스트레이션",
         unavailable: "오케스트레이션을 관리하려면 이 호스트에 연결하세요",
         enableTools: {
-          title: "FDE 도구 활성화",
+          title: "{{brandName}} 도구 활성화",
           hint: "에이전트가 워크트리, 에이전트, 일정을 관리할 수 있습니다",
-          accessibilityLabel: "FDE 도구 주입",
+          accessibilityLabel: "{{brandName}} 도구 주입",
         },
         systemPrompt: {
           title: "시스템 프롬프트",
@@ -2826,10 +2838,10 @@ export const ko: TranslationResources = {
             "이 호스트는 연결되어 있지 않습니다. 재시작하기 전에 온라인 상태가 될 때까지 기다리세요.",
           offlineTitle: "호스트 오프라인",
           offlineMessage:
-            "이 호스트는 오프라인입니다. FDE가 자동으로 다시 연결하므로 다시 온라인이 될 때까지 기다린 후 재시작하세요.",
+            "이 호스트는 오프라인입니다. {{brandName}}가 자동으로 다시 연결하므로 다시 온라인이 될 때까지 기다린 후 재시작하세요.",
           requestFailedTitle: "오류",
           requestFailedMessage:
-            "재시작 요청을 보내지 못했습니다. FDE가 자동으로 다시 연결하므로 호스트가 온라인으로 표시되면 다시 시도하세요.",
+            "재시작 요청을 보내지 못했습니다. {{brandName}}가 자동으로 다시 연결하므로 호스트가 온라인으로 표시되면 다시 시도하세요.",
           dialogFailedMessage: "재시작 확인 대화 상자를 열 수 없습니다.",
         },
         selfUpdate: {
@@ -2877,7 +2889,7 @@ export const ko: TranslationResources = {
         },
         update: {
           desktopManagedHint:
-            "이 데몬은 FDE Desktop에서 관리됩니다. 호스트에서 FDE 데스크톱을 업데이트합니다.",
+            "이 데몬은 {{brandName}} Desktop에서 관리됩니다. 호스트에서 {{brandName}} 데스크톱을 업데이트합니다.",
           title: "데몬 업데이트",
           hint: "데몬을 최신 버전으로 업데이트하고 다시 시작하세요.",
           confirm: "업데이트",
@@ -3038,7 +3050,7 @@ export const ko: TranslationResources = {
         newScript: "새 스크립트",
         editScript: "{{name}} 편집",
         runAsService: "서비스로 실행",
-        serviceHint: "FDE가 프로세스를 감독하고 $PASEO_PORT를 통해 포트를 할당합니다",
+        serviceHint: "{{brandName}}가 프로세스를 감독하고 $PASEO_PORT를 통해 포트를 할당합니다",
         actions: {
           add: "스크립트 추가",
           edit: "편집",
@@ -3047,7 +3059,7 @@ export const ko: TranslationResources = {
       },
       metadata: {
         title: "메타데이터 생성",
-        info: "FDE가 메타데이터를 생성하는 데 사용하는 AI 프롬프트에 주입되는 프로젝트별 지침 - 브랜치 이름, 커밋 스타일, PR 형식 같은 팀 규칙을 적용하는 데 사용하세요",
+        info: "{{brandName}}가 메타데이터를 생성하는 데 사용하는 AI 프롬프트에 주입되는 프로젝트별 지침 - 브랜치 이름, 커밋 스타일, PR 형식 같은 팀 규칙을 적용하는 데 사용하세요",
         branchName: "브랜치 이름",
         branchNamePlaceholder:
           "브랜치에 feat/ 또는 fix/를 접두사로, 개인 브랜치에는 mb/를 붙이세요",

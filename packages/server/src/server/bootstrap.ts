@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import express from "express";
 import { createServer as createHTTPServer, type IncomingMessage, type ServerResponse } from "http";
 import { constants, existsSync, unlinkSync } from "fs";
@@ -237,7 +238,7 @@ import { buildDirectClaimOffer, type ClaimOfferSource } from "./claim-offer.js";
 import { renderPairingQrSvg } from "./pairing-qr.js";
 import { renderClaimGatePage } from "./claim-gate-page.js";
 import { mountPairingCodeRoutes } from "./pairing-code-route.js";
-import { DEFAULT_PAIRING_BASE_URL } from "@fde/protocol/connection-offer";
+
 import { createIdentityPreflightHandler, createIdentityRouteHandler } from "./identity-route.js";
 import { mountSetupRoutes } from "./setup-routes.js";
 import { WorkspaceAutoName } from "./workspace-auto-name.js";
@@ -628,6 +629,9 @@ function resolveAutoUpdate(config: PaseoDaemonConfig): DaemonAutoUpdateConfig {
   return config.autoUpdate ?? DEFAULT_AUTO_UPDATE_CONFIG;
 }
 
+const BRAND_PAIRING_URL = brand.services.pairingUrl ?? "";
+const BRAND_RELAY_ENDPOINT = brand.services.relayEndpoint ?? "";
+
 function createInitialMutableDaemonConfig(config: PaseoDaemonConfig): MutableDaemonConfig {
   const providers = config.providerOverrides ?? {};
 
@@ -642,7 +646,7 @@ function createInitialMutableDaemonConfig(config: PaseoDaemonConfig): MutableDae
     trustedProxies: config.trustedProxies ?? ["loopback"],
     trustLan: configuredTrustLan(config),
     git: config.git ?? resolveGitProcessPolicy({ env: process.env }),
-    app: { baseUrl: config.appBaseUrl ?? DEFAULT_PAIRING_BASE_URL },
+    app: { baseUrl: config.appBaseUrl ?? BRAND_PAIRING_URL },
     ...(config.providerCatalogRefreshTimeoutMs !== undefined
       ? { catalogRefreshTimeoutMs: config.providerCatalogRefreshTimeoutMs }
       : {}),
@@ -781,9 +785,9 @@ export async function createPaseoDaemon(
   // `app.pairingBaseUrl` is the current name and `app.baseUrl` the pre-rename
   // one; both are watched so an edit to either applies without a restart.
   const persistedApp: { pairingBaseUrl?: string; baseUrl?: string } = {};
-  let appBaseUrl = config.appBaseUrl ?? DEFAULT_PAIRING_BASE_URL;
+  let appBaseUrl = config.appBaseUrl ?? BRAND_PAIRING_URL;
   const applyAppBaseUrl = () => {
-    appBaseUrl = resolvePairingBaseUrl(persistedApp) ?? DEFAULT_PAIRING_BASE_URL;
+    appBaseUrl = resolvePairingBaseUrl(persistedApp) ?? BRAND_PAIRING_URL;
   };
   daemonConfigStore.onFieldChange("hostnames", (value) => {
     configuredHostnames = value as HostnamesConfig | undefined;
@@ -903,7 +907,7 @@ export async function createPaseoDaemon(
       const live = relayRuntime?.getConfig();
       return {
         enabled: live?.enabled ?? daemonConfigStore.get().relay?.enabled ?? false,
-        publicEndpoint: live?.publicEndpoint ?? config.relayPublicEndpoint ?? "relay.paseo.sh:443",
+        publicEndpoint: live?.publicEndpoint ?? config.relayPublicEndpoint ?? BRAND_RELAY_ENDPOINT,
         publicUseTls: live?.publicUseTls ?? config.relayPublicUseTls ?? false,
       };
     },
@@ -1888,9 +1892,9 @@ export async function createPaseoDaemon(
               agentManager.setAppendSystemPrompt(typeof value === "string" ? value : "");
             });
             const relayEnabled = config.relayEnabled ?? true;
-            const relayEndpoint = config.relayEndpoint ?? "relay.paseo.sh:443";
+            const relayEndpoint = config.relayEndpoint ?? BRAND_RELAY_ENDPOINT;
             const relayPublicEndpoint = config.relayPublicEndpoint ?? relayEndpoint;
-            const relayUseTls = config.relayUseTls ?? relayEndpoint === "relay.paseo.sh:443";
+            const relayUseTls = config.relayUseTls ?? relayEndpoint === BRAND_RELAY_ENDPOINT;
             const relayPublicUseTls = config.relayPublicUseTls ?? relayUseTls;
             if (boundListenTarget.type === "tcp") {
               logger.info(

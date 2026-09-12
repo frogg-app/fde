@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import { connectToDaemon, getDaemonHost } from "../../utils/client.js";
 import type { CommandError, CommandOptions } from "../../output/index.js";
 import type {
@@ -32,7 +33,7 @@ export async function connectScheduleClient(
     throw {
       code: "DAEMON_NOT_RUNNING",
       message: `Cannot connect to daemon at ${resolvedHost}: ${message}`,
-      details: "Start the daemon with: fde daemon start",
+      details: `Start the daemon with: ${brand.cliName} daemon start`,
     } satisfies CommandError;
   }
 }
@@ -126,7 +127,7 @@ function resolveScheduleTarget(args: {
     if (!currentAgentId) {
       throw {
         code: "INVALID_TARGET",
-        message: "--target self requires running inside an FDE agent",
+        message: `--target self requires running inside an ${brand.name} agent`,
       } satisfies CommandError;
     }
     return { type: "self", agentId: currentAgentId };

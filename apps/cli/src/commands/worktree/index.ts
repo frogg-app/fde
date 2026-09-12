@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import { Command } from "commander";
 import { runLsCommand } from "./ls.js";
 import { runArchiveCommand } from "./archive.js";
@@ -6,16 +7,18 @@ import { withOutput } from "../../output/index.js";
 import { addJsonAndDaemonHostOptions } from "../../utils/command-options.js";
 
 export function createWorktreeCommand(): Command {
-  const worktree = new Command("worktree").description("Manage FDE-managed git worktrees");
+  const worktree = new Command("worktree").description(
+    `Manage ${brand.name}-managed git worktrees`,
+  );
 
   addJsonAndDaemonHostOptions(
-    worktree.command("ls").description("List FDE-managed git worktrees"),
+    worktree.command("ls").description(`List ${brand.name}-managed git worktrees`),
   ).action(withOutput(runLsCommand));
 
   addJsonAndDaemonHostOptions(
     worktree
       .command("create")
-      .description("Create an FDE-managed git worktree")
+      .description(`Create an ${brand.name}-managed git worktree`)
       .option("--mode <mode>", "Creation mode: branch-off, checkout-branch, or checkout-pr")
       .option("--new-branch <name>", "New branch name (--mode branch-off)")
       .option(

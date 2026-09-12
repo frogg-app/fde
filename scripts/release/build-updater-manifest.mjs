@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { desktopArtifactName } from "../../packages/branding/src/artifact-contract.mjs";
 // Writes the `latest.json` that tauri-plugin-updater fetches (see
 // `plugins.updater.endpoints` in apps/desktop/src-tauri/tauri.conf.json) from the
 // renamed release assets and their minisign `.sig` files.
@@ -7,18 +8,22 @@
 //        --repo frogg-app/fde [--assets-dir release-assets] [--out latest.json]
 //        [--notes-file notes.md]
 
+import { loadBrand } from "../dev/branding/load.cjs";
+
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 
 /** Updater platform key -> the asset that platform installs (names from collect-desktop-bundles). */
+const brand = loadBrand();
+
 export const UPDATER_ASSETS = {
-  "linux-x86_64": (v) => `FDE-${v}-x86_64.AppImage`,
+  "linux-x86_64": (v) => desktopArtifactName(brand, v, `linux-x86_64.AppImage`),
   // Zipped NSIS installer: the plugin unpacks it (and GitHub will not take a raw .exe).
-  "windows-x86_64": (v) => `FDE-${v}-x64-setup.zip`,
-  "darwin-aarch64": (v) => `FDE-${v}-aarch64.app.tar.gz`,
-  "darwin-x86_64": (v) => `FDE-${v}-x86_64.app.tar.gz`,
+  "windows-x86_64": (v) => desktopArtifactName(brand, v, `win-x64-setup.zip`),
+  "darwin-aarch64": (v) => desktopArtifactName(brand, v, `mac-aarch64.app.tar.gz`),
+  "darwin-x86_64": (v) => desktopArtifactName(brand, v, `mac-x86_64.app.tar.gz`),
 };
 
 /**
@@ -44,6 +49,7 @@ export function buildUpdaterManifest({ version, tag, repo, signatures, notes = "
   }
   return {
     version,
+    brand: { id: brand.id, applicationId: brand.applicationId },
     notes,
     pub_date: pubDate ?? new Date().toISOString(),
     platforms,

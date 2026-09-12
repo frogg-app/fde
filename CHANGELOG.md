@@ -56,6 +56,114 @@
   for a standalone APK that can coexist with production. Preserve license and
   speech-model notices in standalone daemon bundles.
 
+## 0.4.1 - 2026-09-12
+
+- Build daemon packages independently of Android and desktop releases. Compile the
+  server and package the exported web UI once, then share that output across all
+  six daemon targets.
+- Add `npm run build:local` for Windows/Linux desktop iteration with preserved
+  compiler caches, bounded concurrency, package checksums, and per-stage timings.
+- Refresh the Nix dependency hash for the synchronized package lockfile.
+
+## 0.4.0 - 2026-09-12
+
+- Merge fork-friendly branding across desktop, web, mobile, CLI, daemon,
+  installers, and deployment tooling. Forks can supply a manifest and artwork
+  while retaining shared sources and independently owned product distributions.
+
+## 0.3.2 - 2026-09-12
+
+- Integrate upstream active-agent sidebar visibility and workspace controls,
+  preserving the completed branding implementation and synchronized versions.
+
+## 0.3.1 - 2026-09-12
+
+- Integrate upstream sidebar subagent runtime while retaining modular branding,
+  release compatibility, and synchronized product versions.
+- Represent single-agent workspaces with one selectable workspace row. Put the
+  disclosure control on the workspace for multiple agents or active subagents,
+  and omit chevrons when there are no visible children.
+- Remove finished subagents from the sidebar automatically while preserving their
+  transcript history. Keep running descendants and permission-waiting agents reachable.
+  Automated layout and lifecycle checks cover this; device visual acceptance remains pending.
+
+## 0.3.0 - 2026-09-12
+
+- Show agents and expandable subagents beneath workspace rows in the sidebar.
+  Click a child to open its existing interactive session or live provider-owned
+  transcript, with cross-workspace navigation and the configured tab placement.
+- Show provider-child discovery and transcript loading failures with retry actions,
+  mark disconnected activity as saved, and refresh child data after reconnect.
+  Automated behavior is covered; desktop/mobile visual acceptance remains pending.
+
+## 0.2.30 - 2026-09-12
+
+- Integrate upstream archive safety and Add host improvements, and reconcile
+  explicit release asset names with branded distributions and FDE compatibility.
+
+## 0.2.29 - 2026-09-12
+
+- Integrate the upstream host-picker scope and translated Add host fix while
+  preserving the branding implementation and synchronized distribution versions.
+
+## 0.2.28 - 2026-09-12
+
+- Complete the branding delivery record with two-product runtime, upgrade, fork,
+  platform packaging, browser, and Nix evidence and explicit operator acceptance limits.
+
+## 0.2.27 - 2026-09-12
+
+- Escape generated skill descriptions for Unicode product names containing colons
+  and quotation marks.
+- Reject custom Tauri packaging without its generated configuration overlay,
+  stale web branding in native release builds, and identity/version drift.
+  Direct native checks remain supported.
+- Link the rebranding workflow from the README and record native input checks
+  and completed platform build evidence.
+
+## 0.2.26 - 2026-09-12
+
+- Make Linux desktop entries launch the installed GUI directly and forward
+  pairing URLs, while keeping AppImage entries relocatable. Inspect actual
+  native package identities in both-brand CI.
+- Record successful fork-lifecycle, concurrent-daemon, Nix, browser, and
+  simulator acceptance and retain test artifacts on the feature PR.
+
+## 0.2.25 - 2026-09-12
+
+- Verify concurrent products and cross-brand management rejection using real
+  daemon archives; check cosmetic upgrades and foreign-asset rejection.
+- Validate Nix distributions in CI, preserve required public configuration
+  templates, and exclude actual environment files from Nix sources.
+- Preserve Windows npm arguments without shell parsing, fix native build flag
+  forwarding, and apply selected identities to Windows development and SSH defaults.
+
+## 0.2.24 - 2026-09-12
+
+- Add fork-owned build-time branding across the UI, desktop/mobile packaging,
+  CLI, daemon, pairing pages, provider skills, installers, and deployment inputs.
+  Custom products keep independent state and update sources; FDE retains its
+  legacy identity and compatibility. See [the rebranding guide](docs/branding.md).
+- Add both-brand generation, browser, runtime, and native packaging CI. Platform
+  compilation and device acceptance are recorded separately in the branding plan.
+
+## 0.2.16 - 2026-09-12
+
+- Keep workspace archival solely in each workspace's overflow menu, remove its
+  keyboard shortcut, and require confirmation for every archive. Worktrees with
+  uncommitted or unpushed work retain their additional risk warning.
+- Open Add host directly from the sidebar instead of layering it over Settings,
+  and add `Ctrl+H` as its global shortcut.
+- Name release assets by product, version, platform, architecture, and package
+  kind. Give Android and desktop builds priority over daemon bundle jobs, with
+  Windows first in the desktop matrix.
+
+## 0.2.15 - 2026-09-12
+
+- Keep the Settings host picker focused on switching hosts. Host creation remains
+  in the main sidebar, whose Add host action now renders its translated label
+  instead of the missing translation key.
+
 ## 0.2.11 - 2026-09-11
 
 - Fix local speech loading when npm hoists the native Sherpa library away from

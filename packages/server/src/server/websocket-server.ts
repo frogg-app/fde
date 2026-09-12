@@ -1,3 +1,4 @@
+import { brandIdentity } from "@fde/branding";
 import { WebSocket, WebSocketServer } from "ws";
 import type { IncomingMessage, Server as HTTPServer } from "http";
 import { join } from "path";
@@ -1682,6 +1683,7 @@ export class VoiceAssistantWebSocketServer {
   private buildServerInfoStatusPayload(session: Session): ServerInfoStatusPayload {
     return {
       status: "server_info",
+      brand: brandIdentity,
       serverId: this.serverId,
       hostname: getHostname(),
       version: this.daemonVersion,

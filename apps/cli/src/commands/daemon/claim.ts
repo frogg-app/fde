@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import type { Command } from "commander";
 import {
   createClaimStore,
@@ -74,7 +75,7 @@ const claimStatusSchema: OutputSchema<ClaimStatusResult> = {
     const lines = [
       `Claimed:        ${data.claimed ? `yes (${data.claimedAt ?? "unknown time"})` : "no"}`,
       `Password:       ${data.passwordConfigured ? "configured" : "not configured"}`,
-      `LAN trusted:    ${data.lanTrusted ? "yes (fde daemon trust-lan off to require pairing on the LAN)" : "no"}`,
+      `LAN trusted:    ${data.lanTrusted ? `yes (${brand.cliName} daemon trust-lan off to require pairing on the LAN)` : "no"}`,
       `Pairing needed: ${describePairingNeeded(data)}`,
       `Principals:     ${data.principalsPath}`,
       `Daemon:         ${

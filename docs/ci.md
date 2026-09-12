@@ -32,27 +32,32 @@ The Tauri CLI comes from `npx --yes @tauri-apps/cli@^2` (a prebuilt binary), so 
 ## `release.yml`: every `v*` tag (or manual dispatch with a `tag` input)
 
 ```
-meta ──┬── ui ── desktop (linux x86_64, windows x86_64, macos aarch64, macos x86_64) ── updater-manifest
-       ├── daemon-bundle (linux-x64, linux-arm64, darwin-arm64, darwin-x64, win-x64, win-arm64)
-       ├── android (arm64-v8a apk)
-       └── docker
+meta ── android (arm64-v8a apk)
+meta ── ui ── desktop (windows/linux/macOS) ── updater
+           └─ daemon-build ── daemon-bundle (six targets)
+meta ── docker
 ```
 
 - **meta** checks that the tag equals `v` + root `package.json` version (fails otherwise),
   extracts the `## <version>` section of `CHANGELOG.md` as release notes, and creates the
   GitHub release `FDE <version>` if it does not exist yet. Only versions with a semver `-` suffix are marked pre-release;
   ordinary `0.x.y` versions are stable releases.
-- **ui** exports `apps/ui/dist` once and shares it with the desktop matrix.
+- **ui** exports `apps/ui/dist` once and shares it with desktop and daemon builds.
 - **desktop** builds with `npx @tauri-apps/cli build --target <triple> --bundles <list>`
   on each platform, renames the bundles with
   `scripts/release/collect-desktop-bundles.mjs`, and uploads them. Linux builds on
   `ubuntu-22.04` so the deb/AppImage run on older glibc. Windows builds natively (not the
   cargo-xwin cross build used locally). macOS is ad-hoc signed
   (`APPLE_SIGNING_IDENTITY=-`): users open it once with right-click > Open.
-- **daemon-bundle** runs `npm run build:daemon-bundle -- --target <target>` per platform
-  and uploads the tarball plus its `.sha256`. Until
-  `scripts/release/build-daemon-bundle.mjs` is on the tagged commit the job logs a notice
-  and does nothing.
+- **daemon-build** compiles the server/CLI workspace graph once and packages the
+  shared `ui-dist` export with `build:daemon-web-ui -- --skip-export`. It selects
+  the same configured brand and rejects a web export with a mismatched fingerprint. Its
+  `daemon-dist` artifact contains all eight workspace `dist` directories, including
+  the precompressed web UI. Artifact paths preserve the repository directory layout.
+- **daemon-bundle** downloads that artifact and installs the runtime/native packages
+  for its own target, then uploads the archive and `.sha256`. It depends only on
+  the shared daemon build and metadata. Android or desktop delays/failures do not
+  block daemon packages, and none of the six target jobs recompile the UI/server.
 - **android** runs `scripts/release/build-android-apk.mjs --abi arm64-v8a` on
   `ubuntu-latest` (Temurin 21, the runner's Android SDK with licenses accepted by
   `android-actions/setup-android`, Gradle cache) and uploads the APK. The
@@ -72,16 +77,16 @@ meta ──┬── ui ── desktop (linux x86_64, windows x86_64, macos aarc
 
 | Asset                                        | Source                                                                                            |
 | -------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `FDE-<ver>-amd64.deb`                        | Tauri deb (Linux x86_64)                                                                          |
-| `FDE-<ver>-x86_64.AppImage`                  | Tauri AppImage                                                                                    |
-| `FDE-<ver>-x64-setup.zip`                    | Tauri NSIS installer (per-user, unsigned), zipped by `scripts/release/package-windows-zips.mjs`   |
-| `FDE-<ver>-x64-portable.zip`                 | `scripts/release/package-windows-zips.mjs` (`fde.exe` + README)                                   |
-| `FDE-<ver>-aarch64.dmg`, `-x86_64.dmg`       | Tauri DMG per architecture                                                                        |
-| `FDE-<ver>-<arch>.app.tar.gz` + `.sig`       | macOS updater bundle, only with a signing key                                                     |
+| `FDE-<ver>-linux-x86_64.deb`                 | Tauri deb (Linux x86_64)                                                                          |
+| `FDE-<ver>-linux-x86_64.AppImage`            | Tauri AppImage                                                                                    |
+| `FDE-<ver>-win-x64-setup.zip`                | Tauri NSIS installer (per-user, unsigned), zipped by `scripts/release/package-windows-zips.mjs`   |
+| `FDE-<ver>-win-x64-portable.zip`             | `scripts/release/package-windows-zips.mjs` (`fde.exe` + README)                                   |
+| `FDE-<ver>-mac-aarch64.dmg`, `-x86_64.dmg`   | Tauri DMG per architecture                                                                        |
+| `FDE-<ver>-mac-<arch>.app.tar.gz` + `.sig`   | macOS updater bundle, only with a signing key                                                     |
 | `*.sig`                                      | minisign signatures next to the AppImage/installer zip, only with the key                         |
 | `latest.json`                                | Updater manifest, only with the key                                                               |
-| `fde-daemon-<ver>-<platform>-<arch>.tar.gz`  | Daemon bundle + `.sha256`, read by `deploy/install.sh` and the desktop app's local daemon install |
-| `fde-daemon-<ver>-win-<arch>.zip`            | Windows daemon bundle + `.sha256`, read by the desktop app's local daemon install                 |
+| `FDE-<ver>-<platform>-<arch>-daemon.tar.gz`  | Daemon bundle + `.sha256`, read by `deploy/install.sh` and the desktop app's local daemon install |
+| `FDE-<ver>-win-<arch>-daemon.zip`            | Windows daemon bundle + `.sha256`, read by the desktop app's local daemon install                 |
 | `FDE-<ver>-android-arm64-v8a[-unsigned].apk` | Android APK; release-signed with the keystore secrets, otherwise debug-signed and `-unsigned`     |
 
 Tauri itself names bundles `FDE_<ver>_amd64.AppImage`, `FDE_<ver>_x64-setup.exe` and so

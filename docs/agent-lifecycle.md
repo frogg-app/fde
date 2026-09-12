@@ -144,6 +144,44 @@ Workspace status is an aggregate activity signal computed **per `workspaceId`**.
 
 Running provider-native subagents contribute `running` to the workspace owned by their parent agent. Their completed, failed, and canceled states stay in the parent's subagents track.
 
+## Sidebar agent tree
+
+A workspace with one managed root agent represents that agent directly: clicking the
+workspace opens its session, and its active subagents appear immediately beneath it.
+Workspaces with multiple root agents expose those agents through a workspace-level
+chevron. Disclosure controls only appear when there are visible child rows; an unrequested,
+pending, or failed discovery query alone never adds a chevron. New children expand
+automatically until the user explicitly collapses their workspace or parent.
+The chevron controls disclosure; clicking the label opens the existing session. Managed
+children open interactive agent tabs in their owning workspace. Provider-owned children
+open their dedicated live, read-only transcript, including reasoning and tool activity.
+Desktop opens honor the subagent Main panel / On the side preference and reuse existing
+tabs; compact opens dismiss the sidebar. Closing a tab preserves the child row.
+
+`apps/ui/src/components/sidebar/agents/` owns the projection, discovery, and rows.
+The collection subscribes to agent and provider descriptor indexes, rather than having
+individual rows subscribe to transcript updates. Discovery reads provider child lists for
+the active workspace and parents the user expands. It refreshes on reconnection. Loading
+and failed requests have visible feedback and a retry action; disconnected child trees
+show saved activity without live status indicators. The provider transcript also exposes
+initial loading, failure/retry, and offline states and refetches after reconnection.
+
+Cross-workspace managed children appear beneath their parent and in their own workspace.
+The sidebar shows only provider children with running status and managed children that
+are running, initializing, or waiting on a permission. Completed, failed, canceled, idle,
+and closed children disappear automatically; their existing tabs and transcript history
+remain available. Active descendants of idle intermediates remain reachable. Workspace
+root agents stay selectable when idle. Archived agents and provider rows hidden by
+**Archive finished** leave the tree; detached agents become roots. Row identity includes the host, parent, and child where
+needed, so provider identifiers never become managed agent identifiers.
+
+The interaction reference is [Orca's agent/session model](https://www.onorca.dev/docs/model/agents-sessions)
+and its [subagent child row projection](https://github.com/stablyai/orca/blob/a05e2139d6529cc3aea3d1fd5f2fc5323d7fa3d9/src/renderer/src/components/sidebar/worktree-subagent-child-rows.ts).
+Orca's in-process rows activate the parent pane because those children have no separate
+PTY. FDE uses its existing dedicated provider-child transcript stream for direct inspection.
+Automated hierarchy, disclosure, retry, and lifecycle tests cover this implementation;
+visual and live-provider acceptance on desktop and mobile remains unverified.
+
 ## The subagents track
 
 The track is a pill at the foot of an agent's pane (`apps/ui/src/subagents/track.tsx`): a count you can read at a glance, and a panel behind it — a popover on wide screens, a sheet on compact ones — holding the rows. It floats over the transcript rather than sitting in a band above the composer, so the timeline scrolls underneath it; `apps/ui/src/panels/agent-tracks.tsx` owns that placement, and the pill frame is shared with the task list in `apps/ui/src/composer/tracks.tsx`.

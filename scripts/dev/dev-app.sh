@@ -7,7 +7,6 @@ export PATH="$ROOT_DIR/node_modules/.bin:$PATH"
 
 source "$SCRIPT_DIR/dev-home.sh"
 
-export PASEO_LISTEN="${PASEO_LISTEN:-127.0.0.1:6768}"
 configure_dev_paseo_home
 
 EXPO_PORT="${EXPO_PORT:-8081}"
@@ -15,7 +14,7 @@ DAEMON_ENDPOINT="$(resolve_dev_daemon_endpoint)"
 DEV_BUILD_LABEL="$(git -C "$ROOT_DIR" branch --show-current 2>/dev/null || true)"
 
 echo "══════════════════════════════════════════════════════"
-echo "  Paseo App Dev"
+echo "  ${FDE_DEV_PRODUCT_NAME} App Dev"
 echo "══════════════════════════════════════════════════════"
 echo "  Metro:   http://localhost:${EXPO_PORT}"
 echo "  Daemon:  ${DAEMON_ENDPOINT}"

@@ -1,3 +1,5 @@
+import { brand, brandIdentity } from "@fde/branding";
+import { matchesBrand } from "@fde/branding/identity";
 import { open, readFile, stat, unlink, mkdir, utimes } from "node:fs/promises";
 import type { FileHandle } from "node:fs/promises";
 import { existsSync } from "node:fs";
@@ -6,6 +8,7 @@ import { hostname } from "node:os";
 import { z } from "zod";
 
 export const pidLockInfoSchema = z.object({
+  brand: z.object({ id: z.string(), applicationId: z.string() }).optional(),
   pid: z.number(),
   startedAt: z.string(),
   hostname: z.string(),
@@ -116,6 +119,8 @@ async function clearExistingPidLock(
   lockOwnerPid: number,
   options: AcquirePidLockOptions | undefined,
 ): Promise<"already_owned" | "cleared"> {
+  if (!matchesBrand(brand, existingLock.brand))
+    throw new PidLockError("This state directory belongs to another product", existingLock);
   const lockOwnerRunning = isPidRunning(existingLock.pid);
   if (existingLock.pid === lockOwnerPid && lockOwnerRunning) {
     await touchPidLockFile(pidPath);
@@ -192,6 +197,7 @@ export async function acquirePidLock(
 
   // Create new lock with exclusive flag
   const lockInfo: PidLockInfo = {
+    brand: brandIdentity,
     pid: lockOwnerPid,
     startedAt: new Date().toISOString(),
     hostname: hostname(),
@@ -225,7 +231,7 @@ export async function refreshPidLock(
     if (!lock) {
       throw new PidLockError("Cannot refresh PID lock: invalid lock file");
     }
-    if (lock.pid !== lockOwnerPid) {
+    if (lock.pid !== lockOwnerPid || !matchesBrand(brand, lock.brand)) {
       throw new PidLockError(`Cannot refresh PID lock owned by PID ${lock.pid}`, lock);
     }
     const now = new Date();
@@ -309,7 +315,7 @@ export async function updatePidLock(
     if (!existingLock) {
       throw new PidLockError("Cannot update PID lock: invalid lock file");
     }
-    if (existingLock.pid !== lockOwnerPid) {
+    if (existingLock.pid !== lockOwnerPid || !matchesBrand(brand, existingLock.brand)) {
       throw new PidLockError(
         `Cannot update PID lock owned by PID ${existingLock.pid}`,
         existingLock,
@@ -337,7 +343,7 @@ export async function releasePidLock(
     // Only remove if it's our lock
     const content = await readFile(pidPath, "utf-8");
     const lock = parsePidLockInfo(JSON.parse(content));
-    if (lock?.pid === lockOwnerPid) {
+    if (lock?.pid === lockOwnerPid && matchesBrand(brand, lock.brand)) {
       await unlink(pidPath);
     }
   } catch {

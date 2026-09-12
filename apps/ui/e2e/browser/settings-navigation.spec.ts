@@ -81,18 +81,39 @@ test.describe("Settings sidebar navigation", () => {
     await verifyLegacyHostSettingsRedirect(page);
   });
 
-  test("the + Add host button opens the add-host method modal", async ({ page }) => {
+  test("the main sidebar Add host button opens only the add-host method modal", async ({
+    page,
+  }) => {
     await gotoAppShell(page);
-    await openSettings(page);
     await openAddHostFlow(page);
     await expectAddHostMethodOptions(page);
+    await expect(page.getByTestId("settings-modal")).toHaveCount(0);
+  });
+
+  test("Ctrl+H opens Add host without opening settings", async ({ page }) => {
+    await gotoAppShell(page);
+    await page.keyboard.press("Control+H");
+
+    await expectAddHostMethodOptions(page);
+    await expect(page.getByTestId("settings-modal")).toHaveCount(0);
+  });
+
+  test("the settings host picker only switches hosts", async ({ page }) => {
+    await gotoAppShell(page);
+    await openSettings(page);
+
+    await page.getByTestId("settings-host-picker").click();
+
+    const picker = page.getByTestId("combobox-desktop-container");
+    await expect(picker).toBeVisible();
+    await expect(picker.getByText("Add host", { exact: true })).toHaveCount(0);
+    await expect(picker.getByText("Enable built-in daemon", { exact: true })).toHaveCount(0);
   });
 
   test("direct connection advanced URI round-trips SSL and password into the form", async ({
     page,
   }) => {
     await gotoAppShell(page);
-    await openSettings(page);
     await openAddHostFlow(page);
     await selectHostConnectionType(page, "direct");
 
@@ -149,13 +170,14 @@ test.describe("Settings sidebar navigation", () => {
     });
 
     await test.step("a modal owns Escape", async () => {
+      await clickSettingsBackToWorkspace(page);
       await openAddHostFlow(page);
       await expect(page.getByText("Add connection", { exact: true })).toBeVisible();
 
       await page.keyboard.press("Escape");
 
       await expect(page.getByText("Add connection", { exact: true })).toHaveCount(0);
-      await expectSettingsModalOpen(page, "Appearance");
+      await expectSettingsClosed(page);
     });
   });
 });

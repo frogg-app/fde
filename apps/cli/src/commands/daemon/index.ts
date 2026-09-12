@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import { Command, Option } from "commander";
 import { startCommand } from "./start.js";
 import { runStatusCommand } from "./status.js";
@@ -36,18 +37,18 @@ export function addDaemonLifecycleCommands(program: Command): Command {
   ).action(withOutput(runDaemonReloadCommand));
 
   addJsonOption(program.command("status").description("Show local daemon status"))
-    .option("--home <path>", "FDE home directory (default: ~/.fde)")
+    .option("--home <path>", `${brand.name} home directory (default: ~/${brand.homeDir})`)
     .action(withOutput(runStatusCommand));
 
   addJsonOption(program.command("stop").description("Stop the local daemon"))
-    .option("--home <path>", "FDE home directory (default: ~/.fde)")
+    .option("--home <path>", `${brand.name} home directory (default: ~/${brand.homeDir})`)
     .option("--timeout <seconds>", "Wait timeout before failing (default: 15)")
     .option("--force", "Send SIGKILL if graceful stop times out")
     .option("--kill-timeout <seconds>", "Wait after SIGKILL before failing (default: 3)")
     .action(withOutput(runStopCommand));
 
   addJsonOption(program.command("restart").description("Restart the local daemon"))
-    .option("--home <path>", "FDE home directory (default: ~/.fde)")
+    .option("--home <path>", `${brand.name} home directory (default: ~/${brand.homeDir})`)
     .option("--timeout <seconds>", "Wait timeout before force step (default: 15)")
     .option("--force", "Send SIGKILL if graceful stop times out")
     .option(
@@ -58,7 +59,7 @@ export function addDaemonLifecycleCommands(program: Command): Command {
     .option("--relay", "Enable relay on restarted daemon")
     .option("--no-relay", "Disable relay on restarted daemon")
     .option("--no-mcp", "Disable Agent MCP on restarted daemon")
-    .option("--no-inject-mcp", "Disable auto-injecting the FDE MCP into created agents")
+    .option("--no-inject-mcp", `Disable auto-injecting the ${brand.name} MCP into created agents`)
     .option("--web-ui", "Enable the bundled daemon web UI on restarted daemon")
     .option("--no-web-ui", "Disable the bundled daemon web UI on restarted daemon")
     .option(
@@ -82,18 +83,21 @@ export function addDaemonLifecycleCommands(program: Command): Command {
   addJsonOption(
     program
       .command("install-service")
-      .description("Start the FDE daemon automatically when you log in"),
+      .description(`Start the ${brand.name} daemon automatically when you log in`),
   )
-    .option("--listen <listen>", "Listen target for the service (default: 127.0.0.1:9999)")
-    .option("--home <path>", "FDE home directory (default: ~/.fde)")
+    .option(
+      "--listen <listen>",
+      `Listen target for the service (default: 127.0.0.1:${brand.daemonPort})`,
+    )
+    .option("--home <path>", `${brand.name} home directory (default: ~/${brand.homeDir})`)
     .action(withOutput(runInstallServiceCommand));
 
   addJsonOption(
     program
       .command("uninstall-service")
-      .description("Stop starting the FDE daemon when you log in"),
+      .description(`Stop starting the ${brand.name} daemon when you log in`),
   )
-    .option("--home <path>", "FDE home directory (default: ~/.fde)")
+    .option("--home <path>", `${brand.name} home directory (default: ~/${brand.homeDir})`)
     .action(withOutput(runUninstallServiceCommand));
 
   return program;
@@ -115,7 +119,7 @@ export function createAuthCommand(): Command {
       .command("claim-status")
       .description("Show whether a device has paired with (claimed) this daemon"),
   )
-    .option("--home <path>", "FDE home directory (default: ~/.fde)")
+    .option("--home <path>", `${brand.name} home directory (default: ~/${brand.homeDir})`)
     .action(withOutput(runClaimStatusCommand));
 
   addJsonOption(
@@ -123,7 +127,7 @@ export function createAuthCommand(): Command {
       .command("reset-claim")
       .description("Forget all paired devices so the next LAN visitor sees the pairing page"),
   )
-    .option("--home <path>", "FDE home directory (default: ~/.fde)")
+    .option("--home <path>", `${brand.name} home directory (default: ~/${brand.homeDir})`)
     .action(withOutput(runResetClaimCommand));
 
   addJsonOption(
@@ -131,7 +135,7 @@ export function createAuthCommand(): Command {
       .command("set-password")
       .description("Prompt for and save a hashed daemon password to config.json"),
   )
-    .option("--home <path>", "FDE home directory (default: ~/.fde)")
+    .option("--home <path>", `${brand.name} home directory (default: ~/${brand.homeDir})`)
     .action(withOutput(runSetPasswordCommand));
 
   addJsonOption(
@@ -142,7 +146,7 @@ export function createAuthCommand(): Command {
       )
       .argument("<mode>", "on or off"),
   )
-    .option("--home <path>", "FDE home directory (default: ~/.fde)")
+    .option("--home <path>", `${brand.name} home directory (default: ~/${brand.homeDir})`)
     .action(withOutput(runTrustLanCommand));
 
   return auth;

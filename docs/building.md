@@ -47,15 +47,47 @@ The Windows command expands to
 followed by `npm run build:win:zips --workspace=@fde/desktop`. The installer is
 unsigned; Tauri warns about that and continues. macOS bundles must be built on a Mac.
 
+### Timed local desktop builds
+
+For repeated Windows work on the Linux VM, use the installed cross toolchain and
+keep the same checkout so Cargo and Metro can reuse their caches:
+
+```sh
+npm run build:local -- --target windows
+npm run build:local -- --target linux --jobs 1
+```
+
+The command holds the selected brand through its build lease, stamps the current
+UI export, and uses the branded Tauri entrypoint. It rebuilds app dependencies before native
+packaging. It uses one Metro worker and one Cargo worker by default (`--jobs`
+changes Cargo concurrency). Only generated installer outputs are cleared; compiler
+objects stay in `apps/desktop/src-tauri/target`. No install, publish, daemon launch,
+or daemon restart is part of this command.
+
+Packages, checksum sidecars, and `timings.json` land in
+`.dev/builds/<brand>/<target>-<version>/<timestamp>/`. The report records the source commit,
+whether the checkout was modified, success/failure, and elapsed seconds per stage.
+A failed stage stops packaging, so a previous executable cannot be reported as a
+successful new build. Compare a first run and a repeat run before quoting speedups.
+On this shared VM, the Windows path took 7m12s on its first measured run and
+2m57s on a repeat; the integrated 0.4.1 branded build took 3m20s with warm caches.
+These measure local packaging, not Windows device execution or a full CI release.
+
+Use an Ubuntu 22.04 build container for portable Linux release packages; a direct
+build on this Ubuntu 24.04 VM targets its newer system libraries. macOS packages
+continue to use Mac runners. Android remains on the existing build script: safely
+reusing its generated native tree requires checking configuration, plugin, dependency,
+and version inputs as well as updating JavaScript.
+
 ### Windows zips
 
 `scripts/release/package-windows-zips.mjs` (the `build:win:zips` step) takes the built
 `fde.exe` from `target/x86_64-pc-windows-msvc/release/` and writes
-`bundle/portable/FDE-<version>-x64-portable.zip`, containing
+`bundle/portable/FDE-<version>-win-x64-portable.zip`, containing
 `FDE-<version>-portable/FDE.exe` and a `README.txt` (no installer, WebView2 required,
 settings under `%APPDATA%\app.frogg.fde`, SmartScreen note). The zip is written with
 Node's `zlib`, no extra dependency. The same step wraps the NSIS installer as
-`bundle/nsis-zip/FDE-<version>-x64-setup.zip` (a single `FDE-<version>-x64-setup.exe`
+`bundle/nsis-zip/FDE-<version>-win-x64-setup.zip` (a single `FDE-<version>-win-x64-setup.exe`
 inside): releases never carry a raw `.exe`, because GitHub rejects those uploads and
 Windows blocks bare downloaded executables. It can be re-run on its own after a Tauri Windows build;
 the version comes from the root `package.json`. A native Windows build (`cargo tauri build`
@@ -65,7 +97,7 @@ on Windows, as the release workflow does) writes to `target/release` instead; pa
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` builds the Linux deb on every push and pull request, and
+`.github/workflows/ci.yml` builds the Linux deb on main pushes and manual dispatch, and
 `.github/workflows/release.yml` builds all platforms for a `vX.Y.Z` tag and renames the
 bundles to `FDE-<version>-...`. See [ci.md](ci.md).
 

@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import type { Command } from "commander";
 import type { CommandError, SingleResult } from "../../output/index.js";
 import {
@@ -45,7 +46,7 @@ async function requireTerminalId(
   const error: CommandError = {
     code: "TERMINAL_NOT_FOUND",
     message: `No terminal found matching: ${terminalId}`,
-    details: "Use `fde terminal ls --all` to list available terminals.",
+    details: `Use \`${brand.cliName} terminal ls --all\` to list available terminals.`,
   };
   throw error;
 }
