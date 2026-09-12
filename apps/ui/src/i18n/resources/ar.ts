@@ -1836,6 +1836,7 @@ export const ar: TranslationResources = {
       off: "إيقاف",
       acknowledge: "تأكيد المهام قبل بدء العمل",
       permissions: "تظل طلبات الإذن مسموعة عند إيقاف تحديثات المهام.",
+      speechSpeed: "سرعة الصوت",
       pause: "التوقف قبل الرد",
       quick: "سريع (0.8 ثانية)",
       natural: "طبيعي (1.4 ثانية)",

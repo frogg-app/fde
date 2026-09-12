@@ -101,7 +101,7 @@ describe("SherpaOnnxTTS", () => {
       },
       pino({ level: "silent" }),
     );
-    await tts.synthesizeSpeech("Ready.");
+    await tts.synthesizeSpeech("Ready.", { speed: 1.3 });
     expect(initialize).toHaveBeenCalledWith(
       expect.objectContaining({
         model: expect.objectContaining({
@@ -113,6 +113,6 @@ describe("SherpaOnnxTTS", () => {
         }),
       }),
     );
-    expect(generate).toHaveBeenCalledWith(expect.objectContaining({ sid: 21, speed: 1.15 }));
+    expect(generate).toHaveBeenCalledWith(expect.objectContaining({ sid: 21, speed: 1.15 * 1.3 }));
   });
 });

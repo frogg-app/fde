@@ -1892,6 +1892,7 @@ export const fr: TranslationResources = {
       acknowledge: "Accuser réception des tâches avant de travailler",
       permissions:
         "Les demandes d’autorisation restent vocales même si les annonces sont désactivées.",
+      speechSpeed: "Vitesse de la voix",
       pause: "Pause avant de répondre",
       quick: "Rapide (0,8 seconde)",
       natural: "Naturelle (1,4 seconde)",

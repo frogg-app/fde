@@ -1863,6 +1863,7 @@ export const ja: TranslationResources = {
       off: "オフ",
       acknowledge: "作業前にタスクの受付を伝える",
       permissions: "通知がオフでも権限の要求は音声で伝えます。",
+      speechSpeed: "音声の速度",
       pause: "応答までの間",
       quick: "短い（0.8秒）",
       natural: "自然（1.4秒）",

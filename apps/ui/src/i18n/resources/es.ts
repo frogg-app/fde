@@ -1888,6 +1888,7 @@ export const es: TranslationResources = {
       off: "Desactivados",
       acknowledge: "Confirmar las tareas antes de trabajar",
       permissions: "Las solicitudes de permiso se leen aunque los avisos estén desactivados.",
+      speechSpeed: "Velocidad de voz",
       pause: "Pausa antes de responder",
       quick: "Rápida (0,8 segundos)",
       natural: "Natural (1,4 segundos)",

@@ -966,6 +966,7 @@ export const CompanionConversationOptionsSchema = z.object({
   verbosity: z.enum(["brief", "detailed"]).default("brief"),
   updates: z.enum(["important", "completion", "off"]).default("important"),
   acknowledgeTasks: z.boolean().default(false),
+  speechSpeed: z.number().min(0.75).max(2).optional(),
   pauseMs: z.number().int().min(600).max(3000).default(1400),
   interruptible: z.boolean().default(true),
 });

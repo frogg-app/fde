@@ -210,9 +210,10 @@ export class LocalSpeechWorkerClient {
     this.forkWorker = options.forkWorker ?? forkLocalSpeechWorker;
   }
 
-  async synthesizeSpeech(text: string): Promise<SpeechStreamResult> {
+  async synthesizeSpeech(text: string, options?: { speed?: number }): Promise<SpeechStreamResult> {
     const result = await this.sendRequest<LocalSpeechTtsResult>({
       type: "tts.synthesize",
+      speed: options?.speed,
       config: this.config,
       text,
     });
@@ -616,8 +617,8 @@ export class LocalSpeechWorkerClient {
 export class WorkerBackedTextToSpeechProvider implements TextToSpeechProvider {
   constructor(private readonly client: LocalSpeechWorkerClient) {}
 
-  synthesizeSpeech(text: string): Promise<SpeechStreamResult> {
-    return this.client.synthesizeSpeech(text);
+  synthesizeSpeech(text: string, options?: { speed?: number }): Promise<SpeechStreamResult> {
+    return this.client.synthesizeSpeech(text, options);
   }
 }
 

@@ -19,6 +19,7 @@ export type LocalSpeechSessionKind = "voiceStt" | "dictationStt" | "vad";
 export type LocalSpeechWorkerRequest =
   | {
       type: "tts.synthesize";
+      speed?: number;
       requestId: string;
       config: LocalSpeechWorkerConfig;
       text: string;

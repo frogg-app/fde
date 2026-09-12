@@ -1811,6 +1811,7 @@ export const zhCN: TranslationResources = {
       off: "关闭",
       acknowledge: "开始工作前确认任务",
       permissions: "关闭任务通知后，权限请求仍会通过语音告知。",
+      speechSpeed: "语音速度",
       pause: "回复前的停顿",
       quick: "快速（0.8秒）",
       natural: "自然（1.4秒）",

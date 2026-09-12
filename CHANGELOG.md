@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add a Companion voice-speed selector (0.75×–2×), defaulting to 1.3×. Apply it
+  during synthesis from the next conversation, without changing pitch or other
+  clients’ speech settings.
+
 - Refine Companion into animated cyan/violet light ribbons with a matching launcher,
   compact live presence and distinct microphone/playback feedback. Add a device
   motion preference and larger labelled controls. Keep the app preview off by

@@ -30,3 +30,7 @@ describe("Companion conversation options", () => {
     },
   );
 });
+
+it.each([0, -1, 2.1, Infinity, NaN])("rejects invalid voice speed %s", (speechSpeed) => {
+  expect(CompanionConversationOptionsSchema.safeParse({ speechSpeed }).success).toBe(false);
+});

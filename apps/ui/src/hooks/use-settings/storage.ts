@@ -105,6 +105,7 @@ export interface AppSettings {
   companionVerbosity: "brief" | "detailed";
   companionUpdates: "important" | "completion" | "off";
   companionAcknowledgeTasks: boolean;
+  companionSpeechSpeed: number;
   companionPauseMs: number;
   companionInterruptible: boolean;
   /** Show the Companion's reply text while it speaks. */
@@ -169,6 +170,7 @@ export const DEFAULT_CLIENT_SETTINGS: AppSettings = {
   companionVerbosity: "brief",
   companionUpdates: "important",
   companionAcknowledgeTasks: false,
+  companionSpeechSpeed: 1.3,
   companionPauseMs: 1400,
   companionInterruptible: true,
   companionShowReplyText: true,
@@ -296,6 +298,7 @@ const StoredAppSettingsSchema = z
     companionVerbosity: z.enum(["brief", "detailed"]).catch("brief"),
     companionUpdates: z.enum(["important", "completion", "off"]).catch("important"),
     companionAcknowledgeTasks: z.boolean().catch(false),
+    companionSpeechSpeed: z.number().min(0.75).max(2).catch(1.3),
     companionPauseMs: z.number().int().min(600).max(3000).catch(1400),
     companionInterruptible: z.boolean().catch(true),
     companionShowReplyText: z.boolean().catch(true),

@@ -248,7 +248,17 @@ export class CompanionSession {
     this.resolveTts = toResolver(options.tts);
     this.resolveTurnDetection = toResolver(options.turnDetection);
     this.sttLanguage = options.sttLanguage;
-    this.ttsManager = new TTSManager(options.sessionId, this.logger, options.tts);
+    this.ttsManager = new TTSManager(options.sessionId, this.logger, () => {
+      const provider = this.resolveTts();
+      return provider
+        ? {
+            synthesizeSpeech: (text) =>
+              provider.synthesizeSpeech(text, {
+                speed: this.conversation.speechSpeed ?? 1.3,
+              }),
+          }
+        : null;
+    });
     this.stallGuard = createCompanionStallGuard({
       scheduler: options.scheduler ?? systemScheduler,
       onStall: () => {

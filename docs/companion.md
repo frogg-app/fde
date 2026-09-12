@@ -258,3 +258,12 @@ Mobile web has separate browser restrictions and no background reliability claim
 Routine Companion/TTS logging excludes transcript text and raw audio. Task records
 and the notebook are intentional local persistence. The opt-in benchmark prints
 its synthetic test transcript/results; it must not be used as routine telemetry.
+
+### Voice speed
+
+App Settings → Companion → Voice speed offers 0.75× to 2×, defaulting to **1.3×**
+(30% faster). The preference applies at the next conversation start and survives
+reconnection. It adjusts synthesis, keeping pitch intact, and multiplies any
+explicit host local-TTS speed. Other voice features retain their configured
+speed. The experimental native Codex voice path does not expose this local
+synthesis control. Older daemons require updating to honor the new preference.

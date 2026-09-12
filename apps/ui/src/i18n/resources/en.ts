@@ -1849,6 +1849,7 @@ export const en = {
       off: "Off",
       acknowledge: "Acknowledge tasks before working",
       permissions: "Permission requests are still spoken when task updates are off.",
+      speechSpeed: "Voice speed",
       pause: "Pause before replying",
       quick: "Quick (0.8 seconds)",
       natural: "Natural (1.4 seconds)",

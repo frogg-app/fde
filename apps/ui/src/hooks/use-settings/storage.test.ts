@@ -1011,3 +1011,10 @@ it.each([
   const { normalizeAppSettings } = await import("./storage");
   expect(normalizeAppSettings(saved).companionEnabled).toBe(false);
 });
+
+it("defaults Companion speech to 30 percent faster and preserves an explicit speed", async () => {
+  const { normalizeAppSettings } = await import("./storage");
+  expect(normalizeAppSettings({}).companionSpeechSpeed).toBe(1.3);
+  expect(normalizeAppSettings({ companionSpeechSpeed: 1 }).companionSpeechSpeed).toBe(1);
+  expect(normalizeAppSettings({ companionSpeechSpeed: 7 }).companionSpeechSpeed).toBe(1.3);
+});

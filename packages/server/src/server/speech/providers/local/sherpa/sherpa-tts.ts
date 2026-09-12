@@ -106,7 +106,7 @@ export class SherpaOnnxTTS implements TextToSpeechProvider {
     );
   }
 
-  async synthesizeSpeech(text: string): Promise<SpeechStreamResult> {
+  async synthesizeSpeech(text: string, options?: { speed?: number }): Promise<SpeechStreamResult> {
     const trimmed = text.trim();
     if (!trimmed) {
       throw new Error("Cannot synthesize empty text");
@@ -115,7 +115,7 @@ export class SherpaOnnxTTS implements TextToSpeechProvider {
     const audio = this.tts.generate({
       text: trimmed,
       sid: this.speakerId,
-      speed: this.speed,
+      speed: this.speed * (options?.speed ?? 1),
       // Electron rejects native external-backed typed arrays. Request a copied buffer
       // from sherpa itself instead of trying to clone after generate() returns.
       enableExternalBuffer: false,

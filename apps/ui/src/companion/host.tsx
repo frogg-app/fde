@@ -182,6 +182,7 @@ function CompanionBody({ serverId, isAvailable, unavailableReason }: CompanionBo
       verbosity: settings.companionVerbosity,
       updates: settings.companionUpdates,
       acknowledgeTasks: settings.companionAcknowledgeTasks,
+      speechSpeed: settings.companionSpeechSpeed,
       pauseMs: settings.companionPauseMs,
       interruptible: settings.companionInterruptible,
     });

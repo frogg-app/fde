@@ -1875,6 +1875,7 @@ export const ptBR: TranslationResources = {
       acknowledge: "Confirmar tarefas antes de trabalhar",
       permissions:
         "Pedidos de permissão continuam sendo falados quando os avisos estão desativados.",
+      speechSpeed: "Velocidade da voz",
       pause: "Pausa antes de responder",
       quick: "Rápida (0,8 segundo)",
       natural: "Natural (1,4 segundo)",

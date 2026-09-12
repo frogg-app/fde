@@ -101,6 +101,12 @@ export function CompanionBehaviorSettings() {
     },
     [updateSettings],
   );
+  const changeSpeechSpeed = useCallback(
+    (companionSpeechSpeed: number) => {
+      void updateSettings({ companionSpeechSpeed });
+    },
+    [updateSettings],
+  );
   const changePauseMs = useCallback(
     (companionPauseMs: number) => {
       void updateSettings({ companionPauseMs });
@@ -151,6 +157,15 @@ export function CompanionBehaviorSettings() {
       </View>
       {!settings.companionNativeVoice ? (
         <>
+          <Choice<number>
+            label={t("companion.behavior.speechSpeed")}
+            value={settings.companionSpeechSpeed}
+            options={[0.75, 1, 1.15, 1.3, 1.5, 1.75, 2].map((value) => ({
+              value,
+              label: `${value}×`,
+            }))}
+            onChange={changeSpeechSpeed}
+          />
           <Choice<number>
             label={t("companion.behavior.pause")}
             value={settings.companionPauseMs}

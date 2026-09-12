@@ -1851,6 +1851,7 @@ export const ko: TranslationResources = {
       off: "끄기",
       acknowledge: "작업 시작 전에 접수 알리기",
       permissions: "작업 알림을 꺼도 권한 요청은 음성으로 안내합니다.",
+      speechSpeed: "음성 속도",
       pause: "응답 전 대기 시간",
       quick: "짧게(0.8초)",
       natural: "자연스럽게(1.4초)",
