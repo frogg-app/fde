@@ -1,6 +1,6 @@
 {
   "name": "fde",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "private": true,
   "description": "FDE (Frogg Development Environment): Tauri desktop client for local and remote AI coding agents (fork of Paseo)",
   "license": "Apache-2.0",
@@ -83,7 +83,8 @@
     "release:major": "npm run release:check && npm run version:all:major && npm run release:push",
     "build:daemon-bundle": "node scripts/release/build-daemon-bundle.mjs",
     "verify": "node scripts/ci/verify.mjs",
-    "worktree:status": "node scripts/dev/worktree-status.mjs"
+    "worktree:status": "node scripts/dev/worktree-status.mjs",
+    "build:local": "node scripts/dev/build-local.mjs"
   },
   "devDependencies": {
     "@types/ws": "^8.5.14",

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.2 - 2026-09-12
+
+- Build daemon packages independently of Android and desktop releases. Compile the
+  server and package the exported web UI once, then share that output across all
+  six daemon targets.
+- Add `npm run build:local` for Windows/Linux desktop iteration with preserved
+  compiler caches, bounded concurrency, package checksums, and per-stage timings.
+
 ## 0.3.1 - 2026-09-12
 
 - Represent single-agent workspaces with one selectable workspace row. Put the
