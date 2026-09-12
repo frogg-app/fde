@@ -96,6 +96,18 @@ function systemdUnit(input: ServicePlanInput): string {
   const home = input.fdeHome
     ? `Environment=${unitQuote(`${brand.envPrefix}_HOME=${input.fdeHome}`)}\n`
     : "";
+  const execution = input.env.FDE_EXECUTION_SERVICE === "1";
+  const executionEnv = execution ? "Environment=FDE_EXECUTION_SERVICE=1\n" : "";
+  const killMode = execution ? "process" : "mixed";
+  let stop = "";
+  if (execution) {
+    const startIndex = input.command.args.lastIndexOf("start");
+    if (startIndex < 0)
+      throw new Error("Independent execution service requires a daemon start command");
+    const stopArgs = [...input.command.args.slice(0, startIndex), "stop", "--force"];
+    const stopExec = [input.command.program, ...stopArgs].map(unitQuote).join(" ");
+    stop = `ExecStop=${stopExec}\n`;
+  }
   return `[Unit]
 Description=${brand.name} daemon (${brand.fullName})
 After=network-online.target
@@ -104,12 +116,12 @@ Wants=network-online.target
 [Service]
 Type=simple
 ExecStart=${exec}
-Environment=PASEO_LISTEN=${input.listen}
+${stop}Environment=PASEO_LISTEN=${input.listen}
 Environment=PASEO_WEB_UI_ENABLED=true
 Environment=${unitQuote(`PATH=${servicePath(input)}`)}
-${home}Restart=on-failure
+${home}${executionEnv}Restart=on-failure
 RestartSec=5
-KillMode=mixed
+KillMode=${killMode}
 TimeoutStopSec=30
 
 [Install]
@@ -137,7 +149,12 @@ ${programArguments}
   </array>
   <key>EnvironmentVariables</key>
   <dict>
-${plistEntry("PASEO_LISTEN", input.listen)}${plistEntry("PASEO_WEB_UI_ENABLED", "true")}${plistEntry("PATH", servicePath(input))}${input.fdeHome ? plistEntry(`${brand.envPrefix}_HOME`, input.fdeHome) : ""}  </dict>
+${plistEntry("PASEO_LISTEN", input.listen)}${plistEntry(
+    "PASEO_WEB_UI_ENABLED",
+    "true",
+  )}${plistEntry("PATH", servicePath(input))}${
+    input.fdeHome ? plistEntry(`${brand.envPrefix}_HOME`, input.fdeHome) : ""
+  }  </dict>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><true/>
   <key>StandardOutPath</key><string>${xml(logPath)}</string>
@@ -160,7 +177,10 @@ export function resolveServicePlan(input: ServicePlanInput): ServicePlan {
         { program: "systemctl", args: ["--user", "restart", SERVICE_NAME] },
       ],
       uninstall: [
-        { program: "systemctl", args: ["--user", "disable", "--now", SERVICE_NAME] },
+        {
+          program: "systemctl",
+          args: ["--user", "disable", "--now", SERVICE_NAME],
+        },
         { program: "systemctl", args: ["--user", "daemon-reload"] },
       ],
       hints: [
@@ -207,7 +227,12 @@ export function resolveServicePlan(input: ServicePlanInput): ServicePlan {
       },
       { program: "schtasks", args: ["/Run", "/TN", WINDOWS_TASK_NAME] },
     ],
-    uninstall: [{ program: "schtasks", args: ["/Delete", "/TN", WINDOWS_TASK_NAME, "/F"] }],
+    uninstall: [
+      {
+        program: "schtasks",
+        args: ["/Delete", "/TN", WINDOWS_TASK_NAME, "/F"],
+      },
+    ],
     hints: [],
   };
 }

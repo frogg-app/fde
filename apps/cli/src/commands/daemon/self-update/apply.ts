@@ -1,6 +1,5 @@
 import {
   appendSelfUpdateLog,
-  pruneVersions,
   readCurrentVersion,
   setCurrentVersion,
   writeLastUpdate,
@@ -70,7 +69,9 @@ export async function applyUpdate(plan: ApplyPlan, deps: ApplyDependencies): Pro
   const finish = (record: ApplyOutcome): ApplyOutcome => {
     writeLastUpdate(plan.installDir, record);
     log(
-      `${record.status}: ${record.from ?? "?"} -> ${record.to}${record.reason ? ` (${record.reason})` : ""}`,
+      `${record.status}: ${record.from ?? "?"} -> ${record.to}${
+        record.reason ? ` (${record.reason})` : ""
+      }`,
     );
     return record;
   };
@@ -78,7 +79,9 @@ export async function applyUpdate(plan: ApplyPlan, deps: ApplyDependencies): Pro
   const from = readCurrentVersion(plan.installDir);
   const previous = plan.previous ?? from;
   log(
-    `applying ${plan.version} (current ${from ?? "none"}, previous ${previous ?? "none"}, service ${deps.service.kind})`,
+    `applying ${plan.version} (current ${from ?? "none"}, previous ${
+      previous ?? "none"
+    }, service ${deps.service.kind})`,
   );
 
   try {
@@ -99,8 +102,10 @@ export async function applyUpdate(plan: ApplyPlan, deps: ApplyDependencies): Pro
   log(`restarting daemon into ${plan.version}`);
   const verified = await restartAndVerify(plan, deps, plan.version, log);
   if (verified.ok) {
-    const removed = pruneVersions(plan.installDir, { protect: [plan.version, previous] });
-    if (removed.length > 0) log(`pruned ${removed.join(", ")}`);
+    // A retained execution service may still load code from any older release.
+    log(
+      "retained installed versions for independent execution; remove only after stopping all execution",
+    );
     return finish({
       from,
       to: plan.version,
@@ -129,7 +134,9 @@ export async function applyUpdate(plan: ApplyPlan, deps: ApplyDependencies): Pro
       from,
       to: plan.version,
       status: "failed",
-      reason: `${verified.reason}; rollback could not switch current: ${error instanceof Error ? error.message : error}`,
+      reason: `${verified.reason}; rollback could not switch current: ${
+        error instanceof Error ? error.message : error
+      }`,
       at: now().toISOString(),
     });
   }

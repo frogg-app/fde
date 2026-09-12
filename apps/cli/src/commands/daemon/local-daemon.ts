@@ -186,7 +186,9 @@ function resolveServerRunnerFromDir(currentDir: string): string | null {
   const packageJsonPath = path.join(currentDir, "package.json");
   if (!existsSync(packageJsonPath)) return null;
   try {
-    const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8")) as { name?: string };
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8")) as {
+      name?: string;
+    };
     if (packageJson.name !== "@fde/server") return null;
     const distRunner = path.join(currentDir, "dist", "scripts", "supervisor-entrypoint.js");
     if (existsSync(distRunner)) {
@@ -372,7 +374,16 @@ async function signalProcessTreeSafely(pid: number, signal: NodeJS.Signals): Pro
 async function signalProcessTreeOrOwnerSafely(
   pid: number,
   signal: NodeJS.Signals,
+  home: string,
 ): Promise<boolean> {
+  // Tree-kill follows detached descendants on Windows (taskkill /T). A retained
+  // or ambiguous execution descriptor must never authorize killing that tree.
+  if (
+    process.env.FDE_EXECUTION_SERVICE === "1" ||
+    existsSync(path.join(home, "execution-service"))
+  ) {
+    return signalProcessSafely(pid, signal);
+  }
   try {
     return await signalProcessTreeSafely(pid, signal);
   } catch {
@@ -403,7 +414,10 @@ async function waitForDaemonUnreachable(
   const reachableHost = host;
   const deadline = Date.now() + timeoutMs;
   async function poll(): Promise<boolean> {
-    const client = await tryConnectToDaemon({ host: reachableHost, timeout: 500 });
+    const client = await tryConnectToDaemon({
+      host: reachableHost,
+      timeout: 500,
+    });
     if (!client) {
       return true;
     }
@@ -462,9 +476,9 @@ function createStopTimeoutError(
   if (!state.running) {
     const host = resolveTcpHostFromListen(state.listen);
     return new Error(
-      `Timed out waiting for daemon${host ? ` at ${host}` : ""} to stop after ${Math.ceil(
-        timeoutMs / 1000,
-      )}s`,
+      `Timed out waiting for daemon${
+        host ? ` at ${host}` : ""
+      } to stop after ${Math.ceil(timeoutMs / 1000)}s`,
     );
   }
   return new Error(
@@ -480,7 +494,7 @@ async function signalDaemonOwnerForStop(
     return createNotRunningStopResult(state, null, "Daemon is not running");
   }
 
-  const signaled = await signalProcessTreeOrOwnerSafely(pid, "SIGTERM");
+  const signaled = await signalProcessTreeOrOwnerSafely(pid, "SIGTERM", state.home);
   if (signaled) {
     return null;
   }
@@ -502,7 +516,7 @@ async function waitForStopAfterRequest(args: {
       : await waitForDaemonUnreachable(state, timeoutMs);
 
   if (!stopped && force && state.running && pid !== null) {
-    await signalProcessTreeOrOwnerSafely(pid, "SIGKILL");
+    await signalProcessTreeOrOwnerSafely(pid, "SIGKILL", state.home);
     stopped = await waitForPidExit(pid, killTimeoutMs);
     return { stopped, forced: true };
   }
@@ -699,7 +713,10 @@ async function requestLifecycleShutdown(
 
   const deadline = Date.now() + timeoutMs;
   const remainingTimeoutMs = () => Math.max(1, deadline - Date.now());
-  const client = await tryConnectToDaemon({ host, timeout: Math.min(remainingTimeoutMs(), 5000) });
+  const client = await tryConnectToDaemon({
+    host,
+    timeout: Math.min(remainingTimeoutMs(), 5000),
+  });
   if (!client) {
     return {
       requested: false,
@@ -712,7 +729,9 @@ async function requestLifecycleShutdown(
     throw new ForeignDaemonError();
   }
   try {
-    await client.shutdownServer({ timeout: Math.min(remainingTimeoutMs(), 5000) });
+    await client.shutdownServer({
+      timeout: Math.min(remainingTimeoutMs(), 5000),
+    });
     return { requested: true };
   } catch (error) {
     return {

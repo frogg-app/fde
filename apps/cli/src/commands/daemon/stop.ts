@@ -1,3 +1,4 @@
+import { stopExecutionService } from "@fde/server";
 import type { Command } from "commander";
 import {
   stopLocalDaemon,
@@ -19,6 +20,7 @@ interface StopResult {
   usedLifecycleRpc: boolean;
   reason: "not_running" | "lifecycle_shutdown_rpc" | "owner_pid_signal" | "owner_pid_sigkill";
   message: string;
+  executionStopped: boolean | null;
 }
 
 const stopResultSchema: OutputSchema<StopResult> = {
@@ -69,17 +71,31 @@ export async function runStopCommand(
   );
 
   try {
-    const result = await stopLocalDaemon({ home, force, timeoutMs, killTimeoutMs });
+    const result = await stopLocalDaemon({
+      home,
+      force,
+      timeoutMs,
+      killTimeoutMs,
+    });
+    const execution =
+      options.all === true ? await stopExecutionService({ home: result.home, force: true }) : null;
+    const executionStopped = execution?.stopped ?? null;
+    const message = execution
+      ? `${result.message}. Independent execution ${
+          execution.stopped ? "stopped" : "was not running"
+        }.`
+      : result.message;
     return {
       type: "single",
       data: {
-        action: result.action,
+        action: executionStopped ? "stopped" : result.action,
         home: result.home,
         pid: result.pid === null ? "-" : String(result.pid),
         forced: result.forced,
         usedLifecycleRpc: result.usedLifecycleRpc,
         reason: result.reason,
-        message: result.message,
+        message,
+        executionStopped,
       },
       schema: stopResultSchema,
     };
