@@ -526,6 +526,8 @@ pub struct CompanionSessionStartRequestConversation {
     pub updates: Option<CompanionSessionStartRequestConversationUpdates>,
     #[serde(rename = "acknowledgeTasks", skip_serializing_if = "Option::is_none")]
     pub acknowledge_tasks: Option<bool>,
+    #[serde(rename = "speechSpeed", skip_serializing_if = "Option::is_none")]
+    pub speech_speed: Option<f64>,
     #[serde(rename = "pauseMs", skip_serializing_if = "Option::is_none")]
     pub pause_ms: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]

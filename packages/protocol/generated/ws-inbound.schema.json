@@ -175,6 +175,11 @@
                       "default": false,
                       "type": "boolean"
                     },
+                    "speechSpeed": {
+                      "type": "number",
+                      "minimum": 0.75,
+                      "maximum": 2
+                    },
                     "pauseMs": {
                       "default": 1400,
                       "type": "integer",
