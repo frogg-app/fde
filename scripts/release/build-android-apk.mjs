@@ -42,7 +42,7 @@ export function apkAssetName({ version, abi, signed, variant = "release", appVar
 
 /** Pure: Gradle arguments for an ABI; `universal` keeps the default (all four). */
 export function gradleArgsFor({ abi, variant, serial, workers, lowMemory }) {
-  const task = variant === "release" ? "assembleRelease" : "assembleDebug";
+  const task = variant === "release" ? ":app:assembleRelease" : ":app:assembleDebug";
   const args = [task, "--no-daemon"];
   if (abi !== "universal") {
     if (!KNOWN_ABIS.includes(abi)) {

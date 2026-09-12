@@ -27,12 +27,12 @@ test("gradle args select the ABI and serial mode", () => {
   assert.ok(testBuild.includes("--init-script"));
   assert.match(testBuild.at(-1), /android-low-memory\.gradle$/);
   assert.deepEqual(gradleArgsFor({ abi: "arm64-v8a", variant: "release", serial: false }), [
-    "assembleRelease",
+    ":app:assembleRelease",
     "--no-daemon",
     "-PreactNativeArchitectures=arm64-v8a",
   ]);
   assert.deepEqual(gradleArgsFor({ abi: "universal", variant: "debug", serial: true }), [
-    "assembleDebug",
+    ":app:assembleDebug",
     "--no-daemon",
     "--max-workers=1",
     "-Dorg.gradle.parallel=false",
@@ -40,7 +40,7 @@ test("gradle args select the ABI and serial mode", () => {
     "-Dkotlin.daemon.jvm.options=-Xmx1024m",
   ]);
   assert.deepEqual(gradleArgsFor({ abi: "arm64-v8a", variant: "release", workers: 3 }), [
-    "assembleRelease",
+    ":app:assembleRelease",
     "--no-daemon",
     "-PreactNativeArchitectures=arm64-v8a",
     "--max-workers=3",
