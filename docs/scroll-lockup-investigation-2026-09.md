@@ -10,8 +10,8 @@ browser profile or device trace was taken — see [Open questions](#open-questio
 
 The reported symptom is very likely the reproduction sequence that
 [memory-lockup-investigation.md](memory-lockup-investigation.md) records as never
-having been established: *open an agent with a long transcript and scroll up until an
-older page loads.* That document should be read alongside this one; several of the
+having been established: _open an agent with a long transcript and scroll up until an
+older page loads._ That document should be read alongside this one; several of the
 mechanisms here produce the allocation-churn shape it describes, though none of them
 have been tied to the reported RSS figures by measurement.
 
@@ -21,17 +21,17 @@ There is no single defect. Scrolling up crosses four independent cost multiplier
 compound, and the platform split is explained by three of them living on the web render
 path that Windows uses and mobile does not.
 
-| # | Defect | Fires | Verified |
-| --- | --- | --- | --- |
-| 1 | Settle scheduler's frame cap is defeated while loading | per history page | yes |
-| 2 | Virtualizer re-estimates the whole history on every render | per render | yes, with harness |
-| 3 | Height estimator runs an uncached markdown parse | per estimate | yes |
-| 4 | Height cache is keyed on a width it is never queried at | always | yes |
-| 5 | Daemon re-clones and re-projects the full timeline | per history page | yes |
-| 6 | Reading-position lookup scans the whole loaded transcript | per scroll event | yes |
-| 7 | Attachment thumbnails re-read from disk over IPC on remount | per image per remount | yes |
-| 8 | Timeline page bumps a global revision, re-stringifying the directory | per history page | yes |
-| 9 | History window slice defeats four WeakMap caches | per recompute | yes |
+| #   | Defect                                                               | Fires                 | Verified          |
+| --- | -------------------------------------------------------------------- | --------------------- | ----------------- |
+| 1   | Settle scheduler's frame cap is defeated while loading               | per history page      | yes               |
+| 2   | Virtualizer re-estimates the whole history on every render           | per render            | yes, with harness |
+| 3   | Height estimator runs an uncached markdown parse                     | per estimate          | yes               |
+| 4   | Height cache is keyed on a width it is never queried at              | always                | yes               |
+| 5   | Daemon re-clones and re-projects the full timeline                   | per history page      | yes               |
+| 6   | Reading-position lookup scans the whole loaded transcript            | per scroll event      | yes               |
+| 7   | Attachment thumbnails re-read from disk over IPC on remount          | per image per remount | yes               |
+| 8   | Timeline page bumps a global revision, re-stringifying the directory | per history page      | yes               |
+| 9   | History window slice defeats four WeakMap caches                     | per recompute         | yes               |
 
 Items 2, 3, 4, 6 and 7 are web-only. Items 1, 5, 8 and 9 are platform-independent, so
 mobile should show some of this too; the absence of a mobile report is not evidence
@@ -73,7 +73,7 @@ Entry is reachable only through history-start pagination: scrolling within
 (`apps/ui/src/agent-stream/history-start-pagination.ts:1`). Scrolling down never
 enters it. The pagination state machine itself is correct — one request in flight,
 latching on exhaustion — but `settleHistoryStartPagination` re-arms immediately if
-still within 96px, so *holding* near the top produces back-to-back sequential pages.
+still within 96px, so _holding_ near the top produces back-to-back sequential pages.
 
 ## 2. Unstable virtualizer options re-estimate the entire history on every render
 
@@ -113,23 +113,23 @@ upward scrolling specifically degrades.
 → `markdownBlockParser.parse(text, {})`, a full markdown-it block parse of the whole
 message. `apps/ui/src/utils/split-markdown-blocks.ts` contains no cache of any kind.
 
-Note the ordering defect: `splitMarkdownBlocks` runs *before* the cache is consulted,
+Note the ordering defect: `splitMarkdownBlocks` runs _before_ the cache is consulted,
 so the parse is paid even when the lookup will miss.
 
 Measured on this VM (Node/V8, warm, the repo's own `markdown-it`):
 
 | message size | per parse | 500 unmeasured assistant rows |
-| --- | --- | --- |
-| 1 KB | 64 µs | 32 ms per sweep |
-| 4 KB | 86 µs | 43 ms per sweep |
-| 16 KB | 252 µs | 126 ms per sweep |
+| ------------ | --------- | ----------------------------- |
+| 1 KB         | 64 µs     | 32 ms per sweep               |
+| 4 KB         | 86 µs     | 43 ms per sweep               |
+| 16 KB        | 252 µs    | 126 ms per sweep              |
 
 Combined with #2, that is tens to hundreds of milliseconds of synchronous work per
 render, and with #1 driving renders every frame, this is the lockup.
 
 This is a reintroduction of the hazard that
 [agent-stream-performance.md](agent-stream-performance.md) already records and fixed on
-the *reveal* path ("a whole-document parse per frame — quadratic over a turn, and the
+the _reveal_ path ("a whole-document parse per frame — quadratic over a turn, and the
 single largest render cost while streaming"). The invariant it documents still holds
 where it was written; the same parser is now called uncached from a path that document
 does not cover.
@@ -138,7 +138,7 @@ does not cover.
 
 `apps/ui/src/utils/assistant-message-height-estimate.ts:6` queries at a fixed
 `ASSISTANT_MARKDOWN_BLOCK_ESTIMATE_WIDTH = MAX_CONTENT_WIDTH - 16` = **804**. Entries
-are *written* from real `onLayout` measurements at the actual rendered width, and the
+are _written_ from real `onLayout` measurements at the actual rendered width, and the
 key is `` `${roundedWidth}:${hash}` `` (`:53`).
 
 So unless blocks happen to render at exactly 804px — which needs an agent pane of
@@ -148,11 +148,11 @@ returns `null` anyway. This is why the sweep cost never amortises at most window
 ## 5. The daemon re-clones and re-projects the entire timeline per page
 
 `packages/server/src/server/session.ts:7005` — `shouldUseFullTimelineForProjectedPage`
-returns true if *any* row in the 40-row page is a `tool_call`, which for a coding agent
+returns true if _any_ row in the 40-row page is a `tool_call`, which for a coding agent
 is effectively always. It then fetches with `limit: 0` (`session.ts:7055`):
 
 ```ts
-this.agentManager.fetchTimeline(input.agentId, { direction: "tail", limit: 0 })
+this.agentManager.fetchTimeline(input.agentId, { direction: "tail", limit: 0 });
 ```
 
 `limit: 0` means `selectAll`, and `fetchTail` returns `state.rows.map(cloneRow)`
@@ -166,7 +166,7 @@ nothing is reused between requests.
 
 Each backward page therefore costs O(total timeline) synchronous work on the daemon's
 single event loop, which is shared with agent streaming, terminal frames and relay
-encryption. This is the most plausible source of *whole-app* stalling that is not
+encryption. This is the most plausible source of _whole-app_ stalling that is not
 specific to the web renderer, and it is directly measurable: `ws_runtime_metrics`
 should show `eventLoopDelay` spiking in lockstep with `fetch_agent_timeline_request`.
 
