@@ -3,13 +3,13 @@
 # Uses separate application/state directories and does not install a service.
 set -euo pipefail
 
-preview_tag=companion-preview-20260912-3
-archive=fde-daemon-0.2.14-linux-x64.tar.gz
-archive_sha=e6716325076276afbdd49b82deabba61b01bb709e32b36855b5ae43869905f92
+preview_tag=companion-preview-20260912-4
+archive=FDE-0.4.1-linux-x86_64-daemon.tar.gz
+archive_sha=63772676fdc990ea2e122f2693123866b91dabbd8846064fa7e7d8ce26344b29
 release_url="https://github.com/frogg-app/fde/releases/download/${preview_tag}"
 install_dir="${FDE_COMPANION_INSTALL_DIR:-${HOME}/.local/share/fde-${preview_tag}}"
 state_dir="${FDE_COMPANION_STATE_DIR:-${HOME}/.fde-${preview_tag}}"
-listen="${FDE_COMPANION_LISTEN:-0.0.0.0:6800}"
+listen="${FDE_COMPANION_LISTEN:-0.0.0.0:6801}"
 
 if [[ "$(uname -s)" != Linux || "$(uname -m)" != x86_64 ]]; then
   echo 'This preview bundle requires Linux x86_64.' >&2
@@ -29,7 +29,7 @@ if [[ ! -x "${install_dir}/bundle/bin/fde" ]]; then
   fi
   (cd "$work_dir" && printf '%s  %s\n' "$archive_sha" "$archive" | sha256sum -c -)
   tar -xzf "${work_dir}/${archive}" -C "$work_dir"
-  mv "${work_dir}/fde-daemon-0.2.14-linux-x64" "${install_dir}/bundle"
+  mv "${work_dir}/fde-daemon-0.4.1-linux-x64" "${install_dir}/bundle"
 fi
 if [[ ! -e "${state_dir}/config.json" ]]; then
   cat > "${state_dir}/config.json" <<'JSON'

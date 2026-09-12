@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Integrate main through 0.4.1 into the Companion preview, preserving its voice
+  controls alongside sidebar/subagent updates, branding and shared build tooling.
+  Rebuild Android and the Linux x64 daemon from the merged source. Scope Android
+  packaging to the app target to avoid unnecessary standalone dependency builds.
+
 - Give Companion an animated glass sphere with flowing cyan/violet light and
   independent microphone/playback feedback. Keep Listening visible during
   thinking and speaking; show muted/reconnecting states honestly and honor

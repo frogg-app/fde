@@ -5,6 +5,26 @@ subscription probes. These results qualify the tested configuration only.
 The final Codex probe reported Linux x64, a QEMU Virtual CPU version 2.5+,
 9 GiB RAM and Node v22.23.2; the host is shared, so load is not controlled.
 
+## Main integration build (2026-09-12)
+
+Merged `origin/main` at `bd10ea0` into Companion in `882a7e3`, bringing version
+0.4.1, sidebar/subagent fixes, branding and build reuse improvements. The two
+conflicts retained both changelog histories and combined branded APK naming with
+the development-app suffix. Companion's contextual launcher and sphere remain.
+
+Verification: full repository typecheck; 112 server/Companion checks, 119 UI/sidebar
+checks, seven Chromium sphere checks, 126 client checks, 652 protocol checks and
+16 package/build-script checks pass (1,032 total). Native Android inputs were
+regenerated for versionCode 4001 and the existing FDE Debug signing key retained.
+Build source `e941988` scopes Gradle to `:app:assembleRelease`: the initial
+aggregate build was terminated by the shared VM's memory manager after app
+packaging; the app-only retry passed. APK identity, version, retained signature
+and Companion bytecode checks passed. The pinned Linux installer started in
+isolated state, returned HTTP 200, and all 70 packaged web assets matched,
+including compressed files. Only that test daemon was stopped. Preview 4's build
+manifest records the source and release commits; physical-device checks remain
+separate.
+
 ## Voice sphere and launcher follow-up (2026-09-12)
 
 - Seven Chromium component checks pass with RN Web's real timing/loop driver:

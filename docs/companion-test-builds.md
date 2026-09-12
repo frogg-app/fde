@@ -1,7 +1,8 @@
 # Companion test builds
 
 Built from the Companion implementation in `feature/companion-voice-hands-free`, version
-0.2.14, on 2026-09-12. These artifacts exercise the subscription/local-speech
+0.4.1, on 2026-09-12, after merging main at `bd10ea0` (merge `882a7e3`, build source `e941988`).
+These artifacts exercise the subscription/local-speech
 baseline, plus the contextual composer launcher, persistent dismissal, quiet
 updates, concurrent listening, and a flowing sphere that remains visibly listening
 while thinking or speaking. Update both client and daemon. They
@@ -9,14 +10,14 @@ are not a signed production release.
 
 ## Artifacts
 
-In `dist/companion-orb-builds/`:
+In `dist/companion-main-builds/`:
 
-- `FDE-0.2.14-android-arm64-v8a-development-unsigned.apk`: standalone Android 10+
+- `FDE-0.4.1-android-arm64-v8a-development-unsigned.apk`: standalone Android 10+
   ARM64 APK, application ID `app.frogg.fde.debug`, displayed as **FDE Debug**.
   Despite the inherited filename suffix, it is signed with the development key.
   It can coexist with production FDE and does not need Metro. Hermes bytecode uses
   `-O0` to build within this VM's memory; production optimization is unchanged.
-- `fde-daemon-0.2.14-linux-x64.tar.gz`: Linux x64 daemon, CLI, browser UI, Node
+- `FDE-0.4.1-linux-x86_64-daemon.tar.gz`: Linux x64 daemon, CLI, browser UI, Node
   22.23.2, npm and native runtime dependencies. Tested on Ubuntu 24.04 x64.
   This is not a Windows, macOS or ARM daemon package.
 - `SHA256SUMS`: checksums for the two artifacts.
@@ -29,19 +30,19 @@ The bundle's `node/bin` contains Node and npm if the host needs them.
 
 ## Run on another Linux host
 
-The [Companion prerelease](https://github.com/frogg-app/fde/releases/tag/companion-preview-20260912-3)
+The [Companion prerelease](https://github.com/frogg-app/fde/releases/tag/companion-preview-20260912-4)
 contains the APK, daemon, checksums and a standalone installer. On Linux x64:
 
 ```sh
-curl -fL https://github.com/frogg-app/fde/releases/download/companion-preview-20260912-3/install-companion-preview.sh -o /tmp/install-companion-preview.sh && bash /tmp/install-companion-preview.sh
+curl -fL https://github.com/frogg-app/fde/releases/download/companion-preview-20260912-4/install-companion-preview.sh -o /tmp/install-companion-preview.sh && bash /tmp/install-companion-preview.sh
 ```
 
 The installer verifies the pinned archive checksum, starts the daemon with relay
-enabled on port 6800 and prints pairing instructions. It uses separate
-`~/.local/share/fde-companion-preview-20260912-3` and
-`~/.fde-companion-preview-20260912-3` directories. It does not replace the regular
+enabled on port 6801 and prints pairing instructions. It uses separate
+`~/.local/share/fde-companion-preview-20260912-4` and
+`~/.fde-companion-preview-20260912-4` directories. It does not replace the regular
 `fde` command or install a system service. Set `FDE_COMPANION_LISTEN` to choose
-another port. Preview 3 uses a new state directory and port 6800 so it can run
+another port. Preview 4 uses a new state directory and port 6801 so it can run
 alongside earlier previews without stopping them. Pair this new host in the app and add
 the workspace you want to test. The provider CLI must already be installed and
 signed in on this host.
@@ -52,7 +53,7 @@ Copy the daemon archive and `SHA256SUMS`, then extract it:
 
 ```sh
 sha256sum --ignore-missing -c SHA256SUMS
-tar -xzf fde-daemon-0.2.14-linux-x64.tar.gz
+tar -xzf FDE-0.4.1-linux-x86_64-daemon.tar.gz
 FDE_COMPANION_TEST_HOME="$(mktemp -d "$PWD/companion-test-state.XXXXXX")"
 cat > "$FDE_COMPANION_TEST_HOME/config.json" <<'JSON'
 {
@@ -62,13 +63,13 @@ cat > "$FDE_COMPANION_TEST_HOME/config.json" <<'JSON'
   }
 }
 JSON
-./fde-daemon-0.2.14-linux-x64/bin/fde start \
-  --home "$FDE_COMPANION_TEST_HOME" --listen 0.0.0.0:6800 --no-relay --web-ui
-./fde-daemon-0.2.14-linux-x64/bin/fde status --home "$FDE_COMPANION_TEST_HOME"
+./fde-daemon-0.4.1-linux-x64/bin/fde start \
+  --home "$FDE_COMPANION_TEST_HOME" --listen 0.0.0.0:6801 --no-relay --web-ui
+./fde-daemon-0.4.1-linux-x64/bin/fde status --home "$FDE_COMPANION_TEST_HOME"
 ```
 
-Use an unused port if 6800 is occupied. Keep the printed state path for subsequent
-commands. Open `http://HOST_LAN_IP:6800` to confirm the browser UI loads. For a
+Use an unused port if 6801 is occupied. Keep the printed state path for subsequent
+commands. Open `http://HOST_LAN_IP:6801` to confirm the browser UI loads. For a
 remote phone, use the existing FDE pairing/relay workflow or a reachable private
 network; the commands above deliberately set up a LAN test.
 
@@ -76,7 +77,7 @@ Install the APK on an ARM64 Android phone, open **FDE Debug**, and add the daemo
 using its LAN address and port. If pairing is required, obtain the QR/link with:
 
 ```sh
-./fde-daemon-0.2.14-linux-x64/bin/fde auth pair --home "$FDE_COMPANION_TEST_HOME"
+./fde-daemon-0.4.1-linux-x64/bin/fde auth pair --home "$FDE_COMPANION_TEST_HOME"
 ```
 
 Add a project/workspace, enable **Settings → General → Enable Companion**, and
@@ -95,7 +96,7 @@ is independent. Missing login or unavailable speech models appear as setup failu
 Stop only this test daemon when finished:
 
 ```sh
-./fde-daemon-0.2.14-linux-x64/bin/fde stop --home "$FDE_COMPANION_TEST_HOME"
+./fde-daemon-0.4.1-linux-x64/bin/fde stop --home "$FDE_COMPANION_TEST_HOME"
 ```
 
 ## Correct launcher
@@ -127,10 +128,11 @@ See `docs/companion-validation.md` in the source checkout for the detailed recor
 ## Rebuild
 
 ```sh
-ANDROID_HOME=/path/to/android-sdk node scripts/release/build-android-apk.mjs \
-  --app-variant development --low-memory --out-dir dist/companion-orb-builds
+ANDROID_HOME=/path/to/android-sdk node --import tsx scripts/dev/branded-run.mts -- \
+  node scripts/release/build-android-apk.mjs \
+  --app-variant development --low-memory --out-dir dist/companion-main-builds
 npm run build:server
 npm run build:daemon-web-ui
-node scripts/release/build-daemon-bundle.mjs \
-  --target linux-x64 --out-dir dist/companion-orb-builds
+npm run build:daemon-bundle -- \
+  --target linux-x64 --out-dir dist/companion-main-builds
 ```
