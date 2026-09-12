@@ -1,3 +1,5 @@
+import { brand } from "@fde/branding";
+import { brandDocsUrl } from "@/branding/links";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import Animated, {
@@ -14,7 +16,7 @@ import { useTranslation } from "react-i18next";
 import { openExternalUrl } from "@/utils/open-external-url";
 import { BookOpen, Copy, RotateCw, TriangleAlert } from "lucide-react-native";
 import { StyleSheet, useUnistyles } from "react-native-unistyles";
-import { FdeLogo } from "@/components/icons/fde-logo";
+import { BrandLogo } from "@/components/icons/brand-logo";
 import { Button } from "@/components/ui/button";
 import { getDesktopDaemonLogs, type DesktopDaemonLogs } from "@/desktop/daemon/desktop-daemon";
 import { TitlebarDragRegion } from "@/components/desktop/titlebar-drag-region";
@@ -28,8 +30,8 @@ interface StartupSplashScreenProps {
   };
 }
 
-const GITHUB_ISSUE_URL = "https://github.com/frogg-app/fde/issues/new";
-const DOCS_URL = "https://paseo.sh/docs";
+const GITHUB_ISSUE_URL = brand.links.support;
+const DOCS_URL = brandDocsUrl();
 
 const LOGO_SIZE = 96;
 const PULSE_DURATION_MS = 900;
@@ -70,7 +72,7 @@ function LogoPulse() {
 
   return (
     <Animated.View style={containerStyle} testID="startup-splash-logo">
-      <FdeLogo size={LOGO_SIZE} />
+      <BrandLogo size={LOGO_SIZE} />
     </Animated.View>
   );
 }
@@ -281,7 +283,7 @@ export function StartupSplashScreen({ bootstrapState }: StartupSplashScreenProps
       >
         <View style={styles.errorContent}>
           <View style={styles.errorHeader}>
-            <FdeLogo size={64} />
+            <BrandLogo size={64} />
             <Text style={styles.title}>{t("startup.errorTitle")}</Text>
           </View>
 
@@ -309,12 +311,16 @@ export function StartupSplashScreen({ bootstrapState }: StartupSplashScreenProps
             <Button variant="secondary" leftIcon={copyIcon} onPress={handleCopyLogs}>
               Copy logs
             </Button>
-            <Button variant="outline" leftIcon={warningIcon} onPress={openGithubIssue}>
-              Open GitHub issue
-            </Button>
-            <Button variant="outline" leftIcon={bookIcon} onPress={openDocs}>
-              Docs
-            </Button>
+            {GITHUB_ISSUE_URL ? (
+              <Button variant="outline" leftIcon={warningIcon} onPress={openGithubIssue}>
+                Open GitHub issue
+              </Button>
+            ) : null}
+            {DOCS_URL ? (
+              <Button variant="outline" leftIcon={bookIcon} onPress={openDocs}>
+                Docs
+              </Button>
+            ) : null}
             <Button variant="default" leftIcon={retryIcon} onPress={bootstrapState.retry}>
               Retry
             </Button>

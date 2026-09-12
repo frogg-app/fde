@@ -145,6 +145,13 @@ export async function generateAssets(build: BrandBuild): Promise<void> {
     }
     await writeFile(path.join(assets, "favicon.png"), await resize(build.assetFiles.icon, 64));
   }
+  await mkdir(path.join(publicDir, "brand"), { recursive: true });
+  for (const appearance of ["light", "dark"]) {
+    for (const status of ["", "-running", "-attention"]) {
+      const name = `favicon-${appearance}${status}.png`;
+      await cp(path.join(assets, name), path.join(publicDir, "brand", name));
+    }
+  }
   const requires = Object.keys(sources).concat([
     "favicon.png",
     ...["light", "dark"].flatMap((mode) =>

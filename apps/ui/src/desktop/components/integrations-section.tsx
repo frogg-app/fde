@@ -1,3 +1,4 @@
+import { brandDocsUrl } from "@/branding/links";
 import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
@@ -11,7 +12,7 @@ import { settingsStyles } from "@/styles/settings";
 import { openExternalUrl } from "@/utils/open-external-url";
 import { shouldUseDesktopDaemon } from "@/desktop/daemon/desktop-daemon";
 
-const CLI_DOCS_URL = "https://paseo.sh/docs/cli";
+const CLI_DOCS_URL = brandDocsUrl("cli");
 
 export function IntegrationsSection() {
   const { t } = useTranslation();

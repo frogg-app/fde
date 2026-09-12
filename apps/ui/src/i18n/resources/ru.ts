@@ -831,7 +831,7 @@ export const ru: TranslationResources = {
           updateCurrent: "Обновление недоступно: эта ветка уже синхронизирована с {{baseRef}}.",
           mergePrNoGithub: "Слияние PR сейчас недоступно: GitHub не подключён.",
           archiveNotWorktree:
-            "Архивирование недоступно: это рабочее пространство не было создано как worktree FDE.",
+            "Архивирование недоступно: это рабочее пространство не было создано как worktree {{brandName}}.",
           mergePrNoForge: "Слияние {{noun}} сейчас недоступно: {{brand}} не подключён.",
           mergePrMissing: "Слияние PR недоступно: PR ещё не создан.",
           mergePrDraft: "Слияние PR недоступно: PR всё ещё является черновиком.",
@@ -1249,7 +1249,7 @@ export const ru: TranslationResources = {
       close: "Закрыть окно",
     },
     quitting: {
-      title: "Завершение работы FDE...",
+      title: "Завершение работы {{brandName}}...",
       detail: "Остановка локального демона.",
     },
     daemon: {
@@ -1263,20 +1263,20 @@ export const ru: TranslationResources = {
       },
       management: {
         title: "Управление встроенным демоном",
-        hint: "Разрешить FDE запускать и останавливать встроенный демон",
+        hint: "Разрешить {{brandName}} запускать и останавливать встроенный демон",
         pauseTitle: "Приостановить встроенный демон",
         pauseMessage:
           "Это немедленно остановит встроенный демон. Запущенные агенты и терминалы, подключенные к встроенному демону, будут остановлены.",
         pauseAndStop: "Приостановить управление и остановить демон",
         registrationFailed:
-          "Встроенный демон запущен, но FDE не удалось сохранить подключение к localhost. Выключите и снова включите управление демоном или добавьте localhost вручную.",
+          "Встроенный демон запущен, но {{brandName}} не удалось сохранить подключение к localhost. Выключите и снова включите управление демоном или добавьте localhost вручную.",
         pausedStopFailed:
-          "Встроенное управление демоном было приостановлено, но FDE не смог остановить демон.",
+          "Встроенное управление демоном было приостановлено, но {{brandName}} не смог остановить демон.",
         updateFailed: "Не удалось изменить настройки управления встроенным демоном.",
       },
       keepRunning: {
         title: "Продолжать работу демона после выхода",
-        hint: "Демон продолжит работать после выхода из FDE",
+        hint: "Демон продолжит работать после выхода из {{brandName}}",
       },
       logs: {
         title: "Файл журнала",
@@ -1291,7 +1291,7 @@ export const ru: TranslationResources = {
       fullStatus: {
         title: "Полный статус",
         modalTitle: "Статус демона",
-        hint: "Выполняет команду `paseo daemon status` и показывает результат",
+        hint: "Выполняет команду `{{cliName}} daemon status` и показывает результат",
         view: "Посмотреть статус",
         copied: "Статус скопирован в буфер обмена.",
         fetchFailed: "Не удалось получить статус демона: {{message}}",
@@ -1305,7 +1305,7 @@ export const ru: TranslationResources = {
         installed: "Установлен",
         installedHint: "Версия {{version}} в {{path}}",
         notInstalledHint:
-          "Скачайте пакет демона FDE ({{platform}}), чтобы запускать агентов на этом компьютере.",
+          "Скачайте пакет демона {{brandName}} ({{platform}}), чтобы запускать агентов на этом компьютере.",
         install: "Установить локальный демон (~{{size}})",
         installing: "Установка...",
         phaseChecksum: "Получение контрольной суммы...",
@@ -1346,7 +1346,7 @@ export const ru: TranslationResources = {
         strategySigned: "Обновления проверяются подписанным обновлятором Tauri.",
         autoCheck: {
           title: "Проверять автоматически",
-          hint: "Искать новые версии каждые 6 часов, пока открыто окно FDE.",
+          hint: "Искать новые версии каждые 6 часов, пока открыто окно {{brandName}}.",
         },
         check: "Проверить обновления",
         checking: "Проверка...",
@@ -1360,15 +1360,17 @@ export const ru: TranslationResources = {
         verifying: "Проверка загрузки...",
         installing: "Установка...",
         installHint: {
-          "windows-installer": "Запускает установщик и снова открывает FDE.",
-          "windows-portable": "Заменяет портативный исполняемый файл и снова открывает FDE.",
-          "linux-appimage": "Заменяет AppImage на месте и перезапускает FDE.",
+          "windows-installer": "Запускает установщик и снова открывает {{brandName}}.",
+          "windows-portable":
+            "Заменяет портативный исполняемый файл и снова открывает {{brandName}}.",
+          "linux-appimage": "Заменяет AppImage на месте и перезапускает {{brandName}}.",
           "linux-deb": "Открывает пакет .deb в установщике пакетов.",
-          "macos-dmg": "Открывает образ диска; перетащите FDE в «Программы», чтобы завершить.",
+          "macos-dmg":
+            "Открывает образ диска; перетащите {{brandName}} в «Программы», чтобы завершить.",
           unknown: "Загружает релиз, собранный для этой платформы.",
         },
         noAsset: "Для этой платформы загрузка ещё не опубликована.",
-        restartRequired: "Перезапустите FDE, чтобы завершить обновление.",
+        restartRequired: "Перезапустите {{brandName}}, чтобы завершить обновление.",
       },
       callout: {
         installingTitle: "Установка обновления",
@@ -1391,7 +1393,7 @@ export const ru: TranslationResources = {
     },
     rosetta: {
       title: "Загрузите сборку Apple Silicon",
-      runningIntel: "Вы используете сборку FDE для Intel через Rosetta на Apple Silicon.",
+      runningIntel: "Вы используете сборку {{brandName}} для Intel через Rosetta на Apple Silicon.",
       highCpu:
         "Из-за этого процессор сильно загружен. Чтобы устранить проблему, скачайте сборку для Apple Silicon.",
       download: "Скачать",
@@ -1436,7 +1438,7 @@ export const ru: TranslationResources = {
         microphone: "Состояние микрофона ещё не проверялось.",
       },
       testNotification: {
-        title: "Тест уведомлений FDE",
+        title: "Тест уведомлений {{brandName}}",
         body: "Если вы это видите, уведомления на рабочем столе работают.",
         notDelivered:
           "Уведомление не доставлено. Проверьте раздел «Уведомления» в системных настройках.",
@@ -1446,12 +1448,12 @@ export const ru: TranslationResources = {
     integrations: {
       cli: {
         statusFailed: "Не удалось проверить состояние установки CLI.",
-        installFailed: "Не удалось установить FDE CLI.",
+        installFailed: "Не удалось установить {{brandName}} CLI.",
       },
     },
   },
   rootError: {
-    title: "В FDE возникла проблема.",
+    title: "В {{brandName}} возникла проблема.",
     body: "Попробуйте перезагрузить приложение. Если ошибка повторится, приложите приведённые ниже сведения к отчёту.",
     details: "Подробности",
   },
@@ -1547,19 +1549,19 @@ export const ru: TranslationResources = {
     },
   },
   onboarding: {
-    title: "Добро пожаловать в FDE",
+    title: "Добро пожаловать в {{brandName}}",
     subtitle: "Подключите компьютер, чтобы начать",
     localDaemon: {
       title: "Запускать агентов на этом компьютере",
-      description: "Устанавливает локальный демон FDE (загрузка около 180 МБ).",
-      descriptionInstalled: "Запускает установленный локальный демон FDE.",
+      description: "Устанавливает локальный демон {{brandName}} (загрузка около 180 МБ).",
+      descriptionInstalled: "Запускает установленный локальный демон {{brandName}}.",
       starting: "Запуск локального демона...",
       failed: "Не удалось настроить локальный демон: {{message}}",
       retry: "Повторить",
     },
     remoteHost: {
       title: "Использовать удалённый хост",
-      description: "Подключитесь к демону FDE на другом компьютере.",
+      description: "Подключитесь к демону {{brandName}} на другом компьютере.",
     },
     actions: {
       settings: "Настройки",
@@ -1638,11 +1640,11 @@ export const ru: TranslationResources = {
       },
       scanQr: {
         title: "Сканировать QR-код",
-        description: "Забрать новый демон FDE или подключиться через шифрованный relay.",
+        description: "Забрать новый демон {{brandName}} или подключиться через шифрованный relay.",
       },
       pasteLink: {
         title: "Вставить ссылку для сопряжения",
-        description: "Забрать новый демон FDE или подключиться через шифрованный relay.",
+        description: "Забрать новый демон {{brandName}} или подключиться через шифрованный relay.",
       },
     },
     networkScan: {
@@ -1651,29 +1653,29 @@ export const ru: TranslationResources = {
       diagnosticsNone: "нет",
       title: "Серверы в вашей сети",
       scanning: "Проверено {{scanned}} из {{total}} адресов…",
-      none: "Серверы FDE не найдены в {{subnets}}.",
+      none: "Серверы {{brandName}} не найдены в {{subnets}}.",
       scanned: "Проверено: {{subnets}}.",
       rescan: "Сканировать снова",
       connect: "Подключиться",
       connecting: "Подключение…",
       needsPairing: "Нужно сопряжение",
       pairingHint:
-        "Получите ссылку для сопряжения: выполните `fde daemon pair` на хосте или откройте его веб-адрес, затем отсканируйте или вставьте её здесь.",
+        "Получите ссылку для сопряжения: выполните `{{cliName}} daemon pair` на хосте или откройте его веб-адрес, затем отсканируйте или вставьте её здесь.",
     },
     claim: {
-      title: "Сопряжение с демоном FDE",
-      thisDaemon: "этот демон FDE",
+      title: "Сопряжение с демоном {{brandName}}",
+      thisDaemon: "этот демон {{brandName}}",
       claiming: "Сопряжение с {{host}}…",
       explainer:
-        "Этот демон FDE ещё никем не занят. После сопряжения это устройство станет его первым владельцем.",
+        "Этот демон {{brandName}} ещё никем не занят. После сопряжения это устройство станет его первым владельцем.",
       successTitle: "Сопряжено",
       successBody:
         "Это устройство теперь первый владелец {{host}}. Другим устройствам понадобится новая ссылка для сопряжения.",
       successRelayBody: "{{host}} добавлен через шифрованный relay.",
       noPendingOffer:
-        "Откройте ссылку для сопряжения (https://frogg.app/pair#offer=…) или вставьте её в «Добавить подключение».",
+        "Откройте ссылку для сопряжения (a link from the daemon) или вставьте её в «Добавить подключение».",
       newLinkHint:
-        "Коды сопряжения одноразовые и действуют десять минут. Получите новый: выполните `fde daemon pair` на хосте или обновите его веб-адрес.",
+        "Коды сопряжения одноразовые и действуют десять минут. Получите новый: выполните `{{cliName}} daemon pair` на хосте или обновите его веб-адрес.",
       triedEndpoints: "Проверено:",
       manualEndpointHelper:
         "Если демон доступен по другому адресу (VPN, Docker, другой интерфейс), введите его в виде host:port.",
@@ -1694,7 +1696,7 @@ export const ru: TranslationResources = {
     },
     direct: {
       title: "Прямое подключение",
-      helper: "Введите адрес сервера FDE.",
+      helper: "Введите адрес сервера {{brandName}}.",
       fields: {
         host: "Хост",
         port: "Порт",
@@ -1708,7 +1710,7 @@ export const ru: TranslationResources = {
         show: "Показать дополнительные параметры",
         hide: "Скрыть дополнительные параметры",
         helper:
-          "Подойдёт любая форма: хост, хост:порт, http(s)://хост:порт, ws(s)://хост:порт или tcp://хост:порт?ssl=true. Демон FDE отвечает по HTTP и WebSocket на порту {{port}}.",
+          "Подойдёт любая форма: хост, хост:порт, http(s)://хост:порт, ws(s)://хост:порт или tcp://хост:порт?ssl=true. Демон {{brandName}} отвечает по HTTP и WebSocket на порту {{port}}.",
         resolved: "Подключение к",
       },
       passwordVisibility: {
@@ -1740,7 +1742,7 @@ export const ru: TranslationResources = {
     },
     remoteSsh: {
       title: "Удалённый SSH",
-      helper: "Подключитесь к демону FDE на удалённом хосте.",
+      helper: "Подключитесь к демону {{brandName}} на удалённом хосте.",
       tabs: {
         config: "Конфигурация SSH",
         manual: "Вручную",
@@ -1759,7 +1761,7 @@ export const ru: TranslationResources = {
       },
       hints: {
         daemonPassword:
-          "Пароль демона FDE, а не вашего входа по SSH. Сохраняется вместе с этим хостом.",
+          "Пароль демона {{brandName}}, а не вашего входа по SSH. Сохраняется вместе с этим хостом.",
         sshPassword:
           "Используется только для входа по SSH. Никогда не сохраняется; если запомнить, хранится в памяти до закрытия приложения.",
       },
@@ -1775,8 +1777,8 @@ export const ru: TranslationResources = {
         invalidTarget: "Укажите корректный хост ssh://",
         failedToConnect: "Не удалось подключиться по SSH. {{detail}}",
         daemonPasswordRequired:
-          "Демону FDE на {{host}} нужен пароль. Введите его ниже и подключитесь снова.",
-        daemonPasswordIncorrect: "Демон FDE на {{host}} отклонил пароль.",
+          "Демону {{brandName}} на {{host}} нужен пароль. Введите его ниже и подключитесь снова.",
+        daemonPasswordIncorrect: "Демон {{brandName}} на {{host}} отклонил пароль.",
         sshPasswordRequired:
           "{{host}} отклонил ваши ключи SSH, но принимает вход по паролю. Введите пароль SSH, чтобы продолжить.",
         sshPasswordIncorrect: "{{host}} отклонил пароль SSH.",
@@ -1787,11 +1789,11 @@ export const ru: TranslationResources = {
     link: {
       title: "Вставить ссылку для сопряжения",
       helper:
-        "Вставьте ссылку со страницы захвата демона или из `fde daemon pair`. Новый демон FDE достаётся первому подключившемуся устройству.",
+        "Вставьте ссылку со страницы захвата демона или из `{{cliName}} daemon pair`. Новый демон {{brandName}} достаётся первому подключившемуся устройству.",
       label: "Ссылка на сопряжение",
       errors: {
         required: "Вставьте ссылку для сопряжения (…/pair#offer=…)",
-        missingOffer: "Это не ссылка для сопряжения FDE",
+        missingOffer: "Это не ссылка для сопряжения {{brandName}}",
         emptyOffer: "Параметр #offer не содержит данных.",
         invalid: "Неверная ссылка для сопряжения",
         unableToPair: "Не удалось выполнить сопряжение с хостом",
@@ -1828,15 +1830,15 @@ export const ru: TranslationResources = {
       enableDescription:
         "Ретранслятор позволяет этому устройству подключаться откуда угодно. Трафик сопряжения защищён сквозным шифрованием.",
       relayDocs: "Как работает ретранслятор",
-      relayDocsAccessibility: "Узнать, как работает ретранслятор FDE",
+      relayDocsAccessibility: "Узнать, как работает ретранслятор {{brandName}}",
       enableRelay: "Включить ретранслятор",
       enablingRelay: "Включение ретранслятора...",
       notNow: "Не сейчас",
       directConnectionHint:
         "Без ретранслятора подключайтесь напрямую через TCP, Tailscale или другую VPN. QR-код создаваться не будет.",
-      updateRequired: "Обновите хост, чтобы включить ретранслятор из FDE Desktop.",
+      updateRequired: "Обновите хост, чтобы включить ретранслятор из {{brandName}} Desktop.",
       unavailable: "Данные для сопряжения недоступны.",
-      hint: "Отсканируйте этот QR-код с помощью FDE на телефоне или скопируйте ссылку ниже.",
+      hint: "Отсканируйте этот QR-код с помощью {{brandName}} на телефоне или скопируйте ссылку ниже.",
       securityWarning:
         "Обращайтесь с этой ссылкой для сопряжения как с паролем. Любой, у кого она есть, может получить доступ к этому демону.",
       qrUnavailable: "QR-код недоступен.",
@@ -1977,7 +1979,7 @@ export const ru: TranslationResources = {
   serviceUrl: {
     title: "Открыть URL сервиса",
     message: "Открыть {{url}}?",
-    inPaseo: "В FDE",
+    inPaseo: "В {{brandName}}",
     externalBrowser: "Внешний браузер",
     dontAskAgain: "Больше не спрашивать",
   },
@@ -2098,8 +2100,8 @@ export const ru: TranslationResources = {
       other: "использованы другие инструменты ({{count}})",
     },
     paseoCalls: {
-      one: "выполнен {{count}} вызов FDE",
-      other: "выполнены вызовы FDE ({{count}})",
+      one: "выполнен {{count}} вызов {{brandName}}",
+      other: "выполнены вызовы {{brandName}} ({{count}})",
     },
     and: "и",
   },
@@ -2180,7 +2182,7 @@ export const ru: TranslationResources = {
       send: "Отправить",
       sending: "Отправка...",
       sentTitle: "Тестовое уведомление отправлено",
-      sentDescription: "FDE передал уведомление операционной системе.",
+      sentDescription: "{{brandName}} передал уведомление операционной системе.",
       sendFailedTitle: "Не удалось отправить тестовое уведомление",
     },
     hostSections: {
@@ -2199,14 +2201,14 @@ export const ru: TranslationResources = {
     metadataGeneration: {
       title: "Генерация метаданных",
       description:
-        "Выберите модель, которую FDE будет использовать для названий рабочих пространств и веток, сообщений коммитов и черновиков PR",
+        "Выберите модель, которую {{brandName}} будет использовать для названий рабочих пространств и веток, сообщений коммитов и черновиков PR",
       selection: "Выбор модели",
       automatic: "Автоматически",
       preferred: "Вручную",
-      automaticHint: "FDE выбирает быструю доступную модель",
-      preferredHint: "Выберите модель, которую использует FDE",
+      automaticHint: "{{brandName}} выбирает быструю доступную модель",
+      preferredHint: "Выберите модель, которую использует {{brandName}}",
       model: "Модель",
-      fallbackHint: "Если она недоступна, FDE использует другую доступную модель",
+      fallbackHint: "Если она недоступна, {{brandName}} использует другую доступную модель",
       docs: "Документация",
       saveError: "Не удалось обновить настройки генерации метаданных",
     },
@@ -2215,7 +2217,7 @@ export const ru: TranslationResources = {
       autoPlay: {
         label: "Автовоспроизведение голосовых оповещений",
         description:
-          "Озвучивать оповещения агентов по мере поступления, пока FDE на переднем плане.",
+          "Озвучивать оповещения агентов по мере поступления, пока {{brandName}} на переднем плане.",
       },
       replyConfirm: {
         label: "Подтверждать голосовые ответы",
@@ -2228,7 +2230,8 @@ export const ru: TranslationResources = {
       browserData: {
         title: "Данные браузера",
         siteData: "Файлы cookie и данные сайтов",
-        description: "Вкладки браузера в FDE используют общие данные входа и данные сайтов.",
+        description:
+          "Вкладки браузера в {{brandName}} используют общие данные входа и данные сайтов.",
         clear: "Очистить данные браузера",
         clearing: "Очистка...",
         confirmTitle: "Очистить данные браузера?",
@@ -2258,7 +2261,7 @@ export const ru: TranslationResources = {
         description: "Где открывать URL-адреса запущенных скриптов",
         options: {
           ask: "Спрашивать",
-          inApp: "В FDE",
+          inApp: "В {{brandName}}",
           external: "Внешний браузер",
         },
       },
@@ -2328,7 +2331,7 @@ export const ru: TranslationResources = {
       },
     },
     about: {
-      attribution: "Frogg Development Environment основан на <paseo>Paseo</paseo>.",
+      attribution: "{{brandFullName}} основан на <paseo>Paseo</paseo>.",
       title: "О приложении",
       appVersion: "Версия приложения",
       thisDevice: "Это устройство",
@@ -2338,7 +2341,7 @@ export const ru: TranslationResources = {
       releaseChannel: {
         label: "Канал выпуска",
         description:
-          "Переключитесь на бета-канал, чтобы раньше получать обновления и помогать развивать FDE.",
+          "Переключитесь на бета-канал, чтобы раньше получать обновления и помогать развивать {{brandName}}.",
         stable: "Стабильный",
         beta: "Бета",
       },
@@ -2346,7 +2349,7 @@ export const ru: TranslationResources = {
         label: "Обновления приложения",
         readyToInstall: "Версия {{version}} готова к установке",
         installTitle: "Установить обновление настольного приложения",
-        installMessage: "Это обновит FDE на этом компьютере.",
+        installMessage: "Это обновит {{brandName}} на этом компьютере.",
         installConfirm: "Установить обновление",
         update: "Обновить",
         updateTo: "Обновить до {{version}}",
@@ -2585,7 +2588,7 @@ export const ru: TranslationResources = {
       },
       sshDeploy: {
         title: "Демон на этом хосте",
-        info: "Устанавливает демон FDE на SSH-хост теми же скриптами, что и ручная установка. Хост сам скачивает пакет релиза; приложение только запускает скрипт по SSH.",
+        info: "Устанавливает демон {{brandName}} на SSH-хост теми же скриптами, что и ручная установка. Хост сам скачивает пакет релиза; приложение только запускает скрипт по SSH.",
         status: {
           probing: "Проверка...",
           installed: "Установлен {{version}}",
@@ -2639,7 +2642,7 @@ export const ru: TranslationResources = {
         uninstall: {
           title: "Удалить демон?",
           message:
-            "Останавливает службу и удаляет установку FDE с {{host}}. Состояние демона (~/.paseo) сохраняется.",
+            "Останавливает службу и удаляет установку {{brandName}} с {{host}}. Состояние демона (~/.paseo) сохраняется.",
         },
         log: {
           running: "Выполняется на {{host}}...",
@@ -2650,7 +2653,7 @@ export const ru: TranslationResources = {
         offer: {
           title: "Демон на этом хосте не найден",
           message:
-            "SSH работает, но демон FDE на {{host}} не установлен. Развернуть сейчас? Подключение повторится, когда установка завершится.",
+            "SSH работает, но демон {{brandName}} на {{host}} не установлен. Развернуть сейчас? Подключение повторится, когда установка завершится.",
         },
       },
       pairDevices: {
@@ -2668,11 +2671,11 @@ export const ru: TranslationResources = {
         unavailable: "Подключитесь к этому хосту, чтобы управлять навыками оркестрации",
         unsupported: "Обновите этот хост, чтобы управлять навыками оркестрации",
         updateAvailable: "Доступно обновление",
-        updateTitle: "Обновить навыки FDE?",
+        updateTitle: "Обновить навыки {{brandName}}?",
         updateFallback: "Встроенные навыки будут синхронизированы с этим хостом.",
-        uninstallTitle: "Удалить навыки FDE?",
+        uninstallTitle: "Удалить навыки {{brandName}}?",
         uninstallMessage:
-          "Удаляет все навыки оркестрации FDE из ~/.agents, ~/.claude и ~/.codex на этом хосте.",
+          "Удаляет все навыки оркестрации {{brandName}} из ~/.agents, ~/.claude и ~/.codex на этом хосте.",
         choose: "Выбрать навыки",
         chooseAll: "Все навыки",
         chooseAllHint: "Устанавливать все встроенные навыки, включая добавленные позже.",
@@ -2708,9 +2711,9 @@ export const ru: TranslationResources = {
         title: "Оркестрация",
         unavailable: "Подключитесь к этому хосту, чтобы управлять оркестрацией.",
         enableTools: {
-          title: "Включить инструменты FDE",
+          title: "Включить инструменты {{brandName}}",
           hint: "Агенты смогут управлять worktree, агентами и расписаниями.",
-          accessibilityLabel: "Добавить инструменты FDE",
+          accessibilityLabel: "Добавить инструменты {{brandName}}",
         },
         systemPrompt: {
           title: "Системный промпт",
@@ -2815,10 +2818,10 @@ export const ru: TranslationResources = {
             "Этот хост не подключён. Дождитесь его появления в сети перед перезапуском.",
           offlineTitle: "Хост не в сети",
           offlineMessage:
-            "Этот хост не в сети. FDE переподключится автоматически. Дождитесь подключения перед перезапуском.",
+            "Этот хост не в сети. {{brandName}} переподключится автоматически. Дождитесь подключения перед перезапуском.",
           requestFailedTitle: "Ошибка",
           requestFailedMessage:
-            "Не удалось отправить запрос на перезапуск. FDE переподключается автоматически. Повторите попытку, когда хост появится в сети.",
+            "Не удалось отправить запрос на перезапуск. {{brandName}} переподключается автоматически. Повторите попытку, когда хост появится в сети.",
           dialogFailedMessage: "Не удалось открыть диалог подтверждения перезапуска.",
         },
         selfUpdate: {
@@ -2864,7 +2867,8 @@ export const ru: TranslationResources = {
           },
         },
         update: {
-          desktopManagedHint: "Этот демон управляется FDE Desktop. Обновите FDE Desktop на хосте.",
+          desktopManagedHint:
+            "Этот демон управляется {{brandName}} Desktop. Обновите {{brandName}} Desktop на хосте.",
           title: "Обновить демон",
           hint: "Обновить демон до последней версии и перезапустить его",
           confirm: "Обновить",
@@ -3027,7 +3031,8 @@ export const ru: TranslationResources = {
         newScript: "Новый скрипт",
         editScript: "Изменить {{name}}",
         runAsService: "Запускать как сервис",
-        serviceHint: "FDE управляет процессом и назначает порт через переменную $PASEO_PORT.",
+        serviceHint:
+          "{{brandName}} управляет процессом и назначает порт через переменную $PASEO_PORT.",
         actions: {
           add: "Добавить скрипт",
           edit: "Редактировать",
@@ -3036,7 +3041,7 @@ export const ru: TranslationResources = {
       },
       metadata: {
         title: "Генерация метаданных",
-        info: "Инструкции для этого проекта, добавляемые в промпты ИИ, с помощью которых FDE генерирует метаданные. Используйте их, чтобы соблюдать принятые в команде правила именования веток, оформления коммитов и формата PR.",
+        info: "Инструкции для этого проекта, добавляемые в промпты ИИ, с помощью которых {{brandName}} генерирует метаданные. Используйте их, чтобы соблюдать принятые в команде правила именования веток, оформления коммитов и формата PR.",
         branchName: "Названия веток",
         branchNamePlaceholder:
           "Добавляйте к веткам префиксы feat/ или fix/, а к личным веткам — mb/",

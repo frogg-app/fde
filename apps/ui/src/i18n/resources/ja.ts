@@ -826,7 +826,7 @@ export const ja: TranslationResources = {
           updateCurrent: "このブランチはすでに{{baseRef}}と最新の状態のため、更新は利用できません",
           mergePrNoGithub: "GitHubが接続されていないため、PRのマージは現在利用できません",
           archiveNotWorktree:
-            "このワークスペースはFDEワークツリーとして作成されていないため、アーカイブはここでは利用できません",
+            "このワークスペースは{{brandName}}ワークツリーとして作成されていないため、アーカイブはここでは利用できません",
           mergePrNoForge: "{{brand}}が接続されていないため、{{noun}}のマージは現在利用できません",
           mergePrMissing: "プルリクエストがまだないため、PRのマージは利用できません",
           mergePrDraft: "プルリクエストがまだドラフトのため、PRのマージは利用できません",
@@ -1244,7 +1244,7 @@ export const ja: TranslationResources = {
       close: "ウィンドウを閉じる",
     },
     quitting: {
-      title: "FDEを終了中...",
+      title: "{{brandName}}を終了中...",
       detail: "ローカルデーモンを停止中。",
     },
     daemon: {
@@ -1258,20 +1258,20 @@ export const ja: TranslationResources = {
       },
       management: {
         title: "組み込みデーモンを管理",
-        hint: "FDEが組み込みデーモンを起動・停止できるようにする",
+        hint: "{{brandName}}が組み込みデーモンを起動・停止できるようにする",
         pauseTitle: "組み込みデーモンを一時停止",
         pauseMessage:
           "これにより組み込みデーモンが即座に停止します。組み込みデーモンに接続されている実行中のエージェントとターミナルが停止されます。",
         pauseAndStop: "一時停止して停止",
         registrationFailed:
-          "組み込みデーモンは起動しましたが、FDEがlocalhostの接続を保存できませんでした。デーモン管理をオフにしてから再度オンにするか、localhostを手動で追加してください。",
+          "組み込みデーモンは起動しましたが、{{brandName}}がlocalhostの接続を保存できませんでした。デーモン管理をオフにしてから再度オンにするか、localhostを手動で追加してください。",
         pausedStopFailed:
-          "組み込みデーモン管理は一時停止されましたが、FDEがデーモンを停止できませんでした。",
+          "組み込みデーモン管理は一時停止されましたが、{{brandName}}がデーモンを停止できませんでした。",
         updateFailed: "組み込みデーモン管理を更新できません。",
       },
       keepRunning: {
         title: "終了後もデーモンを実行し続ける",
-        hint: "FDEを終了してもデーモンは実行し続けます",
+        hint: "{{brandName}}を終了してもデーモンは実行し続けます",
       },
       logs: {
         title: "ログファイル",
@@ -1286,7 +1286,7 @@ export const ja: TranslationResources = {
       fullStatus: {
         title: "詳細ステータス",
         modalTitle: "デーモンのステータス",
-        hint: "`paseo daemon status`を実行して出力を表示します",
+        hint: "`{{cliName}} daemon status`を実行して出力を表示します",
         view: "ステータスを表示",
         copied: "ステータスをクリップボードにコピーしました。",
         fetchFailed: "デーモンのステータスの取得に失敗しました: {{message}}",
@@ -1300,7 +1300,7 @@ export const ja: TranslationResources = {
         installed: "インストール済み",
         installedHint: "バージョン {{version}}（{{path}}）",
         notInstalledHint:
-          "このマシンでエージェントを実行するには、FDE デーモンバンドル（{{platform}}）をダウンロードしてください。",
+          "このマシンでエージェントを実行するには、{{brandName}} デーモンバンドル（{{platform}}）をダウンロードしてください。",
         install: "ローカルデーモンをインストール（約{{size}}）",
         installing: "インストール中...",
         phaseChecksum: "チェックサムを取得中...",
@@ -1338,7 +1338,7 @@ export const ja: TranslationResources = {
         strategySigned: "アップデートは署名付き Tauri アップデーターで検証されます。",
         autoCheck: {
           title: "自動的に確認",
-          hint: "FDE のウィンドウが開いている間、6 時間ごとに新しいバージョンを確認します。",
+          hint: "{{brandName}} のウィンドウが開いている間、6 時間ごとに新しいバージョンを確認します。",
         },
         check: "アップデートを確認",
         checking: "確認中...",
@@ -1352,16 +1352,17 @@ export const ja: TranslationResources = {
         verifying: "ダウンロードを検証中...",
         installing: "インストール中...",
         installHint: {
-          "windows-installer": "インストーラーを実行し、FDE を再起動します。",
-          "windows-portable": "ポータブル版の実行ファイルを置き換え、FDE を再起動します。",
-          "linux-appimage": "AppImage をその場で置き換え、FDE を再起動します。",
+          "windows-installer": "インストーラーを実行し、{{brandName}} を再起動します。",
+          "windows-portable":
+            "ポータブル版の実行ファイルを置き換え、{{brandName}} を再起動します。",
+          "linux-appimage": "AppImage をその場で置き換え、{{brandName}} を再起動します。",
           "linux-deb": ".deb パッケージをパッケージインストーラーで開きます。",
           "macos-dmg":
-            "ディスクイメージを開きます。FDE を「アプリケーション」にドラッグして完了してください。",
+            "ディスクイメージを開きます。{{brandName}} を「アプリケーション」にドラッグして完了してください。",
           unknown: "このプラットフォーム向けのリリースをダウンロードします。",
         },
         noAsset: "このプラットフォーム向けのダウンロードはまだ公開されていません。",
-        restartRequired: "アップデートを完了するには FDE を再起動してください。",
+        restartRequired: "アップデートを完了するには {{brandName}} を再起動してください。",
       },
       callout: {
         installingTitle: "更新をインストール中",
@@ -1384,7 +1385,7 @@ export const ja: TranslationResources = {
     },
     rosetta: {
       title: "Apple Siliconビルドをダウンロード",
-      runningIntel: "Apple Silicon上のRosettaでFDEのIntelビルドを実行しています。",
+      runningIntel: "Apple Silicon上のRosettaで{{brandName}}のIntelビルドを実行しています。",
       highCpu:
         "これにより高いCPU使用率が発生します。修正するにはApple Siliconビルドをダウンロードしてください。",
       download: "ダウンロード",
@@ -1427,7 +1428,7 @@ export const ja: TranslationResources = {
         microphone: "マイクのステータスはまだ確認されていません。",
       },
       testNotification: {
-        title: "FDE通知テスト",
+        title: "{{brandName}}通知テスト",
         body: "これが見えれば、デスクトップ通知は機能しています。",
         notDelivered: "通知が届きませんでした。システム設定 > 通知を確認してください。",
         failed: "通知の送信に失敗しました。",
@@ -1436,12 +1437,12 @@ export const ja: TranslationResources = {
     integrations: {
       cli: {
         statusFailed: "CLIのインストール状態を確認できません。",
-        installFailed: "FDE CLIをインストールできません。",
+        installFailed: "{{brandName}} CLIをインストールできません。",
       },
     },
   },
   rootError: {
-    title: "FDE で問題が発生しました。",
+    title: "{{brandName}} で問題が発生しました。",
     body: "アプリを再読み込みするにはもう一度お試しください。繰り返し発生する場合は、以下の詳細を添えて報告してください。",
     details: "詳細",
   },
@@ -1536,19 +1537,20 @@ export const ja: TranslationResources = {
     },
   },
   onboarding: {
-    title: "FDEへようこそ",
+    title: "{{brandName}}へようこそ",
     subtitle: "始めるにはコンピューターに接続してください",
     localDaemon: {
       title: "このマシンでエージェントを実行",
-      description: "ローカルの FDE デーモンをインストールします（約 180 MB のダウンロード）。",
-      descriptionInstalled: "インストール済みのローカル FDE デーモンを起動します。",
+      description:
+        "ローカルの {{brandName}} デーモンをインストールします（約 180 MB のダウンロード）。",
+      descriptionInstalled: "インストール済みのローカル {{brandName}} デーモンを起動します。",
       starting: "ローカルデーモンを起動中...",
       failed: "ローカルデーモンをセットアップできませんでした: {{message}}",
       retry: "再試行",
     },
     remoteHost: {
       title: "リモートホストを使用",
-      description: "別のマシン上の FDE デーモンに接続します。",
+      description: "別のマシン上の {{brandName}} デーモンに接続します。",
     },
     actions: {
       settings: "設定",
@@ -1627,11 +1629,13 @@ export const ja: TranslationResources = {
       },
       scanQr: {
         title: "QRコードをスキャン",
-        description: "新しい FDE デーモンを取得するか、暗号化リレー経由でペアリングします。",
+        description:
+          "新しい {{brandName}} デーモンを取得するか、暗号化リレー経由でペアリングします。",
       },
       pasteLink: {
         title: "ペアリングリンクを貼り付け",
-        description: "新しい FDE デーモンを取得するか、暗号化リレー経由でペアリングします。",
+        description:
+          "新しい {{brandName}} デーモンを取得するか、暗号化リレー経由でペアリングします。",
       },
     },
     networkScan: {
@@ -1640,29 +1644,29 @@ export const ja: TranslationResources = {
       diagnosticsNone: "なし",
       title: "ネットワーク上のサーバー",
       scanning: "{{total}} 件中 {{scanned}} 件のアドレスをスキャン中…",
-      none: "{{subnets}} に FDE サーバーは見つかりませんでした。",
+      none: "{{subnets}} に {{brandName}} サーバーは見つかりませんでした。",
       scanned: "{{subnets}} をスキャンしました。",
       rescan: "再スキャン",
       connect: "接続",
       connecting: "接続中…",
       needsPairing: "ペアリングが必要",
       pairingHint:
-        "ペアリングリンクを取得: ホストで `fde daemon pair` を実行するか、その Web アドレスを開き、ここでスキャンまたは貼り付けてください。",
+        "ペアリングリンクを取得: ホストで `{{cliName}} daemon pair` を実行するか、その Web アドレスを開き、ここでスキャンまたは貼り付けてください。",
     },
     claim: {
-      title: "FDE デーモンとペアリング",
-      thisDaemon: "この FDE デーモン",
+      title: "{{brandName}} デーモンとペアリング",
+      thisDaemon: "この {{brandName}} デーモン",
       claiming: "{{host}} とペアリング中…",
       explainer:
-        "この FDE デーモンはまだ取得されていません。ペアリングすると、このデバイスが最初の所有者になります。",
+        "この {{brandName}} デーモンはまだ取得されていません。ペアリングすると、このデバイスが最初の所有者になります。",
       successTitle: "ペアリング完了",
       successBody:
         "このデバイスは {{host}} の最初の所有者になりました。他のデバイスには新しいペアリングリンクが必要です。",
       successRelayBody: "{{host}} を暗号化リレー経由で追加しました。",
       noPendingOffer:
-        "ペアリングリンク (https://frogg.app/pair#offer=…) を開くか、「接続を追加」から貼り付けてください。",
+        "ペアリングリンク (a link from the daemon) を開くか、「接続を追加」から貼り付けてください。",
       newLinkHint:
-        "ペアリングコードは一回限りで、10 分で期限切れになります。新しいコードを取得: ホストで `fde daemon pair` を実行するか、その Web アドレスを再読み込みしてください。",
+        "ペアリングコードは一回限りで、10 分で期限切れになります。新しいコードを取得: ホストで `{{cliName}} daemon pair` を実行するか、その Web アドレスを再読み込みしてください。",
       triedEndpoints: "試行済み:",
       manualEndpointHelper:
         "デーモンに別のアドレス (VPN、Docker、別のインターフェース) で到達できる場合は、host:port の形式で入力してください。",
@@ -1683,7 +1687,7 @@ export const ja: TranslationResources = {
     },
     direct: {
       title: "直接接続",
-      helper: "FDEサーバーのアドレスを入力してください。",
+      helper: "{{brandName}}サーバーのアドレスを入力してください。",
       fields: {
         host: "ホスト",
         port: "ポート",
@@ -1697,7 +1701,7 @@ export const ja: TranslationResources = {
         show: "詳細設定を表示",
         hide: "詳細設定を非表示",
         helper:
-          "どの形式でも入力できます: ホスト、ホスト:ポート、http(s)://ホスト:ポート、ws(s)://ホスト:ポート、tcp://ホスト:ポート?ssl=true。FDE デーモンはポート {{port}} で HTTP と WebSocket を提供します。",
+          "どの形式でも入力できます: ホスト、ホスト:ポート、http(s)://ホスト:ポート、ws(s)://ホスト:ポート、tcp://ホスト:ポート?ssl=true。{{brandName}} デーモンはポート {{port}} で HTTP と WebSocket を提供します。",
         resolved: "接続先",
       },
       passwordVisibility: {
@@ -1728,7 +1732,7 @@ export const ja: TranslationResources = {
     },
     remoteSsh: {
       title: "リモート SSH",
-      helper: "リモートホストで動作する FDE デーモンに接続します。",
+      helper: "リモートホストで動作する {{brandName}} デーモンに接続します。",
       tabs: {
         config: "SSH 設定",
         manual: "手動",
@@ -1747,7 +1751,7 @@ export const ja: TranslationResources = {
       },
       hints: {
         daemonPassword:
-          "FDE デーモンのパスワードです（SSH ログインのものではありません）。このホストと一緒に保存されます。",
+          "{{brandName}} デーモンのパスワードです（SSH ログインのものではありません）。このホストと一緒に保存されます。",
         sshPassword:
           "SSH ログインにのみ使用します。保存はされず、記憶する場合もアプリを閉じるまでメモリ上に保持されるだけです。",
       },
@@ -1763,8 +1767,8 @@ export const ja: TranslationResources = {
         invalidTarget: "有効な ssh:// ホストを入力してください",
         failedToConnect: "SSH で接続できません。{{detail}}",
         daemonPasswordRequired:
-          "{{host}} の FDE デーモンにはパスワードが必要です。下に入力してもう一度接続してください。",
-        daemonPasswordIncorrect: "{{host}} の FDE デーモンがパスワードを拒否しました。",
+          "{{host}} の {{brandName}} デーモンにはパスワードが必要です。下に入力してもう一度接続してください。",
+        daemonPasswordIncorrect: "{{host}} の {{brandName}} デーモンがパスワードを拒否しました。",
         sshPasswordRequired:
           "{{host}} は SSH 鍵を拒否しましたが、パスワードでのログインは受け付けます。続行するには SSH パスワードを入力してください。",
         sshPasswordIncorrect: "{{host}} が SSH パスワードを拒否しました。",
@@ -1775,11 +1779,11 @@ export const ja: TranslationResources = {
     link: {
       title: "ペアリングリンクを貼り付け",
       helper:
-        "デーモンのクレームページまたは `fde daemon pair` のリンクを貼り付けてください。新しい FDE デーモンは最初にペアリングしたデバイスのものになります。",
+        "デーモンのクレームページまたは `{{cliName}} daemon pair` のリンクを貼り付けてください。新しい {{brandName}} デーモンは最初にペアリングしたデバイスのものになります。",
       label: "ペアリングリンク",
       errors: {
         required: "ペアリングリンクを貼り付けてください (…/pair#offer=…)",
-        missingOffer: "これは FDE のペアリングリンクではありません",
+        missingOffer: "これは {{brandName}} のペアリングリンクではありません",
         emptyOffer: "オファーのペイロードが空です",
         invalid: "無効なペアリングリンク",
         unableToPair: "ホストをペアリングできません",
@@ -1816,15 +1820,15 @@ export const ja: TranslationResources = {
       enableDescription:
         "リレーを使うと、このデバイスからどこでも接続できます。ペアリング通信はエンドツーエンドで暗号化されます。",
       relayDocs: "リレーの仕組み",
-      relayDocsAccessibility: "FDE リレーの仕組みを読む",
+      relayDocsAccessibility: "{{brandName}} リレーの仕組みを読む",
       enableRelay: "リレーを有効にする",
       enablingRelay: "有効化中...",
       notNow: "今はしない",
       directConnectionHint:
         "リレーを使わない場合は、TCP、Tailscale、または別の VPN で直接接続してください。QR コードは作成されません。",
-      updateRequired: "FDE Desktop からリレーを有効にするにはホストを更新してください。",
+      updateRequired: "{{brandName}} Desktop からリレーを有効にするにはホストを更新してください。",
       unavailable: "ペアリングオファーが利用できません。",
-      hint: "スマートフォンのFDEでこのQRコードをスキャンするか、以下のリンクをコピーしてください。",
+      hint: "スマートフォンの{{brandName}}でこのQRコードをスキャンするか、以下のリンクをコピーしてください。",
       securityWarning:
         "このペアリングリンクはパスワードと同様に扱ってください。リンクを知っている人は誰でもこのデーモンにアクセスできます。",
       qrUnavailable: "QRコードが利用できません。",
@@ -1966,7 +1970,7 @@ export const ja: TranslationResources = {
   serviceUrl: {
     title: "サービスURLを開く",
     message: "{{url}}を開きますか？",
-    inPaseo: "FDEで",
+    inPaseo: "{{brandName}}で",
     externalBrowser: "外部ブラウザ",
     dontAskAgain: "次回から確認しない",
   },
@@ -2087,8 +2091,8 @@ export const ja: TranslationResources = {
       other: "その他のツールを{{count}}回使用",
     },
     paseoCalls: {
-      one: "FDEを{{count}}回呼び出し",
-      other: "FDEを{{count}}回呼び出し",
+      one: "{{brandName}}を{{count}}回呼び出し",
+      other: "{{brandName}}を{{count}}回呼び出し",
     },
     and: "および",
   },
@@ -2169,7 +2173,7 @@ export const ja: TranslationResources = {
       send: "送信",
       sending: "送信中...",
       sentTitle: "テスト通知を送信しました",
-      sentDescription: "FDE が通知をオペレーティングシステムに渡しました。",
+      sentDescription: "{{brandName}} が通知をオペレーティングシステムに渡しました。",
       sendFailedTitle: "テスト通知を送信できません",
     },
     hostSections: {
@@ -2192,10 +2196,10 @@ export const ja: TranslationResources = {
       selection: "モデル選択",
       automatic: "自動",
       preferred: "手動",
-      automaticHint: "FDE が利用可能な高速モデルを選択します",
-      preferredHint: "FDE が使用するモデルを選択します",
+      automaticHint: "{{brandName}} が利用可能な高速モデルを選択します",
+      preferredHint: "{{brandName}} が使用するモデルを選択します",
       model: "モデル",
-      fallbackHint: "利用できない場合、FDE は別の利用可能なモデルを使用します",
+      fallbackHint: "利用できない場合、{{brandName}} は別の利用可能なモデルを使用します",
       docs: "ドキュメント",
       saveError: "メタデータ生成を更新できません",
     },
@@ -2204,7 +2208,7 @@ export const ja: TranslationResources = {
       autoPlay: {
         label: "音声アラートを自動再生",
         description:
-          "FDE がフォアグラウンドにあるとき、エージェントのアラートを届き次第読み上げます。",
+          "{{brandName}} がフォアグラウンドにあるとき、エージェントのアラートを届き次第読み上げます。",
       },
       replyConfirm: {
         label: "音声返信を確認する",
@@ -2243,7 +2247,7 @@ export const ja: TranslationResources = {
         description: "実行中のスクリプトからURLを開く場所",
         options: {
           ask: "確認する",
-          inApp: "FDEで",
+          inApp: "{{brandName}}で",
           external: "外部ブラウザ",
         },
       },
@@ -2311,7 +2315,7 @@ export const ja: TranslationResources = {
       },
     },
     about: {
-      attribution: "Frogg Development Environment は <paseo>Paseo</paseo> をベースにしています。",
+      attribution: "{{brandFullName}} は <paseo>Paseo</paseo> をベースにしています。",
       title: "アプリ情報",
       appVersion: "アプリバージョン",
       thisDevice: "このデバイス",
@@ -2328,7 +2332,7 @@ export const ja: TranslationResources = {
         label: "アプリの更新",
         readyToInstall: "インストール準備完了: {{version}}",
         installTitle: "デスクトップの更新をインストール",
-        installMessage: "このコンピューターのFDEを更新します",
+        installMessage: "このコンピューターの{{brandName}}を更新します",
         installConfirm: "更新をインストール",
         update: "更新",
         updateTo: "{{version}}に更新",
@@ -2567,7 +2571,7 @@ export const ja: TranslationResources = {
       },
       sshDeploy: {
         title: "このホストのデーモン",
-        info: "手動インストールと同じスクリプトで SSH ホストに FDE デーモンをインストールします。リリースバンドルはホスト自身がダウンロードし、アプリは SSH 経由でスクリプトを実行するだけです。",
+        info: "手動インストールと同じスクリプトで SSH ホストに {{brandName}} デーモンをインストールします。リリースバンドルはホスト自身がダウンロードし、アプリは SSH 経由でスクリプトを実行するだけです。",
         status: {
           probing: "確認中...",
           installed: "インストール済み {{version}}",
@@ -2622,7 +2626,7 @@ export const ja: TranslationResources = {
         uninstall: {
           title: "デーモンをアンインストールしますか？",
           message:
-            "サービスを停止し、{{host}} から FDE のインストールを削除します。デーモンの状態 (~/.paseo) は保持されます。",
+            "サービスを停止し、{{host}} から {{brandName}} のインストールを削除します。デーモンの状態 (~/.paseo) は保持されます。",
         },
         log: {
           running: "{{host}} で実行中...",
@@ -2633,7 +2637,7 @@ export const ja: TranslationResources = {
         offer: {
           title: "このホストにデーモンが見つかりません",
           message:
-            "SSH は動作していますが、{{host}} に FDE デーモンがインストールされていません。今すぐデプロイしますか？インストール完了後に接続を再試行します。",
+            "SSH は動作していますが、{{host}} に {{brandName}} デーモンがインストールされていません。今すぐデプロイしますか？インストール完了後に接続を再試行します。",
         },
       },
       pairDevices: {
@@ -2647,11 +2651,11 @@ export const ja: TranslationResources = {
         title: "オーケストレーションスキル",
         description: "エージェントがCLI経由でオーケストレーションできるようにします。",
         updateAvailable: "更新が利用可能",
-        updateTitle: "FDEスキルを更新しますか？",
+        updateTitle: "{{brandName}}スキルを更新しますか？",
         updateFallback: "バンドルされたスキルをマシンに同期します。",
-        uninstallTitle: "FDEスキルをアンインストールしますか？",
+        uninstallTitle: "{{brandName}}スキルをアンインストールしますか？",
         uninstallMessage:
-          "~/.agents、~/.claude、~/.codexからすべてのFDEオーケストレーションスキルを削除します。",
+          "~/.agents、~/.claude、~/.codexからすべての{{brandName}}オーケストレーションスキルを削除します。",
         choose: "スキルを選択",
         chooseAll: "すべてのスキル",
         chooseAllHint:
@@ -2688,9 +2692,9 @@ export const ja: TranslationResources = {
         title: "オーケストレーション",
         unavailable: "オーケストレーションを管理するにはこのホストに接続してください",
         enableTools: {
-          title: "FDEツールを有効にする",
+          title: "{{brandName}}ツールを有効にする",
           hint: "エージェントがワークツリー、エージェント、スケジュールを管理できるようになります",
-          accessibilityLabel: "FDEツールを有効にする",
+          accessibilityLabel: "{{brandName}}ツールを有効にする",
         },
         systemPrompt: {
           title: "システムプロンプト",
@@ -2795,10 +2799,10 @@ export const ja: TranslationResources = {
             "このホストは接続されていません。再起動する前にオンラインになるまでお待ちください。",
           offlineTitle: "ホストオフライン",
           offlineMessage:
-            "このホストはオフラインです。FDEが自動再接続します。再起動は、ホストがオンラインに戻ってから行ってください。",
+            "このホストはオフラインです。{{brandName}}が自動再接続します。再起動は、ホストがオンラインに戻ってから行ってください。",
           requestFailedTitle: "エラー",
           requestFailedMessage:
-            "再起動リクエストの送信に失敗しました。FDEは自動的に再接続します。ホストがオンラインになったら再試行してください。",
+            "再起動リクエストの送信に失敗しました。{{brandName}}は自動的に再接続します。ホストがオンラインになったら再試行してください。",
           dialogFailedMessage: "再起動確認ダイアログを開けませんでした。",
         },
         selfUpdate: {
@@ -2846,7 +2850,7 @@ export const ja: TranslationResources = {
         },
         update: {
           desktopManagedHint:
-            "このデーモンはFDE Desktopによって管理されています。ホスト上のFDE Desktopを更新してください。",
+            "このデーモンは{{brandName}} Desktopによって管理されています。ホスト上の{{brandName}} Desktopを更新してください。",
           title: "デーモンを更新",
           hint: "デーモンを最新バージョンに更新して再起動します",
           confirm: "更新",
@@ -3008,7 +3012,7 @@ export const ja: TranslationResources = {
         newScript: "新しいスクリプト",
         editScript: "{{name}}を編集",
         runAsService: "サービスとして実行",
-        serviceHint: "FDEがプロセスを監督し、$PASEO_PORTを通じてポートを割り当てます",
+        serviceHint: "{{brandName}}がプロセスを監督し、$PASEO_PORTを通じてポートを割り当てます",
         actions: {
           add: "スクリプトを追加",
           edit: "編集",
@@ -3017,7 +3021,7 @@ export const ja: TranslationResources = {
       },
       metadata: {
         title: "メタデータ生成",
-        info: "FDEがメタデータ生成に使うAIプロンプトへ追加する、プロジェクト固有の指示です。ブランチ名、コミット形式、PR形式など、チームの規約を反映するために使います。",
+        info: "{{brandName}}がメタデータ生成に使うAIプロンプトへ追加する、プロジェクト固有の指示です。ブランチ名、コミット形式、PR形式など、チームの規約を反映するために使います。",
         branchName: "ブランチ名",
         branchNamePlaceholder: "ブランチ名は feat/ または fix/ で始め、個人ブランチは mb/ にする",
         commitMessage: "コミットメッセージ",

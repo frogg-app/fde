@@ -161,3 +161,10 @@ The official and Acme presets both generate native/web artwork, runtime exports,
 Tauri/EAS inputs and provenance. Six behavior tests cover neutral defaults, validation,
 update configuration, home isolation, management identity and artifact names. The
 branding library and build scripts pass TypeScript and lint checks.
+
+### Shared UI evidence
+
+Acme web export succeeds with its own HTML title, PWA identity, colors and assets.
+All nine locales use product interpolation while retaining Paseo attribution.
+77 targeted tests pass, including brand-isolated storage cleanup. Native shell
+integration and mobile package/device verification remain separate checkpoints.

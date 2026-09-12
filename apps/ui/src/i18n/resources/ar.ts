@@ -817,7 +817,8 @@ export const ar: TranslationResources = {
           updateDirty: "التحديث غير متاح أثناء وجود تغييرات محلية، لذا قم بتنفيذها أو تخزينها أولاً",
           updateCurrent: "التحديث غير متاح لأن هذا الفرع محدث بالفعل باستخدام{{baseRef}}",
           mergePrNoGithub: "دمج PR غير متاح الآن لأن GitHub غير متصل",
-          archiveNotWorktree: "الأرشيف غير متاح هنا لأنه لم يتم إنشاء مساحة العمل هذه كشجرة عمل FDE",
+          archiveNotWorktree:
+            "الأرشيف غير متاح هنا لأنه لم يتم إنشاء مساحة العمل هذه كشجرة عمل {{brandName}}",
           mergePrNoForge: "دمج {{noun}} غير متاح الآن لأن {{brand}} غير متصل",
           mergePrMissing: "دمج PR غير متاح لأنه لا يوجد طلب سحب حتى الآن",
           mergePrDraft: "دمج PR غير متاح لأن طلب السحب لا يزال مسودة",
@@ -1231,7 +1232,7 @@ export const ar: TranslationResources = {
       close: "إغلاق النافذة",
     },
     quitting: {
-      title: "جارٍ إنهاء FDE...",
+      title: "جارٍ إنهاء {{brandName}}...",
       detail: "إيقاف البرنامج الخفي المحلي.",
     },
     daemon: {
@@ -1245,20 +1246,20 @@ export const ar: TranslationResources = {
       },
       management: {
         title: "إدارة البرنامج الخفي المدمج",
-        hint: "اسمح لـ FDE ببدء تشغيل البرنامج الخفي المدمج وإيقافه",
+        hint: "اسمح لـ {{brandName}} ببدء تشغيل البرنامج الخفي المدمج وإيقافه",
         pauseTitle: "وقفة المدمج في البرنامج الخفي",
         pauseMessage:
           "سيؤدي هذا إلى إيقاف البرنامج الخفي المدمج على الفور. سيتم إيقاف تشغيل الوكلاء والمحطات الطرفية المتصلة بالبرنامج الخفي المدمج.",
         pauseAndStop: "وقفة وتوقف",
         registrationFailed:
-          "Built-in daemon started, but FDE could not save the localhost connection. Toggle daemon management off and on again, or add localhost manually.",
+          "Built-in daemon started, but {{brandName}} could not save the localhost connection. Toggle daemon management off and on again, or add localhost manually.",
         pausedStopFailed:
-          "تم إيقاف إدارة البرنامج الخفي المضمنة مؤقتًا، لكن لم يتمكن FDE من إيقاف البرنامج الخفي.",
+          "تم إيقاف إدارة البرنامج الخفي المضمنة مؤقتًا، لكن لم يتمكن {{brandName}} من إيقاف البرنامج الخفي.",
         updateFailed: "غير قادر على تحديث إدارة البرنامج الخفي المضمنة.",
       },
       keepRunning: {
         title: "استمر في تشغيل البرنامج الخفي بعد الإقلاع عن التدخين",
-        hint: "يستمر تشغيل Daemon عند إنهاء FDE",
+        hint: "يستمر تشغيل Daemon عند إنهاء {{brandName}}",
       },
       logs: {
         title: "ملف السجل",
@@ -1273,7 +1274,7 @@ export const ar: TranslationResources = {
       fullStatus: {
         title: "الوضع الكامل",
         modalTitle: "حالة Daemon",
-        hint: "يقوم بتشغيل`paseo daemon status`ويظهر الإخراج",
+        hint: "يقوم بتشغيل`{{cliName}} daemon status`ويظهر الإخراج",
         view: "عرض الحالة",
         copied: "تم نسخ الحالة إلى الحافظة.",
         fetchFailed: "فشل جلب حالة البرنامج الخفي:{{message}}",
@@ -1286,7 +1287,8 @@ export const ar: TranslationResources = {
         title: "الخادم المحلي",
         installed: "مثبّت",
         installedHint: "الإصدار {{version}} في {{path}}",
-        notInstalledHint: "نزّل حزمة خادم FDE ({{platform}}) لتشغيل الوكلاء على هذا الجهاز.",
+        notInstalledHint:
+          "نزّل حزمة خادم {{brandName}} ({{platform}}) لتشغيل الوكلاء على هذا الجهاز.",
         install: "تثبيت الخادم المحلي (~{{size}})",
         installing: "جارٍ التثبيت...",
         phaseChecksum: "جارٍ جلب المجموع الاختباري...",
@@ -1323,7 +1325,7 @@ export const ar: TranslationResources = {
         strategySigned: "يتم التحقق من التحديثات بواسطة محدّث Tauri الموقّع.",
         autoCheck: {
           title: "التحقق تلقائيًا",
-          hint: "البحث عن إصدارات جديدة كل 6 ساعات أثناء فتح نافذة FDE.",
+          hint: "البحث عن إصدارات جديدة كل 6 ساعات أثناء فتح نافذة {{brandName}}.",
         },
         check: "التحقق من التحديثات",
         checking: "جارٍ التحقق...",
@@ -1337,15 +1339,15 @@ export const ar: TranslationResources = {
         verifying: "جارٍ التحقق من التنزيل...",
         installing: "جارٍ التثبيت...",
         installHint: {
-          "windows-installer": "يشغّل المثبّت ويعيد فتح FDE.",
-          "windows-portable": "يستبدل الملف التنفيذي المحمول ويعيد فتح FDE.",
-          "linux-appimage": "يستبدل AppImage في مكانه ويعيد تشغيل FDE.",
+          "windows-installer": "يشغّل المثبّت ويعيد فتح {{brandName}}.",
+          "windows-portable": "يستبدل الملف التنفيذي المحمول ويعيد فتح {{brandName}}.",
+          "linux-appimage": "يستبدل AppImage في مكانه ويعيد تشغيل {{brandName}}.",
           "linux-deb": "يفتح حزمة ‎.deb في مثبّت الحزم لديك.",
-          "macos-dmg": "يفتح صورة القرص؛ اسحب FDE إلى مجلد التطبيقات للإنهاء.",
+          "macos-dmg": "يفتح صورة القرص؛ اسحب {{brandName}} إلى مجلد التطبيقات للإنهاء.",
           unknown: "ينزّل الإصدار المبني لهذه المنصة.",
         },
         noAsset: "لم يُنشر تنزيل لهذه المنصة بعد.",
-        restartRequired: "أعد تشغيل FDE لإكمال التحديث.",
+        restartRequired: "أعد تشغيل {{brandName}} لإكمال التحديث.",
       },
       callout: {
         installingTitle: "تثبيت التحديث",
@@ -1367,7 +1369,7 @@ export const ar: TranslationResources = {
     },
     rosetta: {
       title: "قم بتنزيل نسخة Apple Silicon",
-      runningIntel: "أنت تقوم بتشغيل إصدار Intel من FDE ضمن Rosetta على Apple Silicon.",
+      runningIntel: "أنت تقوم بتشغيل إصدار Intel من {{brandName}} ضمن Rosetta على Apple Silicon.",
       highCpu:
         "يؤدي هذا إلى ارتفاع استخدام وحدة المعالجة المركزية. قم بتنزيل إصدار Apple Silicon لإصلاحه.",
       download: "تحميل",
@@ -1410,7 +1412,7 @@ export const ar: TranslationResources = {
         microphone: "لم يتم التحقق من حالة الميكروفون بعد.",
       },
       testNotification: {
-        title: "اختبار الإخطار FDE",
+        title: "اختبار الإخطار {{brandName}}",
         body: "إذا كان بإمكانك رؤية ذلك، فهذا يعني أن إشعارات سطح المكتب تعمل.",
         notDelivered: "لم يتم تسليم الإخطار. تحقق من إعدادات النظام > الإشعارات.",
         failed: "فشل في إرسال الإخطار.",
@@ -1419,12 +1421,12 @@ export const ar: TranslationResources = {
     integrations: {
       cli: {
         statusFailed: "غير قادر على التحقق من حالة تثبيت CLI.",
-        installFailed: "غير قادر على تثبيت FDE CLI.",
+        installFailed: "غير قادر على تثبيت {{brandName}} CLI.",
       },
     },
   },
   rootError: {
-    title: "واجه FDE مشكلة.",
+    title: "واجه {{brandName}} مشكلة.",
     body: "جرّب مرة أخرى لإعادة تحميل التطبيق. إذا استمر حدوث ذلك، فأرفق التفاصيل أدناه عند الإبلاغ عنه.",
     details: "التفاصيل",
   },
@@ -1518,19 +1520,19 @@ export const ar: TranslationResources = {
     },
   },
   onboarding: {
-    title: "مرحبا بكم في FDE",
+    title: "مرحبا بكم في {{brandName}}",
     subtitle: "قم بتوصيل جهاز الكمبيوتر الخاص بك للبدء",
     localDaemon: {
       title: "تشغيل الوكلاء على هذا الجهاز",
-      description: "يثبّت خادم FDE المحلي (تنزيل بحجم 180 ميغابايت تقريبًا).",
-      descriptionInstalled: "يشغّل خادم FDE المحلي المثبّت.",
+      description: "يثبّت خادم {{brandName}} المحلي (تنزيل بحجم 180 ميغابايت تقريبًا).",
+      descriptionInstalled: "يشغّل خادم {{brandName}} المحلي المثبّت.",
       starting: "جارٍ بدء الخادم المحلي...",
       failed: "تعذّر إعداد الخادم المحلي: {{message}}",
       retry: "حاول مرة أخرى",
     },
     remoteHost: {
       title: "استخدام مضيف بعيد",
-      description: "الاتصال بخادم FDE على جهاز آخر.",
+      description: "الاتصال بخادم {{brandName}} على جهاز آخر.",
     },
     actions: {
       settings: "إعدادات",
@@ -1609,11 +1611,11 @@ export const ar: TranslationResources = {
       },
       scanQr: {
         title: "مسح رمز QR",
-        description: "امتلك خادم FDE جديدًا، أو اقترن عبر المرحّل المشفّر.",
+        description: "امتلك خادم {{brandName}} جديدًا، أو اقترن عبر المرحّل المشفّر.",
       },
       pasteLink: {
         title: "الصق رابط الاقتران",
-        description: "امتلك خادم FDE جديدًا، أو اقترن عبر المرحّل المشفّر.",
+        description: "امتلك خادم {{brandName}} جديدًا، أو اقترن عبر المرحّل المشفّر.",
       },
     },
     networkScan: {
@@ -1622,28 +1624,27 @@ export const ar: TranslationResources = {
       diagnosticsNone: "لا شيء",
       title: "الخوادم على شبكتك",
       scanning: "جارٍ فحص {{scanned}} من {{total}} عنوانًا…",
-      none: "لم يُعثر على خوادم FDE في {{subnets}}.",
+      none: "لم يُعثر على خوادم {{brandName}} في {{subnets}}.",
       scanned: "تم فحص {{subnets}}.",
       rescan: "إعادة الفحص",
       connect: "اتصال",
       connecting: "جارٍ الاتصال…",
       needsPairing: "يحتاج إلى اقتران",
       pairingHint:
-        "احصل على رابط اقتران: شغّل `fde daemon pair` على المضيف أو افتح عنوانه على الويب، ثم امسحه أو الصقه هنا.",
+        "احصل على رابط اقتران: شغّل `{{cliName}} daemon pair` على المضيف أو افتح عنوانه على الويب، ثم امسحه أو الصقه هنا.",
     },
     claim: {
-      title: "الاقتران بخادم FDE",
-      thisDaemon: "خادم FDE هذا",
+      title: "الاقتران بخادم {{brandName}}",
+      thisDaemon: "خادم {{brandName}} هذا",
       claiming: "جارٍ الاقتران بـ {{host}}…",
-      explainer: "لم يُمتلك خادم FDE هذا بعد. الاقتران يجعل هذا الجهاز مالكه الأول.",
+      explainer: "لم يُمتلك خادم {{brandName}} هذا بعد. الاقتران يجعل هذا الجهاز مالكه الأول.",
       successTitle: "تم الاقتران",
       successBody:
         "أصبح هذا الجهاز المالك الأول لـ {{host}}. تحتاج الأجهزة الأخرى إلى رابط اقتران جديد.",
       successRelayBody: "تمت إضافة {{host}} عبر المرحّل المشفّر.",
-      noPendingOffer:
-        "افتح رابط اقتران (https://frogg.app/pair#offer=…) أو الصق واحدًا من «إضافة اتصال».",
+      noPendingOffer: "افتح رابط اقتران (a link from the daemon) أو الصق واحدًا من «إضافة اتصال».",
       newLinkHint:
-        "رموز الاقتران تُستخدم مرة واحدة وتنتهي صلاحيتها بعد عشر دقائق. احصل على رمز جديد: شغّل `fde daemon pair` على المضيف أو أعد تحميل عنوانه على الويب.",
+        "رموز الاقتران تُستخدم مرة واحدة وتنتهي صلاحيتها بعد عشر دقائق. احصل على رمز جديد: شغّل `{{cliName}} daemon pair` على المضيف أو أعد تحميل عنوانه على الويب.",
       triedEndpoints: "تمت المحاولة:",
       manualEndpointHelper:
         "إذا كان الخادم متاحًا على عنوان آخر (VPN أو Docker أو واجهة مختلفة)، فأدخله بصيغة host:port.",
@@ -1664,7 +1665,7 @@ export const ar: TranslationResources = {
     },
     direct: {
       title: "اتصال مباشر",
-      helper: "أدخل عنوان خادم FDE.",
+      helper: "أدخل عنوان خادم {{brandName}}.",
       fields: {
         host: "Host",
         port: "ميناء",
@@ -1678,7 +1679,7 @@ export const ar: TranslationResources = {
         show: "عرض متقدم",
         hide: "إخفاء المتقدمة",
         helper:
-          "يمكنك استخدام أي صيغة: مضيف، مضيف:منفذ، http(s)://مضيف:منفذ، ws(s)://مضيف:منفذ أو tcp://مضيف:منفذ?ssl=true. يستجيب خادم FDE عبر HTTP وWebSocket على المنفذ {{port}}.",
+          "يمكنك استخدام أي صيغة: مضيف، مضيف:منفذ، http(s)://مضيف:منفذ، ws(s)://مضيف:منفذ أو tcp://مضيف:منفذ?ssl=true. يستجيب خادم {{brandName}} عبر HTTP وWebSocket على المنفذ {{port}}.",
         resolved: "سيتم الاتصال بـ",
       },
       passwordVisibility: {
@@ -1710,7 +1711,7 @@ export const ar: TranslationResources = {
     },
     remoteSsh: {
       title: "SSH عن بُعد",
-      helper: "الاتصال بخادم FDE يعمل على المضيف البعيد.",
+      helper: "الاتصال بخادم {{brandName}} يعمل على المضيف البعيد.",
       tabs: {
         config: "إعدادات SSH",
         manual: "يدوي",
@@ -1728,7 +1729,8 @@ export const ar: TranslationResources = {
         rememberSshPassword: "تذكّر لهذه الجلسة",
       },
       hints: {
-        daemonPassword: "كلمة مرور خادم FDE، وليست كلمة مرور تسجيل دخول SSH. تُحفظ مع هذا المضيف.",
+        daemonPassword:
+          "كلمة مرور خادم {{brandName}}، وليست كلمة مرور تسجيل دخول SSH. تُحفظ مع هذا المضيف.",
         sshPassword:
           "تُستخدم فقط لتسجيل الدخول عبر SSH. لا تُحفظ أبدًا؛ عند التذكّر تبقى في الذاكرة حتى إغلاق التطبيق.",
       },
@@ -1744,8 +1746,8 @@ export const ar: TranslationResources = {
         invalidTarget: "أدخل مضيف ssh:// صالحًا",
         failedToConnect: "تعذر الاتصال عبر SSH. {{detail}}",
         daemonPasswordRequired:
-          "يتطلب خادم FDE على {{host}} كلمة مرور. أدخلها أدناه ثم أعد الاتصال.",
-        daemonPasswordIncorrect: "رفض خادم FDE على {{host}} كلمة المرور.",
+          "يتطلب خادم {{brandName}} على {{host}} كلمة مرور. أدخلها أدناه ثم أعد الاتصال.",
+        daemonPasswordIncorrect: "رفض خادم {{brandName}} على {{host}} كلمة المرور.",
         sshPasswordRequired:
           "رفض {{host}} مفاتيح SSH لديك لكنه يقبل تسجيل الدخول بكلمة مرور. أدخل كلمة مرور SSH للمتابعة.",
         sshPasswordIncorrect: "رفض {{host}} كلمة مرور SSH.",
@@ -1756,11 +1758,11 @@ export const ar: TranslationResources = {
     link: {
       title: "الصق رابط الاقتران",
       helper:
-        "الصق الرابط من صفحة امتلاك الخادم أو من `fde daemon pair`. يمتلك خادمَ FDE الجديد أولُ جهاز يقترن به.",
+        "الصق الرابط من صفحة امتلاك الخادم أو من `{{cliName}} daemon pair`. يمتلك خادمَ {{brandName}} الجديد أولُ جهاز يقترن به.",
       label: "رابط الاقتران",
       errors: {
         required: "الصق رابط الاقتران (…/pair#offer=…)",
-        missingOffer: "هذا ليس رابط اقتران FDE",
+        missingOffer: "هذا ليس رابط اقتران {{brandName}}",
         emptyOffer: "حمولة العرض فارغة",
         invalid: "رابط الاقتران غير صالح",
         unableToPair: "غير قادر على إقران المضيف",
@@ -1794,15 +1796,15 @@ export const ar: TranslationResources = {
       enableDescription:
         "يتيح التتابع لهذا الجهاز الاتصال من أي مكان. حركة مرور الإقران مشفرة من طرف إلى طرف.",
       relayDocs: "كيفية عمل التتابع",
-      relayDocsAccessibility: "اقرأ كيفية عمل تتابع FDE",
+      relayDocsAccessibility: "اقرأ كيفية عمل تتابع {{brandName}}",
       enableRelay: "تمكين التتابع",
       enablingRelay: "جارٍ التمكين...",
       notNow: "ليس الآن",
       directConnectionHint:
         "بدون التتابع، اتصل مباشرة عبر TCP أو Tailscale أو شبكة VPN أخرى. لن يتم إنشاء رمز QR.",
-      updateRequired: "حدّث المضيف لتمكين التتابع من FDE Desktop.",
+      updateRequired: "حدّث المضيف لتمكين التتابع من {{brandName}} Desktop.",
       unavailable: "عرض الاقتران غير متاح.",
-      hint: "قم بمسح رمز QR هذا باستخدام FDE على هاتفك، أو انسخ الرابط أدناه.",
+      hint: "قم بمسح رمز QR هذا باستخدام {{brandName}} على هاتفك، أو انسخ الرابط أدناه.",
       securityWarning:
         "تعامل مع رابط الاقتران هذا ككلمة مرور. يمكن لأي شخص يملكه الوصول إلى هذا البرنامج الخفي.",
       qrUnavailable: "رمز QR غير متاح.",
@@ -1942,7 +1944,7 @@ export const ar: TranslationResources = {
   serviceUrl: {
     title: "افتح الخدمة URL",
     message: "افتح{{url}}؟",
-    inPaseo: "في FDE",
+    inPaseo: "في {{brandName}}",
     externalBrowser: "متصفح خارجي",
     dontAskAgain: "لا تسأل مرة أخرى",
   },
@@ -2062,8 +2064,8 @@ export const ar: TranslationResources = {
       other: "استخدم {{count}} أدوات أخرى",
     },
     paseoCalls: {
-      one: "استدعى FDE {{count}} مرة",
-      other: "استدعى FDE {{count}} مرات",
+      one: "استدعى {{brandName}} {{count}} مرة",
+      other: "استدعى {{brandName}} {{count}} مرات",
     },
     and: "و",
   },
@@ -2144,7 +2146,7 @@ export const ar: TranslationResources = {
       send: "إرسال",
       sending: "جارٍ الإرسال...",
       sentTitle: "تم إرسال إشعار الاختبار",
-      sentDescription: "سلّم FDE الإشعار إلى نظام التشغيل.",
+      sentDescription: "سلّم {{brandName}} الإشعار إلى نظام التشغيل.",
       sendFailedTitle: "تعذر إرسال إشعار الاختبار",
     },
     hostSections: {
@@ -2163,14 +2165,14 @@ export const ar: TranslationResources = {
     metadataGeneration: {
       title: "إنشاء البيانات الوصفية",
       description:
-        "اختر النموذج الذي يستخدمه FDE لعناوين مساحات العمل وأسماء الفروع ورسائل الالتزام ومسودات طلبات السحب",
+        "اختر النموذج الذي يستخدمه {{brandName}} لعناوين مساحات العمل وأسماء الفروع ورسائل الالتزام ومسودات طلبات السحب",
       selection: "اختيار النموذج",
       automatic: "تلقائي",
       preferred: "يدوي",
-      automaticHint: "يختار FDE نموذجًا سريعًا متاحًا",
-      preferredHint: "اختر النموذج الذي يستخدمه FDE",
+      automaticHint: "يختار {{brandName}} نموذجًا سريعًا متاحًا",
+      preferredHint: "اختر النموذج الذي يستخدمه {{brandName}}",
       model: "النموذج",
-      fallbackHint: "إذا لم يكن متاحًا، يستخدم FDE نموذجًا آخر متاحًا",
+      fallbackHint: "إذا لم يكن متاحًا، يستخدم {{brandName}} نموذجًا آخر متاحًا",
       docs: "الوثائق",
       saveError: "تعذر تحديث إنشاء البيانات الوصفية",
     },
@@ -2178,7 +2180,8 @@ export const ar: TranslationResources = {
       title: "التنبيهات الصوتية",
       autoPlay: {
         label: "تشغيل التنبيهات المنطوقة تلقائيًا",
-        description: "قراءة تنبيهات الوكلاء فور وصولها عندما يكون أحد تطبيقات FDE في المقدمة.",
+        description:
+          "قراءة تنبيهات الوكلاء فور وصولها عندما يكون أحد تطبيقات {{brandName}} في المقدمة.",
       },
       replyConfirm: {
         label: "تأكيد الردود الصوتية",
@@ -2190,7 +2193,7 @@ export const ar: TranslationResources = {
       browserData: {
         title: "بيانات المتصفح",
         siteData: "ملفات تعريف الارتباط وبيانات المواقع",
-        description: "تتشارك علامات تبويب المتصفح تسجيلات الدخول وبيانات المواقع عبر FDE.",
+        description: "تتشارك علامات تبويب المتصفح تسجيلات الدخول وبيانات المواقع عبر {{brandName}}.",
         clear: "مسح بيانات المتصفح",
         clearing: "جارٍ المسح...",
         confirmTitle: "هل تريد مسح بيانات المتصفح؟",
@@ -2218,7 +2221,7 @@ export const ar: TranslationResources = {
         description: "مكان فتح عناوين URL من تشغيل البرامج النصية",
         options: {
           ask: "بسأل",
-          inApp: "في FDE",
+          inApp: "في {{brandName}}",
           external: "متصفح خارجي",
         },
       },
@@ -2286,7 +2289,7 @@ export const ar: TranslationResources = {
       },
     },
     about: {
-      attribution: "Frogg Development Environment مبني على <paseo>Paseo</paseo>.",
+      attribution: "{{brandFullName}} مبني على <paseo>Paseo</paseo>.",
       title: "عن",
       appVersion: "نسخة التطبيق",
       thisDevice: "هذا الجهاز",
@@ -2303,7 +2306,7 @@ export const ar: TranslationResources = {
         label: "تحديثات التطبيق",
         readyToInstall: "جاهز للتثبيت:{{version}}",
         installTitle: "تثبيت تحديث سطح المكتب",
-        installMessage: "يؤدي هذا إلى تحديث FDE على هذا الكمبيوتر",
+        installMessage: "يؤدي هذا إلى تحديث {{brandName}} على هذا الكمبيوتر",
         installConfirm: "تثبيت التحديث",
         update: "تحديث",
         updateTo: "التحديث إلى{{version}}",
@@ -2540,7 +2543,7 @@ export const ar: TranslationResources = {
       },
       sshDeploy: {
         title: "الخدمة على هذا المضيف",
-        info: "يثبّت خدمة FDE على مضيف SSH بالنصوص البرمجية نفسها المستخدمة في التثبيت اليدوي. يحمّل المضيف حزمة الإصدار بنفسه؛ ولا يقوم التطبيق سوى بتشغيل النص البرمجي عبر SSH.",
+        info: "يثبّت خدمة {{brandName}} على مضيف SSH بالنصوص البرمجية نفسها المستخدمة في التثبيت اليدوي. يحمّل المضيف حزمة الإصدار بنفسه؛ ولا يقوم التطبيق سوى بتشغيل النص البرمجي عبر SSH.",
         status: {
           probing: "جارٍ الفحص...",
           installed: "مثبّت {{version}}",
@@ -2592,7 +2595,8 @@ export const ar: TranslationResources = {
         },
         uninstall: {
           title: "إزالة الخدمة؟",
-          message: "يوقف الخدمة ويزيل تثبيت FDE من {{host}}. تُحفظ حالة الخدمة (~/.paseo).",
+          message:
+            "يوقف الخدمة ويزيل تثبيت {{brandName}} من {{host}}. تُحفظ حالة الخدمة (~/.paseo).",
         },
         log: {
           running: "قيد التشغيل على {{host}}...",
@@ -2603,7 +2607,7 @@ export const ar: TranslationResources = {
         offer: {
           title: "لم يُعثر على الخدمة على هذا المضيف",
           message:
-            "SSH يعمل، لكن لا توجد خدمة FDE مثبّتة على {{host}}. هل تريد نشرها الآن؟ سيُعاد الاتصال عند انتهاء التثبيت.",
+            "SSH يعمل، لكن لا توجد خدمة {{brandName}} مثبّتة على {{host}}. هل تريد نشرها الآن؟ سيُعاد الاتصال عند انتهاء التثبيت.",
         },
       },
       pairDevices: {
@@ -2617,10 +2621,11 @@ export const ar: TranslationResources = {
         title: "مهارات التنسيق",
         description: "قم بتعليم عملائك كيفية التنسيق من خلال CLI",
         updateAvailable: "التحديث متاح",
-        updateTitle: "تحديث مهارات FDE ؟",
+        updateTitle: "تحديث مهارات {{brandName}} ؟",
         updateFallback: "مزامنة المهارات المجمعة لجهازك.",
-        uninstallTitle: "إلغاء تثبيت مهارات FDE ؟",
-        uninstallMessage: "يزيل جميع مهارات تنسيق FDE من ~/.agents ، ~/.claude ، ~/.codex.",
+        uninstallTitle: "إلغاء تثبيت مهارات {{brandName}} ؟",
+        uninstallMessage:
+          "يزيل جميع مهارات تنسيق {{brandName}} من ~/.agents ، ~/.claude ، ~/.codex.",
         choose: "اختيار المهارات",
         chooseAll: "كل المهارات",
         chooseAllHint: "أبقِ جميع المهارات المرفقة مثبتة، بما فيها ما يُضاف لاحقًا.",
@@ -2656,9 +2661,9 @@ export const ar: TranslationResources = {
         title: "التنسيق",
         unavailable: "اتصل بهذا المضيف لإدارة التنسيق",
         enableTools: {
-          title: "تمكين أدوات FDE",
+          title: "تمكين أدوات {{brandName}}",
           hint: "سيتمكن الوكلاء من إدارة أشجار العمل والوكلاء والجداول الزمنية",
-          accessibilityLabel: "حقن أدوات FDE",
+          accessibilityLabel: "حقن أدوات {{brandName}}",
         },
         systemPrompt: {
           title: "موجه النظام",
@@ -2760,10 +2765,10 @@ export const ar: TranslationResources = {
             "هذا المضيف غير متصل. انتظر حتى يصبح متصلاً بالإنترنت قبل إعادة التشغيل.",
           offlineTitle: "Host غير متصل",
           offlineMessage:
-            "هذا المضيف غير متصل.  يقوم FDE بإعادة الاتصال تلقائيًا - انتظر حتى يتم الاتصال بالإنترنت مرة أخرى قبل إعادة التشغيل.",
+            "هذا المضيف غير متصل.  يقوم {{brandName}} بإعادة الاتصال تلقائيًا - انتظر حتى يتم الاتصال بالإنترنت مرة أخرى قبل إعادة التشغيل.",
           requestFailedTitle: "خطأ",
           requestFailedMessage:
-            "فشل في إرسال طلب إعادة التشغيل.  يقوم FDE بإعادة الاتصال تلقائيًا - حاول مرة أخرى بمجرد ظهور المضيف على أنه متصل بالإنترنت.",
+            "فشل في إرسال طلب إعادة التشغيل.  يقوم {{brandName}} بإعادة الاتصال تلقائيًا - حاول مرة أخرى بمجرد ظهور المضيف على أنه متصل بالإنترنت.",
           dialogFailedMessage: "غير قادر على فتح مربع حوار تأكيد إعادة التشغيل.",
         },
         selfUpdate: {
@@ -2809,7 +2814,8 @@ export const ar: TranslationResources = {
           },
         },
         update: {
-          desktopManagedHint: "يدير FDE Desktop هذا البرنامج الخفي. حدّث FDE Desktop على المضيف.",
+          desktopManagedHint:
+            "يدير {{brandName}} Desktop هذا البرنامج الخفي. حدّث {{brandName}} Desktop على المضيف.",
           title: "Update daemon",
           hint: "Update the daemon to the latest version and restart it",
           confirm: "Update",
@@ -2969,7 +2975,7 @@ export const ar: TranslationResources = {
         newScript: "نص جديد",
         editScript: "تحرير{{name}}",
         runAsService: "تشغيل كخدمة",
-        serviceHint: "يشرف FDE على العملية ويعين منفذًا عبر $PASEO_PORT",
+        serviceHint: "يشرف {{brandName}} على العملية ويعين منفذًا عبر $PASEO_PORT",
         actions: {
           add: "إضافة البرنامج النصي",
           edit: "يحرر",
@@ -2978,7 +2984,7 @@ export const ar: TranslationResources = {
       },
       metadata: {
         title: "توليد البيانات الوصفية",
-        info: "تعليمات خاصة بالمشروع يتم إدخالها في الذكاء الاصطناعي الذي يستخدمه FDE لإنشاء بيانات التعريف - استخدمها لفرض اصطلاحات فريقك مثل تسمية الفرع أو نمط الالتزام أو تنسيق PR",
+        info: "تعليمات خاصة بالمشروع يتم إدخالها في الذكاء الاصطناعي الذي يستخدمه {{brandName}} لإنشاء بيانات التعريف - استخدمها لفرض اصطلاحات فريقك مثل تسمية الفرع أو نمط الالتزام أو تنسيق PR",
         branchName: "اسماء الفروع",
         branchNamePlaceholder: "بادئة الفروع بـ fet/ أو Fix/, mb/ للفروع الشخصية",
         commitMessage: "ارتكاب الرسائل",

@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import {
   ArrowDown,
   ArrowUp,
@@ -1040,7 +1041,7 @@ function AutoArchiveMergedWorkspacesCard({ serverId }: { serverId: string }) {
         <View style={settingsStyles.rowContent}>
           <Text style={settingsStyles.rowTitle}>Archive merged PR workspaces</Text>
           <Text style={settingsStyles.rowHint}>
-            Automatically archive clean FDE workspaces after their pull request is merged
+            Automatically archive clean {brand.name} workspaces after their pull request is merged
           </Text>
         </View>
         <Switch

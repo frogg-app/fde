@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import type { ServerInfoStatusPayload } from "@fde/protocol/messages";
 import type { HostRuntimeSnapshot } from "@/runtime/host-runtime";
 import type { HostConnection, HostProfile } from "@/types/host-connection";
@@ -22,7 +23,7 @@ export function formatAppDiagnosticHeader(input: {
   isDesktopApp: boolean;
   hostCount: number;
 }): string {
-  return formatDiagnosticSection("FDE app diagnostics", [
+  return formatDiagnosticSection(`${brand.name} app diagnostics`, [
     { label: "Collected at", value: new Date().toISOString() },
     { label: "App version", value: input.appVersion ?? "unknown" },
     { label: "Platform", value: input.platform },

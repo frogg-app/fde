@@ -3,4 +3,5 @@
  * speaks HTTP and WebSocket on this single port. Paseo used 6767; typing that
  * port explicitly still works everywhere, only the default moved.
  */
-export const DEFAULT_DAEMON_PORT = 9999;
+import { brand } from "@fde/branding";
+export const DEFAULT_DAEMON_PORT = brand.daemonPort;

@@ -178,7 +178,7 @@ describe("desktop-updates helpers", () => {
     const { buildMacAppleSiliconDownloadUrl } = await loadModuleForPlatform("web");
 
     expect(buildMacAppleSiliconDownloadUrl("v0.1.64")).toBe(
-      "https://github.com/frogg-app/fde/releases/download/v0.1.64/FDE_0.1.64_aarch64.dmg",
+      "https://github.com/frogg-app/fde/releases/download/v0.1.64/FDE-0.1.64-aarch64.dmg",
     );
     expect(buildMacAppleSiliconDownloadUrl(null)).toBeNull();
   });

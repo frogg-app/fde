@@ -4,7 +4,7 @@ import { View, Text, Pressable } from "react-native";
 import { StyleSheet, useUnistyles } from "react-native-unistyles";
 import { useRouter } from "expo-router";
 import { FolderOpen, Inbox, Plug, Smartphone } from "lucide-react-native";
-import { FdeLogo } from "@/components/icons/fde-logo";
+import { BrandLogo } from "@/components/icons/brand-logo";
 import { MenuHeader } from "@/components/headers/menu-header";
 import { useOpenAddProject } from "@/hooks/use-open-add-project";
 import { useHostChooser } from "@/hosts/host-chooser";
@@ -91,7 +91,7 @@ export function OpenProjectScreen() {
       <View style={styles.content}>
         <TitlebarDragRegion />
         <View style={styles.logo}>
-          <FdeLogo size={52} />
+          <BrandLogo size={52} />
         </View>
         <View style={styles.tiles}>
           <HomeTile
