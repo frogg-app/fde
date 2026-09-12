@@ -10,7 +10,7 @@ use serde_json::{json, Value};
 
 pub const DIRNAME: &str = "daemon";
 const CURRENT_MARKER: &str = "current";
-pub const RELEASE_BASE: &str = "https://github.com/frogg-app/fde/releases/download";
+pub const RELEASE_BASE: &str = crate::branding::RELEASE_BASE;
 
 /// nodejs.org / bundle platform name for the running OS.
 pub fn platform_name() -> &'static str {
@@ -38,25 +38,23 @@ fn is_windows() -> bool {
 
 /// `fde-daemon-<version>-<platform>-<arch>.tar.gz` (or `.zip` on Windows).
 pub fn archive_name(version: &str) -> String {
-    let extension = if is_windows() { "zip" } else { "tar.gz" };
-    format!(
-        "fde-daemon-{version}-{}-{}.{extension}",
-        platform_name(),
-        arch_name()
-    )
+    crate::branding::daemon_artifact(version, platform_name(), arch_name())
 }
 
 /// Default download URL of a release bundle. `FDE_DAEMON_BUNDLE_URL` replaces
 /// it wholesale (a `file://` or http URL of the archive; the checksum sidecar
 /// is that URL plus `.sha256`).
-pub fn archive_url(version: &str) -> String {
-    if let Some(url) = std::env::var("FDE_DAEMON_BUNDLE_URL")
-        .ok()
-        .filter(|v| !v.trim().is_empty())
-    {
-        return url;
+pub fn archive_url(version: &str) -> Result<String, String> {
+    if let Some(url) = crate::branding::env_value("DAEMON_BUNDLE_URL") {
+        return Ok(url);
     }
-    format!("{RELEASE_BASE}/v{version}/{}", archive_name(version))
+    if RELEASE_BASE.is_empty() {
+        return Err("No daemon distribution source configured for this product".into());
+    }
+    Ok(format!(
+        "{RELEASE_BASE}/download/v{version}/{}",
+        archive_name(version)
+    ))
 }
 
 /// An unpacked bundle directory that passed the layout check.
@@ -79,9 +77,11 @@ impl InstalledBundle {
 
     /// `bin/fde` (or `bin/fde.cmd`): what the daemon gets as `PASEO_CLI`.
     pub fn launcher(&self) -> PathBuf {
-        self.dir
-            .join("bin")
-            .join(if is_windows() { "fde.cmd" } else { "fde" })
+        self.dir.join("bin").join(if is_windows() {
+            format!("{}.cmd", crate::branding::CLI_NAME)
+        } else {
+            crate::branding::CLI_NAME.to_string()
+        })
     }
 }
 
@@ -114,6 +114,9 @@ pub fn validate_bundle_dir(dir: &Path) -> Result<String, String> {
         .and_then(|raw| {
             serde_json::from_str(&raw).map_err(|e| format!("bundle manifest invalid: {e}"))
         })?;
+    if !crate::branding::matches_identity(manifest.get("brand")) {
+        return Err("Daemon bundle belongs to another product".into());
+    }
     let version = manifest
         .get("version")
         .and_then(Value::as_str)
@@ -206,7 +209,11 @@ impl BundleStore {
         for entry in entries.flatten() {
             let name = entry.file_name();
             let name = name.to_string_lossy();
-            if entry.path().is_dir() && name != keep && !name.starts_with('.') {
+            if entry.path().is_dir()
+                && name != keep
+                && !name.starts_with('.')
+                && validate_bundle_dir(&entry.path()).is_ok()
+            {
                 log::info!("sidecar: pruning old bundle {}", entry.path().display());
                 let _ = fs::remove_dir_all(entry.path());
             }
@@ -242,7 +249,7 @@ pub(crate) fn write_fake_bundle(dir: &Path, version: &str) {
     fs::write(&node, "").unwrap();
     fs::write(
         dir.join("manifest.json"),
-        json!({ "version": version, "platform": platform_name(), "arch": arch_name() }).to_string(),
+        json!({ "version": version, "platform": platform_name(), "arch": arch_name(), "brand": crate::branding::identity() }).to_string(),
     )
     .unwrap();
 }
@@ -257,6 +264,7 @@ mod tests {
         assert!(name.starts_with("fde-daemon-0.1.6-"));
         assert!(name.ends_with(".tar.gz") || name.ends_with(".zip"));
         assert!(archive_url("0.1.6")
+            .unwrap()
             .starts_with("https://github.com/frogg-app/fde/releases/download/v0.1.6/"));
     }
 

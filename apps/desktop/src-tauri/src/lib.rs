@@ -3,6 +3,9 @@
 //! See `docs/desktop-shell.md` for the design. The JS bridge injected into the
 //! page lives in `../bridge.js` (built from `../../src/bridge.ts`).
 
+#[path = "../../../../packages/branding/native/runtime.rs"]
+pub mod branding;
+
 mod app_log;
 mod commands;
 mod deep_link;

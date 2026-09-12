@@ -1,7 +1,6 @@
 import { parseArgs } from "node:util";
 import { mkdir, copyFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { execFileSync } from "node:child_process";
 import { z } from "zod";
 import { BrandManifestSchema } from "../../packages/branding/src/schema.js";
 import { validateAssets } from "./branding/assets.mjs";
@@ -53,15 +52,6 @@ if (command === "init") {
   );
 } else if (command === "prepare") {
   const build = await prepareBrand(values.brand);
-  execFileSync(
-    process.execPath,
-    [
-      path.join(root, "node_modules/typescript/bin/tsc"),
-      "-p",
-      path.join(root, "packages/branding/tsconfig.json"),
-    ],
-    { cwd: root, stdio: "inherit" },
-  );
   process.stdout.write(`Brand prepared: ${build.brand.name} (${build.fingerprint.slice(0, 12)})\n`);
 } else if (command === "schema") {
   await writeFile(

@@ -59,7 +59,7 @@ pub async fn install_from_url(
 
 /// Installs the release bundle for `version` (or `FDE_DAEMON_BUNDLE_URL`).
 pub async fn install_version(sidecar: &Sidecar, version: &str) -> Result<InstalledBundle, String> {
-    install_from_url(sidecar, &archive_url(version), version).await
+    install_from_url(sidecar, &archive_url(version)?, version).await
 }
 
 async fn run_install(

@@ -5,7 +5,7 @@ import { listenToDesktopEvent, type DesktopEventUnlisten } from "@/desktop/elect
 import { isWeb } from "@/constants/platform";
 import { i18n } from "@/i18n/i18next";
 
-export type DesktopUpdateStrategy = "tauri-signed" | "github-release";
+export type DesktopUpdateStrategy = "tauri-signed" | "github-release" | "disabled";
 
 /**
  * How the shell applies the update once downloaded (`src/updates/assets.rs`):
@@ -97,7 +97,9 @@ export function shouldShowDesktopUpdateSection(): boolean {
 }
 
 export function parseDesktopUpdateStrategy(value: unknown): DesktopUpdateStrategy | null {
-  return value === "tauri-signed" || value === "github-release" ? value : null;
+  return value === "tauri-signed" || value === "github-release" || value === "disabled"
+    ? value
+    : null;
 }
 
 const INSTALL_KINDS: readonly DesktopUpdateInstallKind[] = [

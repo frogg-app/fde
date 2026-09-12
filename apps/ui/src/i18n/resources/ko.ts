@@ -1332,6 +1332,7 @@ export const ko: TranslationResources = {
         title: "업데이트",
         currentVersion: "현재 버전",
         strategyGithub: "업데이트는 GitHub 릴리스에서 다운로드됩니다.",
+        strategyDisabled: "이 배포판에서는 업데이트가 비활성화되어 있습니다.",
         strategySigned: "업데이트는 서명된 Tauri 업데이터로 검증됩니다.",
         autoCheck: {
           title: "자동으로 확인",

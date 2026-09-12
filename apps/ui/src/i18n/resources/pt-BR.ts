@@ -1350,6 +1350,7 @@ export const ptBR: TranslationResources = {
         title: "Atualizações",
         currentVersion: "Versão atual",
         strategyGithub: "As atualizações são baixadas das releases do GitHub.",
+        strategyDisabled: "As atualizações estão desativadas para esta distribuição.",
         strategySigned: "As atualizações são verificadas pelo atualizador assinado do Tauri.",
         autoCheck: {
           title: "Verificar automaticamente",

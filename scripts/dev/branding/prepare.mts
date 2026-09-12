@@ -1,3 +1,5 @@
+import { execFileSync } from "node:child_process";
+import { acquireLock, assertBuildAvailable } from "./locks.mjs";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
@@ -7,17 +9,8 @@ import { outputRoot, root, uiOutput, resolveBrand } from "./resolve.mjs";
 
 export async function prepareBrand(directory?: string): Promise<ReturnType<typeof resolveBrand>> {
   const build = resolveBrand(directory);
-  const lock = path.join(root, ".generated/branding.lock");
-  await mkdir(path.dirname(lock), { recursive: true });
-  try {
-    await mkdir(lock);
-  } catch (error) {
-    if (!(error instanceof Error) || !("code" in error) || error.code !== "EEXIST") throw error;
-    throw new Error(
-      "Another brand preparation is active in this worktree. Use separate worktrees for concurrent brand builds.",
-      { cause: error },
-    );
-  }
+  await assertBuildAvailable(build);
+  const release = await acquireLock("prepare", build);
   try {
     const stamp = path.join(outputRoot, "fingerprint");
     const same = existsSync(stamp) && (await readFile(stamp, "utf8")).trim() === build.fingerprint;
@@ -28,9 +21,20 @@ export async function prepareBrand(directory?: string): Promise<ReturnType<typeo
       await generateAssets(build);
     }
     await generateConfig(build);
-    await writeFile(stamp, build.fingerprint + "\n");
+    if (!same || !existsSync(path.join(root, "packages/branding/dist/runtime.js"))) {
+      execFileSync(
+        process.execPath,
+        [
+          path.join(root, "node_modules/typescript/bin/tsc"),
+          "-p",
+          path.join(root, "packages/branding/tsconfig.json"),
+        ],
+        { cwd: root, stdio: "inherit" },
+      );
+    }
+    if (!same) await writeFile(stamp, build.fingerprint + "\n");
     return build;
   } finally {
-    await rm(lock, { recursive: true, force: true });
+    await release();
   }
 }

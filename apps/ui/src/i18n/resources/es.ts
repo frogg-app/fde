@@ -1359,6 +1359,7 @@ export const es: TranslationResources = {
         title: "Actualizaciones",
         currentVersion: "Versión actual",
         strategyGithub: "Las actualizaciones se descargan desde las releases de GitHub.",
+        strategyDisabled: "Las actualizaciones están desactivadas para esta distribución.",
         strategySigned: "Las actualizaciones se verifican con el actualizador firmado de Tauri.",
         autoCheck: {
           title: "Comprobar automáticamente",

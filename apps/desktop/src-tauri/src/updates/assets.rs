@@ -36,11 +36,17 @@ impl AssetKind {
     pub fn asset_name(self, version: &str, arch: &str) -> String {
         match self {
             // Both Windows assets are zips: GitHub rejects raw .exe release assets.
-            AssetKind::WindowsInstaller => format!("FDE-{version}-x64-setup.zip"),
-            AssetKind::WindowsPortable => format!("FDE-{version}-x64-portable.zip"),
-            AssetKind::LinuxAppImage => format!("FDE-{version}-x86_64.AppImage"),
-            AssetKind::LinuxDeb => format!("FDE-{version}-amd64.deb"),
-            AssetKind::MacDmg => format!("FDE-{version}-{arch}.dmg"),
+            AssetKind::WindowsInstaller => {
+                crate::branding::desktop_artifact(version, "x64-setup.zip")
+            }
+            AssetKind::WindowsPortable => {
+                crate::branding::desktop_artifact(version, "x64-portable.zip")
+            }
+            AssetKind::LinuxAppImage => {
+                crate::branding::desktop_artifact(version, "x86_64.AppImage")
+            }
+            AssetKind::LinuxDeb => crate::branding::desktop_artifact(version, "amd64.deb"),
+            AssetKind::MacDmg => crate::branding::desktop_artifact(version, &format!("{arch}.dmg")),
         }
     }
 }

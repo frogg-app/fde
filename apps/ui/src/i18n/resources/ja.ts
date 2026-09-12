@@ -1335,6 +1335,7 @@ export const ja: TranslationResources = {
         title: "アップデート",
         currentVersion: "現在のバージョン",
         strategyGithub: "アップデートは GitHub リリースからダウンロードされます。",
+        strategyDisabled: "この配布版では更新が無効になっています。",
         strategySigned: "アップデートは署名付き Tauri アップデーターで検証されます。",
         autoCheck: {
           title: "自動的に確認",

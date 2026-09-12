@@ -7,7 +7,7 @@ use percent_encoding::percent_decode_str;
 use serde::Serialize;
 use url::Url;
 
-pub const SCHEME: &str = "paseo";
+pub const SCHEME: &str = crate::branding::SCHEME;
 const PAIRING_HOST: &str = "pair";
 const OFFER_FRAGMENT_PREFIX: &str = "offer=";
 

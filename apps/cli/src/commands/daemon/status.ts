@@ -1,3 +1,4 @@
+import { matchesBrand } from "@fde/branding/identity";
 import { brand } from "@fde/branding";
 import type { Command } from "commander";
 import { createRequire } from "node:module";
@@ -256,7 +257,15 @@ async function probeDaemonOverWebsocket(args: {
     return { connectedDaemon: "unreachable" };
   }
 
-  const daemonVersion = client.getLastServerInfoMessage()?.version ?? null;
+  const serverInfo = client.getLastServerInfoMessage();
+  if (!matchesBrand(brand, serverInfo?.brand)) {
+    await client.close().catch(() => undefined);
+    return {
+      connectedDaemon: "unreachable",
+      note: `Port ${host} belongs to another product; configure a separate daemon port.`,
+    };
+  }
+  const daemonVersion = serverInfo?.version ?? null;
   try {
     const statusPayload = await client.getDaemonStatus({
       timeout: DAEMON_STATUS_PROBE_TIMEOUT_MS,

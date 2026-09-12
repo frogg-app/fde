@@ -1309,6 +1309,7 @@ export const zhCN: TranslationResources = {
         title: "更新",
         currentVersion: "当前版本",
         strategyGithub: "更新从 GitHub releases 下载。",
+        strategyDisabled: "此发行版已禁用更新。",
         strategySigned: "更新由已签名的 Tauri 更新器验证。",
         autoCheck: {
           title: "自动检查",

@@ -229,6 +229,26 @@ export function DesktopUpdatesSection({ appVersion }: { appVersion: string | nul
     return null;
   }
 
+  if (brand.distribution.updateMode === "disabled" || strategy === "disabled") {
+    return (
+      <SettingsSection title={t("desktop.updates.section.title")} testID="desktop-updates-section">
+        <View style={settingsStyles.card}>
+          <View style={settingsStyles.row}>
+            <View style={settingsStyles.rowContent}>
+              <Text style={settingsStyles.rowTitle}>
+                {t("desktop.updates.section.currentVersion")}
+              </Text>
+              <Text style={settingsStyles.rowHint}>
+                {t("desktop.updates.section.strategyDisabled")}
+              </Text>
+            </View>
+            <Text style={styles.valueText}>{formatVersionWithPrefix(appVersion)}</Text>
+          </View>
+        </View>
+      </SettingsSection>
+    );
+  }
+
   const lastCheckedText = formatLastChecked(t, lastCheckedAt, availableUpdate?.checkedAt);
   const showAvailable =
     availableUpdate !== null && (status === "available" || status === "pending" || isInstalling);

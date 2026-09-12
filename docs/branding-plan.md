@@ -174,3 +174,9 @@ integration and mobile package/device verification remain separate checkpoints.
 Daemon discovery and server information now include an additive public brand identity. Homes, default ports, service names, launchers, child-process homes, pairing schemes and CLI copy resolve from the selected product. Custom products have no implicit relay, pairing host or update repository. Legacy home migration and legacy distribution metadata remain accepted for FDE only. Bundle replacement, PID-lock recovery and lifecycle shutdown verify ownership. Pairing HTML escapes product names and uses the selected appearance.
 
 Validation: 80 existing CLI lifecycle tests passed; three new custom-distribution regression tests passed; 32 daemon ownership, home-migration, discovery and pairing tests passed, including three custom-brand tests. Server and CLI typechecks and changed-source lint passed. Service definitions now quote paths containing spaces and escape XML values.
+
+### Native build milestone
+
+The Tauri shell and experimental Rust daemon consume the same generated identity constants. Native homes, window titles, URL schemes, sidecar launchers, bundle validation, release assets and updater selection now follow the selected product. Disabled updates make no requests; custom signed updates do not downgrade to the unsigned path. The desktop build wrapper holds a worktree branding lease and verifies the web export fingerprint before packaging. Cargo preparation works for direct native checks as well as the wrapper. Version synchronization now includes the experimental daemon and native lockfiles.
+
+Validation: desktop Rust tests passed (134 passed, one existing ignored test); experimental Rust daemon tests passed (55); Acme desktop `cargo check` passed. UI and CLI typechecks passed. Platform packaging and interactive installation acceptance remain to be exercised in the distribution milestone and CI.

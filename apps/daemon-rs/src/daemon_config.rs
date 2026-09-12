@@ -66,16 +66,10 @@ pub struct Loaded {
 
 /// `$FDE_HOME`, else `$PASEO_HOME`, else `~/.fde`.
 pub fn resolve_home() -> Option<PathBuf> {
-    for key in ["FDE_HOME", "PASEO_HOME"] {
-        if let Ok(value) = std::env::var(key) {
-            if !value.trim().is_empty() {
-                return Some(PathBuf::from(value));
-            }
-        }
-    }
-    std::env::var("HOME")
-        .ok()
-        .map(|h| Path::new(&h).join(".fde"))
+    let base = std::env::var("HOME")
+        .or_else(|_| std::env::var("USERPROFILE"))
+        .ok()?;
+    Some(crate::branding::home_path(PathBuf::from(base)))
 }
 
 pub fn load(home: Option<&Path>) -> Loaded {

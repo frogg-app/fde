@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile as writeRaw } from "node:fs/promises";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { root, outputRoot, uiOutput, type BrandBuild } from "./resolve.mjs";
@@ -88,6 +88,9 @@ export async function generateConfig(build: BrandBuild): Promise<void> {
   );
   const constants: Record<string, string | number | boolean> = {
     ID: brand.id,
+    VERSION: version,
+    CONFIG_FINGERPRINT: fingerprint,
+    SOURCE_REVISION: revision,
     NAME: brand.name,
     FULL_NAME: brand.fullName,
     APPLICATION_ID: brand.applicationId,
@@ -116,4 +119,13 @@ function rustType(value: string | number | boolean): string {
   if (typeof value === "number") return "u16";
   if (typeof value === "boolean") return "bool";
   return "&str";
+}
+
+async function writeFile(file: string, contents: string): Promise<void> {
+  try {
+    if ((await readFile(file, "utf8")) === contents) return;
+  } catch {
+    /* New output. */
+  }
+  await writeRaw(file, contents);
 }

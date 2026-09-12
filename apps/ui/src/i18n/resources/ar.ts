@@ -1322,6 +1322,7 @@ export const ar: TranslationResources = {
         title: "التحديثات",
         currentVersion: "الإصدار الحالي",
         strategyGithub: "يتم تنزيل التحديثات من إصدارات GitHub.",
+        strategyDisabled: "التحديثات معطّلة لهذا الإصدار.",
         strategySigned: "يتم التحقق من التحديثات بواسطة محدّث Tauri الموقّع.",
         autoCheck: {
           title: "التحقق تلقائيًا",

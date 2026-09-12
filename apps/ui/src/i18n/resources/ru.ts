@@ -1343,6 +1343,7 @@ export const ru: TranslationResources = {
         title: "Обновления",
         currentVersion: "Текущая версия",
         strategyGithub: "Обновления загружаются из релизов GitHub.",
+        strategyDisabled: "Обновления отключены для этой сборки.",
         strategySigned: "Обновления проверяются подписанным обновлятором Tauri.",
         autoCheck: {
           title: "Проверять автоматически",

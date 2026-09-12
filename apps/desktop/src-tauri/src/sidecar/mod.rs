@@ -24,7 +24,7 @@ use bundle::BundleStore;
 pub use lifecycle::{LaunchConfig, NOT_INSTALLED};
 
 pub const INSTALL_EVENT: &str = "paseo:event:local-daemon-install-event";
-pub const DEFAULT_PORT: u16 = 9999;
+pub const DEFAULT_PORT: u16 = crate::branding::DEFAULT_PORT;
 
 pub type EventSink = Arc<dyn Fn(Value) + Send + Sync>;
 
@@ -103,17 +103,7 @@ pub fn register(app: &App) -> tauri::Result<()> {
 
 /// `$FDE_HOME`, the legacy `$PASEO_HOME`, or `~/.fde`, as the daemon resolves it.
 pub fn paseo_home<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
-    for key in ["FDE_HOME", "PASEO_HOME"] {
-        if let Ok(home) = std::env::var(key) {
-            if !home.trim().is_empty() {
-                return PathBuf::from(home);
-            }
-        }
-    }
-    app.path()
-        .home_dir()
-        .map(|dir| dir.join(".fde"))
-        .unwrap_or_default()
+    crate::branding::home_path(app.path().home_dir().unwrap_or_default())
 }
 
 fn daemon_settings<R: Runtime>(app: &AppHandle<R>) -> Value {

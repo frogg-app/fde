@@ -1332,6 +1332,7 @@ export const en = {
         title: "Updates",
         currentVersion: "Current version",
         strategyGithub: "Updates are downloaded from GitHub releases.",
+        strategyDisabled: "Updates are disabled for this distribution.",
         strategySigned: "Updates are verified by the signed Tauri updater.",
         autoCheck: {
           title: "Check automatically",
