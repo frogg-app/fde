@@ -40,10 +40,20 @@ export type DaemonProbe = (httpBase: string) => Promise<{ version: string; healt
 export async function probeDaemon(
   httpBase: string,
 ): Promise<{ version: string; healthy: boolean }> {
-  const identity = await daemonHttpJson<IdentityShape>({ base: httpBase, path: "/api/identity" });
-  const health = await daemonHttpJson<HealthShape>({ base: httpBase, path: "/api/health" });
+  let gatewayVersion: string | null = null;
+  const identity = await daemonHttpJson<IdentityShape>({
+    base: httpBase,
+    path: "/api/identity",
+    onResponse(response) {
+      gatewayVersion = response.headers.get("x-fde-gateway-version");
+    },
+  });
+  const health = await daemonHttpJson<HealthShape>({
+    base: httpBase,
+    path: "/api/health",
+  });
   return {
-    version: typeof identity.version === "string" ? identity.version : "",
+    version: gatewayVersion ?? (typeof identity.version === "string" ? identity.version : ""),
     healthy: health.status === "ok" && matchesBrand(brand, identity.brand),
   };
 }
@@ -68,7 +78,9 @@ export async function waitForDaemonVersion(
       }
       lastReason =
         result.version !== options.expectedVersion
-          ? `daemon reports version ${result.version || "unknown"}, expected ${options.expectedVersion}`
+          ? `daemon reports version ${result.version || "unknown"}, expected ${
+              options.expectedVersion
+            }`
           : "daemon health check did not report ok";
     } catch (error) {
       lastReason = error instanceof Error ? error.message : String(error);
@@ -76,10 +88,16 @@ export async function waitForDaemonVersion(
     if (options.isRunning && now() > gracePeriodEnd) {
       deadPolls = (await options.isRunning()) ? 0 : deadPolls + 1;
       if (deadPolls >= 3) {
-        return { ok: false, reason: `daemon process is not running (${lastReason})` };
+        return {
+          ok: false,
+          reason: `daemon process is not running (${lastReason})`,
+        };
       }
     }
     await sleep(POLL_INTERVAL_MS);
   }
-  return { ok: false, reason: `timed out after ${Math.round(timeoutMs / 1000)}s: ${lastReason}` };
+  return {
+    ok: false,
+    reason: `timed out after ${Math.round(timeoutMs / 1000)}s: ${lastReason}`,
+  };
 }

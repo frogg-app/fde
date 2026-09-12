@@ -22,7 +22,13 @@ same Paseo agent ID. Provider history is not appended again when the canonical t
 primed.
 
 Idle agents remain resident indefinitely. Runtime closure happens only through an explicit lifecycle
-action such as archive, replacement, reload, workspace teardown, or daemon shutdown.
+action such as archive, replacement, reload, workspace teardown, or daemon shutdown
+in legacy mode. With `FDE_EXECUTION_SERVICE=1`, public daemon shutdown closes the
+gateway only. The independent execution service retains these runtimes, including
+idle agents with provider background work. `fde stop --all` explicitly closes
+execution; `fde execution-status` reports its version and residency. This boundary
+initially retains the complete backend, not one process per agent. See the
+[independent execution spec](plans/independent-execution-service.md).
 
 A provider runtime can still die on its own — crash, OOM kill, host suspend. Work the agent parked
 inside that process dies with it: Claude Code's background Bash shells, `Monitor` watches, and
@@ -163,7 +169,10 @@ The collection subscribes to agent and provider descriptor indexes, rather than 
 individual rows subscribe to transcript updates. Discovery reads provider child lists for
 the active workspace and parents the user expands. It refreshes on reconnection. Loading
 and failed requests have visible feedback and a retry action; disconnected child trees
-show saved activity without live status indicators. The provider transcript also exposes
+show saved activity without live status indicators. Initializing and reconnecting hosts
+show Connecting, reserving Offline for disconnected or failed connections; live
+indicators return only when online. Development module reloads retain the existing
+host runtime independently of constructor identity. The provider transcript also exposes
 initial loading, failure/retry, and offline states and refetches after reconnection.
 
 Cross-workspace managed children appear beneath their parent and in their own workspace.

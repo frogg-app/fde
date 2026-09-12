@@ -2,6 +2,7 @@ import { brand } from "@fde/branding";
 import { Command, Option } from "commander";
 import { startCommand } from "./start.js";
 import { runStatusCommand } from "./status.js";
+import { runExecutionStatusCommand } from "./execution-status.js";
 import { runStopCommand } from "./stop.js";
 import { runRestartCommand } from "./restart.js";
 import { runSetPasswordCommand } from "./set-password.js";
@@ -40,10 +41,17 @@ export function addDaemonLifecycleCommands(program: Command): Command {
     .option("--home <path>", `${brand.name} home directory (default: ~/${brand.homeDir})`)
     .action(withOutput(runStatusCommand));
 
+  addJsonOption(
+    program.command("execution-status").description("Show independent agent execution status"),
+  )
+    .option("--home <path>", `${brand.name} home directory (default: ~/${brand.homeDir})`)
+    .action(withOutput(runExecutionStatusCommand));
+
   addJsonOption(program.command("stop").description("Stop the local daemon"))
     .option("--home <path>", `${brand.name} home directory (default: ~/${brand.homeDir})`)
     .option("--timeout <seconds>", "Wait timeout before failing (default: 15)")
     .option("--force", "Send SIGKILL if graceful stop times out")
+    .option("--all", "Also stop independent execution and all of its agents")
     .option("--kill-timeout <seconds>", "Wait after SIGKILL before failing (default: 3)")
     .action(withOutput(runStopCommand));
 

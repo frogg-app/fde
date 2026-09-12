@@ -50,7 +50,7 @@ function fakeService(installDir: string, broken: string[]) {
 const immediate = async () => {};
 
 describe("applyUpdate", () => {
-  test("applies a healthy version, records it, and prunes down to three", async () => {
+  test("applies a healthy version and retains older execution code", async () => {
     const installDir = makeInstallDir();
     for (const version of ["0.1.10", "0.1.11", "0.1.12", "0.1.13", "0.1.14"]) {
       installFakeVersion(installDir, version);
@@ -67,7 +67,12 @@ describe("applyUpdate", () => {
         httpBase: "http://127.0.0.1:1",
         verifyTimeoutMs: 3000,
       },
-      { service: fake.service, probe: fake.probe, log: (line) => log.push(line), sleep: immediate },
+      {
+        service: fake.service,
+        probe: fake.probe,
+        log: (line) => log.push(line),
+        sleep: immediate,
+      },
     );
 
     expect(outcome).toMatchObject({
@@ -80,8 +85,14 @@ describe("applyUpdate", () => {
     expect(readPreviousVersion(installDir)).toBe("0.1.13");
     expect(fake.restarts).toEqual(["0.1.14"]);
     expect(readLastUpdate(installDir)?.status).toBe("applied");
-    expect(listInstalledVersions(installDir)).toEqual(["0.1.14", "0.1.13", "0.1.12"]);
-    expect(log.some((line) => line.includes("pruned 0.1.11, 0.1.10"))).toBe(true);
+    expect(listInstalledVersions(installDir)).toEqual([
+      "0.1.14",
+      "0.1.13",
+      "0.1.12",
+      "0.1.11",
+      "0.1.10",
+    ]);
+    expect(log.some((line) => line.includes("retained installed versions"))).toBe(true);
   });
 
   test("rolls back to previous when the new daemon never becomes healthy", async () => {
@@ -99,7 +110,12 @@ describe("applyUpdate", () => {
         httpBase: "http://127.0.0.1:1",
         verifyTimeoutMs: 2000,
       },
-      { service: fake.service, probe: fake.probe, log: () => {}, sleep: immediate },
+      {
+        service: fake.service,
+        probe: fake.probe,
+        log: () => {},
+        sleep: immediate,
+      },
     );
 
     expect(outcome.status).toBe("rolled_back");
@@ -129,7 +145,12 @@ describe("applyUpdate", () => {
         httpBase: "http://127.0.0.1:1",
         verifyTimeoutMs: 1500,
       },
-      { service: fake.service, probe: fake.probe, log: () => {}, sleep: immediate },
+      {
+        service: fake.service,
+        probe: fake.probe,
+        log: () => {},
+        sleep: immediate,
+      },
     );
     expect(outcome.status).toBe("failed");
     expect(outcome.reason).toMatch(/rollback to 0.1.13 also failed/);
@@ -145,7 +166,12 @@ describe("applyUpdate", () => {
         httpBase: "http://127.0.0.1:1",
         verifyTimeoutMs: 1500,
       },
-      { service: lonelyFake.service, probe: lonelyFake.probe, log: () => {}, sleep: immediate },
+      {
+        service: lonelyFake.service,
+        probe: lonelyFake.probe,
+        log: () => {},
+        sleep: immediate,
+      },
     );
     expect(noPrevious.status).toBe("failed");
     expect(noPrevious.reason).toMatch(/no previous version/);
@@ -159,7 +185,12 @@ describe("applyUpdate", () => {
     const fake = fakeService(installDir, []);
     const outcome = await applyUpdate(
       { installDir, version: "0.1.14", previous: "0.1.13", httpBase: null },
-      { service: fake.service, probe: fake.probe, log: () => {}, sleep: immediate },
+      {
+        service: fake.service,
+        probe: fake.probe,
+        log: () => {},
+        sleep: immediate,
+      },
     );
     expect(outcome.status).toBe("applied");
     expect(readPreviousVersion(installDir)).toBeNull();

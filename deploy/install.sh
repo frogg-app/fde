@@ -273,22 +273,23 @@ install_bundle() {
 }
 
 prune_old_versions() {
-  local dir name
-  for dir in "${FDE_INSTALL_DIR}"/versions/*/; do
-    [ -d "${dir}" ] || continue
-    name="$(basename "${dir}")"
-    if [ "${name}" != "${BUNDLE_VERSION}" ] && [ "${name}" != "${PREVIOUS_VERSION}" ]; then
-      validate_bundle_identity "${dir}"
-      rm -rf "${dir}"
-      log "removed old version ${name}"
-    fi
-  done
+  # A daemon using this install may retain any older runtime, even when this
+  # installer has no FDE_EXECUTION_SERVICE environment setting or shares no home.
+  log "retaining installed versions; remove old versions only after stopping all execution"
 }
 
 systemd_quote() { printf '"%s"' "$(printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g; s/%/%%/g')"; }
 xml() { printf '%s' "$1" | sed 's/\&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g'; }
 write_systemd_unit() {
-  local unit_dir unit
+  local unit_dir unit kill_mode execution_env stop_command
+  kill_mode=mixed
+  execution_env=
+  stop_command=
+  if [ "${FDE_EXECUTION_SERVICE:-}" = 1 ]; then
+    kill_mode=process
+    execution_env=Environment=FDE_EXECUTION_SERVICE=1
+    stop_command="ExecStop=$(systemd_quote "${FDE_INSTALL_DIR}/current/bin/${BRAND_CLI}") daemon stop --force"
+  fi
   unit_dir="${XDG_CONFIG_HOME:-${HOME}/.config}/systemd/user"
   unit="${unit_dir}/${SERVICE_NAME}.service"
   if [ -f "${unit}" ] && ! grep -Fq "${FDE_INSTALL_DIR}/current" "${unit}"; then die "service belongs to another installation"; fi
@@ -309,7 +310,9 @@ Environment=$(systemd_quote "${BRAND_ENV_PREFIX}_INSTALL_DIR=${FDE_INSTALL_DIR}"
 ${FDE_HOME:+Environment=$(systemd_quote "${BRAND_ENV_PREFIX}_HOME=${FDE_HOME}")}
 Restart=on-failure
 RestartSec=5
-KillMode=mixed
+${execution_env}
+${stop_command}
+KillMode=${kill_mode}
 TimeoutStopSec=30
 
 [Install]

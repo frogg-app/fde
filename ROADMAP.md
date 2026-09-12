@@ -11,6 +11,13 @@ preserved work outside this checkout.
 
 ## Implemented baseline
 
+- Opt-in independent execution service and restartable daemon gateway, with
+  execution status, explicit stop-all, retained-version reporting, and isolated
+  turn/permission/supervisor acceptance. [Specification](docs/plans/independent-execution-service.md).
+  An isolated Linux systemd restart/stop also preserves execution. Real-provider
+  background work, Windows/macOS lifecycle, and complete installed-update acceptance
+  remain outstanding; default launches retain the legacy lifecycle.
+
 - Independent desktop/daemon release paths, shared daemon build artifacts, and a
   timed local desktop build command. See [building](docs/building.md#timed-local-desktop-builds).
   Guarded Android native-output reuse remains a follow-up.

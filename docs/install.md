@@ -146,9 +146,8 @@ CLIs (`claude`, `codex`, ...) reachable from that shell are reachable from the
 daemon. Re-run the installer after installing a new agent CLI to refresh it.
 
 The script is non-interactive and idempotent. Re-running it with a newer
-release installs the new version next to the old one, flips `current`, prunes
-older versions (the previous one is kept for rollback), and restarts the
-service.
+release installs the new version next to the old one, flips `current`, retains older versions, and restarts the service. Older
+versions can still supply code to independent execution services.
 
 ### Environment overrides
 
@@ -230,8 +229,9 @@ The outcome lands in `<install dir>/last-update.json`
 step is appended to `<install dir>/self-update.log`. The foreground command waits
 for that file and exits `0` (applied), `2` (rolled back), or `1` (failed). Re-running
 is safe: a version already under `versions/` is not downloaded again, and the
-current version is never re-applied. At most three versions are kept; `current` and
-`previous` are never pruned. The install dir is `FDE_INSTALL_DIR` (the installer
+current version is never re-applied. Installed versions are retained because running execution services may still
+load their code. After stopping execution for every home using this install,
+operators can remove old versions, keeping `current` and `previous` for rollback. The install dir is `FDE_INSTALL_DIR` (the installer
 writes it into the service environment) or `~/.local/share/fde`.
 
 ### From a connected client
@@ -410,3 +410,53 @@ host's platform. The version defaults to the app's own. The listen address
 defaults to `127.0.0.1:9999` because the app reaches the daemon through the
 SSH tunnel; for Docker it becomes `FDE_BIND`/`FDE_PORT`. See
 [desktop-shell.md](desktop-shell.md), "SSH deploy".
+
+## Independent execution (experimental opt-in)
+
+Set `FDE_EXECUTION_SERVICE=1` when starting the daemon to separate its public
+connection gateway from agent execution. An initial stop/start is required to
+leave legacy mode; existing legacy processes cannot be adopted. Start with an
+isolated home when evaluating this mode.
+
+```bash
+FDE_EXECUTION_SERVICE=1 fde start --home /path/to/isolated-home
+fde execution-status --home /path/to/isolated-home
+fde stop --home /path/to/isolated-home
+FDE_EXECUTION_SERVICE=1 fde start --home /path/to/isolated-home
+fde stop --all --home /path/to/isolated-home
+```
+
+`execution-status` shows the installed CLI version, running backend version,
+execution PID, and resident agent count, even while the gateway is stopped.
+`stop` and `restart` retain execution; `stop --all` explicitly stops execution
+and agents, including when the gateway is already absent. An unreachable
+execution owner produces an error, rather than claiming it stopped. Idle agents
+count as resident because providers can own background work between turns.
+The `daemon` prefix remains accepted for these commands.
+
+Updating the gateway does not hot-reload retained backend code. Residents keep
+using the original backend until archived or explicitly stopped. Updater checks
+use the gateway version header and the backend health response; execution status
+reports the retained version separately. Release directories accumulate until
+manually removed after stopping all execution using that installation.
+
+On Linux, `FDE_EXECUTION_SERVICE=1 fde install-service` persists the opt-in and
+writes an `ExecStop` that stops the gateway, with `KillMode=process` to keep
+execution outside the service manager's descendant cleanup. The shell installer
+accepts the same setting. Reinstall the service definition when switching modes;
+a preexisting `KillMode=mixed` unit still kills descendants during service stop.
+The execution process remains in the unit's cgroup: host shutdown, resource limits,
+and explicit cgroup cleanup still apply. An isolated transient-systemd test with
+the compiled CLI preserved the execution PID and pending permission across restart
+and stop; permission resolution after reconnect also passed. Full installed-release
+update/rollback and target-host resource policies remain separate validation.
+
+macOS launchd and Windows managed-service process survival have not been
+validated; their service installers do not persist this experimental setting.
+CLI shutdown avoids descendant tree-kill when an execution-service state directory
+exists, including when the calling shell no longer has the opt-in environment.
+Container replacement and OS reboot stop execution. A gateway stop is not access
+revocation: execution-owned relay and agent MCP connections can remain available.
+
+See [the execution service specification](plans/independent-execution-service.md)
+for process ownership, discovery, compatibility, and validation boundaries.

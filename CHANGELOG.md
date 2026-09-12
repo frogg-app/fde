@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.5.0 - 2026-09-12
+
+- Show Connecting while sidebar agent hosts are reconnecting or not yet initialized,
+  reserving Offline for disconnected or failed connections. Cached activity keeps
+  live indicators hidden until the connection returns.
+- Preserve the existing host runtime during development hot reloads so active
+  connections are not abandoned in favor of an empty connection store.
+- Use the selected product name for the execution process and refresh Nix dependencies.
+- Add opt-in independent execution (`FDE_EXECUTION_SERVICE=1`): the supervised
+  daemon becomes a restartable HTTP/WebSocket gateway while the execution service
+  retains agents, provider turns, permissions, MCP tools, and orchestration.
+- Add `execution-status` and `stop --all`, preserve execution during normal and
+  forced gateway shutdown, and reconnect to a retained runtime even when a later
+  launcher omits the opt-in flag. Idle agents prevent automatic runtime replacement.
+- Preserve original client authorization through the gateway, stream requests and
+  upgrades, and safely recover crash-left Unix sockets. Keep public service URLs
+  separate from private execution/MCP endpoints.
+- Verify updates against the installed gateway version, reconcile completed update
+  handoffs in retained execution, and retain release directories for running code.
+  Linux opt-in service definitions avoid descendant cleanup during gateway stop.
+- Real isolated-process tests prove turn and permission continuity and supervisor
+  reattachment; an isolated Linux systemd restart/stop also preserves execution.
+  Real-provider background work, Windows/macOS lifecycle, and complete installed-update
+  acceptance remain unverified. The feature is not enabled by default or deployed.
+
+- Specify the independent execution boundary, compatibility and lifecycle contracts,
+  rollout, and acceptance criteria in the [implementation spec](docs/plans/independent-execution-service.md).
+
 ## 0.4.1 - 2026-09-12
 
 - Build daemon packages independently of Android and desktop releases. Compile the

@@ -1,3 +1,5 @@
+import type { HostRuntimeConnectionStatus } from "@/runtime/host-runtime";
+import { sidebarConnectionMessage } from "./connection";
 import { memo, useState, useMemo, useCallback } from "react";
 import { Pressable, Text, View, type PressableStateCallbackType } from "react-native";
 import { ChevronDown, ChevronRight } from "lucide-react-native";
@@ -42,7 +44,7 @@ export function SidebarWorkspaceAgents({
   serverId: string;
   workspaceId: string;
 }) {
-  const { discovery, offlineHosts } = useSidebarAgents();
+  const { discovery, connections } = useSidebarAgents();
   const { nodes, expanded, singleRootKey } = useWorkspaceAgentTree();
   const workspaceKey = buildWorkspaceTabPersistenceKey({ serverId, workspaceId });
   const selection = useActiveWorkspaceSelection();
@@ -82,7 +84,7 @@ export function SidebarWorkspaceAgents({
     <View style={styles.tree} testID={`sidebar-agents-${workspaceId}`}>
       {singleRootKey ? (
         <ChildDiscoveryStatus
-          offline={offlineHosts.has(serverId)}
+          connectionStatus={connections.get(serverId) ?? "connecting"}
           load={discovery.get(singleRootKey)}
         />
       ) : null}
@@ -91,7 +93,7 @@ export function SidebarWorkspaceAgents({
           key={node.key}
           node={node}
           discovery={discovery}
-          offline={offlineHosts.has(serverId)}
+          connectionStatus={connections.get(serverId) ?? "connecting"}
           selectedTarget={selectedTarget}
           onOpen={open}
         />
@@ -103,13 +105,13 @@ export function SidebarWorkspaceAgents({
 export const SidebarAgentBranch = memo(function SidebarAgentBranch({
   node,
   discovery,
-  offline,
+  connectionStatus,
   selectedTarget,
   onOpen,
 }: {
   node: SidebarAgentNode;
   discovery: ReadonlyMap<string, ChildDiscovery>;
-  offline: boolean;
+  connectionStatus: HostRuntimeConnectionStatus;
   selectedTarget: WorkspaceTabTarget | null;
   onOpen: (node: SidebarAgentNode) => void;
 }) {
@@ -126,9 +128,9 @@ export const SidebarAgentBranch = memo(function SidebarAgentBranch({
       tooltip: label,
       modified: false,
       icon: getProviderIcon(node.row.provider),
-      statusBucket: offline ? null : statusBucket,
+      statusBucket: connectionStatus === "online" ? statusBucket : null,
     }),
-    [data, label, node.row.provider, offline, statusBucket],
+    [data, label, node.row.provider, connectionStatus, statusBucket],
   );
   const selected = selectedTarget !== null && workspaceTabTargetsEqual(selectedTarget, node.target);
   const load = discovery.get(node.key);
@@ -197,13 +199,13 @@ export const SidebarAgentBranch = memo(function SidebarAgentBranch({
       </View>
       {expanded && canExpand ? (
         <View style={styles.children}>
-          <ChildDiscoveryStatus offline={offline} load={load} />
+          <ChildDiscoveryStatus connectionStatus={connectionStatus} load={load} />
           {node.children.map((child) => (
             <SidebarAgentBranch
               key={child.key}
               node={child}
               discovery={discovery}
-              offline={offline}
+              connectionStatus={connectionStatus}
               selectedTarget={selectedTarget}
               onOpen={onOpen}
             />
@@ -215,14 +217,15 @@ export const SidebarAgentBranch = memo(function SidebarAgentBranch({
 });
 
 function ChildDiscoveryStatus({
-  offline,
+  connectionStatus,
   load,
 }: {
-  offline: boolean;
+  connectionStatus: HostRuntimeConnectionStatus;
   load: ChildDiscovery | undefined;
 }) {
   const { t } = useTranslation();
-  if (offline) return <Text style={styles.detail}>{t("subagents.offline")}</Text>;
+  const message = sidebarConnectionMessage(connectionStatus);
+  if (message) return <Text style={styles.detail}>{t(message)}</Text>;
   if (load?.pending) return <Text style={styles.detail}>{t("common.states.loading")}</Text>;
   if (load?.failed)
     return (

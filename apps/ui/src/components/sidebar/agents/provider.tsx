@@ -5,7 +5,11 @@ import { useShallow } from "zustand/react/shallow";
 import type { DaemonClient } from "@fde/client/internal/daemon-client";
 import { useActiveWorkspaceSelection } from "@/stores/navigation-active-workspace-store";
 import { useSessionStore } from "@/stores/session-store";
-import { getHostRuntimeStore, useHostRuntimeConnectionStatuses } from "@/runtime/host-runtime";
+import {
+  getHostRuntimeStore,
+  useHostRuntimeConnectionStatuses,
+  type HostRuntimeConnectionStatus,
+} from "@/runtime/host-runtime";
 import { refreshProviderSubagents, useProviderSubagentStore } from "@/subagents/provider-store";
 import { buildSidebarAgentTrees, type SidebarAgentHost, type SidebarAgentNode } from "./model";
 
@@ -24,13 +28,13 @@ export interface ChildDiscovery {
 interface SidebarAgentsContextValue {
   trees: ReadonlyMap<string, SidebarAgentNode[]>;
   discovery: ReadonlyMap<string, ChildDiscovery>;
-  offlineHosts: ReadonlySet<string>;
+  connections: ReadonlyMap<string, HostRuntimeConnectionStatus>;
 }
 
 const SidebarAgentsContext = createContext<SidebarAgentsContextValue>({
   trees: new Map(),
   discovery: new Map(),
-  offlineHosts: new Set(),
+  connections: new Map(),
 });
 
 /** One collection subscription; transcript chunks never run a selector for every agent row. */
@@ -126,9 +130,8 @@ export function SidebarAgentsProvider({
         },
       });
     });
-    const offlineHosts = new Set(serverIds.filter((id) => connections.get(id) !== "online"));
-    return { trees, discovery, offlineHosts };
-  }, [trees, parents, queries, serverIds, connections]);
+    return { trees, discovery, connections };
+  }, [trees, parents, queries, connections]);
   return <SidebarAgentsContext.Provider value={value}>{children}</SidebarAgentsContext.Provider>;
 }
 

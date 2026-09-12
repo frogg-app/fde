@@ -778,6 +778,10 @@ export class AgentManager {
     this.mcpBaseUrl = url;
   }
 
+  hasPendingAgentRegistrations(): boolean {
+    return this.agentRegistrationTasks.size > 0;
+  }
+
   prepareForShutdown(): void {
     this.acceptingAgentRegistrations = false;
   }
