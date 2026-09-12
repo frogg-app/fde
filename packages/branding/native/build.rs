@@ -3,6 +3,7 @@ use std::{env, fs, path::PathBuf, process::Command};
 
 pub fn prepare(root: PathBuf) -> PathBuf {
     println!("cargo:rerun-if-env-changed=FDE_BRAND_DIR");
+    println!("cargo:rerun-if-env-changed=FDE_EMBED_DAEMON_ARCHIVE");
     for input in [
         "package.json",
         "deploy",

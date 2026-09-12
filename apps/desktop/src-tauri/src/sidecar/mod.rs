@@ -32,6 +32,7 @@ pub type EventSink = Arc<dyn Fn(Value) + Send + Sync>;
 /// that serialises lifecycle operations.
 pub struct Sidecar {
     pub store: BundleStore,
+    pub embedded_bundle: Option<PathBuf>,
     emit: EventSink,
     progress: Mutex<Option<(u64, Option<u64>)>>,
     installing: AtomicBool,
@@ -42,6 +43,7 @@ impl Sidecar {
     pub fn new(app_data_dir: PathBuf, emit: EventSink) -> Self {
         Self {
             store: BundleStore::new(app_data_dir),
+            embedded_bundle: None,
             emit,
             progress: Mutex::new(None),
             installing: AtomicBool::new(false),
@@ -85,7 +87,15 @@ pub fn register(app: &App) -> tauri::Result<()> {
             log::warn!("failed to emit install event: {error}");
         }
     });
-    let sidecar = Sidecar::new(data_dir, emit);
+    let mut sidecar = Sidecar::new(data_dir, emit);
+    if let Ok(resources) = app.path().resource_dir() {
+        let archive = resources.join("daemon-bundle").join(bundle::archive_name(
+            &app.package_info().version.to_string(),
+        ));
+        if archive.is_file() {
+            sidecar.embedded_bundle = Some(archive);
+        }
+    }
     match sidecar.store.installed() {
         Some(bundle) => log::info!(
             "sidecar: bundle {} installed at {}",

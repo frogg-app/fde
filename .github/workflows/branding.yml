@@ -1,0 +1,138 @@
+name: Branding acceptance
+on:
+  pull_request:
+    paths:
+      - "brands/**"
+      - "packages/branding/**"
+      - "scripts/dev/brand*"
+      - "scripts/dev/branding/**"
+      - "scripts/release/**"
+      - "scripts/ci/branding*"
+      - "apps/desktop/**"
+      - "apps/ui/app.config.js"
+      - "deploy/**"
+      - ".github/**"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: branding-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  ONNXRUNTIME_NODE_INSTALL: skip
+  CI: "true"
+  LEFTHOOK: "0"
+jobs:
+  web-and-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        brand: [brands/fde, brands/example]
+    env:
+      FDE_BRAND_DIR: ${{ matrix.brand }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-node-deps
+      - run: npm run brand:check
+      - run: node scripts/ci/branding-acceptance.mjs
+      - run: node scripts/ci/branding-contribution.mjs
+        env:
+          ALLOW_OFFICIAL_BRAND_CHANGE: ${{ contains(github.event.pull_request.labels.*.name, 'branding:official') && '1' || '0' }}
+      - run: npm run build:server && npm run build:daemon-web-ui
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/ci/branding-browser.mjs
+      - run: node scripts/release/build-daemon-bundle.mjs --target linux-x64 --out-dir dist/bundles
+      - run: node --test scripts/ci/branding-install.test.mjs
+      - run: npx vitest run src/server/orchestration-skills/internal/brand-ownership.test.ts --root packages/server
+      - uses: actions/upload-artifact@v7
+        with:
+          name: branding-runtime-${{ strategy.job-index }}
+          path: |
+            dist/bundles
+            .generated/branding/brand.json
+            .generated/branding/provenance.json
+            .generated/browser
+          include-hidden-files: true
+          retention-days: 7
+  desktop:
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-22.04, windows-latest, macos-latest]
+        brand: [brands/fde, brands/example]
+    env:
+      FDE_BRAND_DIR: ${{ matrix.brand }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-node-deps
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf libssl-dev libgtk-3-dev
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
+          shared-key: branding-${{ matrix.runner }}-${{ strategy.job-index }}
+      - run: npm run build:desktop
+      - run: cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml commands::cli_install
+      - uses: actions/upload-artifact@v7
+        with:
+          name: branding-desktop-${{ strategy.job-index }}
+          path: apps/desktop/src-tauri/target/release/bundle
+          retention-days: 7
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      FDE_BRAND_DIR: brands/example
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-node-deps
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+      - run: node scripts/release/build-android-apk.mjs --variant debug --abi arm64-v8a
+      - uses: actions/upload-artifact@v7
+        with:
+          name: branding-android
+          path: apps/ui/android/app/build/outputs/apk/**/*.apk
+          retention-days: 7
+  ios:
+    runs-on: macos-latest
+    timeout-minutes: 60
+    env:
+      FDE_BRAND_DIR: brands/example
+      APP_VARIANT: development
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-node-deps
+      - run: npm run build:app-deps
+      - working-directory: apps/ui
+        run: npx expo prebuild --platform ios --clean --non-interactive
+      - name: Build unsigned simulator app
+        working-directory: apps/ui
+        shell: bash
+        run: |
+          workspace=$(find ios -maxdepth 1 -name '*.xcworkspace' -print -quit)
+          scheme=$(xcodebuild -list -json -workspace "$workspace" | node -e 'let s="";process.stdin.on("data",c=>s+=c);process.stdin.on("end",()=>process.stdout.write(JSON.parse(s).workspace.schemes[0]))')
+          xcodebuild -workspace "$workspace" -scheme "$scheme" -sdk iphonesimulator -configuration Debug -derivedDataPath ios/build CODE_SIGNING_ALLOWED=NO build
+      - uses: actions/upload-artifact@v7
+        with:
+          name: branding-ios-simulator
+          path: apps/ui/ios/build/Build/Products/Debug-iphonesimulator/*.app
+          retention-days: 7
+  selected-distribution:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/select-brand
+      - uses: ./.github/actions/setup-node-deps
+      - run: npm run brand:check && npm run build:ui

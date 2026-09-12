@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile as writeRaw } from "node:fs/promises";
+import { access, mkdir, readFile, writeFile as writeRaw } from "node:fs/promises";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { root, outputRoot, uiOutput, type BrandBuild } from "./resolve.mjs";
@@ -22,12 +22,21 @@ export async function generateConfig(build: BrandBuild): Promise<void> {
   );
   await writeFile(path.join(outputRoot, "brand.json"), json(brand));
   const iconPath = (name: string) => path.join(outputRoot, "icons", name);
+  const embedded = process.env.FDE_EMBED_DAEMON_ARCHIVE;
+  const resources: Record<string, string> = {};
+  if (embedded) {
+    for (const file of [path.resolve(embedded), path.resolve(embedded) + ".sha256"]) {
+      await access(file);
+      resources[file] = `daemon-bundle/${path.basename(file)}`;
+    }
+  }
   const overlay = {
     productName: brand.name,
     identifier: brand.applicationId,
     version,
     mainBinaryName: brand.desktopBinaryName,
     bundle: {
+      resources,
       publisher: brand.publisher,
       shortDescription: brand.name,
       longDescription: brand.description,

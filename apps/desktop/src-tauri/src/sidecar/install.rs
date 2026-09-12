@@ -59,6 +59,18 @@ pub async fn install_from_url(
 
 /// Installs the release bundle for `version` (or `FDE_DAEMON_BUNDLE_URL`).
 pub async fn install_version(sidecar: &Sidecar, version: &str) -> Result<InstalledBundle, String> {
+    if crate::branding::env_value("DAEMON_BUNDLE_URL").is_none() {
+        if let Some(archive) = &sidecar.embedded_bundle {
+            if archive
+                .file_name()
+                .is_some_and(|name| name == super::bundle::archive_name(version).as_str())
+            {
+                let url = url::Url::from_file_path(archive)
+                    .map_err(|_| "Invalid embedded daemon path")?;
+                return install_from_url(sidecar, url.as_str(), version).await;
+            }
+        }
+    }
     install_from_url(sidecar, &archive_url(version)?, version).await
 }
 
@@ -124,6 +136,8 @@ async fn extract_and_activate(
     let manifest_version = validate_bundle_dir(staging)?;
     let target = sidecar.store.version_dir(&manifest_version);
     if target.exists() {
+        validate_bundle_dir(&target)
+            .map_err(|e| format!("Refusing to replace an unrelated bundle: {e}"))?;
         log::info!(
             "sidecar: replacing existing bundle directory {}",
             target.display()

@@ -1,3 +1,5 @@
+import { prepareEmbeddedDaemon } from "./branding/desktop-bundle.mjs";
+import { createRequire } from "node:module";
 import { checkWebBuild } from "./branding/build-output.mjs";
 /** Keeps one brand active for the lifetime of a build or dev server. */
 import { spawn, execFileSync } from "node:child_process";
@@ -18,7 +20,7 @@ try {
   let command: string;
   let cwd = process.cwd();
   if (target === "tauri") {
-    command = "cargo";
+    command = process.execPath;
     cwd = path.join(root, "apps/desktop");
     const action = args.shift() ?? "build";
     if (action === "build" && !(await checkWebBuild())) {
@@ -29,7 +31,16 @@ try {
         shell: process.platform === "win32",
       });
     }
-    args.unshift("tauri", action, "--config", path.join(outputRoot, "tauri.conf.json"));
+    if (action === "build") {
+      prepareEmbeddedDaemon(build, args);
+      await prepareBrand(build.selected);
+    }
+    args.unshift(
+      createRequire(import.meta.url).resolve("@tauri-apps/cli/tauri.js"),
+      action,
+      "--config",
+      path.join(outputRoot, "tauri.conf.json"),
+    );
   } else {
     command = target === "--" ? args.shift()! : target;
     if (!command) throw new Error("Missing build command");
