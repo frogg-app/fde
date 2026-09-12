@@ -9,8 +9,8 @@ description: >-
   The key covers everything the tree is built against. `runner.os` alone is not
   enough: it reads "Linux" for both ubuntu-22.04 and ubuntu-24.04, so a tree
   carrying native modules (node-pty, sherpa-onnx) compiled on one image would be
-  restored onto the other. `ImageOS` distinguishes them. This is the same trap
-  the desktop job's rust-cache key documents.
+  restored onto the other. Resolve the image version explicitly because hosted
+  runner environment variables are not reliably exposed through the env context.
 
 runs:
   using: composite
@@ -19,6 +19,21 @@ runs:
       with:
         node-version: "22"
         cache: npm
+
+    - name: Resolve native dependency cache identity
+      id: native-runtime
+      shell: bash
+      run: |
+        node <<'JS'
+        const fs = require("node:fs");
+        const os = require("node:os");
+        let image = os.release();
+        if (process.platform === "linux") {
+          const release = fs.readFileSync("/etc/os-release", "utf8");
+          image = release.match(/^VERSION_ID="?([^"\n]+)/m)[1];
+        }
+        fs.appendFileSync(process.env.GITHUB_OUTPUT, `image=${process.platform}-${image}\n`);
+        JS
 
     - name: Restore node_modules
       id: cache
@@ -29,7 +44,7 @@ runs:
           apps/*/node_modules
           packages/*/node_modules
         key: >-
-          node-modules-${{ env.ImageOS }}-${{ runner.arch }}-node22-${{ hashFiles('package-lock.json') }}
+          node-modules-v2-${{ runner.os }}-${{ steps.native-runtime.outputs.image }}-${{ runner.arch }}-node22-${{ hashFiles('package-lock.json') }}
 
     - name: Install dependencies
       # Only on a miss. A hit restored a tree built from this exact lockfile, on

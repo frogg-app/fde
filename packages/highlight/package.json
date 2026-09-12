@@ -1,6 +1,6 @@
 {
   "name": "@fde/highlight",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "files": [
     "dist",
     "!dist/**/*.map",
@@ -20,7 +20,7 @@
     "access": "public"
   },
   "scripts": {
-    "clean": "node ../../scripts/clean-package-dist.mjs",
+    "clean": "node ../../scripts/ci/clean-package-dist.mjs",
     "build": "tsc -p tsconfig.json --incremental false",
     "build:clean": "npm run clean && npm run build",
     "prepack": "npm run build:clean",

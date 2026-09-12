@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.1 - 2026-09-12
+
+- Isolate native dependency caches by operating system, OS image version and
+  architecture. The first 0.6.0 release attempt exposed an inherited cache key
+  collision that restored Linux dependencies on Intel macOS.
+- Repair clean-build helper paths so renamed protocol outputs can be removed
+  before local repackaging. The Electron app and FDE namespace migration remain
+  unchanged from 0.6.0.
+
 ## 0.6.0 - 2026-09-12
 
 - Make Electron the production app-only desktop on Windows, macOS and Linux.
