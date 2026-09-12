@@ -11,8 +11,8 @@ test("manifest lists only platforms with a signature", () => {
     pubDate: "2026-09-02T00:00:00.000Z",
     notes: "notes",
     signatures: {
-      "FDE-0.1.5-x86_64.AppImage": "sig-linux\n",
-      "FDE-0.1.5-aarch64.app.tar.gz": "sig-mac",
+      "FDE-0.1.5-linux-x86_64.AppImage": "sig-linux\n",
+      "FDE-0.1.5-mac-aarch64.app.tar.gz": "sig-mac",
       "FDE-0.1.5-amd64.deb": "not an updater asset",
     },
   });
@@ -23,11 +23,11 @@ test("manifest lists only platforms with a signature", () => {
     platforms: {
       "linux-x86_64": {
         signature: "sig-linux",
-        url: "https://github.com/frogg-app/fde/releases/download/v0.1.5/FDE-0.1.5-x86_64.AppImage",
+        url: "https://github.com/frogg-app/fde/releases/download/v0.1.5/FDE-0.1.5-linux-x86_64.AppImage",
       },
       "darwin-aarch64": {
         signature: "sig-mac",
-        url: "https://github.com/frogg-app/fde/releases/download/v0.1.5/FDE-0.1.5-aarch64.app.tar.gz",
+        url: "https://github.com/frogg-app/fde/releases/download/v0.1.5/FDE-0.1.5-mac-aarch64.app.tar.gz",
       },
     },
   });

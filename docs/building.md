@@ -51,11 +51,11 @@ unsigned; Tauri warns about that and continues. macOS bundles must be built on a
 
 `scripts/release/package-windows-zips.mjs` (the `build:win:zips` step) takes the built
 `fde.exe` from `target/x86_64-pc-windows-msvc/release/` and writes
-`bundle/portable/FDE-<version>-x64-portable.zip`, containing
+`bundle/portable/FDE-<version>-win-x64-portable.zip`, containing
 `FDE-<version>-portable/FDE.exe` and a `README.txt` (no installer, WebView2 required,
 settings under `%APPDATA%\app.frogg.fde`, SmartScreen note). The zip is written with
 Node's `zlib`, no extra dependency. The same step wraps the NSIS installer as
-`bundle/nsis-zip/FDE-<version>-x64-setup.zip` (a single `FDE-<version>-x64-setup.exe`
+`bundle/nsis-zip/FDE-<version>-win-x64-setup.zip` (a single `FDE-<version>-win-x64-setup.exe`
 inside): releases never carry a raw `.exe`, because GitHub rejects those uploads and
 Windows blocks bare downloaded executables. It can be re-run on its own after a Tauri Windows build;
 the version comes from the root `package.json`. A native Windows build (`cargo tauri build`

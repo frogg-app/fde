@@ -2,10 +2,9 @@
 // Copies the bundles `cargo tauri build` wrote under <release-dir>/bundle/ into one
 // flat directory with the release asset names documented in docs/ci.md:
 //
-//   FDE-<version>-amd64.deb            FDE-<version>-x86_64.AppImage
-//   FDE-<version>-x64-setup.zip        FDE-<version>-x64-portable.zip
-//   FDE-<version>-aarch64.dmg          FDE-<version>-x86_64.dmg
-//   FDE-<version>-<arch>.app.tar.gz    (macOS updater bundle)
+//   FDE-<version>-linux-x86_64.deb      FDE-<version>-linux-x86_64.AppImage
+//   FDE-<version>-win-x64-setup.zip     FDE-<version>-win-x64-portable.zip
+//   FDE-<version>-mac-<arch>.dmg        FDE-<version>-mac-<arch>.app.tar.gz
 //
 // A `.sig` next to any bundle (present when TAURI_SIGNING_PRIVATE_KEY was set)
 // is copied under the renamed name plus `.sig`.
@@ -33,22 +32,34 @@ const REPO_ROOT = path.resolve(here, "../..");
 /** Bundle kinds per platform: where Tauri writes them and what they become. */
 const BUNDLE_RULES = {
   linux: [
-    { dir: "bundle/deb", extension: ".deb", name: (v) => `FDE-${v}-amd64.deb` },
-    { dir: "bundle/appimage", extension: ".AppImage", name: (v) => `FDE-${v}-x86_64.AppImage` },
+    { dir: "bundle/deb", extension: ".deb", name: (v) => `FDE-${v}-linux-x86_64.deb` },
+    {
+      dir: "bundle/appimage",
+      extension: ".AppImage",
+      name: (v) => `FDE-${v}-linux-x86_64.AppImage`,
+    },
   ],
   // Windows ships zipped: GitHub rejects raw .exe release assets (and Windows
   // itself blocks bare downloaded exes). scripts/release/package-windows-zips.mjs
   // writes both zips before this runs.
   windows: [
-    { dir: "bundle/nsis-zip", extension: "-setup.zip", name: (v) => `FDE-${v}-x64-setup.zip` },
-    { dir: "bundle/portable", extension: ".zip", name: (v) => `FDE-${v}-x64-portable.zip` },
+    {
+      dir: "bundle/nsis-zip",
+      extension: "-setup.zip",
+      name: (v) => `FDE-${v}-win-x64-setup.zip`,
+    },
+    {
+      dir: "bundle/portable",
+      extension: ".zip",
+      name: (v) => `FDE-${v}-win-x64-portable.zip`,
+    },
   ],
   macos: [
-    { dir: "bundle/dmg", extension: ".dmg", name: (v, arch) => `FDE-${v}-${arch}.dmg` },
+    { dir: "bundle/dmg", extension: ".dmg", name: (v, arch) => `FDE-${v}-mac-${arch}.dmg` },
     {
       dir: "bundle/macos",
       extension: ".app.tar.gz",
-      name: (v, arch) => `FDE-${v}-${arch}.app.tar.gz`,
+      name: (v, arch) => `FDE-${v}-mac-${arch}.app.tar.gz`,
     },
   ],
 };
@@ -81,10 +92,12 @@ export function planBundleRenames({ platform, arch, version, files }) {
       continue;
     }
     const target = rule.name(version, arch);
-    // A dev checkout's target dir keeps every version ever built. When several
-    // bundles match, the one already carrying this release's name wins; anything
-    // else is genuinely ambiguous and the rename would be a guess.
-    const named = matches.filter((file) => path.posix.basename(file) === target);
+    // A dev checkout's target dir keeps every version ever built. Prefer the
+    // exact version being collected whether the source uses Tauri's underscores
+    // or our former dashed release name.
+    const escapedVersion = version.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const versionPattern = new RegExp(`[_-]${escapedVersion}[_-]`);
+    const named = matches.filter((file) => versionPattern.test(path.posix.basename(file)));
     let picked = null;
     if (named.length === 1) {
       picked = named[0];

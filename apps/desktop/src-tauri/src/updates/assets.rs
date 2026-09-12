@@ -3,11 +3,11 @@
 //!
 //! | kind              | asset                          |
 //! | ----------------- | ------------------------------ |
-//! | Windows installer | `FDE-<v>-x64-setup.zip`        |
-//! | Windows portable  | `FDE-<v>-x64-portable.zip`     |
-//! | Linux AppImage    | `FDE-<v>-x86_64.AppImage`      |
-//! | Linux deb         | `FDE-<v>-amd64.deb`            |
-//! | macOS             | `FDE-<v>-<aarch64|x86_64>.dmg` |
+//! | Windows installer | `FDE-<v>-win-x64-setup.zip`         |
+//! | Windows portable  | `FDE-<v>-win-x64-portable.zip`      |
+//! | Linux AppImage    | `FDE-<v>-linux-x86_64.AppImage`     |
+//! | Linux deb         | `FDE-<v>-linux-x86_64.deb`          |
+//! | macOS             | `FDE-<v>-mac-<aarch64|x86_64>.dmg` |
 
 use std::path::Path;
 
@@ -36,11 +36,11 @@ impl AssetKind {
     pub fn asset_name(self, version: &str, arch: &str) -> String {
         match self {
             // Both Windows assets are zips: GitHub rejects raw .exe release assets.
-            AssetKind::WindowsInstaller => format!("FDE-{version}-x64-setup.zip"),
-            AssetKind::WindowsPortable => format!("FDE-{version}-x64-portable.zip"),
-            AssetKind::LinuxAppImage => format!("FDE-{version}-x86_64.AppImage"),
-            AssetKind::LinuxDeb => format!("FDE-{version}-amd64.deb"),
-            AssetKind::MacDmg => format!("FDE-{version}-{arch}.dmg"),
+            AssetKind::WindowsInstaller => format!("FDE-{version}-win-x64-setup.zip"),
+            AssetKind::WindowsPortable => format!("FDE-{version}-win-x64-portable.zip"),
+            AssetKind::LinuxAppImage => format!("FDE-{version}-linux-x86_64.AppImage"),
+            AssetKind::LinuxDeb => format!("FDE-{version}-linux-x86_64.deb"),
+            AssetKind::MacDmg => format!("FDE-{version}-mac-{arch}.dmg"),
         }
     }
 }
@@ -158,27 +158,27 @@ mod tests {
     fn names_assets_like_the_release_workflow() {
         assert_eq!(
             AssetKind::WindowsInstaller.asset_name("0.2.0", "x86_64"),
-            "FDE-0.2.0-x64-setup.zip"
+            "FDE-0.2.0-win-x64-setup.zip"
         );
         assert_eq!(
             AssetKind::WindowsPortable.asset_name("0.2.0", "x86_64"),
-            "FDE-0.2.0-x64-portable.zip"
+            "FDE-0.2.0-win-x64-portable.zip"
         );
         assert_eq!(
             AssetKind::LinuxAppImage.asset_name("0.2.0", "x86_64"),
-            "FDE-0.2.0-x86_64.AppImage"
+            "FDE-0.2.0-linux-x86_64.AppImage"
         );
         assert_eq!(
             AssetKind::LinuxDeb.asset_name("0.2.0", "x86_64"),
-            "FDE-0.2.0-amd64.deb"
+            "FDE-0.2.0-linux-x86_64.deb"
         );
         assert_eq!(
             AssetKind::MacDmg.asset_name("0.2.0", "aarch64"),
-            "FDE-0.2.0-aarch64.dmg"
+            "FDE-0.2.0-mac-aarch64.dmg"
         );
         assert_eq!(
             AssetKind::MacDmg.asset_name("0.2.0-beta.1", "x86_64"),
-            "FDE-0.2.0-beta.1-x86_64.dmg"
+            "FDE-0.2.0-beta.1-mac-x86_64.dmg"
         );
     }
 

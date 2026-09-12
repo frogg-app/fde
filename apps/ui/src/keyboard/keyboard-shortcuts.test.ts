@@ -636,6 +636,7 @@ describe("keyboard-shortcut help sections", () => {
       context: { isMac: true, isDesktop: false },
       expectedKeys: {
         "new-agent": ["mod", "O"],
+        "add-host": ["ctrl", "H"],
         "workspace-tab-new": ["mod", "T"],
         "workspace-jump-index": ["alt", "1-9"],
         "workspace-tab-jump-index": ["alt", "shift", "1-9"],
@@ -650,6 +651,7 @@ describe("keyboard-shortcut help sections", () => {
       context: { isMac: true, isDesktop: true },
       expectedKeys: {
         "new-agent": ["mod", "O"],
+        "add-host": ["ctrl", "H"],
         "new-workspace": ["mod", "N"],
         "workspace-tab-new": ["mod", "T"],
         "workspace-jump-index": ["mod", "1-9"],
@@ -667,6 +669,7 @@ describe("keyboard-shortcut help sections", () => {
       name: "uses non-mac desktop defaults for tab jump and close tab",
       context: { isMac: false, isDesktop: true },
       expectedKeys: {
+        "add-host": ["ctrl", "H"],
         "workspace-tab-jump-index": ["alt", "1-9"],
         "workspace-tab-close-current": ["ctrl", "W"],
       },
@@ -679,6 +682,7 @@ describe("keyboard-shortcut help sections", () => {
       // only and `formatShortcut` labels either token "Ctrl" there, so the badge
       // is unchanged — see the render assertion below.
       expectedKeys: {
+        "add-host": ["ctrl", "H"],
         "toggle-left-sidebar": ["ctrl", "B"],
         "toggle-both-sidebars": ["ctrl", "."],
       },
@@ -792,12 +796,14 @@ describe("keyboard-shortcut help sections", () => {
     const workspaces = sections.find((section) => section.id === "workspaces");
     const layout = sections.find((section) => section.id === "layout");
     const openProject = findRow(sections, "new-agent");
+    const addHost = findRow(sections, "add-host");
     const cycleAgentMode = findRow(sections, "cycle-agent-mode");
     const showShortcuts = findRow(sections, "show-shortcuts");
 
     expect(workspaces?.titleKey).toBe("settings.shortcuts.sections.workspaces");
     expect(layout?.titleKey).toBe("settings.shortcuts.sections.layout");
     expect(openProject?.labelKey).toBe("settings.shortcuts.help.openProject");
+    expect(addHost?.labelKey).toBe("settings.addHost");
     expect(openProject?.label).toBe("Open project");
     expect(cycleAgentMode?.labelKey).toBe("settings.shortcuts.help.cycleAgentMode");
     expect(showShortcuts?.noteKey).toBe("settings.shortcuts.helpNotes.showKeyboardShortcuts");

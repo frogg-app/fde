@@ -3,8 +3,8 @@
 // raw .exe is pushed as a release asset, and Windows itself is hostile to bare
 // downloaded exes, so nothing Windows leaves the build as an .exe:
 //
-//   FDE-<version>-x64-portable.zip  FDE-<version>-portable/{FDE.exe,README.txt}
-//   FDE-<version>-x64-setup.zip     FDE-<version>-x64-setup.exe (the NSIS installer)
+//   FDE-<version>-win-x64-portable.zip  FDE-<version>-portable/{FDE.exe,README.txt}
+//   FDE-<version>-win-x64-setup.zip     FDE-<version>-win-x64-setup.exe
 //
 // The installer zip is what both updaters consume: tauri-plugin-updater unpacks a
 // zipped NSIS installer itself, and the GitHub-release path in
@@ -176,15 +176,15 @@ export function packagePortableWindows({
     { name: `${folder}/README.txt`, data: buildReadme(resolvedVersion), mtime },
   ]);
   mkdirSync(outputDir, { recursive: true });
-  const zipPath = path.join(outputDir, `FDE-${resolvedVersion}-x64-portable.zip`);
+  const zipPath = path.join(outputDir, `FDE-${resolvedVersion}-win-x64-portable.zip`);
   writeFileSync(zipPath, zip);
   return { zipPath, byteSize: zip.length, exeByteSize: exe.length };
 }
 
 /**
  * Zips the NSIS installer Tauri wrote under `bundle/nsis/` into
- * `bundle/nsis-zip/FDE-<version>-x64-setup.zip`, holding a single entry named
- * `FDE-<version>-x64-setup.exe`. The installer's own `.sig` does not carry over:
+ * `bundle/nsis-zip/FDE-<version>-win-x64-setup.zip`, holding a single entry named
+ * `FDE-<version>-win-x64-setup.exe`. The installer's own `.sig` does not carry over:
  * the updater verifies whatever it downloads, so the zip is signed after this
  * step (see the release workflow).
  */
@@ -209,12 +209,12 @@ export function packageWindowsInstallerZip({
   }
   const installerPath = path.join(nsisDir, candidates[0]);
   const installer = readFileSync(installerPath);
-  const entryName = `FDE-${resolvedVersion}-x64-setup.exe`;
+  const entryName = `FDE-${resolvedVersion}-win-x64-setup.exe`;
   const zip = createZip([
     { name: entryName, data: installer, mtime: statSync(installerPath).mtime },
   ]);
   mkdirSync(outputDir, { recursive: true });
-  const zipPath = path.join(outputDir, `FDE-${resolvedVersion}-x64-setup.zip`);
+  const zipPath = path.join(outputDir, `FDE-${resolvedVersion}-win-x64-setup.zip`);
   writeFileSync(zipPath, zip);
   return { zipPath, entryName, byteSize: zip.length, installerByteSize: installer.length };
 }

@@ -81,10 +81,21 @@ test.describe("Settings sidebar navigation", () => {
     await verifyLegacyHostSettingsRedirect(page);
   });
 
-  test("the main sidebar Add host button opens the add-host method modal", async ({ page }) => {
+  test("the main sidebar Add host button opens only the add-host method modal", async ({
+    page,
+  }) => {
     await gotoAppShell(page);
     await openAddHostFlow(page);
     await expectAddHostMethodOptions(page);
+    await expect(page.getByTestId("settings-modal")).toHaveCount(0);
+  });
+
+  test("Ctrl+H opens Add host without opening settings", async ({ page }) => {
+    await gotoAppShell(page);
+    await page.keyboard.press("Control+H");
+
+    await expectAddHostMethodOptions(page);
+    await expect(page.getByTestId("settings-modal")).toHaveCount(0);
   });
 
   test("the settings host picker only switches hosts", async ({ page }) => {
@@ -166,7 +177,7 @@ test.describe("Settings sidebar navigation", () => {
       await page.keyboard.press("Escape");
 
       await expect(page.getByText("Add connection", { exact: true })).toHaveCount(0);
-      await expectSettingsModalOpen(page, "General");
+      await expectSettingsClosed(page);
     });
   });
 });

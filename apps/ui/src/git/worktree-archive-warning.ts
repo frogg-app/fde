@@ -21,6 +21,7 @@ export interface WorktreeArchiveWarningLabels {
   title: (workspaceName: string) => string;
   confirm: string;
   cancel: string;
+  consequence: string;
   uncommittedChanges: string;
   uncommittedChangesWithDiff: (diffStat: string) => string;
   addedLine: (count: number) => string;
@@ -32,6 +33,7 @@ export const DEFAULT_WORKTREE_ARCHIVE_WARNING_LABELS: WorktreeArchiveWarningLabe
   title: (workspaceName) => i18n.t("workspace.git.actions.archiveWarning.title", { workspaceName }),
   confirm: i18n.t("workspace.git.actions.archiveWarning.confirm"),
   cancel: i18n.t("workspace.git.actions.archiveWarning.cancel"),
+  consequence: i18n.t("workspace.git.actions.archiveWarning.consequence"),
   uncommittedChanges: i18n.t("workspace.git.actions.archiveWarning.uncommittedChanges"),
   uncommittedChangesWithDiff: (diffStat) =>
     i18n.t("workspace.git.actions.archiveWarning.uncommittedChangesWithDiff", { diffStat }),
@@ -104,13 +106,9 @@ export function buildWorktreeArchiveRiskReasons(
 export function buildWorktreeArchiveConfirmationMessage(
   input: WorktreeArchiveConfirmationInput,
   labels: WorktreeArchiveWarningLabels = DEFAULT_WORKTREE_ARCHIVE_WARNING_LABELS,
-): string | null {
+): string {
   const reasons = buildWorktreeArchiveRiskReasons(input, labels);
-  if (reasons.length === 0) {
-    return null;
-  }
-
-  return reasons.join("\n");
+  return [labels.consequence, ...reasons].join("\n\n");
 }
 
 export async function confirmRiskyWorktreeArchive(
@@ -118,10 +116,6 @@ export async function confirmRiskyWorktreeArchive(
   labels: WorktreeArchiveWarningLabels = DEFAULT_WORKTREE_ARCHIVE_WARNING_LABELS,
 ): Promise<boolean> {
   const message = buildWorktreeArchiveConfirmationMessage(input, labels);
-  if (!message) {
-    return true;
-  }
-
   return await confirmDialog({
     title: labels.title(input.workspaceName),
     message,

@@ -22,7 +22,11 @@ export interface ShortcutRoutingInput {
   payload: KeyboardShortcutPayload;
 }
 
-export type ShortcutCallbackName = "toggle-agent-list" | "toggle-both-sidebars" | "cycle-theme";
+export type ShortcutCallbackName =
+  | "toggle-agent-list"
+  | "toggle-both-sidebars"
+  | "cycle-theme"
+  | "open-add-host";
 
 export type ShortcutAction =
   | { kind: "none" }
@@ -51,7 +55,6 @@ const PASSTHROUGH_DISPATCH: Record<string, KeyboardActionDefinition> = {
   "workspace.tab.target.files": { id: "workspace.tab.target.files", scope: "workspace" },
   "workspace.new": { id: "workspace.new", scope: "sidebar" },
   "workspace.project.pick": { id: "workspace.project.pick", scope: "workspace" },
-  "workspace.archive": { id: "workspace.archive", scope: "sidebar" },
   "workspace.pin": { id: "workspace.pin", scope: "sidebar" },
   "worktree.new": { id: "worktree.new", scope: "sidebar" },
   "workspace.terminal.new": { id: "workspace.terminal.new", scope: "workspace" },
@@ -75,6 +78,7 @@ const SIMPLE_CALLBACKS: Record<string, ShortcutCallbackName> = {
   "sidebar.toggle.left": "toggle-agent-list",
   "sidebar.toggle.both": "toggle-both-sidebars",
   "theme.cycle": "cycle-theme",
+  "host.add": "open-add-host",
 };
 
 const MESSAGE_INPUT_DISPATCH: Record<

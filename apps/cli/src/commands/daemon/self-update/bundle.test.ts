@@ -25,10 +25,10 @@ afterEach(() => {
 describe("bundle naming", () => {
   test("matches the installer's asset names per platform", () => {
     expect(bundleAssetName("0.1.14", { platform: "linux", arch: "x64" })).toBe(
-      "fde-daemon-0.1.14-linux-x64.tar.gz",
+      "FDE-0.1.14-linux-x86_64-daemon.tar.gz",
     );
     expect(bundleAssetName("0.1.14", { platform: "win", arch: "arm64" })).toBe(
-      "fde-daemon-0.1.14-win-arm64.zip",
+      "FDE-0.1.14-win-arm64-daemon.zip",
     );
     expect(detectBundleTarget("darwin", "arm64")).toEqual({ platform: "darwin", arch: "arm64" });
     expect(detectBundleTarget("win32", "x64")).toEqual({ platform: "win", arch: "x64" });

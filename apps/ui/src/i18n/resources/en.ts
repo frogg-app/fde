@@ -855,6 +855,8 @@ export const en = {
           title: 'Archive "{{workspaceName}}"?',
           confirm: "Archive",
           cancel: "Cancel",
+          consequence:
+            "This removes the workspace from the sidebar. To restore it later, open History.",
           uncommittedChanges: "Uncommitted changes",
           uncommittedChangesWithDiff: "Uncommitted changes ({{diffStat}})",
           addedLine: "{{count}} added line",

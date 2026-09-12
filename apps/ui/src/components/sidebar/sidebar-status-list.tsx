@@ -46,8 +46,6 @@ import { redirectIfArchivingActiveWorkspace } from "@/utils/sidebar-workspace-ar
 import { useWorkspaceArchive } from "@/workspace/use-workspace-archive";
 import { toWorktreeArchiveRisk } from "@/git/worktree-archive-warning";
 import type { ShortcutKey } from "@/utils/format-shortcut";
-import { useShortcutKeys } from "@/hooks/use-shortcut-keys";
-import { useKeyboardActionHandler } from "@/hooks/use-keyboard-action-handler";
 import { useClearWorkspaceAttention } from "@/hooks/use-clear-workspace-attention";
 import {
   SidebarWorkspaceRowFrame,
@@ -640,7 +638,6 @@ function StatusWorkspaceRowWithMenu({
   }, [onToggleWorkspacePin, workspace]);
   const onTogglePin = canPin ? handleTogglePin : undefined;
 
-  const archiveShortcutKeys = useShortcutKeys("archive-workspace");
   const { hasClearableAttention, clearAttention } = useClearWorkspaceAttention({
     serverId: workspace.serverId,
     workspaceId: workspace.workspaceId,
@@ -650,17 +647,6 @@ function StatusWorkspaceRowWithMenu({
       toast.error(error instanceof Error ? error.message : "Failed to mark workspace as read");
     });
   }, [clearAttention, toast]);
-
-  useKeyboardActionHandler({
-    handlerId: `workspace-archive-${workspace.workspaceKey}`,
-    actions: ["workspace.archive"],
-    enabled: selected && !isArchiving,
-    priority: 0,
-    handle: () => {
-      handleArchive();
-      return true;
-    },
-  });
 
   return (
     <>
@@ -682,7 +668,7 @@ function StatusWorkspaceRowWithMenu({
         onCopyPath={handleCopyPath}
         onRename={handleOpenRename}
         onMarkAsRead={hasClearableAttention ? handleMarkAsRead : undefined}
-        archiveShortcutKeys={selected ? archiveShortcutKeys : null}
+        archiveShortcutKeys={null}
         isPinned={isPinned}
         onTogglePin={onTogglePin}
         reserveIdleStatusIndicatorSpace={reserveIdleStatusIndicatorSpace}

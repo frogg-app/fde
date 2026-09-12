@@ -36,14 +36,20 @@ fn is_windows() -> bool {
     cfg!(target_os = "windows")
 }
 
-/// `fde-daemon-<version>-<platform>-<arch>.tar.gz` (or `.zip` on Windows).
+/// `FDE-<version>-<platform>-<arch>-daemon.tar.gz` (or `.zip` on Windows).
 pub fn archive_name(version: &str) -> String {
     let extension = if is_windows() { "zip" } else { "tar.gz" };
-    format!(
-        "fde-daemon-{version}-{}-{}.{extension}",
-        platform_name(),
+    let platform = if platform_name() == "darwin" {
+        "mac"
+    } else {
+        platform_name()
+    };
+    let arch = if arch_name() == "x64" && !is_windows() {
+        "x86_64"
+    } else {
         arch_name()
-    )
+    };
+    format!("FDE-{version}-{platform}-{arch}-daemon.{extension}")
 }
 
 /// Default download URL of a release bundle. `FDE_DAEMON_BUNDLE_URL` replaces
@@ -254,7 +260,8 @@ mod tests {
     #[test]
     fn names_follow_the_release_convention() {
         let name = archive_name("0.1.6");
-        assert!(name.starts_with("fde-daemon-0.1.6-"));
+        assert!(name.starts_with("FDE-0.1.6-"));
+        assert!(name.contains("-daemon."));
         assert!(name.ends_with(".tar.gz") || name.ends_with(".zip"));
         assert!(archive_url("0.1.6")
             .starts_with("https://github.com/frogg-app/fde/releases/download/v0.1.6/"));

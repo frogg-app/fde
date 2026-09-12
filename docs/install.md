@@ -117,7 +117,7 @@ pre-release flag, which every `0.x` release carries.
 What it does:
 
 1. Detects the platform (`linux`/`darwin`, `x64`/`arm64`) and downloads
-   `fde-daemon-<version>-<platform>-<arch>.tar.gz` plus its `.sha256` sidecar
+   `FDE-<version>-<platform>-<arch>-daemon.tar.gz` plus its `.sha256` sidecar
    from the GitHub release, verifying the checksum. Without `FDE_VERSION` it
    resolves the newest release itself, falling back to the GitHub API when
    `/releases/latest` resolves to nothing because every published release is
@@ -210,7 +210,7 @@ never forwarded to download hosts or custom API/mirror URLs. Rate-limit failures
 include the reset time when GitHub provides one.
 
 It downloads
-`fde-daemon-<v>-<platform>-<arch>.tar.gz` with its `.sha256`, verifies the
+`FDE-<v>-<platform>-<arch>-daemon.tar.gz` with its `.sha256`, verifies the
 checksum, unpacks into `<install dir>/versions/<v>` next to the running
 version, writes `<install dir>/previous`, and hands off to a detached
 supervisor (`fde daemon self-update --apply`, a hidden subcommand) that
@@ -327,7 +327,7 @@ and `PASEO_HOSTNAMES` are passed into the container when set. See
 
 `npm run build:daemon-bundle -- --target linux-x64` (after `npm run build:server`
 and `npm run build:daemon-web-ui`) writes
-`dist/bundles/fde-daemon-<version>-<platform>-<arch>.tar.gz` and a `.sha256`
+`dist/bundles/FDE-<version>-<platform>-<arch>-daemon.tar.gz` and a `.sha256`
 sidecar. Targets: `linux-x64`, `linux-arm64`, `darwin-x64`, `darwin-arm64`,
 `win-x64`, `win-arm64`; cross-building from Linux works for all of them
 because the runtime is downloaded from nodejs.org and platform-specific npm
@@ -353,7 +353,7 @@ has no local speech and voice defaults to off there.
 
 ### Windows bundle
 
-Windows targets produce `fde-daemon-<v>-win-<arch>.zip` (plus `.sha256`)
+Windows targets produce `FDE-<v>-win-<arch>-daemon.zip` (plus `.sha256`)
 instead of a tarball. The zip is what the desktop app downloads for its local
 daemon on Windows (`install.sh` does not run there). Differences from the
 tarball:
@@ -405,7 +405,7 @@ the Add host sheet.
 Nothing is copied to the host: the script downloads the bundle from the
 GitHub release itself (`FDE_RELEASE_BASE`, or an exact `FDE_BUNDLE_URL`), so
 the release tagged `v<version>` must carry
-`fde-daemon-<version>-<platform>-<arch>.tar.gz` and its `.sha256` for the
+`FDE-<version>-<platform>-<arch>-daemon.tar.gz` and its `.sha256` for the
 host's platform. The version defaults to the app's own. The listen address
 defaults to `127.0.0.1:9999` because the app reaches the daemon through the
 SSH tunnel; for Docker it becomes `FDE_BIND`/`FDE_PORT`. See

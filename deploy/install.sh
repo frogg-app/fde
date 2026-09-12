@@ -104,7 +104,7 @@ resolve_latest_version() {
 
 # Sets BUNDLE_PATH to a verified tarball, downloading it when needed.
 acquire_bundle() {
-  local name
+  local name public_platform public_arch
   if [ -n "${FDE_BUNDLE_FILE}" ]; then
     [ -f "${FDE_BUNDLE_FILE}" ] || die "FDE_BUNDLE_FILE does not exist: ${FDE_BUNDLE_FILE}"
     BUNDLE_PATH="${FDE_BUNDLE_FILE}"
@@ -121,7 +121,11 @@ acquire_bundle() {
     name="${url##*/}"
   else
     [ -n "${FDE_VERSION}" ] || resolve_latest_version
-    name="fde-daemon-${FDE_VERSION}-${PLATFORM}-${ARCH}.tar.gz"
+    public_platform="$PLATFORM"
+    public_arch="$ARCH"
+    [ "$public_platform" = "darwin" ] && public_platform="mac"
+    [ "$public_arch" = "x64" ] && public_arch="x86_64"
+    name="FDE-${FDE_VERSION}-${public_platform}-${public_arch}-daemon.tar.gz"
     url="${FDE_RELEASE_BASE}/download/v${FDE_VERSION}/${name}"
   fi
   BUNDLE_PATH="${WORK_DIR}/${name}"

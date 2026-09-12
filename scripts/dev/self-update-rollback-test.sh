@@ -60,8 +60,9 @@ read_manifest_field() {
 # derive_bundle <src-tree> <version> <broken:0|1> -> writes serve_dir/download/v<version>/<asset>{,.sha256}
 derive_bundle() {
   local src="$1" version="$2" broken="$3"
-  local name="fde-daemon-${version}-${platform_arch}"
-  local staging="${work}/derive/${name}"
+  local name="FDE-${version}-${public_platform_arch}-daemon"
+  local bundle_dir_name="fde-daemon-${version}-${platform_arch}"
+  local staging="${work}/derive/${bundle_dir_name}"
   rm -rf "${staging}"
   mkdir -p "$(dirname "${staging}")"
   cp -a "${src}" "${staging}"
@@ -75,7 +76,7 @@ derive_bundle() {
   fi
   local out_dir="${serve_dir}/download/v${version}"
   mkdir -p "${out_dir}"
-  tar -C "$(dirname "${staging}")" -czf "${out_dir}/${name}.tar.gz" "${name}"
+  tar -C "$(dirname "${staging}")" -czf "${out_dir}/${name}.tar.gz" "${bundle_dir_name}"
   printf '%s  %s.tar.gz\n' "$(sha256_of "${out_dir}/${name}.tar.gz")" "${name}" > "${out_dir}/${name}.tar.gz.sha256"
   rm -rf "${staging}"
   echo "${out_dir}/${name}.tar.gz"
@@ -103,7 +104,14 @@ log "installing ${bundle} into ${install_dir} (no service)"
 FDE_INSTALL_DIR="${install_dir}" FDE_BIN_DIR="${work}/bin" FDE_NO_SERVICE=1 FDE_BUNDLE_FILE="${bundle}" \
   bash "${repo_root}/deploy/install.sh" | sed 's/^/  /'
 base_version="$(read_manifest_field "${install_dir}/current/manifest.json" version)"
-platform_arch="$(read_manifest_field "${install_dir}/current/manifest.json" platform)-$(read_manifest_field "${install_dir}/current/manifest.json" arch)"
+bundle_platform="$(read_manifest_field "${install_dir}/current/manifest.json" platform)"
+bundle_arch="$(read_manifest_field "${install_dir}/current/manifest.json" arch)"
+platform_arch="${bundle_platform}-${bundle_arch}"
+public_platform="${bundle_platform}"
+public_arch="${bundle_arch}"
+[ "${public_platform}" = "darwin" ] && public_platform="mac"
+[ "${public_arch}" = "x64" ] && public_arch="x86_64"
+public_platform_arch="${public_platform}-${public_arch}"
 broken_version="$(bump_patch "${base_version}" 1)"
 good_version="$(bump_patch "${base_version}" 2)"
 [ "$(readlink "${install_dir}/current")" = "versions/${base_version}" ] || fail "current does not point at ${base_version}"
@@ -114,7 +122,7 @@ derive_bundle "${install_dir}/versions/${base_version}" "${good_version}" 0 >/de
 python3 -m http.server --directory "${serve_dir}" --bind 127.0.0.1 "${http_port}" >"${work}/http.log" 2>&1 &
 http_pid=$!
 sleep 1
-broken_asset="download/v${broken_version}/fde-daemon-${broken_version}-${platform_arch}.tar.gz"
+broken_asset="download/v${broken_version}/FDE-${broken_version}-${public_platform_arch}-daemon.tar.gz"
 if ! curl -fsSI "http://127.0.0.1:${http_port}/${broken_asset}" >/dev/null; then
   echo "served tree:" >&2
   find "${serve_dir}" -type f >&2
