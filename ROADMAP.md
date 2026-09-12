@@ -12,7 +12,8 @@ preserved work outside this checkout.
 ## Implemented baseline
 
 - Expandable sidebar agent/subagent trees with direct live transcript access,
-  runtime identity preservation, and reconnect/retry states. See
+  runtime identity preservation, and reconnect/retry states. Single-agent workspaces
+  avoid duplicate rows; disclosure contains only active subagents. See
   [agent lifecycle](docs/agent-lifecycle.md#sidebar-agent-tree); desktop/mobile
   visual and live-provider acceptance remains outstanding.
 

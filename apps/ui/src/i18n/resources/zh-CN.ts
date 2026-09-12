@@ -1934,6 +1934,8 @@ export const zhCN: TranslationResources = {
     backdrop: "菜单背景",
   },
   subagents: {
+    expandWorkspace: "展开 {{label}} 中的代理",
+    collapseWorkspace: "折叠 {{label}} 中的代理",
     expand: "展开 {{label}} 的子代理",
     collapse: "折叠 {{label}} 的子代理",
     offline: "离线 · 显示已保存的活动",

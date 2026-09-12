@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.1 - 2026-09-12
+
+- Represent single-agent workspaces with one selectable workspace row. Put the
+  disclosure control on the workspace for multiple agents or active subagents,
+  and omit chevrons when there are no visible children.
+- Remove finished subagents from the sidebar automatically while preserving their
+  transcript history. Keep running descendants and permission-waiting agents reachable.
+  Automated layout and lifecycle checks cover this; device visual acceptance remains pending.
+
 ## 0.3.0 - 2026-09-12
 
 - Show agents and expandable subagents beneath workspace rows in the sidebar.

@@ -1974,6 +1974,8 @@ export const en = {
     backdrop: "Menu backdrop",
   },
   subagents: {
+    expandWorkspace: "Expand agents in {{label}}",
+    collapseWorkspace: "Collapse agents in {{label}}",
     expand: "Expand subagents for {{label}}",
     collapse: "Collapse subagents for {{label}}",
     offline: "Offline · showing saved activity",

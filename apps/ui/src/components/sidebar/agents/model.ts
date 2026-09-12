@@ -71,9 +71,36 @@ export function buildSidebarAgentTrees(input: {
     }
     appendProviderChildren({ host, nodes, descriptors: input.descriptors, hidden: input.hidden });
     for (const node of nodes.values()) node.children.sort(byCreatedAt);
+    pruneWorkspaceChildren(workspaces, host);
   }
   for (const roots of workspaces.values()) roots.sort(byCreatedAt);
   return workspaces;
+}
+
+function pruneWorkspaceChildren(
+  workspaces: Map<string, SidebarAgentNode[]>,
+  host: SidebarAgentHost,
+) {
+  for (const roots of workspaces.values()) {
+    if (roots[0]?.serverId !== host.serverId) continue;
+    for (const node of roots) node.children = activeChildren(node.children, host.agents);
+  }
+}
+
+// Preserve workspace instances, and promote running descendants of idle intermediates.
+function activeChildren(
+  children: SidebarAgentNode[],
+  agents: ReadonlyMap<string, Agent>,
+): SidebarAgentNode[] {
+  return children.flatMap((node) => {
+    const descendants = activeChildren(node.children, agents);
+    const agent = node.row.kind === "paseo" ? agents.get(node.row.id) : undefined;
+    const active =
+      node.row.status === "running" ||
+      node.row.status === "initializing" ||
+      (agent?.pendingPermissions.length ?? 0) > 0;
+    return active ? [{ ...node, children: descendants }] : descendants;
+  });
 }
 
 function appendProviderChildren({
@@ -90,7 +117,13 @@ function appendProviderChildren({
   for (const [key, descriptor] of descriptors) {
     const parent = nodes.get(descriptor.parentAgentId);
     const expectedKey = providerSubagentKey(host.serverId, descriptor.parentAgentId, descriptor.id);
-    if (!host.providerSubagentsSupported || !parent || key !== expectedKey || hidden.has(key))
+    if (
+      !host.providerSubagentsSupported ||
+      !parent ||
+      key !== expectedKey ||
+      hidden.has(key) ||
+      descriptor.status !== "running"
+    )
       continue;
     parent.children.push({
       key: `${host.serverId}\0provider\0${descriptor.parentAgentId}\0${descriptor.id}`,
@@ -105,7 +138,7 @@ function appendProviderChildren({
         description: descriptor.description,
         subtitle: descriptor.subtitle ?? null,
         status: descriptor.status,
-        requiresAttention: descriptor.status === "failed",
+        requiresAttention: false,
         createdAt: new Date(descriptor.createdAt),
       },
       target: {

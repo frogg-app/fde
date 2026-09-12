@@ -31,6 +31,7 @@ import { TrailingActionScrim } from "@/components/ui/trailing-action-scrim";
 import { useWorkspaceLabelDefinitions } from "@/workspace-labels";
 
 import { SidebarWorkspaceAgents } from "./agents/tree";
+import { WorkspaceAgentTreeScope, WorkspaceAgentDisclosure } from "./agents/workspace-tree";
 
 const foregroundMutedColorMapping = (theme: Theme) => ({ color: theme.colors.foregroundMuted });
 const needsInputColorMapping = (theme: Theme) => ({
@@ -73,7 +74,7 @@ export function SidebarWorkspaceRowFrame({
   );
 
   return (
-    <>
+    <WorkspaceAgentTreeScope serverId={workspace.serverId} workspaceId={workspace.workspaceId}>
       <WorkspaceHoverCard
         workspace={workspace}
         prHint={workspace.prHint}
@@ -90,7 +91,7 @@ export function SidebarWorkspaceRowFrame({
       {!isDragging ? (
         <SidebarWorkspaceAgents serverId={workspace.serverId} workspaceId={workspace.workspaceId} />
       ) : null}
-    </>
+    </WorkspaceAgentTreeScope>
   );
 }
 
@@ -145,6 +146,7 @@ export const SidebarWorkspaceRowContent = memo(function SidebarWorkspaceRowConte
   return (
     <View style={styles.workspaceRowContent}>
       <View style={styles.workspaceRowMain}>
+        <WorkspaceAgentDisclosure label={workspaceLabel} />
         {leadingProjectName ? (
           <ProjectStatusIndicator
             iconDataUri={leadingProjectIconDataUri}

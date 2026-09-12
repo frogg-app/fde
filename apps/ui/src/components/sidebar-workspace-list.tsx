@@ -1,3 +1,4 @@
+import { useSidebarWorkspaceTarget } from "@/components/sidebar/agents/workspace-tree";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
   View,
@@ -1374,13 +1375,18 @@ function WorkspaceRowItem({
   isDragging = false,
   dragHandleProps,
 }: WorkspaceRowItemProps) {
+  const target = useSidebarWorkspaceTarget(workspace);
   const handlePress = useCallback(() => {
     if (!workspace.serverId) {
       return;
     }
     onWorkspacePress?.();
-    navigateToWorkspace({ serverId: workspace.serverId, workspaceId: workspace.workspaceId });
-  }, [onWorkspacePress, workspace.serverId, workspace.workspaceId]);
+    navigateToWorkspace({
+      serverId: workspace.serverId,
+      workspaceId: workspace.workspaceId,
+      target,
+    });
+  }, [onWorkspacePress, workspace.serverId, workspace.workspaceId, target]);
 
   return (
     <WorkspaceRow
