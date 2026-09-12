@@ -226,3 +226,43 @@ test("refuses discovery and forced stop when a live owner cannot authenticate", 
     instanceId: runtime.instanceId,
   });
 }, 60_000);
+
+test("runtime version upgrade retains resident execution and reports gateway and backend versions separately", async () => {
+  const { home, options, runtime } = await startRuntime();
+  const first = await connectGateway(runtime);
+  const agent = await first.client.createAgent({
+    provider: "mock",
+    cwd: home,
+    title: "Version retention",
+    model: "ten-second-stream",
+  });
+  const retained = await ensureExecutionService({ ...options, version: "acceptance-2" });
+  expect(retained).toEqual(runtime);
+  expect((await first.client.fetchAgent(agent.id))?.agent.id).toBe(agent.id);
+  const gateway = createExecutionGateway({
+    listen: "127.0.0.1:0",
+    runtime: retained,
+    gatewayVersion: "acceptance-2",
+  });
+  gateways.push(gateway);
+  await gateway.start();
+  const target = gateway.getListenTarget();
+  if (target?.type !== "tcp") throw new Error("Expected TCP gateway");
+  const response = await fetch(`http://127.0.0.1:${target.port}/api/identity`);
+  expect(response.status).toBe(200);
+  expect(response.headers.get("x-fde-gateway-version")).toBe("acceptance-2");
+  expect(response.headers.get("x-fde-execution-version")).toBe("acceptance-1");
+  expect(await response.json()).toMatchObject({ version: "acceptance-1" });
+}, 60_000);
+
+test("runtime version upgrade replaces an empty service before attaching", async () => {
+  const { home, options, runtime } = await startRuntime();
+  const replaced = await ensureExecutionService({ ...options, version: "acceptance-2" });
+  expect(replaced.version).toBe("acceptance-2");
+  expect(replaced.instanceId).not.toBe(runtime.instanceId);
+  expect(replaced.pid).not.toBe(runtime.pid);
+  expect(await getExecutionServiceStatus(home)).toMatchObject({
+    version: "acceptance-2",
+    residentAgentCount: 0,
+  });
+}, 60_000);

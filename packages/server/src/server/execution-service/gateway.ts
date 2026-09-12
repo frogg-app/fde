@@ -123,7 +123,10 @@ export function createExecutionGateway({
       for (const socket of sockets) socket.destroy();
       if (!server.listening) return;
       await new Promise<void>((resolve, reject) =>
-        server.close((error) => (error ? reject(error) : resolve())),
+        server.close((error) => {
+          if (error) reject(error);
+          else resolve();
+        }),
       );
       bound = null;
     },

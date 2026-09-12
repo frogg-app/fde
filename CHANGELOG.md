@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.4.3 - 2026-09-12
+
+- Add opt-in independent execution (`FDE_EXECUTION_SERVICE=1`): the supervised
+  daemon becomes a restartable HTTP/WebSocket gateway while the execution service
+  retains agents, provider turns, permissions, MCP tools, and orchestration.
+- Add `execution-status` and `stop --all`, preserve execution during normal and
+  forced gateway shutdown, and reconnect to a retained runtime even when a later
+  launcher omits the opt-in flag. Idle agents prevent automatic runtime replacement.
+- Preserve original client authorization through the gateway, stream requests and
+  upgrades, and safely recover crash-left Unix sockets. Keep public service URLs
+  separate from private execution/MCP endpoints.
+- Verify updates against the installed gateway version, reconcile completed update
+  handoffs in retained execution, and retain release directories for running code.
+  Linux opt-in service definitions avoid descendant cleanup during gateway stop.
+- Real isolated-process tests prove turn and permission continuity and supervisor
+  reattachment. Real-provider background work and Windows/macOS/systemd acceptance
+  remain unverified; the feature is not enabled by default or deployed by this change.
+
+## 0.4.2 - 2026-09-12
+
+- Specify the independent execution boundary, compatibility and lifecycle contracts,
+  rollout, and acceptance criteria in the [implementation spec](docs/plans/independent-execution-service.md).
+
 ## 0.4.1 - 2026-09-12
 
 - Build daemon packages independently of Android and desktop releases. Compile the

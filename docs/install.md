@@ -411,7 +411,6 @@ defaults to `127.0.0.1:9999` because the app reaches the daemon through the
 SSH tunnel; for Docker it becomes `FDE_BIND`/`FDE_PORT`. See
 [desktop-shell.md](desktop-shell.md), "SSH deploy".
 
-
 ## Independent execution (experimental opt-in)
 
 Set `FDE_EXECUTION_SERVICE=1` when starting the daemon to separate its public

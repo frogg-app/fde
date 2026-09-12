@@ -10,7 +10,7 @@ import { createExecutionGateway } from "./gateway.js";
 // These local-resource tests exercise Unix filesystem sockets, including a crash-left inode.
 const cleanup: Array<() => Promise<unknown>> = [];
 afterEach(async () => {
-  for (const close of cleanup.splice(0).reverse()) await close();
+  for (const close of cleanup.splice(0).toReversed()) await close();
 });
 async function fixture() {
   const directory = await mkdtemp(path.join(tmpdir(), "fde-gateway-"));

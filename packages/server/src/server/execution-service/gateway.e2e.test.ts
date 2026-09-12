@@ -1,14 +1,14 @@
 import { createServer, request, type Server } from "node:http";
 import { once } from "node:events";
 import { afterEach, expect, it } from "vitest";
-import WebSocket, { WebSocketServer } from "ws";
+import { WebSocket, WebSocketServer } from "ws";
 import { createExecutionGateway } from "./gateway.js";
 import { restoreExecutionRequest } from "./forwarding.js";
 
 const token = "a".repeat(64);
 const cleanup: Array<() => Promise<unknown>> = [];
 afterEach(async () => {
-  for (const close of cleanup.splice(0).reverse()) await close();
+  for (const close of cleanup.splice(0).toReversed()) await close();
 });
 async function listen(server: Server) {
   server.listen(0, "127.0.0.1");
@@ -163,7 +163,7 @@ it("forwards WebSocket identity and messages and closes upgraded sockets on stop
     }
     ws.handleUpgrade(req, socket, head, (client) => {
       client.send(req.socket.remoteAddress);
-      client.on("message", (message) => client.send(message));
+      attachEcho(client);
     });
   });
   const port = await listen(server);
@@ -290,3 +290,7 @@ it("removes private credentials from an already-read distinct header view", asyn
   const result = await get(port, { "x-fde-execution-token": token, "x-fde-execution-peer": "ipc" });
   expect(result.body).toBe("[]");
 });
+
+function attachEcho(client: WebSocket): void {
+  client.on("message", (message) => client.send(message));
+}

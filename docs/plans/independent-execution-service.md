@@ -60,8 +60,7 @@ State lives under `$FDE_HOME/execution-service/` (legacy home resolution still
 applies). The directory is private to its OS user. The existing PID-lock utility
 is reused with this subdirectory, independently from the public daemon lock.
 
-`runtime.json` is atomically published after both listeners are ready, with mode
-0600. Its versioned schema contains `protocolVersion: 1`, `instanceId`, `pid`,
+`runtime.json` is atomically published after both listeners are ready, with mode 0600. Its versioned schema contains `protocolVersion: 1`, `instanceId`, `pid`,
 `version`, `startedAt`, `port`, `controlPort`, and `token`. Runtime listeners bind
 only to loopback; these are private machine-local transports, not user-facing
 services. The public gateway obeys the configured listen address, including TCP,
@@ -108,16 +107,16 @@ not a security revocation or a stop-all operation.
 
 ## Lifecycle and update behavior
 
-| Operation | Public gateway | Existing execution |
-| --- | --- | --- |
-| stop daemon in opt-in mode | stops | continues |
-| start / restart daemon | binds and reconnects | continues |
-| install newer daemon then restart | uses installed gateway | old runtime retained while resident |
-| start with older runtime and no resident agents | binds after replacement | current runtime starts |
-| stop daemon with `--all` | stops | explicitly closes all agents and stops |
-| crash gateway / supervisor | supervised recovery | continues |
-| crash execution process | unavailable until recovery | active work lost; durable resume only |
-| OS reboot / container replacement | stops | stops |
+| Operation                                       | Public gateway             | Existing execution                     |
+| ----------------------------------------------- | -------------------------- | -------------------------------------- |
+| stop daemon in opt-in mode                      | stops                      | continues                              |
+| start / restart daemon                          | binds and reconnects       | continues                              |
+| install newer daemon then restart               | uses installed gateway     | old runtime retained while resident    |
+| start with older runtime and no resident agents | binds after replacement    | current runtime starts                 |
+| stop daemon with `--all`                        | stops                      | explicitly closes all agents and stops |
+| crash gateway / supervisor                      | supervised recovery        | continues                              |
+| crash execution process                         | unavailable until recovery | active work lost; durable resume only  |
+| OS reboot / container replacement               | stops                      | stops                                  |
 
 Expose execution status through CLI with both installed and running versions so
 an old runtime cannot be mistaken for a fully applied backend update. Preserve
@@ -176,3 +175,41 @@ out of execution behind a typed protocol, and split execution into independently
 versioned workers. That next stage needs command idempotency, durable event cursors,
 replay boundaries, fencing leases, crash recovery, and native tool routing across
 workers. It must not equate an idle foreground turn with safe provider termination.
+
+## Implementation and validation record (2026-09-12)
+
+Implemented the coarse execution boundary described above, with independent
+state/launch locks, private capability-authenticated control, streaming gateway,
+original-peer authorization, public/private endpoint separation, CLI lifecycle,
+retained updater handoff reconciliation, and opt-in Linux unit changes. A retained
+owner is automatically reused even if the next launcher omits the opt-in flag;
+invalid or unpublished live ownership cannot authorize a legacy second writer.
+`--all` is explicit cancellation of all execution, not a request to drain naturally.
+Release pruning is conservatively disabled because an installation can supply
+multiple homes and a single home's descriptor cannot establish that old code is
+unused. Operators must stop execution for every home before deleting old releases.
+
+Validated using isolated Linux processes and deterministic provider behavior:
+
+- Eight execution acceptance cases cover a turn continuing with no gateway,
+  unchanged active-turn/PID and one prompt after reconnection, pending permission
+  resolution, concurrent launch convergence, descriptor incompatibility, forged
+  control credentials, idle-resident stop refusal versus explicit stop-all, and
+  retained-versus-empty runtime version updates.
+- A real supervisor launch/shutdown/relaunch retains the same execution process
+  and pending permission, including restart without the opt-in environment flag.
+- Ten streaming/HTTP/WebSocket transport cases, three Unix-socket ownership and
+  crash-recovery cases, and an HTTP-server gate case cover peer metadata, forgery,
+  cancellation, upstream failure, upgrade cleanup, and rejection before all handlers.
+- Two real forced-supervisor-shutdown cases preserve detached descendants with
+  either opt-in environment or retained execution state. Existing supervisor,
+  CLI/service/update, bootstrap, origin, and packaging regressions also pass.
+- Full server-stack build and full repository typecheck pass. Specific command
+  results are also reported in the pull request.
+
+Not validated: live provider background shells/workflows across replacement,
+Windows desktop jobs/services, macOS launchd, or an actual Linux systemd update.
+The process tests do not claim OS-reboot/container survival or live migration of
+AgentManager/provider code. Production services were not restarted and opt-in was
+not enabled on the production home. Per-agent workers and narrower backend/API
+extraction remain future work as described above.

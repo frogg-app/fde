@@ -135,7 +135,9 @@ test("supervisor shutdown preserves execution and a later launch attaches withou
       behavior: "allow",
     });
     await reconnected.waitForAgentUpsert(agent.id, (state) => state.status === "idle");
-    await stopSupervisor(replacement);
+    await reconnected.shutdownServer();
+    await expect.poll(() => replacement.process.exitCode, { timeout: 10_000 }).toBe(0);
+    expect(await getExecutionServiceStatus(home)).toMatchObject({ pid: runtime!.pid });
     expect(await stopExecutionService({ home, force: true })).toEqual({ stopped: true });
     expect(await getExecutionServiceStatus(home)).toBeNull();
   } finally {

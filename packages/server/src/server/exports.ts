@@ -110,3 +110,6 @@ export type {
   AgentStreamEventPayload,
   AgentStreamMessage,
 } from "@fde/protocol/messages";
+
+export { getExecutionServiceStatus, stopExecutionService } from "./execution-service/client.js";
+export type { ExecutionServiceStatus } from "./execution-service/protocol.js";
