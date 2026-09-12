@@ -138,3 +138,25 @@ machine. For the dev client (`npm run android` in `apps/ui`) also set
   for FDE releases and needs far more memory.
 - Keep `react`/`react-dom` at the version React Native embeds (`19.1.0` for RN 0.81):
   a newer React builds fine but crashes at startup with `Incompatible React versions`.
+
+## Checking packaged startup
+
+A successful APK build does not prove the app launches. Run the packaged app
+without Metro on an explicitly selected device or booted emulator:
+
+```bash
+node scripts/release/smoke-android-apk.mjs --serial DEVICE_SERIAL \
+  --apk release-assets/FDE-VERSION-android-arm64-v8a-unsigned.apk \
+  --out-dir .dev/android-startup-smoke
+```
+
+The check installs the APK, cold-launches it twice, and requires a stable process
+and foreground activity for 30 seconds per launch. It records timestamp-scoped
+logcat, crash logs, screenshots and a JSON result without clearing device logs.
+The Android startup diagnostic workflow can run the same check against an existing
+Actions APK artifact using a hardware-accelerated Google APIs emulator.
+
+The diagnostic workflow currently extracts the unchanged ARM64 libraries into
+the rooted x86 emulator installation to bypass its direct-APK loading limitation.
+This isolates application startup errors; passing that diagnostic is not proof
+of normal installation on a physical ARM64 device.

@@ -1,0 +1,157 @@
+name: Android APK startup diagnostic
+
+on:
+  push:
+    branches: [fix/android-launch-crash]
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: Workflow run containing the APK artifact
+        default: "34705698056"
+        type: string
+      artifact_name:
+        description: Exact artifact name containing the APK
+        default: release-assets-android-arm64-v8a
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  startup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_RUN_ID: ${{ inputs.source_run_id || '34705698056' }}
+      ARTIFACT_NAME: ${{ inputs.artifact_name || 'release-assets-android-arm64-v8a' }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Initialize diagnostic directories
+        run: |
+          echo "ANDROID_AVD_HOME=$RUNNER_TEMP/fde-startup-avd" >> "$GITHUB_ENV"
+          echo "EVIDENCE_DIR=$RUNNER_TEMP/android-startup-evidence" >> "$GITHUB_ENV"
+          echo "APK_DIR=$RUNNER_TEMP/android-startup-apk" >> "$GITHUB_ENV"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+      - name: Download the exact APK artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$EVIDENCE_DIR" "$APK_DIR"
+          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" --name "$ARTIFACT_NAME" --dir "$APK_DIR"
+          mapfile -d '' apks < <(find "$APK_DIR" -type f -name '*.apk' -print0)
+          if [ "${#apks[@]}" -ne 1 ]; then
+            echo "Expected exactly one APK, found ${#apks[@]}" >&2
+            exit 1
+          fi
+          echo "APK_PATH=${apks[0]}" >> "$GITHUB_ENV"
+          sha256sum "${apks[0]}" | tee "$EVIDENCE_DIR/apk.sha256"
+          printf 'run=%s\nartifact=%s\n' "$SOURCE_RUN_ID" "$ARTIFACT_NAME" > "$EVIDENCE_DIR/source.txt"
+      - name: Prepare hardware-accelerated Google APIs emulator
+        timeout-minutes: 6
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -c /dev/kvm
+          sudo chmod a+rw /dev/kvm
+          sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          avdmanager="$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager"
+          "$sdkmanager" --install 'platform-tools' 'emulator' 'system-images;android-35;google_apis;x86_64'
+          "$ANDROID_HOME/emulator/emulator" -accel-check
+          mkdir -p "$ANDROID_AVD_HOME"
+          printf 'no\n' | "$avdmanager" create avd --force --name fde-startup --package 'system-images;android-35;google_apis;x86_64' --device pixel_6
+          "$ANDROID_HOME/emulator/emulator" -avd fde-startup -port 5554 -accel on -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 4096 -cores 2 > "$EVIDENCE_DIR/emulator.txt" 2>&1 &
+          echo "EMULATOR_PID=$!" >> "$GITHUB_ENV"
+          adb="$ANDROID_HOME/platform-tools/adb"
+          timeout 180 "$adb" -s emulator-5554 wait-for-device
+          booted=false
+          for attempt in $(seq 1 90); do
+            if [ "$("$adb" -s emulator-5554 shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ]; then
+              booted=true
+              break
+            fi
+            sleep 2
+          done
+          if [ "$booted" != true ]; then echo 'Emulator boot timed out' >&2; exit 1; fi
+          "$adb" -s emulator-5554 shell getprop > "$EVIDENCE_DIR/device-properties.txt"
+          "$adb" -s emulator-5554 shell input keyevent 82
+      - name: Prepare diagnostic ARM64 extraction workaround
+        timeout-minutes: 2
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'DIAGNOSTIC ONLY: preserve the APK bytes; populate the emulator installed ARM64 library directory.' | tee "$EVIDENCE_DIR/translation-workaround.txt"
+          adb="$ANDROID_HOME/platform-tools/adb"
+          "$adb" -s emulator-5554 root
+          timeout 30 "$adb" -s emulator-5554 wait-for-device
+          test "$("$adb" -s emulator-5554 shell id -u | tr -d '\r')" = 0
+          export NATIVE_LIBS_DIR="$RUNNER_TEMP/diagnostic-arm64-libs"
+          mkdir -p "$NATIVE_LIBS_DIR"
+          python3 - <<'PYTHON'
+          import hashlib, os, pathlib, re, zipfile
+          destination = pathlib.Path(os.environ['NATIVE_LIBS_DIR'])
+          with zipfile.ZipFile(os.environ['APK_PATH']) as apk:
+              entries = [entry for entry in apk.infolist() if re.fullmatch(r'lib/arm64-v8a/[^/]+\.so', entry.filename)]
+              if not entries:
+                  raise SystemExit('APK has no ARM64 shared libraries')
+              hashes = []
+              for entry in entries:
+                  content = apk.read(entry)
+                  name = pathlib.PurePosixPath(entry.filename).name
+                  (destination / name).write_bytes(content)
+                  hashes.append(f'{hashlib.sha256(content).hexdigest()}  {name}')
+              evidence = pathlib.Path(os.environ['EVIDENCE_DIR']) / 'extracted-libraries.sha256'
+              evidence.write_text('\n'.join(hashes) + '\n')
+          PYTHON
+          echo "REAL_ADB=$adb" >> "$GITHUB_ENV"
+          echo "NATIVE_LIBS_DIR=$NATIVE_LIBS_DIR" >> "$GITHUB_ENV"
+          cat > "$RUNNER_TEMP/diagnostic-adb" <<'WRAPPER'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          "$REAL_ADB" "$@"
+          if [ "${1:-}" = -s ] && [ "${2:-}" = emulator-5554 ] && [ "${3:-}" = install ]; then
+            installed=$("$REAL_ADB" -s emulator-5554 shell pm path app.frogg.fde | tr -d '\r')
+            installed=${installed#package:}
+            if [[ "$installed" != /data/app/*/base.apk ]] || [[ "$installed" == *$'\n'* ]]; then
+              echo "Unexpected installed APK path: $installed" >&2
+              exit 1
+            fi
+            target="${installed%/base.apk}/lib/arm64"
+            "$REAL_ADB" -s emulator-5554 shell mkdir -p "$target"
+            "$REAL_ADB" -s emulator-5554 push "$NATIVE_LIBS_DIR/." "$target/"
+            "$REAL_ADB" -s emulator-5554 shell chmod -R 755 "$target"
+            "$REAL_ADB" -s emulator-5554 shell restorecon -RF "$target"
+            "$REAL_ADB" -s emulator-5554 shell ls -lZ "$target" > "$EVIDENCE_DIR/installed-library-contexts.txt"
+            "$REAL_ADB" -s emulator-5554 shell dumpsys package app.frogg.fde > "$EVIDENCE_DIR/installed-package.txt"
+          fi
+          WRAPPER
+          chmod +x "$RUNNER_TEMP/diagnostic-adb"
+          sha256sum --check "$EVIDENCE_DIR/apk.sha256"
+      - name: Check packaged startup and relaunch
+        timeout-minutes: 5
+        shell: bash
+        run: |
+          node scripts/release/smoke-android-apk.mjs \
+            --serial emulator-5554 --apk "$APK_PATH" --app-id app.frogg.fde \
+            --adb "$RUNNER_TEMP/diagnostic-adb" --out-dir "$EVIDENCE_DIR/smoke" --seconds 30
+      - name: Preserve emulator diagnostics
+        if: always()
+        timeout-minutes: 2
+        shell: bash
+        run: |
+          mkdir -p "$EVIDENCE_DIR"
+          adb="$ANDROID_HOME/platform-tools/adb"
+          timeout 20 "$adb" devices -l > "$EVIDENCE_DIR/adb-devices.txt" 2>&1 || true
+          timeout 30 "$adb" -s emulator-5554 logcat -d -t 5000 > "$EVIDENCE_DIR/final-logcat.txt" 2>&1 || true
+          timeout 20 "$adb" -s emulator-5554 logcat -b crash -d -t 1000 > "$EVIDENCE_DIR/final-crash.txt" 2>&1 || true
+          timeout 10 "$adb" -s emulator-5554 emu kill || true
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: android-startup-diagnostics-${{ github.run_id }}
+          path: ${{ runner.temp }}/android-startup-evidence
+          if-no-files-found: warn
+          retention-days: 7

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.2 - 2026-09-12
+
+- Add an explicit-device Android APK startup check that observes two cold launches
+  and retains crash logs, screenshots, process and foreground-activity evidence.
+- Add a hardware-accelerated Android diagnostic workflow for existing build
+  artifacts. Android launch-crash investigation is ongoing; this tooling change
+  does not claim a runtime fix.
+
 ## 0.6.1 - 2026-09-12
 
 - Isolate native dependency caches by operating system, OS image version and
