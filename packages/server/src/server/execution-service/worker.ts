@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import { randomUUID } from "node:crypto";
 import { createPaseoDaemon, type DaemonLifecycleIntent } from "../bootstrap.js";
 import { loadConfig } from "../config.js";
@@ -17,7 +18,7 @@ import {
   removeExecutionDescriptor,
 } from "./state.js";
 
-process.title = "FDE Execution Service";
+process.title = `${brand.name} Execution Service`;
 
 async function main(): Promise<void> {
   const home = resolveFdeHome();

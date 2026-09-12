@@ -1,15 +1,13 @@
 # Changelog
 
-## 0.4.4 - 2026-09-12
+## 0.5.0 - 2026-09-12
 
 - Show Connecting while sidebar agent hosts are reconnecting or not yet initialized,
   reserving Offline for disconnected or failed connections. Cached activity keeps
   live indicators hidden until the connection returns.
 - Preserve the existing host runtime during development hot reloads so active
   connections are not abandoned in favor of an empty connection store.
-
-## 0.4.3 - 2026-09-12
-
+- Use the selected product name for the execution process and refresh Nix dependencies.
 - Add opt-in independent execution (`FDE_EXECUTION_SERVICE=1`): the supervised
   daemon becomes a restartable HTTP/WebSocket gateway while the execution service
   retains agents, provider turns, permissions, MCP tools, and orchestration.
@@ -26,8 +24,6 @@
   reattachment; an isolated Linux systemd restart/stop also preserves execution.
   Real-provider background work, Windows/macOS lifecycle, and complete installed-update
   acceptance remain unverified. The feature is not enabled by default or deployed.
-
-## 0.4.2 - 2026-09-12
 
 - Specify the independent execution boundary, compatibility and lifecycle contracts,
   rollout, and acceptance criteria in the [implementation spec](docs/plans/independent-execution-service.md).
