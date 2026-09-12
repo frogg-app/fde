@@ -1,3 +1,5 @@
+import { brandEnv } from "@fde/branding/identity";
+import { brand } from "@fde/branding";
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
@@ -43,7 +45,7 @@ export interface ServiceActionResult {
 
 /** How to launch the CLI again from a service manager, with no shell in between. */
 export function resolveCliCommand(env: NodeJS.ProcessEnv = process.env): ServiceCommand {
-  const launcher = env.FDE_CLI?.trim() || env.PASEO_CLI?.trim();
+  const launcher = brandEnv(brand, env, "CLI");
   if (launcher && existsSync(launcher)) {
     return { program: launcher, args: [] };
   }
@@ -55,7 +57,12 @@ export function resolveCliCommand(env: NodeJS.ProcessEnv = process.env): Service
     const versionsIndex = entry.split(path.sep).indexOf("versions");
     if (versionsIndex > 0) {
       const root = entry.split(path.sep).slice(0, versionsIndex).join(path.sep);
-      const rolling = path.join(root, "current", "bin", "fde");
+      const rolling = path.join(
+        root,
+        "current",
+        "bin",
+        process.platform === "win32" ? `${brand.cliName}.cmd` : brand.cliName,
+      );
       if (existsSync(rolling)) return { program: rolling, args: [] };
     }
     return { program: process.execPath, args: [path.resolve(entry)] };
@@ -127,7 +134,7 @@ export function installLoginService(options: ServiceActionOptions = {}): Service
     hints: plan.hints,
     message: warnings.length
       ? `Installed ${plan.label}, but some steps need attention: ${warnings.join("; ")}`
-      : `FDE will start when you log in (${plan.label}).`,
+      : `${brand.name} will start when you log in (${plan.label}).`,
   };
 }
 
@@ -150,7 +157,7 @@ export function uninstallLoginService(options: ServiceActionOptions = {}): Servi
     warnings: [],
     hints: [],
     message: existed
-      ? `FDE will no longer start when you log in (${plan.label} removed).`
+      ? `${brand.name} will no longer start when you log in (${plan.label} removed).`
       : `Nothing to remove: no ${plan.label} login service is installed.`,
   };
 }

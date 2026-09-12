@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import type { Command } from "commander";
 import { render, withOutput, type OutputSchema, type SingleResult } from "../../output/index.js";
 import { addJsonOption } from "../../utils/command-options.js";
@@ -79,7 +80,7 @@ export function addHubProjectsCommand(
       parent
         .command("projects")
         .description("List projects for the authenticated Hub organization")
-        .option("--hub <origin>", "FDE Hub origin")
+        .option("--hub <origin>", `${brand.name} Hub origin`)
         .option("--api-key <secret>", "Organization API key"),
     ),
   ).action(

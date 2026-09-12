@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import type { Command } from "commander";
 import { createRequire } from "node:module";
 import { getOrCreateServerId, findExecutable, execCommand } from "@fde/server";
@@ -120,7 +121,7 @@ function toStatusRows(status: DaemonStatus): StatusRow[] {
     { key: "Server ID", value: status.serverId ?? "-" },
     { key: "Local Daemon", value: status.localDaemon },
     { key: "Connected Daemon", value: status.connectedDaemon },
-    { key: "FDE Home", value: status.home },
+    { key: `${brand.name} Home`, value: status.home },
     { key: "Listen", value: status.listen },
     { key: "Relay", value: status.relay },
     { key: "Hostname", value: status.hostname ?? "-" },

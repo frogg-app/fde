@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import path from "node:path";
 import type { Command } from "commander";
 import type { CommandError, CommandOptions, SingleResult } from "../../output/index.js";
@@ -14,7 +15,7 @@ export function resolveProjectPath(input: {
       throw {
         code: "MISSING_PATH",
         message: "Project path is required when targeting a daemon explicitly",
-        details: "Usage: fde project create <path> --host <host>",
+        details: `Usage: ${brand.cliName} project create <path> --host <host>`,
       } satisfies CommandError;
     }
     return input.pathArg;

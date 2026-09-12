@@ -1,3 +1,5 @@
+import { matchesBrand } from "@fde/branding/identity";
+import { brand } from "@fde/branding";
 import { spawnSync, type ChildProcess } from "node:child_process";
 import { existsSync, readFileSync, unlinkSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -124,7 +126,7 @@ function envWithHome(home?: string): NodeJS.ProcessEnv {
   }
 
   // FDE_HOME wins over an inherited PASEO_HOME, so an explicit --home always applies.
-  return { ...process.env, FDE_HOME: home };
+  return { ...process.env, [`${brand.envPrefix}_HOME`]: home };
 }
 
 function buildRunnerArgs(options: DaemonStartOptions): string[] {
@@ -158,7 +160,7 @@ function buildRunnerArgs(options: DaemonStartOptions): string[] {
 function buildChildEnv(options: DaemonStartOptions): NodeJS.ProcessEnv {
   const childEnv: NodeJS.ProcessEnv = { ...process.env };
   if (options.home) {
-    childEnv.FDE_HOME = options.home;
+    childEnv[`${brand.envPrefix}_HOME`] = options.home;
   }
   if (options.listen) {
     childEnv.PASEO_LISTEN = options.listen;
@@ -245,6 +247,14 @@ function resolveStopReason(
   return "owner_pid_signal";
 }
 
+class ForeignDaemonError extends Error {
+  constructor() {
+    super(
+      `Refusing to manage another product with ${brand.name}. Check the state directory and daemon port.`,
+    );
+  }
+}
+
 function readPidFile(pidPath: string): LocalDaemonPidInfo | null {
   try {
     const parsed = JSON.parse(readFileSync(pidPath, "utf-8")) as Record<string, unknown>;
@@ -253,6 +263,7 @@ function readPidFile(pidPath: string): LocalDaemonPidInfo | null {
       return null;
     }
 
+    if (!matchesBrand(brand, parsed.brand)) throw new ForeignDaemonError();
     return {
       pid: pidValue,
       startedAt: typeof parsed.startedAt === "string" ? parsed.startedAt : undefined,
@@ -261,7 +272,8 @@ function readPidFile(pidPath: string): LocalDaemonPidInfo | null {
       listen: resolveListenField(parsed.listen, parsed.sockPath),
       desktopManaged: parsed.desktopManaged === true ? true : undefined,
     };
-  } catch {
+  } catch (error) {
+    if (error instanceof ForeignDaemonError) throw error;
     return null;
   }
 }
@@ -561,7 +573,8 @@ export function resolveLocalDaemonState(options: { home?: string } = {}): LocalD
     home,
     listen,
     relayEnabled: config.relayEnabled ?? true,
-    relayEndpoint: config.relayPublicEndpoint ?? config.relayEndpoint ?? "relay.paseo.sh:443",
+    relayEndpoint:
+      config.relayPublicEndpoint ?? config.relayEndpoint ?? brand.services.relayEndpoint ?? "",
     relayUseTls: config.relayUseTls ?? false,
     relayPublicUseTls: config.relayPublicUseTls ?? config.relayUseTls ?? false,
     logPath,
@@ -694,6 +707,10 @@ async function requestLifecycleShutdown(
     };
   }
 
+  if (!matchesBrand(brand, client.getLastServerInfoMessage()?.brand)) {
+    await client.close().catch(() => undefined);
+    throw new ForeignDaemonError();
+  }
   try {
     await client.shutdownServer({ timeout: Math.min(remainingTimeoutMs(), 5000) });
     return { requested: true };

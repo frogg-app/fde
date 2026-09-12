@@ -15,7 +15,8 @@
  * code renders the hand-off page and none get the daemon-only "Pair this
  * browser" button.
  */
-import { DEFAULT_PAIRING_BASE_URL } from "@fde/protocol/connection-offer";
+import { brand } from "@fde/branding";
+import { brandEnv } from "@fde/branding/identity";
 import type { ClaimOfferStore } from "./claim-offer-store.js";
 import { CONTENT_SECURITY_POLICY, DEFAULT_PAIR_PAGE_ROOT_REDIRECT } from "./pairing-page-chrome.js";
 import { renderExpiredPairingPage, renderPairingCodePage } from "./pairing-code-page.js";
@@ -23,6 +24,7 @@ import { resolvePairingCode, type PairingCodeRouteDependencies } from "./pairing
 import { renderPairingQrSvg } from "./pairing-qr.js";
 
 export interface PairPageWorkerEnv {
+  [key: string]: string | undefined;
   /** Public base URL the rendered QR encodes. Must be the host people reach. */
   FDE_PAIRING_BASE_URL?: string;
   /** Where `GET /` sends a visitor who arrives without a code. */
@@ -82,8 +84,10 @@ export async function handlePairPageRequest(
   request: Request,
   env: PairPageWorkerEnv = {},
 ): Promise<Response> {
-  const pairingBaseUrl = env.FDE_PAIRING_BASE_URL ?? DEFAULT_PAIRING_BASE_URL;
-  const rootRedirect = env.FDE_PAIR_ROOT_REDIRECT ?? DEFAULT_PAIR_PAGE_ROOT_REDIRECT;
+  const pairingBaseUrl =
+    brandEnv(brand, env, "PAIRING_BASE_URL") ?? brand.services.pairingUrl ?? "";
+  const rootRedirect =
+    brandEnv(brand, env, "PAIR_ROOT_REDIRECT") ?? DEFAULT_PAIR_PAGE_ROOT_REDIRECT;
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, "") || "/";
 
@@ -107,6 +111,7 @@ export async function handlePairPageRequest(
   }
 
   if (path === "/") {
+    if (!rootRedirect) return html(renderExpiredPairingPage(), 200);
     return new Response(null, {
       status: 302,
       headers: { ...BASE_HEADERS, Location: rootRedirect },

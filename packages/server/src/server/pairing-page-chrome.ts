@@ -1,12 +1,13 @@
+import { brand } from "@fde/branding";
 /**
  * Shared chrome for the daemon's two self-contained HTML pages: the "Claim
  * this FDE daemon" gate and the `/code/<code>` pairing landing page. Inline
  * CSS only — these pages load no external assets.
  */
-export const FDE_ACCENT = "#25B5C8";
+export const FDE_ACCENT = brand.colors.dark.accent;
 
 /** Where `GET /` sends a visitor who arrives without a pairing code. */
-export const DEFAULT_PAIR_PAGE_ROOT_REDIRECT = "https://frogg.app";
+export const DEFAULT_PAIR_PAGE_ROOT_REDIRECT = brand.links.website ?? "";
 
 /**
  * The pages are self-contained (inline CSS, inline SVG QR, one inline script)
@@ -32,8 +33,8 @@ export function escapeHtml(value: string): string {
 }
 
 export const PAIRING_PAGE_STYLES = `
-:root{color-scheme:light dark;--accent:${FDE_ACCENT};--bg:#0f1417;--card:#161d21;--fg:#e6edf0;--muted:#8fa3ab;--border:#243036}
-@media (prefers-color-scheme:light){:root{--bg:#f4f7f8;--card:#ffffff;--fg:#14202a;--muted:#5b6b73;--border:#d8e1e5}}
+:root{color-scheme:light dark;--accent:${brand.colors.dark.accent};--accent-fg:${brand.colors.dark.accentForeground};--bg:${brand.colors.dark.background};--card:${brand.colors.dark.background};--fg:${brand.colors.dark.foreground};--muted:${brand.colors.dark.foreground};--border:#52616b}
+@media (prefers-color-scheme:light){:root{--accent:${brand.colors.light.accent};--accent-fg:${brand.colors.light.accentForeground};--bg:${brand.colors.light.background};--card:${brand.colors.light.background};--fg:${brand.colors.light.foreground};--muted:${brand.colors.light.foreground};--border:#c0c9cf}}
 *{box-sizing:border-box}html,body{margin:0;height:100%}
 body{background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;align-items:center;justify-content:center;padding:24px}
 main{width:100%;max-width:520px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px 28px 22px}
@@ -47,7 +48,7 @@ h1{font-size:22px;margin:0 0 6px}p{margin:0 0 12px;color:var(--muted)}
 ol{padding-left:20px;margin:0 0 14px;color:var(--fg)}ol li{margin:4px 0}
 .link{display:block;word-break:break-all;font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--fg);text-decoration:none}
 .row{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
-button,.button{display:inline-block;background:var(--accent);color:#04191d;border:0;border-radius:8px;padding:9px 14px;font:inherit;font-weight:600;cursor:pointer;text-decoration:none}
+button,.button{display:inline-block;background:var(--accent);color:var(--accent-fg);border:0;border-radius:8px;padding:9px 14px;font:inherit;font-weight:600;cursor:pointer;text-decoration:none}
 button.secondary{background:transparent;color:var(--accent);border:1px solid var(--accent)}
 .status{font-size:13px;color:var(--muted)}
 .meta{margin-top:16px;font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:10px}

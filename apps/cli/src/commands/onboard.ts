@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import { cancel, confirm, intro, isCancel, log, outro, spinner } from "@clack/prompts";
 import { Command, Option } from "commander";
 import { writeFileSync } from "node:fs";
@@ -287,8 +288,8 @@ export function onboardCommand(): Command {
   return new Command("onboard")
     .description("Run first-time setup, start daemon, and print pairing instructions")
     .option("--listen <listen>", "Listen target (host:port, port, or unix socket path)")
-    .option("--port <port>", "Port to listen on (default: 9999)")
-    .option("--home <path>", "FDE home directory (default: ~/.fde)")
+    .option("--port <port>", `Port to listen on (default: ${brand.daemonPort})`)
+    .option("--home <path>", `${brand.name} home directory (default: ~/${brand.homeDir})`)
     .option("--relay", "Enable relay connection without prompting")
     .option("--no-relay", "Disable relay connection")
     .option("--no-mcp", "Disable the Agent MCP HTTP endpoint")
@@ -436,7 +437,7 @@ async function printPairingOffer(
   if (options.relay === false) {
     log.message("Relay pairing skipped because --no-relay was provided.");
     printNextSteps(null, paseoHome, richUi);
-    if (richUi) outro("FDE daemon is running.");
+    if (richUi) outro(`${brand.name} daemon is running.`);
     return;
   }
 
@@ -452,7 +453,7 @@ async function printPairingOffer(
     if (!shouldEnable) {
       printDirectConnectionGuidance();
       printNextSteps(null, paseoHome, richUi);
-      if (richUi) outro("FDE daemon is running.");
+      if (richUi) outro(`${brand.name} daemon is running.`);
       return;
     }
     pairing = await resolveLocalPairingOffer({ paseoHome, enableRelay: true });
@@ -466,7 +467,7 @@ async function printPairingOffer(
     log.warn("Relay pairing URL is unavailable for this daemon configuration.");
     printNextSteps(null, paseoHome, richUi);
     if (richUi) {
-      outro("FDE daemon is running.");
+      outro(`${brand.name} daemon is running.`);
     }
     return;
   }
@@ -476,19 +477,19 @@ async function printPairingOffer(
       url: pairing.url,
       qr: pairing.qr,
       columns: process.stdout.columns,
-      deepLink: buildPairingDeepLink(pairing.url),
+      deepLink: buildPairingDeepLink(pairing.url, brand.scheme),
     }),
   );
   printNextSteps(pairing.url, paseoHome, richUi);
   if (richUi) {
-    outro("FDE is ready!");
+    outro(`${brand.name} is ready!`);
   }
 }
 
 export async function runOnboard(options: OnboardOptions): Promise<void> {
   const richUi = process.stdin.isTTY && process.stdout.isTTY;
   if (richUi) {
-    intro("Welcome to FDE");
+    intro(`Welcome to ${brand.name}`);
   }
 
   if (options.listen && options.port) {
@@ -507,9 +508,9 @@ export async function runOnboard(options: OnboardOptions): Promise<void> {
 
   const paseoHome = resolveLocalPaseoHome(options.home);
   if (richUi) {
-    renderNote(paseoHome, "FDE home");
+    renderNote(paseoHome, `${brand.name} home`);
   } else {
-    console.log(`FDE home: ${paseoHome}`);
+    console.log(`${brand.name} home: ${paseoHome}`);
   }
 
   const voiceEnabled = await resolveAndPersistVoice(paseoHome, options);

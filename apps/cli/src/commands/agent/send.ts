@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import { type Command } from "commander";
 import { collectMultiple } from "../../utils/command-options.js";
 import { connectToDaemon, getDaemonHost } from "../../utils/client.js";
@@ -119,8 +120,7 @@ async function resolvePromptInput(options: {
     const error: CommandError = {
       code: "MISSING_PROMPT",
       message: "A prompt is required",
-      details:
-        "Usage: fde agent send [options] <id> [prompt] | --prompt <text> | --prompt-file <path>",
+      details: `Usage: ${brand.cliName} agent send [options] <id> [prompt] | --prompt <text> | --prompt-file <path>`,
     };
     throw error;
   }
@@ -173,7 +173,7 @@ export async function runSendCommand(
     const error: CommandError = {
       code: "MISSING_AGENT_ID",
       message: "Agent ID is required",
-      details: "Usage: fde agent send [options] <id> [prompt]",
+      details: `Usage: ${brand.cliName} agent send [options] <id> [prompt]`,
     };
     throw error;
   }
@@ -192,7 +192,7 @@ export async function runSendCommand(
     const error: CommandError = {
       code: "DAEMON_NOT_RUNNING",
       message: `Cannot connect to daemon at ${host}: ${message}`,
-      details: "Start the daemon with: fde daemon start",
+      details: `Start the daemon with: ${brand.cliName} daemon start`,
     };
     throw error;
   }

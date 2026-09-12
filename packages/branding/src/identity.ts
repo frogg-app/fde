@@ -4,13 +4,15 @@ export interface BrandIdentity {
   id: string;
   applicationId: string;
 }
-export function matchesBrand(
-  expected: BrandIdentity,
-  actual: BrandIdentity | null | undefined,
-): boolean {
-  return actual
-    ? actual.id === expected.id && actual.applicationId === expected.applicationId
-    : expected.id === "fde";
+export function matchesBrand(expected: BrandIdentity, actual: unknown): boolean {
+  if (actual === null || actual === undefined) return expected.id === "fde";
+  return (
+    typeof actual === "object" &&
+    "id" in actual &&
+    "applicationId" in actual &&
+    actual.id === expected.id &&
+    actual.applicationId === expected.applicationId
+  );
 }
 
 export function brandEnv(

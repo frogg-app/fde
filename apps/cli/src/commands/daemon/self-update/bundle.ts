@@ -1,3 +1,6 @@
+import { brand } from "@fde/branding";
+import { matchesBrand, type BrandIdentity } from "@fde/branding/identity";
+import { daemonArtifactName } from "@fde/branding/artifacts";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
@@ -30,6 +33,7 @@ export interface BundleManifest {
   version: string;
   platform: string;
   arch: string;
+  brand?: BrandIdentity;
 }
 
 const DOWNLOAD_TIMEOUT_MS = 10 * 60_000;
@@ -52,8 +56,7 @@ export function detectBundleTarget(
 }
 
 export function bundleAssetName(version: string, target: BundleTarget): string {
-  const extension = target.platform === "win" ? "zip" : "tar.gz";
-  return `fde-daemon-${version}-${target.platform}-${target.arch}.${extension}`;
+  return daemonArtifactName(brand, version, target.platform, target.arch);
 }
 
 export async function sha256File(filePath: string): Promise<string> {
@@ -147,11 +150,18 @@ export function readBundleManifest(versionRoot: string): BundleManifest {
   ) {
     throw new Error(`invalid bundle manifest at ${manifestPath}`);
   }
-  return { version: parsed.version, platform: parsed.platform, arch: parsed.arch };
+  if (!matchesBrand(brand, parsed.brand))
+    throw new Error(`Bundle belongs to another product; expected ${brand.applicationId}`);
+  return {
+    version: parsed.version,
+    platform: parsed.platform,
+    arch: parsed.arch,
+    brand: parsed.brand,
+  };
 }
 
 export function bundleLauncherPath(versionRoot: string, platform: BundlePlatform): string {
-  return path.join(versionRoot, "bin", platform === "win" ? "fde.cmd" : "fde");
+  return path.join(versionRoot, "bin", platform === "win" ? `${brand.cliName}.cmd` : brand.cliName);
 }
 
 function runOrThrow(command: string, args: string[]): void {
@@ -195,7 +205,7 @@ export async function extractBundle(
     runOrThrow("tar", ["-xzf", archivePath, "--strip-components=1", "-C", destination]);
   }
   if (!existsSync(bundleLauncherPath(destination, platform))) {
-    throw new Error("bundle is missing bin/fde");
+    throw new Error(`bundle is missing bin/${brand.cliName}`);
   }
   readBundleManifest(destination);
 }

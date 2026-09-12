@@ -96,6 +96,19 @@ resolve_dev_daemon_endpoint() {
 }
 
 configure_dev_paseo_home() {
+  local brand_root brand_prefix brand_id brand_home_var
+  brand_root="$(default_dev_paseo_root)"
+  node --import tsx "$brand_root/scripts/dev/brand.mts" prepare >/dev/null || return 1
+  brand_prefix="$(node -p 'require(process.argv[1]).envPrefix' "$brand_root/.generated/branding/brand.json")"
+  brand_id="$(node -p 'require(process.argv[1]).id' "$brand_root/.generated/branding/brand.json")"
+  brand_home_var="${brand_prefix}_HOME"
+  if [ "$brand_id" != "fde" ]; then
+    export PASEO_HOME="${!brand_home_var:-$brand_root/.dev/$brand_id-home}"
+  else
+    export PASEO_HOME="${FDE_HOME:-${PASEO_HOME:-$brand_root/.dev/paseo-home}}"
+  fi
+  export "$brand_home_var=$PASEO_HOME"
+
   if [ -n "${PASEO_HOME:-}" ]; then
     export PASEO_HOME
     if [ -n "${PASEO_DEV_SEED_HOME:-}" ]; then

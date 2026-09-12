@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import type { Command } from "commander";
 import { connectToDaemon } from "../../utils/client.js";
 import type { CommandOptions, OutputSchema, SingleResult } from "../../output/index.js";
@@ -20,7 +21,7 @@ export const daemonReloadSchema: OutputSchema<DaemonReloadResult> = {
         "Warning: These changes require a daemon restart:",
         ...result.data.restartRequiredPaths.map((path) => `  ${path}`),
         "",
-        "Run: fde daemon restart",
+        `Run: ${brand.cliName} daemon restart`,
       );
     }
     if (result.data.overrideControlledPaths.length > 0) {

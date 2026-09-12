@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import { Command, Option } from "commander";
 import { getStructuredAgentResponse, StructuredAgentResponseError } from "@fde/server";
 import type { AgentSnapshotPayload } from "@fde/protocol/messages";
@@ -339,7 +340,7 @@ function validateRunWorkspaceOptions(options: AgentRunOptions): void {
     throw {
       code: "INVALID_OPTIONS",
       message: "Worktree options require --new-workspace worktree",
-      details: "Usage: fde run --new-workspace worktree [worktree options] <prompt>",
+      details: `Usage: ${brand.cliName} run --new-workspace worktree [worktree options] <prompt>`,
     } satisfies CommandError;
   }
 
@@ -378,7 +379,7 @@ function validateRunOptions(prompt: string, options: AgentRunOptions, outputSche
     throw {
       code: "MISSING_PROMPT",
       message: "A prompt is required",
-      details: "Usage: fde agent run [options] <prompt>",
+      details: `Usage: ${brand.cliName} agent run [options] <prompt>`,
     } satisfies CommandError;
   }
 
@@ -493,7 +494,7 @@ async function connectToDaemonOrThrow(
     throw {
       code: "DAEMON_NOT_RUNNING",
       message: `Cannot connect to daemon at ${host}: ${message}`,
-      details: "Start the daemon with: fde daemon start",
+      details: `Start the daemon with: ${brand.cliName} daemon start`,
     } satisfies CommandError;
   }
 }
@@ -605,8 +606,7 @@ export async function runRunCommand(
       const error: CommandError = {
         code: "INVALID_THINKING_OPTION",
         message: "--thinking cannot be empty",
-        details:
-          'Provide a thinking option ID. Use "fde provider models <provider> --thinking" to list valid IDs.',
+        details: `Provide a thinking option ID. Use "${brand.cliName} provider models <provider> --thinking" to list valid IDs.`,
       };
       throw error;
     }

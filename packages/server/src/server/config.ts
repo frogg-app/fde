@@ -1,9 +1,11 @@
+import { brandEnv } from "@fde/branding/identity";
+import { brand } from "@fde/branding";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { resolvePaseoNodeEnv } from "./paseo-env.js";
 import { z } from "zod";
-import { DEFAULT_PAIRING_BASE_URL } from "@fde/protocol/connection-offer";
+
 import { expandTilde } from "../utils/path.js";
 
 import type { PaseoDaemonConfig } from "./bootstrap.js";
@@ -28,9 +30,9 @@ import { mergeHostnames, parseHostnamesEnv, type HostnamesConfig } from "./hostn
 import { resolveGitProcessPolicy } from "../utils/git-process-scheduler.js";
 import type { DaemonAutoUpdateConfig } from "@fde/protocol/messages";
 
-const DEFAULT_PORT = 9999;
-const DEFAULT_RELAY_ENDPOINT = "relay.paseo.sh:443";
-const DEFAULT_APP_BASE_URL = DEFAULT_PAIRING_BASE_URL;
+const DEFAULT_PORT = brand.daemonPort;
+const DEFAULT_RELAY_ENDPOINT = brand.services.relayEndpoint ?? "";
+const DEFAULT_APP_BASE_URL = brand.services.pairingUrl ?? "";
 /**
  * Bases written into config.json by earlier releases as *their* default. A home
  * carrying one of these is not expressing a preference, so the current default
@@ -44,7 +46,7 @@ export function resolvePairingBaseUrl(app: {
 }): string | undefined {
   for (const candidate of [app.pairingBaseUrl, app.baseUrl]) {
     const trimmed = candidate?.trim().replace(/\/+$/, "");
-    if (trimmed && !SUPERSEDED_APP_BASE_URLS.has(trimmed)) return trimmed;
+    if (trimmed && (!brand.legacyFde || !SUPERSEDED_APP_BASE_URLS.has(trimmed))) return trimmed;
   }
   return undefined;
 }
@@ -311,6 +313,11 @@ function resolveTlsFromEnv(
   return persistedValue ?? fallback;
 }
 
+function validateRelayEndpoint(enabled: boolean, endpoint: string): void {
+  if (enabled && !endpoint)
+    throw new Error("Configure a relay endpoint before enabling relay for this product.");
+}
+
 function resolveRelayConfig(input: ResolveRelayInput): ResolvedRelay {
   const environmentEnabled = parseBooleanEnv(input.env.PASEO_RELAY_ENABLED);
   // COMPAT(relayOptInDefault): daemons whose startup config omitted this field
@@ -324,6 +331,7 @@ function resolveRelayConfig(input: ResolveRelayInput): ResolvedRelay {
     input.env.PASEO_RELAY_ENDPOINT ??
     input.persisted.daemon?.relay?.endpoint ??
     DEFAULT_RELAY_ENDPOINT;
+  validateRelayEndpoint(enabled, endpoint);
   const publicEndpoint =
     input.env.PASEO_RELAY_PUBLIC_ENDPOINT ??
     input.persisted.daemon?.relay?.publicEndpoint ??
@@ -588,7 +596,7 @@ function resolveStaticLoadConfigSettings(
     trustedProxies: resolveTrustedProxiesConfig(env, persisted),
     trustLan: resolveTrustLanConfig(env, persisted),
     appBaseUrl:
-      env.FDE_PAIRING_BASE_URL ??
+      brandEnv(brand, env, "PAIRING_BASE_URL") ??
       env.PASEO_APP_BASE_URL ??
       resolvePersistedPairingBaseUrl(persisted) ??
       DEFAULT_APP_BASE_URL,
@@ -610,7 +618,8 @@ export function resolveConfigFromPersisted(
   const env = resolvedOptions.env ?? process.env;
   const cli = resolvedOptions.cli;
   const relayEnabledFallback =
-    resolvedOptions.relayEnabledFallback ?? persisted.daemon?.relay?.enabled === undefined;
+    resolvedOptions.relayEnabledFallback ??
+    (brand.legacyFde && persisted.daemon?.relay?.enabled === undefined);
 
   const listen = resolveListenAddress(env, cli, persisted);
   const {
@@ -772,7 +781,10 @@ function resolveCoreDaemonOverridePaths(
   ) {
     paths.push("daemon.git.maxProcessConcurrency");
   }
-  if (env.FDE_PAIRING_BASE_URL !== undefined || env.PASEO_APP_BASE_URL !== undefined) {
+  if (
+    brandEnv(brand, env, "PAIRING_BASE_URL") !== undefined ||
+    env.PASEO_APP_BASE_URL !== undefined
+  ) {
     paths.push("app.baseUrl", "app.pairingBaseUrl");
   }
   if (env.PASEO_PASSWORD?.trim()) paths.push("daemon.auth.password");

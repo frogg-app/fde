@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import { Command } from "commander";
 import { createAgentCommand } from "./commands/agent/index.js";
 import {
@@ -26,9 +27,9 @@ export function createCli(): Command {
   const program = new Command();
 
   program
-    .name("fde")
+    .name(brand.cliName)
     .description(
-      "FDE (Frogg Development Environment) CLI - control your AI coding agents from the command line",
+      `${brand.name} (${brand.fullName}) CLI - control your AI coding agents from the command line`,
     )
     .version(VERSION, "-v, --version", "output the version number")
     // Global output options

@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import { randomUUID } from "node:crypto";
 import { chmodSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -156,13 +157,13 @@ function isMissingFile(error: unknown): boolean {
 function invalidCredentialFile(): HubCommandError {
   return new HubCommandError(
     "HUB_CREDENTIALS_INVALID",
-    "Stored Hub login is invalid. Run `fde hub login <origin>` to replace it.",
+    `Stored Hub login is invalid. Run \`${brand.cliName} hub login <origin>\` to replace it.`,
   );
 }
 
 function credentialStorageError(): HubCommandError {
   return new HubCommandError(
     "HUB_CREDENTIALS_UNAVAILABLE",
-    "Could not access the private Hub credential store under the FDE home directory.",
+    `Could not access the private Hub credential store under the ${brand.name} home directory.`,
   );
 }

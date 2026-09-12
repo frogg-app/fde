@@ -168,3 +168,9 @@ Acme web export succeeds with its own HTML title, PWA identity, colors and asset
 All nine locales use product interpolation while retaining Paseo attribution.
 77 targeted tests pass, including brand-isolated storage cleanup. Native shell
 integration and mobile package/device verification remain separate checkpoints.
+
+### Daemon and CLI milestone
+
+Daemon discovery and server information now include an additive public brand identity. Homes, default ports, service names, launchers, child-process homes, pairing schemes and CLI copy resolve from the selected product. Custom products have no implicit relay, pairing host or update repository. Legacy home migration and legacy distribution metadata remain accepted for FDE only. Bundle replacement, PID-lock recovery and lifecycle shutdown verify ownership. Pairing HTML escapes product names and uses the selected appearance.
+
+Validation: 80 existing CLI lifecycle tests passed; three new custom-distribution regression tests passed; 32 daemon ownership, home-migration, discovery and pairing tests passed, including three custom-brand tests. Server and CLI typechecks and changed-source lint passed. Service definitions now quote paths containing spaces and escape XML values.
