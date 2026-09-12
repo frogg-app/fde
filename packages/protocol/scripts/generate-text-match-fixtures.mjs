@@ -12,7 +12,7 @@
  */
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const output = resolve(packageRoot, "generated/text-match-fixtures.json");
@@ -24,7 +24,7 @@ const {
   fuzzyPolicyForToken,
   compareMatchScores,
   tokenizeQuery,
-} = await import(resolve(packageRoot, "dist/search/text-match.js"));
+} = await import(pathToFileURL(resolve(packageRoot, "dist/search/text-match.js")).href);
 
 /** mulberry32: small, seeded, and identical run to run. */
 function rng(seed) {

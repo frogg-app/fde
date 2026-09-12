@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { Command } from "commander";
@@ -104,7 +105,7 @@ export function addHubExportCommand(parent: Command, dependencies: HubExportDepe
         .command("export")
         .description("Export active Hub triggers as one YAML file per trigger")
         .argument("[directory]", "Destination directory", ".paseo/triggers")
-        .option("--hub <origin>", "FDE Hub origin")
+        .option("--hub <origin>", `${brand.name} Hub origin`)
         .option("--api-key <secret>", "Organization API key")
         .option("--force", "Replace trigger files with different contents"),
     ),

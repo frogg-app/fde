@@ -30,6 +30,7 @@
         {
           default = paseo;
           paseo = paseo;
+          fde = paseo;
         }
       );
 
@@ -37,7 +38,7 @@
       nixosModules.paseo =
         { pkgs, lib, ... }:
         {
-          imports = [ ./module.nix ];
+          imports = [ ./module.nix ./branded-module.nix ];
           services.paseo.package = lib.mkDefault self.packages.${pkgs.stdenv.hostPlatform.system}.default;
         };
 

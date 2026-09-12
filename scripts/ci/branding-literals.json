@@ -1,0 +1,46 @@
+[
+  {
+    "literal": "FDE",
+    "reason": "Official identity comparisons and environment prefix compatibility."
+  },
+  {
+    "literal": "Paseo",
+    "reason": "Legacy installation detection and retained attribution."
+  },
+  {
+    "literal": "{{brandFullName}}는 <paseo>Paseo</paseo>를 기반으로 합니다.",
+    "reason": "Retained Paseo attribution, with the displayed product interpolated."
+  },
+  {
+    "literal": "{{brandFullName}} está basado en <paseo>Paseo</paseo>.",
+    "reason": "Retained Paseo attribution, with the displayed product interpolated."
+  },
+  {
+    "literal": "{{brandFullName}} مبني على <paseo>Paseo</paseo>.",
+    "reason": "Retained Paseo attribution, with the displayed product interpolated."
+  },
+  {
+    "literal": "{{brandFullName}} основан на <paseo>Paseo</paseo>.",
+    "reason": "Retained Paseo attribution, with the displayed product interpolated."
+  },
+  {
+    "literal": "{{brandFullName}} 基于 <paseo>Paseo</paseo> 构建。",
+    "reason": "Retained Paseo attribution, with the displayed product interpolated."
+  },
+  {
+    "literal": "{{brandFullName}} est basé sur <paseo>Paseo</paseo>.",
+    "reason": "Retained Paseo attribution, with the displayed product interpolated."
+  },
+  {
+    "literal": "{{brandFullName}} は <paseo>Paseo</paseo> をベースにしています。",
+    "reason": "Retained Paseo attribution, with the displayed product interpolated."
+  },
+  {
+    "literal": "O {{brandFullName}} é baseado no <paseo>Paseo</paseo>.",
+    "reason": "Retained Paseo attribution, with the displayed product interpolated."
+  },
+  {
+    "literal": "{{brandFullName}} is based on <paseo>Paseo</paseo>.",
+    "reason": "Retained Paseo attribution, with the displayed product interpolated."
+  }
+]

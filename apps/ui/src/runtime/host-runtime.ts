@@ -1,5 +1,6 @@
+import { brand } from "@fde/branding";
 import { useSyncExternalStore, useMemo } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import AsyncStorage from "@/storage/brand-storage";
 import equal from "fast-deep-equal/es6";
 import {
   DaemonClient,
@@ -1896,7 +1897,7 @@ export class HostRuntimeStore {
   ): Promise<HostProfile> {
     const offer = parseAnyConnectionOfferFromUrl(offerUrlOrFragment);
     if (!offer) {
-      throw new Error("This is not an FDE pairing link");
+      throw new Error(`This is not an ${brand.name} pairing link`);
     }
     return this.upsertConnectionFromAnyOffer(offer, { label });
   }

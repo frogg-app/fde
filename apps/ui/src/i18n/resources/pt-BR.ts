@@ -836,7 +836,7 @@ export const ptBR: TranslationResources = {
           mergePrNoGithub:
             "Merge da PR não está disponível agora porque o GitHub não está conectado",
           archiveNotWorktree:
-            "Arquivar não está disponível aqui porque este workspace não foi criado como um worktree do FDE",
+            "Arquivar não está disponível aqui porque este workspace não foi criado como um worktree do {{brandName}}",
           mergePrNoForge:
             "Merge da {{noun}} não está disponível agora porque o {{brand}} não está conectado",
           mergePrMissing: "Merge da PR não está disponível porque ainda não há uma pull request",
@@ -1259,7 +1259,7 @@ export const ptBR: TranslationResources = {
       close: "Fechar janela",
     },
     quitting: {
-      title: "Saindo do FDE...",
+      title: "Saindo do {{brandName}}...",
       detail: "Parando o daemon local.",
     },
     daemon: {
@@ -1273,20 +1273,20 @@ export const ptBR: TranslationResources = {
       },
       management: {
         title: "Gerenciar daemon integrado",
-        hint: "Permitir que o FDE inicie e pare o daemon integrado",
+        hint: "Permitir que o {{brandName}} inicie e pare o daemon integrado",
         pauseTitle: "Pausar daemon integrado",
         pauseMessage:
           "Isso vai parar o daemon integrado imediatamente. Agentes e terminais em execução conectados ao daemon integrado serão interrompidos.",
         pauseAndStop: "Pausar e parar",
         registrationFailed:
-          "O daemon integrado foi iniciado, mas o FDE não conseguiu salvar a conexão localhost. Desative e reative o gerenciamento do daemon ou adicione localhost manualmente.",
+          "O daemon integrado foi iniciado, mas o {{brandName}} não conseguiu salvar a conexão localhost. Desative e reative o gerenciamento do daemon ou adicione localhost manualmente.",
         pausedStopFailed:
-          "O gerenciamento do daemon integrado foi pausado, mas o FDE não conseguiu parar o daemon.",
+          "O gerenciamento do daemon integrado foi pausado, mas o {{brandName}} não conseguiu parar o daemon.",
         updateFailed: "Não foi possível atualizar o gerenciamento do daemon integrado.",
       },
       keepRunning: {
         title: "Manter daemon em execução ao sair",
-        hint: "O daemon continua em execução quando você sai do FDE",
+        hint: "O daemon continua em execução quando você sai do {{brandName}}",
       },
       logs: {
         title: "Arquivo de log",
@@ -1301,7 +1301,7 @@ export const ptBR: TranslationResources = {
       fullStatus: {
         title: "Status completo",
         modalTitle: "Status do daemon",
-        hint: "Executa `paseo daemon status` e mostra a saída",
+        hint: "Executa `{{cliName}} daemon status` e mostra a saída",
         view: "Ver status",
         copied: "Status copiado para a área de transferência.",
         fetchFailed: "Falha ao buscar status do daemon: {{message}}",
@@ -1315,7 +1315,7 @@ export const ptBR: TranslationResources = {
         installed: "Instalado",
         installedHint: "Versão {{version}} em {{path}}",
         notInstalledHint:
-          "Baixe o pacote do daemon FDE ({{platform}}) para executar agentes nesta máquina.",
+          "Baixe o pacote do daemon {{brandName}} ({{platform}}) para executar agentes nesta máquina.",
         install: "Instalar daemon local (~{{size}})",
         installing: "Instalando...",
         phaseChecksum: "Obtendo a soma de verificação...",
@@ -1352,10 +1352,11 @@ export const ptBR: TranslationResources = {
         title: "Atualizações",
         currentVersion: "Versão atual",
         strategyGithub: "As atualizações são baixadas das releases do GitHub.",
+        strategyDisabled: "As atualizações estão desativadas para esta distribuição.",
         strategySigned: "As atualizações são verificadas pelo atualizador assinado do Tauri.",
         autoCheck: {
           title: "Verificar automaticamente",
-          hint: "Procura novas versões a cada 6 horas enquanto uma janela do FDE estiver aberta.",
+          hint: "Procura novas versões a cada 6 horas enquanto uma janela do {{brandName}} estiver aberta.",
         },
         check: "Verificar atualizações",
         checking: "Verificando...",
@@ -1369,15 +1370,16 @@ export const ptBR: TranslationResources = {
         verifying: "Verificando o download...",
         installing: "Instalando...",
         installHint: {
-          "windows-installer": "Executa o instalador e reabre o FDE.",
-          "windows-portable": "Substitui o executável portátil e reabre o FDE.",
-          "linux-appimage": "Substitui o AppImage no lugar e reinicia o FDE.",
+          "windows-installer": "Executa o instalador e reabre o {{brandName}}.",
+          "windows-portable": "Substitui o executável portátil e reabre o {{brandName}}.",
+          "linux-appimage": "Substitui o AppImage no lugar e reinicia o {{brandName}}.",
           "linux-deb": "Abre o pacote .deb no seu instalador de pacotes.",
-          "macos-dmg": "Abre a imagem de disco; arraste o FDE para Aplicativos para concluir.",
+          "macos-dmg":
+            "Abre a imagem de disco; arraste o {{brandName}} para Aplicativos para concluir.",
           unknown: "Baixa a versão compilada para esta plataforma.",
         },
         noAsset: "Ainda não há download publicado para esta plataforma.",
-        restartRequired: "Reinicie o FDE para concluir a atualização.",
+        restartRequired: "Reinicie o {{brandName}} para concluir a atualização.",
       },
       callout: {
         installingTitle: "Instalando atualização",
@@ -1400,7 +1402,8 @@ export const ptBR: TranslationResources = {
     },
     rosetta: {
       title: "Baixar a build para Apple Silicon",
-      runningIntel: "Você está executando a build Intel do FDE pelo Rosetta no Apple Silicon.",
+      runningIntel:
+        "Você está executando a build Intel do {{brandName}} pelo Rosetta no Apple Silicon.",
       highCpu: "Isso causa alto uso de CPU. Baixe a build para Apple Silicon para corrigir.",
       download: "Baixar",
     },
@@ -1442,7 +1445,7 @@ export const ptBR: TranslationResources = {
         microphone: "O status do microfone ainda não foi verificado.",
       },
       testNotification: {
-        title: "Teste de notificação do FDE",
+        title: "Teste de notificação do {{brandName}}",
         body: "Se você consegue ver isto, as notificações desktop funcionam.",
         notDelivered:
           "A notificação não foi entregue. Verifique Ajustes do Sistema > Notificações.",
@@ -1452,12 +1455,12 @@ export const ptBR: TranslationResources = {
     integrations: {
       cli: {
         statusFailed: "Não foi possível verificar o status de instalação da CLI.",
-        installFailed: "Não foi possível instalar a CLI do FDE.",
+        installFailed: "Não foi possível instalar a CLI do {{brandName}}.",
       },
     },
   },
   rootError: {
-    title: "O FDE encontrou um problema.",
+    title: "O {{brandName}} encontrou um problema.",
     body: "Tente novamente para recarregar o app. Se isso continuar acontecendo, inclua os detalhes abaixo ao relatar o problema.",
     details: "Detalhes",
   },
@@ -1552,19 +1555,19 @@ export const ptBR: TranslationResources = {
     },
   },
   onboarding: {
-    title: "Bem-vindo ao FDE",
+    title: "Bem-vindo ao {{brandName}}",
     subtitle: "Conecte seu computador para começar",
     localDaemon: {
       title: "Executar agentes nesta máquina",
-      description: "Instala o daemon FDE local (download de cerca de 180 MB).",
-      descriptionInstalled: "Inicia o daemon FDE local já instalado.",
+      description: "Instala o daemon {{brandName}} local (download de cerca de 180 MB).",
+      descriptionInstalled: "Inicia o daemon {{brandName}} local já instalado.",
       starting: "Iniciando o daemon local...",
       failed: "Não foi possível configurar o daemon local: {{message}}",
       retry: "Tentar novamente",
     },
     remoteHost: {
       title: "Usar um host remoto",
-      description: "Conecte-se a um daemon FDE em outra máquina.",
+      description: "Conecte-se a um daemon {{brandName}} em outra máquina.",
     },
     actions: {
       settings: "Configurações",
@@ -1643,11 +1646,13 @@ export const ptBR: TranslationResources = {
       },
       scanQr: {
         title: "Escanear QR code",
-        description: "Reivindique um novo daemon do FDE ou emparelhe pelo relay criptografado.",
+        description:
+          "Reivindique um novo daemon do {{brandName}} ou emparelhe pelo relay criptografado.",
       },
       pasteLink: {
         title: "Colar link de pareamento",
-        description: "Reivindique um novo daemon do FDE ou emparelhe pelo relay criptografado.",
+        description:
+          "Reivindique um novo daemon do {{brandName}} ou emparelhe pelo relay criptografado.",
       },
     },
     networkScan: {
@@ -1656,29 +1661,29 @@ export const ptBR: TranslationResources = {
       diagnosticsNone: "nenhum",
       title: "Servidores na sua rede",
       scanning: "Verificando {{scanned}} de {{total}} endereços…",
-      none: "Nenhum servidor FDE encontrado em {{subnets}}.",
+      none: "Nenhum servidor {{brandName}} encontrado em {{subnets}}.",
       scanned: "Verificado {{subnets}}.",
       rescan: "Verificar de novo",
       connect: "Conectar",
       connecting: "Conectando…",
       needsPairing: "Precisa emparelhar",
       pairingHint:
-        "Obtenha um link de emparelhamento: execute `fde daemon pair` no host ou abra o endereço web dele, depois escaneie ou cole aqui.",
+        "Obtenha um link de emparelhamento: execute `{{cliName}} daemon pair` no host ou abra o endereço web dele, depois escaneie ou cole aqui.",
     },
     claim: {
-      title: "Emparelhar com um daemon do FDE",
-      thisDaemon: "este daemon do FDE",
+      title: "Emparelhar com um daemon do {{brandName}}",
+      thisDaemon: "este daemon do {{brandName}}",
       claiming: "Emparelhando com {{host}}…",
       explainer:
-        "Este daemon do FDE ainda não foi reivindicado. Emparelhar torna este dispositivo o primeiro proprietário dele.",
+        "Este daemon do {{brandName}} ainda não foi reivindicado. Emparelhar torna este dispositivo o primeiro proprietário dele.",
       successTitle: "Emparelhado",
       successBody:
         "Este dispositivo agora é o primeiro proprietário de {{host}}. Outros dispositivos precisam de um novo link de emparelhamento.",
       successRelayBody: "{{host}} foi adicionado pelo relay criptografado.",
       noPendingOffer:
-        "Abra um link de emparelhamento (https://frogg.app/pair#offer=…) ou cole um em Adicionar conexão.",
+        "Abra um link de emparelhamento (a link from the daemon) ou cole um em Adicionar conexão.",
       newLinkHint:
-        "Códigos de emparelhamento são de uso único e expiram em dez minutos. Obtenha um novo: execute `fde daemon pair` no host ou recarregue o endereço web dele.",
+        "Códigos de emparelhamento são de uso único e expiram em dez minutos. Obtenha um novo: execute `{{cliName}} daemon pair` no host ou recarregue o endereço web dele.",
       triedEndpoints: "Tentado:",
       manualEndpointHelper:
         "Se o daemon estiver acessível em outro endereço (VPN, Docker, outra interface), informe-o como host:porta.",
@@ -1699,7 +1704,7 @@ export const ptBR: TranslationResources = {
     },
     direct: {
       title: "Conexão direta",
-      helper: "Informe o endereço de um servidor FDE.",
+      helper: "Informe o endereço de um servidor {{brandName}}.",
       fields: {
         host: "Host",
         port: "Porta",
@@ -1713,7 +1718,7 @@ export const ptBR: TranslationResources = {
         show: "Mostrar avançado",
         hide: "Ocultar avançado",
         helper:
-          "Qualquer forma funciona: host, host:porta, http(s)://host:porta, ws(s)://host:porta ou tcp://host:porta?ssl=true. Um daemon FDE fala HTTP e WebSocket na porta {{port}}.",
+          "Qualquer forma funciona: host, host:porta, http(s)://host:porta, ws(s)://host:porta ou tcp://host:porta?ssl=true. Um daemon {{brandName}} fala HTTP e WebSocket na porta {{port}}.",
         resolved: "Vai conectar a",
       },
       passwordVisibility: {
@@ -1745,7 +1750,7 @@ export const ptBR: TranslationResources = {
     },
     remoteSsh: {
       title: "SSH remoto",
-      helper: "Conecte-se a um daemon FDE no host remoto.",
+      helper: "Conecte-se a um daemon {{brandName}} no host remoto.",
       tabs: {
         config: "Configuração SSH",
         manual: "Manual",
@@ -1763,7 +1768,8 @@ export const ptBR: TranslationResources = {
         rememberSshPassword: "Lembrar nesta sessão",
       },
       hints: {
-        daemonPassword: "A senha do daemon FDE, não a do seu login SSH. Salva junto com este host.",
+        daemonPassword:
+          "A senha do daemon {{brandName}}, não a do seu login SSH. Salva junto com este host.",
         sshPassword:
           "Usada apenas para entrar por SSH. Nunca é salva; se lembrada, fica na memória até o app fechar.",
       },
@@ -1779,8 +1785,8 @@ export const ptBR: TranslationResources = {
         invalidTarget: "Insira um host ssh:// válido",
         failedToConnect: "Não foi possível conectar por SSH. {{detail}}",
         daemonPasswordRequired:
-          "O daemon FDE em {{host}} exige uma senha. Digite-a abaixo e conecte novamente.",
-        daemonPasswordIncorrect: "O daemon FDE em {{host}} rejeitou a senha.",
+          "O daemon {{brandName}} em {{host}} exige uma senha. Digite-a abaixo e conecte novamente.",
+        daemonPasswordIncorrect: "O daemon {{brandName}} em {{host}} rejeitou a senha.",
         sshPasswordRequired:
           "{{host}} recusou suas chaves SSH, mas aceita login por senha. Digite a senha SSH para continuar.",
         sshPasswordIncorrect: "{{host}} rejeitou a senha SSH.",
@@ -1791,11 +1797,11 @@ export const ptBR: TranslationResources = {
     link: {
       title: "Colar link de pareamento",
       helper:
-        "Cole o link da página de reivindicação do daemon ou do `fde daemon pair`. Um novo daemon do FDE é reivindicado pelo primeiro dispositivo que emparelha.",
+        "Cole o link da página de reivindicação do daemon ou do `{{cliName}} daemon pair`. Um novo daemon do {{brandName}} é reivindicado pelo primeiro dispositivo que emparelha.",
       label: "Link de pareamento",
       errors: {
         required: "Cole um link de emparelhamento (…/pair#offer=…)",
-        missingOffer: "Esse não é um link de pareamento do FDE",
+        missingOffer: "Esse não é um link de pareamento do {{brandName}}",
         emptyOffer: "O payload da oferta está vazio",
         invalid: "Link de pareamento inválido",
         unableToPair: "Não foi possível parear host",
@@ -1831,15 +1837,15 @@ export const ptBR: TranslationResources = {
       enableDescription:
         "O relay permite conectar este dispositivo de qualquer lugar. O tráfego de pareamento é criptografado de ponta a ponta.",
       relayDocs: "Como o relay funciona",
-      relayDocsAccessibility: "Leia como o relay do FDE funciona",
+      relayDocsAccessibility: "Leia como o relay do {{brandName}} funciona",
       enableRelay: "Ativar relay",
       enablingRelay: "Ativando...",
       notNow: "Agora não",
       directConnectionHint:
         "Sem relay, conecte diretamente por TCP, Tailscale ou outra VPN. Nenhum código QR é criado.",
-      updateRequired: "Atualize o host para ativar o relay pelo FDE Desktop.",
+      updateRequired: "Atualize o host para ativar o relay pelo {{brandName}} Desktop.",
       unavailable: "Oferta de pareamento indisponível.",
-      hint: "Escaneie este QR code com o FDE no seu celular ou copie o link abaixo.",
+      hint: "Escaneie este QR code com o {{brandName}} no seu celular ou copie o link abaixo.",
       securityWarning:
         "Trate este link de pareamento como uma senha. Qualquer pessoa com o link pode acessar este daemon.",
       qrUnavailable: "QR code indisponível.",
@@ -1981,7 +1987,7 @@ export const ptBR: TranslationResources = {
   serviceUrl: {
     title: "Abrir URL do serviço",
     message: "Abrir {{url}}?",
-    inPaseo: "No FDE",
+    inPaseo: "No {{brandName}}",
     externalBrowser: "Navegador externo",
     dontAskAgain: "Não perguntar novamente",
   },
@@ -2108,8 +2114,8 @@ export const ptBR: TranslationResources = {
       other: "usou {{count}} outras ferramentas",
     },
     paseoCalls: {
-      one: "chamou o FDE {{count}} vez",
-      other: "chamou o FDE {{count}} vezes",
+      one: "chamou o {{brandName}} {{count}} vez",
+      other: "chamou o {{brandName}} {{count}} vezes",
     },
     and: "e",
   },
@@ -2190,7 +2196,7 @@ export const ptBR: TranslationResources = {
       send: "Enviar",
       sending: "Enviando...",
       sentTitle: "Notificação de teste enviada",
-      sentDescription: "O FDE entregou a notificação ao sistema operacional.",
+      sentDescription: "O {{brandName}} entregou a notificação ao sistema operacional.",
       sendFailedTitle: "Não foi possível enviar a notificação de teste",
     },
     hostSections: {
@@ -2209,14 +2215,14 @@ export const ptBR: TranslationResources = {
     metadataGeneration: {
       title: "Geração de metadados",
       description:
-        "Escolha o modelo usado pelo FDE para títulos de espaços de trabalho, nomes de branches, mensagens de commit e rascunhos de pull request",
+        "Escolha o modelo usado pelo {{brandName}} para títulos de espaços de trabalho, nomes de branches, mensagens de commit e rascunhos de pull request",
       selection: "Seleção de modelo",
       automatic: "Automática",
       preferred: "Manual",
-      automaticHint: "O FDE escolhe um modelo rápido disponível",
-      preferredHint: "Escolha o modelo que o FDE usa",
+      automaticHint: "O {{brandName}} escolhe um modelo rápido disponível",
+      preferredHint: "Escolha o modelo que o {{brandName}} usa",
       model: "Modelo",
-      fallbackHint: "Se ele não estiver disponível, o FDE usa outro modelo disponível",
+      fallbackHint: "Se ele não estiver disponível, o {{brandName}} usa outro modelo disponível",
       docs: "Documentação",
       saveError: "Não foi possível atualizar a geração de metadados",
     },
@@ -2225,7 +2231,7 @@ export const ptBR: TranslationResources = {
       autoPlay: {
         label: "Reproduzir alertas falados automaticamente",
         description:
-          "Lê os alertas dos agentes ao chegarem enquanto um FDE está em primeiro plano.",
+          "Lê os alertas dos agentes ao chegarem enquanto um {{brandName}} está em primeiro plano.",
       },
       replyConfirm: {
         label: "Confirmar respostas por voz",
@@ -2238,7 +2244,7 @@ export const ptBR: TranslationResources = {
       browserData: {
         title: "Dados do navegador",
         siteData: "Cookies e dados de sites",
-        description: "As abas do navegador compartilham logins e dados de sites no FDE.",
+        description: "As abas do navegador compartilham logins e dados de sites no {{brandName}}.",
         clear: "Limpar dados do navegador",
         clearing: "Limpando...",
         confirmTitle: "Limpar dados do navegador?",
@@ -2267,7 +2273,7 @@ export const ptBR: TranslationResources = {
         description: "Onde abrir URLs de scripts em execução",
         options: {
           ask: "Perguntar",
-          inApp: "No FDE",
+          inApp: "No {{brandName}}",
           external: "Navegador externo",
         },
       },
@@ -2336,7 +2342,7 @@ export const ptBR: TranslationResources = {
       },
     },
     about: {
-      attribution: "O Frogg Development Environment é baseado no <paseo>Paseo</paseo>.",
+      attribution: "O {{brandFullName}} é baseado no <paseo>Paseo</paseo>.",
       title: "Sobre",
       appVersion: "Versão do app",
       thisDevice: "Este dispositivo",
@@ -2353,7 +2359,7 @@ export const ptBR: TranslationResources = {
         label: "Atualizações do app",
         readyToInstall: "Pronta para instalar: {{version}}",
         installTitle: "Instalar atualização desktop",
-        installMessage: "Isso atualiza o FDE neste computador",
+        installMessage: "Isso atualiza o {{brandName}} neste computador",
         installConfirm: "Instalar atualização",
         update: "Atualizar",
         updateTo: "Atualizar para {{version}}",
@@ -2502,6 +2508,8 @@ export const ptBR: TranslationResources = {
         openCli: "Abrir documentação da CLI",
       },
       commandLine: {
+        installedPath:
+          "Instalado em {{path}}. Adicione o diretório ao PATH se necessário e abra um novo terminal.",
         title: "Linha de comando",
         description: "Controle agentes e execute scripts pelo terminal",
       },
@@ -2591,7 +2599,7 @@ export const ptBR: TranslationResources = {
       },
       sshDeploy: {
         title: "Daemon neste host",
-        info: "Instala o daemon do FDE no host SSH com os mesmos scripts da instalação manual. O próprio host baixa o pacote da versão; o app só executa o script via SSH.",
+        info: "Instala o daemon do {{brandName}} no host SSH com os mesmos scripts da instalação manual. O próprio host baixa o pacote da versão; o app só executa o script via SSH.",
         status: {
           probing: "Verificando...",
           installed: "Instalado {{version}}",
@@ -2646,7 +2654,7 @@ export const ptBR: TranslationResources = {
         uninstall: {
           title: "Desinstalar o daemon?",
           message:
-            "Para o serviço e remove a instalação do FDE de {{host}}. O estado do daemon (~/.paseo) é mantido.",
+            "Para o serviço e remove a instalação do {{brandName}} de {{host}}. O estado do daemon (~/.paseo) é mantido.",
         },
         log: {
           running: "Executando em {{host}}...",
@@ -2657,7 +2665,7 @@ export const ptBR: TranslationResources = {
         offer: {
           title: "Daemon não encontrado neste host",
           message:
-            "O SSH funciona, mas nenhum daemon do FDE está instalado em {{host}}. Implantar agora? A conexão será tentada novamente quando a instalação terminar.",
+            "O SSH funciona, mas nenhum daemon do {{brandName}} está instalado em {{host}}. Implantar agora? A conexão será tentada novamente quando a instalação terminar.",
         },
       },
       pairDevices: {
@@ -2671,11 +2679,11 @@ export const ptBR: TranslationResources = {
         title: "Skills de orquestração",
         description: "Ensine seus agentes a orquestrar pela CLI",
         updateAvailable: "Atualização disponível",
-        updateTitle: "Atualizar FDE skills?",
+        updateTitle: "Atualizar {{brandName}} skills?",
         updateFallback: "Sincronize as skills incluídas com sua máquina.",
-        uninstallTitle: "Desinstalar FDE skills?",
+        uninstallTitle: "Desinstalar {{brandName}} skills?",
         uninstallMessage:
-          "Remove todas as skills de orquestração do FDE de ~/.agents, ~/.claude e ~/.codex.",
+          "Remove todas as skills de orquestração do {{brandName}} de ~/.agents, ~/.claude e ~/.codex.",
         choose: "Escolher skills",
         chooseAll: "Todas as skills",
         chooseAllHint:
@@ -2712,9 +2720,9 @@ export const ptBR: TranslationResources = {
         title: "Orquestração",
         unavailable: "Conecte-se a este host para gerenciar a orquestração",
         enableTools: {
-          title: "Ativar ferramentas do FDE",
+          title: "Ativar ferramentas do {{brandName}}",
           hint: "Agentes poderão gerenciar worktrees, agentes e agendamentos",
-          accessibilityLabel: "Injetar ferramentas do FDE",
+          accessibilityLabel: "Injetar ferramentas do {{brandName}}",
         },
         systemPrompt: {
           title: "Prompt do sistema",
@@ -2819,10 +2827,10 @@ export const ptBR: TranslationResources = {
             "Este host não está conectado. Aguarde até ele ficar online antes de reiniciar.",
           offlineTitle: "Host offline",
           offlineMessage:
-            "Este host está offline. O FDE reconecta automaticamente. Aguarde ele voltar a ficar online antes de reiniciar.",
+            "Este host está offline. O {{brandName}} reconecta automaticamente. Aguarde ele voltar a ficar online antes de reiniciar.",
           requestFailedTitle: "Erro",
           requestFailedMessage:
-            "Falha ao enviar a solicitação de reinício. O FDE reconecta automaticamente. Tente novamente quando o host aparecer como online.",
+            "Falha ao enviar a solicitação de reinício. O {{brandName}} reconecta automaticamente. Tente novamente quando o host aparecer como online.",
           dialogFailedMessage: "Não foi possível abrir o diálogo de confirmação de reinício.",
         },
         selfUpdate: {
@@ -2870,7 +2878,7 @@ export const ptBR: TranslationResources = {
         },
         update: {
           desktopManagedHint:
-            "Este daemon é gerenciado pelo FDE Desktop. Atualize o FDE Desktop no host.",
+            "Este daemon é gerenciado pelo {{brandName}} Desktop. Atualize o {{brandName}} Desktop no host.",
           title: "Atualizar daemon",
           hint: "Atualiza o daemon para a versão mais recente e o reinicia",
           confirm: "Atualizar",
@@ -3032,7 +3040,7 @@ export const ptBR: TranslationResources = {
         newScript: "Novo script",
         editScript: "Editar {{name}}",
         runAsService: "Executar como serviço",
-        serviceHint: "O FDE supervisiona o processo e atribui uma porta via $PASEO_PORT",
+        serviceHint: "O {{brandName}} supervisiona o processo e atribui uma porta via $PASEO_PORT",
         actions: {
           add: "Adicionar script",
           edit: "Editar",
@@ -3041,7 +3049,7 @@ export const ptBR: TranslationResources = {
       },
       metadata: {
         title: "Geração de metadados",
-        info: "Instruções específicas do projeto injetadas nos prompts de IA que o FDE usa para gerar metadados. Use-as para aplicar convenções da sua equipe, como nomes de branch, estilo de commit ou formato de PR",
+        info: "Instruções específicas do projeto injetadas nos prompts de IA que o {{brandName}} usa para gerar metadados. Use-as para aplicar convenções da sua equipe, como nomes de branch, estilo de commit ou formato de PR",
         branchName: "Nomes de branch",
         branchNamePlaceholder: "Prefixe branches com feat/ ou fix/, mb/ para branches pessoais",
         commitMessage: "Mensagens de commit",

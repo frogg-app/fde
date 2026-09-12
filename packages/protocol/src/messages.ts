@@ -3597,6 +3597,7 @@ const ServerCapabilitiesFromUnknownSchema = z
 export const ServerInfoStatusPayloadSchema = z
   .object({
     status: z.literal("server_info"),
+    brand: z.object({ id: z.string(), name: z.string(), applicationId: z.string() }).optional(),
     serverId: z.string().trim().min(1),
     hostname: ServerInfoHostnameSchema.optional(),
     version: ServerInfoVersionSchema.optional(),

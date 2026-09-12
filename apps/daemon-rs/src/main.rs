@@ -4,6 +4,9 @@
 //! and forwards the rest to the Node daemon (see `proxy`). The point is to migrate
 //! the protocol surface incrementally while staying a drop-in replacement.
 
+#[path = "../../../packages/branding/native/runtime.rs"]
+pub mod branding;
+
 mod auth;
 mod config;
 mod daemon_config;
@@ -216,6 +219,7 @@ async fn identity(
     discovery_headers(
         Json(json!({
             "product": "fde",
+            "brand": crate::branding::identity(),
             "serverId": state.server_id,
             "hostname": state.hostname,
             "version": DAEMON_VERSION,

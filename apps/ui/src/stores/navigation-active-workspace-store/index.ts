@@ -1,4 +1,4 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import AsyncStorage from "@/storage/brand-storage";
 import { useLocalSearchParams, usePathname } from "expo-router";
 import { useEffect, useSyncExternalStore } from "react";
 import {

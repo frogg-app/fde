@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import { Command, Option } from "commander";
 import chalk from "chalk";
 import { resolveCliVersion } from "../../../version.js";
@@ -165,7 +166,7 @@ export function selfUpdateCommand(): Command {
       .option("--home <path>", "Paseo home directory (default: ~/.paseo)")
       .option(
         "--install-dir <dir>",
-        "Install root (default: $FDE_INSTALL_DIR or ~/.local/share/fde)",
+        `Install root (default: ${brand.envPrefix}_INSTALL_DIR or ~/.local/share/${brand.id})`,
       )
       .option("--verify-timeout <ms>", "How long to wait for the restarted daemon (default: 90000)")
       .addOption(new Option("--apply <version>").hideHelp())

@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 /**
  * The standalone pairing-page service behind `https://pair.frogg.app`.
  *
@@ -18,7 +19,6 @@ import { randomUUID } from "node:crypto";
 
 import express from "express";
 
-import { DEFAULT_PAIRING_BASE_URL } from "@fde/protocol/connection-offer";
 import { createClaimOfferStore } from "./claim-offer-store.js";
 import { CONTENT_SECURITY_POLICY, DEFAULT_PAIR_PAGE_ROOT_REDIRECT } from "./pairing-page-chrome.js";
 import { renderExpiredPairingPage } from "./pairing-code-page.js";
@@ -34,7 +34,7 @@ export interface PairPageAppOptions {
 }
 
 export function createPairPageApp(options: PairPageAppOptions = {}): express.Express {
-  const pairingBaseUrl = options.pairingBaseUrl ?? DEFAULT_PAIRING_BASE_URL;
+  const pairingBaseUrl = options.pairingBaseUrl ?? brand.services.pairingUrl ?? "";
   const rootRedirect = options.rootRedirect ?? DEFAULT_PAIR_PAGE_ROOT_REDIRECT;
 
   const app = express();
@@ -57,7 +57,8 @@ export function createPairPageApp(options: PairPageAppOptions = {}): express.Exp
   });
 
   app.get("/", (_req, res) => {
-    res.redirect(302, rootRedirect);
+    if (rootRedirect) res.redirect(302, rootRedirect);
+    else res.type("html").send(renderExpiredPairingPage());
   });
 
   mountPairingCodeRoutes(app, {

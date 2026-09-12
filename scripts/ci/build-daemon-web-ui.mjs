@@ -1,3 +1,4 @@
+import { portableCommand } from "../dev/npm-command.mjs";
 import { spawn } from "node:child_process";
 import { createReadStream, createWriteStream } from "node:fs";
 import { cp, mkdir, readdir, rm, stat } from "node:fs/promises";
@@ -19,7 +20,8 @@ function fmtMiB(bytes) {
 
 function run(command, args, options) {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, {
+    const invocation = portableCommand(command, args);
+    const child = spawn(invocation.command, invocation.args, {
       stdio: "inherit",
       shell: false,
       ...options,
@@ -37,9 +39,13 @@ function run(command, args, options) {
 
 async function exportBrowserWebApp() {
   console.log("Exporting browser web app...");
-  await run("npm", ["run", "build:web", "--workspace=@fde/app"], {
-    cwd: REPO_ROOT,
-  });
+  await run(
+    process.platform === "win32" ? "npm.cmd" : "npm",
+    ["run", "build:web", "--workspace=@fde/app"],
+    {
+      cwd: REPO_ROOT,
+    },
+  );
 }
 
 async function cleanTarget() {

@@ -1,3 +1,5 @@
+import { brand } from "@fde/branding";
+import { installedSkillName } from "@fde/branding/skills";
 import { createHash } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
@@ -60,7 +62,9 @@ async function listBundledSkills(sourceDir: string): Promise<string[]> {
 
 /** Every name Paseo owns on disk: what it ships now plus what it used to ship. */
 function managedSkillNames(available: readonly string[]): string[] {
-  return [...new Set([...available, ...LEGACY_SKILL_NAMES])].sort(compareStrings);
+  return [...new Set([...available, ...(brand.legacyFde ? LEGACY_SKILL_NAMES : [])])].sort(
+    compareStrings,
+  );
 }
 
 /** The names a convergence may create, replace, or delete. */
@@ -91,10 +95,16 @@ async function hashSkillDir(skillDir: string): Promise<SkillFiles | null> {
   return files;
 }
 
-async function hashSkills(rootDir: string, names: readonly string[]): Promise<TargetSkills> {
+async function hashSkills(
+  rootDir: string,
+  names: readonly string[],
+  source = false,
+): Promise<TargetSkills> {
   const out: TargetSkills = new Map();
   for (const name of names) {
-    const files = await hashSkillDir(path.join(rootDir, name));
+    const files = await hashSkillDir(
+      path.join(rootDir, source ? name : installedSkillName(brand, name)),
+    );
     if (files !== null) out.set(name, files);
   }
   return out;
@@ -158,7 +168,7 @@ export async function getSkillsStatus(
   const available = await listBundledSkills(targets.sourceDir);
   const names = managedSkillNames(available);
   const [bundle, agentsDisk, claudeDisk, codexDisk] = await Promise.all([
-    hashSkills(targets.sourceDir, available),
+    hashSkills(targets.sourceDir, available, true),
     hashSkills(targets.agentsDir, names),
     hashSkills(targets.claudeDir, names),
     hashSkills(targets.codexDir, names),

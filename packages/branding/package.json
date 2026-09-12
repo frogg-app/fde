@@ -1,0 +1,54 @@
+{
+  "name": "@fde/branding",
+  "version": "0.4.0",
+  "description": "Build-time product identity for FDE distributions",
+  "license": "Apache-2.0",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/runtime.d.ts",
+      "source": "./src/runtime.ts",
+      "default": "./dist/runtime.js"
+    },
+    "./schema": {
+      "types": "./dist/schema.d.ts",
+      "default": "./dist/schema.js"
+    },
+    "./identity": {
+      "types": "./dist/identity.d.ts",
+      "source": "./src/identity.ts",
+      "default": "./dist/identity.js"
+    },
+    "./artifacts": {
+      "types": "./dist/artifacts.d.ts",
+      "source": "./src/artifacts.ts",
+      "default": "./dist/artifacts.js"
+    },
+    "./installers": {
+      "types": "./dist/installers.d.ts",
+      "source": "./src/installers.ts",
+      "default": "./dist/installers.js"
+    },
+    "./skills": {
+      "types": "./dist/skills.d.ts",
+      "source": "./src/skills.ts",
+      "default": "./dist/skills.js"
+    }
+  },
+  "scripts": {
+    "build": "node --import tsx ../../scripts/dev/brand.mts prepare",
+    "typecheck": "tsgo --noEmit",
+    "test": "node --import tsx --test src/*.test.ts"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "~22.19.0",
+    "tsx": "^4.6.0",
+    "typescript": "^5.9.3"
+  }
+}

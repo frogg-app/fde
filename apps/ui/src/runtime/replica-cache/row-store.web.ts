@@ -1,3 +1,5 @@
+import { brand } from "@fde/branding";
+import { storageKey } from "@fde/branding/identity";
 import type { ReplicaHostRows, ReplicaRow, ReplicaRowChanges, ReplicaRowStore } from "./row-store";
 import { REPLICA_ROW_STORE_SCHEMA_VERSION } from "./row-store-schema";
 
@@ -11,7 +13,7 @@ export type {
 } from "./row-store";
 export { REPLICA_ROW_STORE_SCHEMA_VERSION, REPLICA_SINGLETON_ROW_ID } from "./row-store-schema";
 
-const DATABASE_NAME = "paseo-replica-row-store";
+const DATABASE_NAME = storageKey(brand, "paseo-replica-row-store");
 const DATABASE_VERSION = 1;
 const ROWS_STORE = "rows";
 const META_STORE = "meta";

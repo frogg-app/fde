@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import type { Command } from "commander";
 import { withOutput } from "../../output/index.js";
 import { addJsonAndDaemonHostOptions } from "../../utils/command-options.js";
@@ -49,7 +50,7 @@ export async function runHubConnect(
     ) {
       await daemon.disconnectHub(false).catch(() => undefined);
       throw new Error(
-        "The daemon did not honor the requested Hub access. Update FDE before connecting it.",
+        `The daemon did not honor the requested Hub access. Update ${brand.name} before connecting it.`,
       );
     }
     return hubStatusResult(response.status);
@@ -61,8 +62,8 @@ export function addHubConnectCommand(parent: Command, dependencies: HubConnectDe
     addHubResolutionHelp(
       parent
         .command("connect")
-        .description("Enroll this daemon with an FDE Hub")
-        .argument("[origin]", "FDE Hub origin")
+        .description(`Enroll this daemon with an ${brand.name} Hub`)
+        .argument("[origin]", `${brand.name} Hub origin`)
         .option("--api-key <secret>", "Organization API key")
         .option("--permission <permission...>", "Grant daemon permission during connection"),
     ),

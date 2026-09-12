@@ -242,7 +242,8 @@ pub fn pid_file_is_desktop_managed(home: &Path) -> bool {
         .ok()
         .and_then(|raw| serde_json::from_str::<Value>(&raw).ok())
         .map(|lock| {
-            lock.get("desktopManaged") == Some(&Value::Bool(true))
+            crate::branding::matches_identity(lock.get("brand"))
+                && lock.get("desktopManaged") == Some(&Value::Bool(true))
                 && lock.get("pid").and_then(Value::as_u64).is_some()
         })
         .unwrap_or(false)

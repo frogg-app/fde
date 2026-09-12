@@ -12,7 +12,8 @@ function isAllowedExternalUrl(url: string): boolean {
   }
 }
 
-export async function openExternalUrl(url: string): Promise<void> {
+export async function openExternalUrl(url: string | null): Promise<void> {
+  if (!url) return;
   if (isWeb) {
     const opener = getDesktopHost()?.opener?.openUrl;
     if (typeof opener === "function") {

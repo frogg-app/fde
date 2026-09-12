@@ -810,7 +810,8 @@ export const zhCN: TranslationResources = {
           updateDirty: "有本地变更时无法更新，请先 commit 或 stash",
           updateCurrent: "无法更新，因为此分支已与 {{baseRef}} 保持最新",
           mergePrNoGithub: "当前无法 merge PR，因为 GitHub 未连接",
-          archiveNotWorktree: "此处无法归档，因为此 workspace 不是作为 FDE worktree 创建的",
+          archiveNotWorktree:
+            "此处无法归档，因为此 workspace 不是作为 {{brandName}} worktree 创建的",
           mergePrNoForge: "当前无法 merge {{noun}}，因为 {{brand}} 未连接",
           mergePrMissing: "无法 merge PR，因为还没有 pull request",
           mergePrDraft: "无法 merge PR，因为 pull request 仍是 draft",
@@ -1222,7 +1223,7 @@ export const zhCN: TranslationResources = {
       close: "关闭窗口",
     },
     quitting: {
-      title: "正在退出 FDE...",
+      title: "正在退出 {{brandName}}...",
       detail: "正在停止本地 daemon。",
     },
     daemon: {
@@ -1236,19 +1237,19 @@ export const zhCN: TranslationResources = {
       },
       management: {
         title: "管理内置 daemon",
-        hint: "让 FDE 启动和停止内置 daemon",
+        hint: "让 {{brandName}} 启动和停止内置 daemon",
         pauseTitle: "暂停内置 daemon",
         pauseMessage:
           "这会立即停止内置 daemon。连接到内置 daemon 的运行中 agents 和 terminals 会被停止。",
         pauseAndStop: "暂停并停止",
         registrationFailed:
-          "内置 daemon 已启动，但 FDE 无法保存 localhost 连接。请关闭后重新开启 daemon 管理，或手动添加 localhost。",
-        pausedStopFailed: "内置 daemon 管理已暂停，但 FDE 无法停止 daemon。",
+          "内置 daemon 已启动，但 {{brandName}} 无法保存 localhost 连接。请关闭后重新开启 daemon 管理，或手动添加 localhost。",
+        pausedStopFailed: "内置 daemon 管理已暂停，但 {{brandName}} 无法停止 daemon。",
         updateFailed: "无法更新内置 daemon 管理设置。",
       },
       keepRunning: {
         title: "退出后保持 daemon 运行",
-        hint: "退出 FDE 后 daemon 会继续运行",
+        hint: "退出 {{brandName}} 后 daemon 会继续运行",
       },
       logs: {
         title: "日志文件",
@@ -1263,7 +1264,7 @@ export const zhCN: TranslationResources = {
       fullStatus: {
         title: "完整状态",
         modalTitle: "Daemon 状态",
-        hint: "运行 `paseo daemon status` 并显示输出",
+        hint: "运行 `{{cliName}} daemon status` 并显示输出",
         view: "查看状态",
         copied: "状态已复制到剪贴板。",
         fetchFailed: "获取 daemon 状态失败：{{message}}",
@@ -1275,7 +1276,7 @@ export const zhCN: TranslationResources = {
         title: "本地 daemon",
         installed: "已安装",
         installedHint: "版本 {{version}}，位于 {{path}}",
-        notInstalledHint: "下载 FDE daemon 包（{{platform}}）以在本机运行代理。",
+        notInstalledHint: "下载 {{brandName}} daemon 包（{{platform}}）以在本机运行代理。",
         install: "安装本地 daemon（约 {{size}}）",
         installing: "正在安装...",
         phaseChecksum: "正在获取校验和...",
@@ -1309,10 +1310,11 @@ export const zhCN: TranslationResources = {
         title: "更新",
         currentVersion: "当前版本",
         strategyGithub: "更新从 GitHub releases 下载。",
+        strategyDisabled: "此发行版已禁用更新。",
         strategySigned: "更新由已签名的 Tauri 更新器验证。",
         autoCheck: {
           title: "自动检查",
-          hint: "在 FDE 窗口打开期间，每 6 小时检查一次新版本。",
+          hint: "在 {{brandName}} 窗口打开期间，每 6 小时检查一次新版本。",
         },
         check: "检查更新",
         checking: "正在检查...",
@@ -1326,15 +1328,15 @@ export const zhCN: TranslationResources = {
         verifying: "正在校验下载...",
         installing: "正在安装...",
         installHint: {
-          "windows-installer": "运行安装程序并重新打开 FDE。",
-          "windows-portable": "替换便携版可执行文件并重新打开 FDE。",
-          "linux-appimage": "原地替换 AppImage 并重启 FDE。",
+          "windows-installer": "运行安装程序并重新打开 {{brandName}}。",
+          "windows-portable": "替换便携版可执行文件并重新打开 {{brandName}}。",
+          "linux-appimage": "原地替换 AppImage 并重启 {{brandName}}。",
           "linux-deb": "在软件包安装器中打开 .deb 包。",
-          "macos-dmg": "打开磁盘映像；将 FDE 拖到“应用程序”以完成。",
+          "macos-dmg": "打开磁盘映像；将 {{brandName}} 拖到“应用程序”以完成。",
           unknown: "下载为此平台构建的版本。",
         },
         noAsset: "此平台的下载尚未发布。",
-        restartRequired: "重启 FDE 以完成更新。",
+        restartRequired: "重启 {{brandName}} 以完成更新。",
       },
       callout: {
         installingTitle: "正在安装更新",
@@ -1356,7 +1358,7 @@ export const zhCN: TranslationResources = {
     },
     rosetta: {
       title: "下载 Apple Silicon 构建",
-      runningIntel: "你正在 Apple Silicon 上通过 Rosetta 运行 FDE 的 Intel 构建。",
+      runningIntel: "你正在 Apple Silicon 上通过 Rosetta 运行 {{brandName}} 的 Intel 构建。",
       highCpu: "这会导致较高 CPU 使用率。下载 Apple Silicon 构建即可修复。",
       download: "下载",
     },
@@ -1396,7 +1398,7 @@ export const zhCN: TranslationResources = {
         microphone: "尚未检查麦克风状态。",
       },
       testNotification: {
-        title: "FDE 通知测试",
+        title: "{{brandName}} 通知测试",
         body: "如果你能看到这条通知，说明桌面通知可用。",
         notDelivered: "通知未送达。请检查 System Settings > Notifications。",
         failed: "发送通知失败。",
@@ -1405,12 +1407,12 @@ export const zhCN: TranslationResources = {
     integrations: {
       cli: {
         statusFailed: "无法检查 CLI 安装状态。",
-        installFailed: "无法安装 FDE CLI。",
+        installFailed: "无法安装 {{brandName}} CLI。",
       },
     },
   },
   rootError: {
-    title: "FDE 遇到了问题。",
+    title: "{{brandName}} 遇到了问题。",
     body: "请重试以重新加载应用。如果问题持续发生，请在报告时附上下面的详细信息。",
     details: "详情",
   },
@@ -1503,19 +1505,19 @@ export const zhCN: TranslationResources = {
     },
   },
   onboarding: {
-    title: "欢迎使用 FDE",
+    title: "欢迎使用 {{brandName}}",
     subtitle: "连接你的电脑即可开始",
     localDaemon: {
       title: "在本机运行代理",
-      description: "安装本地 FDE daemon（下载约 180 MB）。",
-      descriptionInstalled: "启动已安装的本地 FDE daemon。",
+      description: "安装本地 {{brandName}} daemon（下载约 180 MB）。",
+      descriptionInstalled: "启动已安装的本地 {{brandName}} daemon。",
       starting: "正在启动本地 daemon...",
       failed: "无法设置本地 daemon：{{message}}",
       retry: "重试",
     },
     remoteHost: {
       title: "使用远程主机",
-      description: "连接到另一台计算机上的 FDE daemon。",
+      description: "连接到另一台计算机上的 {{brandName}} daemon。",
     },
     actions: {
       settings: "设置",
@@ -1594,11 +1596,11 @@ export const zhCN: TranslationResources = {
       },
       scanQr: {
         title: "扫描二维码",
-        description: "认领新的 FDE 守护进程，或通过加密中继配对。",
+        description: "认领新的 {{brandName}} 守护进程，或通过加密中继配对。",
       },
       pasteLink: {
         title: "粘贴配对链接",
-        description: "认领新的 FDE 守护进程，或通过加密中继配对。",
+        description: "认领新的 {{brandName}} 守护进程，或通过加密中继配对。",
       },
     },
     networkScan: {
@@ -1607,26 +1609,26 @@ export const zhCN: TranslationResources = {
       diagnosticsNone: "无",
       title: "您网络中的服务器",
       scanning: "正在扫描 {{scanned}}/{{total}} 个地址…",
-      none: "在 {{subnets}} 中未找到 FDE 服务器。",
+      none: "在 {{subnets}} 中未找到 {{brandName}} 服务器。",
       scanned: "已扫描 {{subnets}}。",
       rescan: "重新扫描",
       connect: "连接",
       connecting: "连接中…",
       needsPairing: "需要配对",
       pairingHint:
-        "获取配对链接：在主机上运行 `fde daemon pair`，或打开其网页地址，然后在此扫描或粘贴。",
+        "获取配对链接：在主机上运行 `{{cliName}} daemon pair`，或打开其网页地址，然后在此扫描或粘贴。",
     },
     claim: {
-      title: "与 FDE 守护进程配对",
-      thisDaemon: "此 FDE 守护进程",
+      title: "与 {{brandName}} 守护进程配对",
+      thisDaemon: "此 {{brandName}} 守护进程",
       claiming: "正在与 {{host}} 配对…",
-      explainer: "此 FDE 守护进程尚未被认领。配对后，此设备将成为它的第一位所有者。",
+      explainer: "此 {{brandName}} 守护进程尚未被认领。配对后，此设备将成为它的第一位所有者。",
       successTitle: "已配对",
       successBody: "此设备现已成为 {{host}} 的第一位所有者。其他设备需要新的配对链接。",
       successRelayBody: "已通过加密中继添加 {{host}}。",
-      noPendingOffer: "打开配对链接 (https://frogg.app/pair#offer=…)，或在“添加连接”中粘贴一个。",
+      noPendingOffer: "打开配对链接 (a link from the daemon)，或在“添加连接”中粘贴一个。",
       newLinkHint:
-        "配对码仅可使用一次，十分钟后过期。获取新配对码：在主机上运行 `fde daemon pair`，或刷新其网页地址。",
+        "配对码仅可使用一次，十分钟后过期。获取新配对码：在主机上运行 `{{cliName}} daemon pair`，或刷新其网页地址。",
       triedEndpoints: "已尝试：",
       manualEndpointHelper:
         "如果守护进程可通过其他地址访问（VPN、Docker、其他网卡），请以 host:port 形式输入。",
@@ -1647,7 +1649,7 @@ export const zhCN: TranslationResources = {
     },
     direct: {
       title: "直接连接",
-      helper: "输入 FDE server 的地址。",
+      helper: "输入 {{brandName}} server 的地址。",
       fields: {
         host: "Host",
         port: "端口",
@@ -1661,7 +1663,7 @@ export const zhCN: TranslationResources = {
         show: "显示高级选项",
         hide: "隐藏高级选项",
         helper:
-          "任意形式均可：主机、主机:端口、http(s)://主机:端口、ws(s)://主机:端口 或 tcp://主机:端口?ssl=true。FDE 守护进程在端口 {{port}} 上提供 HTTP 和 WebSocket。",
+          "任意形式均可：主机、主机:端口、http(s)://主机:端口、ws(s)://主机:端口 或 tcp://主机:端口?ssl=true。{{brandName}} 守护进程在端口 {{port}} 上提供 HTTP 和 WebSocket。",
         resolved: "将连接到",
       },
       passwordVisibility: {
@@ -1691,7 +1693,7 @@ export const zhCN: TranslationResources = {
     },
     remoteSsh: {
       title: "远程 SSH",
-      helper: "连接到远程主机上运行的 FDE 守护进程。",
+      helper: "连接到远程主机上运行的 {{brandName}} 守护进程。",
       tabs: {
         config: "SSH 配置",
         manual: "手动",
@@ -1709,7 +1711,8 @@ export const zhCN: TranslationResources = {
         rememberSshPassword: "在本次会话中记住",
       },
       hints: {
-        daemonPassword: "这是 FDE 守护进程的密码，不是你的 SSH 登录密码。会随此主机一起保存。",
+        daemonPassword:
+          "这是 {{brandName}} 守护进程的密码，不是你的 SSH 登录密码。会随此主机一起保存。",
         sshPassword: "仅用于 SSH 登录。永不保存；若选择记住，则仅保留在内存中直到应用关闭。",
       },
       actions: {
@@ -1723,8 +1726,9 @@ export const zhCN: TranslationResources = {
         invalidDaemonPort: "守护进程端口必须在 1 到 65535 之间",
         invalidTarget: "请输入有效的 ssh:// 主机",
         failedToConnect: "无法通过 SSH 连接。{{detail}}",
-        daemonPasswordRequired: "{{host}} 上的 FDE 守护进程需要密码。请在下方输入后重新连接。",
-        daemonPasswordIncorrect: "{{host}} 上的 FDE 守护进程拒绝了该密码。",
+        daemonPasswordRequired:
+          "{{host}} 上的 {{brandName}} 守护进程需要密码。请在下方输入后重新连接。",
+        daemonPasswordIncorrect: "{{host}} 上的 {{brandName}} 守护进程拒绝了该密码。",
         sshPasswordRequired:
           "{{host}} 拒绝了你的 SSH 密钥，但接受密码登录。请输入 SSH 密码以继续。",
         sshPasswordIncorrect: "{{host}} 拒绝了该 SSH 密码。",
@@ -1734,11 +1738,11 @@ export const zhCN: TranslationResources = {
     link: {
       title: "粘贴配对链接",
       helper:
-        "粘贴守护进程认领页面或 `fde daemon pair` 给出的链接。新的 FDE 守护进程归第一个配对的设备所有。",
+        "粘贴守护进程认领页面或 `{{cliName}} daemon pair` 给出的链接。新的 {{brandName}} 守护进程归第一个配对的设备所有。",
       label: "配对链接",
       errors: {
         required: "请粘贴配对链接 (…/pair#offer=…)",
-        missingOffer: "这不是 FDE 配对链接",
+        missingOffer: "这不是 {{brandName}} 配对链接",
         emptyOffer: "Offer payload 为空",
         invalid: "无效的配对链接",
         unableToPair: "无法配对 host",
@@ -1771,15 +1775,15 @@ export const zhCN: TranslationResources = {
       enableTitle: "启用中继？",
       enableDescription: "中继让此设备可以从任何地方连接。配对流量采用端到端加密。",
       relayDocs: "中继如何工作",
-      relayDocsAccessibility: "阅读 FDE 中继的工作原理",
+      relayDocsAccessibility: "阅读 {{brandName}} 中继的工作原理",
       enableRelay: "启用中继",
       enablingRelay: "正在启用...",
       notNow: "暂不",
       directConnectionHint:
         "不使用中继时，请通过 TCP、Tailscale 或其他 VPN 直接连接。不会生成二维码。",
-      updateRequired: "请更新主机，以便从 FDE Desktop 启用中继。",
+      updateRequired: "请更新主机，以便从 {{brandName}} Desktop 启用中继。",
       unavailable: "配对 offer 不可用。",
-      hint: "用手机上的 FDE 扫描此二维码，或复制下方链接。",
+      hint: "用手机上的 {{brandName}} 扫描此二维码，或复制下方链接。",
       securityWarning: "请像保管密码一样保管此配对链接。任何获得此链接的人都可以访问此守护进程。",
       qrUnavailable: "二维码不可用。",
       qrAccessibility: "配对二维码",
@@ -1918,7 +1922,7 @@ export const zhCN: TranslationResources = {
   serviceUrl: {
     title: "打开服务 URL",
     message: "打开 {{url}}？",
-    inPaseo: "在 FDE 中",
+    inPaseo: "在 {{brandName}} 中",
     externalBrowser: "外部浏览器",
     dontAskAgain: "不再询问",
   },
@@ -2045,8 +2049,8 @@ export const zhCN: TranslationResources = {
       other: "使用了 {{count}} 个其他工具",
     },
     paseoCalls: {
-      one: "调用了 FDE {{count}} 次",
-      other: "调用了 FDE {{count}} 次",
+      one: "调用了 {{brandName}} {{count}} 次",
+      other: "调用了 {{brandName}} {{count}} 次",
     },
     and: "并",
   },
@@ -2127,7 +2131,7 @@ export const zhCN: TranslationResources = {
       send: "发送",
       sending: "正在发送...",
       sentTitle: "测试通知已发送",
-      sentDescription: "FDE 已将通知交给操作系统。",
+      sentDescription: "{{brandName}} 已将通知交给操作系统。",
       sendFailedTitle: "无法发送测试通知",
     },
     hostSections: {
@@ -2145,14 +2149,14 @@ export const zhCN: TranslationResources = {
     plugins: pluginSettings["zh-CN"],
     metadataGeneration: {
       title: "元数据生成",
-      description: "选择 FDE 用于工作区标题、分支名称、提交消息和拉取请求草稿的模型",
+      description: "选择 {{brandName}} 用于工作区标题、分支名称、提交消息和拉取请求草稿的模型",
       selection: "模型选择",
       automatic: "自动",
       preferred: "手动",
-      automaticHint: "FDE 会选择一个可用的快速模型",
-      preferredHint: "选择 FDE 使用的模型",
+      automaticHint: "{{brandName}} 会选择一个可用的快速模型",
+      preferredHint: "选择 {{brandName}} 使用的模型",
       model: "模型",
-      fallbackHint: "如果不可用，FDE 会改用其他可用模型",
+      fallbackHint: "如果不可用，{{brandName}} 会改用其他可用模型",
       docs: "文档",
       saveError: "无法更新元数据生成设置",
     },
@@ -2160,7 +2164,7 @@ export const zhCN: TranslationResources = {
       title: "语音提醒",
       autoPlay: {
         label: "自动播放语音提醒",
-        description: "当某个 FDE 位于前台时，代理提醒到达后立即朗读。",
+        description: "当某个 {{brandName}} 位于前台时，代理提醒到达后立即朗读。",
       },
       replyConfirm: {
         label: "确认语音回复",
@@ -2172,7 +2176,7 @@ export const zhCN: TranslationResources = {
       browserData: {
         title: "浏览器数据",
         siteData: "Cookie 和网站数据",
-        description: "浏览器标签页在 FDE 中共享登录状态和网站数据。",
+        description: "浏览器标签页在 {{brandName}} 中共享登录状态和网站数据。",
         clear: "清除浏览器数据",
         clearing: "正在清除...",
         confirmTitle: "清除浏览器数据？",
@@ -2198,7 +2202,7 @@ export const zhCN: TranslationResources = {
         description: "运行脚本中的 URL 打开位置",
         options: {
           ask: "询问",
-          inApp: "在 FDE 中",
+          inApp: "在 {{brandName}} 中",
           external: "外部浏览器",
         },
       },
@@ -2266,7 +2270,7 @@ export const zhCN: TranslationResources = {
       },
     },
     about: {
-      attribution: "Frogg Development Environment 基于 <paseo>Paseo</paseo> 构建。",
+      attribution: "{{brandFullName}} 基于 <paseo>Paseo</paseo> 构建。",
       title: "关于",
       appVersion: "应用版本",
       thisDevice: "此设备",
@@ -2283,7 +2287,7 @@ export const zhCN: TranslationResources = {
         label: "应用更新",
         readyToInstall: "可安装：{{version}}",
         installTitle: "安装桌面版更新",
-        installMessage: "这会更新此电脑上的 FDE",
+        installMessage: "这会更新此电脑上的 {{brandName}}",
         installConfirm: "安装更新",
         update: "更新",
         updateTo: "更新到 {{version}}",
@@ -2429,6 +2433,7 @@ export const zhCN: TranslationResources = {
         openCli: "打开 CLI 文档",
       },
       commandLine: {
+        installedPath: "已安装到 {{path}}。如有需要，请将其目录添加到 PATH，然后打开新终端。",
         title: "命令行",
         description: "从终端控制 Agent 并运行脚本",
       },
@@ -2518,7 +2523,7 @@ export const zhCN: TranslationResources = {
       },
       sshDeploy: {
         title: "此主机上的守护进程",
-        info: "使用与手动安装相同的脚本在 SSH 主机上安装 FDE 守护进程。主机自行下载发布包，应用只通过 SSH 运行脚本。",
+        info: "使用与手动安装相同的脚本在 SSH 主机上安装 {{brandName}} 守护进程。主机自行下载发布包，应用只通过 SSH 运行脚本。",
         status: {
           probing: "正在检查...",
           installed: "已安装 {{version}}",
@@ -2570,7 +2575,8 @@ export const zhCN: TranslationResources = {
         },
         uninstall: {
           title: "卸载守护进程？",
-          message: "停止服务并从 {{host}} 移除 FDE 安装。守护进程状态 (~/.paseo) 会保留。",
+          message:
+            "停止服务并从 {{host}} 移除 {{brandName}} 安装。守护进程状态 (~/.paseo) 会保留。",
         },
         log: {
           running: "正在 {{host}} 上运行...",
@@ -2581,7 +2587,7 @@ export const zhCN: TranslationResources = {
         offer: {
           title: "未在此主机上找到守护进程",
           message:
-            "SSH 可用，但 {{host}} 上没有安装 FDE 守护进程。现在部署吗？安装完成后会重新尝试连接。",
+            "SSH 可用，但 {{host}} 上没有安装 {{brandName}} 守护进程。现在部署吗？安装完成后会重新尝试连接。",
         },
       },
       pairDevices: {
@@ -2595,10 +2601,11 @@ export const zhCN: TranslationResources = {
         title: "编排 skills",
         description: "教会 Agent 通过 CLI 编排任务",
         updateAvailable: "有更新可用",
-        updateTitle: "更新 FDE skills？",
+        updateTitle: "更新 {{brandName}} skills？",
         updateFallback: "将内置 skills 同步到你的机器。",
-        uninstallTitle: "卸载 FDE skills？",
-        uninstallMessage: "会从 ~/.agents、~/.claude、~/.codex 移除所有 FDE 编排 skills。",
+        uninstallTitle: "卸载 {{brandName}} skills？",
+        uninstallMessage:
+          "会从 ~/.agents、~/.claude、~/.codex 移除所有 {{brandName}} 编排 skills。",
         choose: "选择 skills",
         chooseAll: "全部 skills",
         chooseAllHint: "保持安装所有内置 skills，包括以后新增的。",
@@ -2634,9 +2641,9 @@ export const zhCN: TranslationResources = {
         title: "编排",
         unavailable: "连接到这个 Host 以管理编排",
         enableTools: {
-          title: "启用 FDE tools",
+          title: "启用 {{brandName}} tools",
           hint: "Agent 将能够管理 worktree、Agent 和计划",
-          accessibilityLabel: "注入 FDE tools",
+          accessibilityLabel: "注入 {{brandName}} tools",
         },
         systemPrompt: {
           title: "System prompt",
@@ -2735,9 +2742,10 @@ export const zhCN: TranslationResources = {
           unavailableTitle: "Host 不可用",
           unavailableMessage: "这个 Host 尚未连接。请等待它上线后再重启。",
           offlineTitle: "Host 离线",
-          offlineMessage: "这个 Host 已离线。FDE 会自动重连，请等它恢复在线后再重启。",
+          offlineMessage: "这个 Host 已离线。{{brandName}} 会自动重连，请等它恢复在线后再重启。",
           requestFailedTitle: "错误",
-          requestFailedMessage: "发送重启请求失败。FDE 会自动重连，请在 Host 显示在线后重试。",
+          requestFailedMessage:
+            "发送重启请求失败。{{brandName}} 会自动重连，请在 Host 显示在线后重试。",
           dialogFailedMessage: "无法打开重启确认对话框。",
         },
         selfUpdate: {
@@ -2783,7 +2791,8 @@ export const zhCN: TranslationResources = {
           },
         },
         update: {
-          desktopManagedHint: "此 Daemon 由 FDE Desktop 管理。请在 Host 上更新 FDE Desktop。",
+          desktopManagedHint:
+            "此 Daemon 由 {{brandName}} Desktop 管理。请在 Host 上更新 {{brandName}} Desktop。",
           title: "Update daemon",
           hint: "Update the daemon to the latest version and restart it",
           confirm: "Update",
@@ -2942,7 +2951,7 @@ export const zhCN: TranslationResources = {
         newScript: "新建 script",
         editScript: "编辑 {{name}}",
         runAsService: "作为服务运行",
-        serviceHint: "FDE 会监管该进程，并通过 $PASEO_PORT 分配端口",
+        serviceHint: "{{brandName}} 会监管该进程，并通过 $PASEO_PORT 分配端口",
         actions: {
           add: "添加 script",
           edit: "编辑",
@@ -2951,7 +2960,7 @@ export const zhCN: TranslationResources = {
       },
       metadata: {
         title: "元数据生成",
-        info: "注入到 FDE 用来生成元数据的 AI prompts 中的 Project 专属指令，可用于强制执行团队约定，例如分支命名、提交风格或 PR 格式",
+        info: "注入到 {{brandName}} 用来生成元数据的 AI prompts 中的 Project 专属指令，可用于强制执行团队约定，例如分支命名、提交风格或 PR 格式",
         branchName: "分支名称",
         branchNamePlaceholder: "分支以 feat/ 或 fix/ 开头，个人分支使用 mb/",
         commitMessage: "提交消息",

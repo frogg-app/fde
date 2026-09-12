@@ -1,3 +1,4 @@
+import { brandAssets } from "../../.generated/branding/assets";
 import { Asset } from "expo-asset";
 import { getDesktopHost } from "@/desktop/host";
 import { buildNotificationRoute, resolveNotificationTarget } from "./notification-routing";
@@ -108,7 +109,7 @@ function getWebNotificationIconUrl(): string | undefined {
   }
 
   try {
-    const asset = Asset.fromModule(require("../../assets/images/notification-icon.png"));
+    const asset = Asset.fromModule(brandAssets["notification-icon.png"]);
     notificationIconUrl = asset.uri ?? null;
   } catch {
     notificationIconUrl = null;

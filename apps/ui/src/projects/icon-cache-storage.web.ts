@@ -1,6 +1,8 @@
+import { brand } from "@fde/branding";
+import { storageKey } from "@fde/branding/identity";
 import type { ProjectIconCacheStorage } from "./icon-cache";
 
-const DATABASE_NAME = "paseo-project-icon-cache";
+const DATABASE_NAME = storageKey(brand, "paseo-project-icon-cache");
 const STORE_NAME = "key-value";
 
 let databasePromise: Promise<IDBDatabase> | null = null;

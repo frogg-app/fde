@@ -1,3 +1,5 @@
+import { brand } from "@fde/branding";
+import { storageKey } from "@fde/branding/identity";
 import { openDatabaseAsync, type SQLiteDatabase } from "expo-sqlite";
 import type { ReplicaRowStore } from "./row-store";
 import { REPLICA_ROW_STORE_SCHEMA_VERSION } from "./row-store-schema";
@@ -18,7 +20,7 @@ export type {
 } from "./row-store";
 export { REPLICA_ROW_STORE_SCHEMA_VERSION, REPLICA_SINGLETON_ROW_ID } from "./row-store-schema";
 
-const DATABASE_NAME = "paseo-replica-row-store.db";
+const DATABASE_NAME = storageKey(brand, "paseo-replica-row-store.db");
 
 function bind(params: readonly SqliteValue[]): SqliteValue[] {
   return [...params];

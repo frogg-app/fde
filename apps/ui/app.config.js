@@ -4,6 +4,9 @@ const path = require("node:path");
 // by scripts/release/sync-workspace-versions.mjs); the Android versionCode and iOS
 // buildNumber are derived from it in native-release-version.js.
 const rootPkg = require("../../package.json");
+const { loadBrand } = require("../../scripts/dev/branding/load.cjs");
+const brand = loadBrand();
+process.env.EXPO_PUBLIC_FOLDER = ".generated/branding/public";
 const withAndroidAsyncStorageSize = require("./plugins/with-android-async-storage-size");
 const withAndroidProfileable = require("./plugins/with-android-profileable");
 const withAndroidReleaseSigning = require("./plugins/with-android-release-signing");
@@ -47,8 +50,8 @@ const buildProfile = isFdroidBuild
         [
           "expo-notifications",
           {
-            icon: "./assets/images/notification-icon.png",
-            color: "#25B5C8",
+            icon: "./.generated/branding/assets/notification-icon.png",
+            color: brand.colors.dark.accent,
           },
         ],
       ],
@@ -60,6 +63,8 @@ function resolveSecretFile(params) {
     return fromEnv.trim();
   }
 
+  if (!brand.legacyFde) return undefined;
+
   const fallbackAbsolutePath = path.resolve(__dirname, params.fallbackRelativePath);
   if (fs.existsSync(fallbackAbsolutePath)) {
     return params.fallbackRelativePath;
@@ -70,8 +75,8 @@ function resolveSecretFile(params) {
 
 const variants = {
   production: {
-    name: "FDE",
-    packageId: "app.frogg.fde",
+    name: brand.name,
+    packageId: brand.applicationId,
     googleServicesFile: resolveSecretFile({
       envKey: "GOOGLE_SERVICES_FILE_PROD",
       fallbackRelativePath: "./.secrets/google-services.prod.json",
@@ -82,8 +87,8 @@ const variants = {
     }),
   },
   development: {
-    name: "FDE Debug",
-    packageId: "app.frogg.fde.debug",
+    name: `${brand.name} Debug`,
+    packageId: `${brand.applicationId}.debug`,
     googleServicesFile: resolveSecretFile({
       envKey: "GOOGLE_SERVICES_FILE_DEBUG",
       fallbackRelativePath: "./.secrets/google-services.debug.json",
@@ -101,15 +106,15 @@ const nativeReleaseVersion = getNativeReleaseVersion(rootPkg.version);
 export default {
   expo: {
     name: variant.name,
-    slug: "fde",
+    slug: brand.id,
     version: nativeReleaseVersion.appVersion,
     orientation: "portrait",
-    icon: "./assets/images/icon.png",
-    scheme: "paseo",
+    icon: "./.generated/branding/assets/icon.png",
+    scheme: brand.scheme,
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
     ios: {
-      icon: "./assets/images/icon-ios.png",
+      icon: "./.generated/branding/assets/icon-ios.png",
       supportsTablet: true,
       infoPlist: {
         NSMicrophoneUsageDescription: "This app needs access to the microphone for voice commands.",
@@ -123,8 +128,8 @@ export default {
     },
     android: {
       adaptiveIcon: {
-        backgroundColor: "#181b1a",
-        foregroundImage: "./assets/images/android-icon-foreground.png",
+        backgroundColor: brand.colors.dark.background,
+        foregroundImage: "./.generated/branding/assets/android-icon-foreground.png",
       },
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
@@ -138,7 +143,7 @@ export default {
     },
     web: {
       output: "single",
-      favicon: "./assets/images/favicon.png",
+      favicon: "./.generated/branding/assets/favicon.png",
     },
     autolinking: {
       searchPaths: ["../../node_modules", "./node_modules"],
@@ -151,12 +156,12 @@ export default {
       [
         "expo-splash-screen",
         {
-          image: "./assets/images/splash-icon.png",
+          image: "./.generated/branding/assets/splash-icon.png",
           imageWidth: 200,
           resizeMode: "contain",
-          backgroundColor: "#181b1a",
+          backgroundColor: brand.colors.dark.background,
           dark: {
-            backgroundColor: "#000000",
+            backgroundColor: brand.colors.dark.background,
           },
         },
       ],
@@ -193,6 +198,9 @@ export default {
       fdroidBuild: isFdroidBuild,
       profileBuild: isProfileBuild,
       router: {},
+      ...(brand.distribution.expoProjectId
+        ? { eas: { projectId: brand.distribution.expoProjectId } }
+        : {}),
     },
   },
 };

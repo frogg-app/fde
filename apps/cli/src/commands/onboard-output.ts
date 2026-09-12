@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import { note } from "@clack/prompts";
 import path from "node:path";
 
@@ -38,16 +39,16 @@ export function describeReachability(input: {
   const addresses = listLanAddresses(input.listen);
   if (addresses.length > 0) {
     lines.push(`On this network: ${addresses.join("  ")}`);
-    lines.push("Type one of those into the FDE app to add this host.");
+    lines.push(`Type one of those into the ${brand.name} app to add this host.`);
   } else {
     lines.push(
-      "This daemon listens on loopback only. Restart it with --listen 0.0.0.0:9999 to reach it from other devices.",
+      `This daemon listens on loopback only. Restart it with --listen 0.0.0.0:${brand.daemonPort} to reach it from other devices.`,
     );
   }
   lines.push(describeAccessMode(input.accessMode));
   if (input.pairingRequired) {
-    lines.push("Pair a device: fde pair");
-    lines.push("Or use a password instead: fde daemon set-password");
+    lines.push(`Pair a device: ${brand.cliName} pair`);
+    lines.push(`Or use a password instead: ${brand.cliName} daemon set-password`);
   }
   return lines;
 }
@@ -61,22 +62,24 @@ export function printNextSteps(
   printLines(
     [
       pairingUrl
-        ? "1. Open FDE and scan the QR code above, or paste the pairing link."
-        : "1. Open FDE and connect to your daemon.",
-      "2. Pairing links open in the FDE desktop app directly (https://pair.frogg.app/code/…).",
-      "3. Desktop app: https://github.com/frogg-app/fde/releases/latest",
-      "4. Docs: https://paseo.sh/docs",
-      '5. Example: fde run --output-schema schema.json "extract fields"',
+        ? `1. Open ${brand.name} and scan the QR code above, or paste the pairing link.`
+        : `1. Open ${brand.name} and connect to your daemon.`,
+      `2. Pairing links open in the ${brand.name} app directly.`,
+      ...(brand.distribution.releaseBase
+        ? [`Desktop app: ${brand.distribution.releaseBase}/latest`]
+        : []),
+      ...(brand.links.docs ? [`Docs: ${brand.links.docs}`] : []),
+      `5. Example: ${brand.cliName} run --output-schema schema.json "extract fields"`,
     ],
     "Next steps",
     richUi,
   );
   printLines(
     [
-      "1. fde --help",
-      "2. fde ls",
-      '3. fde run "your prompt"',
-      "4. fde status",
+      `1. ${brand.cliName} --help`,
+      `2. ${brand.cliName} ls`,
+      `3. ${brand.cliName} run "your prompt"`,
+      `4. ${brand.cliName} status`,
       `5. Daemon logs: ${daemonLogPath}`,
     ],
     "CLI quick reference",

@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import net from "node:net";
 
 export type HostnamesConfig = true | string[] | undefined;
@@ -43,7 +44,9 @@ function matchesHostnamePattern(hostname: string, pattern: string): boolean {
  * daemon should not also have to set `PASEO_HOSTNAMES`, and the name resolves
  * to whatever that owner points it at, so allowing it costs nothing.
  */
-export const PAIRING_HOSTNAME = "pair.frogg.app";
+export const PAIRING_HOSTNAME = brand.services.pairingUrl
+  ? new URL(brand.services.pairingUrl).hostname
+  : "";
 
 function isDefaultAllowedHostname(hostname: string): boolean {
   // Vite-style defaults: localhost, *.localhost, all IP addresses, and the

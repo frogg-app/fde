@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "acme",
+  "name": "Acme Studio",
+  "applicationId": "com.acme.studio",
+  "daemonPort": 10099,
+  "assets": { "icon": "./icon.svg" },
+  "colors": {
+    "light": {
+      "accent": "#6d28d9",
+      "accentForeground": "#ffffff",
+      "background": "#faf5ff",
+      "foreground": "#27143d"
+    },
+    "dark": {
+      "accent": "#c4b5fd",
+      "accentForeground": "#27143d",
+      "background": "#20152e",
+      "foreground": "#faf5ff"
+    }
+  }
+}

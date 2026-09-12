@@ -49,6 +49,9 @@ async function loadModuleForPlatform(
   vi.doMock("@/desktop/host", () => ({
     getDesktopHost: () => options?.desktopHost ?? null,
   }));
+  vi.doMock("../../.generated/branding/assets", () => ({
+    brandAssets: { "notification-icon.png": 1 },
+  }));
   vi.doMock("expo-asset", () => ({
     Asset: {
       fromModule: vi.fn(() => ({

@@ -191,7 +191,7 @@ describe("DaemonUpdateService", () => {
       "beta",
     ]);
     expect(calls[0]?.env).toMatchObject({
-      PASEO_HOME: path.join(installDir, "home"),
+      FDE_HOME: path.join(installDir, "home"),
       FDE_INSTALL_DIR: installDir,
       PASEO_LISTEN: "0.0.0.0:9993",
     });

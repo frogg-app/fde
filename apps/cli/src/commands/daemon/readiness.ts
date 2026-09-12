@@ -1,3 +1,5 @@
+import { brand } from "@fde/branding";
+import { matchesBrand } from "@fde/branding/identity";
 import os from "node:os";
 
 import type { DaemonIdentity } from "@fde/server";
@@ -34,7 +36,7 @@ export async function probeDaemonIdentity(
       path: "/api/identity",
       timeoutMs,
     });
-    return identity.product === "fde" ? identity : null;
+    return identity.product === "fde" && matchesBrand(brand, identity.brand) ? identity : null;
   } catch {
     return null;
   }

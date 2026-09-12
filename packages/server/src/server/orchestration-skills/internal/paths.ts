@@ -9,7 +9,7 @@ export function resolveBundledSkillsDir(moduleUrl: string | URL = import.meta.ur
   const moduleDir = path.dirname(fileURLToPath(moduleUrl));
   const candidates = [
     path.resolve(moduleDir, "..", "..", "..", "skills"),
-    path.resolve(moduleDir, "..", "..", "..", "..", "..", "..", "skills"),
+    path.resolve(moduleDir, "..", "..", "..", "..", "..", "..", ".generated", "branding", "skills"),
   ];
   return candidates.find((candidate) => existsSync(candidate)) ?? candidates[0]!;
 }

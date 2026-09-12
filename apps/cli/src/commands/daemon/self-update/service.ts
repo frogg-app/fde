@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import { spawn, spawnSync } from "node:child_process";
 import { openSync, readFileSync } from "node:fs";
 import os from "node:os";
@@ -12,8 +13,8 @@ import { currentLinkPath } from "./layout.js";
  * `FDE_NO_SERVICE=1` install, Windows, or a hand-started daemon falls back to
  * the CLI's own stop/start through the pid-lock contract.
  */
-export const SYSTEMD_UNIT = "fde-daemon";
-export const LAUNCHD_LABEL = "app.frogg.fde-daemon";
+export const SYSTEMD_UNIT = brand.serviceName;
+export const LAUNCHD_LABEL = brand.launchdLabel;
 
 export type ServiceKind = "systemd" | "launchd" | "unmanaged";
 
@@ -106,7 +107,10 @@ export function createUnmanagedServiceManager(options: UnmanagedServiceOptions):
         detached: true,
         stdio: "ignore",
         shell: options.platform === "win32",
-        env: { ...process.env, ...(options.home ? { PASEO_HOME: options.home } : {}) },
+        env: {
+          ...process.env,
+          ...(options.home ? { [`${brand.envPrefix}_HOME`]: options.home } : {}),
+        },
       });
       // `daemon start` daemonizes and exits 0 once the child survives its
       // startup grace; a non-zero exit (or a launcher that cannot run at all)
@@ -141,8 +145,10 @@ export function createUnmanagedServiceManager(options: UnmanagedServiceOptions):
 export function serviceFileTargetsInstall(filePath: string, installDir: string): boolean {
   try {
     const content = readFileSync(filePath, "utf8");
-    const launcher = path.join(installDir, "current", "bin", "fde");
-    return content.includes(launcher) || content.includes(`FDE_INSTALL_DIR=${installDir}`);
+    const launcher = path.join(installDir, "current", "bin", brand.cliName);
+    return (
+      content.includes(launcher) || content.includes(`${brand.envPrefix}_INSTALL_DIR=${installDir}`)
+    );
   } catch {
     return false;
   }
@@ -165,6 +171,9 @@ export function detectServiceManager(options: UnmanagedServiceOptions): ServiceM
 }
 
 const SUPERVISOR_ENV_KEYS = [
+  ...["HOME", "INSTALL_DIR", "RELEASE_BASE", "RELEASES_API", "GITHUB_TOKEN"].map(
+    (key) => `${brand.envPrefix}_${key}`,
+  ),
   "PATH",
   "HOME",
   "USERPROFILE",
@@ -198,7 +207,7 @@ export function spawnDetachedSupervisor(input: {
 }): { pid: number | null; via: "systemd-run" | "detached" } {
   const env = input.env ?? process.env;
   if (process.platform === "linux" && isInsideSystemdUnit()) {
-    const unit = `fde-self-update-${Date.now()}`;
+    const unit = `${brand.id}-self-update-${Date.now()}`;
     const setenv = SUPERVISOR_ENV_KEYS.filter((key) => env[key] !== undefined).map(
       (key) => `--setenv=${key}=${env[key]}`,
     );

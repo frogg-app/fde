@@ -20,31 +20,7 @@ const MARKER: &str = "FDE_PROBE ";
 /// Runs under `sh -s` on Linux and macOS. `docker info` (not just the binary)
 /// decides `hasDocker`, so a socket the user cannot reach counts as absent.
 /// Strings are JSON-escaped by `esc`; the flags print as bare `true`/`false`.
-pub const PROBE_SNIPPET: &str = r#"set +e
-esc() { printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' | tr -d '\n\r'; }
-os=$(uname -s 2>/dev/null); arch=$(uname -m 2>/dev/null)
-docker=false
-if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then docker=true; fi
-systemd=false
-if command -v systemctl >/dev/null 2>&1 && systemctl --user show-environment >/dev/null 2>&1; then systemd=true; fi
-curl=false
-if command -v curl >/dev/null 2>&1; then curl=true; fi
-installed=false; version=""
-root="${FDE_INSTALL_DIR:-$HOME/.local/share/fde}"
-if [ -x "$root/current/bin/fde" ]; then
-  installed=true
-  if [ -f "$root/current/manifest.json" ]; then
-    version=$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' "$root/current/manifest.json" | head -n 1)
-  fi
-elif command -v fde >/dev/null 2>&1; then
-  installed=true
-  version=$(fde --version 2>/dev/null | head -n 1)
-fi
-container=false
-if [ "$docker" = true ] && docker container inspect "${FDE_CONTAINER:-fde-daemon}" >/dev/null 2>&1; then container=true; fi
-printf 'FDE_PROBE {"os":"%s","arch":"%s","hasDocker":%s,"hasSystemdUser":%s,"hasCurl":%s,"hasFde":{"installed":%s,"version":"%s"},"hasDockerContainer":%s,"homeDir":"%s"}\n' \
-  "$(esc "$os")" "$(esc "$arch")" "$docker" "$systemd" "$curl" "$installed" "$(esc "$version")" "$container" "$(esc "$HOME")"
-"#;
+pub const PROBE_SNIPPET: &str = include_str!(concat!(env!("OUT_DIR"), "/probe.sh"));
 
 /// Finds the marker line in the snippet's stdout and normalises it: flags
 /// become booleans, an empty version is dropped.

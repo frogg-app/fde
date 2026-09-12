@@ -23,6 +23,14 @@ FDE diverged from Paseo at v0.7.2 and is maintained independently. Credit for
 the original work goes to Mohamed Boudra and the Paseo contributors; see
 [NOTICE](NOTICE).
 
+## Rebranding a fork
+
+Supply a manifest and artwork, then select them with `FDE_BRAND_DIR`. Desktop,
+mobile, web, CLI, and daemon distributions use that product's identity while
+keeping shared internals and upstream feature commits independent of branding.
+Start with the [rebranding guide](docs/branding.md) and
+[manifest reference](docs/branding-reference.md).
+
 ## Layout
 
 ```
@@ -31,6 +39,7 @@ apps/
   ui/        Web UI (Expo web export) loaded by the shell
   cli/       Command-line client and daemon launcher
 packages/
+  branding/  Shared branding contract and generated product identity
   server/    The daemon: agent lifecycle, WebSocket API, MCP server
   protocol/  Shared WebSocket message schemas
   client/    Client library used by the UI and CLI

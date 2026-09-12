@@ -6,7 +6,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { openExternalUrl } from "@/utils/open-external-url";
 
 interface ExternalLinkProps {
-  href: string;
+  href: string | null;
   label: string;
   tooltip?: ReactNode;
   testID?: string;
@@ -29,6 +29,8 @@ export function ExternalLink({
   const handlePress = useCallback(() => {
     void openExternalUrl(href);
   }, [href]);
+
+  if (!href) return null;
 
   const trigger = (
     <Pressable

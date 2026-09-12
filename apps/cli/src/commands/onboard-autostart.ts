@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import { cancel, confirm, isCancel, log } from "@clack/prompts";
 
 import { installLoginService, uninstallLoginService } from "./daemon/service/install.js";
@@ -23,7 +24,7 @@ export async function configureAutostart(args: {
   let wanted: boolean | null;
   if (args.richUi) {
     const answer = await confirm({
-      message: "Start the FDE daemon automatically when you log in?",
+      message: `Start the ${brand.name} daemon automatically when you log in?`,
       active: "Yes",
       inactive: "No",
       initialValue: true,

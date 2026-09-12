@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import type { Command } from "commander";
 import type { DaemonClient } from "@fde/client/internal/daemon-client";
 import { connectToDaemon, getDaemonHost } from "../../utils/client.js";
@@ -45,7 +46,7 @@ export async function runDeleteCommand(
     const error: CommandError = {
       code: "MISSING_ARGUMENT",
       message: "Agent ID required unless --all or --cwd is specified",
-      details: "Usage: fde agent delete <id> | --all | --cwd <path>",
+      details: `Usage: ${brand.cliName} agent delete <id> | --all | --cwd <path>`,
     };
     throw error;
   }
@@ -58,7 +59,7 @@ export async function runDeleteCommand(
     const error: CommandError = {
       code: "DAEMON_NOT_RUNNING",
       message: `Cannot connect to daemon at ${host}: ${message}`,
-      details: "Start the daemon with: fde daemon start",
+      details: `Start the daemon with: ${brand.cliName} daemon start`,
     };
     throw error;
   }
@@ -81,7 +82,7 @@ export async function runDeleteCommand(
         const error: CommandError = {
           code: "AGENT_NOT_FOUND",
           message: `No agent found matching: ${id}`,
-          details: "Use `fde ls` to list available agents",
+          details: `Use \`${brand.cliName} ls\` to list available agents`,
         };
         throw error;
       }

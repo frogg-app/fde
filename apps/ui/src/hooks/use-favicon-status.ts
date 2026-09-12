@@ -1,3 +1,4 @@
+import { brandAssets } from "../../.generated/branding/assets";
 import { useEffect, useRef, useState } from "react";
 import { getIsElectronRuntimeMac } from "@/constants/layout";
 import { useAggregatedAgents } from "./use-aggregated-agents";
@@ -12,14 +13,14 @@ type ColorScheme = "dark" | "light";
 /* eslint-disable @typescript-eslint/no-require-imports */
 const FAVICON_IMAGES: Record<ColorScheme, Record<FaviconStatus, { uri: string } | number>> = {
   dark: {
-    none: require("../../assets/images/favicon-dark.png"),
-    running: require("../../assets/images/favicon-dark-running.png"),
-    attention: require("../../assets/images/favicon-dark-attention.png"),
+    none: brandAssets["favicon-dark.png"],
+    running: brandAssets["favicon-dark-running.png"],
+    attention: brandAssets["favicon-dark-attention.png"],
   },
   light: {
-    none: require("../../assets/images/favicon-light.png"),
-    running: require("../../assets/images/favicon-light-running.png"),
-    attention: require("../../assets/images/favicon-light-attention.png"),
+    none: brandAssets["favicon-light.png"],
+    running: brandAssets["favicon-light-running.png"],
+    attention: brandAssets["favicon-light-attention.png"],
   },
 };
 /* eslint-enable @typescript-eslint/no-require-imports */
@@ -45,7 +46,7 @@ function getFaviconUri(status: FaviconStatus, colorScheme: ColorScheme): string 
     return image.uri;
   }
   const suffix = status === "none" ? "" : `-${status}`;
-  return `/assets/images/favicon-${colorScheme}${suffix}.png`;
+  return `/brand/favicon-${colorScheme}${suffix}.png`;
 }
 
 function getOrCreateFaviconLink(): HTMLLinkElement | null {

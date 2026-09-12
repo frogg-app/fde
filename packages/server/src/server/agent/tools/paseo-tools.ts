@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import { z } from "zod";
 import { ensureValidJson } from "../../json-utils.js";
 import type { Logger } from "pino";
@@ -896,7 +897,7 @@ export function createPaseoToolCatalog(options: PaseoToolHostDependencies): Pase
           .string()
           .min(1)
           .optional()
-          .describe("Optional worktree slug/path label. Omit to let FDE generate one."),
+          .describe(`Optional worktree slug/path label. Omit to let ${brand.name} generate one.`),
         branchName: z
           .string()
           .min(1)
@@ -909,21 +910,21 @@ export function createPaseoToolCatalog(options: PaseoToolHostDependencies): Pase
           .describe("Optional base branch. Defaults to the repository default branch."),
       })
       .strict()
-      .describe("Create a new branch in a new FDE worktree."),
+      .describe(`Create a new branch in a new ${brand.name} worktree.`),
     z
       .object({
         kind: z.literal("checkout-branch"),
         branch: z.string().min(1).describe("Existing branch to check out."),
       })
       .strict()
-      .describe("Check out an existing branch in a new FDE worktree."),
+      .describe(`Check out an existing branch in a new ${brand.name} worktree.`),
     z
       .object({
         kind: z.literal("checkout-pr"),
         githubPrNumber: z.number().int().positive().describe("GitHub pull request number."),
       })
       .strict()
-      .describe("Check out a GitHub pull request in a new FDE worktree."),
+      .describe(`Check out a GitHub pull request in a new ${brand.name} worktree.`),
   ]);
   const AgentWorkspaceInputSchema = z.discriminatedUnion("kind", [
     z
@@ -1212,8 +1213,7 @@ export function createPaseoToolCatalog(options: PaseoToolHostDependencies): Pase
     "create_workspace",
     {
       title: "Create workspace",
-      description:
-        "Create a workspace using an existing local checkout or a new FDE-managed worktree.",
+      description: `Create a workspace using an existing local checkout or a new ${brand.name}-managed worktree.`,
       inputSchema: {
         isolation: z.enum(["local", "worktree"]),
         path: z
@@ -2262,8 +2262,7 @@ export function createPaseoToolCatalog(options: PaseoToolHostDependencies): Pase
     "start_workspace_script",
     {
       title: "Start workspace script",
-      description:
-        "Start one configured workspace script through FDE's managed workspace-script launcher.",
+      description: `Start one configured workspace script through ${brand.name}'s managed workspace-script launcher.`,
       inputSchema: {
         workspaceId: z.string().describe("Workspace ID containing the configured script."),
         scriptName: z.string().min(1).describe("Configured paseo.json script name to start."),

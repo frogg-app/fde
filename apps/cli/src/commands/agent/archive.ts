@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import { Command } from "commander";
 import type { DaemonClient } from "@fde/client/internal/daemon-client";
 import { connectToDaemon, getDaemonHost, resolveAgentId } from "../../utils/client.js";
@@ -51,7 +52,7 @@ export async function runArchiveCommand(
     const error: CommandError = {
       code: "MISSING_AGENT_ID",
       message: "Agent ID is required",
-      details: "Usage: fde agent archive <id-or-name>",
+      details: `Usage: ${brand.cliName} agent archive <id-or-name>`,
     };
     throw error;
   }
@@ -64,7 +65,7 @@ export async function runArchiveCommand(
     const error: CommandError = {
       code: "DAEMON_NOT_RUNNING",
       message: `Cannot connect to daemon at ${host}: ${message}`,
-      details: "Start the daemon with: fde daemon start",
+      details: `Start the daemon with: ${brand.cliName} daemon start`,
     };
     throw error;
   }
@@ -77,7 +78,7 @@ export async function runArchiveCommand(
       const error: CommandError = {
         code: "AGENT_NOT_FOUND",
         message: `Agent not found: ${agentIdArg}`,
-        details: 'Use "fde ls" to list available agents',
+        details: `Use "${brand.cliName} ls" to list available agents`,
       };
       throw error;
     }
@@ -101,8 +102,7 @@ export async function runArchiveCommand(
       const error: CommandError = {
         code: "AGENT_RUNNING",
         message: `Agent ${agentId.slice(0, 7)} is currently running`,
-        details:
-          "Use --force to archive a running agent (it will interrupt the active run), or stop it first with: fde agent stop. Use fde agent delete to hard-delete it.",
+        details: `Use --force to archive a running agent (it will interrupt the active run), or stop it first with: ${brand.cliName} agent stop. Use ${brand.cliName} agent delete to hard-delete it.`,
       };
       throw error;
     }

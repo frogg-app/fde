@@ -17,10 +17,30 @@
   # The default is read from a sidecar file so the CI auto-updater can replace
   # the hash with a single file write instead of a sed against this source.
   npmDepsHash ? lib.fileContents ./npm-deps.hash,
+  # A self-contained manifest/artwork directory, pinned by the consuming flake.
+  brandSource ? null,
 }:
 
+let
+  manifest = builtins.fromJSON (builtins.readFile (if brandSource == null then ../../brands/fde/brand.json else brandSource + "/brand.json"));
+  identity = {
+    inherit (manifest) id name applicationId daemonPort;
+    cliName = manifest.cliName or manifest.id;
+    homeDir = manifest.homeDir or ".${manifest.id}";
+    envPrefix = manifest.envPrefix or (lib.toUpper (builtins.replaceStrings [ "-" ] [ "_" ] manifest.id));
+    serviceName = manifest.serviceName or "${manifest.id}-daemon";
+    legacyFde = brandSource == null;
+  };
+in
 buildNpmPackage rec {
-  pname = "paseo";
+  pname = identity.cliName;
+  passthru.brand = identity;
+  FDE_BRAND_DIR = if brandSource == null then "brands/fde" else ".branding-input/selected";
+  postPatch = lib.optionalString (brandSource != null) ''
+    mkdir -p .branding-input/selected
+    cp -R ${lib.escapeShellArg (toString brandSource)}/. .branding-input/selected/
+    chmod -R u+w .branding-input
+  '';
   version = (builtins.fromJSON (builtins.readFile ../../package.json)).version;
 
   src = lib.cleanSourceWith {
@@ -33,7 +53,7 @@ buildNpmPackage rec {
       # Exclude non-daemon workspace contents (keep package.json for workspace resolution)
       !(lib.hasPrefix "/apps/ui/android" relPath)
       && !(lib.hasPrefix "/apps/ui/ios" relPath)
-      && !(lib.hasPrefix "/apps/desktop" relPath)
+      && !(lib.hasPrefix "/apps/desktop/src-tauri/target" relPath)
       # Documentation, CI definitions and agent/editor configuration. None of
       # these reach the build.
       && !(lib.hasPrefix "/docs" relPath)
@@ -51,6 +71,12 @@ buildNpmPackage rec {
       && !(lib.hasSuffix ".e2e.test.ts" baseName)
       && baseName != "node_modules"
       && baseName != ".git"
+      && baseName != ".generated"
+      && baseName != ".branding-input"
+      && baseName != ".branding-source"
+      && (!(lib.hasPrefix ".env" baseName) || baseName == ".env.example")
+      && baseName != "target"
+      && baseName != "dist"
       && baseName != ".paseo"
       && baseName != ".DS_Store";
   };
@@ -124,23 +150,27 @@ buildNpmPackage rec {
     # Create wrapper for the server entry point (for systemd / direct use)
     mkdir -p $out/bin
     # Keep Paseo's runtime mode separate from NODE_ENV, which belongs to spawned agents.
-    makeWrapper ${nodejs}/bin/node $out/bin/paseo-server \
+    makeWrapper ${nodejs}/bin/node $out/bin/${identity.cliName}-server \
       --add-flags "$out/lib/paseo/packages/server/dist/scripts/supervisor-entrypoint.js" \
       --set PASEO_NODE_ENV production
 
     # Create wrapper for the CLI
-    makeWrapper ${nodejs}/bin/node $out/bin/paseo \
+    makeWrapper ${nodejs}/bin/node $out/bin/${identity.cliName} \
       --add-flags "$out/lib/paseo/apps/cli/dist/index.js" \
       --set NODE_PATH "$out/lib/paseo/node_modules"
 
+    ${lib.optionalString identity.legacyFde ''
+      ln -s fde $out/bin/paseo
+      ln -s fde-server $out/bin/paseo-server
+    ''}
     runHook postInstall
   '';
 
   meta = {
     description = "Self-hosted daemon for Claude Code, Codex, and OpenCode";
-    homepage = "https://github.com/getpaseo/paseo";
-    license = lib.licenses.agpl3Plus;
-    mainProgram = "paseo";
+    homepage = manifest.links.website or "";
+    license = lib.licenses.asl20;
+    mainProgram = identity.cliName;
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
   };
 }
