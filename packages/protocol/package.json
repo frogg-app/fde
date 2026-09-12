@@ -1,6 +1,6 @@
 {
   "name": "@fde/protocol",
-  "version": "0.2.17",
+  "version": "0.3.0",
   "description": "Paseo shared protocol schemas and wire types",
   "files": [
     "dist",

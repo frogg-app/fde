@@ -36,6 +36,7 @@ import {
   type SidebarProjectEntry,
   type SidebarWorkspaceEntry,
 } from "@/hooks/use-sidebar-workspaces-list";
+import { SidebarAgentsProvider } from "@/components/sidebar/agents/provider";
 import { useSidebarModel } from "@/components/sidebar/sidebar-model";
 import type { PinnedSidebarGroups } from "@/hooks/use-sidebar-pins";
 import { RetainedPanelActivity } from "@/components/retained-panel";
@@ -122,6 +123,10 @@ export const LeftSidebar = memo(function LeftSidebar({ active }: { active: boole
     shortcutModel,
   } = useSidebarModel();
   const { shortcutIndexByWorkspaceKey } = shortcutModel;
+  const agentServerIds = useMemo(() => {
+    const placements = projects.flatMap((project) => project.workspaces);
+    return Array.from(new Set(placements.map((workspace) => workspace.serverId)));
+  }, [projects]);
 
   const [isManualRefresh, setIsManualRefresh] = useState(false);
 
@@ -193,32 +198,36 @@ export const LeftSidebar = memo(function LeftSidebar({ active }: { active: boole
 
   if (isCompactLayout) {
     return (
-      <RetainedPanelActivity active={active}>
-        <MobileSidebar
-          {...sharedProps}
-          active={active}
-          insetsTop={insets.top}
-          insetsBottom={insets.bottom}
-          closeSidebar={showMobileAgent}
-          handleOpenProject={handleOpenProjectMobile}
-          handleAddHost={handleAddHost}
-          handleSettings={handleSettingsMobile}
-        />
-      </RetainedPanelActivity>
+      <SidebarAgentsProvider serverIds={agentServerIds} active={active}>
+        <RetainedPanelActivity active={active}>
+          <MobileSidebar
+            {...sharedProps}
+            active={active}
+            insetsTop={insets.top}
+            insetsBottom={insets.bottom}
+            closeSidebar={showMobileAgent}
+            handleOpenProject={handleOpenProjectMobile}
+            handleAddHost={handleAddHost}
+            handleSettings={handleSettingsMobile}
+          />
+        </RetainedPanelActivity>
+      </SidebarAgentsProvider>
     );
   }
 
   return (
-    <RetainedPanelActivity active={active}>
-      <DesktopSidebar
-        {...sharedProps}
-        insetsTop={insets.top}
-        active={active}
-        handleOpenProject={handleOpenProjectDesktop}
-        handleAddHost={handleAddHost}
-        handleSettings={handleSettingsDesktop}
-      />
-    </RetainedPanelActivity>
+    <SidebarAgentsProvider serverIds={agentServerIds} active={active}>
+      <RetainedPanelActivity active={active}>
+        <DesktopSidebar
+          {...sharedProps}
+          insetsTop={insets.top}
+          active={active}
+          handleOpenProject={handleOpenProjectDesktop}
+          handleAddHost={handleAddHost}
+          handleSettings={handleSettingsDesktop}
+        />
+      </RetainedPanelActivity>
+    </SidebarAgentsProvider>
   );
 });
 

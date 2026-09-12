@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.17 - 2026-09-12
+## 0.3.0 - 2026-09-12
 
 - Show agents and expandable subagents beneath workspace rows in the sidebar.
   Click a child to open its existing interactive session or live provider-owned
