@@ -204,11 +204,20 @@ Validated using isolated Linux processes and deterministic provider behavior:
 - Two real forced-supervisor-shutdown cases preserve detached descendants with
   either opt-in environment or retained execution state. Existing supervisor,
   CLI/service/update, bootstrap, origin, and packaging regressions also pass.
-- Full server-stack build and full repository typecheck pass. Specific command
-  results are also reported in the pull request.
+- Full server-stack build and full repository typecheck pass. The prepared pull-request
+  description also records the checks.
+
+An additional real Linux systemd check used an isolated transient unit with the
+compiled CLI, `Type=simple`, `KillMode=process`, and the generated-style `ExecStop`.
+Restarting the unit retained the execution PID, instance, active turn, and pending
+permission; the permission resolved after reconnect. Stopping the unit retained
+execution, and explicit stop-all terminated it. The temporary home and unit were
+removed, and no other services were modified. This proves service restart/stop;
+it does not prove a release download, version-link swap, or rollback under systemd.
 
 Not validated: live provider background shells/workflows across replacement,
-Windows desktop jobs/services, macOS launchd, or an actual Linux systemd update.
+Windows desktop jobs/services, macOS launchd, or a complete installed-release update
+and rollback under Linux systemd.
 The process tests do not claim OS-reboot/container survival or live migration of
 AgentManager/provider code. Production services were not restarted and opt-in was
 not enabled on the production home. Per-agent workers and narrower backend/API

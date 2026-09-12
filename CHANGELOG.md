@@ -15,8 +15,9 @@
   handoffs in retained execution, and retain release directories for running code.
   Linux opt-in service definitions avoid descendant cleanup during gateway stop.
 - Real isolated-process tests prove turn and permission continuity and supervisor
-  reattachment. Real-provider background work and Windows/macOS/systemd acceptance
-  remain unverified; the feature is not enabled by default or deployed by this change.
+  reattachment; an isolated Linux systemd restart/stop also preserves execution.
+  Real-provider background work, Windows/macOS lifecycle, and complete installed-update
+  acceptance remain unverified. The feature is not enabled by default or deployed.
 
 ## 0.4.2 - 2026-09-12
 

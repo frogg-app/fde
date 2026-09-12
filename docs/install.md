@@ -446,8 +446,10 @@ execution outside the service manager's descendant cleanup. The shell installer
 accepts the same setting. Reinstall the service definition when switching modes;
 a preexisting `KillMode=mixed` unit still kills descendants during service stop.
 The execution process remains in the unit's cgroup: host shutdown, resource limits,
-and explicit cgroup cleanup still apply. Validate systemd restart behavior on the
-target host before depending on uninterrupted production turns.
+and explicit cgroup cleanup still apply. An isolated transient-systemd test with
+the compiled CLI preserved the execution PID and pending permission across restart
+and stop; permission resolution after reconnect also passed. Full installed-release
+update/rollback and target-host resource policies remain separate validation.
 
 macOS launchd and Windows managed-service process survival have not been
 validated; their service installers do not persist this experimental setting.
