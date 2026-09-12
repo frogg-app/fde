@@ -168,7 +168,7 @@ function methodIcon(method: AddProjectMethodId): FlowRowOption["icon"] {
 }
 
 function directoryOptionSubtitle(option: ProjectPickerOption, shortPath: string): string | null {
-  if (option.kind === "path") return "Open this path";
+  if (option.kind === "path") return "Open folder";
   if (shortPath === option.path) return null;
   return option.path;
 }
@@ -530,6 +530,9 @@ export function AddProjectFlow({ request, onClose }: AddProjectFlowProps) {
     () => (directoryQuery.data?.query === query ? directoryQuery.data.paths : EMPTY_PATHS),
     [directoryQuery.data, query],
   );
+  const browseDirectory = useCallback((path: string) => {
+    setState((current) => setAddProjectPageInput(current, path));
+  }, []);
   const pathOptions = useMemo(
     () =>
       buildProjectPickerOptions({
@@ -616,17 +619,33 @@ export function AddProjectFlow({ request, onClose }: AddProjectFlowProps) {
       }));
     }
     if (page.kind === "directory-search") {
-      return pathOptions.map((option) => {
-        const shortPath = shortenPath(option.path);
-        return {
-          id: option.path,
-          title: shortPath,
-          subtitle: directoryOptionSubtitle(option, shortPath),
-          icon: Folder,
-          testID: pathTestId(option.path),
-          select: () => void openAddedProject(option.path, "directory-search"),
-        };
-      });
+      const currentPath = page.query.trim();
+      const choices: FlowRowOption[] = currentPath
+        ? [
+            {
+              id: `choose:${currentPath}`,
+              title: `Choose ${shortenPath(currentPath)}`,
+              subtitle: "Add project in this folder",
+              icon: FolderPlus,
+              testID: "add-project-flow-choose-directory",
+              select: () => void openAddedProject(currentPath, "directory-search"),
+            },
+          ]
+        : [];
+      choices.push(
+        ...pathOptions.map((option) => {
+          const shortPath = shortenPath(option.path);
+          return {
+            id: option.path,
+            title: shortPath,
+            subtitle: directoryOptionSubtitle(option, shortPath),
+            icon: Folder,
+            testID: pathTestId(option.path),
+            select: () => browseDirectory(option.path),
+          };
+        }),
+      );
+      return choices;
     }
     if (page.kind === "github-search") {
       const search = githubQuery.data?.query === page.query ? githubQuery.data.payload : null;
@@ -698,6 +717,7 @@ export function AddProjectFlow({ request, onClose }: AddProjectFlowProps) {
     host,
     onClose,
     openAddedProject,
+    browseDirectory,
     page,
     pathOptions,
     recommendedPaths,
