@@ -63,6 +63,18 @@ export function useChatOutline({
   const nextJumpRequestIdRef = useRef(0);
   const nextIndexRequestIdRef = useRef(0);
   const loadedItems = useMemo(() => [...tail, ...(head ?? NO_STREAM_ITEMS)], [head, tail]);
+  // Looked up once per scroll event, so a linear scan would cost more the further back
+  // the reader has scrolled -- exactly the direction that already hurts.
+  const loadedItemSeqById = useMemo(() => {
+    const seqById = new Map<string, number>();
+    for (const item of loadedItems) {
+      const seq = item.timelineCursor?.seq;
+      if (seq !== undefined) {
+        seqById.set(item.id, seq);
+      }
+    }
+    return seqById;
+  }, [loadedItems]);
   const prompts = enabled ? (index?.prompts ?? NO_PROMPTS) : NO_PROMPTS;
 
   useEffect(() => {
@@ -111,10 +123,7 @@ export function useChatOutline({
   // complete index, so unloaded rows never have to exist in the DOM to be marked.
   const publishActivePrompt = useStableEvent(() => {
     const rowId = readingRowIdRef.current;
-    const anchorSeq =
-      rowId === null
-        ? null
-        : (loadedItems.find((item) => item.id === rowId)?.timelineCursor?.seq ?? null);
+    const anchorSeq = rowId === null ? null : (loadedItemSeqById.get(rowId) ?? null);
     activePrompt.publish(resolveActivePromptSeq(prompts, anchorSeq));
   });
 

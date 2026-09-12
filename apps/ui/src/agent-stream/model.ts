@@ -47,6 +47,34 @@ const EMPTY_AUXILIARY: StreamRenderAuxiliary = {
   turnFooter: null,
 };
 
+/**
+ * Slices of a tail, keyed by the offset they start at.
+ *
+ * Every cache below is a WeakMap keyed on the array identity it was given, so a fresh
+ * `tail.slice(historyStart)` per call makes all of them miss permanently -- and
+ * `historyStart` is non-zero for any conversation longer than the initial window. Reusing
+ * one slice per (tail, offset) pair is what lets the rest of this file memoize at all.
+ */
+const renderedTailCache = new WeakMap<StreamItem[], Map<number, StreamItem[]>>();
+
+function getRenderedTail(tail: StreamItem[], historyStart: number): StreamItem[] {
+  if (!historyStart) {
+    return tail;
+  }
+  let byOffset = renderedTailCache.get(tail);
+  if (!byOffset) {
+    byOffset = new Map();
+    renderedTailCache.set(tail, byOffset);
+  }
+  const cached = byOffset.get(historyStart);
+  if (cached) {
+    return cached;
+  }
+  const sliced = tail.slice(historyStart);
+  byOffset.set(historyStart, sliced);
+  return sliced;
+}
+
 const orderedTailCache = new WeakMap<StreamItem[], Map<string, StreamItem[]>>();
 const orderedHeadCache = new WeakMap<StreamItem[], Map<string, StreamItem[]>>();
 const splitHistoryCache = new WeakMap<
@@ -163,7 +191,7 @@ export function buildAgentStreamRenderModel(
     isMobileBreakpoint: input.isMobileBreakpoint,
   });
   const orderingCacheKey = `${input.platform}:${input.isMobileBreakpoint}`;
-  const renderedTail = input.historyStart ? input.tail.slice(input.historyStart) : input.tail;
+  const renderedTail = getRenderedTail(input.tail, input.historyStart ?? 0);
   const orderedTail = getOrderedItems({
     cache: orderedTailCache,
     source: renderedTail,

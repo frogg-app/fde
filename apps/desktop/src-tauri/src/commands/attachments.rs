@@ -11,6 +11,7 @@ use serde_json::{json, Value};
 
 pub const DIRNAME: &str = "desktop-attachments";
 
+#[derive(Clone)]
 pub struct AttachmentStore {
     dir: PathBuf,
 }

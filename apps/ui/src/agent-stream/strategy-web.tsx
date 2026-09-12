@@ -153,10 +153,14 @@ function canNestedScrollerConsumeUpwardInput(
   let element = target instanceof Element ? target : null;
   while (element && element !== scrollContainer) {
     if (element instanceof HTMLElement) {
-      const overflowY = window.getComputedStyle(element).overflowY;
-      const canScroll = overflowY === "auto" || overflowY === "scroll";
-      if (canScroll && element.scrollHeight > element.clientHeight && element.scrollTop > 0) {
-        return true;
+      // Geometry first: this runs for every ancestor on every upward wheel and touchmove
+      // event, and resolving computed style is far dearer than reading these. Almost
+      // nothing on the path is scrollable or scrolled, so most ancestors stop here.
+      if (element.scrollTop > 0 && element.scrollHeight > element.clientHeight) {
+        const overflowY = window.getComputedStyle(element).overflowY;
+        if (overflowY === "auto" || overflowY === "scroll") {
+          return true;
+        }
       }
     }
     element = element.parentElement;
@@ -369,15 +373,27 @@ function WebStreamViewport(props: StreamRenderInput & { isMobileBreakpoint: bool
   const activationKey = routeBottomAnchorRequest?.requestKey ?? props.agentId;
   const isActivationReady = !hasRouteBottomAnchorRequest || isAuthoritativeHistoryReady;
 
+  // The virtualizer compares getItemKey by identity and drops every cached measurement
+  // when it changes, re-estimating from index 0. A fresh closure per render therefore
+  // costs a full sweep of estimateSize per render, and estimateSize is not cheap. Read
+  // the rows through a ref so both callbacks keep one identity for the component's life.
+  const historyVirtualizedRef = useRef(segments.historyVirtualized);
+  historyVirtualizedRef.current = segments.historyVirtualized;
+  const getVirtualRowKey = useCallback(
+    (index: number) => historyVirtualizedRef.current[index]?.id ?? index,
+    [],
+  );
+  const estimateVirtualRowSize = useCallback((index: number) => {
+    const row = historyVirtualizedRef.current[index];
+    return row ? estimateStreamItemHeight(row) : 120;
+  }, []);
+
   const rowVirtualizer = useVirtualizer({
     count: segments.historyVirtualized.length,
     enabled: shouldUseVirtualizer,
     getScrollElement: () => scrollContainerRef.current,
-    getItemKey: (index: number) => segments.historyVirtualized[index]?.id ?? index,
-    estimateSize: (index: number) => {
-      const row = segments.historyVirtualized[index];
-      return row ? estimateStreamItemHeight(row) : 120;
-    },
+    getItemKey: getVirtualRowKey,
+    estimateSize: estimateVirtualRowSize,
     measureElement: measureVirtualElement,
     scrollMargin: VIRTUALIZER_SCROLL_MARGIN_PX,
     useAnimationFrameWithResizeObserver: true,

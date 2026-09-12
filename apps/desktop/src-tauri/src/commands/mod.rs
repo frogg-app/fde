@@ -52,6 +52,24 @@ pub fn register_state(app: &App) -> tauri::Result<()> {
     Ok(())
 }
 
+/// Run a blocking store operation off the async runtime's worker threads.
+///
+/// Reading an attachment reads the whole file and base64-encodes it, and these commands
+/// share a runtime with every daemon transport session. Enough concurrent thumbnail reads
+/// -- which the agent stream can issue freely as rows scroll into view -- would otherwise
+/// occupy the workers that pump daemon frames, stalling the app rather than just the
+/// images.
+async fn run_blocking<S, F>(store: S, args: Value, operation: F) -> Result<Value, String>
+where
+    S: Send + 'static,
+    F: FnOnce(S, Value) -> Result<Value, String> + Send + 'static,
+{
+    match tauri::async_runtime::spawn_blocking(move || operation(store, args)).await {
+        Ok(result) => result,
+        Err(error) => Err(format!("Attachment operation failed: {error}")),
+    }
+}
+
 #[tauri::command]
 pub async fn desktop_invoke(
     app: AppHandle,
@@ -98,16 +116,30 @@ pub async fn desktop_invoke(
         "write_attachment_base64" => app
             .state::<attachments::AttachmentStore>()
             .write_base64(&args),
-        "write_attachment_bytes" => app
-            .state::<attachments::AttachmentStore>()
-            .write_bytes(&args),
-        "copy_attachment_file" => app.state::<attachments::AttachmentStore>().copy_file(&args),
-        "read_file_base64" => app
-            .state::<attachments::AttachmentStore>()
-            .read_base64(&args),
-        "delete_attachment_file" => app
-            .state::<attachments::AttachmentStore>()
-            .delete_file(&args),
+        "write_attachment_bytes" => {
+            run_blocking(app.state::<attachments::AttachmentStore>().inner().clone(), args, |store, args| {
+                store.write_bytes(&args)
+            })
+            .await
+        }
+        "copy_attachment_file" => {
+            run_blocking(app.state::<attachments::AttachmentStore>().inner().clone(), args, |store, args| {
+                store.copy_file(&args)
+            })
+            .await
+        }
+        "read_file_base64" => {
+            run_blocking(app.state::<attachments::AttachmentStore>().inner().clone(), args, |store, args| {
+                store.read_base64(&args)
+            })
+            .await
+        }
+        "delete_attachment_file" => {
+            run_blocking(app.state::<attachments::AttachmentStore>().inner().clone(), args, |store, args| {
+                store.delete_file(&args)
+            })
+            .await
+        }
         "garbage_collect_attachment_files" => app
             .state::<attachments::AttachmentStore>()
             .garbage_collect(&args),

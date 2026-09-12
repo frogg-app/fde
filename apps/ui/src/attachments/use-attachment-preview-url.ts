@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from "react";
+import { acquireAttachmentPreviewUrl } from "@/attachments/preview-url-cache";
 import type { AttachmentMetadata } from "@/attachments/types";
-import { releaseAttachmentPreviewUrl, resolveAttachmentPreviewUrl } from "@/attachments/service";
 
 export function useAttachmentPreviewUrl(
   attachment: AttachmentMetadata | null | undefined,
 ): string | null {
   const [url, setUrl] = useState<string | null>(null);
-  const activeAttachmentRef = useRef<AttachmentMetadata | null>(null);
   const attachmentRef = useRef(attachment);
   attachmentRef.current = attachment;
 
@@ -17,25 +16,24 @@ export function useAttachmentPreviewUrl(
 
   useEffect(() => {
     let disposed = false;
-    let currentUrl: string | null = null;
     const current = attachmentRef.current;
 
-    activeAttachmentRef.current = current ?? null;
     if (!current) {
       setUrl(null);
       return;
     }
 
-    void (async () => {
-      try {
-        const resolved = await resolveAttachmentPreviewUrl(current);
-        if (disposed) {
-          await releaseAttachmentPreviewUrl({ attachment: current, url: resolved });
-          return;
+    // Leased rather than resolved: these thumbnails sit inside the virtualized agent
+    // stream, so the same attachment is mounted and unmounted repeatedly while scrolling.
+    const lease = acquireAttachmentPreviewUrl(current);
+    void lease.promise.then(
+      (resolved) => {
+        if (!disposed) {
+          setUrl(resolved);
         }
-        currentUrl = resolved;
-        setUrl(resolved);
-      } catch (error) {
+        return resolved;
+      },
+      (error) => {
         console.error("[attachments] Failed to resolve preview URL", {
           attachmentId: current.id,
           error,
@@ -43,19 +41,12 @@ export function useAttachmentPreviewUrl(
         if (!disposed) {
           setUrl(null);
         }
-      }
-    })();
+      },
+    );
 
     return () => {
       disposed = true;
-      const activeAttachment = activeAttachmentRef.current;
-      if (!currentUrl || !activeAttachment) {
-        return;
-      }
-      void releaseAttachmentPreviewUrl({
-        attachment: activeAttachment,
-        url: currentUrl,
-      });
+      lease.release();
     };
   }, [id, storageType, storageKey, mimeType]);
 

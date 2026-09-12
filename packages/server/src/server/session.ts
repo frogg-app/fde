@@ -7039,6 +7039,44 @@ export class Session {
     };
   }
 
+  /**
+   * Most recent full-timeline fetch and its projection, per agent.
+   *
+   * A projected page whose rows include a tool call needs the whole timeline to project
+   * correctly, and `fetchTimeline(..., { limit: 0 })` clones every row in the agent's
+   * history to supply it. Paging backwards through a transcript therefore re-cloned and
+   * re-projected everything for each 40-row page -- O(total) per page on the daemon's
+   * single event loop, which also carries agent streaming, terminal frames and relay
+   * encryption. Successive pages over an unchanged timeline now reuse one snapshot.
+   *
+   * Keyed on the timeline's epoch and extent, so any appended row invalidates it. Holding
+   * one entry per agent is deliberate: paging is sequential, and a second agent's page
+   * simply replaces the entry rather than growing this map without bound.
+   */
+  private readonly fullTimelineProjectionCache = new Map<
+    string,
+    {
+      key: string;
+      timeline: AgentTimelineFetchResult;
+      entries: readonly TimelineProjectionEntry[];
+    }
+  >();
+
+  private getFullTimelineForProjection(agentId: string): {
+    timeline: AgentTimelineFetchResult;
+    entries: readonly TimelineProjectionEntry[];
+  } {
+    const timeline = this.agentManager.fetchTimeline(agentId, { direction: "tail", limit: 0 });
+    const key = `${timeline.epoch}:${timeline.window.nextSeq}:${timeline.window.minSeq}:${timeline.rows.length}`;
+    const cached = this.fullTimelineProjectionCache.get(agentId);
+    if (cached && cached.key === key) {
+      return { timeline: cached.timeline, entries: cached.entries };
+    }
+    const entries = projectTimelineRows({ rows: timeline.rows, mode: "projected" });
+    this.fullTimelineProjectionCache.set(agentId, { key, timeline, entries });
+    return { timeline, entries };
+  }
+
   private selectProjectedTimelineProjection(input: {
     agentId: string;
     controlTimeline: AgentTimelineFetchResult;
@@ -7047,19 +7085,28 @@ export class Session {
     pageLimit: number;
     fullTimeline?: AgentTimelineFetchResult;
   }): AgentTimelineProjectionSelection {
-    const selectedTimeline = this.shouldUseFullTimelineForProjectedPage({
+    const needsFullTimeline = this.shouldUseFullTimelineForProjectedPage({
       timeline: input.controlTimeline,
       pageLimit: input.pageLimit,
-    })
-      ? (input.fullTimeline ??
-        this.agentManager.fetchTimeline(input.agentId, { direction: "tail", limit: 0 }))
-      : input.controlTimeline;
+    });
+    let selectedTimeline = input.controlTimeline;
+    let projectedEntries: readonly TimelineProjectionEntry[] | undefined;
+    if (needsFullTimeline) {
+      if (input.fullTimeline) {
+        selectedTimeline = input.fullTimeline;
+      } else {
+        const snapshot = this.getFullTimelineForProjection(input.agentId);
+        selectedTimeline = snapshot.timeline;
+        projectedEntries = snapshot.entries;
+      }
+    }
     const page = selectProjectedTimelinePage({
       rows: selectedTimeline.rows,
       bounds: selectedTimeline.window,
       direction: input.controlTimeline.reset ? "tail" : input.direction,
       ...(input.cursor ? { cursorSeq: input.cursor.seq } : {}),
       limit: input.pageLimit,
+      ...(projectedEntries ? { projectedEntries } : {}),
     });
 
     return {
@@ -7746,6 +7793,7 @@ export class Session {
 
     this.workspaceGitObserver.dispose();
     this.workspaceFilesSession.dispose();
+    this.fullTimelineProjectionCache.clear();
   }
 }
 

@@ -534,6 +534,34 @@ describe("selectProjectedTimelinePage", () => {
     };
   }
 
+  test("a supplied projection produces the same page as computing one", () => {
+    // Paging backwards re-selects from the same unchanged rows, and projecting them costs
+    // O(total timeline) with a string concatenation per merged run. The session reuses one
+    // projection across pages, so the supplied and computed paths have to agree exactly.
+    const rows: AgentTimelineRow[] = [
+      { seq: 1, timestamp: "2026-02-13T00:00:00.000Z", item: { type: "user_message", text: "go" } },
+      ...Array.from({ length: 60 }, (_, index) => toolRow(index + 2, "completed")),
+      {
+        seq: 62,
+        timestamp: "2026-02-13T00:00:01.000Z",
+        item: { type: "assistant_message", text: "done" },
+      },
+    ];
+    const projectedEntries = projectTimelineRows({ rows, mode: "projected" });
+
+    for (const direction of ["tail", "before"] as const) {
+      const computed = selectProjectedTimelinePage({ rows, direction, limit: 40, cursorSeq: 62 });
+      const supplied = selectProjectedTimelinePage({
+        rows,
+        direction,
+        limit: 40,
+        cursorSeq: 62,
+        projectedEntries,
+      });
+      expect(supplied).toEqual(computed);
+    }
+  });
+
   test("tail page returns full projected items instead of tool lifecycle deltas", () => {
     const rows: AgentTimelineRow[] = [
       { seq: 1, timestamp: "2026-02-13T00:00:00.000Z", item: { type: "user_message", text: "go" } },

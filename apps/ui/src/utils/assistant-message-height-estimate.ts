@@ -4,6 +4,17 @@ import { splitMarkdownBlocks } from "@/utils/split-markdown-blocks";
 
 const ASSISTANT_MARKDOWN_BLOCK_HEIGHT_CACHE_LIMIT = 1000;
 const ASSISTANT_MARKDOWN_BLOCK_ESTIMATE_WIDTH = MAX_CONTENT_WIDTH - 16;
+
+/**
+ * Width the next estimate should look up, tracked from real measurements.
+ *
+ * Entries are keyed on the width they were measured at, but estimates used to ask for a
+ * constant full-content width. A pane narrower than that never measures at the constant,
+ * so the lookup could not hit and every estimate paid a full markdown parse to then
+ * return null. Following the last observed width keeps the key on the value the cache is
+ * actually being filled with. Falls back to the constant until something has rendered.
+ */
+let lastObservedMarkdownBlockWidth: number | null = null;
 const ASSISTANT_MESSAGE_VERTICAL_PADDING = 24;
 const ASSISTANT_MARKDOWN_BLOCK_GAP = 12;
 
@@ -68,6 +79,10 @@ export function setAssistantMarkdownBlockHeight(input: {
   if (!key) {
     return null;
   }
+  const normalizedWidth = normalizeMarkdownBlockWidth(input.width);
+  if (normalizedWidth !== null) {
+    lastObservedMarkdownBlockWidth = normalizedWidth;
+  }
   const height = Math.ceil(input.height);
   touchCacheEntry(
     assistantMarkdownBlockHeightCache,
@@ -84,11 +99,12 @@ function estimateAssistantMarkdownBlockHeightFromCache(markdown: string): number
     return null;
   }
 
+  const width = lastObservedMarkdownBlockWidth ?? ASSISTANT_MARKDOWN_BLOCK_ESTIMATE_WIDTH;
   let blockHeight = 0;
   for (const block of blocks) {
     const key = createMarkdownBlockHeightKey({
       block,
-      width: ASSISTANT_MARKDOWN_BLOCK_ESTIMATE_WIDTH,
+      width,
     });
     const cachedHeight = key ? assistantMarkdownBlockHeightCache.get(key) : undefined;
     if (cachedHeight === undefined) {
@@ -113,4 +129,5 @@ export function estimateAssistantMessageHeightFromCache(markdown: string): numbe
 
 export function clearAssistantMessageHeightEstimateCache(): void {
   assistantMarkdownBlockHeightCache.clear();
+  lastObservedMarkdownBlockWidth = null;
 }
