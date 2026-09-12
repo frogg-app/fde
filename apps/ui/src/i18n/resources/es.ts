@@ -2018,6 +2018,11 @@ export const es: TranslationResources = {
     backdrop: "Fondo del menú",
   },
   subagents: {
+    expand: "Expandir subagentes de {{label}}",
+    collapse: "Contraer subagentes de {{label}}",
+    offline: "Sin conexión · actividad guardada",
+    loadFailedRetry: "No se pudieron cargar los subagentes · Reintentar",
+    activityFailedRetry: "No se pudo cargar la actividad · Reintentar",
     title: "Subagentes",
     pillLabelOne: "1 subagente",
     pillLabelMany: "{{count}} subagentes",

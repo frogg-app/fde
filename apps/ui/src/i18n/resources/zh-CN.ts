@@ -1938,6 +1938,11 @@ export const zhCN: TranslationResources = {
     backdrop: "菜单背景",
   },
   subagents: {
+    expand: "展开 {{label}} 的子代理",
+    collapse: "折叠 {{label}} 的子代理",
+    offline: "离线 · 显示已保存的活动",
+    loadFailedRetry: "无法加载子代理 · 重试",
+    activityFailedRetry: "无法加载活动 · 重试",
     title: "Subagent",
     pillLabelOne: "1 个 subagent",
     pillLabelMany: "{{count}} 个 subagent",

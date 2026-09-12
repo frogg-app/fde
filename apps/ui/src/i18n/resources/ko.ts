@@ -1976,6 +1976,11 @@ export const ko: TranslationResources = {
     backdrop: "메뉴 배경",
   },
   subagents: {
+    expand: "{{label}}의 하위 에이전트 펼치기",
+    collapse: "{{label}}의 하위 에이전트 접기",
+    offline: "오프라인 · 저장된 활동 표시",
+    loadFailedRetry: "하위 에이전트를 불러오지 못했습니다 · 다시 시도",
+    activityFailedRetry: "활동을 불러오지 못했습니다 · 다시 시도",
     title: "하위 에이전트",
     pillLabelOne: "하위 에이전트 1개",
     pillLabelMany: "하위 에이전트 {{count}}개",

@@ -1989,6 +1989,11 @@ export const ja: TranslationResources = {
     backdrop: "メニューの背景",
   },
   subagents: {
+    expand: "{{label}} のサブエージェントを展開",
+    collapse: "{{label}} のサブエージェントを折りたたむ",
+    offline: "オフライン · 保存済みのアクティビティ",
+    loadFailedRetry: "サブエージェントを読み込めませんでした · 再試行",
+    activityFailedRetry: "アクティビティを読み込めませんでした · 再試行",
     title: "サブエージェント",
     pillLabelOne: "サブエージェント 1 件",
     pillLabelMany: "サブエージェント {{count}} 件",

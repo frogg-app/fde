@@ -1998,6 +1998,11 @@ export const ru: TranslationResources = {
     backdrop: "Фон меню",
   },
   subagents: {
+    expand: "Развернуть субагентов {{label}}",
+    collapse: "Свернуть субагентов {{label}}",
+    offline: "Нет соединения · сохранённая активность",
+    loadFailedRetry: "Не удалось загрузить субагентов · Повторить",
+    activityFailedRetry: "Не удалось загрузить активность · Повторить",
     title: "Субагенты",
     pillLabelOne: "1 субагент",
     pillLabelMany: "Субагентов: {{count}}",

@@ -266,3 +266,5 @@ Runner evidence is retained in [branding acceptance](https://github.com/frogg-ap
 The final integration also merges upstream `daaa4c6` (the host-picker scope and translated Add host fix). Its UI and browser-test changes are retained unchanged; version conflicts are resolved through the shared version synchronizer.
 
 A subsequent upstream integration incorporates `25beb70`: intentional workspace archival, direct Add host flow, and explicit release asset names. The naming contract is shared by Node release tools, client helpers, and generated Rust tables. FDE preserves pre-0.2.16 lookups and publishes legacy aliases for older clients; custom distributions retain independent prefixes and receive no FDE aliases.
+
+The branch then adopts upstream 0.3.0 (`c188d3b`), including sidebar subagent runtime, and synchronizes the integration at 0.3.1. Branding-specific release tests pass 54 cases, desktop Rust passes 137 with one existing ignored test, experimental Rust passes 56, and custom generated Rust identity tests pass. Linux acceptance builds the Debian/AppImage formats used by release CI; optional RPM packaging was already exercised on earlier milestones.
