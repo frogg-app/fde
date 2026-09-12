@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.4 - 2026-09-12
+
+- Show Connecting while sidebar agent hosts are reconnecting or not yet initialized,
+  reserving Offline for disconnected or failed connections. Cached activity keeps
+  live indicators hidden until the connection returns.
+- Preserve the existing host runtime during development hot reloads so active
+  connections are not abandoned in favor of an empty connection store.
+
 ## 0.4.3 - 2026-09-12
 
 - Add opt-in independent execution (`FDE_EXECUTION_SERVICE=1`): the supervised

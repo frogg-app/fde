@@ -169,7 +169,10 @@ The collection subscribes to agent and provider descriptor indexes, rather than 
 individual rows subscribe to transcript updates. Discovery reads provider child lists for
 the active workspace and parents the user expands. It refreshes on reconnection. Loading
 and failed requests have visible feedback and a retry action; disconnected child trees
-show saved activity without live status indicators. The provider transcript also exposes
+show saved activity without live status indicators. Initializing and reconnecting hosts
+show Connecting, reserving Offline for disconnected or failed connections; live
+indicators return only when online. Development module reloads retain the existing
+host runtime independently of constructor identity. The provider transcript also exposes
 initial loading, failure/retry, and offline states and refetches after reconnection.
 
 Cross-workspace managed children appear beneath their parent and in their own workspace.

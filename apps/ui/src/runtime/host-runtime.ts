@@ -1,3 +1,4 @@
+import { getSharedRuntime } from "./shared-runtime";
 import { brand } from "@fde/branding";
 import { useSyncExternalStore, useMemo } from "react";
 import AsyncStorage from "@/storage/brand-storage";
@@ -2436,14 +2437,11 @@ export function getHostRuntimeStore(): HostRuntimeStore {
     return singletonHostRuntimeStore;
   }
 
-  const existing = Reflect.get(globalThis, HOST_RUNTIME_STORE_GLOBAL_KEY);
-  if (existing instanceof HostRuntimeStore) {
-    singletonHostRuntimeStore = existing;
-    return existing;
-  }
-
-  singletonHostRuntimeStore = new HostRuntimeStore();
-  Reflect.set(globalThis, HOST_RUNTIME_STORE_GLOBAL_KEY, singletonHostRuntimeStore);
+  singletonHostRuntimeStore = getSharedRuntime(
+    globalThis,
+    HOST_RUNTIME_STORE_GLOBAL_KEY,
+    () => new HostRuntimeStore(),
+  );
   return singletonHostRuntimeStore;
 }
 
