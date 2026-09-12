@@ -1,0 +1,44 @@
+{
+  "name": "@fde/desktop-electron",
+  "version": "0.4.2",
+  "private": true,
+  "description": "FDE Electron desktop shell",
+  "homepage": "https://frogg.app",
+  "license": "Apache-2.0",
+  "author": {
+    "name": "Frogg App",
+    "email": "hello@frogg.app"
+  },
+  "main": "dist/main.js",
+  "scripts": {
+    "dev": "node --import tsx ../../scripts/dev/branded-run.mts -- node ../../scripts/dev/electron-dev.mjs",
+    "build": "node --import tsx ../../scripts/dev/branded-run.mts -- node ../../scripts/release/build-electron.mjs",
+    "build:main": "tsc -p tsconfig.json",
+    "typecheck": "tsgo --noEmit -p tsconfig.json",
+    "test": "vitest run src && node --test test/*.test.mjs",
+    "install:electron": "node ../../node_modules/electron/install.js",
+    "test:smoke": "node e2e/smoke.mjs"
+  },
+  "dependencies": {
+    "@fde/branding": "*",
+    "@fde/protocol": "*",
+    "builder-util-runtime": "^9.5.1",
+    "electron-log": "^5.4.3",
+    "electron-updater": "^6.6.2",
+    "semver": "^7.7.3",
+    "ws": "^8.20.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "24.6.0",
+    "@types/semver": "^7.7.1",
+    "@types/ws": "^8.5.14",
+    "electron": "44.3.0",
+    "electron-builder": "26.8.1",
+    "typescript": "5.9.3",
+    "vitest": "^4.1.6"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

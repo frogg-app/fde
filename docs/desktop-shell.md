@@ -1,5 +1,9 @@
 # Desktop shell (Tauri)
 
+This documents the retained Tauri shell. The migration branch defaults to the
+[Electron shell](electron-desktop.md); use the explicit Tauri development/build
+commands to continue the reliability investigation alongside it.
+
 The desktop app is a Tauri v2 shell around the Expo web export in `apps/ui`. It replaces
 Paseo's Electron shell. This doc records the design decisions; the bridge contract itself
 lives in code at `apps/ui/src/desktop/host.ts` (`DesktopHostBridge`) and

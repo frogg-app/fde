@@ -17,7 +17,9 @@ Root checkout dev is intentionally split across terminals:
 - `npm run dev:server` runs the daemon bound to `0.0.0.0:6768`.
 - `npm run dev:app` runs Expo on port `8081` and connects to the dev daemon. On a remote VM,
   use the VM LAN address to access it.
-- The Electron desktop shell was dropped in this fork; the Tauri shell lives in `apps/desktop` (see [desktop-shell.md](desktop-shell.md)).
+- `npm run dev:desktop` starts the Electron shell with isolated state and ports.
+  `npm run dev:desktop:tauri` starts the retained Tauri shell. See
+  [electron-desktop.md](electron-desktop.md) for the migration workflow.
 
 The web dev launcher passes the current Git branch to Metro as
 `EXPO_PUBLIC_PASEO_DEV_BUILD_LABEL`. The expanded sidebar shows it in the

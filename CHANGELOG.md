@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.2 - 2026-09-12
+
+- Restore the Electron desktop shell alongside Tauri using the current UI and
+  bridge contract, isolated app profiles, native integrations, SSH transports and
+  an independently bundled Node daemon. Preserve ownership during daemon shutdown.
+- Add branded Electron packaging, development commands, comparison artifact CI,
+  and a real renderer/daemon close-and-relaunch smoke runner. Keep the Tauri
+  commands available for parallel investigation.
+- Restrict desktop IPC to trusted app frames and adapt clipboard and network
+  permissions to Electron 44. Update comparison builds only through an explicitly
+  configured Electron feed. See the migration guide for validation evidence and
+  outstanding device acceptance.
+
 ## 0.4.1 - 2026-09-12
 
 - Build daemon packages independently of Android and desktop releases. Compile the

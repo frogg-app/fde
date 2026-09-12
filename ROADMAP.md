@@ -44,6 +44,12 @@ visible until device or deployment evidence closes them.
 
 ## Next: establish reliable everyday use
 
+- [ ] **Electron desktop migration acceptance.** Restore the current desktop
+      contract in an isolated Electron package while the Tauri investigation
+      continues. Record implementation and automated evidence separately from
+      Windows memory, voice, shutdown/relaunch and updater device acceptance. See
+      [the migration guide](docs/electron-desktop.md).
+
 - [ ] **Windows shutdown and relaunch.** User reports large, active WebView2
       processes surviving FDE close and blocking relaunch. Confirm process ownership,
       profile shutdown, and validate normal/update exits under voice load. See

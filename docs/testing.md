@@ -105,7 +105,12 @@ When a test is labeled end-to-end, it calls the real service. No environment var
 
 ### Packaged desktop smoke
 
-The Electron desktop shell (and its packaged smoke and browser E2E) was dropped in this fork; the Tauri shell lives in `apps/desktop` (see [desktop-shell.md](desktop-shell.md)).
+The Electron shell has a real Playwright smoke runner in
+`apps/desktop-electron/e2e/smoke.mjs`. It launches the exported UI, checks sandbox
+preferences and native commands, starts a real isolated local daemon, and verifies
+settings persistence and owned-daemon shutdown across two app launches. See
+[electron-desktop.md](electron-desktop.md) for commands and platform limits.
+The Tauri bridge harness remains available in `apps/desktop/test`.
 
 ### Undeclared peer dependencies break app.asar
 

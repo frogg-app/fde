@@ -9,7 +9,7 @@ Your code never leaves your machine. Paseo is local-first.
 ```
 ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
 │  Mobile App  │    │     CLI     │    │ Desktop App │
-│   (Expo)     │    │ (Commander) │    │ (Tauri)     │
+│   (Expo)     │    │ (Commander) │    │ (Desktop)   │
 └──────┬───────┘    └──────┬──────┘    └──────┬──────┘
        │                   │                  │
        │    WebSocket      │    WebSocket     │    Managed subprocess
@@ -36,7 +36,7 @@ Your code never leaves your machine. Paseo is local-first.
 - **Daemon:** Local server that spawns and manages agent processes and exposes the WebSocket API.
 - **App:** Cross-platform Expo client for iOS, Android, web, and the shared UI used by desktop.
 - **CLI:** Terminal interface for agent workflows that can also start and manage the daemon.
-- **Desktop app:** Tauri shell (`apps/desktop`, see [desktop-shell.md](desktop-shell.md)) around the web app that bundles and auto-manages its own daemon.
+- **Desktop app:** Electron shell (`apps/desktop-electron`, see [electron-desktop.md](electron-desktop.md)) around the web app with a separately bundled Node daemon. The Tauri shell remains in `apps/desktop` for comparison.
 - **Relay:** Optional encrypted bridge for remote access without opening ports directly.
 
 ## Packages
@@ -181,9 +181,15 @@ See [SECURITY.md](../SECURITY.md) for the full threat model.
 The optional Hub relationship is daemon-outbound and does not use the relay. Its connection,
 authorization, ownership, persistence, and lifecycle contract is documented in [hub.md](hub.md).
 
-### `apps/desktop` — Desktop app (Tauri)
+### Desktop shells
 
-The Electron desktop shell was dropped in this fork; the Tauri shell lives in `apps/desktop` (see [desktop-shell.md](desktop-shell.md)).
+`apps/desktop-electron` restores Electron behind the shared `window.paseoDesktop`
+contract. Its sandboxed renderer uses the same Expo export; native operations and
+SSH transports run in the main process, while the daemon runs under a separately
+bundled Node executable. See [electron-desktop.md](electron-desktop.md).
+
+`apps/desktop` retains the Tauri implementation for the ongoing reliability
+comparison. See [desktop-shell.md](desktop-shell.md).
 
 ## WebSocket protocol
 

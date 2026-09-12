@@ -3,7 +3,9 @@
 FDE (Frogg Development Environment) is a self-hosted interface for running and
 monitoring local and remote AI coding agents across desktop, mobile, web, and CLI.
 Forked from Paseo v0.7.2, it combines an Expo UI, a Node.js daemon, and a small
-Tauri v2 desktop shell with a Rust core. Windows, macOS, and Linux are first-class.
+Tauri v2 desktop shell with a Rust core. The Electron migration branch adds
+`apps/desktop-electron` and defaults desktop commands to it; the Tauri shell
+remains available for comparison. Windows, macOS, and Linux are first-class.
 
 The parent [AGENTS.md](../AGENTS.md) also applies (shared VM, git identity,
 versioning, Docker, and file-length rules). Read any deeper `AGENTS.md` for the
@@ -33,6 +35,8 @@ Consult the roadmap for their priority and status before starting a planned slic
 
 ## Code map
 
+- `apps/desktop-electron/`: Electron shell, native bridge and bundled daemon; see
+  [electron-desktop.md](docs/electron-desktop.md).
 - `apps/desktop/`: Tauri shell and native bridge; see
   [desktop-shell.md](docs/desktop-shell.md) and [building.md](docs/building.md).
 - `apps/ui/`: shared Expo/React Native UI for desktop, web, and mobile.
@@ -69,7 +73,7 @@ and runs full typecheck; agents must not independently merge through old checkou
 ## Working here
 
 - Install JS workspaces with root `npm ci`. Run `npm run dev:server` and
-  `npm run dev:app` in separate terminals; `npm run dev:desktop` starts Tauri.
+  `npm run dev:app` in separate terminals; `npm run dev:desktop` starts Electron; `npm run dev:desktop:tauri` starts Tauri.
   Follow `docs/development.md` for isolated dev state and build prerequisites.
 - This VM is headless and shared: bind services to `0.0.0.0`, use the VM LAN IP
   for user-facing URLs, and leave others' processes and worktrees alone.

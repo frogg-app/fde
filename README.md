@@ -1,17 +1,18 @@
 # FDE (Frogg Development Environment)
 
-A fast, slim desktop client for local and remote AI coding agents. FDE is a
-fork of [Paseo](https://github.com/getpaseo/paseo) with the Electron desktop shell
-rewritten in [Tauri](https://tauri.app).
+A desktop client for local and remote AI coding agents, forked from
+[Paseo](https://github.com/getpaseo/paseo). This branch restores Electron alongside
+the Tauri shell to compare desktop reliability. See the
+[Electron migration guide](docs/electron-desktop.md).
 
 ## Why a fork
 
 Paseo's chat interface for Claude Code, Codex, Copilot, OpenCode, and Pi (no API
 keys required), its project and subagent views, session resume, desktop
 notifications, and its remotely hostable daemon are excellent. FDE keeps all of
-that and replaces the ~200 MB Electron runtime with a native Tauri window, so the
-desktop app is a small binary you can install on any Windows, macOS, or Linux
-machine and point at a remote host where the agent CLIs actually live.
+that, supports Windows, macOS and Linux, and connects to local or remote hosts
+where the agent CLIs live. The Electron package includes a separate Node daemon
+runtime; the Tauri shell downloads its optional daemon bundle.
 
 On top of that, an FDE reads agent notifications aloud and lets you answer by voice: when an
 agent finishes, asks a question, or needs a permission, the daemon synthesises a short spoken
@@ -35,7 +36,8 @@ Start with the [rebranding guide](docs/branding.md) and
 
 ```
 apps/
-  desktop/   Tauri desktop shell (Rust + thin TS bridge)
+  desktop-electron/ Electron desktop shell and bundled daemon
+  desktop/   Tauri desktop shell retained for comparison
   ui/        Web UI (Expo web export) loaded by the shell
   cli/       Command-line client and daemon launcher
 packages/
