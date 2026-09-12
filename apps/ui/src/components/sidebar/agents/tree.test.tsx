@@ -1,10 +1,14 @@
+import { ToastApiProvider } from "@/contexts/toast-api-context";
 /** @vitest-environment jsdom */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { I18nextProvider } from "react-i18next";
 import { createInstance } from "i18next";
 import { ProviderSubagentHistoryStatus } from "@/subagents/provider-history";
-import { SidebarAgentBranch } from "./tree";
+import { SidebarAgentBranch, SidebarWorkspaceAgents } from "./tree";
+import { WorkspaceAgentTreeState, WorkspaceAgentDisclosure } from "./workspace-tree";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Pressable, Text } from "react-native";
 import type { SidebarAgentNode } from "./model";
 import { en } from "@/i18n/resources/en";
 
@@ -30,6 +34,7 @@ vi.hoisted(() => {
 
 // This test mounts sidebar rows; full pane registration pulls native Markdown into jsdom.
 vi.mock("@/panels/register-panels", () => ({ ensurePanelsRegistered() {} }));
+vi.mock("expo-router", () => ({ useLocalSearchParams: () => ({}), usePathname: () => "/" }));
 
 const i18n = createInstance();
 await i18n.init({ lng: "en", resources: { en: { translation: en } } });
@@ -69,6 +74,8 @@ const parent: SidebarAgentNode = {
   },
   children: [child],
 };
+const leafParent = { ...parent, children: [] };
+const toastApi = { show: vi.fn(), copied: vi.fn(), error: vi.fn() };
 afterEach(cleanup);
 
 describe("sidebar subagent interaction", () => {
@@ -160,6 +167,101 @@ describe("sidebar subagent interaction", () => {
     expect(screen.getAllByText("Offline · showing saved activity")).toHaveLength(1);
     expect(screen.getAllByRole("button", { name: "Inspect the runtime" })).toHaveLength(1);
   });
+});
+
+describe("workspace agent disclosure", () => {
+  function workspaceTree(roots: SidebarAgentNode[], onWorkspacePress = vi.fn()) {
+    const queryClient = new QueryClient();
+    return (
+      <ToastApiProvider api={toastApi}>
+        <QueryClientProvider client={queryClient}>
+          <I18nextProvider i18n={i18n}>
+            <WorkspaceAgentTreeState roots={roots}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Workspace"
+                onPress={onWorkspacePress}
+              >
+                <WorkspaceAgentDisclosure label="Workspace" />
+                <Text>Workspace</Text>
+              </Pressable>
+              <SidebarWorkspaceAgents serverId="host" workspaceId="workspace" />
+            </WorkspaceAgentTreeState>
+          </I18nextProvider>
+        </QueryClientProvider>
+      </ToastApiProvider>
+    );
+  }
+
+  it("shows only the selectable workspace for a single agent without children", () => {
+    const open = vi.fn();
+    render(workspaceTree([{ ...parent, children: [] }], open));
+    expect(screen.getAllByRole("button")).toHaveLength(1);
+    expect(screen.queryByTestId("sidebar-agents-workspace")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Workspace" }));
+    expect(open).toHaveBeenCalledOnce();
+  });
+
+  it("puts live children directly below a singleton workspace and removes its disclosure when they finish", () => {
+    const view = render(workspaceTree([parent]));
+    expect(screen.queryByTestId("sidebar-agent-paseo-parent")).toBeNull();
+    expect(screen.getAllByRole("button", { name: "Inspect the runtime" })).toHaveLength(1);
+    expect(
+      screen
+        .getByRole("button", { name: "Collapse agents in Workspace" })
+        .getAttribute("aria-expanded"),
+    ).toBe("true");
+    view.rerender(workspaceTree([{ ...parent, children: [] }]));
+    expect(screen.getAllByRole("button")).toHaveLength(1);
+    expect(screen.queryByTestId("sidebar-agents-workspace")).toBeNull();
+  });
+
+  it("collapses multiple agents from the workspace without selecting it", () => {
+    const open = vi.fn();
+    const second = {
+      ...parent,
+      key: "second",
+      row: { ...parent.row, id: "second", title: "Second agent" },
+      children: [],
+    };
+    render(workspaceTree([parent, second], open));
+    expect(screen.getAllByRole("button", { name: "Second agent" })).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "Collapse agents in Workspace" }));
+    expect(screen.queryByRole("button", { name: "Second agent" })).toBeNull();
+    expect(open).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Expand agents in Workspace" }));
+    expect(screen.getAllByRole("button", { name: "Second agent" })).toHaveLength(1);
+  });
+
+  it.each(["pending", "failed"])(
+    "does not invent a child disclosure when discovery is %s",
+    (status) => {
+      const node = leafParent;
+      const discovery = new Map([
+        [
+          parent.key,
+          {
+            pending: status === "pending",
+            failed: status === "failed",
+            retry: vi.fn(),
+            discover: vi.fn(),
+          },
+        ],
+      ]);
+      render(
+        <I18nextProvider i18n={i18n}>
+          <SidebarAgentBranch
+            node={node}
+            discovery={discovery}
+            offline={false}
+            selectedTarget={null}
+            onOpen={vi.fn()}
+          />
+        </I18nextProvider>,
+      );
+      expect(screen.getAllByRole("button")).toHaveLength(1);
+    },
+  );
 });
 
 const pendingHistory = { connected: true, pending: true, failed: false, retry: vi.fn() };

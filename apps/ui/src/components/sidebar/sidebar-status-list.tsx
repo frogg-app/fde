@@ -1,3 +1,4 @@
+import { useSidebarWorkspaceTarget } from "@/components/sidebar/agents/workspace-tree";
 import {
   memo,
   useCallback,
@@ -526,11 +527,16 @@ const StatusWorkspaceRow = memo(function StatusWorkspaceRow({
     activeWorkspaceSelection?.serverId === workspace.serverId &&
     activeWorkspaceSelection?.workspaceId === workspace.workspaceId;
 
+  const target = useSidebarWorkspaceTarget(workspace);
   const handlePress = useCallback(() => {
     if (!workspace.serverId) return;
     onWorkspacePress?.();
-    navigateToWorkspace({ serverId: workspace.serverId, workspaceId: workspace.workspaceId });
-  }, [onWorkspacePress, workspace.serverId, workspace.workspaceId]);
+    navigateToWorkspace({
+      serverId: workspace.serverId,
+      workspaceId: workspace.workspaceId,
+      target,
+    });
+  }, [onWorkspacePress, workspace.serverId, workspace.workspaceId, target]);
 
   return (
     <StatusWorkspaceRowWithMenu

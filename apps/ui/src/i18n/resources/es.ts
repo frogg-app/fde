@@ -2018,6 +2018,8 @@ export const es: TranslationResources = {
     backdrop: "Fondo del menú",
   },
   subagents: {
+    expandWorkspace: "Expandir agentes en {{label}}",
+    collapseWorkspace: "Contraer agentes en {{label}}",
     expand: "Expandir subagentes de {{label}}",
     collapse: "Contraer subagentes de {{label}}",
     offline: "Sin conexión · actividad guardada",

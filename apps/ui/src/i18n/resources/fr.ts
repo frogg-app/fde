@@ -2019,6 +2019,8 @@ export const fr: TranslationResources = {
     backdrop: "Toile de fond du menu",
   },
   subagents: {
+    expandWorkspace: "Afficher les agents de {{label}}",
+    collapseWorkspace: "Masquer les agents de {{label}}",
     expand: "Développer les sous-agents de {{label}}",
     collapse: "Réduire les sous-agents de {{label}}",
     offline: "Hors ligne · activité enregistrée",

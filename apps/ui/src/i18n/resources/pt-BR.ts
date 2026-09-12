@@ -2003,6 +2003,8 @@ export const ptBR: TranslationResources = {
     backdrop: "Fundo do menu",
   },
   subagents: {
+    expandWorkspace: "Expandir agentes em {{label}}",
+    collapseWorkspace: "Recolher agentes em {{label}}",
     expand: "Expandir subagentes de {{label}}",
     collapse: "Recolher subagentes de {{label}}",
     offline: "Offline · atividade salva",

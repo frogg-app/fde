@@ -1,9 +1,20 @@
 # Changelog
 
+## 0.3.2 - 2026-09-12
+
+- Integrate upstream active-agent sidebar visibility and workspace controls,
+  preserving the completed branding implementation and synchronized versions.
+
 ## 0.3.1 - 2026-09-12
 
 - Integrate upstream sidebar subagent runtime while retaining modular branding,
   release compatibility, and synchronized product versions.
+- Represent single-agent workspaces with one selectable workspace row. Put the
+  disclosure control on the workspace for multiple agents or active subagents,
+  and omit chevrons when there are no visible children.
+- Remove finished subagents from the sidebar automatically while preserving their
+  transcript history. Keep running descendants and permission-waiting agents reachable.
+  Automated layout and lifecycle checks cover this; device visual acceptance remains pending.
 
 ## 0.3.0 - 2026-09-12
 

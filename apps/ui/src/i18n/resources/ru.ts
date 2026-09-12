@@ -1998,6 +1998,8 @@ export const ru: TranslationResources = {
     backdrop: "Фон меню",
   },
   subagents: {
+    expandWorkspace: "Развернуть агентов в {{label}}",
+    collapseWorkspace: "Свернуть агентов в {{label}}",
     expand: "Развернуть субагентов {{label}}",
     collapse: "Свернуть субагентов {{label}}",
     offline: "Нет соединения · сохранённая активность",

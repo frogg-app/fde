@@ -1976,6 +1976,8 @@ export const ko: TranslationResources = {
     backdrop: "메뉴 배경",
   },
   subagents: {
+    expandWorkspace: "{{label}}의 에이전트 펼치기",
+    collapseWorkspace: "{{label}}의 에이전트 접기",
     expand: "{{label}}의 하위 에이전트 펼치기",
     collapse: "{{label}}의 하위 에이전트 접기",
     offline: "오프라인 · 저장된 활동 표시",

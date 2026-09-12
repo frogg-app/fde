@@ -1963,6 +1963,8 @@ export const ar: TranslationResources = {
     backdrop: "خلفية القائمة",
   },
   subagents: {
+    expandWorkspace: "توسيع الوكلاء في {{label}}",
+    collapseWorkspace: "طي الوكلاء في {{label}}",
     expand: "توسيع الوكلاء الفرعيين لـ {{label}}",
     collapse: "طي الوكلاء الفرعيين لـ {{label}}",
     offline: "غير متصل · عرض النشاط المحفوظ",

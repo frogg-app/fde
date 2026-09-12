@@ -26,6 +26,7 @@ import { useSettings } from "@/hooks/use-settings";
 import { useSidebarAgents, type ChildDiscovery } from "./provider";
 import type { Theme } from "@/styles/theme";
 import type { SidebarAgentNode } from "./model";
+import { useWorkspaceAgentTree } from "./workspace-tree";
 
 const ThemedChevronDown = withUnistyles(ChevronDown);
 const ThemedChevronRight = withUnistyles(ChevronRight);
@@ -34,8 +35,6 @@ const chevronProps = (theme: Theme) => ({
   color: theme.colors.foregroundMuted,
 });
 
-const EMPTY_NODES: SidebarAgentNode[] = [];
-
 export function SidebarWorkspaceAgents({
   serverId,
   workspaceId,
@@ -43,9 +42,9 @@ export function SidebarWorkspaceAgents({
   serverId: string;
   workspaceId: string;
 }) {
-  const { trees, discovery, offlineHosts } = useSidebarAgents();
+  const { discovery, offlineHosts } = useSidebarAgents();
+  const { nodes, expanded, singleRootKey } = useWorkspaceAgentTree();
   const workspaceKey = buildWorkspaceTabPersistenceKey({ serverId, workspaceId });
-  const nodes = workspaceKey ? (trees.get(workspaceKey) ?? EMPTY_NODES) : EMPTY_NODES;
   const selection = useActiveWorkspaceSelection();
   const isActiveWorkspace =
     selection?.serverId === serverId && selection.workspaceId === workspaceId;
@@ -78,9 +77,15 @@ export function SidebarWorkspaceAgents({
     },
     [isCompact, preferences],
   );
-  if (nodes.length === 0) return null;
+  if (!expanded || nodes.length === 0) return null;
   return (
     <View style={styles.tree} testID={`sidebar-agents-${workspaceId}`}>
+      {singleRootKey ? (
+        <ChildDiscoveryStatus
+          offline={offlineHosts.has(serverId)}
+          load={discovery.get(singleRootKey)}
+        />
+      ) : null}
       {nodes.map((node) => (
         <SidebarAgentBranch
           key={node.key}
@@ -128,7 +133,7 @@ export const SidebarAgentBranch = memo(function SidebarAgentBranch({
   const selected = selectedTarget !== null && workspaceTabTargetsEqual(selectedTarget, node.target);
   const load = discovery.get(node.key);
   const hasChildren = node.children.length > 0;
-  const canExpand = hasChildren || load?.pending || load?.failed;
+  const canExpand = hasChildren;
   const Chevron = expanded ? ThemedChevronDown : ThemedChevronRight;
   const disclosureState = useMemo(() => ({ expanded }), [expanded]);
   const selectionState = useMemo(() => ({ selected }), [selected]);
