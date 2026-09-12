@@ -15,6 +15,8 @@ FDE_BRAND_DIR=brands/example npm run build:ui
 FDE_BRAND_DIR=brands/example npm run build:desktop
 ```
 
+Use the npm desktop entrypoints so the Tauri CLI and Rust receive the same generated configuration. Raw custom Tauri builds without that overlay fail with an actionable message; release builds also reject missing/stale web branding and native version drift. Direct `cargo check` and `cargo test` remain available.
+
 Desktop builds require the native prerequisites in [building.md](building.md). Windows builds on Linux use `npm run build:desktop:win`; native Windows and macOS runners use `build:desktop`. The selected identity supplies the executable name, icons, installer inputs, application identifier, URL handler, and runtime defaults.
 
 Acme has no download server. Its desktop build therefore builds and includes a daemon archive for offline first launch. Products with a release repository use the existing downloader-based packaging by default. Set `FDE_EMBED_DAEMON=1` to include a bundle for those products too, or supply an existing archive and matching `.sha256` with `FDE_EMBED_DAEMON_ARCHIVE`. Daemon archive ownership is checked before installation.
@@ -86,7 +88,7 @@ Generated output lives in `.generated/branding`, `apps/ui/.generated/branding`, 
 
 Build and development wrappers hold a worktree lease. A conflicting brand build fails with an actionable error. Use separate worktrees for concurrent products. A running development server cannot safely change its brand; stop that server and start it with the new selection.
 
-Development uses `npm run dev:server` and `npm run dev:app` (`dev:win` starts both on Windows). Custom products use their daemon port and the next port for Metro (65534 when the daemon uses 65535); FDE keeps development ports 6768/8081. Set `PASEO_LISTEN`, `EXPO_PORT`, or `PASEO_DEV_DAEMON_ENDPOINT` explicitly when running several worktrees of the same product. Development state stays inside the worktree unless its own home override is supplied.
+Development uses `npm run dev:server` and `npm run dev:app` (`dev:win` starts both on Windows). Custom products use their daemon port and the next port for Metro (65534 when the daemon uses 65535); FDE keeps development ports 6768/8081. Set `PASEO_LISTEN`, `EXPO_PORT`, or `PASEO_DEV_DAEMON_ENDPOINT` explicitly when running several worktrees of the same product. Development daemon state stays inside the worktree unless its own home override is supplied.
 
 Use `npm run build:server`, `build:daemon-web-ui`, and `build:daemon-bundle -- --target linux-x64` for standalone daemon distribution. Supported targets also include Linux arm64, macOS x64/arm64, and Windows x64/arm64. The bundle includes Node, the daemon, the web client, branded CLI launchers, and provenance metadata. Shared npm package names remain `@fde/*`; custom public commands come from the daemon bundle.
 

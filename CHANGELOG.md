@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.27 - 2026-09-12
+
+- Escape generated skill descriptions for Unicode product names containing colons
+  and quotation marks.
+- Reject custom Tauri packaging without its generated configuration overlay,
+  stale web branding in native release builds, and identity/version drift.
+  Direct native checks remain supported.
+- Link the rebranding workflow from the README and record native input checks
+  and completed platform build evidence.
+
 ## 0.2.26 - 2026-09-12
 
 - Make Linux desktop entries launch the installed GUI directly and forward

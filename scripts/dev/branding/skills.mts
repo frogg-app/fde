@@ -39,6 +39,14 @@ export async function generateSkills({ brand }: BrandBuild) {
           .replaceAll("127.0.0.1:9999", `127.0.0.1:${brand.daemonPort}`);
         // Capitalized prose names are presentation; SDK symbols such as usePaseo stay intact.
         text = text.replace(/\b(?:Paseo|FDE)\b/g, () => brand.name);
+        // Bundled descriptions are single-line plain YAML. Quote the generated
+        // value so punctuation in a public product name cannot alter frontmatter.
+        text = text.replace(/^---\r?\n[\s\S]*?\r?\n---/, (header) =>
+          header.replace(
+            /^description: (.+)$/m,
+            (_, description: string) => `description: ${JSON.stringify(description)}`,
+          ),
+        );
         // The SDK documentation describes the shared technology, not a product service.
         // Instructions can describe the compatibility project; make ownership explicit.
         if (entry.name === "SKILL.md") {

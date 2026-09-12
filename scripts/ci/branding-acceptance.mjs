@@ -31,7 +31,7 @@ try {
   const manifest = {
     schemaVersion: 1,
     id: "atlas",
-    name: "株式会社 Atlas Studio",
+    name: '株式会社 Atlas: "Studio"',
     applicationId: "com.atlas.studio",
     daemonPort: 11099,
     assets: { icon: "./icon.svg" },
@@ -45,6 +45,16 @@ try {
   assert.equal(b.distribution.updateMode, "disabled");
   assert.equal(b.services.pairingUrl, null);
   assert.equal(b.services.relayEndpoint, null);
+  const skill = await readFile(
+    path.join(root, ".generated/branding/skills/paseo/SKILL.md"),
+    "utf8",
+  );
+  const description = skill.match(/^description: (.+)$/m)?.[1];
+  assert.equal(
+    JSON.parse(description),
+    `${manifest.name} reference for managing projects, workspaces, workspace scripts, agents, schedules, and heartbeats.`,
+    "product punctuation remains a literal YAML description",
+  );
   const nativeBefore = JSON.parse(
     await readFile(path.join(root, ".generated/branding/tauri.conf.json"), "utf8"),
   );

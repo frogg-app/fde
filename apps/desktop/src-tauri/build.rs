@@ -5,21 +5,50 @@ fn main() {
         .join("../../..")
         .canonicalize()
         .unwrap();
-    let generated = branding_build::prepare(root);
+    let generated = branding_build::prepare(root.clone());
+    println!("cargo:rerun-if-env-changed=TAURI_CONFIG");
+    println!("cargo:rerun-if-env-changed=TAURI_ENV_PLATFORM");
+    println!(
+        "cargo:rerun-if-changed={}",
+        root.join("apps/ui/dist/brand-build.json").display()
+    );
     let mut overlay: serde_json::Value =
         serde_json::from_str(&std::fs::read_to_string(generated.join("tauri.conf.json")).unwrap())
             .unwrap();
-    // Preserve command-line build overrides, but never permit an identity mismatch.
-    if let Ok(extra) = std::env::var("TAURI_CONFIG") {
-        let extra: serde_json::Value = serde_json::from_str(&extra).expect("TAURI_CONFIG JSON");
-        if let Some(id) = extra.get("identifier") {
+    let extra = std::env::var("TAURI_CONFIG")
+        .map(|value| serde_json::from_str::<serde_json::Value>(&value).expect("TAURI_CONFIG JSON"))
+        .unwrap_or(serde_json::json!({}));
+    // The CLI reads its configuration before Cargo starts. Child-process environment
+    // changes cannot repair an unbranded configuration already loaded by that CLI.
+    if std::env::var_os("TAURI_ENV_PLATFORM").is_some() {
+        let brand: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(generated.join("brand.json")).unwrap())
+                .unwrap();
+        assert!(brand["legacyFde"] == true || extra["identifier"] == overlay["identifier"],
+            "Custom Tauri builds require the prepared overlay. Use npm run build:desktop or npm run dev:desktop.");
+    }
+    if std::env::var("PROFILE").as_deref() == Ok("release") {
+        let stamp = std::fs::read_to_string(root.join("apps/ui/dist/brand-build.json"))
+            .ok()
+            .and_then(|value| serde_json::from_str::<serde_json::Value>(&value).ok());
+        let fingerprint = std::fs::read_to_string(generated.join("fingerprint")).unwrap();
+        assert!(stamp.as_ref().and_then(|s| s["configFingerprint"].as_str()) == Some(fingerprint.trim()),
+            "Desktop web assets are missing or belong to another build. Use npm run build:desktop to rebuild them.");
+    }
+    for key in ["identifier", "productName", "mainBinaryName", "version"] {
+        if let Some(value) = extra.get(key) {
             assert_eq!(
-                id, &overlay["identifier"],
-                "Tauri configuration and selected brand differ"
+                value, &overlay[key],
+                "Tauri configuration differs from the selected brand: {key}"
             );
         }
-        merge(&mut overlay, extra);
     }
+    assert_eq!(
+        std::env::var("CARGO_PKG_VERSION").unwrap(),
+        overlay["version"].as_str().unwrap(),
+        "Native versions differ. Run npm run version:sync-internal."
+    );
+    merge(&mut overlay, extra);
     let value = serde_json::to_string(&overlay).unwrap();
     std::env::set_var("TAURI_CONFIG", &value);
     println!("cargo:rustc-env=TAURI_CONFIG={value}");

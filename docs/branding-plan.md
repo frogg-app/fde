@@ -238,3 +238,9 @@ Both Nix packages completed native dependency fixup with zero unresolved librari
 Linux package inspection also revealed that an installed desktop entry could resolve an identically named CLI earlier on PATH. Generated Debian/RPM entries now launch the absolute desktop executable and pass `%U` for pairing URLs. AppImage entries keep a relative command and the URL placeholder so they remain portable. Package acceptance inspects actual Debian contents, embedded daemon identity, macOS bundle identifiers/display metadata, and Windows installer/executable names.
 
 Interactive OS installation/update dialogs, signed production releases, physical mobile devices, store submission, and production infrastructure deployment remain separate operator acceptance. This work does not publish, deploy, or merge the product. The pinned NSIS template must be reviewed when upgrading the Tauri bundler; preparation rejects missing identity patch anchors.
+
+### Native input enforcement
+
+A custom `cargo check` succeeds without a packaging wrapper. Simulating a raw Tauri CLI invocation without the generated overlay fails with the documented build command, rather than letting the parent CLI package FDE identity around custom internals. A release check with a deliberately incorrect web fingerprint also fails before packaging. The native build compares application ID, package/executable names, and version with the resolved inputs. Desktop Rust tests still pass 136 cases with one existing ignored test.
+
+The Acme Linux AppImage and unsigned iOS simulator jobs completed successfully on the 0.2.24 milestone. Its sole failing platform job was the custom Windows npm invocation subsequently fixed in 0.2.25. The 0.2.26 FDE Debian package was rebuilt and inspected: its desktop entry launches `/usr/bin/fde` and forwards pairing URLs with `%U`. Current native package inspection is part of CI, including both products' macOS bundle metadata and Windows filenames.
