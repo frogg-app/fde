@@ -206,7 +206,7 @@ async function createSession(
       logger.warn({ err }, "Failed to provision Silero VAD model, falling back to bundled");
     }
     const provider = new SherpaSileroTurnDetectionProvider({ modelPath: vadModelPath }, logger);
-    const session = provider.createSession({ logger });
+    const session = provider.createSession({ logger, ...message.endpointing });
     trackTurnDetectionSession(message.sessionId, session);
     await session.connect();
     sessions.set(message.sessionId, session);
@@ -215,10 +215,7 @@ async function createSession(
 
   const model = message.kind === "voiceStt" ? "voice" : "dictation";
   const engine = getSttEngine(message.config, model);
-  const session =
-    message.kind === "voiceStt"
-      ? getSttProvider(message.config, "voice").createSession({ logger })
-      : new SherpaParakeetRealtimeTranscriptionSession({ engine });
+  const session = new SherpaParakeetRealtimeTranscriptionSession({ engine });
   trackTranscriptionSession(message.sessionId, session);
   await session.connect();
   sessions.set(message.sessionId, session);

@@ -1834,6 +1834,23 @@ export const ko: TranslationResources = {
     },
   },
   companion: {
+    behavior: {
+      nextSession: "변경 사항은 다음 Companion 시작 시 적용됩니다.",
+      verbosity: "답변 길이",
+      brief: "간결하게",
+      detailed: "자세하게",
+      updates: "작업 음성 알림",
+      important: "완료 및 실패",
+      completion: "완료만",
+      off: "끄기",
+      acknowledge: "작업 시작 전에 접수 알리기",
+      permissions: "작업 알림을 꺼도 권한 요청은 음성으로 안내합니다.",
+      pause: "응답 전 대기 시간",
+      quick: "짧게(0.8초)",
+      natural: "자연스럽게(1.4초)",
+      relaxed: "여유 있게(2.4초)",
+      interruptible: "말해서 응답 중단하기",
+    },
     title: "컴패니언",
     setup: {
       disabled: "사용 안 함",

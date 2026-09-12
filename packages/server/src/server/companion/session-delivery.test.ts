@@ -1,5 +1,5 @@
 import { EventEmitter } from "node:events";
-import { mkdir, mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { Readable } from "node:stream";
@@ -167,6 +167,72 @@ async function idle(session: CompanionSession) {
     await new Promise<void>((resolve) => setImmediate(resolve));
   } while (queued !== session["turnQueue"]);
 }
+
+describe("Companion announcement preferences", () => {
+  it("replays a specific pending permission at startup even when task updates are off", async () => {
+    await writeFile(
+      path.join(home, "jobs.json"),
+      JSON.stringify([
+        {
+          jobId: "job-permission",
+          kind: "agent",
+          label: "Selected worker",
+          question: "Existing task",
+          agentId: "worker",
+          dispatched: true,
+          status: "running",
+          summary: "Permission needed for selected worker: delete file (request permission-42)",
+          startedAt: "2026-09-12T00:00:00.000Z",
+          settledAt: null,
+        },
+      ]),
+    );
+    const h = createHarness();
+    await h.session.handleSessionStart({
+      type: "companion.session.start.request",
+      requestId: "start",
+      conversation: {
+        verbosity: "brief",
+        updates: "off",
+        acknowledgeTasks: false,
+        pauseMs: 1400,
+        interruptible: true,
+      },
+    });
+    await idle(h.session);
+    expect(h.prompts).toHaveLength(1);
+    expect(h.prompts[0]).toContain("permission-42");
+    expect(h.audio().length).toBeGreaterThan(0);
+    expect(h.jobs.get("job-permission")?.status).toBe("running");
+  });
+
+  it("keeps completed work available without speaking it when updates are off", async () => {
+    const h = createHarness();
+    await h.session.handleSessionStart({
+      type: "companion.session.start.request",
+      requestId: "start",
+      conversation: {
+        verbosity: "brief",
+        updates: "off",
+        acknowledgeTasks: false,
+        pauseMs: 1400,
+        interruptible: true,
+      },
+    });
+    const id = await h.startJob();
+    await idle(h.session);
+    expect(h.audio()).toEqual([]);
+    expect(h.prompts).toEqual([]);
+    expect(h.jobs.get(id)?.status).toBe("succeeded");
+    expect(h.jobs.get(id)?.announced).not.toBe(true);
+    await h.session.cleanup();
+    const next = h.connect().session;
+    await start(next);
+    await idle(next);
+    expect(h.jobs.get(id)?.announced).toBe(true);
+    expect(h.workerRuns).toBe(1);
+  });
+});
 
 describe("Companion result delivery", () => {
   it.each(["error", "empty"] as const)(

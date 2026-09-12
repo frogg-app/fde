@@ -1006,6 +1006,7 @@ export class VoiceAssistantWebSocketServer {
       const model = this.companion.modelConfig;
       next.companionDetails = {
         protocolVersion: 2,
+        conversationControls: true,
         backend: model.status === "available" ? model.backend : null,
         model: model.status === "available" ? model.model : null,
         localSpeechReady: this.speech?.getReadiness().realtimeVoice.available === true,

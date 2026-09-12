@@ -95,10 +95,13 @@ export function createVoiceTurnController(params: {
   turnDetection: TurnDetectionProvider;
   stt: SpeechToTextProvider;
   sttLanguage?: string;
+  continuousTranscripts?: boolean;
+  endpointing?: { confirmMs?: number; silenceMs?: number };
   callbacks: VoiceTurnControllerCallbacks;
 }): VoiceTurnController {
   const detector = params.turnDetection.createSession({
     logger: params.logger.child({ component: "turn-detection" }),
+    ...params.endpointing,
   });
 
   let state: VoiceInputState = { status: "idle" };
@@ -108,19 +111,21 @@ export function createVoiceTurnController(params: {
   let sttResampler: Pcm16MonoResampler | null = null;
   let inputRate = detector.requiredSampleRate;
   let sttInputRate = 0;
+  let preroll = Buffer.alloc(0);
   let queued = Promise.resolve();
   let activeTranscriptSegmentId: string | null = null;
   let partialTranscriptFired = false;
   let reconnectAttemptedForTurn = false;
   const sealedTranscriptSegmentIds = new Set<string>();
   let currentFinalizingTurn: FinalizingVoiceTurn | null = null;
+  const finalizingTurns = new Map<string, FinalizingVoiceTurn>();
 
   function fail(error: unknown): void {
     params.callbacks.onError(error instanceof Error ? error : new Error(String(error)));
   }
 
   function firePartialTranscript(segmentId: string, transcript: string): void {
-    if (partialTranscriptFired || state.status !== "capturing") {
+    if ((!params.continuousTranscripts && partialTranscriptFired) || state.status !== "capturing") {
       return;
     }
 
@@ -131,29 +136,19 @@ export function createVoiceTurnController(params: {
   }
 
   function clearFinalizingTurnTimeout(): void {
-    if (currentFinalizingTurn) {
-      clearTimeout(currentFinalizingTurn.timeout);
-    }
+    for (const turn of finalizingTurns.values()) clearTimeout(turn.timeout);
   }
 
   function getFinalizingTurnForSegment(segmentId: string): FinalizingVoiceTurn | null {
-    if (!currentFinalizingTurn) {
-      return null;
+    for (const turn of finalizingTurns.values()) {
+      if (turn.committedSegmentIds.includes(segmentId)) return turn;
     }
-
-    if (currentFinalizingTurn.committedSegmentIds.includes(segmentId)) {
+    if (
+      currentFinalizingTurn?.committedSegmentIds.length === 0 &&
+      (!activeTranscriptSegmentId || activeTranscriptSegmentId === segmentId)
+    )
       return currentFinalizingTurn;
-    }
-
-    if (currentFinalizingTurn.committedSegmentIds.length > 0) {
-      return null;
-    }
-
-    if (activeTranscriptSegmentId && activeTranscriptSegmentId !== segmentId) {
-      return null;
-    }
-
-    return currentFinalizingTurn;
+    return null;
   }
 
   function getOrderedFinalSegmentIds(turn: FinalizingVoiceTurn): string[] {
@@ -195,13 +190,15 @@ export function createVoiceTurnController(params: {
   }
 
   function fireFinalTranscript(turn: FinalizingVoiceTurn, reason: "complete" | "timeout"): void {
-    if (turn.fired || currentFinalizingTurn?.turnId !== turn.turnId) {
+    if (turn.fired || !finalizingTurns.has(turn.turnId)) {
       return;
     }
 
     turn.fired = true;
     clearTimeout(turn.timeout);
-    currentFinalizingTurn = null;
+    finalizingTurns.delete(turn.turnId);
+    if (currentFinalizingTurn === turn) currentFinalizingTurn = null;
+    for (const id of turn.committedSegmentIds) sealedTranscriptSegmentIds.delete(id);
 
     const finalTranscript = assembleFinalTranscript(turn);
     if (reason === "timeout") {
@@ -217,9 +214,8 @@ export function createVoiceTurnController(params: {
       );
     }
 
-    void runSerial(async () => {
-      await params.callbacks.onFinalTranscript(finalTranscript);
-    });
+    // Responses may run for minutes. They must never own the microphone input queue.
+    void params.callbacks.onFinalTranscript(finalTranscript).catch(fail);
   }
 
   function maybeFireFinalTranscript(turn: FinalizingVoiceTurn): void {
@@ -290,7 +286,7 @@ export function createVoiceTurnController(params: {
   }
 
   function handlePartialSttTranscript(event: StreamingTranscriptionEvent): void {
-    if (state.status !== "capturing" || partialTranscriptFired) {
+    if (state.status !== "capturing" || (!params.continuousTranscripts && partialTranscriptFired)) {
       return;
     }
 
@@ -335,10 +331,12 @@ export function createVoiceTurnController(params: {
     session.on("committed", ({ segmentId }) => {
       if (stopped) return;
       sealedTranscriptSegmentIds.add(segmentId);
-      if (state.status === "capturing" && !activeTranscriptSegmentId) {
-        activeTranscriptSegmentId = segmentId;
-      }
-      const turn = currentFinalizingTurn;
+      // A worker acknowledgement can arrive after the next utterance starts.
+      // Assign it to the oldest outstanding commit, never the new live input.
+      const turn =
+        [...finalizingTurns.values()].find(
+          (candidate) => candidate.committedSegmentIds.length === 0,
+        ) ?? currentFinalizingTurn;
       if (turn && !turn.committedSegmentIds.includes(segmentId)) {
         turn.committedSegmentIds.push(segmentId);
         maybeFireFinalTranscript(turn);
@@ -420,13 +418,15 @@ export function createVoiceTurnController(params: {
     activeTranscriptSegmentId = null;
     partialTranscriptFired = false;
     reconnectAttemptedForTurn = false;
-    clearFinalizingTurnTimeout();
-    currentFinalizingTurn = null;
     state = {
       status: "capturing",
       utteranceId: uuidv4(),
       startedAt,
     };
+    if (params.continuousTranscripts && preroll.length > 0) {
+      sttSession?.appendPcm16(preroll);
+      preroll = Buffer.alloc(0);
+    }
     params.logger.info(
       {
         utteranceId: state.utteranceId,
@@ -460,6 +460,7 @@ export function createVoiceTurnController(params: {
       fired: false,
     };
     currentFinalizingTurn = finalizingTurn;
+    finalizingTurns.set(turnId, finalizingTurn);
 
     detector.reset();
     try {
@@ -519,14 +520,17 @@ export function createVoiceTurnController(params: {
         resampler = null;
         sttResampler = null;
         sttSession = null;
+        preroll = Buffer.alloc(0);
         currentFinalizingTurn = null;
+        finalizingTurns.clear();
+        sealedTranscriptSegmentIds.clear();
         state = { status: "idle" };
       });
     },
 
     async appendClientChunk(input): Promise<void> {
       await runSerial(async () => {
-        if (state.status === "idle") {
+        if (stopped || state.status === "idle") {
           return;
         }
 
@@ -559,7 +563,15 @@ export function createVoiceTurnController(params: {
 
         if (sttPcm16 && sttPcm16.length > 0) {
           try {
-            currentSttSession?.appendPcm16(sttPcm16);
+            if (params.continuousTranscripts && state.status !== "capturing") {
+              // Keep the start of a word while VAD confirms speech, without
+              // repeatedly decoding a quiet room between utterances.
+              const joined = Buffer.concat([preroll, sttPcm16]);
+              const limit = (currentSttSession?.requiredSampleRate ?? 16000) * 2;
+              preroll = joined.subarray(Math.max(0, joined.length - limit));
+            } else {
+              currentSttSession?.appendPcm16(sttPcm16);
+            }
           } catch (error) {
             handleSttError(error);
           }

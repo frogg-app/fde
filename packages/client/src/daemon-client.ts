@@ -22,6 +22,7 @@ import { validateWSOutboundMessage } from "@fde/protocol/validation/ws-outbound"
 import type {
   CompanionNotebook,
   CompanionSessionStartResponse,
+  CompanionConversationOptions,
   AgentStreamEventPayload,
   AgentSnapshotPayload,
   ProjectPlacementPayload,
@@ -3674,14 +3675,17 @@ export class DaemonClient {
   // Companion
   // ============================================================================
 
-  async startCompanionSession(voiceTransport?: {
-    kind: "codex-webrtc";
-    sdp: string;
-  }): Promise<CompanionSessionStartResponse["payload"]> {
+  async startCompanionSession(
+    voiceTransport?: {
+      kind: "codex-webrtc";
+      sdp: string;
+    },
+    conversation?: CompanionConversationOptions,
+  ): Promise<CompanionSessionStartResponse["payload"]> {
     const requestId = this.createRequestId();
     return this.sendRequest({
       requestId,
-      message: { type: "companion.session.start.request", requestId, voiceTransport },
+      message: { type: "companion.session.start.request", requestId, voiceTransport, conversation },
       select: (msg) => {
         if (msg.type !== "companion.session.start.response") return null;
         if (msg.payload.requestId !== requestId) return null;

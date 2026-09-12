@@ -101,6 +101,11 @@ export interface AppSettings {
   /** Device-level opt-in. Enabling exposes Start without starting a conversation. */
   companionEnabled: boolean;
   companionNativeVoice: boolean;
+  companionVerbosity: "brief" | "detailed";
+  companionUpdates: "important" | "completion" | "off";
+  companionAcknowledgeTasks: boolean;
+  companionPauseMs: number;
+  companionInterruptible: boolean;
   /** Show the Companion's reply text while it speaks. */
   companionShowReplyText: boolean;
 }
@@ -159,6 +164,11 @@ export const DEFAULT_CLIENT_SETTINGS: AppSettings = {
   voiceReplyConfirm: true,
   companionEnabled: false,
   companionNativeVoice: false,
+  companionVerbosity: "brief",
+  companionUpdates: "important",
+  companionAcknowledgeTasks: false,
+  companionPauseMs: 1400,
+  companionInterruptible: true,
   companionShowReplyText: true,
 };
 
@@ -280,6 +290,11 @@ const StoredAppSettingsSchema = z
     voiceReplyConfirm: z.boolean().catch(true),
     companionEnabled: z.boolean().catch(false),
     companionNativeVoice: z.boolean().catch(false),
+    companionVerbosity: z.enum(["brief", "detailed"]).catch("brief"),
+    companionUpdates: z.enum(["important", "completion", "off"]).catch("important"),
+    companionAcknowledgeTasks: z.boolean().catch(false),
+    companionPauseMs: z.number().int().min(600).max(3000).catch(1400),
+    companionInterruptible: z.boolean().catch(true),
     companionShowReplyText: z.boolean().catch(true),
     // COMPAT(explorerSidebarRouting): replaced by source-specific side-pane preferences in v0.6.
     openSupportingTabsInSidePanel: z.boolean().optional().catch(undefined),

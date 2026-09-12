@@ -25,6 +25,7 @@ export interface CompanionHost {
 export function useCompanionHost(): CompanionHost {
   const enabled = useSettings((settings) => settings.companionEnabled);
   const nativeVoice = useSettings((settings) => settings.companionNativeVoice);
+  const requestedServerId = useCompanionStore((state) => state.context?.serverId);
   const boundServerId = useCompanionStore((state) =>
     ["open", "starting", "reconnecting", "stopping"].includes(state.session.status)
       ? state.serverId
@@ -36,7 +37,8 @@ export function useCompanionHost(): CompanionHost {
       Object.keys(state.sessions).filter((serverId) => state.sessions[serverId]?.serverInfo),
     ),
   );
-  const serverId = boundServerId ?? resolveServerId(activeServerId, connectedServerIds);
+  const serverId =
+    boundServerId ?? requestedServerId ?? resolveServerId(activeServerId, connectedServerIds);
   const serverInfo = useSessionStore((state) =>
     serverId ? (state.sessions[serverId]?.serverInfo ?? null) : null,
   );
@@ -50,7 +52,12 @@ export function useCompanionHost(): CompanionHost {
   return {
     serverId,
     details,
-    isAvailable: enabled && serverId !== null && readiness?.enabled === true && transportReady,
+    isAvailable:
+      enabled &&
+      serverId !== null &&
+      readiness?.enabled === true &&
+      transportReady &&
+      details?.conversationControls === true,
     unavailableReason: resolveCompanionUnavailableMessage({ serverInfo }),
   };
 }

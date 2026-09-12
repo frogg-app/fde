@@ -153,6 +153,68 @@ return does not establish prolonged mute/unmute or mobile reliability.
   Only the isolated smoke daemon was stopped, gracefully. See
   [artifacts and deployment](companion-test-builds.md).
 
+## Conversational iteration (2026-09-12)
+
+The composer now launches Companion with host/workspace/agent context; the sidebar
+entry is removed. Dismissal keeps the session and its compact indicator alive.
+Quiet dispatch is the default, with settings for reply length, announcements,
+acknowledgements, endpointing and interruption. New clients require the daemon's
+`conversationControls` capability, so update both packages together.
+
+The blocked-listening defect was reproduced in the input queue: it awaited the
+entire model response and playback in the final-transcript callback. That callback
+now runs independently. VAD, incremental recognition and synthesis use separate
+worker processes. Incremental finals rotate buffers synchronously and preserve
+pending utterances; silence uses bounded pre-roll instead of repeated recognition.
+
+Additional automated checks cover growing partials, capture during a held response,
+consecutive finalization, quiet dispatch versus failed dispatch, disabled
+interruption, preserved context on dismissal/reopen, reconnection preferences,
+and suppressed updates retained for a later conversation. Launching from an already
+running worker attaches its receipt without dispatching work; existing pending
+permissions replay even with spoken updates off. Client and wire checks
+include starts from older clients and validation of conversation options.
+
+Real local speech checks passed with downloaded Parakeet and Silero models:
+
+- The existing worker transcription integration still passes.
+- A new test feeds the 4.15-second recording at microphone pace, inserts a 700ms
+  pause inside it, and recognizes another request while the first response
+  callback remains held. Both utterances produce final text; growing partials
+  arrive during the second. The saved fixture's low level is normalized by 40×
+  for this VAD test. This is a recorded PCM regression, not a phone microphone or
+  physical speaker measurement. Reproduce with:
+
+```sh
+cd packages/server
+PASEO_LOCAL_MODELS_DIR=/path/to/models/local-speech npx vitest run \
+  src/server/speech/providers/local/companion-duplex.local.e2e.test.ts \
+  src/server/speech/providers/local/worker-process.local.e2e.test.ts
+```
+
+Final checks for this iteration: full repository typecheck, lint/format checks,
+139 Companion/controller/worker tests, 217 UI/voice/settings tests, 126 client
+transport tests, and 36 protocol checks passed, plus the two real local speech
+integrations. These cover the selected-worker and startup permission regressions
+described above.
+
+Preview 2 artifacts were rebuilt with the current UI and server. The standalone
+APK is development-signed (`app.frogg.fde.debug`, Android 10+, ARM64) and passes
+signature inspection. A 390px-wide browser check rendered the settings and changed
+reply length through its dropdown. The extracted Linux daemon advertised the new
+capability and returned nonzero local Piper PCM with quiet-mode settings on both
+Codex and Claude subscriptions: 108,544 and 115,200 PCM bytes respectively. These
+probes supplied no API keys and simulated playback acknowledgements. They do not
+establish speaker output or physical-phone quality. The pinned-checksum installer
+also passed against the local archive, served the packaged web UI, and its isolated
+daemon was stopped gracefully. Shared daemons were left running. See
+[test builds](companion-test-builds.md).
+
+Quiet mode intentionally waits for the final tool round before speaking. Earlier
+streaming text-to-PCM benchmarks do not measure this mode's end-to-end latency.
+The independent input queue, partial transcript and pause regressions pass; the
+physical-device acceptance below remains necessary.
+
 ## Release gates still open
 
 - Diverse 30-turn microphone-to-speaker runs and cold starts per supported

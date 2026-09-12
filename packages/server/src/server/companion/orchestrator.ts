@@ -37,8 +37,8 @@ const MAX_TOOL_ROUNDS = 4;
  * What one conversational turn emits.
  *
  * `text_delta` events arrive while the model is still generating — the speech
- * track cuts them at clause boundaries and starts talking long before
- * `completed` lands. Nothing downstream may wait for `completed` to speak.
+ * track can speak at clause boundaries. Quiet conversations instead wait for
+ * the final tool round, so dispatch narration never reaches the speaker.
  */
 export type CompanionTurnEvent =
   | { type: "text_delta"; text: string }
@@ -46,6 +46,7 @@ export type CompanionTurnEvent =
   | { type: "completed"; reply: string; tools: CompanionToolName[] };
 
 interface CompanionOrchestratorBase {
+  instructions?: string;
   tools: readonly CompanionTool[];
   notebook: CompanionNotebookStore;
 }
@@ -66,8 +67,10 @@ export class CompanionOrchestrator {
   private readonly tools: readonly CompanionTool[];
   private readonly notebook: CompanionNotebookStore;
   private readonly history: CompanionTurnMessage[] = [];
+  private readonly instructions: string;
 
   constructor(options: CompanionOrchestratorOptions) {
+    this.instructions = options.instructions ?? "";
     this.tools = options.tools;
     this.notebook = options.notebook;
     this.backend =
@@ -104,7 +107,7 @@ export class CompanionOrchestrator {
     const notebook = await this.notebook.promptText();
     const preamble = notebook ? `Your notebook right now:\n${notebook}` : "Your notebook is empty.";
     const backendTurn = this.backend.beginTurn({
-      text: `${preamble}\n\nThey said: ${text}`,
+      text: `${preamble}${this.instructions ? `\n${this.instructions}` : ""}\n\nThey said: ${text}`,
       history: this.history,
       signal,
     });

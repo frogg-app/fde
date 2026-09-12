@@ -1795,6 +1795,23 @@ export const zhCN: TranslationResources = {
     },
   },
   companion: {
+    behavior: {
+      nextSession: "更改将在下次启动 Companion 时生效。",
+      verbosity: "回复长度",
+      brief: "简短",
+      detailed: "详细",
+      updates: "任务语音通知",
+      important: "完成和失败",
+      completion: "仅完成",
+      off: "关闭",
+      acknowledge: "开始工作前确认任务",
+      permissions: "关闭任务通知后，权限请求仍会通过语音告知。",
+      pause: "回复前的停顿",
+      quick: "快速（0.8秒）",
+      natural: "自然（1.4秒）",
+      relaxed: "从容（2.4秒）",
+      interruptible: "允许说话打断回复",
+    },
     title: "伙伴",
     setup: {
       disabled: "已关闭",

@@ -419,8 +419,8 @@ function SessionProviderInternal({ children, serverId, client }: SessionProvider
     () =>
       registerCompanionSession({
         serverId,
-        startSession: async (voiceTransport) => {
-          const response = await client.startCompanionSession(voiceTransport);
+        startSession: async (voiceTransport, conversation) => {
+          const response = await client.startCompanionSession(voiceTransport, conversation);
           return {
             accepted: response.accepted,
             reasonCode: response.reasonCode ?? null,

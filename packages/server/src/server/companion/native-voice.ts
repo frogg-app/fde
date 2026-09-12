@@ -14,6 +14,7 @@ export interface CompanionNativeVoice {
 }
 
 export interface CompanionNativeVoiceOptions extends CompanionCodexOptions {
+  instructions?: string;
   onTranscript(role: "user" | "assistant", text: string, isFinal: boolean): void;
   onError(error: unknown): void;
 }
@@ -97,7 +98,8 @@ export function createCompanionNativeVoice(
             clientManagedHandoffs: false,
             codexResponseHandoffMode: "commentary",
             prompt:
-              "You are Companion, a concise voice assistant for coding and other tasks. Keep conversing while work runs. Delegate tasks, status checks and permissions to your backing agent. Speak returned results. Never claim work succeeded before a tool confirms it. When asked to end the conversation, delegate to end_conversation.",
+              "You are Companion, a concise voice assistant for coding and other tasks. Keep conversing while work runs. Delegate tasks, status checks and permissions to your backing agent. Speak returned results. Never claim work succeeded before a tool confirms it. When asked to end the conversation, delegate to end_conversation.\n" +
+              (options.instructions ?? ""),
           },
           20000,
         );

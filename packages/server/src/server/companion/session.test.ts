@@ -35,6 +35,7 @@ import {
   type CompanionRuntime,
 } from "./session.js";
 import { CompanionNotebookStore, companionNotebookPath } from "./store.js";
+import type { CompanionTool } from "./tools/index.js";
 
 const logger = pino({ level: "silent" });
 
@@ -84,6 +85,7 @@ function createGate(): Gate {
 
 interface ScriptedTurn {
   deltas: readonly string[];
+  tool?: Anthropic.ToolUseBlock;
   /** Held open so tests can prove speech does not wait on the finished message. */
   gate?: Promise<void>;
 }
@@ -106,7 +108,12 @@ function createScriptedClient(turns: ScriptedTurn[]): CompanionModelClient {
         },
         finalMessage: async () => {
           await turn.gate;
-          return textMessage(turn.deltas.join(""));
+          const message = textMessage(turn.deltas.join(""));
+          if (turn.tool) {
+            message.content.push(turn.tool);
+            message.stop_reason = "tool_use";
+          }
+          return message;
         },
       };
       return stream;
@@ -190,6 +197,9 @@ afterEach(async () => {
 });
 
 interface HarnessOptions {
+  interruptible?: boolean;
+  acknowledgeTasks?: boolean;
+  tools?: CompanionTool[];
   turns?: ScriptedTurn[];
   backendMissing?: boolean;
   speechAvailable?: boolean;
@@ -232,7 +242,7 @@ function createHarness(options: HarnessOptions = {}) {
         },
     notebook: new CompanionNotebookStore({ filePath: companionNotebookPath(home) }),
     fillers,
-    createTools: () => [],
+    createTools: () => options.tools ?? [],
     runDeferredJob: async () => "done",
     createBackend: ({ tools }) =>
       createCompanionApiBackend({
@@ -271,7 +281,17 @@ function createHarness(options: HarnessOptions = {}) {
     detector,
     sttSessions,
     start: () =>
-      session.handleSessionStart({ type: "companion.session.start.request", requestId: "r1" }),
+      session.handleSessionStart({
+        type: "companion.session.start.request",
+        requestId: "r1",
+        conversation: {
+          acknowledgeTasks: options.acknowledgeTasks ?? true,
+          verbosity: "brief",
+          updates: "important",
+          pauseMs: 1400,
+          interruptible: options.interruptible ?? true,
+        },
+      }),
     typed: (text: string) =>
       session.handleMessageSend({
         type: "companion.message.send.request",
@@ -326,6 +346,86 @@ describe("CompanionSession start", () => {
 });
 
 describe("CompanionSession turns", () => {
+  it("keeps quiet until the final reply with acknowledgements disabled", async () => {
+    const gate = createGate();
+    const harness = createHarness({
+      acknowledgeTasks: false,
+      turns: [{ deltas: ["The build passed."], gate: gate.promise }],
+    });
+    await harness.start();
+    const pending = harness.typed("How did the build go?");
+    await settle();
+    harness.scheduler.advance(COMPANION_STALL_DELAY_MS.api);
+    await settle();
+    expect(harness.tts.synthesized).toEqual([]);
+    expect(harness.fillers.taken).toEqual([]);
+    gate.open();
+    await pending;
+    expect(harness.tts.synthesized).toEqual(["The build passed."]);
+    await harness.session.cleanup();
+  });
+
+  it.each([true, false])(
+    "quiet dispatch speaks a failure, but no successful task acknowledgement (success=%s)",
+    async (success) => {
+      const tool: CompanionTool = {
+        name: "create_agent",
+        description: "Start task",
+        deferred: false,
+        inputShape: {},
+        inputSchema: { type: "object" },
+        invoke: async () =>
+          success
+            ? { ok: true, content: '{"jobId":"job-1"}' }
+            : { ok: false, error: "Workspace is unavailable" },
+      };
+      const final = success
+        ? "The task is running."
+        : "The workspace is unavailable. Select another project.";
+      const harness = createHarness({
+        acknowledgeTasks: false,
+        tools: [tool],
+        turns: [
+          {
+            deltas: ["I will start by creating a worker."],
+            tool: { type: "tool_use", id: "tool-1", name: "create_agent", input: {} },
+          },
+          { deltas: [final] },
+        ],
+      });
+      await harness.start();
+      await harness.typed("Fix the build");
+      expect(harness.tts.synthesized.join(" ")).toBe(success ? "" : final);
+      await harness.session.cleanup();
+    },
+  );
+
+  it("continues the current reply when spoken interruption is disabled", async () => {
+    const harness = createHarness({
+      interruptible: false,
+      autoAck: false,
+      turns: [
+        {
+          deltas: [
+            "The first check completed successfully.",
+            " The second check also completed successfully.",
+          ],
+        },
+      ],
+    });
+    await harness.start();
+    const turn = harness.typed("Tell me the result");
+    await expect.poll(() => harness.of("companion.audio.output").length).toBe(1);
+    harness.detector.emit("speech_started");
+    await settle();
+    expect(harness.of("companion.input.state").at(-1)?.payload.isSpeaking).toBe(false);
+    harness.session.handleAudioPlayed(harness.of("companion.audio.output")[0].payload.id);
+    await expect.poll(() => harness.of("companion.audio.output").length).toBe(2);
+    harness.session.handleAudioPlayed(harness.of("companion.audio.output")[1].payload.id);
+    await turn;
+    await harness.session.cleanup();
+  });
+
   it("hands a segment to TTS before the turn completes", async () => {
     const gate = createGate();
     const harness = createHarness({

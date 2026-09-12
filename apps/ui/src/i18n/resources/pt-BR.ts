@@ -1855,6 +1855,24 @@ export const ptBR: TranslationResources = {
     },
   },
   companion: {
+    behavior: {
+      nextSession: "As alterações valem ao iniciar o Companion novamente.",
+      verbosity: "Tamanho das respostas",
+      brief: "Breve",
+      detailed: "Detalhada",
+      updates: "Avisos de tarefas por voz",
+      important: "Conclusões e falhas",
+      completion: "Somente conclusões",
+      off: "Desativados",
+      acknowledge: "Confirmar tarefas antes de trabalhar",
+      permissions:
+        "Pedidos de permissão continuam sendo falados quando os avisos estão desativados.",
+      pause: "Pausa antes de responder",
+      quick: "Rápida (0,8 segundo)",
+      natural: "Natural (1,4 segundo)",
+      relaxed: "Tranquila (2,4 segundos)",
+      interruptible: "Permitir interrupção por voz",
+    },
     title: "Companheiro",
     setup: {
       disabled: "Desativado",

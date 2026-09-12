@@ -27,6 +27,8 @@ export type CompanionSendState =
   | { status: "failed"; text: string; reasonCode: string | null };
 
 export interface CompanionState {
+  context: { serverId: string; workspaceId?: string; agentId?: string } | null;
+  launch: (context: { serverId: string; workspaceId?: string; agentId?: string }) => void;
   isOpen: boolean;
   serverId: string | null;
   isMinimized: boolean;
@@ -81,6 +83,7 @@ const NO_TOPICS: CompanionNotebookEntry[] = [];
 
 /** Everything the conversation accumulates; reset whenever a session ends. */
 const CONVERSATION_RESET = {
+  context: null,
   serverId: null,
   isMuted: false,
   volume: 0,
@@ -122,8 +125,24 @@ export const useCompanionStore = create<CompanionState>((set) => ({
   topics: NO_TOPICS,
 
   open: () => set({ isOpen: true, isMinimized: false }),
-  close: () => set({ isOpen: false, isMinimized: false }),
-  setOpen: (isOpen) => set({ isOpen, isMinimized: false }),
+  close: () =>
+    set((state) => ({
+      isOpen: false,
+      isMinimized: ["open", "starting", "reconnecting"].includes(state.session.status),
+    })),
+  setOpen: (isOpen) =>
+    set((state) => ({
+      isOpen,
+      isMinimized: !isOpen && ["open", "starting", "reconnecting"].includes(state.session.status),
+    })),
+  launch: (context) =>
+    set((state) => ({
+      isOpen: true,
+      isMinimized: false,
+      ...(["open", "starting", "reconnecting"].includes(state.session.status)
+        ? {}
+        : { context, serverId: context.serverId }),
+    })),
 
   sessionStarting: (serverId) =>
     set({ serverId: serverId ?? null, session: { status: "starting" } }),
@@ -138,6 +157,7 @@ export const useCompanionStore = create<CompanionState>((set) => ({
     set((state) => ({
       ...CONVERSATION_RESET,
       serverId: state.serverId,
+      context: state.context,
       session: { status: "open" },
     })),
   sessionFailed: ({ reasonCode, retryable }) =>

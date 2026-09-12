@@ -1842,6 +1842,23 @@ export const ja: TranslationResources = {
     },
   },
   companion: {
+    behavior: {
+      nextSession: "変更は次にCompanionを開始すると適用されます。",
+      verbosity: "返信の長さ",
+      brief: "簡潔",
+      detailed: "詳細",
+      updates: "タスクの音声通知",
+      important: "完了と失敗",
+      completion: "完了のみ",
+      off: "オフ",
+      acknowledge: "作業前にタスクの受付を伝える",
+      permissions: "通知がオフでも権限の要求は音声で伝えます。",
+      pause: "応答までの間",
+      quick: "短い（0.8秒）",
+      natural: "自然（1.4秒）",
+      relaxed: "長い（2.4秒）",
+      interruptible: "話しかけて割り込む",
+    },
     title: "コンパニオン",
     setup: {
       disabled: "無効",

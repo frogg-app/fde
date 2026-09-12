@@ -1,5 +1,5 @@
 import type { CompanionAudioOutputMessage } from "@fde/protocol/messages";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { AudioEngine, AudioPlaybackSource } from "@/voice/audio-engine-types";
 import {
   CompanionMessageRejected,
@@ -149,6 +149,30 @@ async function settle(): Promise<void> {
 }
 
 describe("companion session lifecycle", () => {
+  it("keeps the selected workspace and conversation preferences across reconnect", async () => {
+    const adapter = createFakeAdapter();
+    const start = vi.spyOn(adapter, "startSession");
+    const runtime = createCompanionRuntime({
+      engine: createFakeEngine(),
+      sink: createRecordingSink().sink,
+    });
+    const conversation = {
+      workspaceId: "workspace-a",
+      agentId: "agent-a",
+      verbosity: "brief",
+      updates: "off",
+      acknowledgeTasks: false,
+      pauseMs: 2400,
+      interruptible: true,
+    } as const;
+    await runtime.start(adapter, false, conversation);
+    await runtime.connectionChanged({ serverId: "local", isConnected: false });
+    await runtime.connectionChanged({ serverId: "local", isConnected: true });
+    expect(start).toHaveBeenNthCalledWith(1, undefined, conversation);
+    expect(start).toHaveBeenNthCalledWith(2, undefined, conversation);
+    await runtime.stop();
+  });
+
   it("reconnects an active conversation while keeping foreground capture and mute", async () => {
     const engine = createFakeEngine();
     const adapter = createFakeAdapter();

@@ -143,6 +143,50 @@
                 "requestId": {
                   "type": "string"
                 },
+                "conversation": {
+                  "type": "object",
+                  "properties": {
+                    "workspaceId": {
+                      "type": "string",
+                      "maxLength": 512
+                    },
+                    "agentId": {
+                      "type": "string",
+                      "maxLength": 512
+                    },
+                    "verbosity": {
+                      "default": "brief",
+                      "type": "string",
+                      "enum": [
+                        "brief",
+                        "detailed"
+                      ]
+                    },
+                    "updates": {
+                      "default": "important",
+                      "type": "string",
+                      "enum": [
+                        "important",
+                        "completion",
+                        "off"
+                      ]
+                    },
+                    "acknowledgeTasks": {
+                      "default": false,
+                      "type": "boolean"
+                    },
+                    "pauseMs": {
+                      "default": 1400,
+                      "type": "integer",
+                      "minimum": 600,
+                      "maximum": 3000
+                    },
+                    "interruptible": {
+                      "default": true,
+                      "type": "boolean"
+                    }
+                  }
+                },
                 "voiceTransport": {
                   "type": "object",
                   "properties": {

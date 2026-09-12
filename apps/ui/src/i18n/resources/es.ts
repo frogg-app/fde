@@ -1870,6 +1870,23 @@ export const es: TranslationResources = {
     },
   },
   companion: {
+    behavior: {
+      nextSession: "Los cambios se aplican al iniciar Companion de nuevo.",
+      verbosity: "Extensión de las respuestas",
+      brief: "Breve",
+      detailed: "Detallada",
+      updates: "Avisos de tareas por voz",
+      important: "Finalizaciones y errores",
+      completion: "Solo finalizaciones",
+      off: "Desactivados",
+      acknowledge: "Confirmar las tareas antes de trabajar",
+      permissions: "Las solicitudes de permiso se leen aunque los avisos estén desactivados.",
+      pause: "Pausa antes de responder",
+      quick: "Rápida (0,8 segundos)",
+      natural: "Natural (1,4 segundos)",
+      relaxed: "Pausada (2,4 segundos)",
+      interruptible: "Permitir interrumpir hablando",
+    },
     title: "Compañero",
     setup: {
       disabled: "Desactivado",

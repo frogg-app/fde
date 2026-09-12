@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { useSettings } from "@/hooks/use-settings";
 import { SettingsSection } from "@/screens/settings/settings-section";
 import { settingsStyles } from "@/styles/settings";
+import { CompanionBehaviorSettings } from "./companion-behavior-settings";
 
 /** Client-side preferences for the Companion; the daemon decides whether it runs at all. */
 export function CompanionSection() {
@@ -102,7 +103,7 @@ export function CompanionSection() {
                       : "companion.setup.subscription",
                   )}
                 </Text>
-                {!host.details ? (
+                {!host.details?.conversationControls ? (
                   <Text style={settingsStyles.rowHint}>
                     {t("companion.reason.companion_update_required")}
                   </Text>
@@ -135,6 +136,7 @@ export function CompanionSection() {
             testID="settings-companion-show-reply-text"
           />
         </View>
+        <CompanionBehaviorSettings />
       </View>
     </SettingsSection>
   );

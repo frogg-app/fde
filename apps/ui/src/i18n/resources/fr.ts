@@ -1874,6 +1874,24 @@ export const fr: TranslationResources = {
     },
   },
   companion: {
+    behavior: {
+      nextSession: "Les modifications s’appliquent au prochain démarrage de Companion.",
+      verbosity: "Longueur des réponses",
+      brief: "Courte",
+      detailed: "Détaillée",
+      updates: "Annonces vocales des tâches",
+      important: "Résultats et échecs",
+      completion: "Résultats uniquement",
+      off: "Désactivées",
+      acknowledge: "Accuser réception des tâches avant de travailler",
+      permissions:
+        "Les demandes d’autorisation restent vocales même si les annonces sont désactivées.",
+      pause: "Pause avant de répondre",
+      quick: "Rapide (0,8 seconde)",
+      natural: "Naturelle (1,4 seconde)",
+      relaxed: "Longue (2,4 secondes)",
+      interruptible: "Me laisser interrompre en parlant",
+    },
     title: "Compagnon",
     setup: {
       disabled: "Désactivé",

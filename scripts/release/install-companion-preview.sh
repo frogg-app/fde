@@ -3,13 +3,13 @@
 # Uses separate application/state directories and does not install a service.
 set -euo pipefail
 
-preview_tag=companion-preview-20260912-1
+preview_tag=companion-preview-20260912-2
 archive=fde-daemon-0.2.14-linux-x64.tar.gz
-archive_sha=117cf943149e9028a9ee4d03c97fe07a8bece676a9c267ca5b55b63c8f5ebf8e
+archive_sha=7e1cbd7a6a81f8f84760e4df1ddf2704eb97fbae6393c69f1203635863611b32
 release_url="https://github.com/frogg-app/fde/releases/download/${preview_tag}"
 install_dir="${FDE_COMPANION_INSTALL_DIR:-${HOME}/.local/share/fde-${preview_tag}}"
 state_dir="${FDE_COMPANION_STATE_DIR:-${HOME}/.fde-${preview_tag}}"
-listen="${FDE_COMPANION_LISTEN:-0.0.0.0:6798}"
+listen="${FDE_COMPANION_LISTEN:-0.0.0.0:6799}"
 
 if [[ "$(uname -s)" != Linux || "$(uname -m)" != x86_64 ]]; then
   echo 'This preview bundle requires Linux x86_64.' >&2

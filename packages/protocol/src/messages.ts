@@ -960,9 +960,21 @@ export const AudioPlayedMessageSchema = z.object({
   id: z.string(),
 });
 
+export const CompanionConversationOptionsSchema = z.object({
+  workspaceId: z.string().max(512).optional(),
+  agentId: z.string().max(512).optional(),
+  verbosity: z.enum(["brief", "detailed"]).default("brief"),
+  updates: z.enum(["important", "completion", "off"]).default("important"),
+  acknowledgeTasks: z.boolean().default(false),
+  pauseMs: z.number().int().min(600).max(3000).default(1400),
+  interruptible: z.boolean().default(true),
+});
+export type CompanionConversationOptions = z.infer<typeof CompanionConversationOptionsSchema>;
+
 export const CompanionSessionStartRequestSchema = z.object({
   type: z.literal("companion.session.start.request"),
   requestId: z.string(),
+  conversation: CompanionConversationOptionsSchema.optional(),
   voiceTransport: z
     .object({ kind: z.literal("codex-webrtc"), sdp: z.string().min(1).max(65536) })
     .optional(),
@@ -3579,6 +3591,7 @@ export const ServerCapabilitiesSchema = z
     companionDetails: z
       .object({
         protocolVersion: z.literal(2),
+        conversationControls: z.boolean().optional(),
         backend: z.enum(["cli", "codex", "api"]).nullable(),
         model: z.string().nullable(),
         localSpeechReady: z.boolean(),

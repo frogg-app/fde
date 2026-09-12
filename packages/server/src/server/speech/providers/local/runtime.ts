@@ -170,10 +170,11 @@ export async function initializeLocalSpeechServices(params: {
   }
   const workerClient = createWorker();
   const ttsWorkerClient = createWorker();
+  const vadWorkerClient = createWorker();
 
   if (isLocalProviderEnabled(providers.voiceTurnDetection)) {
-    if (workerClient) {
-      turnDetectionService = initializeLocalTurnDetection({ client: workerClient });
+    if (vadWorkerClient) {
+      turnDetectionService = initializeLocalTurnDetection({ client: vadWorkerClient });
     } else {
       warnLocalConfigMissing(logger, "turn detection");
     }
@@ -209,6 +210,7 @@ export async function initializeLocalSpeechServices(params: {
   const cleanup = () => {
     workerClient?.shutdown();
     ttsWorkerClient?.shutdown();
+    vadWorkerClient?.shutdown();
   };
 
   return {

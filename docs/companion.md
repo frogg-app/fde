@@ -3,7 +3,9 @@
 Companion lets you have a voice conversation while Claude and Codex workers do
 project work on your daemon. It is optional and **disabled by default on each
 device**. Turn on **Settings → General → Enable Companion**, then choose
-**Start Companion**. Enabling it does not start a model or acquire the microphone.
+the bottom-right **Companion** launcher in a project composer. It replaces the
+former Voice mode action and works while a coding worker is busy. Companion no
+longer appears in the sidebar. Enabling it does not start a model or acquire the microphone.
 Existing installations also default to off; the former auto-start preference is
 no longer used.
 
@@ -19,8 +21,11 @@ Standalone Android and Linux daemon artifacts and deployment commands are in
 - **End** releases audio and closes the conversation. It stays stopped until an
   explicit Start action. Ending a conversation does not cancel coding tasks.
 - **Minimize** keeps the conversation active, with a persistent Open/End control.
-- Dismissing the conversation closes it. Disabling Companion also closes it and
-  hides navigation, command search and keyboard entry points; Settings remains.
+- Dismissing the panel, including its close button or sheet gesture, minimizes
+  it and keeps capture, playback and task announcements active. Only **End**,
+  disabling Companion, or an audio interruption ends the conversation.
+- Disabling Companion hides its launcher, command search and keyboard entry
+  points; Settings remains.
 - Say that you want to end the conversation to invoke `end_conversation`. Ask to
   cancel a particular task to invoke `cancel_agent` instead.
 
@@ -33,6 +38,48 @@ failed states. They show the selected conversation model and its billing mode,
 link to provider setup, and point to host Usage for provider-supplied limits.
 “No API key” does not mean unlimited subscription usage. FDE does not estimate
 missing quota data as an unlimited allowance.
+
+## Context and conversation preferences
+
+The composer launcher captures its host, workspace and agent. The panel and
+minimized indicator show the host and project; reopening from another project
+preserves the active conversation's original context. If the selected worker is
+already running, Companion tracks that task and its permission/result events
+without restarting it. New work on that same selected worker is tracked while
+the conversation remains active, including when minimized. End first to launch on a
+different host. You can explicitly choose another workspace by voice on that host.
+
+Settings → General → Companion offers preferences for the next conversation:
+
+- Reply length: **Brief** (default) or Detailed.
+- Spoken task updates: **Completions and failures** (default), Completions only,
+  or Off. Permission requests remain audible. Muting the microphone does not
+  mute results. Updates turned off remain available in task receipts.
+- Acknowledge tasks before working: **off** by default. Quiet local speech drops
+  tool preambles and successful dispatch acknowledgements; a failed dispatch
+  still gets an explanation. Tool execution and completion are separate events.
+- Pause before replying: 0.8, **1.4**, or 2.4 seconds of detected silence.
+- Let me interrupt by speaking: **on** by default.
+
+Pause and interruption settings apply to local speech. Native WebRTC uses its
+provider's turn detection. Briefness and acknowledgement preferences also enter
+its conversation instructions. Preferences are captured at explicit Start and
+preserved across reconnect; changing Settings does not reconfigure an active call.
+
+Local voice runs VAD, recognition and synthesis in separate child processes.
+Microphone delivery never awaits the model reply or playback. During speech,
+Parakeet publishes revised partial transcripts at a throttled interval, retaining
+completed portions of long utterances. A one-second pre-roll preserves the first
+word while VAD confirms speech; silence between turns is not continuously decoded.
+An in-sentence pause shorter than the configured endpoint keeps the same turn.
+Final recognition rotates its buffer before decoding so it cannot erase the next
+utterance. Only completed utterances dispatch tasks; provisional text can change.
+
+Quiet mode waits for the last tool round before synthesizing the answer. This
+avoids speaking "I will check" ahead of every read, at the cost of waiting for that
+short final response. Ordinary worker completion reads its existing timeline
+without launching an extra summarizer. Acknowledgements can be enabled for earlier
+streamed speech. Physical microphone/speaker latency is still a validation gate.
 
 ## Subscription setup
 
@@ -115,7 +162,7 @@ When an active conversation loses its daemon connection, the client drops outgoi
 frames and shows Reconnecting. Local capture retains its existing foreground audio
 session so a screen-locked phone does not need to reacquire the microphone. When
 the daemon reconnects, Companion establishes a new session and restores mute state.
-End, dismissal or disabling the feature cancels that intent. The daemon replays
+End or disabling the feature cancels that intent. Dismissal keeps it active. The daemon replays
 unannounced durable results; it does not rerun their workers.
 
 Playback acknowledgements, rather than submission to TTS, determine canonical
@@ -132,7 +179,8 @@ daemon dies after acceptance but before dispatch, that request is not automatica
 replayed: inspect task state before asking for the action again. This favors
 avoiding duplicate actions over pretending to provide exactly-once execution.
 
-Current clients require `capabilities.companionDetails.protocolVersion: 2` before
+Current clients require `capabilities.companionDetails.protocolVersion: 2` and
+`conversationControls: true` before
 offering a working conversation. Older daemons are directed to update in Settings.
 Existing message names remain compatible; metadata is additive.
 

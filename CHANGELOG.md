@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- Replace the composer Voice mode action with a host/project-bound Companion
+  launcher and remove its sidebar entry. Dismissing or minimizing keeps the
+  conversation running, with a host/project indicator and explicit End control.
+  Track an already-running selected worker so its result can be announced without
+  dispatching the task again.
+- Add quiet task dispatch, concise replies, completion/failure announcement
+  preferences, optional acknowledgements, adjustable pauses and interruption.
+  Read completed workers directly instead of spawning another summarization job.
+- Keep microphone/VAD processing independent of response generation and playback;
+  isolate VAD from STT/TTS, publish incremental Parakeet transcripts, preserve
+  speech across overlapping finalization, and avoid decoding idle silence.
 - Make Companion optional and off by default on each device. Add explicit Start,
   Mute, End and Minimize controls with a persistent active indicator; disabling it
   removes launch controls and releases audio without stopping coding tasks.

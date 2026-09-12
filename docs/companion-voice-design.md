@@ -25,6 +25,22 @@ bounded. Canonical history credits completely played segments, with provider
 context reconstructed after interruption. Local synthesis prepares the next
 segment while playback continues. See [Companion](companion.md).
 
+## Conversational input and quiet replies (2026-09-12)
+
+The microphone/VAD queue no longer awaits final-transcript response callbacks.
+Recognition emits growing partials, and VAD runs independently from synchronous
+Parakeet decoding and TTS. Finalizing utterances retain their own buffers and IDs
+when another utterance begins. Default endpointing tolerates 1.4 seconds of silence
+and confirms interruption after 120ms of detected speech, plus Silero's internal
+window and transport delay; this is not a measured 120ms playback-stop claim.
+
+Quiet mode suppresses dispatch narration and fillers, then speaks verified results,
+failures and permissions. Settings select longer pauses, reply length, announcements
+and optional acknowledgements. Dismissal minimizes; End releases the session.
+The real local regression sends microphone-paced fixture PCM through independent
+VAD/STT workers, inserts a short pause, and holds the first reply callback open
+while recognizing a second utterance. See [validation](companion-validation.md).
+
 ## Remaining limitations
 
 - Partial segments are omitted conservatively; there is no word-level playback

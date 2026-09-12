@@ -54,6 +54,12 @@ visible until device or deployment evidence closes them.
       retry of unheard results, network resumption with mute preservation,
       Codex orchestration and fast Piper speech are implemented. Automated and
       subscription probes are recorded in [validation](docs/companion-validation.md).
+- [x] **Make Companion conversational and unobtrusive.** Composer launcher with
+      fixed host/workspace context, dismissal that preserves the call, quiet
+      completion updates, speech preferences, independent VAD/STT/TTS workers,
+      growing transcripts and concurrent input/response processing. Microphone-paced
+      local regression covers an in-sentence pause and a second utterance during
+      a held reply; real-device conversational quality remains above.
 - [ ] **Qualify native Companion preview.** Immediate and deferred Claude results
       were spoken in the production adapters with controlled silence. Complete
       per-job delivery receipts, reconnect deduplication, account-tier and device

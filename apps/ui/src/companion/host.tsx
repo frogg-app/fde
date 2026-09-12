@@ -10,6 +10,7 @@ import {
 } from "@/components/adaptive-modal-sheet";
 import { Alert } from "@/components/ui/alert";
 import { useSettings } from "@/hooks/use-settings";
+import { useActiveWorkspaceSelection } from "@/stores/navigation-active-workspace-store";
 import { Button } from "@/components/ui/button";
 import { useSessionStore } from "@/stores/session-store";
 import { navigateToAgent } from "@/utils/navigate-to-agent";
@@ -52,10 +53,26 @@ export function CompanionHost() {
   const isOpen = useCompanionStore((state) => state.isOpen);
   const close = useCompanionStore((state) => state.close);
   const host = useCompanionHost();
-  const header = useMemo<SheetHeader>(() => ({ title: t("companion.title") }), [t]);
+  const context = useCompanionStore((state) => state.context);
+  const hostLabel = useSessionStore((state) =>
+    host.serverId ? state.sessions[host.serverId]?.serverInfo?.hostname : null,
+  );
+  const workspace = useSessionStore((state) =>
+    context?.workspaceId
+      ? state.sessions[context.serverId]?.workspaces.get(context.workspaceId)
+      : undefined,
+  );
+  const workspaceLabel = workspace
+    ? `${workspace.projectCustomName ?? workspace.projectDisplayName} · ${workspace.name}`
+    : null;
+  const contextLabel = [hostLabel ?? host.serverId, workspaceLabel].filter(Boolean).join(" · ");
+  const header = useMemo<SheetHeader>(
+    () => ({ title: t("companion.title"), subtitle: contextLabel }),
+    [t, contextLabel],
+  );
 
   useEffect(() => {
-    if (!enabled || (!isOpen && !isMinimized)) {
+    if (!enabled) {
       void getCompanionRuntime().stop();
     }
     if (!enabled && isOpen) close();
@@ -75,13 +92,16 @@ export function CompanionHost() {
   if (!enabled) return null;
   return (
     <>
-      {isMinimized && (session.status === "open" || session.status === "reconnecting") ? (
+      {isMinimized && ["open", "starting", "reconnecting"].includes(session.status) ? (
         <View style={styles.activeIndicator} testID="companion-active-indicator">
           <Button size="sm" onPress={open}>
             {session.status === "reconnecting"
               ? t("agentPanel.states.reconnecting")
               : t("companion.actions.resume")}
           </Button>
+          <Text style={styles.activeContext} numberOfLines={1}>
+            {contextLabel}
+          </Text>
           <Button size="sm" variant="ghost" onPress={end}>
             {t("companion.actions.stop")}
           </Button>
@@ -97,7 +117,11 @@ export function CompanionHost() {
         {isOpen ? (
           <CompanionBody
             serverId={host.serverId}
-            unavailableReason={host.unavailableReason}
+            unavailableReason={
+              host.details && host.details.conversationControls !== true
+                ? t("companion.reason.companion_update_required")
+                : host.unavailableReason
+            }
             isAvailable={host.isAvailable}
           />
         ) : null}
@@ -138,6 +162,7 @@ function CompanionBody({ serverId, isAvailable, unavailableReason }: CompanionBo
   const dismissSendError = useCompanionStore((state) => state.dismissSendError);
 
   const { settings } = useSettings();
+  const activeWorkspace = useActiveWorkspaceSelection();
   const [draft, setDraft] = useState("");
   // The input is uncontrolled, so clearing it after a send means remounting the
   // value rather than writing an empty string back through the prop.
@@ -152,9 +177,22 @@ function CompanionBody({ serverId, isAvailable, unavailableReason }: CompanionBo
     if (!serverId) return;
     const adapter = getCompanionSession(serverId);
     if (!adapter) return;
+    const context = useCompanionStore.getState().context ?? {
+      serverId,
+      workspaceId: activeWorkspace?.serverId === serverId ? activeWorkspace.workspaceId : undefined,
+    };
+    useCompanionStore.getState().launch(context);
     sessionStarting(serverId);
-    void getCompanionRuntime().start(adapter, settings.companionNativeVoice);
-  }, [serverId, sessionStarting, settings.companionNativeVoice]);
+    void getCompanionRuntime().start(adapter, settings.companionNativeVoice, {
+      workspaceId: context.workspaceId,
+      agentId: "agentId" in context ? context.agentId : undefined,
+      verbosity: settings.companionVerbosity,
+      updates: settings.companionUpdates,
+      acknowledgeTasks: settings.companionAcknowledgeTasks,
+      pauseMs: settings.companionPauseMs,
+      interruptible: settings.companionInterruptible,
+    });
+  }, [serverId, sessionStarting, settings, activeWorkspace]);
 
   const stop = useCallback(() => {
     sessionStopping();
@@ -374,11 +412,19 @@ const styles = StyleSheet.create((theme) => ({
     position: "absolute",
     bottom: 16,
     right: 16,
+    maxWidth: "95%",
     zIndex: 100,
     flexDirection: "row",
+    alignItems: "center",
     backgroundColor: theme.colors.surface0,
     padding: 8,
     borderRadius: 12,
+  },
+  activeContext: {
+    color: theme.colors.foregroundMuted,
+    fontSize: theme.fontSize.sm,
+    flexShrink: 1,
+    marginHorizontal: 8,
   },
   body: {
     gap: theme.spacing[3],

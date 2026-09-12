@@ -1,3 +1,4 @@
+import { useCompanionStore } from "@/companion/store";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
   View,
@@ -182,14 +183,6 @@ function resolveIsComposerLocked(
   isSubmitLoading: boolean,
 ): boolean {
   return submitBehavior === "preserve-and-lock" && isSubmitLoading;
-}
-
-function resolveIsVoiceModeForAgent(
-  voice: ReturnType<typeof useVoiceOptional>,
-  serverId: string,
-  agentId: string,
-): boolean {
-  return voice?.isVoiceModeForAgent(serverId, agentId) ?? false;
 }
 
 function resolveKeyboardPriority(isMessageInputFocused: boolean): number {
@@ -503,29 +496,6 @@ function resolveErrorMessage(error: unknown): string | null {
   if (error instanceof Error) return error.message;
   if (typeof error === "string") return error;
   return null;
-}
-
-interface AttemptStartRealtimeVoiceArgs {
-  voice: ReturnType<typeof useVoiceOptional>;
-  isConnected: boolean;
-  hasAgent: boolean;
-  serverId: string;
-  agentId: string;
-  toastErrorRef: { current: (message: string) => void };
-}
-
-function attemptStartRealtimeVoice(args: AttemptStartRealtimeVoiceArgs): void {
-  const { voice, isConnected, hasAgent, serverId, agentId, toastErrorRef } = args;
-  if (!voice || !isConnected || !hasAgent) return;
-  if (voice.isVoiceSwitching) return;
-  if (voice.isVoiceModeForAgent(serverId, agentId)) return;
-  void voice.startVoice(serverId, agentId).catch((error) => {
-    console.error("[Composer] Failed to start voice mode", error);
-    const message = resolveErrorMessage(error);
-    if (message && message.trim().length > 0) {
-      toastErrorRef.current(message);
-    }
-  });
 }
 
 function focusMessageInputWithPlatformStrategy(messageInputRef: {
@@ -1074,26 +1044,19 @@ interface ComposerVoiceModeButtonProps {
 }
 
 interface ComposerRightControlsSlotProps extends ComposerVoiceModeButtonProps {
-  isVoiceModeForAgent: boolean;
-  hasAgent: boolean;
-  isAgentRunning: boolean;
   hasSendableContent: boolean;
   isCompact: boolean;
   showVoice: boolean;
 }
 
 function ComposerRightControlsSlot({
-  isVoiceModeForAgent,
-  hasAgent,
-  isAgentRunning,
   hasSendableContent,
   isCompact,
   showVoice,
   ...voiceProps
 }: ComposerRightControlsSlotProps) {
   const hideVoiceForCompactInput = isCompact && hasSendableContent;
-  const showVoiceModeButton =
-    showVoice && !isVoiceModeForAgent && hasAgent && !isAgentRunning && !hideVoiceForCompactInput;
+  const showVoiceModeButton = showVoice && !hideVoiceForCompactInput;
   if (!showVoiceModeButton) return null;
   return (
     <View style={styles.rightControls}>
@@ -1127,7 +1090,7 @@ function ComposerVoiceModeButton({
       <TooltipTrigger
         onPress={handleToggleRealtimeVoice}
         disabled={!isConnected || isVoiceSwitching}
-        accessibilityLabel={t("composer.voice.enableVoiceMode")}
+        accessibilityLabel={t("companion.actions.start")}
         accessibilityRole="button"
         style={realtimeVoiceButtonStyle}
       >
@@ -1135,7 +1098,7 @@ function ComposerVoiceModeButton({
       </TooltipTrigger>
       <TooltipContent side="top" align="center" offset={8}>
         <View style={styles.tooltipRow}>
-          <Text style={styles.tooltipText}>{t("composer.voice.voiceMode")}</Text>
+          <Text style={styles.tooltipText}>{t("companion.title")}</Text>
           {shortcutNode}
         </View>
       </TooltipContent>
@@ -1861,18 +1824,12 @@ function ComposerContentImpl({
     enabled: !externalKeyboardShift,
   });
 
-  const isVoiceModeForAgent = resolveIsVoiceModeForAgent(voice, serverId, agentId);
-
   const handleToggleRealtimeVoice = useCallback(() => {
-    attemptStartRealtimeVoice({
-      voice,
-      isConnected,
-      hasAgent,
-      serverId,
-      agentId,
-      toastErrorRef,
-    });
-  }, [agentId, hasAgent, isConnected, serverId, voice]);
+    if (!appSettings.companionEnabled || !isConnected) return;
+    useCompanionStore
+      .getState()
+      .launch({ serverId, workspaceId: workspaceId ?? undefined, agentId: agentId || undefined });
+  }, [appSettings.companionEnabled, isConnected, serverId, workspaceId, agentId]);
 
   const handleEditQueuedMessage = useCallback(
     (id: string) => {
@@ -1982,16 +1939,13 @@ function ComposerContentImpl({
   const rightContent = useMemo(
     () => (
       <ComposerRightControlsSlot
-        isVoiceModeForAgent={isVoiceModeForAgent}
-        hasAgent={hasAgent}
-        isAgentRunning={isAgentRunning}
         hasSendableContent={hasSendableContent}
         isCompact={isCompactLayout}
-        showVoice={mode.showVoice}
+        showVoice={appSettings.companionEnabled}
         buttonIconSize={buttonIconSize}
         handleToggleRealtimeVoice={handleToggleRealtimeVoice}
         isConnected={isConnected}
-        isVoiceSwitching={isVoiceSwitching}
+        isVoiceSwitching={false}
         realtimeVoiceButtonStyle={realtimeVoiceButtonStyle}
         voiceToggleKeys={voiceToggleKeys}
         t={t}
@@ -2000,14 +1954,10 @@ function ComposerContentImpl({
     [
       buttonIconSize,
       handleToggleRealtimeVoice,
-      hasAgent,
       hasSendableContent,
-      isAgentRunning,
       isConnected,
       isCompactLayout,
-      isVoiceModeForAgent,
-      isVoiceSwitching,
-      mode.showVoice,
+      appSettings.companionEnabled,
       realtimeVoiceButtonStyle,
       t,
       voiceToggleKeys,
@@ -2397,6 +2347,7 @@ function ComposerContentImpl({
                   beforeVoiceContent={beforeVoiceContent}
                   rightContent={rightContent}
                   activeActionContent={activeActionContent}
+                  onStartCompanion={handleToggleRealtimeVoice}
                   voiceServerId={serverId}
                   voiceAgentId={agentId}
                   isAgentRunning={isAgentRunning}

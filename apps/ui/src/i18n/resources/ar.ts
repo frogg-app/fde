@@ -1820,6 +1820,23 @@ export const ar: TranslationResources = {
     },
   },
   companion: {
+    behavior: {
+      nextSession: "تُطبَّق التغييرات عند بدء Companion في المرة القادمة.",
+      verbosity: "طول الرد",
+      brief: "موجز",
+      detailed: "مفصل",
+      updates: "تحديثات المهام الصوتية",
+      important: "الإكمال والإخفاق",
+      completion: "الإكمال فقط",
+      off: "إيقاف",
+      acknowledge: "تأكيد المهام قبل بدء العمل",
+      permissions: "تظل طلبات الإذن مسموعة عند إيقاف تحديثات المهام.",
+      pause: "التوقف قبل الرد",
+      quick: "سريع (0.8 ثانية)",
+      natural: "طبيعي (1.4 ثانية)",
+      relaxed: "متأنٍ (2.4 ثانية)",
+      interruptible: "السماح بمقاطعة الرد بالكلام",
+    },
     title: "الرفيق",
     setup: {
       disabled: "معطّل",

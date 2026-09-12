@@ -1833,6 +1833,23 @@ export const en = {
     },
   },
   companion: {
+    behavior: {
+      nextSession: "Changes apply when you next start Companion.",
+      verbosity: "Reply length",
+      brief: "Brief",
+      detailed: "Detailed",
+      updates: "Spoken task updates",
+      important: "Completions and failures",
+      completion: "Completions only",
+      off: "Off",
+      acknowledge: "Acknowledge tasks before working",
+      permissions: "Permission requests are still spoken when task updates are off.",
+      pause: "Pause before replying",
+      quick: "Quick (0.8 seconds)",
+      natural: "Natural (1.4 seconds)",
+      relaxed: "Relaxed (2.4 seconds)",
+      interruptible: "Let me interrupt by speaking",
+    },
     title: "Companion",
     setup: {
       disabled: "Disabled",

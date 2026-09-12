@@ -1,6 +1,10 @@
 import { createCompanionNativeAudio, type CompanionNativeAudio } from "./native-audio";
 import { Buffer } from "buffer";
-import type { CompanionAudioOutputMessage, CompanionNotebookEntry } from "@fde/protocol/messages";
+import type {
+  CompanionAudioOutputMessage,
+  CompanionNotebookEntry,
+  CompanionConversationOptions,
+} from "@fde/protocol/messages";
 import type { AudioEngine, AudioPlaybackSource } from "@/voice/audio-engine-types";
 import { decodeAudioChunk, toAudioPlaybackSource } from "@/voice/playback-source";
 import { pcm16Rms } from "@/voice/speaking-level";
@@ -14,10 +18,13 @@ const PCM_MIME_TYPE = "audio/pcm;rate=16000;bits=16";
  */
 export interface CompanionSessionAdapter {
   serverId: string;
-  startSession(voiceTransport?: {
-    kind: "codex-webrtc";
-    sdp: string;
-  }): Promise<CompanionSessionStartResult>;
+  startSession(
+    voiceTransport?: {
+      kind: "codex-webrtc";
+      sdp: string;
+    },
+    conversation?: CompanionConversationOptions,
+  ): Promise<CompanionSessionStartResult>;
   stopSession(): Promise<void>;
   sendAudioChunk(audio: string, format: string): Promise<void>;
   audioPlayed(id: string): Promise<void>;
@@ -85,7 +92,11 @@ export interface CompanionConnectionState {
 }
 
 export interface CompanionRuntime {
-  start(adapter: CompanionSessionAdapter, nativeVoice?: boolean): Promise<void>;
+  start(
+    adapter: CompanionSessionAdapter,
+    nativeVoice?: boolean,
+    conversation?: CompanionConversationOptions,
+  ): Promise<void>;
   connectionChanged(connection: CompanionConnectionState): Promise<void>;
   stop(): Promise<void>;
   toggleMute(): void;
@@ -126,6 +137,7 @@ export function createCompanionRuntime(deps: CompanionRuntimeDeps): CompanionRun
   let sessionId: string | undefined;
   let nativeAudio: CompanionNativeAudio | null = null;
   let usingNativeVoice = false;
+  let conversationOptions: CompanionConversationOptions | undefined;
   let reconnect: { nativeVoice: boolean; muted: boolean } | null = null;
   let turnId = 0;
   let userSpeaking = false;
@@ -194,15 +206,17 @@ export function createCompanionRuntime(deps: CompanionRuntimeDeps): CompanionRun
   }
 
   const runtime: CompanionRuntime = {
-    async start(adapter, nativeVoice = false) {
+    async start(adapter, nativeVoice = false, conversation) {
       if (starting) {
         const requestedGeneration = state.generation;
         await starting;
-        if (requestedGeneration === state.generation) await runtime.start(adapter, nativeVoice);
+        if (requestedGeneration === state.generation)
+          await runtime.start(adapter, nativeVoice, conversation);
         return;
       }
       if (state.isActive) return;
       usingNativeVoice = nativeVoice;
+      conversationOptions = conversation;
       const generation = ++state.generation;
       state.adapter = adapter;
       starting = (async () => {
@@ -229,6 +243,7 @@ export function createCompanionRuntime(deps: CompanionRuntimeDeps): CompanionRun
           if (generation !== state.generation) return;
           const result = await adapter.startSession(
             offer ? { kind: "codex-webrtc", sdp: offer } : undefined,
+            conversation,
           );
           if (generation !== state.generation) {
             await adapter.stopSession().catch(() => undefined);
@@ -323,7 +338,7 @@ export function createCompanionRuntime(deps: CompanionRuntimeDeps): CompanionRun
       const intent = reconnect;
       reconnect = null;
       const expectedGeneration = state.generation + 1;
-      await runtime.start(adapter, intent.nativeVoice);
+      await runtime.start(adapter, intent.nativeVoice, conversationOptions);
       if (state.generation !== expectedGeneration || !state.isActive) return;
       if (state.isMuted !== intent.muted) runtime.toggleMute();
     },

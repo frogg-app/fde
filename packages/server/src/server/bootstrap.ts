@@ -147,6 +147,7 @@ import { createCompanionSubagentRunner } from "./companion/tools/thinking.js";
 import { createCompanionApiBackend, createCompanionModelClient } from "./companion/backends/api.js";
 import { CompanionMessageReceipts } from "./companion/message-receipts.js";
 import { CompanionDeferredJobs } from "./companion/deferred-jobs.js";
+import { watchCompanionAgent } from "./companion/watch-agent.js";
 import { createCompanionCodexBackend } from "./companion/backends/codex.js";
 import { createCompanionCliBackend } from "./companion/backends/cli.js";
 import type { CompanionRuntime } from "./companion/session.js";
@@ -1764,6 +1765,11 @@ export async function createPaseoDaemon(
           }),
     createTools: ({ deferredJobs, logger: sessionLogger, endConversation, conversationId }) =>
       createCompanionTools({
+        readTimeline: (agentId) => {
+          const agent = agentManager.getAgent(agentId);
+          if (!agent || agent.internal) throw new Error("Agent is unavailable");
+          return agentManager.getTimeline(agentId);
+        },
         agentManager,
         agentStorage,
         workspaceRegistry,
@@ -1813,6 +1819,16 @@ export async function createPaseoDaemon(
     logger,
     filePath: path.join(config.paseoHome, "companion", "jobs.json"),
   });
+  companion.watchAgent = (agentId, conversationId, workspaceId) => {
+    if (!companion.jobs) return () => {};
+    return watchCompanionAgent({
+      agentManager,
+      jobs: companion.jobs,
+      agentId,
+      conversationId,
+      workspaceId,
+    });
+  };
   agentManager.subscribe(
     (event) => {
       if (event.type === "agent_state") companion.jobs?.observeAgent(event.agent);

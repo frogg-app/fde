@@ -963,3 +963,16 @@ it("does not enable Companion when migrating the old auto-start preference", asy
   expect(normalizeAppSettings({ companionEnabled: true }).companionEnabled).toBe(true);
   expect(normalizeAppSettings({}).companionNativeVoice).toBe(false);
 });
+
+it("defaults Companion to quiet, interruptible conversation and normalizes invalid preferences", async () => {
+  const { normalizeAppSettings } = await import("./storage");
+  const defaults = normalizeAppSettings({});
+  expect(defaults.companionAcknowledgeTasks).toBe(false);
+  expect(defaults.companionInterruptible).toBe(true);
+  expect(defaults.companionVerbosity).toBe("brief");
+  expect(defaults.companionUpdates).toBe("important");
+  expect(defaults.companionPauseMs).toBe(1400);
+  const invalid = normalizeAppSettings({ companionPauseMs: -1, companionUpdates: "everything" });
+  expect(invalid.companionPauseMs).toBe(1400);
+  expect(invalid.companionUpdates).toBe("important");
+});
