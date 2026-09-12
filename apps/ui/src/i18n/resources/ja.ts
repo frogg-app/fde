@@ -1984,6 +1984,8 @@ export const ja: TranslationResources = {
     backdrop: "メニューの背景",
   },
   subagents: {
+    expandWorkspace: "{{label}} のエージェントを展開",
+    collapseWorkspace: "{{label}} のエージェントを折りたたむ",
     expand: "{{label}} のサブエージェントを展開",
     collapse: "{{label}} のサブエージェントを折りたたむ",
     offline: "オフライン · 保存済みのアクティビティ",

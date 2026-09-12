@@ -97,8 +97,8 @@ describe("sidebar session tree", () => {
     const tree = project(
       [
         makeAgent({ id: "parent" }),
-        makeAgent({ id: "child", parentAgentId: "parent" }),
-        makeAgent({ id: "grandchild", parentAgentId: "child" }),
+        makeAgent({ id: "child", status: "running", parentAgentId: "parent" }),
+        makeAgent({ id: "grandchild", status: "running", parentAgentId: "child" }),
       ],
       [providerChild],
     );
@@ -117,7 +117,7 @@ describe("sidebar session tree", () => {
   it("keeps cross-workspace children under their parent and opens their own workspace", () => {
     const tree = project([
       makeAgent({ id: "parent" }),
-      makeAgent({ id: "child", parentAgentId: "parent", workspaceId: "other" }),
+      makeAgent({ id: "child", status: "running", parentAgentId: "parent", workspaceId: "other" }),
     ]);
     const nested = tree.get(workspaceKey)![0].children[0];
     const otherKey = buildWorkspaceTabPersistenceKey({
@@ -141,12 +141,37 @@ describe("sidebar session tree", () => {
     expect(roots.every((node) => node.children.length === 0)).toBe(true);
   });
 
-  it("honors archive-finished visibility and keeps failed provider activity inspectable", () => {
+  it("removes finished provider children immediately without archiving their transcripts", () => {
     const parent = makeAgent({ id: "parent" });
-    const failed = { ...providerChild, status: "failed" as const };
-    expect(project([parent], [failed]).get(workspaceKey)![0].children[0].row.status).toBe("failed");
+    expect(project([parent], [providerChild]).get(workspaceKey)![0].children).toHaveLength(1);
+    for (const status of ["completed", "failed", "canceled"] as const) {
+      expect(
+        project([parent], [{ ...providerChild, status }]).get(workspaceKey)![0].children,
+      ).toEqual([]);
+    }
     const hidden = new Set([providerSubagentKey(SERVER_ID, "parent", "native")]);
-    expect(project([parent], [failed], hidden).get(workspaceKey)![0].children).toEqual([]);
+    expect(project([parent], [providerChild], hidden).get(workspaceKey)![0].children).toEqual([]);
+  });
+
+  it("keeps idle workspace roots but removes idle, failed and closed managed children", () => {
+    const parent = makeAgent({ id: "parent" });
+    const children = ["idle", "error", "closed", "running", "initializing"].map((status) =>
+      makeAgent({ id: status, parentAgentId: "parent", status: status as Agent["status"] }),
+    );
+    const roots = project([parent, ...children]).get(workspaceKey)!;
+    expect(roots.map((node) => node.row.id)).toEqual(["parent"]);
+    expect(roots[0].children.map((node) => node.row.id)).toEqual(["initializing", "running"]);
+  });
+
+  it("keeps running grandchildren reachable after an intermediate agent becomes idle", () => {
+    const roots = project([
+      makeAgent({ id: "parent" }),
+      makeAgent({ id: "middle", parentAgentId: "parent" }),
+      makeAgent({ id: "worker", parentAgentId: "middle", status: "running" }),
+    ]).get(workspaceKey)!;
+    expect(roots[0].children.map((node) => node.target)).toEqual([
+      { kind: "agent", agentId: "worker" },
+    ]);
   });
 
   it("isolates identical child and parent ids on separate hosts and gates unsupported hosts", () => {

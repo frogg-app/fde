@@ -146,8 +146,12 @@ Running provider-native subagents contribute `running` to the workspace owned by
 
 ## Sidebar agent tree
 
-Workspace rows show their managed agents with expandable subagents beneath each parent.
-New children expand automatically until the user explicitly collapses that parent.
+A workspace with one managed root agent represents that agent directly: clicking the
+workspace opens its session, and its active subagents appear immediately beneath it.
+Workspaces with multiple root agents expose those agents through a workspace-level
+chevron. Disclosure controls only appear when there are visible child rows; an unrequested,
+pending, or failed discovery query alone never adds a chevron. New children expand
+automatically until the user explicitly collapses their workspace or parent.
 The chevron controls disclosure; clicking the label opens the existing session. Managed
 children open interactive agent tabs in their owning workspace. Provider-owned children
 open their dedicated live, read-only transcript, including reasoning and tool activity.
@@ -163,8 +167,12 @@ show saved activity without live status indicators. The provider transcript also
 initial loading, failure/retry, and offline states and refetches after reconnection.
 
 Cross-workspace managed children appear beneath their parent and in their own workspace.
-Archived agents and provider rows hidden by **Archive finished** leave the sidebar tree;
-detached agents become roots. Row identity includes the host, parent, and child where
+The sidebar shows only provider children with running status and managed children that
+are running, initializing, or waiting on a permission. Completed, failed, canceled, idle,
+and closed children disappear automatically; their existing tabs and transcript history
+remain available. Active descendants of idle intermediates remain reachable. Workspace
+root agents stay selectable when idle. Archived agents and provider rows hidden by
+**Archive finished** leave the tree; detached agents become roots. Row identity includes the host, parent, and child where
 needed, so provider identifiers never become managed agent identifiers.
 
 The interaction reference is [Orca's agent/session model](https://www.onorca.dev/docs/model/agents-sessions)
