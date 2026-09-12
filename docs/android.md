@@ -160,3 +160,8 @@ The diagnostic workflow currently extracts the unchanged ARM64 libraries into
 the rooted x86 emulator installation to bypass its direct-APK loading limitation.
 This isolates application startup errors; passing that diagnostic is not proof
 of normal installation on a physical ARM64 device.
+
+Runtime polyfills live in `src/polyfills/runtime.ts`, the first side-effect import
+in `index.ts`. Keep them there: static imports execute before an importing module
+body, so calling navigator initialization from the root layout is too late for
+xterm platform detection on React Native.

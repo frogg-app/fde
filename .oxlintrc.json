@@ -71,6 +71,7 @@
           "**/react-native",
           "**/@/styles/unistyles",
           "**/src/styles/unistyles",
+          "**/src/polyfills/runtime",
           "**/@/test/window-local-storage"
         ]
       }

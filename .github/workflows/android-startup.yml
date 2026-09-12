@@ -5,6 +5,10 @@ on:
     branches: [fix/android-launch-crash]
   workflow_dispatch:
     inputs:
+      build_current:
+        description: Build and test the selected source revision instead of an existing artifact
+        default: false
+        type: boolean
       source_run_id:
         description: Workflow run containing the APK artifact
         default: "34705698056"
@@ -21,7 +25,7 @@ permissions:
 jobs:
   startup:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 60
     env:
       GH_TOKEN: ${{ github.token }}
       SOURCE_RUN_ID: ${{ inputs.source_run_id || '34705698056' }}
@@ -33,10 +37,12 @@ jobs:
           echo "ANDROID_AVD_HOME=$RUNNER_TEMP/fde-startup-avd" >> "$GITHUB_ENV"
           echo "EVIDENCE_DIR=$RUNNER_TEMP/android-startup-evidence" >> "$GITHUB_ENV"
           echo "APK_DIR=$RUNNER_TEMP/android-startup-apk" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/android-startup-evidence" "$RUNNER_TEMP/android-startup-apk"
       - uses: actions/setup-node@v7
         with:
           node-version: "22"
       - name: Download the exact APK artifact
+        if: github.event_name != 'push' && !inputs.build_current
         shell: bash
         run: |
           set -euo pipefail
@@ -50,6 +56,44 @@ jobs:
           echo "APK_PATH=${apks[0]}" >> "$GITHUB_ENV"
           sha256sum "${apks[0]}" | tee "$EVIDENCE_DIR/apk.sha256"
           printf 'run=%s\nartifact=%s\n' "$SOURCE_RUN_ID" "$ARTIFACT_NAME" > "$EVIDENCE_DIR/source.txt"
+      - uses: jlumbroso/free-disk-space@v1.3.1
+        if: github.event_name == 'push' || inputs.build_current
+        with:
+          tool-cache: false
+          android: false
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: false
+      - uses: actions/setup-java@v6
+        if: github.event_name == 'push' || inputs.build_current
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: android-actions/setup-android@v4
+        with:
+          log-accepted-android-sdk-licenses: false
+      - uses: gradle/actions/setup-gradle@v6
+        if: github.event_name == 'push' || inputs.build_current
+      - name: Build APK from the selected source
+        if: github.event_name == 'push' || inputs.build_current
+        timeout-minutes: 40
+        run: |
+          node scripts/ci/npm-retry.mjs ci
+          node scripts/release/build-android-apk.mjs --abi arm64-v8a --serial --out-dir "$APK_DIR"
+          mapfile -d '' apks < <(find "$APK_DIR" -type f -name '*.apk' -print0)
+          test "${#apks[@]}" -eq 1
+          echo "APK_PATH=${apks[0]}" >> "$GITHUB_ENV"
+          sha256sum "${apks[0]}" | tee "$EVIDENCE_DIR/apk.sha256"
+          git rev-parse HEAD > "$EVIDENCE_DIR/source.txt"
+      - uses: actions/upload-artifact@v7
+        if: github.event_name == 'push' || inputs.build_current
+        with:
+          name: android-startup-apk-${{ github.run_id }}
+          path: ${{ runner.temp }}/android-startup-apk/*.apk
+          if-no-files-found: error
+          retention-days: 7
       - name: Prepare hardware-accelerated Google APIs emulator
         timeout-minutes: 6
         shell: bash

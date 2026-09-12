@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.3 - 2026-09-12
+
+- Initialize native runtime polyfills before importing the router and application
+  modules. Android previously loaded xterm before navigator.userAgent existed,
+  causing an immediate JavaScript exception during launch.
+- Cover the entry ordering with the real xterm bundle in a React Native-like
+  runtime, and build the selected source in the Android startup diagnostic.
+
 ## 0.6.2 - 2026-09-12
 
 - Add an explicit-device Android APK startup check that observes two cold launches
