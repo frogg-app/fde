@@ -163,7 +163,7 @@ export const LeftSidebar = memo(function LeftSidebar({ active }: { active: boole
   const labels = useMemo(
     (): SidebarLabels => ({
       addProject: t("sidebar.actions.addProject"),
-      addHost: t("settings.hostPicker.addHost"),
+      addHost: t("settings.addHost"),
       settings: t("sidebar.actions.settings"),
       closeSidebar: t("sidebar.actions.closeSidebar"),
     }),

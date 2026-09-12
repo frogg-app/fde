@@ -15,10 +15,7 @@ import { SETTINGS_DESKTOP_SIDEBAR_WIDTH } from "@/constants/layout";
 import { isWeb } from "@/constants/platform";
 import { useKeyboardShortcutsAvailable } from "@/keyboard/availability";
 import { useLocalDaemonServerId } from "@/hooks/use-is-local-daemon";
-import {
-  type EnableBuiltInDaemonOption,
-  useEnableBuiltInDaemonOption,
-} from "@/desktop/hooks/use-enable-built-in-daemon-option";
+import { useEnableBuiltInDaemonOption } from "@/desktop/hooks/use-enable-built-in-daemon-option";
 import type { HostSectionSlug, SettingsSectionSlug } from "@/utils/host-routes";
 import type { SettingsView } from "@/navigation/settings-navigation";
 import { ICON_SIZE, type Theme } from "@/styles/theme";
@@ -142,24 +139,16 @@ interface HostPickerProps {
   activeServerId: string | null;
   sortedHosts: HostProfile[];
   onSelectHost: (serverId: string) => void;
-  onAddHost: () => void;
-  enableBuiltInDaemonOption: EnableBuiltInDaemonOption;
 }
 
 /**
  * Scopes the host sections to a host. Reuses the canonical sidebar host
  * switcher pattern (left-sidebar.tsx): a quiet row-styled trigger opening a
- * <Combobox>. The local host is listed first, each row shows the connection it
- * is using right now; an "Add host" row is always reachable from the list —
- * even with a single host.
+ * <Combobox>. The local host is listed first and each row shows the connection
+ * it is using right now. Host creation stays in the main sidebar footer; this
+ * control has one job and only switches the settings scope.
  */
-function HostPicker({
-  activeServerId,
-  sortedHosts,
-  onSelectHost,
-  onAddHost,
-  enableBuiltInDaemonOption,
-}: HostPickerProps) {
+function HostPicker({ activeServerId, sortedHosts, onSelectHost }: HostPickerProps) {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const triggerRef = useRef<View | null>(null);
@@ -187,15 +176,10 @@ function HostPicker({
       open={isOpen}
       onOpenChange={setIsOpen}
       anchorRef={triggerRef}
-      includeAddHost
-      onAddHost={onAddHost}
-      includeEnableBuiltInDaemon={enableBuiltInDaemonOption.visible}
-      onEnableBuiltInDaemon={enableBuiltInDaemonOption.onPress}
       showActiveConnection
       searchable={false}
       title={t("settings.hostPicker.switchHost")}
       desktopMinWidth={240}
-      addHostTestID="settings-add-host"
       hostOptionTestID={hostOptionTestID}
     >
       <ComboboxTrigger
@@ -269,8 +253,6 @@ export function SettingsSidebar({
             activeServerId={activeHostServerId}
             sortedHosts={sortedHosts}
             onSelectHost={onSelectHost}
-            onAddHost={onAddHost}
-            enableBuiltInDaemonOption={enableBuiltInDaemonOption}
           />
           {HOST_SECTION_ITEMS.map((item) => (
             <SidebarHostSectionButton

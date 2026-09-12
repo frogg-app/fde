@@ -3,7 +3,7 @@ import { openSettings } from "../support/helpers/app";
 import { getE2EDaemonPort, wsRoutePatternForPort } from "../support/helpers/daemon-port";
 import { startIsolatedHostDaemon } from "../support/helpers/isolated-host-daemon";
 import {
-  addDirectHostFromSettings,
+  addDirectHostFromSidebar,
   clickSettingsBackToWorkspace,
   openSettingsHostSection,
 } from "../support/helpers/settings";
@@ -28,8 +28,7 @@ test.describe("Settings host selection", () => {
       });
 
       await page.goto("/");
-      await openSettings(page);
-      await addDirectHostFromSettings(page, {
+      await addDirectHostFromSidebar(page, {
         host: "127.0.0.1",
         port: remoteDaemon.port,
       });
