@@ -6,7 +6,7 @@ import {
   type PluginHandlerContext,
   type PluginRpcContract,
 } from "@fde/plugin/server";
-import { createPaseoApi, type PaseoApi } from "@fde/client";
+import { createFdeApi, type FdeApi } from "@fde/client";
 import { DaemonClient } from "@fde/client/internal/daemon-client";
 import { createPluginDaemonTransportFactory } from "./daemon-transport.js";
 import { isPluginClientOnlySdkSpecifier, isPluginSdkSpecifier } from "./plugin-sdk-specifiers.js";
@@ -22,7 +22,7 @@ interface RegisteredRpc {
 const handlers = new Map<string, RegisteredRpc>();
 let cleanup: (() => void | Promise<void>) | null = null;
 let daemonClient: DaemonClient | null = null;
-let paseo: PaseoApi | null = null;
+let fde: FdeApi | null = null;
 let stopping = false;
 const nodeRequire = createRequire(import.meta.url);
 
@@ -113,7 +113,7 @@ async function initialize(message: Extract<PluginProcessRequest, { type: "initia
     reconnect: { enabled: false },
     transportFactory,
   });
-  paseo = createPaseoApi(daemonClient);
+  fde = createFdeApi(daemonClient);
   await daemonClient.connect();
   evaluateBundle(message.bundle);
   send({ type: "ready", methods: [...handlers.keys()].sort() });
@@ -130,9 +130,9 @@ async function shutdown(): Promise<void> {
     console.error("Plugin cleanup failed", error);
   }
   await daemonClient?.close().catch(() => undefined);
-  await sendAndWait({ type: "paseo_close" });
+  await sendAndWait({ type: "fde_close" });
   daemonClient = null;
-  paseo = null;
+  fde = null;
   process.disconnect();
 }
 
@@ -148,7 +148,7 @@ process.on("message", (message: PluginProcessRequest) => {
     void shutdown();
     return;
   }
-  if (message.type === "paseo_frame" || message.type === "paseo_close") return;
+  if (message.type === "fde_frame" || message.type === "fde_close") return;
   if (stopping) return;
   const registered = handlers.get(message.method);
   if (!registered) {
@@ -162,8 +162,8 @@ process.on("message", (message: PluginProcessRequest) => {
   void registered.contract.input
     .parseAsync(message.input)
     .then((input) => {
-      if (!paseo) throw new Error("Plugin FDE API is unavailable");
-      return registered.handler(input, { paseo });
+      if (!fde) throw new Error("Plugin FDE API is unavailable");
+      return registered.handler(input, { fde });
     })
     .then((output) => registered.contract.output.parseAsync(output))
     .then(

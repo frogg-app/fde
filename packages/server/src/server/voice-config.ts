@@ -1,6 +1,6 @@
 import { brand } from "@fde/branding";
-const VOICE_PROMPT_BLOCK_START = "<paseo_voice_mode>";
-const VOICE_PROMPT_BLOCK_END = "</paseo_voice_mode>";
+const VOICE_PROMPT_BLOCK_START = "<fde_voice_mode>";
+const VOICE_PROMPT_BLOCK_END = "</fde_voice_mode>";
 
 const VOICE_AGENT_SYSTEM_INSTRUCTION = [
   `${brand.name} voice mode is now on.`,

@@ -1,19 +1,19 @@
 # Architecture
 
-Paseo is a client-server system for monitoring and controlling local AI coding agents. The daemon runs on your machine, manages agent processes, and streams their output in real time over WebSocket. Clients (mobile app, CLI, desktop app) connect to the daemon to observe and interact with agents.
+FDE is a client-server system for monitoring and controlling local AI coding agents. The daemon runs on your machine, manages agent processes, and streams their output in real time over WebSocket. Clients (mobile app, CLI, desktop app) connect to the daemon to observe and interact with agents.
 
-Your code never leaves your machine. Paseo is local-first.
+FDE is self-hosted. Provider tools and configured inference services follow the selected provider and network policy.
 
 ## System overview
 
 ```
 ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
 │  Mobile App  │    │     CLI     │    │ Desktop App │
-│   (Expo)     │    │ (Commander) │    │ (Tauri)     │
+│   (Expo)     │    │ (Commander) │    │ (Desktop)   │
 └──────┬───────┘    └──────┬──────┘    └──────┬──────┘
        │                   │                  │
-       │    WebSocket      │    WebSocket     │    Managed subprocess
-       │    (direct or     │    (direct)      │    + WebSocket
+       │    WebSocket      │    WebSocket     │    WebSocket
+       │    (direct or     │    (direct)      │    (independent daemon)
        │     via relay)    │                  │
        └───────────┬───────┴──────────────────┘
                    │
@@ -36,21 +36,21 @@ Your code never leaves your machine. Paseo is local-first.
 - **Daemon:** Local server that spawns and manages agent processes and exposes the WebSocket API.
 - **App:** Cross-platform Expo client for iOS, Android, web, and the shared UI used by desktop.
 - **CLI:** Terminal interface for agent workflows that can also start and manage the daemon.
-- **Desktop app:** Tauri shell (`apps/desktop`, see [desktop-shell.md](desktop-shell.md)) around the web app that bundles and auto-manages its own daemon.
+- **Desktop app:** Electron shell (`apps/desktop-electron`, see [electron-desktop.md](electron-desktop.md)) around the web app, connecting to independently installed local or remote daemons.
 - **Relay:** Optional encrypted bridge for remote access without opening ports directly.
 
 ## Packages
 
 ### `packages/server` — The daemon
 
-The heart of Paseo. A Node.js process that:
+The heart of FDE. A Node.js process that:
 
 - Listens for WebSocket connections from clients
 - Manages agent lifecycle (create, run, stop, resume, archive)
 - Streams agent output in real time via a timeline model
 - Provides agent-to-agent tools through a transport-neutral tool catalog, with MCP as one adapter
 - Optionally connects outbound to a relay for remote access
-- Optionally serves the browser web client from the same HTTP server (self-hosting guide: [public-docs/web-ui.md](../public-docs/web-ui.md)); until a device has paired, LAN visitors get the claim page instead (`server/claim-gate-page.ts`, [permissions.md](permissions.md#claimed-state))
+- Optionally serves the browser web client from the same HTTP server (self-hosting guide: [daemon installation](install.md)); until a device has paired, LAN visitors get the claim page instead (`server/claim-gate-page.ts`, [permissions.md](permissions.md#claimed-state))
 - Exposes a few unauthenticated HTTP routes next to `/api/health`: `/api/identity` (`server/identity-route.ts`) and the pairing routes under `/api/setup/*` (`server/setup-routes.ts`)
 
 All paths are under `packages/server/src/`.
@@ -75,7 +75,7 @@ not retain non-Git directories.
 | `server/agent/agent-manager.ts` | Agent lifecycle state machine, timeline tracking, subscriber management        |
 | `server/agent/agent-storage.ts` | File-backed JSON persistence at `$FDE_HOME/agents/`                            |
 | `server/agent/tools/`           | Transport-neutral catalog for workspaces, agents, permissions, and automation  |
-| `server/agent/mcp-server.ts`    | Thin MCP adapter that registers the Paseo tool catalog with the MCP SDK        |
+| `server/agent/mcp-server.ts`    | Thin MCP adapter that registers the FDE tool catalog with the MCP SDK          |
 | `server/agent/providers/`       | Provider adapters (see "Agent providers" below)                                |
 | `server/orchestration-skills/`  | Bundled catalog, host selection, convergence, and skill-directory transactions |
 | `server/relay-transport.ts`     | Outbound relay connection with E2E encryption                                  |
@@ -91,13 +91,13 @@ it does not depend on the server.
 
 ### `packages/client` — Daemon client library and SDK facade
 
-Owns the low-level daemon WebSocket driver plus the higher-level `PaseoClient`
+Owns the low-level daemon WebSocket driver plus the higher-level `FdeClient`
 facade. App and CLI may import the low-level driver from
 `@fde/client/internal/daemon-client` during migration, while new SDK-shaped
 code imports from `@fde/client`.
 
-`PaseoApi` is the capability-only boundary over workspaces, agents, providers, and config.
-`PaseoClient` adds connection lifecycle. App plugin surfaces borrow an API over their selected
+`FdeApi` is the capability-only boundary over workspaces, agents, providers, and config.
+`FdeClient` adds connection lifecycle. App plugin surfaces borrow an API over their selected
 host's client; plugin subprocesses use the same facade over a host-owned IPC transport.
 
 ### `apps/ui` — Mobile + web client (Expo)
@@ -143,20 +143,20 @@ traffic. Workspace assignments stay on the workspace directory sequence.
 
 ### `apps/cli` — Command-line client
 
-Commander.js CLI with Docker-style commands. Common agent operations are also exposed at the top level (e.g. `paseo ls`, `paseo run`).
+Commander.js CLI with Docker-style commands. Common agent operations are also exposed at the top level (e.g. `fde ls`, `fde run`).
 
-- `paseo agent ls/run/import/attach/logs/stop/delete/send/inspect/wait/archive/reload/update/mode`
-- `paseo daemon start/stop/restart/status/pair/set-password`
-- `paseo terminal ls/create/capture/send-keys/kill`
-- `paseo script ls/start/stop`
-- `paseo schedule create/ls/inspect/update/pause/resume/run-once/logs/delete`
-- `paseo heartbeat create/update/delete`
-- `paseo project create/ls/rename/delete`
-- `paseo workspace create/ls/rename/archive`
-- `paseo permit allow/deny/ls`
-- `paseo provider ls/models`
-- hidden legacy `paseo worktree create/ls/archive` compatibility alias
-- `paseo speech …`
+- `fde agent ls/run/import/attach/logs/stop/delete/send/inspect/wait/archive/reload/update/mode`
+- `fde daemon start/stop/restart/status/pair/set-password`
+- `fde terminal ls/create/capture/send-keys/kill`
+- `fde script ls/start/stop`
+- `fde schedule create/ls/inspect/update/pause/resume/run-once/logs/delete`
+- `fde heartbeat create/update/delete`
+- `fde project create/ls/rename/delete`
+- `fde workspace create/ls/rename/archive`
+- `fde permit allow/deny/ls`
+- `fde provider ls/models`
+- hidden legacy `fde worktree create/ls/archive` compatibility alias
+- `fde speech …`
 
 Communicates with the daemon via the same WebSocket protocol as the app.
 
@@ -170,20 +170,27 @@ Enables remote access when the daemon is behind a firewall.
 - Pairing via QR code transfers the daemon's public key to the client
 - New homes keep relay disabled until pairing consent. `DaemonConfigStore` persists the desired state, while the relay runtime starts or stops the outbound transport live; pairing reads that current state instead of a startup snapshot.
 - Optional E2EE capability negotiation preserves application frame kind: text plaintext uses base64 ciphertext text frames, while binary plaintext uses raw ciphertext binary frames; mixed-version peers remain base64-only
-- Self-hosted relays opt into TLS with `daemon.relay.useTls` or `PASEO_RELAY_USE_TLS=true`; the public (client-facing) TLS setting can be overridden independently via `daemon.relay.publicUseTls` or `PASEO_RELAY_PUBLIC_USE_TLS`
+- Self-hosted relays opt into TLS with `daemon.relay.useTls` or `FDE_RELAY_USE_TLS=true`; the public (client-facing) TLS setting can be overridden independently via `daemon.relay.publicUseTls` or `FDE_RELAY_PUBLIC_USE_TLS`
 
-The production relay server lives in [getpaseo/paseo-relay](https://github.com/getpaseo/paseo-relay). It is a distributed Elixir service. The Cloudflare relay implementation in this monorepo is retained as legacy code and is not deployed.
+No relay endpoint is configured by default. Operators may configure a self-hosted relay; otherwise use direct or SSH connections. Do not assume an upstream or hosted FDE relay is available.
 
 See [SECURITY.md](../SECURITY.md) for the full threat model.
 
-### Paseo Hub
+### FDE Hub
 
 The optional Hub relationship is daemon-outbound and does not use the relay. Its connection,
 authorization, ownership, persistence, and lifecycle contract is documented in [hub.md](hub.md).
 
-### `apps/desktop` — Desktop app (Tauri)
+### Desktop application
 
-The Electron desktop shell was dropped in this fork; the Tauri shell lives in `apps/desktop` (see [desktop-shell.md](desktop-shell.md)).
+`apps/desktop-electron` is the production Electron app-only shell behind
+`window.fdeDesktop`. It loads the shared Expo UI with a sandboxed preload and
+context isolation. Native operations, SSH transports and remote deployment run
+in the main process. The Node daemon is installed separately; quitting the app
+does not stop agents or a local server. See [desktop shell](desktop-shell.md).
+
+The retired native shell and experimental Rust backend remain inactive reference
+sources, not release targets or a planned daemon migration.
 
 ## WebSocket protocol
 
@@ -366,12 +373,12 @@ The built-in, user-facing providers are Claude Code, Codex, Copilot, OpenCode, P
 
 All providers:
 
-- Handle their own authentication (Paseo does not manage API keys)
+- Handle their own authentication (FDE does not manage API keys)
 - Support session resume via persistence handles
 - Map tool calls to a normalized `ToolCallDetail` type
 - Expose provider-specific modes (plan, default, full-access)
 
-Providers that can accept native tool definitions should set `supportsNativePaseoTools` and read `launchContext.paseoTools`. The daemon then passes the shared Paseo tool catalog directly and removes the internal Paseo MCP server from that provider launch config. Providers that only support MCP continue to receive the same tools through the MCP fallback at `/mcp/agents`.
+Providers that can accept native tool definitions should set `supportsNativeFdeTools` and read `launchContext.fdeTools`. The daemon then passes the shared FDE tool catalog directly and removes the internal FDE MCP server from that provider launch config. Providers that only support MCP continue to receive the same tools through the MCP fallback at `/mcp/agents`.
 
 ## Data flow: running an agent
 
@@ -385,8 +392,8 @@ Providers that can accept native tool definitions should set `supportsNativePase
 
 ## Storage
 
-The FDE home defaults to `~/.fde`. `FDE_HOME` sets it; the older `PASEO_HOME` still works
-as a fallback and `FDE_HOME` wins when both are set. A machine that still has `~/.paseo` and
+The FDE home defaults to `~/.fde`. `FDE_HOME` sets it; the older `FDE_HOME` still works
+as a fallback and `FDE_HOME` wins when both are set. A machine that still has `~/.fde` and
 no `~/.fde` is migrated once on the next daemon or CLI start (the directory is renamed, or
 copied when the rename crosses devices, and the move is logged); a home a daemon is still
 running from is left alone until it stops. File names inside the home are unchanged. The
@@ -404,14 +411,32 @@ $FDE_HOME/
 ├── principals.json                             # Paired devices: principals + credential digests (permissions.md)
 ├── push-tokens.json                            # Mobile push tokens
 ├── tts-cache/                                  # Synthesised spoken-alert audio (LRU, 50 MB)
-├── paseo.sock / paseo.pid                      # Local IPC socket and pidfile
+├── fde.sock / fde.pid                      # Local IPC socket and pidfile
 └── daemon.log                                  # Daemon trace logs (rotated)
 ```
 
+## Independent execution (opt-in)
+
+`FDE_EXECUTION_SERVICE=1` selects a persistent execution process behind the existing
+supervised daemon. `execution-service/gateway-daemon.ts` reconnects to the authenticated
+owner described under `$FDE_HOME/execution-service/`; `worker.ts` runs the existing
+backend, AgentManager, providers, MCP, relay, terminals, and workspace services.
+HTTP and WebSocket forwarding restores the original client's identity before
+access policy runs. Gateway stop drops public connections without closing agents.
+Retained execution stays authoritative if a later launcher omits the opt-in flag.
+
+Installed gateway and running backend versions can differ. Runtime replacement is
+allowed on a subsequent start only when no agents are resident or starting; idle
+agents may still own background work. `stop --all` is the explicit destructive
+execution stop. Existing runtime code is retained on disk. The mode remains opt-in
+pending native service-manager and real-provider acceptance; it does not preserve
+processes across a reboot or container replacement. See the
+[specification and validation record](plans/independent-execution-service.md).
+
 ## Deployment models
 
-1. **Local daemon** (default): `paseo daemon start` on `127.0.0.1:9999` (6767 was the upstream default and still works when configured explicitly)
-2. **Managed desktop**: the desktop shell spawns the daemon as subprocess, and stops it again on quit so that "restart the app" is a complete reset. Settings > Host > "Keep daemon running after quit" opts out. Only a daemon the desktop started is stopped — a daemon you started yourself with `paseo daemon start` is left alone (`paseo.pid` records `desktopManaged`).
+1. **Local daemon** (default): `fde daemon start` on `127.0.0.1:9999` (6767 was the upstream default and still works when configured explicitly)
+2. **Managed desktop**: the desktop shell spawns the daemon as subprocess, and stops it again on quit so that "restart the app" is a complete reset. Settings > Host > "Keep daemon running after quit" opts out. Only a daemon the desktop started is stopped — a daemon you started yourself with `fde daemon start` is left alone (`fde.pid` records `desktopManaged`).
 3. **Remote + relay**: Daemon behind firewall, relay bridges with E2E encryption
 
 Native installs (`deploy/install.sh`) are versioned: `<install dir>/versions/<v>` plus a

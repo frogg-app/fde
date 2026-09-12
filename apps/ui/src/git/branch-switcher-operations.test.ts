@@ -37,7 +37,7 @@ describe("createBranchSwitcherOperations", () => {
 
     const operations = createBranchSwitcherOperations(client, workspaceDirectory);
     await operations.getBranchSuggestions(200);
-    await operations.listPaseoStashes();
+    await operations.listFdeStashes();
     await operations.saveStash("main");
     await operations.popStash(0);
     await operations.switchBranch("feature");

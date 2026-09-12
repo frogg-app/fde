@@ -52,20 +52,20 @@ export async function stageLegacyFavoritesForHostMigration(
   await gotoAppShell(page);
   await page.evaluate(
     ({ favorites: storedFavorites, serverId: hostId }) => {
-      const preferencesKey = "@paseo:create-agent-preferences";
+      const preferencesKey = "@fde:create-agent-preferences";
       const raw = localStorage.getItem(preferencesKey);
       const preferences = raw ? JSON.parse(raw) : {};
       localStorage.setItem(
         preferencesKey,
         JSON.stringify({ ...preferences, favoriteModels: storedFavorites }),
       );
-      localStorage.removeItem(`@paseo:legacy-favorites-to-agent-profiles:v1:${hostId}`);
+      localStorage.removeItem(`@fde:legacy-favorites-to-agent-profiles:v1:${hostId}`);
 
       // Preserve this upgrade-shaped storage across the fixture's next-page
       // default seed; a reload is the startup boundary under test.
-      const nonce = localStorage.getItem("@paseo:e2e-seed-nonce");
+      const nonce = localStorage.getItem("@fde:e2e-seed-nonce");
       if (nonce) {
-        localStorage.setItem("@paseo:e2e-disable-default-seed-once", nonce);
+        localStorage.setItem("@fde:e2e-disable-default-seed-once", nonce);
       }
     },
     { favorites, serverId },

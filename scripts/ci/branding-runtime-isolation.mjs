@@ -65,9 +65,9 @@ try {
         CLAUDE_CONFIG_DIR: path.join(home, ".claude"),
         XDG_CONFIG_HOME: path.join(home, ".config"),
         XDG_DATA_HOME: path.join(home, ".local/share"),
-        PASEO_DICTATION_ENABLED: "false",
-        PASEO_VOICE_MODE_ENABLED: "false",
-        PASEO_COMPANION_ENABLED: "false",
+        FDE_DICTATION_ENABLED: "false",
+        FDE_VOICE_MODE_ENABLED: "false",
+        FDE_COMPANION_ENABLED: "false",
       },
     };
     product.log = createWriteStream(path.join(output, `${id}.log`));

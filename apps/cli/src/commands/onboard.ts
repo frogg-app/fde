@@ -6,7 +6,7 @@ import path from "node:path";
 import { loadPersistedConfig, type PersistedConfig } from "@fde/server";
 import { buildPairingDeepLink } from "@fde/protocol/connection-offer";
 import {
-  resolveLocalPaseoHome,
+  resolveLocalFdeHome,
   resolveLocalDaemonState,
   resolveTcpHostFromListen,
   startLocalDaemonDetached,
@@ -48,14 +48,14 @@ const DEFAULT_READY_TIMEOUT_MS = 10 * 60 * 1000;
 const READY_PROBE_TIMEOUT_MS = 1200;
 /**
  * Voice is on by default: the daemon bundle ships the local speech runtime and
- * models download on first use. `--voice disable`, `PASEO_VOICE=0`, or
+ * models download on first use. `--voice disable`, `FDE_VOICE=0`, or
  * `features.voice.enabled=false` opt out.
  */
 export const DEFAULT_VOICE_ENABLED = true;
 
-/** Non-interactive runs honor the `PASEO_VOICE` umbrella switch, then the default. */
+/** Non-interactive runs honor the `FDE_VOICE` umbrella switch, then the default. */
 export function resolveNonInteractiveVoiceDefault(env: NodeJS.ProcessEnv): boolean {
-  const raw = env.PASEO_VOICE?.trim().toLowerCase();
+  const raw = env.FDE_VOICE?.trim().toLowerCase();
   if (raw !== undefined && ["0", "false", "no", "off"].includes(raw)) return false;
   if (raw !== undefined && ["1", "true", "yes", "on"].includes(raw)) return true;
   return DEFAULT_VOICE_ENABLED;
@@ -82,8 +82,8 @@ function parseTimeoutMs(raw: string | undefined): number {
   return Math.ceil(seconds * 1000);
 }
 
-function savePersistedConfig(paseoHome: string, config: OnboardPersistedConfig): void {
-  const configPath = path.join(paseoHome, "config.json");
+function savePersistedConfig(fdeHome: string, config: OnboardPersistedConfig): void {
+  const configPath = path.join(fdeHome, "config.json");
   writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
 }
 
@@ -308,11 +308,8 @@ export function onboardCommand(): Command {
     });
 }
 
-async function resolveAndPersistVoice(
-  paseoHome: string,
-  options: OnboardOptions,
-): Promise<boolean> {
-  let persisted = loadPersistedConfig(paseoHome) as OnboardPersistedConfig;
+async function resolveAndPersistVoice(fdeHome: string, options: OnboardOptions): Promise<boolean> {
+  let persisted = loadPersistedConfig(fdeHome) as OnboardPersistedConfig;
   const persistedVoiceSelection = resolvePersistedVoiceSelection(persisted);
   const shouldPrompt = options.voice === "ask" || options.voice === undefined;
   let voiceEnabled: boolean;
@@ -334,7 +331,7 @@ async function resolveAndPersistVoice(
   }
 
   persisted = applyVoiceSelection(persisted, voiceEnabled);
-  savePersistedConfig(paseoHome, persisted);
+  savePersistedConfig(fdeHome, persisted);
   return voiceEnabled;
 }
 
@@ -431,18 +428,18 @@ async function reportReachability(
  */
 async function printPairingOffer(
   options: OnboardOptions,
-  paseoHome: string,
+  fdeHome: string,
   richUi: boolean,
 ): Promise<void> {
   if (options.relay === false) {
     log.message("Relay pairing skipped because --no-relay was provided.");
-    printNextSteps(null, paseoHome, richUi);
+    printNextSteps(null, fdeHome, richUi);
     if (richUi) outro(`${brand.name} daemon is running.`);
     return;
   }
 
   let pairing = await resolveLocalPairingOffer({
-    paseoHome,
+    fdeHome,
     enableRelay: options.relay === true,
   });
 
@@ -452,11 +449,11 @@ async function printPairingOffer(
     const shouldEnable = richUi ? await confirmRelayPairing() : false;
     if (!shouldEnable) {
       printDirectConnectionGuidance();
-      printNextSteps(null, paseoHome, richUi);
+      printNextSteps(null, fdeHome, richUi);
       if (richUi) outro(`${brand.name} daemon is running.`);
       return;
     }
-    pairing = await resolveLocalPairingOffer({ paseoHome, enableRelay: true });
+    pairing = await resolveLocalPairingOffer({ fdeHome, enableRelay: true });
     log.success("Relay enabled");
   }
   if (pairing.mode === "direct") {
@@ -465,7 +462,7 @@ async function printPairingOffer(
 
   if (!pairing.url) {
     log.warn("Relay pairing URL is unavailable for this daemon configuration.");
-    printNextSteps(null, paseoHome, richUi);
+    printNextSteps(null, fdeHome, richUi);
     if (richUi) {
       outro(`${brand.name} daemon is running.`);
     }
@@ -480,7 +477,7 @@ async function printPairingOffer(
       deepLink: buildPairingDeepLink(pairing.url, brand.scheme),
     }),
   );
-  printNextSteps(pairing.url, paseoHome, richUi);
+  printNextSteps(pairing.url, fdeHome, richUi);
   if (richUi) {
     outro(`${brand.name} is ready!`);
   }
@@ -506,14 +503,14 @@ export async function runOnboard(options: OnboardOptions): Promise<void> {
     process.exit(1);
   }
 
-  const paseoHome = resolveLocalPaseoHome(options.home);
+  const fdeHome = resolveLocalFdeHome(options.home);
   if (richUi) {
-    renderNote(paseoHome, `${brand.name} home`);
+    renderNote(fdeHome, `${brand.name} home`);
   } else {
-    console.log(`${brand.name} home: ${paseoHome}`);
+    console.log(`${brand.name} home: ${fdeHome}`);
   }
 
-  const voiceEnabled = await resolveAndPersistVoice(paseoHome, options);
+  const voiceEnabled = await resolveAndPersistVoice(fdeHome, options);
   log.message(
     voiceEnabled
       ? "Voice features enabled. Local speech models will be downloaded automatically if missing."
@@ -522,7 +519,7 @@ export async function runOnboard(options: OnboardOptions): Promise<void> {
 
   await ensureDaemonStarted(options, richUi);
   const ready = await waitForDaemonReadyWithUi({
-    home: options.home ?? paseoHome,
+    home: options.home ?? fdeHome,
     timeoutMs,
     richUi,
   });
@@ -530,5 +527,5 @@ export async function runOnboard(options: OnboardOptions): Promise<void> {
   await configureAutostart({ listen: ready.listen, home: options.home, richUi });
   await reportReachability(ready, options.home, richUi);
 
-  await printPairingOffer(options, paseoHome, richUi);
+  await printPairingOffer(options, fdeHome, richUi);
 }

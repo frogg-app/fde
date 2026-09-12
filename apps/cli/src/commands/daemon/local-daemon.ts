@@ -4,7 +4,7 @@ import { spawnSync, type ChildProcess } from "node:child_process";
 import { existsSync, readFileSync, unlinkSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
-import { loadConfig, resolvePaseoHome, spawnProcess } from "@fde/server";
+import { loadConfig, resolveFdeHome, spawnProcess } from "@fde/server";
 import treeKill from "tree-kill";
 import { tryConnectToDaemon } from "../../utils/client.js";
 
@@ -99,7 +99,7 @@ export interface DaemonLaunchRuntime {
 const DETACHED_STARTUP_GRACE_MS = 1200;
 const PID_POLL_INTERVAL_MS = 100;
 const DAEMON_LOG_FILENAME = "daemon.log";
-const DAEMON_PID_FILENAME = "paseo.pid";
+const DAEMON_PID_FILENAME = "fde.pid";
 
 export const DEFAULT_STOP_TIMEOUT_MS = 15_000;
 export const DEFAULT_KILL_TIMEOUT_MS = 3_000;
@@ -108,7 +108,7 @@ const require = createRequire(import.meta.url);
 
 const defaultDaemonLaunchRuntime: DaemonLaunchRuntime = {
   resolveRunnerEntry: resolveDaemonRunnerEntry,
-  resolveHome: resolvePaseoHome,
+  resolveHome: resolveFdeHome,
   spawnDetached: spawnProcess,
   spawnForeground: spawnSync,
 };
@@ -125,7 +125,7 @@ function envWithHome(home?: string): NodeJS.ProcessEnv {
     return process.env;
   }
 
-  // FDE_HOME wins over an inherited PASEO_HOME, so an explicit --home always applies.
+  // An explicit --home overrides the inherited home setting.
   return { ...process.env, [`${brand.envPrefix}_HOME`]: home };
 }
 
@@ -163,21 +163,21 @@ function buildChildEnv(options: DaemonStartOptions): NodeJS.ProcessEnv {
     childEnv[`${brand.envPrefix}_HOME`] = options.home;
   }
   if (options.listen) {
-    childEnv.PASEO_LISTEN = options.listen;
+    childEnv.FDE_LISTEN = options.listen;
   } else if (options.port) {
-    childEnv.PASEO_LISTEN = `127.0.0.1:${options.port}`;
+    childEnv.FDE_LISTEN = `127.0.0.1:${options.port}`;
   }
   if (options.hostnames) {
-    childEnv.PASEO_HOSTNAMES = options.hostnames;
+    childEnv.FDE_HOSTNAMES = options.hostnames;
   }
   if (options.relayUseTls === true) {
-    childEnv.PASEO_RELAY_USE_TLS = "true";
+    childEnv.FDE_RELAY_USE_TLS = "true";
   }
   if (options.webUi === true) {
-    childEnv.PASEO_WEB_UI_ENABLED = "true";
+    childEnv.FDE_WEB_UI_ENABLED = "true";
   }
   if (options.webUi === false) {
-    childEnv.PASEO_WEB_UI_ENABLED = "false";
+    childEnv.FDE_WEB_UI_ENABLED = "false";
   }
   return childEnv;
 }
@@ -186,7 +186,9 @@ function resolveServerRunnerFromDir(currentDir: string): string | null {
   const packageJsonPath = path.join(currentDir, "package.json");
   if (!existsSync(packageJsonPath)) return null;
   try {
-    const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8")) as { name?: string };
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8")) as {
+      name?: string;
+    };
     if (packageJson.name !== "@fde/server") return null;
     const distRunner = path.join(currentDir, "dist", "scripts", "supervisor-entrypoint.js");
     if (existsSync(distRunner)) {
@@ -218,8 +220,8 @@ function resolveDaemonRunnerEntry(): string {
   throw new Error("Unable to resolve @fde/server package root for daemon runner");
 }
 
-function pidFilePath(paseoHome: string): string {
-  return path.join(paseoHome, DAEMON_PID_FILENAME);
+function pidFilePath(fdeHome: string): string {
+  return path.join(fdeHome, DAEMON_PID_FILENAME);
 }
 
 function resolveListenField(listen: unknown, sockPath: unknown): string | undefined {
@@ -372,7 +374,16 @@ async function signalProcessTreeSafely(pid: number, signal: NodeJS.Signals): Pro
 async function signalProcessTreeOrOwnerSafely(
   pid: number,
   signal: NodeJS.Signals,
+  home: string,
 ): Promise<boolean> {
+  // Tree-kill follows detached descendants on Windows (taskkill /T). A retained
+  // or ambiguous execution descriptor must never authorize killing that tree.
+  if (
+    process.env.FDE_EXECUTION_SERVICE === "1" ||
+    existsSync(path.join(home, "execution-service"))
+  ) {
+    return signalProcessSafely(pid, signal);
+  }
   try {
     return await signalProcessTreeSafely(pid, signal);
   } catch {
@@ -403,7 +414,10 @@ async function waitForDaemonUnreachable(
   const reachableHost = host;
   const deadline = Date.now() + timeoutMs;
   async function poll(): Promise<boolean> {
-    const client = await tryConnectToDaemon({ host: reachableHost, timeout: 500 });
+    const client = await tryConnectToDaemon({
+      host: reachableHost,
+      timeout: 500,
+    });
     if (!client) {
       return true;
     }
@@ -462,9 +476,9 @@ function createStopTimeoutError(
   if (!state.running) {
     const host = resolveTcpHostFromListen(state.listen);
     return new Error(
-      `Timed out waiting for daemon${host ? ` at ${host}` : ""} to stop after ${Math.ceil(
-        timeoutMs / 1000,
-      )}s`,
+      `Timed out waiting for daemon${
+        host ? ` at ${host}` : ""
+      } to stop after ${Math.ceil(timeoutMs / 1000)}s`,
     );
   }
   return new Error(
@@ -480,7 +494,7 @@ async function signalDaemonOwnerForStop(
     return createNotRunningStopResult(state, null, "Daemon is not running");
   }
 
-  const signaled = await signalProcessTreeOrOwnerSafely(pid, "SIGTERM");
+  const signaled = await signalProcessTreeOrOwnerSafely(pid, "SIGTERM", state.home);
   if (signaled) {
     return null;
   }
@@ -502,7 +516,7 @@ async function waitForStopAfterRequest(args: {
       : await waitForDaemonUnreachable(state, timeoutMs);
 
   if (!stopped && force && state.running && pid !== null) {
-    await signalProcessTreeOrOwnerSafely(pid, "SIGKILL");
+    await signalProcessTreeOrOwnerSafely(pid, "SIGKILL", state.home);
     stopped = await waitForPidExit(pid, killTimeoutMs);
     return { stopped, forced: true };
   }
@@ -516,8 +530,8 @@ function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-export function resolveLocalPaseoHome(home?: string): string {
-  return resolvePaseoHome(envWithHome(home));
+export function resolveLocalFdeHome(home?: string): string {
+  return resolveFdeHome(envWithHome(home));
 }
 
 export function resolveTcpHostFromListen(listen: string): string | null {
@@ -552,16 +566,16 @@ export function resolveLocalDaemonState(options: { home?: string } = {}): LocalD
     ...envWithHome(options.home),
     // Status should reflect local persisted config + pid file, not inherited daemon env overrides.
     // This is CLI-side defensive scrubbing; the daemon RPC is authoritative when available.
-    PASEO_LISTEN: undefined,
-    PASEO_HOSTNAMES: undefined,
-    PASEO_ALLOWED_HOSTS: undefined,
-    PASEO_RELAY_ENABLED: undefined,
-    PASEO_RELAY_ENDPOINT: undefined,
-    PASEO_RELAY_PUBLIC_ENDPOINT: undefined,
-    PASEO_RELAY_USE_TLS: undefined,
-    PASEO_RELAY_PUBLIC_USE_TLS: undefined,
+    FDE_LISTEN: undefined,
+    FDE_HOSTNAMES: undefined,
+    FDE_ALLOWED_HOSTS: undefined,
+    FDE_RELAY_ENABLED: undefined,
+    FDE_RELAY_ENDPOINT: undefined,
+    FDE_RELAY_PUBLIC_ENDPOINT: undefined,
+    FDE_RELAY_USE_TLS: undefined,
+    FDE_RELAY_PUBLIC_USE_TLS: undefined,
   };
-  const home = resolvePaseoHome(env);
+  const home = resolveFdeHome(env);
   const config = loadConfig(home, { env });
   const pidPath = pidFilePath(home);
   const logPath = path.join(home, DAEMON_LOG_FILENAME);
@@ -586,7 +600,7 @@ export function resolveLocalDaemonState(options: { home?: string } = {}): LocalD
 }
 
 export function tailDaemonLog(home?: string, lines = 30): string | null {
-  const logPath = path.join(resolveLocalPaseoHome(home), DAEMON_LOG_FILENAME);
+  const logPath = path.join(resolveLocalFdeHome(home), DAEMON_LOG_FILENAME);
   return tailFile(logPath, lines);
 }
 
@@ -601,8 +615,8 @@ export async function startLocalDaemonDetached(
   const daemonRunnerEntry = runtime.resolveRunnerEntry();
   const childEnv = buildChildEnv(options);
 
-  const paseoHome = runtime.resolveHome(childEnv);
-  const logPath = path.join(paseoHome, DAEMON_LOG_FILENAME);
+  const fdeHome = runtime.resolveHome(childEnv);
+  const logPath = path.join(fdeHome, DAEMON_LOG_FILENAME);
   const child = runtime.spawnDetached(
     process.execPath,
     [...process.execArgv, daemonRunnerEntry, ...buildRunnerArgs(options)],
@@ -699,7 +713,10 @@ async function requestLifecycleShutdown(
 
   const deadline = Date.now() + timeoutMs;
   const remainingTimeoutMs = () => Math.max(1, deadline - Date.now());
-  const client = await tryConnectToDaemon({ host, timeout: Math.min(remainingTimeoutMs(), 5000) });
+  const client = await tryConnectToDaemon({
+    host,
+    timeout: Math.min(remainingTimeoutMs(), 5000),
+  });
   if (!client) {
     return {
       requested: false,
@@ -712,7 +729,9 @@ async function requestLifecycleShutdown(
     throw new ForeignDaemonError();
   }
   try {
-    await client.shutdownServer({ timeout: Math.min(remainingTimeoutMs(), 5000) });
+    await client.shutdownServer({
+      timeout: Math.min(remainingTimeoutMs(), 5000),
+    });
     return { requested: true };
   } catch (error) {
     return {

@@ -7,18 +7,18 @@ import { resolveSpeechConfig } from "./speech-config-resolver.js";
 
 describe("resolveSpeechConfig", () => {
   test("spoken notifications follow the voice umbrella and honour their own opt-outs", () => {
-    const paseoHome = "/tmp/paseo-home";
+    const fdeHome = "/tmp/fde-home";
     const resolve = (env: NodeJS.ProcessEnv, persistedInput: unknown) =>
       resolveSpeechConfig({
-        paseoHome,
+        fdeHome,
         env,
         persisted: PersistedConfigSchema.parse(persistedInput),
         localRuntimeAvailable: true,
       }).speech.notifications;
 
     expect(resolve({}, {})).toEqual({ enabled: true });
-    expect(resolve({ PASEO_VOICE: "0" }, {})).toEqual({ enabled: false });
-    expect(resolve({ PASEO_VOICE_NOTIFICATIONS: "0" }, {})).toEqual({
+    expect(resolve({ FDE_VOICE: "0" }, {})).toEqual({ enabled: false });
+    expect(resolve({ FDE_VOICE_NOTIFICATIONS: "0" }, {})).toEqual({
       enabled: false,
     });
     expect(resolve({}, { features: { voice: { notifications: { enabled: false } } } })).toEqual({
@@ -36,7 +36,7 @@ describe("resolveSpeechConfig", () => {
     ).toEqual({ enabled: false });
     expect(
       resolveSpeechConfig({
-        paseoHome,
+        fdeHome,
         env: {} as NodeJS.ProcessEnv,
         persisted: PersistedConfigSchema.parse({}),
         localRuntimeAvailable: false,
@@ -45,12 +45,12 @@ describe("resolveSpeechConfig", () => {
   });
 
   test("resolves local-first defaults without env overrides", () => {
-    const paseoHome = "/tmp/paseo-home";
+    const fdeHome = "/tmp/fde-home";
     const persisted = PersistedConfigSchema.parse({});
     const env = {} as NodeJS.ProcessEnv;
 
     const result = resolveSpeechConfig({
-      paseoHome,
+      fdeHome,
       env,
       persisted,
     });
@@ -77,7 +77,7 @@ describe("resolveSpeechConfig", () => {
       enabled: true,
     });
     expect(result.speech.local).toEqual({
-      modelsDir: path.join(paseoHome, "models", "local-speech"),
+      modelsDir: path.join(fdeHome, "models", "local-speech"),
       models: {
         dictationStt: "parakeet-tdt-0.6b-v2-int8",
         voiceStt: "parakeet-tdt-0.6b-v2-int8",
@@ -108,22 +108,22 @@ describe("resolveSpeechConfig", () => {
       },
     });
     const env = {
-      PASEO_DICTATION_LOCAL_STT_MODEL: "parakeet-tdt-0.6b-v2-int8",
-      PASEO_VOICE_LOCAL_STT_MODEL: "parakeet-tdt-0.6b-v2-int8",
-      PASEO_VOICE_LOCAL_TTS_MODEL: "kokoro-en-v0_19",
-      PASEO_VOICE_LOCAL_TTS_SPEAKER_ID: "5",
-      PASEO_VOICE_LOCAL_TTS_SPEED: "1.35",
-      PASEO_DICTATION_LANGUAGE: "es",
-      PASEO_VOICE_LANGUAGE: "pt",
-      PASEO_LOCAL_MODELS_DIR: "/tmp/models",
+      FDE_DICTATION_LOCAL_STT_MODEL: "parakeet-tdt-0.6b-v2-int8",
+      FDE_VOICE_LOCAL_STT_MODEL: "parakeet-tdt-0.6b-v2-int8",
+      FDE_VOICE_LOCAL_TTS_MODEL: "kokoro-en-v0_19",
+      FDE_VOICE_LOCAL_TTS_SPEAKER_ID: "5",
+      FDE_VOICE_LOCAL_TTS_SPEED: "1.35",
+      FDE_DICTATION_LANGUAGE: "es",
+      FDE_VOICE_LANGUAGE: "pt",
+      FDE_LOCAL_MODELS_DIR: "/tmp/models",
       OPENAI_API_KEY: "env-key",
-      PASEO_VOICE_STT_PROVIDER: "openai",
-      PASEO_DICTATION_STT_PROVIDER: "local",
-      PASEO_VOICE_TTS_PROVIDER: "local",
+      FDE_VOICE_STT_PROVIDER: "openai",
+      FDE_DICTATION_STT_PROVIDER: "local",
+      FDE_VOICE_TTS_PROVIDER: "local",
     } as NodeJS.ProcessEnv;
 
     const result = resolveSpeechConfig({
-      paseoHome: "/tmp/paseo-home",
+      fdeHome: "/tmp/fde-home",
       env,
       persisted,
     });
@@ -189,10 +189,10 @@ describe("resolveSpeechConfig", () => {
     });
 
     const result = resolveSpeechConfig({
-      paseoHome: "/tmp/paseo-home",
+      fdeHome: "/tmp/fde-home",
       env: {
-        PASEO_DICTATION_LANGUAGE: "es",
-        PASEO_VOICE_LANGUAGE: "  ",
+        FDE_DICTATION_LANGUAGE: "es",
+        FDE_VOICE_LANGUAGE: "  ",
       } as NodeJS.ProcessEnv,
       persisted,
     });
@@ -212,7 +212,7 @@ describe("resolveSpeechConfig", () => {
     });
 
     const result = resolveSpeechConfig({
-      paseoHome: "/tmp/paseo-home",
+      fdeHome: "/tmp/fde-home",
       env: {} as NodeJS.ProcessEnv,
       persisted,
     });
@@ -251,13 +251,13 @@ describe("resolveSpeechConfig", () => {
     const persisted = PersistedConfigSchema.parse({});
     const env = {} as NodeJS.ProcessEnv;
     const withRuntime = resolveSpeechConfig({
-      paseoHome: "/tmp/paseo-home",
+      fdeHome: "/tmp/fde-home",
       env,
       persisted,
       localRuntimeAvailable: true,
     });
     const withoutRuntime = resolveSpeechConfig({
-      paseoHome: "/tmp/paseo-home",
+      fdeHome: "/tmp/fde-home",
       env,
       persisted,
       localRuntimeAvailable: false,
@@ -279,8 +279,8 @@ describe("resolveSpeechConfig", () => {
       features: { dictation: { enabled: true }, voiceMode: { enabled: true } },
     });
     const off = resolveSpeechConfig({
-      paseoHome: "/tmp/paseo-home",
-      env: { PASEO_VOICE: "0" } as NodeJS.ProcessEnv,
+      fdeHome: "/tmp/fde-home",
+      env: { FDE_VOICE: "0" } as NodeJS.ProcessEnv,
       persisted: explicitOn,
       localRuntimeAvailable: true,
     });
@@ -296,7 +296,7 @@ describe("resolveSpeechConfig", () => {
     expect(
       enabledFlags(
         resolveSpeechConfig({
-          paseoHome: "/tmp/paseo-home",
+          fdeHome: "/tmp/fde-home",
           env: {} as NodeJS.ProcessEnv,
           persisted: persistedOff,
           localRuntimeAvailable: true,
@@ -305,10 +305,10 @@ describe("resolveSpeechConfig", () => {
     ).toEqual({ dictation: false, voice: false, hasLocalConfig: false });
 
     const forcedOn = resolveSpeechConfig({
-      paseoHome: "/tmp/paseo-home",
+      fdeHome: "/tmp/fde-home",
       env: {
-        PASEO_VOICE: "1",
-        PASEO_VOICE_MODE_ENABLED: "0",
+        FDE_VOICE: "1",
+        FDE_VOICE_MODE_ENABLED: "0",
       } as NodeJS.ProcessEnv,
       persisted: PersistedConfigSchema.parse({}),
       localRuntimeAvailable: false,

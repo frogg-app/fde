@@ -377,7 +377,7 @@ describe("evaluatePluginClientBundle", () => {
     expect(element).toMatchObject({ props: { size: 18, color: "#123456" } });
   });
 
-  it("provides Paseo UI through @fde/plugin/react-native", () => {
+  it("provides Fde UI through @fde/plugin/react-native", () => {
     const plugin = evaluatePluginClientBundle(
       "example",
       `(function(require) {

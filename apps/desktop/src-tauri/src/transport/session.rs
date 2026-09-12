@@ -47,7 +47,7 @@ pub struct OpenSessionInput {
     pub session_id: String,
     pub target: TransportTarget,
     /// WebSocket subprotocols for the handshake: the daemon password travels
-    /// as `paseo.bearer.<password>`, exactly as the browser client sends it.
+    /// as `fde.bearer.<password>`, exactly as the browser client sends it.
     pub protocols: Vec<String>,
 }
 
@@ -262,11 +262,11 @@ mod tests {
     fn parses_ssh_password_and_subprotocols() {
         let input = json!({
             "sessionId": "s",
-            "protocols": ["paseo.bearer.hunter2"],
+            "protocols": ["fde.bearer.hunter2"],
             "target": { "transportType": "ssh", "host": "box", "sshPassword": "pw" }
         });
         let parsed = parse_open_session_input(&input).unwrap();
-        assert_eq!(parsed.protocols, vec!["paseo.bearer.hunter2".to_string()]);
+        assert_eq!(parsed.protocols, vec!["fde.bearer.hunter2".to_string()]);
         let TransportTarget::Ssh { password, .. } = parsed.target else {
             panic!("ssh target");
         };

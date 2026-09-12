@@ -653,8 +653,8 @@ describe("ProviderSnapshotManager public surface", () => {
     }
   });
 
-  test("PASEO_PROVIDER_REFRESH_TIMEOUT_MS env var is honored when no option is given", async () => {
-    vi.stubEnv("PASEO_PROVIDER_REFRESH_TIMEOUT_MS", "1");
+  test("FDE_PROVIDER_REFRESH_TIMEOUT_MS env var is honored when no option is given", async () => {
+    vi.stubEnv("FDE_PROVIDER_REFRESH_TIMEOUT_MS", "1");
     const isAvailable = vi.fn(waitUntilAborted);
     const manager = new ProviderSnapshotManager({
       logger: createTestLogger(),
@@ -680,8 +680,8 @@ describe("ProviderSnapshotManager public surface", () => {
     }
   });
 
-  test("PASEO_PROVIDER_REFRESH_TIMEOUT_MS env var is ignored when option is provided", async () => {
-    vi.stubEnv("PASEO_PROVIDER_REFRESH_TIMEOUT_MS", "1");
+  test("FDE_PROVIDER_REFRESH_TIMEOUT_MS env var is ignored when option is provided", async () => {
+    vi.stubEnv("FDE_PROVIDER_REFRESH_TIMEOUT_MS", "1");
     const isAvailable = vi.fn(waitUntilAborted);
     const manager = new ProviderSnapshotManager({
       logger: createTestLogger(),
@@ -1067,7 +1067,7 @@ describe("ProviderSnapshotManager public surface", () => {
   });
 
   test("getProviderDiagnostic reports a stuck catalog refresh inside the diagnostic", async () => {
-    await withEnv("PASEO_ENABLE_MOCK_SLOW", "true", async () => {
+    await withEnv("FDE_ENABLE_MOCK_SLOW", "true", async () => {
       vi.useFakeTimers();
       const manager = new ProviderSnapshotManager({
         logger: createTestLogger(),

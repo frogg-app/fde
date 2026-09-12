@@ -8,7 +8,7 @@ on:
       - "scripts/dev/branding/**"
       - "scripts/release/**"
       - "scripts/ci/branding*"
-      - "apps/desktop/**"
+      - "apps/desktop-electron/**"
       - "apps/ui/app.config.js"
       - "deploy/**"
       - ".github/**"
@@ -72,13 +72,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-node-deps
-      - if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf libssl-dev libgtk-3-dev
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: apps/desktop/src-tauri
-          shared-key: branding-${{ matrix.runner }}-${{ strategy.job-index }}
+      - run: npm run install:electron --workspace=@fde/desktop-electron
       - if: runner.os == 'Windows'
         name: Validate Windows development script
         shell: pwsh
@@ -88,18 +82,13 @@ jobs:
           [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD 'scripts/dev/dev.ps1'), [ref]$tokens, [ref]$errors) | Out-Null
           if ($errors.Count) { throw ($errors | Out-String) }
       - run: node --test scripts/dev/npm-command.test.mjs
-      - if: runner.os == 'Linux'
-        name: Build Linux release formats
-        run: npm run build:desktop -- --bundles deb,appimage
-      - if: runner.os != 'Linux'
-        run: npm run build:desktop
+      - run: npm run build:desktop
       - run: node scripts/ci/branding-package-inspect.mjs
-      - run: cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml commands::cli_install
       - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: branding-desktop-${{ strategy.job-index }}
-          path: apps/desktop/src-tauri/target/release/bundle
+          path: apps/desktop-electron/release
           retention-days: 7
   android:
     runs-on: ubuntu-latest

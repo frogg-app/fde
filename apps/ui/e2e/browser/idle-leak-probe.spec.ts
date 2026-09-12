@@ -8,12 +8,12 @@ import { startRunningMockAgent } from "../support/helpers/composer";
  * samples CDP performance metrics so a leak shows up as monotonic growth in
  * JS heap, DOM nodes or event listeners rather than as a single number.
  */
-const RUN = process.env.PASEO_IDLE_LEAK_PROBE === "1";
+const RUN = process.env.FDE_IDLE_LEAK_PROBE === "1";
 const probeDescribe = RUN ? test.describe : test.describe.skip;
 
-const SAMPLES = Number(process.env.PASEO_LEAK_SAMPLES ?? "12");
-const SAMPLE_EVERY_MS = Number(process.env.PASEO_LEAK_INTERVAL_MS ?? "15000");
-const MODEL = process.env.PASEO_LEAK_MODEL ?? "five-minute-stream";
+const SAMPLES = Number(process.env.FDE_LEAK_SAMPLES ?? "12");
+const SAMPLE_EVERY_MS = Number(process.env.FDE_LEAK_INTERVAL_MS ?? "15000");
+const MODEL = process.env.FDE_LEAK_MODEL ?? "five-minute-stream";
 
 interface Metrics {
   t: number;
@@ -60,7 +60,7 @@ probeDescribe("Leak probe", () => {
   test("samples heap, nodes and listeners across a long stream", async ({ page }, testInfo) => {
     test.setTimeout(SAMPLES * SAMPLE_EVERY_MS + 180_000);
     await page.addInitScript(() => {
-      Reflect.set(globalThis, "__PASEO_RENDER_PROFILE_ENABLED__", true);
+      Reflect.set(globalThis, "__FDE_RENDER_PROFILE_ENABLED__", true);
     });
 
     const traffic = trackDaemonFrames(page);
@@ -133,7 +133,7 @@ probeDescribe("Leak probe", () => {
 
 /** Runs in the page: totals React profiler samples per profiler id. */
 function countRenderProfileSamplesById(): number {
-  const samples = Reflect.get(globalThis, "__PASEO_RENDER_PROFILE__");
+  const samples = Reflect.get(globalThis, "__FDE_RENDER_PROFILE__");
   if (!Array.isArray(samples)) return 0;
   const byId: Record<string, number> = {};
   for (const sample of samples) {

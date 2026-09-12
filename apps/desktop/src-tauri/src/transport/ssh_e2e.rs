@@ -249,10 +249,10 @@ fn missing_ssh_executable_is_an_immediate_error() {
     }
 }
 
-/// A daemon started with `PASEO_PASSWORD=hunter2` on
+/// A daemon started with `FDE_PASSWORD=hunter2` on
 /// `127.0.0.1:$FDE_TEST_DAEMON_PASSWORD_PORT` (default 6798): without the
 /// bearer subprotocol it closes the tunnelled socket with 4401 "Password
-/// required"; with `paseo.bearer.hunter2` on the handshake the session opens.
+/// required"; with `fde.bearer.hunter2` on the handshake the session opens.
 #[test]
 fn daemon_password_travels_as_the_bearer_subprotocol() {
     let port = std::env::var("FDE_TEST_DAEMON_PASSWORD_PORT")
@@ -290,7 +290,7 @@ fn daemon_password_travels_as_the_bearer_subprotocol() {
 
         let (manager, mut events) = new_manager();
         let mut wrong = open_args("pw-wrong", "ok-host", port);
-        wrong["protocols"] = json!(["paseo.bearer.nope"]);
+        wrong["protocols"] = json!(["fde.bearer.nope"]);
         manager.open(&wrong).unwrap();
         assert_eq!(
             next_event(&mut events, Duration::from_secs(10)).await["kind"],
@@ -302,7 +302,7 @@ fn daemon_password_travels_as_the_bearer_subprotocol() {
 
         let (manager, mut events) = new_manager();
         let mut right = open_args("pw-ok", "ok-host", port);
-        right["protocols"] = json!(["paseo.bearer.hunter2"]);
+        right["protocols"] = json!(["fde.bearer.hunter2"]);
         manager.open(&right).unwrap();
         assert_eq!(
             next_event(&mut events, Duration::from_secs(10)).await,

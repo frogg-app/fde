@@ -1,7 +1,7 @@
 # Minimal FDE daemon + web UI deployment.
 #
 # Open http://<host>:9999 after `docker compose up -d`.
-# For any network-reachable deployment, change PASEO_PASSWORD first.
+# For any network-reachable deployment, change FDE_PASSWORD first.
 # Pin the exact image version so a redeploy is reproducible.
 services:
   fde:
@@ -11,10 +11,10 @@ services:
     ports:
       - "0.0.0.0:9999:9999"
     environment:
-      PASEO_PASSWORD: "change-me"
+      FDE_PASSWORD: "change-me"
       # Add DNS names you use to reach this container. IPs and localhost are
       # already allowed by default.
-      # PASEO_HOSTNAMES: "fde.example.com,.lan"
+      # FDE_HOSTNAMES: "fde.example.com,.lan"
     volumes:
       # Persistent daemon state (agents, config, pairing).
       - ./fde-home:/home/fde/.fde

@@ -100,20 +100,20 @@ From `packages/server`, after installing workspaces and downloading/extracting t
 [Piper LJSpeech package](https://k2-fsa.github.io/sherpa/onnx/tts/all/English/vits-piper-en_US-ljspeech-medium.html):
 
 ```sh
-PASEO_COMPANION_BENCH=1 \
-PASEO_COMPANION_BENCH_TTS_DIR=/path/to/vits-piper-en_US-ljspeech-medium \
+FDE_COMPANION_BENCH=1 \
+FDE_COMPANION_BENCH_TTS_DIR=/path/to/vits-piper-en_US-ljspeech-medium \
 npx tsx scripts/benchmark-companion.ts --provider=claude --turns=30
 
-PASEO_COMPANION_BENCH=1 \
-PASEO_COMPANION_BENCH_TTS_DIR=/path/to/vits-piper-en_US-ljspeech-medium \
+FDE_COMPANION_BENCH=1 \
+FDE_COMPANION_BENCH_TTS_DIR=/path/to/vits-piper-en_US-ljspeech-medium \
 npx tsx scripts/benchmark-companion.ts --provider=codex --turns=30
 
-PASEO_COMPANION_BENCH=1 \
-PASEO_COMPANION_BENCH_TTS_DIR=/path/to/vits-piper-en_US-ljspeech-medium \
+FDE_COMPANION_BENCH=1 \
+FDE_COMPANION_BENCH_TTS_DIR=/path/to/vits-piper-en_US-ljspeech-medium \
 npx tsx scripts/benchmark-companion-native.ts
 
-PASEO_COMPANION_BENCH=1 \
-PASEO_COMPANION_BENCH_TTS_DIR=/path/to/vits-piper-en_US-ljspeech-medium \
+FDE_COMPANION_BENCH=1 \
+FDE_COMPANION_BENCH_TTS_DIR=/path/to/vits-piper-en_US-ljspeech-medium \
 npx tsx scripts/benchmark-companion-native.ts --deferred
 ```
 
@@ -127,7 +127,7 @@ Run regression suites from their package directories:
 ```sh
 # packages/server
 npx vitest run src/server/companion src/server/speech/speech-config-resolver.test.ts
-PASEO_LOCAL_MODELS_DIR=/path/to/models/local-speech \
+FDE_LOCAL_MODELS_DIR=/path/to/models/local-speech \
 npx vitest run src/server/speech/providers/local/worker-process.local.e2e.test.ts
 
 # apps/ui
@@ -230,7 +230,7 @@ Real local speech checks passed with downloaded Parakeet and Silero models:
 
 ```sh
 cd packages/server
-PASEO_LOCAL_MODELS_DIR=/path/to/models/local-speech npx vitest run \
+FDE_LOCAL_MODELS_DIR=/path/to/models/local-speech npx vitest run \
   src/server/speech/providers/local/companion-duplex.local.e2e.test.ts \
   src/server/speech/providers/local/worker-process.local.e2e.test.ts
 ```
@@ -307,3 +307,18 @@ interface limitation of the preview, not an unrun local-speech test.
 Background capture requires native platform behavior beyond a UI preference.
 [Android microphone foreground services](https://developer.android.com/develop/background-work/services/fgs/service-types),
 [Apple background modes](https://developer.apple.com/documentation/bundleresources/information-property-list/uibackgroundmodes).
+
+## Main integration and voice preferences (2026-09-12)
+
+Integrated current main 0.6.1 (Electron/execution service/FDE namespace) with the
+Companion branch. Added 0.75×–2× synthesis speed, default 1.3×, and mobile
+Call/Media routing. A real isolated Kitten recording decreased from 4.393 seconds
+at 1× to 3.304 seconds at 1.3× for the same sentence. This verifies generated
+speech duration, not end-to-end latency. No provider API calls or daemon restart.
+
+Full repository typecheck and server/CLI build pass. Android audio-module Kotlin
+compilation passes. Focused server, protocol, UI and browser checks cover speed
+propagation, stored defaults, audio routing across sessions and mute crossfade.
+Native iOS compilation and physical-device routing/audio quality remain unverified
+on this Linux host. The 150 ms monochrome transition uses native opacity animation
+and SVG palettes, retaining speech motion while the microphone is muted.

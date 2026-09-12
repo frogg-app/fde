@@ -709,7 +709,7 @@ export const ar: TranslationResources = {
       },
       routes: {
         public: "الوكيل العكسي",
-        paseo: "Memorable",
+        fde: "Memorable",
         direct: "مباشر",
       },
       states: {
@@ -1836,6 +1836,11 @@ export const ar: TranslationResources = {
       off: "إيقاف",
       acknowledge: "تأكيد المهام قبل بدء العمل",
       permissions: "تظل طلبات الإذن مسموعة عند إيقاف تحديثات المهام.",
+      audioMode: "وضع الصوت",
+      callMode: "مكالمة",
+      mediaMode: "وسائط",
+      audioModeHint:
+        "يُطبّق في المحادثة التالية. يفضّل وضع المكالمة ميكروفون السماعة والتحكم في الصدى. يستخدم وضع الوسائط مسار الوسائط؛ يُنصح بسماعات الرأس. توفر ميكروفون Bluetooth يعتمد على الجهاز.",
       speechSpeed: "سرعة الصوت",
       pause: "التوقف قبل الرد",
       quick: "سريع (0.8 ثانية)",
@@ -1998,7 +2003,7 @@ export const ar: TranslationResources = {
   serviceUrl: {
     title: "افتح الخدمة URL",
     message: "افتح{{url}}؟",
-    inPaseo: "في {{brandName}}",
+    inFde: "في {{brandName}}",
     externalBrowser: "متصفح خارجي",
     dontAskAgain: "لا تسأل مرة أخرى",
   },
@@ -2124,7 +2129,7 @@ export const ar: TranslationResources = {
       one: "استخدم {{count}} أداة أخرى",
       other: "استخدم {{count}} أدوات أخرى",
     },
-    paseoCalls: {
+    fdeCalls: {
       one: "استدعى {{brandName}} {{count}} مرة",
       other: "استدعى {{brandName}} {{count}} مرات",
     },
@@ -2658,8 +2663,7 @@ export const ar: TranslationResources = {
         },
         uninstall: {
           title: "إزالة الخدمة؟",
-          message:
-            "يوقف الخدمة ويزيل تثبيت {{brandName}} من {{host}}. تُحفظ حالة الخدمة (~/.paseo).",
+          message: "يوقف الخدمة ويزيل تثبيت {{brandName}} من {{host}}. تُحفظ حالة الخدمة (~/.fde).",
         },
         log: {
           running: "قيد التشغيل على {{host}}...",
@@ -2997,13 +3001,13 @@ export const ar: TranslationResources = {
         savedToast: "تم تحديث المشروع",
       },
       readFailures: {
-        invalidTitle: "تعذر تحليل paseo.json",
+        invalidTitle: "تعذر تحليل fde.json",
         invalidDescription: "قم بإصلاح الملف على القرص، ثم أعد تحميله.",
         missingTitle: "هذا المضيف ليس لديه هذا المشروع",
         missingSingleHost: "المضيف المحدد ليس لديه سجل لهذا المشروع.",
-        transportTitle: "تعذر تحميل paseo.json",
+        transportTitle: "تعذر تحميل fde.json",
         transportFallback: "المضيف لم يستجب.",
-        failedTitle: "تعذر تحميل paseo.json",
+        failedTitle: "تعذر تحميل fde.json",
         failedDescription: "أعد التحميل للمحاولة مرة أخرى.",
       },
       worktree: {
@@ -3013,7 +3017,7 @@ export const ar: TranslationResources = {
         docsTooltip: "راجع المستندات لمزيد من التفاصيل ومتغيرات البيئة المتاحة لهذه الأوامر",
         setup: "يثبت",
         setupAccessibility: "أوامر إعداد شجرة العمل",
-        uncommittedTitle: "ثبّت تغييرات paseo.json",
+        uncommittedTitle: "ثبّت تغييرات fde.json",
         uncommittedDescription:
           "تستخدم أشجار العمل الجديدة نص الإعداد البرمجي من الفرع الأساسي الذي تحدده.",
         teardown: "هدم",
@@ -3038,7 +3042,7 @@ export const ar: TranslationResources = {
         newScript: "نص جديد",
         editScript: "تحرير{{name}}",
         runAsService: "تشغيل كخدمة",
-        serviceHint: "يشرف {{brandName}} على العملية ويعين منفذًا عبر $PASEO_PORT",
+        serviceHint: "يشرف {{brandName}} على العملية ويعين منفذًا عبر $FDE_PORT",
         actions: {
           add: "إضافة البرنامج النصي",
           edit: "يحرر",
@@ -3057,8 +3061,8 @@ export const ar: TranslationResources = {
       },
       writeFailures: {
         staleTitle: "تم تغيير التكوين على القرص",
-        staleDescription: "أعد التحميل لجلب أحدث ملف paseo.json قبل الحفظ.",
-        failedTitle: "تعذر حفظ paseo.json",
+        staleDescription: "أعد التحميل لجلب أحدث ملف fde.json قبل الحفظ.",
+        failedTitle: "تعذر حفظ fde.json",
         failedDescription: "حاول مرة أخرى، أو أعد تحميل الإصدار الأحدث من القرص.",
       },
       actions: {

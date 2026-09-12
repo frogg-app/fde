@@ -30,7 +30,7 @@ Workspace archive runs lifecycle teardown from the exact `cwd` but removes only 
 `worktreeRoot` after its last active reference disappears. Worktree recovery recreates that backing
 checkout from `mainRepoRoot`, then restores the relative path from `worktreeRoot` to `cwd`.
 
-Paseo uses **file-based JSON persistence** instead of a traditional database. All data is validated at runtime with Zod schemas. Most stores write atomically (write to temp file, then rename); a few still use plain `writeFile` — see each section. There is no schema-versioning/migration framework — schemas rely on optional fields with defaults for forward compatibility, with a small amount of inline normalization in `persisted-config.ts` for legacy provider/speech entries.
+FDE uses **file-based JSON persistence** instead of a traditional database. All data is validated at runtime with Zod schemas. Most stores write atomically (write to temp file, then rename); a few still use plain `writeFile` — see each section. There is no schema-versioning/migration framework — schemas rely on optional fields with defaults for forward compatibility, with a small amount of inline normalization in `persisted-config.ts` for legacy provider/speech entries.
 
 All server-side stores live under `$FDE_HOME` (defaults to `~/.fde`).
 
@@ -47,7 +47,7 @@ $FDE_HOME/
 ├── config.json                          # Daemon configuration
 ├── server-id                            # Stable daemon identifier (plain text, "srv_<base64url>")
 ├── daemon-keypair.json                  # E2EE keypair for relay (mode 0600)
-├── paseo.pid                            # Daemon PID lock file
+├── fde.pid                            # Daemon PID lock file
 ├── daemon.log                           # Default log file (path configurable)
 ├── agents/
 │   └── {sanitized-cwd}/
@@ -62,7 +62,7 @@ $FDE_HOME/
 │   └── icons/                           # Host-local custom project icon images
 ├── runtime/
 │   └── managed-processes/
-│       └── {recordId}.json              # Helper processes owned by Paseo; reconciled on daemon bootstrap
+│       └── {recordId}.json              # Helper processes owned by FDE; reconciled on daemon bootstrap
 ├── plugins/
 │   ├── sources.json                      # Git origin, ref, commit, and managed checkout ownership
 │   └── {pluginId}/{version}/checkout/    # Source checkout for one installed Git commit
@@ -90,7 +90,7 @@ Each agent is stored as a separate JSON file, grouped by project directory.
 | `lastActivityAt`     | `string?` (ISO 8601)                     | Last activity timestamp                                                                                                                                                                                                                                                                                                                                                             |
 | `lastUserMessageAt`  | `string?` (ISO 8601)                     | Last user message timestamp                                                                                                                                                                                                                                                                                                                                                         |
 | `title`              | `string?`                                | User-visible title                                                                                                                                                                                                                                                                                                                                                                  |
-| `labels`             | `Record<string, string>`                 | Key-value labels (default `{}`). Paseo uses `paseo.parent-agent-id` for parentage and client-scoped `paseo.open-agent-tab.*` labels while managed subagent tabs are open — see [agent-lifecycle.md](./agent-lifecycle.md)                                                                                                                                                           |
+| `labels`             | `Record<string, string>`                 | Key-value labels (default `{}`). FDE uses `fde.parent-agent-id` for parentage and client-scoped `fde.open-agent-tab.*` labels while managed subagent tabs are open — see [agent-lifecycle.md](./agent-lifecycle.md)                                                                                                                                                                 |
 | `lastStatus`         | `AgentStatus`                            | One of: `"initializing"`, `"idle"`, `"running"`, `"error"`, `"closed"`. `closed` means the record is resumable but has no live provider runtime; archive remains represented separately by `archivedAt`.                                                                                                                                                                            |
 | `lastModeId`         | `string?`                                | Last active mode ID                                                                                                                                                                                                                                                                                                                                                                 |
 | `config`             | `SerializableConfig?`                    | Agent session configuration (see below)                                                                                                                                                                                                                                                                                                                                             |
@@ -184,7 +184,7 @@ Single file, validated with `PersistedConfigSchema`.
 `{ mode: "all" }`. Installed state is not persisted; the daemon derives it from its three managed
 skill directories and keeps config plus filesystem convergence behind one serialized owner.
 
-`paseo reload` reads and validates this file once inside the daemon. That snapshot drives resolution,
+`fde reload` reads and validates this file once inside the daemon. That snapshot drives resolution,
 classification, application, and reload bookkeeping. `DaemonConfigStore` owns applying runtime-safe
 fields and their removal/default semantics; session handlers and the CLI only relay the structured
 result. Normal config patches persist only the requested fields, so launch overrides and resolved
@@ -257,7 +257,7 @@ All fields are optional with sensible defaults.
 Git-managed plugins still appear as directory sources in `config.json`. This keeps the plugin
 runtime and protocol config compatible with directory-only clients. `plugins/sources.json` owns the
 Git-specific origin, tracking ref, installed commit, repository subdirectory, and checkout root.
-Paseo writes it atomically. An update creates and validates a new version directory before changing
+FDE writes it atomically. An update creates and validates a new version directory before changing
 the configured directory path; successful activation removes the old version.
 
 ### Profile lists
@@ -299,27 +299,27 @@ requests.
 
 Environment variables override `config.json`:
 
-| Environment variable                 | Setting                  |
-| ------------------------------------ | ------------------------ |
-| `PASEO_GIT_MAX_PROCESSES_PER_SECOND` | `maxProcessesPerSecond`  |
-| `PASEO_GIT_MAX_PROCESS_CONCURRENCY`  | `maxProcessConcurrency`  |
-| `PASEO_GIT_CONCURRENCY`              | Legacy concurrency alias |
+| Environment variable               | Setting                  |
+| ---------------------------------- | ------------------------ |
+| `FDE_GIT_MAX_PROCESSES_PER_SECOND` | `maxProcessesPerSecond`  |
+| `FDE_GIT_MAX_PROCESS_CONCURRENCY`  | `maxProcessConcurrency`  |
+| `FDE_GIT_CONCURRENCY`              | Legacy concurrency alias |
 
-`PASEO_GIT_MAX_PROCESS_CONCURRENCY` wins when it and the legacy alias are both set. Run `paseo reload`
+`FDE_GIT_MAX_PROCESS_CONCURRENCY` wins when it and the legacy alias are both set. Run `fde reload`
 after changing `config.json`. Environment changes require a daemon restart; the launch environment
 remains authoritative during reload.
 
-`agents.metadataGeneration.providers` controls the preferred structured-generation fallback order for daemon-side metadata tasks such as commit messages, PR text, branch names, and generated agent titles. Entries are tried first in the configured order, then Paseo falls through to dynamically discovered defaults and finally the current selection when available.
+`agents.metadataGeneration.providers` controls the preferred structured-generation fallback order for daemon-side metadata tasks such as commit messages, PR text, branch names, and generated agent titles. Entries are tried first in the configured order, then FDE falls through to dynamically discovered defaults and finally the current selection when available.
 
 Local speech model ids are intentionally narrow: STT uses `parakeet-tdt-0.6b-v2-int8`, TTS uses `kokoro-en-v0_19`, and turn detection uses the bundled Silero VAD model.
 
 Set these to select OpenAI instead of local speech:
 
-| Env var                        | Applies to                      |
-| ------------------------------ | ------------------------------- |
-| `PASEO_VOICE_STT_PROVIDER`     | Voice mode STT provider         |
-| `PASEO_DICTATION_STT_PROVIDER` | Composer dictation STT provider |
-| `PASEO_VOICE_TTS_PROVIDER`     | Voice mode TTS provider         |
+| Env var                      | Applies to                      |
+| ---------------------------- | ------------------------------- |
+| `FDE_VOICE_STT_PROVIDER`     | Voice mode STT provider         |
+| `FDE_DICTATION_STT_PROVIDER` | Composer dictation STT provider |
+| `FDE_VOICE_TTS_PROVIDER`     | Voice mode TTS provider         |
 
 OpenAI speech can be configured under `providers.openai`. STT and TTS resolve independently, so they can point at different endpoints:
 
@@ -340,9 +340,9 @@ OpenAI speech can be configured under `providers.openai`. STT and TTS resolve in
 }
 ```
 
-`providers.openai.stt` is used for both composer dictation and voice mode speech-to-text; `providers.openai.tts` is used for voice mode text-to-speech. The equivalent env vars are `OPENAI_STT_API_KEY`/`OPENAI_STT_BASE_URL` and `OPENAI_TTS_API_KEY`/`OPENAI_TTS_BASE_URL`. Each feature falls back to `providers.openai.apiKey`/`providers.openai.baseUrl`, then `OPENAI_API_KEY`/`OPENAI_BASE_URL`, when its own fields are unset. These settings apply only to Paseo OpenAI speech features, not to Codex or other OpenAI-backed tools.
+`providers.openai.stt` is used for both composer dictation and voice mode speech-to-text; `providers.openai.tts` is used for voice mode text-to-speech. The equivalent env vars are `OPENAI_STT_API_KEY`/`OPENAI_STT_BASE_URL` and `OPENAI_TTS_API_KEY`/`OPENAI_TTS_BASE_URL`. Each feature falls back to `providers.openai.apiKey`/`providers.openai.baseUrl`, then `OPENAI_API_KEY`/`OPENAI_BASE_URL`, when its own fields are unset. These settings apply only to FDE OpenAI speech features, not to Codex or other OpenAI-backed tools.
 
-Paseo uses these paths under the configured OpenAI base URL:
+FDE uses these paths under the configured OpenAI base URL:
 
 - dictation STT: `/v1/audio/transcriptions`
 - voice mode STT: `/v1/audio/transcriptions`
@@ -449,8 +449,8 @@ Array of workspace records. A workspace is a specific working directory within a
 | `title`                        | `string \| null`                                | User-set name override layered over `displayName`. Null means "use `displayName`".                                                                                                            |
 | `branch`                       | `string \| null`                                | The current Git branch for git-backed workspaces. Separate from `displayName`/`title`; a background branch refresh never rewrites the name.                                                   |
 | `worktreeRoot`                 | `string \| null`                                | Backing checkout/worktree root. May differ from `cwd` for exact subprojects and remains persisted after the worktree is deleted so restore can reproduce the placement.                       |
-| `baseBranch`                   | `string \| null`                                | Normalized branch the Paseo worktree was created from; null for directories, local checkouts, and checkout-branch worktrees                                                                   |
-| `isPaseoOwnedWorktree`         | `boolean`                                       | Whether Paseo owns and may remove/recreate the backing `worktreeRoot`                                                                                                                         |
+| `baseBranch`                   | `string \| null`                                | Normalized branch the FDE worktree was created from; null for directories, local checkouts, and checkout-branch worktrees                                                                     |
+| `isFdeOwnedWorktree`           | `boolean`                                       | Whether FDE owns and may remove/recreate the backing `worktreeRoot`                                                                                                                           |
 | `mainRepoRoot`                 | `string \| null`                                | Main repository root for worktree checkouts, independent of both exact `cwd` and backing `worktreeRoot`                                                                                       |
 | `createdAt`                    | `string` (ISO 8601)                             |                                                                                                                                                                                               |
 | `updatedAt`                    | `string` (ISO 8601)                             |                                                                                                                                                                                               |
@@ -512,9 +512,9 @@ These small files are not validated as full Zod schemas but are persisted under 
 
 | Path                  | Format                                                         | Notes                                                                             |
 | --------------------- | -------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `server-id`           | Plain text, e.g. `srv_<base64url>`                             | Stable per-`$FDE_HOME` daemon ID. Overridable via `PASEO_SERVER_ID` env.          |
+| `server-id`           | Plain text, e.g. `srv_<base64url>`                             | Stable per-`$FDE_HOME` daemon ID. Overridable via `FDE_SERVER_ID` env.            |
 | `daemon-keypair.json` | `{ v: 2, publicKeyB64, secretKeyB64 }` (libsodium box keypair) | E2EE relay identity. Written with mode `0600`. Regenerated if file is unreadable. |
-| `paseo.pid`           | JSON `{ pid, startedAt, ... }`                                 | PID lock; prevents two daemons sharing one `$FDE_HOME`.                           |
+| `fde.pid`             | JSON `{ pid, startedAt, ... }`                                 | PID lock; prevents two daemons sharing one `$FDE_HOME`.                           |
 | `daemon.log`          | Pino log output                                                | Default location; path/rotation configurable via `log.file` in `config.json`.     |
 
 ---
@@ -528,7 +528,7 @@ These live in React Native `AsyncStorage` or browser `IndexedDB`, not on the dae
 Right-sidebar client state splits on whether it is determined by the directory or owned by the workspace (two workspaces can share one `cwd`). The split is enforced by the cache key, so changing a key changes the sharing semantics — see [architecture.md](architecture.md#right-sidebar-boundary-directory-backed-vs-workspace-owned) for the full table.
 
 - **Directory-backed** (shared by same-`cwd` workspaces): keyed by `(serverId, cwd)`. Git status/diff, GitHub PR status, PR timeline, file preview content. These are TanStack Query caches, not persisted stores.
-- **Workspace-owned** (independent per workspace): keyed by `workspaceId`, with `cwd` used only as a fallback when no `workspaceId` is present. Review draft comments (`@paseo:review-draft-store`), diff-mode overrides (in-memory), workspace composer attachments, and file-explorer nav/expand state. The `workspaceId` part of these keys is **opaque** — never parse it back into a path.
+- **Workspace-owned** (independent per workspace): keyed by `workspaceId`, with `cwd` used only as a fallback when no `workspaceId` is present. Review draft comments (`@fde:review-draft-store`), diff-mode overrides (in-memory), workspace composer attachments, and file-explorer nav/expand state. The `workspaceId` part of these keys is **opaque** — never parse it back into a path.
 
 ### Replica row store
 
@@ -552,7 +552,7 @@ source code, prompts, and tool output; encrypted-at-rest storage is a separate s
 
 ### Draft Store
 
-**AsyncStorage key:** `paseo-drafts` (version 2)
+**AsyncStorage key:** `fde-drafts` (version 2)
 
 ```typescript
 {
@@ -568,7 +568,7 @@ source code, prompts, and tool output; encrypted-at-rest storage is a separate s
 
 ### Attachment Store (Web)
 
-**IndexedDB database:** `paseo-attachment-bytes`, object store: `attachments`
+**IndexedDB database:** `fde-attachment-bytes`, object store: `attachments`
 
 Stores binary attachment blobs keyed by attachment ID.
 

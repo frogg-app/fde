@@ -8,7 +8,7 @@ pub const UNINSTALL_SH: &str = include_str!(concat!(env!("OUT_DIR"), "/uninstall
 
 /// The Docker path has no uninstall script in `deploy/`: removing the
 /// container is the whole job, and the state directory is kept like
-/// `uninstall.sh` keeps `~/.paseo`.
+/// `uninstall.sh` keeps `~/.fde`.
 pub const UNINSTALL_DOCKER_SH: &str =
     include_str!(concat!(env!("OUT_DIR"), "/uninstall-docker.sh"));
 

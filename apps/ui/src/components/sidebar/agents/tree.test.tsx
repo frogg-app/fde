@@ -62,7 +62,7 @@ const parent: SidebarAgentNode = {
   key: "host\0agent\0parent",
   target: { kind: "agent", agentId: "parent" },
   row: {
-    kind: "paseo",
+    kind: "fde",
     id: "parent",
     provider: "codex",
     title: "Build the sidebar",
@@ -86,7 +86,7 @@ describe("sidebar subagent interaction", () => {
         <SidebarAgentBranch
           node={parent}
           discovery={new Map()}
-          offline={false}
+          connectionStatus="online"
           selectedTarget={child.target}
           onOpen={onOpen}
         />
@@ -112,7 +112,7 @@ describe("sidebar subagent interaction", () => {
         <SidebarAgentBranch
           node={node}
           discovery={new Map()}
-          offline={false}
+          connectionStatus="online"
           selectedTarget={null}
           onOpen={onOpen}
         />
@@ -141,7 +141,7 @@ describe("sidebar subagent interaction", () => {
         <SidebarAgentBranch
           node={parent}
           discovery={discovery}
-          offline={false}
+          connectionStatus="online"
           selectedTarget={null}
           onOpen={onOpen}
         />
@@ -158,7 +158,7 @@ describe("sidebar subagent interaction", () => {
         <SidebarAgentBranch
           node={parent}
           discovery={new Map()}
-          offline
+          connectionStatus="offline"
           selectedTarget={null}
           onOpen={vi.fn()}
         />
@@ -204,7 +204,7 @@ describe("workspace agent disclosure", () => {
 
   it("puts live children directly below a singleton workspace and removes its disclosure when they finish", () => {
     const view = render(workspaceTree([parent]));
-    expect(screen.queryByTestId("sidebar-agent-paseo-parent")).toBeNull();
+    expect(screen.queryByTestId("sidebar-agent-fde-parent")).toBeNull();
     expect(screen.getAllByRole("button", { name: "Inspect the runtime" })).toHaveLength(1);
     expect(
       screen
@@ -253,7 +253,7 @@ describe("workspace agent disclosure", () => {
           <SidebarAgentBranch
             node={node}
             discovery={discovery}
-            offline={false}
+            connectionStatus="online"
             selectedTarget={null}
             onOpen={vi.fn()}
           />

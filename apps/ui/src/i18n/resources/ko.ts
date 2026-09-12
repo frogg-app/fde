@@ -709,7 +709,7 @@ export const ko: TranslationResources = {
       },
       routes: {
         public: "역방향 프록시",
-        paseo: "간편 주소",
+        fde: "간편 주소",
         direct: "직접",
       },
       states: {
@@ -1851,6 +1851,11 @@ export const ko: TranslationResources = {
       off: "끄기",
       acknowledge: "작업 시작 전에 접수 알리기",
       permissions: "작업 알림을 꺼도 권한 요청은 음성으로 안내합니다.",
+      audioMode: "오디오 모드",
+      callMode: "통화",
+      mediaMode: "미디어",
+      audioModeHint:
+        "다음 대화부터 적용됩니다. 통화는 헤드셋 마이크와 에코 제어를 우선합니다. 미디어는 미디어 경로를 사용하며 헤드폰을 권장합니다. Bluetooth 마이크 지원은 기기에 따라 다릅니다.",
       speechSpeed: "음성 속도",
       pause: "응답 전 대기 시간",
       quick: "짧게(0.8초)",
@@ -2015,7 +2020,7 @@ export const ko: TranslationResources = {
   serviceUrl: {
     title: "서비스 URL 열기",
     message: "{{url}}을(를) 열까요?",
-    inPaseo: "{{brandName}}에서",
+    inFde: "{{brandName}}에서",
     externalBrowser: "외부 브라우저",
     dontAskAgain: "다시 묻지 않기",
   },
@@ -2141,7 +2146,7 @@ export const ko: TranslationResources = {
       one: "기타 도구 {{count}}개 사용함",
       other: "기타 도구 {{count}}개 사용함",
     },
-    paseoCalls: {
+    fdeCalls: {
       one: "{{brandName}}를 {{count}}회 호출함",
       other: "{{brandName}}를 {{count}}회 호출함",
     },
@@ -2677,7 +2682,7 @@ export const ko: TranslationResources = {
         uninstall: {
           title: "데몬을 제거할까요?",
           message:
-            "서비스를 중지하고 {{host}}에서 {{brandName}} 설치를 제거합니다. 데몬 상태(~/.paseo)는 유지됩니다.",
+            "서비스를 중지하고 {{host}}에서 {{brandName}} 설치를 제거합니다. 데몬 상태(~/.fde)는 유지됩니다.",
         },
         log: {
           running: "{{host}}에서 실행 중...",
@@ -3020,13 +3025,13 @@ export const ko: TranslationResources = {
         savedToast: "프로젝트가 업데이트되었습니다.",
       },
       readFailures: {
-        invalidTitle: "paseo.json을 파싱할 수 없습니다",
+        invalidTitle: "fde.json을 파싱할 수 없습니다",
         invalidDescription: "디스크의 파일을 수정한 후 다시 로드하세요.",
         missingTitle: "이 호스트에는 이 프로젝트가 없습니다",
         missingSingleHost: "선택한 호스트에 이 프로젝트의 기록이 없습니다.",
-        transportTitle: "paseo.json을 불러올 수 없습니다",
+        transportTitle: "fde.json을 불러올 수 없습니다",
         transportFallback: "호스트가 응답하지 않았습니다.",
-        failedTitle: "paseo.json을 불러올 수 없습니다",
+        failedTitle: "fde.json을 불러올 수 없습니다",
         failedDescription: "다시 로드하여 재시도하세요.",
       },
       worktree: {
@@ -3036,7 +3041,7 @@ export const ko: TranslationResources = {
         docsTooltip: "자세한 내용과 이 명령에 사용할 수 있는 환경 변수는 문서를 참조하세요",
         setup: "설정",
         setupAccessibility: "워크트리 설정 명령",
-        uncommittedTitle: "paseo.json 변경 사항을 커밋하세요",
+        uncommittedTitle: "fde.json 변경 사항을 커밋하세요",
         uncommittedDescription: "새 워크트리는 선택한 기본 브랜치의 설정 스크립트를 사용합니다.",
         teardown: "정리",
         teardownAccessibility: "워크트리 정리 명령",
@@ -3060,7 +3065,7 @@ export const ko: TranslationResources = {
         newScript: "새 스크립트",
         editScript: "{{name}} 편집",
         runAsService: "서비스로 실행",
-        serviceHint: "{{brandName}}가 프로세스를 감독하고 $PASEO_PORT를 통해 포트를 할당합니다",
+        serviceHint: "{{brandName}}가 프로세스를 감독하고 $FDE_PORT를 통해 포트를 할당합니다",
         actions: {
           add: "스크립트 추가",
           edit: "편집",
@@ -3080,8 +3085,8 @@ export const ko: TranslationResources = {
       },
       writeFailures: {
         staleTitle: "디스크에서 구성이 변경되었습니다",
-        staleDescription: "저장하기 전에 다시 로드하여 최신 paseo.json을 가져오세요.",
-        failedTitle: "paseo.json을 저장할 수 없습니다",
+        staleDescription: "저장하기 전에 다시 로드하여 최신 fde.json을 가져오세요.",
+        failedTitle: "fde.json을 저장할 수 없습니다",
         failedDescription: "다시 시도하거나 디스크에서 최신 버전을 다시 로드하세요.",
       },
       actions: {

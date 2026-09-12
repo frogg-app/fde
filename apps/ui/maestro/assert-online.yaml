@@ -1,8 +1,8 @@
-appId: sh.paseo
+appId: sh.fde
 ---
 - runFlow:
     when:
-      visible: "Open in.*Paseo.*\\?"
+      visible: "Open in.*Fde.*\\?"
     commands:
       - tapOn: "Open"
 

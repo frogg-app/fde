@@ -1,16 +1,16 @@
-# Paseo Hub relationship
+# FDE Hub relationship
 
-Paseo Hub is an explicit opt-in connection from one Paseo daemon to one Hub. Running a daemon does
+FDE Hub is an explicit opt-in connection from one FDE daemon to one Hub. Running a daemon does
 not register it with a Hub. The relationship begins only when a user runs
-`paseo hub connect [url]` from the daemon machine with an explicit API key or matching stored CLI login.
+`fde hub connect [url]` from the daemon machine with an explicit API key or matching stored CLI login.
 
-The human CLI login and daemon relationship are separate identities. `paseo hub login [url]` stores a durable organization-scoped CLI credential keyed by normalized Hub origin under `PASEO_HOME`. Interactive login optionally connects the local daemon, then points to the Hub UI for trigger configuration; it does not scaffold or deploy configuration. `paseo hub init` remains the explicit triggers-as-code scaffold. `paseo hub export [directory]` writes the active organization's current triggers as one self-contained YAML file per trigger, using the active login unless another Hub or API key is selected. Origin resolution uses explicit command input, `PASEO_HUB_URL`, active login, then `https://hub.paseo.sh`. Connect uses exact-origin authority to request a one-time enrollment token, then passes only that token to the daemon. The daemon generates and persists its own relationship credential.
+The human CLI login and daemon relationship are separate identities. `fde hub login [url]` stores a durable organization-scoped CLI credential keyed by normalized Hub origin under `FDE_HOME`. Interactive login optionally connects the local daemon, then points to the Hub UI for trigger configuration; it does not scaffold or deploy configuration. `fde hub init` remains the explicit triggers-as-code scaffold. `fde hub export [directory]` writes the active organization's current triggers as one self-contained YAML file per trigger, using the active login unless another Hub or API key is selected. Origin resolution uses explicit command input, `FDE_HUB_URL`, then an explicitly configured Hub endpoint. Connect uses exact-origin authority to request a one-time enrollment token, then passes only that token to the daemon. The daemon generates and persists its own relationship credential.
 
 ## Connection and authority
 
 The daemon enrolls over HTTP(S), then opens and maintains a direct outbound WebSocket to the Hub.
-The Hub never discovers or acquires the daemon through Paseo's relay. The relay remains an optional
-encrypted path for normal Paseo clients and has no role in Hub enrollment, authentication, dispatch,
+The Hub never discovers or acquires the daemon through FDE's relay. The relay remains an optional
+encrypted path for normal FDE clients and has no role in Hub enrollment, authentication, dispatch,
 or reconnects.
 
 The daemon persists a relationship ID and private connection credential before enrollment. The
@@ -21,7 +21,7 @@ Normal authenticated daemon sessions may manage the daemon's Hub relationship an
 Hub connections have no daemon permissions by default. Connecting gives Hub machine identity and
 presence but no execution authority. The `hub.execute` permission lets workflows triggered from
 GitHub, Slack, Discord, Linear, and other integrations create workspaces and run agents. Grant it
-during interactive login or later with `paseo hub permissions grant hub.execute`. Relationships
+during interactive login or later with `fde hub permissions grant hub.execute`. Relationships
 created before this split migrate their legacy execution scope to `hub.execute`. Hub sessions cannot
 manage their own relationship or permissions.
 
@@ -46,11 +46,11 @@ Transient stream frames are not durably replayed.
 
 Daemon restart preserves the Hub relationship and owned execution identity, but interrupts any
 active turn. The daemon persists that agent as `closed`; an idempotent create retry returns the same
-daemon, execution, and agent identity with that terminal state. Paseo never stores or automatically
+daemon, execution, and agent identity with that terminal state. FDE never stores or automatically
 replays the original prompt. A duplicate create returns the existing agent without starting another
 turn.
 
-Every Hub execution creates a fresh Paseo workspace. The workspace owns the execution's agents and
+Every Hub execution creates a fresh FDE workspace. The workspace owns the execution's agents and
 terminals. Local checkout and worktree targets select only the workspace backing and isolation; the
 Hub cannot select or reuse an existing workspace. Hub creates use the same agent creation path as
 trusted clients. They may select any worktree target shape and carry optional MCP server configuration and provider-native
@@ -85,7 +85,7 @@ daemon is indistinguishable from a missing execution and is never exposed or aff
 
 Interrupt uses the ordinary agent cancellation lifecycle. Archive resolves the execution agent's
 required workspaceId and sends it through the shared workspace archive service. The service archives
-that workspace's agents and terminals, then removes Paseo-owned backing directories only after their
+that workspace's agents and terminals, then removes FDE-owned backing directories only after their
 final active workspace reference disappears. Local checkouts remain on disk; sibling workspaces
 sharing a backing directory remain active.
 
@@ -99,19 +99,19 @@ Hub authentication rejection or close code `4403` permanently revokes the local 
 daemon deletes its credential, stops reconnecting, and retains only the relationship ID, Hub origin,
 scopes, and a sanitized reason for status reporting.
 
-`paseo hub disconnect` disables socket reconnect and execution authority before making one bounded
+`fde hub disconnect` disables socket reconnect and execution authority before making one bounded
 remote revocation request. The daemon then removes the local relationship whether the request
 succeeds or fails. A failed request returns a warning that server-side revocation may remain pending.
 `--force` skips the remote request. Legacy persisted `disconnecting` records are removed on startup;
 the daemon does not retry revocation in the background.
 
-`paseo hub logout` removes only the active human CLI credential and preserves credentials for other origins. Interactive logout inspects and optionally disconnects a same-origin daemon before deleting the login; a failed requested disconnect preserves the login. JSON and noninteractive logout never prompt or disconnect implicitly.
+`fde hub logout` removes only the active human CLI credential and preserves credentials for other origins. Interactive logout inspects and optionally disconnects a same-origin daemon before deleting the login; a failed requested disconnect preserves the login. JSON and noninteractive logout never prompt or disconnect implicitly.
 
 ## Cross-repository compatibility
 
-The consumer implementation lives in Paseo Cloud. Cloud owns its copy of the Hub wire schemas and
-has no Paseo runtime or build dependency. Cross-repository end-to-end verification separately builds
-a Paseo source checkout and exercises the real daemon, CLI, direct WebSocket, Cloud service, and
+The consumer implementation lives in FDE Cloud. Cloud owns its copy of the Hub wire schemas and
+has no FDE runtime or build dependency. Cross-repository end-to-end verification separately builds
+a FDE source checkout and exercises the real daemon, CLI, direct WebSocket, Cloud service, and
 Postgres. That compatibility fixture is not a package dependency or fallback implementation.
 Its `hub-e2e` ACP provider accepts only exact tool names on the injected `hub` MCP server. Other
 custom ACP providers remain unsupported for unattended preapproval.

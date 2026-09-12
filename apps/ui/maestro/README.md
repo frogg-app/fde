@@ -7,7 +7,7 @@ failure screenshot proves the intended behavior, not just that the app launched.
 
 `ios-sidebar-close-regression.yaml` exercises close swipes over a semantic header
 and the nested workspace list without activating the content below the swipe.
-Start the `sh.paseo.debug` dev client against the intended Metro server first;
+Start the `sh.fde.debug` dev client against the intended Metro server first;
 the flow preserves that running connection.
 
 ```bash
@@ -58,7 +58,7 @@ The reusable pieces live in `flows/`:
 Compose new workspace scenarios out of these primitives instead of copying the
 old full flow. The shell scripts render the top-level flows and every `flows/*.yaml`
 file into the same temp directory, so nested `runFlow: flows/...` paths keep
-working with `${PASEO_MAESTRO_*}` placeholders.
+working with `${FDE_MAESTRO_*}` placeholders.
 
 The flow is intentionally strict. It must:
 
@@ -76,7 +76,7 @@ Do not weaken this flow to only wait for `message-input-root`. That can pass on
 the wrong route. The header assertion and the `New workspace` negative assertion
 are what prove the redirect actually completed.
 
-The scripts assume a development build with package id `sh.paseo.debug`, an
+The scripts assume a development build with package id `sh.fde.debug`, an
 already-running local daemon on `127.0.0.1:9999`, and a connected Android device
 or emulator. They call `adb reverse tcp:9999 tcp:9999`; they do not restart the
 daemon.
@@ -89,8 +89,8 @@ bash apps/ui/maestro/record-workspace-create-android-focus.sh
 Optional environment:
 
 ```bash
-PASEO_MAESTRO_APP_ID=sh.paseo.debug
-PASEO_MAESTRO_DIRECT_ENDPOINT=127.0.0.1:9999
-PASEO_MAESTRO_DAEMON_WS_URL=ws://127.0.0.1:9999/ws
-PASEO_MAESTRO_PROJECT_PATH=/path/to/git/repo
+FDE_MAESTRO_APP_ID=sh.fde.debug
+FDE_MAESTRO_DIRECT_ENDPOINT=127.0.0.1:9999
+FDE_MAESTRO_DAEMON_WS_URL=ws://127.0.0.1:9999/ws
+FDE_MAESTRO_PROJECT_PATH=/path/to/git/repo
 ```

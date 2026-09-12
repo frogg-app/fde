@@ -46,7 +46,7 @@ class FakeDaemonRuntime implements DaemonLaunchRuntime {
   }
 
   resolveHome(env: NodeJS.ProcessEnv): string {
-    return env.FDE_HOME ?? env.PASEO_HOME ?? "/tmp/paseo";
+    return env.FDE_HOME ?? "/tmp/fde";
   }
 
   spawnDetached(
@@ -70,13 +70,13 @@ class FakeDaemonRuntime implements DaemonLaunchRuntime {
 
 const tempRoots: string[] = [];
 
-async function createPaseoHome(config: unknown): Promise<string> {
-  const root = await mkdtemp(path.join(os.tmpdir(), "paseo-local-daemon-"));
+async function createFdeHome(config: unknown): Promise<string> {
+  const root = await mkdtemp(path.join(os.tmpdir(), "fde-local-daemon-"));
   tempRoots.push(root);
-  const paseoHome = path.join(root, ".paseo");
-  await mkdir(paseoHome, { recursive: true });
-  await writeFile(path.join(paseoHome, "config.json"), JSON.stringify(config, null, 2));
-  return paseoHome;
+  const fdeHome = path.join(root, ".fde");
+  await mkdir(fdeHome, { recursive: true });
+  await writeFile(path.join(fdeHome, "config.json"), JSON.stringify(config, null, 2));
+  return fdeHome;
 }
 
 function expectSupervisorLaunch(argv: string[]): void {
@@ -103,7 +103,7 @@ describe("local daemon launch supervision", () => {
   test("foreground start spawns supervisor-entrypoint instead of server/index", async () => {
     const runtime = new FakeDaemonRuntime();
 
-    const status = startLocalDaemonForeground({ home: "/tmp/paseo-test", relay: false }, runtime);
+    const status = startLocalDaemonForeground({ home: "/tmp/fde-test", relay: false }, runtime);
 
     expect(status).toBe(0);
     expect(runtime.recordedLaunches.map((launch) => launch.mode)).toEqual(["foreground"]);
@@ -118,14 +118,11 @@ describe("local daemon launch supervision", () => {
     vi.useFakeTimers();
     const runtime = new FakeDaemonRuntime();
 
-    const resultPromise = startLocalDaemonDetached(
-      { home: "/tmp/paseo-test", mcp: false },
-      runtime,
-    );
+    const resultPromise = startLocalDaemonDetached({ home: "/tmp/fde-test", mcp: false }, runtime);
     await vi.advanceTimersByTimeAsync(1200);
     const result = await resultPromise;
 
-    expect(result).toEqual({ pid: 4242, logPath: "/tmp/paseo-test/daemon.log" });
+    expect(result).toEqual({ pid: 4242, logPath: "/tmp/fde-test/daemon.log" });
     expect(runtime.daemonProcess.wasUnreferenced).toBe(true);
     expect(runtime.recordedLaunches.map((launch) => launch.mode)).toEqual(["detached"]);
     const launch = runtime.recordedLaunches[0];
@@ -140,7 +137,7 @@ describe("local daemon launch supervision", () => {
 
     const status = startLocalDaemonForeground(
       {
-        home: "/tmp/paseo-test",
+        home: "/tmp/fde-test",
         relayUseTls: true,
       },
       runtime,
@@ -151,7 +148,7 @@ describe("local daemon launch supervision", () => {
     const launch = runtime.recordedLaunches[0];
     expect(launch?.mode).toBe("foreground");
     expect(launch?.args).toContain("--relay-use-tls");
-    expect(launch?.options?.env?.PASEO_RELAY_USE_TLS).toBe("true");
+    expect(launch?.options?.env?.FDE_RELAY_USE_TLS).toBe("true");
   });
 
   test("web UI flag is passed to the supervised daemon", async () => {
@@ -159,7 +156,7 @@ describe("local daemon launch supervision", () => {
 
     const status = startLocalDaemonForeground(
       {
-        home: "/tmp/paseo-test",
+        home: "/tmp/fde-test",
         webUi: true,
       },
       runtime,
@@ -170,7 +167,7 @@ describe("local daemon launch supervision", () => {
     const launch = runtime.recordedLaunches[0];
     expect(launch?.mode).toBe("foreground");
     expect(launch?.args).toContain("--web-ui");
-    expect(launch?.options?.env?.PASEO_WEB_UI_ENABLED).toBe("true");
+    expect(launch?.options?.env?.FDE_WEB_UI_ENABLED).toBe("true");
   });
 
   test("no-web UI flag is passed to the supervised daemon", async () => {
@@ -178,7 +175,7 @@ describe("local daemon launch supervision", () => {
 
     const status = startLocalDaemonForeground(
       {
-        home: "/tmp/paseo-test",
+        home: "/tmp/fde-test",
         webUi: false,
       },
       runtime,
@@ -189,16 +186,16 @@ describe("local daemon launch supervision", () => {
     const launch = runtime.recordedLaunches[0];
     expect(launch?.mode).toBe("foreground");
     expect(launch?.args).toContain("--no-web-ui");
-    expect(launch?.options?.env?.PASEO_WEB_UI_ENABLED).toBe("false");
+    expect(launch?.options?.env?.FDE_WEB_UI_ENABLED).toBe("false");
   });
 
   test("local daemon state keeps public relay TLS separate from daemon relay TLS", async () => {
-    const home = await createPaseoHome({
+    const home = await createFdeHome({
       version: 1,
       daemon: {
         relay: {
           endpoint: "10.0.0.5:51185",
-          publicEndpoint: "paseo.example.com",
+          publicEndpoint: "fde.example.com",
           useTls: false,
           publicUseTls: true,
         },
@@ -207,7 +204,7 @@ describe("local daemon launch supervision", () => {
 
     const state = resolveLocalDaemonState({ home });
 
-    expect(state.relayEndpoint).toBe("paseo.example.com");
+    expect(state.relayEndpoint).toBe("fde.example.com");
     expect(state.relayUseTls).toBe(false);
     expect(state.relayPublicUseTls).toBe(true);
   });

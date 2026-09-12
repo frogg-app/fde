@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { formatPairingInstructions } from "./pairing.js";
 
 const QR = "\u001b[47m\u001b[30m      \n ████ \n      \u001b[0m";
-const URL = "https://app.paseo.sh/#offer=pairing-offer";
+const URL = "https://app.example.test/#offer=pairing-offer";
 
 describe("formatPairingInstructions", () => {
   it("prints the QR and an unmodified pairing-link line when the terminal is wide enough", () => {
@@ -16,13 +16,13 @@ describe("formatPairingInstructions", () => {
   });
 
   it("prints the app deep link on its own line when given", () => {
-    const deepLink = "paseo://pair#offer=pairing-offer";
+    const deepLink = "fde://pair#offer=pairing-offer";
     const output = formatPairingInstructions({ qr: QR, url: URL, columns: 7, deepLink });
 
     expect(output.split("\n")).toContain(URL);
     expect(output.split("\n")).toContain(deepLink);
     expect(output).toContain("FDE desktop app opens the link above directly");
-    expect(formatPairingInstructions({ qr: QR, url: URL, columns: 7 })).not.toContain("paseo://");
+    expect(formatPairingInstructions({ qr: QR, url: URL, columns: 7 })).not.toContain("fde://");
   });
 
   it("does not print a QR that would reach the terminal edge", () => {

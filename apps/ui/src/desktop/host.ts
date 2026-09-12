@@ -195,6 +195,8 @@ export interface DesktopInvokeBridge {
 }
 
 export interface DesktopHostBridge {
+  /** False for app-only shells; omitted by legacy shells that manage a daemon. */
+  supportsLocalDaemon?: boolean;
   platform?: string;
   windowChromeMode?: string;
   invoke?: DesktopInvokeBridge["invoke"];
@@ -214,7 +216,7 @@ export interface DesktopHostBridge {
 
 declare global {
   interface Window {
-    paseoDesktop?: DesktopHostBridge;
+    fdeDesktop?: DesktopHostBridge;
   }
 }
 

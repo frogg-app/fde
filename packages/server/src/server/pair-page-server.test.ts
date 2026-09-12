@@ -38,7 +38,7 @@ describe("standalone pairing page service", () => {
 
       expect(response.status).toBe(200);
       expect(html).toContain(code);
-      expect(html).toContain(`paseo://pair#offer=${code}`);
+      expect(html).toContain(`fde://pair#offer=${code}`);
       expect(html).toContain("<svg");
       // It issued no codes, so it can never pair the browser looking at it,
       // and it says nothing about the daemon the code belongs to.

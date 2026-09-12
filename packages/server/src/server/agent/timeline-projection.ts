@@ -490,10 +490,20 @@ export function selectProjectedTimelinePage(input: {
   direction: TimelineLimitDirection;
   cursorSeq?: number;
   limit?: number;
+  /**
+   * Projection of `rows`, when the caller already has one.
+   *
+   * Projecting merges assistant and reasoning chunks across the whole conversation, so
+   * it costs O(total timeline) and allocates a concatenated string per merged run. A
+   * caller paging backwards through an unchanged timeline would otherwise repeat that
+   * for every page. Must be the projection of exactly these rows.
+   */
+  projectedEntries?: readonly TimelineProjectionEntry[];
 }): ProjectedTimelinePageSelection {
   const limit = input.limit === undefined ? 0 : Math.max(0, Math.floor(input.limit));
   const bounds = input.bounds ?? getTimelineBounds(input.rows);
-  const projectedAll = projectTimelineRows({ rows: input.rows, mode: "projected" });
+  const projectedAll =
+    input.projectedEntries ?? projectTimelineRows({ rows: input.rows, mode: "projected" });
   if (!bounds) {
     return {
       entries: [],

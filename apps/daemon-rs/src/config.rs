@@ -4,7 +4,7 @@
 use std::net::SocketAddr;
 
 pub struct Config {
-    /// Address to bind. `PASEO_LISTEN` (host:port) wins over `PASEO_PORT`.
+    /// Address to bind. `FDE_LISTEN` (host:port) wins over `FDE_PORT`.
     pub listen: SocketAddr,
     /// Upstream Node daemon for message types not yet implemented natively.
     /// `None` means run standalone and reject unknown types instead of proxying.
@@ -25,12 +25,12 @@ impl Config {
     /// `persisted_listen` is `daemon.listen` from config.json; env wins over it,
     /// matching the Node daemon's precedence.
     pub fn from_env(persisted_listen: Option<&str>) -> anyhow::Result<Self> {
-        let listen = match std::env::var("PASEO_LISTEN") {
+        let listen = match std::env::var("FDE_LISTEN") {
             Ok(v) if !v.trim().is_empty() => parse_listen(v.trim())?,
             _ => match persisted_listen.map(str::trim).filter(|v| !v.is_empty()) {
                 Some(value) => parse_listen(value)?,
                 None => {
-                    let port = std::env::var("PASEO_PORT")
+                    let port = std::env::var("FDE_PORT")
                         .ok()
                         .and_then(|p| p.trim().parse::<u16>().ok())
                         .unwrap_or(DEFAULT_PORT);
@@ -39,7 +39,7 @@ impl Config {
             },
         };
 
-        let web_ui_enabled = std::env::var("PASEO_WEB_UI_ENABLED")
+        let web_ui_enabled = std::env::var("FDE_WEB_UI_ENABLED")
             .map(|v| v != "0" && v != "false")
             .unwrap_or(true);
         // Ships next to the daemon in a release build; overridable for dev.
@@ -71,10 +71,10 @@ fn parse_listen(value: &str) -> anyhow::Result<SocketAddr> {
     }
     let (host, port) = value
         .rsplit_once(':')
-        .ok_or_else(|| anyhow::anyhow!("PASEO_LISTEN must be host:port or port, got {value:?}"))?;
+        .ok_or_else(|| anyhow::anyhow!("FDE_LISTEN must be host:port or port, got {value:?}"))?;
     let port: u16 = port
         .parse()
-        .map_err(|_| anyhow::anyhow!("PASEO_LISTEN has a non-numeric port: {value:?}"))?;
+        .map_err(|_| anyhow::anyhow!("FDE_LISTEN has a non-numeric port: {value:?}"))?;
     let host = host.trim_matches(|c| c == '[' || c == ']');
     let ip = if host == "localhost" {
         "127.0.0.1".parse()?
@@ -91,17 +91,17 @@ mod tests {
     #[test]
     fn parses_the_forms_the_node_daemon_accepts() {
         assert_eq!(
-            parse_listen("0.0.0.0:6767").unwrap().to_string(),
-            "0.0.0.0:6767"
+            parse_listen("0.0.0.0:9999").unwrap().to_string(),
+            "0.0.0.0:9999"
         );
-        assert_eq!(parse_listen("6767").unwrap().to_string(), "127.0.0.1:6767");
+        assert_eq!(parse_listen("9999").unwrap().to_string(), "127.0.0.1:9999");
         assert_eq!(
             parse_listen("localhost:80").unwrap().to_string(),
             "127.0.0.1:80"
         );
         assert_eq!(
-            parse_listen("[::1]:6767").unwrap().to_string(),
-            "[::1]:6767"
+            parse_listen("[::1]:9999").unwrap().to_string(),
+            "[::1]:9999"
         );
         assert!(parse_listen("0.0.0.0:not-a-port").is_err());
     }

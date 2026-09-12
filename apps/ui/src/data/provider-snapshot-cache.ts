@@ -9,8 +9,8 @@ import { CompactProviderSnapshotSchema } from "@fde/protocol/messages";
 import { z } from "zod";
 
 const CACHE_VERSION = 1;
-const CACHE_KEY_PREFIX = "@paseo/provider-snapshot/v1";
-const CACHE_INDEX_KEY = "@paseo/provider-snapshot-index/v1";
+const CACHE_KEY_PREFIX = "@fde/provider-snapshot/v1";
+const CACHE_INDEX_KEY = "@fde/provider-snapshot-index/v1";
 const CACHE_INDEX_VERSION = 1;
 const DEFAULT_MAX_CACHE_BYTES = 4 * 1024 * 1024;
 

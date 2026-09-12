@@ -705,7 +705,7 @@ export const en = {
       },
       routes: {
         public: "Reverse proxy",
-        paseo: "Memorable",
+        fde: "Memorable",
         direct: "Direct",
       },
       states: {
@@ -1849,6 +1849,11 @@ export const en = {
       off: "Off",
       acknowledge: "Acknowledge tasks before working",
       permissions: "Permission requests are still spoken when task updates are off.",
+      audioMode: "Audio mode",
+      callMode: "Call",
+      mediaMode: "Media",
+      audioModeHint:
+        "Applies next conversation. Call mode favors headset microphones and echo control. Media uses media routing; headphones are recommended. Bluetooth microphone availability depends on the device.",
       speechSpeed: "Voice speed",
       pause: "Pause before replying",
       quick: "Quick (0.8 seconds)",
@@ -2014,7 +2019,7 @@ export const en = {
   serviceUrl: {
     title: "Open service URL",
     message: "Open {{url}}?",
-    inPaseo: "In {{brandName}}",
+    inFde: "In {{brandName}}",
     externalBrowser: "External browser",
     dontAskAgain: "Don't ask again",
   },
@@ -2140,7 +2145,7 @@ export const en = {
       one: "used {{count}} other tool",
       other: "used {{count}} other tools",
     },
-    paseoCalls: {
+    fdeCalls: {
       one: "called {{brandName}} {{count}} time",
       other: "called {{brandName}} {{count}} times",
     },
@@ -2283,7 +2288,7 @@ export const en = {
       directoryLabel: "Plugin directory",
       directoryPlaceholder: "/absolute/path/on/host",
       idLabel: "Plugin installation ID",
-      idHint: "Leave blank to use paseo-plugin.json",
+      idHint: "Leave blank to use fde-plugin.json",
       idPlaceholder: "Manifest default",
       install: "Install directory",
       installing: "Installing…",
@@ -2765,7 +2770,7 @@ export const en = {
         uninstall: {
           title: "Uninstall the daemon?",
           message:
-            "Stops the service and removes the {{brandName}} install from {{host}}. Daemon state (~/.paseo) is kept.",
+            "Stops the service and removes the {{brandName}} install from {{host}}. Daemon state (~/.fde) is kept.",
         },
         log: {
           running: "Running on {{host}}...",
@@ -3108,13 +3113,13 @@ export const en = {
         savedToast: "Project updated",
       },
       readFailures: {
-        invalidTitle: "paseo.json couldn't be parsed",
+        invalidTitle: "fde.json couldn't be parsed",
         invalidDescription: "Fix the file on disk, then reload.",
         missingTitle: "This host doesn't have this project",
         missingSingleHost: "The selected host has no record of this project.",
-        transportTitle: "Couldn't load paseo.json",
+        transportTitle: "Couldn't load fde.json",
         transportFallback: "The host didn't respond.",
-        failedTitle: "Couldn't load paseo.json",
+        failedTitle: "Couldn't load fde.json",
         failedDescription: "Reload to try again.",
       },
       worktree: {
@@ -3125,7 +3130,7 @@ export const en = {
           "See docs for more details and the environment variables available to these commands",
         setup: "Setup",
         setupAccessibility: "Worktree setup commands",
-        uncommittedTitle: "Commit paseo.json changes",
+        uncommittedTitle: "Commit fde.json changes",
         uncommittedDescription:
           "New worktrees use the setup script from the base branch you select.",
         teardown: "Teardown",
@@ -3150,7 +3155,7 @@ export const en = {
         newScript: "New script",
         editScript: "Edit {{name}}",
         runAsService: "Run as a service",
-        serviceHint: "{{brandName}} supervises the process and assigns a port via $PASEO_PORT",
+        serviceHint: "{{brandName}} supervises the process and assigns a port via $FDE_PORT",
         actions: {
           add: "Add script",
           edit: "Edit",
@@ -3169,8 +3174,8 @@ export const en = {
       },
       writeFailures: {
         staleTitle: "Config changed on disk",
-        staleDescription: "Reload to fetch the latest paseo.json before saving.",
-        failedTitle: "Couldn't save paseo.json",
+        staleDescription: "Reload to fetch the latest fde.json before saving.",
+        failedTitle: "Couldn't save fde.json",
         failedDescription: "Try again, or reload the latest version from disk.",
       },
       actions: {

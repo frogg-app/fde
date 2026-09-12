@@ -225,9 +225,9 @@ function classifyDaemonAuthProbeFailure(error: unknown): DaemonAuthProbeFailure 
 
 function describeDaemonAuthProbeFailure(host: string, failure: DaemonAuthProbeFailure): string {
   if (failure === "auth_required") {
-    return `Daemon is reachable at ${host} but requires a password. Set PASEO_PASSWORD and retry.`;
+    return `Daemon is reachable at ${host} but requires a password. Set FDE_PASSWORD and retry.`;
   }
-  return `Daemon is reachable at ${host} but the supplied password was rejected. Check PASEO_PASSWORD and retry.`;
+  return `Daemon is reachable at ${host} but the supplied password was rejected. Check FDE_PASSWORD and retry.`;
 }
 
 async function probeDaemonOverWebsocket(args: {

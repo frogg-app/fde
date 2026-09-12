@@ -2,7 +2,7 @@ import { parseHostPort } from "@fde/protocol/daemon-endpoints";
 import type { WorkspaceScriptPayload } from "@fde/protocol/messages";
 import type { ActiveConnection } from "@/runtime/host-runtime";
 
-export type WorkspaceScriptLinkKind = "public" | "paseo" | "direct";
+export type WorkspaceScriptLinkKind = "public" | "fde" | "direct";
 
 export interface WorkspaceScriptLinkTarget {
   kind: WorkspaceScriptLinkKind;
@@ -85,7 +85,7 @@ export function resolveWorkspaceScriptLink(input: {
 
   const targets: WorkspaceScriptLinkTarget[] = [];
   addTarget(targets, "public", publicProxyUrl);
-  addTarget(targets, "paseo", localProxyUrl);
+  addTarget(targets, "fde", localProxyUrl);
   addTarget(targets, "direct", buildDirectServiceUrl(activeConnection, script.port));
 
   return { primary: targets[0] ?? null, targets };

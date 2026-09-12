@@ -15,7 +15,7 @@ import type {
   OutputSchema,
   SingleResult,
 } from "../../output/index.js";
-import { resolveLocalPaseoHome } from "./local-daemon.js";
+import { resolveLocalFdeHome } from "./local-daemon.js";
 
 const CONFIG_FILENAME = "config.json";
 
@@ -82,9 +82,9 @@ export async function setDaemonPasswordInConfig(
   newPassword: string,
   options: SetPasswordOptions = {},
 ): Promise<SetPasswordResult> {
-  const paseoHome = resolveLocalPaseoHome(options.home);
-  const configPath = path.join(paseoHome, CONFIG_FILENAME);
-  const persisted = loadPersistedConfig(paseoHome);
+  const fdeHome = resolveLocalFdeHome(options.home);
+  const configPath = path.join(fdeHome, CONFIG_FILENAME);
+  const persisted = loadPersistedConfig(fdeHome);
   const nextConfig: PersistedConfig = {
     ...persisted,
     daemon: {
@@ -96,7 +96,7 @@ export async function setDaemonPasswordInConfig(
     },
   };
 
-  savePersistedConfig(paseoHome, nextConfig);
+  savePersistedConfig(fdeHome, nextConfig);
 
   return {
     action: "password_set",

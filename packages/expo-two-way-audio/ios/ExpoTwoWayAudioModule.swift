@@ -7,6 +7,7 @@ let ON_RECORDING_CHANGE_EVENT_NAME = "onRecordingChange"
 let ON_AUDIO_INTERRUPTION_EVENT_NAME = "onAudioInterruption"
 
 public class ExpoTwoWayAudioModule: Module {
+    private var mediaMode = false
     private var audioEngine: AudioEngine?
     public func definition() -> ModuleDefinition {
         Name("ExpoTwoWayAudio")
@@ -22,12 +23,15 @@ public class ExpoTwoWayAudioModule: Module {
 
         }
 
+        Function("setAudioMode") { (mode: String) in
+            self.mediaMode = mode == "media"
+        }
         AsyncFunction("initialize") { () -> Bool in
             do {
                 if self.audioEngine != nil {
                     return true
                 }
-                self.audioEngine = try AudioEngine()
+                self.audioEngine = try AudioEngine(mediaMode: self.mediaMode)
                 self.setupMicrophoneCallback()
                 self.setupInputAudioLevelCallback()
                 self.setupOutputAudioLevelCallback()

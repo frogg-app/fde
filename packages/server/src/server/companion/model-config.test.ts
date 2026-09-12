@@ -50,7 +50,7 @@ describe("resolveCompanionModelConfig", () => {
   });
 
   test("the CLI backend still takes the configured model override", () => {
-    expect(resolve({ PASEO_COMPANION_MODEL: "env-model" }, {}, true)).toEqual({
+    expect(resolve({ FDE_COMPANION_MODEL: "env-model" }, {}, true)).toEqual({
       status: "available",
       backend: "cli",
       model: "env-model",
@@ -59,7 +59,7 @@ describe("resolveCompanionModelConfig", () => {
 
   test("prefers the config key over the environment", () => {
     const resolved = resolve(
-      { PASEO_COMPANION_BACKEND: "api", ANTHROPIC_API_KEY: "env-key" },
+      { FDE_COMPANION_BACKEND: "api", ANTHROPIC_API_KEY: "env-key" },
       { providers: { anthropic: { apiKey: "config-key" } } },
     );
     expect(resolved).toEqual({
@@ -75,7 +75,7 @@ describe("resolveCompanionModelConfig", () => {
     expect(
       resolve(
         {
-          PASEO_COMPANION_BACKEND: "api",
+          FDE_COMPANION_BACKEND: "api",
           ANTHROPIC_API_KEY: "env-key",
           ANTHROPIC_BASE_URL: "https://proxy.test",
         },
@@ -93,7 +93,7 @@ describe("resolveCompanionModelConfig", () => {
   test("a whitespace-only env value does not shadow the config fallback", () => {
     expect(
       resolve(
-        { PASEO_COMPANION_BACKEND: "api", ANTHROPIC_API_KEY: "   ", ANTHROPIC_BASE_URL: "  " },
+        { FDE_COMPANION_BACKEND: "api", ANTHROPIC_API_KEY: "   ", ANTHROPIC_BASE_URL: "  " },
         { providers: { anthropic: { apiKey: "config-key", baseUrl: "https://config.test" } } },
       ),
     ).toEqual({
@@ -106,7 +106,7 @@ describe("resolveCompanionModelConfig", () => {
   });
 
   test("a whitespace-only env value leaves the key unresolved", () => {
-    expect(resolve({ PASEO_COMPANION_BACKEND: "api", ANTHROPIC_API_KEY: " \t " }, {}).status).toBe(
+    expect(resolve({ FDE_COMPANION_BACKEND: "api", ANTHROPIC_API_KEY: " \t " }, {}).status).toBe(
       "unavailable",
     );
   });
@@ -118,9 +118,9 @@ describe("resolveCompanionModelConfig", () => {
   test("the config model wins over the env model, which wins over the default", () => {
     const configModel = resolve(
       {
-        PASEO_COMPANION_BACKEND: "api",
+        FDE_COMPANION_BACKEND: "api",
         ANTHROPIC_API_KEY: "env-key",
-        PASEO_COMPANION_MODEL: "env-model",
+        FDE_COMPANION_MODEL: "env-model",
       },
       { features: { companion: { model: "config-model" } } },
     );
@@ -128,16 +128,16 @@ describe("resolveCompanionModelConfig", () => {
 
     const envModel = resolve(
       {
-        PASEO_COMPANION_BACKEND: "api",
+        FDE_COMPANION_BACKEND: "api",
         ANTHROPIC_API_KEY: "env-key",
-        PASEO_COMPANION_MODEL: "env-model",
+        FDE_COMPANION_MODEL: "env-model",
       },
       {},
     );
     expect(envModel).toMatchObject({ status: "available", model: "env-model" });
 
     const envBlank = resolve(
-      { PASEO_COMPANION_BACKEND: "api", ANTHROPIC_API_KEY: "env-key", PASEO_COMPANION_MODEL: "  " },
+      { FDE_COMPANION_BACKEND: "api", ANTHROPIC_API_KEY: "env-key", FDE_COMPANION_MODEL: "  " },
       {},
     );
     expect(envBlank).toMatchObject({ status: "available", model: DEFAULT_COMPANION_MODEL });

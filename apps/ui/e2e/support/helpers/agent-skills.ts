@@ -42,7 +42,7 @@ export interface AgentSkillsSandbox {
 }
 
 export async function startAgentSkillsSandbox(): Promise<AgentSkillsSandbox> {
-  const root = await mkdtemp(path.join(os.tmpdir(), "paseo-agent-skills-e2e-"));
+  const root = await mkdtemp(path.join(os.tmpdir(), "fde-agent-skills-e2e-"));
   const home = path.join(root, "home");
   await mkdir(home, { recursive: true });
   const daemon = await startIsolatedHostDaemon(`agent-skills-${randomUUID()}`, {

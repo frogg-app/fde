@@ -34,7 +34,7 @@ test.describe("composer steer supersedes plan approval", () => {
     }, testInfo) => {
       test.setTimeout(420_000);
       const cwd = realpathSync(
-        mkdtempSync(path.join(tmpdir(), `paseo-permission-steer-${scenario.provider}-`)),
+        mkdtempSync(path.join(tmpdir(), `fde-permission-steer-${scenario.provider}-`)),
       );
       let handle: AgentHandle | undefined;
 

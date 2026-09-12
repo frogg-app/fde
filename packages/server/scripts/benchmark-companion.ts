@@ -16,9 +16,9 @@ import { CompanionNotebookStore } from "../src/server/companion/store.js";
 import { defineCompanionTool } from "../src/server/companion/tools/index.js";
 import { SherpaOnnxTTS } from "../src/server/speech/providers/local/sherpa/sherpa-tts.js";
 
-if (process.env.PASEO_COMPANION_BENCH !== "1")
+if (process.env.FDE_COMPANION_BENCH !== "1")
   throw new Error(
-    "Set PASEO_COMPANION_BENCH=1 to use your subscription allowance for this benchmark.",
+    "Set FDE_COMPANION_BENCH=1 to use your subscription allowance for this benchmark.",
   );
 const provider =
   process.argv.find((arg) => arg.startsWith("--provider="))?.split("=")[1] ?? "claude";
@@ -48,7 +48,7 @@ const backend = (provider === "claude" ? createCompanionCliBackend : createCompa
   tools,
   logger,
 });
-const ttsDir = process.env.PASEO_COMPANION_BENCH_TTS_DIR;
+const ttsDir = process.env.FDE_COMPANION_BENCH_TTS_DIR;
 const tts = ttsDir
   ? new SherpaOnnxTTS({ preset: "piper-ljspeech-medium", modelDir: ttsDir }, logger)
   : null;

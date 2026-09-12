@@ -3,7 +3,7 @@ import { chmodSync, mkdtempSync, readdirSync, statSync, writeFileSync } from "no
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, it } from "vitest";
-import { DEFAULT_HUB_ORIGIN, resolveHubCredential, resolveHubOrigin } from "./authority.js";
+import { resolveHubCredential, resolveHubOrigin } from "./authority.js";
 import { PrivateHubCredentialStore, type HubCredentialStore } from "./credentials.js";
 
 const temporaryDirectories: string[] = [];
@@ -18,7 +18,7 @@ afterEach(async () => {
 describe("Hub CLI credentials", () => {
   it("stores multiple normalized origins privately and selects the latest login", () => {
     const home = temporaryHome();
-    const store = new PrivateHubCredentialStore({ PASEO_HOME: home });
+    const store = new PrivateHubCredentialStore({ FDE_HOME: home });
 
     store.save({ origin: "https://first.example.com", credential: "first-secret" });
     store.save({ origin: "https://second.example.com:443", credential: "second-secret" });
@@ -42,7 +42,7 @@ describe("Hub CLI credentials", () => {
   });
 
   it("logs out only the active human credential and preserves other origins", () => {
-    const store = new PrivateHubCredentialStore({ PASEO_HOME: temporaryHome() });
+    const store = new PrivateHubCredentialStore({ FDE_HOME: temporaryHome() });
     store.save({ origin: "https://first.example.com", credential: "first-secret" });
     store.save({ origin: "https://second.example.com", credential: "second-secret" });
 
@@ -59,7 +59,7 @@ describe("Hub CLI credentials", () => {
     chmodSync(path.join(home, "hub-credentials.json"), 0o600);
 
     assert.throws(
-      () => new PrivateHubCredentialStore({ PASEO_HOME: home }).active(),
+      () => new PrivateHubCredentialStore({ FDE_HOME: home }).active(),
       (error) => {
         assert.ok(error instanceof Error);
         assert.equal(error.message.includes(secret), false);
@@ -72,7 +72,7 @@ describe("Hub CLI credentials", () => {
   it("repairs permissive persisted file modes before returning credentials", () => {
     if (process.platform === "win32") return;
     const home = temporaryHome();
-    const store = new PrivateHubCredentialStore({ PASEO_HOME: home });
+    const store = new PrivateHubCredentialStore({ FDE_HOME: home });
     store.save({ origin: "https://hub.test", credential: "stored-secret" });
     const credentialPath = path.join(home, "hub-credentials.json");
     chmodSync(credentialPath, 0o644);
@@ -81,14 +81,14 @@ describe("Hub CLI credentials", () => {
     assert.equal(statSync(credentialPath).mode & 0o777, 0o600);
   });
 
-  it("resolves origin from explicit, environment, active login, then hosted default", () => {
-    const store = new PrivateHubCredentialStore({ PASEO_HOME: temporaryHome() });
+  it("resolves origin from explicit, environment, active login, or requires configuration", () => {
+    const store = new PrivateHubCredentialStore({ FDE_HOME: temporaryHome() });
     store.save({ origin: "https://stored.example.com", credential: "stored-secret" });
 
     assert.equal(
       resolveHubOrigin({
         options: { origin: "https://explicit.example.com" },
-        env: { PASEO_HUB_URL: "https://env.example.com" },
+        env: { FDE_HUB_URL: "https://env.example.com" },
         credentials: store,
       }),
       "https://explicit.example.com",
@@ -96,7 +96,7 @@ describe("Hub CLI credentials", () => {
     assert.equal(
       resolveHubOrigin({
         options: {},
-        env: { PASEO_HUB_URL: "https://env.example.com" },
+        env: { FDE_HUB_URL: "https://env.example.com" },
         credentials: store,
       }),
       "https://env.example.com",
@@ -105,25 +105,26 @@ describe("Hub CLI credentials", () => {
       resolveHubOrigin({ options: {}, env: {}, credentials: store }),
       "https://stored.example.com",
     );
-    assert.equal(
-      resolveHubOrigin({
-        options: {},
-        env: {},
-        credentials: new PrivateHubCredentialStore({ PASEO_HOME: temporaryHome() }),
-      }),
-      DEFAULT_HUB_ORIGIN,
+    assert.throws(
+      () =>
+        resolveHubOrigin({
+          options: {},
+          env: {},
+          credentials: new PrivateHubCredentialStore({ FDE_HOME: temporaryHome() }),
+        }),
+      { code: "HUB_ORIGIN_REQUIRED" },
     );
   });
 
   it("resolves credential from explicit, environment, then exact-origin stored login", () => {
-    const store = new PrivateHubCredentialStore({ PASEO_HOME: temporaryHome() });
+    const store = new PrivateHubCredentialStore({ FDE_HOME: temporaryHome() });
     store.save({ origin: "https://stored.example.com", credential: "stored-secret" });
 
     assert.equal(
       resolveHubCredential({
         origin: "https://stored.example.com",
         options: { origin: "https://stored.example.com", apiKey: "explicit-secret" },
-        env: { PASEO_HUB_API_KEY: "env-secret" },
+        env: { FDE_HUB_API_KEY: "env-secret" },
         credentials: store,
       }),
       "explicit-secret",
@@ -132,7 +133,7 @@ describe("Hub CLI credentials", () => {
       resolveHubCredential({
         origin: "https://stored.example.com",
         options: { origin: "https://stored.example.com" },
-        env: { PASEO_HUB_API_KEY: "env-secret" },
+        env: { FDE_HUB_API_KEY: "env-secret" },
         credentials: store,
       }),
       "env-secret",
@@ -149,7 +150,7 @@ describe("Hub CLI credentials", () => {
   });
 
   it("never applies a stored credential to a different origin", () => {
-    const store = new PrivateHubCredentialStore({ PASEO_HOME: temporaryHome() });
+    const store = new PrivateHubCredentialStore({ FDE_HOME: temporaryHome() });
     store.save({ origin: "https://stored.example.com", credential: "stored-secret" });
 
     assert.throws(
@@ -189,7 +190,7 @@ describe("Hub CLI credentials", () => {
 });
 
 function temporaryHome(): string {
-  const directory = mkdtempSync(path.join(tmpdir(), "paseo-hub-credentials-"));
+  const directory = mkdtempSync(path.join(tmpdir(), "fde-hub-credentials-"));
   temporaryDirectories.push(directory);
   return directory;
 }

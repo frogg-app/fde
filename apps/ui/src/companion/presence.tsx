@@ -36,6 +36,7 @@ export function CompanionPresence({
   return (
     <View style={styles.orbRow}>
       <MicOrb
+        muted={isMuted}
         state={micState}
         animated={animated}
         playbackActive={isSessionOpen && isSpeaking}

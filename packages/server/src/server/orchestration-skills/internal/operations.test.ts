@@ -26,7 +26,7 @@ interface Sandbox {
 }
 
 async function makeSandbox(): Promise<Sandbox> {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), "paseo-skills-"));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "fde-skills-"));
   const targets: SkillTargets = {
     sourceDir: path.join(root, "bundle"),
     agentsDir: path.join(root, "home", ".agents", "skills"),
@@ -74,8 +74,8 @@ async function writeOnDiskSkillToAllTargets(
 }
 
 async function writeCurrentBundle(sourceDir: string): Promise<void> {
-  await writeBundleSkill(sourceDir, "paseo", { "SKILL.md": "paseo-v1" });
-  await writeBundleSkill(sourceDir, "paseo-loop", { "SKILL.md": "loop-v1" });
+  await writeBundleSkill(sourceDir, "fde", { "SKILL.md": "fde-v1" });
+  await writeBundleSkill(sourceDir, "fde-loop", { "SKILL.md": "loop-v1" });
 }
 
 async function pathExists(p: string): Promise<boolean> {
@@ -111,42 +111,42 @@ describe("getSkillsStatus", () => {
 
     expect(status.state).toBe("not-installed");
     expect(status.ops).toEqual([
-      { kind: "add", name: "paseo" },
-      { kind: "add", name: "paseo-loop" },
+      { kind: "add", name: "fde" },
+      { kind: "add", name: "fde-loop" },
     ]);
   });
 
   it("reports every bundled skill as available", async () => {
     await writeCurrentBundle(sandbox.targets.sourceDir);
-    await writeBundleSkill(sandbox.targets.sourceDir, "paseo-advisor", {
+    await writeBundleSkill(sandbox.targets.sourceDir, "fde-advisor", {
       "SKILL.md": "advisor-v1",
     });
 
-    const status = await getSkillsStatus(sandbox.targets, only("paseo"));
+    const status = await getSkillsStatus(sandbox.targets, only("fde"));
 
-    expect(status.available).toEqual(["paseo", "paseo-advisor", "paseo-loop"]);
+    expect(status.available).toEqual(["fde", "fde-advisor", "fde-loop"]);
   });
 
   it("reports a skill present in only one target as installed", async () => {
     await writeCurrentBundle(sandbox.targets.sourceDir);
-    await writeOnDiskSkill(sandbox.targets.claudeDir, "paseo", { "SKILL.md": "paseo-v1" });
+    await writeOnDiskSkill(sandbox.targets.claudeDir, "fde", { "SKILL.md": "fde-v1" });
 
     const status = await getSkillsStatus(sandbox.targets, ALL_SKILLS);
 
     // `add` means "missing from at least one target", so it cannot answer
     // "is there a directory here to delete". `installed` answers that.
-    expect(status.installed).toEqual(["paseo"]);
+    expect(status.installed).toEqual(["fde"]);
     expect(status.ops).toEqual([
-      { kind: "add", name: "paseo" },
-      { kind: "add", name: "paseo-loop" },
+      { kind: "add", name: "fde" },
+      { kind: "add", name: "fde-loop" },
     ]);
   });
 
   it("reports legacy skill directories left on disk as installed", async () => {
     await writeCurrentBundle(sandbox.targets.sourceDir);
-    await writeOnDiskSkill(sandbox.targets.agentsDir, "paseo-chat", { "SKILL.md": "chat-old" });
+    await writeOnDiskSkill(sandbox.targets.agentsDir, "fde-chat", { "SKILL.md": "chat-old" });
 
-    expect((await getSkillsStatus(sandbox.targets, ALL_SKILLS)).installed).toEqual(["paseo-chat"]);
+    expect((await getSkillsStatus(sandbox.targets, ALL_SKILLS)).installed).toEqual(["fde-chat"]);
   });
 
   it("returns not-installed when only user-personal skill dirs exist (the live bug)", async () => {
@@ -159,40 +159,40 @@ describe("getSkillsStatus", () => {
 
     expect(status.state).toBe("not-installed");
     expect(status.ops).toEqual([
-      { kind: "add", name: "paseo" },
-      { kind: "add", name: "paseo-loop" },
+      { kind: "add", name: "fde" },
+      { kind: "add", name: "fde-loop" },
     ]);
   });
 
   it("returns up-to-date when every bundled skill matches on disk", async () => {
     await writeCurrentBundle(sandbox.targets.sourceDir);
-    await writeOnDiskSkillToAllTargets(sandbox.targets, "paseo", { "SKILL.md": "paseo-v1" });
-    await writeOnDiskSkillToAllTargets(sandbox.targets, "paseo-loop", { "SKILL.md": "loop-v1" });
+    await writeOnDiskSkillToAllTargets(sandbox.targets, "fde", { "SKILL.md": "fde-v1" });
+    await writeOnDiskSkillToAllTargets(sandbox.targets, "fde-loop", { "SKILL.md": "loop-v1" });
 
     const status = await getSkillsStatus(sandbox.targets, ALL_SKILLS);
 
     expect(status).toEqual({
       state: "up-to-date",
       ops: [],
-      available: ["paseo", "paseo-loop"],
-      installed: ["paseo", "paseo-loop"],
+      available: ["fde", "fde-loop"],
+      installed: ["fde", "fde-loop"],
     });
   });
 
   it("ignores user-added files inside current managed skill dirs in every target", async () => {
     await writeCurrentBundle(sandbox.targets.sourceDir);
-    await writeOnDiskSkillToAllTargets(sandbox.targets, "paseo", { "SKILL.md": "paseo-v1" });
-    await writeOnDiskSkillToAllTargets(sandbox.targets, "paseo-loop", { "SKILL.md": "loop-v1" });
-    await writeOnDiskSkill(sandbox.targets.agentsDir, "paseo", {
-      "SKILL.md": "paseo-v1",
+    await writeOnDiskSkillToAllTargets(sandbox.targets, "fde", { "SKILL.md": "fde-v1" });
+    await writeOnDiskSkillToAllTargets(sandbox.targets, "fde-loop", { "SKILL.md": "loop-v1" });
+    await writeOnDiskSkill(sandbox.targets.agentsDir, "fde", {
+      "SKILL.md": "fde-v1",
       "my-context.md": "user context",
     });
-    await writeOnDiskSkill(sandbox.targets.claudeDir, "paseo", {
-      "SKILL.md": "paseo-v1",
+    await writeOnDiskSkill(sandbox.targets.claudeDir, "fde", {
+      "SKILL.md": "fde-v1",
       "commands/local.md": "user command",
     });
-    await writeOnDiskSkill(sandbox.targets.codexDir, "paseo", {
-      "SKILL.md": "paseo-v1",
+    await writeOnDiskSkill(sandbox.targets.codexDir, "fde", {
+      "SKILL.md": "fde-v1",
       "hooks/guard.sh": "user guard",
     });
 
@@ -201,75 +201,75 @@ describe("getSkillsStatus", () => {
     expect(status).toEqual({
       state: "up-to-date",
       ops: [],
-      available: ["paseo", "paseo-loop"],
-      installed: ["paseo", "paseo-loop"],
+      available: ["fde", "fde-loop"],
+      installed: ["fde", "fde-loop"],
     });
   });
 
   it("returns drift with a single update op when one bundled file diverges", async () => {
     await writeCurrentBundle(sandbox.targets.sourceDir);
-    await writeOnDiskSkill(sandbox.targets.agentsDir, "paseo", { "SKILL.md": "stale" });
-    await writeOnDiskSkill(sandbox.targets.claudeDir, "paseo", { "SKILL.md": "paseo-v1" });
-    await writeOnDiskSkill(sandbox.targets.codexDir, "paseo", { "SKILL.md": "paseo-v1" });
-    await writeOnDiskSkillToAllTargets(sandbox.targets, "paseo-loop", { "SKILL.md": "loop-v1" });
+    await writeOnDiskSkill(sandbox.targets.agentsDir, "fde", { "SKILL.md": "stale" });
+    await writeOnDiskSkill(sandbox.targets.claudeDir, "fde", { "SKILL.md": "fde-v1" });
+    await writeOnDiskSkill(sandbox.targets.codexDir, "fde", { "SKILL.md": "fde-v1" });
+    await writeOnDiskSkillToAllTargets(sandbox.targets, "fde-loop", { "SKILL.md": "loop-v1" });
 
     const status = await getSkillsStatus(sandbox.targets, ALL_SKILLS);
 
     expect(status.state).toBe("drift");
-    expect(status.ops).toEqual([{ kind: "update", name: "paseo" }]);
+    expect(status.ops).toEqual([{ kind: "update", name: "fde" }]);
   });
 
   it("returns drift when a secondary agent target is stale", async () => {
     await writeCurrentBundle(sandbox.targets.sourceDir);
-    await writeOnDiskSkill(sandbox.targets.agentsDir, "paseo", { "SKILL.md": "paseo-v1" });
-    await writeOnDiskSkill(sandbox.targets.agentsDir, "paseo-loop", { "SKILL.md": "loop-v1" });
-    await writeOnDiskSkill(sandbox.targets.claudeDir, "paseo", { "SKILL.md": "stale" });
-    await writeOnDiskSkill(sandbox.targets.claudeDir, "paseo-loop", { "SKILL.md": "loop-v1" });
-    await writeOnDiskSkill(sandbox.targets.codexDir, "paseo", { "SKILL.md": "paseo-v1" });
-    await writeOnDiskSkill(sandbox.targets.codexDir, "paseo-loop", { "SKILL.md": "loop-v1" });
+    await writeOnDiskSkill(sandbox.targets.agentsDir, "fde", { "SKILL.md": "fde-v1" });
+    await writeOnDiskSkill(sandbox.targets.agentsDir, "fde-loop", { "SKILL.md": "loop-v1" });
+    await writeOnDiskSkill(sandbox.targets.claudeDir, "fde", { "SKILL.md": "stale" });
+    await writeOnDiskSkill(sandbox.targets.claudeDir, "fde-loop", { "SKILL.md": "loop-v1" });
+    await writeOnDiskSkill(sandbox.targets.codexDir, "fde", { "SKILL.md": "fde-v1" });
+    await writeOnDiskSkill(sandbox.targets.codexDir, "fde-loop", { "SKILL.md": "loop-v1" });
 
     const status = await getSkillsStatus(sandbox.targets, ALL_SKILLS);
 
     expect(status.state).toBe("drift");
-    expect(status.ops).toEqual([{ kind: "update", name: "paseo" }]);
+    expect(status.ops).toEqual([{ kind: "update", name: "fde" }]);
   });
 
   it("returns drift with add ops for the bundled skills missing from disk", async () => {
     await writeCurrentBundle(sandbox.targets.sourceDir);
-    await writeOnDiskSkillToAllTargets(sandbox.targets, "paseo", { "SKILL.md": "paseo-v1" });
+    await writeOnDiskSkillToAllTargets(sandbox.targets, "fde", { "SKILL.md": "fde-v1" });
 
     const status = await getSkillsStatus(sandbox.targets, ALL_SKILLS);
 
     expect(status.state).toBe("drift");
-    expect(status.ops).toEqual([{ kind: "add", name: "paseo-loop" }]);
+    expect(status.ops).toEqual([{ kind: "add", name: "fde-loop" }]);
   });
 
   it("returns drift with a delete op for a legacy skill name still on disk", async () => {
     await writeCurrentBundle(sandbox.targets.sourceDir);
-    await writeOnDiskSkillToAllTargets(sandbox.targets, "paseo", { "SKILL.md": "paseo-v1" });
-    await writeOnDiskSkillToAllTargets(sandbox.targets, "paseo-loop", { "SKILL.md": "loop-v1" });
-    await writeOnDiskSkill(sandbox.targets.agentsDir, "paseo-chat", { "SKILL.md": "chat-old" });
+    await writeOnDiskSkillToAllTargets(sandbox.targets, "fde", { "SKILL.md": "fde-v1" });
+    await writeOnDiskSkillToAllTargets(sandbox.targets, "fde-loop", { "SKILL.md": "loop-v1" });
+    await writeOnDiskSkill(sandbox.targets.agentsDir, "fde-chat", { "SKILL.md": "chat-old" });
 
     const status = await getSkillsStatus(sandbox.targets, ALL_SKILLS);
 
     expect(status.state).toBe("drift");
-    expect(status.ops).toEqual([{ kind: "delete", name: "paseo-chat" }]);
+    expect(status.ops).toEqual([{ kind: "delete", name: "fde-chat" }]);
   });
 
   it("emits add + update + delete ops sorted by name when state is mixed", async () => {
     await writeCurrentBundle(sandbox.targets.sourceDir);
-    await writeOnDiskSkill(sandbox.targets.agentsDir, "paseo", { "SKILL.md": "stale" });
-    await writeOnDiskSkill(sandbox.targets.claudeDir, "paseo", { "SKILL.md": "paseo-v1" });
-    await writeOnDiskSkill(sandbox.targets.codexDir, "paseo", { "SKILL.md": "paseo-v1" });
-    await writeOnDiskSkill(sandbox.targets.agentsDir, "paseo-chat", { "SKILL.md": "chat-old" });
+    await writeOnDiskSkill(sandbox.targets.agentsDir, "fde", { "SKILL.md": "stale" });
+    await writeOnDiskSkill(sandbox.targets.claudeDir, "fde", { "SKILL.md": "fde-v1" });
+    await writeOnDiskSkill(sandbox.targets.codexDir, "fde", { "SKILL.md": "fde-v1" });
+    await writeOnDiskSkill(sandbox.targets.agentsDir, "fde-chat", { "SKILL.md": "chat-old" });
 
     const status = await getSkillsStatus(sandbox.targets, ALL_SKILLS);
 
     expect(status.state).toBe("drift");
     expect(status.ops).toEqual([
-      { kind: "update", name: "paseo" },
-      { kind: "delete", name: "paseo-chat" },
-      { kind: "add", name: "paseo-loop" },
+      { kind: "update", name: "fde" },
+      { kind: "delete", name: "fde-chat" },
+      { kind: "add", name: "fde-loop" },
     ]);
   });
 });
@@ -280,7 +280,7 @@ describe("custom skill selection", () => {
   beforeEach(async () => {
     sandbox = await makeSandbox();
     await writeCurrentBundle(sandbox.targets.sourceDir);
-    await writeBundleSkill(sandbox.targets.sourceDir, "paseo-advisor", {
+    await writeBundleSkill(sandbox.targets.sourceDir, "fde-advisor", {
       "SKILL.md": "advisor-v1",
     });
   });
@@ -290,56 +290,56 @@ describe("custom skill selection", () => {
   });
 
   it("installs only the selected skills", async () => {
-    const status = await installSkills(sandbox.targets, only("paseo", "paseo-loop"));
+    const status = await installSkills(sandbox.targets, only("fde", "fde-loop"));
 
     expect(status).toEqual({
       state: "up-to-date",
       ops: [],
-      available: ["paseo", "paseo-advisor", "paseo-loop"],
-      installed: ["paseo", "paseo-loop"],
+      available: ["fde", "fde-advisor", "fde-loop"],
+      installed: ["fde", "fde-loop"],
     });
-    expect(await installedIn(sandbox.targets, "paseo")).toEqual([true, true, true]);
-    expect(await installedIn(sandbox.targets, "paseo-loop")).toEqual([true, true, true]);
-    expect(await installedIn(sandbox.targets, "paseo-advisor")).toEqual([false, false, false]);
+    expect(await installedIn(sandbox.targets, "fde")).toEqual([true, true, true]);
+    expect(await installedIn(sandbox.targets, "fde-loop")).toEqual([true, true, true]);
+    expect(await installedIn(sandbox.targets, "fde-advisor")).toEqual([false, false, false]);
   });
 
   it("reports up-to-date while an unselected bundled skill is absent", async () => {
-    await installSkills(sandbox.targets, only("paseo"));
+    await installSkills(sandbox.targets, only("fde"));
 
-    const status = await getSkillsStatus(sandbox.targets, only("paseo"));
+    const status = await getSkillsStatus(sandbox.targets, only("fde"));
 
     expect(status).toEqual({
       state: "up-to-date",
       ops: [],
-      available: ["paseo", "paseo-advisor", "paseo-loop"],
-      installed: ["paseo"],
+      available: ["fde", "fde-advisor", "fde-loop"],
+      installed: ["fde"],
     });
   });
 
   it("removes a previously installed skill once it leaves the selection", async () => {
     await installSkills(sandbox.targets, ALL_SKILLS);
 
-    const status = await installSkills(sandbox.targets, only("paseo"));
+    const status = await installSkills(sandbox.targets, only("fde"));
 
     expect(status.state).toBe("up-to-date");
-    expect(await installedIn(sandbox.targets, "paseo")).toEqual([true, true, true]);
-    expect(await installedIn(sandbox.targets, "paseo-loop")).toEqual([false, false, false]);
-    expect(await installedIn(sandbox.targets, "paseo-advisor")).toEqual([false, false, false]);
+    expect(await installedIn(sandbox.targets, "fde")).toEqual([true, true, true]);
+    expect(await installedIn(sandbox.targets, "fde-loop")).toEqual([false, false, false]);
+    expect(await installedIn(sandbox.targets, "fde-advisor")).toEqual([false, false, false]);
   });
 
   it("reports a delete op for a deselected skill before it is applied", async () => {
     await installSkills(sandbox.targets, ALL_SKILLS);
 
-    const status = await getSkillsStatus(sandbox.targets, only("paseo", "paseo-advisor"));
+    const status = await getSkillsStatus(sandbox.targets, only("fde", "fde-advisor"));
 
     expect(status.state).toBe("drift");
-    expect(status.ops).toEqual([{ kind: "delete", name: "paseo-loop" }]);
+    expect(status.ops).toEqual([{ kind: "delete", name: "fde-loop" }]);
   });
 
   it("leaves unrelated user skills untouched", async () => {
     await writeOnDiskSkill(sandbox.targets.agentsDir, "unslop", { "SKILL.md": "user-unslop" });
 
-    await installSkills(sandbox.targets, only("paseo"));
+    await installSkills(sandbox.targets, only("fde"));
 
     expect(
       await fs.readFile(path.join(sandbox.targets.agentsDir, "unslop", "SKILL.md"), "utf-8"),
@@ -354,33 +354,33 @@ describe("custom skill selection", () => {
     expect(status).toEqual({
       state: "not-installed",
       ops: [],
-      available: ["paseo", "paseo-advisor", "paseo-loop"],
+      available: ["fde", "fde-advisor", "fde-loop"],
       installed: [],
     });
-    expect(await installedIn(sandbox.targets, "paseo")).toEqual([false, false, false]);
-    expect(await installedIn(sandbox.targets, "paseo-loop")).toEqual([false, false, false]);
+    expect(await installedIn(sandbox.targets, "fde")).toEqual([false, false, false]);
+    expect(await installedIn(sandbox.targets, "fde-loop")).toEqual([false, false, false]);
   });
 
   it("ignores selected names that the bundle does not ship", async () => {
-    const status = await installSkills(sandbox.targets, only("paseo", "not-a-skill"));
+    const status = await installSkills(sandbox.targets, only("fde", "not-a-skill"));
 
     expect(status).toEqual({
       state: "up-to-date",
       ops: [],
-      available: ["paseo", "paseo-advisor", "paseo-loop"],
-      installed: ["paseo"],
+      available: ["fde", "fde-advisor", "fde-loop"],
+      installed: ["fde"],
     });
     expect(await installedIn(sandbox.targets, "not-a-skill")).toEqual([false, false, false]);
   });
 
   it("still deletes legacy skill names that are not selectable", async () => {
-    await writeOnDiskSkillToAllTargets(sandbox.targets, "paseo-orchestrator", {
+    await writeOnDiskSkillToAllTargets(sandbox.targets, "fde-orchestrator", {
       "SKILL.md": "orchestrator-old",
     });
 
-    await installSkills(sandbox.targets, only("paseo"));
+    await installSkills(sandbox.targets, only("fde"));
 
-    expect(await installedIn(sandbox.targets, "paseo-orchestrator")).toEqual([false, false, false]);
+    expect(await installedIn(sandbox.targets, "fde-orchestrator")).toEqual([false, false, false]);
   });
 });
 
@@ -404,16 +404,16 @@ describe("installSkills / updateSkills", () => {
     expect(status).toEqual({
       state: "up-to-date",
       ops: [],
-      available: ["paseo", "paseo-loop"],
-      installed: ["paseo", "paseo-loop"],
+      available: ["fde", "fde-loop"],
+      installed: ["fde", "fde-loop"],
     });
-    for (const name of ["paseo", "paseo-loop"]) {
+    for (const name of ["fde", "fde-loop"]) {
       expect(
         await fs.readFile(path.join(sandbox.targets.agentsDir, name, "SKILL.md"), "utf-8"),
-      ).toBe(name === "paseo" ? "paseo-v1" : "loop-v1");
+      ).toBe(name === "fde" ? "fde-v1" : "loop-v1");
       expect(
         await fs.readFile(path.join(sandbox.targets.codexDir, name, "SKILL.md"), "utf-8"),
-      ).toBe(name === "paseo" ? "paseo-v1" : "loop-v1");
+      ).toBe(name === "fde" ? "fde-v1" : "loop-v1");
       expect(await pathExists(path.join(sandbox.targets.claudeDir, name))).toBe(true);
     }
     expect(
@@ -423,48 +423,48 @@ describe("installSkills / updateSkills", () => {
 
   it("repairs missing and edited skills without deleting a legacy directory", async () => {
     await writeCurrentBundle(sandbox.targets.sourceDir);
-    await writeOnDiskSkill(sandbox.targets.agentsDir, "paseo", { "SKILL.md": "stale" });
-    await writeOnDiskSkill(sandbox.targets.agentsDir, "paseo-chat", { "SKILL.md": "chat-old" });
-    await writeOnDiskSkill(sandbox.targets.claudeDir, "paseo-chat", { "SKILL.md": "chat-old" });
-    await writeOnDiskSkill(sandbox.targets.codexDir, "paseo-chat", { "SKILL.md": "chat-old" });
+    await writeOnDiskSkill(sandbox.targets.agentsDir, "fde", { "SKILL.md": "stale" });
+    await writeOnDiskSkill(sandbox.targets.agentsDir, "fde-chat", { "SKILL.md": "chat-old" });
+    await writeOnDiskSkill(sandbox.targets.claudeDir, "fde-chat", { "SKILL.md": "chat-old" });
+    await writeOnDiskSkill(sandbox.targets.codexDir, "fde-chat", { "SKILL.md": "chat-old" });
 
     const status = await updateSkills(sandbox.targets, ALL_SKILLS);
 
     expect(status).toEqual({
       state: "drift",
-      ops: [{ kind: "delete", name: "paseo-chat" }],
-      available: ["paseo", "paseo-loop"],
-      installed: ["paseo", "paseo-chat", "paseo-loop"],
+      ops: [{ kind: "delete", name: "fde-chat" }],
+      available: ["fde", "fde-loop"],
+      installed: ["fde", "fde-chat", "fde-loop"],
     });
     expect(
-      await fs.readFile(path.join(sandbox.targets.agentsDir, "paseo", "SKILL.md"), "utf-8"),
-    ).toBe("paseo-v1");
+      await fs.readFile(path.join(sandbox.targets.agentsDir, "fde", "SKILL.md"), "utf-8"),
+    ).toBe("fde-v1");
     expect(
-      await fs.readFile(path.join(sandbox.targets.agentsDir, "paseo-loop", "SKILL.md"), "utf-8"),
+      await fs.readFile(path.join(sandbox.targets.agentsDir, "fde-loop", "SKILL.md"), "utf-8"),
     ).toBe("loop-v1");
     for (const dir of [
       sandbox.targets.agentsDir,
       sandbox.targets.claudeDir,
       sandbox.targets.codexDir,
     ]) {
-      expect(await pathExists(path.join(dir, "paseo-chat"))).toBe(true);
+      expect(await pathExists(path.join(dir, "fde-chat"))).toBe(true);
     }
   });
 
   it("defines updated as the state reached after preserving user files", async () => {
     await writeCurrentBundle(sandbox.targets.sourceDir);
-    await writeOnDiskSkillToAllTargets(sandbox.targets, "paseo", { "SKILL.md": "paseo-v1" });
-    await writeOnDiskSkillToAllTargets(sandbox.targets, "paseo-loop", { "SKILL.md": "loop-v1" });
-    await writeOnDiskSkill(sandbox.targets.agentsDir, "paseo", {
+    await writeOnDiskSkillToAllTargets(sandbox.targets, "fde", { "SKILL.md": "fde-v1" });
+    await writeOnDiskSkillToAllTargets(sandbox.targets, "fde-loop", { "SKILL.md": "loop-v1" });
+    await writeOnDiskSkill(sandbox.targets.agentsDir, "fde", {
       "SKILL.md": "stale",
       "hooks/guard.sh": "user guard",
     });
-    await writeOnDiskSkill(sandbox.targets.claudeDir, "paseo", {
-      "SKILL.md": "paseo-v1",
+    await writeOnDiskSkill(sandbox.targets.claudeDir, "fde", {
+      "SKILL.md": "fde-v1",
       "notes/local.md": "claude notes",
     });
-    await writeOnDiskSkill(sandbox.targets.codexDir, "paseo", {
-      "SKILL.md": "paseo-v1",
+    await writeOnDiskSkill(sandbox.targets.codexDir, "fde", {
+      "SKILL.md": "fde-v1",
       "prompts/local.md": "codex prompt",
     });
 
@@ -474,48 +474,39 @@ describe("installSkills / updateSkills", () => {
     expect(await getSkillsStatus(sandbox.targets, ALL_SKILLS)).toEqual({
       state: "up-to-date",
       ops: [],
-      available: ["paseo", "paseo-loop"],
-      installed: ["paseo", "paseo-loop"],
+      available: ["fde", "fde-loop"],
+      installed: ["fde", "fde-loop"],
     });
     expect(
-      await fs.readFile(
-        path.join(sandbox.targets.agentsDir, "paseo", "hooks", "guard.sh"),
-        "utf-8",
-      ),
+      await fs.readFile(path.join(sandbox.targets.agentsDir, "fde", "hooks", "guard.sh"), "utf-8"),
     ).toBe("user guard");
     expect(
-      await fs.readFile(
-        path.join(sandbox.targets.claudeDir, "paseo", "notes", "local.md"),
-        "utf-8",
-      ),
+      await fs.readFile(path.join(sandbox.targets.claudeDir, "fde", "notes", "local.md"), "utf-8"),
     ).toBe("claude notes");
     expect(
-      await fs.readFile(
-        path.join(sandbox.targets.codexDir, "paseo", "prompts", "local.md"),
-        "utf-8",
-      ),
+      await fs.readFile(path.join(sandbox.targets.codexDir, "fde", "prompts", "local.md"), "utf-8"),
     ).toBe("codex prompt");
   });
 
   it("repairs secondary agent targets even when agents skills are current", async () => {
     await writeCurrentBundle(sandbox.targets.sourceDir);
-    await writeOnDiskSkill(sandbox.targets.agentsDir, "paseo", { "SKILL.md": "paseo-v1" });
-    await writeOnDiskSkill(sandbox.targets.agentsDir, "paseo-loop", { "SKILL.md": "loop-v1" });
-    await writeOnDiskSkill(sandbox.targets.claudeDir, "paseo", { "SKILL.md": "paseo-v1" });
-    await writeOnDiskSkill(sandbox.targets.codexDir, "paseo", { "SKILL.md": "paseo-v1" });
-    await writeOnDiskSkill(sandbox.targets.codexDir, "paseo-loop", { "SKILL.md": "loop-v1" });
+    await writeOnDiskSkill(sandbox.targets.agentsDir, "fde", { "SKILL.md": "fde-v1" });
+    await writeOnDiskSkill(sandbox.targets.agentsDir, "fde-loop", { "SKILL.md": "loop-v1" });
+    await writeOnDiskSkill(sandbox.targets.claudeDir, "fde", { "SKILL.md": "fde-v1" });
+    await writeOnDiskSkill(sandbox.targets.codexDir, "fde", { "SKILL.md": "fde-v1" });
+    await writeOnDiskSkill(sandbox.targets.codexDir, "fde-loop", { "SKILL.md": "loop-v1" });
 
     const status = await updateSkills(sandbox.targets, ALL_SKILLS);
 
     expect(status.state).toBe("up-to-date");
     expect(
-      await fs.readFile(path.join(sandbox.targets.claudeDir, "paseo-loop", "SKILL.md"), "utf-8"),
+      await fs.readFile(path.join(sandbox.targets.claudeDir, "fde-loop", "SKILL.md"), "utf-8"),
     ).toBe("loop-v1");
   });
 
   it("auto-updates drifted installed skills", async () => {
     await writeCurrentBundle(sandbox.targets.sourceDir);
-    await writeOnDiskSkill(sandbox.targets.agentsDir, "paseo", {
+    await writeOnDiskSkill(sandbox.targets.agentsDir, "fde", {
       "SKILL.md": "stale",
       "hooks/guard.sh": "user guard",
     });
@@ -525,13 +516,10 @@ describe("installSkills / updateSkills", () => {
     expect(status.state).toBe("up-to-date");
     expect((await getSkillsStatus(sandbox.targets, ALL_SKILLS)).state).toBe("up-to-date");
     expect(
-      await fs.readFile(path.join(sandbox.targets.agentsDir, "paseo", "SKILL.md"), "utf-8"),
-    ).toBe("paseo-v1");
+      await fs.readFile(path.join(sandbox.targets.agentsDir, "fde", "SKILL.md"), "utf-8"),
+    ).toBe("fde-v1");
     expect(
-      await fs.readFile(
-        path.join(sandbox.targets.agentsDir, "paseo", "hooks", "guard.sh"),
-        "utf-8",
-      ),
+      await fs.readFile(path.join(sandbox.targets.agentsDir, "fde", "hooks", "guard.sh"), "utf-8"),
     ).toBe("user guard");
   });
 
@@ -543,13 +531,13 @@ describe("installSkills / updateSkills", () => {
     expect(status).toEqual({
       state: "not-installed",
       ops: [
-        { kind: "add", name: "paseo" },
-        { kind: "add", name: "paseo-loop" },
+        { kind: "add", name: "fde" },
+        { kind: "add", name: "fde-loop" },
       ],
-      available: ["paseo", "paseo-loop"],
+      available: ["fde", "fde-loop"],
       installed: [],
     });
-    expect(await installedIn(sandbox.targets, "paseo")).toEqual([false, false, false]);
+    expect(await installedIn(sandbox.targets, "fde")).toEqual([false, false, false]);
   });
 
   it("is idempotent — running install twice keeps state at up-to-date", async () => {
@@ -574,7 +562,7 @@ describe("uninstallSkills", () => {
     await fs.rm(sandbox.root, { recursive: true, force: true });
   });
 
-  it("removes every Paseo skill from all three targets and preserves user dirs", async () => {
+  it("removes every Fde skill from all three targets and preserves user dirs", async () => {
     await writeCurrentBundle(sandbox.targets.sourceDir);
     await installSkills(sandbox.targets, ALL_SKILLS);
     for (const name of ["unslop", "tdd", "devbox"]) {
@@ -584,7 +572,7 @@ describe("uninstallSkills", () => {
     const status = await uninstallSkills(sandbox.targets, ALL_SKILLS);
 
     expect(status.state).toBe("not-installed");
-    for (const name of ["paseo", "paseo-loop", ...LEGACY_SKILL_NAMES]) {
+    for (const name of ["fde", "fde-loop", ...LEGACY_SKILL_NAMES]) {
       expect(await installedIn(sandbox.targets, name)).toEqual([false, false, false]);
     }
     for (const name of ["unslop", "tdd", "devbox"]) {
@@ -609,12 +597,12 @@ describe("uninstallSkills", () => {
       sandbox.targets.claudeDir,
       sandbox.targets.codexDir,
     ]) {
-      await writeOnDiskSkill(dir, "paseo-chat", { "SKILL.md": "chat-old" });
+      await writeOnDiskSkill(dir, "fde-chat", { "SKILL.md": "chat-old" });
     }
 
     const status = await uninstallSkills(sandbox.targets, ALL_SKILLS);
 
     expect(status.state).toBe("not-installed");
-    expect(await installedIn(sandbox.targets, "paseo-chat")).toEqual([false, false, false]);
+    expect(await installedIn(sandbox.targets, "fde-chat")).toEqual([false, false, false]);
   });
 });

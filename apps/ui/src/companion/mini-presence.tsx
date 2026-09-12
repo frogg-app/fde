@@ -14,6 +14,7 @@ export function CompanionMiniPresence({ animated = true }: { animated?: boolean 
   const open = useCompanionStore((s) => s.open);
   return (
     <MicOrb
+      muted={isMuted}
       animated={animated}
       playbackActive={session.status === "open" && isSpeaking}
       size={44}

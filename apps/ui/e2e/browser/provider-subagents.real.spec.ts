@@ -28,7 +28,7 @@ const cases: ProviderSubagentCase[] = [
     expectedName: "sentinel_child",
     providerConfig: { model: "opus" },
     prompt:
-      'Use Claude Code\'s native Task tool exactly once. Set its subagent_type input to "Explore" and its name input to "sentinel_child". Ask it to reply with exactly CLAUDE_CHILD_SENTINEL and do nothing else. Wait for it, then reply ROOT_DONE. Do not use Paseo tools.',
+      'Use Claude Code\'s native Task tool exactly once. Set its subagent_type input to "Explore" and its name input to "sentinel_child". Ask it to reply with exactly CLAUDE_CHILD_SENTINEL and do nothing else. Wait for it, then reply ROOT_DONE. Do not use Fde tools.',
   },
   {
     provider: "codex",
@@ -36,7 +36,7 @@ const cases: ProviderSubagentCase[] = [
     expectedName: "Sentinel child",
     providerConfig: { providerOptions: { features: { multi_agent_v2: true } } },
     prompt:
-      'Use the native collaboration.spawn_agent tool exactly once with task_name "sentinel_child" and fork_turns "none". Ask it to reply with exactly CODEX_CHILD_SENTINEL and do nothing else. Wait for it with collaboration.wait_agent, then reply ROOT_DONE. Do not use Paseo tools.',
+      'Use the native collaboration.spawn_agent tool exactly once with task_name "sentinel_child" and fork_turns "none". Ask it to reply with exactly CODEX_CHILD_SENTINEL and do nothing else. Wait for it with collaboration.wait_agent, then reply ROOT_DONE. Do not use Fde tools.',
   },
   {
     provider: "opencode",
@@ -57,7 +57,7 @@ test.describe("real provider subagent timelines", () => {
       page,
     }, testInfo) => {
       const cwd = realpathSync(
-        mkdtempSync(path.join(tmpdir(), `paseo-provider-subagent-${scenario.provider}-`)),
+        mkdtempSync(path.join(tmpdir(), `fde-provider-subagent-${scenario.provider}-`)),
       );
       let handle: AgentHandle | undefined;
 

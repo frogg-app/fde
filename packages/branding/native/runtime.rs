@@ -12,13 +12,7 @@ pub fn env_value(suffix: &str) -> Option<String> {
             .map(|v| v.trim().to_string())
             .filter(|v| !v.is_empty())
     };
-    read(env_key(suffix)).or_else(|| {
-        if LEGACY_FDE {
-            read(format!("PASEO_{suffix}"))
-        } else {
-            None
-        }
-    })
+    read(env_key(suffix))
 }
 pub fn matches_identity(value: Option<&serde_json::Value>) -> bool {
     match value.filter(|v| !v.is_null()) {

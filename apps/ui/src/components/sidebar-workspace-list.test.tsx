@@ -65,9 +65,9 @@ interface RenderCounts {
 const runningScript: WorkspaceScriptPayload = {
   scriptName: "web",
   type: "service",
-  hostname: "web.paseo.localhost",
+  hostname: "web.fde.localhost",
   port: 3000,
-  proxyUrl: "http://web.paseo.localhost:6767",
+  proxyUrl: "http://web.fde.localhost:9999",
   lifecycle: "running",
   health: "healthy",
   exitCode: null,

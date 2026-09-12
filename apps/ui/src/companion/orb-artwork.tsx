@@ -12,9 +12,21 @@ import Svg, {
 // Open, translucent light fields. Nothing clips them into a microphone badge.
 export const OrbArtwork = memo(function OrbArtwork({
   layer,
+  monochrome = false,
 }: {
+  monochrome?: boolean;
   layer: "halo" | "surface" | "cool" | "warm" | "glass";
 }) {
+  const color = (hex: string) => {
+    if (!monochrome) return hex;
+    const rgb = Number.parseInt(hex.slice(1), 16);
+    const grey = Math.round(
+      ((rgb >> 16) & 255) * 0.2126 + ((rgb >> 8) & 255) * 0.7152 + (rgb & 255) * 0.0722,
+    )
+      .toString(16)
+      .padStart(2, "0");
+    return `#${grey}${grey}${grey}`;
+  };
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   const light = `url(#${id})`;
   const ribbon = `url(#${id}r)`;
@@ -23,9 +35,9 @@ export const OrbArtwork = memo(function OrbArtwork({
       <Svg width="100%" height="100%" viewBox="0 0 240 240">
         <Defs>
           <RadialGradient id={id}>
-            <Stop offset="0" stopColor="#68dfff" stopOpacity="0.32" />
-            <Stop offset="0.5" stopColor="#9770ff" stopOpacity="0.18" />
-            <Stop offset="1" stopColor="#717cff" stopOpacity="0" />
+            <Stop offset="0" stopColor={color("#68dfff")} stopOpacity="0.32" />
+            <Stop offset="0.5" stopColor={color("#9770ff")} stopOpacity="0.18" />
+            <Stop offset="1" stopColor={color("#717cff")} stopOpacity="0" />
           </RadialGradient>
         </Defs>
         <Ellipse cx="120" cy="120" rx="120" ry="112" fill={light} />
@@ -38,7 +50,7 @@ export const OrbArtwork = memo(function OrbArtwork({
               cx={120 + Math.cos(angle) * radius}
               cy={120 + Math.sin(angle) * radius}
               r={i % 3 === 0 ? 1.2 : 0.65}
-              fill={i % 2 ? "#8eeaff" : "#beafff"}
+              fill={color(i % 2 ? "#8eeaff" : "#beafff")}
               opacity={0.25 + (i % 4) * 0.12}
             />
           );
@@ -51,11 +63,11 @@ export const OrbArtwork = memo(function OrbArtwork({
       <Svg width="100%" height="100%" viewBox="0 0 240 240">
         <Defs>
           <RadialGradient id={id} cx="46%" cy="42%" r="53%">
-            <Stop offset="0" stopColor="#f0fdff" stopOpacity="0.95" />
-            <Stop offset="0.2" stopColor="#a0e2ff" stopOpacity="0.85" />
-            <Stop offset="0.48" stopColor="#7b9eff" stopOpacity="0.65" />
-            <Stop offset="0.75" stopColor="#835ce9" stopOpacity="0.26" />
-            <Stop offset="1" stopColor="#8164ed" stopOpacity="0" />
+            <Stop offset="0" stopColor={color("#f0fdff")} stopOpacity="0.95" />
+            <Stop offset="0.2" stopColor={color("#a0e2ff")} stopOpacity="0.85" />
+            <Stop offset="0.48" stopColor={color("#7b9eff")} stopOpacity="0.65" />
+            <Stop offset="0.75" stopColor={color("#835ce9")} stopOpacity="0.26" />
+            <Stop offset="1" stopColor={color("#8164ed")} stopOpacity="0" />
           </RadialGradient>
         </Defs>
         <Path
@@ -71,11 +83,11 @@ export const OrbArtwork = memo(function OrbArtwork({
       <Svg width="100%" height="100%" viewBox="0 0 240 240">
         <Defs>
           <LinearGradient id={id} x1="0%" y1="10%" x2="100%" y2="90%">
-            <Stop offset="0" stopColor="#8aeaff" stopOpacity="0" />
-            <Stop offset="0.3" stopColor="#e6ffff" stopOpacity="0.72" />
-            <Stop offset="0.58" stopColor="#cbc5ff" stopOpacity="0.22" />
-            <Stop offset="0.83" stopColor="#e8c7ff" stopOpacity="0.66" />
-            <Stop offset="1" stopColor="#f5c4ec" stopOpacity="0" />
+            <Stop offset="0" stopColor={color("#8aeaff")} stopOpacity="0" />
+            <Stop offset="0.3" stopColor={color("#e6ffff")} stopOpacity="0.72" />
+            <Stop offset="0.58" stopColor={color("#cbc5ff")} stopOpacity="0.22" />
+            <Stop offset="0.83" stopColor={color("#e8c7ff")} stopOpacity="0.66" />
+            <Stop offset="1" stopColor={color("#f5c4ec")} stopOpacity="0" />
           </LinearGradient>
         </Defs>
         <Path
@@ -104,17 +116,17 @@ export const OrbArtwork = memo(function OrbArtwork({
     <Svg width="100%" height="100%" viewBox="0 0 240 240">
       <Defs>
         <RadialGradient id={id}>
-          <Stop offset="0" stopColor={cool ? "#edffff" : "#fff0fb"} stopOpacity="0.88" />
-          <Stop offset="0.28" stopColor={cool ? "#52e9ff" : "#eaaaed"} stopOpacity="0.7" />
-          <Stop offset="0.65" stopColor={cool ? "#4798ff" : "#ab70ff"} stopOpacity="0.34" />
-          <Stop offset="1" stopColor={cool ? "#5479ef" : "#7651dc"} stopOpacity="0" />
+          <Stop offset="0" stopColor={color(cool ? "#edffff" : "#fff0fb")} stopOpacity="0.88" />
+          <Stop offset="0.28" stopColor={color(cool ? "#52e9ff" : "#eaaaed")} stopOpacity="0.7" />
+          <Stop offset="0.65" stopColor={color(cool ? "#4798ff" : "#ab70ff")} stopOpacity="0.34" />
+          <Stop offset="1" stopColor={color(cool ? "#5479ef" : "#7651dc")} stopOpacity="0" />
         </RadialGradient>
         <LinearGradient id={`${id}r`} x1="10%" y1="0%" x2="85%" y2="100%">
-          <Stop offset="0" stopColor={cool ? "#87ffff" : "#ffc9f1"} stopOpacity="0" />
-          <Stop offset="0.3" stopColor={cool ? "#7aeaff" : "#e2b8ff"} stopOpacity="0.7" />
-          <Stop offset="0.55" stopColor={cool ? "#d0ffff" : "#f5dfff"} stopOpacity="0.28" />
-          <Stop offset="0.82" stopColor={cool ? "#4589ff" : "#9979ff"} stopOpacity="0.65" />
-          <Stop offset="1" stopColor="#7975ef" stopOpacity="0" />
+          <Stop offset="0" stopColor={color(cool ? "#87ffff" : "#ffc9f1")} stopOpacity="0" />
+          <Stop offset="0.3" stopColor={color(cool ? "#7aeaff" : "#e2b8ff")} stopOpacity="0.7" />
+          <Stop offset="0.55" stopColor={color(cool ? "#d0ffff" : "#f5dfff")} stopOpacity="0.28" />
+          <Stop offset="0.82" stopColor={color(cool ? "#4589ff" : "#9979ff")} stopOpacity="0.65" />
+          <Stop offset="1" stopColor={color("#7975ef")} stopOpacity="0" />
         </LinearGradient>
       </Defs>
       <Ellipse cx="85" cy="103" rx="75" ry="87" fill={light} />

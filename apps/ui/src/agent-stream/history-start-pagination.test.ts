@@ -4,6 +4,7 @@ import {
   createHistoryStartPaginationState,
   evaluateHistoryStartPagination,
   isHistoryStartLoadingOperation,
+  MAX_AUTO_CONTINUED_PAGES,
   rearmHistoryStartPagination,
   settleHistoryStartPagination,
   type HistoryStartPaginationInput,
@@ -36,6 +37,7 @@ describe("history start pagination", () => {
     expect(localReveal.state).toEqual({
       status: "settling",
       loadedProgressKey: "epoch-1:20:local-60",
+      autoContinuedPages: 0,
     });
   });
   it("waits for user scroll intent before loading", () => {
@@ -65,7 +67,11 @@ describe("history start pagination", () => {
       false,
       false,
     ]);
-    expect(pageApplied.state).toEqual({ status: "settling", loadedProgressKey: "epoch-1:10" });
+    expect(pageApplied.state).toEqual({
+      status: "settling",
+      loadedProgressKey: "epoch-1:10",
+      autoContinuedPages: 0,
+    });
   });
 
   it("loads one page each time anchored geometry leaves and returns to history start", () => {
@@ -113,6 +119,46 @@ describe("history start pagination", () => {
     expect(isHistoryStartLoadingOperation(first.state)).toBe(true);
     expect(isHistoryStartLoadingOperation(pageApplied.state)).toBe(true);
     expect(isHistoryStartLoadingOperation(continued.state)).toBe(true);
+  });
+
+  it("stops chaining pages once the auto-continue budget is spent", () => {
+    // Continuing after a settle exists so a page shorter than the viewport cannot strand
+    // the reader at a dead history start. Unbounded, it chained instead: one sustained
+    // scroll was measured pulling 13 pages, and each page re-renders the viewport
+    // synchronously, so input stayed blocked long after the scroll stopped.
+    let state = createArmedHistoryStartPaginationState();
+    let loads = 0;
+    for (let page = 0; page < 10; page += 1) {
+      const key = `epoch-1:${page}`;
+      const requested = evaluateHistoryStartPagination(state, {
+        ...visibleHistoryStart,
+        progressKey: key,
+      });
+      if (requested.shouldLoad) {
+        loads += 1;
+      }
+      const applied = evaluateHistoryStartPagination(requested.state, {
+        ...visibleHistoryStart,
+        progressKey: `${key}:done`,
+      });
+      const settled = settleHistoryStartPagination(applied.state, {
+        ...visibleHistoryStart,
+        progressKey: `${key}:done`,
+      });
+      if (settled.shouldLoad) {
+        loads += 1;
+      }
+      state = settled.state;
+      if (state.status === "latched") {
+        break;
+      }
+    }
+
+    expect(state).toEqual({ status: "latched" });
+    expect(loads).toBeLessThanOrEqual(MAX_AUTO_CONTINUED_PAGES + 1);
+
+    // Scrolling again must still work, rather than leaving history unreachable.
+    expect(rearmHistoryStartPagination(state)).toEqual({ status: "ready" });
   });
 
   it("latches a request that finishes without cursor progress", () => {

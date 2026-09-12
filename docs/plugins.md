@@ -2,10 +2,10 @@
 
 Local plugins contribute daemon RPCs, native app surfaces, workspace panels, Command Center items,
 client slash commands, timeline items, composer pills, app themes, and composer attachment sources
-from one `index.ts`. Paseo executes the server contribution in a subprocess and evaluates the client
+from one `index.ts`. FDE executes the server contribution in a subprocess and evaluates the client
 contribution in the app runtime.
 
-> **Trust every plugin you add.** `paseo plugin add` and `paseo plugin install` mean “I trust this codebase.” Plugins are unsandboxed: server code and Git preparation commands run with the daemon user's access on the daemon host, and client contributions run inside Paseo. The repository's dependencies and future updates are part of that trust decision. With `--host`, preparation runs on that remote daemon host.
+> **Trust every plugin you add.** `fde plugin add` and `fde plugin install` mean “I trust this codebase.” Plugins are unsandboxed: server code and Git preparation commands run with the daemon user's access on the daemon host, and client contributions run inside FDE. The repository's dependencies and future updates are part of that trust decision. With `--host`, preparation runs on that remote daemon host.
 
 ## Install a directory source
 
@@ -13,13 +13,13 @@ Create a typecheckable plugin project, install its development dependencies, the
 the daemon. `init` only writes the project files; it does not run the package manager.
 
 ```bash
-paseo plugin init /absolute/path/to/my-plugin
+fde plugin init /absolute/path/to/my-plugin
 cd /absolute/path/to/my-plugin
 npm install
 npm run typecheck
-paseo plugin install /absolute/path/to/my-plugin
-paseo plugin install /absolute/path/to/my-plugin --id another-runtime-id
-paseo plugin ls
+fde plugin install /absolute/path/to/my-plugin
+fde plugin install /absolute/path/to/my-plugin --id another-runtime-id
+fde plugin ls
 ```
 
 The daemon stores directory sources under the root `plugins` object:
@@ -38,7 +38,7 @@ The daemon stores directory sources under the root `plugins` object:
 ```
 
 The plugin system is disabled unless `pluginsEnabled` is `true`. Changing that root field is
-runtime-safe: run `paseo reload` after editing `config.json`. Enabling starts every configured,
+runtime-safe: run `fde reload` after editing `config.json`. Enabling starts every configured,
 enabled plugin; disabling tears them all down without restarting the daemon. Plugin source entries
 remain lifecycle-owned and do not reload from manual config edits.
 
@@ -46,7 +46,7 @@ The directory contains an identity-only manifest, one entry point, and local typ
 
 ```text
 my-plugin/
-  paseo-plugin.json
+  fde-plugin.json
   index.ts
   main.client.tsx
   package.json
@@ -54,7 +54,7 @@ my-plugin/
 ```
 
 The generated `package.json` installs `@fde/plugin` and the other host modules as development
-dependencies for local typechecking and tests. Paseo compiles TypeScript and TSX and supplies the
+dependencies for local typechecking and tests. FDE compiles TypeScript and TSX and supplies the
 runtime modules, so consumers do not install these packages when adding the plugin.
 
 ```json
@@ -70,10 +70,10 @@ keys.
 
 Never enable plugins on a user's behalf without explicit permission. Before asking, check the
 target daemon's current `pluginsEnabled` value. State that plugins are trusted, unsandboxed code:
-backend code can access the daemon machine, while client contributions run inside the Paseo app.
+backend code can access the daemon machine, while client contributions run inside the FDE app.
 
-Source changes are explicit. Run `paseo plugin reload <id>` to stop and fully tear down the old
-plugin before compiling and starting from disk. A failed reload stays failed; Paseo does not restore
+Source changes are explicit. Run `fde plugin reload <id>` to stop and fully tear down the old
+plugin before compiling and starting from disk. A failed reload stays failed; FDE does not restore
 the old code. Use `enable`, `disable`, and `remove` to manage one plugin. Removing a directory source
 never deletes it. The global `pluginsEnabled` switch remains available.
 
@@ -83,26 +83,26 @@ GitHub repositories use an `owner/repository` shorthand. Other hosts use a Git U
 directory always wins over shorthand resolution.
 
 ```bash
-paseo plugin add owner/repository
-paseo plugin add https://gitlab.com/group/repository.git
-paseo plugin add https://git.example.com/owner/repository.git
-paseo plugin add owner/monorepo:plugins/review
-paseo plugin add owner/repository --ref main
-paseo plugin status
-paseo plugin update review
-paseo plugin update --all
+fde plugin add owner/repository
+fde plugin add https://gitlab.com/group/repository.git
+fde plugin add https://git.example.com/owner/repository.git
+fde plugin add owner/monorepo:plugins/review
+fde plugin add owner/repository --ref main
+fde plugin status
+fde plugin update review
+fde plugin update --all
 ```
 
 Append `:relative/path` to the source when the plugin lives below the repository root.
 
 Omitting `--ref` tracks the remote's default branch. A branch passed with `--ref` also tracks;
 tags and commits stay pinned. `status` fetches tracked refs and reports the installed and available
-commits. Removing a Git source deletes Paseo's managed checkout.
+commits. Removing a Git source deletes FDE's managed checkout.
 
 ### Declare Git preparation
 
 Most plugins should omit `build`. Use it only when the staged checkout must install a dependency
-that Paseo does not provide, generate source or assets, or perform another required preparation
+that FDE does not provide, generate source or assets, or perform another required preparation
 step:
 
 ```json
@@ -116,19 +116,19 @@ step:
 ```
 
 `build` is an optional list of argv arrays. Each array must contain at least one non-empty string;
-shell command strings are rejected. Paseo starts the executable directly, without a shell, from the
+shell command strings are rejected. FDE starts the executable directly, without a shell, from the
 plugin directory in the staged checkout. It never detects lockfiles or chooses a package manager.
 
-On install and every update, Paseo resolves the exact Git revision and manifest, runs the declared
+On install and every update, FDE resolves the exact Git revision and manifest, runs the declared
 commands, then validates, compiles, and activates the candidate. It logs each argv command and its
-output in the daemon log. If a command fails, the error includes its output, Paseo discards the
+output in the daemon log. If a command fails, the error includes its output, FDE discards the
 candidate, and the existing installed and running version stays untouched. On a remote daemon, all
 of this happens on the remote daemon host.
 
-Server contributions can write to stdout and stderr with normal Node logging. Paseo adds `[paseo]`
+Server contributions can write to stdout and stderr with normal Node logging. FDE adds `[fde]`
 entries for loading, ready, stopping, and stopped transitions. Compilation and load failures are
 recorded as stderr entries before a subprocess exists. Inspect the recent in-memory
-tail from the host plugin settings or with `paseo plugin logs <id>`. Git preparation commands are
+tail from the host plugin settings or with `fde plugin logs <id>`. Git preparation commands are
 recorded in `$FDE_HOME/daemon.log` before a plugin exists, rather than the plugin log tail. Reload, disable, and process
 failure retain the tail; removing the plugin clears it. Daemon restarts do not retain the tail, but
 structured copies remain in `$FDE_HOME/daemon.log`. Plugin output can contain secrets, so do not
@@ -145,7 +145,7 @@ code lives behind filename boundaries:
 | `*.server.ts`  | Node APIs, filesystem and process access, credentials, and handlers. |
 | `*.shared.ts`  | Zod RPC contracts and plain values used by both runtimes.            |
 
-Shared files import contracts from `@fde/plugin/server`. Client files import Paseo UI from
+Shared files import contracts from `@fde/plugin/server`. Client files import FDE UI from
 `@fde/plugin/react-native`. Its `Icon` resolves a Lucide name using the client's installed icon
 set; an unknown name renders nothing so it cannot break the plugin surface.
 Its controlled modal keeps presentation metadata on `<Modal title="…" icon={…}>` and body UI in
@@ -157,7 +157,7 @@ See `public-docs/plugins/reference.md`.
 | Module                     | Use it for                                               |
 | -------------------------- | -------------------------------------------------------- |
 | `@fde/plugin`              | contribution contracts and client data hooks             |
-| `@fde/plugin/react-native` | Paseo React Native components and UI hooks               |
+| `@fde/plugin/react-native` | FDE React Native components and UI hooks                 |
 | `@fde/plugin/server`       | `defineRpc`, `defineAttachmentSource`, and handler types |
 
 The compiler removes client registrations and imports from the server entry point, and server
@@ -180,25 +180,25 @@ export default function contribute(plugin: PluginContext) {
 }
 ```
 
-The contribution function must return cleanup. Server cleanup may be async; Paseo waits for it when
+The contribution function must return cleanup. Server cleanup may be async; FDE waits for it when
 the plugin is reloaded, disabled, removed, disconnected, or shut down. Cleanup is for resources
-created by plugin code. Paseo removes registered contributions, unmounts surfaces, clears query
+created by plugin code. FDE removes registered contributions, unmounts surfaces, clears query
 state, rejects pending RPCs, closes the plugin's daemon session, and stops the subprocess. Cleanup
 errors are logged and do not interrupt host teardown.
 
-Paseo owns the route, screen header, Lucide icon validation, close action, theme DTO, layout facts,
+FDE owns the route, screen header, Lucide icon validation, close action, theme DTO, layout facts,
 and render error boundary. The contributed component owns the complete body below the header.
 
 RPC contracts validate inputs and outputs in both the app and plugin subprocess. `useRpc` returns a
 typed async function. Use the host-provided `@tanstack/react-query` for request state and caching;
-Paseo gives each plugin installation its own query client.
+FDE gives each plugin installation its own query client.
 
-`usePaseo()` and the handler's `{ paseo }` context expose the same `PaseoApi`: projects,
+`useFde()` and the handler's `{ fde }` context expose the same `FdeApi`: projects,
 workspaces, agents, providers, and daemon config. They do not expose connection lifecycle. A surface borrows the
-selected host's existing connection; switching the screen's host changes both `usePaseo()` and
+selected host's existing connection; switching the screen's host changes both `useFde()` and
 `useRpc()` to that host. An offline selected host fails there and never falls through to another
 installation. A server handler owns an IPC-backed daemon session for the life of its subprocess.
-Use plugin RPC for plugin-specific backend behavior that is not a normal Paseo operation.
+Use plugin RPC for plugin-specific backend behavior that is not a normal FDE operation.
 
 Each subprocess gets an exclusively owned `plugin:<id>` session. That identity is reserved from
 normal clients, never resumes another session, and is cleaned immediately on exit without reconnect
@@ -206,7 +206,7 @@ grace. During daemon startup, plugin sessions may connect while application WebS
 paused; the daemon accepts clients only after configured plugins have settled and the initial
 catalog is complete.
 
-When the same plugin contribution exists on multiple hosts, Paseo shows it once in the sidebar and
+When the same plugin contribution exists on multiple hosts, FDE shows it once in the sidebar and
 adds a host picker to the screen header. The selected host supplies the bundle, RPC transport, and
 query cache. Plugin code cannot address another host.
 
@@ -224,7 +224,7 @@ workspace only. Location controls hosting, not context. An agent panel target ke
 when moved between hosts. Explorer configuration can create workspace-context panels and remove
 existing agent-context instances, but it cannot create an agent panel without an agent-aware command.
 
-Command Center callbacks use the selected host's existing `PaseoApi` for normal Paseo operations.
+Command Center callbacks use the selected host's existing `FdeApi` for normal FDE operations.
 They use typed plugin RPC only for plugin-specific backend work. Surface and panel props expose
 optional client-owned agent and workspace navigation; its absence is the compatibility gate for
 older clients. Other navigation remains limited to registered global surfaces and workspace panels.
@@ -240,7 +240,7 @@ client state without mounting a panel or surface.
 ```tsx
 export function contributeClient(client: PluginClientContext) {
   const pills = new Map<string, () => void>();
-  const unsubscribe = client.paseo.agents.subscribe((update) => {
+  const unsubscribe = client.fde.agents.subscribe((update) => {
     if (update.kind !== "upsert" || !update.agent.workspaceId) return;
     const { id: agentId, workspaceId } = update.agent;
     pills.get(agentId)?.();
@@ -268,7 +268,7 @@ export function contributeClient(client: PluginClientContext) {
 
 Wire it from `index.ts` with `plugin.addClientSide(contributeClient)`. `addComposerPill` exists only
 on `PluginClientContext`; it returns an idempotent removal function. A pill appears only in the
-matching workspace and agent track bar alongside Tasks and Subagents. Paseo owns the pressable,
+matching workspace and agent track bar alongside Tasks and Subagents. FDE owns the pressable,
 shared chrome, pending state, error reporting, and placement. The component owns its icon and text;
 the callback is client code by construction. Removing the pill, reloading the plugin, disconnecting
 the host, or unloading the app tears down the contribution.
@@ -278,12 +278,12 @@ the host, or unloading the app tears down the contribution.
 Timeline transformers and renderers are client contributions. The daemon's canonical rows and
 built-in projection stay unchanged. The app transforms each source item while building the render
 model, for both fetched history and live events. The input includes `phase: "streaming" | "complete"`.
-Paseo memoizes by source-item reference and derives every replacement ID from the source identity, so
+FDE memoizes by source-item reference and derives every replacement ID from the source identity, so
 streaming updates preserve mounted component identity.
 
 `query.itemType` selects one public `AgentTimelineItem.type`. The callback owns any detailed
 recognition and returns plain plugin item objects. `undefined` keeps the source item, `items`
-replaces it, and an empty array removes it. Output `data` must be JSON-compatible. Paseo adds the
+replaces it, and an empty array removes it. Output `data` must be JSON-compatible. FDE adds the
 runtime plugin ID, preserves the source timeline cursor and identity, validates renderer data with
 its Zod schema, and mounts the component inside the normal plugin runtime and error boundary. An
 optional output `id` distinguishes several stable replacements from the same source item; its output
@@ -296,7 +296,7 @@ See `examples/plugins/timeline-items` for the complete contract.
 A plugin subprocess can also append a canonical plugin row from a server handler:
 
 ```ts
-await paseo.agents.ref(agentId).timeline.append({
+await fde.agents.ref(agentId).timeline.append({
   type: "plugin",
   id: "review",
   kind: "review-result",
@@ -316,7 +316,7 @@ payload that cannot be rendered intact. The daemon advertises this RPC through
 
 `addClientSlashCommand` registers an agent- or workspace-context command in the composer. The
 callback runs in the app, receives the trimmed text after the command name as `args`, and receives
-the same `paseo`, `rpc`, `openSurface`, workspace, agent, and `openPanel` capabilities as the matching
+the same `fde`, `rpc`, `openSurface`, workspace, agent, and `openPanel` capabilities as the matching
 Command Center callback.
 
 ```ts
@@ -331,14 +331,14 @@ plugin.addClientSlashCommand({
 });
 ```
 
-Paseo owns the autocomplete row, input clearing, and error toast. It never sends the command text to
+FDE owns the autocomplete row, input clearing, and error toast. It never sends the command text to
 the agent. Built-in client commands win name and alias collisions, plugin commands win
 provider-command collisions, and the first plugin in stable catalog order wins collisions between
 plugins. Plugin slash commands do not run when the composer has attachments.
 
 ## Contribute composer attachments
 
-Register a declarative attachment source backed by a plugin RPC. Paseo owns the attachment menu,
+Register a declarative attachment source backed by a plugin RPC. FDE owns the attachment menu,
 search picker, drafts, selected pill, and submission. The plugin returns complete text snapshots;
 credentials and vendor API calls stay in the daemon handler.
 
@@ -361,7 +361,7 @@ drops the optional presentation fields.
 
 ## Contribute a theme
 
-`addTheme` takes a small light or dark palette and a display name. Paseo expands it through the
+`addTheme` takes a small light or dark palette and a display name. FDE expands it through the
 same semantic builders as the built-in themes, so plugins do not depend on the complete app token
 contract. Unistyles needs every theme name at `StyleSheet.configure` time, so
 `apps/ui/src/styles/theme.ts` reserves one light and one dark plugin slot. The appearance

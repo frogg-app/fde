@@ -88,7 +88,7 @@ import { useDraftWorkspaceAttachmentScopeKey } from "@/attachments/workspace-att
 import type { MessagePayload } from "@/composer/types";
 import type { UserComposerAttachment } from "@/attachments/types";
 import type { AgentAttachment, ForgeSearchItem } from "@fde/protocol/messages";
-import type { CreatePaseoWorktreeInput } from "@fde/client/internal/daemon-client";
+import type { CreateFdeWorktreeInput } from "@fde/client/internal/daemon-client";
 import type { AgentProvider } from "@fde/protocol/agent-types";
 import type { WorkspaceDraftTabSetup, WorkspaceTabTarget } from "@/workspace-tabs/model";
 import { isEmptyWorkspaceSubmission, runCreateEmptyWorkspace } from "./new-workspace-empty";
@@ -780,7 +780,7 @@ interface WorkspaceDraftSubmissionConfig {
 async function createAndMergeWorkspace(input: {
   client: NonNullable<ReturnType<typeof useHostRuntimeClient>>;
   createInput: Parameters<
-    NonNullable<ReturnType<typeof useHostRuntimeClient>>["createPaseoWorktree"]
+    NonNullable<ReturnType<typeof useHostRuntimeClient>>["createFdeWorktree"]
   >[0];
   mergeWorkspaces: (
     serverId: string,
@@ -789,7 +789,7 @@ async function createAndMergeWorkspace(input: {
   serverId: string;
   createFailedMessage: string;
 }): Promise<ReturnType<typeof normalizeWorkspaceDescriptor>> {
-  const payload = await input.client.createPaseoWorktree(input.createInput);
+  const payload = await input.client.createFdeWorktree(input.createInput);
   if (payload.error || !payload.workspace) {
     throw new Error(payload.error ?? input.createFailedMessage);
   }
@@ -1947,7 +1947,7 @@ export function NewWorkspaceScreen({
       prompt: string;
       attachments: AgentAttachment[];
       checkoutRequest: PickerCheckoutRequest | undefined;
-    }): CreatePaseoWorktreeInput => {
+    }): CreateFdeWorktreeInput => {
       if (!selectedProject) {
         throw new Error("Choose a project");
       }

@@ -25,7 +25,7 @@ describe("resolveCompanionCapability", () => {
   test("is enabled with no reason when the flag defaults on and a key resolves", () => {
     expect(
       resolve({
-        env: { PASEO_COMPANION_BACKEND: "api", ANTHROPIC_API_KEY: "key" },
+        env: { FDE_COMPANION_BACKEND: "api", ANTHROPIC_API_KEY: "key" },
       }),
     ).toEqual({
       enabled: true,
@@ -51,10 +51,10 @@ describe("resolveCompanionCapability", () => {
     expect(
       resolve({
         env: {
-          PASEO_COMPANION_BACKEND: "api",
+          FDE_COMPANION_BACKEND: "api",
           ANTHROPIC_API_KEY: "key",
-          PASEO_VOICE: "0",
-          PASEO_COMPANION_ENABLED: "1",
+          FDE_VOICE: "0",
+          FDE_COMPANION_ENABLED: "1",
         },
       }),
     ).toEqual({ enabled: false, reason: DISABLED_REASON });
@@ -64,19 +64,19 @@ describe("resolveCompanionCapability", () => {
     expect(
       resolve({
         env: {
-          PASEO_COMPANION_BACKEND: "api",
+          FDE_COMPANION_BACKEND: "api",
           ANTHROPIC_API_KEY: "key",
-          PASEO_COMPANION_ENABLED: "0",
-          PASEO_VOICE: "1",
+          FDE_COMPANION_ENABLED: "0",
+          FDE_VOICE: "1",
         },
       }),
     ).toEqual({ enabled: false, reason: DISABLED_REASON });
     expect(
       resolve({
         env: {
-          PASEO_COMPANION_BACKEND: "api",
+          FDE_COMPANION_BACKEND: "api",
           ANTHROPIC_API_KEY: "key",
-          PASEO_COMPANION_ENABLED: "1",
+          FDE_COMPANION_ENABLED: "1",
         },
         localRuntimeAvailable: false,
       }),
@@ -87,9 +87,9 @@ describe("resolveCompanionCapability", () => {
     expect(
       resolve({
         env: {
-          PASEO_COMPANION_BACKEND: "api",
+          FDE_COMPANION_BACKEND: "api",
           ANTHROPIC_API_KEY: "key",
-          PASEO_COMPANION_ENABLED: "0",
+          FDE_COMPANION_ENABLED: "0",
         },
         persisted: { features: { companion: { enabled: true } } },
       }),
@@ -99,7 +99,7 @@ describe("resolveCompanionCapability", () => {
   test("defaults on independently of local speech readiness", () => {
     expect(
       resolve({
-        env: { PASEO_COMPANION_BACKEND: "api", ANTHROPIC_API_KEY: "key" },
+        env: { FDE_COMPANION_BACKEND: "api", ANTHROPIC_API_KEY: "key" },
         localRuntimeAvailable: false,
       }),
     ).toEqual({
@@ -109,7 +109,7 @@ describe("resolveCompanionCapability", () => {
   });
 
   test("a disabled Companion reports the disabled reason ahead of the missing backend", () => {
-    expect(resolve({ env: { PASEO_COMPANION_ENABLED: "0" } })).toEqual({
+    expect(resolve({ env: { FDE_COMPANION_ENABLED: "0" } })).toEqual({
       enabled: false,
       reason: DISABLED_REASON,
     });

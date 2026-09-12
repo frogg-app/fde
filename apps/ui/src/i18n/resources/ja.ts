@@ -711,7 +711,7 @@ export const ja: TranslationResources = {
       },
       routes: {
         public: "リバースプロキシ",
-        paseo: "Memorable",
+        fde: "Memorable",
         direct: "直接接続",
       },
       states: {
@@ -1863,6 +1863,11 @@ export const ja: TranslationResources = {
       off: "オフ",
       acknowledge: "作業前にタスクの受付を伝える",
       permissions: "通知がオフでも権限の要求は音声で伝えます。",
+      audioMode: "オーディオモード",
+      callMode: "通話",
+      mediaMode: "メディア",
+      audioModeHint:
+        "次の会話から適用。通話はヘッドセットのマイクとエコー抑制を優先します。メディアは通常の音声経路を使うため、ヘッドホンを推奨します。Bluetooth マイクの利用可否は端末によります。",
       speechSpeed: "音声の速度",
       pause: "応答までの間",
       quick: "短い（0.8秒）",
@@ -2028,7 +2033,7 @@ export const ja: TranslationResources = {
   serviceUrl: {
     title: "サービスURLを開く",
     message: "{{url}}を開きますか？",
-    inPaseo: "{{brandName}}で",
+    inFde: "{{brandName}}で",
     externalBrowser: "外部ブラウザ",
     dontAskAgain: "次回から確認しない",
   },
@@ -2155,7 +2160,7 @@ export const ja: TranslationResources = {
       one: "その他のツールを{{count}}回使用",
       other: "その他のツールを{{count}}回使用",
     },
-    paseoCalls: {
+    fdeCalls: {
       one: "{{brandName}}を{{count}}回呼び出し",
       other: "{{brandName}}を{{count}}回呼び出し",
     },
@@ -2693,7 +2698,7 @@ export const ja: TranslationResources = {
         uninstall: {
           title: "デーモンをアンインストールしますか？",
           message:
-            "サービスを停止し、{{host}} から {{brandName}} のインストールを削除します。デーモンの状態 (~/.paseo) は保持されます。",
+            "サービスを停止し、{{host}} から {{brandName}} のインストールを削除します。デーモンの状態 (~/.fde) は保持されます。",
         },
         log: {
           running: "{{host}} で実行中...",
@@ -3037,13 +3042,13 @@ export const ja: TranslationResources = {
         savedToast: "プロジェクトを更新しました",
       },
       readFailures: {
-        invalidTitle: "paseo.jsonを解析できませんでした",
+        invalidTitle: "fde.jsonを解析できませんでした",
         invalidDescription: "ディスク上のファイルを修正してから再読み込みしてください。",
         missingTitle: "このホストにはこのプロジェクトがありません",
         missingSingleHost: "選択したホストにはこのプロジェクトの記録がありません。",
-        transportTitle: "paseo.jsonを読み込めませんでした",
+        transportTitle: "fde.jsonを読み込めませんでした",
         transportFallback: "ホストが応答しませんでした。",
-        failedTitle: "paseo.jsonを読み込めませんでした",
+        failedTitle: "fde.jsonを読み込めませんでした",
         failedDescription: "再読み込みして再試行してください。",
       },
       worktree: {
@@ -3054,7 +3059,7 @@ export const ja: TranslationResources = {
           "これらのコマンドで使用可能な詳細と環境変数についてはドキュメントを参照してください",
         setup: "セットアップ",
         setupAccessibility: "ワークツリーセットアップコマンド",
-        uncommittedTitle: "paseo.json の変更をコミットしてください",
+        uncommittedTitle: "fde.json の変更をコミットしてください",
         uncommittedDescription:
           "新しいワークツリーでは、選択したベースブランチのセットアップスクリプトが使われます。",
         teardown: "削除時",
@@ -3079,7 +3084,7 @@ export const ja: TranslationResources = {
         newScript: "新しいスクリプト",
         editScript: "{{name}}を編集",
         runAsService: "サービスとして実行",
-        serviceHint: "{{brandName}}がプロセスを監督し、$PASEO_PORTを通じてポートを割り当てます",
+        serviceHint: "{{brandName}}がプロセスを監督し、$FDE_PORTを通じてポートを割り当てます",
         actions: {
           add: "スクリプトを追加",
           edit: "編集",
@@ -3098,8 +3103,8 @@ export const ja: TranslationResources = {
       },
       writeFailures: {
         staleTitle: "設定がディスク上で変更されました",
-        staleDescription: "保存する前に最新のpaseo.jsonを取得するために再読み込みしてください。",
-        failedTitle: "paseo.jsonを保存できませんでした",
+        staleDescription: "保存する前に最新のfde.jsonを取得するために再読み込みしてください。",
+        failedTitle: "fde.jsonを保存できませんでした",
         failedDescription: "再試行するか、ディスクから最新バージョンを再読み込みしてください。",
       },
       actions: {

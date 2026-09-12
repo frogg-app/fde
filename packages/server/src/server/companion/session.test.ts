@@ -123,18 +123,22 @@ function createScriptedClient(turns: ScriptedTurn[]): CompanionModelClient {
 
 interface RecordingTts extends TextToSpeechProvider {
   synthesized: string[];
+  speeds: (number | undefined)[];
   nextSynthesis: () => Promise<string>;
 }
 
 function createRecordingTts(): RecordingTts {
   const synthesized: string[] = [];
+  const speeds: (number | undefined)[] = [];
   const waiting: Array<(text: string) => void> = [];
   return {
     synthesized,
+    speeds,
     nextSynthesis() {
       return new Promise<string>((resolve) => waiting.push(resolve));
     },
-    async synthesizeSpeech(text) {
+    async synthesizeSpeech(text, options) {
+      speeds.push(options?.speed);
       synthesized.push(text);
       waiting.shift()?.(text);
       return { stream: Readable.from([Buffer.from("audio")]), format: "pcm;rate=24000" };
@@ -362,6 +366,7 @@ describe("CompanionSession turns", () => {
     gate.open();
     await pending;
     expect(harness.tts.synthesized).toEqual(["The build passed."]);
+    expect(harness.tts.speeds).toEqual([1.3]);
     await harness.session.cleanup();
   });
 

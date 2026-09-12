@@ -3,7 +3,7 @@ import { z } from "zod";
 /**
  * Relay-only pairing offer.
  *
- * `serverId` is a stable daemon identifier scoped to `PASEO_HOME`, and is also
+ * `serverId` is a stable daemon identifier scoped to `FDE_HOME`, and is also
  * used as the relay session identifier.
  */
 export const ConnectionOfferV2Schema = z.object({
@@ -84,10 +84,10 @@ const PAIRING_CODE_PATH = "/code/";
 export const DEFAULT_PAIRING_BASE_URL = "https://pair.frogg.app";
 
 /**
- * The same payload as an app deep link, `paseo://pair#offer=<payload>`. The
- * scheme stays `paseo` because the desktop shell already registers it.
+ * The same payload as an app deep link, `fde://pair#offer=<payload>`. The
+ * scheme stays `fde` because the desktop shell already registers it.
  */
-export const PAIRING_DEEP_LINK_SCHEME = "paseo";
+export const PAIRING_DEEP_LINK_SCHEME = "fde";
 export const PAIRING_DEEP_LINK_BASE = `${PAIRING_DEEP_LINK_SCHEME}://pair`;
 
 function encodeUtf8ToBase64Url(input: string): string {
@@ -111,7 +111,7 @@ export function buildPairingUrl(baseUrl: string, encoded: string): string {
   return `${base}${PAIRING_CODE_PATH}${encoded}`;
 }
 
-/** `paseo://pair#offer=<payload>` for any link or code carrying an offer; null without one. */
+/** `fde://pair#offer=<payload>` for any link or code carrying an offer; null without one. */
 export function buildPairingDeepLink(
   offerUrlOrFragment: string,
   scheme = PAIRING_DEEP_LINK_SCHEME,
@@ -120,7 +120,7 @@ export function buildPairingDeepLink(
   return encoded ? `${scheme}://pair${OFFER_FRAGMENT_PREFIX}${encoded}` : null;
 }
 
-/** True for `paseo://pair#offer=…` (a trailing slash before the fragment is tolerated). */
+/** True for `fde://pair#offer=…` (a trailing slash before the fragment is tolerated). */
 export function isPairingDeepLink(input: string, scheme = PAIRING_DEEP_LINK_SCHEME): boolean {
   const trimmed = input.trim();
   return (
@@ -174,7 +174,7 @@ function extractCodePathSegment(input: string): string | null {
 /**
  * The encoded offer from any link FDE hands out: the canonical
  * `https://pair.frogg.app/code/<code>`, the older `…#offer=<code>` fragment
- * (still emitted as the `paseo://pair` deep link), and `…?code=<code>`.
+ * (still emitted as the `fde://pair` deep link), and `…?code=<code>`.
  * Returns null when the input carries no payload.
  */
 export function extractPairingCode(input: string): string | null {
@@ -190,7 +190,7 @@ export function extractPairingCode(input: string): string | null {
 /**
  * Parse a pairing link in any accepted form: `https://pair.frogg.app/code/<code>`,
  * `…?code=<code>`, or the older `…#offer=<base64url>` fragment (including
- * `paseo://pair#offer=…` and Paseo's `https://app.paseo.sh/#offer=…`).
+ * `fde://pair#offer=…` and Fde's `https://app.example.test/#offer=…`).
  *
  * Returns `null` if the input carries no pairing code. Throws if a code exists
  * but the payload is malformed or fails schema validation.

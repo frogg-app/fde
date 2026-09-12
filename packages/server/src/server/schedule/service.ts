@@ -15,7 +15,7 @@ import {
 import { resolveCreateAgentTitles } from "../agent/create-agent-title.js";
 import { type BoundCreateAgentCommand, formatProviderModel } from "../agent/create-agent/create.js";
 import type { PersistedWorkspaceRecord } from "../workspace-registry.js";
-import type { CreatePaseoWorktreeWorkflowResult } from "../worktree-session.js";
+import type { CreateFdeWorktreeWorkflowResult } from "../worktree-session.js";
 import { ScheduleStore } from "./store.js";
 import { computeNextRunAt, validateScheduleCadence } from "./cron.js";
 import type {
@@ -225,7 +225,7 @@ interface ScheduleWorkspaceCreateInput {
 }
 
 export interface ScheduleServiceOptions {
-  paseoHome: string;
+  fdeHome: string;
   logger: Logger;
   agentManager: ScheduleAgentManager;
   agentStorage: AgentStorage;
@@ -233,9 +233,9 @@ export interface ScheduleServiceOptions {
   createDirectoryWorkspace: (
     input: ScheduleWorkspaceCreateInput,
   ) => Promise<PersistedWorkspaceRecord>;
-  createPaseoWorktreeWorkspace: (
+  createFdeWorktreeWorkspace: (
     input: ScheduleWorkspaceCreateInput,
-  ) => Promise<CreatePaseoWorktreeWorkflowResult>;
+  ) => Promise<CreateFdeWorktreeWorkflowResult>;
   archiveWorkspace: (workspaceId: string) => Promise<void>;
   now?: () => Date;
   runner?: (schedule: StoredSchedule, runId: string) => Promise<ScheduleExecutionResult>;
@@ -250,9 +250,9 @@ export class ScheduleService {
   private readonly createDirectoryWorkspace: (
     input: ScheduleWorkspaceCreateInput,
   ) => Promise<PersistedWorkspaceRecord>;
-  private readonly createPaseoWorktreeWorkspace: (
+  private readonly createFdeWorktreeWorkspace: (
     input: ScheduleWorkspaceCreateInput,
-  ) => Promise<CreatePaseoWorktreeWorkflowResult>;
+  ) => Promise<CreateFdeWorktreeWorkflowResult>;
   private readonly archiveWorkspace: (workspaceId: string) => Promise<void>;
   private readonly now: () => Date;
   private readonly runner: (
@@ -263,13 +263,13 @@ export class ScheduleService {
   private tickTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(options: ScheduleServiceOptions) {
-    this.store = new ScheduleStore(join(options.paseoHome, "schedules"));
+    this.store = new ScheduleStore(join(options.fdeHome, "schedules"));
     this.logger = options.logger.child({ module: "schedule-service" });
     this.agentManager = options.agentManager;
     this.agentStorage = options.agentStorage;
     this.createAgent = options.createAgent;
     this.createDirectoryWorkspace = options.createDirectoryWorkspace;
-    this.createPaseoWorktreeWorkspace = options.createPaseoWorktreeWorkspace;
+    this.createFdeWorktreeWorkspace = options.createFdeWorktreeWorkspace;
     this.archiveWorkspace = options.archiveWorkspace;
     this.now = options.now ?? (() => new Date());
     this.runner = options.runner ?? ((schedule, runId) => this.executeSchedule(schedule, runId));
@@ -901,8 +901,8 @@ export class ScheduleService {
         workspaceId: workspace.workspaceId,
         title: resolveScheduleAgentTitle(config, schedule.prompt),
         labels: {
-          "paseo.schedule-id": schedule.id,
-          "paseo.schedule-run": runId,
+          "fde.schedule-id": schedule.id,
+          "fde.schedule-run": runId,
         },
         mode: config.modeId,
         thinking: config.thinkingOptionId,
@@ -977,7 +977,7 @@ export class ScheduleService {
       case "local":
         return this.createDirectoryWorkspace({ cwd: config.cwd, firstAgentContext });
       case "worktree":
-        return (await this.createPaseoWorktreeWorkspace({ cwd: config.cwd, firstAgentContext }))
+        return (await this.createFdeWorktreeWorkspace({ cwd: config.cwd, firstAgentContext }))
           .workspace;
     }
   }

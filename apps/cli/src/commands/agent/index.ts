@@ -97,7 +97,7 @@ export function createAgentCommand(): Command {
 
   // Heartbeats are an agent scheduling its own recurring prompts, keyed on the
 
-  // caller's PASEO_AGENT_ID. It was a top-level group; it belongs here.
+  // caller's FDE_AGENT_ID. It was a top-level group; it belongs here.
 
   agent.addCommand(createHeartbeatCommand());
 

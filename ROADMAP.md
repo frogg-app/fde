@@ -1,13 +1,9 @@
 # FDE roadmap
 
-Reviewed against source and GitHub on 2026-09-11. This is the current backlog;
-[CHANGELOG.md](CHANGELOG.md) records completed work. An unchecked item is planned,
-not evidence that someone is actively working on it.
-
-Latest published release: **0.2.0** (2026-09-05). The **0.2.1** baseline integrates
-previously unmerged fixes and documentation cleanup; it has not been released.
-See [repository status](docs/project-status.md) for branch reconciliation and
-preserved work outside this checkout.
+Release baseline: **0.6.0**. Electron is the production app-only desktop;
+Node daemons remain separately installed. [Changelog](CHANGELOG.md) records
+completed work and [upgrade notes](docs/upgrade-0.6.md) describe the coordinated
+namespace migration. Unchecked items are validation/backlog work, not active tasks.
 
 ## Implemented baseline
 
@@ -15,6 +11,13 @@ preserved work outside this checkout.
   motion control and Kitten Rosie local voice. See the
   [design, measurements and remaining native gaps](docs/companion-polish-plan.md).
   The reported Android startup crash is still unresolved.
+
+- Opt-in independent execution service and restartable daemon gateway, with
+  execution status, explicit stop-all, retained-version reporting, and isolated
+  turn/permission/supervisor acceptance. [Specification](docs/plans/independent-execution-service.md).
+  An isolated Linux systemd restart/stop also preserves execution. Real-provider
+  background work, Windows/macOS lifecycle, and complete installed-update acceptance
+  remain outstanding; default launches retain the legacy lifecycle.
 
 - Independent desktop/daemon release paths, shared daemon build artifacts, and a
   timed local desktop build command. See [building](docs/building.md#timed-local-desktop-builds).
@@ -26,10 +29,10 @@ preserved work outside this checkout.
   [agent lifecycle](docs/agent-lifecycle.md#sidebar-agent-tree); desktop/mobile
   visual and live-provider acceptance remains outstanding.
 
-- Tauri desktop shell for Windows, macOS and Linux; direct and relay connections,
-  Rust SSH/socket/pipe transport, SSH config host picker, and SSH daemon deploy.
-- Optional local daemon download/supervision, run-at-login services, daemon
-  self-update with rollback, and desktop updates from GitHub release assets.
+- Electron app-only desktop for Windows, macOS and Linux; direct and configured relay connections,
+  SSH/socket/pipe transport, SSH config host picker, and remote daemon deployment.
+- Separately installed Node daemon packages, run-at-login services, daemon
+  self-update with rollback, and Electron desktop updates.
 - Native daemon installers and Docker packaging; `~/.fde` migration, port 9999,
   trusted-LAN policy, first-device claim gate and client v3 claim handling.
 - Windows installer and portable ZIP, macOS DMGs for both architectures, Linux
@@ -49,10 +52,9 @@ visible until device or deployment evidence closes them.
 
 ## Next: establish reliable everyday use
 
-- [ ] **Windows shutdown and relaunch.** User reports large, active WebView2
-      processes surviving FDE close and blocking relaunch. Confirm process ownership,
-      profile shutdown, and validate normal/update exits under voice load. See
-      [process evidence](docs/memory-lockup-investigation.md#windows-process-evidence-and-failure-to-exit).
+- [ ] **Electron platform acceptance.** The user reports scrolling fixed in the 0.4.2 Windows build. Verify sustained memory, voice, close/relaunch, installers and updater handoff on each platform. See [desktop acceptance](docs/electron-desktop.md).
+
+- [ ] **Windows shutdown and relaunch.** Verify the production Electron app under voice and streaming load, including rapid relaunch and update exits. Keep independently installed daemons running.
 
 - [ ] **Investigate update-install UI stalls.** Download and install reportedly
       takes 10–15 seconds to show confirmation; hover/cursor feedback is also delayed.
@@ -97,8 +99,7 @@ visible until device or deployment evidence closes them.
       Capture profiles before assigning a performance improvement percentage.
 - [ ] **Signing and distribution.** Configure persistent Android release signing,
       Windows Authenticode, macOS Developer ID/notarization, and updater signing.
-      The desktop updater public key is still a placeholder; unsigned GitHub
-      asset updates remain the fallback. See [CI](docs/ci.md) and
+      Verify Electron feed metadata and signed update payloads for each target. See [CI](docs/ci.md) and
       [Android](docs/android.md) for setup. Verify secret configuration rather
       than treating old missing-secret notes as current evidence.
 
@@ -116,16 +117,12 @@ visible until device or deployment evidence closes them.
 - [ ] **Notification click routing.** Specify how desktop clicks reopen the
       relevant host/workspace/agent across platforms.
 - [ ] **Tighten webview CSP.** Enumerate the UI's required connection origins and
-      verify direct, relay, SSH and local-sidecar connections against the policy.
+      verify direct, relay, SSH and separately installed local connections against the policy.
 - [ ] **iOS delivery.** Upstream Expo/iOS tooling exists; establish FDE signing,
       distribution and device acceptance. Android already has a release pipeline.
 
 ## Engineering backlog
 
-- [ ] **Rust terminal registry**, if measurements justify prioritizing it:
-      reconnect persistence, workspace ownership, naming, restore, and visibility
-      across clients. Native terminal streams remain opt-in until these work.
-      [Migration plan](docs/rust-daemon-plan.md).
 - [ ] **Session decomposition.** Most original extractions, including checkout
       mutations, already exist. Next proposed slice is workspace request handling,
       reusing existing provisioning/recovery/observer services; agent lifecycle
@@ -139,15 +136,9 @@ visible until device or deployment evidence closes them.
 
 ## Deferred deliberately
 
-- **Rust filesystem walker:** scoring core ported and fixture-checked; traversal
-  order affects budgeted results, so porting the walker is paused.
-- **Rust git port:** cancelled after measurement identified scheduler queuing as
-  the bottleneck and the scheduler was fixed. Revisit only for measured diff work.
-- **Rust speech:** deferred despite memory cost; model management, VAD and streaming
-  make it a substantial migration. Agent providers and plugin JS hosts stay Node.
 - **Triggers:** CLI commands are disabled. A service we control or a self-hostable
   replacement must exist before enabling external events. See [hub.md](docs/hub.md).
-- **Remaining Paseo wire/env/deep-link renames:** keep compatibility until an
+- **Remaining FDE wire/env/deep-link renames:** keep compatibility until an
   explicit migration policy exists. `FDE_HOME` and `~/.fde` are already implemented.
 
 ## Keeping this current

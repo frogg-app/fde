@@ -1,10 +1,28 @@
 export const HISTORY_START_THRESHOLD_PX = 96;
 
+/** Pages a settle may chain before it waits for the reader to scroll again. */
+export const MAX_AUTO_CONTINUED_PAGES = 2;
+
 export type HistoryStartPaginationState =
   | { status: "dormant" }
   | { status: "ready" }
-  | { status: "loading"; requestedProgressKey: string; requestObserved: boolean }
-  | { status: "settling"; loadedProgressKey: string }
+  | {
+      status: "loading";
+      requestedProgressKey: string;
+      requestObserved: boolean;
+      /**
+       * Pages loaded since the last real user intent.
+       *
+       * Continuing after a settled page exists so a page shorter than the viewport cannot
+       * strand the reader at a dead history start with more history available. Left
+       * unbounded it chained instead: the prepend anchor keeps the reader inside the
+       * threshold, so each settle immediately requested another page. One sustained scroll
+       * was measured pulling 13 pages over 22.7s, and because each page re-renders the
+       * viewport synchronously that storm kept blocking input long after the scroll ended.
+       */
+      autoContinuedPages: number;
+    }
+  | { status: "settling"; loadedProgressKey: string; autoContinuedPages: number }
   | { status: "latched" };
 
 export interface HistoryStartPaginationInput {
@@ -58,7 +76,11 @@ export function evaluateHistoryStartPagination(
   if (state.status === "loading") {
     if (input.progressKey !== null && input.progressKey !== state.requestedProgressKey) {
       return {
-        state: { status: "settling", loadedProgressKey: input.progressKey },
+        state: {
+          status: "settling",
+          loadedProgressKey: input.progressKey,
+          autoContinuedPages: state.autoContinuedPages,
+        },
         shouldLoad: false,
       };
     }
@@ -102,6 +124,7 @@ export function evaluateHistoryStartPagination(
       status: "loading",
       requestedProgressKey: input.progressKey,
       requestObserved: false,
+      autoContinuedPages: 0,
     },
     shouldLoad: true,
   };
@@ -120,7 +143,8 @@ export function settleHistoryStartPagination(
     !input.isReady ||
     !input.hasOlderHistory ||
     input.isLoadingOlderHistory ||
-    input.progressKey === null
+    input.progressKey === null ||
+    state.autoContinuedPages >= MAX_AUTO_CONTINUED_PAGES
   ) {
     return {
       state: isAtHistoryStart ? { status: "latched" } : { status: "ready" },
@@ -132,6 +156,7 @@ export function settleHistoryStartPagination(
       status: "loading",
       requestedProgressKey: input.progressKey,
       requestObserved: false,
+      autoContinuedPages: state.autoContinuedPages + 1,
     },
     shouldLoad: true,
   };

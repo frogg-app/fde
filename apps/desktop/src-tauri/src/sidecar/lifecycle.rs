@@ -48,9 +48,9 @@ pub fn daemon_start_env(
     config: &LaunchConfig,
 ) -> BTreeMap<String, String> {
     let mut env = CliInvocation::probe_env(bundle, &config.home);
-    env.insert("PASEO_DESKTOP_MANAGED".into(), "1".into());
-    env.insert("PASEO_WEB_UI_ENABLED".into(), "false".into());
-    env.insert("PASEO_LISTEN".into(), config.listen.clone());
+    env.insert("FDE_DESKTOP_MANAGED".into(), "1".into());
+    env.insert("FDE_WEB_UI_ENABLED".into(), "false".into());
+    env.insert("FDE_LISTEN".into(), config.listen.clone());
     env
 }
 
@@ -185,7 +185,7 @@ pub async fn start(
         daemon_start_env(&bundle, config),
     );
     log::info!(
-        "sidecar: starting daemon: {} (FDE_HOME={}, PASEO_LISTEN={})",
+        "sidecar: starting daemon: {} (FDE_HOME={}, FDE_LISTEN={})",
         invocation.describe(),
         config.home.display(),
         config.listen
@@ -238,7 +238,7 @@ pub async fn restart(
 /// says a desktop-managed daemon owns this home. The CLI stop is a no-op for
 /// a dead pid, so a stale file costs one short CLI run at exit.
 pub fn pid_file_is_desktop_managed(home: &Path) -> bool {
-    fs::read_to_string(home.join("paseo.pid"))
+    fs::read_to_string(home.join("fde.pid"))
         .ok()
         .and_then(|raw| serde_json::from_str::<Value>(&raw).ok())
         .map(|lock| {
@@ -292,7 +292,7 @@ mod tests {
     fn config() -> LaunchConfig {
         LaunchConfig {
             home: PathBuf::from("/h/.fde"),
-            listen: "127.0.0.1:6767".into(),
+            listen: "127.0.0.1:9999".into(),
             manage_enabled: true,
         }
     }
@@ -300,12 +300,12 @@ mod tests {
     #[test]
     fn start_env_matches_electron_overlay() {
         let env = daemon_start_env(&bundle(), &config());
-        assert_eq!(env["PASEO_DESKTOP_MANAGED"], "1");
-        assert_eq!(env["PASEO_WEB_UI_ENABLED"], "false");
-        assert_eq!(env["PASEO_NODE_ENV"], "production");
-        assert_eq!(env["PASEO_LISTEN"], "127.0.0.1:6767");
+        assert_eq!(env["FDE_DESKTOP_MANAGED"], "1");
+        assert_eq!(env["FDE_WEB_UI_ENABLED"], "false");
+        assert_eq!(env["FDE_NODE_ENV"], "production");
+        assert_eq!(env["FDE_LISTEN"], "127.0.0.1:9999");
         assert_eq!(env["FDE_HOME"], "/h/.fde");
-        assert_eq!(env["PASEO_CLI"], bundle().launcher().to_string_lossy());
+        assert_eq!(env["FDE_CLI"], bundle().launcher().to_string_lossy());
     }
 
     #[test]
@@ -329,12 +329,12 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         assert!(!pid_file_is_desktop_managed(dir.path()));
         fs::write(
-            dir.path().join("paseo.pid"),
+            dir.path().join("fde.pid"),
             r#"{"pid":12,"desktopManaged":true}"#,
         )
         .unwrap();
         assert!(pid_file_is_desktop_managed(dir.path()));
-        fs::write(dir.path().join("paseo.pid"), r#"{"pid":12}"#).unwrap();
+        fs::write(dir.path().join("fde.pid"), r#"{"pid":12}"#).unwrap();
         assert!(!pid_file_is_desktop_managed(dir.path()));
     }
 

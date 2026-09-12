@@ -30,15 +30,15 @@ export async function generateSkills({ brand }: BrandBuild) {
         }
         text = text
           .replace(
-            /\b(?:paseo|fde)(?= (?:daemon|project|workspace|script|run|send|ls|schedule|heartbeat|provider|--version)\b)/g,
+            /\b(?:fde|fde)(?= (?:daemon|project|workspace|script|run|send|ls|schedule|heartbeat|provider|--version)\b)/g,
             brand.cliName,
           )
-          .replaceAll("~/.paseo", `~/${brand.homeDir}`)
           .replaceAll("~/.fde", `~/${brand.homeDir}`)
-          .replaceAll("PASEO_HOME", `${brand.envPrefix}_HOME`)
+          .replaceAll("~/.fde", `~/${brand.homeDir}`)
+          .replaceAll("FDE_HOME", `${brand.envPrefix}_HOME`)
           .replaceAll("127.0.0.1:9999", `127.0.0.1:${brand.daemonPort}`);
-        // Capitalized prose names are presentation; SDK symbols such as usePaseo stay intact.
-        text = text.replace(/\b(?:Paseo|FDE)\b/g, () => brand.name);
+        // Capitalized prose names are presentation; SDK symbols such as useFde stay intact.
+        text = text.replace(/\b(?:Fde|FDE)\b/g, () => brand.name);
         // Bundled descriptions are single-line plain YAML. Quote the generated
         // value so punctuation in a public product name cannot alter frontmatter.
         text = text.replace(/^---\r?\n[\s\S]*?\r?\n---/, (header) =>

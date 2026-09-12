@@ -2,7 +2,7 @@ name: Release
 
 # Builds and publishes a GitHub release for a `vX.Y.Z` tag: desktop bundles for
 # Linux, Windows and macOS, the daemon bundles the install script downloads, the
-# updater manifest (when a signing key is configured), the Android APK (release-
+# Electron updater manifests, the Android APK (release-
 # signed when the keystore secrets are set, otherwise debug-signed and named
 # `-unsigned`; see the android job) and the
 # Docker image (when Docker Hub credentials are configured). docs/ci.md explains
@@ -23,6 +23,12 @@ on:
         default: all
         type: choice
         options: [all, android]
+      platforms:
+        description: "Which platforms to build"
+        required: false
+        default: default
+        type: choice
+        options: [default, all]
 
 permissions:
   contents: write
@@ -54,9 +60,11 @@ jobs:
       version: ${{ steps.version.outputs.version }}
       prerelease: ${{ steps.version.outputs.prerelease }}
       clobber: ${{ steps.release.outputs.clobber }}
-      signing: ${{ steps.secrets.outputs.signing }}
       docker: ${{ steps.secrets.outputs.docker }}
       android_signing: ${{ steps.secrets.outputs.android_signing }}
+      desktop_matrix: ${{ steps.platforms.outputs.desktop }}
+      daemon_matrix: ${{ steps.platforms.outputs.daemon }}
+      build_all: ${{ steps.platforms.outputs.build_all }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -94,26 +102,72 @@ jobs:
           echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
 
       # Secrets are detected once here; jobs that need them read the flags. The
-      # updater and docker flags are optional, and so is android_signing: when
+      # docker flags are optional, and so is android_signing: when
       # it is false the android job warns and publishes a debug-signed APK
       # named -unsigned (see that job's first step).
       - name: Detect optional secrets
         id: secrets
         env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
           FDE_ANDROID_KEYSTORE_BASE64: ${{ secrets.FDE_ANDROID_KEYSTORE_BASE64 }}
           FDE_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.FDE_ANDROID_KEYSTORE_PASSWORD }}
         run: |
-          signing=false; docker=false; android_signing=false
-          [ -n "$TAURI_SIGNING_PRIVATE_KEY" ] && signing=true
+          docker=false; android_signing=false
           [ -n "$DOCKERHUB_USERNAME" ] && [ -n "$DOCKERHUB_TOKEN" ] && docker=true
           [ -n "$FDE_ANDROID_KEYSTORE_BASE64" ] && [ -n "$FDE_ANDROID_KEYSTORE_PASSWORD" ] && android_signing=true
-          echo "signing=$signing" >> "$GITHUB_OUTPUT"
           echo "docker=$docker" >> "$GITHUB_OUTPUT"
           echo "android_signing=$android_signing" >> "$GITHUB_OUTPUT"
-          echo "updater signing: $signing, docker push: $docker, android release keystore: $android_signing"
+          echo "docker push: $docker, android release keystore: $android_signing"
+
+      # Which platforms this run builds.
+      #
+      # A tag push is a real release and builds everything. A manual run defaults to the
+      # small set actually used for day-to-day testing -- Windows x64 desktop, the
+      # linux-x64 daemon bundle, and the arm64 Android APK -- because the full matrix is
+      # four desktop runners and six daemon targets, and most runs only need those three.
+      # Pick `platforms: all` on a manual run to get the whole matrix without a tag.
+      #
+      # The win-x64 daemon bundle rides along with the default set: the Windows desktop
+      # app supervises a local daemon, so shipping it without that bundle is a broken
+      # install rather than a smaller one.
+      - name: Resolve platform matrix
+        id: platforms
+        env:
+          PLATFORMS: ${{ github.event_name == 'workflow_dispatch' && inputs.platforms || 'all' }}
+        run: |
+          if [ "$PLATFORMS" = "all" ]; then
+            build_all=true
+            desktop='{"include":[
+              {"platform":"windows","arch":"x86_64","runner":"windows-latest","target":"win-x64"},
+              {"platform":"linux","arch":"x86_64","runner":"ubuntu-22.04","target":"linux-x64"},
+              {"platform":"macos","arch":"aarch64","runner":"macos-15","target":"darwin-arm64"},
+              {"platform":"macos","arch":"x86_64","runner":"macos-15-intel","target":"darwin-x64"}
+            ]}'
+            daemon='{"include":[
+              {"runner":"ubuntu-latest","target":"linux-x64"},
+              {"runner":"ubuntu-latest","target":"linux-arm64"},
+              {"runner":"macos-latest","target":"darwin-arm64"},
+              {"runner":"macos-latest","target":"darwin-x64"},
+              {"runner":"ubuntu-latest","target":"win-x64"},
+              {"runner":"ubuntu-latest","target":"win-arm64"}
+            ]}'
+          else
+            build_all=false
+            desktop='{"include":[
+              {"platform":"windows","arch":"x86_64","runner":"windows-latest","target":"win-x64"}
+            ]}'
+            daemon='{"include":[
+              {"runner":"ubuntu-latest","target":"linux-x64"},
+              {"runner":"ubuntu-latest","target":"win-x64"}
+            ]}'
+          fi
+          {
+            echo "build_all=$build_all"
+            echo "desktop=$(echo "$desktop" | tr -d '\n ')"
+            echo "daemon=$(echo "$daemon" | tr -d '\n ')"
+          } >> "$GITHUB_OUTPUT"
+          echo "platforms=$PLATFORMS (all=$build_all)"
 
       - name: Release notes from CHANGELOG.md
         env:
@@ -146,7 +200,7 @@ jobs:
             fi
           else
             product_name=$(node -p 'require("./.generated/branding/brand.json").name')
-            args=(--title "$product_name $VERSION" --notes-file notes.md --verify-tag)
+            args=(--title "$product_name $VERSION" --notes-file notes.md --verify-tag --draft)
             if [ "$PRERELEASE" = "true" ]; then args+=(--prerelease); fi
             gh release create "$RELEASE_TAG" "${args[@]}"
             echo "clobber=true" >> "$GITHUB_OUTPUT"
@@ -226,37 +280,16 @@ jobs:
     timeout-minutes: 60
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - platform: windows
-            arch: x86_64
-            runner: windows-latest
-            target: x86_64-pc-windows-msvc
-            bundles: nsis
-          # ubuntu-22.04 on purpose: deb/AppImage link against the build host's glibc
-          # and webkit2gtk, so older is more portable.
-          - platform: linux
-            arch: x86_64
-            runner: ubuntu-22.04
-            target: x86_64-unknown-linux-gnu
-            bundles: deb,appimage
-          - platform: macos
-            arch: aarch64
-            runner: macos-latest
-            target: aarch64-apple-darwin
-            bundles: dmg
-          - platform: macos
-            arch: x86_64
-            runner: macos-latest
-            target: x86_64-apple-darwin
-            bundles: dmg
+      # Built in the meta job so a manual run can trim the matrix; see the comment there.
+      # ubuntu-22.04 is deliberate for linux: deb/AppImage link against the build host's
+      # glibc and webkit2gtk, so older is more portable.
+      matrix: ${{ fromJSON(needs.meta.outputs.desktop_matrix) }}
     env:
-      RELEASE_DIR: apps/desktop/src-tauri/target/${{ matrix.target }}/release
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ env.RELEASE_TAG }}
-
       - uses: ./.github/actions/select-brand
         with:
           directory: ${{ vars.FDE_BRAND_DIR }}
@@ -264,90 +297,22 @@ jobs:
           revision: ${{ vars.FDE_BRAND_REVISION }}
           subdirectory: ${{ vars.FDE_BRAND_SUBDIR }}
           token: ${{ secrets.BRANDING_READ_TOKEN }}
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version: "22"
-          cache: npm
-
-      - name: Install Linux Tauri dependencies
-        if: matrix.platform == 'linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            libwebkit2gtk-4.1-dev libayatana-appindicator3-dev \
-            librsvg2-dev patchelf build-essential curl wget file libssl-dev libgtk-3-dev
-
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target }}
-
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: apps/desktop/src-tauri
-          # A shared key (not `key:`) so a tag build restores the cache CI already warmed on
-          # main. Without it every release compiled the Tauri dependency tree from scratch.
-          # The runner image is part of the key: rust-cache only distinguishes `runner.os`,
-          # so a cache warmed on ubuntu-latest (glibc 2.39) would poison this 22.04 job with
-          # build scripts it cannot execute.
-          shared-key: desktop-${{ matrix.target }}-${{ matrix.runner }}
-
-      - name: Install dependencies
-        run: node scripts/ci/npm-retry.mjs ci
-
-      - uses: actions/download-artifact@v8
-        with:
-          name: ui-dist
-          path: apps/ui/dist
-
-      - name: Build desktop bundles
-        working-directory: apps/desktop
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          # Ad-hoc signature: no Apple certificate yet, but the app must at least
-          # launch via right-click > Open. Replace with a Developer ID identity later.
-          APPLE_SIGNING_IDENTITY: "-"
-          SIGNING: ${{ needs.meta.outputs.signing }}
-        run: |
-          args=(build --target "${{ matrix.target }}" --bundles "${{ matrix.bundles }}")
-          if [ "$SIGNING" = "true" ]; then
-            echo '{"bundle":{"createUpdaterArtifacts":true}}' > "$RUNNER_TEMP/updater-config.json"
-            args+=(--config "$RUNNER_TEMP/updater-config.json")
-          fi
-          if [ "$RUNNER_OS" = "Windows" ] && [ -n "$TRUSTED_SIGNING_ACCOUNT" ]; then
-            # Azure Trusted Signing via scripts/release/sign-windows.ps1 (Windows runners only).
-            echo '{"bundle":{"windows":{"signCommand":"powershell -NoProfile -ExecutionPolicy Bypass -File ../../scripts/release/sign-windows.ps1 %1"}}}' > "$RUNNER_TEMP/sign-config.json"
-            args+=(--config "$RUNNER_TEMP/sign-config.json")
-          fi
-          node --import tsx ../../scripts/dev/branded-run.mts tauri "${args[@]}"
-
-      # Both Windows assets ship as zips: GitHub refuses raw .exe release assets.
-      # The installer zip replaces the bundler's .exe.sig with a signature over the
-      # zip, which is what the updater actually downloads and verifies.
-      - name: Package Windows zips (portable and installer)
-        if: matrix.platform == 'windows'
-        run: node scripts/release/package-windows-zips.mjs --release-dir "$RELEASE_DIR"
-
-      - name: Sign the Windows installer zip for the updater
-        if: matrix.platform == 'windows' && needs.meta.outputs.signing == 'true'
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        run: |
-          for zip in "$RELEASE_DIR"/bundle/nsis-zip/*-setup.zip; do
-            npx --yes @tauri-apps/cli@^2 signer sign --password "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD" "$zip"
-          done
-
+      - uses: ./.github/actions/setup-node-deps
+      - run: npm run install:electron --workspace=@fde/desktop-electron
+      - name: Build app-only Electron bundles
+        run: npm run build:desktop -- --target ${{ matrix.target }}
       - name: Collect release assets
-        run: >-
-          node scripts/release/collect-desktop-bundles.mjs
-          --platform ${{ matrix.platform }}
-          --arch ${{ matrix.arch }}
-          --version ${{ needs.meta.outputs.version }}
-          --release-dir "$RELEASE_DIR"
-          --out-dir release-assets
-
+        run: |
+          mkdir -p release-assets
+          find apps/desktop-electron/release -maxdepth 1 -type f             \( -name '*.exe' -o -name '*.zip' -o -name '*.dmg' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.tar.gz' -o -name '*.blockmap' \)             -exec cp {} release-assets/ \;
+      - name: Smoke packaged Linux startup and relaunch
+        if: matrix.platform == 'linux'
+        env:
+          FDE_ELECTRON_SMOKE_NO_SANDBOX: "1"
+        run: |
+          binary=$(node -p 'require("./.generated/branding/brand.json").id')
+          FDE_ELECTRON_SMOKE_EXECUTABLE="$PWD/apps/desktop-electron/release/linux-unpacked/$binary" \
+            xvfb-run -a npm run test:smoke --workspace=@fde/desktop-electron
       - name: Upload to GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -427,17 +392,11 @@ jobs:
     timeout-minutes: 30
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          # Every target cross-builds from Linux (the script only downloads
-          # binaries); macOS runners are kept for the darwin targets so the
-          # tarballs are packed with BSD tar like the install script expects.
-          - { runner: ubuntu-latest, target: linux-x64 }
-          - { runner: ubuntu-latest, target: linux-arm64 }
-          - { runner: macos-latest, target: darwin-arm64 }
-          - { runner: macos-latest, target: darwin-x64 }
-          - { runner: ubuntu-latest, target: win-x64 }
-          - { runner: ubuntu-latest, target: win-arm64 }
+      # Built in the meta job so a manual run can trim the matrix; see the comment there.
+      # Every target cross-builds from Linux (the script only downloads binaries); macOS
+      # runners are kept for the darwin targets so the tarballs are packed with BSD tar
+      # like the install script expects.
+      matrix: ${{ fromJSON(needs.meta.outputs.daemon_matrix) }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -623,63 +582,30 @@ jobs:
           retention-days: 7
 
   updater-manifest:
-    name: updater latest.json
+    name: Electron updater manifests
     needs: [meta, desktop]
-    if: inputs.only != 'android' && (needs.meta.outputs.signing == 'true')
+    if: inputs.only != 'android' && needs.meta.outputs.build_all == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ env.RELEASE_TAG }}
-
-      - uses: ./.github/actions/select-brand
-        with:
-          directory: ${{ vars.FDE_BRAND_DIR }}
-          repository: ${{ vars.FDE_BRAND_REPOSITORY }}
-          revision: ${{ vars.FDE_BRAND_REVISION }}
-          subdirectory: ${{ vars.FDE_BRAND_SUBDIR }}
-          token: ${{ secrets.BRANDING_READ_TOKEN }}
-
       - uses: actions/download-artifact@v8
         with:
-          # The android job also uploads release-assets-android-*; the manifest
-          # script only looks at desktop bundles and their .sig files.
           pattern: release-assets-*
           path: release-assets
           merge-multiple: true
-
-      - uses: actions/download-artifact@v8
-        with:
-          name: release-notes
-          path: notes
-
-      - name: Build latest.json
-        run: >-
-          node scripts/release/build-updater-manifest.mjs
-          --version ${{ needs.meta.outputs.version }}
-          --tag "$RELEASE_TAG"
-          --repo "$GITHUB_REPOSITORY"
-          --assets-dir release-assets
-          --notes-file notes/notes.md
-          --out latest.json
-
-      - name: Upload to GitHub release
+      - name: Build Electron channel manifests and checksums
+        run: node scripts/release/electron-release-manifests.mjs --version ${{ needs.meta.outputs.version }} --assets release-assets --out electron-metadata
+      - name: Upload metadata
         env:
           GH_TOKEN: ${{ github.token }}
           CLOBBER: ${{ needs.meta.outputs.clobber }}
         run: |
           flags=()
           if [ "$CLOBBER" = "true" ]; then flags+=(--clobber); fi
-          existing=$(gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name')
-          for f in latest.json; do
-            n=$(basename "$f")
-            if [ "$CLOBBER" != "true" ] && grep -qx -- "$n" <<<"$existing"; then
-              echo "::warning::$n already on $RELEASE_TAG; skipping"
-              continue
-            fi
-            gh release upload "$RELEASE_TAG" "$f" "${flags[@]}"
-          done
+          gh release upload "$RELEASE_TAG" electron-metadata/* "${flags[@]}"
   docker:
     name: docker image
     needs: meta
@@ -754,3 +680,20 @@ jobs:
           tags: ${{ steps.tags.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  publish:
+    name: publish completed release
+    needs: [meta, desktop, daemon-bundle, android, updater-manifest, docker]
+    if: >-
+      always() && needs.meta.result == 'success' &&
+      needs.meta.outputs.build_all == 'true' &&
+      needs.desktop.result == 'success' && needs.daemon-bundle.result == 'success' &&
+      needs.android.result == 'success' && needs.updater-manifest.result == 'success' &&
+      (needs.docker.result == 'success' || needs.docker.result == 'skipped')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish only after every required platform succeeds
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release edit "$RELEASE_TAG" --draft=false

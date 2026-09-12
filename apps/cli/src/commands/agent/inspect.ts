@@ -150,7 +150,7 @@ function toInspectData(snapshot: AgentSnapshotPayload): AgentInspect {
       id: p.id,
       tool: p.name ?? "unknown",
     })),
-    Worktree: snapshot.labels?.["paseo.worktree"] ?? null,
+    Worktree: snapshot.labels?.["fde.worktree"] ?? null,
     ParentAgentId: snapshot.labels?.[PARENT_AGENT_ID_LABEL] ?? null,
   };
 }

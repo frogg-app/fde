@@ -32,7 +32,7 @@ export function subscribePendingOffer(listener: () => void): () => void {
 /**
  * Normalises the ways a pairing link reaches the app: the canonical
  * `https://pair.frogg.app/code/<code>`, the `?code=` query, the older
- * `…#offer=<payload>` fragment (including `paseo://pair#offer=…`), and the
+ * `…#offer=<payload>` fragment (including `fde://pair#offer=…`), and the
  * `?offer=` query the web build also accepts. Returns a string carrying an
  * `#offer=` fragment, or null when the URL carries no offer.
  */

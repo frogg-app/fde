@@ -1,13 +1,7 @@
 // CLI exports for @fde/server
-export { createPaseoDaemon, type PaseoDaemon, type PaseoDaemonConfig } from "./bootstrap.js";
+export { createFdeDaemon, type FdeDaemon, type FdeDaemonConfig } from "./bootstrap.js";
 export { loadConfig, type CliConfigOverrides } from "./config.js";
-export {
-  consumeHomeMigrationNotice,
-  resolveConfiguredHome,
-  resolveFdeHome,
-  resolvePaseoHome,
-  type HomeMigrationNotice,
-} from "./paseo-home.js";
+export { resolveConfiguredHome, resolveFdeHome } from "./fde-home.js";
 export { getOrCreateServerId } from "./server-id.js";
 export { createRootLogger, type LogLevel, type LogFormat } from "./logger.js";
 export {
@@ -110,3 +104,6 @@ export type {
   AgentStreamEventPayload,
   AgentStreamMessage,
 } from "@fde/protocol/messages";
+
+export { getExecutionServiceStatus, stopExecutionService } from "./execution-service/client.js";
+export type { ExecutionServiceStatus } from "./execution-service/protocol.js";

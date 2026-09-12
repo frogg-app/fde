@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { usePendingArchiveAgentIds } from "@/hooks/use-archive-agent";
 import equal from "fast-deep-equal";
 import { useStoreWithEqualityFn } from "zustand/traditional";
@@ -6,8 +6,8 @@ import { useSessionStore, type Agent } from "@/stores/session-store";
 import { refreshProviderSubagents, useProviderSubagentStore } from "./provider-store";
 import type { ProviderSubagentDescriptorPayload } from "@fde/protocol/messages";
 
-export interface PaseoSubagentRow {
-  kind: "paseo";
+export interface FdeSubagentRow {
+  kind: "fde";
   id: Agent["id"];
   provider: Agent["provider"];
   title: Agent["title"];
@@ -36,7 +36,7 @@ export interface ProviderSubagentRow {
   createdAt: Date;
 }
 
-export type SubagentRow = PaseoSubagentRow | ProviderSubagentRow;
+export type SubagentRow = FdeSubagentRow | ProviderSubagentRow;
 
 type SessionStoreSnapshot = ReturnType<typeof useSessionStore.getState>;
 type ProviderSubagentStoreSnapshot = ReturnType<typeof useProviderSubagentStore.getState>;
@@ -51,7 +51,7 @@ const EMPTY_PROVIDER_SUBAGENT_ROWS: ProviderSubagentRow[] = [];
 
 function toSubagentRow(agent: Agent): SubagentRow {
   return {
-    kind: "paseo",
+    kind: "fde",
     id: agent.id,
     provider: agent.provider,
     title: agent.title,
@@ -122,19 +122,28 @@ export function selectProviderSubagentsForParent(
 
 export function useSubagentsForParent(params: SelectSubagentsParams): SubagentRow[] {
   const pendingArchiveIds = usePendingArchiveAgentIds(params.serverId);
-  const paseoRows = useStoreWithEqualityFn(
-    useSessionStore,
-    (state) => selectSubagentsForParent(state, params, pendingArchiveIds),
-    equal,
-  );
   const supported = useSessionStore(
     (state) => state.sessions[params.serverId]?.serverInfo?.features?.providerSubagents === true,
   );
-  const providerRows = useStoreWithEqualityFn(
-    useProviderSubagentStore,
-    (state) => selectProviderSubagentsForParent(state, params, supported),
-    equal,
+  // useSyncExternalStoreWithSelector memoizes on the selector's identity, so an inline
+  // arrow re-runs the whole selection on every render of this component rather than only
+  // when the store changes. Both selectors walk every agent on the server and sort, then
+  // deep-compare the result, so that is real work on an unrelated render -- a keystroke,
+  // for instance. The params object is destructured so a fresh literal at the call site
+  // does not defeat this either.
+  const { serverId, parentAgentId } = params;
+  const selectFdeRows = useCallback(
+    (state: SessionStoreSnapshot) =>
+      selectSubagentsForParent(state, { serverId, parentAgentId }, pendingArchiveIds),
+    [serverId, parentAgentId, pendingArchiveIds],
   );
+  const selectProviderRows = useCallback(
+    (state: ProviderSubagentStoreSnapshot) =>
+      selectProviderSubagentsForParent(state, { serverId, parentAgentId }, supported),
+    [serverId, parentAgentId, supported],
+  );
+  const fdeRows = useStoreWithEqualityFn(useSessionStore, selectFdeRows, equal);
+  const providerRows = useStoreWithEqualityFn(useProviderSubagentStore, selectProviderRows, equal);
   const client = useSessionStore((state) => state.sessions[params.serverId]?.client ?? null);
 
   useEffect(() => {
@@ -145,9 +154,9 @@ export function useSubagentsForParent(params: SelectSubagentsParams): SubagentRo
   }, [client, params.parentAgentId, params.serverId, supported]);
 
   return useMemo(() => {
-    if (providerRows.length === 0) return paseoRows;
-    const rows = [...paseoRows, ...providerRows];
+    if (providerRows.length === 0) return fdeRows;
+    const rows = [...fdeRows, ...providerRows];
     rows.sort((left, right) => left.createdAt.getTime() - right.createdAt.getTime());
     return rows;
-  }, [paseoRows, providerRows]);
+  }, [fdeRows, providerRows]);
 }

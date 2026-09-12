@@ -333,7 +333,7 @@ describe("useAgentInputDraft live contract", () => {
         kind: "issue",
         number: 42,
         title: "Unify attachments",
-        url: "https://github.com/paseo/paseo/issues/42",
+        url: "https://github.com/fde/fde/issues/42",
         state: "open",
         body: "body",
         labels: ["composer"],

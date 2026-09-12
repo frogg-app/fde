@@ -5,9 +5,9 @@ interface PairingInstructions {
   url: string;
   qr: string | null;
   columns?: number;
-  /** When set, the same offer as a `paseo://pair#offer=…` link for the desktop app. */
+  /** When set, the same offer as a `fde://pair#offer=…` link for the desktop app. */
   deepLink?: string | null;
-  /** `PASEO_PAIRING_QR=0`: drop the QR section instead of explaining its absence. */
+  /** `FDE_PAIRING_QR=0`: drop the QR section instead of explaining its absence. */
   qrDisabled?: boolean;
 }
 

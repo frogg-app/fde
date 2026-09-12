@@ -7,19 +7,19 @@ const DEFAULT_LOG_ROTATE_SIZE = "10m";
 const DEFAULT_LOG_ROTATE_MAX_FILES = 3;
 
 export function resolveSupervisorLogFile(
-  paseoHome: string,
+  fdeHome: string,
   persistedConfig: ReturnType<typeof loadPersistedConfig>,
   env: NodeJS.ProcessEnv = process.env,
 ) {
   const configuredFile = persistedConfig.log?.file;
   const configuredPath = configuredFile?.path;
-  const envRotateSize = env.PASEO_LOG_ROTATE_SIZE?.trim();
-  const envRotateMaxFiles = parseOptionalPositiveInteger(env.PASEO_LOG_ROTATE_COUNT);
-  let logPath = path.join(paseoHome, DEFAULT_DAEMON_LOG_FILENAME);
+  const envRotateSize = env.FDE_LOG_ROTATE_SIZE?.trim();
+  const envRotateMaxFiles = parseOptionalPositiveInteger(env.FDE_LOG_ROTATE_COUNT);
+  let logPath = path.join(fdeHome, DEFAULT_DAEMON_LOG_FILENAME);
   if (configuredPath) {
     logPath = path.isAbsolute(configuredPath)
       ? configuredPath
-      : path.resolve(paseoHome, configuredPath);
+      : path.resolve(fdeHome, configuredPath);
   }
 
   return {

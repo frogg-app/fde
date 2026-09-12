@@ -1,7 +1,12 @@
 import { type PermissionResponse } from "expo-modules-core";
 import ExpoTwoWayAudioModule from "./ExpoTwoWayAudioModule";
 
-export async function initialize() {
+export async function initialize(mode: "call" | "media" = "call") {
+  if (typeof ExpoTwoWayAudioModule.setAudioMode === "function") {
+    ExpoTwoWayAudioModule.setAudioMode(mode);
+  } else if (mode === "media") {
+    throw new Error("Media audio mode requires an updated native app build.");
+  }
   return await ExpoTwoWayAudioModule.initialize();
 }
 

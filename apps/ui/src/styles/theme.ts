@@ -441,8 +441,8 @@ export function buildDarkSemanticColors(tint: DarkThemeConfig) {
 // Dark tint definitions
 // ---------------------------------------------------------------------------
 
-// Paseo — subtle teal-green tint (default)
-const paseoDarkColors = buildDarkSemanticColors({
+// Fde — subtle teal-green tint (default)
+const fdeDarkColors = buildDarkSemanticColors({
   surface0: "#181B1A",
   surface1: "#1E2120",
   surface2: "#272A29",
@@ -692,9 +692,9 @@ export function buildDarkTheme(semanticColors: ReturnType<typeof buildDarkSemant
 
 export const darkTheme = buildDarkTheme(
   brand.legacyFde
-    ? paseoDarkColors
+    ? fdeDarkColors
     : {
-        ...paseoDarkColors,
+        ...fdeDarkColors,
         surface0: brand.colors.dark.background,
         foreground: brand.colors.dark.foreground,
         accent: brand.colors.dark.accent,

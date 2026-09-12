@@ -22,18 +22,18 @@ describe("parseDirectEndpointInput", () => {
       port: 9999,
       useTls: false,
     });
-    expect(parseDirectEndpointInput("192.168.1.10:6767/")).toMatchObject({
+    expect(parseDirectEndpointInput("192.168.1.10:9999/")).toMatchObject({
       host: "192.168.1.10",
-      port: 6767,
+      port: 9999,
     });
   });
 
-  it("keeps an explicit legacy 6767 port", () => {
-    expect(parseDirectEndpointInput("localhost:6767").port).toBe(6767);
+  it("keeps an explicit legacy 9999 port", () => {
+    expect(parseDirectEndpointInput("localhost:9999").port).toBe(9999);
   });
 
   it("honours a custom default port", () => {
-    expect(parseDirectEndpointInput("frogbox", { defaultPort: 6767 }).port).toBe(6767);
+    expect(parseDirectEndpointInput("frogbox", { defaultPort: 9999 }).port).toBe(9999);
   });
 
   it("parses http and https URLs, with scheme default ports", () => {
@@ -67,9 +67,9 @@ describe("parseDirectEndpointInput", () => {
   });
 
   it("keeps the legacy tcp form working, including ssl and password", () => {
-    expect(parseDirectEndpointInput("tcp://localhost:6767?ssl=true")).toEqual({
+    expect(parseDirectEndpointInput("tcp://localhost:9999?ssl=true")).toEqual({
       host: "localhost",
-      port: 6767,
+      port: 9999,
       isIpv6: false,
       useTls: true,
     });

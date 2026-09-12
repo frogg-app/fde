@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import type { PersistedConfig } from "../persisted-config.js";
-import type { PaseoOpenAIConfig, PaseoSpeechConfig } from "../bootstrap.js";
+import type { FdeOpenAIConfig, FdeSpeechConfig } from "../bootstrap.js";
 import { resolveLocalSpeechConfig } from "./providers/local/config.js";
 import { resolveOpenAiSpeechConfig } from "./providers/openai/config.js";
 import { resolveSherpaLoaderEnv } from "./providers/local/sherpa/sherpa-runtime-env.js";
@@ -53,9 +53,9 @@ function parseOptionalBooleanFlag(value: unknown): boolean | undefined {
  * platform package) is present: a bundle without it would otherwise start a
  * worker that can only fail. Precedence for each feature:
  *
- * 1. `PASEO_VOICE=0` / `features.voice.enabled=false` turns everything off
- * 2. the fine-grained key (`PASEO_DICTATION_ENABLED`, `features.dictation.enabled`, ...)
- * 3. `PASEO_VOICE=1` / `features.voice.enabled=true`
+ * 1. `FDE_VOICE=0` / `features.voice.enabled=false` turns everything off
+ * 2. the fine-grained key (`FDE_DICTATION_ENABLED`, `features.dictation.enabled`, ...)
+ * 3. `FDE_VOICE=1` / `features.voice.enabled=true`
  * 4. whether the local runtime is available
  */
 export interface VoiceDefaultsInput {
@@ -97,7 +97,7 @@ function buildFeatureProviderInputs(params: {
   const defaults: VoiceDefaultsInput = {
     umbrella: parseOptionalBooleanFlag(
       firstSpeechDefinedValue<string | boolean>([
-        params.env.PASEO_VOICE,
+        params.env.FDE_VOICE,
         params.persisted.features?.voice?.enabled,
       ]),
     ),
@@ -106,7 +106,7 @@ function buildFeatureProviderInputs(params: {
   const voiceModeEnabled = resolveVoiceFeatureEnabled(
     parseOptionalBooleanFlag(
       firstSpeechDefinedValue<string | boolean>([
-        params.env.PASEO_VOICE_MODE_ENABLED,
+        params.env.FDE_VOICE_MODE_ENABLED,
         params.persisted.features?.voiceMode?.enabled,
       ]),
     ),
@@ -115,13 +115,13 @@ function buildFeatureProviderInputs(params: {
   return {
     dictationStt: {
       configuredValue: firstSpeechDefinedValue<string>([
-        params.env.PASEO_DICTATION_STT_PROVIDER,
+        params.env.FDE_DICTATION_STT_PROVIDER,
         params.persisted.features?.dictation?.stt?.provider,
       ]),
       enabled: resolveVoiceFeatureEnabled(
         parseOptionalBooleanFlag(
           firstSpeechDefinedValue<string | boolean>([
-            params.env.PASEO_DICTATION_ENABLED,
+            params.env.FDE_DICTATION_ENABLED,
             params.persisted.features?.dictation?.enabled,
           ]),
         ),
@@ -130,21 +130,21 @@ function buildFeatureProviderInputs(params: {
     },
     voiceTurnDetection: {
       configuredValue: firstSpeechDefinedValue<string>([
-        params.env.PASEO_VOICE_TURN_DETECTION_PROVIDER,
+        params.env.FDE_VOICE_TURN_DETECTION_PROVIDER,
         params.persisted.features?.voiceMode?.turnDetection?.provider,
       ]),
       enabled: voiceModeEnabled,
     },
     voiceStt: {
       configuredValue: firstSpeechDefinedValue<string>([
-        params.env.PASEO_VOICE_STT_PROVIDER,
+        params.env.FDE_VOICE_STT_PROVIDER,
         params.persisted.features?.voiceMode?.stt?.provider,
       ]),
       enabled: voiceModeEnabled,
     },
     voiceTts: {
       configuredValue: firstSpeechDefinedValue<string>([
-        params.env.PASEO_VOICE_TTS_PROVIDER,
+        params.env.FDE_VOICE_TTS_PROVIDER,
         params.persisted.features?.voiceMode?.tts?.provider,
       ]),
       enabled: voiceModeEnabled,
@@ -196,7 +196,7 @@ function resolveVoiceNotificationsEnabled(params: {
   const defaults: VoiceDefaultsInput = {
     umbrella: parseOptionalBooleanFlag(
       firstSpeechDefinedValue<string | boolean>([
-        params.env.PASEO_VOICE,
+        params.env.FDE_VOICE,
         params.persisted.features?.voice?.enabled,
       ]),
     ),
@@ -205,7 +205,7 @@ function resolveVoiceNotificationsEnabled(params: {
   return resolveVoiceFeatureEnabled(
     parseOptionalBooleanFlag(
       firstSpeechDefinedValue<string | boolean>([
-        params.env.PASEO_VOICE_NOTIFICATIONS,
+        params.env.FDE_VOICE_NOTIFICATIONS,
         params.persisted.features?.voice?.notifications?.enabled,
       ]),
     ),
@@ -223,7 +223,7 @@ export function resolveCompanionFeatureEnabled(params: {
 }): boolean {
   const umbrella = parseOptionalBooleanFlag(
     firstSpeechDefinedValue<string | boolean>([
-      params.env.PASEO_VOICE,
+      params.env.FDE_VOICE,
       params.persisted.features?.voice?.enabled,
     ]),
   );
@@ -231,7 +231,7 @@ export function resolveCompanionFeatureEnabled(params: {
   return (
     parseOptionalBooleanFlag(
       firstSpeechDefinedValue<string | boolean>([
-        params.env.PASEO_COMPANION_ENABLED,
+        params.env.FDE_COMPANION_ENABLED,
         params.persisted.features?.companion?.enabled,
       ]),
     ) ?? true
@@ -239,14 +239,14 @@ export function resolveCompanionFeatureEnabled(params: {
 }
 
 export function resolveSpeechConfig(params: {
-  paseoHome: string;
+  fdeHome: string;
   env: NodeJS.ProcessEnv;
   persisted: PersistedConfig;
   /** Defaults to probing for the sherpa-onnx platform package. */
   localRuntimeAvailable?: boolean;
 }): {
-  openai: PaseoOpenAIConfig | undefined;
-  speech: PaseoSpeechConfig;
+  openai: FdeOpenAIConfig | undefined;
+  speech: FdeSpeechConfig;
 } {
   const localRuntimeAvailable = params.localRuntimeAvailable ?? isLocalSpeechRuntimeAvailable();
   const providers = resolveRequestedSpeechProviders({
@@ -261,7 +261,7 @@ export function resolveSpeechConfig(params: {
   });
 
   const local = resolveLocalSpeechConfig({
-    paseoHome: params.paseoHome,
+    fdeHome: params.fdeHome,
     env: params.env,
     persisted: params.persisted,
     providers,

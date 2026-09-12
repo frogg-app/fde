@@ -2,6 +2,7 @@ import {
   getDesktopAppLogs,
   getDesktopDaemonLogs,
   getDesktopDaemonStatus,
+  shouldUseDesktopDaemon,
   type DesktopAppLogs,
   type DesktopDaemonLogs,
   type DesktopDaemonStatus,
@@ -16,12 +17,14 @@ export interface DesktopDiagnosticCollectionResult {
 }
 
 export interface DesktopDiagnosticSources {
+  supportsLocalDaemon?: () => boolean;
   getStatus: () => Promise<DesktopDaemonStatus>;
   getDaemonLogs: () => Promise<DesktopDaemonLogs>;
   getAppLogs: () => Promise<DesktopAppLogs>;
 }
 
 const DEFAULT_DESKTOP_DIAGNOSTIC_SOURCES: DesktopDiagnosticSources = {
+  supportsLocalDaemon: shouldUseDesktopDaemon,
   getStatus: getDesktopDaemonStatus,
   getDaemonLogs: getDesktopDaemonLogs,
   getAppLogs: getDesktopAppLogs,
@@ -34,15 +37,17 @@ export async function collectDesktopDiagnosticSections(
   let failed = false;
 
   const [daemonResult, appLogsResult] = await Promise.allSettled([
-    Promise.all([sources.getStatus(), sources.getDaemonLogs()]),
+    sources.supportsLocalDaemon?.() === false
+      ? Promise.resolve(null)
+      : Promise.all([sources.getStatus(), sources.getDaemonLogs()]),
     sources.getAppLogs(),
   ]);
 
-  if (daemonResult.status === "fulfilled") {
+  if (daemonResult.status === "fulfilled" && daemonResult.value) {
     const [status, daemonLogs] = daemonResult.value;
     const appLogs = appLogsResult.status === "fulfilled" ? appLogsResult.value : null;
     sections.unshift(...formatDesktopDaemonSections({ status, daemonLogs, appLogs }));
-  } else {
+  } else if (daemonResult.status === "rejected") {
     failed = true;
     sections.unshift(
       formatDiagnosticSection("Desktop", [
@@ -78,7 +83,10 @@ function formatDesktopDaemonSections(input: {
     formatDiagnosticSection("Desktop", [
       { label: "Daemon status", value: status.status },
       { label: "Desktop managed", value: String(status.desktopManaged) },
-      { label: "Daemon PID", value: status.pid === null ? "none" : String(status.pid) },
+      {
+        label: "Daemon PID",
+        value: status.pid === null ? "none" : String(status.pid),
+      },
       { label: "Daemon version", value: status.version ?? "unknown" },
       { label: "Daemon home", value: status.home || "unknown" },
       { label: "Log path", value: daemonLogs.logPath || "unknown" },

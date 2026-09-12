@@ -43,7 +43,7 @@ function entry(id: string, status: AgentSnapshotPayload["status"]): FetchAgentsE
         currentBranch: null,
         remoteUrl: null,
         worktreeRoot: null,
-        isPaseoOwnedWorktree: false,
+        isFdeOwnedWorktree: false,
         mainRepoRoot: null,
       },
     },

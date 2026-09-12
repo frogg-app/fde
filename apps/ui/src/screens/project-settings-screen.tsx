@@ -9,8 +9,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, MoreVertical, Pencil, Plus } from "lucide-react-native";
 import { ProjectIconView } from "@/components/project-icon-view";
 import type {
-  PaseoConfigRaw,
-  PaseoConfigRevision,
+  FdeConfigRaw,
+  FdeConfigRevision,
   ProjectConfigRpcError,
 } from "@fde/protocol/messages";
 import type { DaemonClient } from "@fde/client/internal/daemon-client";
@@ -255,8 +255,8 @@ function ProjectSettingsBody({
       selectedHost.projectName,
     ],
   );
-  const loadedConfig: PaseoConfigRaw | null = data?.ok ? (data.config ?? {}) : null;
-  const loadedRevision: PaseoConfigRevision | null = data?.ok ? data.revision : null;
+  const loadedConfig: FdeConfigRaw | null = data?.ok ? (data.config ?? {}) : null;
+  const loadedRevision: FdeConfigRevision | null = data?.ok ? data.revision : null;
   const hasUncommittedWorktreeSetupChanges =
     data?.ok === true && data.hasUncommittedWorktreeSetupChanges === true;
   const readError: ProjectConfigRpcError | null = data && !data.ok ? data.error : null;
@@ -325,8 +325,8 @@ function ProjectSettingsBody({
 
 interface RenderContentInput {
   readQuery: ReturnType<typeof useQuery<ReadProjectConfigData>>;
-  loadedConfig: PaseoConfigRaw | null;
-  loadedRevision: PaseoConfigRevision | null;
+  loadedConfig: FdeConfigRaw | null;
+  loadedRevision: FdeConfigRevision | null;
   hasUncommittedWorktreeSetupChanges: boolean;
   readError: ProjectConfigRpcError | null;
   selectedHost: ProjectHostEntry;
@@ -400,7 +400,7 @@ function renderContent({
   );
 }
 
-function revisionToKey(revision: PaseoConfigRevision | null): string {
+function revisionToKey(revision: FdeConfigRevision | null): string {
   if (!revision) return "none";
   return `${revision.mtimeMs}-${revision.size}`;
 }
@@ -470,8 +470,8 @@ function errorToDetail(error: unknown): string | null {
 }
 
 interface ProjectConfigFormProps {
-  baseConfig: PaseoConfigRaw;
-  revision: PaseoConfigRevision | null;
+  baseConfig: FdeConfigRaw;
+  revision: FdeConfigRevision | null;
   hasUncommittedWorktreeSetupChanges: boolean;
   repoRoot: string;
   queryKey: readonly [string, string, string];
@@ -498,8 +498,8 @@ function ProjectConfigForm({
 
   const saveMutation = useMutation({
     mutationFn: async (input: {
-      config: PaseoConfigRaw;
-      expectedRevision: PaseoConfigRevision | null;
+      config: FdeConfigRaw;
+      expectedRevision: FdeConfigRevision | null;
     }) => {
       return client.writeProjectConfig({
         repoRoot,

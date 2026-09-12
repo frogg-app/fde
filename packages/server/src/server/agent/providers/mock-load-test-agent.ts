@@ -608,7 +608,7 @@ function buildCycleQueue(turnId: string, cycle: number): CycleEvent[] {
   const shellDetail: ToolCallDetail = {
     type: "shell",
     command: "node scripts/simulate-stream-burst.mjs",
-    cwd: "/tmp/paseo-mock-load",
+    cwd: "/tmp/fde-mock-load",
     output:
       "[burst] tick 1 userIsAtBottom=true\n[burst] tick 2 userIsAtBottom=true\n[burst] drag-start isDragging=true\n[burst] tick 3 suppressed\n[burst] drag-end isDragging=false\n",
     exitCode: 0,
@@ -1147,7 +1147,7 @@ export class MockLoadTestAgentSession implements AgentSession {
       const detail: ToolCallDetail = {
         type: "shell",
         command: "sleep 5",
-        cwd: "/tmp/paseo-mock-load",
+        cwd: "/tmp/fde-mock-load",
       };
       this.emitTimeline(
         turn.turnId,

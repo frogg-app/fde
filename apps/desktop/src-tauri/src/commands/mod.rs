@@ -1,5 +1,5 @@
 //! `desktop_invoke` dispatch: one Tauri command, one match on the Electron
-//! command name. Unknown names fail exactly as Electron's `paseo:invoke` did.
+//! command name. Unknown names fail exactly as Electron's `fde:invoke` did.
 
 pub mod attachments;
 pub mod cli_install;
@@ -21,7 +21,7 @@ use crate::network;
 use crate::ssh_config;
 use crate::transport::{ssh_auth, EventSink, TransportManager};
 
-const TRANSPORT_EVENT: &str = "paseo:event:local-daemon-transport-event";
+const TRANSPORT_EVENT: &str = "fde:event:local-daemon-transport-event";
 
 /// Creates the per-app stores once the app paths are known.
 pub fn register_state(app: &App) -> tauri::Result<()> {
@@ -51,6 +51,24 @@ pub fn register_state(app: &App) -> tauri::Result<()> {
     app.manage(DeployManager::new(emit_deploy));
     crate::sidecar::register(app)?;
     Ok(())
+}
+
+/// Run a blocking store operation off the async runtime's worker threads.
+///
+/// Reading an attachment reads the whole file and base64-encodes it, and these commands
+/// share a runtime with every daemon transport session. Enough concurrent thumbnail reads
+/// -- which the agent stream can issue freely as rows scroll into view -- would otherwise
+/// occupy the workers that pump daemon frames, stalling the app rather than just the
+/// images.
+async fn run_blocking<S, F>(store: S, args: Value, operation: F) -> Result<Value, String>
+where
+    S: Send + 'static,
+    F: FnOnce(S, Value) -> Result<Value, String> + Send + 'static,
+{
+    match tauri::async_runtime::spawn_blocking(move || operation(store, args)).await {
+        Ok(result) => result,
+        Err(error) => Err(format!("Attachment operation failed: {error}")),
+    }
 }
 
 #[tauri::command]
@@ -99,20 +117,37 @@ pub async fn desktop_invoke(
         "write_attachment_base64" => app
             .state::<attachments::AttachmentStore>()
             .write_base64(&args),
-        "write_attachment_bytes" => app
-            .state::<attachments::AttachmentStore>()
-            .write_bytes(&args),
-        "copy_attachment_file" => app.state::<attachments::AttachmentStore>().copy_file(&args),
-        "read_file_base64" => app
-            .state::<attachments::AttachmentStore>()
-            .read_base64(&args),
-        "delete_attachment_file" => app
-            .state::<attachments::AttachmentStore>()
-            .delete_file(&args),
-        "garbage_collect_attachment_files" => app
-            .state::<attachments::AttachmentStore>()
-            .garbage_collect(&args),
-        // Pairing deep links (`paseo://pair#offer=…`, see `launch.rs`): the page
+        "write_attachment_bytes" => {
+            run_blocking(app.state::<attachments::AttachmentStore>().inner().clone(), args, |store, args| {
+                store.write_bytes(&args)
+            })
+            .await
+        }
+        "copy_attachment_file" => {
+            run_blocking(app.state::<attachments::AttachmentStore>().inner().clone(), args, |store, args| {
+                store.copy_file(&args)
+            })
+            .await
+        }
+        "read_file_base64" => {
+            run_blocking(app.state::<attachments::AttachmentStore>().inner().clone(), args, |store, args| {
+                store.read_base64(&args)
+            })
+            .await
+        }
+        "delete_attachment_file" => {
+            run_blocking(app.state::<attachments::AttachmentStore>().inner().clone(), args, |store, args| {
+                store.delete_file(&args)
+            })
+            .await
+        }
+        "garbage_collect_attachment_files" => {
+            run_blocking(app.state::<attachments::AttachmentStore>().inner().clone(), args, |store, args| {
+                store.garbage_collect(&args)
+            })
+            .await
+        }
+        // Pairing deep links (`fde://pair#offer=…`, see `launch.rs`): the page
         // calls this after registering its `open-pairing-offer` listener.
         "pairing_offer_ready" => Ok(serde_json::to_value(
             app.state::<LaunchState>().pairing_offer_ready(),

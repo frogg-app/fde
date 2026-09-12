@@ -14,7 +14,7 @@ type WorkspaceSetupDaemonClient = Pick<
   | "close"
   | "addProject"
   | "connect"
-  | "createPaseoWorktree"
+  | "createFdeWorktree"
   | "createWorkspace"
   | "fetchAgent"
   | "fetchAgents"
@@ -210,7 +210,7 @@ export async function createWorkspaceThroughDaemon(
   client: WorkspaceSetupDaemonClient,
   input: { cwd: string; worktreeSlug: string },
 ): Promise<{ id: string; name: string }> {
-  const result = await client.createPaseoWorktree(input);
+  const result = await client.createFdeWorktree(input);
   if (!result.workspace || result.error) {
     throw new Error(result.error ?? `Failed to create workspace for ${input.cwd}`);
   }

@@ -1,3 +1,5 @@
+import { queryClient } from "@/data/query-client";
+import { APP_SETTINGS_QUERY_KEY, type AppSettings } from "@/hooks/use-settings/storage";
 import { createAudioEngine } from "@/voice/audio-engine";
 import {
   createCompanionRuntime,
@@ -20,6 +22,8 @@ export function getCompanionRuntime(): CompanionRuntime {
 
   let created: CompanionRuntime | null = null;
   const engine = createAudioEngine({
+    audioMode: () =>
+      queryClient.getQueryData<AppSettings>(APP_SETTINGS_QUERY_KEY)?.companionAudioMode ?? "call",
     onCaptureData: (pcm) => created?.handleCapturePcm(pcm),
     onVolumeLevel: (level) => created?.handleCaptureVolume(level),
     onInterruption: () => {

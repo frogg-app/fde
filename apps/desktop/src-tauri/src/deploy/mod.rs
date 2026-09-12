@@ -25,7 +25,7 @@ use crate::transport::EventSink;
 use args::{DeployMethod, SshTarget};
 use job::JobSpec;
 
-pub const DEPLOY_EVENT: &str = "paseo:event:ssh-deploy-event";
+pub const DEPLOY_EVENT: &str = "fde:event:ssh-deploy-event";
 
 type Jobs = Arc<Mutex<HashMap<String, Arc<Notify>>>>;
 

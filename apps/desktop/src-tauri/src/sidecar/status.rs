@@ -130,7 +130,7 @@ mod tests {
     fn maps_running_probe() {
         let payload = json!({
             "serverId": "srv", "localDaemon": "running", "connectedDaemon": "reachable",
-            "listen": "127.0.0.1:6767", "hostname": "box", "pid": 42, "daemonVersion": "0.1.6",
+            "listen": "127.0.0.1:9999", "hostname": "box", "pid": 42, "daemonVersion": "0.1.6",
             "desktopManaged": true
         });
         let status = DesktopDaemonStatus::from_probe(&payload, Path::new("/h"));

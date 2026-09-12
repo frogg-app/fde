@@ -46,7 +46,7 @@ function literals(file, source) {
         ts.isTemplateHead(node) ||
         ts.isTemplateMiddle(node) ||
         ts.isTemplateTail(node)) &&
-      /\b(?:FDE|Paseo)\b|frogg\.app/.test(node.text)
+      /\b(?:FDE|Fde)\b|frogg\.app/.test(node.text)
     )
       values.add(node.text);
     ts.forEachChild(node, visit);

@@ -128,6 +128,11 @@ try {
   if (first === next) throw Error("Sphere did not flow");
   await page.locator('[data-testid="companion-mic-orb"]').click();
   await page.getByText("Microphone muted", { exact: true }).waitFor();
+  await page.waitForFunction(
+    () =>
+      getComputedStyle(document.querySelector('[data-testid="companion-art-mono-surface"]'))
+        .opacity === "1",
+  );
   await page.screenshot({ path: `${out}/muted.png` });
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.screenshot({ path: `${out}/desktop.png` });

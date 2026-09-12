@@ -1,7 +1,7 @@
 import { afterEach, expect, test, vi } from "vitest";
-import { createPaseoApi, createPaseoClient } from "./index.js";
+import { createFdeApi, createFdeClient } from "./index.js";
 import { DaemonClient } from "./daemon-client.js";
-import type { PaseoAgent, PaseoClient, PaseoWorkspace } from "./index.js";
+import type { FdeAgent, FdeClient, FdeWorkspace } from "./index.js";
 
 type FakeWebSocketHandler = (...args: unknown[]) => void;
 
@@ -84,9 +84,9 @@ function parseSentFrame(
 
 async function connectClient(
   features: Record<string, boolean> = { providersSnapshotCwd: true },
-): Promise<{ client: PaseoClient; ws: FakeWebSocket }> {
+): Promise<{ client: FdeClient; ws: FakeWebSocket }> {
   vi.stubGlobal("WebSocket", FakeWebSocket);
-  const client = createPaseoClient({
+  const client = createFdeClient({
     url: "ws://daemon.test",
     reconnect: { enabled: false },
   });
@@ -100,7 +100,7 @@ async function connectClient(
     clientType: "cli",
     protocolVersion: 1,
   });
-  expect(hello.clientId).toEqual(expect.stringMatching(/^paseo-sdk-/));
+  expect(hello.clientId).toEqual(expect.stringMatching(/^fde-sdk-/));
   ws.message(
     sessionMessage({
       type: "status",
@@ -118,7 +118,7 @@ async function connectClient(
   return { client, ws };
 }
 
-function createWorkspace(input: Partial<PaseoWorkspace> = {}): PaseoWorkspace {
+function createWorkspace(input: Partial<FdeWorkspace> = {}): FdeWorkspace {
   return {
     id: "workspace_sdk",
     projectId: "project_sdk",
@@ -139,7 +139,7 @@ function createWorkspace(input: Partial<PaseoWorkspace> = {}): PaseoWorkspace {
   };
 }
 
-function createAgent(input: Partial<PaseoAgent> = {}): PaseoAgent {
+function createAgent(input: Partial<FdeAgent> = {}): FdeAgent {
   return {
     id: "agent_sdk",
     provider: "codex",
@@ -171,7 +171,7 @@ function createAgent(input: Partial<PaseoAgent> = {}): PaseoAgent {
   };
 }
 
-test("createPaseoClient exposes workspace list through the daemon client", async () => {
+test("createFdeClient exposes workspace list through the daemon client", async () => {
   const { client, ws } = await connectClient();
 
   const listPromise = client.workspaces.list({
@@ -216,25 +216,25 @@ test("createPaseoClient exposes workspace list through the daemon client", async
   await client.close();
 });
 
-test("createPaseoApi borrows daemon capabilities without exposing connection ownership", () => {
+test("createFdeApi borrows daemon capabilities without exposing connection ownership", () => {
   const daemonClient = new DaemonClient({
     url: "ws://daemon.test",
     clientId: "borrowed-api",
     reconnect: { enabled: false },
   });
 
-  const paseo = createPaseoApi(daemonClient);
+  const fde = createFdeApi(daemonClient);
 
-  expect(Object.keys(paseo).sort()).toEqual([
+  expect(Object.keys(fde).sort()).toEqual([
     "agents",
     "config",
     "projects",
     "providers",
     "workspaces",
   ]);
-  expect("connect" in paseo).toBe(false);
-  expect("close" in paseo).toBe(false);
-  expect("skills" in paseo.agents).toBe(false);
+  expect("connect" in fde).toBe(false);
+  expect("close" in fde).toBe(false);
+  expect("skills" in fde.agents).toBe(false);
 });
 
 test("project actions list registered projects through the existing RPC", async () => {
@@ -335,7 +335,7 @@ test("agent actions list the daemon directory without exposing the low-level cli
                 isGit: false,
                 currentBranch: null,
                 remoteUrl: null,
-                isPaseoOwnedWorktree: false,
+                isFdeOwnedWorktree: false,
                 mainRepoRoot: null,
               },
             },

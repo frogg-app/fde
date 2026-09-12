@@ -75,7 +75,7 @@ impl InstalledBundle {
         cli_entry_in(&self.dir)
     }
 
-    /// `bin/fde` (or `bin/fde.cmd`): what the daemon gets as `PASEO_CLI`.
+    /// `bin/fde` (or `bin/fde.cmd`): what the daemon gets as `FDE_CLI`.
     pub fn launcher(&self) -> PathBuf {
         self.dir.join("bin").join(if is_windows() {
             format!("{}.cmd", crate::branding::CLI_NAME)

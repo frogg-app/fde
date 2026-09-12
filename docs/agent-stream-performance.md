@@ -7,6 +7,12 @@ For terminal output, which is a separate pipeline with separate budgets, see [te
 A source-level audit of this pipeline plus the desktop transport, covering the findings behind the
 invariants below, is in [performance-investigation-2026-09.html](performance-investigation-2026-09.html).
 
+The invariants below cover the _streaming_ path. Scrolling back through history is a
+separate hot path with its own defects, audited in
+[scroll-lockup-investigation-2026-09.md](scroll-lockup-investigation-2026-09.md) --
+including a reintroduction of the uncached `splitMarkdownBlocks` parse, this time from
+the web virtualizer's height estimator rather than the reveal.
+
 ## The pipeline
 
 ```
@@ -63,7 +69,7 @@ So arrival sets a _target_ and the reveal rate is derived from the backlog inste
 
 ## Measuring
 
-- **Smoothness (user-perceived):** `apps/ui/e2e/browser/agent-stream-smoothness.spec.ts`, gated behind `PASEO_AGENT_STREAM_PERF_E2E=1`. Drives the mock provider's `bursty-stream` model and reports coefficient of variation of characters painted per frame (smoothness) plus p95 gap between visible updates (stalls). Both numbers are needed: a stalled stream is perfectly smooth.
+- **Smoothness (user-perceived):** `apps/ui/e2e/browser/agent-stream-smoothness.spec.ts`, gated behind `FDE_AGENT_STREAM_PERF_E2E=1`. Drives the mock provider's `bursty-stream` model and reports coefficient of variation of characters painted per frame (smoothness) plus p95 gap between visible updates (stalls). Both numbers are needed: a stalled stream is perfectly smooth.
 - **Reproducing bursty arrival:** the `bursty-stream` model in `mock-load-test-agent.ts` emits uneven runs of tokens separated by idle gaps. Burst sizes come from a seeded generator, so a run repeats exactly.
 - **Rate policy in isolation:** `computeRevealStep` in `apps/ui/src/agent-stream/text-reveal.ts` is pure; `text-reveal.test.ts` covers convergence and burst flattening without a renderer.
 

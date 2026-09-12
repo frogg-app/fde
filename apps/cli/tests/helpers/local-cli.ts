@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 const CLI_ENTRY = join(import.meta.dirname, "..", "..", "dist", "index.js");
 
-export function runLocalPaseo(
+export function runLocalFde(
   args: string[],
   env: NodeJS.ProcessEnv = {},
   cwd = process.cwd(),

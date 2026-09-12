@@ -716,7 +716,7 @@ type BatchPollPrNode = z.infer<typeof BatchPollPrNodeSchema>;
 type BatchPollRepository = z.infer<typeof BatchPollRepositorySchema>;
 
 const BATCH_PR_STATUS_FRAGMENT = `
-fragment PaseoPollPullRequest on PullRequest {
+fragment FdePollPullRequest on PullRequest {
   number
   url
   title
@@ -782,12 +782,12 @@ function buildBatchPullRequestStatusQuery(
       entry.headRef,
     )}, first: ${BATCH_PR_CANDIDATE_LIMIT}, orderBy: {field: CREATED_AT, direction: DESC}) {
       nodes {
-        ...PaseoPollPullRequest
+        ...FdePollPullRequest
       }
     }
   }`,
   );
-  return `query PaseoBatchPullRequestStatus {
+  return `query FdeBatchPullRequestStatus {
   rateLimit {
     limit
     remaining
@@ -844,7 +844,7 @@ function buildBatchPullRequestChecksQuery(
     }
   }`,
   );
-  return `query PaseoBatchPullRequestChecks {
+  return `query FdeBatchPullRequestChecks {
   rateLimit {
     limit
     remaining

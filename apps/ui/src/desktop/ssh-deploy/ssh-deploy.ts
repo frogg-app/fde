@@ -3,7 +3,7 @@ import { listenToDesktopEvent, type DesktopEventUnlisten } from "@/desktop/elect
 import { invokeDesktopCommand } from "@/desktop/electron/invoke";
 import { getSessionSshPassword } from "@/desktop/daemon/ssh-session-passwords";
 
-/** Desktop bridge event name (`paseo:event:` is added by the shell). */
+/** Desktop bridge event name (`fde:event:` is added by the shell). */
 export const SSH_DEPLOY_EVENT = "ssh-deploy-event";
 export const DEFAULT_SSH_DEPLOY_LISTEN_HOST = "127.0.0.1";
 /** The service manager returns before the daemon binds its port; wait this long before reconnecting. */

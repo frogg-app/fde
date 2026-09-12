@@ -51,6 +51,6 @@ export type {
   PluginWorkspacePanelProps,
   PluginWorkspaceSnapshot,
 } from "./contracts.js";
-export { usePaseo } from "./paseo-context.js";
+export { useFde } from "./fde-context.js";
 export { useAgent, useWorkspace } from "./client-state.js";
 export { useRpc } from "./rpc-context.js";

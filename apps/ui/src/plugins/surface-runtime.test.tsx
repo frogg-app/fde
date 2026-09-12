@@ -1,7 +1,7 @@
 import type { DaemonClient } from "@fde/client/internal/daemon-client";
-import type { PaseoApi } from "@fde/client";
-import { PaseoApiProvider } from "@fde/plugin/host";
-import { usePaseo } from "@fde/plugin";
+import type { FdeApi } from "@fde/client";
+import { FdeApiProvider } from "@fde/plugin/host";
+import { useFde } from "@fde/plugin";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
@@ -34,29 +34,29 @@ function clientWithWorkspace(id: string) {
   };
 }
 
-function borrowFromAppProvider(paseo: PaseoApi): PaseoApi {
-  let borrowed: PaseoApi | null = null;
+function borrowFromAppProvider(fde: FdeApi): FdeApi {
+  let borrowed: FdeApi | null = null;
   function PluginSurface() {
-    borrowed = usePaseo();
+    borrowed = useFde();
     return null;
   }
   renderToStaticMarkup(
-    <PaseoApiProvider paseo={paseo}>
+    <FdeApiProvider fde={fde}>
       <PluginSurface />
-    </PaseoApiProvider>,
+    </FdeApiProvider>,
   );
-  if (!borrowed) throw new Error("Plugin surface did not receive Paseo API");
+  if (!borrowed) throw new Error("Plugin surface did not receive Fde API");
   return borrowed;
 }
 
 describe("plugin surface host runtime", () => {
-  it("creates a PR worktree and agent through usePaseo on the selected app host", async () => {
+  it("creates a PR worktree and agent through useFde on the selected app host", async () => {
     const selected = clientWithWorkspace("workspace-a");
     const runtime = createPluginSurfaceRuntime(selected.client, "workspace-plugin");
     if (!runtime) throw new Error("Expected selected host runtime");
 
-    const paseo = borrowFromAppProvider(runtime.paseo);
-    const workspace = await paseo.workspaces.create({
+    const fde = borrowFromAppProvider(runtime.fde);
+    const workspace = await fde.workspaces.create({
       source: {
         kind: "worktree",
         cwd: "/tmp/repository",
@@ -83,7 +83,7 @@ describe("plugin surface host runtime", () => {
     if (!first || !second) throw new Error("Expected online host runtimes");
 
     await first.invoke("host", {});
-    await borrowFromAppProvider(second.paseo).workspaces.create({
+    await borrowFromAppProvider(second.fde).workspaces.create({
       source: { kind: "directory", path: "/tmp/workspace-b" },
     });
 

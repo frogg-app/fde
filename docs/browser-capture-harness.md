@@ -1,6 +1,6 @@
 # Browser Capture Harness
 
-> Note: The Electron desktop shell was dropped in this fork; this document describes the upstream Paseo Electron capture harness and is kept for reference only. The Tauri shell lives in `apps/desktop` (see [desktop-shell.md](desktop-shell.md)).
+> Historical browser-capture harness reference. Verify commands against the current Electron workspace before use; production desktop behavior is documented in [desktop-shell.md](desktop-shell.md).
 
 The desktop capture harness is the real-Electron verification path for browser screenshots.
 It validates the compositor behavior that unit tests cannot see:
@@ -37,13 +37,13 @@ preload is available:
 
 ```bash
 npm run build:main --workspace=@fde/desktop
-PASEO_CAPTURE_HARNESS_GROUP=automation npm run capture-harness --workspace=@fde/desktop
+FDE_CAPTURE_HARNESS_GROUP=automation npm run capture-harness --workspace=@fde/desktop
 ```
 
 Run the shared browser profile fixture with:
 
 ```bash
-PASEO_CAPTURE_HARNESS_GROUP=browser-profile npm run capture-harness --workspace=@fde/desktop
+FDE_CAPTURE_HARNESS_GROUP=browser-profile npm run capture-harness --workspace=@fde/desktop
 ```
 
 The browser profile group runs two Electron processes in sequence. It verifies that each

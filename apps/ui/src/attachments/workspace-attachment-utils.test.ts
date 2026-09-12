@@ -15,7 +15,7 @@ function contextAttachment(
     title: "Comment · octocat",
     subtitle: "Fix flaky build",
     text: "GitHub pull request comment\n\nLooks good.",
-    url: "https://github.com/getpaseo/paseo/pull/42#issuecomment-1",
+    url: "https://github.com/frogg-app/fde/pull/42#issuecomment-1",
     ...overrides,
   };
 }

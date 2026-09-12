@@ -76,7 +76,7 @@ export async function runArchiveCommandWithDeps(
 
   try {
     // Get the list of worktrees first to resolve the name
-    const listResponse = await client.getPaseoWorktreeList({});
+    const listResponse = await client.getFdeWorktreeList({});
 
     if (listResponse.error) {
       const error: CommandError = {
@@ -102,8 +102,8 @@ export async function runArchiveCommandWithDeps(
     }
 
     // Archive the worktree. scope:"worktree" archives every active workspace on
-    // the directory and then removes the directory (Paseo-owned gated).
-    const response = await client.archivePaseoWorktree({
+    // the directory and then removes the directory (Fde-owned gated).
+    const response = await client.archiveFdeWorktree({
       worktreePath: worktree.worktreePath,
       scope: "worktree",
     });

@@ -715,7 +715,7 @@ export const fr: TranslationResources = {
       },
       routes: {
         public: "Proxy inverse",
-        paseo: "Memorable",
+        fde: "Memorable",
         direct: "Directe",
       },
       states: {
@@ -1892,6 +1892,11 @@ export const fr: TranslationResources = {
       acknowledge: "Accuser réception des tâches avant de travailler",
       permissions:
         "Les demandes d’autorisation restent vocales même si les annonces sont désactivées.",
+      audioMode: "Mode audio",
+      callMode: "Appel",
+      mediaMode: "Multimédia",
+      audioModeHint:
+        "À la prochaine conversation. Appel privilégie le micro du casque et la réduction d’écho. Multimédia utilise le routage multimédia ; un casque est recommandé. Le micro Bluetooth dépend de l’appareil.",
       speechSpeed: "Vitesse de la voix",
       pause: "Pause avant de répondre",
       quick: "Rapide (0,8 seconde)",
@@ -2058,7 +2063,7 @@ export const fr: TranslationResources = {
   serviceUrl: {
     title: "Service ouvertURL",
     message: "Ouvrir{{url}}?",
-    inPaseo: "Dans {{brandName}}",
+    inFde: "Dans {{brandName}}",
     externalBrowser: "Navigateur externe",
     dontAskAgain: "Ne demande plus",
   },
@@ -2185,7 +2190,7 @@ export const fr: TranslationResources = {
       one: "a utilisé {{count}} autre outil",
       other: "a utilisé {{count}} autres outils",
     },
-    paseoCalls: {
+    fdeCalls: {
       one: "a appelé {{brandName}} {{count}} fois",
       other: "a appelé {{brandName}} {{count}} fois",
     },
@@ -2728,7 +2733,7 @@ export const fr: TranslationResources = {
         uninstall: {
           title: "Désinstaller le daemon ?",
           message:
-            "Arrête le service et supprime l'installation {{brandName}} de {{host}}. L'état du daemon (~/.paseo) est conservé.",
+            "Arrête le service et supprime l'installation {{brandName}} de {{host}}. L'état du daemon (~/.fde) est conservé.",
         },
         log: {
           running: "Exécution sur {{host}}...",
@@ -3074,13 +3079,13 @@ export const fr: TranslationResources = {
         savedToast: "Projet mis à jour",
       },
       readFailures: {
-        invalidTitle: "paseo.json n'a pas pu être analysé",
+        invalidTitle: "fde.json n'a pas pu être analysé",
         invalidDescription: "Corrigez le fichier sur le disque, puis rechargez.",
         missingTitle: "Cet hôte n'a pas ce projet",
         missingSingleHost: "L'hôte sélectionné n'a aucune trace de ce projet.",
-        transportTitle: "Impossible de charger paseo.json",
+        transportTitle: "Impossible de charger fde.json",
         transportFallback: "L'hôte n'a pas répondu.",
-        failedTitle: "Impossible de charger paseo.json",
+        failedTitle: "Impossible de charger fde.json",
         failedDescription: "Rechargez pour réessayer.",
       },
       worktree: {
@@ -3091,7 +3096,7 @@ export const fr: TranslationResources = {
           "Voir la documentation pour plus de détails et les variables d'environnement disponibles pour ces commandes",
         setup: "Installation",
         setupAccessibility: "Commandes de configuration de Worktree",
-        uncommittedTitle: "Validez les modifications de paseo.json",
+        uncommittedTitle: "Validez les modifications de fde.json",
         uncommittedDescription:
           "Les nouveaux worktrees utilisent le script de configuration de la branche de base sélectionnée.",
         teardown: "Démolir",
@@ -3116,7 +3121,7 @@ export const fr: TranslationResources = {
         newScript: "Nouveau scénario",
         editScript: "Modifier{{name}}",
         runAsService: "Exécuter en tant que service",
-        serviceHint: "{{brandName}} supervise le processus et attribue un port via $PASEO_PORT",
+        serviceHint: "{{brandName}} supervise le processus et attribue un port via $FDE_PORT",
         actions: {
           add: "Ajouter un script",
           edit: "Modifier",
@@ -3137,8 +3142,8 @@ export const fr: TranslationResources = {
       },
       writeFailures: {
         staleTitle: "Configuration modifiée sur le disque",
-        staleDescription: "Rechargez pour récupérer le dernier paseo.json avant de sauvegarder.",
-        failedTitle: "Impossible d'enregistrer paseo.json",
+        staleDescription: "Rechargez pour récupérer le dernier fde.json avant de sauvegarder.",
+        failedTitle: "Impossible d'enregistrer fde.json",
         failedDescription: "Réessayez ou rechargez la dernière version à partir du disque.",
       },
       actions: {

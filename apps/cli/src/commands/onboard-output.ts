@@ -53,12 +53,8 @@ export function describeReachability(input: {
   return lines;
 }
 
-export function printNextSteps(
-  pairingUrl: string | null,
-  paseoHome: string,
-  richUi: boolean,
-): void {
-  const daemonLogPath = path.join(paseoHome, "daemon.log");
+export function printNextSteps(pairingUrl: string | null, fdeHome: string, richUi: boolean): void {
+  const daemonLogPath = path.join(fdeHome, "daemon.log");
   printLines(
     [
       pairingUrl

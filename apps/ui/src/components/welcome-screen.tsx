@@ -29,6 +29,7 @@ import { BrandLogo } from "@/components/icons/brand-logo";
 import { openExternalUrl } from "@/utils/open-external-url";
 import { isFdroidBuild } from "@/constants/build-profile";
 import { isWeb, isNative } from "@/constants/platform";
+import { shouldUseDesktopDaemon } from "@/desktop/daemon/desktop-daemon";
 import { isElectronRuntime } from "@/desktop/host";
 import { HEADER_INNER_HEIGHT } from "@/constants/layout";
 import { TITLEBAR_DRAG_SURFACE_DATASET } from "@/components/desktop/titlebar-drag-region";
@@ -249,7 +250,7 @@ export function WelcomeScreen({ onHostAdded }: WelcomeScreenProps) {
   // Desktop with no hosts: choose between a remote host and the local daemon
   // (which downloads the daemon bundle). Everywhere else the remote actions
   // show directly.
-  const offersLocalDaemon = isElectronRuntime() && hosts.length === 0;
+  const offersLocalDaemon = shouldUseDesktopDaemon() && hosts.length === 0;
   const [mode, setMode] = useState<WelcomeMode>(offersLocalDaemon ? "choose" : "remote");
 
   useEffect(() => {

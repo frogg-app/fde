@@ -18,7 +18,7 @@ A pairing invitation is neither. It is an expiring, single-use exchange that cre
 ## Claimed state
 
 A daemon is **unclaimed** while nobody can authenticate to it: no daemon password is
-configured (`daemon.auth.password` / `PASEO_PASSWORD`) and `$FDE_HOME/principals.json`
+configured (`daemon.auth.password` / `FDE_PASSWORD`) and `$FDE_HOME/principals.json`
 holds no principal with a credential. The predicate lives in
 `packages/server/src/server/access-policy.ts` and is read live, so a change to the file
 takes effect without a restart.
@@ -40,7 +40,7 @@ localhost does not turn LAN visitors into loopback clients.
 
 ### Trusted LAN
 
-`daemon.auth.trustLan` (default `true`; `PASEO_TRUST_LAN=0|1` overrides it, and the
+`daemon.auth.trustLan` (default `true`; `FDE_TRUST_LAN=0|1` overrides it, and the
 environment wins) treats clients on the daemon's own private network exactly like loopback:
 no bearer unless a password is configured, no claim page, and `GET /api/identity` answers
 `pairingRequired: false` to them. "Private network" is the address the request resolves to
@@ -57,7 +57,7 @@ files, and terminals** — a roommate on the Wi-Fi, a coworker on the office LAN
 container on the Docker bridge. That is the right default for a daemon on a home network
 or a single-user machine, and the wrong one for a shared or untrusted network. The
 password is the opt-in lock and applies to everyone, LAN included: `fde daemon
-set-password` (or `PASEO_PASSWORD`). To keep the pairing gate on the LAN without a
+set-password` (or `FDE_PASSWORD`). To keep the pairing gate on the LAN without a
 password, run `fde daemon trust-lan off` (the CLI writes `config.json` and applies it live
 through the daemon's config reload; `fde daemon status` shows the mode as `LAN Trusted`).
 
@@ -68,7 +68,7 @@ direct: { endpoints }, claim: { token, expiresAt }, relay? }` encoded as
 `https://pair.frogg.app/code/…`. The daemon serves that page itself at `GET /code/:code`
 (and `GET /pair?code=`), so `pair.frogg.app` can be reverse-proxied to your own daemon and
 no pairing code need ever reach frogg.app; the same payload is also offered as the app deep
-link `paseo://pair#offer=…` (the gate page's "Open in FDE" button, and `deepLink` in
+link `fde://pair#offer=…` (the gate page's "Open in FDE" button, and `deepLink` in
 `fde daemon pair --json`), which the desktop shell routes straight into the app. The token is
 single-use and expires after ten minutes.
 
@@ -85,7 +85,7 @@ daemon's live code still renders — a proxy in front of many daemons has to be 
 it — but with no "Pair this browser" button and with `hostname` omitted, so the page echoes
 nothing about a machine this daemon does not own. `pair.frogg.app` is accepted as a `Host`
 header by default, so the hostname can be reverse-proxied to a daemon without setting
-`PASEO_HOSTNAMES`.
+`FDE_HOSTNAMES`.
 
 Because a code carries the whole offer, the page can also be served by something that is not
 a daemon at all: `deploy/pair` builds a small stateless image that mounts only this route,
@@ -104,7 +104,7 @@ first), then `POST /api/setup/claim { token, label }` with a device label such a
 credential, returns the plaintext credential once, and stores only its SHA-256 in
 `principals.json` (mode 0600). The app stores that credential as the `password` of a
 `directTcp` host connection, so from then on it is the bearer for that device
-(`Authorization: Bearer …`, or the `paseo.bearer.<credential>` WebSocket subprotocol, the
+(`Authorization: Bearer …`, or the `fde.bearer.<credential>` WebSocket subprotocol, the
 same slot a password uses), and the daemon is claimed. A used or expired token answers 403
 and the app asks for a new link; when no endpoint answers it lists the ones it tried and
 lets the user type another; an endpoint that answers with a different `serverId` is

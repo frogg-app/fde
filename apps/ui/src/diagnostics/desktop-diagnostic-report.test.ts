@@ -9,26 +9,43 @@ function makeSources(): DesktopDiagnosticSources {
     getStatus: async () => ({
       serverId: "server-1",
       status: "running",
-      listen: "127.0.0.1:6767",
+      listen: "127.0.0.1:9999",
       hostname: "host",
       pid: 4242,
-      home: "/paseo/home",
+      home: "/fde/home",
       version: "1.2.3",
       desktopManaged: true,
       error: null,
     }),
     getDaemonLogs: async () => ({
-      logPath: "/paseo/home/daemon.log",
+      logPath: "/fde/home/daemon.log",
       contents: "daemon line one\ndaemon line two",
     }),
     getAppLogs: async () => ({
-      logPath: "/logs/Paseo/main.log",
+      logPath: "/logs/Fde/main.log",
       contents: "[login-shell-env] start\n[login-shell-env] failed",
     }),
   };
 }
 
 describe("desktop diagnostic report", () => {
+  test("collects app logs without requesting a daemon in app-only shells", async () => {
+    const result = await collectDesktopDiagnosticSections({
+      ...makeSources(),
+      supportsLocalDaemon: () => false,
+      getStatus: async () => {
+        throw new Error("must not request daemon status");
+      },
+      getDaemonLogs: async () => {
+        throw new Error("must not request daemon logs");
+      },
+    });
+    expect(result.status).toBe("done");
+    expect(result.sections).toEqual([
+      "Desktop app log tail\n  [login-shell-env] start\n  [login-shell-env] failed",
+    ]);
+  });
+
   test("starts desktop diagnostic requests together", async () => {
     const calls: string[] = [];
     let releaseAppLogs: () => void = () => {};
@@ -64,8 +81,8 @@ describe("desktop diagnostic report", () => {
     const report = result.sections.join("\n\n");
 
     expect(result.status).toBe("done");
-    expect(report).toContain("  Log path: /paseo/home/daemon.log");
-    expect(report).toContain("  App log path: /logs/Paseo/main.log");
+    expect(report).toContain("  Log path: /fde/home/daemon.log");
+    expect(report).toContain("  App log path: /logs/Fde/main.log");
     expect(report).toContain("Desktop daemon log tail\n  daemon line one\n  daemon line two");
     expect(report).toContain(
       "Desktop app log tail\n  [login-shell-env] start\n  [login-shell-env] failed",

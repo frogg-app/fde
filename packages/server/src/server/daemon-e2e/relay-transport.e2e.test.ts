@@ -8,7 +8,7 @@ import { spawn, type ChildProcess } from "node:child_process";
 import { Buffer } from "node:buffer";
 
 import { generateLocalPairingOffer } from "../pairing-offer.js";
-import { createTestPaseoDaemon } from "../test-utils/paseo-daemon.js";
+import { createTestFdeDaemon } from "../test-utils/fde-daemon.js";
 import { createClientChannel, type Transport } from "@fde/relay/e2ee";
 import {
   deriveSharedKey,
@@ -38,14 +38,14 @@ function createCapturingLogger() {
 }
 
 async function getPairingOfferUrl(args: {
-  paseoHome: string;
+  fdeHome: string;
   relayEnabled?: boolean;
   relayEndpoint?: string;
   relayPublicEndpoint?: string;
   appBaseUrl?: string;
 }): Promise<string> {
   const pairing = await generateLocalPairingOffer({
-    paseoHome: args.paseoHome,
+    fdeHome: args.fdeHome,
     relayEnabled: args.relayEnabled,
     relayEndpoint: args.relayEndpoint,
     relayPublicEndpoint: args.relayPublicEndpoint,
@@ -200,7 +200,7 @@ async function waitForCapturedLog(
       "--show-interactive-dev-session=false",
     ];
     if (options.useLocalRelay) {
-      relayArgs.push("--var", "PASEO_RELAY_UPSTREAM:");
+      relayArgs.push("--var", "FDE_RELAY_UPSTREAM:");
     }
     relayProcess = spawn("npx", relayArgs, {
       cwd: relayDir,
@@ -242,12 +242,12 @@ async function waitForCapturedLog(
   };
 
   test("daemon connects to relay and client ping/pong works through relay", async () => {
-    process.env.PASEO_PRIMARY_LAN_IP = "192.168.1.12";
+    process.env.FDE_PRIMARY_LAN_IP = "192.168.1.12";
 
     const { logger, lines } = createCapturingLogger();
     await startRelay();
 
-    const daemon = await createTestPaseoDaemon({
+    const daemon = await createTestFdeDaemon({
       listen: "127.0.0.1",
       logger,
       relayEnabled: true,
@@ -256,7 +256,7 @@ async function waitForCapturedLog(
 
     try {
       const offerUrl = await getPairingOfferUrl({
-        paseoHome: daemon.paseoHome,
+        fdeHome: daemon.fdeHome,
         relayEnabled: daemon.config.relayEnabled,
         relayEndpoint: daemon.config.relayEndpoint,
         relayPublicEndpoint: daemon.config.relayPublicEndpoint,
@@ -383,12 +383,12 @@ async function waitForCapturedLog(
   }, 90000);
 
   test("daemon closes a relay client that sends an unsupported handshake key", async () => {
-    process.env.PASEO_PRIMARY_LAN_IP = "192.168.1.12";
+    process.env.FDE_PRIMARY_LAN_IP = "192.168.1.12";
 
     const { logger, lines } = createCapturingLogger();
     await startRelay({ useLocalRelay: true });
 
-    const daemon = await createTestPaseoDaemon({
+    const daemon = await createTestFdeDaemon({
       listen: "127.0.0.1",
       logger,
       relayEnabled: true,
@@ -397,7 +397,7 @@ async function waitForCapturedLog(
 
     try {
       const offerUrl = await getPairingOfferUrl({
-        paseoHome: daemon.paseoHome,
+        fdeHome: daemon.fdeHome,
         relayEnabled: daemon.config.relayEnabled,
         relayEndpoint: daemon.config.relayEndpoint,
         relayPublicEndpoint: daemon.config.relayPublicEndpoint,
@@ -499,12 +499,12 @@ async function waitForCapturedLog(
   }, 90000);
 
   test("daemon keeps relay socket open while idle (no handshake timeout loop)", async () => {
-    process.env.PASEO_PRIMARY_LAN_IP = "192.168.1.12";
+    process.env.FDE_PRIMARY_LAN_IP = "192.168.1.12";
 
     const { logger, lines } = createCapturingLogger();
     await startRelay();
 
-    const daemon = await createTestPaseoDaemon({
+    const daemon = await createTestFdeDaemon({
       listen: "127.0.0.1",
       logger,
       relayEnabled: true,
@@ -513,7 +513,7 @@ async function waitForCapturedLog(
 
     try {
       const offerUrl = await getPairingOfferUrl({
-        paseoHome: daemon.paseoHome,
+        fdeHome: daemon.fdeHome,
         relayEnabled: daemon.config.relayEnabled,
         relayEndpoint: daemon.config.relayEndpoint,
         relayPublicEndpoint: daemon.config.relayPublicEndpoint,
@@ -645,12 +645,12 @@ async function waitForCapturedLog(
   }, 90000);
 
   test("daemon accepts a relay client that pipelines app hello after E2EE hello", async () => {
-    process.env.PASEO_PRIMARY_LAN_IP = "192.168.1.12";
+    process.env.FDE_PRIMARY_LAN_IP = "192.168.1.12";
 
     const { logger, lines } = createCapturingLogger();
     await startRelay();
 
-    const daemon = await createTestPaseoDaemon({
+    const daemon = await createTestFdeDaemon({
       listen: "127.0.0.1",
       logger,
       relayEnabled: true,
@@ -659,7 +659,7 @@ async function waitForCapturedLog(
 
     try {
       const offerUrl = await getPairingOfferUrl({
-        paseoHome: daemon.paseoHome,
+        fdeHome: daemon.fdeHome,
         relayEnabled: daemon.config.relayEnabled,
         relayEndpoint: daemon.config.relayEndpoint,
         relayPublicEndpoint: daemon.config.relayPublicEndpoint,

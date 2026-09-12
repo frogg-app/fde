@@ -119,7 +119,7 @@ export const WORKSPACE_SEARCH_HIDDEN_DIRECTORIES = [
   ".codex",
   ".github",
   ".opencode",
-  ".paseo",
+  ".fde",
   ".vscode",
 ] as const;
 /**

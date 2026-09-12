@@ -8,33 +8,33 @@ describe("starter trigger connections", () => {
         {
           github: [
             {
-              slug: "github-getpaseo",
-              accountLogin: "getpaseo",
+              slug: "github-frogg-app",
+              accountLogin: "frogg-app",
               accountType: "Organization",
-              repositories: ["getpaseo/paseo"],
+              repositories: ["frogg-app/fde"],
             },
           ],
-          slack: [{ teamId: "T123", teamName: "Paseo" }],
-          discord: [{ guildId: "456", guildName: "Paseo Discord" }],
+          slack: [{ teamId: "T123", teamName: "Fde" }],
+          discord: [{ guildId: "456", guildName: "Fde Discord" }],
         },
-        "getpaseo/paseo",
+        "frogg-app/fde",
       ),
     ).toEqual([
       {
-        id: "github:getpaseo/paseo",
-        label: "GitHub — getpaseo/paseo",
+        id: "github:frogg-app/fde",
+        label: "GitHub — frogg-app/fde",
         provider: "github",
-        filters: { repo: "getpaseo/paseo" },
+        filters: { repo: "frogg-app/fde" },
       },
       {
         id: "slack:T123",
-        label: "Slack — Paseo",
+        label: "Slack — Fde",
         provider: "slack",
         filters: { workspace: "T123" },
       },
       {
         id: "discord:456",
-        label: "Discord — Paseo Discord",
+        label: "Discord — Fde Discord",
         provider: "discord",
         filters: { guild: "456" },
       },
@@ -47,16 +47,16 @@ describe("starter trigger connections", () => {
         {
           github: [
             {
-              slug: "github-getpaseo",
-              accountLogin: "getpaseo",
+              slug: "github-frogg-app",
+              accountLogin: "frogg-app",
               accountType: "Organization",
-              repositories: ["getpaseo/hub"],
+              repositories: ["frogg-app/hub"],
             },
           ],
           slack: [],
           discord: [],
         },
-        "getpaseo/paseo",
+        "frogg-app/fde",
       ),
     ).toEqual([]);
   });

@@ -10,7 +10,7 @@ import type { AgentManager, AgentManagerEvent, ManagedAgent } from "../agent/age
 import type { McpServerConfig } from "../agent/agent-sdk-types.js";
 import type { AgentStorage, StoredAgentRecord } from "../agent/agent-storage.js";
 import type { BoundCreateAgentCommand } from "../agent/create-agent/create.js";
-import type { CreatePaseoWorktreeWorkflowResult } from "../worktree-session.js";
+import type { CreateFdeWorktreeWorkflowResult } from "../worktree-session.js";
 import { buildStoredAgentPayload } from "../agent/agent-projections.js";
 import { serializeAgentSnapshot, serializeAgentStreamEvent } from "../messages.js";
 import { daemonExecutionKey, type DaemonAgentOwner } from "../agent/agent-owner.js";
@@ -59,7 +59,7 @@ interface DaemonExecutionsOptions {
   interruptAgent: (agentId: string) => Promise<unknown>;
   archiveWorkspace: (workspaceId: string, requestId: string) => Promise<unknown>;
   cleanupFailedCreate?: (input: {
-    createdWorktree: CreatePaseoWorktreeWorkflowResult | null;
+    createdWorktree: CreateFdeWorktreeWorkflowResult | null;
     createdAgentId: string | null;
   }) => Promise<void>;
 }
@@ -180,7 +180,7 @@ export class DaemonExecutions implements HubExecutionAgents {
     requireHubMcpNamespace(input.mcpServers);
     requireToolPolicyServers(input.toolPolicy, input.mcpServers);
 
-    let createdWorktree: CreatePaseoWorktreeWorkflowResult | null = null;
+    let createdWorktree: CreateFdeWorktreeWorkflowResult | null = null;
     let createdAgentId: string | null = null;
     let result: Awaited<ReturnType<BoundCreateAgentCommand>>;
     try {
@@ -349,8 +349,8 @@ export class DaemonExecutions implements HubExecutionAgents {
 }
 
 function requireHubMcpNamespace(mcpServers: Record<string, McpServerConfig> | undefined): void {
-  if (mcpServers && Object.hasOwn(mcpServers, "paseo")) {
-    throw new Error('Hub execution MCP server name "paseo" is reserved by the daemon');
+  if (mcpServers && Object.hasOwn(mcpServers, "fde")) {
+    throw new Error('Hub execution MCP server name "fde" is reserved by the daemon');
   }
 }
 
@@ -370,8 +370,8 @@ function requireToolPolicyServers(
 }
 
 function ownedCreatedWorktree(
-  worktree: CreatePaseoWorktreeWorkflowResult | null,
-): CreatePaseoWorktreeWorkflowResult | null {
+  worktree: CreateFdeWorktreeWorkflowResult | null,
+): CreateFdeWorktreeWorkflowResult | null {
   return worktree?.created === true ? worktree : null;
 }
 

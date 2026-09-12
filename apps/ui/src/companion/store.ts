@@ -109,10 +109,9 @@ export function deriveCompanionMicState(state: {
   isSpeaking: boolean;
   isThinking: boolean;
 }): CompanionMicState {
-  if (state.session.status !== "open") return "idle";
+  if (state.session.status !== "open" || state.isMuted) return "idle";
   if (state.isSpeaking) return "speaking";
   if (state.isThinking) return "thinking";
-  if (state.isMuted) return "idle";
   return "listening";
 }
 

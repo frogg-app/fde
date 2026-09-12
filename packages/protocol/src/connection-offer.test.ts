@@ -29,7 +29,7 @@ describe("connection offer", () => {
       v: 2,
       serverId: "server-123",
       daemonPublicKeyB64: "pubkey",
-      relay: { endpoint: "relay.paseo.sh:443" },
+      relay: { endpoint: "relay.example.test:443" },
     };
 
     expect(decodeOfferFragmentPayload(encodeBase64UrlNoPadUtf8(JSON.stringify(payload)))).toEqual(
@@ -42,11 +42,13 @@ describe("connection offer", () => {
       v: 2,
       serverId: "server-123",
       daemonPublicKeyB64: "pubkey",
-      relay: { endpoint: "relay.paseo.sh:443" },
+      relay: { endpoint: "relay.example.test:443" },
     });
     const encoded = encodeBase64UrlNoPadUtf8(JSON.stringify(offer));
 
-    expect(parseConnectionOfferFromUrl(`https://app.paseo.sh/#offer=${encoded}`)).toEqual(offer);
+    expect(parseConnectionOfferFromUrl(`https://app.example.test/#offer=${encoded}`)).toEqual(
+      offer,
+    );
   });
 
   it("leaves relay TLS unset when absent", () => {
@@ -74,7 +76,7 @@ describe("connection offer", () => {
     });
     const encoded = encodeBase64UrlNoPadUtf8(JSON.stringify(offer));
 
-    expect(parseConnectionOfferFromUrl(`https://app.paseo.sh/#offer=${encoded}`)).toEqual({
+    expect(parseConnectionOfferFromUrl(`https://app.example.test/#offer=${encoded}`)).toEqual({
       v: 2,
       serverId: "server-123",
       daemonPublicKeyB64: "pubkey",
@@ -83,7 +85,7 @@ describe("connection offer", () => {
   });
 
   it("returns null when the URL has no offer fragment", () => {
-    expect(parseConnectionOfferFromUrl("https://app.paseo.sh/pair")).toBeNull();
+    expect(parseConnectionOfferFromUrl("https://app.example.test/pair")).toBeNull();
   });
 
   it("parses direct claim (v3) offers and keeps relay optional", () => {
@@ -98,8 +100,12 @@ describe("connection offer", () => {
     };
     const encoded = encodeBase64UrlNoPadUtf8(JSON.stringify(offer));
 
-    expect(parseAnyConnectionOfferFromUrl(`https://app.paseo.sh/#offer=${encoded}`)).toEqual(offer);
-    expect(() => parseConnectionOfferFromUrl(`https://app.paseo.sh/#offer=${encoded}`)).toThrow();
+    expect(parseAnyConnectionOfferFromUrl(`https://app.example.test/#offer=${encoded}`)).toEqual(
+      offer,
+    );
+    expect(() =>
+      parseConnectionOfferFromUrl(`https://app.example.test/#offer=${encoded}`),
+    ).toThrow();
   });
 });
 
@@ -126,15 +132,15 @@ describe("pairing links", () => {
     );
   });
 
-  it("derives the paseo://pair deep link and parses it back", () => {
+  it("derives the fde://pair deep link and parses it back", () => {
     const encoded = encodeOfferFragmentPayload(offer);
     const url = buildPairingUrl(DEFAULT_PAIRING_BASE_URL, encoded);
     const deepLink = buildPairingDeepLink(url);
-    expect(deepLink).toBe(`paseo://pair#offer=${encoded}`);
+    expect(deepLink).toBe(`fde://pair#offer=${encoded}`);
     expect(isPairingDeepLink(deepLink!)).toBe(true);
-    expect(isPairingDeepLink(`paseo://pair/#offer=${encoded}`)).toBe(true);
-    expect(isPairingDeepLink("paseo://h/srv/agent/a")).toBe(false);
-    expect(isPairingDeepLink("paseo://pair#offer=")).toBe(false);
+    expect(isPairingDeepLink(`fde://pair/#offer=${encoded}`)).toBe(true);
+    expect(isPairingDeepLink("fde://h/srv/agent/a")).toBe(false);
+    expect(isPairingDeepLink("fde://pair#offer=")).toBe(false);
     expect(parseAnyConnectionOfferFromUrl(deepLink!)).toEqual(offer);
     expect(parseAnyConnectionOfferFromUrl(url)).toEqual(offer);
     expect(hasPairingCode(url)).toBe(true);

@@ -8,7 +8,7 @@ const runningDesktopDaemonStatus: DesktopDaemonStatus = {
   listen: null,
   hostname: null,
   pid: 123,
-  home: "/tmp/paseo",
+  home: "/tmp/fde",
   version: "1.0.0",
   desktopManaged: true,
   error: null,

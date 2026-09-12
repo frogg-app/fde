@@ -42,7 +42,7 @@ describe("Hub commands", () => {
       },
     });
     connect?.outputHelp();
-    assert.match(help, /active stored login.*https:\/\/hub\.paseo\.sh/u);
+    assert.match(help, /active stored login.*Hub URL must be configured/u);
   });
 
   it("login stores the durable credential and marks its normalized origin active", async () => {
@@ -54,45 +54,41 @@ describe("Hub commands", () => {
       {
         env: {},
         credentials,
-        flow: { authorize: async () => "paseo_cli_prefix_durable-secret" },
+        flow: { authorize: async () => "fde_cli_prefix_durable-secret" },
         reporter: quietReporter,
       },
     );
 
     assert.deepEqual(credentials.active(), {
       origin: "https://hub.test",
-      credential: "paseo_cli_prefix_durable-secret",
+      credential: "fde_cli_prefix_durable-secret",
     });
     assert.deepEqual(result.data, { origin: "https://hub.test", status: "logged_in" });
     assert.equal(JSON.stringify(result).includes("durable-secret"), false);
   });
 
-  it("login without an origin uses the hosted default and reports it before authorization", async () => {
+  it("login without an origin requires configuration before authorization", async () => {
     const credentials = new MemoryCredentials();
     const events: string[] = [];
-
-    const result = await runHubLogin(
-      undefined,
-      {},
-      {
-        env: {},
-        credentials,
-        flow: {
-          authorize: async (origin) => {
-            events.push(`authorize:${origin}`);
-            return "paseo_cli_prefix_durable-secret";
+    await assert.rejects(
+      runHubLogin(
+        undefined,
+        {},
+        {
+          env: {},
+          credentials,
+          flow: {
+            authorize: async (origin) => {
+              events.push(origin);
+              return "secret";
+            },
           },
+          reporter: { progress: (message) => events.push(message) },
         },
-        reporter: { progress: (message) => events.push(`progress:${message}`) },
-      },
+      ),
+      { code: "HUB_ORIGIN_REQUIRED" },
     );
-
-    assert.deepEqual(events, [
-      "progress:Logging in to https://hub.paseo.sh",
-      "authorize:https://hub.paseo.sh",
-      "progress:Logged in",
-    ]);
-    assert.equal(result.data.origin, "https://hub.paseo.sh");
+    assert.deepEqual(events, []);
   });
 
   it("interactive login continues through the injected daemon and Hub guidance coordinator", async () => {
@@ -108,7 +104,7 @@ describe("Hub commands", () => {
         flow: {
           authorize: async () => {
             events.push("login");
-            return "paseo_cli_prefix_durable-secret";
+            return "fde_cli_prefix_durable-secret";
           },
         },
         isInteractive: () => true,
@@ -136,10 +132,10 @@ describe("Hub commands", () => {
     ] as const) {
       const credentials = new MemoryCredentials();
       let continuationCount = 0;
-      await runHubLogin(undefined, options, {
+      await runHubLogin("https://hub.test", options, {
         env: {},
         credentials,
-        flow: { authorize: async () => "paseo_cli_prefix_durable-secret" },
+        flow: { authorize: async () => "fde_cli_prefix_durable-secret" },
         isInteractive: () => interactive,
         continueGuidedSetup: async () => {
           continuationCount += 1;
@@ -312,10 +308,10 @@ describe("Hub commands", () => {
     assert.deepEqual(requests, ["https://active.test:active-secret"]);
   });
 
-  it("connect without authority reports the hosted destination and contacts nothing", async () => {
+  it("connect without a configured destination contacts nothing", async () => {
     const progress: string[] = [];
     const credentials = new MemoryCredentials();
-    const daemon = new FakeDaemonConnection(new FakeDaemon("https://hub.paseo.sh"));
+    const daemon = new FakeDaemonConnection(new FakeDaemon("https://hub.example.test"));
     let hubRequests = 0;
 
     await assert.rejects(
@@ -336,13 +332,12 @@ describe("Hub commands", () => {
         },
       ),
       {
-        code: "HUB_API_KEY_REQUIRED",
-        message:
-          "No stored Hub login matches https://hub.paseo.sh. Run `fde hub login https://hub.paseo.sh`, pass --api-key <secret>, or set PASEO_HUB_API_KEY.",
+        code: "HUB_ORIGIN_REQUIRED",
+        message: "Configure a Hub URL with --hub, FDE_HUB_URL, or an existing Hub login.",
       },
     );
 
-    assert.deepEqual(progress, ["Connecting this daemon to https://hub.paseo.sh"]);
+    assert.deepEqual(progress, []);
     assert.equal(hubRequests, 0);
     assert.equal(daemon.connectionCount, 0);
   });
@@ -356,7 +351,7 @@ describe("Hub commands", () => {
     const result = await runHubProjects(
       { hub: "https://explicit.test", apiKey: "explicit-secret", json: true },
       {
-        env: { PASEO_HUB_URL: "https://env.test", PASEO_HUB_API_KEY: "env-secret" },
+        env: { FDE_HUB_URL: "https://env.test", FDE_HUB_API_KEY: "env-secret" },
         credentials,
         hub: {
           listProjects: async (origin, credential) => {
@@ -364,8 +359,8 @@ describe("Hub commands", () => {
             return [
               {
                 id: "a50e05af-4f20-4c8f-8dcc-58e5ea360663",
-                slug: "paseo",
-                name: "Paseo",
+                slug: "fde",
+                name: "Fde",
               },
             ];
           },
@@ -382,8 +377,8 @@ describe("Hub commands", () => {
       projects: [
         {
           id: "a50e05af-4f20-4c8f-8dcc-58e5ea360663",
-          slug: "paseo",
-          name: "Paseo",
+          slug: "fde",
+          name: "Fde",
         },
       ],
     });

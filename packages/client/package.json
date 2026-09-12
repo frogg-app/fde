@@ -1,7 +1,7 @@
 {
   "name": "@fde/client",
-  "version": "0.4.1",
-  "description": "Paseo client SDK package",
+  "version": "0.6.1",
+  "description": "Fde client SDK package",
   "files": [
     "dist",
     "!dist/**/*.map",
@@ -30,7 +30,7 @@
     "access": "public"
   },
   "scripts": {
-    "clean": "node ../../scripts/clean-package-dist.mjs",
+    "clean": "node ../../scripts/ci/clean-package-dist.mjs",
     "build": "npm run build --workspace=@fde/protocol && tsc -p tsconfig.json --incremental false",
     "build:clean": "npm run clean && npm run build",
     "prepack": "npm run build:clean",
@@ -39,8 +39,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@fde/protocol": "0.4.1",
-    "@fde/relay": "0.4.1",
+    "@fde/protocol": "0.6.1",
+    "@fde/relay": "0.6.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {

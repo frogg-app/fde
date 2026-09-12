@@ -21,20 +21,19 @@ export function resolveBrand(directory?: string) {
   if (
     !official &&
     (brand.id === "fde" ||
-      brand.id === "paseo" ||
       [brand.cliName, brand.desktopBinaryName, brand.scheme].some((name) =>
-        ["fde", "paseo"].includes(name),
+        ["fde"].includes(name),
       ) ||
-      [".fde", ".paseo"].includes(brand.homeDir) ||
-      ["FDE", "PASEO"].includes(brand.envPrefix) ||
+      [".fde"].includes(brand.homeDir) ||
+      ["FDE"].includes(brand.envPrefix) ||
       brand.applicationId.startsWith("app.frogg.") ||
-      brand.applicationId.startsWith("sh.paseo.") ||
-      ["fde-daemon", "paseo"].includes(brand.serviceName) ||
+      brand.applicationId.startsWith("sh.fde.") ||
+      ["fde-daemon", "fde"].includes(brand.serviceName) ||
       brand.launchdLabel.startsWith("app.frogg.") ||
-      brand.launchdLabel.startsWith("sh.paseo."))
+      brand.launchdLabel.startsWith("sh.fde."))
   ) {
     throw new Error(
-      "Custom brands must use independent identities; FDE/Paseo identities are reserved",
+      "Custom brands must use independent identities; FDE/Fde identities are reserved",
     );
   }
   const hash = createHash("sha256");

@@ -1,18 +1,18 @@
-# Contributing to Paseo
+# Contributing to FDE
 
-Thank you for taking the time to contribute to Paseo.
+Thank you for taking the time to contribute to FDE.
 
 ## Philosophy
 
-Paseo is an opinionated product, built on freedom and flexibility: any agent provider, any device, running on your own machine. It is meant to be composable, so you can build the workflow you want. Read more about the product vision [here](docs/product.md).
+FDE is an opinionated product, built on freedom and flexibility: any agent provider, any device, running on your own machine. It is meant to be composable, so you can build the workflow you want. Read more about the product vision [here](docs/product.md).
 
-Given Paseo's scope, contributing to it takes a lot of context that is very hard to transfer. That's why product, design, architecture, and workflow decisions are currently all made by the maintainer.
+Given FDE's scope, contributing to it takes a lot of context that is very hard to transfer. That's why product, design, architecture, and workflow decisions are currently all made by the maintainer.
 
 I pick what to build based on whether it fits the product, how many workflows it improves, whether it keeps things composable, whether we can hold the quality bar, and whether I want to build it.
 
 ## Report bugs in GitHub issues or Discord
 
-Open an [issue](https://github.com/getpaseo/paseo/issues) or post in [Discord](https://discord.gg/jz8T2uahpH).
+Open an [issue](https://github.com/frogg-app/fde/issues) or post in [Discord](https://discord.gg/jz8T2uahpH).
 
 > [!IMPORTANT]
 > Feature requests opened as issues will get closed automatically
@@ -23,11 +23,11 @@ You may submit a PR to fix a bug, please read the PR guidelines below.
 
 ## Product discussions go in GitHub Discussions or Discord
 
-There's no feature request backlog. Open a product discussion in [Discussions](https://github.com/getpaseo/paseo/discussions) or `#product` in [Discord](https://discord.gg/jz8T2uahpH), and frame it as a workflow:
+There's no feature request backlog. Open a product discussion in [Discussions](https://github.com/frogg-app/fde/discussions) or `#product` in [Discord](https://discord.gg/jz8T2uahpH), and frame it as a workflow:
 
 - What are you trying to do?
 - How do you do it today?
-- Where does Paseo get in the way?
+- Where does FDE get in the way?
 - What would the flow look like if it worked for you?
 
 "Can you build X" is not useful because it doesn't tell me about your problem.
@@ -77,7 +77,7 @@ Here is the criteria I use to decide:
 
 ## QA evidence
 
-QA is the main bottleneck of Paseo's product development, and it's not just whether the feature works, it's also whether it meets the quality bar.
+QA is the main bottleneck of FDE's product development, and it's not just whether the feature works, it's also whether it meets the quality bar.
 
 Pull requests without evidence will be closed.
 
@@ -115,7 +115,7 @@ Issues are only for bugs. Open it as a product discussion instead, framed as a w
 
 ### Why didn't my PR get a detailed review?
 
-Writing a review is very time consuming and Paseo receives a lot of PRs, I cannot give detailed explanations at volume.
+Writing a review is very time consuming and FDE receives a lot of PRs, I cannot give detailed explanations at volume.
 
 ### How long until someone looks at my pull request?
 

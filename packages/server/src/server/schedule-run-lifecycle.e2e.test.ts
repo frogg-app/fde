@@ -12,7 +12,7 @@ import {
   type DaemonTestContext,
 } from "./test-utils/index.js";
 import type { SessionOutboundMessage } from "./messages.js";
-import { getPaseoWorktreesRoot } from "../utils/worktree.js";
+import { getFdeWorktreesRoot } from "../utils/worktree.js";
 
 type AgentUpdateMessage = Extract<SessionOutboundMessage, { type: "agent_update" }>;
 type WorkspaceUpdateMessage = Extract<SessionOutboundMessage, { type: "workspace_update" }>;
@@ -50,7 +50,7 @@ function createGitRepo(): string {
     cwd: repoDir,
     stdio: "pipe",
   });
-  execFileSync("git", ["config", "user.name", "Paseo Test"], {
+  execFileSync("git", ["config", "user.name", "Fde Test"], {
     cwd: repoDir,
     stdio: "pipe",
   });
@@ -273,9 +273,9 @@ test("archiveOnFinish=true scheduled run emits a workspace remove", async () => 
 
 test("worktree isolation creates a run worktree and archiveOnFinish removes it", async () => {
   const repoDir = createGitRepo();
-  const expectedRoot = await getPaseoWorktreesRoot(
+  const expectedRoot = await getFdeWorktreesRoot(
     repoDir,
-    realpathSync(ctx.daemon.paseoHome),
+    realpathSync(ctx.daemon.fdeHome),
     ctx.daemon.config.worktreesRoot,
   );
   const schedule = await createNewAgentSchedule({
@@ -321,9 +321,9 @@ test("worktree isolation creates a run worktree and archiveOnFinish removes it",
 
 test("update_schedule patches thinking, archive behavior, and isolation for the next run", async () => {
   const repoDir = createGitRepo();
-  const expectedRoot = await getPaseoWorktreesRoot(
+  const expectedRoot = await getFdeWorktreesRoot(
     repoDir,
-    realpathSync(ctx.daemon.paseoHome),
+    realpathSync(ctx.daemon.fdeHome),
     ctx.daemon.config.worktreesRoot,
   );
   const schedule = await createNewAgentSchedule({

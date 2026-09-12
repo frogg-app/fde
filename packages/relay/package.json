@@ -1,7 +1,7 @@
 {
   "name": "@fde/relay",
-  "version": "0.4.1",
-  "description": "Paseo relay for bridging daemon and client connections",
+  "version": "0.6.1",
+  "description": "Fde relay for bridging daemon and client connections",
   "files": [
     "dist",
     "!dist/**/*.map"
@@ -32,7 +32,7 @@
     "access": "public"
   },
   "scripts": {
-    "clean": "node ../../scripts/clean-package-dist.mjs",
+    "clean": "node ../../scripts/ci/clean-package-dist.mjs",
     "build": "tsc -p tsconfig.json --incremental false",
     "build:clean": "npm run clean && npm run build",
     "prepack": "npm run build:clean",

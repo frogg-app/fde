@@ -1,8 +1,9 @@
 import { fork, spawn, type ChildProcess } from "child_process";
-import { mkdirSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { createStream as createRotatingFileStream } from "rotating-file-stream";
 import { signalProcessTree } from "../src/utils/tree-kill.js";
+import { resolveFdeHome } from "../src/server/fde-home.js";
 
 const WORKER_HEARTBEAT_INTERVAL_MS = 1_000;
 const WORKER_TERMINATION_GRACE_MS = 10_000;
@@ -17,24 +18,24 @@ interface SupervisorLogFileOptions {
 
 type WorkerLifecycleMessage =
   | {
-      type: "paseo:shutdown";
+      type: "fde:shutdown";
       reason?: string;
     }
   | {
-      type: "paseo:ready";
+      type: "fde:ready";
       listen: string;
     }
   | {
-      type: "paseo:restart";
+      type: "fde:restart";
       reason?: string;
     };
 
 interface SupervisorHeartbeatMessage {
-  type: "paseo:supervisor-heartbeat";
+  type: "fde:supervisor-heartbeat";
 }
 
 interface SupervisorGracefulShutdownMessage {
-  type: "paseo:graceful-shutdown";
+  type: "fde:graceful-shutdown";
   reason: string;
 }
 
@@ -69,24 +70,24 @@ function parseLifecycleMessage(msg: unknown): WorkerLifecycleMessage | null {
     return null;
   }
   const type = (msg as { type?: unknown }).type;
-  if (type === "paseo:shutdown") {
+  if (type === "fde:shutdown") {
     const reason = (msg as { reason?: unknown }).reason;
     return {
-      type: "paseo:shutdown",
+      type: "fde:shutdown",
       ...(typeof reason === "string" && reason.trim().length > 0 ? { reason } : {}),
     };
   }
-  if (type === "paseo:ready") {
+  if (type === "fde:ready") {
     const listen = (msg as { listen?: unknown }).listen;
     if (typeof listen !== "string" || listen.trim().length === 0) {
       return null;
     }
-    return { type: "paseo:ready", listen };
+    return { type: "fde:ready", listen };
   }
-  if (type === "paseo:restart") {
+  if (type === "fde:restart") {
     const reason = (msg as { reason?: unknown }).reason;
     return {
-      type: "paseo:restart",
+      type: "fde:restart",
       ...(typeof reason === "string" && reason.trim().length > 0 ? { reason } : {}),
     };
   }
@@ -197,16 +198,24 @@ export function runSupervisor(options: SupervisorOptions): SupervisorController 
       if (child !== currentChild) {
         return;
       }
-      writeLifecycleLog(
-        "Worker did not exit after graceful shutdown request; forcing process tree kill",
-        {
-          reason,
-          supervisorPid: process.pid,
-          workerPid: currentChild.pid ?? null,
-        },
-      );
-      void signalProcessTree(currentChild, "SIGKILL").catch((error) => {
-        writeLifecycleLog("Failed to force-kill worker process tree", {
+      const executionHome = path.join(resolveFdeHome(workerEnv), "execution-service");
+      const retainExecution = workerEnv.FDE_EXECUTION_SERVICE === "1" || existsSync(executionHome);
+      const forceKillMessage = retainExecution
+        ? "Worker did not exit after graceful shutdown request; forcing gateway termination"
+        : "Worker did not exit after graceful shutdown request; forcing process tree kill";
+      writeLifecycleLog(forceKillMessage, {
+        reason,
+        retainExecution,
+        supervisorPid: process.pid,
+        workerPid: currentChild.pid ?? null,
+      });
+      // Tree kill follows detached descendants on Windows and would terminate
+      // the independent execution service together with an unresponsive gateway.
+      const forceKill = retainExecution
+        ? Promise.resolve().then(() => currentChild.kill("SIGKILL"))
+        : signalProcessTree(currentChild, "SIGKILL");
+      void forceKill.catch((error) => {
+        writeLifecycleLog("Failed to force-kill worker", {
           error: error instanceof Error ? error.message : String(error),
           supervisorPid: process.pid,
           workerPid: currentChild.pid ?? null,
@@ -245,7 +254,7 @@ export function runSupervisor(options: SupervisorOptions): SupervisorController 
 
     const currentChild = child;
     const heartbeat = setInterval(() => {
-      const message: SupervisorHeartbeatMessage = { type: "paseo:supervisor-heartbeat" };
+      const message: SupervisorHeartbeatMessage = { type: "fde:supervisor-heartbeat" };
       if (currentChild.connected) {
         currentChild.send?.(message, (error) => {
           if (error) {
@@ -280,7 +289,7 @@ export function runSupervisor(options: SupervisorOptions): SupervisorController 
         return;
       }
 
-      if (lifecycleMessage.type === "paseo:ready") {
+      if (lifecycleMessage.type === "fde:ready") {
         writeLifecycleLog("Worker ready", { listen: lifecycleMessage.listen });
         Promise.resolve(options.onWorkerReady?.({ listen: lifecycleMessage.listen })).catch(
           (error) => {
@@ -291,7 +300,7 @@ export function runSupervisor(options: SupervisorOptions): SupervisorController 
         return;
       }
 
-      if (lifecycleMessage.type === "paseo:shutdown") {
+      if (lifecycleMessage.type === "fde:shutdown") {
         const reason = lifecycleMessage.reason ?? "worker_requested_shutdown";
         writeLifecycleLog("Worker requested shutdown", { reason });
         requestShutdown(reason);
@@ -341,7 +350,7 @@ export function runSupervisor(options: SupervisorOptions): SupervisorController 
     }
     const currentChild = child;
     const message: SupervisorGracefulShutdownMessage = {
-      type: "paseo:graceful-shutdown",
+      type: "fde:graceful-shutdown",
       reason,
     };
     writeLifecycleLog("Supervisor requesting graceful worker shutdown", {

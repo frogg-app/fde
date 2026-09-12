@@ -213,7 +213,7 @@ function createFallbackWorkspaceGitSnapshot(cwd: string): WorkspaceGitRuntimeSna
       mainRepoRoot: null,
       currentBranch: null,
       remoteUrl: null,
-      isPaseoOwnedWorktree: false,
+      isFdeOwnedWorktree: false,
       isDirty: null,
       baseRef: null,
       aheadBehind: null,
@@ -247,7 +247,7 @@ function createFallbackWorkspaceGitService(): WorkspaceGitService {
       currentBranch: null,
       remoteUrl: null,
       worktreeRoot: null,
-      isPaseoOwnedWorktree: false,
+      isFdeOwnedWorktree: false,
       mainRepoRoot: null,
     }),
     getSnapshot: async (cwd: string) => createFallbackWorkspaceGitSnapshot(cwd),
@@ -581,7 +581,7 @@ export class VoiceAssistantWebSocketServer {
   private readonly workspaceGitService: WorkspaceGitService;
   private readonly workspaceAutoName: WorkspaceAutoName;
   private readonly downloadTokenStore: DownloadTokenStore;
-  private readonly paseoHome: string;
+  private readonly fdeHome: string;
   private readonly worktreesRoot: string | undefined;
   private readonly daemonConfigStore: DaemonConfigStore;
   private readonly pushNotifications: PushNotifications;
@@ -638,7 +638,7 @@ export class VoiceAssistantWebSocketServer {
     agentManager: AgentManager,
     agentStorage: AgentStorage,
     downloadTokenStore: DownloadTokenStore,
-    paseoHome: string,
+    fdeHome: string,
     daemonConfigStore: DaemonConfigStore,
     mcpBaseUrl: string | null,
     wsConfig: WebSocketServerConfig,
@@ -712,7 +712,7 @@ export class VoiceAssistantWebSocketServer {
     this.workspaceGitService = workspaceGitService ?? createFallbackWorkspaceGitService();
     this.workspaceAutoName = workspaceAutoName;
     this.downloadTokenStore = downloadTokenStore;
-    this.paseoHome = paseoHome;
+    this.fdeHome = fdeHome;
     this.worktreesRoot = daemonRuntimeConfig?.worktreesRoot;
     this.daemonConfigStore = daemonConfigStore;
     this.mcpBaseUrl = mcpBaseUrl;
@@ -759,7 +759,7 @@ export class VoiceAssistantWebSocketServer {
     const pushLogger = this.logger.child({ module: "push" });
     this.pushNotifications = createPushNotifications({
       logger: pushLogger,
-      filePath: join(paseoHome, "push-tokens.json"),
+      filePath: join(fdeHome, "push-tokens.json"),
     });
     this.pushNotificationSender = pushNotificationSender ?? this.pushNotifications;
 
@@ -1467,7 +1467,7 @@ export class VoiceAssistantWebSocketServer {
       downloadTokenStore: this.downloadTokenStore,
       pushNotifications: this.pushNotifications,
       spokenAlerts: this.spokenAlerts,
-      paseoHome: this.paseoHome,
+      fdeHome: this.fdeHome,
       worktreesRoot: this.worktreesRoot,
       agentManager: this.agentManager,
       agentStorage: this.agentStorage,

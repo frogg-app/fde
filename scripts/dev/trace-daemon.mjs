@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 // Emit the set of files the daemon and CLI need at runtime, computed by
 // static module-graph tracing (@vercel/nft) from the daemon entry points.
-// Used by deploy/nix/package.nix's installPhase to materialize $out/lib/paseo
+// Used by deploy/nix/package.nix's installPhase to materialize $out/lib/fde
 // with only the bytes the daemon actually loads — no Expo, RN, Metro,
 // ML stacks, or other non-daemon workspace bloat.
 //
 // Output: newline-separated repo-relative file paths on stdout. The Nix
-// installPhase copies each path to $out/lib/paseo/<path>, preserving the
+// installPhase copies each path to $out/lib/fde/<path>, preserving the
 // directory structure node's module resolution expects.
 //
 // Run from the repo root, after `npm run build:server`. Requires
@@ -34,6 +34,7 @@ const { sherpaPlatformPackageName } = await import(
 const entries = [
   "apps/cli/dist/index.js",
   "packages/server/dist/scripts/supervisor-entrypoint.js",
+  "packages/server/dist/server/server/execution-service/worker.js",
   "packages/server/dist/server/terminal/terminal-worker-process.js",
   "packages/server/dist/server/server/speech/providers/local/worker-process.js",
 ];
@@ -52,7 +53,7 @@ const additionalInputs = [
   // Server runtime config files (read by path, not require)
   "packages/server/.env.example",
   // CLI shebang script wrapping dist/index.js
-  "apps/cli/bin/paseo",
+  "apps/cli/bin/fde",
   // node-pty's compiled native addon. nft can't trace it because
   // node-pty loads it via `require(path.join(__dirname, 'prebuilds/<plat>/pty.node'))`
   // with a runtime-computed platform suffix. Pin to the host platform —

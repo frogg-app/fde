@@ -45,7 +45,7 @@ This architecture means:
 - The daemon can run on any machine: laptop, VM, remote server
 - Multiple clients can connect simultaneously
 - Agents keep running when a client disconnects — the daemon owns them, not the client
-- Quitting the desktop app stops the daemon it started, so "restart the app" is a real fix; a daemon you run yourself is unaffected
+- The app is app-only; quitting it leaves independently installed daemons and agents running
 
 ## Target user
 
@@ -71,7 +71,7 @@ Anyone who builds software:
 
 ## Current state (reviewed September 2026)
 
-- Desktop (Tauri, Windows/macOS/Linux), Android build pipeline, web and CLI;
+- Desktop (Electron, Windows/macOS/Linux), Android build pipeline, web and CLI;
   iOS delivery remains planned.
 - Built-in providers: Claude Code (Agent SDK), Codex (app-server), GitHub Copilot (ACP), OpenCode, Pi, OMP
 - One-click ACP provider catalog: CodeWhale, Cursor, Hermes, Qwen Coder, Kimi Code, and others — plus custom ACP providers

@@ -11,10 +11,9 @@ import type { Logger } from "pino";
 import { z } from "zod";
 import { createBranchChangeRouteHandler } from "./script-route-branch-handler.js";
 
-export type ListenTarget =
-  | { type: "tcp"; host: string; port: number }
-  | { type: "socket"; path: string }
-  | { type: "pipe"; path: string };
+import { parseListenString, type ListenTarget } from "./listen-target.js";
+export { parseListenString, type ListenTarget } from "./listen-target.js";
+import { createExecutionHttpServer } from "./execution-service/http-server.js";
 
 function resolveBoundListenTarget(
   listenTarget: ListenTarget,
@@ -34,50 +33,6 @@ function resolveBoundListenTarget(
     host: listenTarget.host,
     port: address.port,
   };
-}
-
-// Matches a Windows drive-letter path like C:\ or D:\
-const WINDOWS_DRIVE_RE = /^[A-Za-z]:\\/;
-
-export function parseListenString(listen: string): ListenTarget {
-  // 1. Windows named pipes: \\.\pipe\... or pipe://...
-  if (listen.startsWith("\\\\.\\pipe\\") || listen.startsWith("pipe://")) {
-    return {
-      type: "pipe",
-      path: listen.startsWith("pipe://") ? listen.slice("pipe://".length) : listen,
-    };
-  }
-  // 2. Explicit unix:// prefix
-  if (listen.startsWith("unix://")) {
-    return { type: "socket", path: listen.slice(7) };
-  }
-  // 3. Reject Windows absolute drive paths — they are not Unix sockets
-  if (WINDOWS_DRIVE_RE.test(listen)) {
-    throw new Error(`Invalid listen string (Windows path is not a valid listen target): ${listen}`);
-  }
-  // 4. POSIX absolute path (/ or ~) — Unix socket
-  if (listen.startsWith("/") || listen.startsWith("~")) {
-    return { type: "socket", path: listen };
-  }
-  // 5. Pure numeric — TCP port on 127.0.0.1
-  const trimmed = listen.trim();
-  if (/^\d+$/.test(trimmed)) {
-    const port = parseInt(trimmed, 10);
-    return { type: "tcp", host: "127.0.0.1", port };
-  }
-  // 6. host:port — TCP
-  if (listen.includes(":")) {
-    const lastColonIdx = listen.lastIndexOf(":");
-    const host = listen.slice(0, lastColonIdx);
-    const portStr = listen.slice(lastColonIdx + 1);
-    const parsedPort = parseInt(portStr, 10);
-    if (!Number.isFinite(parsedPort)) {
-      throw new Error(`Invalid port in listen string: ${listen}`);
-    }
-    const cleanHost = host.startsWith("[") && host.endsWith("]") ? host.slice(1, -1) : host;
-    return { type: "tcp", host: cleanHost || "127.0.0.1", port: parsedPort };
-  }
-  throw new Error(`Invalid listen string: ${listen}`);
 }
 
 function formatListenTarget(listenTarget: ListenTarget | null): string | null {
@@ -121,9 +76,9 @@ import { VoiceAssistantWebSocketServer } from "./websocket-server.js";
 import { WorkspaceSetupRuntime } from "./workspace-setup-runtime.js";
 import { createWorkspaceLabelService } from "./workspace-labels/index.js";
 import { createGitHubService } from "../services/github-service.js";
-import { createPaseoWorktree as createRegisteredPaseoWorktree } from "./paseo-worktree-service.js";
+import { createFdeWorktree as createRegisteredFdeWorktree } from "./fde-worktree-service.js";
 import { createWorkspaceProvisioningService } from "./session/workspace-provisioning/workspace-provisioning-service.js";
-import { createPaseoWorktreeWorkflow } from "./worktree-session.js";
+import { createFdeWorktreeWorkflow } from "./worktree-session.js";
 import { DownloadTokenStore } from "./file-download/token-store.js";
 import type { OpenAiSpeechProviderConfig } from "./speech/providers/openai/config.js";
 import type { LocalSpeechProviderConfig } from "./speech/providers/local/config.js";
@@ -156,11 +111,8 @@ import { AgentManager } from "./agent/agent-manager.js";
 import { AgentStorage } from "./agent/agent-storage.js";
 import { attachAgentStoragePersistence } from "./persistence-hooks.js";
 import { createAgentMcpServer } from "./agent/mcp-server.js";
-import {
-  createPaseoToolCatalog,
-  type PaseoToolHostDependencies,
-} from "./agent/tools/paseo-tools.js";
-import type { PaseoToolRuntimeContext } from "./agent/tools/types.js";
+import { createFdeToolCatalog, type FdeToolHostDependencies } from "./agent/tools/fde-tools.js";
+import type { FdeToolRuntimeContext } from "./agent/tools/types.js";
 import { createAgentProviderRuntime } from "./agent/provider-runtime.js";
 import { bootstrapWorkspaceRegistries } from "./workspace-registry-bootstrap.js";
 import { WorkspaceReconciliationService } from "./workspace-reconciliation-service.js";
@@ -397,20 +349,20 @@ function describeMcpDebugPayload(value: unknown): Record<string, unknown> {
   };
 }
 
-export type PaseoOpenAIConfig = OpenAiSpeechProviderConfig;
-export type PaseoLocalSpeechConfig = LocalSpeechProviderConfig;
+export type FdeOpenAIConfig = OpenAiSpeechProviderConfig;
+export type FdeLocalSpeechConfig = LocalSpeechProviderConfig;
 
-export interface PaseoSpeechSttLanguages {
+export interface FdeSpeechSttLanguages {
   dictation: string;
   voice: string;
 }
 
-export interface PaseoSpeechConfig {
+export interface FdeSpeechConfig {
   providers: RequestedSpeechProviders;
   /** Spoken agent alerts (TTS of attention notifications). Absent means off. */
   notifications?: { enabled: boolean };
-  sttLanguages?: PaseoSpeechSttLanguages;
-  local?: PaseoLocalSpeechConfig;
+  sttLanguages?: FdeSpeechSttLanguages;
+  local?: FdeLocalSpeechConfig;
 }
 
 export type DaemonLifecycleIntent =
@@ -427,9 +379,11 @@ export type DaemonLifecycleIntent =
       reason: string;
     };
 
-export interface PaseoDaemonConfig {
+export interface FdeDaemonConfig {
+  /** Internal transport boundary; never persisted or accepted from remote clients. */
+  executionService?: { token: string; getPublicListen(): string };
   listen: string;
-  paseoHome: string;
+  fdeHome: string;
   daemonVersion?: string;
   desktopManaged?: boolean;
   worktreesRoot?: string;
@@ -476,8 +430,8 @@ export interface PaseoDaemonConfig {
   };
   appBaseUrl?: string;
   auth?: DaemonAuthConfig;
-  openai?: PaseoOpenAIConfig;
-  speech?: PaseoSpeechConfig;
+  openai?: FdeOpenAIConfig;
+  speech?: FdeSpeechConfig;
   voiceLlmProvider?: AgentProvider | null;
   voiceLlmProviderExplicit?: boolean;
   voiceLlmModel?: string | null;
@@ -506,8 +460,8 @@ export interface PaseoDaemonConfig {
   };
 }
 
-export interface PaseoDaemon {
-  config: PaseoDaemonConfig;
+export interface FdeDaemon {
+  config: FdeDaemonConfig;
   agentManager: AgentManager;
   agentStorage: AgentStorage;
   terminalManager: TerminalManager;
@@ -520,7 +474,7 @@ export interface PaseoDaemon {
   getListenTarget(): ListenTarget | null;
 }
 
-export interface PaseoDaemonDependencies {
+export interface FdeDaemonDependencies {
   hubRelationshipRemote?: HubRelationshipRemote;
   hubRelationshipClock?: HubRelationshipClock;
   hubRelationshipRetryPolicy?: HubRelationshipRetryPolicy;
@@ -532,7 +486,7 @@ export interface PaseoDaemonDependencies {
 }
 
 function createBootstrapManagedProcessRegistry(
-  config: Pick<PaseoDaemonConfig, "paseoHome" | "managedProcesses">,
+  config: Pick<FdeDaemonConfig, "fdeHome" | "managedProcesses">,
   logger: Logger,
 ): ManagedProcessRegistry {
   if (config.managedProcesses) {
@@ -540,7 +494,7 @@ function createBootstrapManagedProcessRegistry(
   }
 
   return createManagedProcessRegistry({
-    paseoHome: config.paseoHome,
+    fdeHome: config.fdeHome,
     processTable: createSystemManagedProcessTable(),
     terminateProcess: terminateWithTreeKill,
     logger,
@@ -559,7 +513,7 @@ async function reconcileManagedProcessLedger(
 
 function mountWebUi(
   app: express.Application,
-  config: PaseoDaemonConfig,
+  config: FdeDaemonConfig,
   logger: Logger,
   gate: WebUiGate,
 ): void {
@@ -617,22 +571,22 @@ function readMutableTrustLan(config: MutableDaemonConfig): boolean {
   return typeof value === "boolean" ? value : DEFAULT_TRUST_LAN;
 }
 
-function configuredTrustLan(config: Pick<PaseoDaemonConfig, "trustLan">): boolean {
+function configuredTrustLan(config: Pick<FdeDaemonConfig, "trustLan">): boolean {
   return config.trustLan ?? DEFAULT_TRUST_LAN;
 }
 
-function resolveExpressTrustProxySetting(config: PaseoDaemonConfig): true | string[] {
+function resolveExpressTrustProxySetting(config: FdeDaemonConfig): true | string[] {
   return config.trustedProxies ?? ["loopback"];
 }
 
-function resolveAutoUpdate(config: PaseoDaemonConfig): DaemonAutoUpdateConfig {
+function resolveAutoUpdate(config: FdeDaemonConfig): DaemonAutoUpdateConfig {
   return config.autoUpdate ?? DEFAULT_AUTO_UPDATE_CONFIG;
 }
 
 const BRAND_PAIRING_URL = brand.services.pairingUrl ?? "";
 const BRAND_RELAY_ENDPOINT = brand.services.relayEndpoint ?? "";
 
-function createInitialMutableDaemonConfig(config: PaseoDaemonConfig): MutableDaemonConfig {
+function createInitialMutableDaemonConfig(config: FdeDaemonConfig): MutableDaemonConfig {
   const providers = config.providerOverrides ?? {};
 
   const initialConfig: MutableDaemonConfig = {
@@ -675,14 +629,14 @@ function createInitialMutableDaemonConfig(config: PaseoDaemonConfig): MutableDae
   return initialConfig;
 }
 
-export async function createPaseoDaemon(
-  config: PaseoDaemonConfig,
+export async function createFdeDaemon(
+  config: FdeDaemonConfig,
   rootLogger: Logger,
-  dependencies: PaseoDaemonDependencies = {},
-): Promise<PaseoDaemon> {
+  dependencies: FdeDaemonDependencies = {},
+): Promise<FdeDaemon> {
   configureGitProcessPolicy(config.git ?? resolveGitProcessPolicy({ env: process.env }));
   const logger = rootLogger.child({ module: "bootstrap" });
-  const obsoleteTimelineDirectory = path.join(config.paseoHome, "agent-timelines");
+  const obsoleteTimelineDirectory = path.join(config.fdeHome, "agent-timelines");
   await rm(obsoleteTimelineDirectory, { recursive: true, force: true }).catch((error) => {
     logger.warn(
       { err: error, path: obsoleteTimelineDirectory },
@@ -693,12 +647,12 @@ export async function createPaseoDaemon(
   const elapsed = () => `${(performance.now() - bootstrapStart).toFixed(0)}ms`;
   const daemonVersion = config.daemonVersion ?? resolveDaemonVersion(import.meta.url);
   const initialMutableConfig = createInitialMutableDaemonConfig(config);
-  const daemonConfigStore = new DaemonConfigStore(config.paseoHome, initialMutableConfig, logger, {
+  const daemonConfigStore = new DaemonConfigStore(config.fdeHome, initialMutableConfig, logger, {
     relayEnabledMutable: config.relayEnabledMutable ?? true,
     startupPersisted: config.configReload?.startupPersisted,
     reloadSource: {
       resolve: (persisted) => {
-        const reloaded = resolveConfigFromPersisted(config.paseoHome, persisted, {
+        const reloaded = resolveConfigFromPersisted(config.fdeHome, persisted, {
           env: config.configReload?.env ?? process.env,
           cli: config.configReload?.cli,
           relayEnabledFallback: config.configReload?.relayEnabledFallback,
@@ -717,13 +671,13 @@ export async function createPaseoDaemon(
   const browserToolsPolicy = new DaemonConfigBrowserToolsPolicy(daemonConfigStore);
   const browserToolsBroker = new BrowserToolsBroker({});
   const pluginRuntime = new PluginService(logger, daemonConfigStore, daemonVersion, {
-    managedSources: new ManagedPluginSources(config.paseoHome),
+    managedSources: new ManagedPluginSources(config.fdeHome),
   });
 
-  const serverId = getOrCreateServerId(config.paseoHome, { logger });
-  const daemonKeyPair = await loadOrCreateDaemonKeyPair(config.paseoHome, logger);
+  const serverId = getOrCreateServerId(config.fdeHome, { logger });
+  const daemonKeyPair = await loadOrCreateDaemonKeyPair(config.fdeHome, logger);
   // Paired principals/credentials and the first-run claim gate (docs/permissions.md).
-  const claimStore = createClaimStore(config.paseoHome);
+  const claimStore = createClaimStore(config.fdeHome);
   const claimOffers = createClaimOfferStore();
   const authConfig: DaemonAuthConfig = {
     ...config.auth,
@@ -759,6 +713,28 @@ export async function createPaseoDaemon(
   const agentMcpAuthToken = randomUUID();
 
   const listenTarget = parseListenString(config.listen);
+  const publicListenTarget = () =>
+    config.executionService
+      ? parseListenString(config.executionService.getPublicListen())
+      : (boundListenTarget ?? listenTarget);
+  const publicTcpPort = () => {
+    const target = publicListenTarget();
+    return target.type === "tcp" ? target.port : null;
+  };
+  const publicTcpHost = () => {
+    const target = publicListenTarget();
+    return target.type === "tcp" ? target.host : null;
+  };
+  const publicOrigins = () => {
+    const target = publicListenTarget();
+    return target.type === "tcp"
+      ? [
+          `http://${formatHostForHttpUrl(target.host)}:${target.port}`,
+          `http://localhost:${target.port}`,
+          `http://127.0.0.1:${target.port}`,
+        ]
+      : [];
+  };
 
   const app = express();
   app.set("trust proxy", resolveExpressTrustProxySetting(config));
@@ -812,7 +788,7 @@ export async function createPaseoDaemon(
         })) ?? [],
       serviceProxy,
       runtimeStore: scriptRuntimeStore,
-      daemonPort: () => (boundListenTarget?.type === "tcp" ? boundListenTarget.port : null),
+      daemonPort: publicTcpPort,
       resolveWorkspaceDirectory: async (workspaceId) =>
         (await workspaceRegistry?.get(workspaceId))?.cwd ?? null,
       logger,
@@ -837,7 +813,10 @@ export async function createPaseoDaemon(
   if (listenTarget.type === "tcp") {
     app.use((req, res, next) => {
       const hostHeader = typeof req.headers.host === "string" ? req.headers.host : undefined;
-      if (!isHostnameAllowed(hostHeader, configuredHostnames)) {
+      if (
+        publicListenTarget().type === "tcp" &&
+        !isHostnameAllowed(hostHeader, configuredHostnames)
+      ) {
         res.status(403).json({ error: "Invalid Host header" });
         return;
       }
@@ -847,8 +826,8 @@ export async function createPaseoDaemon(
 
   // CORS - allow same-origin + configured origins
   const fixedAllowedOrigins = [
-    // Paseo's Electron renderer used the custom paseo:// scheme.
-    "paseo://app",
+    // Fde's Electron renderer used the custom fde:// scheme.
+    "fde://app",
     // The FDE Tauri shell: WebKit reports `tauri://localhost`, WebView2 (Windows)
     // `http://tauri.localhost` (or https on newer builds).
     "tauri://localhost",
@@ -873,7 +852,10 @@ export async function createPaseoDaemon(
 
   app.use((req, res, next) => {
     const origin = req.headers.origin;
-    if (origin && (allowedOrigins.has("*") || allowedOrigins.has(origin))) {
+    if (
+      origin &&
+      (allowedOrigins.has("*") || allowedOrigins.has(origin) || publicOrigins().includes(origin))
+    ) {
       res.setHeader("Access-Control-Allow-Origin", origin);
       res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
       res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
@@ -902,7 +884,7 @@ export async function createPaseoDaemon(
     hostname: getHostname(),
     daemonPublicKeyB64: daemonKeyPair.publicKeyB64,
     appBaseUrl: () => appBaseUrl,
-    listenTarget: () => boundListenTarget ?? listenTarget,
+    listenTarget: publicListenTarget,
     relay: () => {
       const live = relayRuntime?.getConfig();
       return {
@@ -954,7 +936,7 @@ export async function createPaseoDaemon(
       serverId,
       version: daemonVersion,
       hostname: getHostname,
-      listen: () => formatListenTarget(boundListenTarget ?? listenTarget),
+      listen: () => formatListenTarget(publicListenTarget()),
       isClaimed: () => claimStore.isClaimed() || Boolean(config.auth?.password),
       trustLan: () => authConfig.access?.trustLan() ?? DEFAULT_TRUST_LAN,
       isTrustedClient: (req) => authConfig.access?.isTrustedClient(req) ?? false,
@@ -973,7 +955,7 @@ export async function createPaseoDaemon(
       serverId,
       hostname: getHostname(),
       version: daemonVersion,
-      listen: formatListenTarget(boundListenTarget ?? listenTarget),
+      listen: formatListenTarget(publicListenTarget()),
     });
   });
 
@@ -1033,7 +1015,7 @@ export async function createPaseoDaemon(
     void handleFileDownload(req, res);
   });
 
-  const httpServer = createHTTPServer(app);
+  const httpServer = createExecutionHttpServer(app, config.executionService);
 
   // Script proxy WebSocket upgrade handler — must be registered before the
   // VoiceAssistantWebSocketServer attaches its own "upgrade" listener so that
@@ -1047,21 +1029,21 @@ export async function createPaseoDaemon(
 
   const agentStorage = new AgentStorage(config.agentStoragePath, logger);
   const projectRegistry = new FileBackedProjectRegistry(
-    path.join(config.paseoHome, "projects", "projects.json"),
+    path.join(config.fdeHome, "projects", "projects.json"),
     logger,
   );
   workspaceRegistry = new FileBackedWorkspaceRegistry(
-    path.join(config.paseoHome, "projects", "workspaces.json"),
+    path.join(config.fdeHome, "projects", "workspaces.json"),
     logger,
   );
   const workspaceLabelService = createWorkspaceLabelService({
-    paseoHome: config.paseoHome,
+    fdeHome: config.fdeHome,
     workspaceRegistry,
   });
   const github = createGitHubService();
   const workspaceGitService = new WorkspaceGitServiceImpl({
     logger,
-    paseoHome: config.paseoHome,
+    fdeHome: config.fdeHome,
     worktreesRoot: config.worktreesRoot,
     deps: {
       forgeOverrides: { github },
@@ -1075,7 +1057,7 @@ export async function createPaseoDaemon(
     logger,
   });
   const agentProviderRuntime = await createAgentProviderRuntime({
-    paseoHome: config.paseoHome,
+    fdeHome: config.fdeHome,
     logger,
     snapshotManager: {
       refreshTimeoutMs: config.providerCatalogRefreshTimeoutMs,
@@ -1121,7 +1103,7 @@ export async function createPaseoDaemon(
   logger.info({ elapsed: elapsed() }, "Agent storage initialized");
   await bootstrapWorkspaceRegistries({
     serverId,
-    paseoHome: config.paseoHome,
+    fdeHome: config.fdeHome,
     agentStorage,
     projectRegistry,
     workspaceRegistry,
@@ -1156,7 +1138,7 @@ export async function createPaseoDaemon(
   });
   const checkoutDiffManager = new CheckoutDiffManager({
     logger,
-    paseoHome: config.paseoHome,
+    fdeHome: config.fdeHome,
     workspaceGitService,
   });
   const archiveWorkspaceRecordExternal = async (
@@ -1202,7 +1184,7 @@ export async function createPaseoDaemon(
         cwd: workspace.cwd,
         kind: workspace.kind,
         worktreeRoot: workspace.worktreeRoot,
-        isPaseoOwnedWorktree: workspace.isPaseoOwnedWorktree,
+        isFdeOwnedWorktree: workspace.isFdeOwnedWorktree,
         mainRepoRoot: workspace.mainRepoRoot,
       }));
   };
@@ -1259,8 +1241,8 @@ export async function createPaseoDaemon(
   });
 
   setupAutoArchiveOnMerge({
-    paseoHome: config.paseoHome,
-    paseoWorktreesBaseRoot: config.worktreesRoot,
+    fdeHome: config.fdeHome,
+    fdeWorktreesBaseRoot: config.worktreesRoot,
     daemonConfigStore,
     workspaceGitService,
     github,
@@ -1278,16 +1260,16 @@ export async function createPaseoDaemon(
     emitWorkspaceUpdatesForWorkspaceIds: emitWorkspaceUpdatesExternal,
   });
 
-  const createPaseoWorktreeForTools = async (
-    input: Parameters<typeof createPaseoWorktreeWorkflow>[1],
-    serviceOptions?: Parameters<typeof createPaseoWorktreeWorkflow>[2],
+  const createFdeWorktreeForTools = async (
+    input: Parameters<typeof createFdeWorktreeWorkflow>[1],
+    serviceOptions?: Parameters<typeof createFdeWorktreeWorkflow>[2],
   ) => {
-    return createPaseoWorktreeWorkflow(
+    return createFdeWorktreeWorkflow(
       {
-        paseoHome: config.paseoHome,
+        fdeHome: config.fdeHome,
         worktreesRoot: config.worktreesRoot,
-        createPaseoWorktree: async (workflowInput, workflowOptions) => {
-          return createRegisteredPaseoWorktree(workflowInput, {
+        createFdeWorktree: async (workflowInput, workflowOptions) => {
+          return createRegisteredFdeWorktree(workflowInput, {
             github,
             ...(workflowOptions?.resolveDefaultBranch
               ? {
@@ -1319,8 +1301,8 @@ export async function createPaseoDaemon(
         archiveWorkspaceRecord: archiveWorkspaceRecordExternal,
         serviceProxy,
         scriptRuntimeStore,
-        getDaemonTcpPort: () => (boundListenTarget?.type === "tcp" ? boundListenTarget.port : null),
-        getDaemonTcpHost: () => (boundListenTarget?.type === "tcp" ? boundListenTarget.host : null),
+        getDaemonTcpPort: publicTcpPort,
+        getDaemonTcpHost: publicTcpHost,
         serviceProxyPublicBaseUrl,
         onScriptsChanged: null,
       },
@@ -1333,11 +1315,11 @@ export async function createPaseoDaemon(
     agentManager,
     agentStorage,
     logger,
-    paseoHome: config.paseoHome,
+    fdeHome: config.fdeHome,
     worktreesRoot: config.worktreesRoot,
     terminalManager,
     providerSnapshotManager,
-    createPaseoWorktree: createPaseoWorktreeForTools,
+    createFdeWorktree: createFdeWorktreeForTools,
     ensureWorkspaceForCreate: ensureWorkspaceForCreateAndBroadcastExternal,
   };
   const createAgent = (input: Parameters<typeof createAgentCommand>[1]) =>
@@ -1345,8 +1327,8 @@ export async function createPaseoDaemon(
   const archiveWorkspaceByIdExternal = (workspaceId: string, requestId: string) =>
     archiveByScope(
       {
-        paseoHome: config.paseoHome,
-        paseoWorktreesBaseRoot: config.worktreesRoot,
+        fdeHome: config.fdeHome,
+        fdeWorktreesBaseRoot: config.worktreesRoot,
         github,
         workspaceGitService,
         agentManager,
@@ -1366,13 +1348,13 @@ export async function createPaseoDaemon(
       { scope: { kind: "workspace", workspaceId }, requestId },
     );
   const hubAgentLifecycle = new CreateAgentLifecycleDispatch({
-    paseoHome: config.paseoHome,
+    fdeHome: config.fdeHome,
     worktreesRoot: config.worktreesRoot,
     agentManager,
     agentStorage,
     github,
     workspaceGitService,
-    createPaseoWorktreeWorkflow: createPaseoWorktreeForTools,
+    createFdeWorktreeWorkflow: createFdeWorktreeForTools,
     archiveAgentForClose: (agentId) =>
       archiveAgentCommand({ agentManager, agentStorage, logger }, agentId),
     findWorkspaceIdForCwd: findWorkspaceIdForCwdExternal,
@@ -1388,7 +1370,7 @@ export async function createPaseoDaemon(
     logger,
   });
   const hubRelationships = new HubRelationshipController({
-    paseoHome: config.paseoHome,
+    fdeHome: config.fdeHome,
     hostname: getHostname(),
     serverId,
     daemonPublicKey: daemonKeyPair.publicKeyB64,
@@ -1450,11 +1432,11 @@ export async function createPaseoDaemon(
     await emitWorkspaceUpdatesExternal([workspace.workspaceId]);
     return workspace;
   };
-  const createSchedulePaseoWorktreeExternal = async (input: {
+  const createScheduleFdeWorktreeExternal = async (input: {
     cwd: string;
     firstAgentContext: FirstAgentContext;
   }) => {
-    const result = await createPaseoWorktreeForTools({
+    const result = await createFdeWorktreeForTools({
       cwd: input.cwd,
       firstAgentContext: input.firstAgentContext,
     });
@@ -1464,8 +1446,8 @@ export async function createPaseoDaemon(
   const archiveScheduleWorkspaceExternal = async (workspaceId: string) => {
     await archiveByScope(
       {
-        paseoHome: config.paseoHome,
-        paseoWorktreesBaseRoot: config.worktreesRoot,
+        fdeHome: config.fdeHome,
+        fdeWorktreesBaseRoot: config.worktreesRoot,
         github,
         workspaceGitService,
         agentManager,
@@ -1495,13 +1477,13 @@ export async function createPaseoDaemon(
     );
   };
   const scheduleService = new ScheduleService({
-    paseoHome: config.paseoHome,
+    fdeHome: config.fdeHome,
     logger,
     agentManager,
     agentStorage,
     createAgent,
     createDirectoryWorkspace: createScheduleLocalWorkspaceExternal,
-    createPaseoWorktreeWorkspace: createSchedulePaseoWorktreeExternal,
+    createFdeWorktreeWorkspace: createScheduleFdeWorktreeExternal,
     archiveWorkspace: archiveScheduleWorkspaceExternal,
   });
   await scheduleService.start();
@@ -1525,12 +1507,12 @@ export async function createPaseoDaemon(
   logger.info({ elapsed: elapsed() }, "Preparing voice and MCP runtime");
 
   const createAgentToolHostDependencies = (
-    runtime: PaseoToolRuntimeContext,
-  ): PaseoToolHostDependencies => ({
+    runtime: FdeToolRuntimeContext,
+  ): FdeToolHostDependencies => ({
     agentManager,
     agentStorage,
     terminalManager,
-    getDaemonTcpPort: () => (boundListenTarget?.type === "tcp" ? boundListenTarget.port : null),
+    getDaemonTcpPort: publicTcpPort,
     scheduleService,
     providerSnapshotManager,
     daemonConfigStore,
@@ -1558,8 +1540,8 @@ export async function createPaseoDaemon(
       workspaceRegistry,
       projectRegistry,
       workspaceGitService,
-      getDaemonTcpPort: () => (boundListenTarget?.type === "tcp" ? boundListenTarget.port : null),
-      getDaemonTcpHost: () => (boundListenTarget?.type === "tcp" ? boundListenTarget.host : null),
+      getDaemonTcpPort: publicTcpPort,
+      getDaemonTcpHost: publicTcpHost,
       serviceProxyPublicBaseUrl,
       resolveScriptHealth: (hostname) => scriptHealthMonitor.getHealthForHostname(hostname),
       logger,
@@ -1567,15 +1549,15 @@ export async function createPaseoDaemon(
       // status updates fan out to every connected client.
       emit: (message) => wsServer?.broadcast(wrapSessionMessage(message)),
       spawnWorkspaceScript,
-      globalServicePorts: loadPersistedConfig(config.paseoHome).worktrees?.servicePorts,
+      globalServicePorts: loadPersistedConfig(config.fdeHome).worktrees?.servicePorts,
     }),
     markWorkspaceArchiving: markWorkspaceArchivingExternal,
     clearWorkspaceArchiving: clearWorkspaceArchivingExternal,
     ensureWorkspaceForCreate: createAgentCommandDependencies.ensureWorkspaceForCreate,
-    createPaseoWorktree: createAgentCommandDependencies.createPaseoWorktree,
+    createFdeWorktree: createAgentCommandDependencies.createFdeWorktree,
     browserToolsEnabled: browserToolsPolicy.isEnabled(),
     browserToolsBroker,
-    paseoHome: config.paseoHome,
+    fdeHome: config.fdeHome,
     worktreesRoot: config.worktreesRoot,
     callerAgentId: runtime.callerAgentId,
     enableVoiceTools: runtime.enableVoiceTools,
@@ -1584,13 +1566,13 @@ export async function createPaseoDaemon(
     resolveCallerContext: (agentId) => wsServer?.resolveVoiceCallerContext(agentId) ?? null,
     logger,
   });
-  const createAgentToolCatalog = (runtime: PaseoToolRuntimeContext) =>
-    createPaseoToolCatalog(createAgentToolHostDependencies(runtime));
+  const createAgentToolCatalog = (runtime: FdeToolRuntimeContext) =>
+    createFdeToolCatalog(createAgentToolHostDependencies(runtime));
   const setAgentProviderToolsEnabled = (enabled: boolean) => {
-    agentProviderRuntime.setPaseoToolCatalog(enabled ? createAgentToolCatalog({}) : null);
+    agentProviderRuntime.setFdeToolCatalog(enabled ? createAgentToolCatalog({}) : null);
   };
-  agentManager.setPaseoToolCatalogFactory(createAgentToolCatalog);
-  agentManager.setPaseoToolsEnabled(config.mcpInjectIntoAgents !== false);
+  agentManager.setFdeToolCatalogFactory(createAgentToolCatalog);
+  agentManager.setFdeToolsEnabled(config.mcpInjectIntoAgents !== false);
   setAgentProviderToolsEnabled(config.mcpEnabled !== false && config.mcpInjectIntoAgents !== false);
 
   let mcpEnabled = config.mcpEnabled ?? true;
@@ -1726,17 +1708,17 @@ export async function createPaseoDaemon(
   const spokenAlerts = createSpokenAlertService({
     enabled: isSpokenNotificationsEnabled(config.speech),
     resolveTts: () => speechService.resolveTts(),
-    cache: createTtsCache({ dir: path.join(config.paseoHome, "tts-cache") }),
+    cache: createTtsCache({ dir: path.join(config.fdeHome, "tts-cache") }),
     logger,
   });
   mountNotificationAudioRoute({ app, spokenAlerts, logger });
 
   const companionFillers = createCompanionFillerBank({
-    cache: createTtsCache({ dir: path.join(config.paseoHome, "tts-cache") }),
+    cache: createTtsCache({ dir: path.join(config.fdeHome, "tts-cache") }),
     resolveTts: () => speechService.resolveTts(),
     logger,
   });
-  const companionPersisted = loadPersistedConfig(config.paseoHome, logger);
+  const companionPersisted = loadPersistedConfig(config.fdeHome, logger);
   const companionModelInputs = await resolveCompanionModelInputs({
     env: process.env,
     persisted: companionPersisted,
@@ -1744,13 +1726,13 @@ export async function createPaseoDaemon(
   const companion: CompanionRuntime = {
     speechReadiness: () => speechService.getReadiness().realtimeVoice,
     acceptedMessages: new CompanionMessageReceipts(
-      path.join(config.paseoHome, "companion", "messages.json"),
+      path.join(config.fdeHome, "companion", "messages.json"),
     ),
-    cwd: config.paseoHome,
+    cwd: config.fdeHome,
     nativeVoicePreview: isCompanionNativeVoiceAvailable(companionModelInputs),
     capability: resolveCompanionCapability(companionModelInputs),
     modelConfig: resolveCompanionModelConfig(companionModelInputs),
-    notebook: new CompanionNotebookStore({ filePath: companionNotebookPath(config.paseoHome) }),
+    notebook: new CompanionNotebookStore({ filePath: companionNotebookPath(config.fdeHome) }),
     fillers: companionFillers,
     createBackend: ({ config: modelConfig, tools, logger: sessionLogger }) =>
       modelConfig.backend === "api"
@@ -1764,7 +1746,7 @@ export async function createPaseoDaemon(
             : createCompanionCliBackend)({
             model: modelConfig.model,
             tools,
-            cwd: config.paseoHome,
+            cwd: config.fdeHome,
             logger: sessionLogger,
           }),
     createTools: ({ deferredJobs, logger: sessionLogger, endConversation, conversationId }) =>
@@ -1792,7 +1774,7 @@ export async function createPaseoDaemon(
       agentManager,
       providerSnapshotManager,
       daemonConfig: { metadataGeneration: daemonConfigStore.get().metadataGeneration },
-      cwd: config.paseoHome,
+      cwd: config.fdeHome,
       logger,
     }),
   };
@@ -1805,7 +1787,7 @@ export async function createPaseoDaemon(
     companionRefresh = (async () => {
       const inputs = await resolveCompanionModelInputs({
         env: process.env,
-        persisted: loadPersistedConfig(config.paseoHome, logger),
+        persisted: loadPersistedConfig(config.fdeHome, logger),
       });
       companion.nativeVoicePreview = isCompanionNativeVoiceAvailable(inputs);
       companion.modelConfig = resolveCompanionModelConfig(inputs);
@@ -1821,7 +1803,7 @@ export async function createPaseoDaemon(
   companion.jobs = new CompanionDeferredJobs({
     run: companion.runDeferredJob,
     logger,
-    filePath: path.join(config.paseoHome, "companion", "jobs.json"),
+    filePath: path.join(config.fdeHome, "companion", "jobs.json"),
   });
   companion.watchAgent = (agentId, conversationId, workspaceId) => {
     if (!companion.jobs) return () => {};
@@ -1875,17 +1857,17 @@ export async function createPaseoDaemon(
             agentMcpBaseUrl =
               !mcpEnabled || config.mcpInjectIntoAgents === false ? null : mcpBaseUrl;
             agentManager.setMcpBaseUrl(agentMcpBaseUrl);
-            agentManager.setPaseoToolsEnabled(mcpEnabled && config.mcpInjectIntoAgents !== false);
+            agentManager.setFdeToolsEnabled(mcpEnabled && config.mcpInjectIntoAgents !== false);
             daemonConfigStore.onFieldChange("mcp.enabled", (value) => {
               mcpEnabled = value !== false;
               const inject = daemonConfigStore.get().mcp.injectIntoAgents !== false;
               agentManager.setMcpBaseUrl(mcpEnabled && inject ? mcpBaseUrl : null);
-              agentManager.setPaseoToolsEnabled(mcpEnabled && inject);
+              agentManager.setFdeToolsEnabled(mcpEnabled && inject);
               setAgentProviderToolsEnabled(mcpEnabled && inject);
             });
             daemonConfigStore.onFieldChange("mcp.injectIntoAgents", (value) => {
               agentManager.setMcpBaseUrl(mcpEnabled && value ? mcpBaseUrl : null);
-              agentManager.setPaseoToolsEnabled(mcpEnabled && value !== false);
+              agentManager.setFdeToolsEnabled(mcpEnabled && value !== false);
               setAgentProviderToolsEnabled(mcpEnabled && value !== false);
             });
             daemonConfigStore.onFieldChange("appendSystemPrompt", (value) => {
@@ -1925,14 +1907,17 @@ export async function createPaseoDaemon(
             const updateService = new DaemonUpdateService({
               install: describeDaemonInstall({ desktopManaged: config.desktopManaged === true }),
               daemonVersion,
-              paseoHome: config.paseoHome,
-              listen: formatListenTarget(boundListenTarget ?? listenTarget),
+              fdeHome: config.fdeHome,
+              listen: formatListenTarget(publicListenTarget()),
+              getListen: () => formatListenTarget(publicListenTarget()),
+              retainAcrossGatewayRestart: Boolean(config.executionService),
               logger,
             });
             autoUpdater = new DaemonAutoUpdater({
               service: updateService,
               getConfig: () => daemonConfigStore.get().autoUpdate,
               hasRunningAgents: () =>
+                !config.executionService &&
                 agentManager.listAgents().some((agent) => agent.lifecycle === "running"),
               logger,
             });
@@ -1944,11 +1929,11 @@ export async function createPaseoDaemon(
               agentManager,
               agentStorage,
               downloadTokenStore,
-              config.paseoHome,
+              config.fdeHome,
               daemonConfigStore,
               mcpBaseUrl,
               {
-                getAllowedOrigins: () => allowedOrigins,
+                getAllowedOrigins: () => new Set([...allowedOrigins, ...publicOrigins()]),
                 getHostnames: () => configuredHostnames,
                 daemonStatusRpc: dependencies.serverFeatureOverrides?.daemonStatusRpc,
                 relayConfig: dependencies.serverFeatureOverrides?.relayConfig,
@@ -1976,15 +1961,17 @@ export async function createPaseoDaemon(
               serviceProxy,
               scriptRuntimeStore,
               handleBranchChange,
-              () => (boundListenTarget?.type === "tcp" ? boundListenTarget.port : null),
-              () => (boundListenTarget?.type === "tcp" ? boundListenTarget.host : null),
+              publicTcpPort,
+              publicTcpHost,
               (hostname) => scriptHealthMonitor.getHealthForHostname(hostname),
               workspaceGitService,
               github,
               config.pushNotificationSender,
               providerSnapshotManager,
               {
-                listen: formatListenTarget(boundListenTarget ?? listenTarget),
+                get listen() {
+                  return formatListenTarget(publicListenTarget());
+                },
                 worktreesRoot: config.worktreesRoot,
                 get appBaseUrl() {
                   return appBaseUrl;
@@ -2010,7 +1997,7 @@ export async function createPaseoDaemon(
               spokenAlerts,
               companion,
             );
-            pluginRuntime.bindPaseoSessionHost(wsServer);
+            pluginRuntime.bindFdeSessionHost(wsServer);
             await pluginRuntime.start();
             wsServer.beginAcceptingConnections();
             {

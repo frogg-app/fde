@@ -21,15 +21,15 @@ test("Sessions shows an empty placeholder when the host has no history", async (
       endpoint: `127.0.0.1:${daemon.port}`,
       nowIso: new Date().toISOString(),
     });
-    await page.route(/:(9999|6767)\b/, (route) => route.abort());
-    await page.routeWebSocket(/:(9999|6767)\b/, async (webSocket) => {
+    await page.route(/:(9999|9999)\b/, (route) => route.abort());
+    await page.routeWebSocket(/:(9999|9999)\b/, async (webSocket) => {
       await webSocket.close({ code: 1008, reason: "Blocked developer daemon during e2e." });
     });
     await page.addInitScript(
       ({ seededHost, preferences }) => {
-        localStorage.setItem("@paseo:e2e", "1");
-        localStorage.setItem("@paseo:daemon-registry", JSON.stringify([seededHost]));
-        localStorage.setItem("@paseo:create-agent-preferences", JSON.stringify(preferences));
+        localStorage.setItem("@fde:e2e", "1");
+        localStorage.setItem("@fde:daemon-registry", JSON.stringify([seededHost]));
+        localStorage.setItem("@fde:create-agent-preferences", JSON.stringify(preferences));
       },
       { seededHost: host, preferences: buildCreateAgentPreferences() },
     );

@@ -27,13 +27,13 @@ describe("GitHub repository search", () => {
       JSON.stringify([
         {
           id: " R_recent ",
-          name: " paseo ",
-          nameWithOwner: " getpaseo/paseo ",
+          name: " fde ",
+          nameWithOwner: " frogg-app/fde ",
           description: null,
           isPrivate: false,
           updatedAt: "2026-07-15T12:00:00Z",
-          sshUrl: " git@github.com:getpaseo/paseo.git ",
-          url: "https://github.com/getpaseo/paseo",
+          sshUrl: " git@github.com:frogg-app/fde.git ",
+          url: "https://github.com/frogg-app/fde",
         },
       ]),
       "ssh\n",
@@ -48,12 +48,12 @@ describe("GitHub repository search", () => {
     ).resolves.toEqual([
       {
         id: "R_recent",
-        name: "paseo",
-        nameWithOwner: "getpaseo/paseo",
+        name: "fde",
+        nameWithOwner: "frogg-app/fde",
         description: null,
         visibility: "public",
         updatedAt: "2026-07-15T12:00:00Z",
-        cloneUrl: "git@github.com:getpaseo/paseo.git",
+        cloneUrl: "git@github.com:frogg-app/fde.git",
       },
     ]);
     expect(runner.calls).toEqual([

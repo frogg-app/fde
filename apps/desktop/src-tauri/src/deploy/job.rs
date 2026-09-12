@@ -1,6 +1,6 @@
 //! One deploy job: ssh runs `... bash -s` on the host, the script goes in on
 //! stdin, and every line of stdout/stderr comes back to the webview as a
-//! `paseo:event:ssh-deploy-event` until the process exits or is cancelled.
+//! `fde:event:ssh-deploy-event` until the process exits or is cancelled.
 
 use std::path::PathBuf;
 use std::sync::Arc;

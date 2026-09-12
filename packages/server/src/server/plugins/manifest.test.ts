@@ -12,9 +12,9 @@ afterEach(async () => {
 
 describe("plugin manifest", () => {
   it("accepts only non-empty argv arrays for build commands", async () => {
-    const directory = await mkdtemp(path.join(tmpdir(), "paseo-plugin-manifest-"));
+    const directory = await mkdtemp(path.join(tmpdir(), "fde-plugin-manifest-"));
     directories.push(directory);
-    const manifest = path.join(directory, "paseo-plugin.json");
+    const manifest = path.join(directory, "fde-plugin.json");
 
     await writeFile(
       manifest,

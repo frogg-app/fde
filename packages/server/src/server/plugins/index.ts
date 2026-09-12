@@ -26,7 +26,7 @@ interface PluginRuntimePort {
   stopPluginById(pluginId: string): Promise<boolean>;
   stopAll(): Promise<void>;
   subscribe(listener: (pluginId: string, error?: string) => void): () => void;
-  bindPaseoSessionHost(sessionHost: Parameters<PluginRuntime["bindPaseoSessionHost"]>[0]): void;
+  bindFdeSessionHost(sessionHost: Parameters<PluginRuntime["bindFdeSessionHost"]>[0]): void;
 }
 
 interface PluginServiceDependencies {
@@ -73,8 +73,8 @@ export class PluginService {
     return () => this.listeners.delete(listener);
   }
 
-  bindPaseoSessionHost(sessionHost: Parameters<PluginRuntime["bindPaseoSessionHost"]>[0]): void {
-    this.runtime.bindPaseoSessionHost(sessionHost);
+  bindFdeSessionHost(sessionHost: Parameters<PluginRuntime["bindFdeSessionHost"]>[0]): void {
+    this.runtime.bindFdeSessionHost(sessionHost);
   }
 
   async start(): Promise<void> {

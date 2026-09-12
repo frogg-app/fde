@@ -29,13 +29,13 @@ import {
 } from "../services/forge-cli-command.js";
 import { parseGitRevParsePath, resolveGitRevParsePath } from "./git-rev-parse-path.js";
 import { runGitCommand, type RunGitCommand } from "./run-git-command.js";
-import { isPaseoOwnedWorktreeCwd, resolvePaseoWorktreesBaseRoot } from "./worktree.js";
+import { isFdeOwnedWorktreeCwd, resolveFdeWorktreesBaseRoot } from "./worktree.js";
 import {
   branchNameFromRef,
-  getPaseoWorktreeChangeRequestHintForBranch,
-  type PaseoWorktreeMetadata,
-  readPaseoWorktreeMetadata,
-  rebindPaseoWorktreeChangeRequestHint,
+  getFdeWorktreeChangeRequestHintForBranch,
+  type FdeWorktreeMetadata,
+  readFdeWorktreeMetadata,
+  rebindFdeWorktreeChangeRequestHint,
 } from "./worktree-metadata.js";
 const READ_ONLY_GIT_ENV = {
   GIT_OPTIONAL_LOCKS: "0",
@@ -782,7 +782,7 @@ export interface CheckoutStatus {
   isGit: false;
 }
 
-export interface CheckoutStatusGitNonPaseo {
+export interface CheckoutStatusGitNonFde {
   isGit: true;
   repoRoot: string;
   mainRepoRoot: string | null;
@@ -798,10 +798,10 @@ export interface CheckoutStatusGitNonPaseo {
   behindOfOrigin: number | null;
   hasRemote: boolean;
   remoteUrl: string | null;
-  isPaseoOwnedWorktree: false;
+  isFdeOwnedWorktree: false;
 }
 
-export interface CheckoutStatusGitPaseo {
+export interface CheckoutStatusGitFde {
   isGit: true;
   repoRoot: string;
   mainRepoRoot: string;
@@ -814,10 +814,10 @@ export interface CheckoutStatusGitPaseo {
   behindOfOrigin: number | null;
   hasRemote: boolean;
   remoteUrl: string | null;
-  isPaseoOwnedWorktree: true;
+  isFdeOwnedWorktree: true;
 }
 
-export type CheckoutStatusGit = CheckoutStatusGitNonPaseo | CheckoutStatusGitPaseo;
+export type CheckoutStatusGit = CheckoutStatusGitNonFde | CheckoutStatusGitFde;
 
 export type CheckoutStatusResult = CheckoutStatus | CheckoutStatusGit;
 
@@ -844,7 +844,7 @@ export interface MergeFromBaseOptions {
 }
 
 export interface CheckoutContext {
-  paseoHome?: string;
+  fdeHome?: string;
   worktreesRoot?: string;
   logger?: Pick<Logger, "trace" | "warn">;
   facts?: CheckoutSnapshotFacts | null;
@@ -862,7 +862,7 @@ export type CheckoutSnapshotFacts =
       remoteUrl: string | null;
       absoluteGitDir: string | null;
       gitCommonDir: string | null;
-      paseoWorktree: PaseoWorktreeForCwd;
+      fdeWorktree: FdeWorktreeForCwd;
       storedBaseRef: string | null;
       resolvedBaseRef: string | null;
       mainRepoRoot: string | null;
@@ -1033,17 +1033,17 @@ async function getMainRepoRootFromCommonDir(
     },
   );
   const worktrees = parseWorktreeList(worktreeOut);
-  const nonBareNonPaseo = worktrees.filter(
+  const nonBareNonFde = worktrees.filter(
     (wt) =>
       !wt.isBare &&
-      !isPaseoWorktreePath(wt.path, {
-        paseoHome: context?.paseoHome,
+      !isFdeWorktreePath(wt.path, {
+        fdeHome: context?.fdeHome,
         worktreesRoot: context?.worktreesRoot,
       }),
   );
-  const childrenOfBareRepo = nonBareNonPaseo.filter((wt) => isDescendantPath(wt.path, normalized));
+  const childrenOfBareRepo = nonBareNonFde.filter((wt) => isDescendantPath(wt.path, normalized));
   const mainChild = childrenOfBareRepo.find((wt) => basename(wt.path) === "main");
-  return mainChild?.path ?? childrenOfBareRepo[0]?.path ?? nonBareNonPaseo[0]?.path ?? normalized;
+  return mainChild?.path ?? childrenOfBareRepo[0]?.path ?? nonBareNonFde[0]?.path ?? normalized;
 }
 
 export interface GitWorktreeEntry {
@@ -1052,15 +1052,15 @@ export interface GitWorktreeEntry {
   isBare?: boolean;
 }
 
-/** Check whether a path is under Paseo's worktree root. */
-export function isPaseoWorktreePath(
+/** Check whether a path is under Fde's worktree root. */
+export function isFdeWorktreePath(
   p: string,
-  options?: { paseoHome?: string; worktreesRoot?: string },
+  options?: { fdeHome?: string; worktreesRoot?: string },
 ): boolean {
-  if (options?.worktreesRoot || options?.paseoHome) {
-    return isDescendantPath(p, resolvePaseoWorktreesBaseRoot(options));
+  if (options?.worktreesRoot || options?.fdeHome) {
+    return isDescendantPath(p, resolveFdeWorktreesBaseRoot(options));
   }
-  return /[/\\]\.paseo[/\\]worktrees[/\\]/.test(p);
+  return /[/\\]\.fde[/\\]worktrees[/\\]/.test(p);
 }
 
 /** True when `child` is strictly inside `parent` (handles both `/` and `\`). */
@@ -1141,53 +1141,53 @@ export async function renameCurrentBranch(
 
   const currentBranch = await getCurrentBranch(cwd);
   if (currentBranch) {
-    rebindPaseoWorktreeChangeRequestHint(worktreeRoot, previousBranch, currentBranch);
+    rebindFdeWorktreeChangeRequestHint(worktreeRoot, previousBranch, currentBranch);
   }
   return { previousBranch, currentBranch };
 }
 
-type PaseoWorktreeForCwd =
-  | { isPaseoOwnedWorktree: false }
-  | { isPaseoOwnedWorktree: true; worktreeRoot: string };
+type FdeWorktreeForCwd =
+  | { isFdeOwnedWorktree: false }
+  | { isFdeOwnedWorktree: true; worktreeRoot: string };
 
-interface PaseoWorktreeLookupOptions {
+interface FdeWorktreeLookupOptions {
   context?: CheckoutContext;
   knownWorktreeRoot?: string | null;
   knownGitCommonDir?: string | null;
 }
 
-async function getPaseoWorktreeForCwd(
+async function getFdeWorktreeForCwd(
   cwd: string,
-  options: PaseoWorktreeLookupOptions = {},
-): Promise<PaseoWorktreeForCwd> {
+  options: FdeWorktreeLookupOptions = {},
+): Promise<FdeWorktreeForCwd> {
   // Fast-path reject: non-worktree paths do not need expensive ownership checks.
   if (!/[\\/]worktrees[\\/]/.test(cwd)) {
-    return { isPaseoOwnedWorktree: false };
+    return { isFdeOwnedWorktree: false };
   }
 
-  const ownership = await isPaseoOwnedWorktreeCwd(cwd, {
-    paseoHome: options.context?.paseoHome,
+  const ownership = await isFdeOwnedWorktreeCwd(cwd, {
+    fdeHome: options.context?.fdeHome,
     worktreesRoot: options.context?.worktreesRoot,
     knownGitCommonDir: options.knownGitCommonDir,
   });
   if (!ownership.allowed) {
-    return { isPaseoOwnedWorktree: false };
+    return { isFdeOwnedWorktree: false };
   }
 
   return {
-    isPaseoOwnedWorktree: true,
+    isFdeOwnedWorktree: true,
     worktreeRoot: options.knownWorktreeRoot ?? (await getWorktreeRoot(cwd, options.context)) ?? cwd,
   };
 }
 
 // Worktrees created before baseRef existed only stored the stripped name; it resolves
 // local-first, which is the base they were actually cut from.
-function storedBaseRefFromMetadata(metadata: PaseoWorktreeMetadata | null): string | null {
+function storedBaseRefFromMetadata(metadata: FdeWorktreeMetadata | null): string | null {
   return metadata?.baseRef ?? metadata?.baseRefName ?? null;
 }
 
-function readPaseoWorktreeBaseRef(worktreeRoot: string): string | null {
-  return storedBaseRefFromMetadata(readPaseoWorktreeMetadata(worktreeRoot));
+function readFdeWorktreeBaseRef(worktreeRoot: string): string | null {
+  return storedBaseRefFromMetadata(readFdeWorktreeMetadata(worktreeRoot));
 }
 
 async function getStoredBaseRefForCwd(
@@ -1197,12 +1197,12 @@ async function getStoredBaseRefForCwd(
   if (context?.facts?.isGit) {
     return context.facts.storedBaseRef;
   }
-  const paseoWorktree = await getPaseoWorktreeForCwd(cwd, { context });
-  if (!paseoWorktree.isPaseoOwnedWorktree) {
+  const fdeWorktree = await getFdeWorktreeForCwd(cwd, { context });
+  if (!fdeWorktree.isFdeOwnedWorktree) {
     return null;
   }
 
-  return readPaseoWorktreeBaseRef(paseoWorktree.worktreeRoot);
+  return readFdeWorktreeBaseRef(fdeWorktree.worktreeRoot);
 }
 
 async function getResolvedBaseRefForCwd(
@@ -1709,7 +1709,7 @@ interface CheckoutInspectionContext {
   remoteUrl: string | null;
   absoluteGitDir: string | null;
   gitCommonDir: string | null;
-  paseoWorktree: PaseoWorktreeForCwd;
+  fdeWorktree: FdeWorktreeForCwd;
 }
 
 async function inspectCheckoutContext(
@@ -1727,7 +1727,7 @@ async function inspectCheckoutContext(
     resolveAbsoluteGitDir(cwd, context),
     resolveGitCommonDir(cwd, context),
   ]);
-  const paseoWorktree = await getPaseoWorktreeForCwd(cwd, {
+  const fdeWorktree = await getFdeWorktreeForCwd(cwd, {
     context,
     knownWorktreeRoot: root,
     knownGitCommonDir: gitCommonDir,
@@ -1739,7 +1739,7 @@ async function inspectCheckoutContext(
     remoteUrl,
     absoluteGitDir,
     gitCommonDir,
-    paseoWorktree,
+    fdeWorktree,
   };
 }
 
@@ -1831,10 +1831,10 @@ function buildPullRequestLookupTargetFromPushConfig(
 }
 
 function buildPullRequestLookupTargetFromMetadata(
-  metadata: PaseoWorktreeMetadata | null,
+  metadata: FdeWorktreeMetadata | null,
   currentBranch: string,
 ): PullRequestStatusLookupTarget | null {
-  const target = getPaseoWorktreeChangeRequestHintForBranch(metadata, currentBranch);
+  const target = getFdeWorktreeChangeRequestHintForBranch(metadata, currentBranch);
   if (!target) {
     return null;
   }
@@ -1915,7 +1915,7 @@ async function resolvePullRequestLookupTargetFromPushConfig(
 async function resolveFactsPullRequestLookupTarget(input: {
   cwd: string;
   inspected: CheckoutInspectionContext;
-  metadata: PaseoWorktreeMetadata | null;
+  metadata: FdeWorktreeMetadata | null;
   branchRemoteName: string | null;
   branchMergeRef: string | null;
   branchRemoteUrl: string | null;
@@ -1968,10 +1968,10 @@ export async function getCheckoutSnapshotFacts(
     return { isGit: false };
   }
 
-  const paseoWorktreeMetadata = inspected.paseoWorktree.isPaseoOwnedWorktree
-    ? readPaseoWorktreeMetadata(inspected.paseoWorktree.worktreeRoot)
+  const fdeWorktreeMetadata = inspected.fdeWorktree.isFdeOwnedWorktree
+    ? readFdeWorktreeMetadata(inspected.fdeWorktree.worktreeRoot)
     : null;
-  const storedBaseRef = storedBaseRefFromMetadata(paseoWorktreeMetadata);
+  const storedBaseRef = storedBaseRefFromMetadata(fdeWorktreeMetadata);
   const resolvedBaseRef = storedBaseRef ?? (await resolveBaseRef(cwd, context));
   const mainRepoRoot = await getMainRepoRootFromCommonDir(
     cwd,
@@ -2013,7 +2013,7 @@ export async function getCheckoutSnapshotFacts(
   let pullRequestLookupTarget = await resolveFactsPullRequestLookupTarget({
     cwd,
     inspected,
-    metadata: paseoWorktreeMetadata,
+    metadata: fdeWorktreeMetadata,
     branchRemoteName,
     branchMergeRef,
     branchRemoteUrl,
@@ -2034,7 +2034,7 @@ export async function getCheckoutSnapshotFacts(
     remoteUrl: inspected.remoteUrl,
     absoluteGitDir: inspected.absoluteGitDir,
     gitCommonDir: inspected.gitCommonDir,
-    paseoWorktree: inspected.paseoWorktree,
+    fdeWorktree: inspected.fdeWorktree,
     storedBaseRef,
     resolvedBaseRef,
     mainRepoRoot,
@@ -2200,7 +2200,7 @@ export async function getCheckoutStatus(
   const worktreeRoot = facts.worktreeRoot;
   const currentBranch = facts.currentBranch;
   const remoteUrl = facts.remoteUrl;
-  const paseoWorktree = facts.paseoWorktree;
+  const fdeWorktree = facts.fdeWorktree;
   const isDirty = await isWorkingTreeDirty(cwd, context);
   const hasRemote = remoteUrl !== null;
   const baseRef = facts.resolvedBaseRef;
@@ -2219,7 +2219,7 @@ export async function getCheckoutStatus(
   const aheadOfOrigin = upstreamStatus?.aheadBehind.ahead ?? null;
   const behindOfOrigin = upstreamStatus?.aheadBehind.behind ?? null;
 
-  if (paseoWorktree.isPaseoOwnedWorktree && baseRef) {
+  if (fdeWorktree.isFdeOwnedWorktree && baseRef) {
     return {
       isGit: true,
       repoRoot: worktreeRoot,
@@ -2233,7 +2233,7 @@ export async function getCheckoutStatus(
       behindOfOrigin,
       hasRemote,
       remoteUrl,
-      isPaseoOwnedWorktree: true,
+      isFdeOwnedWorktree: true,
     };
   }
 
@@ -2251,7 +2251,7 @@ export async function getCheckoutStatus(
     behindOfOrigin,
     hasRemote,
     remoteUrl,
-    isPaseoOwnedWorktree: false,
+    isFdeOwnedWorktree: false,
   };
 }
 
@@ -4070,7 +4070,7 @@ function getUnavailablePullRequestStatus(
   }
   if (
     facts?.isGit === true &&
-    facts.paseoWorktree.isPaseoOwnedWorktree &&
+    facts.fdeWorktree.isFdeOwnedWorktree &&
     facts.pullRequestLookupTarget === null
   ) {
     return buildPullRequestStatusResult(null, "authenticated");

@@ -8,9 +8,9 @@ import { resolveProjectName, runRenameCommand } from "./rename.js";
 
 const project = {
   projectId: "project-1",
-  projectDisplayName: "Paseo",
+  projectDisplayName: "Fde",
   projectCustomName: null,
-  projectRootPath: "/tmp/paseo",
+  projectRootPath: "/tmp/fde",
   projectKind: "git" as const,
 };
 const addProject = vi.fn(async () => ({ project, error: null }));
@@ -52,9 +52,9 @@ describe("project commands", () => {
     expect(addProject).toHaveBeenCalledWith(path.resolve("relative/project"));
     expect(result.data).toEqual({
       projectId: "project-1",
-      name: "Paseo",
+      name: "Fde",
       kind: "git",
-      path: "/tmp/paseo",
+      path: "/tmp/fde",
     });
     expect(close).toHaveBeenCalled();
   });
@@ -65,15 +65,15 @@ describe("project commands", () => {
     );
     expect(resolveProjectPath({ cwd: "/home/user" })).toBe(path.resolve("/home/user"));
     expect(
-      resolveProjectPath({ cwd: "/home/user", pathArg: "/srv/repo", daemonTarget: "host:6767" }),
+      resolveProjectPath({ cwd: "/home/user", pathArg: "/srv/repo", daemonTarget: "host:9999" }),
     ).toBe("/srv/repo");
     expect(
-      resolveProjectPath({ cwd: "/home/user", pathArg: "~/repo", daemonTarget: "host:6767" }),
+      resolveProjectPath({ cwd: "/home/user", pathArg: "~/repo", daemonTarget: "host:9999" }),
     ).toBe("~/repo");
   });
 
   it("requires a daemon-owned path for an explicit target", () => {
-    expect(() => resolveProjectPath({ cwd: "/home/user", daemonTarget: "host:6767" })).toThrow();
+    expect(() => resolveProjectPath({ cwd: "/home/user", daemonTarget: "host:9999" })).toThrow();
   });
 
   it("lists projects", async () => {

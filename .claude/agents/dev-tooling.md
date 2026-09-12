@@ -13,19 +13,17 @@ features. If a request is really a feature, say so and hand it back.
 
 ## The repo
 
-FDE (Frogg Development Environment) is a Tauri desktop client for AI coding agents, forked
+FDE (Frogg Development Environment) is an Electron app-only desktop client for AI coding agents, forked
 from Paseo v0.7.2. Follow root and scoped `AGENTS.md` instructions. Use the
 assigned checkout; consult `docs/project-status.md` before touching old worktrees.
 
-- `apps/` holds deliverables (`desktop` = Tauri v2 + Rust, `ui` = Expo web client, `cli`).
+- `apps/` holds deliverables (`desktop-electron` = Electron app-only, `ui` = Expo web client, `cli`).
 - `packages/` holds libraries only (`protocol`, `client`, `server`, `relay`, `highlight`,
   `plugin`, ...). No `index.ts` barrel files.
 - `scripts/` is split into `dev/`, `release/`, `ci/`. `deploy/` holds Docker and Nix.
 - `docs/` is the source of truth for system knowledge — read it before non-trivial work.
-- Version source of truth is the root `package.json`; workspace versions and
-  `apps/desktop/src-tauri/tauri.conf.json` are synced by
+- Version source of truth is the root `package.json`; workspace versions are synced by
   `scripts/release/sync-workspace-versions.mjs`.
-- Upstream Paseo is kept read-only at `/home/frogg/projects/paseo`. Never edit it.
 
 ## Build ordering
 
@@ -71,8 +69,8 @@ This VM is headless and shared by multiple users.
   unreachable and useless. Surface links as `http://$(hostname -I | awk '{print $1}'):PORT`.
 - There is no browser here. Verify over the network or via CLI.
 - Never kill processes, free ports, or mutate state you did not create.
-- The dev daemon runs on `6768` (`npm run dev:server` pins `PASEO_LISTEN=0.0.0.0:6768`); the
-  packaged daemon uses `9999`. Dev state lives in the checkout's `.dev/paseo-home`, not
+- The dev daemon runs on `6768` (`npm run dev:server` pins `FDE_LISTEN=0.0.0.0:6768`); the
+  packaged daemon uses `9999`. Dev state lives in the checkout's `.dev/fde-home`, not
   `~/.fde`.
 
 ## Coding standards for anything you write

@@ -9,7 +9,7 @@ Set a personal API key in the daemon environment:
 export LINEAR_API_KEY="lin_api_..."
 ```
 
-Register the extension in `$PASEO_HOME/config.json`:
+Register the extension in `$FDE_HOME/config.json`:
 
 ```json
 {
@@ -17,7 +17,7 @@ Register the extension in `$PASEO_HOME/config.json`:
   "plugins": {
     "linear": {
       "source": "directory",
-      "path": "/absolute/path/to/paseo/examples/plugins/linear"
+      "path": "/absolute/path/to/fde/examples/plugins/linear"
     }
   }
 }

@@ -52,8 +52,8 @@ export class ManagedPluginSources {
   private readonly metadataPath: string;
   private readonly records: Record<string, ManagedPluginRecord>;
 
-  constructor(paseoHome: string) {
-    this.root = path.join(paseoHome, "plugins");
+  constructor(fdeHome: string) {
+    this.root = path.join(fdeHome, "plugins");
     this.metadataPath = path.join(this.root, "sources.json");
     this.records = this.readRecords();
   }
@@ -280,7 +280,7 @@ function assertPluginPath(checkoutRoot: string, directory: string): void {
 
 async function clone(remote: string, checkoutRoot: string): Promise<void> {
   const publicRemote = redactRemoteCredentials(remote);
-  const cloneRemote = publicRemote === remote ? remote : "https://paseo.invalid/plugin.git";
+  const cloneRemote = publicRemote === remote ? remote : "https://fde.invalid/plugin.git";
   const envOverlay =
     cloneRemote === remote
       ? GIT_ENV

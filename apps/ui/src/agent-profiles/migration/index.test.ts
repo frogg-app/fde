@@ -97,7 +97,7 @@ class FakeProfileHost {
   }
 }
 
-const PREFERENCES_KEY = "@paseo:create-agent-preferences";
+const PREFERENCES_KEY = "@fde:create-agent-preferences";
 
 function migrationStorage() {
   return new MemoryStorage({

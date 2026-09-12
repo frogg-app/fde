@@ -28,16 +28,14 @@ function extractWorktreeName(path: string): string {
   return basename(path);
 }
 
-export function resolvePaseoHomePath(): string {
-  return resolveFdeHomePath();
-}
+export { resolveFdeHomePath } from "../../utils/fde-home.js";
 
-export function resolvePaseoWorktreesDir(): string {
-  return join(resolvePaseoHomePath(), "worktrees");
+export function resolveFdeWorktreesDir(): string {
+  return join(resolveFdeHomePath(), "worktrees");
 }
 
 function isAgentInManagedWorktree(agentCwd: string): boolean {
-  const worktreesDir = resolvePaseoWorktreesDir();
+  const worktreesDir = resolveFdeWorktreesDir();
   return agentCwd === worktreesDir || agentCwd.startsWith(worktreesDir + sep);
 }
 
@@ -82,7 +80,7 @@ export async function runLsCommand(
     const agents = agentsPayload.entries.map((entry) => entry.agent);
 
     // Get worktree list from daemon
-    const response = await client.getPaseoWorktreeList({});
+    const response = await client.getFdeWorktreeList({});
 
     await client.close();
 

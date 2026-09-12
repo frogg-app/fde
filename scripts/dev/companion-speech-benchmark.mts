@@ -20,13 +20,14 @@ const { values } = parseArgs({
     "out-dir": { type: "string", default: ".dev/companion-speech-benchmark" },
     samples: { type: "string", default: "30" },
     speaker: { type: "string" },
+    speed: { type: "string", default: "1.3" },
     download: { type: "boolean", default: false },
     help: { type: "boolean" },
   },
 });
 if (values.help) {
   console.log(
-    "Usage: node --import tsx scripts/dev/companion-speech-benchmark.mts [--model ID] [--models-dir DIR] [--out-dir DIR] [--samples 30] [--speaker ID] [--download]",
+    "Usage: node --import tsx scripts/dev/companion-speech-benchmark.mts [--model ID] [--models-dir DIR] [--out-dir DIR] [--samples 30] [--speaker ID] [--speed 1.3] [--download]",
   );
   process.exit(0);
 }
@@ -34,6 +35,8 @@ const model = LocalTtsModelIdSchema.parse(values.model);
 const count = Number(values.samples);
 if (!Number.isInteger(count) || count < 3 || count > 100)
   throw new Error("--samples must be between 3 and 100");
+const speed = Number(values.speed);
+if (!Number.isFinite(speed) || speed < 0.75 || speed > 2) throw new Error("Invalid speech speed");
 const speaker = values.speaker === undefined ? undefined : Number(values.speaker);
 if (speaker !== undefined && (!Number.isInteger(speaker) || speaker < 0))
   throw new Error("Invalid speaker ID");
@@ -90,7 +93,7 @@ try {
   for (let i = 0; i <= count; i++) {
     const text = texts[i % texts.length];
     const start = performance.now();
-    const result = await client.synthesizeSpeech(text);
+    const result = await client.synthesizeSpeech(text, { speed });
     const match = /rate=(\d+)/.exec(result.format);
     if (!match) throw new Error(`Unexpected format: ${result.format}`);
     const rate = Number(match[1]);
@@ -131,6 +134,7 @@ try {
     passed: true,
     model,
     speaker,
+    speed,
     platform: platform(),
     arch: arch(),
     node: process.version,

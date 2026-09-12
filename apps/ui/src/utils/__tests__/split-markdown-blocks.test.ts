@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   clipMarkdownBlocksToLength,
   splitMarkdownBlocks,
+  clearMarkdownBlockSplitCache,
   splitMarkdownBlocksWithRanges,
 } from "../split-markdown-blocks";
 
@@ -122,5 +123,42 @@ describe("splitMarkdownBlocksWithRanges", () => {
     for (const block of splitMarkdownBlocksWithRanges(text)) {
       expect(text.slice(block.start, block.end)).toBe(block.text);
     }
+  });
+});
+
+describe("split cache", () => {
+  it("parses a given text once, however often it is asked for", () => {
+    // The web virtualizer's height estimator asks for the same message once per
+    // unmeasured row per measurement sweep. Without a cache that is a full markdown-it
+    // parse each time, which is the dominant cost of scrolling back through history.
+    clearMarkdownBlockSplitCache();
+    const text = "# Heading\n\nFirst paragraph.\n\nSecond paragraph.\n\n- a\n- b";
+    const first = splitMarkdownBlocksWithRanges(text);
+    const second = splitMarkdownBlocksWithRanges(text);
+    expect(second).toBe(first);
+  });
+
+  it("still returns correct blocks for a cached text", () => {
+    clearMarkdownBlockSplitCache();
+    const text = "One.\n\nTwo.\n\nThree.";
+    const expected = splitMarkdownBlocksWithRanges(text).map((block) => block.text);
+    clearMarkdownBlockSplitCache();
+    const uncached = splitMarkdownBlocksWithRanges(text).map((block) => block.text);
+    expect(uncached).toEqual(expected);
+    expect(splitMarkdownBlocks(text)).toEqual(expected);
+  });
+
+  it("evicts old entries rather than growing without bound", () => {
+    clearMarkdownBlockSplitCache();
+    const big = "x".repeat(400_000);
+    const texts = Array.from({ length: 8 }, (_, index) => `${big}${index}\n\ntail`);
+    for (const text of texts) {
+      splitMarkdownBlocksWithRanges(text);
+    }
+    // 8 * 400k exceeds the 2M budget, so the first text must have been evicted and
+    // therefore re-parsed into a fresh array.
+    const firstAgain = splitMarkdownBlocksWithRanges(texts[0]);
+    const firstOnceMore = splitMarkdownBlocksWithRanges(texts[0]);
+    expect(firstOnceMore).toBe(firstAgain);
   });
 });

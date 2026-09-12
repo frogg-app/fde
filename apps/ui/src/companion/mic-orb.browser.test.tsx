@@ -2,7 +2,7 @@ import React, { act, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { CompanionPresence } from "./presence";
-import { useCompanionStore } from "./store";
+import { deriveCompanionMicState, useCompanionStore } from "./store";
 import { MicOrb } from "./mic-orb";
 import type { CompanionMicState } from "./store";
 
@@ -122,6 +122,7 @@ it("shows Listening alongside Thinking and Speaking, then reports mute and conne
   expect(element("companion-response-state").textContent).toBe("companion.micState.speaking");
   act(() => state.setMuted(true));
   expect(element("companion-mic-state").textContent).toBe("companion.status.muted");
+  expect(deriveCompanionMicState(useCompanionStore.getState())).toBe("idle");
   expect(element("companion-mic-orb").getAttribute("aria-label")).toBe("companion.actions.unmute");
   act(() => state.sessionReconnecting());
   expect(element("companion-mic-state").textContent).toBe("agentPanel.states.reconnecting");
@@ -170,4 +171,31 @@ it("lets the device motion preference stop continuous animation", async () => {
   await expect.poll(() => getComputedStyle(element("companion-input-level")).opacity).toBe("1");
   expect(getComputedStyle(element("companion-orb-flow")).transform).toBe(initial);
   expect(inputScale()).toBe(1);
+});
+
+it("crossfades muted artwork to monochrome and back", async () => {
+  const draw = (muted: boolean) =>
+    render(
+      <MicOrb
+        state="listening"
+        volume={0}
+        muted={muted}
+        onPress={onPress}
+        accessibilityLabel="Mute"
+      />,
+    );
+  draw(false);
+  expect(getComputedStyle(element("companion-art-mono-surface")).opacity).toBe("0");
+  draw(true);
+  // The first frame retains colour; the transition is not an immediate swap.
+  expect(Number(getComputedStyle(element("companion-art-color-surface")).opacity)).toBeGreaterThan(
+    0,
+  );
+  await expect
+    .poll(() => getComputedStyle(element("companion-art-mono-surface")).opacity)
+    .toBe("1");
+  draw(false);
+  await expect
+    .poll(() => getComputedStyle(element("companion-art-color-surface")).opacity)
+    .toBe("1");
 });

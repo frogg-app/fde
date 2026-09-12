@@ -15,9 +15,9 @@ shared delegation workflow in the root file.
   `packages/plugin/`; daemon management commands under `apps/cli/`.
 - Coordinate edits to `packages/client/` and shared schemas with `client-dev`.
   Agree request, response, event, error, and capability semantics before splitting work.
-- `apps/daemon-rs/` is experimental. Only change it for an assigned migration or
-  compatibility task; Node remains the production daemon.
-- Desktop sidecar supervision and native transports belong to `desktop-dev`.
+- Node is the production daemon. The retired Rust backend is inactive reference source.
+- Desktop native transports and remote SSH deployment belong to `desktop-dev`.
+  The desktop application never supervises a local daemon.
 
 ## Read for the task
 
@@ -30,8 +30,7 @@ Then select the relevant references:
 - Wire changes: `docs/protocol-compatibility.md`, `docs/protocol-validation.md`,
   `docs/rpc-namespacing.md`, `docs/permissions.md`.
 - Voice: `docs/voice.md`, `docs/companion.md`, `docs/companion-voice-design.md`.
-- Refactoring: `docs/refactors/session-decomposition-plan.md`;
-  Rust work: `docs/rust-daemon-plan.md`.
+- Refactoring: `docs/refactors/session-decomposition-plan.md`.
 
 ## Implementation and verification
 

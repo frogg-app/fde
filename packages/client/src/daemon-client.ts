@@ -28,7 +28,7 @@ import type {
   ProjectPlacementPayload,
   AgentPermissionResolvedMessage,
   CreateAgentRequestMessage,
-  CreatePaseoWorktreeRequest,
+  CreateFdeWorktreeRequest,
   FileDownloadTokenResponse,
   FileUploadResponse,
   FileExplorerResponse,
@@ -66,8 +66,8 @@ import type {
   GitHubSearchResponse,
   GitHubSearchRequest,
   DirectorySuggestionsResponse,
-  PaseoWorktreeListResponse,
-  PaseoWorktreeArchiveResponse,
+  FdeWorktreeListResponse,
+  FdeWorktreeArchiveResponse,
   ProjectIconSource,
   ProjectIconResponse,
   ProjectIconGetResponse,
@@ -108,8 +108,8 @@ import type {
   SessionInboundMessage,
   SessionOutboundMessage,
   SendAgentMessageRequest,
-  PaseoConfigRaw,
-  PaseoConfigRevision,
+  FdeConfigRaw,
+  FdeConfigRevision,
   WorkspaceCreateRequest,
   WorkspaceRecoveryState,
   PluginListItem,
@@ -388,8 +388,8 @@ export interface CreateAgentRequestOptions extends AgentConfigOverrides {
   labels?: Record<string, string>;
 }
 
-export interface CreatePaseoWorktreeInput extends Pick<
-  CreatePaseoWorktreeRequest,
+export interface CreateFdeWorktreeInput extends Pick<
+  CreateFdeWorktreeRequest,
   | "cwd"
   | "projectId"
   | "worktreeSlug"
@@ -430,11 +430,11 @@ type BranchSuggestionsPayload = BranchSuggestionsResponse["payload"];
 type ForgeSearchPayload = ForgeSearchResponse["payload"];
 type GitHubSearchPayload = GitHubSearchResponse["payload"];
 type DirectorySuggestionsPayload = DirectorySuggestionsResponse["payload"];
-type PaseoWorktreeListPayload = PaseoWorktreeListResponse["payload"];
-type PaseoWorktreeArchivePayload = PaseoWorktreeArchiveResponse["payload"];
-type CreatePaseoWorktreePayload = Extract<
+type FdeWorktreeListPayload = FdeWorktreeListResponse["payload"];
+type FdeWorktreeArchivePayload = FdeWorktreeArchiveResponse["payload"];
+type CreateFdeWorktreePayload = Extract<
   SessionOutboundMessage,
-  { type: "create_paseo_worktree_response" }
+  { type: "create_fde_worktree_response" }
 >["payload"];
 type WorkspaceCreatePayload = Extract<
   SessionOutboundMessage,
@@ -489,8 +489,8 @@ type ListCommandsDraftConfig = Pick<
 >;
 export interface WriteProjectConfigInput {
   repoRoot: string;
-  config: PaseoConfigRaw;
-  expectedRevision: PaseoConfigRevision | null;
+  config: FdeConfigRaw;
+  expectedRevision: FdeConfigRevision | null;
   requestId?: string;
 }
 interface ListCommandsOptions {
@@ -1226,7 +1226,7 @@ export class DaemonClient {
     } else if (this.config.authHeader) {
       headers.Authorization = this.config.authHeader;
     }
-    const protocols = password ? [`paseo.bearer.${password}`] : undefined;
+    const protocols = password ? [`fde.bearer.${password}`] : undefined;
 
     try {
       // Reconnect can overlap with browser close/error delivery ordering.
@@ -1553,7 +1553,7 @@ export class DaemonClient {
   }
 
   private sendJsonMessage(envelopeType: string, messageType: string, message: unknown): void {
-    this.traceInstant("paseo.ws.message.outbound", {
+    this.traceInstant("fde.ws.message.outbound", {
       envelopeType,
       messageType,
     });
@@ -1564,7 +1564,7 @@ export class DaemonClient {
     if (!this.transport) {
       throw new Error("Transport not connected");
     }
-    const isOpen = this.beginTraceSection("paseo.ws.frame.outbound", {
+    const isOpen = this.beginTraceSection("fde.ws.frame.outbound", {
       kind: typeof frame === "string" ? "text" : "binary",
       size: String(getTransportFrameSize(frame)),
     });
@@ -1606,7 +1606,7 @@ export class DaemonClient {
       throw new Error(`Transport not connected (status: ${this.connectionState.status})`);
     }
     try {
-      this.traceInstant("paseo.ws.message.outbound", {
+      this.traceInstant("fde.ws.message.outbound", {
         envelopeType: "binary",
         messageType: "binary",
       });
@@ -4231,7 +4231,7 @@ export class DaemonClient {
 
   async stashList(
     cwd: string,
-    options?: { paseoOnly?: boolean },
+    options?: { fdeOnly?: boolean },
     requestId?: string,
   ): Promise<StashListPayload> {
     return this.sendCorrelatedSessionRequest({
@@ -4239,28 +4239,28 @@ export class DaemonClient {
       message: {
         type: "stash_list_request",
         cwd,
-        paseoOnly: options?.paseoOnly,
+        fdeOnly: options?.fdeOnly,
       },
       responseType: "stash_list_response",
     });
   }
 
-  async getPaseoWorktreeList(
+  async getFdeWorktreeList(
     input: { cwd?: string; repoRoot?: string },
     requestId?: string,
-  ): Promise<PaseoWorktreeListPayload> {
+  ): Promise<FdeWorktreeListPayload> {
     return this.sendCorrelatedSessionRequest({
       requestId,
       message: {
-        type: "paseo_worktree_list_request",
+        type: "fde_worktree_list_request",
         cwd: input.cwd,
         repoRoot: input.repoRoot,
       },
-      responseType: "paseo_worktree_list_response",
+      responseType: "fde_worktree_list_response",
     });
   }
 
-  async archivePaseoWorktree(
+  async archiveFdeWorktree(
     input: {
       worktreePath?: string;
       repoRoot?: string;
@@ -4269,29 +4269,29 @@ export class DaemonClient {
       scope?: "workspace" | "worktree";
     },
     requestId?: string,
-  ): Promise<PaseoWorktreeArchivePayload> {
+  ): Promise<FdeWorktreeArchivePayload> {
     return this.sendCorrelatedSessionRequest({
       requestId,
       message: {
-        type: "paseo_worktree_archive_request",
+        type: "fde_worktree_archive_request",
         worktreePath: input.worktreePath,
         repoRoot: input.repoRoot,
         branchName: input.branchName,
         ...(input.workspaceId !== undefined ? { workspaceId: input.workspaceId } : {}),
         ...(input.scope !== undefined ? { scope: input.scope } : {}),
       },
-      responseType: "paseo_worktree_archive_response",
+      responseType: "fde_worktree_archive_response",
     });
   }
 
-  async createPaseoWorktree(
-    input: CreatePaseoWorktreeInput,
+  async createFdeWorktree(
+    input: CreateFdeWorktreeInput,
     requestId?: string,
-  ): Promise<CreatePaseoWorktreePayload> {
+  ): Promise<CreateFdeWorktreePayload> {
     return this.sendCorrelatedSessionRequest({
       requestId,
       message: {
-        type: "create_paseo_worktree_request",
+        type: "create_fde_worktree_request",
         cwd: input.cwd,
         ...(input.projectId !== undefined ? { projectId: input.projectId } : {}),
         worktreeSlug: input.worktreeSlug,
@@ -4303,7 +4303,7 @@ export class DaemonClient {
         ...(input.checkoutSource !== undefined ? { checkoutSource: input.checkoutSource } : {}),
         ...(input.githubPrNumber !== undefined ? { githubPrNumber: input.githubPrNumber } : {}),
       },
-      responseType: "create_paseo_worktree_response",
+      responseType: "create_fde_worktree_response",
     });
   }
 
@@ -5879,7 +5879,7 @@ export class DaemonClient {
 
     const rawBytes = asUint8Array(rawData);
     const isOpen = this.beginTraceSection(
-      "paseo.ws.frame.inbound",
+      "fde.ws.frame.inbound",
       describeInboundTransportFrame(rawData, rawBytes),
     );
     try {
@@ -5900,7 +5900,7 @@ export class DaemonClient {
     const bytes = rawBytesLength ?? payload.length;
     const startMs = perfNow();
     let parsedJson: unknown;
-    const parseTraceOpen = this.beginTraceSection("paseo.ws.json.parse", {
+    const parseTraceOpen = this.beginTraceSection("fde.ws.json.parse", {
       size: String(bytes),
     });
     try {
@@ -5935,7 +5935,7 @@ export class DaemonClient {
     this.consecutiveLivenessFailures = 0;
 
     if (parsed.data.type === "pong") {
-      this.traceInstant("paseo.ws.message.inbound", {
+      this.traceInstant("fde.ws.message.inbound", {
         envelopeType: "pong",
         messageType: "pong",
       });
@@ -5944,7 +5944,7 @@ export class DaemonClient {
       return;
     }
 
-    this.traceInstant("paseo.ws.message.inbound", {
+    this.traceInstant("fde.ws.message.inbound", {
       envelopeType: "session",
       messageType: parsed.data.message.type,
     });
@@ -5959,7 +5959,7 @@ export class DaemonClient {
   private tryHandleBinaryFrame(rawBytes: Uint8Array): boolean {
     const fileFrame = decodeFileTransferFrame(rawBytes);
     if (fileFrame) {
-      this.traceInstant("paseo.ws.message.inbound", {
+      this.traceInstant("fde.ws.message.inbound", {
         envelopeType: "binary",
         messageType: "file",
         opcode: String(fileFrame.opcode),
@@ -5974,7 +5974,7 @@ export class DaemonClient {
     if (!frame) {
       return false;
     }
-    this.traceInstant("paseo.ws.message.inbound", {
+    this.traceInstant("fde.ws.message.inbound", {
       envelopeType: "binary",
       messageType: "terminal",
       opcode: String(frame.opcode),

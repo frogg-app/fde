@@ -76,10 +76,10 @@ test("every executable daemon entrypoint enters the supervisor", async () => {
 
   assert.match(nixPackage, /dist\/scripts\/supervisor-entrypoint\.js/);
   assertNoDirectWorkerLaunch("Nix package wrapper", nixPackage);
-  assert.match(nixPackage, /--set PASEO_NODE_ENV production/);
+  assert.match(nixPackage, /--set FDE_NODE_ENV production/);
   assert.doesNotMatch(nixPackage, /--set(-default)?\s+NODE_ENV\b/);
   assert.doesNotMatch(nixModule, /\bNODE_ENV\b\s*=/);
-  assert.doesNotMatch(nixModule, /\bPASEO_NODE_ENV\b/);
+  assert.doesNotMatch(nixModule, /\bFDE_NODE_ENV\b/);
 
   // The daemon bundle launcher and the Docker entrypoint enter through the
   // CLI, which starts the daemon via the supervisor entrypoint.

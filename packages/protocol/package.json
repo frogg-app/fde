@@ -1,7 +1,7 @@
 {
   "name": "@fde/protocol",
-  "version": "0.4.1",
-  "description": "Paseo shared protocol schemas and wire types",
+  "version": "0.6.1",
+  "description": "Fde shared protocol schemas and wire types",
   "files": [
     "dist",
     "!dist/**/*.map",
@@ -18,7 +18,7 @@
     "access": "public"
   },
   "scripts": {
-    "clean": "node ../../scripts/clean-package-dist.mjs",
+    "clean": "node ../../scripts/ci/clean-package-dist.mjs",
     "build": "tsc -p tsconfig.json --incremental false",
     "build:clean": "npm run clean && npm run build",
     "prepack": "npm run build:clean",

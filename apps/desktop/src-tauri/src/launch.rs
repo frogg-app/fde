@@ -1,5 +1,5 @@
 //! Launch state: the pending open-project path (from argv) and the agent
-//! navigation inbox (from `paseo://` deep links). Both are drained once by the
+//! navigation inbox (from `fde://` deep links). Both are drained once by the
 //! bridge, mirroring Electron's `pending-open-project-store.ts` and
 //! `agent-navigation.ts` for the single main window.
 
@@ -17,7 +17,7 @@ use crate::window::MAIN_WINDOW_LABEL;
 
 const OPEN_PROJECT_FLAG: &str = "--open-project";
 const IGNORED_ARG_PREFIXES: &[&str] = &["-psn_", "--no-sandbox"];
-pub const OPEN_PAIRING_OFFER_EVENT: &str = "paseo:event:open-pairing-offer";
+pub const OPEN_PAIRING_OFFER_EVENT: &str = "fde:event:open-pairing-offer";
 
 pub struct LaunchState {
     pending_open_project: Mutex<Option<String>>,
@@ -158,12 +158,12 @@ fn focus_main_window<R: Runtime>(app: &AppHandle<R>) {
 pub fn receive_agent_deep_link<R: Runtime>(app: &AppHandle<R>, target: AgentDeepLinkTarget) {
     let state = app.state::<LaunchState>();
     if let Some(ready_target) = state.deliver_or_queue(target) {
-        let _ = app.emit_to(MAIN_WINDOW_LABEL, "paseo:event:open-agent", ready_target);
+        let _ = app.emit_to(MAIN_WINDOW_LABEL, "fde:event:open-agent", ready_target);
     }
     focus_main_window(app);
 }
 
-/// A `paseo://pair#offer=…` link: the UI parses the offer and runs the claim
+/// A `fde://pair#offer=…` link: the UI parses the offer and runs the claim
 /// flow (`apps/ui/src/pairing/`), so only the raw URL crosses the bridge.
 pub fn receive_pairing_deep_link<R: Runtime>(app: &AppHandle<R>, link: PairingDeepLink) {
     let state = app.state::<LaunchState>();
@@ -174,7 +174,7 @@ pub fn receive_pairing_deep_link<R: Runtime>(app: &AppHandle<R>, link: PairingDe
 }
 
 /// A second launch (`fde /path/to/project`, or an OS handing us a
-/// `paseo://` link on Windows/Linux). Deep links in `argv` are forwarded to the
+/// `fde://` link on Windows/Linux). Deep links in `argv` are forwarded to the
 /// deep-link plugin by the single-instance plugin, so only paths are handled here.
 pub fn handle_second_instance<R: Runtime>(app: &AppHandle<R>, argv: &[String]) {
     if parse_agent_deep_link_from_args(argv).is_some()
@@ -187,7 +187,7 @@ pub fn handle_second_instance<R: Runtime>(app: &AppHandle<R>, argv: &[String]) {
         state.set_pending_open_project(Some(path.clone()));
         let _ = app.emit_to(
             MAIN_WINDOW_LABEL,
-            "paseo:event:open-project",
+            "fde:event:open-project",
             serde_json::json!({ "path": path }),
         );
     }
@@ -262,7 +262,7 @@ mod tests {
 
     #[test]
     fn pairing_offer_queues_until_ready_then_delivers_directly() {
-        let raw = "paseo://pair#offer=eyJ2IjozfQ";
+        let raw = "fde://pair#offer=eyJ2IjozfQ";
         let state = LaunchState::from_argv(&args(&["fde", raw]));
         let link = PairingDeepLink {
             url: raw.to_string(),
@@ -276,7 +276,7 @@ mod tests {
         state.window_loading();
         assert_eq!(state.deliver_or_queue_pairing(link.clone()), None);
         let newer = PairingDeepLink {
-            url: "paseo://pair#offer=newer".to_string(),
+            url: "fde://pair#offer=newer".to_string(),
         };
         assert_eq!(state.deliver_or_queue_pairing(newer.clone()), None);
         assert_eq!(
@@ -288,17 +288,17 @@ mod tests {
 
     #[test]
     fn pairing_and_agent_links_do_not_cross_inboxes() {
-        let state = LaunchState::from_argv(&args(&["fde", "paseo://pair#offer=abc"]));
+        let state = LaunchState::from_argv(&args(&["fde", "fde://pair#offer=abc"]));
         assert_eq!(state.window_ready(), None);
         assert!(state.pairing_offer_ready().is_some());
-        let state = LaunchState::from_argv(&args(&["fde", "paseo://h/srv/agent/ag"]));
+        let state = LaunchState::from_argv(&args(&["fde", "fde://h/srv/agent/ag"]));
         assert_eq!(state.pairing_offer_ready(), None);
         assert!(state.window_ready().is_some());
     }
 
     #[test]
     fn navigation_queues_until_ready_then_delivers_directly() {
-        let state = LaunchState::from_argv(&args(&["fde", "paseo://h/srv/agent/ag"]));
+        let state = LaunchState::from_argv(&args(&["fde", "fde://h/srv/agent/ag"]));
         let target = AgentDeepLinkTarget {
             server_id: "srv".into(),
             agent_id: "ag".into(),

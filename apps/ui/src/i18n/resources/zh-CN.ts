@@ -705,7 +705,7 @@ export const zhCN: TranslationResources = {
       },
       routes: {
         public: "反向代理",
-        paseo: "Memorable",
+        fde: "Memorable",
         direct: "直接地址",
       },
       states: {
@@ -1811,6 +1811,11 @@ export const zhCN: TranslationResources = {
       off: "关闭",
       acknowledge: "开始工作前确认任务",
       permissions: "关闭任务通知后，权限请求仍会通过语音告知。",
+      audioMode: "音频模式",
+      callMode: "通话",
+      mediaMode: "媒体",
+      audioModeHint:
+        "下次对话生效。通话模式优先使用耳机麦克风和回声消除。媒体模式使用媒体音频路由，建议佩戴耳机。蓝牙麦克风可用性取决于设备。",
       speechSpeed: "语音速度",
       pause: "回复前的停顿",
       quick: "快速（0.8秒）",
@@ -1969,7 +1974,7 @@ export const zhCN: TranslationResources = {
   serviceUrl: {
     title: "打开服务 URL",
     message: "打开 {{url}}？",
-    inPaseo: "在 {{brandName}} 中",
+    inFde: "在 {{brandName}} 中",
     externalBrowser: "外部浏览器",
     dontAskAgain: "不再询问",
   },
@@ -2095,7 +2100,7 @@ export const zhCN: TranslationResources = {
       one: "使用了 {{count}} 个其他工具",
       other: "使用了 {{count}} 个其他工具",
     },
-    paseoCalls: {
+    fdeCalls: {
       one: "调用了 {{brandName}} {{count}} 次",
       other: "调用了 {{brandName}} {{count}} 次",
     },
@@ -2622,8 +2627,7 @@ export const zhCN: TranslationResources = {
         },
         uninstall: {
           title: "卸载守护进程？",
-          message:
-            "停止服务并从 {{host}} 移除 {{brandName}} 安装。守护进程状态 (~/.paseo) 会保留。",
+          message: "停止服务并从 {{host}} 移除 {{brandName}} 安装。守护进程状态 (~/.fde) 会保留。",
         },
         log: {
           running: "正在 {{host}} 上运行...",
@@ -2958,13 +2962,13 @@ export const zhCN: TranslationResources = {
         savedToast: "Project 已更新",
       },
       readFailures: {
-        invalidTitle: "无法解析 paseo.json",
+        invalidTitle: "无法解析 fde.json",
         invalidDescription: "修复磁盘上的文件，然后重新加载。",
         missingTitle: "这个 Host 没有这个 Project",
         missingSingleHost: "所选 Host 没有这个 Project 的记录。",
-        transportTitle: "无法加载 paseo.json",
+        transportTitle: "无法加载 fde.json",
         transportFallback: "Host 没有响应。",
-        failedTitle: "无法加载 paseo.json",
+        failedTitle: "无法加载 fde.json",
         failedDescription: "重新加载以重试。",
       },
       worktree: {
@@ -2974,7 +2978,7 @@ export const zhCN: TranslationResources = {
         docsTooltip: "查看命令可用的环境变量和更多细节",
         setup: "Setup",
         setupAccessibility: "Worktree setup 命令",
-        uncommittedTitle: "提交 paseo.json 更改",
+        uncommittedTitle: "提交 fde.json 更改",
         uncommittedDescription: "新工作树使用所选基础分支中的设置脚本。",
         teardown: "Teardown",
         teardownAccessibility: "Worktree teardown 命令",
@@ -2998,7 +3002,7 @@ export const zhCN: TranslationResources = {
         newScript: "新建 script",
         editScript: "编辑 {{name}}",
         runAsService: "作为服务运行",
-        serviceHint: "{{brandName}} 会监管该进程，并通过 $PASEO_PORT 分配端口",
+        serviceHint: "{{brandName}} 会监管该进程，并通过 $FDE_PORT 分配端口",
         actions: {
           add: "添加 script",
           edit: "编辑",
@@ -3017,8 +3021,8 @@ export const zhCN: TranslationResources = {
       },
       writeFailures: {
         staleTitle: "磁盘上的配置已变更",
-        staleDescription: "保存前请重新加载最新的 paseo.json。",
-        failedTitle: "无法保存 paseo.json",
+        staleDescription: "保存前请重新加载最新的 fde.json。",
+        failedTitle: "无法保存 fde.json",
         failedDescription: "重试，或从磁盘重新加载最新版本。",
       },
       actions: {

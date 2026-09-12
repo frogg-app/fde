@@ -11,14 +11,14 @@ import {
 
 const PLUGIN_ID = "plugin-host-ui-e2e";
 
-const PLUGIN_SOURCE = `import { usePaseo } from "@fde/plugin";
+const PLUGIN_SOURCE = `import { useFde } from "@fde/plugin";
 import { Icon, Modal, useToast } from "@fde/plugin/react-native";
 import { useQueryClient } from "@tanstack/react-query";
 import React, { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 
 function ModalBody({ onSaved }) {
-  usePaseo();
+  useFde();
   useQueryClient();
   const toast = useToast();
 
@@ -115,10 +115,10 @@ async function savePluginIssue(page: Page): Promise<void> {
 }
 
 test("plugin modal adapts its presentation and preserves host contexts", async ({ page }) => {
-  const directory = await mkdtemp(path.join(tmpdir(), "paseo-plugin-host-ui-e2e-"));
+  const directory = await mkdtemp(path.join(tmpdir(), "fde-plugin-host-ui-e2e-"));
   const client = await connectNewWorkspaceDaemonClient({ ownProjects: false });
   const previousConfig = await client.getDaemonConfig();
-  await writeFile(path.join(directory, "paseo-plugin.json"), JSON.stringify({ id: PLUGIN_ID }));
+  await writeFile(path.join(directory, "fde-plugin.json"), JSON.stringify({ id: PLUGIN_ID }));
   await writeFile(path.join(directory, "index.tsx"), PLUGIN_SOURCE);
 
   try {

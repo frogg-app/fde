@@ -2,7 +2,7 @@ import * as React from "react";
 import * as ReactJsxRuntime from "react/jsx-runtime";
 // eslint-disable-next-line no-restricted-imports -- plugin client runtime injects host ReactNative.
 import * as ReactNative from "react-native";
-// eslint-disable-next-line no-restricted-imports -- plugin bundles receive TanStack's real runtime, not Paseo's query wrappers.
+// eslint-disable-next-line no-restricted-imports -- plugin bundles receive TanStack's real runtime, not Fde's query wrappers.
 import * as ReactQuery from "@tanstack/react-query";
 import * as Zod from "zod";
 import {
@@ -18,7 +18,7 @@ import {
   type PluginTimelineRendererContribution,
   type PluginTimelineTransformerContribution,
   type PluginWorkspacePanelContribution,
-  usePaseo,
+  useFde,
   useAgent,
   useWorkspace,
   useRpc,
@@ -282,13 +282,13 @@ export function evaluatePluginClientBundle(id: string, bundle: string): Evaluate
         defineAttachmentSource,
         defineRpc,
         Icon,
-        usePaseo,
+        useFde,
         useAgent,
         useWorkspace,
         useRpc,
       };
     }
-    if (name === "@fde/plugin/react-native" || name === "@paseo/plugin/react-native") {
+    if (name === "@fde/plugin/react-native") {
       return pluginReactNativeRuntime;
     }
     if (name === "@fde/plugin/server") {

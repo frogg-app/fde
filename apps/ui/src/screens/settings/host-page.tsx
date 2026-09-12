@@ -31,9 +31,9 @@ import {
   ProfileDraft,
   TerminalProfileEditModal,
 } from "@/screens/settings/terminal-profile-edit-modal";
-import { getIsElectron } from "@/constants/platform";
 import {
   getDesktopDaemonStatus,
+  shouldUseDesktopDaemon,
   restartDesktopDaemon,
   startDesktopDaemon,
   stopDesktopDaemon,
@@ -282,7 +282,7 @@ export function HostAgentsPage({ serverId }: { serverId: string }) {
     <View>
       {isConnected ? (
         <SettingsSection title={t("settings.hostSections.agents")}>
-          <InjectPaseoToolsCard serverId={serverId} />
+          <InjectFdeToolsCard serverId={serverId} />
           <BrowserToolsOptInCard serverId={serverId} />
           <AppendSystemPromptCard serverId={serverId} />
         </SettingsSection>
@@ -684,7 +684,7 @@ function RestartDaemonCard({ host }: { host: HostProfile }) {
           host.serverId,
           `settings_daemon_restart_${host.serverId}`,
           {
-            getIsElectron,
+            getIsElectron: shouldUseDesktopDaemon,
             getDesktopDaemonStatus,
             getDesktopSettings: loadDesktopSettings,
             restartDesktopDaemon,
@@ -982,7 +982,7 @@ function UpdateDaemonCard({ host }: { host: HostProfile }) {
   );
 }
 
-function InjectPaseoToolsCard({ serverId }: { serverId: string }) {
+function InjectFdeToolsCard({ serverId }: { serverId: string }) {
   const { t } = useTranslation();
   const isConnected = useHostRuntimeIsConnected(serverId);
   const { config, patchConfig } = useDaemonConfig(serverId);

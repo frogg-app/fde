@@ -497,9 +497,9 @@ describe("workspace message schemas", () => {
           scripts: [
             {
               scriptName: "web",
-              hostname: "web.paseo.localhost",
+              hostname: "web.fde.localhost",
               port: 3000,
-              proxyUrl: "http://web.paseo.localhost:6767",
+              proxyUrl: "http://web.fde.localhost:9999",
               lifecycle: "running",
               health: "healthy",
             },
@@ -516,9 +516,9 @@ describe("workspace message schemas", () => {
       {
         scriptName: "web",
         type: "service",
-        hostname: "web.paseo.localhost",
+        hostname: "web.fde.localhost",
         port: 3000,
-        proxyUrl: "http://web.paseo.localhost:6767",
+        proxyUrl: "http://web.fde.localhost:9999",
         lifecycle: "running",
         health: "healthy",
         exitCode: null,
@@ -555,13 +555,13 @@ describe("workspace message schemas", () => {
     expect(parsed.payload.workspace.worktreeSlug).toBeUndefined();
   });
 
-  test("preserves a Paseo-owned worktree slug", () => {
+  test("preserves a Fde-owned worktree slug", () => {
     const parsed = WorkspaceDescriptorPayloadSchema.parse({
       id: "owned-worktree",
       projectId: "project",
       projectDisplayName: "repo",
       projectRootPath: "/repo",
-      workspaceDirectory: "/paseo/worktrees/project/feature/packages/app",
+      workspaceDirectory: "/fde/worktrees/project/feature/packages/app",
       worktreeSlug: "feature",
       projectKind: "git",
       workspaceKind: "worktree",
@@ -717,7 +717,7 @@ describe("workspace message schemas", () => {
             type: "service",
             hostname: "web--repo.localhost",
             port: 3000,
-            proxyUrl: "http://web--repo.localhost:6767",
+            proxyUrl: "http://web--repo.localhost:9999",
             lifecycle: "running",
             health: "healthy",
             terminalId: "terminal-1",
@@ -739,7 +739,7 @@ describe("workspace message schemas", () => {
         scripts: [
           {
             scriptName: "web",
-            hostname: "web.paseo.localhost",
+            hostname: "web.fde.localhost",
             port: null,
             proxyUrl: null,
             lifecycle: "stopped",
@@ -763,14 +763,14 @@ describe("workspace message schemas", () => {
       type: "service",
       hostname: "web--repo.localhost",
       port: 3000,
-      proxyUrl: "http://web--repo.localhost:6767",
+      proxyUrl: "http://web--repo.localhost:9999",
       lifecycle: "running",
       health: "healthy",
     });
 
     expect(parsed.localProxyUrl).toBeUndefined();
     expect(parsed.publicProxyUrl).toBeUndefined();
-    expect(parsed.proxyUrl).toBe("http://web--repo.localhost:6767");
+    expect(parsed.proxyUrl).toBe("http://web--repo.localhost:9999");
   });
 
   test("parses workspace service payloads with split local and public proxy URLs", () => {
@@ -779,14 +779,14 @@ describe("workspace message schemas", () => {
       type: "service",
       hostname: "web--repo.localhost",
       port: 3000,
-      localProxyUrl: "http://web--repo.localhost:6767",
+      localProxyUrl: "http://web--repo.localhost:9999",
       publicProxyUrl: "https://web--repo.services.example.com",
       proxyUrl: "https://web--repo.services.example.com",
       lifecycle: "running",
       health: "healthy",
     });
 
-    expect(parsed.localProxyUrl).toBe("http://web--repo.localhost:6767");
+    expect(parsed.localProxyUrl).toBe("http://web--repo.localhost:9999");
     expect(parsed.publicProxyUrl).toBe("https://web--repo.services.example.com");
     expect(parsed.proxyUrl).toBe("https://web--repo.services.example.com");
   });
@@ -812,14 +812,14 @@ describe("workspace message schemas", () => {
         status: "completed",
         detail: {
           type: "worktree_setup",
-          worktreePath: "/repo/.paseo/worktrees/feature-a",
+          worktreePath: "/repo/.fde/worktrees/feature-a",
           branchName: "feature-a",
           log: "done",
           commands: [
             {
               index: 1,
               command: "npm install",
-              cwd: "/repo/.paseo/worktrees/feature-a",
+              cwd: "/repo/.fde/worktrees/feature-a",
               log: "done",
               status: "completed",
               exitCode: 0,
@@ -854,7 +854,7 @@ describe("workspace message schemas", () => {
           status: "completed",
           detail: {
             type: "worktree_setup",
-            worktreePath: "/repo/.paseo/worktrees/feature-a",
+            worktreePath: "/repo/.fde/worktrees/feature-a",
             branchName: "feature-a",
             log: "done",
             commands: [],
@@ -900,7 +900,7 @@ describe("workspace message schemas", () => {
             gitRuntime: {
               currentBranch: "main",
               remoteUrl: "https://github.com/acme/repo.git",
-              isPaseoOwnedWorktree: false,
+              isFdeOwnedWorktree: false,
               isDirty: true,
               aheadBehind: {
                 ahead: 2,
@@ -963,7 +963,7 @@ describe("workspace message schemas", () => {
             gitRuntime: {
               currentBranch: "main",
               remoteUrl: "https://github.com/acme/repo.git",
-              isPaseoOwnedWorktree: false,
+              isFdeOwnedWorktree: false,
               isDirty: false,
               aheadBehind: {
                 ahead: 0,
@@ -1079,7 +1079,7 @@ describe("workspace message schemas", () => {
                 isGit: true,
                 currentBranch: "main",
                 remoteUrl: "https://github.com/acme/repo.git",
-                isPaseoOwnedWorktree: false,
+                isFdeOwnedWorktree: false,
                 mainRepoRoot: null,
               },
             },

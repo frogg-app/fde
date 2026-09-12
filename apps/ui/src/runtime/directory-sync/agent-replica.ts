@@ -15,6 +15,44 @@ import {
 import { reconcileAgentDirectory } from "@/utils/agent-directory-reconciliation";
 import { applyLegacyDaemonWorkspaceOwnership } from "@/workspace/legacy-daemon-workspaces";
 
+/**
+ * Whether two replicas of the same agent are interchangeable for the directory.
+ *
+ * Compared per field rather than by reference because a timeline response rebuilds the
+ * snapshot every time, so an unchanged agent still arrives as a fresh object. Nested
+ * values are compared structurally; an agent snapshot is small, and the alternative this
+ * avoids is re-serializing the whole directory.
+ */
+function isSameAgentReplica(left: Agent, right: Agent): boolean {
+  if (left === right) {
+    return true;
+  }
+  const leftKeys = Object.keys(left) as (keyof Agent)[];
+  const rightKeys = Object.keys(right) as (keyof Agent)[];
+  if (leftKeys.length !== rightKeys.length) {
+    return false;
+  }
+  for (const key of leftKeys) {
+    const leftValue = left[key];
+    const rightValue = right[key];
+    if (leftValue === rightValue) {
+      continue;
+    }
+    if (
+      leftValue === null ||
+      rightValue === null ||
+      typeof leftValue !== "object" ||
+      typeof rightValue !== "object"
+    ) {
+      return false;
+    }
+    if (JSON.stringify(leftValue) !== JSON.stringify(rightValue)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 function projectAgentDirectoryEntry(agent: Agent): FetchAgentsEntry | null {
   return agent.projectPlacement
     ? { agent: projectAgentSnapshot(agent), project: agent.projectPlacement }
@@ -89,7 +127,12 @@ export class AgentDirectoryReplica {
     if (accepted.archivedAt) {
       clearArchiveAgentPending({ queryClient, serverId: this.serverId, agentId: accepted.id });
     }
-    return true;
+    // Every timeline response carries the agent, including the ones fetched while paging
+    // back through history. Reporting a change makes the caller bump the directory
+    // revision and re-serialize every agent, workspace and project, then re-derive every
+    // subscriber -- sidebar, command center, workspace tabs. Scrolling back is the case
+    // where that fires repeatedly with nothing about the agent actually different.
+    return existing === undefined || !isSameAgentReplica(existing, accepted);
   }
 
   applyDelta(delta: AgentDirectoryDelta): void {

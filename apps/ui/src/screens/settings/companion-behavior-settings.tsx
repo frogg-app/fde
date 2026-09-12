@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { ChevronDown } from "lucide-react-native";
 import { StyleSheet, withUnistyles } from "react-native-unistyles";
-import { Text, View } from "react-native";
+import { Platform, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "@/hooks/use-settings";
 import { Switch } from "@/components/ui/switch";
@@ -101,6 +101,12 @@ export function CompanionBehaviorSettings() {
     },
     [updateSettings],
   );
+  const changeAudioMode = useCallback(
+    (companionAudioMode: "call" | "media") => {
+      void updateSettings({ companionAudioMode });
+    },
+    [updateSettings],
+  );
   const changeSpeechSpeed = useCallback(
     (companionSpeechSpeed: number) => {
       void updateSettings({ companionSpeechSpeed });
@@ -125,6 +131,22 @@ export function CompanionBehaviorSettings() {
       <View style={[settingsStyles.row, settingsStyles.rowBorder]}>
         <Text style={settingsStyles.rowHint}>{t("companion.behavior.nextSession")}</Text>
       </View>
+      {Platform.OS !== "web" ? (
+        <>
+          <Choice<"call" | "media">
+            label={t("companion.behavior.audioMode")}
+            value={settings.companionAudioMode}
+            options={[
+              { value: "call", label: t("companion.behavior.callMode") },
+              { value: "media", label: t("companion.behavior.mediaMode") },
+            ]}
+            onChange={changeAudioMode}
+          />
+          <View style={settingsStyles.row}>
+            <Text style={settingsStyles.rowHint}>{t("companion.behavior.audioModeHint")}</Text>
+          </View>
+        </>
+      ) : null}
       <Choice<"brief" | "detailed">
         label={t("companion.behavior.verbosity")}
         value={settings.companionVerbosity}

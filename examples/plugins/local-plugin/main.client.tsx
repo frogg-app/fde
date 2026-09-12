@@ -49,11 +49,11 @@ export function contributeClient(client: PluginClientContext) {
     pills.get(agentId)?.();
     pills.delete(agentId);
   };
-  const unsubscribe = client.paseo.agents.subscribe((update) => {
+  const unsubscribe = client.fde.agents.subscribe((update) => {
     if (update.kind === "remove") remove(update.agentId);
     else register(update.agent);
   });
-  void client.paseo.agents
+  void client.fde.agents
     .list()
     .then(({ entries }) => {
       for (const { agent } of entries) register(agent);

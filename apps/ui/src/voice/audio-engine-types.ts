@@ -1,4 +1,5 @@
 export interface AudioEngineCallbacks {
+  audioMode?(): "call" | "media";
   onCaptureData(pcm: Uint8Array): void;
   onVolumeLevel(level: number): void;
   onInterruption?(): void;

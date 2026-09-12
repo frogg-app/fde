@@ -64,7 +64,7 @@ pub struct Loaded {
     pub auth: AuthConfig,
 }
 
-/// `$FDE_HOME`, else `$PASEO_HOME`, else `~/.fde`.
+/// `$FDE_HOME`, else `$FDE_HOME`, else `~/.fde`.
 pub fn resolve_home() -> Option<PathBuf> {
     let base = std::env::var("HOME")
         .or_else(|_| std::env::var("USERPROFILE"))
@@ -90,9 +90,9 @@ pub fn load(home: Option<&Path>) -> Loaded {
         .map(|c| c.sha256)
         .collect();
 
-    // PASEO_PASSWORD is plaintext in the env; the Node daemon bcrypts it at load.
+    // FDE_PASSWORD is plaintext in the env; the Node daemon bcrypts it at load.
     // We hash it here for the same reason, so the compare path is uniform.
-    let password_hash = match std::env::var("PASEO_PASSWORD")
+    let password_hash = match std::env::var("FDE_PASSWORD")
         .ok()
         .filter(|p| !p.trim().is_empty())
     {
@@ -163,7 +163,7 @@ mod tests {
         let dir = tempdir();
         std::fs::write(
             dir.join("config.json"),
-            r#"{"daemon":{"listen":"0.0.0.0:6767","cors":{"allowedOrigins":["http://a"]},
+            r#"{"daemon":{"listen":"0.0.0.0:9999","cors":{"allowedOrigins":["http://a"]},
                 "auth":{"password":"$2b$12$abc"},"trustLan":false}}"#,
         )
         .unwrap();
@@ -180,7 +180,7 @@ mod tests {
             loaded.server_id, "srv_fromdisk",
             "must reuse the Node daemon's id"
         );
-        assert_eq!(loaded.listen.as_deref(), Some("0.0.0.0:6767"));
+        assert_eq!(loaded.listen.as_deref(), Some("0.0.0.0:9999"));
         assert_eq!(loaded.allowed_origins, vec!["http://a".to_string()]);
         assert_eq!(loaded.auth.password_hash.as_deref(), Some("$2b$12$abc"));
         assert_eq!(loaded.auth.credential_hashes, vec!["aa".to_string()]);

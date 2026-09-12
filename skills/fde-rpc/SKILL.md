@@ -1,6 +1,6 @@
 ---
 name: fde-rpc
-description: Add or change a WebSocket session RPC between the FDE daemon and its clients. Use when adding a new request/response message, wiring a daemon handler, exposing a new daemon capability to the app, gating a feature on `server_info.features`, or when a protocol change fails typecheck, the authorization exhaustiveness test, or the generated-Rust staleness check. Covers the exact ordered file list and the traps.
+description: Add or change a WebSocket session RPC between the FDE daemon and its clients. Use when adding a new request/response message, wiring a daemon handler, exposing a new daemon capability to the app, gating a feature on `server_info.features`, or when a protocol change fails typecheck, the authorization exhaustiveness test. Covers the exact ordered file list and the traps.
 ---
 
 # Adding a session RPC
@@ -82,17 +82,15 @@ call site.
 
 ## Regenerate the derived artifacts
 
-zod is the source of truth; three artifacts are derived from it and CI fails if they are stale.
+zod is the source of truth; generated schemas and validators must agree with it.
 
 ```bash
-npm run build --workspace=@fde/protocol   # postbuild regenerates the Rust types and fixtures
-bash scripts/ci/check-generated-rust.sh   # the exact CI gate
+npm run build --workspace=@fde/protocol
+npm run generate:validators --workspace=@fde/protocol
 ```
 
-Commit the resulting changes under `packages/protocol/generated/` and
-`apps/daemon-rs/src/generated/`. Leaving them out is the most common CI failure on a protocol
-change — the Rust daemon's view of the wire format silently diverges from every TypeScript
-client's.
+Commit tracked protocol schema/fixture changes produced by the current build.
+The retired Rust backend is not a production generation or release target.
 
 The ahead-of-time outbound validator
 (`packages/protocol/src/generated/validation/ws-outbound.aot.ts`) is gitignored and regenerated

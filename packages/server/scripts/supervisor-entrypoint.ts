@@ -8,13 +8,13 @@ import {
   startPidLockHeartbeat,
   updatePidLock,
 } from "../src/server/pid-lock.js";
-import { resolveFdeHome } from "../src/server/paseo-home.js";
+import { resolveFdeHome } from "../src/server/fde-home.js";
 import { loadPersistedConfig } from "../src/server/persisted-config.js";
 import { runSupervisor } from "./supervisor.js";
 import { resolveSupervisorLogFile } from "./supervisor-log-config.js";
 import { applySherpaLoaderEnv } from "../src/server/speech/providers/local/sherpa/sherpa-runtime-env.js";
 
-process.title = "Paseo Supervisor";
+process.title = "Fde Supervisor";
 
 interface DaemonRunnerConfig {
   devMode: boolean;
@@ -76,9 +76,9 @@ function resolveWorkerExecArgv(workerEntry: string, devMode: boolean): string[] 
     "--heapsnapshot-near-heap-limit=3",
     "--max-old-space-size=3072",
     "--report-on-fatalerror",
-    "--report-directory=/tmp/paseo-reports",
+    "--report-directory=/tmp/fde-reports",
   ];
-  const inspectArg = process.env.PASEO_NODE_INSPECT ?? "--inspect";
+  const inspectArg = process.env.FDE_NODE_INSPECT ?? "--inspect";
   if (inspectArg !== "0" && inspectArg !== "false" && inspectArg !== "off") {
     devArgs.push(inspectArg);
   }
@@ -109,12 +109,12 @@ async function main(): Promise<void> {
 
   applySherpaLoaderEnv(workerEnv);
 
-  const paseoHome = resolveFdeHome(workerEnv);
-  const persistedConfig = loadPersistedConfig(paseoHome);
-  const supervisorLogFile = resolveSupervisorLogFile(paseoHome, persistedConfig, workerEnv);
+  const fdeHome = resolveFdeHome(workerEnv);
+  const persistedConfig = loadPersistedConfig(fdeHome);
+  const supervisorLogFile = resolveSupervisorLogFile(fdeHome, persistedConfig, workerEnv);
 
   try {
-    await acquirePidLock(paseoHome, null, {
+    await acquirePidLock(fdeHome, null, {
       ownerPid: process.pid,
       reclaimStaleDesktopLock: config.reclaimStalePidLock,
     });
@@ -129,7 +129,7 @@ async function main(): Promise<void> {
 
   let lockReleased = false;
   let requestSupervisorShutdown: ((reason: string) => void) | null = null;
-  const stopLockHeartbeat = startPidLockHeartbeat(paseoHome, {
+  const stopLockHeartbeat = startPidLockHeartbeat(fdeHome, {
     ownerPid: process.pid,
     onError: (error) => {
       const message = error instanceof Error ? error.message : String(error);
@@ -145,7 +145,7 @@ async function main(): Promise<void> {
     }
     lockReleased = true;
     stopLockHeartbeat();
-    await releasePidLock(paseoHome, {
+    await releasePidLock(fdeHome, {
       ownerPid: process.pid,
     });
   };
@@ -175,7 +175,7 @@ async function main(): Promise<void> {
     restartOnCrash: true,
     logFile: supervisorLogFile,
     onWorkerReady: async ({ listen }) => {
-      await updatePidLock(paseoHome, { listen }, { ownerPid: process.pid });
+      await updatePidLock(fdeHome, { listen }, { ownerPid: process.pid });
     },
     onSupervisorExit: releaseLock,
   });

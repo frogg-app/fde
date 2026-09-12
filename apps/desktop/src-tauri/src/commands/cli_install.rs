@@ -155,7 +155,7 @@ pub fn status<R: Runtime>(app: &AppHandle<R>) -> Result<Value, String> {
 pub fn install<R: Runtime>(app: &AppHandle<R>) -> Result<Value, String> {
     let dir = bin_dir(app)?;
     let sidecar = app.state::<Sidecar>();
-    let command = install_to(&sidecar.store, &dir, &crate::sidecar::paseo_home(app))?;
+    let command = install_to(&sidecar.store, &dir, &crate::sidecar::fde_home(app))?;
     #[cfg(windows)]
     {
         let script = format!("$dir={}; $p=[Environment]::GetEnvironmentVariable('Path','User'); if (($p -split ';') -notcontains $dir) {{ [Environment]::SetEnvironmentVariable('Path',($p.TrimEnd(';')+';'+$dir),'User') }}", ps(&dir.to_string_lossy()));

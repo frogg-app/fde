@@ -18,7 +18,7 @@ vi.mock("@fde/branding", async () => {
   };
 });
 import { brandIdentity } from "@fde/branding";
-import { resolveConfiguredHome } from "./paseo-home.js";
+import { resolveConfiguredHome } from "./fde-home.js";
 import { loadConfig } from "./config.js";
 import { acquirePidLock, releasePidLock } from "./pid-lock.js";
 import { renderExpiredPairingPage } from "./pairing-code-page.js";
@@ -40,7 +40,7 @@ test("custom daemon defaults stay local without inherited FDE infrastructure", a
   expect(config.relayEnabled).toBe(false);
   expect(config.relayEndpoint).toBe("");
   expect(config.appBaseUrl).toBe("");
-  expect(resolveConfiguredHome({ FDE_HOME: "/foreign", PASEO_HOME: "/legacy" })).toBeUndefined();
+  expect(resolveConfiguredHome({ FDE_HOME: "/foreign" })).toBeUndefined();
   expect(resolveConfiguredHome({ ACME_HOME: "/own" })).toBe("/own");
 });
 test("a foreign PID record cannot be reclaimed or removed", async () => {
@@ -53,13 +53,13 @@ test("a foreign PID record cannot be reclaimed or removed", async () => {
     listen: null,
     brand: { id: "fde", applicationId: "app.frogg.fde" },
   };
-  await writeFile(path.join(home, "paseo.pid"), JSON.stringify(foreign));
+  await writeFile(path.join(home, "fde.pid"), JSON.stringify(foreign));
   await expect(acquirePidLock(home, null)).rejects.toThrow(/another product/);
   await releasePidLock(home);
-  expect(JSON.parse(await readFile(path.join(home, "paseo.pid"), "utf8"))).toEqual(foreign);
-  await rm(path.join(home, "paseo.pid"));
+  expect(JSON.parse(await readFile(path.join(home, "fde.pid"), "utf8"))).toEqual(foreign);
+  await rm(path.join(home, "fde.pid"));
   await acquirePidLock(home, "127.0.0.1:10099");
-  expect(JSON.parse(await readFile(path.join(home, "paseo.pid"), "utf8")).brand).toEqual(
+  expect(JSON.parse(await readFile(path.join(home, "fde.pid"), "utf8")).brand).toEqual(
     brandIdentity,
   );
   await releasePidLock(home);

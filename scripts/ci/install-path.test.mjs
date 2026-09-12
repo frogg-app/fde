@@ -20,7 +20,7 @@ function fixture(t, shell = "bash", overrides = {}) {
   t.after(() => rmSync(home, { recursive: true, force: true }));
   const bundle = path.join(home, "bundle");
   mkdirSync(path.join(bundle, "bin"), { recursive: true });
-  for (const name of ["fde", "paseo"]) {
+  for (const name of ["fde", "fde"]) {
     writeFileSync(path.join(bundle, "bin", name), "#!/bin/sh\necho installed-cli\n", {
       mode: 0o755,
     });
@@ -118,7 +118,7 @@ test("the native installer listens on every network interface and starts without
   f.env.PATH = `${shimDir}:/usr/bin:/bin`;
   const output = f.run();
   const unit = readFileSync(path.join(f.home, ".config/systemd/user/fde-daemon.service"), "utf8");
-  assert.match(unit, /^Environment=PASEO_LISTEN=0\.0\.0\.0:9999$/m);
+  assert.match(unit, /^Environment=FDE_LISTEN=0\.0\.0\.0:9999$/m);
   assert.match(output, /started the daemon for this login/);
 });
 

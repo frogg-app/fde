@@ -20,11 +20,7 @@ export function brandEnv(
   env: Record<string, string | undefined>,
   suffix: string,
 ): string | undefined {
-  const selected = env[`${brand.envPrefix}_${suffix}`]?.trim();
-  if (selected) return selected;
-  if (brand.legacyFde)
-    return env[`FDE_${suffix}`]?.trim() || env[`PASEO_${suffix}`]?.trim() || undefined;
-  return undefined;
+  return env[`${brand.envPrefix}_${suffix}`]?.trim() || undefined;
 }
 
 export function storageKey(brand: Brand, key: string): string {

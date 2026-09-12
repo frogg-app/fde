@@ -14,17 +14,17 @@ it("does not update or remove another product's provider files", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "brand-skills-"));
   roots.push(root);
   const sourceDir = path.join(root, "source");
-  await mkdir(path.join(sourceDir, "paseo"), { recursive: true });
-  await writeFile(path.join(sourceDir, "paseo/SKILL.md"), "bundled instructions");
+  await mkdir(path.join(sourceDir, "fde"), { recursive: true });
+  await writeFile(path.join(sourceDir, "fde/SKILL.md"), "bundled instructions");
   const targets = {
     agentsDir: path.join(root, "agents"),
     claudeDir: path.join(root, "claude"),
     codexDir: path.join(root, "codex"),
   };
-  await syncSkills({ sourceDir, ...targets, skillNames: ["paseo"] });
-  const installed = path.join(targets.agentsDir, installedSkillName(brand, "paseo"));
+  await syncSkills({ sourceDir, ...targets, skillNames: ["fde"] });
+  const installed = path.join(targets.agentsDir, installedSkillName(brand, "fde"));
   await writeFile(
-    path.join(installed, ".paseo-managed-files.json"),
+    path.join(installed, ".fde-managed-files.json"),
     JSON.stringify({
       version: 1,
       brand: { id: "other", applicationId: "com.other.studio" },
@@ -32,19 +32,19 @@ it("does not update or remove another product's provider files", async () => {
     }),
   );
   await writeFile(path.join(installed, "SKILL.md"), "other product instructions");
-  await expect(syncSkills({ sourceDir, ...targets, skillNames: ["paseo"] })).rejects.toThrow(
+  await expect(syncSkills({ sourceDir, ...targets, skillNames: ["fde"] })).rejects.toThrow(
     "another product",
   );
-  await expect(removeSkill("paseo", targets)).rejects.toThrow("another product");
+  await expect(removeSkill("fde", targets)).rejects.toThrow("another product");
   expect(await readFile(path.join(installed, "SKILL.md"), "utf8")).toBe(
     "other product instructions",
   );
 });
 it("keeps custom physical names distinct while preserving logical names", () => {
-  expect(installedSkillName({ id: "acme", legacyFde: false }, "paseo")).toBe("acme-paseo");
-  expect(installedSkillName({ id: "beta", legacyFde: false }, "paseo")).toBe("beta-paseo");
-  expect(installedSkillName({ id: "fde", legacyFde: true }, "paseo")).toBe("paseo");
-  expect(() => installedSkillName(brand, "../paseo")).toThrow("Invalid skill name");
+  expect(installedSkillName({ id: "acme", legacyFde: false }, "fde")).toBe("acme-fde");
+  expect(installedSkillName({ id: "beta", legacyFde: false }, "fde")).toBe("beta-fde");
+  expect(installedSkillName({ id: "fde", legacyFde: true }, "fde")).toBe("fde");
+  expect(() => installedSkillName(brand, "../fde")).toThrow("Invalid skill name");
 });
 
 it("rolls back only the active product's physical skill directory", async () => {
@@ -52,25 +52,25 @@ it("rolls back only the active product's physical skill directory", async () => 
   const root = await mkdtemp(path.join(os.tmpdir(), "brand-skills-rollback-"));
   roots.push(root);
   const sourceDir = path.join(root, "source");
-  await mkdir(path.join(sourceDir, "paseo"), { recursive: true });
-  await writeFile(path.join(sourceDir, "paseo/SKILL.md"), "instructions");
+  await mkdir(path.join(sourceDir, "fde"), { recursive: true });
+  await writeFile(path.join(sourceDir, "fde/SKILL.md"), "instructions");
   const targets = {
     sourceDir,
     agentsDir: path.join(root, "agents"),
     claudeDir: path.join(root, "claude"),
     codexDir: path.join(root, "codex"),
   };
-  await syncSkills({ ...targets, skillNames: ["paseo"] });
-  const untouched = path.join(targets.agentsDir, "other-paseo");
+  await syncSkills({ ...targets, skillNames: ["fde"] });
+  const untouched = path.join(targets.agentsDir, "other-fde");
   await mkdir(untouched);
   await writeFile(path.join(untouched, "SKILL.md"), "other instructions");
   const transaction = await beginSkillsTransaction(
     targets,
     { mode: "all" },
     { mode: "custom", skills: [] },
-    [{ kind: "delete", name: "paseo" }],
+    [{ kind: "delete", name: "fde" }],
   );
-  const installed = path.join(targets.agentsDir, installedSkillName(brand, "paseo"), "SKILL.md");
+  const installed = path.join(targets.agentsDir, installedSkillName(brand, "fde"), "SKILL.md");
   await expect(readFile(installed, "utf8")).rejects.toThrow();
   await transaction.rollback();
   expect(await readFile(installed, "utf8")).toBe("instructions");

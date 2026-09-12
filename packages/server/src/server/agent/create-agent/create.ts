@@ -1,14 +1,14 @@
 import type { Logger } from "pino";
 
 import type { TerminalManager } from "../../../terminal/terminal-manager.js";
-import type { CreatePaseoWorktreeInput } from "../../paseo-worktree-service.js";
+import type { CreateFdeWorktreeInput } from "../../fde-worktree-service.js";
 import { expandUserPath, resolvePathFromBase } from "../../path-utils.js";
 import { toWorktreeRequestError } from "../../worktree-errors.js";
 import type {
   AgentWorktreeSetupContinuation,
-  CreatePaseoWorktreeSetupContinuationInput,
-  CreatePaseoWorktreeWorkflowFn,
-  CreatePaseoWorktreeWorkflowResult,
+  CreateFdeWorktreeSetupContinuationInput,
+  CreateFdeWorktreeWorkflowFn,
+  CreateFdeWorktreeWorkflowResult,
 } from "../../worktree-session.js";
 import type { AgentAttachment, FirstAgentContext, GitSetupOptions } from "../../messages.js";
 import type { AgentManager, CreateAgentOptions, ManagedAgent } from "../agent-manager.js";
@@ -39,11 +39,11 @@ export interface CreateAgentCommandDependencies {
   agentManager: AgentManager;
   agentStorage: AgentStorage;
   logger: Logger;
-  paseoHome?: string;
+  fdeHome?: string;
   worktreesRoot?: string;
   terminalManager?: TerminalManager | null;
   providerSnapshotManager: Pick<ProviderSnapshotManager, "resolveCreateConfig">;
-  createPaseoWorktree?: CreatePaseoWorktreeWorkflowFn;
+  createFdeWorktree?: CreateFdeWorktreeWorkflowFn;
   // Mints a fresh directory workspace for a cwd and returns its id.
   ensureWorkspaceForCreate?: EnsureWorkspaceForCreate;
 }
@@ -98,9 +98,9 @@ export interface CreateAgentFromMcpInput {
   env?: Record<string, string>;
   onCreated?: (created: {
     agentId: string;
-    createdWorktree: CreatePaseoWorktreeWorkflowResult | null;
+    createdWorktree: CreateFdeWorktreeWorkflowResult | null;
   }) => void;
-  onWorktreeCreated?: (createdWorktree: CreatePaseoWorktreeWorkflowResult) => void;
+  onWorktreeCreated?: (createdWorktree: CreateFdeWorktreeWorkflowResult) => void;
   callerAgentId?: string;
   callerContext?: {
     lockedCwd?: string;
@@ -126,7 +126,7 @@ export interface CreateAgentCommandResult {
   background: boolean;
   initialPromptStarted: boolean;
   initialPromptError: unknown | null;
-  createdWorktree?: CreatePaseoWorktreeWorkflowResult;
+  createdWorktree?: CreateFdeWorktreeWorkflowResult;
 }
 
 export type BoundCreateAgentCommand = (
@@ -167,7 +167,7 @@ interface ResolvedCreateAgent {
   background: boolean;
   promptFailure: CreateAgentPromptFailureMode;
   promptLogger?: Logger;
-  createdWorktree?: CreatePaseoWorktreeWorkflowResult;
+  createdWorktree?: CreateFdeWorktreeWorkflowResult;
 }
 
 export async function createAgentCommand(
@@ -511,7 +511,7 @@ async function resolveMcpCwd(params: {
   resolvedCwd: string;
   setupContinuation?: AgentWorktreeSetupContinuation;
   createdWorkspaceId?: string;
-  createdWorktree?: CreatePaseoWorktreeWorkflowResult;
+  createdWorktree?: CreateFdeWorktreeWorkflowResult;
 }> {
   const { dependencies, worktree } = params;
   if (!worktree) {
@@ -543,10 +543,10 @@ async function resolveMcpCwd(params: {
       githubPrNumber: worktree.githubPrNumber,
       firstAgentContext: { prompt: params.initialPrompt },
       runSetup: false,
-      paseoHome: dependencies.paseoHome,
+      fdeHome: dependencies.fdeHome,
       worktreesRoot: dependencies.worktreesRoot,
     },
-    createPaseoWorktree: dependencies.createPaseoWorktree,
+    createFdeWorktree: dependencies.createFdeWorktree,
     resolveDefaultBranch: baseBranch ? async () => baseBranch : undefined,
     setupContinuation: {
       kind: "agent",
@@ -575,20 +575,20 @@ async function resolveMcpCwd(params: {
 }
 
 interface CreateMcpWorktreeOptions {
-  input: CreatePaseoWorktreeInput;
-  createPaseoWorktree: CreatePaseoWorktreeWorkflowFn | undefined;
+  input: CreateFdeWorktreeInput;
+  createFdeWorktree: CreateFdeWorktreeWorkflowFn | undefined;
   resolveDefaultBranch?: (repoRoot: string) => Promise<string>;
-  setupContinuation?: CreatePaseoWorktreeSetupContinuationInput;
+  setupContinuation?: CreateFdeWorktreeSetupContinuationInput;
 }
 
 async function createMcpWorktree(
   options: CreateMcpWorktreeOptions,
-): Promise<CreatePaseoWorktreeWorkflowResult> {
+): Promise<CreateFdeWorktreeWorkflowResult> {
   try {
-    if (!options.createPaseoWorktree) {
+    if (!options.createFdeWorktree) {
       throw new Error("FDE worktree service is not configured");
     }
-    return await options.createPaseoWorktree(options.input, {
+    return await options.createFdeWorktree(options.input, {
       ...(options.resolveDefaultBranch
         ? { resolveDefaultBranch: options.resolveDefaultBranch }
         : {}),

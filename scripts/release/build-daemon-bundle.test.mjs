@@ -46,7 +46,7 @@ test("daemon assets use platform-first public names", () => {
 test("Windows launcher keeps the CLI launch contract", () => {
   const lines = WINDOWS_LAUNCHER.split("\r\n");
   assert.equal(lines[0], "@echo off");
-  assert.ok(lines.includes('if not defined PASEO_NODE_ENV set "PASEO_NODE_ENV=production"'));
+  assert.ok(lines.includes('if not defined FDE_NODE_ENV set "FDE_NODE_ENV=production"'));
   const exec = lines.find((line) => line.includes("node.exe"));
   assert.ok(exec, "launcher runs node.exe");
   assert.match(exec, /--disable-warning=DEP0040/);

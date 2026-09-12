@@ -12,11 +12,11 @@ import { claudeQuery } from "../src/server/agent/providers/claude/query.js";
 import { defineCompanionTool } from "../src/server/companion/tools/index.js";
 import { SherpaOnnxTTS } from "../src/server/speech/providers/local/sherpa/sherpa-tts.js";
 
-if (process.env.PASEO_COMPANION_BENCH !== "1")
-  throw new Error("Set PASEO_COMPANION_BENCH=1 to spend subscription allowance on this probe.");
-const modelDir = process.env.PASEO_COMPANION_BENCH_TTS_DIR;
+if (process.env.FDE_COMPANION_BENCH !== "1")
+  throw new Error("Set FDE_COMPANION_BENCH=1 to spend subscription allowance on this probe.");
+const modelDir = process.env.FDE_COMPANION_BENCH_TTS_DIR;
 if (!modelDir)
-  throw new Error("Set PASEO_COMPANION_BENCH_TTS_DIR to the extracted Piper LJSpeech directory.");
+  throw new Error("Set FDE_COMPANION_BENCH_TTS_DIR to the extracted Piper LJSpeech directory.");
 const muted = process.argv.includes("--mute");
 let muteMicrophone = async () => {};
 let beforeHandoff = async () => {};

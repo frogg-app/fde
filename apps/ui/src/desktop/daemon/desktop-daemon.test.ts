@@ -30,7 +30,7 @@ describe("listenToLocalTransportEvents", () => {
     // Electron's preload passes the payload; Tauri's `listen` wraps it.
     listener({ sessionId: "s1", kind: "open" });
     listener({
-      event: "paseo:event:x",
+      event: "fde:event:x",
       id: 7,
       payload: { sessionId: "s1", kind: "error", error: "ssh: boom" },
     });
@@ -65,5 +65,21 @@ describe("listenToLocalTransportEvents", () => {
     await expect(listenToLocalTransportEvents(() => {})).rejects.toThrow(
       "Desktop events API is unavailable.",
     );
+  });
+});
+
+describe("desktop daemon capability", () => {
+  afterEach(() => {
+    hostState.host = null;
+  });
+  it.each([
+    [null, false],
+    [{}, true],
+    [{ supportsLocalDaemon: true }, true],
+    [{ supportsLocalDaemon: false }, false],
+  ])("resolves %j to %s", async (host, expected) => {
+    hostState.host = host;
+    const { shouldUseDesktopDaemon } = await import("./desktop-daemon");
+    expect(shouldUseDesktopDaemon()).toBe(expected);
   });
 });

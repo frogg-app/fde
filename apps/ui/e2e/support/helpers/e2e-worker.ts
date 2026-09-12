@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { chmod, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { forkPaseoHomeMetadata, resolvePaseoHomePath } from "./paseo-home-fork";
+import { forkFdeHomeMetadata, resolveFdeHomePath } from "./fde-home-fork";
 import { startIsolatedHostDaemon } from "./isolated-host-daemon";
 
 export interface E2EWorker {
@@ -13,11 +13,11 @@ export interface E2EWorker {
 function resolveOptionalHome(value: string | undefined): string | null {
   const trimmed = value?.trim();
   if (!trimmed) return null;
-  return resolvePaseoHomePath(trimmed === "current" ? "~/.paseo" : trimmed);
+  return resolveFdeHomePath(trimmed === "current" ? "~/.fde" : trimmed);
 }
 
 async function createFakeEditorBin(): Promise<string> {
-  const binDir = await mkdtemp(path.join(tmpdir(), "paseo-e2e-editor-bin-"));
+  const binDir = await mkdtemp(path.join(tmpdir(), "fde-e2e-editor-bin-"));
   let realGhPath = "";
   try {
     const locator = process.platform === "win32" ? "where.exe" : "which";
@@ -36,7 +36,7 @@ async function createFakeEditorBin(): Promise<string> {
   const fakeEditorSource = `#!/usr/bin/env node
 const fs = require("fs");
 const path = require("path");
-const recordPath = process.env.PASEO_E2E_EDITOR_RECORD_PATH;
+const recordPath = process.env.FDE_E2E_EDITOR_RECORD_PATH;
 if (recordPath) {
   fs.appendFileSync(recordPath, JSON.stringify({
     command: path.basename(process.argv[1]),
@@ -59,7 +59,7 @@ if (recordPath) {
   const fakeGhSource = `#!/usr/bin/env node
 const { spawnSync } = require("child_process");
 const args = process.argv.slice(2);
-const fixtureRemote = "https://github.com/paseo-e2e/local-fixture.git";
+const fixtureRemote = "https://github.com/fde-e2e/local-fixture.git";
 const origin = spawnSync("git", ["config", "--get", "remote.origin.url"], {
   encoding: "utf8",
   stdio: ["ignore", "pipe", "ignore"]
@@ -69,7 +69,7 @@ if (origin === fixtureRemote) {
   const command = args.slice(0, 2).join(" ");
   if (command === "auth status") process.exit(0);
   if (command === "repo view") {
-    process.stdout.write(JSON.stringify({ owner: { login: "paseo-e2e" }, name: "local-fixture", parent: null }));
+    process.stdout.write(JSON.stringify({ owner: { login: "fde-e2e" }, name: "local-fixture", parent: null }));
     process.exit(0);
   }
   if (command === "issue list") {
@@ -80,7 +80,7 @@ if (origin === fixtureRemote) {
     const pr = {
       number: 1,
       title: "Use pasted PR as start ref",
-      url: "https://github.com/paseo-e2e/local-fixture/pull/1",
+      url: "https://github.com/fde-e2e/local-fixture/pull/1",
       state: "OPEN",
       body: null,
       labels: [],
@@ -98,9 +98,9 @@ if (origin === fixtureRemote) {
         baseRefName: "main",
         headRefName: "pr-branch-1",
         isCrossRepository: false,
-        headRepositoryOwner: { login: "paseo-e2e" },
+        headRepositoryOwner: { login: "fde-e2e" },
         headRepository: {
-          sshUrl: "git@github.com:paseo-e2e/local-fixture.git",
+          sshUrl: "git@github.com:fde-e2e/local-fixture.git",
           url: fixtureRemote
         }
       } } }
@@ -125,11 +125,11 @@ process.exit(result.status ?? 1);
 }
 
 async function applyMetadataFork(targetHome: string, providerIds: string[]): Promise<void> {
-  const sourceHome = resolveOptionalHome(process.env.E2E_FORK_PASEO_HOME_FROM);
+  const sourceHome = resolveOptionalHome(process.env.E2E_FORK_FDE_HOME_FROM);
   if (!sourceHome) return;
-  const result = await forkPaseoHomeMetadata({ sourceHome, targetHome });
-  process.env.E2E_FORK_SOURCE_PASEO_HOME = result.sourceHome;
-  process.env.E2E_FORK_TARGET_PASEO_HOME = result.targetHome;
+  const result = await forkFdeHomeMetadata({ sourceHome, targetHome });
+  process.env.E2E_FORK_SOURCE_FDE_HOME = result.sourceHome;
+  process.env.E2E_FORK_TARGET_FDE_HOME = result.targetHome;
   process.env.E2E_FORK_COPIED_FILES = String(result.copiedFiles);
   process.env.E2E_FORK_COPIED_BYTES = String(result.copiedBytes);
 
@@ -156,41 +156,41 @@ async function applyMetadataFork(targetHome: string, providerIds: string[]): Pro
 
 export async function startE2EWorker(
   workerIndex: number,
-  options: { forkProviders?: string[]; injectPaseoTools?: boolean } = {},
+  options: { forkProviders?: string[]; injectFdeTools?: boolean } = {},
 ): Promise<E2EWorker> {
-  const requestedRoot = resolveOptionalHome(process.env.E2E_PASEO_HOME);
-  const paseoHome = requestedRoot
+  const requestedRoot = resolveOptionalHome(process.env.E2E_FDE_HOME);
+  const fdeHome = requestedRoot
     ? path.join(requestedRoot, `worker-${workerIndex}`)
-    : await mkdtemp(path.join(tmpdir(), `paseo-e2e-worker-${workerIndex}-`));
-  const preserveHome = Boolean(requestedRoot) || process.env.E2E_KEEP_PASEO_HOME === "1";
+    : await mkdtemp(path.join(tmpdir(), `fde-e2e-worker-${workerIndex}-`));
+  const preserveHome = Boolean(requestedRoot) || process.env.E2E_KEEP_FDE_HOME === "1";
   const fakeEditorBin = await createFakeEditorBin();
-  const editorRecordPath = path.join(paseoHome, "editor-open-records.jsonl");
+  const editorRecordPath = path.join(fdeHome, "editor-open-records.jsonl");
   const serverId = `srv_e2e_worker_${workerIndex}`;
 
   try {
-    await applyMetadataFork(paseoHome, options.forkProviders ?? []);
-    if (options.injectPaseoTools) {
-      await enablePaseoTools(paseoHome);
+    await applyMetadataFork(fdeHome, options.forkProviders ?? []);
+    if (options.injectFdeTools) {
+      await enableFdeTools(fdeHome);
     }
     const daemon = await startIsolatedHostDaemon(serverId, {
-      paseoHome,
+      fdeHome,
       preserveHome,
       environment: {
         NODE_ENV: "development",
         PATH: `${fakeEditorBin}${path.delimiter}${process.env.PATH ?? ""}`,
-        PASEO_E2E_EDITOR_RECORD_PATH: editorRecordPath,
+        FDE_E2E_EDITOR_RECORD_PATH: editorRecordPath,
       },
     });
 
     process.env.E2E_DAEMON_PORT = String(daemon.port);
     process.env.E2E_SERVER_ID = daemon.serverId;
-    process.env.E2E_PASEO_HOME = daemon.paseoHome;
+    process.env.E2E_FDE_HOME = daemon.fdeHome;
     process.env.E2E_EDITOR_RECORD_PATH = editorRecordPath;
     delete process.env.E2E_RELAY_PORT;
     delete process.env.E2E_RELAY_DAEMON_PUBLIC_KEY;
 
     console.log(
-      `[e2e] Worker ${workerIndex} daemon started on port ${daemon.port}, home: ${daemon.paseoHome}`,
+      `[e2e] Worker ${workerIndex} daemon started on port ${daemon.port}, home: ${daemon.fdeHome}`,
     );
     return {
       close: async () => {
@@ -201,13 +201,13 @@ export async function startE2EWorker(
     };
   } catch (error) {
     await rm(fakeEditorBin, { recursive: true, force: true });
-    if (!preserveHome) await rm(paseoHome, { recursive: true, force: true });
+    if (!preserveHome) await rm(fdeHome, { recursive: true, force: true });
     throw error;
   }
 }
 
-async function enablePaseoTools(paseoHome: string): Promise<void> {
-  const configPath = path.join(paseoHome, "config.json");
+async function enableFdeTools(fdeHome: string): Promise<void> {
+  const configPath = path.join(fdeHome, "config.json");
   const existing = existsSync(configPath)
     ? JSON.parse(await readFile(configPath, "utf8"))
     : { version: 1 };

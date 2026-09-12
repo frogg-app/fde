@@ -134,7 +134,7 @@ export function addHubDeployCommand(
     addHubResolutionHelp(
       hub
         .command("deploy")
-        .description("Discover, validate, and activate the canonical .paseo Hub bundle")
+        .description("Discover, validate, and activate the canonical .fde Hub bundle")
         .option("-p, --project <slug>", "Target project slug")
         .option("--hub <origin>", `${brand.name} Hub origin`)
         .option("--api-key <secret>", "Organization API key")

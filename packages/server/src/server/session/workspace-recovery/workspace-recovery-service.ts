@@ -4,9 +4,9 @@ import { createRealpathAwarePathMatcher } from "../../../utils/path.js";
 import { runGitCommand } from "../../../utils/run-git-command.js";
 import {
   createWorktree,
-  isPaseoOwnedWorktreeCwd,
+  isFdeOwnedWorktreeCwd,
   mapWorkspaceCwdToWorktree,
-  rollbackCreatedPaseoWorktree,
+  rollbackCreatedFdeWorktree,
 } from "../../../utils/worktree.js";
 import { WorktreeRequestError, toWorktreeRequestError } from "../../worktree-errors.js";
 import {
@@ -59,7 +59,7 @@ type RecoveryPlan =
 type UnavailableRecoveryState = Extract<WorkspaceRecoveryState, { kind: "unavailable" }>;
 
 export function createWorkspaceRecoveryService(deps: {
-  paseoHome: string;
+  fdeHome: string;
   worktreesRoot?: string;
   getWorkspace: (workspaceId: string) => Promise<PersistedWorkspaceRecord | null>;
   getProject: (projectId: string) => Promise<PersistedProjectRecord | null>;
@@ -175,8 +175,8 @@ export function createWorkspaceRecoveryService(deps: {
     if (!previousWorktreePath) {
       // COMPAT(worktreeRestoreMissingWorktreeRoot): records created before v0.1.110
       // lack durable backing placement; remove filesystem discovery after 2027-01-17.
-      const ownership = await isPaseoOwnedWorktreeCwd(workspace.cwd, {
-        paseoHome: deps.paseoHome,
+      const ownership = await isFdeOwnedWorktreeCwd(workspace.cwd, {
+        fdeHome: deps.fdeHome,
         worktreesRoot: deps.worktreesRoot,
       });
       previousWorktreePath = ownership.allowed
@@ -191,7 +191,7 @@ export function createWorkspaceRecoveryService(deps: {
         worktreeSlug: basename(previousWorktreePath),
         source: { kind: "checkout-branch", branchName: branch },
         runSetup: false,
-        paseoHome: deps.paseoHome,
+        fdeHome: deps.fdeHome,
         worktreesRoot: deps.worktreesRoot,
       });
       recreatedWorktreePath = result.worktreePath;
@@ -218,12 +218,12 @@ export function createWorkspaceRecoveryService(deps: {
         });
       }
     } catch (error) {
-      return rollbackCreatedPaseoWorktree(
+      return rollbackCreatedFdeWorktree(
         {
           cwd: sourceRepoRoot,
           worktreePath: recreatedWorktreePath,
           teardownCwds: [],
-          paseoHome: deps.paseoHome,
+          fdeHome: deps.fdeHome,
           worktreesBaseRoot: deps.worktreesRoot,
         },
         error,

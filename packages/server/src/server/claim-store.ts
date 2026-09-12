@@ -8,7 +8,7 @@ import { ensurePrivateFile, writePrivateFileAtomicSync } from "./private-files.j
 
 /**
  * Paired principals and their device credentials, persisted under
- * `$PASEO_HOME/principals.json` (mode 0600). The daemon is "claimed" once at
+ * `$FDE_HOME/principals.json` (mode 0600). The daemon is "claimed" once at
  * least one principal holds a credential; pairing the first device claims it.
  *
  * Credentials are high-entropy random secrets, so they are stored as SHA-256
@@ -79,8 +79,8 @@ function generateId(prefix: string): string {
   return `${prefix}_${randomBytes(9).toString("base64url")}`;
 }
 
-export function createClaimStore(paseoHome: string): ClaimStore {
-  const filePath = path.join(paseoHome, PRINCIPALS_FILENAME);
+export function createClaimStore(fdeHome: string): ClaimStore {
+  const filePath = path.join(fdeHome, PRINCIPALS_FILENAME);
   let cache: { mtimeMs: number; size: number; value: PrincipalsFile } | null = null;
 
   function read(): PrincipalsFile {

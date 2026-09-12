@@ -6,9 +6,9 @@ describe("onboarding defaults", () => {
   test("voice is enabled unless the user opts out", () => {
     expect(DEFAULT_VOICE_ENABLED).toBe(true);
     expect(resolveNonInteractiveVoiceDefault({})).toBe(true);
-    expect(resolveNonInteractiveVoiceDefault({ PASEO_VOICE: "0" })).toBe(false);
-    expect(resolveNonInteractiveVoiceDefault({ PASEO_VOICE: "off" })).toBe(false);
-    expect(resolveNonInteractiveVoiceDefault({ PASEO_VOICE: "1" })).toBe(true);
-    expect(resolveNonInteractiveVoiceDefault({ PASEO_VOICE: "garbage" })).toBe(true);
+    expect(resolveNonInteractiveVoiceDefault({ FDE_VOICE: "0" })).toBe(false);
+    expect(resolveNonInteractiveVoiceDefault({ FDE_VOICE: "off" })).toBe(false);
+    expect(resolveNonInteractiveVoiceDefault({ FDE_VOICE: "1" })).toBe(true);
+    expect(resolveNonInteractiveVoiceDefault({ FDE_VOICE: "garbage" })).toBe(true);
   });
 });

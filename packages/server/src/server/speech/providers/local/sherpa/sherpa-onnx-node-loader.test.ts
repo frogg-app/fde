@@ -15,7 +15,7 @@ vi.mock("./sherpa-runtime-env.js", () => ({
   resolveSherpaLoaderEnv: () => ({ libDir: "/platform" }),
   sherpaPlatformPackageName: () => "sherpa-onnx-test",
 }));
-vi.mock("../../../../paseo-env.js", () => ({ createExternalCommandProcessEnv: () => ({}) }));
+vi.mock("../../../../fde-env.js", () => ({ createExternalCommandProcessEnv: () => ({}) }));
 
 const publicApi = () => ({
   OfflineRecognizer: vi.fn(),

@@ -2,11 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { Animated, Easing, Platform, Pressable, View } from "react-native";
 import { useReducedMotion } from "react-native-reanimated";
 import { StyleSheet } from "react-native-unistyles";
-import { OrbArtwork } from "./orb-artwork";
+import { ArtworkFade } from "./artwork-fade";
 import type { CompanionMicState } from "./store";
 
 interface MicOrbProps {
   state: CompanionMicState;
+  muted?: boolean;
   size?: number;
   animated?: boolean;
   playbackActive?: boolean;
@@ -21,6 +22,7 @@ interface MicOrbProps {
 /** Microphone feedback and the voice's inner light move independently, including while thinking. */
 export function MicOrb({
   state,
+  muted = false,
   size = 288,
   animated = true,
   playbackActive = state === "speaking",
@@ -30,10 +32,22 @@ export function MicOrb({
   onPress,
   testID,
 }: MicOrbProps) {
-  const active = state !== "idle";
+  const active = !muted && state !== "idle";
   const systemReducedMotion = useReducedMotion();
   const reducedMotion = systemReducedMotion || !animated;
   const flowing = active || playbackActive;
+  const [muteBlend] = useState(() => new Animated.Value(muted ? 1 : 0));
+  useEffect(() => {
+    const fade = Animated.timing(muteBlend, {
+      toValue: muted ? 1 : 0,
+      duration: 150,
+      easing: Easing.inOut(Easing.quad),
+      isInteraction: false,
+      useNativeDriver: Platform.OS !== "web",
+    });
+    fade.start();
+    return () => fade.stop();
+  }, [muted, muteBlend]);
   const [phase] = useState(() => new Animated.Value(0));
   const [drift] = useState(() => new Animated.Value(0));
   const [capture] = useState(() => new Animated.Value(0));
@@ -100,7 +114,7 @@ export function MicOrb({
         ],
       },
       sphere: {
-        opacity: flowing ? 1 : 0.35,
+        opacity: flowing || muted ? 1 : 0.35,
         transform: [
           {
             scale: reducedMotion
@@ -168,7 +182,7 @@ export function MicOrb({
         ],
       },
     }),
-    [active, flowing, reducedMotion, capture, playback, phase, drift],
+    [active, flowing, muted, reducedMotion, capture, playback, phase, drift],
   );
 
   return (
@@ -184,23 +198,23 @@ export function MicOrb({
         pointerEvents="none"
         testID="companion-input-level"
       >
-        <OrbArtwork layer="halo" />
+        <ArtworkFade muted={muteBlend} layer="halo" />
       </Animated.View>
       <Animated.View
         style={[styles.sphere, { width: (size * 8) / 9, height: (size * 8) / 9 }, motion.sphere]}
         pointerEvents="none"
       >
         <View style={styles.layer}>
-          <OrbArtwork layer="surface" />
+          <ArtworkFade muted={muteBlend} layer="surface" />
         </View>
         <Animated.View style={[styles.layer, motion.cool]} testID="companion-orb-flow">
-          <OrbArtwork layer="cool" />
+          <ArtworkFade muted={muteBlend} layer="cool" />
         </Animated.View>
         <Animated.View style={[styles.layer, motion.warm]} testID="companion-output-level">
-          <OrbArtwork layer="warm" />
+          <ArtworkFade muted={muteBlend} layer="warm" />
         </Animated.View>
         <Animated.View style={[styles.layer, motion.filaments]} testID="companion-orb-filaments">
-          <OrbArtwork layer="glass" />
+          <ArtworkFade muted={muteBlend} layer="glass" />
         </Animated.View>
       </Animated.View>
     </Pressable>

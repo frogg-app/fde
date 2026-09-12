@@ -60,7 +60,7 @@ export class PrivateHubCredentialStore implements HubCredentialStore {
   private readonly filePath: string;
 
   constructor(env: Readonly<Record<string, string | undefined>> = process.env) {
-    this.filePath = path.join(resolvePaseoHome(env), "hub-credentials.json");
+    this.filePath = path.join(resolveFdeHome(env), "hub-credentials.json");
   }
 
   active(): StoredHubCredential | null {
@@ -137,7 +137,7 @@ export class PrivateHubCredentialStore implements HubCredentialStore {
   }
 }
 
-function resolvePaseoHome(env: Readonly<Record<string, string | undefined>>): string {
+function resolveFdeHome(env: Readonly<Record<string, string | undefined>>): string {
   return resolveFdeHomePath(env as NodeJS.ProcessEnv);
 }
 

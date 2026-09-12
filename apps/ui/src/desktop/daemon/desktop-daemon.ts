@@ -64,7 +64,7 @@ export interface OpenLocalTransportSessionInput {
   [key: string]: unknown;
   sessionId: string;
   target: DesktopDaemonTransportTarget;
-  /** WebSocket subprotocols for the handshake (`paseo.bearer.<daemon password>`). */
+  /** WebSocket subprotocols for the handshake (`fde.bearer.<daemon password>`). */
   protocols?: string[];
 }
 
@@ -162,7 +162,7 @@ function parseDesktopDaemonLogs(raw: unknown): DesktopDaemonLogs {
 }
 
 export function shouldUseDesktopDaemon(): boolean {
-  return isElectronRuntime();
+  return isElectronRuntime() && getDesktopHost()?.supportsLocalDaemon !== false;
 }
 
 export async function getDesktopDaemonStatus(): Promise<DesktopDaemonStatus> {

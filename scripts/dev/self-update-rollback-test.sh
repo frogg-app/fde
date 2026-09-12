@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # End-to-end check of `fde daemon self-update` and its rollback on one host,
-# without touching any real install: a scratch FDE_INSTALL_DIR and PASEO_HOME,
+# without touching any real install: a scratch FDE_INSTALL_DIR and FDE_HOME,
 # a daemon started by hand (FDE_NO_SERVICE=1, so the unmanaged stop/start path
 # is exercised), and a local HTTP server standing in for the GitHub release.
 #
@@ -130,7 +130,7 @@ if ! curl -fsSI "http://127.0.0.1:${http_port}/${broken_asset}" >/dev/null; then
   fail "the local release server does not serve ${broken_asset}"
 fi
 
-export FDE_INSTALL_DIR="${install_dir}" PASEO_HOME="${home_dir}" PASEO_LISTEN="${listen}"
+export FDE_INSTALL_DIR="${install_dir}" FDE_HOME="${home_dir}" FDE_LISTEN="${listen}"
 export FDE_RELEASE_BASE="http://127.0.0.1:${http_port}"
 fde="${install_dir}/current/bin/fde"
 

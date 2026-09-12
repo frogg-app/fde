@@ -35,7 +35,7 @@ export function buildSidebarAgentTrees(input: {
         serverId: host.serverId,
         workspaceId: agent.workspaceId,
         row: {
-          kind: "paseo",
+          kind: "fde",
           id: agent.id,
           provider: agent.provider,
           title: agent.title,
@@ -94,7 +94,7 @@ function activeChildren(
 ): SidebarAgentNode[] {
   return children.flatMap((node) => {
     const descendants = activeChildren(node.children, agents);
-    const agent = node.row.kind === "paseo" ? agents.get(node.row.id) : undefined;
+    const agent = node.row.kind === "fde" ? agents.get(node.row.id) : undefined;
     const active =
       node.row.status === "running" ||
       node.row.status === "initializing" ||

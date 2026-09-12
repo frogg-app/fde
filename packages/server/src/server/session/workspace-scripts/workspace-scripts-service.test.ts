@@ -54,7 +54,7 @@ function fakeGitService() {
     isGit: true,
     repoRoot: "/tmp/repo",
     currentBranch: "feature/scripts",
-    remoteUrl: "https://github.com/getpaseo/paseo.git",
+    remoteUrl: "https://github.com/frogg-app/fde.git",
     hasRemote: true,
   };
 
@@ -101,7 +101,7 @@ function buildService(options: BuildOptions = {}) {
     workspaceRegistry: fakeWorkspaceRegistry(workspace),
     projectRegistry: fakeProjectRegistry(options.project ?? null),
     workspaceGitService: options.gitService ?? fakeGitService(),
-    getDaemonTcpPort: () => 6767,
+    getDaemonTcpPort: () => 9999,
     getDaemonTcpHost: () => "127.0.0.1",
     serviceProxyPublicBaseUrl: null,
     resolveScriptHealth: null,
@@ -157,7 +157,7 @@ describe("buildSnapshot", () => {
     ).toEqual([]);
   });
 
-  test("returns no scripts for a workspace without a paseo.json", async () => {
+  test("returns no scripts for a workspace without a fde.json", async () => {
     const dir = mkdtempSync(join(tmpdir(), "workspace-scripts-"));
     tempDirs.push(dir);
     const { service } = buildService();
@@ -170,7 +170,7 @@ describe("buildSnapshot", () => {
     const directory = mkdtempSync(join(tmpdir(), "workspace-scripts-"));
     tempDirs.push(directory);
     writeFileSync(
-      join(directory, "paseo.json"),
+      join(directory, "fde.json"),
       JSON.stringify({ scripts: { app: { type: "service", command: "npm run app", port: 3000 } } }),
     );
     const project = {
@@ -202,7 +202,7 @@ describe("buildSnapshot", () => {
         projectSlug: deriveProjectServiceSlug(project),
         branchName: workspace.branch,
         scriptName: "app",
-        daemonPort: 6767,
+        daemonPort: 9999,
       }).hostname,
     );
     await service.start({ ...request, workspaceId: workspace.workspaceId });
@@ -225,7 +225,7 @@ describe("stop", () => {
     const dir = mkdtempSync(join(tmpdir(), "workspace-scripts-"));
     tempDirs.push(dir);
     writeFileSync(
-      join(dir, "paseo.json"),
+      join(dir, "fde.json"),
       JSON.stringify({ scripts: { web: { type: "service", command: "npm run web", port: 3000 } } }),
     );
     const runtimeStore = new WorkspaceScriptRuntimeStore();
@@ -313,10 +313,10 @@ describe("start", () => {
     expect(spawnCalls[0]).toMatchObject({
       repoRoot: "/tmp/repo",
       workspaceId: "ws-1",
-      projectSlug: "paseo",
+      projectSlug: "fde",
       branchName: "feature/scripts",
       scriptName: "app",
-      daemonPort: 6767,
+      daemonPort: 9999,
       daemonListenHost: "127.0.0.1",
     });
     expect(emitted).toContainEqual({
@@ -395,7 +395,7 @@ describe("start", () => {
     const directory = mkdtempSync(join(tmpdir(), "workspace-scripts-"));
     tempDirs.push(directory);
     writeFileSync(
-      join(directory, "paseo.json"),
+      join(directory, "fde.json"),
       JSON.stringify({ scripts: { app: { type: "service", command: "npm run app", port: 3000 } } }),
     );
     const project = {

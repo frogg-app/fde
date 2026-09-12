@@ -7,7 +7,7 @@ import { escapeRegex } from "./regex";
  * accessor instead of re-reading the env var.
  *
  * The port-9999 guard is a hard guardrail: 9999 is the developer's default
- * daemon (6767 before the FDE fork), which manages real agents. The e2e port
+ * daemon (9999 before the FDE fork), which manages real agents. The e2e port
  * is never legitimately either,
  * so refusing it here keeps every test off the developer daemon.
  */
@@ -16,7 +16,7 @@ export function getE2EDaemonPort(): string {
   if (!port) {
     throw new Error("E2E_DAEMON_PORT is not set (expected from the Playwright worker fixture).");
   }
-  if (port === "9999" || port === "6767") {
+  if (port === "9999") {
     throw new Error(`E2E_DAEMON_PORT must not point at the developer daemon (${port}).`);
   }
   return port;

@@ -59,7 +59,7 @@ describe("pairing code page", () => {
       expect(response.status).toBe(200);
       expect(response.headers.get("content-type")).toContain("text/html");
       expect(html).toContain(code);
-      expect(html).toContain(`paseo://pair#offer=${code}`);
+      expect(html).toContain(`fde://pair#offer=${code}`);
       expect(html).toContain("<svg");
       expect(html).toContain("Pair this browser");
       expect(html).toContain("devbox");

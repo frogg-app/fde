@@ -43,7 +43,7 @@ describe("pairing page worker", () => {
 
     expect(response.status).toBe(200);
     expect(html).toContain(code);
-    expect(html).toContain(`paseo://pair#offer=${code}`);
+    expect(html).toContain(`fde://pair#offer=${code}`);
     expect(html).toContain("<svg");
     // It issues no codes, so it can never pair the browser looking at the page,
     // and it never echoes back the hostname from a foreign offer.

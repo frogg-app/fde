@@ -115,7 +115,7 @@ function daemonConnectionFailure(host: string, cause: unknown): CommandError {
       ? `Start the ${brand.name} daemon on the SSH host; SSH transport does not install or start it.`
       : [
           `Start a local daemon with: ${brand.cliName} daemon start`,
-          "To use another daemon, pass --host <host:port> or set PASEO_HOST.",
+          "To use another daemon, pass --host <host:port> or set FDE_HOST.",
         ].join("\n"),
   };
 }

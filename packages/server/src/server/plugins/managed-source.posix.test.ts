@@ -13,13 +13,13 @@ afterEach(async () => {
 });
 
 async function createRepository(): Promise<string> {
-  const repository = await mkdtemp(path.join(tmpdir(), "paseo-plugin-git-repository-"));
+  const repository = await mkdtemp(path.join(tmpdir(), "fde-plugin-git-repository-"));
   roots.push(repository);
   await runGitCommand(["init", "-b", "main"], { cwd: repository });
-  await runGitCommand(["config", "user.name", "Paseo Tests"], { cwd: repository });
-  await runGitCommand(["config", "user.email", "paseo@example.test"], { cwd: repository });
+  await runGitCommand(["config", "user.name", "Fde Tests"], { cwd: repository });
+  await runGitCommand(["config", "user.email", "fde@example.test"], { cwd: repository });
   await writeFile(
-    path.join(repository, "paseo-plugin.json"),
+    path.join(repository, "fde-plugin.json"),
     JSON.stringify({ id: "managed-example" }),
   );
   await writeFile(path.join(repository, "index.ts"), "export default () => () => {};\n");
@@ -36,7 +36,7 @@ async function commitAll(repository: string, message: string): Promise<string> {
 
 describe("managed Git plugin sources", () => {
   it("does not expose Git URL credentials when cloning fails", async () => {
-    const home = await mkdtemp(path.join(tmpdir(), "paseo-plugin-git-home-"));
+    const home = await mkdtemp(path.join(tmpdir(), "fde-plugin-git-home-"));
     roots.push(home);
     const sources = new ManagedPluginSources(home);
 
@@ -48,7 +48,7 @@ describe("managed Git plugin sources", () => {
 
   it("tracks branches, prepares updates, persists commits, and keeps tags pinned", async () => {
     const repository = await createRepository();
-    const home = await mkdtemp(path.join(tmpdir(), "paseo-plugin-git-home-"));
+    const home = await mkdtemp(path.join(tmpdir(), "fde-plugin-git-home-"));
     roots.push(home);
     const remote = pathToFileURL(repository).href;
     const sources = new ManagedPluginSources(home);

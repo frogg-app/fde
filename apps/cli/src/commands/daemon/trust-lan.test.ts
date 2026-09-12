@@ -64,7 +64,7 @@ describe("daemon trust-lan", () => {
     const home = createHome();
     // This test process stands in for the daemon: the pid file makes the CLI treat it as running.
     writeFileSync(
-      path.join(home, "paseo.pid"),
+      path.join(home, "fde.pid"),
       JSON.stringify({ pid: process.pid, listen: "127.0.0.1:65001" }),
     );
     const reloads: string[] = [];
@@ -85,7 +85,7 @@ describe("daemon trust-lan", () => {
 
     const overridden = await setTrustLanInConfig("on", { home, reloadLive });
     expect(overridden.applied).toEqual({ status: "env_override" });
-    expect(overridden.message).toContain("PASEO_TRUST_LAN");
+    expect(overridden.message).toContain("FDE_TRUST_LAN");
 
     const failed = await setTrustLanInConfig("on", { home, reloadLive });
     expect(failed.applied).toEqual({

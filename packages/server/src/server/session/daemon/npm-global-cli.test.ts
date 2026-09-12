@@ -1,6 +1,6 @@
 import path from "node:path";
 import { describe, expect, test } from "vitest";
-import { DefaultNpmGlobalPaseoCli } from "./npm-global-cli.js";
+import { DefaultNpmGlobalFdeCli } from "./npm-global-cli.js";
 
 interface CommandCall {
   command: string;
@@ -13,7 +13,7 @@ const globalRoot = path.join(path.sep, "global", "lib");
 const globalNodeModules = path.join(globalRoot, "node_modules");
 const cliPackagePath = path.join(globalNodeModules, "@fde", "cli");
 
-function npmGlobalPaseoCliJson(version: string, options?: { linked?: boolean }): string {
+function npmGlobalFdeCliJson(version: string, options?: { linked?: boolean }): string {
   return JSON.stringify({
     name: "lib",
     path: globalRoot,
@@ -27,17 +27,17 @@ function npmGlobalPaseoCliJson(version: string, options?: { linked?: boolean }):
   });
 }
 
-describe("DefaultNpmGlobalPaseoCli", () => {
+describe("DefaultNpmGlobalFdeCli", () => {
   test("inspects the npm global cli install with npm -g ls", async () => {
     const calls: CommandCall[] = [];
-    const cli = new DefaultNpmGlobalPaseoCli(async (command, args, options) => {
+    const cli = new DefaultNpmGlobalFdeCli(async (command, args, options) => {
       calls.push({
         command,
         args,
         timeout: options?.timeout,
         maxBuffer: options?.maxBuffer,
       });
-      return { exitCode: 0, stdout: npmGlobalPaseoCliJson("0.1.15"), stderr: "" };
+      return { exitCode: 0, stdout: npmGlobalFdeCliJson("0.1.15"), stderr: "" };
     });
 
     await expect(cli.inspect()).resolves.toEqual({
@@ -58,7 +58,7 @@ describe("DefaultNpmGlobalPaseoCli", () => {
 
   test("runs the global install command for the latest cli", async () => {
     const calls: CommandCall[] = [];
-    const cli = new DefaultNpmGlobalPaseoCli(async (command, args, options) => {
+    const cli = new DefaultNpmGlobalFdeCli(async (command, args, options) => {
       calls.push({
         command,
         args,
@@ -84,7 +84,7 @@ describe("DefaultNpmGlobalPaseoCli", () => {
   });
 
   test("reports missing npm when npm exits without JSON", async () => {
-    const cli = new DefaultNpmGlobalPaseoCli(async () => ({
+    const cli = new DefaultNpmGlobalFdeCli(async () => ({
       exitCode: 127,
       stdout: "",
       stderr: "npm: command not found",
@@ -94,7 +94,7 @@ describe("DefaultNpmGlobalPaseoCli", () => {
   });
 
   test("reports missing global cli when npm output has no cli dependency", async () => {
-    const cli = new DefaultNpmGlobalPaseoCli(async () => ({
+    const cli = new DefaultNpmGlobalFdeCli(async () => ({
       exitCode: 1,
       stdout: JSON.stringify({ name: "lib", path: globalRoot, dependencies: {} }),
       stderr: "missing",

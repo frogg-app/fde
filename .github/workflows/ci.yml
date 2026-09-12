@@ -147,95 +147,24 @@ jobs:
       - name: Test server (unit, no e2e)
         run: npx vitest run --root packages/server --fileParallelism --exclude "**/*.e2e.test.ts" --shard=${{ matrix.shard }}/5
 
-  daemon-rs:
-    name: daemon (rust)
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy, rustfmt
-
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: apps/daemon-rs
-          # Distinct from the desktop crate's key: sharing one would let a cache
-          # warmed by either poison the other (see the desktop job).
-          shared-key: daemon-rs-x86_64-unknown-linux-gnu
-
-      - uses: ./.github/actions/setup-node-deps
-
-      - name: Generated protocol types are current
-        run: ./scripts/ci/check-generated-rust.sh
-
-      - name: Check formatting
-        working-directory: apps/daemon-rs
-        run: cargo fmt --check
-
-      - name: Clippy
-        working-directory: apps/daemon-rs
-        run: cargo clippy --all-targets -- -D warnings
-
-      - name: Test
-        working-directory: apps/daemon-rs
-        run: cargo test
-
   desktop:
-    name: desktop (linux deb)
-    # ubuntu-22.04 like release.yml: the two share a Rust cache, and a build
-    # script compiled against 24.04's glibc cannot run on the release runner.
+    name: Electron desktop (Linux)
     runs-on: ubuntu-22.04
-    # Platform builds are slow; keep them off the pull-request gate and run them
-    # once the change is on main (or on demand via workflow_dispatch).
     if: github.event_name != 'pull_request'
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
-
-      - uses: actions/setup-node@v7
+      - uses: ./.github/actions/setup-node-deps
+      - run: npm run install:electron --workspace=@fde/desktop-electron
+      - run: npm run build:app-deps
+      - run: npm run test --workspace=@fde/desktop-electron
+      - run: npm run build:desktop -- --target linux-x64
+      - uses: actions/upload-artifact@v7
         with:
-          node-version: "22"
-          cache: npm
-
-      - name: Install Linux Tauri dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            libwebkit2gtk-4.1-dev libayatana-appindicator3-dev \
-            librsvg2-dev patchelf build-essential curl wget file libssl-dev libgtk-3-dev
-
-      - uses: dtolnay/rust-toolchain@stable
-
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: apps/desktop/src-tauri
-          # The runner image is part of the key: rust-cache only distinguishes
-          # `runner.os` ("Linux" for both 22.04 and 24.04), so without it a cache
-          # warmed on one image poisons a job on the other.
-          shared-key: desktop-x86_64-unknown-linux-gnu-ubuntu-22.04
-
-      - name: Install dependencies
-        run: node scripts/ci/npm-retry.mjs ci
-
-      - name: Build web UI
-        run: npm run build:ui
-
-      - name: Desktop tests (bridge bundle + cargo test)
-        run: npm run test --workspace=@fde/desktop
-
-      # The npm-distributed Tauri CLI is a prebuilt binary, so this is much faster
-      # than `cargo install tauri-cli` and needs no extra cache.
-      - name: Build Linux deb
-        working-directory: apps/desktop
-        run: node --import tsx ../../scripts/dev/branded-run.mts tauri build --bundles deb
-
-      - name: Upload deb
-        uses: actions/upload-artifact@v7
-        with:
-          name: fde-linux-deb
-          path: apps/desktop/src-tauri/target/release/bundle/deb/*.deb
+          name: fde-linux-desktop
+          path: |
+            apps/desktop-electron/release/*.deb
+            apps/desktop-electron/release/*.AppImage
           retention-days: 7
           if-no-files-found: error
 

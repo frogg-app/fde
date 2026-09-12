@@ -8,7 +8,7 @@ import { Command } from "commander";
  * feature - the domain vocabulary everywhere else is already "triggers".
  *
  * Every subcommand is disabled pending a rewrite. The previous implementation
- * defaulted to `https://hub.paseo.sh`, an upstream-hosted service this project
+ * defaulted to an upstream-hosted service this project
  * does not run, and enrolling pointed a third party at a standing connection
  * able to run coding agents against local repositories. The daemon-side
  * protocol (`packages/server/src/server/hub/`) and the old CLI implementation
@@ -34,7 +34,7 @@ export const TRIGGERS_DISABLED_MESSAGE =
   "Triggers are disabled pending a rewrite.\n" +
   "\n" +
   "The previous implementation enrolled this daemon with an upstream-hosted\n" +
-  "service (https://hub.paseo.sh) that could create workspaces and run agents\n" +
+  "service that could create workspaces and run agents\n" +
   "here. Nothing connects to it now.\n" +
   "\n" +
   'Track this at ROADMAP.md under "Triggers".';

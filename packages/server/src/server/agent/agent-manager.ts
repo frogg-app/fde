@@ -70,9 +70,9 @@ import {
 } from "./agent-run-state.js";
 import { invokeRewindCapability, type RewindMode } from "./rewind/rewind.js";
 import { isSystemInjectedEnvelope } from "./agent-prompt.js";
-import { stripInternalPaseoMcpServer, withRuntimePaseoMcpServer } from "./runtime-mcp-config.js";
+import { stripInternalFdeMcpServer, withRuntimeFdeMcpServer } from "./runtime-mcp-config.js";
 import { resolveCreateAgentTitles } from "./create-agent-title.js";
-import type { PaseoToolCatalogFactory } from "./tools/types.js";
+import type { FdeToolCatalogFactory } from "./tools/types.js";
 import {
   ProviderSubagentStore,
   type ProviderSubagentDescriptor,
@@ -170,7 +170,7 @@ function buildStoredAgentConfig(record: StoredAgentRecord): AgentSessionConfig {
     config.systemPrompt = record.config.systemPrompt;
   }
   if (record.config.mcpServers != null) config.mcpServers = record.config.mcpServers;
-  return stripInternalPaseoMcpServer(config);
+  return stripInternalFdeMcpServer(config);
 }
 
 export { AGENT_LIFECYCLE_STATUSES, type AgentLifecycleStatus };
@@ -278,8 +278,8 @@ export interface AgentManagerOptions {
   terminalManager?: TerminalManager | null;
   mcpBaseUrl?: string;
   mcpAuthToken?: string;
-  paseoToolsEnabled?: boolean;
-  paseoToolCatalogFactory?: PaseoToolCatalogFactory;
+  fdeToolsEnabled?: boolean;
+  fdeToolCatalogFactory?: FdeToolCatalogFactory;
   appendSystemPrompt?: string;
   agentStreamCoalesceWindowMs?: number;
   rescueTimeouts?: AgentManagerRescueTimeouts;
@@ -689,8 +689,8 @@ export class AgentManager {
   private readonly agentStreamCoalescer: AgentStreamCoalescer;
   private mcpBaseUrl: string | null;
   private readonly mcpAuthToken: string | null;
-  private paseoToolsEnabled = true;
-  private paseoToolCatalogFactory: PaseoToolCatalogFactory | null = null;
+  private fdeToolsEnabled = true;
+  private fdeToolCatalogFactory: FdeToolCatalogFactory | null = null;
   private appendSystemPrompt: string;
   private onAgentAttention?: AgentAttentionCallback;
   private onAgentArchived?: AgentArchivedCallback;
@@ -708,7 +708,7 @@ export class AgentManager {
     this.onWorkspaceStateMayHaveChanged = options?.onWorkspaceStateMayHaveChanged;
     this.mcpBaseUrl = options?.mcpBaseUrl ?? null;
     this.mcpAuthToken = options?.mcpAuthToken ?? null;
-    this.configurePaseoTools(options);
+    this.configureFdeTools(options);
     this.appendSystemPrompt = options.appendSystemPrompt ?? "";
     this.logger = options.logger.child({ module: "agent", component: "agent-manager" });
     this.rescueTimeouts = {
@@ -732,9 +732,9 @@ export class AgentManager {
     });
   }
 
-  private configurePaseoTools(options: AgentManagerOptions): void {
-    this.paseoToolsEnabled = options.paseoToolsEnabled ?? true;
-    this.paseoToolCatalogFactory = options.paseoToolCatalogFactory ?? null;
+  private configureFdeTools(options: AgentManagerOptions): void {
+    this.fdeToolsEnabled = options.fdeToolsEnabled ?? true;
+    this.fdeToolCatalogFactory = options.fdeToolCatalogFactory ?? null;
   }
 
   registerClient(provider: AgentProvider, client: AgentClient): void {
@@ -778,16 +778,20 @@ export class AgentManager {
     this.mcpBaseUrl = url;
   }
 
+  hasPendingAgentRegistrations(): boolean {
+    return this.agentRegistrationTasks.size > 0;
+  }
+
   prepareForShutdown(): void {
     this.acceptingAgentRegistrations = false;
   }
 
-  setPaseoToolsEnabled(enabled: boolean): void {
-    this.paseoToolsEnabled = enabled;
+  setFdeToolsEnabled(enabled: boolean): void {
+    this.fdeToolsEnabled = enabled;
   }
 
-  setPaseoToolCatalogFactory(factory: PaseoToolCatalogFactory | null): void {
-    this.paseoToolCatalogFactory = factory;
+  setFdeToolCatalogFactory(factory: FdeToolCatalogFactory | null): void {
+    this.fdeToolCatalogFactory = factory;
   }
 
   /**
@@ -1296,9 +1300,7 @@ export class AgentManager {
     );
     let handedToRegistration = false;
     try {
-      const importedConfig = await this.normalizeConfig(
-        stripInternalPaseoMcpServer(imported.config),
-      );
+      const importedConfig = await this.normalizeConfig(stripInternalFdeMcpServer(imported.config));
       const timelineRows = buildImportedTimelineRows(imported.timeline);
       const initialTitle = resolveImportedAgentTitle(importedConfig, timelineRows);
 
@@ -1330,7 +1332,7 @@ export class AgentManager {
   // config swaps). When `rehydrateFromDisk` is set, the timeline is wiped so a
   // new epoch is minted and provider history is re-streamed — this is what the
   // user-facing "Reload agent" action wants when the on-disk session was
-  // mutated outside Paseo.
+  // mutated outside Fde.
   reloadAgentSession(
     agentId: string,
     overrides?: Partial<AgentSessionConfig>,
@@ -4801,9 +4803,9 @@ export class AgentManager {
     agentId: string,
     env?: Record<string, string>,
   ): Promise<PreparedSessionConfig> {
-    const storedConfig = await this.normalizeConfig(stripInternalPaseoMcpServer(config), { env });
+    const storedConfig = await this.normalizeConfig(stripInternalFdeMcpServer(config), { env });
     const launchConfig = this.applyDaemonAppendSystemPrompt(
-      withRuntimePaseoMcpServer({
+      withRuntimeFdeMcpServer({
         config: storedConfig,
         agentId,
         mcpBaseUrl: this.mcpBaseUrl,
@@ -4836,16 +4838,16 @@ export class AgentManager {
       agentId,
       env: {
         ...env,
-        PASEO_AGENT_ID: agentId,
-        PASEO_AGENT_CWD: cwd,
+        FDE_AGENT_ID: agentId,
+        FDE_AGENT_CWD: cwd,
       },
     };
     if (
-      this.paseoToolsEnabled &&
-      client.capabilities.supportsNativePaseoTools &&
-      this.paseoToolCatalogFactory
+      this.fdeToolsEnabled &&
+      client.capabilities.supportsNativeFdeTools &&
+      this.fdeToolCatalogFactory
     ) {
-      context.paseoTools = await this.paseoToolCatalogFactory({ callerAgentId: agentId });
+      context.fdeTools = await this.fdeToolCatalogFactory({ callerAgentId: agentId });
     }
     return context;
   }
@@ -4854,7 +4856,7 @@ export class AgentManager {
     launchConfig: AgentSessionConfig,
     launchContext: AgentLaunchContext,
   ): AgentSessionConfig {
-    return launchContext.paseoTools ? stripInternalPaseoMcpServer(launchConfig) : launchConfig;
+    return launchContext.fdeTools ? stripInternalFdeMcpServer(launchConfig) : launchConfig;
   }
 
   private async requireAvailableClient(options: { provider: AgentProvider }): Promise<AgentClient> {

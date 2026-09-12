@@ -5,7 +5,7 @@ import { WebSocket } from "ws";
 import { afterEach, describe, expect, test } from "vitest";
 
 import { parseAnyConnectionOfferFromUrl } from "@fde/protocol/connection-offer";
-import { createTestPaseoDaemon, type TestPaseoDaemon } from "./test-utils/paseo-daemon.js";
+import { createTestFdeDaemon, type TestFdeDaemon } from "./test-utils/fde-daemon.js";
 
 /**
  * The test daemon binds 127.0.0.1, so a remote visitor is simulated with
@@ -47,11 +47,11 @@ function wsClose(
 
 describe("first-run claim gate", () => {
   let tempRoot: string | null = null;
-  let daemonHandle: TestPaseoDaemon | null = null;
+  let daemonHandle: TestFdeDaemon | null = null;
 
   async function startDaemon(
     options: { password?: string; trustLan?: boolean } = {},
-  ): Promise<TestPaseoDaemon> {
+  ): Promise<TestFdeDaemon> {
     tempRoot = await mkdtemp(path.join(os.tmpdir(), "fde-claim-gate-"));
     const distDir = path.join(tempRoot, "dist");
     await mkdir(distDir, { recursive: true });
@@ -59,7 +59,7 @@ describe("first-run claim gate", () => {
       path.join(distDir, "index.html"),
       "<!DOCTYPE html><html><head></head><body>the app</body></html>",
     );
-    daemonHandle = await createTestPaseoDaemon({
+    daemonHandle = await createTestFdeDaemon({
       mcpEnabled: false,
       webUi: { enabled: true, distDir },
       trustLan: options.trustLan,
@@ -147,8 +147,8 @@ describe("first-run claim gate", () => {
     });
     expect(withCredential.status).toBe(200);
     expect((await fetch(`${base}/api/status`, { headers: PUBLIC })).status).toBe(401);
-    expect(await wsClose(port, PUBLIC, `paseo.bearer.${minted.credential}`)).toBe("open");
-    expect(await wsClose(port, PUBLIC, "paseo.bearer.wrong")).toEqual({
+    expect(await wsClose(port, PUBLIC, `fde.bearer.${minted.credential}`)).toBe("open");
+    expect(await wsClose(port, PUBLIC, "fde.bearer.wrong")).toEqual({
       code: 4401,
       reason: "Incorrect password",
     });
@@ -204,7 +204,7 @@ describe("first-run claim gate", () => {
     });
     expect(claimed.status).toBe(201);
     const minted = (await claimed.json()) as { credential: string };
-    expect(await wsClose(port, PUBLIC, `paseo.bearer.${minted.credential}`)).toBe("open");
+    expect(await wsClose(port, PUBLIC, `fde.bearer.${minted.credential}`)).toBe("open");
   });
 
   test("with trustLan off a LAN visitor sees the gate and needs a bearer", async () => {

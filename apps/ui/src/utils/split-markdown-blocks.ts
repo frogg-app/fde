@@ -2,6 +2,52 @@ import MarkdownIt from "markdown-it";
 
 const markdownBlockParser = new MarkdownIt();
 
+/**
+ * Budget for the split cache, charged in characters of source.
+ *
+ * Splitting runs a full markdown-it block parse, so callers that ask repeatedly for the
+ * same message -- the web virtualizer's height estimator asks once per unmeasured row
+ * per sweep -- otherwise re-parse the whole document every time. Charged in characters
+ * rather than entries because one entry holds a copy of its key.
+ */
+const MAX_SPLIT_CACHE_CHARS = 2_000_000;
+
+const splitCache = new Map<string, MarkdownBlockRange[]>();
+let splitCacheChars = 0;
+
+function readSplitCache(text: string): MarkdownBlockRange[] | undefined {
+  const cached = splitCache.get(text);
+  if (cached === undefined) {
+    return undefined;
+  }
+  // Re-insert so the map's iteration order stays least-recently-used first.
+  splitCache.delete(text);
+  splitCache.set(text, cached);
+  return cached;
+}
+
+function writeSplitCache(text: string, blocks: MarkdownBlockRange[]): void {
+  if (text.length > MAX_SPLIT_CACHE_CHARS) {
+    return;
+  }
+  splitCache.set(text, blocks);
+  splitCacheChars += text.length;
+  while (splitCacheChars > MAX_SPLIT_CACHE_CHARS) {
+    const oldest = splitCache.keys().next().value;
+    if (oldest === undefined) {
+      break;
+    }
+    splitCache.delete(oldest);
+    splitCacheChars -= oldest.length;
+  }
+}
+
+/** Drop every cached split. Exposed for tests; nothing in the app needs it. */
+export function clearMarkdownBlockSplitCache(): void {
+  splitCache.clear();
+  splitCacheChars = 0;
+}
+
 /** A block together with the half-open source range it was cut from. */
 export interface MarkdownBlockRange {
   text: string;
@@ -20,6 +66,11 @@ export interface MarkdownBlockRange {
 export function splitMarkdownBlocksWithRanges(text: string): MarkdownBlockRange[] {
   if (text.length === 0) {
     return [];
+  }
+
+  const cached = readSplitCache(text);
+  if (cached !== undefined) {
+    return cached;
   }
 
   const blocks: MarkdownBlockRange[] = [];
@@ -86,6 +137,7 @@ export function splitMarkdownBlocksWithRanges(text: string): MarkdownBlockRange[
 
   flush();
 
+  writeSplitCache(text, blocks);
   return blocks;
 }
 

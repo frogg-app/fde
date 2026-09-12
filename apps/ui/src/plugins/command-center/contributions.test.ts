@@ -1,5 +1,5 @@
 import { QueryClient } from "@tanstack/react-query";
-import { createPaseoApi, type PaseoApi } from "@fde/client";
+import { createFdeApi, type FdeApi } from "@fde/client";
 import { DaemonClient } from "@fde/client/internal/daemon-client";
 import {
   defineRpc,
@@ -15,9 +15,9 @@ import { buildPluginCommandCenterContributions } from "./contributions";
 const workspace: PluginWorkspaceSnapshot = {
   id: "workspace-1",
   projectId: "project-1",
-  projectDisplayName: "Paseo",
-  projectRootPath: "/repo/paseo",
-  directory: "/repo/paseo/review",
+  projectDisplayName: "Fde",
+  projectRootPath: "/repo/fde",
+  directory: "/repo/fde/review",
   projectKind: "git",
   kind: "worktree",
   name: "Review",
@@ -126,7 +126,7 @@ function createRuntime(pluginId: string) {
     clientType: "cli",
   });
   return {
-    paseo: createPaseoApi(client),
+    fde: createFdeApi(client),
     invoke: async (method: string, input: unknown) => {
       expect(pluginId).toBe("review");
       expect(method).toBe("review.inspect");
@@ -176,11 +176,11 @@ describe("plugin Command Center contributions", () => {
   it("supplies the direct API, typed RPC, snapshots, and narrow navigation", async () => {
     const opened: string[] = [];
     let rpcValue = 0;
-    let receivedPaseo: PaseoApi | null = null;
+    let receivedFde: FdeApi | null = null;
     const installed = plugin(async (context) => {
       expect(context.workspace).toBe(workspace);
       expect(context.agent).toBe(agent);
-      receivedPaseo = context.paseo;
+      receivedFde = context.fde;
       rpcValue = (await context.rpc(inspect, { value: 4 })).value;
       context.openSurface("main");
       context.openPanel("details", { location: "explorer" });
@@ -211,7 +211,7 @@ describe("plugin Command Center contributions", () => {
     await actions.find((action) => action.id === "review:agent")?.run();
 
     expect(rpcValue).toBe(5);
-    expect(receivedPaseo).toBe(runtime.paseo);
+    expect(receivedFde).toBe(runtime.fde);
     expect(opened).toEqual(["review/surface/main", "review/agent/details/agent-1/explorer"]);
   });
 

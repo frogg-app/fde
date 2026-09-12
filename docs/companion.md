@@ -109,8 +109,8 @@ models:
 ```
 
 `backend` accepts `subscription`, `claude`, `codex`, or `api`.
-`PASEO_COMPANION_BACKEND` is the environment alternative. Persisted configuration
-wins. `model` or `PASEO_COMPANION_MODEL` overrides the conversation model. Defaults
+`FDE_COMPANION_BACKEND` is the environment alternative. Persisted configuration
+wins. `model` or `FDE_COMPANION_MODEL` overrides the conversation model. Defaults
 are `claude-haiku-4-5` and `gpt-5.6-luna` with low reasoning. Availability still
 depends on the account and provider version; model failures are reported rather
 than silently switching to another billing method.
@@ -140,8 +140,8 @@ flowchart LR
 Local speech uses the existing Sherpa runtime. The default English voice is now
 **Kitten nano 0.8 FP32, Rosie**, approximately 61 MiB. Explicitly configured
 Piper and Kokoro voices remain supported. Host overrides use
-`PASEO_VOICE_LOCAL_TTS_MODEL`, `PASEO_VOICE_LOCAL_TTS_SPEAKER_ID` and
-`PASEO_VOICE_LOCAL_TTS_SPEED`; the default Kitten speaker is 5.
+`FDE_VOICE_LOCAL_TTS_MODEL`, `FDE_VOICE_LOCAL_TTS_SPEAKER_ID` and
+`FDE_VOICE_LOCAL_TTS_SPEED`; the default Kitten speaker is 5.
 See the [polish design and measurements](companion-polish-plan.md). Recognition retains Parakeet and existing configurable
 endpointing. Missing downloads and unavailable speech providers prevent startup.
 Native Codex voice does not require local speech models.
@@ -267,3 +267,26 @@ reconnection. It adjusts synthesis, keeping pitch intact, and multiplies any
 explicit host local-TTS speed. Other voice features retain their configured
 speed. The experimental native Codex voice path does not expose this local
 synthesis control. Older daemons require updating to honor the new preference.
+
+### Mobile audio routing
+
+App Settings → Companion → Audio mode selects **Call** (default) or **Media**,
+starting with the next conversation. Android Media uses `MODE_NORMAL`,
+`USAGE_MEDIA` playback/focus and normal microphone capture instead of requesting
+communication routing. iOS retains microphone-capable `playAndRecord`, using
+`default` mode with A2DP output and no voice-processing unit; capture is converted
+from the hardware sample rate to the wire's 16 kHz. Call retains the existing
+voice-chat processing and headset-microphone routing.
+
+Media is not a promise of high-quality Bluetooth output and headset-microphone
+input simultaneously. The OS/device determines available routes; headphones are
+recommended because echo rejection can differ. See the platform
+[Android audio attributes](https://developer.android.com/reference/android/media/AudioAttributes)
+and [Apple A2DP option](https://developer.apple.com/documentation/avfaudio/avaudiosession/categoryoptions-swift.struct/allowbluetootha2dp).
+This requires a rebuilt native app, with physical Android/iOS speaker, wired,
+Bluetooth, background and interruption checks still outstanding. Older native
+binaries reject Media selection with an update-required error.
+
+Muting crossfades the artwork's coloured layers to luminance-matched monochrome
+in 150 ms; unmuting reverses it. Ongoing output motion remains independent from
+microphone state. The minimized presence shares this behavior.

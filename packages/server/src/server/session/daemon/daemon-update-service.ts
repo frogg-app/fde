@@ -17,8 +17,8 @@ import { readLastUpdateResult, type DaemonInstallInfo } from "./daemon-update-in
  * Runs `fde daemon self-update` for clients. One instance per daemon: it
  * owns the single in-flight run and broadcasts `daemon.update.run.progress`
  * to every session. The CLI does the work (download, verify, install) and
- * hands off to its detached supervisor, which restarts this process; the
- * outcome is read back from `last-update.json` by whichever daemon comes up.
+ * hands off to its detached supervisor. Legacy mode restarts this process;
+ * retained execution reconciles `last-update.json` after the gateway restarts.
  */
 export type CheckPayload = Omit<DaemonUpdateCheckResponse["payload"], "requestId">;
 export type StartPayload = Omit<DaemonUpdateStartResponse["payload"], "requestId">;
@@ -33,8 +33,10 @@ export type SpawnUpdateCli = (
 export interface DaemonUpdateServiceOptions {
   install: DaemonInstallInfo;
   daemonVersion: string;
-  paseoHome: string;
+  fdeHome: string;
   listen: string | null;
+  getListen?: () => string | null;
+  retainAcrossGatewayRestart?: boolean;
   logger: pino.Logger;
   env?: NodeJS.ProcessEnv;
   spawnCli?: SpawnUpdateCli;
@@ -90,8 +92,12 @@ const defaultSpawnCli: SpawnUpdateCli = (command, args, options) =>
 export class DaemonUpdateService {
   private readonly install: DaemonInstallInfo;
   private readonly daemonVersion: string;
-  private readonly paseoHome: string;
+  private readonly fdeHome: string;
   private readonly listen: string | null;
+  private readonly getListen: (() => string | null) | undefined;
+  private readonly retainAcrossGatewayRestart: boolean;
+  private runStartedAt = 0;
+  private handedOff = false;
   private readonly logger: pino.Logger;
   private readonly env: NodeJS.ProcessEnv;
   private readonly spawnCli: SpawnUpdateCli;
@@ -102,8 +108,10 @@ export class DaemonUpdateService {
   constructor(options: DaemonUpdateServiceOptions) {
     this.install = options.install;
     this.daemonVersion = options.daemonVersion;
-    this.paseoHome = options.paseoHome;
+    this.fdeHome = options.fdeHome;
     this.listen = options.listen;
+    this.getListen = options.getListen;
+    this.retainAcrossGatewayRestart = options.retainAcrossGatewayRestart === true;
     this.logger = options.logger.child({ module: "daemon-update" });
     this.env = options.env ?? process.env;
     this.spawnCli = options.spawnCli ?? defaultSpawnCli;
@@ -119,10 +127,12 @@ export class DaemonUpdateService {
   }
 
   currentRun(): DaemonUpdateRun | null {
+    this.reconcileHandoff();
     return this.run;
   }
 
   status(): StatusPayload {
+    this.reconcileHandoff();
     return {
       updatable: this.install.updatable,
       reason: this.install.reason,
@@ -167,6 +177,7 @@ export class DaemonUpdateService {
   async start(
     input: { version?: string; channel?: DaemonUpdateChannel } = {},
   ): Promise<StartPayload> {
+    this.reconcileHandoff();
     if (!this.install.updatable || !this.install.cliLauncher) {
       return { accepted: false, runId: null, targetVersion: null, error: this.install.reason };
     }
@@ -179,13 +190,15 @@ export class DaemonUpdateService {
       };
     }
     const runId = randomUUID();
+    this.runStartedAt = Date.now();
+    this.handedOff = false;
     this.run = {
       runId,
       from: this.daemonVersion,
       to: input.version ?? "latest",
       phase: "check",
       message: "resolving release",
-      at: new Date().toISOString(),
+      at: new Date(this.runStartedAt).toISOString(),
     };
     this.broadcast();
     const args = [
@@ -209,11 +222,23 @@ export class DaemonUpdateService {
     return { accepted: true, runId, targetVersion: input.version ?? null, error: null };
   }
 
+  private reconcileHandoff(): void {
+    if (!this.retainAcrossGatewayRestart || !this.handedOff || !this.run) return;
+    const result = readLastUpdateResult(this.install.installDir);
+    if (!result || result.to !== this.run.to) return;
+    const completedAt = Date.parse(result.at);
+    if (!Number.isFinite(completedAt) || completedAt < this.runStartedAt) return;
+    // Status exposes the terminal result; no active run remains to block the next update.
+    this.run = null;
+    this.handedOff = false;
+  }
+
   private finishRun(runId: string, result: CliResultEvent | null): void {
     if (!this.run || this.run.runId !== runId) return;
     const status = result?.status ?? "failed";
     if (status === "handoff") {
-      // The supervisor restarts this daemon; the outcome lands in last-update.json.
+      // Retained execution observes the detached supervisor result after gateway restart.
+      this.handedOff = true;
       this.update("restart", `restarting into ${result?.targetVersion ?? this.run.to}`);
       return;
     }
@@ -248,17 +273,19 @@ export class DaemonUpdateService {
       "self-update",
       "--json",
       "--home",
-      this.paseoHome,
+      this.fdeHome,
       "--install-dir",
       this.install.installDir,
       ...extraArgs,
     ];
+    const listen = this.getListen ? this.getListen() : this.listen;
     const env: NodeJS.ProcessEnv = {
       ...this.env,
-      [`${brand.envPrefix}_HOME`]: this.paseoHome,
+      [`${brand.envPrefix}_HOME`]: this.fdeHome,
       FDE_INSTALL_DIR: this.install.installDir,
-      ...(this.listen ? { PASEO_LISTEN: this.listen } : {}),
+      ...(listen ? { FDE_LISTEN: listen } : {}),
     };
+    if (this.getListen && !listen) delete env.FDE_LISTEN;
     this.logger.info({ launcher, args: extraArgs, runId }, "running fde daemon self-update");
     return new Promise((resolve, reject) => {
       const child = this.spawnCli(launcher, args, { env });

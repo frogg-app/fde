@@ -5,7 +5,7 @@ import path from "node:path";
 
 /**
  * The FDE home directory as the daemon resolves it, without creating anything:
- * `FDE_HOME`, then the legacy `PASEO_HOME`, then `~/.fde`. Mirrors
+ * `FDE_HOME`, then `~/.fde`. Mirrors
  * `resolveFdeHome` in `@fde/server` for the CLI's read-only path lookups.
  */
 export const FDE_HOME_DIR_NAME = brand.homeDir;

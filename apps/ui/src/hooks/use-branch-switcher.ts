@@ -94,7 +94,7 @@ export function useBranchSwitcher({
     async (branchId: string) => {
       if (!operations) return;
       try {
-        const stashPayload = await operations.listPaseoStashes();
+        const stashPayload = await operations.listFdeStashes();
         const targetStash = stashPayload.entries.find((e) => e.branch === branchId);
         if (!targetStash) return;
         const shouldRestore = await confirmDialog({

@@ -8,9 +8,11 @@ use std::path::{Component, Path, PathBuf};
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine;
 use serde_json::{json, Value};
+use std::collections::HashSet;
 
 pub const DIRNAME: &str = "desktop-attachments";
 
+#[derive(Clone)]
 pub struct AttachmentStore {
     dir: PathBuf,
 }
@@ -197,7 +199,9 @@ impl AttachmentStore {
 
     pub fn garbage_collect(&self, args: &Value) -> Result<Value, String> {
         let dir = self.ensure_dir()?;
-        let referenced: Vec<String> = args
+        // A set, not a list: this is checked once per file on disk, so a linear scan makes
+        // collection cost files x referenced ids.
+        let referenced: HashSet<String> = args
             .get("referencedIds")
             .and_then(Value::as_array)
             .map(|ids| {
@@ -221,7 +225,7 @@ impl AttachmentStore {
                 .file_stem()
                 .map(|s| s.to_string_lossy().to_string())
                 .unwrap_or_default();
-            if referenced.iter().any(|id| *id == stem) {
+            if referenced.contains(&stem) {
                 continue;
             }
             fs::remove_file(&path).map_err(|e| e.to_string())?;

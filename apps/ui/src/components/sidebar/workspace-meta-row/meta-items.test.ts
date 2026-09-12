@@ -21,7 +21,7 @@ const LABELS: WorkspaceLabelDefinition[] = [{ name: "Urgent", color: "red" }];
 function select(overrides: Partial<Parameters<typeof selectMetaRowItems>[0]> = {}) {
   return selectMetaRowItems({
     currentBranch: "feature/sidebar-badges",
-    projectName: "Paseo",
+    projectName: "Fde",
     hasHostBadge: true,
     prHint: PR_HINT,
     serviceSummary: SERVICE,

@@ -10,9 +10,9 @@ describe("runCli", () => {
       createCliParseArgv({
         argv: [],
         cwd: process.cwd(),
-        nodeArgv: ["node", "paseo"],
+        nodeArgv: ["node", "fde"],
       }),
-    ).toEqual(["node", "paseo", "--help"]);
+    ).toEqual(["node", "fde", "--help"]);
   });
 
   it("routes explicit root relay flags to onboard", () => {
@@ -20,16 +20,16 @@ describe("runCli", () => {
       createCliParseArgv({
         argv: ["--relay"],
         cwd: process.cwd(),
-        nodeArgv: ["node", "paseo"],
+        nodeArgv: ["node", "fde"],
       }),
-    ).toEqual(["node", "paseo", "onboard", "--relay"]);
+    ).toEqual(["node", "fde", "onboard", "--relay"]);
     expect(
       createCliParseArgv({
         argv: ["--no-relay"],
         cwd: process.cwd(),
-        nodeArgv: ["node", "paseo"],
+        nodeArgv: ["node", "fde"],
       }),
-    ).toEqual(["node", "paseo", "onboard", "--no-relay"]);
+    ).toEqual(["node", "fde", "onboard", "--no-relay"]);
   });
 
   it("preserves known CLI command argv", () => {
@@ -37,9 +37,9 @@ describe("runCli", () => {
       createCliParseArgv({
         argv: ["daemon", "set-password"],
         cwd: process.cwd(),
-        nodeArgv: ["node", "paseo"],
+        nodeArgv: ["node", "fde"],
       }),
-    ).toEqual(["node", "paseo", "daemon", "set-password"]);
+    ).toEqual(["node", "fde", "daemon", "set-password"]);
   });
 
   it("recognizes legacy daemon commands even beside a directory named daemon", () => {
@@ -63,13 +63,13 @@ describe("runCli", () => {
       createCliParseArgv({
         argv: ["hooks", "claude", "UserPromptSubmit"],
         cwd: process.cwd(),
-        nodeArgv: ["node", "paseo"],
+        nodeArgv: ["node", "fde"],
       }),
-    ).toEqual(["node", "paseo", "hooks", "claude", "UserPromptSubmit"]);
+    ).toEqual(["node", "fde", "hooks", "claude", "UserPromptSubmit"]);
   });
 
   it("classifies existing unknown directories as open-project invocations", () => {
-    const root = mkdtempSync(path.join(tmpdir(), "paseo-cli-run-"));
+    const root = mkdtempSync(path.join(tmpdir(), "fde-cli-run-"));
     const project = path.join(root, "repository");
     mkdirSync(project);
 
@@ -78,7 +78,7 @@ describe("runCli", () => {
         createCliParseArgv({
           argv: ["repository"],
           cwd: root,
-          nodeArgv: ["node", "paseo"],
+          nodeArgv: ["node", "fde"],
         }),
       ).toEqual({
         kind: "open-project",

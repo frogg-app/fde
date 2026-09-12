@@ -30,7 +30,10 @@ async function resolved() {
 async function fingerprint() {
   return (await readFile(path.join(root, ".generated/branding/fingerprint"), "utf8")).trim();
 }
-const before = execFileSync("git", ["diff", "--binary", "HEAD"], { cwd: root });
+const before = execFileSync("git", ["diff", "--binary", "HEAD"], {
+  cwd: root,
+  maxBuffer: 64 * 1024 * 1024,
+});
 try {
   prepare(selected);
   const initial = await fingerprint();
@@ -85,10 +88,7 @@ try {
   );
   assert.equal(metadata.brand.applicationId, manifest.applicationId);
   assert.equal(metadata.asset, artifact);
-  const skill = await readFile(
-    path.join(root, ".generated/branding/skills/paseo/SKILL.md"),
-    "utf8",
-  );
+  const skill = await readFile(path.join(root, ".generated/branding/skills/fde/SKILL.md"), "utf8");
   const description = skill.match(/^description: (.+)$/m)?.[1];
   assert.equal(
     JSON.parse(description),
@@ -131,7 +131,7 @@ try {
   await assert.rejects(access(sentinel));
   assert.equal(await fingerprint(), initial, "switching back restores the original build inputs");
   assert.deepEqual(
-    execFileSync("git", ["diff", "--binary", "HEAD"], { cwd: root }),
+    execFileSync("git", ["diff", "--binary", "HEAD"], { cwd: root, maxBuffer: 64 * 1024 * 1024 }),
     before,
     "preparation must leave tracked source untouched",
   );

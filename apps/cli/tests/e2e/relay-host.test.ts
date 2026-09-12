@@ -180,14 +180,14 @@ async function waitForDaemonRelayRegistered(offerUrl: string, timeoutMs = 30_000
     ctx = await createE2ETestContext({
       timeout: 60_000,
       env: {
-        PASEO_RELAY_ENABLED: "true",
-        PASEO_RELAY_ENDPOINT: relayEndpoint,
-        PASEO_RELAY_PUBLIC_ENDPOINT: relayEndpoint,
+        FDE_RELAY_ENABLED: "true",
+        FDE_RELAY_ENDPOINT: relayEndpoint,
+        FDE_RELAY_PUBLIC_ENDPOINT: relayEndpoint,
       },
     });
 
     const offer = await generateLocalPairingOffer({
-      paseoHome: ctx.paseoHome,
+      fdeHome: ctx.fdeHome,
       relayEnabled: true,
       relayEndpoint,
       relayPublicEndpoint: relayEndpoint,
@@ -210,17 +210,17 @@ async function waitForDaemonRelayRegistered(offerUrl: string, timeoutMs = 30_000
     }
   }, SHUTDOWN_TIMEOUT_MS);
 
-  it("runs `paseo --host <offer-url> ls` over the relay and matches direct ls output", async () => {
+  it("runs `fde --host <offer-url> ls` over the relay and matches direct ls output", async () => {
     if (!ctx) throw new Error("test context not initialized");
 
-    const direct = await ctx.paseo(["ls", "--json"]);
+    const direct = await ctx.fde(["ls", "--json"]);
     expect(direct.exitCode, `direct ls failed: ${direct.stderr}`).toBe(0);
     const directAgents = JSON.parse(direct.stdout.trim() || "[]");
     expect(Array.isArray(directAgents)).toBe(true);
 
-    const relay = await ctx.paseo(["ls", "--json", "--host", offerUrl], {
+    const relay = await ctx.fde(["ls", "--json", "--host", offerUrl], {
       timeout: 30_000,
-      env: { PASEO_HOST: offerUrl },
+      env: { FDE_HOST: offerUrl },
     });
     expect(relay.exitCode, `relay ls failed: ${relay.stderr}\nstdout: ${relay.stdout}`).toBe(0);
     const relayAgents = JSON.parse(relay.stdout.trim() || "[]");
