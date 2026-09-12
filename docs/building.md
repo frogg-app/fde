@@ -57,17 +57,21 @@ npm run build:local -- --target windows
 npm run build:local -- --target linux --jobs 1
 ```
 
-The command rebuilds app dependencies and exports the current UI before native
+The command holds the selected brand through its build lease, stamps the current
+UI export, and uses the branded Tauri entrypoint. It rebuilds app dependencies before native
 packaging. It uses one Metro worker and one Cargo worker by default (`--jobs`
 changes Cargo concurrency). Only generated installer outputs are cleared; compiler
 objects stay in `apps/desktop/src-tauri/target`. No install, publish, daemon launch,
 or daemon restart is part of this command.
 
 Packages, checksum sidecars, and `timings.json` land in
-`.dev/builds/<target>-<version>/<timestamp>/`. The report records the source commit,
+`.dev/builds/<brand>/<target>-<version>/<timestamp>/`. The report records the source commit,
 whether the checkout was modified, success/failure, and elapsed seconds per stage.
 A failed stage stops packaging, so a previous executable cannot be reported as a
 successful new build. Compare a first run and a repeat run before quoting speedups.
+On this shared VM, the Windows path took 7m12s on its first measured run and
+2m57s on a repeat; the integrated 0.4.1 branded build took 3m20s with warm caches.
+These measure local packaging, not Windows device execution or a full CI release.
 
 Use an Ubuntu 22.04 build container for portable Linux release packages; a direct
 build on this Ubuntu 24.04 VM targets its newer system libraries. macOS packages

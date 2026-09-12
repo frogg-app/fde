@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import { appendFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { createPaseoDaemon } from "./bootstrap.js";
@@ -7,7 +8,7 @@ import { createRootLogger } from "./logger.js";
 import type { DaemonLifecycleIntent } from "./bootstrap.js";
 import { getProcessDiagnostics } from "./process-diagnostics.js";
 
-process.title = "FDE Daemon";
+process.title = `${brand.name} Daemon`;
 
 type SupervisorLifecycleMessage =
   | {

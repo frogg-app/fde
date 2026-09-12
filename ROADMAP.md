@@ -38,6 +38,10 @@ preserved work outside this checkout.
 Implementation does not imply validation on every target. Keep the gaps below
 visible until device or deployment evidence closes them.
 
+## Active feature work
+
+- [x] **Fork-friendly branding.** Implemented on [PR #49](https://github.com/frogg-app/fde/pull/49). See the [rebranding guide](docs/branding.md), [manifest reference](docs/branding-reference.md), and [validation record](docs/branding-plan.md). The PR carries current platform build results; interactive device acceptance remains separate.
+
 ## Next: establish reliable everyday use
 
 - [ ] **Windows shutdown and relaunch.** User reports large, active WebView2

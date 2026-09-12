@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import path from "path";
 import type { Command } from "commander";
 import type { DaemonClient } from "@fde/client/internal/daemon-client";
@@ -55,7 +56,7 @@ export async function runArchiveCommandWithDeps(
     const error: CommandError = {
       code: "MISSING_WORKTREE_NAME",
       message: "Worktree name is required",
-      details: "Usage: fde worktree archive <name>",
+      details: `Usage: ${brand.cliName} worktree archive <name>`,
     };
     throw error;
   }
@@ -68,7 +69,7 @@ export async function runArchiveCommandWithDeps(
     const error: CommandError = {
       code: "DAEMON_NOT_RUNNING",
       message: `Cannot connect to daemon at ${host}: ${message}`,
-      details: "Start the daemon with: fde daemon start",
+      details: `Start the daemon with: ${brand.cliName} daemon start`,
     };
     throw error;
   }
@@ -95,7 +96,7 @@ export async function runArchiveCommandWithDeps(
       const error: CommandError = {
         code: "WORKTREE_NOT_FOUND",
         message: `Worktree not found: ${nameArg}`,
-        details: 'Use "fde worktree ls" to list available worktrees',
+        details: `Use "${brand.cliName} worktree ls" to list available worktrees`,
       };
       throw error;
     }

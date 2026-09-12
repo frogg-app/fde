@@ -42,3 +42,26 @@ test("rejects a missing or incomplete shared export before removing the previous
   await assert.rejects(packageDaemonWebUi(source, target), { code: "ENOENT" });
   assert.equal(await readFile(join(target, "index.html"), "utf8"), "Previous UI");
 });
+
+test("a shared web export must match the selected brand before replacing daemon assets", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "fde-web-brand-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const source = join(root, "source");
+  const target = join(root, "target");
+  await mkdir(source);
+  await mkdir(target);
+  await writeFile(join(source, "index.html"), "New UI");
+  await writeFile(join(target, "index.html"), "Previous UI");
+  await writeFile(join(source, "brand-build.json"), JSON.stringify({ configFingerprint: "other" }));
+  await assert.rejects(
+    packageDaemonWebUi(source, target, "selected"),
+    /stale or different branding/,
+  );
+  assert.equal(await readFile(join(target, "index.html"), "utf8"), "Previous UI");
+  await writeFile(
+    join(source, "brand-build.json"),
+    JSON.stringify({ configFingerprint: "selected" }),
+  );
+  await packageDaemonWebUi(source, target, "selected");
+  assert.equal(await readFile(join(target, "index.html"), "utf8"), "New UI");
+});

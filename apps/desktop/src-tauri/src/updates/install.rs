@@ -53,7 +53,7 @@ pub fn install(
             Ok(InstallOutcome {
                 installed: true,
                 restart_required: true,
-                detail: "Installer started. FDE closes now and reopens when the update has been applied.".into(),
+                detail: format!("Installer started. {} closes now and reopens when the update has been applied.", crate::branding::NAME),
                 exit_app: true,
                 relaunch: None,
             })
@@ -71,8 +71,10 @@ pub fn install(
             Ok(InstallOutcome {
                 installed: true,
                 restart_required: true,
-                detail: "FDE closes now; the new version replaces the executable and starts again."
-                    .into(),
+                detail: format!(
+                    "{} closes now; the new version replaces the executable and starts again.",
+                    crate::branding::NAME
+                ),
                 exit_app: true,
                 relaunch: None,
             })
@@ -91,7 +93,11 @@ pub fn install(
             Ok(InstallOutcome {
                 installed: true,
                 restart_required: true,
-                detail: format!("Updated {}. FDE restarts now.", target.display()),
+                detail: format!(
+                    "Updated {}. {} restarts now.",
+                    target.display(),
+                    crate::branding::NAME
+                ),
                 exit_app: true,
                 relaunch: Some(target),
             })
@@ -102,8 +108,9 @@ pub fn install(
                 installed: true,
                 restart_required: true,
                 detail: format!(
-                    "Opened {} in the package installer. Restart FDE once it finishes.",
-                    file_name(downloaded)
+                    "Opened {} in the package installer. Restart {} once it finishes.",
+                    file_name(downloaded),
+                    crate::branding::NAME
                 ),
                 exit_app: false,
                 relaunch: None,
@@ -114,7 +121,7 @@ pub fn install(
             Ok(InstallOutcome {
                 installed: true,
                 restart_required: true,
-                detail: "Opened the disk image. Drag FDE to Applications to replace the current version, then relaunch it.".into(),
+                detail: format!("Opened the disk image. Drag {} to Applications to replace the current version, then relaunch it.", crate::branding::NAME),
                 exit_app: false,
                 relaunch: None,
             })

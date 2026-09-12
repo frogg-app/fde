@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import path from "node:path";
 import YAML from "yaml";
 import type { HubDeployBundle } from "./deploy-bundle.js";
@@ -39,7 +40,9 @@ export interface HubInitScaffold {
 }
 
 export function hubLoginResumeCommand(step: "connect" | "init", origin: string): string {
-  return step === "connect" ? `fde hub connect ${origin}` : "fde hub init";
+  return step === "connect"
+    ? `${brand.cliName} hub connect ${origin}`
+    : `${brand.cliName} hub init`;
 }
 
 export function planHubInitOpening(input: {

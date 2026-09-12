@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import os from "node:os";
 
 import {
@@ -51,7 +52,9 @@ export function encodeOfferToPairingUrl(args: {
 }): string {
   const json = JSON.stringify(args.offer);
   const encoded = Buffer.from(json, "utf8").toString("base64url");
-  return buildPairingUrl(args.appBaseUrl, encoded);
+  return args.appBaseUrl
+    ? buildPairingUrl(args.appBaseUrl, encoded)
+    : `${brand.scheme}://pair#offer=${encoded}`;
 }
 
 function getPrimaryLanIp(): string | null {

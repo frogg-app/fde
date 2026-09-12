@@ -10,3 +10,7 @@ originate from Paseo and retain their original license and copyright. The
 desktop shell was rewritten in Tauri for this fork.
 
 See LICENSE for the full license text.
+
+The Windows installer template in packages/branding/templates is derived from
+Tauri bundler 2.9.4, copyright Tauri Programme within The Commons Conservancy,
+licensed under Apache-2.0 OR MIT. Adjacent files retain both licenses.

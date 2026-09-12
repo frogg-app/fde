@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import type { Command } from "commander";
 import type { AgentPermissionRequest } from "@fde/protocol/agent-types";
 import { connectToDaemon, getDaemonHost } from "../../utils/client.js";
@@ -26,7 +27,7 @@ export async function runDenyCommand(
     const error: CommandError = {
       code: "MISSING_ARGUMENT",
       message: "Request ID is required unless --all is specified",
-      details: "Usage: fde permit deny <agent> <req_id> or fde permit deny <agent> --all",
+      details: `Usage: ${brand.cliName} permit deny <agent> <req_id> or ${brand.cliName} permit deny <agent> --all`,
     };
     throw error;
   }
@@ -39,7 +40,7 @@ export async function runDenyCommand(
     const error: CommandError = {
       code: "DAEMON_NOT_RUNNING",
       message: `Cannot connect to daemon at ${host}: ${message}`,
-      details: "Start the daemon with: fde daemon start",
+      details: `Start the daemon with: ${brand.cliName} daemon start`,
     };
     throw error;
   }
@@ -51,7 +52,7 @@ export async function runDenyCommand(
       const error: CommandError = {
         code: "AGENT_NOT_FOUND",
         message: `Agent not found: ${agentIdOrPrefix}`,
-        details: 'Use "fde ls" to list available agents',
+        details: `Use "${brand.cliName} ls" to list available agents`,
       };
       throw error;
     }

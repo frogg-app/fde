@@ -1,3 +1,5 @@
+import { brand, brandIdentity } from "@fde/branding";
+import { installedSkillName } from "@fde/branding/skills";
 import { createHash, randomUUID } from "node:crypto";
 import {
   cp,
@@ -20,7 +22,7 @@ import {
   type SkillSelection,
   type SkillTargets,
 } from "./operations.js";
-import { listFilesRecursive } from "./sync.js";
+import { listFilesRecursive, assertSkillOwnership } from "./sync.js";
 
 export interface SkillsTransaction {
   /** Convergence stuck. Drop the staged copies. */
@@ -51,10 +53,16 @@ interface CapturedDirectory {
   backupPath: string | null;
 }
 
-const MANIFEST_OWNER = "paseo-skills-transaction";
+const MANIFEST_OWNER = brand.legacyFde
+  ? "paseo-skills-transaction"
+  : `${brand.applicationId}-skills-transaction`;
 const MANIFEST_FILENAME = "transaction.json";
-const TRANSACTION_PREFIX = ".paseo-skills-transaction-";
-const RECOVERED_PREFIX = ".paseo-skills-recovered-";
+const TRANSACTION_PREFIX = brand.legacyFde
+  ? ".paseo-skills-transaction-"
+  : `.${brand.id}-skills-transaction-`;
+const RECOVERED_PREFIX = brand.legacyFde
+  ? ".paseo-skills-recovered-"
+  : `.${brand.id}-skills-recovered-`;
 const BACKUP_DIRNAME = "backup";
 const MANAGED_FILES_MANIFEST = ".paseo-managed-files.json";
 
@@ -133,7 +141,9 @@ async function validateEntries(
   transactionDir: string,
   entries: CapturedDirectory[],
 ): Promise<boolean> {
-  const names = new Set(await listManagedSkillNames(targets.sourceDir));
+  const names = new Set(
+    (await listManagedSkillNames(targets.sourceDir)).map((name) => installedSkillName(brand, name)),
+  );
   const roots = [targets.agentsDir, targets.claudeDir, targets.codexDir];
   return entries.every((entry) => {
     const rootIndex = roots.findIndex((root) => path.dirname(entry.livePath) === root);
@@ -190,7 +200,8 @@ async function listAllFiles(rootDir: string): Promise<string[]> {
 }
 
 async function expectedSyncedFiles(sourceDir: string, name: string): Promise<Map<string, Buffer>> {
-  const skillDir = path.join(sourceDir, name);
+  const logical = brand.legacyFde ? name : name.slice(brand.id.length + 1);
+  const skillDir = path.join(sourceDir, logical);
   const files = new Map<string, Buffer>();
   const hashes: Record<string, string> = {};
   for (const rel of await listFilesRecursive(skillDir)) {
@@ -200,7 +211,9 @@ async function expectedSyncedFiles(sourceDir: string, name: string): Promise<Map
   }
   files.set(
     MANAGED_FILES_MANIFEST,
-    Buffer.from(`${JSON.stringify({ version: 1, files: hashes }, null, 2)}\n`),
+    Buffer.from(
+      `${JSON.stringify({ version: 1, brand: brandIdentity, files: hashes }, null, 2)}\n`,
+    ),
   );
   return files;
 }
@@ -524,8 +537,9 @@ export async function beginSkillsTransaction(
   try {
     for (const { root, rootIndex } of uniqueRoots) {
       for (const op of ops) {
-        const name = op.name;
+        const name = installedSkillName(brand, op.name);
         const livePath = path.join(root, name);
+        await assertSkillOwnership(livePath);
         const liveInfo = await lstat(livePath).catch(() => null);
         if (liveInfo === null) {
           entries.push({ livePath, kind: op.kind, backupPath: null });

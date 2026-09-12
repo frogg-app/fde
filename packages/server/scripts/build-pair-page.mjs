@@ -1,3 +1,4 @@
+import { loadBrand } from "../../../scripts/dev/branding/load.cjs";
 /**
  * Bundles the standalone pairing-page service into one self-contained CJS file
  * (dist/pair-page/server.cjs) so the Docker image in deploy/pair needs nothing
@@ -11,6 +12,7 @@ import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
 
 const here = (path) => fileURLToPath(new URL(path, import.meta.url));
+loadBrand();
 const protocolSrc = here("../../protocol/src/");
 
 /** `@fde/protocol/x` resolves to the workspace source, with no install step. */

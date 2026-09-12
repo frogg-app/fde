@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Build a desktop package with warm checkout-local caches and record each stage's duration.
 import { spawnSync } from "node:child_process";
-import { mkdirSync, readFileSync, writeFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync, rmSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
@@ -24,11 +24,18 @@ export function localBuildSteps(target) {
       args: ["--no-install", "expo", "export", "--platform", "web", "--max-workers", "1"],
     },
     {
+      name: "web-stamp",
+      command: "node",
+      args: ["--import", "tsx", "scripts/dev/branding/build-output.mts", "stamp"],
+    },
+    {
       name: "desktop",
-      command: "cargo",
-      cwd: "apps/desktop",
+      command: "node",
       bundleDir: `${releaseDir}/bundle`,
       args: [
+        "--import",
+        "tsx",
+        "scripts/dev/branded-run.mts",
         "tauri",
         "build",
         ...(windows ? ["--runner", "cargo-xwin"] : []),
@@ -63,15 +70,18 @@ export function localBuildSteps(target) {
   ];
 }
 
-export function runLocalBuild({ target, jobs, root = REPO_ROOT, run = spawnSync }) {
-  if (!Number.isInteger(jobs) || jobs < 1) throw new Error("--jobs must be a positive integer");
-  const steps = localBuildSteps(target);
+function createBuildReport(root, target, run) {
   const version = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8")).version;
+  const provenancePath = path.join(root, ".generated/branding/provenance.json");
+  const provenance = existsSync(provenancePath)
+    ? JSON.parse(readFileSync(provenancePath, "utf8"))
+    : null;
   const startedAt = new Date().toISOString();
   const outputDir = path.join(
     root,
     ".dev",
     "builds",
+    ...(provenance ? [provenance.brand.id] : []),
     `${target}-${version}`,
     startedAt.replaceAll(":", "-"),
   );
@@ -82,12 +92,21 @@ export function runLocalBuild({ target, jobs, root = REPO_ROOT, run = spawnSync 
   const report = {
     target,
     version,
+    brand: provenance?.brand ?? null,
+    configFingerprint: provenance?.configFingerprint ?? null,
     dirty: sourceStatus.status === 0 ? Boolean(sourceStatus.stdout?.trim()) : null,
     commit: commit.status === 0 ? commit.stdout?.trim() : null,
     startedAt,
     status: "building",
     steps: [],
   };
+  return { outputDir, reportPath, report };
+}
+
+export function runLocalBuild({ target, jobs, root = REPO_ROOT, run = spawnSync }) {
+  if (!Number.isInteger(jobs) || jobs < 1) throw new Error("--jobs must be a positive integer");
+  const steps = localBuildSteps(target);
+  const { outputDir, reportPath, report } = createBuildReport(root, target, run);
   const env = {
     ...process.env,
     CI: "true",
@@ -140,7 +159,7 @@ function main() {
   });
   if (values.help) {
     console.log(
-      "Usage: npm run build:local -- --target windows|linux [--jobs 1]\nOutputs and timings: .dev/builds/<target>-<version>/<timestamp>/\nUse a compatible Linux build container for portable Linux releases.",
+      "Usage: npm run build:local -- --target windows|linux [--jobs 1]\nOutputs and timings: .dev/builds/<brand>/<target>-<version>/<timestamp>/\nUse a compatible Linux build container for portable Linux releases.",
     );
     return;
   }
@@ -148,6 +167,9 @@ function main() {
     throw new Error(
       "This local cross-build command requires a Linux x64 host; use the native desktop build on other hosts.",
     );
+  }
+  if (!process.env.FDE_BRAND_BUILD_OWNER) {
+    throw new Error("Use npm run build:local so one selected brand is held for the entire build.");
   }
   runLocalBuild({ target: values.target, jobs: Number(values.jobs) });
 }

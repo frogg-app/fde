@@ -49,6 +49,11 @@ impl CliInvocation {
         let mut env = BTreeMap::new();
         env.insert("PASEO_NODE_ENV".into(), "production".into());
         env.insert(
+            crate::branding::env_key("CLI"),
+            bundle_launcher.to_string_lossy().into_owned(),
+        );
+        // Provider/tool contracts still consume the internal PASEO_CLI key.
+        env.insert(
             "PASEO_CLI".into(),
             bundle_launcher.to_string_lossy().into_owned(),
         );
@@ -59,7 +64,10 @@ impl CliInvocation {
     /// path, plus the daemon home so the CLI looks at the same `paseo.pid`.
     pub fn probe_env(bundle: &InstalledBundle, home: &Path) -> BTreeMap<String, String> {
         let mut env = Self::base_env(&bundle.launcher());
-        env.insert("FDE_HOME".into(), home.to_string_lossy().into_owned());
+        env.insert(
+            crate::branding::env_key("HOME"),
+            home.to_string_lossy().into_owned(),
+        );
         env
     }
 

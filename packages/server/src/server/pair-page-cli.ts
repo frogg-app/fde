@@ -7,20 +7,25 @@
  */
 import { createPairPageApp, DEFAULT_PAIR_PAGE_ROOT_REDIRECT } from "./pair-page-server.js";
 
-import { DEFAULT_PAIRING_BASE_URL } from "@fde/protocol/connection-offer";
+import { brand } from "@fde/branding";
+import { brandEnv } from "@fde/branding/identity";
 
-const host = process.env.FDE_PAIR_HOST ?? "0.0.0.0";
-const port = Number(process.env.FDE_PAIR_PORT ?? 8787);
-const pairingBaseUrl = process.env.FDE_PAIRING_BASE_URL ?? DEFAULT_PAIRING_BASE_URL;
-const rootRedirect = process.env.FDE_PAIR_ROOT_REDIRECT ?? DEFAULT_PAIR_PAGE_ROOT_REDIRECT;
+const host = brandEnv(brand, process.env, "PAIR_HOST") ?? "0.0.0.0";
+const port = Number(brandEnv(brand, process.env, "PAIR_PORT") ?? 8787);
+const pairingBaseUrl =
+  brandEnv(brand, process.env, "PAIRING_BASE_URL") ?? brand.services.pairingUrl ?? "";
+const rootRedirect =
+  brandEnv(brand, process.env, "PAIR_ROOT_REDIRECT") ?? DEFAULT_PAIR_PAGE_ROOT_REDIRECT;
 
 if (!Number.isInteger(port) || port < 1 || port > 65535) {
-  console.error(`[fde-pair-page] invalid FDE_PAIR_PORT: ${process.env.FDE_PAIR_PORT}`);
+  console.error(
+    `[${brand.id}-pair-page] invalid ${brand.envPrefix}_PAIR_PORT: ${brandEnv(brand, process.env, "PAIR_PORT")}`,
+  );
   process.exit(1);
 }
 
 const server = createPairPageApp({ pairingBaseUrl, rootRedirect }).listen(port, host, () => {
-  console.log(`[fde-pair-page] listening on http://${host}:${port} for ${pairingBaseUrl}`);
+  console.log(`[${brand.id}-pair-page] listening on http://${host}:${port} for ${pairingBaseUrl}`);
 });
 
 for (const signal of ["SIGINT", "SIGTERM"] as const) {

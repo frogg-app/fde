@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import path from "node:path";
 import type { Command } from "commander";
 import type { DaemonClient } from "@fde/client/internal/daemon-client";
@@ -40,7 +41,7 @@ export async function runCreateCommand(
     throw cmdError(
       "DAEMON_NOT_RUNNING",
       `Cannot connect to daemon at ${host}: ${message}`,
-      "Start the daemon with: fde daemon start",
+      `Start the daemon with: ${brand.cliName} daemon start`,
     );
   }
 

@@ -3,10 +3,17 @@
 # directories (chowning bind mounts on first run), then drops to the `fde`
 # user and starts the daemon in the foreground through the CLI.
 set -euo pipefail
+source /opt/fde/brand.sh
+home_key="${BRAND_ENV_PREFIX}_HOME"
+state_home="${!home_key:-}"
+if [[ -z "$state_home" && "$BRAND_LEGACY_FDE" == "1" ]]; then
+  state_home="${PASEO_HOME:-}"
+fi
+state_home="${state_home:-${HOME:-/home/fde}/${BRAND_HOME}}"
+export "$home_key=$state_home" "${BRAND_ENV_PREFIX}_DOCKER=1"
 
 : "${HOME:=/home/fde}"
-: "${FDE_HOME:=${PASEO_HOME:-${HOME}/.fde}}"
-: "${PASEO_LISTEN:=0.0.0.0:9999}"
+: "${PASEO_LISTEN:=0.0.0.0:${BRAND_PORT}}"
 : "${PASEO_WEB_UI_ENABLED:=true}"
 : "${PASEO_LOG_LEVEL:=info}"
 : "${PASEO_LOG_FORMAT:=json}"
@@ -17,7 +24,7 @@ set -euo pipefail
 : "${XDG_STATE_HOME:=${HOME}/.local/state}"
 : "${XDG_CACHE_HOME:=${HOME}/.cache}"
 
-export HOME FDE_HOME PASEO_LISTEN PASEO_WEB_UI_ENABLED PASEO_LOG_LEVEL PASEO_LOG_FORMAT
+export HOME PASEO_LISTEN PASEO_WEB_UI_ENABLED PASEO_LOG_LEVEL PASEO_LOG_FORMAT
 export CLAUDE_CONFIG_DIR CODEX_HOME XDG_CONFIG_HOME XDG_DATA_HOME XDG_STATE_HOME XDG_CACHE_HOME
 
 ensure_dir() {
@@ -28,7 +35,7 @@ ensure_dir() {
   fi
 }
 
-for dir in "$HOME" "$FDE_HOME" "$CLAUDE_CONFIG_DIR" "$CODEX_HOME" \
+for dir in "$HOME" "$state_home" "$CLAUDE_CONFIG_DIR" "$CODEX_HOME" \
   "$XDG_CONFIG_HOME" "$XDG_DATA_HOME" "$XDG_STATE_HOME" "$XDG_CACHE_HOME" /workspace; do
   ensure_dir "$dir"
 done
@@ -40,17 +47,17 @@ if [[ "$#" -gt 0 ]]; then
   exec "$@"
 fi
 
-if [[ -z "${PASEO_PASSWORD:-}" ]] && [[ ! -s "${FDE_HOME}/principals.json" ]]; then
+if [[ -z "${PASEO_PASSWORD:-}" ]] && [[ ! -s "${state_home}/principals.json" ]]; then
   {
-    echo "[fde] No password and no paired device yet: the daemon is unclaimed."
-    echo "[fde] Open http://<host>:${PASEO_LISTEN##*:}/ from another machine (or run 'fde daemon pair' here)"
-    echo "[fde] and pair from the FDE app; the first device to pair owns this daemon."
-    echo "[fde] Set PASEO_PASSWORD instead if you prefer a shared password."
+    echo "[${BRAND_ID}] No password and no paired device yet: the daemon is unclaimed."
+    echo "[${BRAND_ID}] Open http://<host>:${PASEO_LISTEN##*:}/ from another machine (or run '${BRAND_CLI} daemon pair' here)"
+    echo "[${BRAND_ID}] and pair from the ${BRAND_NAME} app; the first device to pair owns this daemon."
+    echo "[${BRAND_ID}] Set PASEO_PASSWORD instead if you prefer a shared password."
   } >&2
 fi
 
-echo "[fde] starting daemon on ${PASEO_LISTEN} with web UI ${PASEO_WEB_UI_ENABLED}"
+echo "[${BRAND_ID}] starting daemon on ${PASEO_LISTEN} with web UI ${PASEO_WEB_UI_ENABLED}"
 if [[ "$(id -u)" == "0" ]]; then
-  exec gosu fde fde daemon start --foreground
+  exec gosu fde "$BRAND_CLI" daemon start --foreground
 fi
-exec fde daemon start --foreground
+exec "$BRAND_CLI" daemon start --foreground

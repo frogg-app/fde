@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import { Command } from "commander";
 import { withOutput } from "../../output/index.js";
 import { addJsonAndDaemonHostOptions } from "../../utils/command-options.js";
@@ -51,7 +52,7 @@ function productionEnvironment(): HubCommandEnvironment {
 
 export function createHubCommand(overrides: Partial<HubCommandEnvironment> = {}): Command {
   const environment = { ...productionEnvironment(), ...overrides };
-  const hub = addHubResolutionHelp(new Command("hub").description("Manage FDE Hub"));
+  const hub = addHubResolutionHelp(new Command("hub").description(`Manage ${brand.name} Hub`));
 
   addHubLoginCommand(hub, {
     env: environment.env,

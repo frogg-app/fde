@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 /**
  * The pairing landing page behind `https://pair.frogg.app/code/<code>`: the
  * daemon renders it itself, so an owner can point that hostname at their own
@@ -38,7 +39,7 @@ function shell(title: string, body: string): string {
 </head>
 <body>
 <main>
-  <div class="brand"><span class="dot"></span><b>FDE</b></div>
+  <div class="brand"><span class="dot"></span><b>${escapeHtml(brand.name)}</b></div>
 ${body}
 </main>
 </body>
@@ -49,9 +50,9 @@ ${body}
 /** The only thing an unknown, malformed, or expired code ever renders. */
 export function renderExpiredPairingPage(): string {
   return shell(
-    "FDE pairing",
+    `${brand.name} pairing`,
     `  <h1>${EXPIRED_PAIRING_MESSAGE}</h1>
-  <p>Pairing links are single-use and valid for a few minutes. Run <code>fde pair</code> on the machine running the daemon to get a new one.</p>`,
+  <p>Pairing links are single-use and valid for a few minutes. Run <code>${escapeHtml(brand.cliName)} pair</code> on the machine running the daemon to get a new one.</p>`,
   );
 }
 
@@ -74,9 +75,9 @@ const SCRIPT = `
 
 export function renderPairingCodePage(input: PairingCodePageInput): string {
   const code = escapeHtml(input.code);
-  const deepLink = buildPairingDeepLink(`#offer=${input.code}`);
+  const deepLink = buildPairingDeepLink(`#offer=${input.code}`, brand.scheme);
   const openInApp = deepLink
-    ? `<a class="button" href="${escapeHtml(deepLink)}">Open in FDE</a>`
+    ? `<a class="button" href="${escapeHtml(deepLink)}">Open in ${escapeHtml(brand.name)}</a>`
     : "";
   const pairHere = input.canPairThisBrowser
     ? `<button id="pair-here" type="button" class="secondary">Pair this browser</button>`
@@ -85,17 +86,17 @@ export function renderPairingCodePage(input: PairingCodePageInput): string {
     ? `<div class="qr">${input.qrSvg}</div>`
     : `<p>QR rendering is unavailable; use the code below.</p>`;
   const host = input.hostname
-    ? `<p>This link pairs a device with the FDE daemon on <span class="host">${escapeHtml(input.hostname)}</span>.</p>`
-    : `<p>This link pairs a device with an FDE daemon.</p>`;
+    ? `<p>This link pairs a device with the ${escapeHtml(brand.name)} daemon on <span class="host">${escapeHtml(input.hostname)}</span>.</p>`
+    : `<p>This link pairs a device with an ${escapeHtml(brand.name)} daemon.</p>`;
 
   return shell(
-    "Pair with FDE",
-    `  <h1>Pair with FDE</h1>
+    `Pair with ${brand.name}`,
+    `  <h1>Pair with ${escapeHtml(brand.name)}</h1>
 ${host}
   ${qr}
   <ol>
-    <li>On a phone: open the FDE app and scan the code above.</li>
-    <li>On a computer with the FDE desktop app: <em>Open in FDE</em>.</li>
+    <li>On a phone: open the ${escapeHtml(brand.name)} app and scan the code above.</li>
+    <li>On a computer with the ${escapeHtml(brand.name)} desktop app: <em>Open in ${escapeHtml(brand.name)}</em>.</li>
     <li>Or open the app, choose <em>Paste pairing link</em>, and paste the code below.</li>
   </ol>
   <p class="link" id="code">${code}</p>

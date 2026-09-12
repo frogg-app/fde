@@ -20,7 +20,9 @@ describe("orchestration skill paths", () => {
       "../../../../../..",
     );
 
-    expect(resolveBundledSkillsDir()).toBe(path.join(repositoryRoot, "skills"));
+    expect(resolveBundledSkillsDir()).toBe(
+      path.join(repositoryRoot, ".generated", "branding", "skills"),
+    );
   });
 
   it("finds the catalog beside the actual emitted server layout", async () => {

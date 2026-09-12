@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import { Command } from "commander";
 import path from "node:path";
 import type {
@@ -118,7 +119,8 @@ async function install(
   _command: Command,
 ): Promise<SingleResult<PluginListItem>> {
   process.stderr.write(
-    "Trusting plugin code: server code and Git build commands run unsandboxed on the daemon host; client code runs inside FDE. Dependencies and future updates are part of the codebase you trust.\n",
+    `Trusting plugin code: server code and Git build commands run unsandboxed on the daemon host; client code runs inside ${brand.name}. Dependencies and future updates are part of the codebase you trust.
+`,
   );
   const isExplicitPath =
     path.isAbsolute(source) ||

@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import { spawn, type ChildProcess } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { createInterface } from "node:readline";
@@ -254,7 +255,7 @@ export class DaemonUpdateService {
     ];
     const env: NodeJS.ProcessEnv = {
       ...this.env,
-      PASEO_HOME: this.paseoHome,
+      [`${brand.envPrefix}_HOME`]: this.paseoHome,
       FDE_INSTALL_DIR: this.install.installDir,
       ...(this.listen ? { PASEO_LISTEN: this.listen } : {}),
     };

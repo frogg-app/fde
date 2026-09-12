@@ -1,3 +1,4 @@
+import { loadBrand } from "../../../scripts/dev/branding/load.cjs";
 /**
  * Bundles the pairing page into a single ES module for Cloudflare Workers
  * (dist/pair-worker/worker.mjs), so `wrangler deploy` needs no monorepo
@@ -12,6 +13,7 @@ import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
 
 const here = (path) => fileURLToPath(new URL(path, import.meta.url));
+loadBrand();
 const protocolSrc = here("../../protocol/src/");
 
 /** `@fde/protocol/x` resolves to the workspace source, with no install step. */

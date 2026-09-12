@@ -42,6 +42,7 @@ test("daemon availability is independent of Android and desktop build outcomes",
 test("all daemon workspace output is shared and bundle jobs never rebuild the web UI", () => {
   const build = jobs.get("daemon-build");
   const bundle = jobs.get("daemon-bundle");
+  assert.match(build, /uses: \.\/\.github\/actions\/select-brand/);
   assert.match(build, /name: ui-dist/);
   assert.match(build, /build:daemon-web-ui -- --skip-export/);
   assert.match(build, /name: daemon-dist/);

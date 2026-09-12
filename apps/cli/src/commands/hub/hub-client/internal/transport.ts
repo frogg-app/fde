@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import type { z } from "zod";
 import { HubCommandError } from "../../error.js";
 import { hubRequestFailure } from "./problem.js";
@@ -30,7 +31,7 @@ export async function requestHub<T>(input: HubRequest<T>): Promise<T> {
   } catch {
     throw new HubCommandError(
       "HUB_NETWORK_ERROR",
-      `Could not reach FDE Hub at ${input.origin}. Check the Hub URL and network connection.`,
+      `Could not reach ${brand.name} Hub at ${input.origin}. Check the Hub URL and network connection.`,
     );
   }
   if (response.status !== input.successStatus) {

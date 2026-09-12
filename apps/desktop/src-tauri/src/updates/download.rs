@@ -12,6 +12,16 @@ use crate::sidecar::download::{fetch_text, fetch_to_file, verify_checksum};
 
 const PROGRESS_STEP_BYTES: u64 = 256 * 1024;
 
+fn validate_metadata(metadata: &serde_json::Value, asset: &str) -> Result<(), String> {
+    if !crate::branding::matches_identity(metadata.get("brand")) {
+        return Err("Update belongs to another product".into());
+    }
+    if metadata["asset"].as_str() != Some(asset) {
+        return Err("Update metadata names another artifact".into());
+    }
+    Ok(())
+}
+
 fn safe_file_name(name: &str) -> Result<&str, String> {
     if name.is_empty() || name.contains('/') || name.contains('\\') || name == "." || name == ".." {
         return Err(format!("asset name {name:?} is not a plain file name"));
@@ -58,6 +68,18 @@ pub async fn download_asset(
         .await
         .map_err(|e| format!("update download failed ({}): {e}", asset.url))?;
 
+    if !crate::branding::LEGACY_FDE {
+        let raw = fetch_text(&format!("{}.metadata.json", asset.url))
+            .await
+            .map_err(|e| format!("Update identity metadata unavailable: {e}"))?;
+        let metadata: serde_json::Value = serde_json::from_str(&raw).map_err(|e| e.to_string())?;
+        validate_metadata(&metadata, &asset.name)?;
+        let digest = metadata["sha256"]
+            .as_str()
+            .ok_or("Update metadata has no checksum")?;
+        verify_checksum(&destination, digest)?;
+    }
+
     let size = tokio::fs::metadata(&destination)
         .await
         .map(|m| m.len())
@@ -97,5 +119,17 @@ mod tests {
         for bad in ["", ".", "..", "a/b", "a\\b", "../x"] {
             assert!(safe_file_name(bad).is_err(), "{bad:?}");
         }
+    }
+}
+
+#[cfg(test)]
+mod identity_tests {
+    use super::*;
+    #[test]
+    fn rejects_metadata_for_another_product_or_artifact() {
+        let good = json!({"brand": crate::branding::identity(), "asset": "selected.zip"});
+        assert!(validate_metadata(&good, "selected.zip").is_ok());
+        assert!(validate_metadata(&good, "different.zip").is_err());
+        assert!(validate_metadata(&json!({"brand":{"id":"foreign", "applicationId":"com.foreign.app"}, "asset":"selected.zip"}), "selected.zip").is_err());
     }
 }

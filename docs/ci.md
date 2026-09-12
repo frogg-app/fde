@@ -50,8 +50,9 @@ meta ── docker
   cargo-xwin cross build used locally). macOS is ad-hoc signed
   (`APPLE_SIGNING_IDENTITY=-`): users open it once with right-click > Open.
 - **daemon-build** compiles the server/CLI workspace graph once and packages the
-  shared `ui-dist` export with `build:daemon-web-ui -- --skip-export`. Its
-  `daemon-dist` artifact contains all seven workspace `dist` directories, including
+  shared `ui-dist` export with `build:daemon-web-ui -- --skip-export`. It selects
+  the same configured brand and rejects a web export with a mismatched fingerprint. Its
+  `daemon-dist` artifact contains all eight workspace `dist` directories, including
   the precompressed web UI. Artifact paths preserve the repository directory layout.
 - **daemon-bundle** downloads that artifact and installs the runtime/native packages
   for its own target, then uploads the archive and `.sha256`. It depends only on

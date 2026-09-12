@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import { resolve } from "node:path";
 import type { DaemonClient } from "@fde/client/internal/daemon-client";
 import { connectToDaemon, getDaemonHost } from "../../utils/client.js";
@@ -30,7 +31,7 @@ export async function connectWorkspaceScriptClient(host?: string): Promise<Daemo
     throw {
       code: "DAEMON_NOT_RUNNING",
       message: `Cannot connect to daemon at ${daemonHost}: ${message}`,
-      details: "Start the daemon with: fde daemon start",
+      details: `Start the daemon with: ${brand.cliName} daemon start`,
     } satisfies CommandError;
   }
 }
@@ -60,8 +61,8 @@ export async function resolveWorkspaceScriptWorkspaceId(
   }
   throw {
     code: "WORKSPACE_NOT_FOUND",
-    message: `No FDE workspace found for ${cwd}`,
-    details: "Open the directory in FDE first, or pass --workspace <workspace-id>.",
+    message: `No ${brand.name} workspace found for ${cwd}`,
+    details: `Open the directory in ${brand.name} first, or pass --workspace <workspace-id>.`,
   } satisfies CommandError;
 }
 

@@ -85,6 +85,6 @@ test("every executable daemon entrypoint enters the supervisor", async () => {
   // CLI, which starts the daemon via the supervisor entrypoint.
   assert.match(bundleBuilder, /daemon\/apps\/cli\/dist\/index\.js/);
   assertNoDirectWorkerLaunch("daemon bundle launcher", bundleBuilder);
-  assert.match(dockerEntrypoint, /fde daemon start --foreground/);
+  assert.match(dockerEntrypoint, /"\$BRAND_CLI" daemon start --foreground/);
   assertNoDirectWorkerLaunch("Docker entrypoint", dockerEntrypoint);
 });

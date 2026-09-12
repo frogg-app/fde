@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import { useCallback, useRef, useState } from "react";
 import {
   parseAnyConnectionOfferFromUrl,
@@ -154,7 +155,7 @@ export function usePairWithOffer(): PairWithOfferController {
           status: "error",
           offer: null,
           code: "invalid_link",
-          message: "This is not an FDE pairing link",
+          message: `This is not an ${brand.name} pairing link`,
           endpoints: [],
         });
         return null;

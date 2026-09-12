@@ -42,9 +42,9 @@ test("local Windows builds refresh the UI before packaging and collect from the 
   assert.equal(report.commit, "commit-sha");
   assert.deepEqual(
     report.steps.map((step) => step.name),
-    ["dependencies", "web-ui", "desktop", "windows-zips", "collect"],
+    ["dependencies", "web-ui", "web-stamp", "desktop", "windows-zips", "collect"],
   );
-  const desktop = calls.find((call) => call.command === "cargo");
+  const desktop = calls.find((call) => call.args.includes("tauri"));
   assert.equal(desktop.options.env.CARGO_BUILD_JOBS, "1");
   assert.equal(desktop.options.env.CI, "true");
   assert.ok(desktop.args.includes("cargo-xwin"));
@@ -66,14 +66,14 @@ test("failed compilation writes a failed timing report and never packages stale 
         target: "windows",
         jobs: 1,
         root,
-        run(command) {
-          calls.push(command);
-          return { status: command === "cargo" ? 1 : 0, stdout: "sha" };
+        run(command, args) {
+          calls.push({ command, args });
+          return { status: args.includes("tauri") ? 1 : 0, stdout: "sha" };
         },
       }),
     /desktop failed/,
   );
-  assert.equal(calls.at(-1), "cargo");
+  assert.ok(calls.at(-1).args.includes("tauri"));
   const parent = path.join(root, ".dev/builds/windows-0.3.2");
   const report = JSON.parse(
     readFileSync(path.join(parent, readdirSync(parent)[0], "timings.json")),

@@ -825,7 +825,7 @@ export const en = {
             "Update isn't available because this branch is already up to date with {{baseRef}}",
           mergePrNoGithub: "Merge PR isn't available right now because GitHub isn't connected",
           archiveNotWorktree:
-            "Archive isn't available here because this workspace was not created as an FDE worktree",
+            "Archive isn't available here because this workspace was not created as an {{brandName}} worktree",
           mergePrNoForge:
             "Merge {{noun}} isn't available right now because {{brand}} isn't connected",
           mergePrMissing: "Merge PR isn't available because there isn't a pull request yet",
@@ -1243,7 +1243,7 @@ export const en = {
       close: "Close window",
     },
     quitting: {
-      title: "Quitting FDE...",
+      title: "Quitting {{brandName}}...",
       detail: "Stopping the local daemon.",
     },
     daemon: {
@@ -1257,20 +1257,20 @@ export const en = {
       },
       management: {
         title: "Manage built-in daemon",
-        hint: "Let FDE start and stop the built-in daemon",
+        hint: "Let {{brandName}} start and stop the built-in daemon",
         pauseTitle: "Pause built-in daemon",
         pauseMessage:
           "This will stop the built-in daemon immediately. Running agents and terminals connected to the built-in daemon will be stopped.",
         pauseAndStop: "Pause and stop",
         registrationFailed:
-          "Built-in daemon started, but FDE could not save the localhost connection. Toggle daemon management off and on again, or add localhost manually.",
+          "Built-in daemon started, but {{brandName}} could not save the localhost connection. Toggle daemon management off and on again, or add localhost manually.",
         pausedStopFailed:
-          "Built-in daemon management was paused, but FDE could not stop the daemon.",
+          "Built-in daemon management was paused, but {{brandName}} could not stop the daemon.",
         updateFailed: "Unable to update built-in daemon management.",
       },
       keepRunning: {
         title: "Keep daemon running after quit",
-        hint: "Daemon keeps running when you quit FDE",
+        hint: "Daemon keeps running when you quit {{brandName}}",
       },
       logs: {
         title: "Log file",
@@ -1285,7 +1285,7 @@ export const en = {
       fullStatus: {
         title: "Full status",
         modalTitle: "Daemon status",
-        hint: "Runs `paseo daemon status` and shows the output",
+        hint: "Runs `{{cliName}} daemon status` and shows the output",
         view: "View status",
         copied: "Status copied to clipboard.",
         fetchFailed: "Failed to fetch daemon status: {{message}}",
@@ -1299,7 +1299,7 @@ export const en = {
         installed: "Installed",
         installedHint: "Version {{version}} at {{path}}",
         notInstalledHint:
-          "Download the FDE daemon bundle ({{platform}}) to run agents on this machine.",
+          "Download the {{brandName}} daemon bundle ({{platform}}) to run agents on this machine.",
         install: "Install local daemon (~{{size}})",
         installing: "Installing...",
         phaseChecksum: "Fetching checksum...",
@@ -1334,10 +1334,11 @@ export const en = {
         title: "Updates",
         currentVersion: "Current version",
         strategyGithub: "Updates are downloaded from GitHub releases.",
+        strategyDisabled: "Updates are disabled for this distribution.",
         strategySigned: "Updates are verified by the signed Tauri updater.",
         autoCheck: {
           title: "Check automatically",
-          hint: "Look for new versions every 6 hours while an FDE window is open.",
+          hint: "Look for new versions every 6 hours while an {{brandName}} window is open.",
         },
         check: "Check for updates",
         checking: "Checking...",
@@ -1351,15 +1352,15 @@ export const en = {
         verifying: "Verifying download...",
         installing: "Installing...",
         installHint: {
-          "windows-installer": "Runs the installer and reopens FDE.",
-          "windows-portable": "Replaces the portable executable and reopens FDE.",
-          "linux-appimage": "Replaces the AppImage in place and restarts FDE.",
+          "windows-installer": "Runs the installer and reopens {{brandName}}.",
+          "windows-portable": "Replaces the portable executable and reopens {{brandName}}.",
+          "linux-appimage": "Replaces the AppImage in place and restarts {{brandName}}.",
           "linux-deb": "Opens the .deb package in your package installer.",
-          "macos-dmg": "Opens the disk image; drag FDE to Applications to finish.",
+          "macos-dmg": "Opens the disk image; drag {{brandName}} to Applications to finish.",
           unknown: "Downloads the release built for this platform.",
         },
         noAsset: "No download is published for this platform yet.",
-        restartRequired: "Restart FDE to finish the update.",
+        restartRequired: "Restart {{brandName}} to finish the update.",
       },
       callout: {
         installingTitle: "Installing update",
@@ -1381,7 +1382,8 @@ export const en = {
     },
     rosetta: {
       title: "Download the Apple Silicon build",
-      runningIntel: "You're running the Intel build of FDE under Rosetta on Apple Silicon.",
+      runningIntel:
+        "You're running the Intel build of {{brandName}} under Rosetta on Apple Silicon.",
       highCpu: "This causes high CPU usage. Download the Apple Silicon build to fix it.",
       download: "Download",
     },
@@ -1423,7 +1425,7 @@ export const en = {
         microphone: "Microphone status has not been checked yet.",
       },
       testNotification: {
-        title: "FDE notification test",
+        title: "{{brandName}} notification test",
         body: "If you can see this, desktop notifications work.",
         notDelivered: "Notification was not delivered. Check System Settings > Notifications.",
         failed: "Failed to send notification.",
@@ -1432,12 +1434,12 @@ export const en = {
     integrations: {
       cli: {
         statusFailed: "Unable to check CLI install status.",
-        installFailed: "Unable to install the FDE CLI.",
+        installFailed: "Unable to install the {{brandName}} CLI.",
       },
     },
   },
   rootError: {
-    title: "FDE ran into a problem.",
+    title: "{{brandName}} ran into a problem.",
     body: "Try again to reload the app. If this keeps happening, include the details below when you report it.",
     details: "Details",
   },
@@ -1532,19 +1534,19 @@ export const en = {
     },
   },
   onboarding: {
-    title: "Welcome to FDE",
+    title: "Welcome to {{brandName}}",
     subtitle: "Connect your computer to get started",
     localDaemon: {
       title: "Run agents on this machine",
-      description: "Installs the local FDE daemon (about 180 MB download).",
-      descriptionInstalled: "Starts the installed local FDE daemon.",
+      description: "Installs the local {{brandName}} daemon (about 180 MB download).",
+      descriptionInstalled: "Starts the installed local {{brandName}} daemon.",
       starting: "Starting the local daemon...",
       failed: "Could not set up the local daemon: {{message}}",
       retry: "Try again",
     },
     remoteHost: {
       title: "Use a remote host",
-      description: "Connect to an FDE daemon on another machine.",
+      description: "Connect to an {{brandName}} daemon on another machine.",
     },
     actions: {
       settings: "Settings",
@@ -1623,11 +1625,11 @@ export const en = {
       },
       scanQr: {
         title: "Scan QR code",
-        description: "Claim a new FDE daemon, or pair over the encrypted relay.",
+        description: "Claim a new {{brandName}} daemon, or pair over the encrypted relay.",
       },
       pasteLink: {
         title: "Paste pairing link",
-        description: "Claim a new FDE daemon, or pair over the encrypted relay.",
+        description: "Claim a new {{brandName}} daemon, or pair over the encrypted relay.",
       },
     },
     networkScan: {
@@ -1636,29 +1638,29 @@ export const en = {
       diagnosticsNone: "none",
       title: "Servers on your network",
       scanning: "Scanning {{scanned}} of {{total}} addresses…",
-      none: "No FDE servers found on {{subnets}}.",
+      none: "No {{brandName}} servers found on {{subnets}}.",
       scanned: "Scanned {{subnets}}.",
       rescan: "Scan again",
       connect: "Connect",
       connecting: "Connecting…",
       needsPairing: "Needs pairing",
       pairingHint:
-        "Get a pairing link: run `fde daemon pair` on the host, or open its web address, then scan or paste it here.",
+        "Get a pairing link: run `{{cliName}} daemon pair` on the host, or open its web address, then scan or paste it here.",
     },
     claim: {
-      title: "Pair with an FDE daemon",
-      thisDaemon: "this FDE daemon",
+      title: "Pair with an {{brandName}} daemon",
+      thisDaemon: "this {{brandName}} daemon",
       claiming: "Pairing with {{host}}…",
       explainer:
-        "This FDE daemon has not been claimed yet. Pairing makes this device its first owner.",
+        "This {{brandName}} daemon has not been claimed yet. Pairing makes this device its first owner.",
       successTitle: "Paired",
       successBody:
         "This device is now the first owner of {{host}}. Other devices need a new pairing link from it.",
       successRelayBody: "{{host}} was added over the encrypted relay.",
       noPendingOffer:
-        "Open a pairing link (https://frogg.app/pair#offer=…) or paste one from Add connection.",
+        "Open a pairing link (a link from the daemon) or paste one from Add connection.",
       newLinkHint:
-        "Pairing codes are single-use and expire after ten minutes. Get a new one: run `fde daemon pair` on the host, or reload its web address for a fresh code.",
+        "Pairing codes are single-use and expire after ten minutes. Get a new one: run `{{cliName}} daemon pair` on the host, or reload its web address for a fresh code.",
       triedEndpoints: "Tried:",
       manualEndpointHelper:
         "If the daemon is reachable at another address (VPN, Docker, a different interface), enter it as host:port.",
@@ -1679,7 +1681,7 @@ export const en = {
     },
     direct: {
       title: "Direct connection",
-      helper: "Enter the address of an FDE server.",
+      helper: "Enter the address of an {{brandName}} server.",
       fields: {
         host: "Host",
         port: "Port",
@@ -1693,7 +1695,7 @@ export const en = {
         show: "Show advanced",
         hide: "Hide advanced",
         helper:
-          "Any form works: host, host:port, http(s)://host:port, ws(s)://host:port or tcp://host:port?ssl=true. An FDE daemon speaks HTTP and WebSocket on port {{port}}.",
+          "Any form works: host, host:port, http(s)://host:port, ws(s)://host:port or tcp://host:port?ssl=true. An {{brandName}} daemon speaks HTTP and WebSocket on port {{port}}.",
         resolved: "Will connect to",
       },
       passwordVisibility: {
@@ -1724,7 +1726,7 @@ export const en = {
     },
     remoteSsh: {
       title: "Remote SSH",
-      helper: "Connect to an FDE daemon running on the remote host.",
+      helper: "Connect to an {{brandName}} daemon running on the remote host.",
       tabs: {
         config: "SSH config",
         manual: "Manual",
@@ -1742,7 +1744,8 @@ export const en = {
         rememberSshPassword: "Remember for this session",
       },
       hints: {
-        daemonPassword: "The password of the FDE daemon, not your SSH login. Saved with this host.",
+        daemonPassword:
+          "The password of the {{brandName}} daemon, not your SSH login. Saved with this host.",
         sshPassword:
           "Used only to log in over SSH. Never saved; kept in memory until the app closes when remembered.",
       },
@@ -1758,8 +1761,8 @@ export const en = {
         invalidTarget: "Enter a valid ssh:// host",
         failedToConnect: "Unable to connect over SSH. {{detail}}",
         daemonPasswordRequired:
-          "The FDE daemon on {{host}} requires a password. Enter it below and connect again.",
-        daemonPasswordIncorrect: "The FDE daemon on {{host}} rejected the password.",
+          "The {{brandName}} daemon on {{host}} requires a password. Enter it below and connect again.",
+        daemonPasswordIncorrect: "The {{brandName}} daemon on {{host}} rejected the password.",
         sshPasswordRequired:
           "{{host}} refused your SSH keys but accepts password login. Enter the SSH password to continue.",
         sshPasswordIncorrect: "{{host}} rejected the SSH password.",
@@ -1770,11 +1773,11 @@ export const en = {
     link: {
       title: "Paste pairing link",
       helper:
-        "Paste the link from the daemon's claim page or from `fde daemon pair`. A new FDE daemon is claimed by the first device that pairs.",
+        "Paste the link from the daemon's claim page or from `{{cliName}} daemon pair`. A new {{brandName}} daemon is claimed by the first device that pairs.",
       label: "Pairing link",
       errors: {
         required: "Paste a pairing link (…/pair#offer=…)",
-        missingOffer: "That is not an FDE pairing link",
+        missingOffer: "That is not an {{brandName}} pairing link",
         emptyOffer: "Offer payload is empty",
         invalid: "Invalid pairing link",
         unableToPair: "Unable to pair host",
@@ -1809,15 +1812,15 @@ export const en = {
       enableDescription:
         "Relay lets this device connect from anywhere. Pairing traffic is end-to-end encrypted.",
       relayDocs: "How relay works",
-      relayDocsAccessibility: "Read how FDE relay works",
+      relayDocsAccessibility: "Read how {{brandName}} relay works",
       enableRelay: "Enable relay",
       enablingRelay: "Enabling...",
       notNow: "Not now",
       directConnectionHint:
         "Without relay, connect directly over TCP, Tailscale, or another VPN. No QR code is created.",
-      updateRequired: "Update the host to enable relay from FDE Desktop.",
+      updateRequired: "Update the host to enable relay from {{brandName}} Desktop.",
       unavailable: "Pairing offer unavailable.",
-      hint: "Scan this QR code with FDE on your phone, or copy the link below.",
+      hint: "Scan this QR code with {{brandName}} on your phone, or copy the link below.",
       securityWarning:
         "Treat this pairing link like a password. Anyone with it can access this daemon.",
       qrUnavailable: "QR code unavailable.",
@@ -1958,7 +1961,7 @@ export const en = {
   serviceUrl: {
     title: "Open service URL",
     message: "Open {{url}}?",
-    inPaseo: "In FDE",
+    inPaseo: "In {{brandName}}",
     externalBrowser: "External browser",
     dontAskAgain: "Don't ask again",
   },
@@ -2085,8 +2088,8 @@ export const en = {
       other: "used {{count}} other tools",
     },
     paseoCalls: {
-      one: "called FDE {{count}} time",
-      other: "called FDE {{count}} times",
+      one: "called {{brandName}} {{count}} time",
+      other: "called {{brandName}} {{count}} times",
     },
     and: "and",
   },
@@ -2202,7 +2205,7 @@ export const en = {
       send: "Send",
       sending: "Sending...",
       sentTitle: "Test notification sent",
-      sentDescription: "FDE handed the notification to the operating system.",
+      sentDescription: "{{brandName}} handed the notification to the operating system.",
       sendFailedTitle: "Unable to send test notification",
     },
     hostSections: {
@@ -2276,14 +2279,14 @@ export const en = {
     metadataGeneration: {
       title: "Metadata generation",
       description:
-        "Choose the model FDE uses for workspace titles, branch names, commit messages, and pull request drafts",
+        "Choose the model {{brandName}} uses for workspace titles, branch names, commit messages, and pull request drafts",
       selection: "Model selection",
       automatic: "Automatic",
       preferred: "Manual",
-      automaticHint: "FDE picks a fast available model",
-      preferredHint: "Choose the model FDE uses",
+      automaticHint: "{{brandName}} picks a fast available model",
+      preferredHint: "Choose the model {{brandName}} uses",
       model: "Model",
-      fallbackHint: "If it is unavailable, FDE falls back to another available model",
+      fallbackHint: "If it is unavailable, {{brandName}} falls back to another available model",
       docs: "Docs",
       saveError: "Unable to update metadata generation",
     },
@@ -2291,7 +2294,8 @@ export const en = {
       title: "Voice alerts",
       autoPlay: {
         label: "Auto-play spoken alerts",
-        description: "Speak agent alerts as they arrive while an FDE is in the foreground.",
+        description:
+          "Speak agent alerts as they arrive while an {{brandName}} is in the foreground.",
       },
       replyConfirm: {
         label: "Confirm voice replies",
@@ -2304,7 +2308,7 @@ export const en = {
       browserData: {
         title: "Browser data",
         siteData: "Cookies and site data",
-        description: "Browser tabs share sign-ins and site data across FDE.",
+        description: "Browser tabs share sign-ins and site data across {{brandName}}.",
         clear: "Clear browser data",
         clearing: "Clearing...",
         confirmTitle: "Clear browser data?",
@@ -2331,7 +2335,7 @@ export const en = {
         description: "Where to open URLs from running scripts",
         options: {
           ask: "Ask",
-          inApp: "In FDE",
+          inApp: "In {{brandName}}",
           external: "External browser",
         },
       },
@@ -2399,7 +2403,7 @@ export const en = {
       },
     },
     about: {
-      attribution: "Frogg Development Environment is based on <paseo>Paseo</paseo>.",
+      attribution: "{{brandFullName}} is based on <paseo>Paseo</paseo>.",
       title: "About",
       appVersion: "App version",
       thisDevice: "This device",
@@ -2416,7 +2420,7 @@ export const en = {
         label: "App updates",
         readyToInstall: "Ready to install: {{version}}",
         installTitle: "Install desktop update",
-        installMessage: "This updates FDE on this computer",
+        installMessage: "This updates {{brandName}} on this computer",
         installConfirm: "Install update",
         update: "Update",
         updateTo: "Update to {{version}}",
@@ -2563,6 +2567,8 @@ export const en = {
         openCli: "Open CLI documentation",
       },
       commandLine: {
+        installedPath:
+          "Installed at {{path}}. Add its directory to PATH if needed, then open a new terminal.",
         title: "Command line",
         description: "Control and script agents from your terminal",
       },
@@ -2652,7 +2658,7 @@ export const en = {
       },
       sshDeploy: {
         title: "Daemon on this host",
-        info: "Installs the FDE daemon on the SSH host with the same scripts as the manual install. The host downloads the release bundle itself; the app only runs the script over SSH.",
+        info: "Installs the {{brandName}} daemon on the SSH host with the same scripts as the manual install. The host downloads the release bundle itself; the app only runs the script over SSH.",
         status: {
           probing: "Checking...",
           installed: "Installed {{version}}",
@@ -2706,7 +2712,7 @@ export const en = {
         uninstall: {
           title: "Uninstall the daemon?",
           message:
-            "Stops the service and removes the FDE install from {{host}}. Daemon state (~/.paseo) is kept.",
+            "Stops the service and removes the {{brandName}} install from {{host}}. Daemon state (~/.paseo) is kept.",
         },
         log: {
           running: "Running on {{host}}...",
@@ -2717,7 +2723,7 @@ export const en = {
         offer: {
           title: "Daemon not found on this host",
           message:
-            "SSH works, but no FDE daemon is installed on {{host}}. Deploy it now? The connection is retried when the install finishes.",
+            "SSH works, but no {{brandName}} daemon is installed on {{host}}. Deploy it now? The connection is retried when the install finishes.",
         },
       },
       pairDevices: {
@@ -2738,11 +2744,11 @@ export const en = {
         uninstallFailed: "Unable to uninstall orchestration skills.",
         saveSelectionFailed: "Unable to save the orchestration skills selection.",
         updateAvailable: "Update available",
-        updateTitle: "Update FDE skills?",
+        updateTitle: "Update {{brandName}} skills?",
         updateFallback: "Sync bundled skills to this host.",
-        uninstallTitle: "Uninstall FDE skills?",
+        uninstallTitle: "Uninstall {{brandName}} skills?",
         uninstallMessage:
-          "Removes all FDE orchestration skills from ~/.agents, ~/.claude, ~/.codex on this host.",
+          "Removes all {{brandName}} orchestration skills from ~/.agents, ~/.claude, ~/.codex on this host.",
         choose: "Choose skills",
         chooseAll: "All skills",
         chooseAllHint: "Keep every bundled skill installed, including ones added later.",
@@ -2774,9 +2780,9 @@ export const en = {
         title: "Orchestration",
         unavailable: "Connect to this host to manage orchestration",
         enableTools: {
-          title: "Enable FDE tools",
+          title: "Enable {{brandName}} tools",
           hint: "Agents will be able to manage worktrees, agents and schedules",
-          accessibilityLabel: "Inject FDE tools",
+          accessibilityLabel: "Inject {{brandName}} tools",
         },
         systemPrompt: {
           title: "System prompt",
@@ -2879,10 +2885,10 @@ export const en = {
             "This host is not connected. Wait for it to come online before restarting.",
           offlineTitle: "Host offline",
           offlineMessage:
-            "This host is offline. FDE reconnects automatically-wait until it's back online before restarting.",
+            "This host is offline. {{brandName}} reconnects automatically-wait until it's back online before restarting.",
           requestFailedTitle: "Error",
           requestFailedMessage:
-            "Failed to send the restart request. FDE reconnects automatically-try again once the host shows as online.",
+            "Failed to send the restart request. {{brandName}} reconnects automatically-try again once the host shows as online.",
           dialogFailedMessage: "Unable to open the restart confirmation dialog.",
         },
         selfUpdate: {
@@ -2930,7 +2936,7 @@ export const en = {
         },
         update: {
           desktopManagedHint:
-            "This daemon is managed by FDE Desktop. Update FDE Desktop on the host.",
+            "This daemon is managed by {{brandName}} Desktop. Update {{brandName}} Desktop on the host.",
           title: "Update daemon",
           hint: "Update the daemon to the latest version and restart it",
           confirm: "Update",
@@ -3091,7 +3097,7 @@ export const en = {
         newScript: "New script",
         editScript: "Edit {{name}}",
         runAsService: "Run as a service",
-        serviceHint: "FDE supervises the process and assigns a port via $PASEO_PORT",
+        serviceHint: "{{brandName}} supervises the process and assigns a port via $PASEO_PORT",
         actions: {
           add: "Add script",
           edit: "Edit",
@@ -3100,7 +3106,7 @@ export const en = {
       },
       metadata: {
         title: "Metadata generation",
-        info: "Project-specific instructions injected into the AI prompts FDE uses to generate metadata - use them to enforce your team's conventions like branch naming, commit style, or PR format",
+        info: "Project-specific instructions injected into the AI prompts {{brandName}} uses to generate metadata - use them to enforce your team's conventions like branch naming, commit style, or PR format",
         branchName: "Branch names",
         branchNamePlaceholder: "Prefix branches with feat/ or fix/, mb/ for personal branches",
         commitMessage: "Commit messages",
