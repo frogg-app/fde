@@ -2,7 +2,11 @@ import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { root, type BrandBuild } from "./resolve.mjs";
 
-type Owner = { pid: number; fingerprint: string; selected: string };
+interface Owner {
+  pid: number;
+  fingerprint: string;
+  selected: string;
+}
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 function alive(pid: number): boolean {
   try {
@@ -56,6 +60,7 @@ export async function acquireLock(
       if (active && active.fingerprint !== build.fingerprint)
         throw new Error(
           `Another brand is being ${kind === "build" ? "built" : "prepared"}; use a separate worktree.`,
+          { cause: error },
         );
       // Nested build entrypoints inherit the owner PID; independent builds still serialize.
       if (kind === "build" && active && String(active.pid) === process.env.FDE_BRAND_BUILD_OWNER)

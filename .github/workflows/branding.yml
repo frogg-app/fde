@@ -49,6 +49,7 @@ jobs:
       - run: node --test scripts/ci/branding-install.test.mjs
       - run: npx vitest run src/server/orchestration-skills/internal/brand-ownership.test.ts --root packages/server
       - uses: actions/upload-artifact@v7
+        if: always()
         with:
           name: branding-runtime-${{ strategy.job-index }}
           path: |
@@ -81,6 +82,7 @@ jobs:
       - run: npm run build:desktop
       - run: cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml commands::cli_install
       - uses: actions/upload-artifact@v7
+        if: always()
         with:
           name: branding-desktop-${{ strategy.job-index }}
           path: apps/desktop/src-tauri/target/release/bundle
@@ -100,6 +102,7 @@ jobs:
       - uses: android-actions/setup-android@v3
       - run: node scripts/release/build-android-apk.mjs --variant debug --abi arm64-v8a
       - uses: actions/upload-artifact@v7
+        if: always()
         with:
           name: branding-android
           path: apps/ui/android/app/build/outputs/apk/**/*.apk
@@ -124,6 +127,7 @@ jobs:
           scheme=$(xcodebuild -list -json -workspace "$workspace" | node -e 'let s="";process.stdin.on("data",c=>s+=c);process.stdin.on("end",()=>process.stdout.write(JSON.parse(s).workspace.schemes[0]))')
           xcodebuild -workspace "$workspace" -scheme "$scheme" -sdk iphonesimulator -configuration Debug -derivedDataPath ios/build CODE_SIGNING_ALLOWED=NO build
       - uses: actions/upload-artifact@v7
+        if: always()
         with:
           name: branding-ios-simulator
           path: apps/ui/ios/build/Build/Products/Debug-iphonesimulator/*.app
@@ -134,5 +138,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/select-brand
+        with:
+          directory: ${{ vars.FDE_BRAND_DIR }}
+          repository: ${{ vars.FDE_BRAND_REPOSITORY }}
+          revision: ${{ vars.FDE_BRAND_REVISION }}
+          subdirectory: ${{ vars.FDE_BRAND_SUBDIR }}
+          token: ${{ secrets.BRANDING_READ_TOKEN }}
       - uses: ./.github/actions/setup-node-deps
       - run: npm run brand:check && npm run build:ui

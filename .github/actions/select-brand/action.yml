@@ -1,29 +1,46 @@
 name: Select distribution branding
 description: Select an in-repository brand or a pinned external manifest/artwork checkout.
+inputs:
+  directory:
+    description: In-repository brand directory.
+    default: ""
+  repository:
+    description: External branding repository.
+    default: ""
+  revision:
+    description: Pinned external commit SHA.
+    default: ""
+  subdirectory:
+    description: Directory in the external repository.
+    default: ""
+  token:
+    description: Optional read token for a private branding repository.
+    default: ""
 runs:
   using: composite
   steps:
     - name: Validate external revision
-      if: env.FDE_BRAND_DIR == '' && vars.FDE_BRAND_REPOSITORY != ''
+      if: env.FDE_BRAND_DIR == '' && inputs.repository != ''
       shell: bash
       env:
-        BRAND_REVISION: ${{ vars.FDE_BRAND_REVISION }}
+        BRAND_REVISION: ${{ inputs.revision }}
       run: |
         [[ "$BRAND_REVISION" =~ ^[a-fA-F0-9]{40}$ ]] || { echo 'FDE_BRAND_REVISION must be a pinned 40-character commit SHA'; exit 1; }
     - uses: actions/checkout@v7
-      if: env.FDE_BRAND_DIR == '' && vars.FDE_BRAND_REPOSITORY != ''
+      if: env.FDE_BRAND_DIR == '' && inputs.repository != ''
       with:
-        repository: ${{ vars.FDE_BRAND_REPOSITORY }}
-        ref: ${{ vars.FDE_BRAND_REVISION }}
+        repository: ${{ inputs.repository }}
+        ref: ${{ inputs.revision }}
         path: .branding-source
         persist-credentials: false
+        token: ${{ inputs.token || github.token }}
     - name: Select brand directory
       shell: bash
       env:
         SELECTED_BRAND: ${{ env.FDE_BRAND_DIR }}
-        REPOSITORY_BRAND: ${{ vars.FDE_BRAND_DIR }}
-        EXTERNAL_REPOSITORY: ${{ vars.FDE_BRAND_REPOSITORY }}
-        EXTERNAL_SUBDIR: ${{ vars.FDE_BRAND_SUBDIR }}
+        REPOSITORY_BRAND: ${{ inputs.directory }}
+        EXTERNAL_REPOSITORY: ${{ inputs.repository }}
+        EXTERNAL_SUBDIR: ${{ inputs.subdirectory }}
       run: |
         if [ -n "$SELECTED_BRAND" ]; then selected="$SELECTED_BRAND";
         elif [ -n "$EXTERNAL_REPOSITORY" ]; then selected=".branding-source/${EXTERNAL_SUBDIR:-.}";

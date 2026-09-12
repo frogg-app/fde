@@ -42,7 +42,7 @@ export function describeReachability(input: {
     lines.push(`Type one of those into the ${brand.name} app to add this host.`);
   } else {
     lines.push(
-      "This daemon listens on loopback only. Restart it with --listen 0.0.0.0:9999 to reach it from other devices.",
+      `This daemon listens on loopback only. Restart it with --listen 0.0.0.0:${brand.daemonPort} to reach it from other devices.`,
     );
   }
   lines.push(describeAccessMode(input.accessMode));
@@ -64,9 +64,11 @@ export function printNextSteps(
       pairingUrl
         ? `1. Open ${brand.name} and scan the QR code above, or paste the pairing link.`
         : `1. Open ${brand.name} and connect to your daemon.`,
-      "2. Pairing links open in the FDE desktop app directly (https://pair.frogg.app/code/…).",
-      "3. Desktop app: https://github.com/frogg-app/fde/releases/latest",
-      "4. Docs: https://paseo.sh/docs",
+      `2. Pairing links open in the ${brand.name} app directly.`,
+      ...(brand.distribution.releaseBase
+        ? [`Desktop app: ${brand.distribution.releaseBase}/latest`]
+        : []),
+      ...(brand.links.docs ? [`Docs: ${brand.links.docs}`] : []),
       `5. Example: ${brand.cliName} run --output-schema schema.json "extract fields"`,
     ],
     "Next steps",
@@ -74,7 +76,7 @@ export function printNextSteps(
   );
   printLines(
     [
-      "1. fde --help",
+      `1. ${brand.cliName} --help`,
       `2. ${brand.cliName} ls`,
       `3. ${brand.cliName} run "your prompt"`,
       `4. ${brand.cliName} status`,

@@ -8,14 +8,14 @@
  */
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { z } from "zod";
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const outputDir = resolve(packageRoot, "generated");
 
 const { WSInboundMessageSchema, WSOutboundMessageSchema } = await import(
-  resolve(packageRoot, "dist/messages.js")
+  pathToFileURL(resolve(packageRoot, "dist/messages.js")).href
 );
 
 function toJsonSchema(schema, io) {

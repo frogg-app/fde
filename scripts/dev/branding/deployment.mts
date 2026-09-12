@@ -53,9 +53,6 @@ export async function generateDeployment({
   await writeFile(path.join(directory, "compose.json"), JSON.stringify(compose, null, 2) + "\n");
   for (const kind of ["pair", "install"] as const) {
     const baseUrl = kind === "pair" ? b.services.pairingUrl : b.links.installer;
-    const routes = baseUrl
-      ? [{ pattern: `${new URL(baseUrl).hostname}/*`, custom_domain: true }]
-      : [];
     // Install scripts share a website: explicit path routes must be configured by its operator.
     const config = {
       name: `${b.id}-${kind === "pair" ? "pair-page" : "install-scripts"}`,
@@ -68,7 +65,7 @@ export async function generateDeployment({
       compatibility_date: "2025-09-01",
       observability: { enabled: true },
       ...(kind === "pair" && baseUrl
-        ? { routes: routes.map((r) => ({ ...r, pattern: new URL(baseUrl).hostname })) }
+        ? { routes: [{ pattern: new URL(baseUrl).hostname, custom_domain: true }] }
         : {}),
       vars:
         kind === "pair"

@@ -38,11 +38,13 @@ const server = createServer(async (req, res) => {
 });
 await new Promise((resolve) => server.listen(0, "0.0.0.0", resolve));
 const browser = await chromium.launch();
+const errors = [];
+const page = await browser.newPage();
+page.on("pageerror", (error) => errors.push(error.message));
 try {
-  const errors = [];
-  const page = await browser.newPage();
-  page.on("pageerror", (error) => errors.push(error.message));
   await page.goto(`http://127.0.0.1:${server.address().port}`, { waitUntil: "networkidle" });
+  assert.deepEqual(errors, [], "no startup errors");
+  await page.waitForFunction(() => document.body.innerText.trim().length > 20, { timeout: 20000 });
   assert.ok((await page.title()).includes(brand.name));
   assert.ok(
     (await page.locator("body").innerText()).trim().length > 20,
@@ -60,6 +62,11 @@ try {
   await page.screenshot({ path: `.generated/browser/${brand.id}-narrow.png`, fullPage: true });
   assert.deepEqual(errors, [], "no uncaught browser errors");
   console.log(`${brand.name}: browser rendering, title, themes, and narrow viewport verified`);
+} catch (error) {
+  await mkdir(".generated/browser", { recursive: true });
+  await page.screenshot({ path: `.generated/browser/${brand.id}-failure.png`, fullPage: true });
+  console.error({ startupErrors: errors, body: await page.locator("body").innerText() });
+  throw error;
 } finally {
   await browser.close();
   await new Promise((resolve) => server.close(resolve));

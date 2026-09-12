@@ -49,12 +49,12 @@ export function resolveBrand(directory?: string) {
     .sort()) {
     hash.update(readFileSync(new URL(file, import.meta.url)));
   }
-  function hashTree(directory: string): void {
-    for (const entry of readdirSync(path.join(root, directory), { withFileTypes: true }).sort(
+  function hashTree(treeDirectory: string): void {
+    for (const entry of readdirSync(path.join(root, treeDirectory), { withFileTypes: true }).sort(
       (a, b) => a.name.localeCompare(b.name),
     )) {
       if (entry.name === "generated") continue;
-      const file = path.join(directory, entry.name);
+      const file = path.join(treeDirectory, entry.name);
       hash.update(file);
       if (entry.isDirectory()) hashTree(file);
       else if (entry.isFile()) hash.update(readFileSync(path.join(root, file)));

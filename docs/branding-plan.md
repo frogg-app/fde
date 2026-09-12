@@ -200,3 +200,9 @@ Generation acceptance verifies repeated output, custom names containing Unicode,
 Branding acceptance CI covers both presets' web/runtime artifacts and Linux/Windows/macOS desktop bundles, plus example Android and unsigned iOS simulator builds. Browser checks execute on CI runners. Fork release workflows select branding through repository variables or a pinned external checkout, upload generated installers, and preserve artifact metadata. Contribution checks reject committed generated files, unreviewed official-preset edits, and new product literals except exact compatibility/attribution entries.
 
 Desktop builds without a release server embed a generated daemon archive, so the example distribution can install its local daemon on first launch without FDE infrastructure. Distributions with a release source retain the small downloader-based packaging by default. The selected product's installer validates both new and existing bundle ownership before replacement.
+
+### First platform feedback and mobile export
+
+The first PR run exposed Windows-incompatible dynamic imports in existing protocol generation, a Tauri CLI/schema version mismatch, composite-action variable scoping, and a notification test that needed to mock the new generated asset boundary. These were corrected. Full local workspace typecheck and lint pass; the desktop suite passes 136 tests with one existing ignored test. Installer PATH fixtures now contain the runtime required by ownership validation.
+
+`brand:eas` creates a disposable source export with the selected generated EAS configuration and staged artwork, leaving tracked sources unchanged. Its example-brand preparation was inspected using EAS's own ignore rules: the custom manifest is included, build profiles select Acme, and no inherited App Store ID is present. Browser acceptance retains screenshots and startup diagnostics when rendering fails; platform results remain pending until the corrected runner jobs finish.

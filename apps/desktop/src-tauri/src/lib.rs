@@ -58,10 +58,18 @@ pub fn run() {
         .setup(|app| {
             if let Some(path) = app_log::log_file_path(app.handle()) {
                 if let Err(error) = app_log::FileLogger::install(&path) {
-                    eprintln!("FDE: could not open log file {}: {error}", path.display());
+                    eprintln!(
+                        "{}: could not open log file {}: {error}",
+                        crate::branding::NAME,
+                        path.display()
+                    );
                 }
             }
-            log::info!("FDE {} starting", app.package_info().version);
+            log::info!(
+                "{} {} starting",
+                crate::branding::NAME,
+                app.package_info().version
+            );
             commands::register_state(app)?;
             updates::register(app)?;
             window::create_main_window(app)?;
@@ -69,7 +77,7 @@ pub fn run() {
             Ok(())
         })
         .build(tauri::generate_context!())
-        .expect("error while building FDE")
+        .expect("error while building desktop application")
         .run(|app, event| {
             if let tauri::RunEvent::ExitRequested { code, .. } = &event {
                 log::info!("app: exit requested (code={code:?})");

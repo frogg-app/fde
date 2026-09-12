@@ -10,16 +10,12 @@ export function prepareEmbeddedDaemon(build: BrandBuild, args: string[]): void {
   if (build.brand.distribution.releaseBase && process.env.FDE_EMBED_DAEMON !== "1") return;
   const tripleIndex = args.indexOf("--target");
   const triple = tripleIndex < 0 ? "" : (args[tripleIndex + 1] ?? "");
-  const platform = triple.includes("windows")
-    ? "win"
-    : triple.includes("apple")
-      ? "darwin"
-      : triple.includes("linux")
-        ? "linux"
-        : process.platform === "win32"
-          ? "win"
-          : process.platform;
-  const arch = triple ? (triple.startsWith("aarch64") ? "arm64" : "x64") : process.arch;
+  let platform: string = process.platform === "win32" ? "win" : process.platform;
+  if (triple.includes("windows")) platform = "win";
+  else if (triple.includes("apple")) platform = "darwin";
+  else if (triple.includes("linux")) platform = "linux";
+  let arch: string = process.arch;
+  if (triple) arch = triple.startsWith("aarch64") ? "arm64" : "x64";
   const directory = path.join(outputRoot, "bundles");
   const archive = path.join(
     directory,

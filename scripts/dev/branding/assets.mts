@@ -62,26 +62,7 @@ export async function generateAssets(build: BrandBuild): Promise<void> {
       await pipeline.png().toFile(path.join(assets, name));
     }
   }
-  for (const appearance of ["light", "dark"] as const) {
-    for (const status of ["", "-running", "-attention"]) {
-      const name = `favicon-${appearance}${status}.png`;
-      if (build.brand.legacyFde) {
-        await cp(path.join(root, "apps/ui/assets/images", name), path.join(assets, name));
-      } else {
-        const source =
-          appearance === "light" ? build.assetFiles.faviconLight : build.assetFiles.faviconDark;
-        const image = sharp(await resize(source ?? build.assetFiles.icon, 64));
-        if (status) {
-          const fill = status === "-running" ? "#2563eb" : "#d97706";
-          const badge = Buffer.from(
-            `<svg width="64" height="64"><circle cx="50" cy="50" r="12" fill="${fill}" stroke="white" stroke-width="3"/></svg>`,
-          );
-          image.composite([{ input: badge }]);
-        }
-        await image.png().toFile(path.join(assets, name));
-      }
-    }
-  }
+  await generateFavicons(build, assets);
   if (build.brand.legacyFde) {
     await cp(path.join(root, "apps/desktop/src-tauri/icons"), icons, { recursive: true });
     for (const name of [
@@ -177,5 +158,28 @@ export async function validateAssets(build: BrandBuild): Promise<void> {
     throw new Error(
       "assets.icon must be a square image at least 1024 × 1024 pixels (or a 1024-square SVG)",
     );
+  }
+}
+
+async function generateFavicons(build: BrandBuild, assets: string): Promise<void> {
+  for (const appearance of ["light", "dark"] as const) {
+    for (const status of ["", "-running", "-attention"]) {
+      const name = `favicon-${appearance}${status}.png`;
+      if (build.brand.legacyFde) {
+        await cp(path.join(root, "apps/ui/assets/images", name), path.join(assets, name));
+      } else {
+        const source =
+          appearance === "light" ? build.assetFiles.faviconLight : build.assetFiles.faviconDark;
+        const image = sharp(await resize(source ?? build.assetFiles.icon, 64));
+        if (status) {
+          const fill = status === "-running" ? "#2563eb" : "#d97706";
+          const badge = Buffer.from(
+            `<svg width="64" height="64"><circle cx="50" cy="50" r="12" fill="${fill}" stroke="white" stroke-width="3"/></svg>`,
+          );
+          image.composite([{ input: badge }]);
+        }
+        await image.png().toFile(path.join(assets, name));
+      }
+    }
   }
 }

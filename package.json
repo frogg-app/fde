@@ -1,6 +1,6 @@
 {
   "name": "fde",
-  "version": "0.2.22",
+  "version": "0.2.23",
   "private": true,
   "description": "FDE (Frogg Development Environment): Tauri desktop client for local and remote AI coding agents (fork of Paseo)",
   "license": "Apache-2.0",
@@ -93,10 +93,12 @@
     "build:daemon-web-ui:prepared": "node scripts/ci/build-daemon-web-ui.mjs",
     "build:daemon-bundle:prepared": "node scripts/release/build-daemon-bundle.mjs",
     "dev:server:prepared": "cross-env PASEO_LISTEN=0.0.0.0:6768 ./scripts/dev/dev-daemon.sh",
-    "dev:app:prepared": "cross-env PASEO_LISTEN=0.0.0.0:6768 EXPO_PORT=8081 ./scripts/dev/dev-app.sh"
+    "dev:app:prepared": "cross-env PASEO_LISTEN=0.0.0.0:6768 EXPO_PORT=8081 ./scripts/dev/dev-app.sh",
+    "brand:eas": "node --import tsx scripts/dev/branded-eas.mts",
+    "brand:stage": "node --import tsx scripts/dev/brand.mts stage"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "2.10.1",
+    "@tauri-apps/cli": "2.11.4",
     "@types/ws": "^8.5.14",
     "@typescript/native-preview": "7.0.0-dev.20260423.1",
     "@vercel/nft": "^1.5.0",

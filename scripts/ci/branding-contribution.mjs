@@ -56,10 +56,10 @@ function literals(file, source) {
 }
 const violations = [];
 for (const file of changed.filter(
-  (file) =>
-    /^(apps|packages)\//.test(file) &&
-    /\.[cm]?[jt]sx?$/.test(file) &&
-    !/\.test\.|\/test[-/]|\/generated\/|^packages\/branding\//.test(file),
+  (candidate) =>
+    /^(apps|packages)\//.test(candidate) &&
+    /\.[cm]?[jt]sx?$/.test(candidate) &&
+    !/\.test\.|\/test[-/]|\/generated\/|^packages\/branding\//.test(candidate),
 )) {
   if (!existsSync(file)) continue;
   let previous = "";

@@ -63,6 +63,12 @@ jobs:
           ref: ${{ env.RELEASE_TAG }}
 
       - uses: ./.github/actions/select-brand
+        with:
+          directory: ${{ vars.FDE_BRAND_DIR }}
+          repository: ${{ vars.FDE_BRAND_REPOSITORY }}
+          revision: ${{ vars.FDE_BRAND_REVISION }}
+          subdirectory: ${{ vars.FDE_BRAND_SUBDIR }}
+          token: ${{ secrets.BRANDING_READ_TOKEN }}
 
       - uses: ./.github/actions/setup-node-deps
 
@@ -187,6 +193,12 @@ jobs:
           ref: ${{ env.RELEASE_TAG }}
 
       - uses: ./.github/actions/select-brand
+        with:
+          directory: ${{ vars.FDE_BRAND_DIR }}
+          repository: ${{ vars.FDE_BRAND_REPOSITORY }}
+          revision: ${{ vars.FDE_BRAND_REVISION }}
+          subdirectory: ${{ vars.FDE_BRAND_SUBDIR }}
+          token: ${{ secrets.BRANDING_READ_TOKEN }}
 
       - uses: actions/setup-node@v7
         with:
@@ -246,6 +258,12 @@ jobs:
           ref: ${{ env.RELEASE_TAG }}
 
       - uses: ./.github/actions/select-brand
+        with:
+          directory: ${{ vars.FDE_BRAND_DIR }}
+          repository: ${{ vars.FDE_BRAND_REPOSITORY }}
+          revision: ${{ vars.FDE_BRAND_REVISION }}
+          subdirectory: ${{ vars.FDE_BRAND_SUBDIR }}
+          token: ${{ secrets.BRANDING_READ_TOKEN }}
 
       - uses: actions/setup-node@v7
         with:
@@ -377,6 +395,12 @@ jobs:
           ref: ${{ env.RELEASE_TAG }}
 
       - uses: ./.github/actions/select-brand
+        with:
+          directory: ${{ vars.FDE_BRAND_DIR }}
+          repository: ${{ vars.FDE_BRAND_REPOSITORY }}
+          revision: ${{ vars.FDE_BRAND_REVISION }}
+          subdirectory: ${{ vars.FDE_BRAND_SUBDIR }}
+          token: ${{ secrets.BRANDING_READ_TOKEN }}
 
       # The bundle script lands with the install-script work; until it is on the
       # tagged commit this job is a no-op rather than a failure.
@@ -456,6 +480,12 @@ jobs:
           ref: ${{ env.RELEASE_TAG }}
 
       - uses: ./.github/actions/select-brand
+        with:
+          directory: ${{ vars.FDE_BRAND_DIR }}
+          repository: ${{ vars.FDE_BRAND_REPOSITORY }}
+          revision: ${{ vars.FDE_BRAND_REVISION }}
+          subdirectory: ${{ vars.FDE_BRAND_SUBDIR }}
+          token: ${{ secrets.BRANDING_READ_TOKEN }}
       - name: Free disk space (Android SDK + NDK + node_modules need it)
         uses: jlumbroso/free-disk-space@v1.3.1
         with:
@@ -553,6 +583,12 @@ jobs:
           ref: ${{ env.RELEASE_TAG }}
 
       - uses: ./.github/actions/select-brand
+        with:
+          directory: ${{ vars.FDE_BRAND_DIR }}
+          repository: ${{ vars.FDE_BRAND_REPOSITORY }}
+          revision: ${{ vars.FDE_BRAND_REVISION }}
+          subdirectory: ${{ vars.FDE_BRAND_SUBDIR }}
+          token: ${{ secrets.BRANDING_READ_TOKEN }}
 
       - uses: actions/download-artifact@v8
         with:
@@ -607,6 +643,12 @@ jobs:
           ref: ${{ env.RELEASE_TAG }}
 
       - uses: ./.github/actions/select-brand
+        with:
+          directory: ${{ vars.FDE_BRAND_DIR }}
+          repository: ${{ vars.FDE_BRAND_REPOSITORY }}
+          revision: ${{ vars.FDE_BRAND_REVISION }}
+          subdirectory: ${{ vars.FDE_BRAND_SUBDIR }}
+          token: ${{ secrets.BRANDING_READ_TOKEN }}
 
       - uses: ./.github/actions/setup-node-deps
       - name: Resolve container distribution
