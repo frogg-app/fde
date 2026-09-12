@@ -6,7 +6,9 @@ import { useCompanionStore } from "./store";
 import { MicOrb } from "./mic-orb";
 import type { CompanionMicState } from "./store";
 
-vi.mock("react-i18next", () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({ t: (key: string) => key }),
+}));
 const motion = vi.hoisted(() => ({ reduced: false }));
 vi.mock("react-native-reanimated", async (importOriginal) => ({
   ...(await importOriginal<typeof import("react-native-reanimated")>()),
@@ -124,4 +126,48 @@ it("shows Listening alongside Thinking and Speaking, then reports mute and conne
   act(() => state.sessionReconnecting());
   expect(element("companion-mic-state").textContent).toBe("agentPanel.states.reconnecting");
   act(() => state.sessionStopped());
+});
+
+it("keeps delivered speech moving while the microphone is muted", async () => {
+  render(
+    <MicOrb
+      state="idle"
+      volume={1}
+      speakingVolume={0.8}
+      playbackActive
+      onPress={onPress}
+      accessibilityLabel="Unmute"
+    />,
+  );
+  expect(getComputedStyle(element("companion-input-level")).opacity).toBe("0.2");
+  const initial = getComputedStyle(element("companion-orb-flow")).transform;
+  await expect
+    .poll(() => getComputedStyle(element("companion-orb-flow")).transform)
+    .not.toBe(initial);
+  expect(inputScale()).toBe(1);
+});
+
+it("lets the device motion preference stop continuous animation", async () => {
+  render(
+    <MicOrb
+      state="listening"
+      volume={0}
+      animated={false}
+      onPress={onPress}
+      accessibilityLabel="Mute"
+    />,
+  );
+  const initial = getComputedStyle(element("companion-orb-flow")).transform;
+  render(
+    <MicOrb
+      state="listening"
+      volume={1}
+      animated={false}
+      onPress={onPress}
+      accessibilityLabel="Mute"
+    />,
+  );
+  await expect.poll(() => getComputedStyle(element("companion-input-level")).opacity).toBe("1");
+  expect(getComputedStyle(element("companion-orb-flow")).transform).toBe(initial);
+  expect(inputScale()).toBe(1);
 });

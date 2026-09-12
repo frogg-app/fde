@@ -1005,7 +1005,10 @@ export const ja: TranslationResources = {
     creating: "作成中…",
     name: "ラベル名",
     updateHostUse: "ラベルを使用するにはホストを更新してください。",
-    errors: { update: "ラベルを更新できません", load: "ラベルを読み込めません" },
+    errors: {
+      update: "ラベルを更新できません",
+      load: "ラベルを読み込めません",
+    },
     colors: {
       violet: "紫",
       sky: "空色",
@@ -1937,8 +1940,14 @@ export const ja: TranslationResources = {
           "ChatGPTへのログインとホスト側のプレビュー有効化が必要です。対応状況はアカウントによって異なります。",
       },
       enabled: {
-        label: "Companionを有効にする",
-        description: "エージェントの作業中に話しかけられます。必要なときに会話を開始してください。",
+        label: "Companion を有効にする（プレビュー）",
+        description:
+          "エージェントとの実験的な音声会話。このデバイスでは初期状態で無効です。会話を開始したときだけ音声入力が始まります。",
+      },
+      animated: {
+        label: "音声グラフィックを動かす",
+        description:
+          "光がゆっくり流れます。オフにすると静かな表示になります。システムの視差効果を減らす設定は常に優先されます。",
       },
       replyText: {
         label: "返答テキストを表示",

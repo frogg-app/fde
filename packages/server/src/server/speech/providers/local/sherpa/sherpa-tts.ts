@@ -6,7 +6,9 @@ import type { SpeechStreamResult, TextToSpeechProvider } from "../../../speech-p
 import { chunkBuffer, float32ToPcm16le } from "../../../audio.js";
 import { loadSherpaOnnxNode } from "./sherpa-onnx-node-loader.js";
 
-export type SherpaTtsPreset = "kokoro-en-v0_19" | "piper-ljspeech-medium";
+import { defaultTtsSpeakerId, type LocalTtsModelId } from "./model-catalog.js";
+
+export type SherpaTtsPreset = LocalTtsModelId;
 
 export interface SherpaTtsConfig {
   preset: SherpaTtsPreset;
@@ -21,6 +23,33 @@ function assertFileExists(filePath: string, label: string): void {
   if (!existsSync(filePath)) {
     throw new Error(`Missing ${label}: ${filePath}`);
   }
+}
+
+function createModelConfig(config: SherpaTtsConfig, speakerId: number) {
+  const files: Record<LocalTtsModelId, string> = {
+    "piper-ljspeech-medium": "en_US-ljspeech-medium.onnx",
+    "kitten-nano-en-v0_8-fp32": "model.fp32.onnx",
+    "kokoro-int8-multi-lang-v1_0": "model.int8.onnx",
+    "kokoro-en-v0_19": "model.onnx",
+  };
+  const model = `${config.modelDir}/${files[config.preset]}`;
+  const voices = `${config.modelDir}/voices.bin`;
+  const tokens = `${config.modelDir}/tokens.txt`;
+  const dataDir = `${config.modelDir}/espeak-ng-data`;
+  assertFileExists(model, "TTS model");
+  assertFileExists(tokens, "TTS tokens");
+  assertFileExists(dataDir, "TTS espeak-ng dataDir");
+  const common = { model, tokens, dataDir, lengthScale: config.lengthScale ?? 1.0 };
+  if (config.preset === "piper-ljspeech-medium") return { vits: common };
+  assertFileExists(voices, "TTS voices");
+  if (config.preset === "kitten-nano-en-v0_8-fp32") return { kitten: { ...common, voices } };
+  if (config.preset === "kokoro-int8-multi-lang-v1_0") {
+    const british = speakerId >= 20 && speakerId <= 27;
+    const lexicon = `${config.modelDir}/${british ? "lexicon-gb-en.txt" : "lexicon-us-en.txt"}`;
+    assertFileExists(lexicon, "TTS pronunciation lexicon");
+    return { kokoro: { ...common, voices, lexicon, lang: british ? "en-gb" : "en-us" } };
+  }
+  return { kokoro: { ...common, voices } };
 }
 
 interface SherpaOfflineTtsNative {
@@ -41,8 +70,12 @@ export class SherpaOnnxTTS implements TextToSpeechProvider {
   private readonly logger: pino.Logger;
 
   constructor(config: SherpaTtsConfig, logger: pino.Logger) {
-    this.logger = logger.child({ module: "speech", provider: "local", component: "tts" });
-    this.speakerId = config.speakerId ?? 0;
+    this.logger = logger.child({
+      module: "speech",
+      provider: "local",
+      component: "tts",
+    });
+    this.speakerId = config.speakerId ?? defaultTtsSpeakerId(config.preset) ?? 0;
     this.speed = config.speed ?? 1.0;
 
     const sherpa = loadSherpaOnnxNode();
@@ -50,45 +83,22 @@ export class SherpaOnnxTTS implements TextToSpeechProvider {
       throw new Error("sherpa-onnx-node OfflineTts is unavailable");
     }
 
-    const isPiper = config.preset === "piper-ljspeech-medium";
-    const modelPath = `${config.modelDir}/${isPiper ? "en_US-ljspeech-medium.onnx" : "model.onnx"}`;
-    const voicesPath = `${config.modelDir}/voices.bin`;
-    const tokensPath = `${config.modelDir}/tokens.txt`;
-    const dataDir = `${config.modelDir}/espeak-ng-data`;
-
-    assertFileExists(modelPath, "TTS model");
-    if (!isPiper) assertFileExists(voicesPath, "TTS voices");
-    assertFileExists(tokensPath, "TTS tokens");
-    assertFileExists(dataDir, "TTS espeak-ng dataDir");
-
-    const modelConfig = isPiper
-      ? {
-          vits: {
-            model: modelPath,
-            tokens: tokensPath,
-            dataDir,
-            lengthScale: config.lengthScale ?? 1.0,
-          },
-        }
-      : {
-          kokoro: {
-            model: modelPath,
-            voices: voicesPath,
-            tokens: tokensPath,
-            dataDir,
-            lengthScale: config.lengthScale ?? 1.0,
-          },
-        };
+    const modelConfig = createModelConfig(config, this.speakerId);
 
     const offlineTtsConfig = {
-      model: modelConfig,
-      numThreads: config.numThreads ?? 2,
-      provider: "cpu",
+      // The native binding reads these inside model, not at the config root.
+      model: {
+        ...modelConfig,
+        numThreads: config.numThreads ?? 2,
+        provider: "cpu",
+      },
       maxNumSentences: 1,
     };
 
     this.tts = new (
-      sherpa as unknown as { OfflineTts: new (config: unknown) => SherpaOfflineTtsNative }
+      sherpa as unknown as {
+        OfflineTts: new (config: unknown) => SherpaOfflineTtsNative;
+      }
     ).OfflineTts(offlineTtsConfig);
     this.logger.info(
       { preset: config.preset, modelDir: config.modelDir },

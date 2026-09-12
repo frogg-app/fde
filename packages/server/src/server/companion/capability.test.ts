@@ -23,18 +23,28 @@ function resolve(params: {
 
 describe("resolveCompanionCapability", () => {
   test("is enabled with no reason when the flag defaults on and a key resolves", () => {
-    expect(resolve({ env: { PASEO_COMPANION_BACKEND: "api", ANTHROPIC_API_KEY: "key" } })).toEqual({
+    expect(
+      resolve({
+        env: { PASEO_COMPANION_BACKEND: "api", ANTHROPIC_API_KEY: "key" },
+      }),
+    ).toEqual({
       enabled: true,
       reason: "",
     });
   });
 
   test("is disabled only when neither an Anthropic key nor the Claude Code CLI is there", () => {
-    expect(resolve({ env: {} })).toEqual({ enabled: false, reason: BACKEND_MISSING_REASON });
+    expect(resolve({ env: {} })).toEqual({
+      enabled: false,
+      reason: BACKEND_MISSING_REASON,
+    });
   });
 
   test("is enabled with no key when the Claude Code CLI can back it", () => {
-    expect(resolve({ env: {}, claudeCliAvailable: true })).toEqual({ enabled: true, reason: "" });
+    expect(resolve({ env: {}, claudeCliAvailable: true })).toEqual({
+      enabled: true,
+      reason: "",
+    });
   });
 
   test("the voice umbrella turns the Companion off even when its own flag is on", () => {
@@ -86,15 +96,15 @@ describe("resolveCompanionCapability", () => {
     ).toEqual({ enabled: false, reason: DISABLED_REASON });
   });
 
-  test("falls back to the local speech runtime when nothing is configured", () => {
+  test("defaults on independently of local speech readiness", () => {
     expect(
       resolve({
         env: { PASEO_COMPANION_BACKEND: "api", ANTHROPIC_API_KEY: "key" },
         localRuntimeAvailable: false,
       }),
     ).toEqual({
-      enabled: false,
-      reason: DISABLED_REASON,
+      enabled: true,
+      reason: "",
     });
   });
 

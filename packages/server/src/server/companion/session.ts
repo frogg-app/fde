@@ -1,3 +1,4 @@
+import { toSpokenText } from "./spoken-text.js";
 import { createCompanionNativeVoice, type CompanionNativeVoice } from "./native-voice.js";
 import { randomUUID } from "node:crypto";
 import { CompanionConversationOptionsSchema } from "@fde/protocol/messages";
@@ -100,7 +101,11 @@ export interface CompanionRuntime {
   watchAgent?: (agentId: string, conversationId: string, workspaceId?: string) => () => void;
   acceptedMessages?: Pick<Set<string>, "has"> & { add(id: string): void };
   activeSession?: string;
-  speechReadiness?: () => { available: boolean; reasonCode: string; retryable: boolean };
+  speechReadiness?: () => {
+    available: boolean;
+    reasonCode: string;
+    retryable: boolean;
+  };
   modelConfig: CompanionModelConfig;
   notebook: CompanionNotebookStore;
   fillers: CompanionFillerBank;
@@ -205,7 +210,9 @@ export class CompanionSession {
   private readonly pendingJobs = new Map<string, CompanionDeferredJob>();
   /** Retry unheard updates after user input, without an inference retry loop. */
   private readonly retryJobs = new Map<string, CompanionDeferredJob>();
-  private readonly acceptedMessages: Pick<Set<string>, "has"> & { add(id: string): void };
+  private readonly acceptedMessages: Pick<Set<string>, "has"> & {
+    add(id: string): void;
+  };
   private starting: Promise<void> | null = null;
   private turnController: VoiceTurnController | null = null;
   private orchestrator: CompanionOrchestrator | null = null;
@@ -231,7 +238,10 @@ export class CompanionSession {
 
   constructor(options: CompanionSessionOptions) {
     this.host = options.host;
-    this.logger = options.logger.child({ module: "companion", sessionId: options.sessionId });
+    this.logger = options.logger.child({
+      module: "companion",
+      sessionId: options.sessionId,
+    });
     this.runtime = options.runtime;
     this.acceptedMessages = options.runtime.acceptedMessages ?? new Set<string>();
     this.resolveStt = toResolver(options.stt);
@@ -257,7 +267,10 @@ export class CompanionSession {
     }
 
     if (this.runtime.activeSession && this.runtime.activeSession !== this.ownerId) {
-      this.emitStartResponse(msg.requestId, { reasonCode: "companion_busy", retryable: true });
+      this.emitStartResponse(msg.requestId, {
+        reasonCode: "companion_busy",
+        retryable: true,
+      });
       return;
     }
     this.runtime.activeSession = this.ownerId;
@@ -265,7 +278,12 @@ export class CompanionSession {
       await this.starting;
       this.emitStartResponse(
         msg.requestId,
-        this.started ? null : { reasonCode: COMPANION_BACKEND_FAILED_REASON_CODE, retryable: true },
+        this.started
+          ? null
+          : {
+              reasonCode: COMPANION_BACKEND_FAILED_REASON_CODE,
+              retryable: true,
+            },
       );
       return;
     }
@@ -317,7 +335,10 @@ export class CompanionSession {
     if (sdp) {
       refusal = null;
       if (!this.runtime.nativeVoicePreview || !this.runtime.capability.enabled)
-        refusal = { reasonCode: "companion_native_unavailable", retryable: false };
+        refusal = {
+          reasonCode: "companion_native_unavailable",
+          retryable: false,
+        };
     }
     if (refusal) {
       this.logger.info({ reasonCode: refusal.reasonCode }, "Companion session start refused");
@@ -340,7 +361,11 @@ export class CompanionSession {
         endConversation: () => {
           this.host.emit({
             type: "companion.input.state",
-            payload: { isSpeaking: false, ended: true, sessionId: this.wireSessionId },
+            payload: {
+              isSpeaking: false,
+              ended: true,
+              sessionId: this.wireSessionId,
+            },
           });
           void this.shutdown();
         },
@@ -364,7 +389,13 @@ export class CompanionSession {
         }),
       );
     if (sdp) {
-      await this.startNativeVoice({ requestId, sdp, tools, deferredJobs, generation });
+      await this.startNativeVoice({
+        requestId,
+        sdp,
+        tools,
+        deferredJobs,
+        generation,
+      });
       return;
     }
     const model = this.runtime.modelConfig;
@@ -376,7 +407,11 @@ export class CompanionSession {
       return;
     }
 
-    const backend = this.runtime.createBackend({ config: model, tools, logger: this.logger });
+    const backend = this.runtime.createBackend({
+      config: model,
+      tools,
+      logger: this.logger,
+    });
 
     this.backend = backend;
     // The CLI backend spends seconds spawning a process and initialising its
@@ -454,7 +489,11 @@ export class CompanionSession {
         this.logger.warn({ err: error }, "Companion native voice failed");
         this.host.emit({
           type: "companion.input.state",
-          payload: { isSpeaking: false, ended: true, sessionId: this.wireSessionId },
+          payload: {
+            isSpeaking: false,
+            ended: true,
+            sessionId: this.wireSessionId,
+          },
         });
         void this.shutdown();
       },
@@ -512,7 +551,10 @@ export class CompanionSession {
     if (!this.turnController) {
       return;
     }
-    await this.turnController.appendClientChunk({ audioBase64: msg.audio, format: msg.format });
+    await this.turnController.appendClientChunk({
+      audioBase64: msg.audio,
+      format: msg.format,
+    });
   }
 
   handleAudioPlayed(id: string): void {
@@ -551,7 +593,11 @@ export class CompanionSession {
     }
     this.host.emit({
       type: "companion.message.send.response",
-      payload: { requestId: msg.requestId, accepted: reasonCode === null, reasonCode },
+      payload: {
+        requestId: msg.requestId,
+        accepted: reasonCode === null,
+        reasonCode,
+      },
     });
     if (reasonCode || duplicate) return;
     this.emitTranscript(text, true);
@@ -569,7 +615,10 @@ export class CompanionSession {
     const notebook = await this.runtime.notebook.get();
     this.host.emit({
       type: "companion.notebook.fetch.response",
-      payload: { requestId: msg.requestId, notebook: toNotebookPayload(notebook) },
+      payload: {
+        requestId: msg.requestId,
+        notebook: toNotebookPayload(notebook),
+      },
     });
   }
 
@@ -580,7 +629,10 @@ export class CompanionSession {
 
   private refuseStart(): CompanionStartRefusal | null {
     if (this.runtime.modelConfig.status === "unavailable") {
-      return { reasonCode: COMPANION_BACKEND_MISSING_REASON_CODE, retryable: false };
+      return {
+        reasonCode: COMPANION_BACKEND_MISSING_REASON_CODE,
+        retryable: false,
+      };
     }
     if (!this.runtime.capability.enabled) {
       return { reasonCode: COMPANION_DISABLED_REASON_CODE, retryable: false };
@@ -592,7 +644,10 @@ export class CompanionSession {
         retryable: readiness.retryable,
       };
     if (!this.resolveTts() || !this.resolveStt() || !this.resolveTurnDetection()) {
-      return { reasonCode: COMPANION_SPEECH_UNAVAILABLE_REASON_CODE, retryable: true };
+      return {
+        reasonCode: COMPANION_SPEECH_UNAVAILABLE_REASON_CODE,
+        retryable: true,
+      };
     }
     return null;
   }
@@ -829,6 +884,8 @@ export class CompanionSession {
     };
     return {
       prepare: async (text) => {
+        text = toSpokenText(text);
+        if (!text) return async () => {};
         const play = await this.ttsManager.prepareSpeech(text, forward, signal);
         return async () => {
           await play();
@@ -836,6 +893,8 @@ export class CompanionSession {
         };
       },
       speak: async (text) => {
+        text = toSpokenText(text);
+        if (!text) return;
         await this.ttsManager.generateAndWaitForPlayback(text, forward, signal, true);
         if (!signal.aborted) this.spokenText += this.spokenText ? ` ${text}` : text;
       },
@@ -984,21 +1043,35 @@ export class CompanionSession {
   private emitInputState(isSpeaking: boolean): void {
     this.host.emit({
       type: "companion.input.state",
-      payload: { isSpeaking, sessionId: this.wireSessionId, turnId: this.wireTurnId },
+      payload: {
+        isSpeaking,
+        sessionId: this.wireSessionId,
+        turnId: this.wireTurnId,
+      },
     });
   }
 
   private emitTranscript(text: string, isFinal: boolean): void {
     this.host.emit({
       type: "companion.transcript",
-      payload: { text, isFinal, sessionId: this.wireSessionId, turnId: this.wireTurnId },
+      payload: {
+        text,
+        isFinal,
+        sessionId: this.wireSessionId,
+        turnId: this.wireTurnId,
+      },
     });
   }
 
   private emitReply(text: string, isFinal: boolean): void {
     this.host.emit({
       type: "companion.reply",
-      payload: { text, isFinal, sessionId: this.wireSessionId, turnId: this.wireTurnId },
+      payload: {
+        text,
+        isFinal,
+        sessionId: this.wireSessionId,
+        turnId: this.wireTurnId,
+      },
     });
   }
 

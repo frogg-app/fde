@@ -1926,8 +1926,14 @@ export const en = {
           "Requires a ChatGPT sign-in and native voice preview enabled on your daemon. Availability depends on your account.",
       },
       enabled: {
-        label: "Enable Companion",
-        description: "Talk to your agents while they work. Start a conversation when you need it.",
+        label: "Enable Companion (preview)",
+        description:
+          "Experimental voice conversations with your agents. Off by default on this device. Listening starts only when you start a conversation.",
+      },
+      animated: {
+        label: "Animate voice graphics",
+        description:
+          "Continuous flowing light. Turn off for a calmer view. System Reduce Motion is always respected.",
       },
       replyText: {
         label: "Show reply text",

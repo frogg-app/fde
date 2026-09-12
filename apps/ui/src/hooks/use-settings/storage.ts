@@ -101,6 +101,7 @@ export interface AppSettings {
   /** Device-level opt-in. Enabling exposes Start without starting a conversation. */
   companionEnabled: boolean;
   companionNativeVoice: boolean;
+  companionAnimated: boolean;
   companionVerbosity: "brief" | "detailed";
   companionUpdates: "important" | "completion" | "off";
   companionAcknowledgeTasks: boolean;
@@ -164,6 +165,7 @@ export const DEFAULT_CLIENT_SETTINGS: AppSettings = {
   voiceReplyConfirm: true,
   companionEnabled: false,
   companionNativeVoice: false,
+  companionAnimated: true,
   companionVerbosity: "brief",
   companionUpdates: "important",
   companionAcknowledgeTasks: false,
@@ -290,6 +292,7 @@ const StoredAppSettingsSchema = z
     voiceReplyConfirm: z.boolean().catch(true),
     companionEnabled: z.boolean().catch(false),
     companionNativeVoice: z.boolean().catch(false),
+    companionAnimated: z.boolean().catch(true),
     companionVerbosity: z.enum(["brief", "detailed"]).catch("brief"),
     companionUpdates: z.enum(["important", "completion", "off"]).catch("important"),
     companionAcknowledgeTasks: z.boolean().catch(false),
@@ -389,7 +392,9 @@ export async function loadAppSettingsFromStorage(deps: SettingsDeps): Promise<Ap
       await writeAppSettings(deps.storage, read.stored, read.settings);
     }
     const { needsWrite: _needsWrite, ...stored } = read.stored;
-    return await migrateAppSettings(read.settings, deps.storage, stored, { native: isNative });
+    return await migrateAppSettings(read.settings, deps.storage, stored, {
+      native: isNative,
+    });
   } catch (error) {
     console.error("[AppSettings] Failed to load settings:", error);
     throw error;
@@ -400,9 +405,11 @@ export async function loadAppSettingsFromStorage(deps: SettingsDeps): Promise<Ap
  * Reads whichever of the settings blobs exists, without migrating. `needsWrite` covers the reads
  * that produce settings the stored blob does not already spell out.
  */
-async function readAppSettings(
-  deps: SettingsDeps,
-): Promise<{ settings: AppSettings; needsWrite: boolean; stored: StoredAppSettings }> {
+async function readAppSettings(deps: SettingsDeps): Promise<{
+  settings: AppSettings;
+  needsWrite: boolean;
+  stored: StoredAppSettings;
+}> {
   const stored = await readSettingsObject(deps.storage, APP_SETTINGS_KEY);
   if (stored) {
     return {
@@ -426,7 +433,11 @@ async function readAppSettings(
   }
 
   const defaultStored = StoredAppSettingsSchema.parse({});
-  return { settings: DEFAULT_CLIENT_SETTINGS, needsWrite: true, stored: defaultStored };
+  return {
+    settings: DEFAULT_CLIENT_SETTINGS,
+    needsWrite: true,
+    stored: defaultStored,
+  };
 }
 
 export async function loadSettingsFromStorage(deps: SettingsDeps): Promise<Settings> {
@@ -596,7 +607,10 @@ async function writeAppSettings(
     JSON.stringify({
       ...persistedStored,
       ...settings,
-      sidebarRowItems: { ...storedSidebarRowItems, ...settings.sidebarRowItems },
+      sidebarRowItems: {
+        ...storedSidebarRowItems,
+        ...settings.sidebarRowItems,
+      },
     }),
   );
 }

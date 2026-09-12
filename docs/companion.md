@@ -138,8 +138,11 @@ flowchart LR
 ```
 
 Local speech uses the existing Sherpa runtime. The default English voice is now
-**Piper LJSpeech medium**, approximately 67 MB. An explicitly configured Kokoro
-voice remains supported. Recognition retains Parakeet and existing configurable
+**Kitten nano 0.8 FP32, Rosie**, approximately 61 MiB. Explicitly configured
+Piper and Kokoro voices remain supported. Host overrides use
+`PASEO_VOICE_LOCAL_TTS_MODEL`, `PASEO_VOICE_LOCAL_TTS_SPEAKER_ID` and
+`PASEO_VOICE_LOCAL_TTS_SPEED`; the default Kitten speaker is 5.
+See the [polish design and measurements](companion-polish-plan.md). Recognition retains Parakeet and existing configurable
 endpointing. Missing downloads and unavailable speech providers prevent startup.
 Native Codex voice does not require local speech models.
 

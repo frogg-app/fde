@@ -1952,9 +1952,14 @@ export const ptBR: TranslationResources = {
           "Requer login no ChatGPT e ativação da prévia no servidor. A disponibilidade depende da sua conta.",
       },
       enabled: {
-        label: "Ativar Companion",
+        label: "Ativar Companion (prévia)",
         description:
-          "Fale com seus agentes enquanto trabalham. Inicie uma conversa quando precisar.",
+          "Conversas de voz experimentais com seus agentes. Desativado por padrão neste dispositivo. A escuta começa apenas quando você inicia uma conversa.",
+      },
+      animated: {
+        label: "Animar gráficos de voz",
+        description:
+          "Luz em movimento contínuo. Desative para uma visualização mais tranquila. A opção de reduzir movimento do sistema é sempre respeitada.",
       },
       replyText: {
         label: "Mostrar o texto da resposta",

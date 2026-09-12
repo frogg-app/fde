@@ -18,12 +18,21 @@ describe("resolveSpeechConfig", () => {
 
     expect(resolve({}, {})).toEqual({ enabled: true });
     expect(resolve({ PASEO_VOICE: "0" }, {})).toEqual({ enabled: false });
-    expect(resolve({ PASEO_VOICE_NOTIFICATIONS: "0" }, {})).toEqual({ enabled: false });
+    expect(resolve({ PASEO_VOICE_NOTIFICATIONS: "0" }, {})).toEqual({
+      enabled: false,
+    });
     expect(resolve({}, { features: { voice: { notifications: { enabled: false } } } })).toEqual({
       enabled: false,
     });
     expect(
-      resolve({}, { features: { voice: { enabled: false, notifications: { enabled: true } } } }),
+      resolve(
+        {},
+        {
+          features: {
+            voice: { enabled: false, notifications: { enabled: true } },
+          },
+        },
+      ),
     ).toEqual({ enabled: false });
     expect(
       resolveSpeechConfig({
@@ -72,13 +81,14 @@ describe("resolveSpeechConfig", () => {
       models: {
         dictationStt: "parakeet-tdt-0.6b-v2-int8",
         voiceStt: "parakeet-tdt-0.6b-v2-int8",
-        voiceTts: "piper-ljspeech-medium",
+        voiceTts: "kitten-nano-en-v0_8-fp32",
+        voiceTtsSpeakerId: 5,
       },
     });
     expect(result.speech.local?.models.dictationStt).toBe("parakeet-tdt-0.6b-v2-int8");
     expect(result.speech.local?.models.voiceStt).toBe("parakeet-tdt-0.6b-v2-int8");
-    expect(result.speech.local?.models.voiceTts).toBe("piper-ljspeech-medium");
-    expect(result.speech.local?.models.voiceTtsSpeakerId).toBeUndefined();
+    expect(result.speech.local?.models.voiceTts).toBe("kitten-nano-en-v0_8-fp32");
+    expect(result.speech.local?.models.voiceTtsSpeakerId).toBe(5);
     expect(result.speech.sttLanguages).toEqual({
       dictation: "en",
       voice: "en",
@@ -274,9 +284,15 @@ describe("resolveSpeechConfig", () => {
       persisted: explicitOn,
       localRuntimeAvailable: true,
     });
-    expect(enabledFlags(off)).toEqual({ dictation: false, voice: false, hasLocalConfig: false });
+    expect(enabledFlags(off)).toEqual({
+      dictation: false,
+      voice: false,
+      hasLocalConfig: false,
+    });
 
-    const persistedOff = PersistedConfigSchema.parse({ features: { voice: { enabled: false } } });
+    const persistedOff = PersistedConfigSchema.parse({
+      features: { voice: { enabled: false } },
+    });
     expect(
       enabledFlags(
         resolveSpeechConfig({
@@ -290,10 +306,17 @@ describe("resolveSpeechConfig", () => {
 
     const forcedOn = resolveSpeechConfig({
       paseoHome: "/tmp/paseo-home",
-      env: { PASEO_VOICE: "1", PASEO_VOICE_MODE_ENABLED: "0" } as NodeJS.ProcessEnv,
+      env: {
+        PASEO_VOICE: "1",
+        PASEO_VOICE_MODE_ENABLED: "0",
+      } as NodeJS.ProcessEnv,
       persisted: PersistedConfigSchema.parse({}),
       localRuntimeAvailable: false,
     });
-    expect(enabledFlags(forcedOn)).toEqual({ dictation: true, voice: false, hasLocalConfig: true });
+    expect(enabledFlags(forcedOn)).toEqual({
+      dictation: true,
+      voice: false,
+      hasLocalConfig: true,
+    });
   });
 });

@@ -1884,8 +1884,12 @@ export const zhCN: TranslationResources = {
         description: "需要登录 ChatGPT 并在主机上启用语音预览。可用性取决于您的账户。",
       },
       enabled: {
-        label: "启用 Companion",
-        description: "在代理工作时与它们交谈。需要时开始对话。",
+        label: "启用 Companion（预览版）",
+        description: "与智能体进行实验性语音对话。在此设备上默认关闭。只有开始对话后才会开始聆听。",
+      },
+      animated: {
+        label: "启用语音图形动画",
+        description: "持续流动的光效。关闭后界面更静谧。始终遵循系统的减少动态效果设置。",
       },
       replyText: {
         label: "显示回复文本",

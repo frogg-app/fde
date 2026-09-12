@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Refine Companion into animated cyan/violet light ribbons with a matching launcher,
+  compact live presence and distinct microphone/playback feedback. Add a device
+  motion preference and larger labelled controls. Keep the app preview off by
+  default; default daemon availability on independently of model readiness.
+- Default local speech to Kitten nano FP32 Rosie, retain explicit Piper/Kokoro
+  overrides, fix native inference-thread configuration and strip presentation
+  markdown before synthesis. Add reproducible audio benchmarks and an interactive
+  design harness. See [measurements and platform limits](docs/companion-polish-plan.md).
+
 - Integrate main through 0.4.1 into the Companion preview, preserving its voice
   controls alongside sidebar/subagent updates, branding and shared build tooling.
   Rebuild Android and the Linux x64 daemon from the merged source. Scope Android

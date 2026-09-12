@@ -10,7 +10,13 @@ import {
 } from "./store";
 
 /** High-frequency audio levels stay within the voice surface, away from transcript and task rows. */
-export function CompanionPresence({ onPress }: { onPress: () => void }) {
+export function CompanionPresence({
+  onPress,
+  animated = true,
+}: {
+  onPress: () => void;
+  animated?: boolean;
+}) {
   const { t } = useTranslation();
   const session = useCompanionStore((state) => state.session);
   const isMuted = useCompanionStore((state) => state.isMuted);
@@ -18,7 +24,12 @@ export function CompanionPresence({ onPress }: { onPress: () => void }) {
   const speakingVolume = useCompanionStore((state) => state.speakingVolume);
   const isThinking = useCompanionStore((state) => state.isThinking);
   const isSpeaking = useCompanionStore((state) => state.isSpeaking);
-  const micState = deriveCompanionMicState({ session, isMuted, isThinking, isSpeaking });
+  const micState = deriveCompanionMicState({
+    session,
+    isMuted,
+    isThinking,
+    isSpeaking,
+  });
   const isSessionOpen = session.status === "open";
   let action = "companion.actions.start";
   if (isSessionOpen) action = isMuted ? "companion.actions.unmute" : "companion.actions.mute";
@@ -26,6 +37,8 @@ export function CompanionPresence({ onPress }: { onPress: () => void }) {
     <View style={styles.orbRow}>
       <MicOrb
         state={micState}
+        animated={animated}
+        playbackActive={isSessionOpen && isSpeaking}
         volume={volume}
         speakingVolume={speakingVolume}
         accessibilityLabel={t(action)}
@@ -43,8 +56,8 @@ export function CompanionPresence({ onPress }: { onPress: () => void }) {
         </Text>
       </View>
       <Text style={styles.activityLabel} testID="companion-response-state">
-        {micState === "thinking" || micState === "speaking"
-          ? t(`companion.micState.${micState}`)
+        {isSessionOpen && (isThinking || isSpeaking)
+          ? t(`companion.micState.${isSpeaking ? "speaking" : "thinking"}`)
           : " "}
       </Text>
     </View>
@@ -62,7 +75,8 @@ const styles = StyleSheet.create((theme) => ({
     alignItems: "center",
     paddingBottom: theme.spacing[4],
     borderRadius: 24,
-    backgroundColor: theme.colors.surface1,
+    backgroundColor: "#0b1020",
+    overflow: "hidden",
   },
   presence: {
     flexDirection: "row",
@@ -71,21 +85,21 @@ const styles = StyleSheet.create((theme) => ({
     paddingHorizontal: theme.spacing[4],
     paddingVertical: theme.spacing[2],
     borderRadius: theme.borderRadius.full,
-    backgroundColor: theme.colors.surface2,
+    backgroundColor: "#19243a",
   },
   listeningDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: theme.colors.statusDotSuccess,
+    backgroundColor: "#70efd8",
   },
   micStateLabel: {
     fontSize: theme.fontSize.sm,
-    color: theme.colors.foreground,
+    color: "#e9f4ff",
   },
   activityLabel: {
     fontSize: theme.fontSize.sm,
-    color: theme.colors.foregroundMuted,
+    color: "#a6bad7",
     marginTop: theme.spacing[2],
   },
 }));

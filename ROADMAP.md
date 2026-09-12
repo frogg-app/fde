@@ -11,6 +11,11 @@ preserved work outside this checkout.
 
 ## Implemented baseline
 
+- Companion visual/speech polish: opt-in device setting, flowing light presence,
+  motion control and Kitten Rosie local voice. See the
+  [design, measurements and remaining native gaps](docs/companion-polish-plan.md).
+  The reported Android startup crash is still unresolved.
+
 - Independent desktop/daemon release paths, shared daemon build artifacts, and a
   timed local desktop build command. See [building](docs/building.md#timed-local-desktop-builds).
   Guarded Android native-output reuse remains a follow-up.

@@ -1970,9 +1970,14 @@ export const fr: TranslationResources = {
           "Nécessite une connexion ChatGPT et l’activation de l’aperçu sur le serveur. La disponibilité dépend de votre compte.",
       },
       enabled: {
-        label: "Activer Companion",
+        label: "Activer Companion (aperçu)",
         description:
-          "Parlez à vos agents pendant leur travail. Démarrez une conversation au besoin.",
+          "Conversations vocales expérimentales avec vos agents. Désactivé par défaut sur cet appareil. L’écoute commence uniquement lorsque vous démarrez une conversation.",
+      },
+      animated: {
+        label: "Animer les effets vocaux",
+        description:
+          "Une lumière en mouvement continu. Désactivez pour une vue plus calme. Le réglage système de réduction des animations est toujours respecté.",
       },
       replyText: {
         label: "Afficher le texte de la réponse",

@@ -1,4 +1,6 @@
-import { Mic, MicOff, SendHorizontal, Square } from "lucide-react-native";
+import { CompanionControls } from "./controls";
+import { CompanionMiniPresence } from "./mini-presence";
+import { SendHorizontal } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
@@ -21,16 +23,10 @@ import { useCompanionStore } from "./store";
 import { TopicsStrip } from "./topics-strip";
 import { useCompanionHost } from "./use-companion-host";
 
-const ThemedMic = withUnistyles(Mic, (theme) => ({ color: theme.colors.foregroundMuted }));
-const ThemedMicOff = withUnistyles(MicOff, (theme) => ({ color: theme.colors.foregroundMuted }));
-const ThemedSquare = withUnistyles(Square, (theme) => ({ color: theme.colors.foregroundMuted }));
 const ThemedSend = withUnistyles(SendHorizontal, (theme) => ({
   color: theme.colors.foregroundMuted,
 }));
 
-const muteIcon = <ThemedMic size={16} />;
-const unmuteIcon = <ThemedMicOff size={16} />;
-const stopIcon = <ThemedSquare size={16} />;
 const sendIcon = <ThemedSend size={16} />;
 
 /**
@@ -42,6 +38,7 @@ const sendIcon = <ThemedSend size={16} />;
 export function CompanionHost() {
   const { t } = useTranslation();
   const enabled = useSettings((settings) => settings.companionEnabled);
+  const animated = useSettings((settings) => settings.companionAnimated);
   const isMinimized = useCompanionStore((state) => state.isMinimized);
   const session = useCompanionStore((state) => state.session);
   const open = useCompanionStore((state) => state.open);
@@ -89,6 +86,7 @@ export function CompanionHost() {
     <>
       {isMinimized && ["open", "starting", "reconnecting"].includes(session.status) ? (
         <View style={styles.activeIndicator} testID="companion-active-indicator">
+          <CompanionMiniPresence animated={animated} />
           <Button size="sm" onPress={open}>
             {session.status === "reconnecting"
               ? t("agentPanel.states.reconnecting")
@@ -142,7 +140,12 @@ function CompanionBody({ serverId, isAvailable, unavailableReason }: CompanionBo
   const hostSession = useSessionStore((state) => (serverId ? state.sessions[serverId] : undefined));
   // The strip's owner resolves every row once, so no row runs its own selector.
   const topics = useMemo(
-    () => buildCompanionTopicRows({ entries: notebookEntries, serverId, session: hostSession }),
+    () =>
+      buildCompanionTopicRows({
+        entries: notebookEntries,
+        serverId,
+        session: hostSession,
+      }),
     [notebookEntries, serverId, hostSession],
   );
   const send = useCompanionStore((state) => state.send);
@@ -235,7 +238,7 @@ function CompanionBody({ serverId, isAvailable, unavailableReason }: CompanionBo
 
   return (
     <View style={styles.body}>
-      <CompanionPresence onPress={pressOrb} />
+      <CompanionPresence onPress={pressOrb} animated={settings.companionAnimated} />
 
       {session.status === "failed" ? (
         <Alert
@@ -272,32 +275,15 @@ function CompanionBody({ serverId, isAvailable, unavailableReason }: CompanionBo
         </Text>
       ) : null}
 
-      <View style={styles.controls}>
-        <Button size="sm" variant="ghost" disabled={!isSessionOpen} onPress={minimize}>
-          {t("companion.actions.minimize")}
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          leftIcon={isMuted ? unmuteIcon : muteIcon}
-          onPress={toggleMute}
-          disabled={!isSessionOpen}
-          testID="companion-mute"
-        >
-          {isMuted ? t("companion.actions.unmute") : t("companion.actions.mute")}
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          leftIcon={stopIcon}
-          onPress={stop}
-          disabled={!canStop}
-          loading={session.status === "stopping"}
-          testID="companion-stop"
-        >
-          {t("companion.actions.stop")}
-        </Button>
-      </View>
+      <CompanionControls
+        isOpen={isSessionOpen}
+        isMuted={isMuted}
+        canStop={canStop}
+        isStopping={session.status === "stopping"}
+        onMinimize={minimize}
+        onToggleMute={toggleMute}
+        onEnd={stop}
+      />
 
       {!settings.companionNativeVoice ? (
         <View style={styles.composer}>
@@ -389,7 +375,9 @@ const styles = StyleSheet.create((theme) => ({
     alignItems: "center",
     backgroundColor: theme.colors.surface0,
     padding: 8,
-    borderRadius: 12,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   activeContext: {
     color: theme.colors.foregroundMuted,
@@ -401,23 +389,22 @@ const styles = StyleSheet.create((theme) => ({
     gap: theme.spacing[3],
   },
   transcriptPartial: {
-    fontSize: theme.fontSize.base,
+    fontSize: theme.fontSize.lg,
+    lineHeight: 26,
+    paddingHorizontal: theme.spacing[3],
     color: theme.colors.foregroundMuted,
     textAlign: "center",
   },
   transcriptFinal: {
-    fontSize: theme.fontSize.base,
+    fontSize: theme.fontSize.lg,
+    lineHeight: 26,
+    paddingHorizontal: theme.spacing[3],
     color: theme.colors.foreground,
     textAlign: "center",
   },
   reply: {
     fontSize: theme.fontSize.base,
     color: theme.colors.foreground,
-  },
-  controls: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: theme.spacing[2],
   },
   composer: {
     flexDirection: "row",

@@ -1966,9 +1966,14 @@ export const es: TranslationResources = {
           "Requiere iniciar sesión en ChatGPT y activar la vista previa en el servidor. La disponibilidad depende de tu cuenta.",
       },
       enabled: {
-        label: "Activar Companion",
+        label: "Activar Companion (versión preliminar)",
         description:
-          "Habla con tus agentes mientras trabajan. Inicia una conversación cuando lo necesites.",
+          "Conversaciones de voz experimentales con tus agentes. Desactivado de forma predeterminada en este dispositivo. Solo escucha cuando inicias una conversación.",
+      },
+      animated: {
+        label: "Animar los gráficos de voz",
+        description:
+          "Luz en movimiento continuo. Desactívalo para una vista más tranquila. Siempre se respeta Reducir movimiento del sistema.",
       },
       replyText: {
         label: "Mostrar el texto de la respuesta",

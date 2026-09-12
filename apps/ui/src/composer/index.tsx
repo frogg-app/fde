@@ -1,3 +1,4 @@
+import { CompanionMark } from "@/companion/mark";
 import { useCompanionStore } from "@/companion/store";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
@@ -26,7 +27,6 @@ import {
   ArrowUp,
   Square,
   Pencil,
-  AudioLines,
   CircleDot,
   FileText,
   GitPullRequest,
@@ -733,7 +733,9 @@ function ImageAttachmentPill({
 interface GithubAttachmentPillProps {
   attachment: Extract<
     ComposerAttachment,
-    { kind: "forge_change_request" | "forge_issue" | "github_pr" | "github_issue" }
+    {
+      kind: "forge_change_request" | "forge_issue" | "github_pr" | "github_issue";
+    }
   >;
   index: number;
   disabled: boolean;
@@ -975,7 +977,10 @@ const StableMessageInput = memo(MessageInput);
 function resolveContextWindowValues(
   rawMax: number | null,
   rawUsed: number | null,
-): { contextWindowMaxTokens: number | null; contextWindowUsedTokens: number | null } {
+): {
+  contextWindowMaxTokens: number | null;
+  contextWindowUsedTokens: number | null;
+} {
   if (typeof rawMax === "number" && typeof rawUsed === "number") {
     return { contextWindowMaxTokens: rawMax, contextWindowUsedTokens: rawUsed };
   }
@@ -1076,12 +1081,11 @@ function ComposerVoiceModeButton({
 }: ComposerVoiceModeButtonProps) {
   const shortcutNode = voiceToggleKeys ? <Shortcut chord={voiceToggleKeys} /> : null;
   const renderTriggerContent = useCallback(
-    ({ hovered }: PressableStateCallbackType & { hovered?: boolean }) => {
+    (_state: PressableStateCallbackType) => {
       if (isVoiceSwitching) {
         return <LoadingSpinner size="small" color="white" />;
       }
-      const colorMapping = hovered ? iconForegroundMapping : iconForegroundMutedMapping;
-      return <ThemedAudioLines size={buttonIconSize} uniProps={colorMapping} />;
+      return <CompanionMark size={buttonIconSize} />;
     },
     [buttonIconSize, isVoiceSwitching],
   );
@@ -1407,7 +1411,11 @@ function ComposerContentImpl({
       if (!workspaceId) {
         return;
       }
-      const attachment = resolveWorkspaceFileDrop({ payload, serverId, workspaceId });
+      const attachment = resolveWorkspaceFileDrop({
+        payload,
+        serverId,
+        workspaceId,
+      });
       if (!attachment) {
         return;
       }
@@ -1425,7 +1433,11 @@ function ComposerContentImpl({
     async (text: string, submitAttachments: ComposerAttachment[]) => {
       onMessageSent?.();
       if (onSubmitMessageRef.current) {
-        await onSubmitMessageRef.current({ text, attachments: submitAttachments, cwd });
+        await onSubmitMessageRef.current({
+          text,
+          attachments: submitAttachments,
+          cwd,
+        });
         return;
       }
       if (!sendAgentMessageRef.current) {
@@ -1694,7 +1706,10 @@ function ComposerContentImpl({
       const oversized = files.find((f) => f.bytes.byteLength > MAX_FILE_SIZE_BYTES);
       if (oversized) {
         toastErrorRef.current(
-          t("composer.errors.fileTooLarge", { size: "50MB", fileName: oversized.fileName }),
+          t("composer.errors.fileTooLarge", {
+            size: "50MB",
+            fileName: oversized.fileName,
+          }),
         );
         return;
       }
@@ -1763,7 +1778,11 @@ function ComposerContentImpl({
         return;
       }
       setSelectedAttachments((prev) =>
-        removeComposerAttachmentAtIndex({ attachments: prev, index, deleteAttachments }),
+        removeComposerAttachmentAtIndex({
+          attachments: prev,
+          index,
+          deleteAttachments,
+        }),
       );
     },
     [forgeAutoAttach, removeAttachment, selectedAttachments, setSelectedAttachments],
@@ -1826,9 +1845,11 @@ function ComposerContentImpl({
 
   const handleToggleRealtimeVoice = useCallback(() => {
     if (!appSettings.companionEnabled || !isConnected) return;
-    useCompanionStore
-      .getState()
-      .launch({ serverId, workspaceId: workspaceId ?? undefined, agentId: agentId || undefined });
+    useCompanionStore.getState().launch({
+      serverId,
+      workspaceId: workspaceId ?? undefined,
+      agentId: agentId || undefined,
+    });
   }, [appSettings.companionEnabled, isConnected, serverId, workspaceId, agentId]);
 
   const handleEditQueuedMessage = useCallback(
@@ -2230,7 +2251,10 @@ function ComposerContentImpl({
           openGithub: (kind: string, numberLabel: string) =>
             t("composer.attachments.openGithub", { kind, number: numberLabel }),
           removeGithub: (kind: string, numberLabel: string) =>
-            t("composer.attachments.removeGithub", { kind, number: numberLabel }),
+            t("composer.attachments.removeGithub", {
+              kind,
+              number: numberLabel,
+            }),
         },
       }),
     [handleOpenAttachment, handleRemoveAttachment, isComposerLocked, selectedAttachments, t],
@@ -2538,14 +2562,19 @@ const ThemedPencil = withUnistyles(Pencil);
 const ThemedArrowUp = withUnistyles(ArrowUp);
 const ThemedGitPullRequest = withUnistyles(GitPullRequest);
 const ThemedCircleDot = withUnistyles(CircleDot);
-const ThemedAudioLines = withUnistyles(AudioLines);
 const ThemedPaperclip = withUnistyles(Paperclip);
 const ThemedImageIcon = withUnistyles(ImageIcon);
 const ThemedClipboardPaste = withUnistyles(ClipboardPaste);
 const ThemedFileText = withUnistyles(FileText);
-const iconForegroundMapping = (theme: Theme) => ({ color: theme.colors.foreground });
-const iconForegroundMutedMapping = (theme: Theme) => ({ color: theme.colors.foregroundMuted });
-const iconAccentForegroundMapping = (theme: Theme) => ({ color: theme.colors.accentForeground });
+const iconForegroundMapping = (theme: Theme) => ({
+  color: theme.colors.foreground,
+});
+const iconForegroundMutedMapping = (theme: Theme) => ({
+  color: theme.colors.foregroundMuted,
+});
+const iconAccentForegroundMapping = (theme: Theme) => ({
+  color: theme.colors.accentForeground,
+});
 
 function renderForgeAttachmentIcon(icon: string): ReactElement {
   return (

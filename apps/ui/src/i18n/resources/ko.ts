@@ -1000,7 +1000,10 @@ export const ko: TranslationResources = {
     creating: "만드는 중…",
     name: "레이블 이름",
     updateHostUse: "레이블을 사용하려면 호스트를 업데이트하세요.",
-    errors: { update: "레이블을 업데이트할 수 없습니다", load: "레이블을 불러올 수 없습니다" },
+    errors: {
+      update: "레이블을 업데이트할 수 없습니다",
+      load: "레이블을 불러올 수 없습니다",
+    },
     colors: {
       violet: "보라",
       sky: "하늘",
@@ -1924,8 +1927,14 @@ export const ko: TranslationResources = {
           "ChatGPT 로그인과 호스트의 미리보기 활성화가 필요합니다. 사용 가능 여부는 계정에 따라 다릅니다.",
       },
       enabled: {
-        label: "Companion 활성화",
-        description: "에이전트가 작업하는 동안 대화하세요. 필요할 때 대화를 시작하세요.",
+        label: "Companion 활성화 (미리보기)",
+        description:
+          "에이전트와의 실험적인 음성 대화입니다. 이 기기에서는 기본적으로 꺼져 있습니다. 대화를 시작할 때만 듣기 시작합니다.",
+      },
+      animated: {
+        label: "음성 그래픽 애니메이션",
+        description:
+          "빛이 계속 흐릅니다. 차분한 화면을 원하면 끄세요. 시스템의 동작 줄이기 설정을 항상 따릅니다.",
       },
       replyText: {
         label: "응답 텍스트 표시",

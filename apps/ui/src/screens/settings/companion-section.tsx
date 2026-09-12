@@ -41,6 +41,13 @@ export function CompanionSection() {
     [updateSettings],
   );
 
+  const changeAnimated = useCallback(
+    (companionAnimated: boolean) => {
+      void updateSettings({ companionAnimated });
+    },
+    [updateSettings],
+  );
+
   const changeNativeVoice = useCallback(
     (companionNativeVoice: boolean) => {
       void updateSettings({ companionNativeVoice });
@@ -122,21 +129,43 @@ export function CompanionSection() {
             </Button>
           ) : null}
         </View>
-        <View style={[settingsStyles.row, settingsStyles.rowBorder]}>
-          <View style={settingsStyles.rowContent}>
-            <Text style={settingsStyles.rowTitle}>{t("companion.settings.replyText.label")}</Text>
-            <Text style={settingsStyles.rowHint}>
-              {t("companion.settings.replyText.description")}
-            </Text>
-          </View>
-          <Switch
-            value={settings.companionShowReplyText}
-            onValueChange={handleReplyTextChange}
-            accessibilityLabel={t("companion.settings.replyText.label")}
-            testID="settings-companion-show-reply-text"
-          />
-        </View>
-        <CompanionBehaviorSettings />
+        {settings.companionEnabled ? (
+          <>
+            <View style={[settingsStyles.row, settingsStyles.rowBorder]}>
+              <View style={settingsStyles.rowContent}>
+                <Text style={settingsStyles.rowTitle}>
+                  {t("companion.settings.replyText.label")}
+                </Text>
+                <Text style={settingsStyles.rowHint}>
+                  {t("companion.settings.replyText.description")}
+                </Text>
+              </View>
+              <Switch
+                value={settings.companionShowReplyText}
+                onValueChange={handleReplyTextChange}
+                accessibilityLabel={t("companion.settings.replyText.label")}
+                testID="settings-companion-show-reply-text"
+              />
+            </View>
+            <View style={[settingsStyles.row, settingsStyles.rowBorder]}>
+              <View style={settingsStyles.rowContent}>
+                <Text style={settingsStyles.rowTitle}>
+                  {t("companion.settings.animated.label")}
+                </Text>
+                <Text style={settingsStyles.rowHint}>
+                  {t("companion.settings.animated.description")}
+                </Text>
+              </View>
+              <Switch
+                value={settings.companionAnimated}
+                onValueChange={changeAnimated}
+                accessibilityLabel={t("companion.settings.animated.label")}
+                testID="settings-companion-animated"
+              />
+            </View>
+            <CompanionBehaviorSettings />
+          </>
+        ) : null}
       </View>
     </SettingsSection>
   );
