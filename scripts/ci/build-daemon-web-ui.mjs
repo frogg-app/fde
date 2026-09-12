@@ -21,7 +21,7 @@ function run(command, args, options) {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       stdio: "inherit",
-      shell: false,
+      shell: process.platform === "win32",
       ...options,
     });
     child.on("error", reject);
@@ -37,9 +37,13 @@ function run(command, args, options) {
 
 async function exportBrowserWebApp() {
   console.log("Exporting browser web app...");
-  await run("npm", ["run", "build:web", "--workspace=@fde/app"], {
-    cwd: REPO_ROOT,
-  });
+  await run(
+    process.platform === "win32" ? "npm.cmd" : "npm",
+    ["run", "build:web", "--workspace=@fde/app"],
+    {
+      cwd: REPO_ROOT,
+    },
+  );
 }
 
 async function cleanTarget() {

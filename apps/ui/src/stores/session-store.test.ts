@@ -749,3 +749,22 @@ describe("removeWorkspace", () => {
     expect(after.workspaces).toBe(before.workspaces);
   });
 });
+
+it("retains and refreshes the connected host's reported product identity", () => {
+  initializeTestSession();
+  const update = useSessionStore.getState().updateSessionServerInfo;
+  const info = {
+    serverId: "test-server",
+    hostname: "host",
+    version: "1.0.0",
+    brand: { id: "acme", applicationId: "com.acme.studio", name: "Acme Studio" },
+  };
+  update("test-server", info);
+  expect(useSessionStore.getState().sessions["test-server"].serverInfo?.brand).toEqual(info.brand);
+  update("test-server", { ...info, brand: { ...info.brand, name: "Acme Workspace" } });
+  expect(useSessionStore.getState().sessions["test-server"].serverInfo?.brand?.name).toBe(
+    "Acme Workspace",
+  );
+  update("test-server", { serverId: "test-server", hostname: "host", version: "1.0.0" });
+  expect(useSessionStore.getState().sessions["test-server"].serverInfo?.brand).toBeUndefined();
+});

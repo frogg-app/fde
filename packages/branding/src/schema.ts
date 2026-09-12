@@ -195,7 +195,7 @@ function resolveIdentity(manifest: BrandManifest) {
     applicationId: manifest.applicationId,
     daemonPort: manifest.daemonPort,
     cliName,
-    desktopBinaryName: manifest.desktopBinaryName ?? cliName,
+    desktopBinaryName: manifest.desktopBinaryName ?? (id === "fde" ? cliName : `${id}-desktop`),
     homeDir: manifest.homeDir ?? `.${id}`,
     envPrefix: manifest.envPrefix ?? id.replaceAll("-", "_").toUpperCase(),
     scheme: manifest.scheme ?? id,

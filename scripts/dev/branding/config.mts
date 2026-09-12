@@ -1,3 +1,4 @@
+import { nativePresentation } from "./native-presentation.mjs";
 import { access, mkdir, readFile, writeFile as writeRaw } from "node:fs/promises";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
@@ -30,19 +31,25 @@ export async function generateConfig(build: BrandBuild): Promise<void> {
       resources[file] = `daemon-bundle/${path.basename(file)}`;
     }
   }
+  const presentation = await nativePresentation(build);
   const overlay = {
-    productName: brand.name,
+    productName: brand.legacyFde ? brand.name : brand.id,
     identifier: brand.applicationId,
     version,
     mainBinaryName: brand.desktopBinaryName,
     bundle: {
       resources,
+      ...presentation.bundle,
       publisher: brand.publisher,
       shortDescription: brand.name,
       longDescription: brand.description,
       icon: ["32x32.png", "128x128.png", "128x128@2x.png", "icon.icns", "icon.ico"].map(iconPath),
       windows: {
-        nsis: { installerIcon: iconPath("icon.ico"), uninstallerIcon: iconPath("icon.ico") },
+        nsis: {
+          ...presentation.nsis,
+          installerIcon: iconPath("icon.ico"),
+          uninstallerIcon: iconPath("icon.ico"),
+        },
       },
       createUpdaterArtifacts: brand.distribution.updateMode === "tauri-signed",
     },

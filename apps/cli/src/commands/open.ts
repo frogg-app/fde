@@ -6,10 +6,11 @@ import { spawnProcess } from "@fde/server";
 import { buildAgentDeepLink, type AgentDeepLinkTarget } from "@fde/protocol/agent-deep-link";
 
 function findDesktopApp(): string | null {
+  const installName = brand.legacyFde ? brand.name : brand.id;
   if (process.platform === "darwin") {
     const candidates = [
-      `/Applications/${brand.name}.app`,
-      path.join(homedir(), "Applications", `${brand.name}.app`),
+      `/Applications/${installName}.app`,
+      path.join(homedir(), "Applications", `${installName}.app`),
       ...(brand.legacyFde
         ? ["/Applications/Paseo.app", path.join(homedir(), "Applications", "Paseo.app")]
         : []),
@@ -27,7 +28,7 @@ function findDesktopApp(): string | null {
   if (process.platform === "linux") {
     const candidates = [
       `/usr/bin/${brand.desktopBinaryName}`,
-      path.join(homedir(), "Applications", `${brand.name}.AppImage`),
+      path.join(homedir(), "Applications", `${installName}.AppImage`),
       ...(brand.legacyFde
         ? [
             "/usr/bin/Paseo",
@@ -53,8 +54,17 @@ function findDesktopApp(): string | null {
     }
 
     const candidates = [
-      path.join(localAppData, brand.name, `${brand.desktopBinaryName}.exe`),
-      path.join(localAppData, "Programs", brand.name, `${brand.desktopBinaryName}.exe`),
+      path.join(
+        localAppData,
+        brand.legacyFde ? brand.name : brand.applicationId,
+        `${brand.desktopBinaryName}.exe`,
+      ),
+      path.join(
+        localAppData,
+        "Programs",
+        brand.legacyFde ? brand.name : brand.applicationId,
+        `${brand.desktopBinaryName}.exe`,
+      ),
       ...(brand.legacyFde ? [path.join(localAppData, "Programs", "Paseo", "Paseo.exe")] : []),
     ];
     return candidates.find((candidate) => existsSync(candidate)) ?? null;

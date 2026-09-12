@@ -30,7 +30,7 @@ visible until device or deployment evidence closes them.
 
 ## Active feature work
 
-- [ ] **Fork-friendly branding.** Implement the approved [branding plan](docs/branding-plan.md) on `feature/modular-branding`.
+- [ ] **Fork-friendly branding.** Implementation is on `feature/modular-branding`; see the [rebranding guide](docs/branding.md) and [validation record](docs/branding-plan.md). Final platform acceptance is in progress.
 
 ## Next: establish reliable everyday use
 

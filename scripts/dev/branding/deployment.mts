@@ -14,6 +14,7 @@ export async function generateDeployment({
   await mkdir(directory, { recursive: true });
   const defaults = {
     ID: b.id,
+    LEGACY_FDE: b.legacyFde ? "1" : "0",
     APPLICATION_ID: b.applicationId,
     NAME: b.name,
     CLI: b.cliName,

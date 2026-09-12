@@ -373,6 +373,7 @@ function SessionProviderInternal({ children, serverId, client }: SessionProvider
       serverId: serverInfo.serverId,
       hostname: serverInfo.hostname,
       version: serverInfo.version,
+      ...(serverInfo.brand ? { brand: serverInfo.brand } : {}),
       ...(serverInfo.desktopManaged !== undefined
         ? { desktopManaged: serverInfo.desktopManaged }
         : {}),
@@ -663,6 +664,7 @@ function SessionProviderInternal({ children, serverId, client }: SessionProvider
           serverId: serverInfo.serverId,
           hostname: serverInfo.hostname,
           version: serverInfo.version,
+          ...(serverInfo.brand ? { brand: serverInfo.brand } : {}),
           ...(serverInfo.desktopManaged !== undefined
             ? { desktopManaged: serverInfo.desktopManaged }
             : {}),

@@ -1,6 +1,6 @@
 import { stageBrand } from "./branding/stage.mjs";
 import { parseArgs } from "node:util";
-import { mkdir, copyFile, writeFile } from "node:fs/promises";
+import { mkdir, copyFile, writeFile, mkdtemp, rename, rm, lstat } from "node:fs/promises";
 import path from "node:path";
 import { z } from "zod";
 import { BrandManifestSchema } from "../../packages/branding/src/schema.js";
@@ -35,11 +35,19 @@ if (command === "init") {
     assets: { icon: `./${filename}` },
   });
   const destination = path.resolve(values.dir);
-  await mkdir(destination, { recursive: true });
-  await writeFile(path.join(destination, "brand.json"), JSON.stringify(manifest, null, 2) + "\n", {
-    flag: "wx",
-  });
-  await copyFile(path.resolve(values.icon), path.join(destination, filename));
+  if (await lstat(destination).catch(() => null)) {
+    throw new Error(`Brand destination already exists: ${destination}. Choose a new directory.`);
+  }
+  await mkdir(path.dirname(destination), { recursive: true });
+  const staging = await mkdtemp(path.join(path.dirname(destination), ".brand-init-"));
+  try {
+    await copyFile(path.resolve(values.icon), path.join(staging, filename));
+    await writeFile(path.join(staging, "brand.json"), JSON.stringify(manifest, null, 2) + "\n");
+    await validateAssets(resolveBrand(staging));
+    await rename(staging, destination);
+  } finally {
+    await rm(staging, { recursive: true, force: true });
+  }
   process.stdout.write(
     `Brand created at ${destination}. Build with FDE_BRAND_DIR=${destination}\n`,
   );

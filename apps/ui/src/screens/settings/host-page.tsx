@@ -178,6 +178,10 @@ function HostStatusBadges({ serverId }: { serverId: string }) {
     (state) => state.sessions[serverId]?.serverInfo?.version ?? null,
   );
 
+  const remoteBrand = useSessionStore(
+    (state) => state.sessions[serverId]?.serverInfo?.brand?.name ?? null,
+  );
+
   const connectionStatus = snapshot?.connectionStatus ?? "connecting";
   const activeConnection = snapshot?.activeConnection ?? null;
   const statusLabel = formatConnectionStatus(connectionStatus);
@@ -204,6 +208,7 @@ function HostStatusBadges({ serverId }: { serverId: string }) {
 
   return (
     <View style={styles.identityBadges} testID="host-page-identity">
+      {remoteBrand ? <StatusBadge label={remoteBrand} variant="muted" /> : null}
       <StatusBadge label={statusLabel} variant={statusVariant} leading={statusLeading} />
       {connectionBadge ? (
         <View style={styles.badgePill}>

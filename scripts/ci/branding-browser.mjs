@@ -44,7 +44,9 @@ page.on("pageerror", (error) => errors.push(error.message));
 try {
   await page.goto(`http://127.0.0.1:${server.address().port}`, { waitUntil: "networkidle" });
   assert.deepEqual(errors, [], "no startup errors");
-  await page.waitForFunction(() => document.body.innerText.trim().length > 20, { timeout: 20000 });
+  await page.waitForFunction(() => document.body.innerText.trim().length > 20, undefined, {
+    timeout: 20000,
+  });
   assert.ok((await page.title()).includes(brand.name));
   assert.ok(
     (await page.locator("body").innerText()).trim().length > 20,

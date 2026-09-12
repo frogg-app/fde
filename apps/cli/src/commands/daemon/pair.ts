@@ -97,7 +97,7 @@ export function pairCommand(): Command {
   return addJsonOption(
     new Command("pair").description("Print a fresh pairing link, QR code, and app deep link"),
   )
-    .option("--home <path>", `${brand.name} home directory (default: ~/.fde)`)
+    .option("--home <path>", `${brand.name} home directory (default: ~/${brand.homeDir})`)
     .option("--relay", "Enable relay without prompting")
     .action(async (_options: PairOptions, command: Command) => {
       await runPairCommand(command.optsWithGlobals());

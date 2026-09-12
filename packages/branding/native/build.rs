@@ -12,6 +12,7 @@ pub fn prepare(root: PathBuf) -> PathBuf {
         "scripts/dev/brand.mts",
         "packages/branding/src",
         "packages/branding/native",
+        "packages/branding/templates",
     ] {
         println!("cargo:rerun-if-changed={}", root.join(input).display());
     }

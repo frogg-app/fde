@@ -16,6 +16,8 @@ const minimal = {
 test("custom defaults have independent identities and no upstream services", () => {
   const brand = resolveBrandManifest(minimal);
   assert.equal(brand.homeDir, ".acme");
+  assert.equal(brand.desktopBinaryName, "acme-desktop");
+  assert.notEqual(brand.desktopBinaryName, brand.cliName);
   assert.equal(brand.scheme, "acme");
   assert.equal(brand.serviceName, "acme-daemon");
   assert.equal(brand.envPrefix, "ACME");

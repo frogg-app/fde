@@ -1,6 +1,6 @@
 {
   "name": "@fde/relay",
-  "version": "0.2.23",
+  "version": "0.2.24",
   "description": "Paseo relay for bridging daemon and client connections",
   "files": [
     "dist",

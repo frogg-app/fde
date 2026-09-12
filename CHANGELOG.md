@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.24 - 2026-09-12
+
+- Add fork-owned build-time branding across the UI, desktop/mobile packaging,
+  CLI, daemon, pairing pages, provider skills, installers, and deployment inputs.
+  Custom products keep independent state and update sources; FDE retains its
+  legacy identity and compatibility. See [the rebranding guide](docs/branding.md).
+- Add both-brand generation, browser, runtime, and native packaging CI. Platform
+  compilation and device acceptance are recorded separately in the branding plan.
+
 ## 0.2.11 - 2026-09-11
 
 - Fix local speech loading when npm hoists the native Sherpa library away from

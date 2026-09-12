@@ -5,7 +5,11 @@
 set -euo pipefail
 source /opt/fde/brand.sh
 home_key="${BRAND_ENV_PREFIX}_HOME"
-state_home="${!home_key:-${HOME:-/home/fde}/${BRAND_HOME}}"
+state_home="${!home_key:-}"
+if [[ -z "$state_home" && "$BRAND_LEGACY_FDE" == "1" ]]; then
+  state_home="${PASEO_HOME:-}"
+fi
+state_home="${state_home:-${HOME:-/home/fde}/${BRAND_HOME}}"
 export "$home_key=$state_home" "${BRAND_ENV_PREFIX}_DOCKER=1"
 
 : "${HOME:=/home/fde}"

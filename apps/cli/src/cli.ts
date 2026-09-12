@@ -29,7 +29,7 @@ export function createCli(): Command {
   program
     .name(brand.cliName)
     .description(
-      `${brand.name} (${brand.fullName}) CLI - control your AI coding agents from the command line`,
+      `${brand.name}${brand.fullName !== brand.name ? ` (${brand.fullName})` : ""} CLI - control your AI coding agents from the command line`,
     )
     .version(VERSION, "-v, --version", "output the version number")
     // Global output options

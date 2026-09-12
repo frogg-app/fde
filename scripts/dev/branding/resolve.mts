@@ -29,7 +29,8 @@ export function resolveBrand(directory?: string) {
       ["FDE", "PASEO"].includes(brand.envPrefix) ||
       brand.applicationId.startsWith("app.frogg.") ||
       ["fde-daemon", "paseo"].includes(brand.serviceName) ||
-      ["app.frogg.fde", "sh.paseo.daemon"].includes(brand.launchdLabel))
+      brand.launchdLabel.startsWith("app.frogg.") ||
+      brand.launchdLabel.startsWith("sh.paseo."))
   ) {
     throw new Error(
       "Custom brands must use independent identities; FDE/Paseo identities are reserved",
@@ -61,6 +62,7 @@ export function resolveBrand(directory?: string) {
     }
   }
   hashTree("packages/branding/src");
+  hashTree("packages/branding/templates");
   hashTree("skills");
   const version: string = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8")).version;
   hash.update(version);

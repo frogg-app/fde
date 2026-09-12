@@ -83,11 +83,16 @@ $version = (Get-Content -LiteralPath (Join-Path $root 'current') -Raw).Trim()
 if ($version -notmatch '^[0-9][0-9A-Za-z.+-]*$') {{ throw 'Invalid daemon version marker' }}
 $bundle = Join-Path $root $version
 $manifest = Get-Content -LiteralPath (Join-Path $bundle 'manifest.json') -Raw | ConvertFrom-Json
-if ($manifest.brand.id -ne {id} -or $manifest.brand.applicationId -ne {app_id}) {{ throw 'Daemon bundle belongs to another product' }}
+if (-not (( $manifest.brand.id -eq {id} -and $manifest.brand.applicationId -eq {app_id}) -or ({legacy} -and -not $manifest.brand))) {{ throw 'Daemon bundle belongs to another product' }}
 [Environment]::SetEnvironmentVariable({home_key}, {home}, 'Process')
 & (Join-Path $bundle 'node/node.exe') (Join-Path $bundle 'daemon/apps/cli/dist/index.js') @args
 exit $LASTEXITCODE
 "#,
+            legacy = if branding::LEGACY_FDE {
+                "$true"
+            } else {
+                "$false"
+            },
             root = ps(&root),
             id = ps(branding::ID),
             app_id = ps(branding::APPLICATION_ID),

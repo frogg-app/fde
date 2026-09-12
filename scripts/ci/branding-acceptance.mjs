@@ -45,6 +45,24 @@ try {
   assert.equal(b.distribution.updateMode, "disabled");
   assert.equal(b.services.pairingUrl, null);
   assert.equal(b.services.relayEndpoint, null);
+  const nativeBefore = JSON.parse(
+    await readFile(path.join(root, ".generated/branding/tauri.conf.json"), "utf8"),
+  );
+  assert.equal(nativeBefore.productName, manifest.id, "native package identity is stable");
+  manifest.name = "新しい Atlas Studio";
+  manifest.publisher = "A different publisher";
+  await writeFile(path.join(scratch, "brand.json"), JSON.stringify(manifest));
+  prepare(scratch);
+  const nativeAfter = JSON.parse(
+    await readFile(path.join(root, ".generated/branding/tauri.conf.json"), "utf8"),
+  );
+  assert.equal(nativeAfter.productName, nativeBefore.productName);
+  assert.equal(nativeAfter.identifier, nativeBefore.identifier);
+  assert.equal(nativeAfter.mainBinaryName, nativeBefore.mainBinaryName);
+  const installer = await readFile(nativeAfter.bundle.windows.nsis.template, "utf8");
+  assert.ok(installer.includes("Uninstall\\${BUNDLEID}"));
+  assert.ok(installer.includes("$LOCALAPPDATA\\${BUNDLEID}"));
+  assert.equal(nativeAfter.bundle.shortDescription, manifest.name);
   const previous = await fingerprint();
   const artwork = await readFile(path.join(scratch, "icon.svg"), "utf8");
   await writeFile(

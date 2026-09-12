@@ -37,6 +37,9 @@ export async function generateSkills({ brand }: BrandBuild) {
           .replaceAll("~/.fde", `~/${brand.homeDir}`)
           .replaceAll("PASEO_HOME", `${brand.envPrefix}_HOME`)
           .replaceAll("127.0.0.1:9999", `127.0.0.1:${brand.daemonPort}`);
+        // Capitalized prose names are presentation; SDK symbols such as usePaseo stay intact.
+        text = text.replace(/\b(?:Paseo|FDE)\b/g, () => brand.name);
+        // The SDK documentation describes the shared technology, not a product service.
         // Instructions can describe the compatibility project; make ownership explicit.
         if (entry.name === "SKILL.md") {
           const end = text.indexOf("\n---", 4);

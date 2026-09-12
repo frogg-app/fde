@@ -73,6 +73,8 @@ buildNpmPackage rec {
       && baseName != ".git"
       && baseName != ".generated"
       && baseName != ".branding-input"
+      && baseName != ".branding-source"
+      && !(lib.hasPrefix ".env" baseName)
       && baseName != "target"
       && baseName != "dist"
       && baseName != ".paseo"
