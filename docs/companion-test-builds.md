@@ -3,12 +3,13 @@
 Built from the Companion implementation in `feature/companion-voice-hands-free`, version
 0.2.14, on 2026-09-12. These artifacts exercise the subscription/local-speech
 baseline, plus the contextual composer launcher, persistent dismissal, quiet
-updates and concurrent listening changes. Update both client and daemon. They
+updates, concurrent listening, and a flowing sphere that remains visibly listening
+while thinking or speaking. Update both client and daemon. They
 are not a signed production release.
 
 ## Artifacts
 
-In `dist/companion-conversation-builds/`:
+In `dist/companion-orb-builds/`:
 
 - `FDE-0.2.14-android-arm64-v8a-development-unsigned.apk`: standalone Android 10+
   ARM64 APK, application ID `app.frogg.fde.debug`, displayed as **FDE Debug**.
@@ -28,20 +29,20 @@ The bundle's `node/bin` contains Node and npm if the host needs them.
 
 ## Run on another Linux host
 
-The [Companion prerelease](https://github.com/frogg-app/fde/releases/tag/companion-preview-20260912-2)
+The [Companion prerelease](https://github.com/frogg-app/fde/releases/tag/companion-preview-20260912-3)
 contains the APK, daemon, checksums and a standalone installer. On Linux x64:
 
 ```sh
-curl -fL https://github.com/frogg-app/fde/releases/download/companion-preview-20260912-2/install-companion-preview.sh -o /tmp/install-companion-preview.sh && bash /tmp/install-companion-preview.sh
+curl -fL https://github.com/frogg-app/fde/releases/download/companion-preview-20260912-3/install-companion-preview.sh -o /tmp/install-companion-preview.sh && bash /tmp/install-companion-preview.sh
 ```
 
 The installer verifies the pinned archive checksum, starts the daemon with relay
-enabled on port 6799 and prints pairing instructions. It uses separate
-`~/.local/share/fde-companion-preview-20260912-2` and
-`~/.fde-companion-preview-20260912-2` directories. It does not replace the regular
+enabled on port 6800 and prints pairing instructions. It uses separate
+`~/.local/share/fde-companion-preview-20260912-3` and
+`~/.fde-companion-preview-20260912-3` directories. It does not replace the regular
 `fde` command or install a system service. Set `FDE_COMPANION_LISTEN` to choose
-another port. Preview 2 uses a new state directory and port 6799 so it can run
-alongside preview 1 without stopping it. Pair this new host in the app and add
+another port. Preview 3 uses a new state directory and port 6800 so it can run
+alongside earlier previews without stopping them. Pair this new host in the app and add
 the workspace you want to test. The provider CLI must already be installed and
 signed in on this host.
 
@@ -62,12 +63,12 @@ cat > "$FDE_COMPANION_TEST_HOME/config.json" <<'JSON'
 }
 JSON
 ./fde-daemon-0.2.14-linux-x64/bin/fde start \
-  --home "$FDE_COMPANION_TEST_HOME" --listen 0.0.0.0:6799 --no-relay --web-ui
+  --home "$FDE_COMPANION_TEST_HOME" --listen 0.0.0.0:6800 --no-relay --web-ui
 ./fde-daemon-0.2.14-linux-x64/bin/fde status --home "$FDE_COMPANION_TEST_HOME"
 ```
 
-Use an unused port if 6799 is occupied. Keep the printed state path for subsequent
-commands. Open `http://HOST_LAN_IP:6799` to confirm the browser UI loads. For a
+Use an unused port if 6800 is occupied. Keep the printed state path for subsequent
+commands. Open `http://HOST_LAN_IP:6800` to confirm the browser UI loads. For a
 remote phone, use the existing FDE pairing/relay workflow or a reachable private
 network; the commands above deliberately set up a LAN test.
 
@@ -97,6 +98,15 @@ Stop only this test daemon when finished:
 ./fde-daemon-0.2.14-linux-x64/bin/fde stop --home "$FDE_COMPANION_TEST_HOME"
 ```
 
+## Correct launcher
+
+Use the **FDE Debug** APK below or this preview daemon's bundled browser UI.
+Production clients from other release branches may still send `set_voice_mode`,
+which reloads the current coding worker and can produce Codex's "already has an
+active writer" error. This preview's Companion action starts its own conversation
+and observes the selected worker. Updating only the daemon does not replace the
+launcher in an installed older client.
+
 ## Acceptance workflow
 
 Start Companion, choose an existing project by voice, request a small change,
@@ -118,9 +128,9 @@ See `docs/companion-validation.md` in the source checkout for the detailed recor
 
 ```sh
 ANDROID_HOME=/path/to/android-sdk node scripts/release/build-android-apk.mjs \
-  --app-variant development --low-memory --out-dir dist/companion-conversation-builds
+  --app-variant development --low-memory --out-dir dist/companion-orb-builds
 npm run build:server
 npm run build:daemon-web-ui
 node scripts/release/build-daemon-bundle.mjs \
-  --target linux-x64 --out-dir dist/companion-conversation-builds
+  --target linux-x64 --out-dir dist/companion-orb-builds
 ```

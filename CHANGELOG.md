@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Give Companion an animated glass sphere with flowing cyan/violet light and
+  independent microphone/playback feedback. Keep Listening visible during
+  thinking and speaking; show muted/reconnecting states honestly and honor
+  reduced-motion preferences. Isolate audio-level renders from task/transcript rows.
+- Verify that opening Companion against a running Claude or Codex worker observes
+  it without reloading, resuming or cancelling its thread. Older clients' legacy
+  Voice mode action can still cause Codex active-writer conflicts; use the updated
+  Companion preview client and its separate conversation launcher.
+
 - Replace the composer Voice mode action with a host/project-bound Companion
   launcher and remove its sidebar entry. Dismissing or minimizing keeps the
   conversation running, with a host/project indicator and explicit End control.

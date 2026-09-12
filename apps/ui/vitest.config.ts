@@ -72,7 +72,11 @@ export default defineConfig({
   // so it scans the native files and dies on imports react-native-web has no answer for.
   // Unbundled, the same imports go through the resolver below and land on the web files.
   optimizeDeps: {
-    include: ["react/jsx-runtime"],
+    include: [
+      "react/jsx-runtime",
+      // Voice sphere tests exercise actual motion; RN Web normally mocks loops in test mode.
+      "react-native-web/dist/vendor/react-native/Animated/AnimatedImplementation",
+    ],
     exclude: ["react-native-reanimated"],
   },
   // The globals a React Native bundler defines, which esbuild is no longer there to supply for

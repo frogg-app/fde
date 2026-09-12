@@ -1900,6 +1900,7 @@ export const es: TranslationResources = {
       api: "Este servidor usa la API. La conversación consume tokens facturados por separado.",
     },
     status: {
+      muted: "Micrófono silenciado",
       connecting: "Conectando…",
     },
     micState: {

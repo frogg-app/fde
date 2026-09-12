@@ -1884,6 +1884,7 @@ export const ru: TranslationResources = {
       api: "На сервере выбран API. Токены разговора оплачиваются отдельно.",
     },
     status: {
+      muted: "Микрофон выключен",
       connecting: "Подключение…",
     },
     micState: {

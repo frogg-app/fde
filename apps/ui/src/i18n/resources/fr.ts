@@ -1905,6 +1905,7 @@ export const fr: TranslationResources = {
       api: "Ce serveur utilise une API. Les jetons de conversation sont facturés séparément.",
     },
     status: {
+      muted: "Microphone coupé",
       connecting: "Connexion…",
     },
     micState: {

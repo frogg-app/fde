@@ -5,6 +5,29 @@ subscription probes. These results qualify the tested configuration only.
 The final Codex probe reported Linux x64, a QEMU Virtual CPU version 2.5+,
 9 GiB RAM and Node v22.23.2; the host is shared, so load is not controlled.
 
+## Voice sphere and launcher follow-up (2026-09-12)
+
+- Seven Chromium component checks pass with RN Web's real timing/loop driver:
+  microphone response during listening/thinking/speaking, mute access, continuous
+  motion in silence, stale-level suppression after mute, reduced motion, and
+  honest listening/muted/reconnecting labels. RN Web's default test-mode animation
+  mock is explicitly replaced for these checks so a no-op loop cannot pass.
+- Isolated 390px light/dark browser previews rendered the actual sphere/presence components
+  with real SVG artwork, exercised microphone levels and mute, and reported no
+  page errors. The surrounding preview frame was a fixture, not the complete app.
+- 79 Companion runtime/store and locale-parity checks pass. Two worker tests use
+  AgentManager with fake Claude/Codex providers held at a permission request, prove
+  observation does not call reload/resume/cancel, and retain completion after End.
+- Full repository typecheck and affected-file lint pass. Android release packaging
+  succeeds; signature verification matches the previous development APK and its
+  Hermes bundle contains the new sphere. The pinned installer starts the extracted
+  Linux daemon in isolated state and serves HTTP 200; all 58 web assets, including
+  compressed variants, match the completed web build byte for byte. The test daemon
+  was stopped gracefully. These checks do not establish physical Android audio quality.
+- The matching screenshot error was found in daemon logs for the legacy
+  `set_voice_mode` path on versions 0.2.10 and 0.3.0. The Companion preview uses a
+  separate startup RPC. See [the incident note](companion-voice-design.md#legacy-launcher-active-writer-incident-2026-09-12).
+
 ## Measurements
 
 | Probe                                                                        |                         Samples | Result                                                                                                   |

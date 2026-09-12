@@ -1872,6 +1872,7 @@ export const ja: TranslationResources = {
       api: "このホストではAPIが選択されています。会話トークンは別途課金されます。",
     },
     status: {
+      muted: "マイクはミュート中",
       connecting: "接続中…",
     },
     micState: {

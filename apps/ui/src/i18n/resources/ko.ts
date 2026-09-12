@@ -1864,6 +1864,7 @@ export const ko: TranslationResources = {
       api: "이 호스트는 API를 사용합니다. 대화 토큰은 별도로 청구됩니다.",
     },
     status: {
+      muted: "마이크 음소거됨",
       connecting: "연결 중…",
     },
     micState: {

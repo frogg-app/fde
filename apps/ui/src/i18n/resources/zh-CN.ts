@@ -1825,6 +1825,7 @@ export const zhCN: TranslationResources = {
       api: "此主机选择了 API。对话令牌将单独计费。",
     },
     status: {
+      muted: "麦克风已静音",
       connecting: "连接中…",
     },
     micState: {

@@ -15,14 +15,9 @@ import { Button } from "@/components/ui/button";
 import { useSessionStore } from "@/stores/session-store";
 import { navigateToAgent } from "@/utils/navigate-to-agent";
 import { buildCompanionTopicRows } from "./topic-rows";
-import { MicOrb } from "./mic-orb";
+import { CompanionPresence } from "./presence";
 import { getCompanionRuntime, getCompanionSession } from "./session-registry";
-import {
-  deriveCompanionMicState,
-  useCompanionStore,
-  type CompanionSession,
-  type CompanionMicState,
-} from "./store";
+import { useCompanionStore } from "./store";
 import { TopicsStrip } from "./topics-strip";
 import { useCompanionHost } from "./use-companion-host";
 
@@ -140,10 +135,6 @@ function CompanionBody({ serverId, isAvailable, unavailableReason }: CompanionBo
   const { t } = useTranslation();
   const session = useCompanionStore((state) => state.session);
   const isMuted = useCompanionStore((state) => state.isMuted);
-  const volume = useCompanionStore((state) => state.volume);
-  const speakingVolume = useCompanionStore((state) => state.speakingVolume);
-  const isThinking = useCompanionStore((state) => state.isThinking);
-  const isSpeaking = useCompanionStore((state) => state.isSpeaking);
   const partialTranscript = useCompanionStore((state) => state.partialTranscript);
   const finalTranscript = useCompanionStore((state) => state.finalTranscript);
   const reply = useCompanionStore((state) => state.reply);
@@ -167,7 +158,6 @@ function CompanionBody({ serverId, isAvailable, unavailableReason }: CompanionBo
   // The input is uncontrolled, so clearing it after a send means remounting the
   // value rather than writing an empty string back through the prop.
   const [draftResetKey, setDraftResetKey] = useState(0);
-  const micState = deriveCompanionMicState({ session, isMuted, isSpeaking, isThinking });
   const isReconnecting = session.status === "reconnecting";
   const isBusy = ["starting", "stopping", "reconnecting"].includes(session.status);
   const canStop = ["open", "starting", "reconnecting"].includes(session.status);
@@ -245,19 +235,7 @@ function CompanionBody({ serverId, isAvailable, unavailableReason }: CompanionBo
 
   return (
     <View style={styles.body}>
-      <View style={styles.orbRow}>
-        <MicOrb
-          state={micState}
-          volume={volume}
-          speakingVolume={speakingVolume}
-          accessibilityLabel={t(`companion.micState.${micState}`)}
-          onPress={pressOrb}
-          testID="companion-mic-orb"
-        />
-        <Text style={styles.micStateLabel} testID="companion-mic-state">
-          {t(companionStatusLabel(session.status, micState))}
-        </Text>
-      </View>
+      <CompanionPresence onPress={pressOrb} />
 
       {session.status === "failed" ? (
         <Alert
@@ -382,13 +360,6 @@ function CompanionBody({ serverId, isAvailable, unavailableReason }: CompanionBo
   );
 }
 
-/** The partial is provisional, so it reads muted until the final replaces it. */
-function companionStatusLabel(status: CompanionSession["status"], micState: CompanionMicState) {
-  if (status === "reconnecting") return "agentPanel.states.reconnecting";
-  if (status === "starting" || status === "stopping") return "companion.status.connecting";
-  return `companion.micState.${micState}`;
-}
-
 function Transcript({ partial, final }: { partial: string; final: string }) {
   if (partial.length > 0) {
     return (
@@ -428,14 +399,6 @@ const styles = StyleSheet.create((theme) => ({
   },
   body: {
     gap: theme.spacing[3],
-  },
-  orbRow: {
-    alignItems: "center",
-    gap: theme.spacing[2],
-  },
-  micStateLabel: {
-    fontSize: theme.fontSize.sm,
-    color: theme.colors.foregroundMuted,
   },
   transcriptPartial: {
     fontSize: theme.fontSize.base,

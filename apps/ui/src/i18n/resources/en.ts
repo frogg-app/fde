@@ -1863,6 +1863,7 @@ export const en = {
       api: "API backend selected on this host. Conversation uses separately billed API tokens.",
     },
     status: {
+      muted: "Microphone muted",
       connecting: "Connecting…",
     },
     micState: {

@@ -54,6 +54,11 @@ visible until device or deployment evidence closes them.
       retry of unheard results, network resumption with mute preservation,
       Codex orchestration and fast Piper speech are implemented. Automated and
       subscription probes are recorded in [validation](docs/companion-validation.md).
+- [x] **Keep Companion visibly listening while thinking.** Flowing voice sphere,
+      independent capture/playback response, persistent Listening indicator,
+      reduced-motion support and isolated audio-level rendering. Browser motion
+      and Claude/Codex worker-observation regressions pass; device appearance still
+      needs the normal Companion physical-device acceptance pass.
 - [x] **Make Companion conversational and unobtrusive.** Composer launcher with
       fixed host/workspace context, dismissal that preserves the call, quiet
       completion updates, speech preferences, independent VAD/STT/TTS workers,

@@ -2,6 +2,8 @@ const Stub = () => null;
 
 export default Stub;
 export const Circle = Stub;
+export const Ellipse = Stub;
+export const RadialGradient = Stub;
 export const Defs = Stub;
 export const G = Stub;
 export const Line = Stub;

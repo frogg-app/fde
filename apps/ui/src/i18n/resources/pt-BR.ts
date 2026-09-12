@@ -1886,6 +1886,7 @@ export const ptBR: TranslationResources = {
       api: "Este servidor usa a API. Os tokens da conversa são cobrados separadamente.",
     },
     status: {
+      muted: "Microfone silenciado",
       connecting: "Conectando…",
     },
     micState: {

@@ -1850,6 +1850,7 @@ export const ar: TranslationResources = {
       api: "تم اختيار API على هذا المضيف. تُحاسب رموز المحادثة بشكل منفصل.",
     },
     status: {
+      muted: "الميكروفون مكتوم",
       connecting: "جارٍ الاتصال…",
     },
     micState: {

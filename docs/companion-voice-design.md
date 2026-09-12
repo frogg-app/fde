@@ -1,6 +1,6 @@
 # Companion voice follow-ups
 
-Implementation status reviewed 2026-09-11. These changes follow the initial
+Implementation status reviewed 2026-09-12. These changes follow the initial
 Companion release in 0.2.0; they do not establish end-to-end voice quality.
 
 ## Integrated fixes
@@ -11,8 +11,16 @@ Companion release in 0.2.0; they do not establish end-to-end voice quality.
   `finally` block, so the next turn retains conversational context.
 - The first speakable segment can end at a natural boundary after 16 characters;
   later segments retain the 40-character minimum and prefer sentence boundaries.
-- The orb uses microphone level while listening and per-chunk PCM loudness while
-  playing a reply. Playback stop resets the reply level.
+- The glass sphere continuously flows while the microphone is live, including
+  during thinking. Capture drives its outer glow and scale; per-chunk PCM loudness
+  drives its inner light independently. Playback stop resets the reply level.
+- Listening stays visible alongside a secondary Thinking/Speaking label. Muting
+  dims the sphere and removes the live indicator. Connecting/reconnecting do not
+  claim to be listening. Reduced motion disables rotation/scale animation while
+  retaining microphone brightness feedback. Transform/opacity animations use
+  the native driver on Android/iOS, stop on unmount and do not block interactions.
+- Audio-level subscriptions live inside the voice surface so microphone updates
+  do not rerender the transcript, controls or task list.
 
 Regression coverage lives in the Companion session, orchestrator, speech-stream,
 and client runtime tests, plus `apps/ui/src/voice/speaking-level.test.ts`.
@@ -40,6 +48,22 @@ and optional acknowledgements. Dismissal minimizes; End releases the session.
 The real local regression sends microphone-paced fixture PCM through independent
 VAD/STT workers, inserts a short pause, and holds the first reply callback open
 while recognizing a second utterance. See [validation](companion-validation.md).
+
+## Legacy launcher active-writer incident (2026-09-12)
+
+The screenshot's thread ID matches daemon logs from 0.2.10 and 0.3.0 reporting
+`set_voice_mode failed`. That legacy RPC calls `reloadAgentSession`, which starts
+its replacement Codex process before closing the original writer. It can also
+interrupt the worker as part of the reload. This is not the Companion startup RPC.
+
+The contextual launcher on `feature/companion-voice-hands-free` sends
+`companion.session.start.request` and passes the selected worker as observation
+context. `watch-agent.test.ts` exercises running Claude and Codex workers with
+pending permissions and checks that the original session is retained without any
+reload/resume/cancel calls. Ending Companion retains the task receipt. Install the
+matching preview client and daemon; merely updating the daemon does not change an
+older client's launcher. The legacy generic reload transaction remains separate
+work; this preview does not claim to fix arbitrary Codex Reload-agent operations.
 
 ## Remaining limitations
 
