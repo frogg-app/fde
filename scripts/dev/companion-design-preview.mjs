@@ -36,7 +36,7 @@ const result = await esbuild.build({
   jsx: "automatic",
   mainFields: ["browser", "module", "main"],
   resolveExtensions: [".web.tsx", ".web.ts", ".web.js", ".tsx", ".ts", ".js"],
-  define: { "process.env.NODE_ENV": '"development"', __DEV__: "true" },
+  define: { global: "globalThis", "process.env.NODE_ENV": '"development"', __DEV__: "true" },
   alias: {
     "@": `${root}/apps/ui/src`,
     "react-native": "react-native-web",
@@ -107,7 +107,10 @@ const browser = await chromium.launch({
 try {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const errors = [];
-  page.on("pageerror", (e) => errors.push(e.message));
+  page.on("pageerror", (e) => {
+    errors.push(e.message);
+    console.error(e.stack);
+  });
   await page.goto(`http://127.0.0.1:${server.address().port}`, {
     waitUntil: "networkidle",
   });
