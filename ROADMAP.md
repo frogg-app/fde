@@ -28,6 +28,10 @@ preserved work outside this checkout.
 Implementation does not imply validation on every target. Keep the gaps below
 visible until device or deployment evidence closes them.
 
+## Active feature work
+
+- [ ] **Fork-friendly branding.** Implement the approved [branding plan](docs/branding-plan.md) on `feature/modular-branding`.
+
 ## Next: establish reliable everyday use
 
 - [ ] **Windows shutdown and relaunch.** User reports large, active WebView2
