@@ -1960,6 +1960,11 @@ export const ar: TranslationResources = {
     backdrop: "خلفية القائمة",
   },
   subagents: {
+    expand: "توسيع الوكلاء الفرعيين لـ {{label}}",
+    collapse: "طي الوكلاء الفرعيين لـ {{label}}",
+    offline: "غير متصل · عرض النشاط المحفوظ",
+    loadFailedRetry: "تعذر تحميل الوكلاء الفرعيين · إعادة المحاولة",
+    activityFailedRetry: "تعذر تحميل النشاط · إعادة المحاولة",
     title: "الوكلاء الفرعيون",
     pillLabelOne: "وكيل فرعي واحد",
     pillLabelMany: "{{count}} وكلاء فرعيين",

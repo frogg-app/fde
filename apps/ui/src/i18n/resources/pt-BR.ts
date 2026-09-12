@@ -1997,6 +1997,11 @@ export const ptBR: TranslationResources = {
     backdrop: "Fundo do menu",
   },
   subagents: {
+    expand: "Expandir subagentes de {{label}}",
+    collapse: "Recolher subagentes de {{label}}",
+    offline: "Offline · atividade salva",
+    loadFailedRetry: "Não foi possível carregar os subagentes · Tentar novamente",
+    activityFailedRetry: "Não foi possível carregar a atividade · Tentar novamente",
     title: "Subagentes",
     pillLabelOne: "1 subagente",
     pillLabelMany: "{{count}} subagentes",

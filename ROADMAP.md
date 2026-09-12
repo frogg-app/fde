@@ -11,6 +11,11 @@ preserved work outside this checkout.
 
 ## Implemented baseline
 
+- Expandable sidebar agent/subagent trees with direct live transcript access,
+  runtime identity preservation, and reconnect/retry states. See
+  [agent lifecycle](docs/agent-lifecycle.md#sidebar-agent-tree); desktop/mobile
+  visual and live-provider acceptance remains outstanding.
+
 - Tauri desktop shell for Windows, macOS and Linux; direct and relay connections,
   Rust SSH/socket/pipe transport, SSH config host picker, and SSH daemon deploy.
 - Optional local daemon download/supervision, run-at-login services, daemon

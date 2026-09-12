@@ -1974,6 +1974,11 @@ export const en = {
     backdrop: "Menu backdrop",
   },
   subagents: {
+    expand: "Expand subagents for {{label}}",
+    collapse: "Collapse subagents for {{label}}",
+    offline: "Offline · showing saved activity",
+    loadFailedRetry: "Could not load subagents · Retry",
+    activityFailedRetry: "Could not load activity · Retry",
     title: "Subagents",
     pillLabelOne: "1 subagent",
     pillLabelMany: "{{count}} subagents",

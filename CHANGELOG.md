@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0 - 2026-09-12
+
+- Show agents and expandable subagents beneath workspace rows in the sidebar.
+  Click a child to open its existing interactive session or live provider-owned
+  transcript, with cross-workspace navigation and the configured tab placement.
+- Show provider-child discovery and transcript loading failures with retry actions,
+  mark disconnected activity as saved, and refresh child data after reconnect.
+  Automated behavior is covered; desktop/mobile visual acceptance remains pending.
+
 ## 0.2.16 - 2026-09-12
 
 - Keep workspace archival solely in each workspace's overflow menu, remove its
