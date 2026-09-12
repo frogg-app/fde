@@ -42,6 +42,7 @@ pub async fn check<R: Runtime>(
     let updater = app.updater_builder().build().map_err(|e| e.to_string())?;
     match updater.check().await.map_err(|e| e.to_string())? {
         Some(update) => {
+            validate_identity(&update.raw_json)?;
             let mut result = CheckResult::up_to_date(updates, channel, Strategy::TauriSigned);
             result.has_update = true;
             result.ready_to_install = true;
@@ -69,6 +70,7 @@ pub async fn install<R: Runtime>(
     let Some(update) = updater.check().await.map_err(|e| e.to_string())? else {
         return Ok(None);
     };
+    validate_identity(&update.raw_json)?;
     let version = update.version.clone();
     log::info!("updates: installing {version} through tauri-plugin-updater");
     let received = AtomicU64::new(0);
@@ -94,4 +96,11 @@ pub async fn install<R: Runtime>(
     log::info!("updates: {version} installed, restarting");
     // `restart` never returns; the page is torn down with the process.
     app.restart()
+}
+
+fn validate_identity(manifest: &Value) -> Result<(), String> {
+    if !crate::branding::matches_identity(manifest.get("brand")) {
+        return Err("Signed update manifest belongs to another product".into());
+    }
+    Ok(())
 }

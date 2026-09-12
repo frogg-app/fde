@@ -29,14 +29,41 @@
 #   FDE_HEALTH_TIMEOUT  seconds to wait for the new daemon on --update (default: 90)
 set -euo pipefail
 
+# BEGIN BRAND DEFAULTS — replaced only in generated distribution scripts.
+BRAND_ID='fde'
+BRAND_NAME='FDE'
+BRAND_FULL_NAME='Frogg Development Environment'
+BRAND_APPLICATION_ID='app.frogg.fde'
+BRAND_ENV_PREFIX='FDE'
+BRAND_CLI='fde'
+BRAND_HOME='.fde'
+BRAND_SERVICE='fde-daemon'
+BRAND_LAUNCHD='app.frogg.fde-daemon'
+BRAND_DAEMON_PREFIX='fde-daemon'
+BRAND_PORT='9999'
+BRAND_RELEASE_BASE='https://github.com/frogg-app/fde/releases'
+BRAND_DOCKER_IMAGE='froggapp/fde'
+BRAND_LEGACY='true'
+BRAND_COMMANDS=(fde paseo)
+# END BRAND DEFAULTS
+
+# Environment names inside this script remain implementation details. Only the
+# selected product's public overrides are imported for a custom distribution.
+if [ "${BRAND_LEGACY}" != "true" ]; then
+  for suffix in INSTALL_DIR BIN_DIR RELEASE_BASE LISTEN VERSION BUNDLE_FILE BUNDLE_URL NO_SERVICE NO_MODIFY_PATH HOME PURGE IMAGE PORT BIND WORKSPACE PASSWORD CONTAINER NO_PULL UPDATE HEALTH_TIMEOUT; do
+    key="${BRAND_ENV_PREFIX}_${suffix}"
+    printf -v "FDE_${suffix}" '%s' "${!key-}"
+  done
+fi
+
 FDE_VERSION="${FDE_VERSION:-latest}"
-FDE_IMAGE="${FDE_IMAGE:-froggapp/fde:${FDE_VERSION}}"
-FDE_HOME="${FDE_HOME:-${HOME}/.fde}"
-FDE_PORT="${FDE_PORT:-9999}"
+FDE_IMAGE="${FDE_IMAGE:-${BRAND_DOCKER_IMAGE:+${BRAND_DOCKER_IMAGE}:${FDE_VERSION}}}"
+FDE_HOME="${FDE_HOME:-${HOME}/${BRAND_HOME}}"
+FDE_PORT="${FDE_PORT:-${BRAND_PORT}}"
 FDE_BIND="${FDE_BIND:-0.0.0.0}"
 FDE_WORKSPACE="${FDE_WORKSPACE:-}"
 FDE_PASSWORD="${FDE_PASSWORD:-}"
-FDE_CONTAINER="${FDE_CONTAINER:-fde-daemon}"
+FDE_CONTAINER="${FDE_CONTAINER:-${BRAND_SERVICE}}"
 FDE_NO_PULL="${FDE_NO_PULL:-0}"
 FDE_UPDATE="${FDE_UPDATE:-0}"
 FDE_HEALTH_TIMEOUT="${FDE_HEALTH_TIMEOUT:-90}"
@@ -48,12 +75,13 @@ for arg in "$@"; do
   esac
 done
 
-log() { printf '[fde] %s\n' "$*"; }
-die() { printf '[fde] error: %s\n' "$*" >&2; exit 1; }
+log() { printf '[%s] %s\n' "${BRAND_CLI}" "$*"; }
+die() { printf '[%s] error: %s\n' "${BRAND_CLI}" "$*" >&2; exit 1; }
 
 command -v docker >/dev/null 2>&1 || die "docker is not installed"
 docker info >/dev/null 2>&1 || die "cannot talk to the Docker daemon (is it running, and is your user allowed to use it?)"
 
+[ -n "${FDE_IMAGE}" ] || die "Configure a container image for this distribution"
 mkdir -p "${FDE_HOME}"
 
 if [ "${FDE_NO_PULL}" != "1" ]; then
@@ -64,7 +92,11 @@ fi
 PREVIOUS_CONTAINER="${FDE_CONTAINER}-previous"
 
 container_exists() {
-  docker container inspect "$1" >/dev/null 2>&1
+  if ! docker container inspect "$1" >/dev/null 2>&1; then return 1; fi
+  local owner
+  owner="$(docker inspect --format '{{index .Config.Labels "app.brand.application-id"}}' "$1")"
+  [ "${owner}" = "${BRAND_APPLICATION_ID}" ] || { [ "${BRAND_LEGACY}" = "true" ] && [ -z "${owner}" ]; } || die "container belongs to another product"
+  return 0
 }
 
 start_container() {
@@ -72,10 +104,13 @@ start_container() {
   run_args=(
     -d
     --name "${FDE_CONTAINER}"
+    --label "app.brand.id=${BRAND_ID}"
+    --label "app.brand.application-id=${BRAND_APPLICATION_ID}"
+    -e "${BRAND_ENV_PREFIX}_HOME=/home/fde/${BRAND_HOME}"
     --restart unless-stopped
-    -p "${FDE_BIND}:${FDE_PORT}:9999"
-    -v "${FDE_HOME}:/home/fde/.fde"
-    -e PASEO_LISTEN=0.0.0.0:9999
+    -p "${FDE_BIND}:${FDE_PORT}:${BRAND_PORT}"
+    -v "${FDE_HOME}:/home/fde/${BRAND_HOME}"
+    -e PASEO_LISTEN=0.0.0.0:${BRAND_PORT}
     -e PASEO_WEB_UI_ENABLED=true
   )
   if [ -n "${FDE_WORKSPACE}" ]; then
@@ -155,8 +190,8 @@ if [ "${FDE_BIND}" = "127.0.0.1" ] || [ "${FDE_BIND}" = "localhost" ]; then
 elif [ -z "${FDE_PASSWORD}" ]; then
   log "no FDE_PASSWORD set: the daemon is unclaimed until the first device pairs (open the web UI or run the pair command below)"
 fi
-log "pair a client:   docker exec ${FDE_CONTAINER} fde daemon pair"
-log "pairing status:  docker exec ${FDE_CONTAINER} fde daemon claim-status"
+log "pair a client:   docker exec ${FDE_CONTAINER} ${BRAND_CLI} daemon pair"
+log "pairing status:  docker exec ${FDE_CONTAINER} ${BRAND_CLI} daemon claim-status"
 log "logs:            docker logs -f ${FDE_CONTAINER}"
 log "update later:    FDE_VERSION=<tag> bash install-docker.sh --update   (rolls back if the new image is unhealthy)"
 log "install agents:  docker exec -it ${FDE_CONTAINER} bash   (see docs/docker.md)"

@@ -5,6 +5,7 @@ pub fn prepare(root: PathBuf) -> PathBuf {
     println!("cargo:rerun-if-env-changed=FDE_BRAND_DIR");
     for input in [
         "package.json",
+        "deploy",
         "brands",
         "scripts/dev/branding",
         "scripts/dev/brand.mts",
@@ -39,5 +40,18 @@ pub fn prepare(root: PathBuf) -> PathBuf {
     let destination = PathBuf::from(env::var_os("OUT_DIR").expect("Cargo OUT_DIR"));
     fs::copy(generated.join("brand.rs"), destination.join("brand.rs"))
         .expect("Prepared Rust branding");
+    for name in [
+        "install.sh",
+        "uninstall.sh",
+        "install-docker.sh",
+        "uninstall-docker.sh",
+        "probe.sh",
+    ] {
+        fs::copy(
+            generated.join("scripts").join(name),
+            PathBuf::from(env::var("OUT_DIR").unwrap()).join(name),
+        )
+        .expect("generated installer script");
+    }
     generated
 }

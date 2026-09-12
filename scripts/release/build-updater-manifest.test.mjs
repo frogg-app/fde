@@ -17,6 +17,7 @@ test("manifest lists only platforms with a signature", () => {
     },
   });
   assert.deepEqual(manifest, {
+    brand: { id: "fde", applicationId: "app.frogg.fde" },
     version: "0.1.5",
     notes: "notes",
     pub_date: "2026-09-02T00:00:00.000Z",

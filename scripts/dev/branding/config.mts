@@ -72,10 +72,18 @@ export async function generateConfig(build: BrandBuild): Promise<void> {
     eas.submit.production.ios = { ascAppId: brand.distribution.iosStoreId };
   else delete eas.submit.production.ios;
   await writeFile(path.join(outputRoot, "eas.json"), json(eas));
-  const revision = execFileSync("git", ["rev-parse", "HEAD"], {
-    cwd: root,
-    encoding: "utf8",
-  }).trim();
+  let revision = process.env.FDE_SOURCE_REVISION ?? "unknown";
+  if (revision === "unknown") {
+    try {
+      revision = execFileSync("git", ["rev-parse", "HEAD"], {
+        cwd: root,
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "ignore"],
+      }).trim();
+    } catch {
+      /* Exported source builds provide FDE_SOURCE_REVISION. */
+    }
+  }
   await writeFile(
     path.join(outputRoot, "provenance.json"),
     json({
@@ -104,6 +112,7 @@ export async function generateConfig(build: BrandBuild): Promise<void> {
     ARTIFACT_PREFIX: brand.artifactPrefix,
     DAEMON_ARTIFACT_PREFIX: brand.daemonArtifactPrefix,
     DEFAULT_PORT: brand.daemonPort,
+    DEFAULT_LISTEN: `127.0.0.1:${brand.daemonPort}`,
     LEGACY_FDE: brand.legacyFde,
     RELEASES_API: brand.distribution.releasesApi ?? "",
     RELEASE_BASE: brand.distribution.releaseBase ?? "",
@@ -121,7 +130,7 @@ function rustType(value: string | number | boolean): string {
   return "&str";
 }
 
-async function writeFile(file: string, contents: string): Promise<void> {
+export async function writeFile(file: string, contents: string): Promise<void> {
   try {
     if ((await readFile(file, "utf8")) === contents) return;
   } catch {

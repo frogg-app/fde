@@ -14,6 +14,8 @@
 //        --arch x86_64|aarch64 [--release-dir apps/desktop/src-tauri/target/release]
 //        [--out-dir release-assets] [--version 1.2.3]
 
+import { loadBrand } from "../dev/branding/load.cjs";
+
 import {
   copyFileSync,
   existsSync,
@@ -27,28 +29,46 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 
+const brand = loadBrand();
+
 const here = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(here, "../..");
 
 /** Bundle kinds per platform: where Tauri writes them and what they become. */
 const BUNDLE_RULES = {
   linux: [
-    { dir: "bundle/deb", extension: ".deb", name: (v) => `FDE-${v}-amd64.deb` },
-    { dir: "bundle/appimage", extension: ".AppImage", name: (v) => `FDE-${v}-x86_64.AppImage` },
+    { dir: "bundle/deb", extension: ".deb", name: (v) => `${brand.artifactPrefix}-${v}-amd64.deb` },
+    {
+      dir: "bundle/appimage",
+      extension: ".AppImage",
+      name: (v) => `${brand.artifactPrefix}-${v}-x86_64.AppImage`,
+    },
   ],
   // Windows ships zipped: GitHub rejects raw .exe release assets (and Windows
   // itself blocks bare downloaded exes). scripts/release/package-windows-zips.mjs
   // writes both zips before this runs.
   windows: [
-    { dir: "bundle/nsis-zip", extension: "-setup.zip", name: (v) => `FDE-${v}-x64-setup.zip` },
-    { dir: "bundle/portable", extension: ".zip", name: (v) => `FDE-${v}-x64-portable.zip` },
+    {
+      dir: "bundle/nsis-zip",
+      extension: "-setup.zip",
+      name: (v) => `${brand.artifactPrefix}-${v}-x64-setup.zip`,
+    },
+    {
+      dir: "bundle/portable",
+      extension: ".zip",
+      name: (v) => `${brand.artifactPrefix}-${v}-x64-portable.zip`,
+    },
   ],
   macos: [
-    { dir: "bundle/dmg", extension: ".dmg", name: (v, arch) => `FDE-${v}-${arch}.dmg` },
+    {
+      dir: "bundle/dmg",
+      extension: ".dmg",
+      name: (v, arch) => `${brand.artifactPrefix}-${v}-${arch}.dmg`,
+    },
     {
       dir: "bundle/macos",
       extension: ".app.tar.gz",
-      name: (v, arch) => `FDE-${v}-${arch}.app.tar.gz`,
+      name: (v, arch) => `${brand.artifactPrefix}-${v}-${arch}.app.tar.gz`,
     },
   ],
 };
@@ -132,6 +152,13 @@ export function collectDesktopBundles({ platform, arch, version, releaseDir, out
     if (!to.endsWith(".sig") && !to.endsWith(".sha256")) {
       const digest = createHash("sha256").update(readFileSync(target)).digest("hex");
       writeFileSync(`${target}.sha256`, `${digest}  ${to}\n`);
+      const provenance = JSON.parse(
+        readFileSync(path.join(REPO_ROOT, ".generated/branding/provenance.json"), "utf8"),
+      );
+      writeFileSync(
+        `${target}.metadata.json`,
+        JSON.stringify({ ...provenance, version, asset: to, sha256: digest }, null, 2) + "\n",
+      );
     }
   }
   return renames;

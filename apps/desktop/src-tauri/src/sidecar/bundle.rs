@@ -120,8 +120,8 @@ pub fn validate_bundle_dir(dir: &Path) -> Result<String, String> {
     let version = manifest
         .get("version")
         .and_then(Value::as_str)
-        .filter(|v| !v.trim().is_empty())
-        .ok_or("bundle manifest has no version")?
+        .filter(|v| !v.trim().is_empty() && !v.contains(['/', '\\']) && !v.starts_with('.'))
+        .ok_or("bundle manifest has no safe version")?
         .to_string();
     let platform = manifest
         .get("platform")

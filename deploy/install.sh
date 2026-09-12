@@ -28,10 +28,37 @@
 #   FDE_HOME          daemon state directory for the service (default: ~/.fde)
 set -euo pipefail
 
-FDE_INSTALL_DIR="${FDE_INSTALL_DIR:-${HOME}/.local/share/fde}"
+# BEGIN BRAND DEFAULTS — replaced only in generated distribution scripts.
+BRAND_ID='fde'
+BRAND_NAME='FDE'
+BRAND_FULL_NAME='Frogg Development Environment'
+BRAND_APPLICATION_ID='app.frogg.fde'
+BRAND_ENV_PREFIX='FDE'
+BRAND_CLI='fde'
+BRAND_HOME='.fde'
+BRAND_SERVICE='fde-daemon'
+BRAND_LAUNCHD='app.frogg.fde-daemon'
+BRAND_DAEMON_PREFIX='fde-daemon'
+BRAND_PORT='9999'
+BRAND_RELEASE_BASE='https://github.com/frogg-app/fde/releases'
+BRAND_DOCKER_IMAGE='froggapp/fde'
+BRAND_LEGACY='true'
+BRAND_COMMANDS=(fde paseo)
+# END BRAND DEFAULTS
+
+# Environment names inside this script remain implementation details. Only the
+# selected product's public overrides are imported for a custom distribution.
+if [ "${BRAND_LEGACY}" != "true" ]; then
+  for suffix in INSTALL_DIR BIN_DIR RELEASE_BASE LISTEN VERSION BUNDLE_FILE BUNDLE_URL NO_SERVICE NO_MODIFY_PATH HOME PURGE IMAGE PORT BIND WORKSPACE PASSWORD CONTAINER NO_PULL UPDATE HEALTH_TIMEOUT; do
+    key="${BRAND_ENV_PREFIX}_${suffix}"
+    printf -v "FDE_${suffix}" '%s' "${!key-}"
+  done
+fi
+
+FDE_INSTALL_DIR="${FDE_INSTALL_DIR:-${HOME}/.local/share/${BRAND_ID}}"
 FDE_BIN_DIR="${FDE_BIN_DIR:-${HOME}/.local/bin}"
-FDE_RELEASE_BASE="${FDE_RELEASE_BASE:-https://github.com/frogg-app/fde/releases}"
-FDE_LISTEN="${FDE_LISTEN:-0.0.0.0:9999}"
+FDE_RELEASE_BASE="${FDE_RELEASE_BASE:-${BRAND_RELEASE_BASE}}"
+FDE_LISTEN="${FDE_LISTEN:-0.0.0.0:${BRAND_PORT}}"
 FDE_VERSION="${FDE_VERSION:-}"
 FDE_BUNDLE_FILE="${FDE_BUNDLE_FILE:-}"
 FDE_BUNDLE_URL="${FDE_BUNDLE_URL:-}"
@@ -39,11 +66,33 @@ FDE_NO_SERVICE="${FDE_NO_SERVICE:-0}"
 FDE_NO_MODIFY_PATH="${FDE_NO_MODIFY_PATH:-0}"
 FDE_HOME="${FDE_HOME:-}"
 
-SERVICE_NAME="fde-daemon"
-LAUNCHD_LABEL="app.frogg.fde-daemon"
+SERVICE_NAME="${BRAND_SERVICE}"
+LAUNCHD_LABEL="${BRAND_LAUNCHD}"
 
-log() { printf '[fde] %s\n' "$*"; }
-die() { printf '[fde] error: %s\n' "$*" >&2; exit 1; }
+log() { printf '[%s] %s\n' "${BRAND_CLI}" "$*"; }
+die() { printf '[%s] error: %s\n' "${BRAND_CLI}" "$*" >&2; exit 1; }
+
+validate_install_owner() {
+  if [ -f "${FDE_INSTALL_DIR}/.brand-identity" ]; then
+    [ "$(cat "${FDE_INSTALL_DIR}/.brand-identity")" = "${BRAND_ID}:${BRAND_APPLICATION_ID}" ] || die "install directory belongs to another product"
+  elif [ -e "${FDE_INSTALL_DIR}/current/manifest.json" ]; then
+    validate_bundle_identity "${FDE_INSTALL_DIR}/current"
+  elif [ "${BRAND_LEGACY}" != "true" ] && [ -d "${FDE_INSTALL_DIR}" ] && [ -n "$(ls -A "${FDE_INSTALL_DIR}")" ]; then
+    die "install directory has no product ownership metadata"
+  fi
+}
+validate_bundle_identity() {
+  local bundle="$1"
+  [ -x "${bundle}/node/bin/node" ] || die "bundle has no Node runtime for identity validation"
+  "${bundle}/node/bin/node" - "${bundle}/manifest.json" "${BRAND_ID}" "${BRAND_APPLICATION_ID}" "${BRAND_LEGACY}" <<'JS'
+const fs = require('node:fs');
+const [file, id, applicationId, legacy] = process.argv.slice(2);
+const metadata = JSON.parse(fs.readFileSync(file, 'utf8'));
+if (metadata.brand ? metadata.brand.id !== id || metadata.brand.applicationId !== applicationId : legacy !== 'true') {
+  console.error('Bundle belongs to another product'); process.exit(1);
+}
+JS
+}
 
 need() {
   command -v "$1" >/dev/null 2>&1 || die "required command not found: $1"
@@ -87,6 +136,7 @@ resolve_latest_prerelease_version() {
 }
 
 resolve_latest_version() {
+  [ -n "${FDE_RELEASE_BASE}" ] || die "No release source configured; supply ${BRAND_ENV_PREFIX}_BUNDLE_FILE or ${BRAND_ENV_PREFIX}_BUNDLE_URL"
   need curl
   local effective candidate
   effective="$(curl -fsSL -o /dev/null -w '%{url_effective}' "${FDE_RELEASE_BASE}/latest")" ||
@@ -121,7 +171,7 @@ acquire_bundle() {
     name="${url##*/}"
   else
     [ -n "${FDE_VERSION}" ] || resolve_latest_version
-    name="fde-daemon-${FDE_VERSION}-${PLATFORM}-${ARCH}.tar.gz"
+    name="${BRAND_DAEMON_PREFIX}-${FDE_VERSION}-${PLATFORM}-${ARCH}.tar.gz"
     url="${FDE_RELEASE_BASE}/download/v${FDE_VERSION}/${name}"
   fi
   BUNDLE_PATH="${WORK_DIR}/${name}"
@@ -151,7 +201,7 @@ read_bundle_version() {
   [ -n "${manifest_entry}" ] || die "bundle has no top-level manifest.json"
   manifest="$(tar -xzOf "${BUNDLE_PATH}" "${manifest_entry}")"
   BUNDLE_VERSION="$(printf '%s' "${manifest}" | sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' | head -n1)"
-  [ -n "${BUNDLE_VERSION}" ] || die "bundle manifest has no version"
+  [[ "${BUNDLE_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+([+-][A-Za-z0-9.-]+)?$ ]] || die "bundle manifest has no valid version"
   local bundle_target
   bundle_target="$(printf '%s' "${manifest}" | sed -n 's/.*"platform": *"\([^"]*\)".*/\1/p' | head -n1)-$(printf '%s' "${manifest}" | sed -n 's/.*"arch": *"\([^"]*\)".*/\1/p' | head -n1)"
   [ "${bundle_target}" = "${PLATFORM}-${ARCH}" ] || die "bundle is for ${bundle_target}, this host is ${PLATFORM}-${ARCH}"
@@ -163,12 +213,14 @@ install_bundle() {
   target="${versions_dir}/${BUNDLE_VERSION}"
   mkdir -p "${versions_dir}" "${FDE_BIN_DIR}"
 
-  if [ -x "${target}/bin/fde" ] && [ -f "${target}/manifest.json" ]; then
+  if [ -x "${target}/bin/${BRAND_CLI}" ] && [ -f "${target}/manifest.json" ]; then
+    validate_bundle_identity "${target}"
     log "version ${BUNDLE_VERSION} already present at ${target}"
   else
     staging="$(mktemp -d "${versions_dir}/.staging.${BUNDLE_VERSION}.XXXXXX")"
     tar -xzf "${BUNDLE_PATH}" --strip-components=1 -C "${staging}"
-    [ -x "${staging}/bin/fde" ] || die "bundle is missing bin/fde"
+    [ -x "${staging}/bin/${BRAND_CLI}" ] || die "bundle is missing bin/fde"
+    validate_bundle_identity "${staging}"
     rm -rf "${target}"
     mv "${staging}" "${target}"
     log "installed version ${BUNDLE_VERSION} to ${target}"
@@ -183,15 +235,21 @@ install_bundle() {
     ln -sfn "versions/${BUNDLE_VERSION}" "${FDE_INSTALL_DIR}/current"
   fi
 
-  # The rollback target for `fde daemon self-update`; only changes on a real
+  # The rollback target for `${BRAND_CLI} daemon self-update`; only changes on a real
   # version switch so a re-run never points previous at the current version.
   if [ -n "${PREVIOUS_VERSION}" ] && [ "${PREVIOUS_VERSION}" != "${BUNDLE_VERSION}" ]; then
     printf '%s\n' "${PREVIOUS_VERSION}" > "${FDE_INSTALL_DIR}/previous"
   fi
 
-  ln -sfn "${FDE_INSTALL_DIR}/current/bin/fde" "${FDE_BIN_DIR}/fde"
-  ln -sfn "${FDE_INSTALL_DIR}/current/bin/paseo" "${FDE_BIN_DIR}/paseo"
-  log "linked ${FDE_BIN_DIR}/fde and ${FDE_BIN_DIR}/paseo"
+  for name in "${BRAND_COMMANDS[@]}"; do
+    if [ -e "${FDE_BIN_DIR}/${name}" ] || [ -L "${FDE_BIN_DIR}/${name}" ]; then
+      [ "$(readlink "${FDE_BIN_DIR}/${name}" 2>/dev/null || true)" = "${FDE_INSTALL_DIR}/current/bin/${name}" ] || die "command ${name} already belongs to another installation"
+    fi
+    ln -sfn "${FDE_INSTALL_DIR}/current/bin/${name}" "${FDE_BIN_DIR}/${name}"
+    log "linked ${FDE_BIN_DIR}/${name}"
+  done
+  printf '%s:%s\n' "${BRAND_ID}" "${BRAND_APPLICATION_ID}" > "${FDE_INSTALL_DIR}/.brand-identity"
+
 }
 
 prune_old_versions() {
@@ -200,31 +258,35 @@ prune_old_versions() {
     [ -d "${dir}" ] || continue
     name="$(basename "${dir}")"
     if [ "${name}" != "${BUNDLE_VERSION}" ] && [ "${name}" != "${PREVIOUS_VERSION}" ]; then
+      validate_bundle_identity "${dir}"
       rm -rf "${dir}"
       log "removed old version ${name}"
     fi
   done
 }
 
+systemd_quote() { printf '"%s"' "$(printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g; s/%/%%/g')"; }
+xml() { printf '%s' "$1" | sed 's/\&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g'; }
 write_systemd_unit() {
   local unit_dir unit
   unit_dir="${XDG_CONFIG_HOME:-${HOME}/.config}/systemd/user"
   unit="${unit_dir}/${SERVICE_NAME}.service"
+  if [ -f "${unit}" ] && ! grep -Fq "${FDE_INSTALL_DIR}/current" "${unit}"; then die "service belongs to another installation"; fi
   mkdir -p "${unit_dir}"
   cat > "${unit}" <<EOF
 [Unit]
-Description=FDE daemon (Frogg Development Environment)
+Description=${BRAND_NAME} daemon (${BRAND_FULL_NAME})
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=${FDE_INSTALL_DIR}/current/bin/fde daemon start --foreground
+ExecStart=$(systemd_quote "${FDE_INSTALL_DIR}/current/bin/${BRAND_CLI}") daemon start --foreground
 Environment=PASEO_LISTEN=${FDE_LISTEN}
 Environment=PASEO_WEB_UI_ENABLED=true
-Environment=PATH=${FDE_BIN_DIR}:${PATH}
-Environment=FDE_INSTALL_DIR=${FDE_INSTALL_DIR}
-${FDE_HOME:+Environment=FDE_HOME=${FDE_HOME}}
+Environment=$(systemd_quote "PATH=${FDE_BIN_DIR}:${PATH}")
+Environment=$(systemd_quote "${BRAND_ENV_PREFIX}_INSTALL_DIR=${FDE_INSTALL_DIR}")
+${FDE_HOME:+Environment=$(systemd_quote "${BRAND_ENV_PREFIX}_HOME=${FDE_HOME}")}
 Restart=on-failure
 RestartSec=5
 KillMode=mixed
@@ -262,11 +324,11 @@ start_detached_daemon() {
   log_dir="${FDE_INSTALL_DIR}/logs"
   mkdir -p "${log_dir}"
   if [ -n "${FDE_HOME}" ]; then
-    nohup env PASEO_LISTEN="${FDE_LISTEN}" PASEO_WEB_UI_ENABLED=true FDE_INSTALL_DIR="${FDE_INSTALL_DIR}" FDE_HOME="${FDE_HOME}" \
-      "${FDE_INSTALL_DIR}/current/bin/fde" daemon start --foreground >> "${log_dir}/fallback-daemon.log" 2>&1 < /dev/null &
+    nohup env PASEO_LISTEN="${FDE_LISTEN}" PASEO_WEB_UI_ENABLED=true FDE_INSTALL_DIR="${FDE_INSTALL_DIR}" "${BRAND_ENV_PREFIX}_HOME=${FDE_HOME}" \
+      "${FDE_INSTALL_DIR}/current/bin/${BRAND_CLI}" daemon start --foreground >> "${log_dir}/fallback-daemon.log" 2>&1 < /dev/null &
   else
     nohup env PASEO_LISTEN="${FDE_LISTEN}" PASEO_WEB_UI_ENABLED=true FDE_INSTALL_DIR="${FDE_INSTALL_DIR}" \
-      "${FDE_INSTALL_DIR}/current/bin/fde" daemon start --foreground >> "${log_dir}/fallback-daemon.log" 2>&1 < /dev/null &
+      "${FDE_INSTALL_DIR}/current/bin/${BRAND_CLI}" daemon start --foreground >> "${log_dir}/fallback-daemon.log" 2>&1 < /dev/null &
   fi
   log "started the daemon for this login; its fallback log is ${log_dir}/fallback-daemon.log"
 }
@@ -284,7 +346,7 @@ write_launchd_plist() {
   <key>Label</key><string>${LAUNCHD_LABEL}</string>
   <key>ProgramArguments</key>
   <array>
-    <string>${FDE_INSTALL_DIR}/current/bin/fde</string>
+    <string>$(xml "${FDE_INSTALL_DIR}/current/bin/${BRAND_CLI}")</string>
     <string>daemon</string>
     <string>start</string>
     <string>--foreground</string>
@@ -293,9 +355,9 @@ write_launchd_plist() {
   <dict>
     <key>PASEO_LISTEN</key><string>${FDE_LISTEN}</string>
     <key>PASEO_WEB_UI_ENABLED</key><string>true</string>
-    <key>PATH</key><string>${FDE_BIN_DIR}:${PATH}</string>
-    <key>FDE_INSTALL_DIR</key><string>${FDE_INSTALL_DIR}</string>
-${FDE_HOME:+    <key>FDE_HOME</key><string>${FDE_HOME}</string>}
+    <key>PATH</key><string>$(xml "${FDE_BIN_DIR}:${PATH}")</string>
+    <key>FDE_INSTALL_DIR</key><string>$(xml "${FDE_INSTALL_DIR}")</string>
+${FDE_HOME:+    <key>${BRAND_ENV_PREFIX}_HOME</key><string>$(xml "${FDE_HOME}")</string>}
   </dict>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><true/>
@@ -364,9 +426,9 @@ print_next_steps() {
   host="${FDE_LISTEN%:*}"
   port="${FDE_LISTEN##*:}"
   echo
-  log "FDE daemon ${BUNDLE_VERSION} installed."
+  log "${BRAND_NAME} daemon ${BUNDLE_VERSION} installed."
   if [ "${FDE_NO_SERVICE}" = "1" ]; then
-    log "no service installed; start the daemon with: fde daemon start --listen ${FDE_LISTEN} --web-ui"
+    log "no service installed; start the daemon with: ${BRAND_CLI} daemon start --listen ${FDE_LISTEN} --web-ui"
   else
     if [ "${host}" = "127.0.0.1" ] || [ "${host}" = "localhost" ]; then
       log "web UI: http://${host}:${port}/"
@@ -377,16 +439,16 @@ print_next_steps() {
       else
         log "web UI: http://${host}:${port}/"
       fi
-      log "the daemon is network-reachable; set a password with: fde daemon set-password"
+      log "the daemon is network-reachable; set a password with: ${BRAND_CLI} daemon set-password"
     fi
   fi
-  log "pair a client:     fde daemon pair"
-  log "check status:      fde daemon status"
-  log "update later:      fde daemon self-update   (rolls back by itself if the new version fails)"
+  log "pair a client:     ${BRAND_CLI} daemon pair"
+  log "check status:      ${BRAND_CLI} daemon status"
+  log "update later:      ${BRAND_CLI} daemon self-update   (rolls back by itself if the new version fails)"
   case ":${PATH}:" in
     *":${FDE_BIN_DIR}:"*) ;;
     *)
-      log "to use fde in this terminal, run:"
+      log "to use ${BRAND_CLI} in this terminal, run:"
       log "  ${PATH_COMMAND}"
       ;;
   esac
@@ -396,6 +458,7 @@ main() {
   need tar
   need uname
   detect_platform
+  validate_install_owner
   WORK_DIR="$(mktemp -d "${TMPDIR:-/tmp}/fde-install.XXXXXX")"
   trap 'rm -rf "${WORK_DIR}"' EXIT
 

@@ -1,3 +1,4 @@
+import { generateInstallers } from "./installers.mjs";
 import { execFileSync } from "node:child_process";
 import { acquireLock, assertBuildAvailable } from "./locks.mjs";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
@@ -21,6 +22,7 @@ export async function prepareBrand(directory?: string): Promise<ReturnType<typeo
       await generateAssets(build);
     }
     await generateConfig(build);
+    await generateInstallers(build);
     if (!same || !existsSync(path.join(root, "packages/branding/dist/runtime.js"))) {
       execFileSync(
         process.execPath,

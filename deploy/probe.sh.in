@@ -1,0 +1,24 @@
+set +e
+esc() { printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' | tr -d '\n\r'; }
+os=$(uname -s 2>/dev/null); arch=$(uname -m 2>/dev/null)
+docker=false
+if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then docker=true; fi
+systemd=false
+if command -v systemctl >/dev/null 2>&1 && systemctl --user show-environment >/dev/null 2>&1; then systemd=true; fi
+curl=false
+if command -v curl >/dev/null 2>&1; then curl=true; fi
+installed=false; version=""
+root="${@ENV_PREFIX@_INSTALL_DIR:-$HOME/.local/share/@ID@}"
+if [ -x "$root/current/bin/@CLI@" ]; then
+  installed=true
+  if [ -f "$root/current/manifest.json" ]; then
+    version=$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' "$root/current/manifest.json" | head -n 1)
+  fi
+elif command -v @CLI@ >/dev/null 2>&1; then
+  installed=true
+  version=$(@CLI@ --version 2>/dev/null | head -n 1)
+fi
+container=false
+if [ "$docker" = true ] && docker container inspect "${@ENV_PREFIX@_CONTAINER:-@SERVICE@}" >/dev/null 2>&1; then container=true; fi
+printf 'FDE_PROBE {"os":"%s","arch":"%s","hasDocker":%s,"hasSystemdUser":%s,"hasCurl":%s,"hasFde":{"installed":%s,"version":"%s"},"hasDockerContainer":%s,"homeDir":"%s"}\n' \
+  "$(esc "$os")" "$(esc "$arch")" "$docker" "$systemd" "$curl" "$installed" "$(esc "$version")" "$container" "$(esc "$HOME")"

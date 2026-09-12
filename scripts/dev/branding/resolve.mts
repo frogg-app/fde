@@ -51,6 +51,14 @@ export function resolveBrand(directory?: string) {
   hash.update(readFileSync(path.join(root, "packages/branding/src/schema.ts")));
   const version: string = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8")).version;
   hash.update(version);
+  for (const file of [
+    "install.sh",
+    "uninstall.sh",
+    "install-docker.sh",
+    "uninstall-docker.sh",
+    "probe.sh.in",
+  ])
+    hash.update(readFileSync(path.join(root, "deploy", file)));
   if (official) {
     for (const assetDirectory of [
       "apps/ui/assets/images",
