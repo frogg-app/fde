@@ -1,3 +1,6 @@
+import { brand } from "@fde/branding";
+import { brandEnv } from "@fde/branding/identity";
+import { readBundleManifest } from "./bundle.js";
 import {
   appendFileSync,
   existsSync,
@@ -41,13 +44,13 @@ export interface LastUpdateRecord {
 }
 
 export function resolveInstallDir(env: NodeJS.ProcessEnv = process.env): string {
-  const explicit = env.FDE_INSTALL_DIR?.trim();
+  const explicit = brandEnv(brand, env, "INSTALL_DIR");
   if (explicit) return explicit;
   if (process.platform === "win32") {
     const base = env.LOCALAPPDATA?.trim() || path.join(os.homedir(), "AppData", "Local");
-    return path.join(base, "fde");
+    return path.join(base, brand.id);
   }
-  return path.join(os.homedir(), ".local", "share", "fde");
+  return path.join(os.homedir(), ".local", "share", brand.id);
 }
 
 export function versionsDir(installDir: string): string {
@@ -64,7 +67,10 @@ export function currentLinkPath(installDir: string): string {
 
 export function isVersionInstalled(installDir: string, version: string): boolean {
   const root = versionRoot(installDir, version);
-  return existsSync(path.join(root, "manifest.json")) && existsSync(path.join(root, "bin"));
+  if (!existsSync(path.join(root, "manifest.json")) || !existsSync(path.join(root, "bin")))
+    return false;
+  readBundleManifest(root);
+  return true;
 }
 
 /** The version `current` points at, or null when this is not a versioned install. */

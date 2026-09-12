@@ -1,3 +1,4 @@
+import { brandIdentity } from "@fde/branding";
 import type { IncomingMessage } from "node:http";
 import type { RequestHandler } from "express";
 
@@ -11,6 +12,7 @@ export const IDENTITY_PRODUCT = "fde";
 
 export interface DaemonIdentity {
   product: typeof IDENTITY_PRODUCT;
+  brand?: typeof brandIdentity;
   serverId: string;
   hostname: string;
   version: string;
@@ -44,6 +46,7 @@ export function describeDaemonIdentity(
 ): DaemonIdentity {
   return {
     product: IDENTITY_PRODUCT,
+    brand: brandIdentity,
     serverId: deps.serverId,
     hostname: deps.hostname(),
     version: deps.version,

@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import Constants from "expo-constants";
 import { Platform } from "react-native";
 import { isElectronRuntime } from "@/desktop/host";
@@ -18,7 +19,7 @@ const PLATFORM_NAMES: Record<string, string> = {
 export function resolveDeviceLabel(input?: { deviceName?: string | null }): string {
   const deviceName = (input?.deviceName ?? Constants.deviceName ?? "").trim();
   const flavour = isElectronRuntime()
-    ? "FDE Desktop"
-    : `FDE (${PLATFORM_NAMES[Platform.OS] ?? Platform.OS})`;
+    ? `${brand.name} Desktop`
+    : `${brand.name} (${PLATFORM_NAMES[Platform.OS] ?? Platform.OS})`;
   return deviceName ? `${flavour} on ${deviceName}` : flavour;
 }

@@ -229,7 +229,7 @@ jobs:
       # than `cargo install tauri-cli` and needs no extra cache.
       - name: Build Linux deb
         working-directory: apps/desktop
-        run: npx --yes @tauri-apps/cli@^2 build --bundles deb
+        run: node --import tsx ../../scripts/dev/branded-run.mts tauri build --bundles deb
 
       - name: Upload deb
         uses: actions/upload-artifact@v7

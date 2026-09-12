@@ -15,27 +15,19 @@
 #   docker build -f deploy/pair/Dockerfile -t froggapp/fde-pair-page .
 # or scripts/release/build-pair-page-docker.sh, which applies the version tags.
 
-FROM node:22-alpine AS build
-
+FROM node:22-bookworm-slim AS build
+ARG FDE_BRAND_DIR=brands/fde
+ARG FDE_SOURCE_REVISION=unknown
+ENV FDE_BRAND_DIR=${FDE_BRAND_DIR} FDE_SOURCE_REVISION=${FDE_SOURCE_REVISION} ONNXRUNTIME_NODE_INSTALL=skip
 WORKDIR /build
-
-# Deps first so edits to the service don't reinstall them.
-COPY deploy/pair/build-package.json package.json
-RUN npm install --no-audit --no-fund --no-package-lock
-
-COPY packages/protocol/src packages/protocol/src
-COPY packages/server/src/server packages/server/src/server
-COPY packages/server/scripts/build-pair-page.mjs packages/server/scripts/build-pair-page.mjs
-
-RUN node packages/server/scripts/build-pair-page.mjs
+COPY . .
+RUN npm ci --ignore-scripts --no-audit --no-fund && node packages/server/scripts/build-pair-page.mjs
 
 FROM node:22-alpine
 
 ENV NODE_ENV=production \
     FDE_PAIR_HOST=0.0.0.0 \
-    FDE_PAIR_PORT=8787 \
-    FDE_PAIRING_BASE_URL=https://pair.frogg.app \
-    FDE_PAIR_ROOT_REDIRECT=https://frogg.app
+    FDE_PAIR_PORT=8787
 
 WORKDIR /app
 COPY --from=build /build/packages/server/dist/pair-page/server.cjs ./server.cjs

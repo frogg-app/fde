@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import type { Command } from "commander";
 import { PARENT_AGENT_ID_LABEL } from "@fde/protocol/agent-labels";
 import type { AgentSnapshotPayload } from "@fde/protocol/messages";
@@ -224,7 +225,7 @@ export async function runInspectCommand(
     const error: CommandError = {
       code: "MISSING_AGENT_ID",
       message: "Agent ID is required",
-      details: "Usage: fde agent inspect <id>",
+      details: `Usage: ${brand.cliName} agent inspect <id>`,
     };
     throw error;
   }
@@ -237,7 +238,7 @@ export async function runInspectCommand(
     const error: CommandError = {
       code: "DAEMON_NOT_RUNNING",
       message: `Cannot connect to daemon at ${host}: ${message}`,
-      details: "Start the daemon with: fde daemon start",
+      details: `Start the daemon with: ${brand.cliName} daemon start`,
     };
     throw error;
   }
@@ -248,7 +249,7 @@ export async function runInspectCommand(
       const error: CommandError = {
         code: "AGENT_NOT_FOUND",
         message: `Agent not found: ${agentIdArg}`,
-        details: 'Use "fde ls" to list available agents',
+        details: `Use "${brand.cliName} ls" to list available agents`,
       };
       throw error;
     }

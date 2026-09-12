@@ -15,7 +15,11 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-REPO="${FDE_IMAGE_REPO:-froggapp/fde}"
+cd "$ROOT_DIR"
+node --import tsx scripts/dev/brand.mts prepare >&2
+brand_input="$(node --import tsx scripts/dev/brand.mts stage)"
+REPO="${FDE_IMAGE_REPO:-$(node -p 'require("./.generated/branding/brand.json").distribution.dockerImage || ""')}"
+[[ -n "$REPO" ]] || { echo 'Configure distribution.dockerImage before building this image' >&2; exit 1; }
 PLATFORMS="${FDE_PLATFORMS:-linux/amd64,linux/arm64}"
 
 push=0
@@ -57,4 +61,4 @@ else
 fi
 
 echo "building ${REPO}:${version} (tags: ${tags[*]})"
-docker buildx build "${args[@]}" "${ROOT_DIR}"
+docker buildx build "${args[@]}" --build-arg "FDE_BRAND_DIR=$brand_input" --build-arg "FDE_SOURCE_REVISION=$(git rev-parse HEAD)" "${ROOT_DIR}"

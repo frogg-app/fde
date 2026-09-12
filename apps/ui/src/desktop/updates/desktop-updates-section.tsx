@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 // Settings > Updates for the desktop shell: current version and update
 // strategy, release channel, automatic checks, "Check for updates" with the
 // last-checked time, and the available release with its notes and a
@@ -34,7 +35,7 @@ import { settingsStyles } from "@/styles/settings";
 import { openExternalUrl } from "@/utils/open-external-url";
 import { formatMessageTimestamp } from "@/utils/time";
 
-const RELEASES_URL = "https://github.com/frogg-app/fde/releases";
+const RELEASES_URL = brand.distribution.releaseBase;
 
 const ThemedDownload = withUnistyles(Download, (theme) => ({
   size: theme.iconSize.sm,
@@ -143,9 +144,11 @@ function AvailableUpdateCard({
           </Text>
         </View>
         <View style={styles.actionGroup}>
-          <Button variant="outline" size="sm" onPress={openRelease}>
-            {t("desktop.updates.section.viewOnGithub")}
-          </Button>
+          {update.releaseUrl || RELEASES_URL ? (
+            <Button variant="outline" size="sm" onPress={openRelease}>
+              {t("desktop.updates.section.viewOnGithub")}
+            </Button>
+          ) : null}
           <Button
             size="sm"
             leftIcon={downloadIcon}
@@ -224,6 +227,26 @@ export function DesktopUpdatesSection({ appVersion }: { appVersion: string | nul
 
   if (!isDesktopApp) {
     return null;
+  }
+
+  if (brand.distribution.updateMode === "disabled" || strategy === "disabled") {
+    return (
+      <SettingsSection title={t("desktop.updates.section.title")} testID="desktop-updates-section">
+        <View style={settingsStyles.card}>
+          <View style={settingsStyles.row}>
+            <View style={settingsStyles.rowContent}>
+              <Text style={settingsStyles.rowTitle}>
+                {t("desktop.updates.section.currentVersion")}
+              </Text>
+              <Text style={settingsStyles.rowHint}>
+                {t("desktop.updates.section.strategyDisabled")}
+              </Text>
+            </View>
+            <Text style={styles.valueText}>{formatVersionWithPrefix(appVersion)}</Text>
+          </View>
+        </View>
+      </SettingsSection>
+    );
   }
 
   const lastCheckedText = formatLastChecked(t, lastCheckedAt, availableUpdate?.checkedAt);

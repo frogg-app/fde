@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import type { Command } from "commander";
 import { withOutput, type OutputSchema, type SingleResult } from "../../output/index.js";
 import { addJsonOption } from "../../utils/command-options.js";
@@ -135,7 +136,7 @@ export function addHubDeployCommand(
         .command("deploy")
         .description("Discover, validate, and activate the canonical .paseo Hub bundle")
         .option("-p, --project <slug>", "Target project slug")
-        .option("--hub <origin>", "FDE Hub origin")
+        .option("--hub <origin>", `${brand.name} Hub origin`)
         .option("--api-key <secret>", "Organization API key")
         .option("--dry-run", "Validate without installing or activating"),
     ),

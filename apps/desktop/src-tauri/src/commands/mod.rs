@@ -2,6 +2,7 @@
 //! command name. Unknown names fail exactly as Electron's `paseo:invoke` did.
 
 pub mod attachments;
+pub mod cli_install;
 pub mod daemon;
 pub mod integrations;
 pub mod runtime;
@@ -96,8 +97,8 @@ pub async fn desktop_invoke(
         "cli_daemon_status" => daemon::cli_status(&app).await,
         "get_local_daemon_version" => Ok(daemon::local_version(&app).await),
         "run_local_daemon_update" => Ok(daemon::run_update(&app).await),
-        "get_cli_install_status" => Ok(integrations::cli_install_status()),
-        "install_cli" => integrations::install_cli(),
+        "get_cli_install_status" => cli_install::status(&app),
+        "install_cli" => cli_install::install(&app),
         "read_legacy_skill_selection" => integrations::read_legacy_skill_selection(&app),
         "delete_legacy_skill_selection" => integrations::delete_legacy_skill_selection(&app),
         "open_local_daemon_transport" => app.state::<TransportManager>().open(&args),

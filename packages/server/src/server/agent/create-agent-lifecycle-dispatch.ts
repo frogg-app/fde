@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import { randomUUID } from "node:crypto";
 import type pino from "pino";
 
@@ -195,7 +196,7 @@ export class CreateAgentLifecycleDispatch {
       worktreesRoot: this.dependencies.worktreesRoot,
     });
     if (!ownership.allowed) {
-      throw new Error("Auto-created worktree is not an FDE-owned worktree");
+      throw new Error(`Auto-created worktree is not an ${brand.name}-owned worktree`);
     }
 
     await archiveByScope(

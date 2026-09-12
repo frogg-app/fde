@@ -1,3 +1,4 @@
+import { brandDocsUrl } from "@/branding/links";
 import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
@@ -11,7 +12,7 @@ import { settingsStyles } from "@/styles/settings";
 import { openExternalUrl } from "@/utils/open-external-url";
 import { shouldUseDesktopDaemon } from "@/desktop/daemon/desktop-daemon";
 
-const CLI_DOCS_URL = "https://paseo.sh/docs/cli";
+const CLI_DOCS_URL = brandDocsUrl("cli");
 
 export function IntegrationsSection() {
   const { t } = useTranslation();
@@ -49,7 +50,10 @@ export function IntegrationsSection() {
   );
   if (!showSection) return null;
   return (
-    <SettingsSection title={t("settings.integrations.title")} trailing={trailing}>
+    <SettingsSection
+      title={t("settings.integrations.title")}
+      trailing={CLI_DOCS_URL ? trailing : undefined}
+    >
       <View style={settingsStyles.card}>
         <View style={settingsStyles.row}>
           <View style={settingsStyles.rowContent}>
@@ -62,6 +66,11 @@ export function IntegrationsSection() {
             <Text style={settingsStyles.rowHint}>
               {t("settings.integrations.commandLine.description")}
             </Text>
+            {status?.installed && status.path ? (
+              <Text selectable style={settingsStyles.rowHint}>
+                {t("settings.integrations.commandLine.installedPath", { path: status.path })}
+              </Text>
+            ) : null}
           </View>
           {status?.installed ? (
             <View style={styles.installedLabel}>

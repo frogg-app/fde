@@ -1,3 +1,6 @@
+import { brand, brandIdentity } from "@fde/branding";
+import { matchesBrand } from "@fde/branding/identity";
+import { installedSkillName } from "@fde/branding/skills";
 import { createHash } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
@@ -20,6 +23,7 @@ const MANAGED_FILES_MANIFEST = ".paseo-managed-files.json";
 
 interface ManagedFilesManifest {
   version: 1;
+  brand?: unknown;
   files: Record<string, string>;
 }
 
@@ -60,7 +64,7 @@ async function readManagedFilesManifest(dstDir: string): Promise<ManagedFilesMan
   if (!parsed) return null;
   if (parsed.version !== 1 || typeof parsed.files !== "object" || parsed.files === null)
     return null;
-  return { version: 1, files: parsed.files as Record<string, string> };
+  return { version: 1, brand: parsed.brand, files: parsed.files as Record<string, string> };
 }
 
 function safeParseJson(raw: string): unknown {
@@ -80,7 +84,7 @@ async function writeManifestIfChanged(
   dstDir: string,
   files: Record<string, string>,
 ): Promise<boolean> {
-  const manifest: ManagedFilesManifest = { version: 1, files };
+  const manifest: ManagedFilesManifest = { version: 1, brand: brandIdentity, files };
   const next = `${JSON.stringify(manifest, null, 2)}\n`;
   const manifestPath = path.join(dstDir, MANAGED_FILES_MANIFEST);
   const current = await fs.readFile(manifestPath, "utf-8").catch(() => null);
@@ -133,6 +137,7 @@ async function assertManagedPathsStayInsideSkill(rootDir: string, rels: readonly
 }
 
 async function syncDirectoryFiles(srcDir: string, dstDir: string): Promise<number> {
+  await assertSkillOwnership(dstDir);
   const files = await listFilesRecursive(srcDir);
   const srcFileSet = new Set(files);
   const srcHashes: Record<string, string> = {};
@@ -176,11 +181,12 @@ export interface RemoveSkillTargets {
 
 export async function removeSkill(skillName: string, targets: RemoveSkillTargets): Promise<void> {
   const paths = [
-    path.join(targets.agentsDir, skillName),
-    path.join(targets.claudeDir, skillName),
-    path.join(targets.codexDir, skillName),
+    path.join(targets.agentsDir, installedSkillName(brand, skillName)),
+    path.join(targets.claudeDir, installedSkillName(brand, skillName)),
+    path.join(targets.codexDir, installedSkillName(brand, skillName)),
   ];
   for (const p of paths) {
+    await assertSkillOwnership(p);
     await fs.rm(p, { recursive: true, force: true });
   }
 }
@@ -198,17 +204,17 @@ export async function syncSkills(options: SkillSyncOptions): Promise<SkillSyncRe
     try {
       changedFiles += await syncDirectoryFiles(
         bundleSkillDir,
-        path.join(options.agentsDir, skillName),
+        path.join(options.agentsDir, installedSkillName(brand, skillName)),
       );
 
       changedFiles += await syncDirectoryFiles(
         bundleSkillDir,
-        path.join(options.claudeDir, skillName),
+        path.join(options.claudeDir, installedSkillName(brand, skillName)),
       );
 
       changedFiles += await syncDirectoryFiles(
         bundleSkillDir,
-        path.join(options.codexDir, skillName),
+        path.join(options.codexDir, installedSkillName(brand, skillName)),
       );
 
       processedSkills++;
@@ -219,4 +225,22 @@ export async function syncSkills(options: SkillSyncOptions): Promise<SkillSyncRe
   }
 
   return { changedFiles, processedSkills };
+}
+
+/** Never adopt or remove another distribution's provider integration. */
+export async function assertSkillOwnership(directory: string): Promise<void> {
+  const stat = await fs.lstat(directory).catch((error: NodeJS.ErrnoException) => {
+    if (error.code === "ENOENT") return null;
+    throw error;
+  });
+  if (!stat) return;
+  if ((!stat.isDirectory() || stat.isSymbolicLink()) && !brand.legacyFde) {
+    throw new Error(`Cannot manage skill through a non-directory or symbolic link: ${directory}`);
+  }
+  if (!stat.isDirectory() && !stat.isSymbolicLink() && brand.legacyFde) return;
+  const manifest = await readManagedFilesManifest(directory);
+  if (manifest && matchesBrand(brand, manifest.brand)) return;
+  if (!manifest && brand.legacyFde) return;
+  if (!manifest && (await fs.readdir(directory)).length === 0) return;
+  throw new Error(`Skill belongs to another product or has no ownership metadata: ${directory}`);
 }

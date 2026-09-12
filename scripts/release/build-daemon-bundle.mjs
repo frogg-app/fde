@@ -4,7 +4,7 @@
 //   dist/bundles/FDE-<version>-<platform>-<arch>-daemon.tar.gz  (Linux, macOS)
 //   dist/bundles/FDE-<version>-win-<arch>-daemon.zip            (Windows)
 //
-// Layout inside the archive (one top-level directory of the same name):
+// Layout inside the archive (one stable internal top-level directory):
 //   node/      official Node.js runtime from nodejs.org (verified, trimmed);
 //              node/bin/node on unix, node/node.exe on Windows
 //   daemon/    packages/server, apps/cli and the workspace libraries they need,
@@ -27,7 +27,9 @@
 // Every target cross-builds from Linux: the runtime and platform packages are
 // downloaded, nothing is compiled.
 
+import { daemonArtifactName } from "../../packages/branding/src/artifact-contract.mjs";
 import { existsSync } from "node:fs";
+import { loadBrand } from "../dev/branding/load.cjs";
 import {
   chmod,
   copyFile,
@@ -62,6 +64,7 @@ import {
 } from "./daemon-bundle-utils.mjs";
 import { createZipFromDirectory } from "./daemon-bundle-zip.mjs";
 
+const brand = loadBrand();
 const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
 export const SUPPORTED_TARGETS = [
   "linux-x64",
@@ -74,7 +77,8 @@ export const SUPPORTED_TARGETS = [
 
 // Workspaces that make up the daemon. Order does not matter for the copy;
 // npm resolves them from the narrowed root package.json written below.
-const DAEMON_WORKSPACES = [
+export const DAEMON_WORKSPACES = [
+  "packages/branding",
   "packages/protocol",
   "packages/client",
   "packages/relay",
@@ -257,7 +261,7 @@ async function applyDependencyPatches(daemonDir) {
 async function writeLaunchers(stagingDir, isWindows) {
   const binDir = path.join(stagingDir, "bin");
   await mkdir(binDir, { recursive: true });
-  for (const name of ["fde", "paseo"]) {
+  for (const name of brand.legacyFde ? [brand.cliName, "paseo"] : [brand.cliName]) {
     if (isWindows) {
       await writeFile(path.join(binDir, `${name}.cmd`), WINDOWS_LAUNCHER);
       continue;
@@ -298,7 +302,7 @@ async function materializeWorkspaceLinks(daemonDir) {
   await rm(path.join(daemonDir, "packages"), { recursive: true, force: true });
 }
 
-async function packBundle({ stagingDir, bundleName, archiveName, outDir, isWindows }) {
+export async function packBundle({ stagingDir, bundleName, archiveName, outDir, isWindows }) {
   const archivePath = path.join(outDir, archiveName);
   console.log(`Packing ${path.relative(REPO_ROOT, archivePath)}...`);
   await rm(archivePath, { force: true });
@@ -309,25 +313,41 @@ async function packBundle({ stagingDir, bundleName, archiveName, outDir, isWindo
   }
   const digest = await sha256File(archivePath);
   await writeFile(`${archivePath}.sha256`, `${digest}  ${path.basename(archivePath)}\n`);
+  const legacyPath = path.join(outDir, `${bundleName}.${isWindows ? "zip" : "tar.gz"}`);
+  if (brand.legacyFde && legacyPath !== archivePath) {
+    await copyFile(archivePath, legacyPath);
+    await writeFile(`${legacyPath}.sha256`, `${digest}  ${path.basename(legacyPath)}\n`);
+  }
   return { archivePath, digest };
 }
 
 export function daemonAssetName(version, platform, arch) {
-  const publicPlatform = platform === "darwin" ? "mac" : platform;
-  const publicArch = arch === "x64" && platform !== "win" ? "x86_64" : arch;
-  return `FDE-${version}-${publicPlatform}-${publicArch}-daemon.${platform === "win" ? "zip" : "tar.gz"}`;
+  return daemonArtifactName(brand, version, platform, arch);
 }
 
 async function main() {
   const { platform, arch, npmPlatform, isWindows, nodeVersion, outDir, keepStaging } = parseCli();
   const rootPackage = JSON.parse(await readFile(path.join(REPO_ROOT, "package.json"), "utf8"));
   const version = rootPackage.version;
-  const bundleName = `fde-daemon-${version}-${platform}-${arch}`;
+  const bundleName = `${brand.daemonArtifactPrefix}-${version}-${platform}-${arch}`;
   const archiveName = daemonAssetName(version, platform, arch);
   const stagingDir = path.join(outDir, "staging", bundleName);
   const daemonDir = path.join(stagingDir, "daemon");
 
   assertBuilt();
+  const webStamp = JSON.parse(
+    await readFile(
+      path.join(REPO_ROOT, "packages/server/dist/server/web-ui/brand-build.json"),
+      "utf8",
+    ),
+  );
+  const provenance = JSON.parse(
+    await readFile(path.join(REPO_ROOT, ".generated/branding/provenance.json"), "utf8"),
+  );
+  if (webStamp.configFingerprint !== provenance.configFingerprint)
+    throw new Error(
+      "Daemon web UI has stale branding; run npm run build:daemon-web-ui with the selected brand",
+    );
   await rm(stagingDir, { recursive: true, force: true });
   await mkdir(daemonDir, { recursive: true });
 
@@ -351,7 +371,10 @@ async function main() {
   await writeLaunchers(stagingDir, isWindows);
 
   const manifest = {
-    name: "fde-daemon",
+    ...JSON.parse(
+      await readFile(path.join(REPO_ROOT, ".generated/branding/provenance.json"), "utf8"),
+    ),
+    name: brand.daemonArtifactPrefix,
     version,
     platform,
     arch,

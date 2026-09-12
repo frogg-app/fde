@@ -38,3 +38,7 @@ runs:
       if: steps.cache.outputs.cache-hit != 'true'
       shell: bash
       run: node scripts/ci/npm-retry.mjs ci
+
+    - name: Prepare selected branding
+      shell: bash
+      run: npm run brand:prepare

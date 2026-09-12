@@ -1,4 +1,8 @@
 #!/usr/bin/env node
+import {
+  desktopArtifactName,
+  legacyDesktopSuffix,
+} from "../../packages/branding/src/artifact-contract.mjs";
 // Copies the bundles `cargo tauri build` wrote under <release-dir>/bundle/ into one
 // flat directory with the release asset names documented in docs/ci.md:
 //
@@ -13,6 +17,8 @@
 //        --arch x86_64|aarch64 [--release-dir apps/desktop/src-tauri/target/release]
 //        [--out-dir release-assets] [--version 1.2.3]
 
+import { loadBrand } from "../dev/branding/load.cjs";
+
 import {
   copyFileSync,
   existsSync,
@@ -26,17 +32,23 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 
+const brand = loadBrand();
+
 const here = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(here, "../..");
 
 /** Bundle kinds per platform: where Tauri writes them and what they become. */
 const BUNDLE_RULES = {
   linux: [
-    { dir: "bundle/deb", extension: ".deb", name: (v) => `FDE-${v}-linux-x86_64.deb` },
+    {
+      dir: "bundle/deb",
+      extension: ".deb",
+      name: (v) => desktopArtifactName(brand, v, `linux-x86_64.deb`),
+    },
     {
       dir: "bundle/appimage",
       extension: ".AppImage",
-      name: (v) => `FDE-${v}-linux-x86_64.AppImage`,
+      name: (v) => desktopArtifactName(brand, v, `linux-x86_64.AppImage`),
     },
   ],
   // Windows ships zipped: GitHub rejects raw .exe release assets (and Windows
@@ -46,20 +58,24 @@ const BUNDLE_RULES = {
     {
       dir: "bundle/nsis-zip",
       extension: "-setup.zip",
-      name: (v) => `FDE-${v}-win-x64-setup.zip`,
+      name: (v) => desktopArtifactName(brand, v, `win-x64-setup.zip`),
     },
     {
       dir: "bundle/portable",
       extension: ".zip",
-      name: (v) => `FDE-${v}-win-x64-portable.zip`,
+      name: (v) => desktopArtifactName(brand, v, `win-x64-portable.zip`),
     },
   ],
   macos: [
-    { dir: "bundle/dmg", extension: ".dmg", name: (v, arch) => `FDE-${v}-mac-${arch}.dmg` },
+    {
+      dir: "bundle/dmg",
+      extension: ".dmg",
+      name: (v, arch) => desktopArtifactName(brand, v, `mac-${arch}.dmg`),
+    },
     {
       dir: "bundle/macos",
       extension: ".app.tar.gz",
-      name: (v, arch) => `FDE-${v}-mac-${arch}.app.tar.gz`,
+      name: (v, arch) => desktopArtifactName(brand, v, `mac-${arch}.app.tar.gz`),
     },
   ],
 };
@@ -137,6 +153,14 @@ export function collectDesktopBundles({ platform, arch, version, releaseDir, out
   if (renames.length === 0) {
     throw new Error(`No bundles found under ${releaseDir}. Run the Tauri build first.`);
   }
+  if (brand.legacyFde) {
+    const prefix = `${brand.artifactPrefix}-${version}-`;
+    const aliases = renames.flatMap(({ from, to }) => {
+      const legacy = prefix + legacyDesktopSuffix(to.slice(prefix.length));
+      return legacy === to ? [] : [{ from, to: legacy }];
+    });
+    renames.push(...aliases);
+  }
   mkdirSync(outDir, { recursive: true });
   for (const { from, to } of renames) {
     const target = path.join(outDir, to);
@@ -145,6 +169,13 @@ export function collectDesktopBundles({ platform, arch, version, releaseDir, out
     if (!to.endsWith(".sig") && !to.endsWith(".sha256")) {
       const digest = createHash("sha256").update(readFileSync(target)).digest("hex");
       writeFileSync(`${target}.sha256`, `${digest}  ${to}\n`);
+      const provenance = JSON.parse(
+        readFileSync(path.join(REPO_ROOT, ".generated/branding/provenance.json"), "utf8"),
+      );
+      writeFileSync(
+        `${target}.metadata.json`,
+        JSON.stringify({ ...provenance, version, asset: to, sha256: digest }, null, 2) + "\n",
+      );
     }
   }
   return renames;

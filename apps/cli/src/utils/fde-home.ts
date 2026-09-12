@@ -1,3 +1,5 @@
+import { brand } from "@fde/branding";
+import { brandEnv } from "@fde/branding/identity";
 import { homedir } from "node:os";
 import path from "node:path";
 
@@ -6,12 +8,7 @@ import path from "node:path";
  * `FDE_HOME`, then the legacy `PASEO_HOME`, then `~/.fde`. Mirrors
  * `resolveFdeHome` in `@fde/server` for the CLI's read-only path lookups.
  */
-export const FDE_HOME_DIR_NAME = ".fde";
-
-function nonEmpty(value: string | undefined): string | undefined {
-  const trimmed = value?.trim();
-  return trimmed ? trimmed : undefined;
-}
+export const FDE_HOME_DIR_NAME = brand.homeDir;
 
 export function expandHomeDir(input: string): string {
   if (input.startsWith("~/") || input.startsWith("~\\")) {
@@ -21,6 +18,6 @@ export function expandHomeDir(input: string): string {
 }
 
 export function resolveFdeHomePath(env: NodeJS.ProcessEnv = process.env): string {
-  const configured = nonEmpty(env.FDE_HOME) ?? nonEmpty(env.PASEO_HOME);
+  const configured = brandEnv(brand, env, "HOME");
   return path.resolve(expandHomeDir(configured ?? path.join(homedir(), FDE_HOME_DIR_NAME)));
 }

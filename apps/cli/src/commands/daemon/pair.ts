@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import { confirm, isCancel, log } from "@clack/prompts";
 import { Command } from "commander";
 import chalk from "chalk";
@@ -57,7 +58,7 @@ interface DirectOfferResponse {
 }
 
 const PAIRING_DAEMON_RPC_TIMEOUT_MS = 1500;
-const RELAY_DOCS_URL = "https://paseo.sh/docs/security";
+const RELAY_DOCS_URL = brand.links.docs ? `${brand.links.docs.replace(/\/$/, "")}/security` : null;
 
 function createProcessOutput(): PairCommandOutput {
   return {
@@ -96,7 +97,7 @@ export function pairCommand(): Command {
   return addJsonOption(
     new Command("pair").description("Print a fresh pairing link, QR code, and app deep link"),
   )
-    .option("--home <path>", "FDE home directory (default: ~/.fde)")
+    .option("--home <path>", `${brand.name} home directory (default: ~/${brand.homeDir})`)
     .option("--relay", "Enable relay without prompting")
     .action(async (_options: PairOptions, command: Command) => {
       await runPairCommand(command.optsWithGlobals());
@@ -150,11 +151,11 @@ async function resolveDaemonPairingOffer(
     const serverInfo = client.getLastServerInfoMessage();
     if (serverInfo?.serverId.trim() !== expectedServerId) {
       throw new Error(
-        "The reachable daemon belongs to a different FDE home. Check --home or the daemon listen configuration.",
+        `The reachable daemon belongs to a different ${brand.name} home. Check --home or the daemon listen configuration.`,
       );
     }
     if (serverInfo?.features?.daemonStatusRpc !== true) {
-      throw new Error("Update the FDE daemon before pairing from this command.");
+      throw new Error(`Update the ${brand.name} daemon before pairing from this command.`);
     }
 
     let offer = await client.getDaemonPairingOffer({
@@ -162,7 +163,7 @@ async function resolveDaemonPairingOffer(
     });
     if (!offer.relayEnabled && enableRelay) {
       if (serverInfo.features.relayConfig !== true) {
-        throw new Error("Update the FDE daemon before enabling relay from this command.");
+        throw new Error(`Update the ${brand.name} daemon before enabling relay from this command.`);
       }
       await client.patchDaemonConfig({ relay: { enabled: true } });
       offer = await client.getDaemonPairingOffer({
@@ -209,8 +210,10 @@ async function resolveDirectClaimOffer(listen: string): Promise<PairingOffer | n
 }
 
 export async function confirmRelayPairing(): Promise<boolean> {
-  log.message("Your connection is end-to-end encrypted. FDE cannot read your code or messages.");
-  log.message(`Learn how it works: ${RELAY_DOCS_URL}`);
+  log.message(
+    `Your connection is end-to-end encrypted. ${brand.name} cannot read your code or messages.`,
+  );
+  if (RELAY_DOCS_URL) log.message(`Learn how it works: ${RELAY_DOCS_URL}`);
   const answer = await confirm({
     message: "Enable relay to pair a device?",
     initialValue: false,
@@ -223,14 +226,14 @@ export function printDirectConnectionGuidance(): void {
   console.log(
     "To connect another device directly, use the daemon's TCP address over your LAN, Tailscale, or another VPN.",
   );
-  console.log(`Learn more: ${RELAY_DOCS_URL}#direct-connections`);
+  if (RELAY_DOCS_URL) console.log(`Learn more: ${RELAY_DOCS_URL}#direct-connections`);
 }
 
 export async function runPairCommand(
   options: PairOptions,
   dependencyOverrides: Partial<PairCommandDependencies> = {},
 ): Promise<void> {
-  if (options.home) process.env.FDE_HOME = options.home;
+  if (options.home) process.env[`${brand.envPrefix}_HOME`] = options.home;
   const dependencies: PairCommandDependencies = {
     resolveOffer: resolveLocalPairingOffer,
     resolveAccessMode: resolveDaemonAccessMode,
@@ -282,18 +285,20 @@ function outputPairingResult(
           code: "RELAY_DISABLED",
           message:
             "Relay pairing is disabled for this daemon and no direct offer is available (is the daemon running on TCP?).",
-          action: "Run fde daemon pair --relay --json to enable it explicitly.",
+          action: `Run ${brand.cliName} daemon pair --relay --json to enable it explicitly.`,
         })}\n`,
       );
     } else {
       output.writeStderr(`${chalk.red("Relay pairing is disabled for this daemon.")}\n`);
-      output.writeStderr(`${chalk.yellow("Run fde daemon pair --relay to enable it.")}\n`);
+      output.writeStderr(
+        `${chalk.yellow(`Run ${brand.cliName} daemon pair --relay to enable it.`)}\n`,
+      );
     }
     output.setExitCode(1);
     return;
   }
 
-  const deepLink = buildPairingDeepLink(pairing.url);
+  const deepLink = buildPairingDeepLink(pairing.url, brand.scheme);
   if (options.json) {
     output.writeStdout(
       `${JSON.stringify(

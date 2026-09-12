@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import path from "node:path";
 import type { Command } from "commander";
 import { isCancel, password as passwordPrompt } from "@clack/prompts";
@@ -100,8 +101,8 @@ export async function setDaemonPasswordInConfig(
   return {
     action: "password_set",
     configPath,
-    restartCommand: "fde daemon restart",
-    message: `Password written to ${configPath}\nRestart the daemon for the change to take effect.\nRun: fde daemon restart`,
+    restartCommand: `${brand.cliName} daemon restart`,
+    message: `Password written to ${configPath}\nRestart the daemon for the change to take effect.\nRun: ${brand.cliName} daemon restart`,
   };
 }
 

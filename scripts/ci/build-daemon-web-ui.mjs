@@ -1,9 +1,11 @@
+import { portableCommand } from "../dev/npm-command.mjs";
 import { spawn } from "node:child_process";
 import { createReadStream, createWriteStream } from "node:fs";
-import { cp, mkdir, readdir, rm, stat } from "node:fs/promises";
+import { cp, mkdir, readdir, readFile, rm, stat } from "node:fs/promises";
 import path from "node:path";
 import { pipeline } from "node:stream/promises";
 import { fileURLToPath } from "node:url";
+import { parseArgs } from "node:util";
 import { constants as zlibConstants, createBrotliCompress, createGzip } from "node:zlib";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -19,7 +21,8 @@ function fmtMiB(bytes) {
 
 function run(command, args, options) {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, {
+    const invocation = portableCommand(command, args);
+    const child = spawn(invocation.command, invocation.args, {
       stdio: "inherit",
       shell: false,
       ...options,
@@ -37,20 +40,24 @@ function run(command, args, options) {
 
 async function exportBrowserWebApp() {
   console.log("Exporting browser web app...");
-  await run("npm", ["run", "build:web", "--workspace=@fde/app"], {
-    cwd: REPO_ROOT,
-  });
+  await run(
+    process.platform === "win32" ? "npm.cmd" : "npm",
+    ["run", "build:web", "--workspace=@fde/app"],
+    {
+      cwd: REPO_ROOT,
+    },
+  );
 }
 
-async function cleanTarget() {
-  console.log(`Cleaning ${path.relative(REPO_ROOT, TARGET_DIST)}...`);
-  await rm(TARGET_DIST, { recursive: true, force: true });
-  await mkdir(TARGET_DIST, { recursive: true });
+async function cleanTarget(targetDist) {
+  console.log(`Cleaning ${path.relative(REPO_ROOT, targetDist)}...`);
+  await rm(targetDist, { recursive: true, force: true });
+  await mkdir(targetDist, { recursive: true });
 }
 
-async function copyAssets() {
-  console.log(`Copying assets to ${path.relative(REPO_ROOT, TARGET_DIST)}...`);
-  await cp(SOURCE_DIST, TARGET_DIST, { recursive: true, force: true });
+async function copyAssets(sourceDist, targetDist) {
+  console.log(`Copying assets to ${path.relative(REPO_ROOT, targetDist)}...`);
+  await cp(sourceDist, targetDist, { recursive: true, force: true });
 }
 
 async function compressFile(filePath) {
@@ -116,26 +123,48 @@ async function measureBundle(dir) {
   return { raw, gzip, brotli };
 }
 
-async function main() {
-  await exportBrowserWebApp();
-
-  const sourceStat = await stat(SOURCE_DIST).catch(() => null);
+/** Package a fresh web export; CI restores it from this run's ui-dist artifact. */
+export async function packageDaemonWebUi(
+  sourceDist = SOURCE_DIST,
+  targetDist = TARGET_DIST,
+  expectedFingerprint,
+) {
+  const sourceStat = await stat(sourceDist).catch(() => null);
   if (!sourceStat?.isDirectory()) {
-    throw new Error(`Browser web export not found at ${SOURCE_DIST}`);
+    throw new Error(`Browser web export not found at ${sourceDist}`);
   }
+  // Validate before clearing a previous package, including an empty/broken artifact.
+  await stat(path.join(sourceDist, "index.html"));
+  if (expectedFingerprint) {
+    const stamp = JSON.parse(await readFile(path.join(sourceDist, "brand-build.json"), "utf8"));
+    if (stamp.configFingerprint !== expectedFingerprint) {
+      throw new Error(
+        "Shared web export has stale or different branding; rebuild the UI for the selected brand.",
+      );
+    }
+  }
+  await cleanTarget(targetDist);
+  await copyAssets(sourceDist, targetDist);
+  await precompressAssets(targetDist);
+  return measureBundle(targetDist);
+}
 
-  await cleanTarget();
-  await copyAssets();
-  await precompressAssets(TARGET_DIST);
-
-  const sizes = await measureBundle(TARGET_DIST);
+async function main() {
+  const { values } = parseArgs({ options: { "skip-export": { type: "boolean", default: false } } });
+  if (!values["skip-export"]) await exportBrowserWebApp();
+  const provenance = JSON.parse(
+    await readFile(path.join(REPO_ROOT, ".generated/branding/provenance.json"), "utf8"),
+  );
+  const sizes = await packageDaemonWebUi(SOURCE_DIST, TARGET_DIST, provenance.configFingerprint);
   console.log("Daemon web UI bundle:");
   console.log(`  raw:    ${fmtMiB(sizes.raw)}`);
   console.log(`  gzip:   ${fmtMiB(sizes.gzip)}`);
   console.log(`  brotli: ${fmtMiB(sizes.brotli)}`);
 }
 
-main().catch((error) => {
-  console.error(error instanceof Error ? error.message : String(error));
-  process.exit(1);
-});
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((error) => {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exitCode = 1;
+  });
+}

@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SidebarCalloutDescriptionText } from "@/components/sidebar-callout";
@@ -11,7 +12,7 @@ import {
 import { useStableEvent } from "@/hooks/use-stable-event";
 import { openExternalUrl } from "@/utils/open-external-url";
 
-const FALLBACK_DOWNLOAD_URL = "https://github.com/frogg-app/fde/releases";
+const FALLBACK_DOWNLOAD_URL = brand.distribution.releaseBase;
 
 function RosettaCalloutDescription({ t }: { t: ReturnType<typeof useTranslation>["t"] }) {
   return (
@@ -60,7 +61,11 @@ export function RosettaCalloutSource() {
   }, [isElectronMac]);
 
   useEffect(() => {
-    if (!isElectronMac || runtimeInfo?.runningUnderARM64Translation !== true) {
+    if (
+      !isElectronMac ||
+      !FALLBACK_DOWNLOAD_URL ||
+      runtimeInfo?.runningUnderARM64Translation !== true
+    ) {
       return;
     }
 

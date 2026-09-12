@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import AsyncStorage from "@/storage/brand-storage";
 import type { AttachmentMetadata, WorkspaceFileComposerAttachment } from "@/attachments/types";
 import { appendWorkspaceFileAttachment } from "@/attachments/workspace-file";
 import {

@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import { Platform } from "react-native";
 import { darkHighlightColors, lightHighlightColors } from "@fde/highlight";
 
@@ -689,7 +690,18 @@ export function buildDarkTheme(semanticColors: ReturnType<typeof buildDarkSemant
   } as const;
 }
 
-export const darkTheme = buildDarkTheme(paseoDarkColors);
+export const darkTheme = buildDarkTheme(
+  brand.legacyFde
+    ? paseoDarkColors
+    : {
+        ...paseoDarkColors,
+        surface0: brand.colors.dark.background,
+        foreground: brand.colors.dark.foreground,
+        accent: brand.colors.dark.accent,
+        accentBright: brand.colors.dark.accentBright,
+        accentForeground: brand.colors.dark.accentForeground,
+      },
+);
 export const darkZincTheme = buildDarkTheme(zincDarkColors);
 export const darkMidnightTheme = buildDarkTheme(midnightDarkColors);
 export const darkClaudeTheme = buildDarkTheme(claudeDarkColors);
@@ -752,7 +764,18 @@ export function buildLightTheme(semanticColors: ReturnType<typeof buildLightSema
   } as const;
 }
 
-export const lightTheme = buildLightTheme(lightSemanticColors);
+export const lightTheme = buildLightTheme(
+  brand.legacyFde
+    ? lightSemanticColors
+    : {
+        ...lightSemanticColors,
+        surface0: brand.colors.light.background,
+        foreground: brand.colors.light.foreground,
+        accent: brand.colors.light.accent,
+        accentBright: brand.colors.light.accentBright,
+        accentForeground: brand.colors.light.accentForeground,
+      },
+);
 
 // Keep compatibility with existing code
 export const theme = darkTheme;

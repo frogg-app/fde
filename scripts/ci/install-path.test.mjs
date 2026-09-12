@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from "node:fs";
+import {
+  mkdtempSync,
+  mkdirSync,
+  writeFileSync,
+  readFileSync,
+  existsSync,
+  rmSync,
+  symlinkSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { test } from "node:test";
@@ -25,6 +33,8 @@ function fixture(t, shell = "bash", overrides = {}) {
       arch: process.arch,
     }),
   );
+  mkdirSync(path.join(bundle, "node/bin"), { recursive: true });
+  symlinkSync(process.execPath, path.join(bundle, "node/bin/node"));
   const archive = path.join(home, "bundle.tar.gz");
   execFileSync("tar", ["-czf", archive, "-C", home, "bundle"]);
   const env = {

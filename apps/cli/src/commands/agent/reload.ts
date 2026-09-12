@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import { Command } from "commander";
 import type { DaemonClient } from "@fde/client/internal/daemon-client";
 import { connectToDaemon, getDaemonHost, resolveAgentId } from "../../utils/client.js";
@@ -46,7 +47,7 @@ export async function runReloadCommand(
     const error: CommandError = {
       code: "MISSING_AGENT_ID",
       message: "Agent ID is required",
-      details: "Usage: fde agent reload <id-or-name>",
+      details: `Usage: ${brand.cliName} agent reload <id-or-name>`,
     };
     throw error;
   }
@@ -59,7 +60,7 @@ export async function runReloadCommand(
     const error: CommandError = {
       code: "DAEMON_NOT_RUNNING",
       message: `Cannot connect to daemon at ${host}: ${message}`,
-      details: "Start the daemon with: fde daemon start",
+      details: `Start the daemon with: ${brand.cliName} daemon start`,
     };
     throw error;
   }
@@ -72,7 +73,7 @@ export async function runReloadCommand(
       const error: CommandError = {
         code: "AGENT_NOT_FOUND",
         message: `Agent not found: ${agentIdArg}`,
-        details: 'Use "fde ls" to list available agents',
+        details: `Use "${brand.cliName} ls" to list available agents`,
       };
       throw error;
     }

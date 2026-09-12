@@ -112,17 +112,19 @@ export function buildPairingUrl(baseUrl: string, encoded: string): string {
 }
 
 /** `paseo://pair#offer=<payload>` for any link or code carrying an offer; null without one. */
-export function buildPairingDeepLink(offerUrlOrFragment: string): string | null {
+export function buildPairingDeepLink(
+  offerUrlOrFragment: string,
+  scheme = PAIRING_DEEP_LINK_SCHEME,
+): string | null {
   const encoded = extractPairingCode(offerUrlOrFragment);
-  return encoded ? `${PAIRING_DEEP_LINK_BASE}${OFFER_FRAGMENT_PREFIX}${encoded}` : null;
+  return encoded ? `${scheme}://pair${OFFER_FRAGMENT_PREFIX}${encoded}` : null;
 }
 
 /** True for `paseo://pair#offer=…` (a trailing slash before the fragment is tolerated). */
-export function isPairingDeepLink(input: string): boolean {
+export function isPairingDeepLink(input: string, scheme = PAIRING_DEEP_LINK_SCHEME): boolean {
   const trimmed = input.trim();
   return (
-    (trimmed.startsWith(`${PAIRING_DEEP_LINK_BASE}#`) ||
-      trimmed.startsWith(`${PAIRING_DEEP_LINK_BASE}/#`)) &&
+    (trimmed.startsWith(`${scheme}://pair#`) || trimmed.startsWith(`${scheme}://pair/#`)) &&
     extractOfferFragmentEncoded(trimmed) !== null
   );
 }

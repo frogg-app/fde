@@ -7,8 +7,8 @@ use serde_json::Value;
 
 use crate::transport::ssh_auth::{password_from_args, SshPassword};
 
-pub const DEFAULT_LISTEN: &str = "127.0.0.1:9999";
-pub const DEFAULT_RELEASE_BASE: &str = "https://github.com/frogg-app/fde/releases";
+pub const DEFAULT_LISTEN: &str = crate::branding::DEFAULT_LISTEN;
+pub const DEFAULT_RELEASE_BASE: &str = crate::branding::RELEASE_BASE;
 const MAX_VERSION_LEN: usize = 64;
 const MAX_URL_LEN: usize = 2048;
 
@@ -173,7 +173,15 @@ pub fn shell_quote(value: &str) -> String {
 pub fn env_assignments(pairs: &[(&str, &str)]) -> String {
     pairs
         .iter()
-        .map(|(key, value)| format!("{key}={}", shell_quote(value)))
+        .map(|(key, value)| {
+            format!(
+                "{}={}",
+                key.strip_prefix("FDE_")
+                    .map(crate::branding::env_key)
+                    .unwrap_or_else(|| key.to_string()),
+                shell_quote(value)
+            )
+        })
         .collect::<Vec<_>>()
         .join(" ")
 }
@@ -181,7 +189,8 @@ pub fn env_assignments(pairs: &[(&str, &str)]) -> String {
 /// The remote command that reads the install script from stdin.
 pub fn build_install_command(request: &DeployRequest) -> String {
     let mut pairs: Vec<(&str, &str)> = vec![("FDE_VERSION", request.version.as_str())];
-    let (bind, port) = split_listen(&request.listen).unwrap_or(("127.0.0.1", 9999));
+    let (bind, port) =
+        split_listen(&request.listen).unwrap_or(("127.0.0.1", crate::branding::DEFAULT_PORT));
     let port = port.to_string();
     match request.method {
         DeployMethod::Native => {

@@ -32,9 +32,9 @@ The Tauri CLI comes from `npx --yes @tauri-apps/cli@^2` (a prebuilt binary), so 
 ## `release.yml`: every `v*` tag (or manual dispatch with a `tag` input)
 
 ```
-meta ── android (arm64-v8a apk) ────────────────────────────────────────┐
-meta ── ui ── desktop (windows x86_64 first, then linux/macOS) ── updater
-                  └────────────────────────────────────────────────────┴── daemon-bundle (six targets)
+meta ── android (arm64-v8a apk)
+meta ── ui ── desktop (windows/linux/macOS) ── updater
+           └─ daemon-build ── daemon-bundle (six targets)
 meta ── docker
 ```
 
@@ -42,19 +42,22 @@ meta ── docker
   extracts the `## <version>` section of `CHANGELOG.md` as release notes, and creates the
   GitHub release `FDE <version>` if it does not exist yet. Only versions with a semver `-` suffix are marked pre-release;
   ordinary `0.x.y` versions are stable releases.
-- **ui** exports `apps/ui/dist` once and shares it with the desktop matrix.
+- **ui** exports `apps/ui/dist` once and shares it with desktop and daemon builds.
 - **desktop** builds with `npx @tauri-apps/cli build --target <triple> --bundles <list>`
   on each platform, renames the bundles with
   `scripts/release/collect-desktop-bundles.mjs`, and uploads them. Linux builds on
   `ubuntu-22.04` so the deb/AppImage run on older glibc. Windows builds natively (not the
   cargo-xwin cross build used locally). macOS is ad-hoc signed
   (`APPLE_SIGNING_IDENTITY=-`): users open it once with right-click > Open.
-- **daemon-bundle** runs `npm run build:daemon-bundle -- --target <target>` per platform
-  after the priority Android and desktop tier has completed, so daemon packaging
-  does not consume runners ahead of the APK or Windows setup build. It uploads
-  the archive plus its `.sha256`. Until
-  `scripts/release/build-daemon-bundle.mjs` is on the tagged commit the job logs a notice
-  and does nothing.
+- **daemon-build** compiles the server/CLI workspace graph once and packages the
+  shared `ui-dist` export with `build:daemon-web-ui -- --skip-export`. It selects
+  the same configured brand and rejects a web export with a mismatched fingerprint. Its
+  `daemon-dist` artifact contains all eight workspace `dist` directories, including
+  the precompressed web UI. Artifact paths preserve the repository directory layout.
+- **daemon-bundle** downloads that artifact and installs the runtime/native packages
+  for its own target, then uploads the archive and `.sha256`. It depends only on
+  the shared daemon build and metadata. Android or desktop delays/failures do not
+  block daemon packages, and none of the six target jobs recompile the UI/server.
 - **android** runs `scripts/release/build-android-apk.mjs --abi arm64-v8a` on
   `ubuntu-latest` (Temurin 21, the runner's Android SDK with licenses accepted by
   `android-actions/setup-android`, Gradle cache) and uploads the APK. The

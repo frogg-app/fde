@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 const ANSI_PATTERN = new RegExp(`${String.fromCharCode(0x1b)}\\[[0-9;]*m`, "g");
 
 interface PairingInstructions {
@@ -45,7 +46,7 @@ export function formatPairingInstructions({
 }: PairingInstructions): string {
   const qrSection = qrDisabled ? "" : `\nScan to pair:\n${formatQr(qr, columns)}\n`;
   const deepLinkSection = deepLink
-    ? `\nThe FDE desktop app opens the link above directly (Paste pairing link also works). Same offer as an app link:\n${deepLink}\n`
+    ? `\nThe ${brand.name} desktop app opens the link above directly (Paste pairing link also works). Same offer as an app link:\n${deepLink}\n`
     : "";
   return `${qrSection}\nPairing link (phone, QR, or paste into the app):\n${url}\n${deepLinkSection}\nTreat this pairing link like a password. Anyone with it can access this daemon.\n`;
 }

@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import type { AgentTimelineItem } from "./agent-sdk-types.js";
 import type { AgentAttachment } from "@fde/protocol/messages";
 import type { AgentTimelineRow } from "./agent-timeline-store-types.js";
@@ -279,7 +280,7 @@ function buildForkContextText(input: {
   agentTitle?: string | null;
   cwd?: string | null;
 }): string {
-  const header = ["Chat history from a previous FDE agent."];
+  const header = [`Chat history from a previous ${brand.name} agent.`];
   const agentTitle = trimContextMetadata(input.agentTitle);
   const cwd = trimContextMetadata(input.cwd);
   if (agentTitle) {

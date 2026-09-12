@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import type { Command } from "commander";
 
 export function addAttachOptions(cmd: Command): Command {
@@ -109,7 +110,7 @@ export async function runAttachCommand(
 
   if (!id) {
     console.error("Error: Agent ID required");
-    console.error("Usage: fde attach <id>");
+    console.error(`Usage: ${brand.cliName} attach <id>`);
     process.exit(1);
   }
 
@@ -119,7 +120,7 @@ export async function runAttachCommand(
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error(`Error: Cannot connect to daemon at ${host}: ${message}`);
-    console.error("Start the daemon with: fde daemon start");
+    console.error(`Start the daemon with: ${brand.cliName} daemon start`);
     process.exit(1);
   }
 
@@ -127,7 +128,7 @@ export async function runAttachCommand(
     const fetchResult = await client.fetchAgent({ agentId: id });
     if (!fetchResult) {
       console.error(`Error: No agent found matching: ${id}`);
-      console.error("Use `fde ls` to list available agents");
+      console.error(`Use \`${brand.cliName} ls\` to list available agents`);
       await client.close();
       process.exit(1);
     }

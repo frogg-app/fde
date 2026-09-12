@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import AsyncStorage from "@/storage/brand-storage";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { readValidatedString } from "@/storage/validated-storage";

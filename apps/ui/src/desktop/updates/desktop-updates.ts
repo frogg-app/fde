@@ -1,10 +1,11 @@
+import { brand } from "@fde/branding";
 import { isElectronRuntime } from "@/desktop/host";
 import { invokeDesktopCommand } from "@/desktop/electron/invoke";
 import { listenToDesktopEvent, type DesktopEventUnlisten } from "@/desktop/electron/events";
 import { isWeb } from "@/constants/platform";
 import { i18n } from "@/i18n/i18next";
 
-export type DesktopUpdateStrategy = "tauri-signed" | "github-release";
+export type DesktopUpdateStrategy = "tauri-signed" | "github-release" | "disabled";
 
 /**
  * How the shell applies the update once downloaded (`src/updates/assets.rs`):
@@ -66,7 +67,9 @@ export interface LocalDaemonVersionResult {
   error: string | null;
 }
 
-const RELEASE_DOWNLOAD_BASE_URL = "https://github.com/frogg-app/fde/releases/download";
+const RELEASE_DOWNLOAD_BASE_URL = brand.distribution.releaseBase
+  ? `${brand.distribution.releaseBase}/download`
+  : null;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -94,7 +97,9 @@ export function shouldShowDesktopUpdateSection(): boolean {
 }
 
 export function parseDesktopUpdateStrategy(value: unknown): DesktopUpdateStrategy | null {
-  return value === "tauri-signed" || value === "github-release" ? value : null;
+  return value === "tauri-signed" || value === "github-release" || value === "disabled"
+    ? value
+    : null;
 }
 
 const INSTALL_KINDS: readonly DesktopUpdateInstallKind[] = [
@@ -272,11 +277,11 @@ export function formatVersionWithPrefix(version: string | null | undefined): str
 
 export function buildMacAppleSiliconDownloadUrl(version: string | null | undefined): string | null {
   const normalizedVersion = normalizeVersionForComparison(version);
-  if (!normalizedVersion) {
+  if (!normalizedVersion || !RELEASE_DOWNLOAD_BASE_URL) {
     return null;
   }
 
-  return `${RELEASE_DOWNLOAD_BASE_URL}/v${normalizedVersion}/FDE_${normalizedVersion}_aarch64.dmg`;
+  return `${RELEASE_DOWNLOAD_BASE_URL}/v${normalizedVersion}/${brand.artifactPrefix}-${normalizedVersion}-aarch64.dmg`;
 }
 
 export function buildDaemonUpdateDiagnostics(result: LocalDaemonUpdateResult): string {

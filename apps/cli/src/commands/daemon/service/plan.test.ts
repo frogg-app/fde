@@ -31,10 +31,12 @@ describe("systemd user unit", () => {
     );
 
     expect(plan.file?.path).toBe(`/scratch/config/systemd/user/${SERVICE_NAME}.service`);
-    expect(plan.file?.contents).toContain("ExecStart=/opt/fde/bin/fde daemon start --foreground");
+    expect(plan.file?.contents).toContain(
+      'ExecStart="/opt/fde/bin/fde" "daemon" "start" "--foreground"',
+    );
     expect(plan.file?.contents).toContain("Environment=PASEO_LISTEN=127.0.0.1:9991");
-    expect(plan.file?.contents).toContain(`Environment=FDE_HOME=${HOME_DIR}/.fde`);
-    expect(plan.file?.contents).toContain("Environment=PATH=/opt/fde/bin:/usr/bin:/bin");
+    expect(plan.file?.contents).toContain(`Environment="FDE_HOME=${HOME_DIR}/.fde"`);
+    expect(plan.file?.contents).toContain('Environment="PATH=/opt/fde/bin:/usr/bin:/bin"');
     expect(plan.file?.contents).toContain("WantedBy=default.target");
     expect(plan.install).toContainEqual({
       program: "systemctl",

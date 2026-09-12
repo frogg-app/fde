@@ -1,6 +1,6 @@
 [package]
 name = "fde"
-version = "0.3.1"
+version = "0.4.1"
 description = "FDE (Frogg Development Environment) desktop shell"
 edition = "2021"
 license = "Apache-2.0"
@@ -15,6 +15,7 @@ name = "fde"
 path = "src/main.rs"
 
 [build-dependencies]
+serde_json = "1"
 tauri-build = { version = "2.6", features = [] }
 
 [dependencies]

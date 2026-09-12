@@ -1,3 +1,5 @@
+import { matchesBrand } from "@fde/branding/identity";
+import { brand } from "@fde/branding";
 import type { Command } from "commander";
 import { createRequire } from "node:module";
 import { getOrCreateServerId, findExecutable, execCommand } from "@fde/server";
@@ -120,7 +122,7 @@ function toStatusRows(status: DaemonStatus): StatusRow[] {
     { key: "Server ID", value: status.serverId ?? "-" },
     { key: "Local Daemon", value: status.localDaemon },
     { key: "Connected Daemon", value: status.connectedDaemon },
-    { key: "FDE Home", value: status.home },
+    { key: `${brand.name} Home`, value: status.home },
     { key: "Listen", value: status.listen },
     { key: "Relay", value: status.relay },
     { key: "Hostname", value: status.hostname ?? "-" },
@@ -255,7 +257,15 @@ async function probeDaemonOverWebsocket(args: {
     return { connectedDaemon: "unreachable" };
   }
 
-  const daemonVersion = client.getLastServerInfoMessage()?.version ?? null;
+  const serverInfo = client.getLastServerInfoMessage();
+  if (!matchesBrand(brand, serverInfo?.brand)) {
+    await client.close().catch(() => undefined);
+    return {
+      connectedDaemon: "unreachable",
+      note: `Port ${host} belongs to another product; configure a separate daemon port.`,
+    };
+  }
+  const daemonVersion = serverInfo?.version ?? null;
   try {
     const statusPayload = await client.getDaemonStatus({
       timeout: DAEMON_STATUS_PROBE_TIMEOUT_MS,

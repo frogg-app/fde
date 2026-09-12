@@ -102,13 +102,29 @@ if (existsSync(tauriConfigPath)) {
   }
 }
 
-const cargoManifestPath = path.join(rootDir, "apps/desktop/src-tauri/Cargo.toml");
-if (existsSync(cargoManifestPath)) {
+for (const [directory, name] of [
+  ["apps/desktop/src-tauri", "fde"],
+  ["apps/daemon-rs", "fde-daemon"],
+]) {
+  const cargoManifestPath = path.join(rootDir, directory, "Cargo.toml");
+  if (!existsSync(cargoManifestPath)) continue;
   const cargoManifest = readFileSync(cargoManifestPath, "utf8");
   const nextManifest = syncCargoPackageVersion(cargoManifest, rootVersion);
   if (nextManifest !== cargoManifest) {
     writeFileSync(cargoManifestPath, nextManifest);
     touched.push(path.relative(rootDir, cargoManifestPath));
+  }
+  const lockPath = path.join(rootDir, directory, "Cargo.lock");
+  if (existsSync(lockPath)) {
+    const lock = readFileSync(lockPath, "utf8");
+    const next = lock.replace(
+      new RegExp(`name = "${name}"\\nversion = "[^"]+"`),
+      `name = "${name}"\nversion = "${rootVersion}"`,
+    );
+    if (next !== lock) {
+      writeFileSync(lockPath, next);
+      touched.push(path.relative(rootDir, lockPath));
+    }
   }
 }
 

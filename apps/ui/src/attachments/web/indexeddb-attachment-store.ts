@@ -1,3 +1,5 @@
+import { brand } from "@fde/branding";
+import { storageKey } from "@fde/branding/identity";
 import {
   type AttachmentStore,
   type AttachmentMetadata,
@@ -17,7 +19,7 @@ interface StoredBlobRecord {
   fileName: string | null;
 }
 
-const DB_NAME = "paseo-attachment-bytes";
+const DB_NAME = storageKey(brand, "paseo-attachment-bytes");
 const STORE_NAME = "attachments";
 const DB_VERSION = 1;
 

@@ -48,6 +48,7 @@ pub type EventSink = Arc<dyn Fn(&str, Value) + Send + Sync>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Strategy {
+    Disabled,
     TauriSigned,
     GithubRelease,
 }
@@ -55,6 +56,7 @@ pub enum Strategy {
 impl Strategy {
     pub fn as_str(self) -> &'static str {
         match self {
+            Strategy::Disabled => "disabled",
             Strategy::TauriSigned => "tauri-signed",
             Strategy::GithubRelease => "github-release",
         }
@@ -158,6 +160,9 @@ impl Updates {
 
     /// The GitHub-release check for `channel` on this platform.
     pub async fn check_github(&self, channel: Channel, kind: Option<AssetKind>) -> CheckResult {
+        if self.strategy == Strategy::Disabled {
+            return CheckResult::up_to_date(self, channel, Strategy::Disabled);
+        }
         check::check_github(self, channel, kind).await
     }
 }
@@ -165,7 +170,12 @@ impl Updates {
 /// Which mechanism this build uses; reported as `updateStrategy` in
 /// `desktop_get_runtime_info`.
 pub fn strategy<R: Runtime>(app: &AppHandle<R>) -> Strategy {
-    if signed::is_configured(app) {
+    if crate::branding::UPDATE_MODE == "disabled" {
+        return Strategy::Disabled;
+    }
+    if crate::branding::UPDATE_MODE == "tauri-signed"
+        || (crate::branding::LEGACY_FDE && signed::is_configured(app))
+    {
         Strategy::TauriSigned
     } else {
         Strategy::GithubRelease
@@ -173,8 +183,7 @@ pub fn strategy<R: Runtime>(app: &AppHandle<R>) -> Strategy {
 }
 
 fn releases_url() -> String {
-    std::env::var("FDE_UPDATE_RELEASES_URL")
-        .ok()
+    crate::branding::env_value("UPDATE_RELEASES_URL")
         .filter(|v| !v.trim().is_empty())
         .unwrap_or_else(|| github::RELEASES_URL.to_string())
 }
@@ -231,7 +240,8 @@ fn settings<R: Runtime>(app: &AppHandle<R>) -> Value {
 }
 
 fn auto_check_enabled<R: Runtime>(app: &AppHandle<R>) -> bool {
-    settings(app)["updates"]["autoCheck"] != json!(false)
+    crate::branding::UPDATE_MODE != "disabled"
+        && settings(app)["updates"]["autoCheck"] != json!(false)
 }
 
 fn channel_for<R: Runtime>(app: &AppHandle<R>, args: &Value) -> Channel {
@@ -246,10 +256,16 @@ async fn run_check<R: Runtime>(
     updates: &Updates,
     channel: Channel,
 ) -> CheckResult {
+    if updates.strategy == Strategy::Disabled {
+        return CheckResult::up_to_date(updates, channel, Strategy::Disabled);
+    }
     if updates.strategy == Strategy::TauriSigned {
         match signed::check(app, updates, channel).await {
             Ok(result) => return result,
             Err(error) => {
+                if !crate::branding::LEGACY_FDE {
+                    return CheckResult::failed(updates, channel, Strategy::TauriSigned, error);
+                }
                 log::warn!("updates: signed check failed ({error}); using GitHub releases")
             }
         }
@@ -262,6 +278,9 @@ async fn run_check<R: Runtime>(
 pub async fn check<R: Runtime>(app: &AppHandle<R>, args: &Value) -> Result<Value, String> {
     let updates = app.state::<Updates>();
     let channel = channel_for(app, args);
+    if updates.strategy == Strategy::Disabled {
+        return Ok(CheckResult::up_to_date(&updates, channel, Strategy::Disabled).to_json());
+    }
     let automatic = args.get("intent").and_then(Value::as_str) != Some("manual");
     Ok(updates
         .check_with(channel, automatic, run_check(app, &updates, channel))
@@ -290,11 +309,17 @@ async fn run_install<R: Runtime>(
     updates: &Updates,
     channel: Channel,
 ) -> Result<Value, String> {
+    if updates.strategy == Strategy::Disabled {
+        return Err("Updates are disabled for this product".into());
+    }
     if updates.strategy == Strategy::TauriSigned {
         match signed::install(app, updates).await {
             Ok(Some(result)) => return Ok(result),
             Ok(None) => return Ok(already_latest()),
             Err(error) => {
+                if !crate::branding::LEGACY_FDE {
+                    return Err(error);
+                }
                 log::warn!("updates: signed install failed ({error}); using GitHub releases")
             }
         }

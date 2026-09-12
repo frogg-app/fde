@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import type { Command } from "commander";
 import type { AgentProviderNotice } from "@fde/protocol/agent-types";
 import type { AgentSnapshotPayload } from "@fde/protocol/messages";
@@ -165,8 +166,7 @@ function parseAgentChanges(options: AgentUpdateOptions): AgentChanges {
     throw {
       code: "INVALID_THINKING_OPTION",
       message: "--thinking cannot be empty",
-      details:
-        'Provide a thinking option ID. Use "fde provider models <provider> --thinking" to list valid IDs.',
+      details: `Provide a thinking option ID. Use "${brand.cliName} provider models <provider> --thinking" to list valid IDs.`,
     } satisfies CommandError;
   }
 
@@ -210,7 +210,7 @@ export async function runUpdateCommand(
     const error: CommandError = {
       code: "MISSING_AGENT_ID",
       message: "Agent ID is required",
-      details: "Usage: fde agent update <id> [--name <name>] [--label <key=value>]",
+      details: `Usage: ${brand.cliName} agent update <id> [--name <name>] [--label <key=value>]`,
     };
     throw error;
   }
@@ -225,7 +225,7 @@ export async function runUpdateCommand(
     const error: CommandError = {
       code: "DAEMON_NOT_RUNNING",
       message: `Cannot connect to daemon at ${host}: ${message}`,
-      details: "Start the daemon with: fde daemon start",
+      details: `Start the daemon with: ${brand.cliName} daemon start`,
     };
     throw error;
   }
@@ -236,7 +236,7 @@ export async function runUpdateCommand(
       const error: CommandError = {
         code: "AGENT_NOT_FOUND",
         message: `Agent not found: ${agentIdArg}`,
-        details: 'Use "fde ls" to list available agents',
+        details: `Use "${brand.cliName} ls" to list available agents`,
       };
       throw error;
     }

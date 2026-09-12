@@ -1,3 +1,5 @@
+import { brand } from "@fde/branding";
+import { brandEnv } from "@fde/branding/identity";
 import { existsSync, renameSync, rmSync } from "node:fs";
 import path from "node:path";
 import { resolveLoopbackHttpBase } from "../daemon-http.js";
@@ -102,7 +104,8 @@ interface ResolvedCandidate {
 }
 
 export function describeNotUpdatable(installDir: string, env: NodeJS.ProcessEnv): string | null {
-  if (env.FDE_DOCKER === "1" || existsSync("/.dockerenv")) {
+  if (brand.distribution.updateMode === "disabled") return `Updates are disabled for ${brand.name}`;
+  if (brandEnv(brand, env, "DOCKER") === "1" || existsSync("/.dockerenv")) {
     return "this daemon runs in Docker; pull the new image and re-run install-docker.sh --update";
   }
   if (readCurrentVersion(installDir) === null) {
@@ -119,7 +122,7 @@ async function resolveCandidate(
   target: BundleTarget,
 ): Promise<ResolvedCandidate | null> {
   const assetName = (version: string) => bundleAssetName(version, target);
-  const userAgent = `FDE/${runtime.cliVersion}`;
+  const userAgent = `${brand.cliName}/${runtime.cliVersion}`;
   if (options.version && source.releaseBaseOverridden) {
     const version = options.version.replace(/^v/, "");
     const url = releaseDownloadUrl(source.releaseBase, version, assetName(version));

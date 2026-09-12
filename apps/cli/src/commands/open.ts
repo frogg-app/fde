@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
@@ -5,12 +6,14 @@ import { spawnProcess } from "@fde/server";
 import { buildAgentDeepLink, type AgentDeepLinkTarget } from "@fde/protocol/agent-deep-link";
 
 function findDesktopApp(): string | null {
+  const installName = brand.legacyFde ? brand.name : brand.id;
   if (process.platform === "darwin") {
     const candidates = [
-      "/Applications/FDE.app",
-      path.join(homedir(), "Applications", "FDE.app"),
-      "/Applications/Paseo.app",
-      path.join(homedir(), "Applications", "Paseo.app"),
+      `/Applications/${installName}.app`,
+      path.join(homedir(), "Applications", `${installName}.app`),
+      ...(brand.legacyFde
+        ? ["/Applications/Paseo.app", path.join(homedir(), "Applications", "Paseo.app")]
+        : []),
     ];
 
     for (const candidate of candidates) {
@@ -24,11 +27,15 @@ function findDesktopApp(): string | null {
 
   if (process.platform === "linux") {
     const candidates = [
-      "/usr/bin/fde",
-      path.join(homedir(), "Applications", "FDE.AppImage"),
-      "/usr/bin/Paseo",
-      "/opt/Paseo/Paseo",
-      path.join(homedir(), "Applications", "Paseo.AppImage"),
+      `/usr/bin/${brand.desktopBinaryName}`,
+      path.join(homedir(), "Applications", `${installName}.AppImage`),
+      ...(brand.legacyFde
+        ? [
+            "/usr/bin/Paseo",
+            "/opt/Paseo/Paseo",
+            path.join(homedir(), "Applications", "Paseo.AppImage"),
+          ]
+        : []),
     ];
 
     for (const candidate of candidates) {
@@ -47,9 +54,18 @@ function findDesktopApp(): string | null {
     }
 
     const candidates = [
-      path.join(localAppData, "FDE", "FDE.exe"),
-      path.join(localAppData, "Programs", "FDE", "FDE.exe"),
-      path.join(localAppData, "Programs", "Paseo", "Paseo.exe"),
+      path.join(
+        localAppData,
+        brand.legacyFde ? brand.name : brand.applicationId,
+        `${brand.desktopBinaryName}.exe`,
+      ),
+      path.join(
+        localAppData,
+        "Programs",
+        brand.legacyFde ? brand.name : brand.applicationId,
+        `${brand.desktopBinaryName}.exe`,
+      ),
+      ...(brand.legacyFde ? [path.join(localAppData, "Programs", "Paseo", "Paseo.exe")] : []),
     ];
     return candidates.find((candidate) => existsSync(candidate)) ?? null;
   }
@@ -78,13 +94,15 @@ function spawnDetached(command: string, args: string[]): void {
 
 function launchDesktop(args: string[]): void {
   if (process.env.PASEO_DESKTOP_CLI === "1") {
-    throw new Error("Cannot open FDE Desktop while running in desktop CLI passthrough mode.");
+    throw new Error(
+      `Cannot open ${brand.name} Desktop while running in desktop CLI passthrough mode.`,
+    );
   }
 
   const desktopApp = findDesktopApp();
   if (!desktopApp) {
     throw new Error(
-      "FDE desktop app not found. Install it from https://github.com/frogg-app/fde/releases",
+      `${brand.name} desktop app not found.${brand.distribution.releaseBase ? ` Install it from ${brand.distribution.releaseBase}` : " Install the desktop application supplied by your distributor."}`,
     );
   }
 
@@ -110,5 +128,5 @@ export async function openDesktopWithProject(projectPath: string): Promise<void>
 }
 
 export async function openDesktopWithAgent(target: AgentDeepLinkTarget): Promise<void> {
-  launchDesktop([buildAgentDeepLink(target)]);
+  launchDesktop([buildAgentDeepLink(target, brand.scheme)]);
 }

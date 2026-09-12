@@ -1,3 +1,4 @@
+import { brand } from "@fde/branding";
 import { Gift } from "lucide-react-native";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -22,7 +23,7 @@ import { updateToastVersion } from "./update-toast-state";
 import { describeAppUpdateProgress } from "./app-update-progress";
 
 const CHECK_INTERVAL_MS = 30 * 60 * 1000;
-const CHANGELOG_URL = "https://github.com/frogg-app/fde/releases";
+const CHANGELOG_URL = brand.distribution.releaseBase;
 
 function renderBody(body: UpdateCalloutBody, t: ReturnType<typeof useTranslation>["t"]): ReactNode {
   if (body.kind === "installing") return t("desktop.updates.callout.installingDescription");
