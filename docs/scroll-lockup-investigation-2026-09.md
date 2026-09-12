@@ -287,7 +287,82 @@ array — `orderedTailCache` (`model.ts:50`), `splitHistoryCache` (`:52`),
 `turnTimingCache` (`:56`), `historyLayoutCache` (`layout.ts:342`) — so all four miss
 permanently. Same shape as #3: a memo keyed on something that changes per page load.
 
+## Platform update, 2026-09-12 (supersedes "Why Windows and not mobile")
+
+The browser was reported as fast and smooth while the Windows build was not. That
+answers [open question 1](#open-questions) with a **no** — it does not reproduce in a
+desktop browser — and refutes this document's claim that the defects are shared web
+code and "what Windows adds is severity, not cause". The reported connection is this
+server's daemon over plain `ws://`, which also answers open question 3.
+
+That connection detail removes most of the platform reasoning below:
+
+- **The Rust transport is not involved.** `host-runtime.ts:560-571` routes `directTcp`
+  through `createAppWebSocketFactory`, and `runtime/websocket-factory.web.ts` returns
+  `defaultWebSocketFactory` — a plain browser `WebSocket` in the webview. The
+  `paseo+desktop:` transport, `app.emit` and the batching in `transport/task.rs` are all
+  bypassed. The #7 "blocking attachment reads starve transport pumping" inference cannot
+  apply, because there is no transport session to starve.
+- **The daemon is the same daemon in both cases**, on the same server, so #5 costs the
+  same on either client and cannot explain the split.
+- **Tauri `emit` would have been a real Windows-only cost, but is off this path.**
+  Recorded because it will matter for socket/pipe/ssh connections:
+  `tauri-2.11.5/src/event/mod.rs:194-206` interpolates the payload into a JavaScript
+  source string and calls `webview.eval`, which on Windows is a UTF-16 copy plus a
+  cross-process `ICoreWebView2::ExecuteScript` (`wry-0.55.1/src/webview2/mod.rs:1320`).
+  Tauri's own `ipc/channel.rs:35-39` switches off `eval` above **8 KB** with the comment
+  that eval is ~2x slower past that on WebView2; the transport batcher allows **256 KB**
+  (`transport/task.rs:242`). Measured in Node with distinct payloads per iteration (so
+  V8's compilation cache cannot hide it): eval of the object literal costs 4.6x
+  `JSON.parse` at 4 KB, 5.0x at 52 KB and 6.8x at 246 KB. Absolute cost was 1.5 ms for a
+  246 KB batch, so this is a multiplier worth removing rather than a lockup on its own,
+  and the Windows-only UTF-16 and marshalling costs were not measured.
+
+## The most likely cause is a version skew, not a platform
+
+**The last released build predates every fix in this document.** `v0.3.1` is the newest
+version tag; `de76371` ("stop scroll-back from locking up the app") and `7c95aa1`
+("unblock input while older history pages load") are both **not** ancestors of it, and
+they are the only two commits touching `agent-stream/` since. A v0.3.1 Windows build
+therefore has none of the nine defects fixed and, crucially, still re-renders inside
+`flushSync` — the 26%-of-profile cost the measured update identifies as dominant.
+
+So the comparison that produced "browser fast, Windows slow" is very likely a current
+dev build against a release binary from before the fixes, not WebView2 against Chromium.
+
+**Nothing else in this repo distinguishes the two.** Checked and cleared for this split:
+
+- Every conversation-scroll listener is passive — `scroll`, `wheel` and `touchmove` at
+  `strategy-web.tsx:1101-1110`, so the compositor never waits on the main thread. The
+  only non-passive `wheel`/`touchmove` listeners are the terminal
+  (`terminal-emulator-runtime.ts:1202`) and the zoomable viewport
+  (`zoomable-viewport/index.web.tsx:139`), neither on the conversation path.
+- No zoom factor is set anywhere, so `devicePixelRatio` is whatever Windows display
+  scaling gives — an environment difference, not a code one.
+- wry's default WebView2 arguments are
+  `--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection`
+  (`wry-0.55.1/src/webview2/mod.rs:297`). Nothing touches GPU or compositing.
+- `windowChromeMode: "custom-windows"` reaches only the titlebar presentation
+  (`desktop/window-chrome-presentation.ts`), not the stream renderer.
+
+### The test that settles it
+
+In order, cheapest first. Each is a single data point and none needs a code change:
+
+1. **Run a build of this branch on the same Windows box.** If it is smooth, this was
+   version skew and there is no Windows bug to find.
+2. **If it is still slow, open the same daemon in Edge or Chrome on that same Windows
+   machine.** Slow in both means the machine — display scaling, GPU driver, CPU — and
+   not WebView2. Fast in the browser but slow in the app isolates the Tauri shell, and
+   only then is a WebView2 investigation warranted.
+
+The earlier browser comparison does not distinguish these, because it is not known to
+have run on the same machine or the same commit.
+
 ## Why Windows and not mobile
+
+> **Superseded.** Kept for the record; the platform reasoning in this section is
+> refuted by the platform update above.
 
 The scroll hot path is shared web code. `estimateStreamItemHeight` has exactly one
 caller, `strategy-web.tsx`; the native strategy uses a plain `FlatList` with
