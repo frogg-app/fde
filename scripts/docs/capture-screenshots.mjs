@@ -100,7 +100,6 @@ const webShots = {
     steps: (page) => clickText(page, "Pair a device"),
   },
   "app/connections": { path: "/settings/hosts/{serverId}/connections", crop: "dialog" },
-  "app/plugins": { path: "/settings/hosts/{serverId}/plugins", crop: "dialog" },
   "app/companion-settings": {
     path: "/settings",
     crop: "dialog",

@@ -258,10 +258,12 @@ The docs rewrite (2026-09-13) replaced `docs/` with the Astro/Starlight site in
 - [ ] **Per-device revoke** for paired devices does not exist.
 - [ ] **Schedules have no UI**; CLI/daemon only.
 - [ ] **Push notifications in the published APK** are unverified.
-- [ ] **`@fde/plugin` is not on npm**, so a scaffolded plugin does not typecheck
-      outside the repo.
-- [ ] **Plugin remove confirmation** says the source is not deleted, which is
-      misleading for Git installs.
+- [ ] **Remove the plugin feature.** Plugins are dropped as not maintainable or
+      securable (2026-09-13); docs and website no longer mention them. Still in
+      the code: `packages/plugin`, `packages/server/src/server/plugins/`, the
+      host Plugins settings page, `fde plugin` CLI, `pluginsEnabled`/`plugins`
+      config, plugin RPCs and themes, `examples/plugins/`, `skills/fde-plugin`.
+      Contributor build-order tables still list `@fde/plugin` until it is removed.
 - [ ] **`FDE_DEV_RESET_HOME`** does nothing on its own.
 - [ ] **Dangling design-doc references.** Comments in `apps/ui` and
       `.oxlintrc.json` messages still cite deleted docs (unistyles, hover, menus,

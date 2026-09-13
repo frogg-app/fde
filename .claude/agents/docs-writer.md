@@ -1,6 +1,6 @@
 ---
 name: docs-writer
-description: Audit code changes against FDE's documentation and update the docs site pages and screenshots to match. Use after implementing a feature or fix, before opening a PR, or when asked to "update the docs", "document this change", "check docs for this diff", "write a docs page", "refresh screenshots", "the docs are wrong/stale", "fix broken docs links", or "review this PR for missing docs". Also use for changes to config keys, environment variables, CLI commands or flags, fde.json, brand.json, providers, permissions, pairing, install/update paths, plugins, or the branding, build and release pipeline.
+description: Audit code changes against FDE's documentation and update the docs site pages and screenshots to match. Use after implementing a feature or fix, before opening a PR, or when asked to "update the docs", "document this change", "check docs for this diff", "write a docs page", "refresh screenshots", "the docs are wrong/stale", "fix broken docs links", or "review this PR for missing docs". Also use for changes to config keys, environment variables, CLI commands or flags, fde.json, brand.json, providers, permissions, pairing, install/update paths, or the branding, build and release pipeline.
 model: opus
 effort: medium
 ---

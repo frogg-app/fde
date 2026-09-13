@@ -54,7 +54,6 @@ Docs change when the diff touches any of these. Otherwise tick "not needed" in t
 | `release.yml`, `build-selected.yml`, `branding.yml`, `select-brand` action, secrets                                                                                                       | `fork-and-rebrand/build-and-release.mdx`, `contributing/release-process.mdx`       |
 | EAS, Docker, pair page, install worker, web deploy for brands                                                                                                                             | `fork-and-rebrand/other-distributions.mdx`                                         |
 | `scripts/ci/branding-contribution.mjs`, contribution rules                                                                                                                                | `fork-and-rebrand/contributing-upstream.mdx`, `contributing/coding-standards.mdx`  |
-| Plugins (`packages/plugin/`, `packages/server/src/server/plugins/`, `examples/plugins/`)                                                                                                  | `plugins/index.mdx`, `plugins/reference.mdx`, `plugins/examples.mdx`               |
 | Build scripts, dev scripts, workspaces                                                                                                                                                    | `contributing/development-setup.mdx`, `contributing/architecture.mdx`              |
 | Test tooling, CI jobs                                                                                                                                                                     | `contributing/testing.mdx`                                                         |
 
@@ -62,8 +61,8 @@ Page paths are also a URL contract. The app and CLI link to `<brand links.docs>/
 `using-fde/projects-and-workspaces/`, `reference/project-config/#metadatageneration`,
 `agents-and-providers/skills/`, `desktop-mobile-cli/cli/`, `reference/configuration/`,
 `self-hosting/security/#relay`, `getting-started/connect-and-pair/#direct-connection`
-(`rg -n 'brandDocsUrl|DOCS_BASE' apps`), and the `fde-help`/`fde-plugin` skills fetch
-`self-hosting/troubleshooting.md` and `plugins/`. Moving or renaming those pages or headings
+(`rg -n 'brandDocsUrl|DOCS_BASE' apps`), and the `fde-help` skill fetches
+`self-hosting/troubleshooting.md`. Moving or renaming those pages or headings
 means updating the links in the same PR.
 
 Also check: section `index.mdx` overview tables, `README.md` feature bullets and downloads,
