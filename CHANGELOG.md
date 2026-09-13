@@ -6,6 +6,11 @@
   releases, with independent platform versions and strict continuity verification.
 - Record development release target defaults and rename-safe update requirements.
 
+## 0.6.21 — 2026-09-13
+
+- Synchronize internal dependency lockfile pins and regenerate the Nix dependency
+  hash for the attachment pre-read safeguards.
+
 ## 0.6.20 — 2026-09-13
 
 - Reject oversized attachment selections before browser/Expo byte reads and Electron
