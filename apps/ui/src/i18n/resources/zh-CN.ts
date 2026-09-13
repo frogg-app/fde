@@ -1,7 +1,9 @@
+import { projectImportCopies } from "./project-import";
 import { en, type TranslationResources } from "./en";
 import { pluginSettings } from "./plugin-settings";
 
 export const zhCN: TranslationResources = {
+  projectImport: projectImportCopies["zh-CN"],
   directoryBrowser: {
     choose: "使用此目录",
     parent: "转到上级目录",

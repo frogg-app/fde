@@ -1325,7 +1325,8 @@ test("create_agent_request does not title an existing workspace from the agent p
       initialPrompt: "Fix login bug\nwith better validation",
       attachments: [],
     });
-    await vi.runAllTimersAsync();
+    // Session import cleanup is periodic; drain pending work without looping its interval.
+    await vi.runOnlyPendingTimersAsync();
 
     const [createdAgent] = agentManager.listAgents();
     expect(createdAgent?.workspaceId).toBe("ws-existing");

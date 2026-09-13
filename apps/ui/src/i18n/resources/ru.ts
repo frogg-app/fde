@@ -1,7 +1,9 @@
+import { projectImportCopies } from "./project-import";
 import { en, type TranslationResources } from "./en";
 import { pluginSettings } from "./plugin-settings";
 
 export const ru: TranslationResources = {
+  projectImport: projectImportCopies["ru"],
   directoryBrowser: {
     choose: "Использовать этот каталог",
     parent: "Перейти к родительскому каталогу",

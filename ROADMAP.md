@@ -11,6 +11,9 @@ namespace migration. Unchecked items are validation/backlog work, not active tas
   input and selections. Pending submissions survive navigation; failures can be
   retried and successful handoffs remove the entry. Browser/daemon coverage is
   automated; native device acceptance remains separate.
+- Project/conversation import through Add Project, with daemon-native sessions and
+  client/daemon Claude/Codex text exports. Includes bounded transfer and persistent
+  project history; [contract and platform validation limits](docs/plans/project-conversation-import.md).
 
 - Home-first immediate directory browsing with pinned selection/parent actions;
   cancellable network discovery with concise status; configurable daemon network

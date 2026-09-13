@@ -2281,6 +2281,80 @@ export class DaemonClient {
     });
   }
 
+  async projectImportPrepare(input: {
+    source: "daemon" | "client";
+    cwd: string;
+    conversationDirectory?: string;
+  }) {
+    const requestId = crypto.randomUUID();
+    return this.sendNamespacedCorrelatedSessionRequest<"project.import.prepare.response">({
+      requestId,
+      message: { type: "project.import.prepare.request", requestId, ...input },
+      timeout: 120_000,
+    });
+  }
+
+  async projectImportUpload(input: {
+    importId: string;
+    path: string;
+    kind: "code" | "conversation";
+    offset: number;
+    contentBase64: string;
+    complete: boolean;
+  }) {
+    const requestId = crypto.randomUUID();
+    return this.sendNamespacedCorrelatedSessionRequest<"project.import.upload.response">({
+      requestId,
+      message: { type: "project.import.upload.request", requestId, ...input },
+      timeout: 120_000,
+    });
+  }
+
+  async projectImportPreview(importId: string) {
+    const requestId = crypto.randomUUID();
+    return this.sendNamespacedCorrelatedSessionRequest<"project.import.preview.response">({
+      requestId,
+      message: { type: "project.import.preview.request", requestId, importId },
+      timeout: 120_000,
+    });
+  }
+
+  async projectImportCommit(importId: string, sessionIds: string[]) {
+    const requestId = crypto.randomUUID();
+    return this.sendNamespacedCorrelatedSessionRequest<"project.import.commit.response">({
+      requestId,
+      message: { type: "project.import.commit.request", requestId, importId, sessionIds },
+      timeout: 120_000,
+    });
+  }
+
+  async projectImportCancel(importId: string) {
+    const requestId = crypto.randomUUID();
+    return this.sendNamespacedCorrelatedSessionRequest<"project.import.cancel.response">({
+      requestId,
+      message: { type: "project.import.cancel.request", requestId, importId },
+      timeout: 120_000,
+    });
+  }
+
+  async projectImportList(projectId: string) {
+    const requestId = crypto.randomUUID();
+    return this.sendNamespacedCorrelatedSessionRequest<"project.import.list.response">({
+      requestId,
+      message: { type: "project.import.list.request", requestId, projectId },
+      timeout: 120_000,
+    });
+  }
+
+  async projectImportRead(projectId: string, id: string, offset = 0) {
+    const requestId = crypto.randomUUID();
+    return this.sendNamespacedCorrelatedSessionRequest<"project.import.read.response">({
+      requestId,
+      message: { type: "project.import.read.request", requestId, projectId, id, offset },
+      timeout: 120_000,
+    });
+  }
+
   async addProject(cwd: string, requestId?: string): Promise<ProjectAddPayload> {
     return this.sendCorrelatedSessionRequest({
       requestId,
