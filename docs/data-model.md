@@ -572,6 +572,14 @@ source code, prompts, and tool output; encrypted-at-rest storage is a separate s
 
 Stores binary attachment blobs keyed by attachment ID.
 
+Generic file attachments retain the 50 MiB per-file upload limit. Browser and Expo
+selections validate every selected file before reading contents into JavaScript;
+Electron validates source metadata before copying into managed storage and bounds
+copy/read IO if the source grows. Rejection uses the existing localized file-size
+error. Expo's document provider may stage a selected file in its cache before the
+JavaScript preflight; this guard prevents the subsequent byte read, not provider
+staging. Native device picker acceptance remains a platform validation task.
+
 ### AttachmentMetadata
 
 | Field         | Type      | Description                    |

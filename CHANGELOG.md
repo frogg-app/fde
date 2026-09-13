@@ -2,9 +2,25 @@
 
 ## Unreleased
 
+- Fix Nix installation collisions from redundant self-links and inspect macOS
+  branded executables through their actual bundle metadata.
+
 - Preserve exact prior Linux/macOS desktop update payloads in selected development
   releases, with independent platform versions and strict continuity verification.
 - Record development release target defaults and rename-safe update requirements.
+
+## 0.6.21 — 2026-09-13
+
+- Synchronize internal dependency lockfile pins and regenerate the Nix dependency
+  hash for the attachment pre-read safeguards.
+
+## 0.6.20 — 2026-09-13
+
+- Reject oversized attachment selections before browser/Expo byte reads and Electron
+  managed-file copies or reads, retaining the existing localized 50MB error.
+  Bound native reads when files grow and remove incomplete managed copies.
+- Verify selection preflight and sparse-file rejection; native device picker
+  acceptance remains separate from automated coverage.
 
 ## 0.6.19 — 2026-09-13
 
