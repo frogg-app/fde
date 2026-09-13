@@ -20,6 +20,7 @@ function createConfig(brand) {
   }
   const artifactName = `${brand.artifactPrefix}-\${version}-\${os}-\${arch}.\${ext}`;
   const icons = path.resolve(__dirname, "../../.generated/branding/icons");
+  const windowsInstaller = path.resolve(__dirname, "../../.generated/branding/windows-installer");
   return {
     appId: brand.applicationId,
     productName,
@@ -49,7 +50,9 @@ function createConfig(brand) {
       target: ["dmg", "zip"],
       hardenedRuntime: true,
       notarize: false,
-      extendInfo: { NSMicrophoneUsageDescription: "Use your microphone for voice conversations." },
+      extendInfo: {
+        NSMicrophoneUsageDescription: "Use your microphone for voice conversations.",
+      },
     },
     linux: {
       category: "Development",
@@ -62,7 +65,19 @@ function createConfig(brand) {
       target: ["nsis", "zip"],
       ...(azureSignOptions ? { azureSignOptions } : {}),
     },
-    nsis: { oneClick: false, perMachine: false, allowToChangeInstallationDirectory: true },
+    // One-click per-user installer; brand:prepare generates the UI include and artwork.
+    // The include also migrates older per-machine installs (see windows-installer.nsh).
+    nsis: {
+      oneClick: true,
+      perMachine: false,
+      runAfterFinish: true,
+      deleteAppDataOnUninstall: false,
+      include: path.join(windowsInstaller, "installer.nsh"),
+      installerIcon: path.join(icons, "icon.ico"),
+      uninstallerIcon: path.join(icons, "icon.ico"),
+      shortcutName: productName,
+      uninstallDisplayName: productName,
+    },
   };
 }
 module.exports = createConfig(loadBrand());

@@ -32,6 +32,17 @@
       "foreground": "#fafafa"
     }
   },
+  "installer": {
+    "tagline": "Run and monitor coding agents from anywhere",
+    "colors": {
+      "background": "#0e1211",
+      "surface": "#1a201f",
+      "foreground": "#f4f7f6",
+      "mutedForeground": "#a3adab",
+      "success": "#3fcf8e",
+      "danger": "#f87171"
+    }
+  },
   "links": {
     "website": "https://frogg.app",
     "source": "https://github.com/frogg-app/fde",
