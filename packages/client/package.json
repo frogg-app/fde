@@ -1,6 +1,6 @@
 {
   "name": "@fde/client",
-  "version": "0.6.13",
+  "version": "0.6.14",
   "description": "Fde client SDK package",
   "files": [
     "dist",
@@ -39,8 +39,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@fde/protocol": "0.6.13",
-    "@fde/relay": "0.6.13",
+    "@fde/protocol": "0.6.14",
+    "@fde/relay": "0.6.14",
     "zod": "^4.4.3"
   },
   "devDependencies": {

@@ -5,6 +5,10 @@
 - Node.js (see `.tool-versions` for exact version)
 - npm workspaces (comes with Node)
 
+Local Cloudflare Worker state (`.wrangler/`) is ignored and must not be committed.
+Project configuration uses `fde.json`; upstream names belong only in attribution
+and licensing, never configuration, environment variables, or runtime paths.
+
 ## Running the dev server
 
 ```bash

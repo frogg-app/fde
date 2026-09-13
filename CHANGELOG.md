@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.6.14 — 2026-09-13
+
+- Remove committed relay runtime databases and ignore Wrangler state. Audit the
+  repository namespace so upstream names remain only in attribution and licensing.
+
 - Default daemon startup, port-only listen targets, service installation, Nix and
   SSH deployment to `0.0.0.0`, preserving explicitly configured addresses.
   Expand generated daemon configuration with editable defaults and provide
