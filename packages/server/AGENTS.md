@@ -2,9 +2,12 @@
 
 Follow the repository [AGENTS.md](../../AGENTS.md) and the
 [daemon developer role](../../.claude/agents/daemon-dev.md). Read
-[architecture](../../docs/architecture.md), [coding standards](../../docs/coding-standards.md),
-[testing](../../docs/testing.md), and [security](../../SECURITY.md) for the boundary
-being changed.
+[architecture](../../website/src/content/docs/docs/contributing/architecture.mdx),
+[coding standards](../../website/src/content/docs/docs/contributing/coding-standards.mdx),
+[testing](../../website/src/content/docs/docs/contributing/testing.mdx), and
+[security](../../SECURITY.md) for the boundary being changed. Daemon behavior, config and
+CLI changes update the matching page under `website/src/content/docs/docs/` in the same
+change (see [fde-docs](../../skills/fde-docs/SKILL.md)).
 
 The Node daemon is a separately installed service. The Electron desktop app never
 bundles, starts or stops it. Keep agent state and authorization authoritative on

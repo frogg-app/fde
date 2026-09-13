@@ -5,8 +5,9 @@ description: Build, benchmark, update, and publish FDE desktop, Android, and dae
 
 # FDE builds and releases
 
-Read `docs/release.md`, `docs/building.md`, and `docs/release-contract.md` in the
-working repository. Root `AGENTS.md` owns versioning and validation requirements.
+Read `website/src/content/docs/docs/contributing/release-process.mdx` and, for forks,
+`website/src/content/docs/docs/fork-and-rebrand/build-and-release.mdx` in the working
+repository. Root `AGENTS.md` owns versioning and validation requirements.
 Use the user's existing authorization for publication; this skill grants no new
 permission to publish, delete releases, modify other machines, or use signing keys.
 
@@ -35,7 +36,7 @@ Use `node scripts/release/benchmark-desktop.mjs --target linux-x64` (or `win-x64
 on Windows) for measured local builds. Do not run two builds in the same worktree:
 they share UI and desktop output directories. The report records dirty state;
 only a clean, identified release checkout is suitable for publishing artifacts.
-Read `docs/building.md` for what the timing includes and CI comparisons.
+The benchmark report states what the timing includes.
 
 When splitting builds across machines, assign each target an isolated checkout of
 the same commit, lockfile, brand input and version. Collect filenames, hashes,

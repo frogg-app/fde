@@ -75,11 +75,11 @@ FDE_SKIP_DEV_SERVER_BUILD=1 npm run dev:server
 
 ### Ports
 
-| Port | What                                                            |
-| ---- | --------------------------------------------------------------- |
-| 9999 | Packaged daemon launched by the desktop app, backed by `~/.fde` |
-| 6768 | Root-checkout dev daemon (`npm run dev:server`)                 |
-| 8081 | Expo for `npm run dev:app`                                      |
+| Port | What                                                                                |
+| ---- | ----------------------------------------------------------------------------------- |
+| 9999 | Installed (packaged) daemon, backed by `~/.fde`. The desktop app never launches one |
+| 6768 | Root-checkout dev daemon (`npm run dev:server`)                                     |
+| 8081 | Expo for `npm run dev:app`                                                          |
 
 Inside a FDE-managed worktree service, read the injected service environment
 (`FDE_SERVICE_DAEMON_PORT`, `FDE_PORT`) instead of hardcoding these.
@@ -144,7 +144,9 @@ npx vitest run <path> --bail=1 > /tmp/t.log 2>&1   # broad sweep, then read the 
 - `apps/` holds deliverables: `desktop-electron` (Electron app-only), `ui` (Expo client, `@fde/app`), `cli`.
 - `packages/` holds libraries only: `protocol`, `client`, `server`, `relay`, `highlight`, `plugin`.
 - `scripts/` splits into `dev/`, `release/`, `ci/`. New scripts go in one of those, not the root.
-- `docs/` is the source of truth for system knowledge. Read the relevant page before non-trivial
-  work; `docs/development.md` covers profiling harnesses and iOS specifics not repeated here.
+- Documentation lives in `website/src/content/docs/docs/` (published at https://frogg.app/docs/).
+  Read the relevant page before non-trivial work; `contributing/development-setup.mdx` covers
+  platform builds not repeated here. Changes users can see need a docs update in the same PR;
+  use the `fde-docs` skill.
 - Version source of truth is the root `package.json`; workspace versions are synced by
   `scripts/release/sync-workspace-versions.mjs`. Do not hand-edit a workspace version.

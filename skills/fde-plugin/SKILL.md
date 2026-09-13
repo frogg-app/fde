@@ -1,6 +1,6 @@
 ---
 name: fde-plugin
-description: Build and manage trusted local FDE plugins. Use when the user asks to create, edit, install, reload, enable, disable, remove, or troubleshoot a FDE plugin; add a native surface, sidebar item, or workspace panel; add Command Center items or slash commands; add composer pills or attachment sources; transform, render, or append agent timeline items; contribute a theme; use FDE from plugin code; or add plugin RPCs.
+description: Build and manage trusted local FDE plugins. Use when the user asks to create, edit, install, reload, enable, disable, remove, or troubleshoot an FDE plugin; add a native surface, sidebar item, or workspace panel; add Command Center items or slash commands; add composer pills or attachment sources; transform, render, or append agent timeline items; contribute a theme; use FDE from plugin code; or add plugin RPCs.
 ---
 
 # FDE plugins
@@ -11,14 +11,15 @@ Build or manage the requested plugin directly. Use the current public docs to ca
 
 ## Check current documentation
 
-Fetch [https://frogg.app/llms.txt](https://frogg.app/llms.txt) first. Select and fetch the current plugin Markdown pages from that index before changing a plugin:
+Fetch the current plugin pages before changing a plugin:
 
-- [Plugin quickstart](https://frogg.app/docs/plugins.md) ([browser page](https://frogg.app/docs/plugins))
-- [Plugin reference](https://frogg.app/docs/plugins/reference.md) ([browser page](https://frogg.app/docs/plugins/reference))
+- [Plugin guide](https://frogg.app/docs/plugins/)
+- [Plugin reference](https://frogg.app/docs/plugins/reference/)
+- [Plugin examples](https://frogg.app/docs/plugins/examples/)
 
 Use the deployed docs when they disagree with this skill. Do not send the user away to read them instead of completing the work.
 
-When working in the FDE repository, also read `docs/plugins.md` and the relevant example under `examples/plugins/`.
+When working in the FDE repository, read the same pages from `website/src/content/docs/docs/plugins/` and the relevant example under `examples/plugins/`.
 
 ## What a plugin can contribute
 
@@ -243,7 +244,7 @@ function PullRequestAction() {
 }
 ```
 
-The API covers workspaces, agents, providers, and daemon config. It omits connection lifecycle because FDE owns the connection. Consult the current [SDK reference](https://frogg.app/docs/sdk/reference.md) for method details.
+The API covers workspaces, agents, providers, and daemon config. It omits connection lifecycle because FDE owns the connection. Consult the [plugin reference](https://frogg.app/docs/plugins/reference/) for method details.
 
 ### Add daemon-side behavior
 
@@ -470,7 +471,7 @@ Plugins are installed per daemon and are trusted, unsandboxed code. Backend code
 
 ### Check the global switch before installing
 
-Identify the target daemon and inspect its root `pluginsEnabled` value in `config.json`. For the local daemon, `fde daemon status --json` reports its `home`; the file is `<home>/config.json`. Treat a missing field as `false`. Do not infer the global value from a plugin's `disabled` status, because an individual plugin can also be disabled.
+Identify the target daemon and inspect its root `pluginsEnabled` value in `config.json`. For the local daemon, `fde status --json` reports its `home`; the file is `<home>/config.json`. Treat a missing field as `false`. Do not infer the global value from a plugin's `disabled` status, because an individual plugin can also be disabled.
 
 If `pluginsEnabled` is already `true`, continue without asking the user to enable it.
 
