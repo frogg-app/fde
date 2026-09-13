@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Align workspace cards consistently with disclosure chevrons on the right, and make
+  subagent cards compact single-line rows with a small additional indent.
+
 - Add mobile Companion Call/Media audio routing, preserving Call as the default.
   Media uses Android media volume/routing and iOS non-voice-processing capture;
   native rebuild and physical-device routing qualification are required.
@@ -80,7 +83,7 @@
   for a standalone APK that can coexist with production. Preserve license and
   speech-model notices in standalone daemon bundles.
 
-## 0.6.9 - 2026-09-13
+## 0.6.10 - 2026-09-13
 
 - Add the FDE release skill, versioned JSON update discovery, explicit runtime and
   minimum-client compatibility, and a publication gate verifying exact payload
