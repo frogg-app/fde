@@ -1,3 +1,4 @@
+import { assertAttachmentFileSize, readBrowserFileBytes } from "@/attachments/file-size";
 import {
   getMimeTypeFromPath,
   isRasterImageFile,
@@ -29,6 +30,11 @@ export async function droppedItemsToPickedFiles(
   items: DroppedItem[],
   runtime: DroppedAttachmentsRuntime = defaultRuntime,
 ): Promise<PickedFile[]> {
+  for (const item of items) {
+    if (item.kind === "web-file" && !isRasterImageFile(item.file)) {
+      assertAttachmentFileSize(item.file.size, item.file.name);
+    }
+  }
   const files: PickedFile[] = [];
 
   for (const item of items) {
@@ -39,7 +45,7 @@ export async function droppedItemsToPickedFiles(
       files.push({
         fileName: item.file.name,
         mimeType: item.file.type || getMimeTypeFromPath(item.file.name),
-        bytes: new Uint8Array(await item.file.arrayBuffer()),
+        bytes: await readBrowserFileBytes(item.file),
       });
       continue;
     }

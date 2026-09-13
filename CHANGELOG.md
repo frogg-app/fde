@@ -6,6 +6,14 @@
   releases, with independent platform versions and strict continuity verification.
 - Record development release target defaults and rename-safe update requirements.
 
+## 0.6.20 — 2026-09-13
+
+- Reject oversized attachment selections before browser/Expo byte reads and Electron
+  managed-file copies or reads, retaining the existing localized 50MB error.
+  Bound native reads when files grow and remove incomplete managed copies.
+- Verify selection preflight and sparse-file rejection; native device picker
+  acceptance remains separate from automated coverage.
+
 ## 0.6.19 — 2026-09-13
 
 - Verify draft release assets through paginated release discovery, including on

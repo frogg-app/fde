@@ -1,6 +1,6 @@
 {
   "name": "@fde/protocol",
-  "version": "0.6.19",
+  "version": "0.6.20",
   "description": "Fde shared protocol schemas and wire types",
   "files": [
     "dist",

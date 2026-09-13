@@ -1,3 +1,4 @@
+import { AttachmentSizeError, assertAttachmentFileSize } from "@/attachments/file-size";
 import { getFileExtension } from "@/attachments/file-types";
 import { copyDesktopAttachmentFile } from "@/desktop/attachments/desktop-file-commands";
 import { readDesktopFileBase64 } from "@/desktop/attachments/desktop-preview-url";
@@ -18,11 +19,19 @@ function base64ToUint8Array(base64: string): Uint8Array {
 }
 
 export async function readDesktopFileBytes(path: string): Promise<Uint8Array> {
-  const { path: managedPath } = await copyDesktopAttachmentFile({
-    attachmentId: crypto.randomUUID(),
-    sourcePath: path,
-    extension: getFileExtension(path) || null,
-  });
-  const base64 = await readDesktopFileBase64(managedPath);
-  return base64ToUint8Array(base64);
+  const fileName = path.split(/[/\\]/).pop() || path;
+  try {
+    const { path: managedPath, byteSize } = await copyDesktopAttachmentFile({
+      attachmentId: crypto.randomUUID(),
+      sourcePath: path,
+      extension: getFileExtension(path) || null,
+    });
+    assertAttachmentFileSize(byteSize, fileName);
+    const base64 = await readDesktopFileBase64(managedPath);
+    return base64ToUint8Array(base64);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.includes("ATTACHMENT_TOO_LARGE:")) throw new AttachmentSizeError(fileName);
+    throw error;
+  }
 }

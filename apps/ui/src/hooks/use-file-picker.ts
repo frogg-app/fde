@@ -1,3 +1,4 @@
+import { readAttachmentSelection } from "@/attachments/file-size";
 import { useCallback, useRef } from "react";
 import * as DocumentPicker from "expo-document-picker";
 import { File } from "expo-file-system";
@@ -41,7 +42,7 @@ async function pickFilesWithDesktopDialog(): Promise<PickedFile[] | null> {
 }
 
 function pickFilesWithWebInput(): Promise<PickedFile[] | null> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const input = document.createElement("input");
     input.type = "file";
     input.multiple = true;
@@ -54,16 +55,26 @@ function pickFilesWithWebInput(): Promise<PickedFile[] | null> {
         return;
       }
 
-      const result: PickedFile[] = [];
-      for (const file of files) {
-        const bytes = new Uint8Array(await file.arrayBuffer());
-        result.push({
-          fileName: file.name,
-          mimeType: file.type || getMimeTypeFromPath(file.name),
-          bytes,
-        });
+      try {
+        const contents = await readAttachmentSelection(
+          files.map((file) => ({
+            name: file.name,
+            size: file.size,
+            readBytes: async () => new Uint8Array(await file.arrayBuffer()),
+          })),
+        );
+        resolve(
+          files.map((file, index) => ({
+            fileName: file.name,
+            mimeType: file.type || getMimeTypeFromPath(file.name),
+            bytes: contents[index]!,
+          })),
+        );
+      } catch (error) {
+        reject(error);
+      } finally {
+        input.remove();
       }
-      resolve(result);
     });
 
     input.addEventListener("cancel", () => {
@@ -90,13 +101,19 @@ async function pickFilesWithDocumentPicker(): Promise<PickedFile[] | null> {
     return null;
   }
 
-  return await Promise.all(
-    result.assets.map(async (asset) => ({
-      fileName: asset.name,
-      mimeType: asset.mimeType ?? getMimeTypeFromPath(asset.name),
-      bytes: await new File(asset.uri).bytes(),
+  const files = result.assets.map((asset) => ({ asset, file: new File(asset.uri) }));
+  const contents = await readAttachmentSelection(
+    files.map(({ asset, file }) => ({
+      name: asset.name,
+      size: file.size,
+      readBytes: () => file.bytes(),
     })),
   );
+  return files.map(({ asset }, index) => ({
+    fileName: asset.name,
+    mimeType: asset.mimeType ?? getMimeTypeFromPath(asset.name),
+    bytes: contents[index]!,
+  }));
 }
 
 export function useFilePicker() {
