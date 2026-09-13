@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.6.17 — 2026-09-13
+
+- Preserve LF shell templates on Windows checkouts and allow individual Windows,
+  Linux daemon, or Android artifact builds when retrying a platform-specific fix.
+
 ## 0.6.16 — 2026-09-13
 
 - Limit main CI artifacts to Windows x64 desktop, Linux x64 daemon, and bundled

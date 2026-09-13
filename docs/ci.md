@@ -74,3 +74,16 @@ checks prove gateway restart/stop continuity, while real-provider background wor
 Windows/macOS lifecycle and complete installed-update acceptance remain open.
 Android signing and physical-device acceptance are distinct from desktop success;
 see [Android](android.md). Do not substitute artifact existence for those checks.
+
+## Targeted build retries
+
+For a transient failure on an unchanged commit, rerun only that failed job with
+`gh run rerun RUN_ID --job JOB_ID`. For a source fix, the old job still points to
+its original commit: dispatch `build-selected.yml` on the fixed revision with
+`-f target=windows`, `-f target=daemon`, or `-f target=android`. The default `all`
+builds all three artifacts. Keep successful artifacts tied to their source SHA.
+
+For a targeted repair already checked locally, a `[skip ci]` commit avoids starting
+the entire main pipeline; manually dispatch the required target after pushing.
+This does not replace the full CI gate for broader changes. Let unrelated builds
+finish instead of cancelling them to retry a single platform.

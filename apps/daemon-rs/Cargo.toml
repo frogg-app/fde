@@ -1,6 +1,6 @@
 [package]
 name = "fde-daemon"
-version = "0.6.16"
+version = "0.6.17"
 description = "FDE daemon (Rust) — protocol-compatible front half of the FDE daemon"
 edition = "2021"
 license = "Apache-2.0"

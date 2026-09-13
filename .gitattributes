@@ -1,0 +1,3 @@
+# Shell scripts execute on POSIX hosts even when packaged on Windows.
+*.sh text eol=lf
+*.sh.in text eol=lf

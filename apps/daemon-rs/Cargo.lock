@@ -241,7 +241,7 @@ dependencies = [
 
 [[package]]
 name = "fde-daemon"
-version = "0.6.16"
+version = "0.6.17"
 dependencies = [
  "anyhow",
  "axum",

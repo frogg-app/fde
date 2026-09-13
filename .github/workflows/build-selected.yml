@@ -2,7 +2,17 @@ name: Build selected clients and daemon
 
 on:
   workflow_dispatch:
+    inputs:
+      target:
+        description: Artifact to build
+        type: choice
+        default: all
+        options: [all, windows, daemon, android]
   workflow_call:
+    inputs:
+      target:
+        type: string
+        default: all
 
 permissions:
   contents: read
@@ -18,6 +28,7 @@ env:
 
 jobs:
   windows:
+    if: inputs.target == 'all' || inputs.target == 'windows'
     name: Windows x64 client
     runs-on: windows-latest
     timeout-minutes: 60
@@ -52,6 +63,7 @@ jobs:
           retention-days: 14
 
   daemon:
+    if: inputs.target == 'all' || inputs.target == 'daemon'
     name: Linux x64 daemon
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -81,6 +93,7 @@ jobs:
           retention-days: 14
 
   android:
+    if: inputs.target == 'all' || inputs.target == 'android'
     name: Android arm64 client (debug-signed)
     runs-on: ubuntu-latest
     timeout-minutes: 90
