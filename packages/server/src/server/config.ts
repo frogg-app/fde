@@ -498,7 +498,7 @@ function resolveTrustedProxiesConfig(
 // - host:port (TCP)
 // - /path/to/socket (Unix socket)
 // - unix:///path/to/socket (Unix socket)
-// Default is TCP at 127.0.0.1:9999
+// Default is TCP at 0.0.0.0:9999
 function resolveListenAddress(
   env: NodeJS.ProcessEnv,
   cli: CliConfigOverrides | undefined,
@@ -508,7 +508,7 @@ function resolveListenAddress(
     cli?.listen ??
     env.FDE_LISTEN ??
     persisted.daemon?.listen ??
-    `127.0.0.1:${env.PORT ?? DEFAULT_PORT}`
+    `0.0.0.0:${env.PORT ?? DEFAULT_PORT}`
   );
 }
 

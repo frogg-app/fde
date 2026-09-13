@@ -26,11 +26,11 @@ export function parseListenString(listen: string): ListenTarget {
   if (listen.startsWith("/") || listen.startsWith("~")) {
     return { type: "socket", path: listen };
   }
-  // 5. Pure numeric — TCP port on 127.0.0.1
+  // 5. Pure numeric — TCP port on 0.0.0.0
   const trimmed = listen.trim();
   if (/^\d+$/.test(trimmed)) {
     const port = parseInt(trimmed, 10);
-    return { type: "tcp", host: "127.0.0.1", port };
+    return { type: "tcp", host: "0.0.0.0", port };
   }
   // 6. host:port — TCP
   if (listen.includes(":")) {
@@ -42,7 +42,7 @@ export function parseListenString(listen: string): ListenTarget {
       throw new Error(`Invalid port in listen string: ${listen}`);
     }
     const cleanHost = host.startsWith("[") && host.endsWith("]") ? host.slice(1, -1) : host;
-    return { type: "tcp", host: cleanHost || "127.0.0.1", port: parsedPort };
+    return { type: "tcp", host: cleanHost || "0.0.0.0", port: parsedPort };
   }
   throw new Error(`Invalid listen string: ${listen}`);
 }

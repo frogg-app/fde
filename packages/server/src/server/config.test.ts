@@ -10,6 +10,27 @@ import { loadPersistedConfig } from "./persisted-config.js";
 const roots: string[] = [];
 
 describe("server config", () => {
+  test.each([
+    [{}, {}, {}, "0.0.0.0:9999"],
+    [{}, { PORT: "8123" }, {}, "0.0.0.0:8123"],
+    [{ daemon: { listen: "127.0.0.1:7001" } }, {}, {}, "127.0.0.1:7001"],
+    [{ daemon: { listen: "127.0.0.1:7001" } }, { FDE_LISTEN: "[::1]:7002" }, {}, "[::1]:7002"],
+    [
+      { daemon: { listen: "127.0.0.1:7001" } },
+      { FDE_LISTEN: "[::1]:7002" },
+      { listen: "/tmp/fde.sock" },
+      "/tmp/fde.sock",
+    ],
+  ])(
+    "resolves listen precedence for persisted %j env %j cli %j",
+    async (persisted, env, cli, expected) => {
+      const home = await mkdtemp(path.join(os.tmpdir(), "fde-listen-config-"));
+      roots.push(home);
+      await writeFile(path.join(home, "config.json"), JSON.stringify(persisted));
+      expect(loadConfig(home, { env, cli }).listen).toBe(expected);
+    },
+  );
+
   afterEach(async () => {
     await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
   });

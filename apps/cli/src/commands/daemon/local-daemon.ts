@@ -165,7 +165,7 @@ function buildChildEnv(options: DaemonStartOptions): NodeJS.ProcessEnv {
   if (options.listen) {
     childEnv.FDE_LISTEN = options.listen;
   } else if (options.port) {
-    childEnv.FDE_LISTEN = `127.0.0.1:${options.port}`;
+    childEnv.FDE_LISTEN = `0.0.0.0:${options.port}`;
   }
   if (options.hostnames) {
     childEnv.FDE_HOSTNAMES = options.hostnames;

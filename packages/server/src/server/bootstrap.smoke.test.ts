@@ -858,7 +858,7 @@ export default function contribute(plugin: unknown) {
   test("parses whitespace-padded numeric port strings", () => {
     expect(parseListenString(" 9999 ")).toEqual({
       type: "tcp",
-      host: "127.0.0.1",
+      host: "0.0.0.0",
       port: 9999,
     });
   });

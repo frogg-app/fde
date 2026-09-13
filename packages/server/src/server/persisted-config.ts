@@ -9,6 +9,7 @@ import {
   ProviderOverridesSchema,
 } from "./agent/provider-launch-config.js";
 import type { AgentProviderRuntimeSettingsMap } from "./agent/provider-launch-config.js";
+import { DEFAULT_GIT_PROCESS_POLICY } from "../utils/git-process-scheduler.js";
 import { ensurePrivateFile, writePrivateFileAtomicSync } from "./private-files.js";
 import {
   AgentProfileSchema,
@@ -392,7 +393,19 @@ const CONFIG_FILENAME = "config.json";
 const DEFAULT_PERSISTED_CONFIG = PersistedConfigSchema.parse({
   version: 1,
   daemon: {
-    listen: `127.0.0.1:${brand.daemonPort}`,
+    listen: `0.0.0.0:${brand.daemonPort}`,
+    mcp: { enabled: true, injectIntoAgents: false },
+    browserTools: { enabled: false },
+    git: DEFAULT_GIT_PROCESS_POLICY,
+    autoArchiveAfterMerge: false,
+    enableTerminalAgentHooks: false,
+    appendSystemPrompt: "",
+    autoUpdate: {
+      enabled: false,
+      channel: "stable",
+      checkIntervalHours: 24,
+      quietHours: null,
+    },
     cors: {
       allowedOrigins: brand.services.allowedOrigins,
     },
@@ -403,6 +416,9 @@ const DEFAULT_PERSISTED_CONFIG = PersistedConfigSchema.parse({
   app: {
     pairingBaseUrl: brand.services.pairingUrl ?? "",
   },
+  pluginsEnabled: false,
+  plugins: {},
+  log: { level: "info", format: "json" },
 }) as PersistedConfig;
 
 interface LoggerLike {
@@ -533,4 +549,17 @@ export function savePersistedConfig(
       cause: err,
     });
   }
+}
+
+/** Explicit formatting keeps ordinary reads free of writes and preserves legacy values. */
+export function formatPersistedConfig(fdeHome: string): string {
+  const configPath = getConfigPath(fdeHome);
+  loadPersistedConfig(fdeHome);
+  const raw = readFileSync(configPath, "utf-8");
+  const parsed: unknown = JSON.parse(raw);
+  const result = PersistedConfigSchema.safeParse(stripRemovedConfigFields(parsed));
+  if (!result.success) throw new Error(`[Config] Invalid config in ${configPath}`);
+  const formatted = JSON.stringify(parsed, null, 2) + "\n";
+  if (raw !== formatted) writePrivateFileAtomicSync(configPath, formatted);
+  return configPath;
 }

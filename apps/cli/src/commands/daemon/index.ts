@@ -1,5 +1,6 @@
 import { brand } from "@fde/branding";
 import { Command, Option } from "commander";
+import { runConfigFormatCommand } from "./config-format.js";
 import { startCommand } from "./start.js";
 import { runStatusCommand } from "./status.js";
 import { runExecutionStatusCommand } from "./execution-status.js";
@@ -30,6 +31,13 @@ function resolveHostnamesOption(hostnames: unknown, allowedHosts: unknown): stri
  */
 export function addDaemonLifecycleCommands(program: Command): Command {
   program.addCommand(startCommand());
+  addJsonOption(
+    program
+      .command("config-format")
+      .description("Prettify config.json, preserving existing settings"),
+  )
+    .option("--home <path>", `${brand.name} home directory (default: ~/${brand.homeDir})`)
+    .action(withOutput(runConfigFormatCommand));
   // Renamed from `self-update`: there is nothing else it could update.
   program.addCommand(selfUpdateCommand().name("update"));
 
@@ -95,7 +103,7 @@ export function addDaemonLifecycleCommands(program: Command): Command {
   )
     .option(
       "--listen <listen>",
-      `Listen target for the service (default: 127.0.0.1:${brand.daemonPort})`,
+      `Listen target for the service (default: 0.0.0.0:${brand.daemonPort})`,
     )
     .option("--home <path>", `${brand.name} home directory (default: ~/${brand.homeDir})`)
     .action(withOutput(runInstallServiceCommand));

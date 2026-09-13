@@ -13,7 +13,7 @@ import path from "node:path";
 export const SERVICE_NAME = brand.serviceName;
 export const LAUNCHD_LABEL = brand.launchdLabel;
 export const WINDOWS_TASK_NAME = `${brand.name} Daemon`;
-export const DEFAULT_SERVICE_LISTEN = `127.0.0.1:${brand.daemonPort}`;
+export const DEFAULT_SERVICE_LISTEN = `0.0.0.0:${brand.daemonPort}`;
 
 export type ServicePlatform = "linux" | "darwin" | "win32";
 
@@ -30,6 +30,8 @@ export interface ServicePlanInput {
   /** How to start the daemon in the foreground. */
   command: ServiceCommand;
   listen: string;
+  /** Only explicit launch overrides should mask future config.json edits. */
+  persistListen?: boolean;
   /** Written into the unit as `FDE_HOME` when the caller pinned one. */
   fdeHome?: string;
   /** Prepended to the service's PATH so agent CLIs stay visible to the daemon. */
@@ -116,8 +118,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 ExecStart=${exec}
-${stop}Environment=FDE_LISTEN=${input.listen}
-Environment=FDE_WEB_UI_ENABLED=true
+${stop}${input.persistListen === false ? "" : `Environment=FDE_LISTEN=${input.listen}\n`}Environment=FDE_WEB_UI_ENABLED=true
 Environment=${unitQuote(`PATH=${servicePath(input)}`)}
 ${home}${executionEnv}Restart=on-failure
 RestartSec=5
@@ -149,7 +150,7 @@ ${programArguments}
   </array>
   <key>EnvironmentVariables</key>
   <dict>
-${plistEntry("FDE_LISTEN", input.listen)}${plistEntry(
+${input.persistListen === false ? "" : plistEntry("FDE_LISTEN", input.listen)}${plistEntry(
     "FDE_WEB_UI_ENABLED",
     "true",
   )}${plistEntry("PATH", servicePath(input))}${

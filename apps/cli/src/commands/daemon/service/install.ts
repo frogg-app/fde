@@ -1,5 +1,6 @@
 import { brandEnv } from "@fde/branding/identity";
 import { brand } from "@fde/branding";
+import { loadConfig, resolveFdeHome } from "@fde/server";
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
@@ -70,25 +71,39 @@ export function resolveCliCommand(env: NodeJS.ProcessEnv = process.env): Service
   return { program: process.execPath, args: [] };
 }
 
-function buildPlanInput(options: ServiceActionOptions): ServicePlanInput {
+function buildPlanInput(
+  options: ServiceActionOptions,
+  action: "install" | "uninstall",
+): ServicePlanInput {
   const platform = options.platform ?? (process.platform as ServicePlatform);
   const env = options.env ?? process.env;
-  const listen = options.listen?.trim() || DEFAULT_SERVICE_LISTEN;
+  const homeDir = options.homeDir ?? os.homedir();
+  const configuredHome =
+    options.home ?? brandEnv(brand, env, "HOME") ?? path.join(homeDir, brand.homeDir);
+  const fdeHome = resolveFdeHome({ ...env, [`${brand.envPrefix}_HOME`]: configuredHome });
+  const explicitListen = options.listen?.trim() || env.FDE_LISTEN?.trim() || undefined;
+  const configControlsListen = action === "install" && explicitListen === undefined;
+  const configuredListen = configControlsListen
+    ? loadConfig(fdeHome, { env: { ...env, FDE_LISTEN: undefined } }).listen
+    : DEFAULT_SERVICE_LISTEN;
+  const listen = explicitListen ?? configuredListen;
+  const persistListen = explicitListen !== undefined;
   const cli = resolveCliCommand(env);
   const args = [...cli.args, "daemon", "start", "--foreground"];
   // Windows tasks carry no environment block, so the settings ride on argv.
   if (platform === "win32") {
-    args.push("--listen", listen);
-    if (options.home) args.push("--home", options.home);
+    if (persistListen) args.push("--listen", listen);
+    args.push("--home", fdeHome);
   }
 
   return {
     platform,
-    homeDir: options.homeDir ?? os.homedir(),
+    homeDir,
     env,
     command: { program: cli.program, args },
     listen,
-    ...(options.home ? { fdeHome: options.home } : {}),
+    persistListen,
+    fdeHome,
     pathPrepend: path.dirname(cli.program),
   };
 }
@@ -107,7 +122,7 @@ function describeCommand(plan: ServicePlan, input: ServicePlanInput): string {
 }
 
 export function installLoginService(options: ServiceActionOptions = {}): ServiceActionResult {
-  const input = buildPlanInput(options);
+  const input = buildPlanInput(options, "install");
   const plan = resolveServicePlan(input);
   const warnings: string[] = [];
 
@@ -139,7 +154,7 @@ export function installLoginService(options: ServiceActionOptions = {}): Service
 }
 
 export function uninstallLoginService(options: ServiceActionOptions = {}): ServiceActionResult {
-  const input = buildPlanInput(options);
+  const input = buildPlanInput(options, "uninstall");
   const plan = resolveServicePlan(input);
   const existed = plan.file ? existsSync(plan.file.path) : true;
 

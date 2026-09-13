@@ -6,6 +6,7 @@ export { getOrCreateServerId } from "./server-id.js";
 export { createRootLogger, type LogLevel, type LogFormat } from "./logger.js";
 export {
   loadPersistedConfig,
+  formatPersistedConfig,
   savePersistedConfig,
   type PersistedConfig,
 } from "./persisted-config.js";

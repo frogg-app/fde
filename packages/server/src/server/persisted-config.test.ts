@@ -1,10 +1,11 @@
-import { chmodSync, mkdtempSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { readFileSync, chmodSync, mkdtempSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, test } from "vitest";
 
 import {
   loadPersistedConfig,
+  formatPersistedConfig,
   PersistedConfigSchema,
   savePersistedConfig,
 } from "./persisted-config.js";
@@ -675,6 +676,61 @@ describe("PersistedConfigSchema voice mode config", () => {
 });
 
 describe("loadPersistedConfig", () => {
+  test("writes readable editable defaults for a new home", () => {
+    const home = createTempHome();
+    try {
+      const config = loadPersistedConfig(home);
+      expect(config.daemon).toMatchObject({
+        listen: "0.0.0.0:9999",
+        mcp: { enabled: true, injectIntoAgents: false },
+        browserTools: { enabled: false },
+        autoArchiveAfterMerge: false,
+        enableTerminalAgentHooks: false,
+        autoUpdate: { enabled: false, channel: "stable", checkIntervalHours: 24, quietHours: null },
+      });
+      expect(config.pluginsEnabled).toBe(false);
+      expect(config.log).toEqual({ level: "info", format: "json" });
+      expect(readFileSync(path.join(home, "config.json"), "utf8")).toBe(
+        JSON.stringify(config, null, 2) + "\n",
+      );
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
+  test("reads without rewriting, and explicitly formats original values including legacy fields", () => {
+    const home = createTempHome();
+    const configPath = path.join(home, "config.json");
+    const original = {
+      version: 1,
+      daemon: { listen: "127.0.0.1:8123", allowedHosts: ["localhost"] },
+      providers: { openai: { voice: { apiKey: "legacy" } } },
+    };
+    try {
+      const compact = JSON.stringify(original);
+      writeFileSync(configPath, compact);
+      loadPersistedConfig(home);
+      expect(readFileSync(configPath, "utf8")).toBe(compact);
+      expect(formatPersistedConfig(home)).toBe(configPath);
+      expect(readFileSync(configPath, "utf8")).toBe(JSON.stringify(original, null, 2) + "\n");
+      expect(loadPersistedConfig(home).daemon?.listen).toBe("127.0.0.1:8123");
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
+  test("does not modify invalid config when formatting", () => {
+    const home = createTempHome();
+    const configPath = path.join(home, "config.json");
+    try {
+      writeFileSync(configPath, '{"daemon":{"listen":false}}');
+      expect(() => formatPersistedConfig(home)).toThrow("Invalid config");
+      expect(readFileSync(configPath, "utf8")).toBe('{"daemon":{"listen":false}}');
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
   test("materializes relay disabled for a new Fde home", () => {
     const home = createTempHome();
     try {
