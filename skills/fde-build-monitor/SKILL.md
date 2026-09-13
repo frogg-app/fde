@@ -105,7 +105,8 @@ source SHA, dependency tree, output directories, ports and dev state. Never run
 Android, web export, Electron or daemon packaging concurrently in one checkout:
 they overwrite shared generated output. Record ownership before launching work.
 
-Use current wrappers, consulting their help and `docs/building.md` first:
+Use current wrappers, consulting their help and
+`website/src/content/docs/docs/contributing/development-setup.mdx` first:
 
 - Windows: `npm run build:desktop -- --target win-x64` on a capable Windows builder.
 - Linux daemon: `npm run build:server`, `npm run build:daemon-web-ui`, then

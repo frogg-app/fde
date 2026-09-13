@@ -1,13 +1,15 @@
 #!/usr/bin/env node
 // Builds the FDE Android APK from apps/ui and copies it to <out-dir> under the
-// release asset name documented in docs/android.md and docs/ci.md:
+// release asset name documented in
+// website/src/content/docs/docs/contributing/release-process.mdx:
 //
 //   FDE-<version>-android-<abi>.apk            signed with the release keystore
 //   FDE-<version>-android-<abi>-unsigned.apk   debug-signed (no keystore configured)
 //
 // <abi> is `arm64-v8a` (default), one of the other React Native ABIs, or
 // `universal` (all four in one APK). The release keystore comes from the
-// FDE_ANDROID_KEYSTORE* environment variables (see docs/android.md); when
+// FDE_ANDROID_KEYSTORE* environment variables (see the Android signing section of
+// release-process.mdx); when
 // FDE_ANDROID_KEYSTORE is unset the APK is debug-signed and named accordingly.
 //
 // Usage: node scripts/release/build-android-apk.mjs [--abi arm64-v8a|universal|...]

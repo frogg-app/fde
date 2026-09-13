@@ -98,8 +98,7 @@ export class CompanionOrchestrator {
      * Recording the generated reply instead would overshoot the other way,
      * leaving it certain it said sentences that never reached a speaker. This
      * is the same reconciliation OpenAI's `conversation.item.truncate`
-     * performs, arriving from the opposite direction; see
-     * docs/companion-voice-design.md.
+     * performs, arriving from the opposite direction.
      */
     heardSoFar?: () => string,
     signal?: AbortSignal,

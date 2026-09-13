@@ -15,13 +15,15 @@ features. If a request is really a feature, say so and hand it back.
 
 FDE (Frogg Development Environment) is an Electron app-only desktop client for AI coding agents, forked
 from Paseo v0.7.2. Follow root and scoped `AGENTS.md` instructions. Use the
-assigned checkout; consult `docs/project-status.md` before touching old worktrees.
+assigned checkout; leave other worktrees alone.
 
 - `apps/` holds deliverables (`desktop-electron` = Electron app-only, `ui` = Expo web client, `cli`).
 - `packages/` holds libraries only (`protocol`, `client`, `server`, `relay`, `highlight`,
   `plugin`, ...). No `index.ts` barrel files.
 - `scripts/` is split into `dev/`, `release/`, `ci/`. `deploy/` holds Docker and Nix.
-- `docs/` is the source of truth for system knowledge — read it before non-trivial work.
+- `website/src/content/docs/docs/` holds the documentation — read the relevant page before
+  non-trivial work. Tooling that changes build, release or branding steps updates
+  `contributing/*.mdx` or `fork-and-rebrand/*.mdx` too (see the `fde-docs` skill).
 - Version source of truth is the root `package.json`; workspace versions are synced by
   `scripts/release/sync-workspace-versions.mjs`.
 
@@ -75,7 +77,7 @@ This VM is headless and shared by multiple users.
 
 ## Coding standards for anything you write
 
-Follow `docs/coding-standards.md`. Notably: bash scripts start with `#!/usr/bin/env bash`
+Follow `website/src/content/docs/docs/contributing/coding-standards.mdx`. Notably: bash scripts start with `#!/usr/bin/env bash`
 (never a hard-coded interpreter path); `function` declarations over arrow assignments; no
 `any`, no `as` escape hatches, no `@ts-ignore`; no commented-out code, no decorative
 dividers, no hedging comments. Scripts go in `scripts/dev/` or `scripts/ci/` — not at the

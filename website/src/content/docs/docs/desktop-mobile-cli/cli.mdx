@@ -1,0 +1,189 @@
+---
+title: CLI reference
+description: The fde command-line interface — daemon lifecycle, pairing, agents, schedules, workspaces, terminals, providers and plugins.
+sidebar:
+  order: 4
+---
+
+The `fde` CLI manages a local daemon and controls any daemon you can reach. It is
+installed with the daemon (`install.sh`, Docker image, Nix package). Custom brands
+install it under their own name, for example `acme`.
+
+Run `fde <command> --help` for the authoritative flag list of your version.
+
+## Global options
+
+| Option                   | Meaning |
+| ------------------------ | ------- |
+| `-o, --format <format>`  | `table` (default), `json` or `yaml` |
+| `--json`                 | Same as `--format json` |
+| `-q, --quiet`            | IDs only |
+| `--no-headers`           | Omit table headers |
+| `--no-color`             | No colour |
+| `-v, --version`          | Print the CLI version |
+
+## Choosing a daemon
+
+Commands that talk to a daemon accept `--host <host>`:
+
+```sh
+fde agent ls --host 192.168.1.20:9999
+fde agent ls --host tcp://build-box:9999
+fde agent ls --host ssh://dev@build-box     # SSH to the host, then its local daemon
+```
+
+Without `--host`, the CLI uses `FDE_HOST`, then the local daemon's socket or pipe, then the
+configured listen address, then `localhost:9999`. Set `FDE_PASSWORD` if the daemon has a
+password.
+
+## Daemon lifecycle
+
+| Command                 | What it does |
+| ----------------------- | ------------ |
+| `fde onboard`           | First-time setup: start the daemon and print pairing instructions |
+| `fde start`             | Start the local daemon in the background (`--foreground` to stay attached) |
+| `fde stop`              | Stop it (`--force`, `--all` also stops independent execution) |
+| `fde restart`           | Stop and start with new flags |
+| `fde status`            | Home, listen address, PID, log path, versions, LAN trust, detected providers |
+| `fde reload`            | Reload `config.json` without a restart |
+| `fde update`            | Update a versioned install from releases, with rollback |
+| `fde install-service`   | Start the daemon at login (systemd user unit or launchd agent) |
+| `fde uninstall-service` | Remove that service |
+| `fde config-format`     | Reformat `config.json` |
+| `fde execution-status`  | Independent agent execution status |
+
+Common `start`/`restart` flags:
+
+| Flag                          | Meaning |
+| ----------------------------- | ------- |
+| `--listen <addr>` / `--port <n>` | Listen target (not both) |
+| `--home <dir>`                | State directory |
+| `--web-ui` / `--no-web-ui`    | Serve the web app |
+| `--relay` / `--no-relay`      | Connect to the configured relay |
+| `--no-mcp`, `--no-inject-mcp` | Disable the MCP endpoint, or its injection into agents |
+| `--hostnames <hosts>`         | Allowed `Host` headers |
+
+`fde update` flags: `--check`, `--to <version>`, `--channel <stable|beta>`, `--no-wait`,
+`--install-dir <dir>`, `--verify-timeout <ms>`, `--json`. Exit code `2` means the update
+failed and was rolled back.
+
+`fde daemon <command>` still works as a hidden alias for these.
+
+## `fde auth`
+
+| Command                        | What it does |
+| ------------------------------ | ------------ |
+| `fde auth pair`                | Print a fresh pairing link, QR code and app deep link (`--relay` to include relay details) |
+| `fde auth claim-status`        | Show whether a device has claimed this daemon |
+| `fde auth reset-claim`         | Forget **all** paired devices |
+| `fde auth set-password`        | Prompt for a password and store its hash in `config.json` |
+| `fde auth trust-lan <on\|off>` | Whether private-network clients connect without pairing or a password |
+
+See [pairing and access](/docs/getting-started/connect-and-pair/).
+
+## `fde agent`
+
+| Command                             | What it does |
+| ----------------------------------- | ------------ |
+| `fde agent ls`                      | List agents (`-a` include archived, `-g` all directories, `--label k=v`) |
+| `fde agent run <prompt>`            | Create and start an agent |
+| `fde agent send <id> [prompt]`      | Send a message (`--prompt-file`, `--image`, `--no-wait`) |
+| `fde agent attach <id>`             | Stream a running agent's output |
+| `fde agent logs <id>`               | Timeline (`-f`, `--tail <n>`, `--filter tools\|text\|errors\|permissions`, `--since`) |
+| `fde agent wait <id>`               | Wait until idle (`--timeout`) |
+| `fde agent inspect <id>`            | Details |
+| `fde agent mode <id> [mode]`        | Change mode (`--list`) |
+| `fde agent stop [id]`               | Interrupt (`--all`, `--cwd`) |
+| `fde agent archive <id>`            | Soft delete |
+| `fde agent delete [id]`             | Hard delete |
+| `fde agent reload <id>`             | Restart the provider process |
+| `fde agent detach <id>`             | Make a subagent independent |
+| `fde agent update <id>`             | Rename, change thinking level or labels |
+| `fde agent heartbeat create\|update\|delete` | Recurring prompts to the calling agent (run inside an agent) |
+
+`fde agent run` flags:
+
+| Flag                                 | Meaning |
+| ------------------------------------ | ------- |
+| `--provider <p>` or `<p>/<model>`    | `claude`, `codex/gpt-5.5`, a custom provider id |
+| `--model`, `--mode`, `--thinking`    | Model, permission mode, thinking option |
+| `--cwd <path>` / `--workspace <id>`  | Where to run |
+| `--new-workspace <local\|worktree>`  | Create a workspace first |
+| `--worktree-mode <branch-off\|checkout-branch\|checkout-pr>`, `--new-branch`, `--base`, `--branch`, `--pr-number`, `--forge`, `--worktree-slug` | Worktree options |
+| `-d, --background`                   | Return immediately |
+| `--title`, `--label k=v`, `--env k=v`, `--image <path>` | Metadata, env, attachments |
+| `--wait-timeout <dur>`               | Give up waiting after `30s`, `5m`, `1h` |
+| `--output-schema <file\|json>`       | Ask for JSON output matching a schema |
+
+Examples:
+
+```sh
+fde agent run --provider claude --mode plan "Explain how auth works in this repo"
+fde agent run -d --new-workspace worktree --new-branch fix/login \
+  --provider codex "Fix the login redirect loop and add a test"
+fde agent logs 8d32b1e --follow --filter permissions
+fde permissions allow 8d32b1e --all
+```
+
+## `fde permissions`
+
+Alias `fde permit`.
+
+| Command                                   | What it does |
+| ----------------------------------------- | ------------ |
+| `fde permissions ls`                      | Pending requests across agents |
+| `fde permissions allow <agent> [req_id]`  | Allow one, or `--all`. `--input <json>` edits the tool input |
+| `fde permissions deny <agent> [req_id]`   | Deny one, or `--all`. `--message`, `--interrupt` |
+
+## `fde schedule`
+
+| Command                         | What it does |
+| ------------------------------- | ------------ |
+| `fde schedule create <prompt>`  | `--every 5m` or `--cron "0 9 * * 1-5"`, `--timezone` (default UTC), `--name`, `--provider`, `--mode`, `--thinking`, `--cwd`, `--run-now`, `--max-runs`, `--expires-in` |
+| `fde schedule ls`, `inspect <id>`, `logs <id>` | Inspect |
+| `fde schedule pause <id>`, `resume <id>`, `run-once <id>`, `delete <id>` | Control |
+| `fde schedule update <id>`      | Change cadence, prompt, provider, limits |
+
+See [schedules](/docs/using-fde/schedules/).
+
+## `fde project` and `fde workspace`
+
+| Command                                   | What it does |
+| ----------------------------------------- | ------------ |
+| `fde project create [path]`               | Register a directory |
+| `fde project ls`, `rename <id> [name]`, `delete <id>` | Manage. `delete` also removes its workspaces |
+| `fde workspace create --isolation <local\|worktree>` | `--path`, `--project`, `--title`, worktree flags as for `agent run` |
+| `fde workspace ls`, `rename <id> [title]`, `archive <id>` | Manage |
+
+## `fde terminal` and `fde script`
+
+| Command                                     | What it does |
+| ------------------------------------------- | ------------ |
+| `fde terminal ls`, `create`, `kill <id>`    | Manage workspace terminals |
+| `fde terminal capture <id>`                 | Print output (`-S` scrollback, `--start`, `--end`, `--ansi`) |
+| `fde terminal send-keys <id> <keys...>`     | Type into a terminal (`-l` literal) |
+| `fde script ls`, `start <name>`, `stop <name>` | Run [`fde.json` scripts](/docs/reference/project-config/) (`--cwd`, `--workspace`) |
+
+## `fde provider`
+
+| Command                            | What it does |
+| ---------------------------------- | ------------ |
+| `fde provider ls`                  | Providers, status, default mode |
+| `fde provider models <provider>`   | Models (`--thinking` for thinking options) |
+| `fde provider diagnostic <provider>` | Binary resolution, version, auth and environment |
+
+## `fde plugin`
+
+`init <dir>`, `ls`, `logs <id>`, `install <source>` (alias `add`), `status [id]`,
+`update [id]`, `reload <id>`, `enable <id>`, `disable <id>`, `remove <id>`. See
+[plugins](/docs/plugins/).
+
+## Opening the desktop app
+
+`fde <directory>` (for example `fde .`) opens that directory as a project in the
+desktop app, when it is installed.
+
+## Not available
+
+`fde trigger` (alias `hub`) exists but every subcommand exits with
+`Triggers are disabled pending a rewrite`.

@@ -13,36 +13,39 @@ area you change.
 
 ## Start here
 
-Read the docs relevant to the task; there is no need to load all of `docs/`.
+Documentation lives in `website/src/content/docs/docs/` and is published at
+https://frogg.app/docs/. Read the pages relevant to the task; there is no need to load
+them all.
 
-- [ROADMAP.md](ROADMAP.md): current priorities, remaining work, verification gaps,
-  and links to detailed plans. An unchecked item does not mean work is active.
-- [docs/product.md](docs/product.md): product direction and intended workflows.
-- [docs/project-status.md](docs/project-status.md): baseline audit, branch
-  reconciliation, and preserved unfinished work in other checkouts.
+- [ROADMAP.md](ROADMAP.md): the to-do list: priorities, open work and verification
+  gaps. An unchecked item does not mean work is active.
 - [CHANGELOG.md](CHANGELOG.md): completed work and release history.
-- [docs/architecture.md](docs/architecture.md): system boundaries and code map.
-- [docs/development.md](docs/development.md), [docs/testing.md](docs/testing.md),
-  and [docs/coding-standards.md](docs/coding-standards.md): development workflow,
-  test selection, and implementation conventions.
+- [Architecture](website/src/content/docs/docs/contributing/architecture.mdx): system
+  boundaries and code map.
+- [Development setup](website/src/content/docs/docs/contributing/development-setup.mdx),
+  [testing](website/src/content/docs/docs/contributing/testing.mdx), and
+  [coding standards](website/src/content/docs/docs/contributing/coding-standards.mdx):
+  development workflow, test selection, and implementation conventions.
+- [Reference](website/src/content/docs/docs/reference/): `config.json`, environment
+  variables and `fde.json`. User-facing behavior is under `getting-started/`,
+  `using-fde/`, `agents-and-providers/`, `desktop-mobile-cli/` and `self-hosting/`.
+- [Fork and rebrand](website/src/content/docs/docs/fork-and-rebrand/): branding, build
+  and release pipeline for custom products.
 
-`docs/` is the source of truth for engineering knowledge. Feature-specific docs
-cover providers, protocol, permissions, voice/Companion, UI behavior, and more;
-use `rg --files docs` to find the relevant topic. Engineering plans include
-[session decomposition](docs/refactors/session-decomposition-plan.md).
-Consult the roadmap for their priority and status before starting a planned slice.
+The code is the source of truth. If a page disagrees with the code, fix the page.
 
 ## Code map
 
 - `apps/desktop-electron/`: Electron app-only shell, native bridge and SSH deployment; see
-  [electron-desktop.md](docs/electron-desktop.md).
+  [desktop app](website/src/content/docs/docs/desktop-mobile-cli/desktop.mdx).
 - `apps/ui/`: shared Expo/React Native UI for desktop, web, and mobile.
 - `apps/cli/`: command-line client and daemon launcher.
 - `packages/server/`: daemon, agent lifecycle, providers, WebSocket API, and MCP.
 - `packages/protocol/`, `packages/client/`: shared wire schemas and client library.
 - Other `packages/`: relay, highlighting, plugin SDK, and shared libraries.
 - `deploy/`: Docker/Nix packaging. `scripts/dev/`, `scripts/release/`,
-  `scripts/ci/`: development, release, and verification helpers.
+  `scripts/ci/`, `scripts/docs/`: development, release, verification and docs helpers.
+- `website/`: the frogg.app site; docs pages in `website/src/content/docs/docs/`.
 
 ## Development agents
 
@@ -57,6 +60,8 @@ other agent runners can read the same files as task instructions.
   transports, SSH deployment, and desktop packaging.
 - [dev-tooling](.claude/agents/dev-tooling.md): development scripts, skills,
   build/test tooling, and CI.
+- [docs-writer](.claude/agents/docs-writer.md): audits a change against the docs and
+  updates pages and screenshots.
 
 For parallel feature work, give each agent a separate branch/worktree, a bounded
 outcome, owned paths, and acceptance checks. Agree shared protocol/bridge contracts
@@ -64,6 +69,17 @@ first and assign one owner per shared file. Use separate dev ports and state.
 Return changed behavior, files/commits, checks run, and remaining integration or
 platform gaps. The coordinating session integrates through the branch/PR workflow
 and runs full typecheck; agents must not independently merge through old checkouts.
+
+## Documentation rule
+
+Any change to user-visible behavior, configuration (`config.json`, env vars, `fde.json`,
+`brand.json`), CLI commands or flags, protocol-visible features, or the branding, build or
+release pipeline must update the matching docs page in the same PR, and its screenshots when
+the UI changes. Pages live in `website/src/content/docs/docs/<section>/`; images in
+`website/src/assets/docs/`. The [fde-docs skill](skills/fde-docs/SKILL.md) maps code areas to
+pages and explains screenshots. Preview with `cd website && npm ci && npm run dev`, and check
+with `npm run build && npm run linkcheck`. Write "an FDE", never "a FDE", and never document
+features the code does not have. If no docs change is needed, say so in the PR checklist.
 
 ## Release skill
 
@@ -75,16 +91,18 @@ update contract across local and CI artifact production.
 
 - Install JS workspaces with root `npm ci`. Run `npm run dev:server` and
   `npm run dev:app` in separate terminals; `npm run dev:desktop` starts Electron.
-  Follow `docs/development.md` for isolated dev state and build prerequisites.
+  Follow [development setup](website/src/content/docs/docs/contributing/development-setup.mdx)
+  for isolated dev state and build prerequisites.
 - This VM is headless and shared: bind services to `0.0.0.0`, use the VM LAN IP
   for user-facing URLs, and leave others' processes and worktrees alone.
 - Run checks appropriate to the change; run full `npm run typecheck` before
   merging. Lefthook formats/lints staged files and typechecks affected workspaces.
 - Root `package.json` owns the version. Use `npm run version:sync-internal` to
-  sync internal workspace versions; see [release.md](docs/release.md) and
-  [ci.md](docs/ci.md) for release procedures.
-- Update relevant docs and roadmap items with implementation; record completed
-  work in the changelog and distinguish implementation from platform validation.
+  sync internal workspace versions; see
+  [release process](website/src/content/docs/docs/contributing/release-process.mdx).
+- Update ROADMAP.md items with implementation, record completed work in the
+  changelog, and distinguish implementation from
+  platform validation.
 - Preserve inherited Apache-2.0 headers and `NOTICE`. Use the FDE wire/env/deep-link
   namespace; coordinate breaking upgrades across clients and daemons.
 

@@ -35,7 +35,7 @@
   "links": {
     "website": "https://frogg.app",
     "source": "https://github.com/frogg-app/fde",
-    "docs": "https://github.com/frogg-app/fde/tree/main/docs",
+    "docs": "https://frogg.app/docs",
     "support": "https://github.com/frogg-app/fde/issues",
     "installer": "https://frogg.app/install.sh"
   },

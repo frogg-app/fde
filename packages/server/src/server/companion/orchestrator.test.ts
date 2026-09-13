@@ -304,8 +304,7 @@ describe("CompanionOrchestrator", () => {
 
   // A barge-in abandons the generator part-way. The exchange still has to reach
   // the history, or the Companion has no record it ever spoke: it repeats itself
-  // and answers "what was that last thing?" with nothing. See
-  // docs/companion-voice-design.md.
+  // and answers "what was that last thing?" with nothing.
   it("remembers what the user heard when a turn is abandoned part-way", async () => {
     const { client, requests } = createScriptedClient([
       {

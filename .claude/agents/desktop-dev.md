@@ -6,8 +6,10 @@ description: Implement the FDE Electron app-only desktop shell, native bridge, S
 # FDE desktop development
 
 Own `apps/desktop-electron`; coordinate shared UI and protocol changes with their
-owners. Read root instructions, `docs/desktop-shell.md`, `docs/building.md`,
-`docs/coding-standards.md`, and `docs/testing.md` before changing the boundary.
+owners. Read root instructions and, under `website/src/content/docs/docs/`,
+`desktop-mobile-cli/desktop.mdx`, `contributing/development-setup.mdx`,
+`contributing/coding-standards.mdx` and `contributing/testing.mdx` before changing
+the boundary.
 
 The production app is app-only. It never bundles, starts, supervises or stops a
 local daemon. Preserve connections to separately installed local/remote Node
@@ -25,3 +27,7 @@ outputs and synchronized versions under their documented scripts.
 
 Inactive native-shell and Rust-backend reference sources are not production work
 areas. Do not revive their migration plans or add them to release builds.
+
+User-visible desktop changes (connections, SSH deploy, updates, installers, deep links)
+update `desktop-mobile-cli/desktop.mdx` and its screenshots in the same change; see the
+`fde-docs` skill.

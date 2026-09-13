@@ -1,0 +1,16 @@
+---
+/**
+ * Inlined before first paint so there is no flash. Dark unless the visitor picked light.
+ * Shares Starlight's storage key so the choice follows them between the landing page and docs.
+ */
+---
+
+<script is:inline>
+  (() => {
+    let stored = null;
+    try {
+      stored = localStorage.getItem("starlight-theme");
+    } catch {}
+    document.documentElement.dataset.theme = stored === "light" ? "light" : "dark";
+  })();
+</script>

@@ -18,7 +18,7 @@ import { resolveLocalDaemonState, resolveLocalFdeHome } from "./local-daemon.js"
 
 /**
  * `fde daemon claim-status` and `fde daemon reset-claim`: inspect or clear the
- * paired principals under $FDE_HOME (see docs/permissions.md, "Claimed state").
+ * paired principals under $FDE_HOME (see getting-started/connect-and-pair.mdx).
  * Both work on the files directly, so they do not need a running daemon; the
  * daemon re-reads the principals file on every check, so a reset takes effect
  * live and the pairing page comes back for LAN visitors.

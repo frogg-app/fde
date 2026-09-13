@@ -1,0 +1,272 @@
+---
+title: Create a brand
+description: Scaffold brand.json and artwork with brand:init, validate with brand:check, and run your branded app locally.
+sidebar:
+  order: 3
+---
+
+import { BrandPreview, Screenshot, Steps, Tabs, TabItem } from "@/components/docs";
+import forkBrandCheckImg from "@/assets/docs/fork/brand-check.png";
+
+A brand is a directory with a `brand.json` manifest and its artwork. Every branding
+command reads the brand from, in order:
+
+1. `--brand <directory>` on `brand:check`, `brand:prepare` and `brand:stage`,
+2. the `FDE_BRAND_DIR` environment variable,
+3. `brands/fde` (stock FDE).
+
+Relative paths resolve against the repository root.
+
+## 1. Scaffold the brand
+
+Prepare a square icon, PNG or SVG, at least 1024 × 1024 pixels. An SVG needs
+`width="1024" height="1024"` (or larger) on its root element. Use a transparent
+background unless the mark should sit on a solid tile.
+
+```sh
+npm run brand:init -- \
+  --dir brands/acme \
+  --id acme \
+  --name "Acme Studio" \
+  --app-id com.acme.studio \
+  --port 10099 \
+  --icon ~/Downloads/acme-icon.svg
+```
+
+```text
+Brand created at /home/you/acme-studio/brands/acme. Build with FDE_BRAND_DIR=/home/you/acme-studio/brands/acme
+```
+
+All six flags are required. `brand:init` copies the icon into the directory as
+`icon.svg` or `icon.png`, writes a minimal manifest, and validates it. It refuses to
+overwrite an existing directory.
+
+```json title="brands/acme/brand.json"
+{
+  "schemaVersion": 1,
+  "id": "acme",
+  "name": "Acme Studio",
+  "applicationId": "com.acme.studio",
+  "daemonPort": 10099,
+  "assets": {
+    "icon": "./icon.svg"
+  }
+}
+```
+
+That manifest already builds a working product. Everything else has a default.
+
+### Choosing the required values
+
+- **`id`**: a lowercase slug (`acme`, `acme-studio`). It becomes the CLI name, home
+  directory, env prefix, URL scheme and service names unless you override them. **Treat
+  it as permanent** once you ship: changing it moves users' state to a new directory.
+- **`applicationId`**: reverse DNS with at least three segments, lowercase letters and
+  digits only (`com.acme.studio`). It is the Android package, macOS bundle ID, Windows
+  install path and browser storage namespace. Also permanent.
+- **`daemonPort`**: 1024 to 65535. Pick a port no other FDE-based product uses, so both
+  can run on one machine. Stock FDE uses 9999; the example uses 10099.
+
+## 2. Add colours and details
+
+Add the optional fields you need. A typical product manifest:
+
+```json title="brands/acme/brand.json"
+{
+  "schemaVersion": 1,
+  "id": "acme",
+  "name": "Acme Studio",
+  "fullName": "Acme Studio for Engineering",
+  "publisher": "Acme Corp",
+  "description": "Acme Studio: run and monitor AI coding agents.",
+  "applicationId": "com.acme.studio",
+  "daemonPort": 10099,
+  "assets": { "icon": "./icon.svg" },
+  "colors": {
+    "light": {
+      "accent": "#6d28d9",
+      "accentForeground": "#ffffff",
+      "background": "#faf5ff",
+      "foreground": "#27143d"
+    },
+    "dark": {
+      "accent": "#c4b5fd",
+      "accentForeground": "#27143d",
+      "background": "#20152e",
+      "foreground": "#faf5ff"
+    }
+  },
+  "links": {
+    "website": "https://studio.acme.example",
+    "docs": "https://studio.acme.example/docs",
+    "support": "https://github.com/acme-corp/fde/issues"
+  },
+  "distribution": {
+    "repository": "acme-corp/fde",
+    "updates": "github-release"
+  }
+}
+```
+
+Try colours before you write them down. This preview checks contrast and reserved
+identities as you type and exports a `brand.json` you can paste into your brand directory:
+
+<BrandPreview name="Acme Studio" publisher="Acme Corp" />
+
+Colour pairs must reach a **4.5:1 contrast ratio**: `accent` against
+`accentForeground`, and `background` against `foreground`, in both appearances. Omit
+`colors` to get a neutral grey palette. See the
+[manifest reference](/docs/fork-and-rebrand/brand-manifest/) for every field.
+
+Keep secrets out of this directory. Everything in `brand.json` is public: it is
+embedded in the app, installers and container labels.
+
+## 3. Check it
+
+```sh
+npm run brand:check -- --brand brands/acme
+```
+
+```text
+Acme Studio: valid (com.acme.studio); updates github-release
+```
+
+<Screenshot src={forkBrandCheckImg} alt="brand:check output for a valid brand and two rejected ones" />
+
+Add `--json` to print the fully resolved brand, including every derived default:
+
+```sh
+npm run --silent brand:check -- --brand brands/acme --json
+```
+
+```json
+{
+  "id": "acme",
+  "name": "Acme Studio",
+  "cliName": "acme",
+  "desktopBinaryName": "acme-desktop",
+  "homeDir": ".acme",
+  "envPrefix": "ACME",
+  "scheme": "acme",
+  "serviceName": "acme-daemon",
+  "launchdLabel": "com.acme.studio-daemon",
+  "artifactPrefix": "acme",
+  "storagePrefix": "com.acme.studio:",
+  "...": "..."
+}
+```
+
+`brand:check` fails on:
+
+- unknown keys or an unsupported `schemaVersion`,
+- invalid slugs, application IDs or ports,
+- a missing icon, or one that is not square and at least 1024 pixels,
+- colour pairs under 4.5:1 contrast,
+- `updates` enabled without `distribution.repository`,
+- reserved FDE identities (see [troubleshooting](/docs/fork-and-rebrand/troubleshooting/)).
+
+## 4. Prepare generated inputs
+
+```sh
+FDE_BRAND_DIR=brands/acme npm run brand:prepare
+```
+
+```text
+Brand prepared: Acme Studio (3f9c1a0b52de)
+```
+
+You rarely run this by hand. `npm ci`, `typecheck` and every `dev:*` and `build:*`
+entrypoint prepare the selected brand first. The hash in brackets is the
+**fingerprint** of the manifest, artwork, generator, bundled skills, installer
+templates and app version. An unchanged fingerprint skips asset generation.
+
+Generated output is git-ignored. Never commit it.
+
+| Path                              | Contents                                                                      |
+| --------------------------------- | ----------------------------------------------------------------------------- |
+| `.generated/branding/brand.json`  | Fully resolved brand, read by Electron, release scripts and CI                |
+| `.generated/branding/icons/`      | `icon.ico`, `icon.icns`, PNG sizes for desktop packaging                      |
+| `.generated/branding/scripts/`    | Branded `install.sh`, `uninstall.sh`, `install-docker.sh`, `uninstall-docker.sh` |
+| `.generated/branding/skills/`     | Bundled agent skills, renamed to `<id>-<skill>` for custom brands             |
+| `.generated/branding/deploy/`     | `compose.json`, `pair-worker.json`, `install-worker.json`, `runtime.sh`       |
+| `.generated/branding/eas.json`    | EAS config with your App Store ID, used by `brand:eas`                        |
+| `.generated/branding/provenance.json` | Brand ID, version, source revision and fingerprint                        |
+| `apps/ui/.generated/branding/`    | Expo icons, splash, favicons, PWA manifest and `index.html`                   |
+| `packages/branding/src/generated/` | The resolved brand compiled into the runtime package                         |
+
+## 5. Stage for Docker and Nix
+
+Docker build contexts and Nix derivations cannot read a brand directory outside the
+source tree. `brand:stage` copies the manifest and artwork into a self-contained,
+git-ignored directory and prints its path:
+
+```sh
+FDE_BRAND_DIR=../acme-brand npm run --silent brand:stage
+```
+
+```text
+.branding-input/acme
+```
+
+The Docker and release scripts call this for you. Stock FDE prints `brands/fde`.
+
+## 6. Run it locally
+
+Select the brand for the whole shell session, then use the normal dev commands:
+
+<Tabs syncKey="shell">
+<TabItem label="bash / zsh">
+
+```sh
+export FDE_BRAND_DIR=brands/acme
+npm run dev:server     # terminal 1: branded daemon
+npm run dev:app        # terminal 2: Expo web and mobile dev server
+npm run dev:desktop    # terminal 3 (optional): Electron shell
+```
+
+</TabItem>
+<TabItem label="PowerShell">
+
+```powershell
+$env:FDE_BRAND_DIR = 'brands/acme'
+npm run dev:win
+```
+
+</TabItem>
+</Tabs>
+
+The dev scripts go through `scripts/dev/branded-run.mts`, which prepares the brand and
+holds it for the life of the process.
+
+| Setting       | Stock FDE              | Custom brand                              |
+| ------------- | ---------------------- | ----------------------------------------- |
+| Daemon listen | `0.0.0.0:6768`         | `0.0.0.0:<daemonPort>` (Acme: 10099)      |
+| Metro / Expo  | 8081                   | `daemonPort + 1` (Acme: 10100)            |
+| Dev state     | `.dev/fde-home`        | `.dev/<id>-home` (Acme: `.dev/acme-home`) |
+
+Override with `FDE_LISTEN`, `EXPO_PORT` or `<PREFIX>_HOME` (`ACME_HOME`) when you run
+several checkouts of the same product.
+
+:::caution[One brand per worktree]
+Generated output is shared by the checkout, so a worktree builds one brand at a time.
+A second build with a different brand fails with
+`Another brand is being built; use a separate worktree.` Stop the running dev server
+before switching brands, or use `git worktree add` for the second brand.
+:::
+
+## 7. Build locally
+
+```sh
+export FDE_BRAND_DIR=brands/acme
+npm run build:ui                                   # web export in apps/ui/dist
+npm run build:desktop -- --target linux-x64        # Electron packages in apps/desktop-electron/release
+npm run build:server && npm run build:daemon-web-ui
+npm run build:daemon-bundle -- --target linux-x64 --out-dir dist/bundles
+```
+
+Desktop targets are `linux-x64`, `linux-arm64`, `win-x64`, `win-arm64`, `darwin-x64`
+and `darwin-arm64`. macOS packages must be built on macOS. Daemon bundle targets are
+the same six; the daemon bundle includes Node, the daemon, the web UI and a CLI
+launcher named after your `cliName`.
+
+Next: [build and release from GitHub Actions](/docs/fork-and-rebrand/build-and-release/).

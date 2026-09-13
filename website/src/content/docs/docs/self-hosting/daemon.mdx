@@ -1,0 +1,115 @@
+---
+title: Run the daemon
+description: Start, stop and supervise the FDE daemon; listen addresses, services, logs, state and running several daemons.
+sidebar:
+  order: 1
+---
+
+Install with the script, Docker or Nix first; see [install](/docs/getting-started/install/).
+This page covers operating a daemon once it is there.
+
+## Service or foreground
+
+`install.sh` registers a login service. Manage it with the CLI or the service manager:
+
+| Platform | Service | Logs |
+| -------- | ------- | ---- |
+| Linux    | systemd user unit `fde-daemon.service` | `journalctl --user -u fde-daemon -f`, and `~/.fde/daemon.log` |
+| macOS    | launchd agent `app.frogg.fde-daemon` | `~/Library/Logs/app.frogg.fde-daemon.log`, and `~/.fde/daemon.log` |
+| Windows  | Scheduled task created by `fde install-service` | `%USERPROFILE%\.fde\daemon.log` |
+
+```sh
+fde status
+fde restart
+fde stop
+fde install-service --listen 0.0.0.0:9999   # (re)create the login service
+fde uninstall-service
+```
+
+Without a service, run it yourself:
+
+```sh
+fde start                      # background; prints PID and log path
+fde start --foreground         # stay attached, for containers and supervisors
+```
+
+Only one daemon can use a home directory. A second start fails with
+`Another FDE daemon is already running (PID ...)`.
+
+## Listen address
+
+The default is `0.0.0.0:9999`: every interface, port 9999.
+
+```sh
+fde restart --listen 127.0.0.1:9999        # this machine only (use with SSH or a proxy)
+fde restart --port 9443
+fde restart --listen /run/user/1000/fde.sock
+```
+
+Persist it in `config.json` as `daemon.listen`, or with `FDE_LISTEN`. The CLI on the same
+machine finds the daemon through its socket or pipe automatically.
+
+## State
+
+Everything lives in `FDE_HOME` (`~/.fde`): `config.json`, agents, projects, schedules,
+worktrees, paired devices, logs and speech models. Back it up to keep history and
+pairings. See [configuration](/docs/reference/configuration/#other-files-in-fde_home).
+
+## Logs
+
+```sh
+fde status | grep Logs
+tail -f ~/.fde/daemon.log
+```
+
+The log is JSON by default and rotates at 10 MB, keeping three files. Readable output:
+
+```sh
+FDE_LOG_FORMAT=pretty FDE_LOG_LEVEL=debug fde start --foreground
+```
+
+Authorization headers are redacted. When a background start fails, the CLI prints the
+last log lines.
+
+## Agent CLIs and PATH
+
+Agents inherit the daemon's environment. A service keeps the `PATH` it was installed
+with. After installing a new agent CLI into a new location, re-run the installer or
+`fde install-service`, then `fde restart`. Put provider API keys in the service's
+environment rather than your shell profile.
+
+## Keep agents alive across restarts
+
+By default, restarting the daemon stops agent processes; agents that were mid-turn are
+resumed with a continuation prompt when the daemon comes back (within an hour).
+
+Opt-in **independent execution** keeps agent runtimes in a separate process so they survive
+daemon restarts and updates:
+
+```sh
+FDE_EXECUTION_SERVICE=1 fde restart
+fde execution-status
+fde stop --all      # stop the daemon and the execution service with its agents
+```
+
+Set `FDE_EXECUTION_SERVICE=1` in the service environment to make it permanent.
+
+## Several daemons on one machine
+
+Give each its own home and port:
+
+```sh
+FDE_HOME=~/.fde-work fde start --listen 0.0.0.0:9998
+FDE_HOME=~/.fde-work fde status
+```
+
+Use `--host` or `FDE_HOST` to point CLI commands at the right one.
+
+## Reload configuration
+
+```sh
+fde reload
+```
+
+It reports settings applied live, settings that need `fde restart`, and settings pinned by
+env vars or flags.

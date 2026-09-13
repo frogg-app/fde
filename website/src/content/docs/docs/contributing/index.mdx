@@ -1,0 +1,58 @@
+---
+title: Contributing
+description: How to contribute to FDE — workflow, pull requests, and where to start.
+sidebar:
+  order: 1
+  label: Overview
+---
+
+import { CardGrid, LinkCard } from "@/components/docs";
+
+FDE is Apache-2.0 and developed at [github.com/frogg-app/fde](https://github.com/frogg-app/fde).
+It is an independently maintained fork of [Paseo](https://github.com/getpaseo/paseo); keep
+the `LICENSE`, `NOTICE` and existing license headers intact.
+
+## Workflow
+
+1. Fork the repository and create a branch from `main`.
+2. Set up the monorepo: [development setup](/docs/contributing/development-setup/).
+3. Make the change with tests: [testing](/docs/contributing/testing/),
+   [coding standards](/docs/contributing/coding-standards/).
+4. Update the docs in the same pull request if users will notice the change:
+   [writing docs](/docs/contributing/writing-docs/).
+5. Check your change:
+
+   ```sh
+   node scripts/ci/verify.mjs --changed
+   npm run typecheck
+   ```
+
+6. Open a pull request against `frogg-app/fde` `main` and complete the template checklist.
+
+If you maintain a branded fork, build upstream contributions from `upstream/main`, not
+from your product branch: [contribute features back](/docs/fork-and-rebrand/contributing-upstream/).
+
+## Pull request checklist
+
+The template asks for:
+
+- the root `package.json` version bumped and workspace versions synced
+  (`npm run version:sync-internal`),
+- a `CHANGELOG.md` entry under the new version,
+- `npm run typecheck`, `npm run lint` and `npm run format:check` passing,
+- docs updated, or a note that none were needed.
+
+## Agent roles
+
+The repository includes role instructions for AI coding agents in `.claude/agents/`
+(`daemon-dev`, `client-dev`, `desktop-dev`, `dev-tooling`, `docs-writer`) and task skills in
+`skills/`. Human contributors can read them as checklists for each area.
+
+<CardGrid>
+  <LinkCard title="Development setup" href="/docs/contributing/development-setup/" description="Build order, dev daemon and app, worktrees." />
+  <LinkCard title="Architecture" href="/docs/contributing/architecture/" description="Daemon, clients, protocol and code map." />
+  <LinkCard title="Testing" href="/docs/contributing/testing/" description="Test categories and what CI runs." />
+  <LinkCard title="Coding standards" href="/docs/contributing/coding-standards/" description="Formatting, branding literals, i18n, protocol." />
+  <LinkCard title="Release process" href="/docs/contributing/release-process/" description="Versions, tags and the release workflow." />
+  <LinkCard title="Writing docs" href="/docs/contributing/writing-docs/" description="Where docs live, style, screenshots, preview." />
+</CardGrid>

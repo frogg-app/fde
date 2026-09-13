@@ -21,16 +21,17 @@ shared delegation workflow in the root file.
 
 ## Read for the task
 
-Start with `docs/architecture.md`, `docs/development.md`, and
-`docs/coding-standards.md`; consult `ROADMAP.md` for planned work.
-Then select the relevant references:
+Docs live in `website/src/content/docs/docs/`. Start with `contributing/architecture.mdx`,
+`contributing/development-setup.mdx` and `contributing/coding-standards.mdx`.
+Then select the relevant pages:
 
-- Lifecycle/providers: `docs/agent-lifecycle.md`, `docs/providers.md`,
-  `docs/custom-providers.md`, `docs/data-model.md`.
-- Wire changes: `docs/protocol-compatibility.md`, `docs/protocol-validation.md`,
-  `docs/rpc-namespacing.md`, `docs/permissions.md`.
-- Voice: `docs/voice.md`, `docs/companion.md`, `docs/companion-voice-design.md`.
-- Refactoring: `docs/refactors/session-decomposition-plan.md`.
+- Lifecycle/providers: `using-fde/agents.mdx`, `agents-and-providers/providers.mdx`,
+  `agents-and-providers/custom-providers.mdx`, `agents-and-providers/mcp.mdx`.
+- Config and access: `reference/configuration.mdx`, `reference/environment-variables.mdx`,
+  `self-hosting/security.mdx`, `using-fde/permissions.mdx`.
+- Wire changes: the protocol section of `contributing/coding-standards.mdx` and the
+  `fde-rpc` skill.
+- Voice: `using-fde/voice-and-companion.mdx`.
 
 ## Implementation and verification
 
@@ -41,10 +42,16 @@ Then select the relevant references:
 - Follow the documented schema/validator generation workflow when changing the
   protocol; update affected consumers and compatibility coverage together.
 - Test observable behavior, including relevant cancellation, reconnect, failure,
-  and cleanup paths. Follow `docs/testing.md` and
-  `docs/ad-hoc-daemon-testing.md`; use isolated dev/test state.
+  and cleanup paths. Follow `contributing/testing.mdx`; use isolated dev/test state.
 - Rebuild server-facing dependencies with root `npm run build:server`. Run
   focused tests and affected typechecks using the current workspace scripts;
   consult `package.json` if older guidance names obsolete commands.
 - Never restart the production daemon or use live agent state as test fixtures.
   Report any required real-provider or deployment validation left unperformed.
+
+## Documentation
+
+Changes to daemon behavior, config keys, environment variables, CLI commands or
+protocol-visible features update the matching docs page in the same change. Follow the
+`fde-docs` skill (`skills/fde-docs/SKILL.md`) for the page map and checks, or hand the
+audit to the `docs-writer` agent.

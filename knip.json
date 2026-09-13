@@ -1,5 +1,6 @@
 {
   "$schema": "./node_modules/knip/schema.json",
+  "ignore": ["website/**"],
   "workspaces": {
     ".": {
       "entry": ["scripts/**/*.{js,mjs,cjs,ts}"],

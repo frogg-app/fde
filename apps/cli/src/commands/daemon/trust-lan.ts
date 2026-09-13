@@ -22,7 +22,7 @@ import { resolveLocalDaemonState, resolveLocalFdeHome } from "./local-daemon.js"
 /**
  * `fde daemon trust-lan on|off`: whether private-network clients (RFC 1918,
  * link-local, ULA) are treated like loopback, i.e. connect without pairing or
- * a password (docs/permissions.md, "Trusted LAN"). Writes
+ * a password (self-hosting/security.mdx). Writes
  * `daemon.auth.trustLan` to config.json and asks a running daemon to reload
  * it, so the change applies live; `FDE_TRUST_LAN` on the daemon wins.
  */

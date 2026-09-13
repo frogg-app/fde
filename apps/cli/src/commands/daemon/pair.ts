@@ -58,7 +58,11 @@ interface DirectOfferResponse {
 }
 
 const PAIRING_DAEMON_RPC_TIMEOUT_MS = 1500;
-const RELAY_DOCS_URL = brand.links.docs ? `${brand.links.docs.replace(/\/$/, "")}/security` : null;
+const DOCS_BASE = brand.links.docs?.replace(/\/$/, "") ?? null;
+const RELAY_DOCS_URL = DOCS_BASE ? `${DOCS_BASE}/self-hosting/security/#relay` : null;
+const DIRECT_DOCS_URL = DOCS_BASE
+  ? `${DOCS_BASE}/getting-started/connect-and-pair/#direct-connection`
+  : null;
 
 function createProcessOutput(): PairCommandOutput {
   return {
@@ -226,7 +230,7 @@ export function printDirectConnectionGuidance(): void {
   console.log(
     "To connect another device directly, use the daemon's TCP address over your LAN, Tailscale, or another VPN.",
   );
-  if (RELAY_DOCS_URL) console.log(`Learn more: ${RELAY_DOCS_URL}#direct-connections`);
+  if (DIRECT_DOCS_URL) console.log(`Learn more: ${DIRECT_DOCS_URL}`);
 }
 
 export async function runPairCommand(

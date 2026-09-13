@@ -1,0 +1,74 @@
+---
+title: MCP tools for agents
+description: The daemon's MCP endpoint lets agents create agents, run scripts, drive terminals, schedule work and answer permissions.
+sidebar:
+  order: 3
+---
+
+The daemon serves a Model Context Protocol endpoint so agents can use FDE itself: start
+other agents, watch them, run workspace scripts, schedule follow-ups. This is how an agent
+orchestrates others.
+
+## Endpoint
+
+```text
+POST http://<daemon>:9999/mcp/agents
+```
+
+- Streamable HTTP, stateless.
+- On by default (`daemon.mcp.enabled`). Disable with `fde restart --no-mcp`.
+- Authorization: agents started by the daemon get a per-run capability token. Other
+  clients use the daemon password as a bearer token.
+
+:::caution
+If the daemon has **no password**, the MCP endpoint accepts any client that can reach it
+under the normal [access rules](/docs/getting-started/connect-and-pair/#who-can-connect).
+:::
+
+## Give agents the tools
+
+Injection is **off** by default. Turn it on in host settings, or:
+
+```json title="~/.fde/config.json"
+{ "daemon": { "mcp": { "injectIntoAgents": true } } }
+```
+
+Then `fde reload`, and reload existing agents (`fde agent reload <id>`) so they pick it up.
+
+With injection on, agents get an MCP server named `fde`. OpenCode and Oh My Pi receive the
+same tools natively. ACP agents receive the server unless their provider sets
+`params.supportsMcpServers: false`.
+
+Without injection, agents can still use the `fde` CLI from their shell; the bundled
+[skills](/docs/agents-and-providers/skills/) teach them how.
+
+## Tools
+
+| Area         | Tools |
+| ------------ | ----- |
+| Agents       | `create_agent`, `send_agent_prompt`, `get_agent_status`, `get_agent_activity`, `list_agents`, `update_agent`, `set_agent_mode`, `cancel_agent`, `archive_agent`, `kill_agent` |
+| Workspaces   | `create_workspace`, `list_workspaces`, `rename_workspace`, `archive_workspace` |
+| Scripts      | `list_workspace_scripts`, `start_workspace_script`, `stop_workspace_script` |
+| Terminals    | `list_terminals`, `create_terminal`, `capture_terminal`, `send_terminal_keys`, `kill_terminal` |
+| Schedules    | `create_schedule`, `list_schedules`, `inspect_schedule`, `update_schedule`, `pause_schedule`, `resume_schedule`, `run_schedule_once`, `schedule_logs`, `delete_schedule` |
+| Heartbeats   | `create_heartbeat`, `delete_heartbeat` |
+| Providers    | `list_providers`, `list_models`, `list_profiles`, `inspect_provider` |
+| Permissions  | `list_pending_permissions`, `respond_to_permission` |
+
+Agents created by an agent run in the background, are labelled with their parent, and
+notify the parent when they finish.
+
+### Browser tools
+
+`daemon.browserTools.enabled: true` adds `browser_*` tools (tabs, snapshot, click, fill,
+type, navigate, screenshot, evaluate and more). Off by default.
+
+## Your own MCP servers
+
+FDE has no global registry of user MCP servers. Agents use the MCP servers configured in
+their own provider (for example Claude Code's settings). Programmatic agent creation can
+also pass `mcpServers` per agent.
+
+## Debugging
+
+Set `MCP_DEBUG=1` in the daemon's environment to log MCP traffic.

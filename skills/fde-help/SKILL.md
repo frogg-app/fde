@@ -13,19 +13,19 @@ You are helping a user understand, configure, or troubleshoot FDE itself. Answer
 
 Fetch [https://frogg.app/llms.txt](https://frogg.app/llms.txt) first. It is the current index of FDE documentation, with a description and Markdown URL for each page.
 
-Use that index to select the page that owns the user's question, then fetch the linked `.md` page before answering. For troubleshooting, begin with [Common problems](https://frogg.app/docs/troubleshooting.md) and follow its links when the issue belongs to a more specific page.
+Use that index to select the page that owns the user's question, then fetch the linked `.md` page before answering. For troubleshooting, begin with [Troubleshooting](https://frogg.app/docs/self-hosting/troubleshooting.md) and follow its links when the issue belongs to a more specific page.
 
 Prefer the deployed docs over memory. Answer the user directly, then link the relevant `.md` page as supporting documentation.
 
 ## Establish the topology first
 
-Identify the daemon involved before diagnosing versions, paths, providers, logs, updates, or connectivity. Do not infer the daemon from the client: FDE Desktop can manage its bundled local daemon and connect to other remote daemons at the same time.
+Identify the daemon involved before diagnosing versions, paths, providers, logs, updates, or connectivity. Do not infer the daemon from the client: one FDE Desktop window can be connected to several daemons, local and remote, at the same time.
 
 Establish two facts:
 
 1. **Where and how the daemon runs**
-   - **Desktop-managed:** FDE Desktop bundles, starts, and updates a daemon on that computer. No separate daemon install is required.
-   - **Standalone:** the daemon was installed separately, commonly through the npm CLI, and runs independently of the desktop app.
+   - **Installed:** set up with `install.sh` (or the desktop app's SSH deploy, which runs the same script), running as a systemd user service, launchd agent or Windows scheduled task. The desktop app never bundles or starts a daemon.
+   - **Nix or manual:** a NixOS service, a dev checkout, or a hand-started `fde start`.
    - **Docker:** the daemon, its home, provider CLIs, credentials, and code mounts live in the container runtime.
 2. **How the affected client reaches it**
    - same-machine local connection
@@ -33,16 +33,16 @@ Establish two facts:
    - direct LAN, VPN, or Tailscale connection
    - daemon-served web UI
 
-Use **Settings → About** to compare the app version with each connected host. For the affected host, open **Settings → your host → Overview → Full status**. On the daemon machine, `fde daemon status --json` reports facts such as server ID, hostname, version, home, listen address, process owner, log path, and whether the daemon is desktop-managed.
+Use **Settings → About** to compare the app version with each connected host. For the affected host, open **Settings → your host → Overview → Full status**. On the daemon machine, `fde status --json` reports facts such as server ID, hostname, version, home, listen address, process owner, log path, and whether the daemon can self-update.
 
-Record which host the user is viewing and which machine or container runs it. A local `fde daemon status` describes the daemon for that CLI's local `FDE_HOME`; it may not be the remote host visible in the app.
+Record which host the user is viewing and which machine or container runs it. A local `fde status` describes the daemon for that CLI's local `FDE_HOME`; it may not be the remote host visible in the app.
 
 Apply later checks to the daemon runtime, not automatically to the client device:
 
 - Provider binaries, credentials, `PATH`, workspaces, config, and daemon logs live on the daemon machine or inside its container.
 - App version and app logs live on the client device.
-- A desktop-managed daemon follows the Desktop app lifecycle and update path.
-- A standalone daemon follows its own CLI/npm lifecycle and may use a different `FDE_HOME` or listen address.
+- An installed daemon updates with `fde update` (or host settings → Daemon updates) and may use a different `FDE_HOME` or listen address.
+- A Nix or manually started daemon updates however it was installed.
 - A Docker daemon uses container paths, volumes, user permissions, image versions, and container lifecycle commands.
 
 ## Diagnose before changing state
@@ -53,7 +53,7 @@ Use the smallest relevant read-only checks:
 
 ```bash
 fde --version
-fde daemon status --json
+fde status --json
 fde provider diagnostic <provider> --json
 ```
 
@@ -75,13 +75,7 @@ Use these defaults on the machine where the daemon or Desktop app actually runs.
 
 Substitute the status-reported `FDE_HOME` for `~/.fde`. In the official Docker image, the default is `/home/fde/.fde`; its host path depends on the volume mount, and container stdout is available through Docker. Desktop app logs describe the Desktop process; daemon logs describe the selected daemon. Read the narrowest useful slice and redact credentials, pairing offers, tokens, passwords, and user code before sharing logs.
 
-If diagnosing the bundled daemon on a computer with FDE Desktop installed, but `fde` is not on `PATH`, the bundled CLI is at:
-
-- macOS: `/Applications/FDE.app/Contents/Resources/bin/fde`
-- Linux: `<install-dir>/resources/bin/fde`
-- Windows: `C:\Program Files\FDE\resources\bin\fde.cmd`
-
-Offer to fix the PATH or symlink; do not change shell configuration silently.
+If `fde` is not on `PATH` on a host installed with `install.sh`, the CLI is at `~/.local/share/fde/current/bin/fde` (linked into `~/.local/bin`). Offer to fix the PATH; do not change shell configuration silently.
 
 ## Escalate with evidence
 

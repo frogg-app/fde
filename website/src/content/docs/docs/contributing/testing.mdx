@@ -1,0 +1,164 @@
+---
+title: Testing
+description: Test categories, how to run a single test, the UI and Playwright suites, desktop smoke tests, and what CI runs.
+sidebar:
+  order: 4
+---
+
+The suites are large. Run the test file you changed, not a whole workspace. Let CI run the
+full suites.
+
+## Test categories
+
+The filename suffix sets the category. Pick the suffix that matches what the test touches.
+
+| Suffix                | What it is                                                     | How to run the category                          |
+| --------------------- | -------------------------------------------------------------- | ------------------------------------------------ |
+| `*.test.ts(x)`        | Unit test. No daemon, no network                               | `npm run test:unit --workspace=@fde/server`      |
+| `*.posix.test.ts`     | Unit test that needs POSIX behavior                            | With the unit tests                              |
+| `*.browser.test.ts(x)`| UI test in a real headless Chromium (Vitest browser mode)      | `npm run test:browser --workspace=@fde/app`      |
+| `*.e2e.test.ts`       | End-to-end against a real daemon                               | `npm run test:e2e --workspace=@fde/server`       |
+| `*.real.e2e.test.ts`  | End-to-end against a real provider                             | `npm run test:e2e:real --workspace=@fde/server`  |
+| `*.local.e2e.test.ts` | End-to-end that needs a local-only resource                    | `npm run test:e2e:local --workspace=@fde/server` |
+
+- Server `test:unit` excludes every `*.e2e.test.ts`. Server `test:e2e` runs e2e files with one
+  worker and excludes the `real` and `local` variants.
+- Real-provider tests read credentials from `packages/server/.env.test`. The server Vitest setup
+  (`packages/server/src/test-utils/vitest-setup.ts`) loads that file, sets
+  `FDE_SUPERVISED=0` and disables Git and SSH prompts. `.env.*` files are gitignored;
+  `packages/server/.env.example` lists the variable names.
+- Live provider smoke tests belong in `*.real.e2e.test.ts`, even when an environment variable
+  guards them. Unit suites must stay deterministic.
+
+## Run one file
+
+```bash
+npx vitest run packages/server/src/server/agent/agent-manager.test.ts --bail=1
+```
+
+For a broader sweep, write the output to a file and read it afterwards:
+
+```bash
+npx vitest run packages/server/src/server/session --bail=1 > /tmp/test-output.txt 2>&1
+```
+
+:::caution
+Do not run `npm run test` for a whole workspace or the full Playwright suite on a shared or
+small machine. Push and let CI run them.
+:::
+
+## UI unit and browser tests
+
+`apps/ui/vitest.config.ts` defines two Vitest projects:
+
+- **unit**: `src/**/*.{test,spec}.{ts,tsx}` and `plugins/**`, in Node, excluding
+  `*.browser.*` files. `apps/ui/vitest.setup.ts` stubs a few native-only modules.
+- **browser**: `src/**/*.browser.{test,spec}.{ts,tsx}` in headless Chromium through the
+  Playwright provider, one file at a time.
+
+```bash
+npx vitest run --root apps/ui --project unit
+npx vitest run --root apps/ui --project browser   # needs: npx playwright install chromium
+npm run test --workspace=@fde/app                  # both projects
+```
+
+Both projects run tests in forked processes with at most two workers. Build `build:server-deps`
+and `@fde/expo-two-way-audio` first, as CI does.
+
+## Playwright e2e (apps/ui)
+
+App end-to-end specs live in `apps/ui/e2e/browser/`. Shared harness code lives in
+`apps/ui/e2e/support/`. `apps/ui/playwright.config.ts` defines three projects:
+
+| Project            | Matches                                         | Script                                             |
+| ------------------ | ----------------------------------------------- | -------------------------------------------------- |
+| `browser`          | every spec except `*.real.spec.ts`              | `npm run test:e2e --workspace=@fde/app`            |
+| `real-provider`    | `*.real.spec.ts` except the relay deployment spec | `npm run test:e2e:real --workspace=@fde/app`     |
+| `relay-deployment` | `relay-deployment-reconnect.real.spec.ts`       | `npm run test:e2e:relay-deployment --workspace=@fde/app` |
+
+- Global setup (`e2e/support/global-setup.ts`) starts Metro on a free port. Workers default to
+  1 locally and 2 when `CI` is set. CI gets one retry.
+- `test:e2e:real` and `test:e2e:relay-deployment` fork provider state from `.dev/fde-home`
+  (`E2E_FORK_FDE_HOME_FROM`). `test:e2e:relay-deployment` also builds the server and daemon web UI.
+- `test:e2e:ui` opens the Playwright UI. `E2E_RECORD_VIDEO=1` records every test.
+- Run a single spec when you need to prove one flow:
+
+  ```bash
+  cd apps/ui && npx playwright test --project=browser e2e/browser/<spec>.spec.ts
+  ```
+
+:::note
+No workflow in `.github/workflows/` runs the app Playwright suite or the server `*.e2e.test.ts`
+files. Run the specs that cover your change locally, one at a time.
+:::
+
+## Mobile flows
+
+`apps/ui/maestro/` holds Maestro flows (`flows/` has reusable steps such as `launch.yaml`) and
+shell wrappers that combine Maestro with `xcrun simctl` or Android tooling, for example
+`bash apps/ui/maestro/test-sidebar-theme.sh 6 1`. `apps/ui/e2e/mobile/` holds `agent-device`
+scripts and a composer keyboard check. These are manual reproduction tools. CI does not run
+them, and some flows target specific past bugs.
+
+## Desktop tests
+
+```bash
+npm run test --workspace=@fde/desktop-electron        # vitest on src, then node --test test/*.test.mjs
+npm run test:smoke --workspace=@fde/desktop-electron  # Playwright Electron smoke
+```
+
+The smoke test (`apps/desktop-electron/e2e/smoke.mjs`) launches the app twice with a temporary
+profile. It checks sandbox and context isolation, settings persistence across launches, that
+daemon commands are rejected, and that no daemon state is created. Without
+`FDE_ELECTRON_SMOKE_EXECUTABLE` it runs the unpacked app against `apps/ui/dist`, so run
+`npm run build:ui` first. Set `FDE_ELECTRON_SMOKE_EXECUTABLE` to test a packaged binary, and
+`FDE_ELECTRON_SMOKE_NO_SANDBOX=1` where the Chromium sandbox is unavailable. The release workflow
+runs it on the packaged Linux build under `xvfb-run`.
+
+## Script tests
+
+```bash
+npm run test:scripts
+```
+
+Runs `node --test` over `scripts/ci/*.test.mjs`, `scripts/dev/*.test.mjs` and
+`scripts/release/*.test.mjs`. Run it when you change build, release or CI scripts.
+
+## Branding tests
+
+- `npm run brand:check` validates the selected brand.
+- `npm run test --workspace=@fde/branding` runs the brand schema tests.
+- `.github/workflows/branding.yml` runs on pull requests that touch `brands/`,
+  `packages/branding/`, branding scripts, `scripts/release/`, `apps/desktop-electron/`,
+  `deploy/` or `.github/`. It builds `brands/fde` and `brands/example` and runs
+  `branding-acceptance.mjs`, `branding-contribution.mjs` (see
+  [Coding standards](/docs/contributing/coding-standards/#no-hard-coded-product-names)),
+  `branding-browser.mjs`, the install test, desktop packaging on Linux, Windows and macOS with
+  `branding-package-inspect.mjs`, an Android debug APK, an iOS simulator build, runtime
+  isolation between the two brands, and a Nix build.
+
+## What CI runs
+
+`.github/workflows/ci.yml` runs on pull requests, pushes to `main` and manual dispatch.
+
+| Job                   | Steps                                                                              |
+| --------------------- | ---------------------------------------------------------------------------------- |
+| `checks`              | `oxfmt --check .`, `oxlint .`, `npm run test:scripts`, `build:server`, `@fde/expo-two-way-audio` build, `npm run typecheck` |
+| `tests`               | `build:server`, then `npm run test` for protocol, client, highlight, relay and plugin, and `test:unit` for cli |
+| `ui-tests` (3 shards) | UI `unit` project                                                                  |
+| `ui-browser-tests`    | Installs Chromium, runs the UI `browser` project                                   |
+| `server-tests` (5 shards) | Server Vitest, excluding `*.e2e.test.ts`                                       |
+| `builds`              | Not on pull requests. Calls `build-selected.yml` (Windows client, Linux daemon, Android APK) |
+
+Other workflows:
+
+- `electron-desktop.yml`: on pull requests touching desktop, UI, packages or the lockfile. Builds
+  the Windows x64 Electron app after its typecheck and tests.
+- `branding.yml`: see [Branding tests](#branding-tests).
+- `release.yml`: runs the Electron smoke test on Linux. See
+  [Release process](/docs/contributing/release-process/).
+
+No workflow builds or tests the Rust sources in `apps/desktop/src-tauri` or `apps/daemon-rs`.
+The `apps/desktop` TypeScript is still typechecked by `npm run typecheck`.
+`.github/workflows/android-startup.yml` is an Android startup diagnostic (manual dispatch, or
+pushes to `fix/android-launch-crash`), not a gate.

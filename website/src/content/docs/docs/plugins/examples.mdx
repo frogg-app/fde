@@ -1,0 +1,175 @@
+---
+title: Plugin examples
+description: The example plugins in the FDE repository, what each one demonstrates, and how to install them.
+sidebar:
+  order: 3
+---
+
+The FDE repository ships five example plugins under
+[`examples/plugins`](https://github.com/frogg-app/fde/tree/main/examples/plugins). They have no
+`package.json`: the daemon supplies `@fde/plugin`, `react`, `react-native`, `@tanstack/react-query`
+and `zod`, so they install as-is. Inside the repository they typecheck with
+`npm run typecheck --workspace=@fde/plugin`.
+
+| Directory | Plugin ID | Demonstrates |
+| --------- | --------- | ------------ |
+| `local-plugin` | `local-example` | RPC, workspace panel, Command Center item, composer pills |
+| `linear` | `linear` | Composer attachment source backed by a vendor API |
+| `inline-thinking` | `inline-thinking` | Timeline transformer and renderer for streaming text |
+| `timeline-items` | `pi-tasks-timeline` | Replacing a tool call with a custom card |
+| `catppuccin` | `catppuccin` | Theme |
+
+## Install an example
+
+Enable plugins on the host first (see [the guide](/docs/plugins/#enable-plugins-on-a-host)).
+
+From a local checkout, on the daemon host:
+
+```bash
+fde plugin install /path/to/fde/examples/plugins/catppuccin
+fde plugin ls
+```
+
+From Git, without a checkout, using the subdirectory suffix:
+
+```bash
+fde plugin add frogg-app/fde:examples/plugins/catppuccin
+```
+
+This clones the whole FDE repository into `$FDE_HOME/plugins/catppuccin/`. Remove an example with
+`fde plugin remove <id>`.
+
+## local-plugin
+
+ID `local-example`. The most complete example. It wires one RPC and three client contributions,
+with the split into `*.client.tsx`, `*.server.ts` and `*.shared.ts`.
+
+- `increment.shared.ts` defines the `increment` RPC contract.
+- `increment.server.ts` implements it in the daemon subprocess.
+- `main.client.tsx` holds a workspace panel that calls the RPC through TanStack Query, and a
+  client-side entry that adds an **Open plugin counter** pill to every agent's composer.
+
+```ts title="examples/plugins/local-plugin/index.ts"
+export default function contribute(plugin: PluginContext) {
+  plugin.handle(incrementRpc, increment);
+  plugin.addWorkspacePanel({
+    id: "counter",
+    title: "Plugin counter",
+    icon: "Blocks",
+    context: "workspace",
+    locations: ["workspace", "explorer"],
+    Component: ExamplePanel,
+  });
+  plugin.addCommandCenterItem({
+    id: "open-counter",
+    title: "Open plugin counter",
+    icon: "Blocks",
+    context: "workspace",
+    onSelect({ openPanel }) {
+      openPanel("counter");
+    },
+  });
+  plugin.addClientSide(contributeClient);
+  return () => {};
+}
+```
+
+Open a workspace, then run **Open plugin counter** from the Command Center. Each button press calls
+the daemon and shows `handledBy: "plugin subprocess"`.
+
+## linear
+
+ID `linear`. Adds **Linear issue** to the composer's attachment menu. Searching by identifier
+(`ENG-123`) fetches that issue; any other text searches titles and returns up to 20 issues. The
+selected issue is attached as a text snapshot with its status, priority, assignee, project,
+labels and description.
+
+```ts title="examples/plugins/linear/issues.server.ts"
+export async function searchIssues({
+  query,
+}: ZodOutput<typeof searchIssuesRpc.input>): Promise<PluginAttachmentSearchPayload> {
+  const linear = createLinearIssueSearch({ apiKey: process.env.LINEAR_API_KEY ?? "" });
+  return linear.search(query);
+}
+```
+
+The API key is read in the daemon subprocess and never reaches the app. Set `LINEAR_API_KEY` in
+the daemon's environment before starting it; without it, searches fail with
+`Set LINEAR_API_KEY in the daemon environment`. The contract and source definition live in
+`issues.shared.ts`, and the example defines its own item schema rather than importing
+`PluginAttachmentItemSchema`.
+
+## inline-thinking
+
+ID `inline-thinking`. Replaces every `reasoning` item with plain muted text, including while it
+streams.
+
+```ts title="examples/plugins/inline-thinking/index.ts"
+plugin.addTimelineTransformer({
+  id: "inline-thinking",
+  query: { itemType: "reasoning" },
+  transform: ({ item, phase }) => ({
+    items: [{ type: "plugin", kind: "inline-thinking", version: 1, data: { text: item.text, phase } }],
+  }),
+});
+```
+
+```tsx title="examples/plugins/inline-thinking/thinking.client.tsx"
+export function InlineThinking({ item, theme }: PluginTimelineItemProps<InlineThinkingData>) {
+  const text = useRevealedText(item.data.text, item.data.phase);
+  const style = useMemo(() => ({ color: theme.colors.foregroundMuted }), [theme.colors.foregroundMuted]);
+  return <Text style={style}>{text}</Text>;
+}
+```
+
+`useRevealedText` from `@fde/plugin/react-native` paces text that arrives in chunks.
+
+## timeline-items
+
+ID `pi-tasks-timeline`. Replaces the `todo` tool call from Pi agents with a task card showing
+progress and per-task status. It recognises two result shapes (`details.tasks` with `subject` and
+`status`, and `details.todos` with `text` and `done`) and keeps the original item for anything else.
+
+```ts title="examples/plugins/timeline-items/pi-tasks.ts"
+export const transformPiTodoToolCall: ToolCallTransformer = ({ item }) => {
+  if (item.name !== "todo" || item.detail.type !== "unknown") {
+    return;
+  }
+  const result = item.detail.output;
+  if (!result || typeof result !== "object" || Array.isArray(result)) return;
+  const details = Reflect.get(result, "details");
+  // ...parse details, then return { items: [{ type: "plugin", kind: "pi-task-list", version: 1, data: { tasks } }] }
+};
+```
+
+The transformer is plain TypeScript in `pi-tasks.ts`, covered by `pi-tasks.test.ts`; the card is in
+`pi-tasks.client.tsx`. The match is on the tool name and result shape, not the provider, so any
+`todo` tool call with one of these shapes is replaced.
+
+## catppuccin
+
+ID `catppuccin`. The smallest plugin: one dark theme, Catppuccin Mocha. After install it appears
+under **Settings → Appearance**.
+
+```ts title="examples/plugins/catppuccin/index.ts"
+export default function contribute(plugin: PluginContext) {
+  plugin.addTheme({
+    id: "mocha",
+    name: "Catppuccin Mocha",
+    appearance: "dark",
+    colors: {
+      background: "#1e1e2e",
+      foreground: "#cdd6f4",
+      raised: "#313244",
+      control: "#45475a",
+      border: "#45475a",
+      accent: "#cba6f7",
+      mutedForeground: "#a6adc8",
+      ring: "#6c7086",
+    },
+  });
+  return () => {};
+}
+```
+
+It has no server code, but the daemon still starts a subprocess for it, as for every plugin.

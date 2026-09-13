@@ -19,8 +19,7 @@ const MIN_SEGMENT_CHARS = 40;
  * response time; everything after streams while they are already listening. So
  * the opening clause is cut as early as a natural boundary allows and the rest
  * of the turn keeps the longer minimum, which reads better. Splitting the whole
- * reply this finely would make the prosody choppy. See
- * docs/companion-voice-design.md.
+ * reply this finely would make the prosody choppy.
  */
 const FIRST_SEGMENT_MIN_CHARS = 16;
 

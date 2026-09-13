@@ -1,0 +1,127 @@
+---
+/** One-line install command with a copy button and visible confirmation. */
+interface Props {
+  command?: string;
+  label?: string;
+}
+const { command = "curl -fsSL https://frogg.app/install.sh | bash", label = "Copy install command" } = Astro.props;
+---
+
+<div class="install">
+  <span class="prompt" aria-hidden="true">$</span>
+  <code>{command}</code>
+  <button type="button" class="copy" data-copy={command} aria-label={label}>
+    <svg class="i-copy" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"
+      ><rect x="8" y="8" width="12" height="12" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"></rect><path
+        d="M16 8V6.5A2.5 2.5 0 0 0 13.5 4h-7A2.5 2.5 0 0 0 4 6.5v7A2.5 2.5 0 0 0 6.5 16H8"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"></path></svg
+    >
+    <svg class="i-check" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"
+      ><path d="m5 12.5 4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path></svg
+    >
+    <span class="label">Copy</span>
+  </button>
+  <span class="sr-status" role="status" aria-live="polite"></span>
+</div>
+
+<script>
+  import { copyWithFeedback } from "../docs/copy";
+  document.addEventListener("click", (event) => {
+    const button = (event.target as Element | null)?.closest<HTMLButtonElement>(".install .copy");
+    if (!button) return;
+    const status = button.parentElement?.querySelector<HTMLElement>(".sr-status") ?? null;
+    void copyWithFeedback(button, button.dataset.copy ?? "", status);
+  });
+</script>
+
+<style>
+  .install {
+    min-width: 0;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    max-width: 100%;
+    padding: 0.35rem 0.35rem 0.35rem 1rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--fde-bg-elevated) 85%, transparent);
+    border: 1px solid var(--fde-border-strong);
+    box-shadow: var(--fde-shadow);
+    backdrop-filter: blur(8px);
+    font-family: var(--fde-font-mono);
+    font-size: 0.9rem;
+  }
+  .prompt {
+    color: var(--fde-accent);
+    user-select: none;
+  }
+  code {
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+    color: var(--fde-text);
+    font-family: inherit;
+  }
+  code::-webkit-scrollbar {
+    display: none;
+  }
+  .copy {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 2.35rem;
+    padding: 0 0.95rem;
+    border-radius: 999px;
+    border: 0;
+    background: var(--fde-accent-soft);
+    color: var(--fde-text);
+    font: 600 0.85rem var(--fde-font);
+    cursor: pointer;
+    transition:
+      background-color var(--fde-fast) var(--fde-ease),
+      color var(--fde-fast) var(--fde-ease),
+      transform var(--fde-fast) var(--fde-ease);
+  }
+  .copy:hover {
+    background: var(--fde-accent);
+    color: var(--fde-accent-fg);
+  }
+  .copy:active {
+    transform: scale(0.94);
+  }
+  .i-check {
+    display: none;
+  }
+  .copy[data-state="copied"] {
+    background: var(--fde-success);
+    color: #fff;
+  }
+  .copy[data-state="copied"] .i-copy {
+    display: none;
+  }
+  .copy[data-state="copied"] .i-check {
+    display: block;
+    animation: pop 320ms var(--fde-ease-spring);
+  }
+  .copy[data-state="failed"] {
+    background: var(--fde-danger);
+    color: #fff;
+  }
+  @keyframes pop {
+    from {
+      transform: scale(0.3);
+    }
+  }
+  .sr-status {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+</style>

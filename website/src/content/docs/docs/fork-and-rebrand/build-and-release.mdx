@@ -1,0 +1,269 @@
+---
+title: Build and release
+description: Select your brand in GitHub Actions, configure signing and publishing secrets, and ship releases that update from your fork.
+sidebar:
+  order: 5
+---
+
+import { Steps } from "@/components/docs";
+
+Your fork already contains the workflows. You do not edit them to change the product.
+You set **repository variables** to select the brand and **secrets** to unlock signing
+and publishing. Every build job runs `.github/actions/select-brand` first, so the whole
+pipeline builds your brand.
+
+## The workflows
+
+| Workflow                | File                                     | Trigger                                    | What it produces                                                                      |
+| ----------------------- | ---------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------- |
+| **Release**             | `.github/workflows/release.yml`          | Push a `v*` tag, or run manually with a tag | A GitHub release: desktop packages, daemon bundles, Android APK, updater metadata, install scripts, optional Docker image |
+| **Build selected**      | `.github/workflows/build-selected.yml`   | Manual (`target`: all, windows, daemon, android); also called by CI on pushes to `main` | Workflow artifacts (not a release): Windows x64 client, Linux x64 daemon, Android arm64 debug-signed APK |
+| **CI**                  | `.github/workflows/ci.yml`               | Pull requests, pushes to `main`            | Format, lint, typecheck, unit tests; calls Build selected on `main`                   |
+| **Branding acceptance** | `.github/workflows/branding.yml`         | PRs touching branding, deploy, desktop or workflows; manual | Builds `brands/fde` and `brands/example` on Linux, Windows, macOS, Android, iOS simulator and Nix; checks your selected brand builds |
+| **Electron desktop**    | `.github/workflows/electron-desktop.yml` | PRs touching desktop, UI or packages; manual | Windows x64 Electron build as an artifact                                           |
+
+Release and Build selected honour the brand variables below. Without them they build
+stock FDE. The checks in `ci.yml` are brand-independent.
+
+## Select the brand
+
+Set repository variables in **Settings → Secrets and variables → Actions → Variables**,
+or with the GitHub CLI.
+
+| Variable               | Meaning                                                               |
+| ---------------------- | --------------------------------------------------------------------- |
+| `FDE_BRAND_DIR`        | Brand directory committed in the fork, for example `brands/acme`     |
+| `FDE_BRAND_REPOSITORY` | External branding repository `owner/name` (used when `FDE_BRAND_DIR` is empty) |
+| `FDE_BRAND_REVISION`   | Full 40-character commit SHA of the external repository (required with it) |
+| `FDE_BRAND_SUBDIR`     | Directory inside the external repository (default: its root)         |
+
+### Brand in the fork
+
+```sh
+gh variable set FDE_BRAND_DIR --body brands/acme --repo acme-corp/fde
+```
+
+### External brand repository
+
+Keep artwork and `brand.json` in their own repository and pin a commit:
+
+```sh
+gh variable set FDE_BRAND_REPOSITORY --body acme-corp/studio-brand --repo acme-corp/fde
+gh variable set FDE_BRAND_REVISION --body 4b1e9c0d2f7a6e5b3c8d9e0f1a2b3c4d5e6f7a8b --repo acme-corp/fde
+gh variable set FDE_BRAND_SUBDIR --body brand --repo acme-corp/fde
+```
+
+For a private branding repository, add a fine-grained token with read access to it as
+the `BRANDING_READ_TOKEN` secret. The action refuses a branch name or short SHA: bump
+`FDE_BRAND_REVISION` deliberately when the brand changes.
+
+The selection order inside a job is: an explicit `FDE_BRAND_DIR` in the job
+environment (used by the branding matrix), then the external repository, then the
+`FDE_BRAND_DIR` variable, then `brands/fde`.
+
+## Secrets and variables
+
+Everything is optional. Missing secrets never fail a release; they turn the feature
+off and the workflow says so.
+
+### Desktop
+
+| Platform | Secrets                                                                                   | Without them                                              |
+| -------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| Windows  | `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `TRUSTED_SIGNING_ENDPOINT`, `TRUSTED_SIGNING_ACCOUNT`, `TRUSTED_SIGNING_PROFILE` (Azure Trusted Signing) | Unsigned NSIS installer and zip; SmartScreen warns users |
+| macOS    | none supported by the workflow                                                            | Unsigned, not notarized (`notarize: false`, `CSC_IDENTITY_AUTO_DISCOVERY=false`); Gatekeeper blocks first launch until the user allows it |
+| Linux    | none                                                                                      | AppImage, deb and tar.gz are unsigned by design           |
+
+The Azure service principal needs the **Trusted Signing Certificate Profile Signer**
+role. The Windows publisher name comes from `publisher` in your brand.
+
+:::caution[macOS signing is not wired up]
+The release workflow has no Apple certificate or notarization step. If you need signed
+macOS builds, add them in your fork (for example electron-builder's `CSC_LINK`,
+`CSC_KEY_PASSWORD`, `APPLE_ID` flow) and expect to maintain that change across upstream
+merges.
+:::
+
+### Android
+
+| Secret                          | Required for signing | Notes                                              |
+| ------------------------------- | -------------------- | -------------------------------------------------- |
+| `FDE_ANDROID_KEYSTORE_BASE64`   | yes                  | `base64 -w0 release.keystore`                      |
+| `FDE_ANDROID_KEYSTORE_PASSWORD` | yes                  | Keystore password                                  |
+| `FDE_ANDROID_KEY_ALIAS`         | no                   | Defaults to `fde`                                  |
+| `FDE_ANDROID_KEY_PASSWORD`      | no                   | Key password, if different                         |
+
+Without the first two, the APK is signed with the public Expo/React Native debug key
+and published as `<prefix>-<version>-android-arm64-v8a-unsigned.apk`.
+
+**Set the keystore before your first release.** Android identifies an app by its
+signing key. Users who installed a debug-signed APK cannot update to a release-signed
+one without uninstalling and losing app data. A new product has no such users yet.
+
+```sh
+keytool -genkeypair -v -keystore acme-release.keystore -alias acme \
+  -keyalg RSA -keysize 4096 -validity 10000
+gh secret set FDE_ANDROID_KEYSTORE_BASE64 --body "$(base64 -w0 acme-release.keystore)" --repo acme-corp/fde
+gh secret set FDE_ANDROID_KEYSTORE_PASSWORD --repo acme-corp/fde
+gh secret set FDE_ANDROID_KEY_ALIAS --body acme --repo acme-corp/fde
+gh secret set FDE_ANDROID_KEY_PASSWORD --repo acme-corp/fde
+```
+
+Back up the keystore outside GitHub. Losing it means you can never update the app
+again.
+
+### Docker Hub
+
+| Secret               | Plus in `brand.json`             |
+| -------------------- | -------------------------------- |
+| `DOCKERHUB_USERNAME` | `distribution.dockerImage`, e.g. `acme/studio` |
+| `DOCKERHUB_TOKEN`    |                                  |
+
+With both secrets set, the release builds `deploy/docker/base/Dockerfile` for
+`linux/amd64` and pushes `<image>:<version>`. Stable versions also move `<major>.<minor>`,
+`<major>` and `latest`. An existing version tag is never overwritten. If the secrets are
+set but `dockerImage` is not, the Docker job fails with
+`Configure distribution.dockerImage to publish containers`.
+
+### Not in the workflows
+
+These run from a workstation or your own automation, not from the shipped workflows:
+
+| Task                    | Command                                                    | Credentials                                            |
+| ----------------------- | ---------------------------------------------------------- | ------------------------------------------------------ |
+| EAS mobile builds       | `npm run brand:eas -- build --platform android --profile production-apk` | `EXPO_TOKEN` or `eas login`; `distribution.expoProjectId` |
+| iOS                     | `npm run brand:eas -- build --platform ios`                | Apple developer account via EAS; `distribution.iosStoreId` for submit |
+| Web app on Cloudflare Pages | `FDE_WEB_DEPLOY_PROJECT=acme-studio npm run deploy:web --workspace=@fde/app` | Wrangler login or `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` |
+| Pairing page image      | `scripts/release/build-pair-page-docker.sh --push`         | `docker login`; `distribution.pairingImage`            |
+
+See [mobile, Docker, Nix and hosted services](/docs/fork-and-rebrand/other-distributions/).
+
+## Cut a release
+
+<Steps>
+
+1. **Merge what you want to ship into `main`** and make sure CI is green.
+
+2. **Add a changelog entry.** The release notes are the `## <version>` section of
+   `CHANGELOG.md`. Without one, the release says only that no entry exists.
+
+   ```markdown title="CHANGELOG.md"
+   ## 0.6.20 — 2026-09-20
+
+   - First Acme Studio release, based on FDE 0.6.19.
+   ```
+
+3. **Bump the version and push the tag.** The root `package.json` version is the
+   product version; the tag must match it exactly.
+
+   ```sh
+   npm run version:all:patch     # npm version across workspaces, commits "chore(release): cut 0.6.20"
+   npm run release:push          # creates annotated tag v0.6.20 on HEAD, pushes branch and tag to origin
+   ```
+
+   Use `version:all:minor` or `version:all:major` for larger bumps, and
+   `version:all:beta:patch` (and friends) for a prerelease such as `0.6.20-beta.1`.
+   `npm run release:patch` runs the full `release:check` first and then both steps.
+
+4. **Watch the run.**
+
+   ```sh
+   gh run watch --repo acme-corp/fde "$(gh run list --repo acme-corp/fde --workflow release.yml --limit 1 --json databaseId --jq '.[0].databaseId')"
+   ```
+
+5. **Check the draft.** The release is created as a draft. The `publish` job clears the
+   draft flag only when desktop, daemon bundles, Android and updater metadata all
+   succeed (Docker may be skipped). A failed platform leaves a draft you can fix and
+   re-run.
+
+</Steps>
+
+### Run the release manually
+
+A tag push always builds everything. A manual run builds an existing tag, and defaults
+to a smaller set: Windows x64 desktop, Linux x64 and Windows x64 daemon bundles, and the
+Android APK. Pick `platforms=all` for the full matrix.
+
+There is no screenshot of GitHub's dispatch form here; these are the same inputs:
+
+```text
+Run workflow: Release
+  tag        (required)  Existing tag to build and publish (for example v0.1.5)
+  only       all | android          default: all
+  platforms  default | all          default: default
+```
+
+```sh
+gh workflow run release.yml --repo acme-corp/fde -f tag=v0.6.20 -f platforms=all
+gh workflow run release.yml --repo acme-corp/fde -f tag=v0.6.20 -f only=android
+gh workflow run build-selected.yml --repo acme-corp/fde -f target=windows
+```
+
+:::note
+A manual run with `platforms=default` does not build the updater metadata or publish;
+those jobs require the full matrix. Use it for test builds.
+:::
+
+## What a release contains
+
+For Acme, `artifactPrefix` is `acme` and the brand id is `acme`:
+
+| Asset                                                   | Built by           |
+| ------------------------------------------------------- | ------------------ |
+| `acme-0.6.20-win-x64.exe`, `.exe.blockmap`, `acme-0.6.20-win-x64.zip`, `acme-0.6.20-win-x64-installer.zip` | desktop (Windows)  |
+| `acme-0.6.20-linux-x86_64.AppImage`, `acme-0.6.20-linux-amd64.deb`, `acme-0.6.20-linux-x64.tar.gz` | desktop (Linux) |
+| `acme-0.6.20-mac-arm64.dmg`, `acme-0.6.20-mac-x64.dmg`, `.zip` and `.blockmap` files | desktop (macOS) |
+| `acme-daemon-0.6.20-<linux\|darwin\|win>-<x64\|arm64>.tar.gz` or `.zip`, each with `.sha256` | daemon bundles (6 targets) |
+| `acme-0.6.20-android-arm64-v8a.apk` (or `-unsigned.apk`) and `.sha256` | android |
+| `electron-latest.yml`, `electron-latest-linux.yml`, `electron-latest-mac.yml` (`electron-beta*` for prereleases), `release.json`, `SHA256SUMS-desktop` | updater-manifest |
+| `install.sh`, `uninstall.sh`, `install-docker.sh`, `uninstall-docker.sh` | meta (generated for your brand) |
+| `acme/studio:0.6.20` on Docker Hub                      | docker (optional)  |
+
+:::note
+Upstream FDE publishes daemon bundles under an `FDE-<version>-<os>-<arch>-daemon` name
+as well, for compatibility with its older clients. Custom brands use the
+`<id>-daemon-<version>-<platform>-<arch>` form only. Confirm names against your first
+real release; the naming contract lives in `packages/branding/src/artifact-contract.mjs`.
+:::
+
+## How updates reach your users
+
+Everything keys off `distribution.repository` in your brand.
+
+- **Desktop app.** electron-updater reads
+  `https://github.com/<repository>/releases/latest/download/` on the stable channel,
+  then pins to the version named in `release.json`. The beta channel picks the newest
+  non-draft release. Users choose the channel in the app. Updates download in the
+  background and install when the app quits; AppImage builds do not install on quit. Set
+  `FDE_ELECTRON_UPDATE_URL` to test against another HTTPS feed.
+- **Daemon.** `install.sh` from your release downloads your daemon bundles. On the host,
+  `<cliName> update` (Acme: `acme update`) checks
+  `https://api.github.com/repos/<repository>/releases`, verifies the `.sha256`, swaps
+  versions and rolls back if the new daemon fails its health check.
+- **No repository, no updates.** Without `distribution.repository` the update mode is
+  `disabled`: the desktop reports updates as disabled and the daemon refuses to self-update. A custom
+  build never falls back to FDE's releases.
+
+Only a semver prerelease suffix (`0.6.20-beta.1`) marks a GitHub prerelease. Stable
+clients ignore prereleases.
+
+Users install the daemon from your release:
+
+```sh
+curl -fsSL https://github.com/acme-corp/fde/releases/latest/download/install.sh | bash
+```
+
+`install.sh` is attached to every release. To serve it from your own domain, deploy the
+generated install worker (see [other distributions](/docs/fork-and-rebrand/other-distributions/#install-scripts-on-your-domain)).
+
+## What has been validated
+
+Be clear-eyed about coverage:
+
+- **Validated in upstream CI:** `brands/example` builds on Linux, Windows and macOS
+  desktop runners, a debug Android APK, an unsigned iOS simulator build, the daemon
+  bundle, installer tests, runtime isolation between FDE and Acme daemons, and Nix.
+- **Not validated upstream:** a full tagged `release.yml` run and a real installed update
+  under a custom brand. Upstream publishes only the FDE brand. Run your first release as
+  a beta tag, install it, then ship a second beta and confirm the update path before you
+  announce a stable release.

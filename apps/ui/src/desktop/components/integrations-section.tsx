@@ -12,7 +12,7 @@ import { settingsStyles } from "@/styles/settings";
 import { openExternalUrl } from "@/utils/open-external-url";
 import { shouldUseDesktopDaemon } from "@/desktop/daemon/desktop-daemon";
 
-const CLI_DOCS_URL = brandDocsUrl("cli");
+const CLI_DOCS_URL = brandDocsUrl("desktop-mobile-cli/cli/");
 
 export function IntegrationsSection() {
   const { t } = useTranslation();

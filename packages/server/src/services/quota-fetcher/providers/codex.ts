@@ -99,7 +99,7 @@ export class CodexQuotaProvider implements ProviderUsageFetcher {
     const resp = await this.callCodexApi(accessToken, account_id);
 
     if (resp === "NEEDS_AUTH") {
-      // Read-only on credentials; the Codex CLI owns refresh. See docs/providers.md.
+      // Read-only on credentials; the Codex CLI owns refresh. See agents-and-providers/providers.mdx.
       return unavailableUsage(this);
     }
 

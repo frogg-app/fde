@@ -1,0 +1,182 @@
+---
+title: Coding standards
+description: Formatting, lint and type rules, licensing, product-name and i18n rules, protocol change rules, and the FDE namespace.
+sidebar:
+  order: 5
+---
+
+This page lists the rules the repository enforces with tools or tests, plus the rules its agent
+skills and `AGENTS.md` document. When a rule has a check, the check wins over this page.
+
+## Formatting
+
+[oxfmt](https://oxc.rs) formats `css`, `js`, `json`, `jsonc`, `jsx`, `md`, `ts`, `tsx`, `yaml`
+and `yml` files. Configuration is in `.oxfmtrc.json`: 2-space indent, 100-column print width,
+double quotes, trailing commas, semicolons. Generated validators and protocol schema files are
+ignored.
+
+```bash
+npm run format        # write
+npm run format:check  # check, as CI does
+```
+
+## Lint
+
+oxlint runs with `.oxlintrc.json`. The `correctness`, `suspicious` and `perf` categories are
+errors, plus explicit rules. The ones you are most likely to hit:
+
+| Rule                                         | Effect                                                   |
+| -------------------------------------------- | -------------------------------------------------------- |
+| `typescript/no-explicit-any`                 | No `any`                                                 |
+| `typescript/consistent-type-definitions`     | `interface` over `type` for object shapes                |
+| `typescript/no-unnecessary-type-assertion`   | No redundant `as` casts                                  |
+| `no-nested-ternary`, `no-unneeded-ternary`   | No nested or pointless ternaries                         |
+| `complexity` (20), `max-depth` (4), `max-nested-callbacks` (3) | Keep functions shallow                 |
+| `no-shadow`                                  | No shadowed variables                                    |
+| `react/jsx-max-depth` (6)                    | Limit JSX nesting                                        |
+| `react/no-array-index-key`                   | Stable keys, not array indexes                           |
+| `react-hooks/exhaustive-deps`                | Complete hook dependency arrays                          |
+| `react-perf/jsx-no-new-{object,function,array}-as-prop` | No fresh literals as props (arrays allowed in `apps/ui/src`) |
+| `import/no-unassigned-import`                | Side-effect imports only from an allowlist               |
+
+In `apps/ui/src`, `no-restricted-imports` bans:
+
+- `TextInput` from `react-native`. Use `EditingTextInput` from `@/components/ui/text-input`.
+- `useQuery`, `useInfiniteQuery` and `useQueries` from `@tanstack/react-query`. Use
+  `useReplicaQuery` or `useFetchQuery` from `@/data/query`.
+- `useUnistyles` from `react-native-unistyles`.
+
+The config lists grandfathered files for the last two bans. Files may leave those lists; do not
+add files to them.
+
+```bash
+npm run lint
+npm run lint:fix
+```
+
+## TypeScript
+
+- Workspace tsconfigs enable `strict`, directly or through `tsconfig.base.json`.
+- Most workspaces typecheck with `tsgo --noEmit` (`@typescript/native-preview`); builds use `tsc`.
+- Run `npm run typecheck` before merging. See
+  [Development setup](/docs/contributing/development-setup/#typecheck-gotchas) for build-order
+  failures.
+- `npm run knip` reports unused files, dependencies and exports. CI does not run it.
+
+## File size
+
+No tool limits file length. The maintainers' guideline is one responsibility per file: aim for
+under 200 implementation lines, accept up to 500 for unified complex logic, and split or justify
+anything longer. Split by responsibility, not by pulling out single functions.
+
+## Shell scripts
+
+Tracked Bash scripts start with `#!/usr/bin/env bash`. Worktree lifecycle commands in `fde.json`
+must also run under PowerShell on Windows, so put portable logic in a Node script
+(`node ./scripts/<area>/<name>.mjs`), as `scripts/dev/seed-worktree-dev-state.mjs` does.
+
+## Licensing
+
+FDE is Apache-2.0 and a fork of Paseo.
+
+- Keep `LICENSE` and `NOTICE` intact, including the Paseo attribution in `NOTICE`.
+- Preserve any existing license or copyright header when you edit or move a file.
+- Keep upstream names only in attribution and licensing, never in configuration, environment
+  variables or runtime paths.
+
+## No hard-coded product names
+
+Product identity comes from the selected brand, so a fork can rebuild without code changes.
+`scripts/ci/branding-contribution.mjs` enforces this in `branding.yml`. It compares your branch
+with `origin/main` (override with `BRANDING_BASE_REF`) and fails when:
+
+- a new string literal in `apps/` or `packages/` source matches `FDE`, `Fde` or `frogg.app` and
+  is not in `scripts/ci/branding-literals.json`. Tests, `generated/` paths and
+  `packages/branding/` are skipped. Literals that already existed in the file are allowed.
+- any `.generated/`, `packages/branding/src/generated/` or `.branding-input/` file is tracked.
+- `brands/fde/` changes without the `branding:official` pull request label.
+
+Instead of a literal:
+
+```ts
+import { brand } from "@fde/branding";
+
+const title = `${brand.name} settings`;
+```
+
+In UI copy, use the interpolation variables that `apps/ui/src/i18n/i18next.ts` injects:
+`{{brandName}}`, `{{brandFullName}}` and `{{cliName}}`.
+
+Add an entry to `branding-literals.json` only for an exact compatibility or attribution string,
+with a `reason`. Run the check locally with `node scripts/ci/branding-contribution.mjs`.
+
+## UI copy and i18n
+
+The `fde-i18n` skill (`skills/fde-i18n/SKILL.md`) is the full procedure. The rules:
+
+- Client copy lives in `apps/ui/src/i18n/resources/`: `en.ts` plus `ar`, `es`, `fr`, `ja`, `ko`,
+  `pt-BR`, `ru` and `zh-CN`. Keys are nested by product surface.
+- Every locale is typed as `TranslationResources`, derived from `en.ts`. Add a key to all nine
+  locales in the same change, translated. Do not paste English.
+- Translate client-owned copy only. Agent output, daemon errors, paths, provider, model and
+  command names, and user text stay as values interpolated into a translated wrapper.
+- Components and hooks use `useTranslation()`. Non-React modules call `i18n.t(...)`.
+- Keys that differ by forge use i18next context: a base key plus an `_mr` sibling. Indeclinable
+  tokens such as `PR`/`MR` are interpolated instead.
+- `plugin-settings.ts` has its own per-locale blocks; update all nine.
+
+`apps/ui/src/i18n/resources.test.ts` enforces key parity, matching `{{placeholder}}` names,
+under 25% of strings identical to English per locale, and a blocklist of hard-coded English
+phrases. It also pins some existing strings, so rewording one means updating its assertion.
+
+```bash
+npx vitest run apps/ui/src/i18n/resources.test.ts --bail=1
+npm run typecheck --workspace=@fde/app
+```
+
+## Protocol and RPC changes
+
+The `fde-rpc` skill (`skills/fde-rpc/SKILL.md`) lists the ordered file changes for a new
+session RPC. The rules:
+
+- Names are dotted with the direction last and a verb operation:
+  `checkout.forge.set_auto_merge.request` and `.response`. No new flat snake_case names.
+- Requests are flat with `requestId` at the top level. Responses put everything, including
+  `requestId` and a nullable `error`, under `payload`.
+- The response type is the request type with `.request` replaced by `.response`.
+- Stay compatible with older clients: new fields are `.optional()`. Never make a field
+  required, remove it or narrow its type.
+- Wire schemas are pure. No `.transform()`, `.catch()` or `.preprocess()`. Use
+  `z.discriminatedUnion` when branches share a literal tag.
+- Add both an inbound and an outbound row in
+  `packages/server/src/server/authorization/operation-permissions.ts`. The outbound record is
+  exhaustive; `rpc_error` is the only `null` row.
+- Gate app features on a `server_info.features` flag, checked in one place. Advertise a flag
+  only when the running daemon can perform the action.
+- Tag every compatibility shim with `// COMPAT(<name>): added in vX.Y.Z, remove after <date>`.
+
+Verify with:
+
+```bash
+npm run build --workspace=@fde/protocol
+npm run typecheck:server
+npx vitest run packages/server/src/server/authorization/index.test.ts --bail=1
+```
+
+A `TS2353` error on your new key in `operation-permissions.ts` usually means a stale protocol
+build. Run `npm run build:client` before you change the entry.
+
+## FDE namespace
+
+FDE uses its own names on the wire, in the environment, in storage and in deep links. Do not
+reintroduce upstream names.
+
+- Environment variables use the brand's `envPrefix`: `FDE_HOME`, `FDE_LISTEN`, and so on. Read
+  them through `brandEnv` from `@fde/branding/identity` in code that must work for other brands.
+- The deep-link scheme is the brand `scheme` (`fde://` for the official brand).
+- The state directory is the brand `homeDir` (`~/.fde`), and project config is `fde.json` in
+  every brand.
+- Wire, environment, storage and plugin names changed in the 0.6 namespace migration. A
+  breaking change to any of them needs coordinated daemon and client upgrades.
+
+See [Environment variables](/docs/reference/environment-variables/) for the full list.

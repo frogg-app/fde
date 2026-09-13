@@ -1,0 +1,83 @@
+---
+title: Troubleshooting
+description: Diagnose daemon, connection, provider, agent, voice and update problems.
+sidebar:
+  order: 6
+---
+
+## Start with facts
+
+Work out **which daemon** has the problem and **how the client reaches it** before changing
+anything. A local `fde status` describes the daemon for that CLI's `FDE_HOME`, which may
+not be the host you are looking at in the app.
+
+```sh
+fde status                     # home, listen, PID, log path, versions, providers
+fde auth claim-status          # pairing, password and LAN trust
+fde provider diagnostic claude # binary, version, auth for one provider
+fde update --check             # what version is available
+tail -n 100 ~/.fde/daemon.log
+```
+
+In the app, **Settings → About** shows the app version; **host settings → Overview**
+shows the daemon's version and update state; **Settings → Diagnostics** collects a report.
+
+## Daemon
+
+| Symptom | Cause and fix |
+| ------- | ------------- |
+| `Another FDE daemon is already running (PID n)` | A daemon already uses this `FDE_HOME`. `fde stop`, or use another home |
+| `Daemon failed to start in background` | Read the log lines printed after it. Common: port in use, invalid config |
+| `[Config] Invalid config in ~/.fde/config.json` | A key is misspelt or has the wrong type. The message names the path. See [configuration](/docs/reference/configuration/) |
+| Log: `Relay is enabled but no relay endpoint is configured` | Relay is on with no endpoint, so the daemon runs without relay and pairing offers are direct only. Set the endpoint in host settings, **Pair devices**, or `daemon.relay.endpoint`, or turn relay off |
+| Service stops when you log out (Linux) | `sudo loginctl enable-linger $USER` |
+| Changes to `config.json` ignored | `fde reload`; check its output for paths that need `fde restart` or are pinned by env vars |
+
+## Connections
+
+| Symptom | Cause and fix |
+| ------- | ------------- |
+| `Cannot reach the daemon at <host>` (CLI) | Not running, wrong port, or firewall. `fde status` on the host; pass `--host` or set `FDE_HOST` |
+| `Daemon is reachable ... but requires a password` | Set `FDE_PASSWORD` for the CLI, or enter it in the app |
+| `This app requires daemon 0.6.0 or later` | Update the daemon, then restart its service. If you already updated, the old process is still running |
+| `403 Invalid Host header` | You used a hostname the daemon does not allow. Add it to `daemon.hostnames` or `FDE_HOSTNAMES` |
+| Browser shows a pairing page | Your address is not loopback or private (for example Tailscale's `100.x`). Pair the device or set a password |
+| TLS error in Direct connection | Turn off **Use SSL** unless a TLS proxy fronts the daemon |
+| LAN scan finds nothing | Scans cover your local subnets only. Enter the address manually; check the daemon listens on `0.0.0.0` |
+| Pairing link fails on a phone | The phone cannot reach any address in the offer. Join the same network or VPN, or set `FDE_PRIMARY_LAN_IP` |
+| Remote SSH `refused your SSH keys` | Enter the SSH password, or fix key auth so `ssh host` works in a terminal |
+
+## Providers and agents
+
+| Symptom | Cause and fix |
+| ------- | ------------- |
+| Provider `not found` | The CLI is not on the daemon's `PATH`. Install it for the daemon's user, re-run the installer or `fde install-service`, `fde restart`. Or set `command` in `agents.providers` |
+| Provider found but agents fail to start | Not signed in as the daemon's user. `fde provider diagnostic <id>` shows auth status |
+| Model list empty or stale | Catalog refresh timed out. Raise `agents.catalogRefreshTimeoutMs`, then reload |
+| Agent waits forever | It is waiting for a permission. `fde permissions ls` |
+| New skills or MCP servers not seen | `fde agent reload <id>` restarts the provider process |
+| `Caller agent ... not found` from the CLI | The shell runs inside an agent (`FDE_AGENT_ID` is set) and the target daemon does not know that agent. Unset `FDE_AGENT_ID` |
+
+## Voice and Companion
+
+| Symptom | Cause and fix |
+| ------- | ------------- |
+| Dictation or voice alerts unavailable | Voice is off on the daemon: the local speech runtime is unavailable, or `features.voice.enabled` is `false`. Check the daemon log |
+| First use is slow | Local speech models are downloading to `~/.fde/models/local-speech` |
+| `Sign in to Claude Code or Codex on this daemon.` | Companion needs a signed-in subscription CLI, or `features.companion.backend: "api"` with an Anthropic key |
+| `Another device is using Companion on this daemon.` | One conversation per daemon. End it on the other device |
+
+## Updates
+
+| Symptom | Cause and fix |
+| ------- | ------------- |
+| `release check failed: HTTP 403` | GitHub rate limit. Set `FDE_GITHUB_TOKEN` or sign in with `gh auth login` |
+| `cannot self-update: ...` | Not an `install.sh` install (Docker, Nix, dev checkout). See [updates](/docs/self-hosting/updates/#not-self-updatable) |
+| `update to X failed and was rolled back to Y` | The new version did not become healthy. Read `~/.local/share/fde/self-update.log` and the daemon log |
+| Desktop: no update found | You may be on Stable while the release is a beta, or the release lacks updater files |
+
+## Getting help
+
+Open an issue at [github.com/frogg-app/fde/issues](https://github.com/frogg-app/fde/issues)
+with `fde status --json` output (review it before posting), the relevant log lines, your
+client version and how you connect.

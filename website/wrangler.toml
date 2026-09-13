@@ -1,0 +1,51 @@
+# frogg.app: the FDE landing page and docs, served as Workers static assets.
+#
+# Build, then deploy from website/:
+#   npm run build
+#   npx wrangler deploy                      # preview on <name>.<account>.workers.dev
+#   npx wrangler deploy --env production     # frogg.app (see below)
+#
+# Pure static assets: no Worker script, bindings, KV or secrets.
+
+name = "fde-website"
+compatibility_date = "2025-09-01"
+workers_dev = true
+
+[assets]
+directory = "./dist"
+# Serve dist/404.html with a 404 status for unknown paths.
+not_found_handling = "404-page"
+# /docs/foo and /docs/foo/ both resolve to docs/foo/index.html (redirecting to the slash form).
+html_handling = "auto-trailing-slash"
+
+# ---------------------------------------------------------------------------
+# Going live on frogg.app (owner approval required)
+#
+# Other Workers already own specific paths on this zone and must keep them:
+#   deploy/install-worker  frogg.app/install.sh, /uninstall.sh, /install-docker.sh
+#   deploy/pair-worker     pair.frogg.app/*
+# Cloudflare picks the most specific matching route, so `frogg.app/*` below does
+# not shadow those exact-path routes. The site never generates files at those
+# paths either (scripts/check-links.mjs treats them as external).
+#
+# To go live: uncomment the routes, run `npx wrangler deploy --env production`,
+# then check https://frogg.app/ and https://frogg.app/install.sh (must still be
+# the shell script). The apex needs a proxied DNS record (e.g. AAAA 100::) for
+# the route to receive traffic if none exists.
+# ---------------------------------------------------------------------------
+[env.production]
+name = "fde-website"
+workers_dev = false
+
+[env.production.assets]
+directory = "./dist"
+not_found_handling = "404-page"
+html_handling = "auto-trailing-slash"
+
+# [[env.production.routes]]
+# pattern = "frogg.app/*"
+# zone_name = "frogg.app"
+#
+# [[env.production.routes]]
+# pattern = "www.frogg.app/*"
+# zone_name = "frogg.app"
