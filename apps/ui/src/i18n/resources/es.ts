@@ -1877,8 +1877,43 @@ export const es: TranslationResources = {
     },
   },
   companion: {
+    behavior: {
+      nextSession: "Los cambios se aplican al iniciar Companion de nuevo.",
+      verbosity: "Extensión de las respuestas",
+      brief: "Breve",
+      detailed: "Detallada",
+      updates: "Avisos de tareas por voz",
+      important: "Finalizaciones y errores",
+      completion: "Solo finalizaciones",
+      off: "Desactivados",
+      acknowledge: "Confirmar las tareas antes de trabajar",
+      permissions: "Las solicitudes de permiso se leen aunque los avisos estén desactivados.",
+      audioMode: "Modo de audio",
+      callMode: "Llamada",
+      mediaMode: "Multimedia",
+      audioModeHint:
+        "Se aplica en la próxima conversación. Llamada favorece el micrófono de los auriculares y el control de eco. Multimedia usa la ruta multimedia; se recomiendan auriculares. El micrófono Bluetooth depende del dispositivo.",
+      speechSpeed: "Velocidad de voz",
+      pause: "Pausa antes de responder",
+      quick: "Rápida (0,8 segundos)",
+      natural: "Natural (1,4 segundos)",
+      relaxed: "Pausada (2,4 segundos)",
+      interruptible: "Permitir interrumpir hablando",
+    },
     title: "Compañero",
+    setup: {
+      disabled: "Desactivado",
+      required: "Configuración necesaria",
+      ready: "Listo",
+      active: "Conversación activa",
+      unknown: "Ningún modelo de conversación seleccionado",
+      providers: "Configurar proveedor",
+      subscription:
+        "Usa la cuota de tu suscripción. Consulta el uso restante en los ajustes del servidor. No cambia automáticamente a facturación por API.",
+      api: "Este servidor usa la API. La conversación consume tokens facturados por separado.",
+    },
     status: {
+      muted: "Micrófono silenciado",
       connecting: "Conectando…",
     },
     micState: {
@@ -1888,6 +1923,10 @@ export const es: TranslationResources = {
       speaking: "Hablando",
     },
     actions: {
+      start: "Iniciar Companion",
+      minimize: "Minimizar",
+      resume: "Abrir conversación",
+
       mute: "Silenciar",
       unmute: "Activar sonido",
       stop: "Detener",
@@ -1905,24 +1944,42 @@ export const es: TranslationResources = {
       sendFailed: "No se envió tu mensaje",
     },
     reason: {
+      companion_speech_unavailable:
+        "La voz local no está lista. Revisa los modelos y los ajustes de voz del servidor.",
+      companion_native_unavailable:
+        "No se pudo conectar la vista previa de voz de Codex. Revisa el inicio de sesión de ChatGPT, tu cuenta y el ajuste del servidor.",
+      companion_connection_failed:
+        "No se pudo conectar al servidor. Revisa la conexión e inténtalo de nuevo.",
+      companion_update_required:
+        "Actualiza el servidor para usar el protocolo de conversación actual.",
       unknown: "El daemon no indicó el motivo.",
-      companion_backend_missing:
-        "Este daemon no tiene clave de API de Anthropic ni la CLI de Claude Code.",
+      companion_backend_missing: "Inicia sesión en Claude Code o Codex en este servidor.",
       companion_backend_failed: "La sesión de modelo del Companion no pudo iniciarse.",
       companion_disabled: "El Compañero está desactivado en este daemon.",
       companion_microphone_unavailable: "El micrófono no está disponible.",
       companion_session_closed: "La sesión del Compañero está cerrada.",
-      companion_busy: "El Compañero está ocupado con otro turno.",
+      companion_busy:
+        "Otro dispositivo está usando Companion en este servidor. Finaliza esa conversación primero.",
     },
     unavailable: {
       title: "El Compañero no está disponible",
       description: "Este daemon no ofrece el Compañero.",
     },
     settings: {
-      autoStart: {
-        label: "Empezar a hablar de inmediato",
+      nativeVoice: {
+        label: "Voz de Codex (vista previa)",
         description:
-          "Abre una sesión en cuanto se abra el Compañero, en lugar de esperar un toque.",
+          "Requiere iniciar sesión en ChatGPT y activar la vista previa en el servidor. La disponibilidad depende de tu cuenta.",
+      },
+      enabled: {
+        label: "Activar Companion (versión preliminar)",
+        description:
+          "Conversaciones de voz experimentales con tus agentes. Desactivado de forma predeterminada en este dispositivo. Solo escucha cuando inicias una conversación.",
+      },
+      animated: {
+        label: "Animar los gráficos de voz",
+        description:
+          "Luz en movimiento continuo. Desactívalo para una vista más tranquila. Siempre se respeta Reducir movimiento del sistema.",
       },
       replyText: {
         label: "Mostrar el texto de la respuesta",

@@ -1,3 +1,4 @@
+import { withAudioOwnership } from "./audio-ownership";
 import type {
   AudioEngine,
   AudioEngineCallbacks,
@@ -42,7 +43,7 @@ function resampleToPcm16(input: Float32Array, inputRate: number, outputRate: num
   return new Uint8Array(output.buffer, output.byteOffset, output.byteLength);
 }
 
-export function createAudioEngine(
+function createUnownedAudioEngine(
   callbacks: AudioEngineCallbacks,
   options?: { traceLabel?: string; resources?: WebAudioResources },
 ): AudioEngine {
@@ -237,3 +238,6 @@ export function createAudioEngine(
     },
   };
 }
+
+export const createAudioEngine: typeof createUnownedAudioEngine = (...args) =>
+  withAudioOwnership(createUnownedAudioEngine(...args));

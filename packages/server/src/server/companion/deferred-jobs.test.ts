@@ -150,7 +150,33 @@ describe("CompanionDeferredJobs", () => {
     };
 
     expect(describeSettledJob(job)).toBe(
-      "The background job you started (the flaky test) finished. Result:\nIt races on the lease clock.\n\nTell the user, in one or two spoken sentences.",
+      "The background job you started (the flaky test, job job-1, agent none, workspace unspecified) finished. Result:\nIt races on the lease clock.\n\nTell the user, in one or two spoken sentences.",
     );
   });
+});
+
+it("preserves finished results and delivery state across restarts", async () => {
+  const { mkdtemp, rm } = await import("node:fs/promises");
+  const { tmpdir } = await import("node:os");
+  const path = await import("node:path");
+  const home = await mkdtemp(path.join(tmpdir(), "companion-job-test-"));
+  try {
+    const filePath = path.join(home, "jobs.json");
+    const jobs = new CompanionDeferredJobs({ run: async () => "Tests passed", logger, filePath });
+    const { jobId } = jobs.start(THINK);
+    await jobs.drain();
+    const restored = new CompanionDeferredJobs({
+      run: async () => {
+        throw new Error("Must not rerun");
+      },
+      logger,
+      filePath,
+    });
+    expect(restored.get(jobId)).toMatchObject({ status: "succeeded", summary: "Tests passed" });
+    restored.markAnnounced(jobId);
+    const again = new CompanionDeferredJobs({ run: async () => "unused", logger, filePath });
+    expect(again.get(jobId)?.announced).toBe(true);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
 });

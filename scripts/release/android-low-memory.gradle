@@ -1,0 +1,10 @@
+// Explicit test-build option. Normal release builds retain Hermes -O.
+gradle.projectsEvaluated {
+    def app = gradle.rootProject.findProject(":app")
+    if (app == null) return // Included Gradle plugin builds have no application.
+    def react = app.extensions.findByName("react")
+    if (react == null) {
+        throw new GradleException("React Native app extension is required for low-memory builds")
+    }
+    react.hermesFlags.set(["-O0", "-output-source-map"])
+}

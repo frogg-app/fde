@@ -214,10 +214,18 @@ export interface CompanionCliBackendOptions {
  * loop instead would mean fabricating `tool_result` user messages the harness
  * does not accept from an SDK client.
  */
-export function createCompanionCliBackend(options: CompanionCliBackendOptions): CompanionBackend {
+function createPersistentCliBackend(options: CompanionCliBackendOptions): CompanionBackend {
   const logger = options.logger.child({ component: "companion-cli-backend" });
   const promptInput = createInputStream();
+  const abortController = new AbortController();
   const queryOptions: Options = {
+    abortController,
+    env: {
+      ...process.env,
+      ANTHROPIC_API_KEY: undefined,
+      ANTHROPIC_AUTH_TOKEN: undefined,
+      ANTHROPIC_BASE_URL: undefined,
+    },
     model: options.model,
     systemPrompt: COMPANION_SYSTEM_PROMPT,
     includePartialMessages: true,
@@ -319,13 +327,26 @@ export function createCompanionCliBackend(options: CompanionCliBackendOptions): 
       if (toolResults.length > 0) {
         throw new Error("The CLI backend runs its own tool loop and never asks for tool results");
       }
+      if (input.signal?.aborted) return { toolCalls: [] };
       const channel = speak(input.text);
+      const interrupt = () => {
+        channel.abandon();
+        void session.interrupt().catch(() => undefined);
+      };
+      input.signal?.addEventListener("abort", interrupt, { once: true });
       try {
         yield* channel.drain();
       } finally {
+        input.signal?.removeEventListener("abort", interrupt);
         channel.abandon();
         if (active === channel) {
-          await session.interrupt();
+          await Promise.race([
+            session.interrupt().catch(() => undefined),
+            new Promise<void>((resolve) => {
+              const timer = setTimeout(resolve, 2000);
+              timer.unref();
+            }),
+          ]);
         }
       }
       return { toolCalls: [] };
@@ -338,8 +359,82 @@ export function createCompanionCliBackend(options: CompanionCliBackendOptions): 
     active?.abandon();
     active = null;
     promptInput.end();
-    await pump;
+    abortController.abort();
+    await Promise.race([
+      pump,
+      new Promise<void>((resolve) => {
+        const timer = setTimeout(resolve, 2000);
+        timer.unref();
+      }),
+    ]);
   }
 
   return { kind: "cli", warm, beginTurn, close };
+}
+
+/** Recycle the harness when context must be reconciled, and after six exchanges. */
+export function createCompanionCliBackend(options: CompanionCliBackendOptions): CompanionBackend {
+  let current: CompanionBackend | null = null;
+  let turns = 0;
+  let previousReply: string | null = null;
+  let interrupted = false;
+  let closed = false;
+  const get = () => {
+    if (closed) throw new Error("Companion backend closed");
+    return (current ??= createPersistentCliBackend(options));
+  };
+  return {
+    kind: "cli",
+    warm: () => get().warm(),
+    beginTurn(input) {
+      return {
+        async *respond(results) {
+          const heard = input.history.at(-1);
+          const repair =
+            previousReply !== null && (heard?.role !== "assistant" || heard.text !== previousReply);
+          if (current && (interrupted || turns >= 6 || repair)) {
+            await current.close();
+            current = null;
+            turns = 0;
+          }
+          const backend = get();
+          const context =
+            turns === 0
+              ? input.history.map((entry) => `${entry.role}: ${entry.text}`).join("\n")
+              : "";
+          const turn = backend.beginTurn({
+            ...input,
+            text: context ? `Conversation so far:\n${context}\n\n${input.text}` : input.text,
+          });
+          let reply = "";
+          let completed = false;
+          try {
+            const stream = turn.respond(results);
+            try {
+              for (;;) {
+                const next = await stream.next();
+                if (next.done) {
+                  completed = true;
+                  return next.value;
+                }
+                if (next.value.type === "text_delta") reply += next.value.text;
+                yield next.value;
+              }
+            } finally {
+              await stream.return({ toolCalls: [] });
+            }
+          } finally {
+            turns += 1;
+            previousReply = reply;
+            interrupted = !completed || input.signal?.aborted === true;
+          }
+        },
+      };
+    },
+    async close() {
+      closed = true;
+      await current?.close();
+      current = null;
+    },
+  };
 }

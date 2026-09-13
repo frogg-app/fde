@@ -1,6 +1,6 @@
 {
   "name": "@fde/relay",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "description": "Fde relay for bridging daemon and client connections",
   "files": [
     "dist",

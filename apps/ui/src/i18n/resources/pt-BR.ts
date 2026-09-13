@@ -1863,8 +1863,44 @@ export const ptBR: TranslationResources = {
     },
   },
   companion: {
+    behavior: {
+      nextSession: "As alterações valem ao iniciar o Companion novamente.",
+      verbosity: "Tamanho das respostas",
+      brief: "Breve",
+      detailed: "Detalhada",
+      updates: "Avisos de tarefas por voz",
+      important: "Conclusões e falhas",
+      completion: "Somente conclusões",
+      off: "Desativados",
+      acknowledge: "Confirmar tarefas antes de trabalhar",
+      permissions:
+        "Pedidos de permissão continuam sendo falados quando os avisos estão desativados.",
+      audioMode: "Modo de áudio",
+      callMode: "Chamada",
+      mediaMode: "Mídia",
+      audioModeHint:
+        "Aplica-se à próxima conversa. Chamada prioriza o microfone do headset e o controle de eco. Mídia usa o roteamento de mídia; fones são recomendados. O microfone Bluetooth depende do dispositivo.",
+      speechSpeed: "Velocidade da voz",
+      pause: "Pausa antes de responder",
+      quick: "Rápida (0,8 segundo)",
+      natural: "Natural (1,4 segundo)",
+      relaxed: "Tranquila (2,4 segundos)",
+      interruptible: "Permitir interrupção por voz",
+    },
     title: "Companheiro",
+    setup: {
+      disabled: "Desativado",
+      required: "Configuração necessária",
+      ready: "Pronto",
+      active: "Conversa ativa",
+      unknown: "Nenhum modelo de conversa selecionado",
+      providers: "Configurar provedor",
+      subscription:
+        "Usa a cota da sua assinatura. Consulte o uso restante nas configurações do servidor. Não muda automaticamente para cobrança por API.",
+      api: "Este servidor usa a API. Os tokens da conversa são cobrados separadamente.",
+    },
     status: {
+      muted: "Microfone silenciado",
       connecting: "Conectando…",
     },
     micState: {
@@ -1874,6 +1910,10 @@ export const ptBR: TranslationResources = {
       speaking: "Falando",
     },
     actions: {
+      start: "Iniciar Companion",
+      minimize: "Minimizar",
+      resume: "Abrir conversa",
+
       mute: "Silenciar",
       unmute: "Reativar som",
       stop: "Parar",
@@ -1891,23 +1931,41 @@ export const ptBR: TranslationResources = {
       sendFailed: "Sua mensagem não foi enviada",
     },
     reason: {
+      companion_speech_unavailable:
+        "A voz local não está pronta. Confira os modelos e as configurações de voz do servidor.",
+      companion_native_unavailable:
+        "Não foi possível conectar à prévia de voz do Codex. Confira o login do ChatGPT, sua conta e a configuração do servidor.",
+      companion_connection_failed:
+        "Não foi possível conectar ao servidor. Confira a conexão e tente novamente.",
+      companion_update_required: "Atualize o servidor para usar o protocolo de conversa atual.",
       unknown: "O daemon não informou o motivo.",
-      companion_backend_missing:
-        "Este daemon não tem chave de API da Anthropic nem a CLI do Claude Code.",
+      companion_backend_missing: "Entre no Claude Code ou Codex neste servidor.",
       companion_backend_failed: "A sessão de modelo do Companion não conseguiu iniciar.",
       companion_disabled: "O Companheiro está desativado neste daemon.",
       companion_microphone_unavailable: "O microfone não está disponível.",
       companion_session_closed: "A sessão do Companheiro está encerrada.",
-      companion_busy: "O Companheiro está ocupado com outro turno.",
+      companion_busy:
+        "Outro dispositivo está usando o Companion neste servidor. Encerre essa conversa primeiro.",
     },
     unavailable: {
       title: "O Companheiro não está disponível",
       description: "Este daemon não oferece o Companheiro.",
     },
     settings: {
-      autoStart: {
-        label: "Começar a falar imediatamente",
-        description: "Abre uma sessão assim que o Companheiro abrir, em vez de esperar um toque.",
+      nativeVoice: {
+        label: "Voz do Codex (prévia)",
+        description:
+          "Requer login no ChatGPT e ativação da prévia no servidor. A disponibilidade depende da sua conta.",
+      },
+      enabled: {
+        label: "Ativar Companion (prévia)",
+        description:
+          "Conversas de voz experimentais com seus agentes. Desativado por padrão neste dispositivo. A escuta começa apenas quando você inicia uma conversa.",
+      },
+      animated: {
+        label: "Animar gráficos de voz",
+        description:
+          "Luz em movimento contínuo. Desative para uma visualização mais tranquila. A opção de reduzir movimento do sistema é sempre respeitada.",
       },
       replyText: {
         label: "Mostrar o texto da resposta",

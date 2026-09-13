@@ -1,3 +1,5 @@
+import { queryClient } from "@/data/query-client";
+import { APP_SETTINGS_QUERY_KEY, type AppSettings } from "@/hooks/use-settings/storage";
 import { createAudioEngine } from "@/voice/audio-engine";
 import {
   createCompanionRuntime,
@@ -20,6 +22,8 @@ export function getCompanionRuntime(): CompanionRuntime {
 
   let created: CompanionRuntime | null = null;
   const engine = createAudioEngine({
+    audioMode: () =>
+      queryClient.getQueryData<AppSettings>(APP_SETTINGS_QUERY_KEY)?.companionAudioMode ?? "call",
     onCaptureData: (pcm) => created?.handleCapturePcm(pcm),
     onVolumeLevel: (level) => created?.handleCaptureVolume(level),
     onInterruption: () => {
@@ -33,6 +37,7 @@ export function getCompanionRuntime(): CompanionRuntime {
   created = createCompanionRuntime({
     engine,
     sink: {
+      sessionReconnecting: () => useCompanionStore.getState().sessionReconnecting(),
       sessionStarted: () => useCompanionStore.getState().sessionStarted(),
       sessionFailed: (input) => useCompanionStore.getState().sessionFailed(input),
       sessionStopped: () => useCompanionStore.getState().sessionStopped(),
@@ -60,7 +65,9 @@ export function getCompanionRuntime(): CompanionRuntime {
 export function registerCompanionSession(adapter: CompanionSessionAdapter): () => void {
   adapters.set(adapter.serverId, adapter);
   return () => {
+    if (adapters.get(adapter.serverId) !== adapter) return;
     adapters.delete(adapter.serverId);
+    if (runtime?.belongsTo(adapter.serverId)) void runtime.stop();
   };
 }
 

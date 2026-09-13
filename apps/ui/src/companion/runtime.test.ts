@@ -1,5 +1,5 @@
 import type { CompanionAudioOutputMessage } from "@fde/protocol/messages";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { AudioEngine, AudioPlaybackSource } from "@/voice/audio-engine-types";
 import {
   CompanionMessageRejected,
@@ -59,6 +59,7 @@ async function sourceText(source: AudioPlaybackSource): Promise<string> {
 }
 
 interface FakeAdapter extends CompanionSessionAdapter {
+  startCalls: number;
   sentAudio: string[];
   ackedChunks: string[];
   sentMessages: string[];
@@ -73,11 +74,13 @@ function createFakeAdapter(
 ): FakeAdapter {
   const adapter: FakeAdapter = {
     serverId: "local",
+    startCalls: 0,
     sentAudio: [],
     ackedChunks: [],
     sentMessages: [],
     stopCalls: 0,
     async startSession() {
+      adapter.startCalls += 1;
       return options.start ?? { accepted: true, reasonCode: null, retryable: false };
     },
     async stopSession() {
@@ -102,6 +105,7 @@ function createFakeAdapter(
 function createRecordingSink(): { sink: CompanionRuntimeSink; events: string[] } {
   const events: string[] = [];
   const sink: CompanionRuntimeSink = {
+    sessionReconnecting: () => events.push("sessionReconnecting"),
     sessionStarted: () => events.push("sessionStarted"),
     sessionFailed: ({ reasonCode, retryable }) =>
       events.push(`sessionFailed:${reasonCode}:${retryable}`),
@@ -145,6 +149,106 @@ async function settle(): Promise<void> {
 }
 
 describe("companion session lifecycle", () => {
+  it("keeps the selected workspace and conversation preferences across reconnect", async () => {
+    const adapter = createFakeAdapter();
+    const start = vi.spyOn(adapter, "startSession");
+    const runtime = createCompanionRuntime({
+      engine: createFakeEngine(),
+      sink: createRecordingSink().sink,
+    });
+    const conversation = {
+      workspaceId: "workspace-a",
+      agentId: "agent-a",
+      verbosity: "brief",
+      updates: "off",
+      acknowledgeTasks: false,
+      pauseMs: 2400,
+      interruptible: true,
+    } as const;
+    await runtime.start(adapter, false, conversation);
+    await runtime.connectionChanged({ serverId: "local", isConnected: false });
+    await runtime.connectionChanged({ serverId: "local", isConnected: true });
+    expect(start).toHaveBeenNthCalledWith(1, undefined, conversation);
+    expect(start).toHaveBeenNthCalledWith(2, undefined, conversation);
+    await runtime.stop();
+  });
+
+  it("reconnects an active conversation while keeping foreground capture and mute", async () => {
+    const engine = createFakeEngine();
+    const adapter = createFakeAdapter();
+    const { sink, events } = createRecordingSink();
+    const runtime = createCompanionRuntime({ engine, sink });
+    await runtime.start(adapter);
+    runtime.toggleMute();
+    await runtime.connectionChanged({ serverId: "local", isConnected: false });
+    expect(runtime.isActive()).toBe(false);
+    expect(engine.captureStarted).toBe(true);
+    runtime.handleCapturePcm(new Uint8Array([1, 2]));
+    expect(adapter.sentAudio).toEqual([]);
+    expect(events).toContain("sessionReconnecting");
+    await runtime.connectionChanged({ serverId: "other", isConnected: true });
+    expect(adapter.startCalls).toBe(1);
+    await runtime.connectionChanged({ serverId: "local", isConnected: true });
+    expect(adapter.startCalls).toBe(2);
+    expect(runtime.isActive()).toBe(true);
+    expect(engine.isMuted()).toBe(true);
+    await runtime.stop();
+  });
+
+  it("does not reconnect after End while the host was offline", async () => {
+    const engine = createFakeEngine();
+    const adapter = createFakeAdapter();
+    const runtime = createCompanionRuntime({ engine, sink: createRecordingSink().sink });
+    await runtime.start(adapter);
+    await runtime.connectionChanged({ serverId: "local", isConnected: false });
+    await runtime.stop();
+    await runtime.connectionChanged({ serverId: "local", isConnected: true });
+    expect(adapter.startCalls).toBe(1);
+    expect(engine.captureStarted).toBe(false);
+    expect(runtime.isActive()).toBe(false);
+  });
+
+  it("releases retained capture when the reconnected host refuses the conversation", async () => {
+    const engine = createFakeEngine();
+    const adapter = createFakeAdapter();
+    const runtime = createCompanionRuntime({ engine, sink: createRecordingSink().sink });
+    await runtime.start(adapter);
+    await runtime.connectionChanged({ serverId: "local", isConnected: false });
+    adapter.startSession = async () => ({
+      accepted: false,
+      reasonCode: "companion_disabled",
+      retryable: false,
+    });
+    await runtime.connectionChanged({ serverId: "local", isConnected: true });
+    expect(engine.captureStarted).toBe(false);
+    expect(runtime.isActive()).toBe(false);
+  });
+
+  it("does not resume after End while a reconnect acknowledgement is pending", async () => {
+    const engine = createFakeEngine();
+    const adapter = createFakeAdapter();
+    const { sink, events } = createRecordingSink();
+    const runtime = createCompanionRuntime({ engine, sink });
+    await runtime.start(adapter);
+    await runtime.connectionChanged({ serverId: "local", isConnected: false });
+    let accept!: (result: CompanionSessionStartResult) => void;
+    adapter.startSession = () => {
+      adapter.startCalls += 1;
+      return new Promise((resolve) => {
+        accept = resolve;
+      });
+    };
+    const resuming = runtime.connectionChanged({ serverId: "local", isConnected: true });
+    await runtime.connectionChanged({ serverId: "local", isConnected: true });
+    expect(adapter.startCalls).toBe(2);
+    await runtime.stop();
+    accept({ accepted: true, reasonCode: null, retryable: false });
+    await resuming;
+    expect(engine.captureStarted).toBe(false);
+    expect(runtime.isActive()).toBe(false);
+    expect(events.filter((event) => event === "sessionStarted")).toHaveLength(1);
+  });
+
   it("does not reopen the microphone when initialization completes after Stop", async () => {
     const engine = createFakeEngine();
     let finishInitialization!: () => void;
@@ -362,5 +466,83 @@ describe("companion typed fallback", () => {
     await runtime.sendMessage("hello");
 
     expect(events.at(-1)).toBe("sendFailed:companion_session_closed");
+  });
+});
+
+describe("companion lifecycle regressions", () => {
+  it("stops a late accepted session without opening capture", async () => {
+    const engine = createFakeEngine();
+    const adapter = createFakeAdapter();
+    let accept!: (result: CompanionSessionStartResult) => void;
+    adapter.startSession = () =>
+      new Promise((resolve) => {
+        accept = resolve;
+      });
+    const { sink, events } = createRecordingSink();
+    const runtime = createCompanionRuntime({ engine, sink });
+    const starting = runtime.start(adapter);
+    await runtime.stop();
+    accept({ accepted: true, reasonCode: null, retryable: false });
+    await starting;
+    expect(engine.captureStarted).toBe(false);
+    expect(runtime.isActive()).toBe(false);
+    expect(events).not.toContain("sessionStarted");
+    expect(adapter.stopCalls).toBeGreaterThan(0);
+  });
+
+  it("releases capture even when remote stop fails", async () => {
+    const engine = createFakeEngine();
+    const adapter = createFakeAdapter();
+    const { sink, events } = createRecordingSink();
+    const runtime = createCompanionRuntime({ engine, sink });
+    await runtime.start(adapter);
+    adapter.stopSession = async () => {
+      throw new Error("Disconnected");
+    };
+    await runtime.stop();
+    expect(engine.captureStarted).toBe(false);
+    expect(events.at(-1)).toBe("sessionStopped");
+  });
+
+  it("reuses the request id after a lost acknowledgement", async () => {
+    const adapter = createFakeAdapter();
+    const ids: (string | undefined)[] = [];
+    adapter.sendMessage = async (_text, id) => {
+      ids.push(id);
+      if (ids.length === 1) throw new Error("Timed out");
+    };
+    const runtime = createCompanionRuntime({
+      engine: createFakeEngine(),
+      sink: createRecordingSink().sink,
+    });
+    await runtime.start(adapter);
+    await runtime.sendMessage("Start the tests");
+    await runtime.sendMessage("Start the tests");
+    expect(ids[0]).toBeTruthy();
+    expect(ids[1]).toBe(ids[0]);
+    await runtime.sendMessage("Start the tests");
+    expect(ids[2]).not.toBe(ids[0]);
+    await runtime.stop();
+  });
+
+  it("drops audio from a previous session", async () => {
+    const engine = createFakeEngine();
+    const runtime = createCompanionRuntime({ engine, sink: createRecordingSink().sink });
+    await runtime.start(
+      createFakeAdapter({
+        start: { accepted: true, reasonCode: null, retryable: false, sessionId: "new" },
+      }),
+    );
+    runtime.handleAudioOutput({
+      audio: Buffer.from("old").toString("base64"),
+      format: "pcm;rate=16000",
+      id: "old:0",
+      groupId: "old",
+      isLastChunk: true,
+      sessionId: "old",
+      turnId: 1,
+    });
+    expect(engine.played).toEqual([]);
+    await runtime.stop();
   });
 });

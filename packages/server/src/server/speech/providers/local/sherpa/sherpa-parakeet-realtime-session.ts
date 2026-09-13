@@ -1,140 +1,124 @@
 import { EventEmitter } from "node:events";
 import { v4 as uuidv4 } from "uuid";
-
 import type { StreamingTranscriptionSession } from "../../../speech-provider.js";
 import { pcm16lePeakAbs, pcm16leToFloat32 } from "../../../audio.js";
-import { SherpaOfflineRecognizerEngine } from "./sherpa-offline-recognizer.js";
+import type { SherpaOfflineRecognizerEngine } from "./sherpa-offline-recognizer.js";
 
+type Recognizer = Pick<
+  SherpaOfflineRecognizerEngine,
+  "sampleRate" | "createStream" | "acceptWaveform" | "recognizer"
+>;
+interface Segment {
+  id: string;
+  pcm: Buffer;
+  prefix: string;
+  text: string;
+}
+
+/** Decoding stays in the STT worker. Capture, VAD and synthesis have independent queues. */
 export class SherpaParakeetRealtimeTranscriptionSession
   extends EventEmitter
   implements StreamingTranscriptionSession
 {
-  private readonly engine: SherpaOfflineRecognizerEngine;
-  private connected = false;
-
   public readonly requiredSampleRate: number;
-  private currentSegmentId: string | null = null;
-  private previousSegmentId: string | null = null;
-  private lastPartialText = "";
-
-  private pcm16: Buffer = Buffer.alloc(0);
-  private lastDecodeAt = 0;
-  private decoding = false;
-  private pendingDecode = false;
+  private readonly engine: Recognizer;
   private readonly minDecodeIntervalMs: number;
+  private current: Segment | null = null;
+  private previousSegmentId: string | null = null;
+  private timer: ReturnType<typeof setTimeout> | null = null;
+  private scheduled: ReturnType<typeof setImmediate> | null = null;
+  private readonly pending: { segment: Segment; final: boolean }[] = [];
 
-  constructor(params: { engine: SherpaOfflineRecognizerEngine; minDecodeIntervalMs?: number }) {
+  constructor(params: { engine: Recognizer; minDecodeIntervalMs?: number }) {
     super();
     this.engine = params.engine;
-    this.requiredSampleRate = this.engine.sampleRate;
-    this.minDecodeIntervalMs = params.minDecodeIntervalMs ?? 350;
+    this.requiredSampleRate = params.engine.sampleRate;
+    this.minDecodeIntervalMs = params.minDecodeIntervalMs ?? 400;
   }
-
   async connect(): Promise<void> {
-    if (this.connected) {
-      return;
-    }
-    this.currentSegmentId = uuidv4();
-    this.connected = true;
+    this.current ??= this.newSegment();
   }
-
+  private newSegment(): Segment {
+    return { id: uuidv4(), pcm: Buffer.alloc(0), prefix: "", text: "" };
+  }
   appendPcm16(chunk: Buffer): void {
-    if (!this.connected || !this.currentSegmentId) {
-      this.emit("error", new Error("Parakeet realtime session not connected"));
-      return;
-    }
-
-    try {
-      this.pcm16 = this.pcm16.length === 0 ? chunk : Buffer.concat([this.pcm16, chunk]);
-      void this.maybeDecode(false);
-    } catch (err) {
-      this.emit("error", err instanceof Error ? err : new Error(String(err)));
-    }
+    const segment = this.current;
+    if (!segment) return;
+    segment.pcm = Buffer.concat([segment.pcm, chunk]);
+    if (this.timer || this.pending.some((job) => job.segment === segment)) return;
+    this.timer = setTimeout(() => {
+      this.timer = null;
+      if (this.current === segment) this.enqueue(segment, false);
+    }, this.minDecodeIntervalMs);
   }
-
   commit(): void {
-    if (!this.connected || !this.currentSegmentId) {
-      this.emit("error", new Error("Parakeet realtime session not connected"));
-      return;
-    }
-
-    void (async () => {
-      try {
-        await this.maybeDecode(true);
-        const finalText = this.lastPartialText;
-        const segmentId = this.currentSegmentId!;
-        const previousSegmentId = this.previousSegmentId;
-
-        this.emit("committed", { segmentId, previousSegmentId });
-        this.emit("transcript", { segmentId, transcript: finalText, isFinal: true });
-
-        this.previousSegmentId = segmentId;
-        this.currentSegmentId = uuidv4();
-        this.lastPartialText = "";
-        this.pcm16 = Buffer.alloc(0);
-      } catch (err) {
-        this.emit("error", err instanceof Error ? err : new Error(String(err)));
-      }
-    })();
+    const segment = this.current;
+    if (!segment) return;
+    if (this.timer) clearTimeout(this.timer);
+    this.timer = null;
+    // Rotate before decoding: new microphone frames cannot be erased by an old final.
+    this.current = this.newSegment();
+    const previousSegmentId = this.previousSegmentId;
+    this.previousSegmentId = segment.id;
+    this.emit("committed", { segmentId: segment.id, previousSegmentId });
+    this.enqueue(segment, true);
   }
-
   clear(): void {
-    if (!this.connected) {
-      return;
-    }
-    this.pcm16 = Buffer.alloc(0);
-    this.currentSegmentId = uuidv4();
-    this.lastPartialText = "";
+    this.close();
+    this.current = this.newSegment();
   }
-
   close(): void {
-    this.connected = false;
-    this.currentSegmentId = null;
-    this.pcm16 = Buffer.alloc(0);
+    this.current = null;
+    if (this.timer) clearTimeout(this.timer);
+    if (this.scheduled) clearImmediate(this.scheduled);
+    this.timer = null;
+    this.scheduled = null;
+    this.pending.length = 0;
   }
-
-  private async maybeDecode(force: boolean): Promise<void> {
-    if (!this.connected || !this.currentSegmentId) {
-      return;
-    }
-
-    const now = Date.now();
-    if (!force && now - this.lastDecodeAt < this.minDecodeIntervalMs) {
-      return;
-    }
-
-    if (this.decoding) {
-      this.pendingDecode = true;
-      return;
-    }
-
-    this.decoding = true;
-    try {
-      const text = await this.decodeNow();
-      this.lastDecodeAt = Date.now();
-      if (text !== this.lastPartialText) {
-        this.lastPartialText = text;
-        this.emit("transcript", {
-          segmentId: this.currentSegmentId,
-          transcript: text,
-          isFinal: false,
-        });
-      }
-    } finally {
-      this.decoding = false;
-      if (this.pendingDecode) {
-        this.pendingDecode = false;
-        await this.maybeDecode(true);
-      }
-    }
+  private enqueue(segment: Segment, final: boolean): void {
+    this.pending.push({ segment, final });
+    this.schedule();
   }
-
-  private async decodeNow(): Promise<string> {
-    if (this.pcm16.length === 0) {
+  private schedule(): void {
+    if (this.scheduled || this.pending.length === 0 || !this.current) return;
+    this.scheduled = setImmediate(() => {
+      this.scheduled = null;
+      const job = this.pending.shift();
+      if (job && (job.final || job.segment === this.current)) {
+        try {
+          const text = this.decodeSegment(job.segment);
+          if (job.final || text !== job.segment.text) {
+            job.segment.text = text;
+            this.emit("transcript", {
+              segmentId: job.segment.id,
+              transcript: text,
+              isFinal: job.final,
+            });
+          }
+        } catch (error) {
+          this.emit("error", error instanceof Error ? error : new Error(String(error)));
+        }
+      }
+      this.schedule();
+    });
+  }
+  private decodeSegment(segment: Segment): string {
+    // Bound repeated offline decoding for long speech; accumulate completed portions.
+    const windowBytes = this.requiredSampleRate * 2 * 20;
+    while (segment.pcm.length > windowBytes) {
+      segment.prefix = [segment.prefix, this.decodeNow(segment.pcm.subarray(0, windowBytes))]
+        .filter(Boolean)
+        .join(" ");
+      segment.pcm = segment.pcm.subarray(windowBytes);
+    }
+    return [segment.prefix, this.decodeNow(segment.pcm)].filter(Boolean).join(" ");
+  }
+  private decodeNow(pcm16: Buffer): string {
+    if (pcm16.length === 0) {
       return "";
     }
 
-    const peak = pcm16lePeakAbs(this.pcm16);
+    const peak = pcm16lePeakAbs(pcm16);
     const peakFloat = peak / 32768.0;
     const targetPeak = 0.6;
     const maxGain = 50;
@@ -143,7 +127,7 @@ export class SherpaParakeetRealtimeTranscriptionSession
 
     const stream = this.engine.createStream();
     try {
-      const floatSamples = pcm16leToFloat32(this.pcm16, gain);
+      const floatSamples = pcm16leToFloat32(pcm16, gain);
       this.engine.acceptWaveform(stream, this.engine.sampleRate, floatSamples);
       this.engine.recognizer.decode(stream);
       const result = this.engine.recognizer.getResult(stream);

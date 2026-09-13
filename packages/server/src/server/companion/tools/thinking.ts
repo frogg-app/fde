@@ -17,6 +17,8 @@ import type {
 import { defineCompanionTool, type CompanionTool } from "./index.js";
 
 export interface CompanionThinkingToolDependencies {
+  readTimeline?: (agentId: string) => readonly AgentTimelineItem[];
+  conversationId?: string;
   deferredJobs: CompanionDeferredJobs;
 }
 
@@ -27,6 +29,7 @@ export interface CompanionSubagentRunnerOptions {
   /** Where the ephemeral subagent runs. The daemon's own project root is fine. */
   cwd: string;
   logger: Logger;
+  resolveWorkspaceCwd?: (workspaceId: string) => Promise<string>;
 }
 
 const SubagentAnswerSchema = z.object({
@@ -97,18 +100,22 @@ export function createCompanionSubagentRunner(
   options: CompanionSubagentRunnerOptions,
 ): CompanionDeferredJobRunner {
   return async (request) => {
+    let cwd = options.cwd;
+    if (request.agentId) cwd = options.agentManager.getAgent(request.agentId)?.config.cwd ?? cwd;
+    if (request.workspaceId && options.resolveWorkspaceCwd)
+      cwd = await options.resolveWorkspaceCwd(request.workspaceId);
     const timeline =
       request.kind === "read_timeline" && request.agentId
         ? renderTimeline(options.agentManager.getTimeline(request.agentId))
         : "";
     const providers = await resolveStructuredGenerationProviders({
-      cwd: options.cwd,
+      cwd,
       providerSnapshotManager: options.providerSnapshotManager,
       daemonConfig: options.daemonConfig,
     });
     const result = await generateStructuredAgentResponseWithFallback({
       manager: options.agentManager,
-      cwd: options.cwd,
+      cwd,
       prompt: buildPrompt(request, timeline),
       schema: SubagentAnswerSchema,
       schemaName: "CompanionAnswer",
@@ -132,14 +139,17 @@ export function createCompanionThinkingTools(
     defineCompanionTool({
       name: "think",
       description:
-        "Hand a question to a subagent to reason about. Returns immediately with a job id; the answer arrives in a later turn. You MUST also say a short line in this same response so the user is not left in silence.",
+        "Hand a question to a subagent to reason about. Returns immediately with a job id; the answer arrives in a later turn. Respect the user's acknowledgement preference.",
       deferred: true,
       schema: z.object({
+        workspaceId: z.string().min(1).optional(),
         question: z.string().min(1),
         label: z.string().min(1).describe("Three or four words naming the work, for the UI."),
       }),
       handler: async (input) =>
         deps.deferredJobs.start({
+          conversationId: deps.conversationId,
+          workspaceId: input.workspaceId,
           kind: "think",
           label: input.label,
           question: input.question,
@@ -150,33 +160,41 @@ export function createCompanionThinkingTools(
     defineCompanionTool({
       name: "read_timeline",
       description:
-        "Have a subagent read an agent's recent timeline and report what happened. Returns immediately with a job id. You MUST also say a short line in this same response.",
-      deferred: true,
+        "Read an agent's recent timeline to verify the actual result before reporting completion. Summarize the outcome without narrating that you are reading.",
+      deferred: !deps.readTimeline,
       schema: z.object({
         agentId: z.string().min(1),
+        workspaceId: z.string().min(1).optional(),
         question: z.string().min(1),
         label: z.string().min(1),
       }),
       handler: async (input) =>
-        deps.deferredJobs.start({
-          kind: "read_timeline",
-          label: input.label,
-          question: input.question,
-          agentId: input.agentId,
-        }),
+        deps.readTimeline
+          ? { timeline: renderTimeline(deps.readTimeline(input.agentId)) }
+          : deps.deferredJobs.start({
+              conversationId: deps.conversationId,
+              workspaceId: input.workspaceId,
+              kind: "read_timeline",
+              label: input.label,
+              question: input.question,
+              agentId: input.agentId,
+            }),
     }),
 
     defineCompanionTool({
       name: "research",
       description:
-        "Hand a longer investigation to a subagent with file and web access. Slower than think. Returns immediately with a job id. You MUST also say a short line in this same response.",
+        "Hand a longer investigation to a subagent using its configured tools. Web access depends on that provider. Returns immediately with a job id. Respect the user's acknowledgement preference.",
       deferred: true,
       schema: z.object({
+        workspaceId: z.string().min(1).optional(),
         question: z.string().min(1),
         label: z.string().min(1),
       }),
       handler: async (input) =>
         deps.deferredJobs.start({
+          conversationId: deps.conversationId,
+          workspaceId: input.workspaceId,
           kind: "research",
           label: input.label,
           question: input.question,

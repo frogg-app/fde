@@ -14,6 +14,7 @@ export type CompanionMicState = "idle" | "listening" | "thinking" | "speaking";
 export type CompanionSession =
   | { status: "closed" }
   | { status: "starting" }
+  | { status: "reconnecting" }
   | { status: "open" }
   | { status: "stopping" }
   | { status: "failed"; reasonCode: string | null; retryable: boolean };
@@ -26,7 +27,12 @@ export type CompanionSendState =
   | { status: "failed"; text: string; reasonCode: string | null };
 
 export interface CompanionState {
+  context: { serverId: string; workspaceId?: string; agentId?: string } | null;
+  launch: (context: { serverId: string; workspaceId?: string; agentId?: string }) => void;
   isOpen: boolean;
+  serverId: string | null;
+  isMinimized: boolean;
+  minimize: () => void;
   session: CompanionSession;
   isMuted: boolean;
   /** Smoothed capture level, 0–1, driving the orb's volume ring while listening. */
@@ -49,8 +55,9 @@ export interface CompanionState {
   open: () => void;
   close: () => void;
   setOpen: (isOpen: boolean) => void;
-  sessionStarting: () => void;
+  sessionStarting: (serverId?: string) => void;
   sessionStarted: () => void;
+  sessionReconnecting: () => void;
   sessionFailed: (input: { reasonCode: string | null; retryable: boolean }) => void;
   sessionStopping: () => void;
   sessionStopped: () => void;
@@ -76,6 +83,8 @@ const NO_TOPICS: CompanionNotebookEntry[] = [];
 
 /** Everything the conversation accumulates; reset whenever a session ends. */
 const CONVERSATION_RESET = {
+  context: null,
+  serverId: null,
   isMuted: false,
   volume: 0,
   speakingVolume: 0,
@@ -100,29 +109,60 @@ export function deriveCompanionMicState(state: {
   isSpeaking: boolean;
   isThinking: boolean;
 }): CompanionMicState {
-  if (state.session.status !== "open") return "idle";
+  if (state.session.status !== "open" || state.isMuted) return "idle";
   if (state.isSpeaking) return "speaking";
   if (state.isThinking) return "thinking";
-  if (state.isMuted) return "idle";
   return "listening";
 }
 
 export const useCompanionStore = create<CompanionState>((set) => ({
   isOpen: false,
+  isMinimized: false,
+  minimize: () => set({ isOpen: false, isMinimized: true }),
   session: CLOSED_SESSION,
   ...CONVERSATION_RESET,
   topics: NO_TOPICS,
 
-  open: () => set({ isOpen: true }),
-  close: () => set({ isOpen: false }),
-  setOpen: (isOpen) => set({ isOpen }),
+  open: () => set({ isOpen: true, isMinimized: false }),
+  close: () =>
+    set((state) => ({
+      isOpen: false,
+      isMinimized: ["open", "starting", "reconnecting"].includes(state.session.status),
+    })),
+  setOpen: (isOpen) =>
+    set((state) => ({
+      isOpen,
+      isMinimized: !isOpen && ["open", "starting", "reconnecting"].includes(state.session.status),
+    })),
+  launch: (context) =>
+    set((state) => ({
+      isOpen: true,
+      isMinimized: false,
+      ...(["open", "starting", "reconnecting"].includes(state.session.status)
+        ? {}
+        : { context, serverId: context.serverId }),
+    })),
 
-  sessionStarting: () => set({ session: { status: "starting" } }),
-  sessionStarted: () => set({ session: { status: "open" }, ...CONVERSATION_RESET }),
+  sessionStarting: (serverId) =>
+    set({ serverId: serverId ?? null, session: { status: "starting" } }),
+  sessionReconnecting: () =>
+    set({
+      session: { status: "reconnecting" },
+      isSpeaking: false,
+      isThinking: false,
+      speakingVolume: 0,
+    }),
+  sessionStarted: () =>
+    set((state) => ({
+      ...CONVERSATION_RESET,
+      serverId: state.serverId,
+      context: state.context,
+      session: { status: "open" },
+    })),
   sessionFailed: ({ reasonCode, retryable }) =>
     set({ session: { status: "failed", reasonCode, retryable }, ...CONVERSATION_RESET }),
   sessionStopping: () => set({ session: { status: "stopping" } }),
-  sessionStopped: () => set({ session: CLOSED_SESSION, ...CONVERSATION_RESET }),
+  sessionStopped: () => set({ isMinimized: false, session: CLOSED_SESSION, ...CONVERSATION_RESET }),
   dismissSessionError: () =>
     set((state) => (state.session.status === "failed" ? { session: CLOSED_SESSION } : {})),
 

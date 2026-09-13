@@ -158,7 +158,6 @@ export class TTSManager {
       {
         isVoiceMode,
         textLength: text.length,
-        text,
       },
       "TTS input text",
     );
@@ -170,7 +169,6 @@ export class TTSManager {
         segments: segments.map((s) => ({
           index: s.index,
           chars: s.text.length,
-          text: s.text.slice(0, 80),
         })),
       },
       `TTS split into ${segments.length} segment(s)`,
@@ -245,6 +243,26 @@ export class TTSManager {
         `TTS generateAndWaitForPlayback done (${Date.now() - ttsStartMs}ms)`,
       );
     }
+  }
+
+  public async prepareSpeech(
+    text: string,
+    emitMessage: (msg: SessionOutboundMessage) => void,
+    abortSignal: AbortSignal,
+  ): Promise<() => Promise<void>> {
+    const prepared = await this.synthesizeSegment({ index: 0, text }, abortSignal);
+    const dispose = () => this.destroySpeechStream(prepared.stream);
+    abortSignal.addEventListener("abort", dispose, { once: true });
+    if (abortSignal.aborted) dispose();
+    return async () => {
+      try {
+        if (!abortSignal.aborted)
+          await this.emitPreparedSegment({ prepared, emitMessage, abortSignal, isVoiceMode: true });
+      } finally {
+        abortSignal.removeEventListener("abort", dispose);
+        dispose();
+      }
+    };
   }
 
   private async synthesizeSegment(
@@ -393,8 +411,9 @@ export class TTSManager {
         buffers.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
       }
 
-      if (!abortSignal.aborted && buffers.length > 0) {
+      if (!abortSignal.aborted) {
         const fullBuffer = Buffer.concat(buffers);
+        if (fullBuffer.length === 0) throw new Error("Speech provider returned empty audio");
         const chunkId = `${audioId}:0`;
         pendingPlayback.pendingChunks = 1;
 

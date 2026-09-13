@@ -142,6 +142,73 @@
                 },
                 "requestId": {
                   "type": "string"
+                },
+                "conversation": {
+                  "type": "object",
+                  "properties": {
+                    "workspaceId": {
+                      "type": "string",
+                      "maxLength": 512
+                    },
+                    "agentId": {
+                      "type": "string",
+                      "maxLength": 512
+                    },
+                    "verbosity": {
+                      "default": "brief",
+                      "type": "string",
+                      "enum": [
+                        "brief",
+                        "detailed"
+                      ]
+                    },
+                    "updates": {
+                      "default": "important",
+                      "type": "string",
+                      "enum": [
+                        "important",
+                        "completion",
+                        "off"
+                      ]
+                    },
+                    "acknowledgeTasks": {
+                      "default": false,
+                      "type": "boolean"
+                    },
+                    "speechSpeed": {
+                      "type": "number",
+                      "minimum": 0.75,
+                      "maximum": 2
+                    },
+                    "pauseMs": {
+                      "default": 1400,
+                      "type": "integer",
+                      "minimum": 600,
+                      "maximum": 3000
+                    },
+                    "interruptible": {
+                      "default": true,
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "voiceTransport": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "codex-webrtc"
+                    },
+                    "sdp": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 65536
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "sdp"
+                  ]
                 }
               },
               "required": [

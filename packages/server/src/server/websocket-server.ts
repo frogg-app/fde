@@ -610,7 +610,7 @@ export class VoiceAssistantWebSocketServer {
     | ((workspaceId: string, oldBranch: string | null, newBranch: string | null) => void)
     | null;
   private serverCapabilities: ServerCapabilities | undefined;
-  private readonly companionCapability: ServerCapabilityState;
+  private companionCapability: ServerCapabilityState;
   private readonly runtimeMetrics = new WebSocketRuntimeMetricsWindow();
   private lastRuntimeMetricsSnapshot: WebSocketRuntimeDiagnosticPayload | null = null;
   private runtimeMetricsInterval: ReturnType<typeof setInterval> | null = null;
@@ -734,6 +734,7 @@ export class VoiceAssistantWebSocketServer {
     }
     this.providerSnapshotManager = providerSnapshotManager;
     this.companionCapability = toCompanionCapability(companion);
+    this.bindCompanionCapability(companion);
     this.serverCapabilities = buildServerCapabilities({
       readiness: this.speech?.getReadiness() ?? null,
       companion: this.companionCapability,
@@ -986,6 +987,14 @@ export class VoiceAssistantWebSocketServer {
     }
   }
 
+  private bindCompanionCapability(companion: CompanionRuntime | undefined): void {
+    if (companion)
+      companion.onCapabilityChange = () => {
+        this.companionCapability = toCompanionCapability(companion);
+        this.publishSpeechReadiness(this.speech?.getReadiness() ?? null);
+      };
+  }
+
   public publishSpeechReadiness(readiness: SpeechReadinessSnapshot | null): void {
     this.updateServerCapabilities(
       buildServerCapabilities({ readiness, companion: this.companionCapability }),
@@ -993,7 +1002,18 @@ export class VoiceAssistantWebSocketServer {
   }
 
   public updateServerCapabilities(capabilities: ServerCapabilities | null | undefined): void {
-    const next = capabilities ?? undefined;
+    const next = capabilities ? { ...capabilities } : undefined;
+    if (next && this.companion) {
+      const model = this.companion.modelConfig;
+      next.companionDetails = {
+        protocolVersion: 2,
+        conversationControls: true,
+        backend: model.status === "available" ? model.backend : null,
+        model: model.status === "available" ? model.model : null,
+        localSpeechReady: this.speech?.getReadiness().realtimeVoice.available === true,
+        nativeVoicePreview: this.companion.nativeVoicePreview === true,
+      };
+    }
     if (areServerCapabilitiesEqual(this.serverCapabilities, next)) {
       return;
     }
@@ -1812,6 +1832,12 @@ export class VoiceAssistantWebSocketServer {
   }
 
   private createServerInfoMessage(session: Session): WSOutboundMessage {
+    void this.companion
+      ?.refresh?.()
+      .then(() => this.companion?.onCapabilityChange?.())
+      .catch((error: unknown) =>
+        this.logger.warn({ err: error }, "Companion readiness refresh failed"),
+      );
     return {
       type: "session",
       message: {

@@ -1000,7 +1000,10 @@ export const ko: TranslationResources = {
     creating: "만드는 중…",
     name: "레이블 이름",
     updateHostUse: "레이블을 사용하려면 호스트를 업데이트하세요.",
-    errors: { update: "레이블을 업데이트할 수 없습니다", load: "레이블을 불러올 수 없습니다" },
+    errors: {
+      update: "레이블을 업데이트할 수 없습니다",
+      load: "레이블을 불러올 수 없습니다",
+    },
     colors: {
       violet: "보라",
       sky: "하늘",
@@ -1837,8 +1840,43 @@ export const ko: TranslationResources = {
     },
   },
   companion: {
+    behavior: {
+      nextSession: "변경 사항은 다음 Companion 시작 시 적용됩니다.",
+      verbosity: "답변 길이",
+      brief: "간결하게",
+      detailed: "자세하게",
+      updates: "작업 음성 알림",
+      important: "완료 및 실패",
+      completion: "완료만",
+      off: "끄기",
+      acknowledge: "작업 시작 전에 접수 알리기",
+      permissions: "작업 알림을 꺼도 권한 요청은 음성으로 안내합니다.",
+      audioMode: "오디오 모드",
+      callMode: "통화",
+      mediaMode: "미디어",
+      audioModeHint:
+        "다음 대화부터 적용됩니다. 통화는 헤드셋 마이크와 에코 제어를 우선합니다. 미디어는 미디어 경로를 사용하며 헤드폰을 권장합니다. Bluetooth 마이크 지원은 기기에 따라 다릅니다.",
+      speechSpeed: "음성 속도",
+      pause: "응답 전 대기 시간",
+      quick: "짧게(0.8초)",
+      natural: "자연스럽게(1.4초)",
+      relaxed: "여유 있게(2.4초)",
+      interruptible: "말해서 응답 중단하기",
+    },
     title: "컴패니언",
+    setup: {
+      disabled: "사용 안 함",
+      required: "설정 필요",
+      ready: "준비됨",
+      active: "대화 중",
+      unknown: "대화 모델이 선택되지 않았습니다",
+      providers: "공급자 설정",
+      subscription:
+        "로그인한 구독의 사용량을 소모합니다. 남은 사용량은 호스트 사용량 설정에서 확인하세요. API 결제로 자동 전환하지 않습니다.",
+      api: "이 호스트는 API를 사용합니다. 대화 토큰은 별도로 청구됩니다.",
+    },
     status: {
+      muted: "마이크 음소거됨",
       connecting: "연결 중…",
     },
     micState: {
@@ -1848,6 +1886,10 @@ export const ko: TranslationResources = {
       speaking: "말하는 중",
     },
     actions: {
+      start: "Companion 시작",
+      minimize: "최소화",
+      resume: "대화 열기",
+
       mute: "음소거",
       unmute: "음소거 해제",
       stop: "중지",
@@ -1865,22 +1907,40 @@ export const ko: TranslationResources = {
       sendFailed: "메시지를 보내지 못했습니다",
     },
     reason: {
+      companion_speech_unavailable:
+        "로컬 음성이 준비되지 않았습니다. 호스트의 모델과 음성 설정을 확인하세요.",
+      companion_native_unavailable:
+        "Codex 음성 미리보기에 연결하지 못했습니다. ChatGPT 로그인, 계정 지원 여부, 호스트 설정을 확인하세요.",
+      companion_connection_failed: "호스트에 연결하지 못했습니다. 연결을 확인하고 다시 시도하세요.",
+      companion_update_required: "현재 대화 프로토콜을 사용하려면 호스트를 업데이트하세요.",
       unknown: "데몬이 이유를 알려주지 않았습니다.",
-      companion_backend_missing: "이 데몬에는 Anthropic API 키도 Claude Code CLI도 없습니다.",
+      companion_backend_missing: "이 호스트에서 Claude Code 또는 Codex에 로그인하세요.",
       companion_backend_failed: "컴패니언의 모델 세션을 시작하지 못했습니다.",
       companion_disabled: "이 데몬에서 컴패니언이 꺼져 있습니다.",
       companion_microphone_unavailable: "마이크를 사용할 수 없습니다.",
       companion_session_closed: "컴패니언 세션이 닫혔습니다.",
-      companion_busy: "컴패니언이 다른 차례를 처리 중입니다.",
+      companion_busy:
+        "다른 기기가 이 호스트의 Companion을 사용 중입니다. 먼저 해당 대화를 종료하세요.",
     },
     unavailable: {
       title: "컴패니언을 사용할 수 없습니다",
       description: "이 데몬은 컴패니언을 제공하지 않습니다.",
     },
     settings: {
-      autoStart: {
-        label: "바로 대화 시작",
-        description: "탭을 기다리지 않고 컴패니언이 열리는 즉시 세션을 시작합니다.",
+      nativeVoice: {
+        label: "Codex 음성 (미리보기)",
+        description:
+          "ChatGPT 로그인과 호스트의 미리보기 활성화가 필요합니다. 사용 가능 여부는 계정에 따라 다릅니다.",
+      },
+      enabled: {
+        label: "Companion 활성화 (미리보기)",
+        description:
+          "에이전트와의 실험적인 음성 대화입니다. 이 기기에서는 기본적으로 꺼져 있습니다. 대화를 시작할 때만 듣기 시작합니다.",
+      },
+      animated: {
+        label: "음성 그래픽 애니메이션",
+        description:
+          "빛이 계속 흐릅니다. 차분한 화면을 원하면 끄세요. 시스템의 동작 줄이기 설정을 항상 따릅니다.",
       },
       replyText: {
         label: "응답 텍스트 표시",

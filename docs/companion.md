@@ -1,333 +1,292 @@
 # Companion
 
-The Companion is a real-time voice conversation with an FDE. It sits one level **above**
-projects and workspaces: you talk to it, it talks back straight away, and it drives the
-agents working inside your workspaces on your behalf.
+Companion lets you have a voice conversation while Claude and Codex workers do
+project work on your daemon. It is optional and **disabled by default on each
+device**. Turn on **Settings → General → Enable Companion**, then choose
+the bottom-right **Companion** launcher in a project composer. It replaces the
+former Voice mode action and works while a coding worker is busy. Companion no
+longer appears in the sidebar. Enabling it does not start a model or acquire the microphone.
+Existing installations also default to off; the former auto-start preference is
+no longer used.
 
-It is deliberately _not_ a coding agent. It is a fast, cheap conversational orchestrator
-whose whole job is to stay in the conversation. Anything that needs real thought is
-handed to a subagent while the Companion keeps talking to you.
+Implementation and qualification record: **2026-09-12**. Subscription text and
+native WebRTC delegation have been exercised on Linux. Physical mobile and other
+host-platform acceptance remains open. See [validation](companion-validation.md).
+Standalone Android and Linux daemon artifacts and deployment commands are in
+[test builds](companion-test-builds.md).
 
-> Status (2026-09-11): implemented and included in 0.2.0, with interruption,
-> speech segmentation and orb follow-ups integrated for 0.2.1. Full-loop device
-> acceptance remains open; backend measurements below are not end-to-end results.
-> See [voice follow-ups](companion-voice-design.md) for current limitations and
-> [ROADMAP.md](../ROADMAP.md) for remaining work.
+## Conversation controls
 
-## How it differs from voice mode
+- **Mute** pauses microphone input while tasks continue.
+- **End** releases audio and closes the conversation. It stays stopped until an
+  explicit Start action. Ending a conversation does not cancel coding tasks.
+- **Minimize** keeps the conversation active, with a persistent Open/End control.
+- Dismissing the panel, including its close button or sheet gesture, minimizes
+  it and keeps capture, playback and task announcements active. Only **End**,
+  disabling Companion, or an audio interruption ends the conversation.
+- Disabling Companion hides its launcher, command search and keyboard entry
+  points; Settings remains.
+- Say that you want to end the conversation to invoke `end_conversation`. Ask to
+  cancel a particular task to invoke `cancel_agent` instead.
 
-[voice.md](voice.md) already describes **voice mode**: a realtime conversation bound to
-_one_ agent session, in _one_ workspace, where the coding agent itself speaks through the
-`speak` tool. The Companion reuses that stack's audio plumbing and replaces the brain.
+One conversation may be active per daemon. Capture and playback have exclusive
+ownership on the device across Companion, dictation, agent voice and alerts.
+Starting a second capture mode requires ending the current one.
 
-|                | Voice mode                | Companion                                  |
-| -------------- | ------------------------- | ------------------------------------------ |
-| Scope          | one agent session         | every workspace and agent on the daemon    |
-| Who answers    | the coding agent          | a fast orchestrator model                  |
-| Latency target | agent turn (seconds)      | first audio ≤ 1.2 s after you stop talking |
-| Context        | the agent's full timeline | a small notebook, rebuilt every turn       |
-| Does the work  | itself                    | delegates to agents and thinking subagents |
+Settings distinguish disabled, setup required, ready, connecting, active and
+failed states. They show the selected conversation model and its billing mode,
+link to provider setup, and point to host Usage for provider-supplied limits.
+“No API key” does not mean unlimited subscription usage. FDE does not estimate
+missing quota data as an unlimited allowance.
 
-## The three rules
+## Context and conversation preferences
 
-1. **Answer fast or say something fast.** The Companion never leaves a silence. If it has
-   an answer it speaks it; if it needs to go and find out, it says so first — "hmm, let me
-   think about that", "that'll take a minute to work out", "let me look into it" — and
-   comes back when it knows.
-2. **Stay small.** The Companion's context is a rolling window of recent turns plus a
-   notebook it maintains itself. It never loads an agent timeline into its own context; it
-   asks a subagent to read it and report back one paragraph.
-3. **Never do the work.** Writing code, reading diffs, researching — all of it is
-   delegated. The Companion's only outputs are speech and tool calls.
+The composer launcher captures its host, workspace and agent. The panel and
+minimized indicator show the host and project; reopening from another project
+preserves the active conversation's original context. If the selected worker is
+already running, Companion tracks that task and its permission/result events
+without restarting it. New work on that same selected worker is tracked while
+the conversation remains active, including when minimized. End first to launch on a
+different host. You can explicitly choose another workspace by voice on that host.
 
-## Architecture
+Settings → General → Companion offers preferences for the next conversation:
 
+- Reply length: **Brief** (default) or Detailed.
+- Spoken task updates: **Completions and failures** (default), Completions only,
+  or Off. Permission requests remain audible. Muting the microphone does not
+  mute results. Updates turned off remain available in task receipts.
+- Acknowledge tasks before working: **off** by default. Quiet local speech drops
+  tool preambles and successful dispatch acknowledgements; a failed dispatch
+  still gets an explanation. Tool execution and completion are separate events.
+- Pause before replying: 0.8, **1.4**, or 2.4 seconds of detected silence.
+- Let me interrupt by speaking: **on** by default.
+
+Pause and interruption settings apply to local speech. Native WebRTC uses its
+provider's turn detection. Briefness and acknowledgement preferences also enter
+its conversation instructions. Preferences are captured at explicit Start and
+preserved across reconnect; changing Settings does not reconfigure an active call.
+
+Local voice runs VAD, recognition and synthesis in separate child processes.
+Microphone delivery never awaits the model reply or playback. During speech,
+Parakeet publishes revised partial transcripts at a throttled interval, retaining
+completed portions of long utterances. A one-second pre-roll preserves the first
+word while VAD confirms speech; silence between turns is not continuously decoded.
+An in-sentence pause shorter than the configured endpoint keeps the same turn.
+Final recognition rotates its buffer before decoding so it cannot erase the next
+utterance. Only completed utterances dispatch tasks; provisional text can change.
+
+Quiet mode waits for the last tool round before synthesizing the answer. This
+avoids speaking "I will check" ahead of every read, at the cost of waiting for that
+short final response. Ordinary worker completion reads its existing timeline
+without launching an extra summarizer. Acknowledgements can be enabled for earlier
+streamed speech. Physical microphone/speaker latency is still a validation gate.
+
+## Subscription setup
+
+Sign in using the user's normal Claude Code or Codex installation on the daemon.
+Credentials remain in the provider's own credential store; FDE does not extract
+OAuth tokens or send them to the phone.
+
+The default conversation backend is authenticated Claude, otherwise authenticated
+Codex. Authentication is checked with the official CLI, without inference, at
+bootstrap and on refresh/start. Checks are coalesced and cached for 15 seconds.
+Reconnect or start again after changing host credentials or persisted settings.
+There is no model-driven background polling or idle Companion warm-up.
+
+An optional host configuration selects the backend independently from worker
+models:
+
+```json
+{
+  "features": {
+    "companion": {
+      "enabled": true,
+      "backend": "subscription",
+      "nativeVoicePreview": false
+    }
+  }
+}
 ```
-mic ─▶ VoiceTurnController ─▶ final transcript
-             (VAD, streaming STT, barge-in — reused from voice mode)
-                                     │
-                                     ▼
-                          CompanionOrchestrator          ── notebook.json
-                       (claude-haiku-4-5, streaming,        (topics, tasks,
-                        tool use, ≤ ~3k token prompt)        one line each)
-                                     │
-                 ┌───────────────────┼────────────────────┐
-                 ▼                   ▼                    ▼
-          text deltas          fast tools           deferred tools
-                 │            (list/status/          (think, research,
-                 ▼             send/create)           read_timeline)
-       sentence-boundary            │                      │
-        streaming TTS               │              headless subagent
-                 │                  │              (internal, cheap)
-                 ▼                  │                      │
-            audio_output ◀──────────┴──────────────────────┘
-                                                    completion re-enters
-                                                    the orchestrator
+
+`backend` accepts `subscription`, `claude`, `codex`, or `api`.
+`FDE_COMPANION_BACKEND` is the environment alternative. Persisted configuration
+wins. `model` or `FDE_COMPANION_MODEL` overrides the conversation model. Defaults
+are `claude-haiku-4-5` and `gpt-5.6-luna` with low reasoning. Availability still
+depends on the account and provider version; model failures are reported rather
+than silently switching to another billing method.
+
+An Anthropic API key is used only with explicit `backend: "api"`. Its existing
+`providers.anthropic` key/base URL configuration remains supported. Merely
+exporting a key does not select API billing for Companion. Workers retain the
+user's normal provider/model configuration and permission enforcement.
+
+The daemon's administrative Companion/voice gates remain separate from the
+per-device preference. Turning the device switch on cannot override those gates.
+
+## Local speech baseline
+
+```mermaid
+flowchart LR
+  M[Microphone] --> V[VAD and local recognition]
+  V --> O[Claude or Codex conversation]
+  O --> S[Segmented local synthesis]
+  S --> P[Device playback]
+  O <--> T[FDE workspace and permission tools]
+  T --> W[Ordinary coding workers]
+  W --> J[Durable task results]
+  J --> O
 ```
 
-### Daemon
+Local speech uses the existing Sherpa runtime. The default English voice is now
+**Kitten nano 0.8 FP32, Rosie**, approximately 61 MiB. Explicitly configured
+Piper and Kokoro voices remain supported. Host overrides use
+`FDE_VOICE_LOCAL_TTS_MODEL`, `FDE_VOICE_LOCAL_TTS_SPEAKER_ID` and
+`FDE_VOICE_LOCAL_TTS_SPEED`; the default Kitten speaker is 5.
+See the [polish design and measurements](companion-polish-plan.md). Recognition retains Parakeet and existing configurable
+endpointing. Missing downloads and unavailable speech providers prevent startup.
+Native Codex voice does not require local speech models.
 
-New module `packages/server/src/server/companion/`. Nothing outside it changes except
-`session.ts` dispatch, `bootstrap.ts` wiring, and the protocol package.
+Recognition and synthesis use separate worker processes. The next speech segment
+can synthesize while the current segment plays, with at most two prepared segments
+outstanding. Cold work is paid at conversation startup/use, not by prewarming the
+Companion in the background. See [model notices](speech-model-notices.md).
 
-| File                | Owns                                                                     |
-| ------------------- | ------------------------------------------------------------------------ |
-| `orchestrator.ts`   | the streaming turn loop, tool dispatch, turn assembly                    |
-| `backend.ts`        | the backend port: text deltas, tool calls, tool results                  |
-| `backends/api.ts`   | the Anthropic Messages API backend                                       |
-| `backends/cli.ts`   | the Claude Code CLI backend, one agent SDK session per Companion session |
-| `model-config.ts`   | backend selection, and key/base URL/model resolution                     |
-| `tools/index.ts`    | the tool catalog and its Zod schemas                                     |
-| `tools/agents.ts`   | fast tools over `AgentManager`                                           |
-| `tools/thinking.ts` | deferred tools that spawn headless subagents                             |
-| `deferred-jobs.ts`  | the background job registry and completion fan-out                       |
-| `notebook.ts`       | the Companion's own small memory: topics, tasks, one-line state          |
-| `store.ts`          | atomic persistence of the notebook                                       |
-| `session.ts`        | `CompanionSession`: per-client audio state, turn lifecycle               |
-| `speech-stream.ts`  | streaming text → sentence segments → TTS, so audio starts mid-sentence   |
-| `fillers.ts`        | the pre-synthesised filler bank and the stall guard                      |
+## Lifecycle and playback
 
-#### The orchestrator model
+Every accepted conversation has a session ID; audio carries a turn generation.
+Barge-in aborts the active backend stream and pending synthesis/playback, and
+invalidates late output. Claude interrupts its SDK query; Codex interrupts its
+app-server turn; the API backend aborts its request. Shutdown runs provider and
+recognition cleanup concurrently with a 2.5-second waiting bound. Startup checks
+its generation after asynchronous boundaries so an ended conversation cannot
+start late.
 
-The turn loop talks to a **backend port** (`backend.ts`): text deltas, tool calls, tool
-results, and nothing about how any of it travels. Two backends implement it.
+When an active conversation loses its daemon connection, the client drops outgoing
+frames and shows Reconnecting. Local capture retains its existing foreground audio
+session so a screen-locked phone does not need to reacquire the microphone. When
+the daemon reconnects, Companion establishes a new session and restores mute state.
+End or disabling the feature cancels that intent. Dismissal keeps it active. The daemon replays
+unannounced durable results; it does not rerun their workers.
 
-**The API backend** (`backends/api.ts`) is the fast path: the Anthropic Messages API
-through `@anthropic-ai/sdk`, already a daemon dependency.
+Playback acknowledgements, rather than submission to TTS, determine canonical
+heard history. A segment is credited after its complete playback. A partially
+played segment is conservatively omitted; word-level playback accounting is not
+implemented. Provider sessions are reconstructed when interrupted history differs
+from generated text, and recycled after six exchanges to bound context. FDE's
+canonical history keeps up to twelve messages and 12,000 characters (4,000 per message).
 
-- Model: `claude-haiku-4-5`, `max_tokens: 1024`, streaming.
-- Key resolution mirrors the OpenAI speech pattern
-  (`speech/providers/openai/config.ts`): `providers.anthropic.apiKey` →
-  `ANTHROPIC_API_KEY`, base URL `providers.anthropic.baseUrl` → `ANTHROPIC_BASE_URL`,
-  model override `features.companion.model`.
-- The system prompt is frozen and cached (`cache_control: ephemeral`); the volatile
-  notebook goes in the last user turn so the prefix keeps hitting cache.
-- No thinking. Haiku 4.5 predates adaptive thinking, and a conversational turn must not
-  pause to reason — that is what the deferred tools are for.
+Typed messages receive immediate accepted/rejected responses. The client reuses
+its request ID for a retry; the daemon persists the latest 10,000 accepted IDs in
+`companion/messages.json`. Acceptance means queued, not task completion. If the
+daemon dies after acceptance but before dispatch, that request is not automatically
+replayed: inspect task state before asking for the action again. This favors
+avoiding duplicate actions over pretending to provide exactly-once execution.
 
-**The CLI backend** (`backends/cli.ts`) is for the far commoner machine: Claude Code
-installed and signed in, no API key anywhere. It holds one `@anthropic-ai/claude-agent-sdk`
-session per Companion session, in streaming-input mode with `includePartialMessages: true`
-— without partial messages you only get whole messages, and the streaming-TTS seam that
-makes this feature feel alive is dead.
+Current clients require `capabilities.companionDetails.protocolVersion: 2` and
+`conversationControls: true` before
+offering a working conversation. Older daemons are directed to update in Settings.
+Existing message names remain compatible; metadata is additive.
 
-- Same model id, from the same config keys. The session runs with no built-in tools, no
-  skills, no filesystem settings and no inherited MCP servers, so its prompt is the
-  Companion's system prompt and nothing else.
-- **The session is warmed when the Companion session opens.** Spawning the process,
-  initialising the harness, connecting the in-process MCP server and making the first model
-  request costs ~2.2 s; the warm turn pays all of it during `companion.session.start`, so
-  no conversational turn ever does. A session that cannot warm refuses the start with
-  `companion_backend_failed` rather than accepting a Companion that cannot talk.
-- **Tools are mounted as an in-process MCP server**, not driven through the orchestrator's
-  loop. The CLI harness owns its own tool loop, and feeding results back through ours would
-  mean fabricating `tool_result` user messages it does not accept from an SDK client. The
-  MCP handlers call the same `invokeCompanionTool` the API path's loop calls, so tool
-  behaviour cannot diverge between backends — only declaration and dispatch do. The backend
-  reports each call as it starts, so both paths emit the same `tool_started` events.
-- No prompt caching. The CLI reports zero cache reads and writes on every turn, so the
-  frozen prefix buys nothing here; it is part of why the path is slower.
+## Tasks, context and permissions
 
-**Selection.** A key wins whenever one resolves — the API path is meaningfully faster. With
-no key, the CLI backs it if Claude Code is installed. Only when neither is there is the
-Companion advertised as unavailable, with reason `companion_backend_missing`; the app never
-shows a control it cannot honour.
+The tool surface includes `list_workspaces`, `list_agents`, `get_agent_status`,
+`create_agent`, `send_agent_prompt`, `cancel_agent`, `respond_to_permission`,
+`list_jobs`, `get_job_result`, `think`, `research`, `read_timeline`, `note`, and `end_conversation`.
 
-#### Tools
+Creation and steering return durable task receipts promptly. The daemon persists
+job ID, agent/workspace, originating conversation, question, status and result in
+`companion/jobs.json`. Agent lifecycle and permission events update these receipts
+independently of the device connection. Results survive End and reconnect; local
+speech announces pending results next time and marks them announced after delivery.
+Delivery requires a successful model response and acknowledgement of every speech
+segment. Model errors, empty or failed synthesis, and interrupted playback leave
+the result unannounced. Retry waits for the next user turn or conversation start;
+it does not repeatedly invoke the model or rerun the worker. A failed receipt write
+also leaves the result unannounced in memory and on disk.
+User speech takes priority, then permission requests, then coalesced results.
 
-Fast tools answer inside the turn (target < 300 ms, all local to the daemon):
+Jobs linked to ordinary agents reconcile against their lifecycle after daemon
+restart. Ephemeral thinking/research jobs interrupted by a restart become explicit
+failures; FDE does not rerun potentially consequential work automatically.
 
-| Tool                | Returns                                                      |
-| ------------------- | ------------------------------------------------------------ |
-| `list_workspaces`   | workspace id, name, project, branch, agent count             |
-| `list_agents`       | agent id, title, workspace, status, last activity, attention |
-| `get_agent_status`  | one agent's status, model, current turn state                |
-| `send_agent_prompt` | queues a prompt to a running agent                           |
-| `create_agent`      | starts a new agent in a workspace with an initial prompt     |
-| `cancel_agent`      | cancels the current turn                                     |
-| `note`              | writes a topic/task line into the notebook                   |
+The orchestrator identifies the selected workspace and passes it to reasoning and
+research tools. Actual web/tool capabilities depend on the chosen worker. Worker
+completion messages direct the orchestrator to read the timeline before claiming
+what changed. Creating a new workspace itself is still a separate product workflow.
 
-Deferred tools return `{ status: "started", jobId }` **immediately** and finish in the
-background:
+Voice permission decisions include both the agent ID and the actual pending
+request ID and use the existing daemon permission path. The conversation prompt
+requires clarification for an ambiguous “yes” or multiple pending requests. This
+is not a replacement for the daemon's enforcement, nor proof that speech intent
+has been qualified on real devices.
 
-| Tool            | Does                                                                      |
-| --------------- | ------------------------------------------------------------------------- |
-| `think`         | a headless subagent reasons about a question, returns one short paragraph |
-| `read_timeline` | a subagent reads an agent's timeline and reports what happened            |
-| `research`      | a longer-running subagent with file and web access                        |
+## Native Codex voice preview
 
-Deferred work uses the existing internal-ephemeral-agent path
-(`agent-response-loop.ts` → `generateStructuredAgentResponseWithFallback`, with
-`internal: true` and `persistSession: false`), so these subagents never appear in the
-sidebar, never persist, and are cleaned up in a `finally`. Model selection reuses
-`DEFAULT_STRUCTURED_GENERATION_PROVIDERS`, which already prefers Haiku and cheap peers.
+Enable `features.companion.nativeVoicePreview` on the daemon and explicitly select
+**Codex voice (preview)** in device Settings. This transport is currently available
+in the desktop/web client. Native iOS/Android use the local-speech baseline.
 
-When a job completes the orchestrator is re-entered with the result as a synthetic user
-turn, and it speaks the answer unprompted — the same way a person comes back to you.
+The browser negotiates WebRTC through FDE's authenticated connection. A dedicated
+Codex app-server process uses ChatGPT authentication and a thin backing router
+with FDE tools. Shell, browser, image, plugin and multi-agent features are disabled
+for the router; substantive work goes through ordinary FDE workers. The adapter
+uses experimental v3 audio, WebRTC, automatic handoffs and commentary return.
+There is no silent API or local-speech fallback if native negotiation fails.
 
-#### Never leave a silence
+Immediate delegation and delayed `appendSpeech` return both passed with a real
+Claude worker and continuous exact microphone silence in the synthetic browser
+probe. This is one account/version, not a Plus/Pro entitlement guarantee.
 
-Two mechanisms, because one is not enough:
+Native result playback receipts are not yet correlated to individual jobs.
+Consequently, native results remain unconfirmed and can be announced again after
+reconnect rather than being silently lost. Native voice stays explicitly in
+preview pending delivery deduplication, interruption/mute/long-session tests,
+account-tier qualification and device testing.
 
-1. **Prompt contract.** A response may contain text and tool calls together. The system
-   prompt requires that any turn calling a deferred tool also emits a short spoken line in
-   the same response. That line is spoken while the job runs.
-2. **Stall guard.** If no audio has been emitted by the backend's stall threshold after
-   end-of-speech — 700 ms on the API path, 3.5 s on the CLI — the daemon speaks a filler
-   from a small rotating bank, pre-synthesised at startup into the existing `tts-cache` so
-   playback is instant. The bank is deliberately short and varied; a repeated filler is
-   worse than a silence.
+## Mobile and privacy
 
-   The threshold is backend-dependent because a filler that fires on every turn is worse
-   than a slightly slow answer: it stops meaning "this one is taking a while" and becomes
-   noise. The CLI's routine first audio is around 2.2 s, so 700 ms there would fill before
-   nearly every ordinary answer. 3.5 s sits past the measured slow tail.
+The iOS app declares background audio. Android voice capture now starts a
+microphone foreground service from the visible user action, with an ongoing
+notification and End action; background activity pause no longer stops a capture
+owned by that service. Existing interruption/audio-focus cleanup remains in use.
+These native changes require rebuilding the app.
 
-The stall guard is cancelled the moment the first real segment is queued, and a filler is
-never spoken twice in a row.
+A physical iPhone/Android screen-lock, Bluetooth, call, audio-focus and network
+recovery pass is still required before claiming “phone in pocket” reliability.
+Mobile web has separate browser restrictions and no background reliability claim.
 
-#### Latency
+Routine Companion/TTS logging excludes transcript text and raw audio. Task records
+and the notebook are intentional local persistence. The opt-in benchmark prints
+its synthetic test transcript/results; it must not be used as routine telemetry.
 
-From end-of-speech to first audio byte, per backend. **Measured** numbers come from
-`backends/cli.real.e2e.test.ts` against a real signed-in Claude Code on a Linux VM, fifteen
-warm turns with the real system prompt and tool catalog. **Estimated** numbers are reasoned
-budgets that nothing here has measured — this machine has no Anthropic API key, so the API
-backend's model latency has never been timed.
+### Voice speed
 
-| Stage                        | API backend     | CLI backend         |
-| ---------------------------- | --------------- | ------------------- |
-| final transcript (local STT) | ~250 ms est.    | ~250 ms est.        |
-| first text delta             | ~400 ms est.    | **1.73 s measured** |
-| first sentence boundary      | ~150 ms est.    | ~150 ms est.        |
-| TTS first segment (Kokoro)   | ~300 ms est.    | ~300 ms est.        |
-| **first audio**              | **~1.1 s est.** | **~2.4 s**          |
+App Settings → Companion → Voice speed offers 0.75× to 2×, defaulting to **1.3×**
+(30% faster). The preference applies at the next conversation start and survives
+reconnection. It adjusts synthesis, keeping pitch intact, and multiplies any
+explicit host local-TTS speed. Other voice features retain their configured
+speed. The experimental native Codex voice path does not expose this local
+synthesis control. Older daemons require updating to honor the new preference.
 
-The CLI's first-delta distribution over those fifteen turns: min 1.24 s, median 1.73 s,
-ninetieth percentile 2.27 s, max 2.62 s. Session warm — process spawn, harness init, MCP
-connect and one throwaway model request — measured 2.20–2.37 s, and is paid at session open,
-never inside a turn.
+### Mobile audio routing
 
-So the CLI costs roughly **+1.3 s per turn**. That is a real regression against the API
-path and the reason a key still wins the selection, but it is the difference between a
-Companion and no Companion on a machine without one, and it stays inside the range where a
-spoken answer still reads as an answer rather than a hang.
+App Settings → Companion → Audio mode selects **Call** (default) or **Media**,
+starting with the next conversation. Android Media uses `MODE_NORMAL`,
+`USAGE_MEDIA` playback/focus and normal microphone capture instead of requesting
+communication routing. iOS retains microphone-capable `playAndRecord`, using
+`default` mode with A2DP output and no voice-processing unit; capture is converted
+from the hardware sample rate to the wire's 16 kHz. Call retains the existing
+voice-chat processing and headset-microphone routing.
 
-The one non-negotiable implementation detail: **TTS is driven from the token stream, not
-from the finished message.** `speech-stream.ts` consumes text deltas, cuts at the first
-sentence or clause boundary past ~40 characters, and hands that segment to `TTSManager`
-while the model is still generating. Waiting for the full completion costs a second and
-makes the whole feature feel dead.
+Media is not a promise of high-quality Bluetooth output and headset-microphone
+input simultaneously. The OS/device determines available routes; headphones are
+recommended because echo rejection can differ. See the platform
+[Android audio attributes](https://developer.android.com/reference/android/media/AudioAttributes)
+and [Apple A2DP option](https://developer.apple.com/documentation/avfaudio/avaudiosession/categoryoptions-swift.struct/allowbluetootha2dp).
+This requires a rebuilt native app, with physical Android/iOS speaker, wired,
+Bluetooth, background and interruption checks still outstanding. Older native
+binaries reject Media selection with an update-required error.
 
-#### Keeping context small
-
-The orchestrator's request is rebuilt every turn from:
-
-- the frozen system prompt,
-- the notebook (topics, open tasks, one line of state each — hard cap 2 KB),
-- the last 12 conversational turns.
-
-Older turns are not summarised by a second model call; they are dropped, because anything
-that mattered was written into the notebook by the `note` tool. The notebook lives at
-`$FDE_HOME/companion/notebook.json` and is written through `writeJsonFileAtomic` by a
-store class that owns its own read-merge-write, per the store surface rules in
-[data-model.md](data-model.md).
-
-### Protocol
-
-A new dotted namespace per [rpc-namespacing.md](rpc-namespacing.md). No new flat names.
-
-Inbound:
-
-| Message                            | Params                               |
-| ---------------------------------- | ------------------------------------ |
-| `companion.session.start.request`  | `requestId`                          |
-| `companion.session.stop.request`   | `requestId`                          |
-| `companion.audio.chunk`            | `audio` (base64), `format`, `isLast` |
-| `companion.audio.played`           | `id`                                 |
-| `companion.message.send.request`   | `requestId`, `text` (typed fallback) |
-| `companion.notebook.fetch.request` | `requestId`                          |
-
-Outbound:
-
-| Message                            | Payload                                           |
-| ---------------------------------- | ------------------------------------------------- |
-| `companion.session.start.response` | `accepted`, `reasonCode`, `retryable`             |
-| `companion.session.stop.response`  | `accepted`                                        |
-| `companion.audio.output`           | `audio`, `format`, `id`, `groupId`, `isLastChunk` |
-| `companion.input.state`            | `isSpeaking`                                      |
-| `companion.transcript`             | `text`, `isFinal`                                 |
-| `companion.reply`                  | `text`, `isFinal` — the accumulated reply so far  |
-| `companion.notebook.update`        | the notebook snapshot                             |
-| `companion.job.update`             | `jobId`, `label`, `status`, `summary`             |
-
-`companion.reply` carries the **whole reply so far**, not a delta — each message replaces
-the last. A snapshot costs marginally more on the wire than a delta but cannot drift out of
-sync when one is dropped, and it lets a spoken filler be replaced wholesale by the answer
-that follows it. Clients assign; they never concatenate.
-
-Permissions: session/audio/message map to `workspace.write`, notebook fetch to
-`workspace.read`. Capability advertisement rides on `server_info.capabilities.companion`
-= `{ enabled, reason }`, resolved the same way the voice features are
-(`speech-config-resolver.ts`), gated additionally on a backend being reachable — an
-Anthropic key or an installed Claude Code CLI. Bootstrap probes for the CLI once at startup
-and the Companion runtime carries the answer, because that probe is async and capability
-resolution is not.
-
-Config keys, following the existing table in [voice.md](voice.md):
-
-| Feature   | `config.json`                 | Environment             |
-| --------- | ----------------------------- | ----------------------- |
-| Companion | `features.companion.enabled`  | `FDE_COMPANION_ENABLED` |
-| Model     | `features.companion.model`    | `FDE_COMPANION_MODEL`   |
-| API key   | `providers.anthropic.apiKey`  | `ANTHROPIC_API_KEY`     |
-| Base URL  | `providers.anthropic.baseUrl` | `ANTHROPIC_BASE_URL`    |
-
-With no API key the Companion uses the Claude Code CLI, which brings its own
-authentication; nothing else needs configuring.
-
-### App
-
-The Companion is global, so it attaches where global things attach — and it is
-explicitly **not** a fourth mobile panel and **not** a route.
-
-- A **sidebar nav row** (`companion`, added to `BUILTIN_SIDEBAR_NAV_IDS`) is the canonical
-  entry point, so it inherits the existing per-device visibility and ordering preference.
-- A **command center** root contribution and a keyboard shortcut open it too.
-- The surface itself is a **global singleton host** mounted in the `_layout.tsx` singleton
-  block, driven by a small zustand store — the `settings-modal/store.ts` +
-  `settings-modal/host.tsx` pattern. On compact it presents as an `AdaptiveModalSheet`; on
-  desktop as a centred card.
-
-Inside, the interface stays quiet. One accent element on the surface — the mic — and
-nothing else competes with it:
-
-- a **mic orb** with a live volume ring: idle, listening, thinking, speaking;
-- the **live partial transcript** under it, replaced by the final one;
-- the Companion's **reply text** as it streams, so you can read what you are hearing;
-- a **topics strip**: the notebook's current topics and tasks as compact rows, each with a
-  status dot from `getStatusDotColor` and a live chip for the agent it refers to. Tapping
-  a row navigates to that agent through `navigateToAgent()` and leaves the Companion
-  listening.
-
-Barge-in is the primary interaction: talking over the Companion stops it, exactly as in
-voice mode. There is a mute toggle and a stop button, and a typed-input fallback for when
-speaking aloud is not an option.
-
-All strings go in `apps/ui/src/i18n/resources/en.ts` under a new `companion` group and are
-mirrored into the other eight locales; `apps/ui/src/i18n/resources.test.ts` is the gate.
-
-## Scope for v1
-
-In:
-
-- one daemon's workspaces, agents and projects;
-- conversation, delegation, status reporting, starting and steering agents;
-- the notebook and the topics strip;
-- desktop, web and Android (the same audio engines voice mode already uses).
-
-Out, and deliberately so:
-
-- cross-host orchestration — the Companion talks to the daemon it runs on;
-- the Companion editing files or running commands directly;
-- a second wake-word / always-listening mode;
-- iOS, which follows whenever the iOS app does.
+Muting crossfades the artwork's coloured layers to luminance-matched monochrome
+in 150 ms; unmuting reverses it. Ongoing output motion remains independent from
+microphone state. The minimized presence shares this behavior.

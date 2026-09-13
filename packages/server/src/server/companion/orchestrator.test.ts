@@ -393,7 +393,7 @@ describe("CompanionOrchestrator", () => {
     await deferredJobs.drain();
 
     expect(settled).toEqual([
-      "The background job you started (the flaky test) finished. Result:\nIt races on the lease clock.\n\nTell the user, in one or two spoken sentences.",
+      "The background job you started (the flaky test, job job-1, agent none, workspace unspecified) finished. Result:\nIt races on the lease clock.\n\nTell the user, in one or two spoken sentences.",
     ]);
 
     const second = await collect(orchestrator.turn(settled[0]));

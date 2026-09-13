@@ -1,5 +1,10 @@
 # Mobile Testing
 
+Android builds are supported; see [Android builds](android.md) for the current
+APK commands and application IDs. The upstream examples below may require ID
+updates. Companion's physical-device acceptance matrix is tracked in
+[Companion validation](companion-validation.md).
+
 > Android has a release pipeline. iOS development tooling remains available, but no iOS store release pipeline is present. Physical-device acceptance is separate from build success.
 
 ## Agent Device

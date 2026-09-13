@@ -7,6 +7,11 @@ namespace migration. Unchecked items are validation/backlog work, not active tas
 
 ## Implemented baseline
 
+- Companion visual/speech polish: opt-in device setting, flowing light presence,
+  motion control and Kitten Rosie local voice. See the
+  [design, measurements and remaining native gaps](docs/companion-polish-plan.md).
+  The reported Android startup crash is still unresolved.
+
 - Opt-in independent execution service and restartable daemon gateway, with
   execution status, explicit stop-all, retained-version reporting, and isolated
   turn/permission/supervisor acceptance. [Specification](docs/plans/independent-execution-service.md).
@@ -61,18 +66,34 @@ visible until device or deployment evidence closes them.
       same workload. Track concrete fixes and remaining acceptance in the
       [investigation](docs/memory-lockup-investigation.md).
 - [ ] **Validate Companion on devices.** Exercise a full microphone-to-speaker
-      conversation with API and CLI backends, interruption, reconnect, failures,
+      conversation with Claude and Codex subscriptions, interruption, reconnect, failures,
       headphones and speakers. Record full-loop latency and device details.
       The 0.2.0 release had no recorded full-loop acceptance test; backend timings
       and automated tests do not close this item.
-- [ ] **Finish Companion interruption semantics.** Cancel in-flight backend work
-      so an interrupted turn cannot delay the next one. Reconcile history to
-      audio actually played rather than text handed to TTS. See
-      [voice follow-ups](docs/companion-voice-design.md).
+- [x] **Implement Companion lifecycle and subscription baseline.** Device opt-in,
+      explicit End, cancellation, acknowledged playback history, durable tasks,
+      retry of unheard results, network resumption with mute preservation,
+      Codex orchestration and fast Piper speech are implemented. Automated and
+      subscription probes are recorded in [validation](docs/companion-validation.md).
+- [x] **Keep Companion visibly listening while thinking.** Flowing voice sphere,
+      independent capture/playback response, persistent Listening indicator,
+      reduced-motion support and isolated audio-level rendering. Browser motion
+      and Claude/Codex worker-observation regressions pass; device appearance still
+      needs the normal Companion physical-device acceptance pass.
+- [x] **Make Companion conversational and unobtrusive.** Composer launcher with
+      fixed host/workspace context, dismissal that preserves the call, quiet
+      completion updates, speech preferences, independent VAD/STT/TTS workers,
+      growing transcripts and concurrent input/response processing. Microphone-paced
+      local regression covers an in-sentence pause and a second utterance during
+      a held reply; real-device conversational quality remains above.
+- [ ] **Qualify native Companion preview.** Immediate and deferred Claude results
+      were spoken in the production adapters with controlled silence. Complete
+      per-job delivery receipts, reconnect deduplication, account-tier and device
+      acceptance before promoting the preview.
 - [ ] **Companion configuration and workspace creation.** Refresh capability when
-      credentials/flags change without restarting the daemon; support creating a
-      workspace before `create_agent` when no existing workspace fits.
-- [ ] **Platform acceptance pass.** Verify Windows app install/close/relaunch,
+      credentials/flags change without restarting the daemon (implemented with
+      a 15-second refresh cache); still support creating a workspace before `create_agent` when no existing workspace fits.
+- [ ] **Platform acceptance pass.** Verify Windows sidecar install/start/stop,
       macOS and Windows updater hand-off/rollback, SSH auth and reconnect, mobile
       claims and spoken alerts, and Android/Windows streaming on real hardware.
       Capture profiles before assigning a performance improvement percentage.

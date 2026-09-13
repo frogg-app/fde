@@ -132,3 +132,22 @@ describe("native audio lifetime", () => {
     expect(native.initialize).toHaveBeenCalledTimes(1);
   });
 });
+
+it("uses the chosen routing mode and changes it only after capture ends", async () => {
+  let mode: "call" | "media" = "media";
+  const audio = createAudioEngine({
+    onCaptureData() {},
+    onVolumeLevel() {},
+    audioMode: () => mode,
+  });
+  await audio.startCapture();
+  expect(native.initialize).toHaveBeenLastCalledWith("media");
+  mode = "call";
+  await audio.initialize();
+  expect(native.initialize).toHaveBeenCalledTimes(1);
+  await audio.stopCapture();
+  await audio.startCapture();
+  expect(native.tearDown).toHaveBeenCalled();
+  expect(native.initialize).toHaveBeenLastCalledWith("call");
+  await audio.destroy();
+});

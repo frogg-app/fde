@@ -8096,6 +8096,12 @@
                 "payload": {
                   "type": "object",
                   "properties": {
+                    "sdp": {
+                      "type": "string"
+                    },
+                    "backend": {
+                      "type": "string"
+                    },
                     "requestId": {
                       "type": "string"
                     },
@@ -8110,6 +8116,9 @@
                     },
                     "retryable": {
                       "type": "boolean"
+                    },
+                    "sessionId": {
+                      "type": "string"
                     }
                   },
                   "required": [
@@ -8218,6 +8227,14 @@
                     },
                     "isLastChunk": {
                       "type": "boolean"
+                    },
+                    "sessionId": {
+                      "type": "string"
+                    },
+                    "turnId": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
                     }
                   },
                   "required": [
@@ -8246,8 +8263,19 @@
                 "payload": {
                   "type": "object",
                   "properties": {
+                    "sessionId": {
+                      "type": "string"
+                    },
+                    "ended": {
+                      "type": "boolean"
+                    },
                     "isSpeaking": {
                       "type": "boolean"
+                    },
+                    "turnId": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
                     }
                   },
                   "required": [
@@ -8272,11 +8300,19 @@
                 "payload": {
                   "type": "object",
                   "properties": {
+                    "sessionId": {
+                      "type": "string"
+                    },
                     "text": {
                       "type": "string"
                     },
                     "isFinal": {
                       "type": "boolean"
+                    },
+                    "turnId": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
                     }
                   },
                   "required": [
@@ -8302,11 +8338,19 @@
                 "payload": {
                   "type": "object",
                   "properties": {
+                    "sessionId": {
+                      "type": "string"
+                    },
                     "text": {
                       "type": "string"
                     },
                     "isFinal": {
                       "type": "boolean"
+                    },
+                    "turnId": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
                     }
                   },
                   "required": [

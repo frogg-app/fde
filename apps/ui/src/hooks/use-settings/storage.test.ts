@@ -258,7 +258,9 @@ describe("loadAppSettingsFromStorage", () => {
     const legacySide = await loadAppSettingsFromStorage(
       makeDeps({
         storage: createInMemoryKeyValueStorage({
-          [APP_SETTINGS_KEY]: JSON.stringify({ openInSidePane: { pullRequests: true } }),
+          [APP_SETTINGS_KEY]: JSON.stringify({
+            openInSidePane: { pullRequests: true },
+          }),
         }),
       }),
     );
@@ -315,7 +317,9 @@ describe("loadAppSettingsFromStorage", () => {
   it("drops an unknown workspace title source back to title", async () => {
     const deps = makeDeps({
       storage: createInMemoryKeyValueStorage({
-        [APP_SETTINGS_KEY]: JSON.stringify({ workspaceTitleSource: "directory" }),
+        [APP_SETTINGS_KEY]: JSON.stringify({
+          workspaceTitleSource: "directory",
+        }),
       }),
     });
 
@@ -327,7 +331,9 @@ describe("loadAppSettingsFromStorage", () => {
   it("normalizes terminal scrollback lines from storage", async () => {
     const deps = makeDeps({
       storage: createInMemoryKeyValueStorage({
-        [APP_SETTINGS_KEY]: JSON.stringify({ terminalScrollbackLines: 1_000_000.9 }),
+        [APP_SETTINGS_KEY]: JSON.stringify({
+          terminalScrollbackLines: 1_000_000.9,
+        }),
       }),
     });
 
@@ -658,7 +664,11 @@ describe("saveAppSettings", () => {
     const queryClient = new QueryClient();
     const sidebarRowItems = { ...DEFAULT_SIDEBAR_ROW_ITEMS, [item]: false };
 
-    await saveAppSettings({ queryClient, updates: { sidebarRowItems }, deps });
+    await saveAppSettings({
+      queryClient,
+      updates: { sidebarRowItems },
+      deps,
+    });
 
     expect((await loadAppSettingsFromStorage(deps)).sidebarRowItems).toEqual(sidebarRowItems);
   });
@@ -713,7 +723,9 @@ describe("appearance settings", () => {
   it("migrates a switched-off checks row item to the hidden checks display", async () => {
     const deps = makeDeps({
       storage: createInMemoryKeyValueStorage({
-        [APP_SETTINGS_KEY]: JSON.stringify({ sidebarRowItems: { checks: false } }),
+        [APP_SETTINGS_KEY]: JSON.stringify({
+          sidebarRowItems: { checks: false },
+        }),
       }),
     });
 
@@ -755,7 +767,10 @@ describe("appearance settings", () => {
     const persisted = JSON.parse(deps.storage.entries.get(APP_SETTINGS_KEY) ?? "null");
 
     expect(result.contentFontSize).toBe(17);
-    expect(persisted).toMatchObject({ uiBaseFontSize: 17, contentFontSize: 17 });
+    expect(persisted).toMatchObject({
+      uiBaseFontSize: 17,
+      contentFontSize: 17,
+    });
   });
 
   it("clamps the content font size into range and rejects non-numeric values", async () => {
@@ -808,7 +823,10 @@ describe("appearance settings", () => {
   it("lets an explicit base size win over the legacy interface scale", async () => {
     const deps = makeDeps({
       storage: createInMemoryKeyValueStorage({
-        [APP_SETTINGS_KEY]: JSON.stringify({ uiBaseFontSize: 16, uiFontSize: 17 }),
+        [APP_SETTINGS_KEY]: JSON.stringify({
+          uiBaseFontSize: 16,
+          uiFontSize: 17,
+        }),
       }),
     });
 
@@ -818,7 +836,10 @@ describe("appearance settings", () => {
   it("falls back to a valid legacy interface scale when the explicit base size is invalid", async () => {
     const deps = makeDeps({
       storage: createInMemoryKeyValueStorage({
-        [APP_SETTINGS_KEY]: JSON.stringify({ uiBaseFontSize: "abc", uiFontSize: 17 }),
+        [APP_SETTINGS_KEY]: JSON.stringify({
+          uiBaseFontSize: "abc",
+          uiFontSize: 17,
+        }),
       }),
     });
 
@@ -955,4 +976,45 @@ describe("parseClampedFontSize", () => {
     expect(parseClampedFontSize("15", { min: 11, max: 24 })).toBe(15);
     expect(parseClampedFontSize("abc", { min: 11, max: 24 })).toBeNull();
   });
+});
+
+it("does not enable Companion when migrating the old auto-start preference", async () => {
+  const { normalizeAppSettings } = await import("./storage");
+  expect(normalizeAppSettings({ companionAutoStart: true }).companionEnabled).toBe(false);
+  expect(normalizeAppSettings({ companionEnabled: true }).companionEnabled).toBe(true);
+  expect(normalizeAppSettings({}).companionNativeVoice).toBe(false);
+});
+
+it("defaults Companion to quiet, interruptible conversation and normalizes invalid preferences", async () => {
+  const { normalizeAppSettings } = await import("./storage");
+  const defaults = normalizeAppSettings({});
+  expect(defaults.companionAcknowledgeTasks).toBe(false);
+  expect(defaults.companionInterruptible).toBe(true);
+  expect(defaults.companionVerbosity).toBe("brief");
+  expect(defaults.companionUpdates).toBe("important");
+  expect(defaults.companionPauseMs).toBe(1400);
+  const invalid = normalizeAppSettings({
+    companionPauseMs: -1,
+    companionUpdates: "everything",
+  });
+  expect(invalid.companionPauseMs).toBe(1400);
+  expect(invalid.companionUpdates).toBe("important");
+});
+
+it.each([
+  {},
+  { companionEnabled: "true" },
+  { companionEnabled: 1 },
+  { companionEnabled: null },
+  { companionAutoStart: true },
+])("keeps Companion opt-in for absent, invalid and legacy settings: %j", async (saved) => {
+  const { normalizeAppSettings } = await import("./storage");
+  expect(normalizeAppSettings(saved).companionEnabled).toBe(false);
+});
+
+it("defaults Companion speech to 30 percent faster and preserves an explicit speed", async () => {
+  const { normalizeAppSettings } = await import("./storage");
+  expect(normalizeAppSettings({}).companionSpeechSpeed).toBe(1.3);
+  expect(normalizeAppSettings({ companionSpeechSpeed: 1 }).companionSpeechSpeed).toBe(1);
+  expect(normalizeAppSettings({ companionSpeechSpeed: 7 }).companionSpeechSpeed).toBe(1.3);
 });

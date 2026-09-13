@@ -50,6 +50,7 @@ describe("companion tools", () => {
           type: "object",
           required: ["question", "label"],
           properties: {
+            workspaceId: { type: "string", minLength: 1 },
             question: { type: "string", minLength: 1 },
             label: {
               type: "string",
@@ -67,6 +68,7 @@ describe("companion tools", () => {
           type: "object",
           required: ["agentId", "question", "label"],
           properties: {
+            workspaceId: { type: "string", minLength: 1 },
             agentId: { type: "string", minLength: 1 },
             question: { type: "string", minLength: 1 },
             label: { type: "string", minLength: 1 },
@@ -81,6 +83,7 @@ describe("companion tools", () => {
           type: "object",
           required: ["question", "label"],
           properties: {
+            workspaceId: { type: "string", minLength: 1 },
             question: { type: "string", minLength: 1 },
             label: { type: "string", minLength: 1 },
           },
@@ -122,6 +125,26 @@ describe("companion tools", () => {
       ok: false,
       error: "Unknown tool summon_dragon",
     });
+  });
+
+  it("reads a completed worker directly without dispatching a summarization job", async () => {
+    const direct = createCompanionThinkingTools({
+      deferredJobs,
+      readTimeline: () => [
+        { type: "assistant_message", text: "Fixed the build. All checks passed." },
+      ],
+    });
+    const result = await invokeCompanionTool(direct, "read_timeline", {
+      agentId: "worker",
+      question: "What changed?",
+      label: "Completed task",
+    });
+    expect(result).toEqual({
+      ok: true,
+      content: JSON.stringify({ timeline: "assistant: Fixed the build. All checks passed." }),
+    });
+    expect(deferredJobs.list()).toEqual([]);
+    expect(direct.find((tool) => tool.name === "read_timeline")?.deferred).toBe(false);
   });
 
   it("writes the notebook through the note tool and defaults its status to open", async () => {

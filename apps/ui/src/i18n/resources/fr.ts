@@ -1880,8 +1880,44 @@ export const fr: TranslationResources = {
     },
   },
   companion: {
+    behavior: {
+      nextSession: "Les modifications s’appliquent au prochain démarrage de Companion.",
+      verbosity: "Longueur des réponses",
+      brief: "Courte",
+      detailed: "Détaillée",
+      updates: "Annonces vocales des tâches",
+      important: "Résultats et échecs",
+      completion: "Résultats uniquement",
+      off: "Désactivées",
+      acknowledge: "Accuser réception des tâches avant de travailler",
+      permissions:
+        "Les demandes d’autorisation restent vocales même si les annonces sont désactivées.",
+      audioMode: "Mode audio",
+      callMode: "Appel",
+      mediaMode: "Multimédia",
+      audioModeHint:
+        "À la prochaine conversation. Appel privilégie le micro du casque et la réduction d’écho. Multimédia utilise le routage multimédia ; un casque est recommandé. Le micro Bluetooth dépend de l’appareil.",
+      speechSpeed: "Vitesse de la voix",
+      pause: "Pause avant de répondre",
+      quick: "Rapide (0,8 seconde)",
+      natural: "Naturelle (1,4 seconde)",
+      relaxed: "Longue (2,4 secondes)",
+      interruptible: "Me laisser interrompre en parlant",
+    },
     title: "Compagnon",
+    setup: {
+      disabled: "Désactivé",
+      required: "Configuration nécessaire",
+      ready: "Prêt",
+      active: "Conversation active",
+      unknown: "Aucun modèle de conversation sélectionné",
+      providers: "Configurer le fournisseur",
+      subscription:
+        "Utilise le quota de votre abonnement. Consultez le solde dans les paramètres du serveur. Aucun passage automatique à la facturation API.",
+      api: "Ce serveur utilise une API. Les jetons de conversation sont facturés séparément.",
+    },
     status: {
+      muted: "Microphone coupé",
       connecting: "Connexion…",
     },
     micState: {
@@ -1891,6 +1927,10 @@ export const fr: TranslationResources = {
       speaking: "Parle",
     },
     actions: {
+      start: "Démarrer Companion",
+      minimize: "Réduire",
+      resume: "Ouvrir la conversation",
+
       mute: "Couper le micro",
       unmute: "Réactiver le micro",
       stop: "Arrêter",
@@ -1908,22 +1948,42 @@ export const fr: TranslationResources = {
       sendFailed: "Votre message n'a pas été envoyé",
     },
     reason: {
+      companion_speech_unavailable:
+        "La voix locale n’est pas prête. Vérifiez les modèles et les paramètres vocaux du serveur.",
+      companion_native_unavailable:
+        "La connexion à la voix Codex en aperçu a échoué. Vérifiez votre connexion ChatGPT, votre compte et les paramètres du serveur.",
+      companion_connection_failed:
+        "Connexion au serveur impossible. Vérifiez la connexion et réessayez.",
+      companion_update_required:
+        "Mettez le serveur à jour pour utiliser le protocole de conversation actuel.",
       unknown: "Le démon n'a pas indiqué pourquoi.",
-      companion_backend_missing: "Ce démon n'a ni clé d'API Anthropic ni CLI Claude Code.",
+      companion_backend_missing: "Connectez-vous à Claude Code ou Codex sur ce serveur.",
       companion_backend_failed: "La session de modèle du Companion n'a pas pu démarrer.",
       companion_disabled: "Le Compagnon est désactivé sur ce démon.",
       companion_microphone_unavailable: "Le microphone n'est pas disponible.",
       companion_session_closed: "La session du Compagnon est fermée.",
-      companion_busy: "Le Compagnon est occupé par un autre tour.",
+      companion_busy:
+        "Un autre appareil utilise Companion sur ce serveur. Terminez cette conversation d’abord.",
     },
     unavailable: {
       title: "Le Compagnon n'est pas disponible",
       description: "Ce démon ne propose pas le Compagnon.",
     },
     settings: {
-      autoStart: {
-        label: "Parler tout de suite",
-        description: "Ouvre une session dès l'ouverture du Compagnon, sans attendre une pression.",
+      nativeVoice: {
+        label: "Voix Codex (aperçu)",
+        description:
+          "Nécessite une connexion ChatGPT et l’activation de l’aperçu sur le serveur. La disponibilité dépend de votre compte.",
+      },
+      enabled: {
+        label: "Activer Companion (aperçu)",
+        description:
+          "Conversations vocales expérimentales avec vos agents. Désactivé par défaut sur cet appareil. L’écoute commence uniquement lorsque vous démarrez une conversation.",
+      },
+      animated: {
+        label: "Animer les effets vocaux",
+        description:
+          "Une lumière en mouvement continu. Désactivez pour une vue plus calme. Le réglage système de réduction des animations est toujours respecté.",
       },
       replyText: {
         label: "Afficher le texte de la réponse",

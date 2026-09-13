@@ -2246,7 +2246,18 @@ export class Session {
         this.companionSession?.handleAudioPlayed(msg.id);
         return undefined;
       case "companion.message.send.request":
-        return this.companionSession?.handleMessageSend(msg);
+        if (!this.companionSession) {
+          this.emit({
+            type: "companion.message.send.response",
+            payload: {
+              requestId: msg.requestId,
+              accepted: false,
+              reasonCode: "companion_disabled",
+            },
+          });
+          return undefined;
+        }
+        return this.companionSession.handleMessageSend(msg);
       case "companion.notebook.fetch.request":
         return this.companionSession?.handleNotebookFetch(msg);
       default:

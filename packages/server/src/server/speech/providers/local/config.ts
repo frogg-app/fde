@@ -1,3 +1,4 @@
+import { defaultTtsSpeakerId } from "./sherpa/model-catalog.js";
 import path from "node:path";
 
 import { z } from "zod";
@@ -201,8 +202,7 @@ export function resolveLocalSpeechConfig(params: {
   );
 
   const resolvedVoiceTtsSpeakerId =
-    parsed.voiceLocalTtsSpeakerId ??
-    (parsed.voiceLocalTtsModel === "kokoro-en-v0_19" ? 0 : undefined);
+    parsed.voiceLocalTtsSpeakerId ?? defaultTtsSpeakerId(parsed.voiceLocalTtsModel);
 
   return {
     sttLanguages: {

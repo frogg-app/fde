@@ -1,6 +1,6 @@
 {
   "name": "@fde/desktop-electron",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "private": true,
   "description": "FDE Electron desktop shell",
   "homepage": "https://frogg.app",

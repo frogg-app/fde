@@ -5,7 +5,7 @@ import {
   isLocalSpeechRuntimeAvailable,
   resolveCompanionFeatureEnabled,
 } from "../speech/speech-config-resolver.js";
-import { resolveCompanionModelConfig } from "./model-config.js";
+import { resolveCompanionModelConfig, isCompanionNativeVoiceAvailable } from "./model-config.js";
 
 export const COMPANION_DISABLED_MESSAGE = "The Companion is turned off on this daemon.";
 
@@ -14,6 +14,7 @@ export interface CompanionCapabilityInputs {
   persisted: PersistedConfig;
   /** Whether the Claude Code CLI can back the Companion when no key resolves. */
   claudeCliAvailable: boolean;
+  codexCliAvailable?: boolean;
   localRuntimeAvailable?: boolean;
 }
 
@@ -30,15 +31,18 @@ export function resolveCompanionCapability(
   const enabled = resolveCompanionFeatureEnabled({
     env: params.env,
     persisted: params.persisted,
-    localRuntimeAvailable,
+    localRuntimeAvailable:
+      localRuntimeAvailable || params.persisted.features?.companion?.nativeVoicePreview === true,
   });
   if (!enabled) {
     return { enabled: false, reason: COMPANION_DISABLED_MESSAGE };
   }
+  if (isCompanionNativeVoiceAvailable(params)) return { enabled: true, reason: "" };
   const model = resolveCompanionModelConfig({
     env: params.env,
     persisted: params.persisted,
     claudeCliAvailable: params.claudeCliAvailable,
+    codexCliAvailable: params.codexCliAvailable,
   });
   if (model.status === "unavailable") {
     return { enabled: false, reason: model.message };

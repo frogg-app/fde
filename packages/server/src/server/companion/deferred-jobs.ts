@@ -1,6 +1,10 @@
+import { mkdirSync, readFileSync, writeFileSync, renameSync, existsSync } from "node:fs";
+import path from "node:path";
+import { z } from "zod";
+import type { ManagedAgent } from "../agent/agent-manager.js";
 import { randomUUID } from "node:crypto";
 
-export type CompanionDeferredJobKind = "think" | "read_timeline" | "research";
+export type CompanionDeferredJobKind = "think" | "read_timeline" | "research" | "agent";
 
 export type CompanionDeferredJobStatus = "running" | "succeeded" | "failed";
 
@@ -12,6 +16,10 @@ export interface CompanionDeferredJobRequest {
   question: string;
   /** Set for read_timeline; the agent whose timeline is being read. */
   agentId: string | null;
+  workspaceId?: string;
+  conversationId?: string;
+  announced?: boolean;
+  dispatched?: boolean;
 }
 
 export interface CompanionDeferredJob extends CompanionDeferredJobRequest {
@@ -42,6 +50,7 @@ export interface CompanionDeferredJobsOptions {
   logger: CompanionDeferredJobsLogger;
   idFactory?: () => string;
   now?: () => Date;
+  filePath?: string;
 }
 
 /**
@@ -51,6 +60,7 @@ export interface CompanionDeferredJobsOptions {
  * synthetic user turn and gets spoken unprompted.
  */
 export class CompanionDeferredJobs {
+  private readonly filePath: string | undefined;
   private readonly run: CompanionDeferredJobRunner;
   private readonly logger: CompanionDeferredJobsLogger;
   private readonly idFactory: () => string;
@@ -60,29 +70,140 @@ export class CompanionDeferredJobs {
   private readonly inFlight = new Set<Promise<void>>();
 
   constructor(options: CompanionDeferredJobsOptions) {
+    this.filePath = options.filePath;
     this.run = options.run;
     this.logger = options.logger;
     this.idFactory = options.idFactory ?? (() => randomUUID());
     this.now = options.now ?? (() => new Date());
+    if (this.filePath && existsSync(this.filePath)) {
+      const schema = z.array(
+        z.object({
+          jobId: z.string(),
+          kind: z.enum(["think", "read_timeline", "research", "agent"]),
+          label: z.string(),
+          question: z.string(),
+          agentId: z.string().nullable(),
+          workspaceId: z.string().optional(),
+          conversationId: z.string().optional(),
+          announced: z.boolean().optional(),
+          dispatched: z.boolean().optional(),
+          status: z.enum(["running", "succeeded", "failed"]),
+          summary: z.string().nullable(),
+          startedAt: z.string(),
+          settledAt: z.string().nullable(),
+        }),
+      );
+      for (const job of schema.parse(JSON.parse(readFileSync(this.filePath, "utf8")))) {
+        if (
+          job.status === "running" &&
+          (job.kind !== "agent" || !job.agentId || job.dispatched === false)
+        ) {
+          job.status = "failed";
+          job.summary =
+            "The daemon restarted before this job could be reconciled. It was not repeated.";
+          job.settledAt = this.now().toISOString();
+        }
+        this.jobs.set(job.jobId, job);
+      }
+    }
   }
 
-  start(request: CompanionDeferredJobRequest): CompanionDeferredJobStarted {
+  start(
+    request: CompanionDeferredJobRequest,
+    dispatch?: (jobId: string) => Promise<void>,
+  ): CompanionDeferredJobStarted {
     const job: CompanionDeferredJob = {
       ...request,
       jobId: this.idFactory(),
+      dispatched: request.kind === "agent" ? false : undefined,
       status: "running",
       summary: null,
       startedAt: this.now().toISOString(),
       settledAt: null,
     };
     this.jobs.set(job.jobId, job);
+    try {
+      this.persist();
+    } catch (error) {
+      this.jobs.delete(job.jobId);
+      throw error;
+    }
     this.emit(job);
 
-    const task = this.execute(job.jobId, request);
+    const task = dispatch
+      ? dispatch(job.jobId).catch((error: unknown) =>
+          this.settle(job.jobId, "failed", error instanceof Error ? error.message : String(error)),
+        )
+      : this.execute(job.jobId, request);
     this.inFlight.add(task);
     void task.finally(() => this.inFlight.delete(task));
 
     return { status: "started", jobId: job.jobId };
+  }
+
+  attachAgent(jobId: string, agent: ManagedAgent): void {
+    const job = this.jobs.get(jobId);
+    if (!job) return;
+    job.agentId = agent.id;
+    job.dispatched = true;
+    job.workspaceId = agent.workspaceId ?? undefined;
+    this.persist();
+    this.observeAgent(agent);
+  }
+
+  observeAgent(agent: ManagedAgent): void {
+    for (const job of this.jobs.values()) {
+      if (
+        job.kind !== "agent" ||
+        job.agentId !== agent.id ||
+        job.status !== "running" ||
+        job.dispatched === false
+      )
+        continue;
+      if (agent.pendingPermissions.size) {
+        const summary = `Permission needed for ${agent.config.title ?? "your agent"}: ${Array.from(
+          agent.pendingPermissions.values(),
+        )
+          .map((p) => `${p.title ?? p.name} (request ${p.id})`)
+          .join(", ")}`;
+        if (job.summary !== summary) {
+          job.summary = summary;
+          this.persist();
+          this.emit(job);
+        }
+      } else if (agent.lifecycle === "error")
+        this.settle(job.jobId, "failed", agent.lastError ?? "Agent failed");
+      else if (agent.lifecycle === "idle" && !agent.activeTurnId)
+        this.settle(
+          job.jobId,
+          "succeeded",
+          "The agent finished. Read its timeline before describing the result.",
+        );
+    }
+  }
+
+  list(): CompanionDeferredJob[] {
+    return Array.from(this.jobs.values());
+  }
+  markAnnounced(jobId: string): void {
+    const job = this.jobs.get(jobId);
+    if (job) {
+      this.jobs.set(jobId, { ...job, announced: true });
+      try {
+        this.persist();
+      } catch (error) {
+        this.jobs.set(jobId, job);
+        throw error;
+      }
+    }
+  }
+
+  private persist(): void {
+    if (!this.filePath) return;
+    mkdirSync(path.dirname(this.filePath), { recursive: true });
+    const temporary = `${this.filePath}.tmp`;
+    writeFileSync(temporary, JSON.stringify(this.list()), { mode: 0o600 });
+    renameSync(temporary, this.filePath);
   }
 
   subscribe(listener: CompanionDeferredJobListener): () => void {
@@ -130,6 +251,7 @@ export class CompanionDeferredJobs {
       settledAt: this.now().toISOString(),
     };
     this.jobs.set(jobId, settled);
+    this.persist();
     this.emit(settled);
   }
 
@@ -151,7 +273,7 @@ export class CompanionDeferredJobs {
  */
 export function describeSettledJob(job: CompanionDeferredJob): string {
   if (job.status === "succeeded") {
-    return `The background job you started (${job.label}) finished. Result:\n${job.summary ?? ""}\n\nTell the user, in one or two spoken sentences.`;
+    return `The background job you started (${job.label}, job ${job.jobId}, agent ${job.agentId ?? "none"}, workspace ${job.workspaceId ?? "unspecified"}) finished. Result:\n${job.summary ?? ""}\n\nTell the user, in one or two spoken sentences.`;
   }
   return `The background job you started (${job.label}) failed: ${job.summary ?? "unknown error"}. Tell the user it did not work, in one spoken sentence, and offer what to do next.`;
 }

@@ -228,3 +228,34 @@ describe("companion notebook", () => {
     expect(store().topics).toEqual([topic]);
   });
 });
+
+describe("Companion launcher context and dismissal", () => {
+  it("keeps its original host and workspace when reopened from another project", () => {
+    const context = { serverId: "host-a", workspaceId: "project-a", agentId: "worker-a" };
+    store().launch(context);
+    store().sessionStarting("host-a");
+    store().close();
+    expect(store().isMinimized).toBe(true);
+    expect(store().session.status).toBe("starting");
+    store().sessionStarted();
+    store().launch({ serverId: "host-b", workspaceId: "project-b" });
+    expect(store().context).toEqual(context);
+    expect(store().serverId).toBe("host-a");
+    expect(store().isOpen).toBe(true);
+    store().setOpen(false);
+    expect(store().session.status).toBe("open");
+    expect(store().isMinimized).toBe(true);
+    store().replyReceived({ text: "Your task is complete.", isFinal: true });
+    expect(store().reply).toBe("Your task is complete.");
+  });
+
+  it("releases context after End so the next launch can choose another host", () => {
+    store().launch({ serverId: "host-a", workspaceId: "project-a" });
+    store().sessionStarting("host-a");
+    store().sessionStarted();
+    store().sessionStopped();
+    store().launch({ serverId: "host-b", workspaceId: "project-b" });
+    expect(store().context).toEqual({ serverId: "host-b", workspaceId: "project-b" });
+    expect(store().session.status).toBe("closed");
+  });
+});

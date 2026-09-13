@@ -420,20 +420,22 @@ function SessionProviderInternal({ children, serverId, client }: SessionProvider
     () =>
       registerCompanionSession({
         serverId,
-        startSession: async () => {
-          const response = await client.startCompanionSession();
+        startSession: async (voiceTransport, conversation) => {
+          const response = await client.startCompanionSession(voiceTransport, conversation);
           return {
             accepted: response.accepted,
             reasonCode: response.reasonCode ?? null,
             retryable: response.retryable,
+            sessionId: response.sessionId,
+            sdp: response.sdp,
           };
         },
         stopSession: () => client.stopCompanionSession(),
         sendAudioChunk: (audio, format) => client.sendCompanionAudioChunk(audio, format),
         audioPlayed: (id) => client.companionAudioPlayed(id),
-        sendMessage: async (text) => {
+        sendMessage: async (text, requestId) => {
           try {
-            await client.sendCompanionMessage(text);
+            await client.sendCompanionMessage(text, requestId);
           } catch (error) {
             throw error instanceof CompanionMessageRejectedError
               ? new CompanionMessageRejected(error.reasonCode)
@@ -447,6 +449,10 @@ function SessionProviderInternal({ children, serverId, client }: SessionProvider
   useEffect(() => {
     voiceRuntime?.updateSessionConnection(serverId, isConnected);
   }, [isConnected, serverId, voiceRuntime]);
+
+  useEffect(() => {
+    void getCompanionRuntime().connectionChanged({ serverId, isConnected });
+  }, [isConnected, serverId]);
 
   // If the client drops mid-initialization, clear pending flags
   useEffect(() => {
@@ -798,18 +804,27 @@ function SessionProviderInternal({ children, serverId, client }: SessionProvider
 
     const companionRuntime = getCompanionRuntime();
     const unsubCompanionAudio = client.on("companion.audio.output", (message) => {
+      if (!companionRuntime.belongsTo(serverId)) return;
       companionRuntime.handleAudioOutput(message.payload);
     });
     const unsubCompanionInputState = client.on("companion.input.state", (message) => {
-      companionRuntime.handleInputState(message.payload.isSpeaking);
+      if (!companionRuntime.belongsTo(serverId, message.payload.sessionId)) return;
+      if (message.payload.ended) {
+        void companionRuntime.stop();
+        return;
+      }
+      companionRuntime.handleInputState(message.payload.isSpeaking, message.payload.turnId);
     });
     const unsubCompanionTranscript = client.on("companion.transcript", (message) => {
+      if (!companionRuntime.belongsTo(serverId, message.payload.sessionId)) return;
       companionRuntime.handleTranscript(message.payload);
     });
     const unsubCompanionReply = client.on("companion.reply", (message) => {
+      if (!companionRuntime.belongsTo(serverId, message.payload.sessionId)) return;
       companionRuntime.handleReply(message.payload);
     });
     const unsubCompanionNotebook = client.on("companion.notebook.update", (message) => {
+      if (!companionRuntime.belongsTo(serverId)) return;
       companionRuntime.handleNotebook(message.payload.notebook.entries);
     });
 

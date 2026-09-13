@@ -169,6 +169,8 @@ const FeatureVoiceModeSchema = z
 
 const FeatureCompanionSchema = z
   .object({
+    backend: z.enum(["subscription", "claude", "codex", "api"]).optional(),
+    nativeVoicePreview: z.boolean().optional(),
     enabled: z.boolean().optional(),
     model: z.string().trim().min(1).optional(),
   })

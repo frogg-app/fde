@@ -1,3 +1,5 @@
+import android.content.Intent
+import expo.modules.twowayaudio.VoiceCaptureService
 import android.annotation.SuppressLint
 import android.content.Context
 import android.media.AudioAttributes
@@ -20,7 +22,8 @@ import java.util.concurrent.Executors
 import kotlin.math.pow
 
 
-class AudioEngine (context: Context) {
+class AudioEngine (context: Context, private val mediaMode: Boolean = false) {
+    private val applicationContext = context.applicationContext
     private val SAMPLE_RATE = 16000
     private val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
     private val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
@@ -122,7 +125,7 @@ class AudioEngine (context: Context) {
 
         audioTrack = AudioTrack(
             AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                .setUsage(if (mediaMode) AudioAttributes.USAGE_MEDIA else AudioAttributes.USAGE_VOICE_COMMUNICATION)
                 .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                 .build(),
             AudioFormat.Builder()
@@ -180,6 +183,11 @@ class AudioEngine (context: Context) {
 
     @SuppressLint("NewApi")
     private fun activateCommunicationRoute() {
+        if (mediaMode) {
+            communicationRouteActive = false
+            audioManager.mode = AudioManager.MODE_NORMAL
+            return
+        }
         communicationRouteActive = true
         audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
         updateAudioRouting()
@@ -258,7 +266,7 @@ class AudioEngine (context: Context) {
             AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE)
                 .setAudioAttributes(
                     AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                        .setUsage(if (mediaMode) AudioAttributes.USAGE_MEDIA else AudioAttributes.USAGE_VOICE_COMMUNICATION)
                         .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                         .build()
                 )
@@ -328,7 +336,7 @@ class AudioEngine (context: Context) {
 
         val bufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT)
         val recorder = AudioRecord(
-            MediaRecorder.AudioSource.VOICE_COMMUNICATION,
+            if (mediaMode) MediaRecorder.AudioSource.MIC else MediaRecorder.AudioSource.VOICE_COMMUNICATION,
             SAMPLE_RATE,
             CHANNEL_CONFIG,
             AUDIO_FORMAT,
@@ -357,6 +365,10 @@ class AudioEngine (context: Context) {
                 }
             }
 
+            VoiceCaptureService.requested = true
+            val serviceIntent = Intent(applicationContext, VoiceCaptureService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) applicationContext.startForegroundService(serviceIntent)
+            else applicationContext.startService(serviceIntent)
             recorder.startRecording()
             isRecording = true
             startMicSampleTap(recorder)
@@ -402,6 +414,8 @@ class AudioEngine (context: Context) {
 
     @Synchronized
     private fun stopRecording() {
+        VoiceCaptureService.requested = false
+        applicationContext.stopService(Intent(applicationContext, VoiceCaptureService::class.java))
         isRecording = false
         val recorder = audioRecord
         audioRecord = null

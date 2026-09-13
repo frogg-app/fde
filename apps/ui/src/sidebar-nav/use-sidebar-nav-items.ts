@@ -27,7 +27,7 @@ export function useSidebarNavItems(): UseSidebarNavItemsReturn {
       resolveSidebarNavItems({
         pluginGroups,
         preferences,
-      }),
+      }).filter((item) => item.key !== "companion"),
     [pluginGroups, preferences],
   );
 

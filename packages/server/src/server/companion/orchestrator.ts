@@ -27,6 +27,8 @@ export const COMPANION_MODEL = "claude-haiku-4-5";
 
 /** Conversational turns kept in context. Anything older lives in the notebook. */
 const HISTORY_LIMIT = 12;
+const HISTORY_CHARACTER_LIMIT = 12000;
+const MESSAGE_CHARACTER_LIMIT = 4000;
 
 /** Bound on tool round-trips inside one turn, so a confused model cannot spin. */
 const MAX_TOOL_ROUNDS = 4;
@@ -35,8 +37,8 @@ const MAX_TOOL_ROUNDS = 4;
  * What one conversational turn emits.
  *
  * `text_delta` events arrive while the model is still generating — the speech
- * track cuts them at clause boundaries and starts talking long before
- * `completed` lands. Nothing downstream may wait for `completed` to speak.
+ * track can speak at clause boundaries. Quiet conversations instead wait for
+ * the final tool round, so dispatch narration never reaches the speaker.
  */
 export type CompanionTurnEvent =
   | { type: "text_delta"; text: string }
@@ -44,6 +46,7 @@ export type CompanionTurnEvent =
   | { type: "completed"; reply: string; tools: CompanionToolName[] };
 
 interface CompanionOrchestratorBase {
+  instructions?: string;
   tools: readonly CompanionTool[];
   notebook: CompanionNotebookStore;
 }
@@ -64,8 +67,10 @@ export class CompanionOrchestrator {
   private readonly tools: readonly CompanionTool[];
   private readonly notebook: CompanionNotebookStore;
   private readonly history: CompanionTurnMessage[] = [];
+  private readonly instructions: string;
 
   constructor(options: CompanionOrchestratorOptions) {
+    this.instructions = options.instructions ?? "";
     this.tools = options.tools;
     this.notebook = options.notebook;
     this.backend =
@@ -97,12 +102,14 @@ export class CompanionOrchestrator {
      * docs/companion-voice-design.md.
      */
     heardSoFar?: () => string,
+    signal?: AbortSignal,
   ): AsyncGenerator<CompanionTurnEvent, void> {
     const notebook = await this.notebook.promptText();
     const preamble = notebook ? `Your notebook right now:\n${notebook}` : "Your notebook is empty.";
     const backendTurn = this.backend.beginTurn({
-      text: `${preamble}\n\nThey said: ${text}`,
+      text: `${preamble}${this.instructions ? `\n${this.instructions}` : ""}\n\nThey said: ${text}`,
       history: this.history,
+      signal,
     });
 
     const invoked: CompanionToolName[] = [];
@@ -112,6 +119,7 @@ export class CompanionOrchestrator {
 
     try {
       for (let round = 0; round < MAX_TOOL_ROUNDS; round += 1) {
+        if (signal?.aborted) return;
         const response = yield* this.streamRound(backendTurn, toolResults, invoked, (delta) => {
           reply += delta;
         });
@@ -120,6 +128,7 @@ export class CompanionOrchestrator {
         }
         toolResults = [];
         for (const call of response) {
+          if (signal?.aborted) return;
           const tool = this.tools.find((candidate) => candidate.name === call.name);
           if (tool) {
             invoked.push(tool.name);
@@ -157,33 +166,47 @@ export class CompanionOrchestrator {
     onDelta: (delta: string) => void,
   ): AsyncGenerator<CompanionTurnEvent, readonly CompanionBackendToolCall[]> {
     const responses = backendTurn.respond(toolResults);
-    for (;;) {
-      const next = await responses.next();
-      if (next.done) {
-        return next.value.toolCalls;
+    try {
+      for (;;) {
+        const next = await responses.next();
+        if (next.done) {
+          return next.value.toolCalls;
+        }
+        const event = next.value;
+        if (event.type === "text_delta") {
+          onDelta(event.text);
+          yield { type: "text_delta", text: event.text };
+          continue;
+        }
+        const tool = this.tools.find((candidate) => candidate.name === event.name);
+        if (tool) {
+          invoked.push(tool.name);
+          yield { type: "tool_started", name: tool.name, deferred: tool.deferred };
+        }
       }
-      const event = next.value;
-      if (event.type === "text_delta") {
-        onDelta(event.text);
-        yield { type: "text_delta", text: event.text };
-        continue;
-      }
-      const tool = this.tools.find((candidate) => candidate.name === event.name);
-      if (tool) {
-        invoked.push(tool.name);
-        yield { type: "tool_started", name: tool.name, deferred: tool.deferred };
-      }
+    } finally {
+      await responses.return({ toolCalls: [] });
     }
   }
 
+  reconcileLastReply(text: string): void {
+    if (this.history.at(-1)?.role === "assistant") this.history.pop();
+    if (text)
+      this.history.push({ role: "assistant", text: text.slice(0, MESSAGE_CHARACTER_LIMIT) });
+  }
+
   private remember(userText: string, reply: string): void {
-    this.history.push({ role: "user", text: userText });
+    this.history.push({ role: "user", text: userText.slice(0, MESSAGE_CHARACTER_LIMIT) });
     if (reply) {
-      this.history.push({ role: "assistant", text: reply });
+      this.history.push({ role: "assistant", text: reply.slice(0, MESSAGE_CHARACTER_LIMIT) });
     }
     const excess = this.history.length - HISTORY_LIMIT;
     if (excess > 0) {
       this.history.splice(0, excess);
+    }
+    let characters = this.history.reduce((total, entry) => total + entry.text.length, 0);
+    while (characters > HISTORY_CHARACTER_LIMIT) {
+      characters -= this.history.shift()!.text.length;
     }
     if (this.history[0]?.role === "assistant") {
       this.history.shift();

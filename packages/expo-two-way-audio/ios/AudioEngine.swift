@@ -2,6 +2,7 @@ import AVFoundation
 import Foundation
 
 class AudioEngine {
+    private let mediaMode: Bool
     private var avAudioEngine = AVAudioEngine()
     private var speechPlayer = AVAudioPlayerNode()
     private var engineConfigChangeObserver: Any?
@@ -49,7 +50,8 @@ class AudioEngine {
         case audioFormatError
     }
     
-    init() throws {
+    init(mediaMode: Bool = false) throws {
+        self.mediaMode = mediaMode
         avAudioEngine.attach(speechPlayer)
         
         guard let format = AVAudioFormat(standardFormatWithSampleRate: 16000, channels: 1) else {
@@ -98,7 +100,7 @@ class AudioEngine {
         let session = AVAudioSession.sharedInstance()
 
         do {
-            try session.setCategory(.playAndRecord, mode: .voiceChat, options: [.defaultToSpeaker, .allowBluetooth, .allowBluetoothA2DP])
+            try session.setCategory(.playAndRecord, mode: mediaMode ? .default : .voiceChat, options: mediaMode ? [.defaultToSpeaker, .allowBluetoothA2DP] : [.defaultToSpeaker, .allowBluetooth, .allowBluetoothA2DP])
         } catch {
             print("Could not set the audio category: \(error.localizedDescription)")
         }
@@ -157,30 +159,47 @@ class AudioEngine {
     func setup() {
         let input = avAudioEngine.inputNode
         do {
-            try input.setVoiceProcessingEnabled(true)
+            try input.setVoiceProcessingEnabled(!mediaMode)
         } catch {
             print("Could not enable voice processing \(error)")
             return
         }
         
-        avAudioEngine.inputNode.isVoiceProcessingInputMuted = !isRecording
+        if !mediaMode { avAudioEngine.inputNode.isVoiceProcessingInputMuted = !isRecording }
         
         let output = avAudioEngine.outputNode
         let mainMixer = avAudioEngine.mainMixerNode
         
         avAudioEngine.connect(speechPlayer, to: mainMixer, format: voiceIOFormat)
-        avAudioEngine.connect(mainMixer, to: output, format: voiceIOFormat)
+        avAudioEngine.connect(mainMixer, to: output, format: mediaMode ? nil : voiceIOFormat)
         
-        input.installTap(onBus: 0, bufferSize: 2048, format: voiceIOFormat) { [weak self] buffer, when in
+        let captureFormat = mediaMode ? input.outputFormat(forBus: 0) : voiceIOFormat
+        let converter = AVAudioConverter(from: captureFormat, to: voiceIOFormat)
+        input.installTap(onBus: 0, bufferSize: 2048, format: captureFormat) { [weak self] buffer, when in
             // We don't do any input processing (no volume calculation or passing mic data to the callback) if discardRecording == true
             // See comment in the playPCMData function
             if self?.isRecording == true && self?.discardRecording == false {
-                self?.processMicrophoneBuffer(buffer)
+                if let self = self, self.mediaMode {
+                    let capacity = AVAudioFrameCount(ceil(Double(buffer.frameLength) * self.voiceIOFormat.sampleRate / buffer.format.sampleRate)) + 32
+                    if let converted = AVAudioPCMBuffer(pcmFormat: self.voiceIOFormat, frameCapacity: capacity), let converter = converter {
+                        var supplied = false
+                        var error: NSError?
+                        converter.convert(to: converted, error: &error) { _, status in
+                            if supplied { status.pointee = .noDataNow; return nil }
+                            supplied = true
+                            status.pointee = .haveData
+                            return buffer
+                        }
+                        if error == nil { self.processMicrophoneBuffer(converted) }
+                    }
+                } else {
+                    self?.processMicrophoneBuffer(buffer)
+                }
                 self?.updateInputVolume()
             }
         }
         
-        mainMixer.installTap(onBus: 0, bufferSize: 2048, format: voiceIOFormat) { [weak self] buffer, when in
+        mainMixer.installTap(onBus: 0, bufferSize: 2048, format: mediaMode ? nil : voiceIOFormat) { [weak self] buffer, when in
             self?.processOutputBuffer(buffer)
             self?.updateOutputVolume()
         }
@@ -303,19 +322,19 @@ class AudioEngine {
     
     func bypassVoiceProcessing(_ bypass: Bool) {
         let input = avAudioEngine.inputNode
-        input.isVoiceProcessingBypassed = bypass
+        if !mediaMode { input.isVoiceProcessingBypassed = bypass }
     }
     
     func toggleRecording(_ val: Bool) -> Bool {
         isRecording = val
         if !isRecording {
-            avAudioEngine.inputNode.isVoiceProcessingInputMuted = true
+            if !mediaMode { avAudioEngine.inputNode.isVoiceProcessingInputMuted = true }
             // Reset input buffer, so that volume levels report 0
             inputBuffer = [Float](repeating: 0, count: 2048)
             updateInputVolume()
         } else {
             activateAudioSessionIfNeeded()
-            avAudioEngine.inputNode.isVoiceProcessingInputMuted = false
+            if !mediaMode { avAudioEngine.inputNode.isVoiceProcessingInputMuted = false }
         }
         print("Recording \(isRecording ? "started" : "stopped")")
         

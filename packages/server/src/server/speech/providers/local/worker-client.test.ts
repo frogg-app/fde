@@ -182,11 +182,12 @@ describe("LocalSpeechWorkerClient", () => {
     const { client, workers } = createClient();
     const provider = new WorkerBackedTextToSpeechProvider(client);
 
-    const pending = provider.synthesizeSpeech("hello");
+    const pending = provider.synthesizeSpeech("hello", { speed: 1.3 });
     expect(workers).toHaveLength(1);
     const request = workers[0].sent[0];
     expect(request).toMatchObject({
       type: "tts.synthesize",
+      speed: 1.3,
       text: "hello",
       config: {
         modelsDir: "/tmp/models",

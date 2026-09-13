@@ -34,6 +34,7 @@ import { getDesktopHost, isElectronRuntime } from "@/desktop/host";
 import { isImeComposingKeyboardEvent } from "@/utils/keyboard-ime";
 import { buildOpenProjectRoute } from "@/utils/host-routes";
 import { hasActiveWebOverlay } from "@/lib/overlay-root";
+import { useSettings } from "@/hooks/use-settings";
 import { useCompanionStore } from "@/companion/store";
 import { useSettingsModalStore } from "@/settings-modal/store";
 import { openAddHostFlow } from "@/hosts/add-host-flow";
@@ -77,6 +78,9 @@ export function useKeyboardShortcuts({
   });
   const openProjectPickerAction = useOpenAddProject();
   const activeWorkspaceSelection = useActiveWorkspaceSelection();
+  const companionEnabled = useSettings((settings) => settings.companionEnabled);
+  const companionEnabledRef = useRef(companionEnabled);
+  companionEnabledRef.current = companionEnabled;
   const keyboardWorkspaceSelectionRef = useRef<ActiveWorkspaceSelection | null>(null);
   const badgeModifierKeyRef = useRef<string | null | undefined>(undefined);
 
@@ -167,6 +171,11 @@ export function useKeyboardShortcuts({
       "open-add-host": openAddHostFlow,
     };
 
+    const toggleCompanion = (nextOpen: boolean) => {
+      if (!companionEnabledRef.current) return false;
+      useCompanionStore.getState().setOpen(nextOpen);
+      return true;
+    };
     const performShortcutAction = (
       action: ShortcutAction,
       event: KeyboardEvent | null,
@@ -225,8 +234,7 @@ export function useKeyboardShortcuts({
           useSettingsModalStore.getState().close();
           return true;
         case "companion-toggle":
-          useCompanionStore.getState().setOpen(action.nextOpen);
-          return true;
+          return toggleCompanion(action.nextOpen);
       }
     };
 

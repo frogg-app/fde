@@ -1,5 +1,91 @@
 # Changelog
 
+## Unreleased
+
+- Add mobile Companion Call/Media audio routing, preserving Call as the default.
+  Media uses Android media volume/routing and iOS non-voice-processing capture;
+  native rebuild and physical-device routing qualification are required.
+- Crossfade Companion artwork to monochrome on mute and back to colour on unmute
+  over 150 ms, including the minimized presence and independent playback motion.
+
+- Add a Companion voice-speed selector (0.75×–2×), defaulting to 1.3×. Apply it
+  during synthesis from the next conversation, without changing pitch or other
+  clients’ speech settings.
+
+- Refine Companion into animated cyan/violet light ribbons with a matching launcher,
+  compact live presence and distinct microphone/playback feedback. Add a device
+  motion preference and larger labelled controls. Keep the app preview off by
+  default; default daemon availability on independently of model readiness.
+- Default local speech to Kitten nano FP32 Rosie, retain explicit Piper/Kokoro
+  overrides, fix native inference-thread configuration and strip presentation
+  markdown before synthesis. Add reproducible audio benchmarks and an interactive
+  design harness. See [measurements and platform limits](docs/companion-polish-plan.md).
+
+- Integrate main through 0.4.1 into the Companion preview, preserving its voice
+  controls alongside sidebar/subagent updates, branding and shared build tooling.
+  Rebuild Android and the Linux x64 daemon from the merged source. Scope Android
+  packaging to the app target to avoid unnecessary standalone dependency builds.
+
+- Give Companion an animated glass sphere with flowing cyan/violet light and
+  independent microphone/playback feedback. Keep Listening visible during
+  thinking and speaking; show muted/reconnecting states honestly and honor
+  reduced-motion preferences. Isolate audio-level renders from task/transcript rows.
+- Verify that opening Companion against a running Claude or Codex worker observes
+  it without reloading, resuming or cancelling its thread. Older clients' legacy
+  Voice mode action can still cause Codex active-writer conflicts; use the updated
+  Companion preview client and its separate conversation launcher.
+
+- Replace the composer Voice mode action with a host/project-bound Companion
+  launcher and remove its sidebar entry. Dismissing or minimizing keeps the
+  conversation running, with a host/project indicator and explicit End control.
+  Track an already-running selected worker so its result can be announced without
+  dispatching the task again.
+- Add quiet task dispatch, concise replies, completion/failure announcement
+  preferences, optional acknowledgements, adjustable pauses and interruption.
+  Read completed workers directly instead of spawning another summarization job.
+- Keep microphone/VAD processing independent of response generation and playback;
+  isolate VAD from STT/TTS, publish incremental Parakeet transcripts, preserve
+  speech across overlapping finalization, and avoid decoding idle silence.
+- Make Companion optional and off by default on each device. Add explicit Start,
+  Mute, End and Minimize controls with a persistent active indicator; disabling it
+  removes launch controls and releases audio without stopping coding tasks.
+- Add Codex subscription orchestration alongside Claude, with explicit API opt-in,
+  live authentication/readiness checks and bounded conversation context.
+- Use Piper LJSpeech as the default local English voice, separate recognition and
+  synthesis workers, and prepare the next segment during playback. Preserve
+  explicitly selected Kokoro voices.
+- Fix startup/stop races, typed-message acknowledgement and retry deduplication,
+  backend cancellation, stale audio and playback-based conversation history.
+- Resume active Companion conversations after daemon reconnection, retaining local
+  foreground capture and mute state. End during an outage or pending reconnect
+  cancels resumption. Bound Codex control requests and reject native voice startup
+  after cancellation.
+- Persist delegated job receipts/results and follow worker/permission events across
+  reconnects. Add voice access to existing permission decisions and conversation End.
+- Keep unheard local Companion results pending after model, synthesis, playback or
+  receipt-write failure. Retry on user input or reconnect without rerunning workers
+  or continuously consuming subscription allowance.
+- Reject outstanding Codex RPCs and clear their timers when disposing the transport,
+  so an interrupted request cannot keep a completed Companion process alive.
+- Add an explicit Codex WebRTC voice preview and reproducible subscription probes.
+  Immediate and delayed Claude worker results returned spoken audio on the tested
+  Linux account. Native delivery receipts and broader account/device qualification
+  remain open.
+- Add iOS background-audio configuration and Android microphone foreground service
+  with an End notification action. Native app rebuilds and physical-device validation
+  are required; this does not establish phone-in-pocket reliability.
+- Record implementation, measurements and remaining release gates in
+  [Companion validation](docs/companion-validation.md).
+- Add an Android low-memory test build option and independent development app ID
+  for a standalone APK that can coexist with production. Preserve license and
+  speech-model notices in standalone daemon bundles.
+
+## 0.6.4 - 2026-09-13
+
+- Integrate the latest main-branch Companion work with the Android startup fix,
+  preserving its voice controls, mobile routing, preferences and build tooling.
+  Companion physical-device qualification remains documented separately.
+
 ## 0.6.3 - 2026-09-12
 
 - Initialize native runtime polyfills before importing the router and application

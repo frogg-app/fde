@@ -210,9 +210,10 @@ export class LocalSpeechWorkerClient {
     this.forkWorker = options.forkWorker ?? forkLocalSpeechWorker;
   }
 
-  async synthesizeSpeech(text: string): Promise<SpeechStreamResult> {
+  async synthesizeSpeech(text: string, options?: { speed?: number }): Promise<SpeechStreamResult> {
     const result = await this.sendRequest<LocalSpeechTtsResult>({
       type: "tts.synthesize",
+      speed: options?.speed,
       config: this.config,
       text,
     });
@@ -235,6 +236,7 @@ export class LocalSpeechWorkerClient {
   async createSession(
     kind: LocalSpeechSessionKind,
     emitter: EventEmitter,
+    endpointing?: { confirmMs?: number; silenceMs?: number },
   ): Promise<{ sessionId: string; requiredSampleRate: number }> {
     const sessionId = randomUUID();
     this.activeSessionIds.add(sessionId);
@@ -245,6 +247,7 @@ export class LocalSpeechWorkerClient {
         config: this.config,
         sessionId,
         kind,
+        endpointing,
       });
       return { sessionId, requiredSampleRate: result.requiredSampleRate };
     } catch (err) {
@@ -614,8 +617,8 @@ export class LocalSpeechWorkerClient {
 export class WorkerBackedTextToSpeechProvider implements TextToSpeechProvider {
   constructor(private readonly client: LocalSpeechWorkerClient) {}
 
-  synthesizeSpeech(text: string): Promise<SpeechStreamResult> {
-    return this.client.synthesizeSpeech(text);
+  synthesizeSpeech(text: string, options?: { speed?: number }): Promise<SpeechStreamResult> {
+    return this.client.synthesizeSpeech(text, options);
   }
 }
 
@@ -641,8 +644,15 @@ export class WorkerBackedTurnDetectionProvider implements TurnDetectionProvider 
 
   constructor(private readonly client: LocalSpeechWorkerClient) {}
 
-  createSession(_params: { logger: pino.Logger }): TurnDetectionSession {
-    return new WorkerBackedTurnDetectionSession(this.client);
+  createSession(params: {
+    logger: pino.Logger;
+    confirmMs?: number;
+    silenceMs?: number;
+  }): TurnDetectionSession {
+    return new WorkerBackedTurnDetectionSession(this.client, {
+      confirmMs: params.confirmMs,
+      silenceMs: params.silenceMs,
+    });
   }
 }
 
@@ -728,7 +738,10 @@ class WorkerBackedTurnDetectionSession extends EventEmitter implements TurnDetec
   private connecting: Promise<void> | null = null;
   private closed = false;
 
-  constructor(private readonly client: LocalSpeechWorkerClient) {
+  constructor(
+    private readonly client: LocalSpeechWorkerClient,
+    private readonly endpointing?: { confirmMs?: number; silenceMs?: number },
+  ) {
     super();
   }
 
@@ -745,7 +758,7 @@ class WorkerBackedTurnDetectionSession extends EventEmitter implements TurnDetec
 
   private async connectRemoteSession(): Promise<void> {
     try {
-      const result = await this.client.createSession("vad", this);
+      const result = await this.client.createSession("vad", this, this.endpointing);
       if (this.closed) {
         this.client.closeSession(result.sessionId);
         return;

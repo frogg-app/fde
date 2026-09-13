@@ -8,6 +8,7 @@ import expo.modules.kotlin.Promise
 import expo.modules.interfaces.permissions.Permissions
 
 class ExpoTwoWayAudioModule : Module() {
+    private var mediaMode = false
     private var ownedEngine: AudioEngine? = null
     companion object {
         private const val ON_MIC_DATA_EVENT = "onMicrophoneData"
@@ -20,6 +21,10 @@ class ExpoTwoWayAudioModule : Module() {
 
     override fun definition() = ModuleDefinition {
         Name("ExpoTwoWayAudio")
+        Function("setAudioMode") { mode: String ->
+            require(mode == "call" || mode == "media") { "Invalid audio mode" }
+            mediaMode = mode == "media"
+        }
         AsyncFunction("initialize") { promise: Promise ->
             synchronized(ExpoTwoWayAudioModule::class.java) {
                 try {
@@ -29,7 +34,7 @@ class ExpoTwoWayAudioModule : Module() {
                     }
                     val context = appContext.reactContext
                         ?: throw IllegalStateException("React context is unavailable")
-                    audioEngine = AudioEngine(context).also { ownedEngine = it }
+                    audioEngine = AudioEngine(context, mediaMode).also { ownedEngine = it }
                     setupCallbacks()
                     promise.resolve(true)
                 } catch (e: Exception) {

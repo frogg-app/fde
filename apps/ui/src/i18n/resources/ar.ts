@@ -1825,8 +1825,43 @@ export const ar: TranslationResources = {
     },
   },
   companion: {
+    behavior: {
+      nextSession: "تُطبَّق التغييرات عند بدء Companion في المرة القادمة.",
+      verbosity: "طول الرد",
+      brief: "موجز",
+      detailed: "مفصل",
+      updates: "تحديثات المهام الصوتية",
+      important: "الإكمال والإخفاق",
+      completion: "الإكمال فقط",
+      off: "إيقاف",
+      acknowledge: "تأكيد المهام قبل بدء العمل",
+      permissions: "تظل طلبات الإذن مسموعة عند إيقاف تحديثات المهام.",
+      audioMode: "وضع الصوت",
+      callMode: "مكالمة",
+      mediaMode: "وسائط",
+      audioModeHint:
+        "يُطبّق في المحادثة التالية. يفضّل وضع المكالمة ميكروفون السماعة والتحكم في الصدى. يستخدم وضع الوسائط مسار الوسائط؛ يُنصح بسماعات الرأس. توفر ميكروفون Bluetooth يعتمد على الجهاز.",
+      speechSpeed: "سرعة الصوت",
+      pause: "التوقف قبل الرد",
+      quick: "سريع (0.8 ثانية)",
+      natural: "طبيعي (1.4 ثانية)",
+      relaxed: "متأنٍ (2.4 ثانية)",
+      interruptible: "السماح بمقاطعة الرد بالكلام",
+    },
     title: "الرفيق",
+    setup: {
+      disabled: "معطّل",
+      required: "يلزم الإعداد",
+      ready: "جاهز",
+      active: "المحادثة نشطة",
+      unknown: "لم يتم اختيار نموذج للمحادثة",
+      providers: "إعداد المزوّد",
+      subscription:
+        "يستخدم حصة اشتراكك المسجّل. راجع الاستخدام المتبقي في إعدادات المضيف. لا يتحول تلقائيًا إلى فوترة API.",
+      api: "تم اختيار API على هذا المضيف. تُحاسب رموز المحادثة بشكل منفصل.",
+    },
     status: {
+      muted: "الميكروفون مكتوم",
       connecting: "جارٍ الاتصال…",
     },
     micState: {
@@ -1836,6 +1871,10 @@ export const ar: TranslationResources = {
       speaking: "يتحدث",
     },
     actions: {
+      start: "بدء Companion",
+      minimize: "تصغير",
+      resume: "فتح المحادثة",
+
       mute: "كتم",
       unmute: "إلغاء الكتم",
       stop: "إيقاف",
@@ -1853,22 +1892,39 @@ export const ar: TranslationResources = {
       sendFailed: "لم يتم إرسال رسالتك",
     },
     reason: {
+      companion_speech_unavailable:
+        "الصوت المحلي غير جاهز. تحقق من النماذج وإعدادات الصوت على المضيف.",
+      companion_native_unavailable:
+        "تعذر الاتصال بمعاينة صوت Codex. تحقق من تسجيل الدخول إلى ChatGPT ودعم حسابك وإعدادات المضيف.",
+      companion_connection_failed: "تعذر الاتصال بالمضيف. تحقق من الاتصال وحاول مجددًا.",
+      companion_update_required: "حدّث المضيف لاستخدام بروتوكول المحادثة الحالي.",
       unknown: "لم يوضّح الخادم السبب.",
-      companion_backend_missing: "لا يوجد على هذا الخادم مفتاح Anthropic API ولا واجهة Claude Code.",
+      companion_backend_missing: "سجّل الدخول إلى Claude Code أو Codex على هذا المضيف.",
       companion_backend_failed: "تعذّر بدء جلسة النموذج الخاصة بالرفيق.",
       companion_disabled: "الرفيق معطّل على هذا الخادم.",
       companion_microphone_unavailable: "الميكروفون غير متاح.",
       companion_session_closed: "جلسة الرفيق مغلقة.",
-      companion_busy: "الرفيق مشغول بدور آخر.",
+      companion_busy: "يستخدم جهاز آخر Companion على هذا المضيف. أنهِ تلك المحادثة أولًا.",
     },
     unavailable: {
       title: "الرفيق غير متاح",
       description: "هذا الخادم لا يوفّر الرفيق.",
     },
     settings: {
-      autoStart: {
-        label: "ابدأ التحدث فوراً",
-        description: "افتح جلسة بمجرد فتح الرفيق، بدلاً من انتظار الضغط.",
+      nativeVoice: {
+        label: "صوت Codex (معاينة)",
+        description:
+          "يتطلب تسجيل الدخول إلى ChatGPT وتمكين المعاينة على المضيف. تعتمد الإتاحة على حسابك.",
+      },
+      enabled: {
+        label: "تفعيل Companion (معاينة)",
+        description:
+          "محادثات صوتية تجريبية مع وكلائك. معطّل افتراضيًا على هذا الجهاز. يبدأ الاستماع فقط عند بدء محادثة.",
+      },
+      animated: {
+        label: "تحريك الرسومات الصوتية",
+        description:
+          "ضوء متدفق باستمرار. أوقفه لعرض أكثر هدوءًا. يتم دائمًا احترام إعداد تقليل الحركة في النظام.",
       },
       replyText: {
         label: "إظهار نص الرد",

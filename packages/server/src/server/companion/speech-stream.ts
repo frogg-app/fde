@@ -98,6 +98,7 @@ export function cutSpeakableSegment(buffer: string, isFirst = false): CompanionS
 /** Where a cut segment goes. `TTSManager.generateAndWaitForPlayback` satisfies it. */
 export interface CompanionSpeechSink {
   speak(text: string): Promise<void>;
+  prepare?(text: string): Promise<() => Promise<void>>;
 }
 
 export interface CompanionSpeechStreamOptions {
@@ -126,6 +127,7 @@ export function createCompanionSpeechStream(
   let buffer = "";
   let spoke = false;
   let queue: Promise<void> = Promise.resolve();
+  const slots: Promise<void>[] = [];
 
   async function speakAfter(previous: Promise<void>, segment: string): Promise<void> {
     await previous;
@@ -144,7 +146,30 @@ export function createCompanionSpeechStream(
       spoke = true;
       options.onSpeaking();
     }
-    queue = speakAfter(queue, segment);
+    if (options.sink.prepare) {
+      const waitForSlot = slots.length >= 2 ? slots[slots.length - 2] : Promise.resolve();
+      const prepared = waitForSlot.then(() =>
+        options.signal.aborted ? async () => {} : options.sink.prepare!(segment),
+      );
+      // Attach the error handler immediately: preparation may fail before playback reaches it.
+      const ready = prepared.then(
+        (play) => ({ play }),
+        (error: unknown) => ({ error }),
+      );
+      queue = queue
+        .then(async () => {
+          const result = await ready;
+          if ("error" in result) throw result.error;
+          return result.play();
+        })
+        .catch((error: unknown) => {
+          if (!options.signal.aborted)
+            options.onError(error instanceof Error ? error : new Error(String(error)));
+        });
+      slots.push(queue);
+    } else {
+      queue = speakAfter(queue, segment);
+    }
   }
 
   let isFirstSegment = true;

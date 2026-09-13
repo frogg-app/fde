@@ -17,7 +17,7 @@ describe("resolveCompanionModelConfig", () => {
       status: "unavailable",
       reasonCode: "companion_backend_missing",
       message:
-        "The Companion needs an Anthropic API key or the Claude Code CLI. Set providers.anthropic.apiKey or ANTHROPIC_API_KEY, or install and sign in to Claude Code.",
+        "Sign in to Claude Code or Codex on this daemon. API usage requires explicitly selecting the API backend.",
     });
   });
 
@@ -29,14 +29,24 @@ describe("resolveCompanionModelConfig", () => {
     });
   });
 
-  test("prefers the faster API backend when a key resolves and the CLI is also there", () => {
+  test("does not spend API credits merely because a key exists", () => {
     expect(resolve({ ANTHROPIC_API_KEY: "env-key" }, {}, true)).toEqual({
       status: "available",
-      backend: "api",
-      apiKey: "env-key",
-      baseUrl: null,
+      backend: "cli",
       model: DEFAULT_COMPANION_MODEL,
     });
+    expect(resolve({ ANTHROPIC_API_KEY: "env-key" }, {}).status).toBe("unavailable");
+  });
+
+  test("supports Codex-only subscription installs", () => {
+    expect(
+      resolveCompanionModelConfig({
+        env: {},
+        persisted: {},
+        claudeCliAvailable: false,
+        codexCliAvailable: true,
+      }),
+    ).toEqual({ status: "available", backend: "codex", model: "gpt-5.6-luna" });
   });
 
   test("the CLI backend still takes the configured model override", () => {
@@ -49,7 +59,7 @@ describe("resolveCompanionModelConfig", () => {
 
   test("prefers the config key over the environment", () => {
     const resolved = resolve(
-      { ANTHROPIC_API_KEY: "env-key" },
+      { FDE_COMPANION_BACKEND: "api", ANTHROPIC_API_KEY: "env-key" },
       { providers: { anthropic: { apiKey: "config-key" } } },
     );
     expect(resolved).toEqual({
@@ -63,7 +73,14 @@ describe("resolveCompanionModelConfig", () => {
 
   test("falls back to the environment key and base url", () => {
     expect(
-      resolve({ ANTHROPIC_API_KEY: "env-key", ANTHROPIC_BASE_URL: "https://proxy.test" }, {}),
+      resolve(
+        {
+          FDE_COMPANION_BACKEND: "api",
+          ANTHROPIC_API_KEY: "env-key",
+          ANTHROPIC_BASE_URL: "https://proxy.test",
+        },
+        {},
+      ),
     ).toEqual({
       status: "available",
       backend: "api",
@@ -76,7 +93,7 @@ describe("resolveCompanionModelConfig", () => {
   test("a whitespace-only env value does not shadow the config fallback", () => {
     expect(
       resolve(
-        { ANTHROPIC_API_KEY: "   ", ANTHROPIC_BASE_URL: "  " },
+        { FDE_COMPANION_BACKEND: "api", ANTHROPIC_API_KEY: "   ", ANTHROPIC_BASE_URL: "  " },
         { providers: { anthropic: { apiKey: "config-key", baseUrl: "https://config.test" } } },
       ),
     ).toEqual({
@@ -89,7 +106,9 @@ describe("resolveCompanionModelConfig", () => {
   });
 
   test("a whitespace-only env value leaves the key unresolved", () => {
-    expect(resolve({ ANTHROPIC_API_KEY: " \t " }, {}).status).toBe("unavailable");
+    expect(resolve({ FDE_COMPANION_BACKEND: "api", ANTHROPIC_API_KEY: " \t " }, {}).status).toBe(
+      "unavailable",
+    );
   });
 
   test("the default model id carries no date suffix", () => {
@@ -98,18 +117,29 @@ describe("resolveCompanionModelConfig", () => {
 
   test("the config model wins over the env model, which wins over the default", () => {
     const configModel = resolve(
-      { ANTHROPIC_API_KEY: "env-key", FDE_COMPANION_MODEL: "env-model" },
+      {
+        FDE_COMPANION_BACKEND: "api",
+        ANTHROPIC_API_KEY: "env-key",
+        FDE_COMPANION_MODEL: "env-model",
+      },
       { features: { companion: { model: "config-model" } } },
     );
     expect(configModel).toMatchObject({ status: "available", model: "config-model" });
 
     const envModel = resolve(
-      { ANTHROPIC_API_KEY: "env-key", FDE_COMPANION_MODEL: "env-model" },
+      {
+        FDE_COMPANION_BACKEND: "api",
+        ANTHROPIC_API_KEY: "env-key",
+        FDE_COMPANION_MODEL: "env-model",
+      },
       {},
     );
     expect(envModel).toMatchObject({ status: "available", model: "env-model" });
 
-    const envBlank = resolve({ ANTHROPIC_API_KEY: "env-key", FDE_COMPANION_MODEL: "  " }, {});
+    const envBlank = resolve(
+      { FDE_COMPANION_BACKEND: "api", ANTHROPIC_API_KEY: "env-key", FDE_COMPANION_MODEL: "  " },
+      {},
+    );
     expect(envBlank).toMatchObject({ status: "available", model: DEFAULT_COMPANION_MODEL });
   });
 });

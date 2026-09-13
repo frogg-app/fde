@@ -93,6 +93,7 @@ import { createTtsCache } from "./notifications/tts-cache.js";
 import { resolveCompanionCapability } from "./companion/capability.js";
 import {
   resolveCompanionModelConfig,
+  isCompanionNativeVoiceAvailable,
   resolveCompanionModelInputs,
 } from "./companion/model-config.js";
 import { createCompanionFillerBank } from "./companion/fillers.js";
@@ -100,6 +101,10 @@ import { CompanionNotebookStore, companionNotebookPath } from "./companion/store
 import { createCompanionTools } from "./companion/tools/index.js";
 import { createCompanionSubagentRunner } from "./companion/tools/thinking.js";
 import { createCompanionApiBackend, createCompanionModelClient } from "./companion/backends/api.js";
+import { CompanionMessageReceipts } from "./companion/message-receipts.js";
+import { CompanionDeferredJobs } from "./companion/deferred-jobs.js";
+import { watchCompanionAgent } from "./companion/watch-agent.js";
+import { createCompanionCodexBackend } from "./companion/backends/codex.js";
 import { createCompanionCliBackend } from "./companion/backends/cli.js";
 import type { CompanionRuntime } from "./companion/session.js";
 import { AgentManager } from "./agent/agent-manager.js";
@@ -1719,6 +1724,12 @@ export async function createFdeDaemon(
     persisted: companionPersisted,
   });
   const companion: CompanionRuntime = {
+    speechReadiness: () => speechService.getReadiness().realtimeVoice,
+    acceptedMessages: new CompanionMessageReceipts(
+      path.join(config.fdeHome, "companion", "messages.json"),
+    ),
+    cwd: config.fdeHome,
+    nativeVoicePreview: isCompanionNativeVoiceAvailable(companionModelInputs),
     capability: resolveCompanionCapability(companionModelInputs),
     modelConfig: resolveCompanionModelConfig(companionModelInputs),
     notebook: new CompanionNotebookStore({ filePath: companionNotebookPath(config.fdeHome) }),
@@ -1730,22 +1741,36 @@ export async function createFdeDaemon(
             tools,
             model: modelConfig.model,
           })
-        : createCompanionCliBackend({
+        : (modelConfig.backend === "codex"
+            ? createCompanionCodexBackend
+            : createCompanionCliBackend)({
             model: modelConfig.model,
             tools,
             cwd: config.fdeHome,
             logger: sessionLogger,
           }),
-    createTools: ({ deferredJobs, logger: sessionLogger }) =>
+    createTools: ({ deferredJobs, logger: sessionLogger, endConversation, conversationId }) =>
       createCompanionTools({
+        readTimeline: (agentId) => {
+          const agent = agentManager.getAgent(agentId);
+          if (!agent || agent.internal) throw new Error("Agent is unavailable");
+          return agentManager.getTimeline(agentId);
+        },
         agentManager,
         agentStorage,
         workspaceRegistry,
         deferredJobs,
+        endConversation,
+        conversationId,
         notebook: companion.notebook,
         logger: sessionLogger,
       }),
     runDeferredJob: createCompanionSubagentRunner({
+      resolveWorkspaceCwd: async (workspaceId) => {
+        const workspace = await workspaceRegistry.get(workspaceId);
+        if (!workspace || workspace.archivedAt) throw new Error("Workspace is unavailable");
+        return workspace.cwd;
+      },
       agentManager,
       providerSnapshotManager,
       daemonConfig: { metadataGeneration: daemonConfigStore.get().metadataGeneration },
@@ -1753,9 +1778,49 @@ export async function createFdeDaemon(
       logger,
     }),
   };
-  if (companion.capability.enabled) {
-    void companionFillers.prewarm();
-  }
+
+  let companionRefresh: Promise<void> | null = null;
+  let companionRefreshedAt = 0;
+  companion.refresh = async () => {
+    if (companionRefresh) return companionRefresh;
+    if (Date.now() - companionRefreshedAt < 15000) return;
+    companionRefresh = (async () => {
+      const inputs = await resolveCompanionModelInputs({
+        env: process.env,
+        persisted: loadPersistedConfig(config.fdeHome, logger),
+      });
+      companion.nativeVoicePreview = isCompanionNativeVoiceAvailable(inputs);
+      companion.modelConfig = resolveCompanionModelConfig(inputs);
+      companion.capability = resolveCompanionCapability(inputs);
+      companionRefreshedAt = Date.now();
+    })();
+    try {
+      await companionRefresh;
+    } finally {
+      companionRefresh = null;
+    }
+  };
+  companion.jobs = new CompanionDeferredJobs({
+    run: companion.runDeferredJob,
+    logger,
+    filePath: path.join(config.fdeHome, "companion", "jobs.json"),
+  });
+  companion.watchAgent = (agentId, conversationId, workspaceId) => {
+    if (!companion.jobs) return () => {};
+    return watchCompanionAgent({
+      agentManager,
+      jobs: companion.jobs,
+      agentId,
+      conversationId,
+      workspaceId,
+    });
+  };
+  agentManager.subscribe(
+    (event) => {
+      if (event.type === "agent_state") companion.jobs?.observeAgent(event.agent);
+    },
+    { replayState: true },
+  );
 
   logger.info({ elapsed: elapsed() }, "Bootstrap complete, ready to start listening");
 

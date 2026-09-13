@@ -32,6 +32,7 @@ export const COMPANION_FILLERS = [
  * filler fires only on turns that really are stuck.
  */
 export const COMPANION_STALL_DELAY_MS: Record<CompanionBackendKind, number> = {
+  codex: 2500,
   api: 700,
   cli: 3500,
 };

@@ -1,3 +1,4 @@
+import { useSettings } from "@/hooks/use-settings";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
@@ -18,6 +19,7 @@ const SNAP_POINTS: string[] = ["70%", "92%"];
 
 export function KeyboardShortcutsDialog() {
   const { t } = useTranslation();
+  const companionEnabled = useSettings((settings) => settings.companionEnabled);
   const open = useKeyboardShortcutsStore((s) => s.shortcutsDialogOpen);
   const setOpen = useKeyboardShortcutsStore((s) => s.setShortcutsDialogOpen);
   const [query, setQuery] = useState("");
@@ -30,8 +32,16 @@ export function KeyboardShortcutsDialog() {
   // instead of advertising a default that no longer fires.
   const bindings = useMemo(() => buildEffectiveBindings(overrides), [overrides]);
   const sections = useMemo(
-    () => buildKeyboardShortcutHelpSections({ isMac, isDesktop: isDesktopApp }, bindings),
-    [bindings, isDesktopApp, isMac],
+    () =>
+      buildKeyboardShortcutHelpSections({ isMac, isDesktop: isDesktopApp }, bindings).map(
+        (section) => ({
+          id: section.id,
+          title: section.title,
+          titleKey: section.titleKey,
+          rows: section.rows.filter((row) => companionEnabled || row.id !== "toggle-companion"),
+        }),
+      ),
+    [bindings, isDesktopApp, isMac, companionEnabled],
   );
   const visibleSections = useMemo(
     () => filterShortcutHelpSections({ sections, query, translate: t, shortcutOs }),

@@ -102,7 +102,10 @@ async function settleSerialQueue(): Promise<void> {
   await Promise.resolve();
 }
 
-function createControllerHarness(options?: { sttLanguage?: string }) {
+function createControllerHarness(options?: {
+  sttLanguage?: string;
+  continuousTranscripts?: boolean;
+}) {
   const detector = new FakeTurnDetectionSession();
   const sttSessions: FakeSttSession[] = [];
   let lastSttLanguage: string | undefined;
@@ -131,6 +134,7 @@ function createControllerHarness(options?: { sttLanguage?: string }) {
     turnDetection: createFakeTurnDetectionProvider(detector),
     stt,
     sttLanguage: options?.sttLanguage,
+    continuousTranscripts: options?.continuousTranscripts,
     callbacks: {
       onSpeechStarted,
       onSpeechStopped,
@@ -154,6 +158,69 @@ function createControllerHarness(options?: { sttLanguage?: string }) {
 }
 
 describe("voice turn controller", () => {
+  it("continues capture and detects interruption while the final-response callback is pending", async () => {
+    const harness = createControllerHarness({ continuousTranscripts: true });
+    let finish!: () => void;
+    harness.onFinalTranscript.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    await harness.controller.start();
+    harness.detector.emit("speech_started");
+    await settleSerialQueue();
+    harness.detector.emit("speech_stopped");
+    await settleSerialQueue();
+    harness.sttSessions[0].emitCommitted({ segmentId: "first", previousSegmentId: null });
+    harness.sttSessions[0].emitTranscript({
+      segmentId: "first",
+      transcript: "Start the task",
+      isFinal: true,
+    });
+    await settleSerialQueue();
+    await harness.controller.appendClientChunk({
+      audioBase64: Buffer.from([1, 2]).toString("base64"),
+      format: "audio/pcm;rate=16000",
+    });
+    harness.detector.emit("speech_started");
+    await settleSerialQueue();
+    expect(harness.onSpeechStarted).toHaveBeenCalledTimes(2);
+    expect(harness.sttSessions[0].appendedChunks).toHaveLength(1);
+    await harness.controller.stop();
+    finish();
+  });
+
+  it("forwards growing partials and preserves an earlier final when speech resumes", async () => {
+    const harness = createControllerHarness({ continuousTranscripts: true });
+    await harness.controller.start();
+    harness.detector.emit("speech_started");
+    await settleSerialQueue();
+    for (const transcript of ["Please", "Please change", "Please change the title"]) {
+      harness.sttSessions[0].emitTranscript({ segmentId: "first", transcript, isFinal: false });
+      await settleSerialQueue();
+    }
+    expect(harness.onPartialTranscript.mock.calls.map(([input]) => input.transcript)).toEqual([
+      "Please",
+      "Please change",
+      "Please change the title",
+    ]);
+    harness.detector.emit("speech_stopped");
+    await settleSerialQueue();
+    harness.sttSessions[0].emitCommitted({ segmentId: "first", previousSegmentId: null });
+    harness.detector.emit("speech_started");
+    await settleSerialQueue();
+    harness.sttSessions[0].emitTranscript({
+      segmentId: "first",
+      transcript: "Please change the title",
+      isFinal: true,
+    });
+    expect(harness.onFinalTranscript).toHaveBeenCalledWith(
+      expect.objectContaining({ transcript: "Please change the title" }),
+    );
+    await harness.controller.stop();
+  });
+
   it("ignores late provider errors and speech events after stop", async () => {
     const harness = createControllerHarness();
     await harness.controller.start();

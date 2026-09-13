@@ -1,3 +1,4 @@
+import { withAudioOwnership } from "./audio-ownership";
 import * as native from "@fde/expo-two-way-audio";
 import type {
   AudioEngine,
@@ -67,7 +68,7 @@ function resamplePcm16(pcm: Uint8Array, fromRate: number, toRate: number): Uint8
   return out;
 }
 
-export function createAudioEngine(
+function createUnownedAudioEngine(
   callbacks: AudioEngineCallbacks,
   _options?: AudioEngineTraceOptions,
 ): AudioEngine {
@@ -135,12 +136,23 @@ export function createAudioEngine(
     },
   );
 
+  let initializedMode: "call" | "media" = "call";
   async function ensureInitialized(): Promise<void> {
     if (refs.destroyed) throw new Error("Audio engine destroyed");
+    const mode = callbacks.audioMode?.() ?? "call";
+    if (
+      refs.initialized &&
+      initializedMode !== mode &&
+      !refs.captureActive &&
+      !refs.processingQueue
+    ) {
+      native.tearDown();
+      refs.initialized = false;
+    }
     if (refs.initialized) return;
     if (!refs.initialization) {
       refs.initialization = (async () => {
-        const success = await native.initialize();
+        const success = await native.initialize(mode);
         if (!success) {
           throw new Error("expo-two-way-audio: native initialize() returned false");
         }
@@ -148,6 +160,7 @@ export function createAudioEngine(
           native.tearDown();
           throw new Error("Audio engine destroyed");
         }
+        initializedMode = mode;
         refs.initialized = true;
       })().finally(() => {
         refs.initialization = null;
@@ -372,3 +385,6 @@ export function createAudioEngine(
     },
   };
 }
+
+export const createAudioEngine: typeof createUnownedAudioEngine = (...args) =>
+  withAudioOwnership(createUnownedAudioEngine(...args));

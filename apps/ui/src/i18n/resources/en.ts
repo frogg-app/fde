@@ -1838,8 +1838,43 @@ export const en = {
     },
   },
   companion: {
+    behavior: {
+      nextSession: "Changes apply when you next start Companion.",
+      verbosity: "Reply length",
+      brief: "Brief",
+      detailed: "Detailed",
+      updates: "Spoken task updates",
+      important: "Completions and failures",
+      completion: "Completions only",
+      off: "Off",
+      acknowledge: "Acknowledge tasks before working",
+      permissions: "Permission requests are still spoken when task updates are off.",
+      audioMode: "Audio mode",
+      callMode: "Call",
+      mediaMode: "Media",
+      audioModeHint:
+        "Applies next conversation. Call mode favors headset microphones and echo control. Media uses media routing; headphones are recommended. Bluetooth microphone availability depends on the device.",
+      speechSpeed: "Voice speed",
+      pause: "Pause before replying",
+      quick: "Quick (0.8 seconds)",
+      natural: "Natural (1.4 seconds)",
+      relaxed: "Relaxed (2.4 seconds)",
+      interruptible: "Let me interrupt by speaking",
+    },
     title: "Companion",
+    setup: {
+      disabled: "Disabled",
+      required: "Setup required",
+      ready: "Ready",
+      active: "Conversation active",
+      unknown: "No conversation model selected",
+      providers: "Provider setup",
+      subscription:
+        "Uses your signed-in subscription allowance. Remaining usage is available in host Usage settings. No automatic switch to API billing.",
+      api: "API backend selected on this host. Conversation uses separately billed API tokens.",
+    },
     status: {
+      muted: "Microphone muted",
       connecting: "Connecting…",
     },
     micState: {
@@ -1851,7 +1886,10 @@ export const en = {
     actions: {
       mute: "Mute",
       unmute: "Unmute",
-      stop: "Stop",
+      stop: "End",
+      start: "Start Companion",
+      minimize: "Minimize",
+      resume: "Open conversation",
       send: "Send",
     },
     compose: {
@@ -1867,21 +1905,41 @@ export const en = {
     },
     reason: {
       unknown: "The daemon did not say why.",
-      companion_backend_missing: "This daemon has no Anthropic API key and no Claude Code CLI.",
+      companion_backend_missing: "Sign in to Claude Code or Codex on this daemon.",
       companion_backend_failed: "The Companion's model session would not start.",
       companion_disabled: "The Companion is turned off on this daemon.",
       companion_microphone_unavailable: "The microphone is unavailable.",
       companion_session_closed: "The Companion session is closed.",
-      companion_busy: "The Companion is busy with another turn.",
+      companion_busy:
+        "Another device is using Companion on this daemon. End that conversation first.",
+      companion_speech_unavailable:
+        "Local speech is not ready. Check model downloads and speech settings on this daemon.",
+      companion_native_unavailable:
+        "Codex voice preview could not connect. Check ChatGPT sign-in, account availability, and the daemon preview setting.",
+      companion_connection_failed:
+        "Could not connect to the daemon. Check the connection and try again.",
+      companion_update_required:
+        "Update this daemon to use Companion's current conversation protocol.",
     },
     unavailable: {
       title: "The Companion is unavailable",
       description: "This daemon does not offer the Companion.",
     },
     settings: {
-      autoStart: {
-        label: "Start talking straight away",
-        description: "Open a session as soon as the Companion opens, instead of waiting for a tap.",
+      nativeVoice: {
+        label: "Codex voice (preview)",
+        description:
+          "Requires a ChatGPT sign-in and native voice preview enabled on your daemon. Availability depends on your account.",
+      },
+      enabled: {
+        label: "Enable Companion (preview)",
+        description:
+          "Experimental voice conversations with your agents. Off by default on this device. Listening starts only when you start a conversation.",
+      },
+      animated: {
+        label: "Animate voice graphics",
+        description:
+          "Continuous flowing light. Turn off for a calmer view. System Reduce Motion is always respected.",
       },
       replyText: {
         label: "Show reply text",

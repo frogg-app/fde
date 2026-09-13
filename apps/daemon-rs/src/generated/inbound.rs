@@ -508,6 +508,54 @@ pub enum SessionMessage {
 pub struct CompanionSessionStartRequest {
     #[serde(rename = "requestId")]
     pub request_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub conversation: Option<CompanionSessionStartRequestConversation>,
+    #[serde(rename = "voiceTransport", skip_serializing_if = "Option::is_none")]
+    pub voice_transport: Option<CompanionSessionStartRequestVoiceTransport>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionSessionStartRequestConversation {
+    #[serde(rename = "workspaceId", skip_serializing_if = "Option::is_none")]
+    pub workspace_id: Option<String>,
+    #[serde(rename = "agentId", skip_serializing_if = "Option::is_none")]
+    pub agent_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub verbosity: Option<CompanionSessionStartRequestConversationVerbosity>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub updates: Option<CompanionSessionStartRequestConversationUpdates>,
+    #[serde(rename = "acknowledgeTasks", skip_serializing_if = "Option::is_none")]
+    pub acknowledge_tasks: Option<bool>,
+    #[serde(rename = "speechSpeed", skip_serializing_if = "Option::is_none")]
+    pub speech_speed: Option<f64>,
+    #[serde(rename = "pauseMs", skip_serializing_if = "Option::is_none")]
+    pub pause_ms: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub interruptible: Option<bool>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum CompanionSessionStartRequestConversationVerbosity {
+    #[serde(rename = "brief")]
+    Brief,
+    #[serde(rename = "detailed")]
+    Detailed,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum CompanionSessionStartRequestConversationUpdates {
+    #[serde(rename = "important")]
+    Important,
+    #[serde(rename = "completion")]
+    Completion,
+    #[serde(rename = "off")]
+    Off,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompanionSessionStartRequestVoiceTransport {
+    pub kind: String,
+    pub sdp: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
