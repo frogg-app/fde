@@ -111,7 +111,8 @@ async function performQuitAndInstall(
   },
 ): Promise<void> {
   if (onBeforeQuit) await onBeforeQuit();
-  runtime.quitAndInstall(/* isSilent */ !restart, /* isForceRunAfter */ restart);
+  // Always silent: a non-silent NSIS run shows the whole setup wizard on every update.
+  runtime.quitAndInstall(/* isSilent */ true, /* isForceRunAfter */ restart);
 }
 
 function getErrorMessage(error: unknown): string {
