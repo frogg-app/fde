@@ -81,16 +81,21 @@ describe("independent execution lifecycle", () => {
     expect(result.data).toMatchObject({ action: "stopped", executionStopped: true });
   });
 
-  test("ordinary stop leaves execution running", async () => {
+  test("ordinary stop stops supervision and leaves execution running", async () => {
     const requests: Parameters<StopDependencies["stopExecution"]>[0][] = [];
+    const gatewayRequests: Parameters<StopDependencies["stopGateway"]>[0][] = [];
     await runStopCommand({}, new Command(), {
-      stopGateway: absentGateway,
+      stopGateway: async (request) => {
+        gatewayRequests.push(request);
+        return absentGateway();
+      },
       stopExecution: async (request) => {
         requests.push(request);
         return { stopped: true };
       },
     });
     expect(requests).toEqual([]);
+    expect(gatewayRequests).toMatchObject([{ stopService: true }]);
   });
 
   test("stop --all reports an execution stop failure", async () => {

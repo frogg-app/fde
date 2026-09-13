@@ -5,7 +5,7 @@ import { createRequire } from "node:module";
 import { getOrCreateServerId, findExecutable, execCommand } from "@fde/server";
 import { connectToDaemon } from "../../utils/client.js";
 import type { CommandOptions, ListResult, OutputSchema } from "../../output/index.js";
-import { resolveLocalDaemonState } from "./local-daemon.js";
+import { resolveLocalDaemonDiagnosticState } from "./local-daemon.js";
 import { resolveNodePathFromPid } from "./runtime-toolchain.js";
 import { resolveLanTrusted } from "./trust-lan.js";
 
@@ -36,7 +36,7 @@ interface DaemonStatus {
   daemonVersion: string | null;
   desktopManaged: boolean;
   /** daemon.auth.trustLan: private-network clients connect without pairing or a password. */
-  lanTrusted: boolean;
+  lanTrusted: boolean | null;
   providers: ProviderBinaryStatus[];
   note?: string;
 }
@@ -134,7 +134,10 @@ function toStatusRows(status: DaemonStatus): StatusRow[] {
     { key: "CLI Node", value: status.cliNode },
     { key: "CLI", value: status.cliVersion },
     { key: "Daemon Version", value: status.daemonVersion ?? "-" },
-    { key: "LAN Trusted", value: String(status.lanTrusted) },
+    {
+      key: "LAN Trusted",
+      value: status.lanTrusted === null ? "unknown" : String(status.lanTrusted),
+    },
   ];
 
   if (status.note) {
@@ -232,7 +235,7 @@ function describeDaemonAuthProbeFailure(host: string, failure: DaemonAuthProbeFa
 
 async function probeDaemonOverWebsocket(args: {
   host: string;
-  state: ReturnType<typeof resolveLocalDaemonState>;
+  state: ReturnType<typeof resolveLocalDaemonDiagnosticState>;
 }): Promise<DaemonProbeResult> {
   const { host, state } = args;
   let client: Awaited<ReturnType<typeof connectToDaemon>>;
@@ -354,7 +357,7 @@ function resolveServerIdSafely(home: string): { serverId: string | null; error: 
 }
 
 async function resolveDaemonNodeLabel(
-  state: ReturnType<typeof resolveLocalDaemonState>,
+  state: ReturnType<typeof resolveLocalDaemonDiagnosticState>,
 ): Promise<string> {
   if (!state.running) return "-";
   if (!state.pidInfo?.pid) return "unknown (no PID available)";
@@ -371,8 +374,9 @@ interface RelayStatusConfig {
 }
 
 function relayConfigFromLocalState(
-  state: ReturnType<typeof resolveLocalDaemonState>,
-): RelayStatusConfig {
+  state: ReturnType<typeof resolveLocalDaemonDiagnosticState>,
+): RelayStatusConfig | null {
+  if (state.configError !== null) return null;
   return {
     enabled: state.relayEnabled,
     endpoint: state.relayEndpoint,
@@ -383,10 +387,11 @@ function relayConfigFromLocalState(
 }
 
 export function selectRelayStatus(input: {
-  persisted: RelayStatusConfig;
+  persisted: RelayStatusConfig | null;
   live?: RelayStatusConfig;
 }): string {
   const relay = input.live ?? input.persisted;
+  if (!relay) return "unknown";
   if (!relay.enabled) return "disabled";
   const scheme = relay.publicUseTls ? "wss" : "ws";
   return `${scheme}://${relay.publicEndpoint}`;
@@ -399,7 +404,7 @@ export async function runStatusCommand(
   _command: Command,
 ): Promise<StatusResult> {
   const home = typeof options.home === "string" ? options.home : undefined;
-  const state = resolveLocalDaemonState({ home });
+  const state = resolveLocalDaemonDiagnosticState({ home });
   const daemonTarget = state.listen.trim();
 
   const owner = resolveOwnerLabel(state.pidInfo?.uid, state.pidInfo?.hostname);
@@ -410,11 +415,11 @@ export async function runStatusCommand(
   let daemonVersion: string | null = null;
   let daemonProviders: ProviderBinaryStatus[] | undefined;
   let relayStatus = selectRelayStatus({ persisted: relayConfigFromLocalState(state) });
-  let note: string | undefined;
+  let note = state.configError === null ? undefined : `Configuration error: ${state.configError}`;
 
   if (!state.running && state.stalePidFile && state.pidInfo) {
     localDaemon = "stale_pid";
-    note = `Stale PID file found for PID ${state.pidInfo.pid}`;
+    note = appendNote(note, `Stale PID file found for PID ${state.pidInfo.pid}`);
   }
 
   if (daemonTarget) {
@@ -448,11 +453,16 @@ export async function runStatusCommand(
   }
 
   const providers = daemonProviders ?? (await checkProviderBinaries());
-  const lanTrusted = await resolveLanTrusted({
-    home,
-    running: localDaemon === "running",
-    listen: daemonTarget,
-  });
+  let lanTrusted: boolean | null = null;
+  try {
+    lanTrusted = await resolveLanTrusted({
+      home,
+      running: localDaemon === "running",
+      listen: daemonTarget,
+    });
+  } catch (error) {
+    note = appendNote(note, `LAN trust unavailable: ${normalizeError(error)}`);
+  }
 
   const daemonStatus: DaemonStatus = {
     serverId,

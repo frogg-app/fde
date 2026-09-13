@@ -103,6 +103,9 @@ export class DaemonSession {
       emit: (msg) => this.host.emit(msg),
       emitLifecycleIntent: (intent) => this.host.emitLifecycleIntent(intent),
       sessionLogger: this.logger,
+      versionedUpdate: this.daemonRuntimeConfig?.update?.installInfo.runningRoot
+        ? this.daemonRuntimeConfig.update
+        : undefined,
     });
   }
 

@@ -585,6 +585,7 @@ describe("DaemonSession self-update RPCs", () => {
   test("delegate to the update service and correlate its answers", async () => {
     const calls: string[] = [];
     const update = {
+      installInfo: { runningRoot: null },
       async check(input: { channel?: string }) {
         calls.push(`check:${input.channel}`);
         return {

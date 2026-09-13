@@ -91,6 +91,9 @@ describe("launchd agent", () => {
     expect(contents).toContain("<key>FDE_LISTEN</key><string>127.0.0.1:9991</string>");
     expect(contents).toContain(`<key>FDE_HOME</key><string>${HOME_DIR}/.fde</string>`);
     expect(contents).toContain("<key>RunAtLoad</key><true/>");
+    expect(contents).toContain(
+      "<key>KeepAlive</key><dict><key>SuccessfulExit</key><false/></dict>",
+    );
     expect(plan.install.at(-1)).toEqual({
       program: "launchctl",
       args: ["bootstrap", "gui/501", plan.file?.path ?? ""],

@@ -1644,6 +1644,9 @@ export const en = {
       connect: "Connect",
       connecting: "Connecting…",
       needsPairing: "Needs pairing",
+      needsUpgrade: "Update daemon",
+      upgradeHint:
+        "This host is running daemon {{version}}. This app requires daemon 0.6.0 or later. Update the daemon on this host, restart its service, then scan again. If you already installed an update, the old daemon is still running.",
       pairingHint:
         "Get a pairing link: run `{{cliName}} daemon pair` on the host, or open its web address, then scan or paste it here.",
     },

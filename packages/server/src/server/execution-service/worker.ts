@@ -2,7 +2,7 @@ import { brand } from "@fde/branding";
 import { randomUUID } from "node:crypto";
 import { createFdeDaemon, type DaemonLifecycleIntent } from "../bootstrap.js";
 import { loadConfig } from "../config.js";
-import { applyCliFlagOverrides } from "../daemon-cli-overrides.js";
+import { parseDaemonCliOverrides } from "../daemon-cli-overrides.js";
 import { createRootLogger } from "../logger.js";
 import { resolveFdeHome } from "../fde-home.js";
 import { acquirePidLock, releasePidLock, startPidLockHeartbeat } from "../pid-lock.js";
@@ -30,8 +30,7 @@ async function main(): Promise<void> {
       void shutdown();
     },
   });
-  const config = loadConfig(home);
-  applyCliFlagOverrides(config);
+  const config = loadConfig(home, { cli: parseDaemonCliOverrides(process.argv.slice(2)) });
   const logger = createRootLogger({ log: config.log }, { fdeHome: directory, file: false });
   const instanceId = randomUUID();
   const token = randomUUID() + randomUUID();

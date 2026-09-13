@@ -3,7 +3,7 @@ import { appendFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { createFdeDaemon } from "./bootstrap.js";
 import { loadConfig } from "./config.js";
-import { applyCliFlagOverrides } from "./daemon-cli-overrides.js";
+import { parseDaemonCliOverrides } from "./daemon-cli-overrides.js";
 import { getExecutionServiceStatus } from "./execution-service/client.js";
 import { createGatewayDaemon } from "./execution-service/gateway-daemon.js";
 import { resolveFdeHome } from "./fde-home.js";
@@ -73,7 +73,7 @@ function writeWorkerLifecycleLog(
 function bootstrapFromEnvironment(): BootstrapResult {
   try {
     const fdeHome = resolveFdeHome();
-    const config = loadConfig(fdeHome);
+    const config = loadConfig(fdeHome, { cli: parseDaemonCliOverrides(process.argv.slice(2)) });
     const logger = createRootLogger({ log: config.log }, { fdeHome, file: false });
     return { fdeHome, logger, config };
   } catch (err) {
@@ -91,8 +91,6 @@ async function main() {
   > | null = null;
   let shutdownPromise: Promise<number> | null = null;
   let exitHookInstalled = false;
-
-  applyCliFlagOverrides(config);
 
   const installExitHook = () => {
     if (exitHookInstalled || !shutdownPromise) {

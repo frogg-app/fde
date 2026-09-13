@@ -1,11 +1,16 @@
 # FDE roadmap
 
-Release baseline: **0.6.7**. Electron is the production app-only desktop;
+Source baseline: **0.6.13** (daemon recovery fixes; publication not yet verified). Electron is the production app-only desktop;
 Node daemons remain separately installed. [Changelog](CHANGELOG.md) records
 completed work and [upgrade notes](docs/upgrade-0.6.md) describe the coordinated
 namespace migration. Unchecked items are validation/backlog work, not active tasks.
 
 ## Implemented baseline
+
+- Daemon stop recovery with invalid startup configuration, service ownership
+  checks, installer running-version/health verification, versioned update routing,
+  and pre-0.6 connection guidance. See [upgrade recovery](docs/upgrade-0.6.md).
+  Native systemd/launchd and old-to-new installed-update acceptance remain open.
 
 - Companion visual/speech polish: opt-in device setting, flowing light presence,
   motion control and Kitten Rosie local voice. See the

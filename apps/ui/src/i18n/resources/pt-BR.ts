@@ -1667,6 +1667,9 @@ export const ptBR: TranslationResources = {
       connect: "Conectar",
       connecting: "Conectando…",
       needsPairing: "Precisa emparelhar",
+      needsUpgrade: "Atualizar daemon",
+      upgradeHint:
+        "Este host está executando o daemon {{version}}. Este aplicativo requer o daemon 0.6.0 ou posterior. Atualize o daemon neste host, reinicie o serviço e busque novamente. Se você já instalou uma atualização, o daemon antigo ainda está em execução.",
       pairingHint:
         "Obtenha um link de emparelhamento: execute `{{cliName}} daemon pair` no host ou abra o endereço web dele, depois escaneie ou cole aqui.",
     },

@@ -387,3 +387,30 @@ describe("retained execution updates", () => {
     expect(calls.map((env) => env.FDE_LISTEN)).toEqual(["0.0.0.0:9993", "0.0.0.0:9994", undefined]);
   });
 });
+
+test("legacy update waits for handoff, shares the update lock, and reports staging failures", async () => {
+  const fake = fakeChild();
+  const { service } = makeService(makeDir(), () => fake.child);
+  const pending = service.startLegacy();
+  let settled = false;
+  void pending.then(() => {
+    settled = true;
+    return null;
+  });
+  await flush();
+  expect(settled).toBe(false);
+  expect(await service.startLegacy()).toMatchObject({
+    success: false,
+    error: expect.stringContaining("already in progress"),
+  });
+  fake.stdout.write('{"event":"result","status":"handoff","targetVersion":"0.6.10"}\n');
+  fake.finish(0);
+  expect(await pending).toEqual({ success: true, error: null, newVersion: "0.6.10" });
+
+  const failing = fakeChild();
+  const other = makeService(makeDir(), () => failing.child);
+  const failed = other.service.startLegacy();
+  failing.stdout.write('{"event":"result","status":"failed","reason":"checksum mismatch"}\n');
+  failing.finish(0);
+  expect(await failed).toEqual({ success: false, error: "checksum mismatch", newVersion: null });
+});

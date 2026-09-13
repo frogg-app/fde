@@ -18,7 +18,12 @@ interface StopResult {
   pid: string;
   forced: boolean;
   usedLifecycleRpc: boolean;
-  reason: "not_running" | "lifecycle_shutdown_rpc" | "owner_pid_signal" | "owner_pid_sigkill";
+  reason:
+    | "not_running"
+    | "lifecycle_shutdown_rpc"
+    | "owner_pid_signal"
+    | "owner_pid_sigkill"
+    | "service_manager";
   message: string;
   executionStopped: boolean | null;
 }
@@ -92,6 +97,7 @@ export async function runStopCommand(
 
   try {
     const result = await dependencies.stopGateway({
+      stopService: true,
       home,
       force,
       timeoutMs,

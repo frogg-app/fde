@@ -40,7 +40,10 @@ async function validate(root: string, expected: BundleIdentity): Promise<void> {
   }
 }
 /** Keep detached AppImage daemons and installed CLI shims independent of the FUSE mount. */
-export async function stageDaemonBundle(input: StageInput): Promise<void> {
+export async function stageDaemonBundle(
+  input: StageInput,
+  publication: { rename: typeof rename } = { rename },
+): Promise<void> {
   try {
     await stat(input.destination);
     await validate(input.destination, input.identity);
@@ -56,14 +59,21 @@ export async function stageDaemonBundle(input: StageInput): Promise<void> {
     await cp(input.source, temporary, { recursive: true, dereference: true });
     await validate(temporary, input.identity);
     try {
-      await rename(temporary, input.destination);
+      await publication.rename(temporary, input.destination);
     } catch (error) {
       const raced =
         error instanceof Error &&
         "code" in error &&
-        ["EEXIST", "ENOTEMPTY"].includes(String(error.code));
+        // Windows reports EPERM when another launch already published the directory.
+        ["EEXIST", "ENOTEMPTY", "EPERM"].includes(String(error.code));
       if (!raced) throw error;
-      await validate(input.destination, input.identity);
+      try {
+        await validate(input.destination, input.identity);
+      } catch {
+        // A rename permission failure is only a successful race if the complete,
+        // expected bundle now exists. Preserve the real filesystem error otherwise.
+        throw error;
+      }
     }
   } finally {
     await rm(temporary, { recursive: true, force: true });

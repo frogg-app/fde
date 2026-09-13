@@ -2,7 +2,7 @@ import { brand } from "@fde/branding";
 import { Command, Option } from "commander";
 import chalk from "chalk";
 import {
-  resolveLocalDaemonState,
+  resolveLocalDaemonDiagnosticState,
   startLocalDaemonForeground,
   startLocalDaemonDetached,
   type DaemonStartOptions as StartOptions,
@@ -42,44 +42,67 @@ export function startCommand(): Command {
     });
 }
 
-export async function runStart(options: StartOptions): Promise<void> {
+export interface StartRuntime {
+  resolveState(options: {
+    home?: string;
+  }): Pick<ReturnType<typeof resolveLocalDaemonDiagnosticState>, "running" | "pidInfo">;
+  startDetached: typeof startLocalDaemonDetached;
+  startForeground: typeof startLocalDaemonForeground;
+  log(message: string): void;
+  error(message: string): void;
+  exit(code: number): never;
+}
+
+const defaultRuntime: StartRuntime = {
+  resolveState: resolveLocalDaemonDiagnosticState,
+  startDetached: startLocalDaemonDetached,
+  startForeground: startLocalDaemonForeground,
+  log: console.log,
+  error: console.error,
+  exit: process.exit,
+};
+
+export async function runStart(
+  options: StartOptions,
+  runtime: StartRuntime = defaultRuntime,
+): Promise<void> {
   if (options.listen && options.port) {
-    console.error(chalk.red("Cannot use --listen and --port together"));
-    process.exit(1);
+    runtime.error(chalk.red("Cannot use --listen and --port together"));
+    runtime.exit(1);
   }
 
-  if (reportAlreadyRunning(options)) return;
+  if (reportAlreadyRunning(options, runtime)) return;
 
   if (!options.foreground) {
     try {
-      const startup = await startLocalDaemonDetached(options);
-      console.log(chalk.green(`Daemon starting in background (PID ${startup.pid ?? "unknown"}).`));
-      console.log(chalk.dim(`Logs: ${startup.logPath}`));
+      const startup = await runtime.startDetached(options);
+      runtime.log(chalk.green(`Daemon starting in background (PID ${startup.pid ?? "unknown"}).`));
+      runtime.log(chalk.dim(`Logs: ${startup.logPath}`));
     } catch (err) {
       // Another start may win the race after the initial check.
-      if (reportAlreadyRunning(options)) return;
-      exitWithError(getErrorMessage(err));
+      if (reportAlreadyRunning(options, runtime)) return;
+      exitWithError(getErrorMessage(err), runtime);
     }
     return;
   }
   try {
-    const status = startLocalDaemonForeground(options);
-    if (status !== 0 && reportAlreadyRunning(options)) return;
-    process.exit(status);
+    const status = runtime.startForeground(options);
+    if (status !== 0 && reportAlreadyRunning(options, runtime)) return;
+    runtime.exit(status);
   } catch (err) {
     const message = getErrorMessage(err);
-    exitWithError(`Failed to start daemon: ${message}`);
+    exitWithError(`Failed to start daemon: ${message}`, runtime);
   }
 }
 
-function reportAlreadyRunning(options: StartOptions): boolean {
-  const state = resolveLocalDaemonState({ home: options.home });
+function reportAlreadyRunning(options: StartOptions, runtime: StartRuntime): boolean {
+  const state = runtime.resolveState({ home: options.home });
   if (!state.running || !state.pidInfo) return false;
-  console.log(`Daemon already running (PID ${state.pidInfo.pid}).`);
+  runtime.log(`Daemon already running (PID ${state.pidInfo.pid}).`);
   return true;
 }
 
-function exitWithError(message: string): never {
-  console.error(chalk.red(message));
-  process.exit(1);
+function exitWithError(message: string, runtime: StartRuntime): never {
+  runtime.error(chalk.red(message));
+  runtime.exit(1);
 }

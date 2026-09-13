@@ -83,6 +83,36 @@
   for a standalone APK that can coexist with production. Preserve license and
   speech-model notices in standalone daemon bundles.
 
+## 0.6.13 - 2026-09-13
+
+- Allow `fde start --no-relay` to override invalid saved relay settings by
+  keeping its already-running check independent of startup validation and applying
+  worker flags before validating configuration, including independent execution.
+- Keep `fde status` usable with invalid relay settings or malformed configuration:
+  show process information and a diagnostic note, with unknown configuration
+  values represented explicitly.
+- Print real host interface addresses in native installer web UI URLs,
+  preserving explicit listeners and IPv6 URL brackets. Report unavailable network
+  addresses and Unix sockets without a placeholder URL.
+
+- Repair daemon lifecycle and script-install updates: stop no longer
+  requires valid startup configuration, and matching systemd/launchd services
+  stop through their owner. Installer activation stops the old same-home daemon
+  and verifies the running version and health before reporting success.
+- Route older update requests for versioned installations through the release
+  updater, and hide the duplicate npm update control for those installations.
+- Explain pre-0.6 daemon incompatibility in network discovery and failed direct
+  connections; include relay configuration recovery in startup errors.
+  Automated checks cover these paths; native installed-update acceptance remains
+  separate from source validation.
+
+- Normalize generated deployment shell scripts to LF and tolerate verified
+  concurrent bundle staging on Windows.
+- Include product-level release discovery and verified update manifests from main.
+  Linux packaged daemon startup, web UI, Electron-origin WebSocket connectivity,
+  invalid-config diagnostics and repeated shutdown passed. Native installed-update
+  and physical-device acceptance remain unverified.
+
 ## 0.6.11 - 2026-09-13
 
 - Replace the unpublished runtime-specific discovery proposal with product-level
