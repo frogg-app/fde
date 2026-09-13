@@ -243,6 +243,12 @@ export const en = {
       reconnectingTo: "Reconnecting to {{serverLabel}}...",
       showAgainWhenReachable: "We will show this agent again as soon as the host is reachable.",
     },
+    connectionNotice: {
+      lost: "Lost connection to {{serverLabel}}",
+      reconnecting: "Reconnecting · offline for {{duration}}",
+      reconnected: "Reconnected to {{serverLabel}}",
+      composerOffline: "Daemon offline. You can send once it reconnects.",
+    },
     archived: {
       callout: "This agent is archived",
       unarchive: "Unarchive",

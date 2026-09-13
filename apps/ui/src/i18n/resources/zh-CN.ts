@@ -245,6 +245,12 @@ export const zhCN: TranslationResources = {
       reconnectingTo: "正在重新连接 {{serverLabel}}...",
       showAgainWhenReachable: "Host 可访问后将再次显示此 Agent。",
     },
+    connectionNotice: {
+      lost: "与 {{serverLabel}} 的连接已断开",
+      reconnecting: "正在重新连接 · 已离线 {{duration}}",
+      reconnected: "已重新连接到 {{serverLabel}}",
+      composerOffline: "守护进程离线。重新连接后即可发送。",
+    },
     archived: {
       callout: "此 Agent 已归档",
       unarchive: "取消归档",

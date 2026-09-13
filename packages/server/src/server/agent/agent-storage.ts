@@ -75,6 +75,12 @@ const STORED_AGENT_SCHEMA = z.object({
   internal: z.boolean().optional(),
   archivedAt: z.string().nullable().optional(),
   owner: AgentOwnerSchema.optional(),
+  /**
+   * Set when the daemon shut down while this agent was mid-turn. Startup uses it
+   * to auto-continue the agent. Snapshot projections never carry it forward, so
+   * any normal persist after that clears it.
+   */
+  interruptedTurn: z.object({ at: z.string(), reason: z.string() }).nullable().optional(),
 });
 
 export type SerializableAgentConfig = Pick<
@@ -260,6 +266,39 @@ export class AgentStorage {
         record.archivedAt = existing.archivedAt;
       }
       return record;
+    });
+  }
+
+  async markInterruptedTurn(
+    agentIds: readonly string[],
+    interruptedTurn: { at: string; reason: string },
+  ): Promise<void> {
+    await this.load();
+    await Promise.all(
+      agentIds.map((agentId) =>
+        this.queueRecordMutation(agentId, (existing) => {
+          if (!existing) {
+            throw new Error(`Agent ${agentId} not found`);
+          }
+          return { ...existing, interruptedTurn };
+        }).catch((error) => {
+          this.logger.warn({ err: error, agentId }, "Failed to mark interrupted turn");
+        }),
+      ),
+    );
+  }
+
+  async clearInterruptedTurn(agentId: string): Promise<void> {
+    await this.load();
+    const existing = this.cache.get(agentId);
+    if (!existing?.interruptedTurn) {
+      return;
+    }
+    await this.queueRecordMutation(agentId, (current) => {
+      if (!current) {
+        throw new Error(`Agent ${agentId} not found`);
+      }
+      return { ...current, interruptedTurn: null };
     });
   }
 

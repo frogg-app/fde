@@ -886,8 +886,13 @@ function ChatAgentContent({
     clearOnAgentBlurRef.current = attentionController.clearOnAgentBlur;
   }, [attentionController.clearOnAgentBlur]);
 
+  // Wide layouts get the app-level bottom-right connection notice instead.
+  const isCompactReconnectLayout = useIsCompactFormFactor();
   const shouldPresentReconnectToast =
-    isPaneVisible && connectionStatus !== "online" && connectionStatus !== "idle";
+    isCompactReconnectLayout &&
+    isPaneVisible &&
+    connectionStatus !== "online" &&
+    connectionStatus !== "idle";
 
   useEffect(() => {
     if (connectionStatus === "online" || connectionStatus === "idle") {

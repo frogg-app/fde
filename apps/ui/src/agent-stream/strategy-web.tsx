@@ -55,6 +55,11 @@ const USER_SCROLL_DELTA_EPSILON = 1;
 const BOTTOM_OVERSCROLL_TOLERANCE_PX = 2;
 const AUTO_SCROLL_BOTTOM_THRESHOLD_PX = 64;
 const AUTO_SCROLL_RESUME_THRESHOLD_PX = 1;
+/**
+ * The jump-to-bottom button must appear before any content hides under the composer pill row
+ * (~62px inset). Sharing the 64px follow threshold let the tail sit under the pills with no button.
+ */
+const NEAR_BOTTOM_INDICATOR_THRESHOLD_PX = 8;
 const HISTORY_START_SETTLE_FRAMES = 2;
 const HISTORY_START_SLOT_HEIGHT_PX = 32;
 const CONTENT_PADDING_TOP_PX = 16;
@@ -206,7 +211,10 @@ function syncNearBottom(
     onNearBottomChange(true);
     return true;
   }
-  const nextValue = isScrollContainerNearBottom(scrollContainer);
+  const nextValue = isScrollContainerNearBottom(
+    scrollContainer,
+    NEAR_BOTTOM_INDICATOR_THRESHOLD_PX,
+  );
   onNearBottomChange(nextValue);
   return nextValue;
 }

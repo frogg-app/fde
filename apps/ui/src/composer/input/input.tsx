@@ -170,6 +170,8 @@ export interface MessageInputProps {
   inputMode?: ComposerInputMode;
   /** Renders `value` as static text on the same surface, for content there is nothing to type into. */
   readOnly?: boolean;
+  /** Paint the connection-lost outline. */
+  offline?: boolean;
   /** Command issued when application state must replace native-owned text. */
   textReplacement: TextReplacement;
   /** Replaces the submit icon with this label, still inside the composer's own toolbar row. */
@@ -1041,6 +1043,7 @@ interface ResolvedMessageInputProps {
   attachmentSlot: React.ReactNode;
   inputMode: ComposerInputMode;
   readOnly: boolean;
+  offline: boolean;
   textReplacement: TextReplacement;
   submitLabel: string | undefined;
 }
@@ -1088,6 +1091,7 @@ function resolveMessageInputProps(props: MessageInputProps): ResolvedMessageInpu
     attachmentSlot: props.attachmentSlot,
     inputMode: props.inputMode ?? "chat",
     readOnly: props.readOnly ?? false,
+    offline: props.offline ?? false,
     textReplacement: props.textReplacement,
     submitLabel: props.submitLabel,
   };
@@ -1143,6 +1147,7 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
       attachmentSlot,
       inputMode,
       readOnly,
+      offline,
       textReplacement,
       submitLabel,
     } = resolveMessageInputProps(props);
@@ -1657,9 +1662,10 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
         styles.inputWrapper,
         readOnly && styles.inputWrapperReadOnly,
         inputWrapperStyle,
+        offline && styles.inputWrapperOffline,
         { opacity: surfacePresentation.input.opacity },
       ],
-      [inputWrapperStyle, readOnly, surfacePresentation.input.opacity],
+      [inputWrapperStyle, offline, readOnly, surfacePresentation.input.opacity],
     );
     // `withUnistyles` maps this component's `style` into a `.hash > *` child
     // rule, which ties on specificity with react-native-web's own
@@ -1844,6 +1850,9 @@ const styles = StyleSheet.create((theme: Theme) => ({
   container: {
     flexShrink: 1,
     position: "relative",
+  },
+  inputWrapperOffline: {
+    borderColor: theme.colors.destructive,
   },
   inputWrapper: {
     flexShrink: 1,
