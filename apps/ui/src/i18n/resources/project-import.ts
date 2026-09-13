@@ -1,7 +1,7 @@
 const en = {
   exportsDirectory: "Exported conversation directory on {{host}} (optional)",
   title: "Import project and conversations",
-  description: "Bring a project and its conversations into FDE",
+  description: "Bring a project and its conversations into {{brandName}}",
   daemon: "On {{host}}",
   computer: "This computer",
   source: "Conversation source",
@@ -37,7 +37,7 @@ export const projectImportCopies: Record<string, Copy> & { en: Copy } = {
   es: {
     exportsDirectory: "Directorio de conversaciones exportadas en {{host}} (opcional)",
     title: "Importar proyecto y conversaciones",
-    description: "Trae un proyecto y sus conversaciones a FDE",
+    description: "Trae un proyecto y sus conversaciones a {{brandName}}",
     daemon: "En {{host}}",
     computer: "Este equipo",
     source: "Origen de las conversaciones",
@@ -70,7 +70,7 @@ export const projectImportCopies: Record<string, Copy> & { en: Copy } = {
   fr: {
     exportsDirectory: "Dossier des conversations exportées sur {{host}} (facultatif)",
     title: "Importer un projet et ses conversations",
-    description: "Ajouter un projet et ses conversations à FDE",
+    description: "Ajouter un projet et ses conversations à {{brandName}}",
     daemon: "Sur {{host}}",
     computer: "Cet ordinateur",
     source: "Source des conversations",
@@ -104,7 +104,7 @@ export const projectImportCopies: Record<string, Copy> & { en: Copy } = {
   ja: {
     exportsDirectory: "{{host}}上のエクスポート済み会話フォルダー（任意）",
     title: "プロジェクトと会話をインポート",
-    description: "プロジェクトと会話をFDEに取り込みます",
+    description: "プロジェクトと会話を{{brandName}}に取り込みます",
     daemon: "{{host}}上",
     computer: "このコンピューター",
     source: "会話の場所",
@@ -137,7 +137,7 @@ export const projectImportCopies: Record<string, Copy> & { en: Copy } = {
   ko: {
     exportsDirectory: "{{host}}의 내보낸 대화 폴더 (선택 사항)",
     title: "프로젝트 및 대화 가져오기",
-    description: "프로젝트와 대화를 FDE로 가져옵니다",
+    description: "프로젝트와 대화를 {{brandName}}로 가져옵니다",
     daemon: "{{host}}에서",
     computer: "이 컴퓨터",
     source: "대화 원본",
@@ -170,7 +170,7 @@ export const projectImportCopies: Record<string, Copy> & { en: Copy } = {
   "zh-CN": {
     exportsDirectory: "{{host}} 上导出的对话目录（可选）",
     title: "导入项目和对话",
-    description: "将项目及其对话导入 FDE",
+    description: "将项目及其对话导入 {{brandName}}",
     daemon: "在 {{host}} 上",
     computer: "此电脑",
     source: "对话来源",
@@ -201,7 +201,7 @@ export const projectImportCopies: Record<string, Copy> & { en: Copy } = {
   ru: {
     exportsDirectory: "Каталог экспортированных разговоров на {{host}} (необязательно)",
     title: "Импорт проекта и разговоров",
-    description: "Перенесите проект и его разговоры в FDE",
+    description: "Перенесите проект и его разговоры в {{brandName}}",
     daemon: "На {{host}}",
     computer: "Этот компьютер",
     source: "Источник разговоров",
@@ -234,7 +234,7 @@ export const projectImportCopies: Record<string, Copy> & { en: Copy } = {
   "pt-BR": {
     exportsDirectory: "Diretório de conversas exportadas em {{host}} (opcional)",
     title: "Importar projeto e conversas",
-    description: "Traga um projeto e suas conversas para o FDE",
+    description: "Traga um projeto e suas conversas para o {{brandName}}",
     daemon: "Em {{host}}",
     computer: "Este computador",
     source: "Origem das conversas",
@@ -267,7 +267,7 @@ export const projectImportCopies: Record<string, Copy> & { en: Copy } = {
   ar: {
     exportsDirectory: "مجلد المحادثات المصدّرة على {{host}} (اختياري)",
     title: "استيراد مشروع ومحادثات",
-    description: "أضف مشروعًا ومحادثاته إلى FDE",
+    description: "أضف مشروعًا ومحادثاته إلى {{brandName}}",
     daemon: "على {{host}}",
     computer: "هذا الكمبيوتر",
     source: "مصدر المحادثات",
