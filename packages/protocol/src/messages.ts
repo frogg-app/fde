@@ -311,10 +311,12 @@ import type {
   ToolCallDetail,
   ToolCallTimelineItem,
   AgentUsage,
+  JsonValue,
 } from "./agent-types.js";
 
 // WebSocket payloads have already crossed JSON serialization. Keeping this as
 // unknown avoids zod-aot's recursive z.json() object-codegen regression.
+const JsonWireValueSchema = z.unknown() as z.ZodType<JsonValue>;
 
 export const AgentStatusSchema = z.enum(AGENT_LIFECYCLE_STATUSES);
 
@@ -760,6 +762,17 @@ export const AgentTimelineItemPayloadSchema: z.ZodType<AgentTimelineItem, unknow
     status: z.enum(["loading", "completed"]),
     trigger: z.enum(["auto", "manual"]).optional(),
     preTokens: z.number().optional(),
+  }),
+  // COMPAT(pluginTimelineItems): plugins were removed after v0.7.0, but older daemons can still
+  // hold these rows. Keep parsing them so a timeline page or stream frame containing one is not
+  // rejected; clients ignore them. Remove after 2027-09-13.
+  z.object({
+    type: z.literal("plugin"),
+    id: z.string(),
+    pluginId: z.string(),
+    kind: z.string(),
+    version: z.number(),
+    data: JsonWireValueSchema,
   }),
 ]);
 

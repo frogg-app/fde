@@ -5628,6 +5628,37 @@
                                     "status"
                                   ],
                                   "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "const": "plugin"
+                                    },
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "pluginId": {
+                                      "type": "string"
+                                    },
+                                    "kind": {
+                                      "type": "string"
+                                    },
+                                    "version": {
+                                      "type": "number"
+                                    },
+                                    "data": {}
+                                  },
+                                  "required": [
+                                    "type",
+                                    "id",
+                                    "pluginId",
+                                    "kind",
+                                    "version",
+                                    "data"
+                                  ],
+                                  "additionalProperties": false
                                 }
                               ]
                             },
@@ -13665,6 +13696,37 @@
                                   "required": [
                                     "type",
                                     "status"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "const": "plugin"
+                                    },
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "pluginId": {
+                                      "type": "string"
+                                    },
+                                    "kind": {
+                                      "type": "string"
+                                    },
+                                    "version": {
+                                      "type": "number"
+                                    },
+                                    "data": {}
+                                  },
+                                  "required": [
+                                    "type",
+                                    "id",
+                                    "pluginId",
+                                    "kind",
+                                    "version",
+                                    "data"
                                   ],
                                   "additionalProperties": false
                                 }
@@ -24336,6 +24398,37 @@
                                   "status"
                                 ],
                                 "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "plugin"
+                                  },
+                                  "id": {
+                                    "type": "string"
+                                  },
+                                  "pluginId": {
+                                    "type": "string"
+                                  },
+                                  "kind": {
+                                    "type": "string"
+                                  },
+                                  "version": {
+                                    "type": "number"
+                                  },
+                                  "data": {}
+                                },
+                                "required": [
+                                  "type",
+                                  "id",
+                                  "pluginId",
+                                  "kind",
+                                  "version",
+                                  "data"
+                                ],
+                                "additionalProperties": false
                               }
                             ]
                           },
@@ -26927,6 +27020,37 @@
                                   "status"
                                 ],
                                 "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "plugin"
+                                  },
+                                  "id": {
+                                    "type": "string"
+                                  },
+                                  "pluginId": {
+                                    "type": "string"
+                                  },
+                                  "kind": {
+                                    "type": "string"
+                                  },
+                                  "version": {
+                                    "type": "number"
+                                  },
+                                  "data": {}
+                                },
+                                "required": [
+                                  "type",
+                                  "id",
+                                  "pluginId",
+                                  "kind",
+                                  "version",
+                                  "data"
+                                ],
+                                "additionalProperties": false
                               }
                             ]
                           },
@@ -29286,6 +29410,37 @@
                               "required": [
                                 "type",
                                 "status"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "type": "string",
+                                  "const": "plugin"
+                                },
+                                "id": {
+                                  "type": "string"
+                                },
+                                "pluginId": {
+                                  "type": "string"
+                                },
+                                "kind": {
+                                  "type": "string"
+                                },
+                                "version": {
+                                  "type": "number"
+                                },
+                                "data": {}
+                              },
+                              "required": [
+                                "type",
+                                "id",
+                                "pluginId",
+                                "kind",
+                                "version",
+                                "data"
                               ],
                               "additionalProperties": false
                             }

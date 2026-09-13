@@ -48,6 +48,57 @@ describe("timeline row identity", () => {
   });
 });
 
+describe("legacy plugin timeline items", () => {
+  const pluginEvent: AgentStreamEventPayload = {
+    type: "timeline",
+    provider: "claude",
+    turnId: "turn-plugin",
+    item: {
+      type: "plugin",
+      id: "review-1",
+      pluginId: "review",
+      kind: "review",
+      version: 1,
+      data: { status: "running" },
+    },
+  };
+
+  it("leaves the stream untouched, including the previous row's turn", () => {
+    const state = hydrateStreamState([
+      {
+        event: {
+          type: "timeline",
+          provider: "claude",
+          turnId: "turn-a",
+          item: { type: "assistant_message", text: "Done" },
+        },
+        timestamp: new Date(1),
+      },
+    ]);
+
+    const next = reduceStreamUpdate(state, pluginEvent, new Date(2));
+
+    expect(next).toBe(state);
+    expect(next.at(-1)?.turnId).toBe("turn-a");
+  });
+
+  it("hydrates a page from an older daemon without a row for the plugin item", () => {
+    const hydrated = hydrateStreamState([
+      { event: pluginEvent, timestamp: new Date(1) },
+      {
+        event: {
+          type: "timeline",
+          provider: "claude",
+          item: { type: "assistant_message", text: "After" },
+        },
+        timestamp: new Date(2),
+      },
+    ]);
+
+    expect(hydrated.map((item) => item.kind)).toEqual(["assistant_message"]);
+  });
+});
+
 describe("user message identity", () => {
   it("replaces provisional optimistic turn membership with canonical membership", () => {
     const optimistic = createUserMessage({

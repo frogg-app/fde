@@ -1488,6 +1488,9 @@ export function reduceStreamUpdate(
   const source = options?.source ?? "live";
   switch (event.type) {
     case "timeline":
+      // COMPAT(pluginTimelineItems): older daemons can still send plugin rows. They are not shown
+      // and must not restamp the previous row's turn. Remove after 2027-09-13.
+      if (event.item.type === "plugin") return state;
       return applyTimelineTurnId(
         reduceTimelineEvent(
           state,
