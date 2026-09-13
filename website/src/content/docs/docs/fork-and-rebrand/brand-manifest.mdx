@@ -1,0 +1,171 @@
+---
+title: Brand manifest reference
+description: Every brand.json field, its validation rule, default and where it is used.
+sidebar:
+  order: 4
+---
+
+The contract is `packages/branding/src/schema.ts`, exported as JSON Schema in
+`packages/branding/brand.schema.json`. The manifest is strict: unknown keys fail.
+Asset paths are relative to `brand.json`.
+
+For editor completion, map `brand.json` files to that schema in your editor settings.
+Do not add a `$schema` key to the manifest: the strict schema rejects it.
+
+## Required fields
+
+| Field           | Rule                                                               | Used for                                                               |
+| --------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| `schemaVersion` | Exactly `1`                                                        | Manifest format version                                                |
+| `id`            | Lowercase slug `^[a-z][a-z0-9]*(-[a-z0-9]+)*$`, max 48 characters  | Default for every identity below; package file names                  |
+| `name`          | 1 to 160 characters, Unicode allowed, no control characters        | Window titles, installers, app name, release titles                    |
+| `applicationId` | Reverse DNS, 3+ lowercase segments, e.g. `com.acme.studio`         | Android package, macOS/Windows app ID, Windows install path, storage namespace |
+| `daemonPort`    | Integer, 1024 to 65535                                             | Default daemon port for installers, Docker, Nix and clients            |
+| `assets.icon`   | Path to a square PNG or SVG, at least 1024 × 1024                  | Source for every generated icon                                        |
+
+## Identity fields
+
+All optional. Defaults derive from `id` and `applicationId`. Set them only when you
+need a different value, and keep them stable after you ship: they decide where
+installations and user state live.
+
+| Field               | Rule                                  | Default for a custom brand  | Acme resolved value          |
+| ------------------- | ------------------------------------- | --------------------------- | ---------------------------- |
+| `fullName`          | Text, max 160                         | `name`                      | `Acme Studio`                |
+| `description`       | Text, max 160                         | `<name>: run and monitor AI coding agents.` | `Acme Studio: run and monitor AI coding agents.` |
+| `publisher`         | Text, max 160                         | `name`                      | `Acme Studio`                |
+| `cliName`           | Slug, max 48                          | `id`                        | `acme`                       |
+| `desktopBinaryName` | Slug, max 48                          | `<id>-desktop`              | `acme-desktop`               |
+| `homeDir`           | `^\.[a-z][a-z0-9-]*$`                 | `.<id>`                     | `.acme`                      |
+| `envPrefix`         | `^[A-Z][A-Z0-9_]*$`                   | `id` uppercased, `-` to `_` | `ACME`                       |
+| `scheme`            | Slug, max 48                          | `id`                        | `acme`                       |
+| `serviceName`       | Slug, max 48                          | `<id>-daemon`               | `acme-daemon`                |
+| `launchdLabel`      | `^[a-z][a-z0-9.-]*$`                  | `<applicationId>-daemon`    | `com.acme.studio-daemon`     |
+| `artifactPrefix`    | `^[a-zA-Z][a-zA-Z0-9-]*$`             | `id`                        | `acme`                       |
+
+Where they show up:
+
+- **`cliName`**: the command installed by `install.sh` and the daemon bundle launcher.
+- **`desktopBinaryName`**: used by the retired Tauri packaging inputs only. The Electron
+  desktop app names its executable after `id` (`acme`).
+- **`homeDir`** and **`envPrefix`**: the daemon state directory (`~/.acme`) and the
+  variable that overrides it (`ACME_HOME`). Installer overrides also use the prefix:
+  `ACME_INSTALL_DIR`, `ACME_BIN_DIR`, `ACME_VERSION`, `ACME_BUNDLE_URL`, `ACME_LISTEN`
+  and so on. Low-level daemon settings such as `FDE_LISTEN` keep the `FDE_` name.
+- **`scheme`**: deep links (`acme://`) registered by the desktop app and mobile app.
+- **`serviceName`** / **`launchdLabel`**: the systemd user unit and launchd agent the
+  installer creates, and the Docker container name.
+- **`artifactPrefix`**: release file names, for example
+  `acme-0.6.19-win-x64.exe` and `acme-0.6.19-android-arm64-v8a.apk`.
+
+## Assets
+
+| Key            | Default           | Generated outputs                                                 |
+| -------------- | ----------------- | ----------------------------------------------------------------- |
+| `icon`         | required          | Desktop ICO/ICNS/PNGs, app icon, PWA and Apple touch icons        |
+| `ios`          | `icon`            | iOS icon, flattened onto the light background colour              |
+| `foreground`   | `icon`            | Android adaptive icon foreground                                  |
+| `notification` | mask of `icon`    | 96 px white notification icon (Android)                           |
+| `splash`       | `icon`            | Splash screen image                                               |
+| `faviconLight` | `icon`            | Light favicon, plus running (blue dot) and attention (amber dot) variants |
+| `faviconDark`  | `icon`            | Dark favicon and its variants                                     |
+
+Every source is resized with `sharp` to fit, preserving transparency. PWA icons are
+placed at 80 % on the dark background colour to respect the maskable safe zone.
+
+Icon tips:
+
+- Design for 1024 px and check it at 32 px. Thin strokes disappear.
+- Provide `foreground` with generous padding if the Android launcher crops your mark.
+- Provide `notification` as a single-colour silhouette on transparency; Android
+  renders only its alpha channel.
+
+## Colours
+
+```json
+"colors": {
+  "light": { "accent": "#6d28d9", "accentForeground": "#ffffff", "background": "#faf5ff", "foreground": "#27143d" },
+  "dark":  { "accent": "#c4b5fd", "accentForeground": "#27143d", "background": "#20152e", "foreground": "#faf5ff" }
+}
+```
+
+| Key                | Required in a palette | Meaning                                                      |
+| ------------------ | --------------------- | ------------------------------------------------------------ |
+| `accent`           | yes                   | Primary buttons, selection, links, focus                     |
+| `accentForeground` | yes                   | Text and icons on `accent`                                   |
+| `background`       | yes                   | App background; also splash, PWA and Android icon backgrounds (dark) |
+| `foreground`       | yes                   | Main text                                                    |
+| `accentBright`     | no, defaults to `accent` | Highlight variant of the accent                           |
+
+Rules:
+
+- Colours are six-digit hex: `#rrggbb`.
+- `accent`/`accentForeground` and `background`/`foreground` must each reach **4.5:1**
+  contrast (WCAG AA) or preparation fails.
+- `light` and `dark` are each optional. A missing palette falls back to neutral grey.
+- Users can still pick other themes, including plugin themes. The brand palette is
+  the default.
+
+## Links
+
+All optional HTTP(S) URLs without embedded credentials. A missing link hides the UI
+that would use it.
+
+| Key         | Used by                                                                         |
+| ----------- | ------------------------------------------------------------------------------- |
+| `website`   | Where the hosted pairing page redirects its root URL                           |
+| `docs`      | In-app help links and CLI output. Pages are appended: `/cli`, `/security`, `/configuration`, `/worktrees`, `/skills`, `/metadata-generation` |
+| `support`   | "Report an issue" link on the startup error screen                              |
+| `source`    | Source link on the welcome screen. Defaults to `https://github.com/<distribution.repository>` |
+| `installer` | Base URL for the generated install-script worker config                        |
+
+## Services
+
+| Key              | Rule                              | Default | Meaning                                                  |
+| ---------------- | --------------------------------- | ------- | -------------------------------------------------------- |
+| `pairingUrl`     | HTTP(S) URL                       | none    | Hosted pairing page, e.g. `https://pair.acme.example`    |
+| `relayEndpoint`  | `host:port`                       | none    | Relay the daemon and clients use when relay is enabled   |
+| `relayUseTls`    | boolean                           | `true`  | Use TLS to reach `relayEndpoint`                         |
+| `allowedOrigins` | array of URLs                     | `[]`    | Default CORS origins in a new daemon config (hosted web app origins) |
+
+A custom brand inherits **none** of FDE's hosted services. Without `pairingUrl`, pairing
+links use your native scheme (`acme://pair#offer=...`) and direct connections still
+work.
+
+## Distribution
+
+| Key                | Rule                         | Default                                  | Meaning                                         |
+| ------------------ | ---------------------------- | ---------------------------------------- | ----------------------------------------------- |
+| `repository`       | `owner/name`                 | none                                     | GitHub repository whose releases feed updates and installers |
+| `updates`          | `disabled`, `github-release`, `tauri-signed` | `github-release` with a repository, else `disabled` | Update mode |
+| `updaterPublicKey` | string                       | none                                     | Only for `tauri-signed`                         |
+| `dockerImage`      | image name without tag       | none                                     | Daemon image, e.g. `acme/studio`                |
+| `pairingImage`     | image name without tag       | none                                     | Pairing page image                              |
+| `iosStoreId`       | digits                       | none                                     | App Store Connect app ID for `eas submit`       |
+| `expoProjectId`    | UUID                         | none                                     | EAS project ID                                  |
+
+Use `github-release` for Electron. `tauri-signed` belongs to the retired Tauri shell,
+which is not released; it requires `updaterPublicKey` and has no effect on Electron
+builds.
+
+With `repository` set:
+
+- the desktop app checks `https://github.com/<repository>/releases` for updates,
+- `install.sh` downloads daemon bundles from the same releases,
+- `<cliName> update` on a daemon host (for Acme, `acme update`) uses the same releases.
+
+Custom products never fall back to FDE's releases.
+
+## Resolved output
+
+`npm run --silent brand:check -- --brand <dir> --json` prints the resolved brand. It
+adds derived values you cannot set directly:
+
+| Resolved key                 | Value                                                   |
+| ---------------------------- | ------------------------------------------------------- |
+| `daemonArtifactPrefix`       | `<id>-daemon`                                           |
+| `storagePrefix`              | `<applicationId>:` (browser and native storage namespace) |
+| `distribution.releasesApi`   | `https://api.github.com/repos/<repository>/releases`    |
+| `distribution.releaseBase`   | `https://github.com/<repository>/releases`              |
+| `distribution.updateMode`    | Resolved `updates`                                      |
+| `legacyFde`                  | `true` only for `brands/fde`                            |

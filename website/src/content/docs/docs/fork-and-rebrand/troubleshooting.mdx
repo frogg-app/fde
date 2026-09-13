@@ -1,0 +1,166 @@
+---
+title: Troubleshooting and FAQ
+description: Fixes for branding, build, release and update problems in a rebranded FDE fork.
+sidebar:
+  order: 10
+---
+
+## Brand check and preparation
+
+### `Custom brands must use independent identities; FDE/Fde identities are reserved`
+
+Your manifest reuses an FDE identity. Change whichever applies:
+
+- `id`, `cliName`, `desktopBinaryName` or `scheme` equal to `fde`,
+- `homeDir` of `.fde` or `envPrefix` of `FDE`,
+- `applicationId` or `launchdLabel` starting with `app.frogg.` or `sh.fde.`,
+- `serviceName` of `fde` or `fde-daemon`.
+
+Only `brands/fde` itself may use them.
+
+### `light brand colors require text contrast of at least 4.5:1`
+
+A palette fails WCAG AA. Check both pairs in the named appearance: `accent` against
+`accentForeground`, and `background` against `foreground`. Darken or lighten one side of
+the pair.
+
+### `assets.icon must be a square image at least 1024 × 1024 pixels`
+
+Export the icon at 1024 px or larger, square. For SVG, set `width` and `height` on the
+root `<svg>` element, not only `viewBox`.
+
+### `ZodError` with `invalid_format` or `unrecognized_keys`
+
+The manifest does not match the schema. The `path` in the error names the field. Common
+causes: capital letters in `id`, an application ID with fewer than three segments, a
+`$schema` key, or a colour without the leading `#`. See the
+[manifest reference](/docs/fork-and-rebrand/brand-manifest/).
+
+### `distribution.repository is required when updates are enabled`
+
+You set `"updates": "github-release"` without `repository`. Add `"repository": "owner/name"`
+or remove `updates`.
+
+### `Another brand is being built; use a separate worktree.`
+
+Another build or dev server in this checkout holds a different brand. Stop it, or use
+`git worktree add` for the second brand. If no build is running, the lock is stale:
+the next run removes locks whose process has exited. Only delete
+`.generated/branding-build.lock` or `.generated/branding-prepare.lock` by hand after
+confirming the owning process is gone.
+
+### The app still shows the old name or icon
+
+- Stop and restart dev servers after changing brands. A running server keeps its brand.
+- Rebuild the web export: `npm run build:ui`. Desktop and daemon packaging compare the
+  web build's fingerprint (`apps/ui/dist/brand-build.json`) with the selected brand.
+- Browsers cache favicons aggressively. Hard-reload or use a private window.
+
+## CI and releases
+
+### Release job fails: `Tag v0.6.20 does not match package.json version 0.6.19`
+
+Tag the commit that bumps the version. Run `npm run version:all:patch` (or another
+mode) first, then `npm run release:push`, which tags `HEAD` with the version in
+`package.json`.
+
+### Docker job fails: `Configure distribution.dockerImage to publish containers`
+
+You set `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` but the brand has no
+`distribution.dockerImage`. Add one, or remove the secrets to skip Docker.
+
+### `FDE_BRAND_REVISION must be a pinned 40-character commit SHA`
+
+External brand repositories must be pinned by full SHA:
+`git -C studio-brand rev-parse HEAD`.
+
+### `Missing manifest: <path>/brand.json`
+
+`FDE_BRAND_DIR` or `FDE_BRAND_SUBDIR` points at the wrong directory. Paths are
+relative to the repository root (or to the external repository root).
+
+### The release stays a draft
+
+`publish` runs only when desktop, daemon bundles, Android and updater metadata all
+succeed, and only for a full-matrix run (tag push or `platforms=all`). Open the failed job,
+fix it, and re-run failed jobs. Re-runs of the same workflow run may overwrite that run's
+assets; a new run against an existing release skips assets that already exist.
+
+### The APK is named `-unsigned`
+
+`FDE_ANDROID_KEYSTORE_BASE64` or `FDE_ANDROID_KEYSTORE_PASSWORD` is missing. The APK is
+debug-signed. Add the keystore secrets before any user installs it.
+
+### Branding acceptance fails with `Official preset changed`
+
+Your pull request edits `brands/fde/`. Custom brands belong in their own directory. For
+an intentional change to FDE's own identity upstream, a maintainer applies the
+`branding:official` label.
+
+### `New product literals need brand values/interpolation`
+
+A pull request added a string containing `FDE`, `Fde` or `frogg.app` in `apps/` or
+`packages/`. Use `brand.name`, `brand.links.*` or i18n interpolation instead. See
+[contributing back](/docs/fork-and-rebrand/contributing-upstream/#keep-brand-changes-out).
+
+## Updates
+
+### The desktop app says updates are disabled
+
+The brand has no `distribution.repository`, or `updates` is `disabled`, or the app is an
+unpackaged development build. Set the repository and rebuild.
+
+### `No Electron update feed has been published for this release channel yet.`
+
+The release is missing `electron-latest*.yml` (stable) or `electron-beta*.yml` (beta).
+Those come from the `updater-manifest` job, which only runs for full-matrix releases.
+
+### `This release requires a manual upgrade from clients older than X`
+
+The release's `release.json` sets a minimum client version above the installed app.
+Users must download the new version by hand once.
+
+### `acme update` reports `cannot self-update`
+
+The daemon was not installed with `install.sh` (for example a dev checkout, Docker or
+a manual copy), or updates are disabled for the brand. Docker hosts update by pulling
+the new image and re-running `install-docker.sh --update`.
+
+### The host settings page mentions `~/.local/share/fde` for a custom brand
+
+This is a known inconsistency in the app's update status text for custom brands at
+0.6.19. The installer and `acme update` use `~/.local/share/acme`.
+
+## FAQ
+
+### Can users switch between FDE and my brand at runtime?
+
+No. The brand is compiled in. Users install your app; it can still connect to any
+compatible daemon, including a stock FDE daemon, because the wire protocol is shared.
+
+### Does my fork have to stay public?
+
+A GitHub fork of a public repository is public. Mirror into a private repository if you
+need one (see [fork the repository](/docs/fork-and-rebrand/fork-the-repo/)). Keep the
+Apache-2.0 `LICENSE` and `NOTICE` files and attribution in either case.
+
+### Can I rename the `@fde/*` packages or the `FDE_` environment variables?
+
+No. They are shared compatibility contracts. Your brand renames what users see and
+where state lives: CLI, home directory, installer env prefix, services, scheme, app ID.
+
+### Do I need a pairing service or relay?
+
+No. Users connect directly over the LAN, a VPN such as Tailscale, or SSH from the
+desktop app. Pairing links fall back to your URL scheme. Add `services.pairingUrl` or a
+relay only if you operate them.
+
+### Can I change my `id` or `applicationId` after shipping?
+
+Treat them as permanent. Changing them creates a different product: new state
+directory, new services, new Android package. Existing installs will not update to it.
+
+### How do I test a brand change without releasing?
+
+Run `gh workflow run build-selected.yml -f target=all` in your fork. It builds the
+Windows client, Linux daemon and a debug Android APK as workflow artifacts.

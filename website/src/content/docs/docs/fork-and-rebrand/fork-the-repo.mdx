@@ -1,0 +1,92 @@
+---
+title: Fork the repository
+description: Create a GitHub fork of frogg-app/fde, add the upstream remote and pick a branch model.
+sidebar:
+  order: 2
+---
+
+import { Steps } from "@/components/docs";
+
+## Fork or clone?
+
+**Fork.** A plain clone works for a one-off local build, but a product needs more:
+
+- **GitHub Actions run in your repository.** The release workflow builds and publishes
+  from the repository that holds the tag, with that repository's secrets and variables.
+- **Updates point at your releases.** The desktop updater and `install.sh` read
+  `distribution.repository` from your brand. That repository must publish releases.
+- **Upstream stays one `git merge` away.** A fork keeps the shared history, so upstream
+  fixes merge cleanly into your product.
+- **Pull requests back upstream** come from branches in your fork.
+
+A fork of a public repository is public. If your organization needs a private
+product repository, create an empty private repository and push a mirror instead
+(`git push --mirror`). Everything on these pages works the same way; you just add the
+`upstream` remote by hand.
+
+## Create the fork
+
+<Steps>
+
+1. Open [github.com/frogg-app/fde](https://github.com/frogg-app/fde) and choose **Fork**.
+   Pick your organization as the owner. Keep the default branch only.
+
+2. Clone your fork and add upstream:
+
+   ```sh
+   git clone https://github.com/acme-corp/fde.git acme-studio
+   cd acme-studio
+   git remote add upstream https://github.com/frogg-app/fde.git
+   git fetch upstream
+   git remote -v
+   ```
+
+   ```text
+   origin    https://github.com/acme-corp/fde.git (fetch)
+   origin    https://github.com/acme-corp/fde.git (push)
+   upstream  https://github.com/frogg-app/fde.git (fetch)
+   upstream  https://github.com/frogg-app/fde.git (push)
+   ```
+
+3. Install and confirm the stock build works before changing anything:
+
+   ```sh
+   npm ci
+   npm run brand:check
+   ```
+
+   ```text
+   FDE: valid (app.frogg.fde); updates github-release
+   ```
+
+4. Open the fork's **Actions** tab and enable workflows. GitHub disables them in new
+   forks. The release workflow declares `contents: write` and publishes with the
+   built-in `GITHUB_TOKEN`; if your organization restricts workflow permissions, allow
+   that scope for this repository.
+
+</Steps>
+
+## Pick a branch model
+
+Keep your product changes in files upstream never touches. That is what keeps
+merges boring.
+
+| Branch            | Contains                                                        | Based on        |
+| ----------------- | --------------------------------------------------------------- | --------------- |
+| `main`            | Upstream history plus your brand directory and release tags    | `upstream/main` |
+| `feature/*`       | Product features you may contribute back                        | `upstream/main` |
+| `acme/*` (optional) | Product-only changes you will never upstream                  | your `main`     |
+
+Two supported places for the brand itself:
+
+- **A directory in your fork**, for example `brands/acme/`. Upstream only ships
+  `brands/fde/` and `brands/example/`, so `brands/acme/` never conflicts. Select it with
+  the `FDE_BRAND_DIR` repository variable.
+- **A separate branding repository**, pinned by commit. CI checks it out next to the
+  source. Your fork then carries no product files at all. See
+  [external brand repositories](/docs/fork-and-rebrand/build-and-release/#external-brand-repository).
+
+Do not edit `brands/fde/`, the shared workflows, or shared source to set your product
+identity. Every such edit is a future merge conflict, and none of them are needed.
+
+Next: [create a brand](/docs/fork-and-rebrand/create-a-brand/).

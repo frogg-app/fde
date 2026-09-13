@@ -1,0 +1,203 @@
+---
+title: Mobile, Docker, Nix and hosted services
+description: Ship a branded Android or iOS app with EAS, a branded Docker image or Nix service, your own pairing page, install scripts and web app.
+sidebar:
+  order: 6
+---
+
+These distributions build from the same brand. None of them run in the shipped
+release workflow except the Android APK and the Docker image.
+
+## Android APK
+
+The release workflow builds an arm64 APK with `scripts/release/build-android-apk.mjs`
+(see [Android signing](/docs/fork-and-rebrand/build-and-release/#android)). To build one
+locally you need JDK 21 and the Android SDK:
+
+```sh
+export FDE_BRAND_DIR=brands/acme
+node scripts/release/build-android-apk.mjs --abi arm64-v8a --out-dir release-assets
+```
+
+The package ID is your `applicationId`. Development builds use `<applicationId>.debug`
+and the name `<name> Debug`, so both install side by side:
+
+```sh
+FDE_BRAND_DIR=brands/acme npm run android:development --workspace=@fde/app
+```
+
+## EAS (Android and iOS)
+
+EAS needs a project-local `eas.json`. `brand:eas` exports a disposable copy of the
+tracked source, writes the branded `eas.json` and staged brand into it, and runs
+`eas-cli` from there. Your checkout stays untouched.
+
+1. Create an Expo project and put its ID in the brand:
+
+   ```json title="brands/acme/brand.json"
+   "distribution": {
+     "repository": "acme-corp/fde",
+     "expoProjectId": "1b2c3d4e-5f60-4a1b-8c2d-3e4f5a6b7c8d",
+     "iosStoreId": "1234567890"
+   }
+   ```
+
+2. Inspect the export without building:
+
+   ```sh
+   FDE_BRAND_DIR=brands/acme npm run brand:eas -- --prepare-only
+   ```
+
+   ```text
+   Mobile source and EAS configuration exported to /tmp/acme-mobile-XXXXXX
+   ```
+
+3. Build:
+
+   ```sh
+   export EXPO_TOKEN=...   # or run `npx eas-cli login` first
+   FDE_BRAND_DIR=brands/acme npm run brand:eas -- build --platform android --profile production-apk
+   FDE_BRAND_DIR=brands/acme npm run brand:eas -- build --platform ios --profile production
+   ```
+
+Profiles come from `apps/ui/eas.json`: `development`, `production` and `production-apk`.
+`iosStoreId` is written into the `submit.production.ios.ascAppId` field of the generated
+`eas.json`. Without it, the iOS submit profile is removed.
+
+:::caution[iOS is unvalidated]
+Upstream FDE has no iOS release pipeline. Branding CI builds only an unsigned iOS
+simulator app for `brands/example`. Treat App Store builds as your own integration work.
+:::
+
+## Docker image
+
+Set `distribution.dockerImage`, then:
+
+```sh
+export FDE_BRAND_DIR=brands/acme
+scripts/release/build-docker.sh                    # host platform, loads locally
+scripts/release/build-docker.sh --push             # linux/amd64 + linux/arm64, pushes all tags
+```
+
+The script stages the brand into `.branding-input/acme` and passes it as the
+`FDE_BRAND_DIR` build argument to `deploy/docker/base/Dockerfile`. Override the target
+with `FDE_IMAGE_REPO` or `FDE_PLATFORMS`.
+
+`brand:prepare` also writes a Compose file for your product:
+
+```sh
+FDE_BRAND_DIR=brands/acme npm run brand:prepare
+docker compose -f .generated/branding/deploy/compose.json config
+```
+
+For Acme it runs container `acme-daemon` on port 10099, sets `ACME_HOME`, mounts
+`./acme-state`, and labels the container with `app.brand.id=acme`. The generated
+`install-docker.sh` on your release checks that label before replacing a container, so
+it never touches another product's container.
+
+## Nix
+
+`deploy/nix/package.nix` takes a pinned, self-contained `brandSource`. Stage the brand
+first, then point your flake at it:
+
+```nix
+{
+  inputs.fde.url = "github:acme-corp/fde?dir=deploy/nix";
+
+  outputs = { self, nixpkgs, fde, ... }: {
+    nixosConfigurations.build-box = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      modules = [
+        fde.nixosModules.default # includes branded-module.nix
+        ({ pkgs, ... }: {
+          services.fde.instances.acme = {
+            enable = true;
+            package = pkgs.callPackage "${fde}/deploy/nix/package.nix" {
+              brandSource = ./acme-brand; # brand.json + artwork
+            };
+            openFirewall = true;
+            environmentFile = "/run/secrets/acme-daemon.env";
+          };
+        })
+      ];
+    };
+  };
+}
+```
+
+`services.fde.instances.<name>` options: `enable`, `package`, `user` and `dataDir`
+(default from the brand id), `port` (default `daemonPort`), `listenAddress`
+(`0.0.0.0`), `openFirewall`, `environment`, `environmentFile`. Two instances must have
+different brand identities.
+
+When the lockfile changes, the package's `npmDepsHash` changes too. Override it with
+`.override { npmDepsHash = "sha256-..."; }` if your nixpkgs differs from the pinned one.
+
+:::note
+The flake example above is illustrative. Branding CI builds the branded Nix package
+(`scripts/ci/branding-nix.sh`); adapt the module wiring to your flake layout.
+:::
+
+## Hosted pairing page
+
+Pairing links look like `<pairingUrl>/code/<offer>`. The page is stateless: the offer is
+in the URL, and it only hands the code to your app. Without `services.pairingUrl`,
+links use your URL scheme (`acme://pair#offer=...`) and still work on devices with the
+app installed.
+
+Two ways to host it:
+
+- **Container**: set `distribution.pairingImage`, then
+  `FDE_BRAND_DIR=brands/acme scripts/release/build-pair-page-docker.sh --push`. It
+  listens on port 8787 (`FDE_PAIR_PORT`) and serves `/healthz`.
+- **Cloudflare Worker**: `brand:prepare` writes
+  `.generated/branding/deploy/pair-worker.json` with your hostname as a custom domain.
+
+  ```sh
+  export FDE_BRAND_DIR=brands/acme
+  node packages/server/scripts/build-pair-worker.mjs
+  npx wrangler deploy --config .generated/branding/deploy/pair-worker.json
+  ```
+
+Keep the pairing service off the machines that run your daemons; it has no reason to
+reach them.
+
+## Install scripts on your domain
+
+Every release carries `install.sh`, `uninstall.sh`, `install-docker.sh` and
+`uninstall-docker.sh` generated for your brand. They install your CLI, your service
+names and your home directory, and download from your repository's releases.
+
+To serve them from `https://studio.acme.example/install.sh`, set `links.installer` and
+deploy the generated install worker:
+
+```sh
+export FDE_BRAND_DIR=brands/acme
+npm run brand:prepare
+npx wrangler deploy --config .generated/branding/deploy/install-worker.json
+```
+
+The generated config has no routes. Add the exact paths (`/install.sh`,
+`/uninstall.sh`, `/install-docker.sh`) for your site in Cloudflare so the worker does
+not take over the whole domain.
+
+## Web app
+
+The daemon serves the web UI itself when started with `--web-ui` (installed services
+enable it). To host the web client separately on Cloudflare Pages:
+
+```sh
+export FDE_BRAND_DIR=brands/acme
+export FDE_WEB_DEPLOY_PROJECT=acme-studio
+npm run deploy:web --workspace=@fde/app
+```
+
+A custom brand must set `FDE_WEB_DEPLOY_PROJECT`; only stock FDE defaults to a project
+(`fde-app`). Add the hosted origin to `services.allowedOrigins` so new daemons accept it.
+
+## Relay
+
+No relay is configured for custom brands, and stock FDE ships none either. To offer
+connections from outside the LAN without a VPN, deploy `packages/relay` yourself and
+set `services.relayEndpoint` (and `relayUseTls`). Operating a relay is outside the
+scope of these pages.

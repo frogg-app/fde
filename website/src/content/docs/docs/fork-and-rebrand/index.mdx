@@ -1,0 +1,77 @@
+---
+title: Fork and rebrand
+description: Ship your own branded FDE from a fork, keep it current with upstream, and contribute features back.
+sidebar:
+  order: 1
+  label: Overview
+---
+
+import { Screenshot, CardGrid, LinkCard } from "@/components/docs";
+import forkStockVsAcmeImg from "@/assets/docs/fork/stock-vs-acme.png";
+
+An FDE fork can ship as its own product. Your organization picks the name, icon,
+colours, application ID, CLI name, state directory, port, release repository and
+container images. The source code, protocol, plugins and package names stay shared
+with upstream, so you can keep merging upstream work.
+
+Branding is **build-time**. You select a brand directory when you build. End users
+cannot switch brands at runtime.
+
+<Screenshot src={forkStockVsAcmeImg} alt="Stock FDE and the Acme Studio example brand, side by side" />
+
+## What a brand controls
+
+A brand is one directory holding a `brand.json` manifest and artwork. The
+generator turns it into everything the builds need.
+
+| Area               | Derived from the brand                                                            |
+| ------------------ | --------------------------------------------------------------------------------- |
+| Identity           | Product name, publisher, description, application ID                             |
+| Artwork            | Desktop icons (ICO/ICNS/PNG), mobile icons, splash, PWA icons, status favicons    |
+| Theme              | Accent, background and foreground colours for light and dark appearances          |
+| Runtime isolation  | CLI name, home directory (`~/.acme`), env prefix (`ACME_`), port, service names   |
+| Links              | URL scheme (`acme://`), website, docs, support and source links                  |
+| Hosted services    | Pairing page URL, relay endpoint, allowed web origins                             |
+| Distribution       | GitHub release repository for updates, Docker images, Expo and App Store IDs      |
+
+What does **not** change: `@fde/*` package names, wire protocol messages, SDK
+symbols, the `fde.json` project file and low-level interfaces such as
+`FDE_LISTEN`. These are compatibility contracts shared by every FDE-based
+product.
+
+## The workflow at a glance
+
+1. [Fork the repository](/docs/fork-and-rebrand/fork-the-repo/) and add an `upstream` remote.
+2. [Create a brand](/docs/fork-and-rebrand/create-a-brand/) with `npm run brand:init`, then check and run it locally.
+3. [Build and release](/docs/fork-and-rebrand/build-and-release/) through the fork's GitHub Actions, with your own secrets.
+4. [Stay current](/docs/fork-and-rebrand/staying-current/) by merging `upstream/main` regularly.
+5. [Contribute features back](/docs/fork-and-rebrand/contributing-upstream/) from branches based on `upstream/main`.
+
+The [Acme Studio walkthrough](/docs/fork-and-rebrand/worked-example/) runs the whole
+flow with the `brands/example` brand that ships in the repository.
+
+## Before you start
+
+- **Node 22** and npm. The repository pins its tooling in `package-lock.json`.
+- A **GitHub organization or account** to hold the fork.
+- A **square icon**, PNG or SVG, at least 1024 × 1024 pixels.
+- For signed releases, your own signing material. See [secrets and variables](/docs/fork-and-rebrand/build-and-release/#secrets-and-variables).
+
+:::caution[Identities are reserved]
+A custom brand cannot reuse FDE's identity. `brand:check` rejects the id `fde`,
+a `fde` CLI or scheme, the `~/.fde` home, the `FDE` env prefix, and application
+IDs or launchd labels starting with `app.frogg.` or `sh.fde.`.
+:::
+
+<CardGrid>
+  <LinkCard
+    title="Brand manifest reference"
+    description="Every brand.json field, default and validation rule."
+    href="/docs/fork-and-rebrand/brand-manifest/"
+  />
+  <LinkCard
+    title="Troubleshooting and FAQ"
+    description="Common branding, build and release failures."
+    href="/docs/fork-and-rebrand/troubleshooting/"
+  />
+</CardGrid>

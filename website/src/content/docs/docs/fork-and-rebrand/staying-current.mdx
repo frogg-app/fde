@@ -1,0 +1,180 @@
+---
+title: Stay current with upstream
+description: Merge upstream FDE into your fork, resolve conflicts, automate a sync check, and version fork releases.
+sidebar:
+  order: 7
+---
+
+import { Steps } from "@/components/docs";
+
+Upstream FDE ships often. A fork that merges weekly stays easy; a fork that merges
+twice a year becomes a project. The branding system is designed so that a normal
+merge touches none of your product files.
+
+## Why merges stay clean
+
+- Your identity lives in `brands/<id>/` or an external repository. Upstream only changes
+  `brands/fde/` and `brands/example/`.
+- Your brand is selected by **repository variables**, not by editing workflows.
+- Generated output (`.generated/`, `apps/ui/.generated/`, `packages/branding/src/generated/`,
+  `.branding-input/`) is git-ignored, so it never conflicts.
+- Upstream CI rejects new hard-coded `FDE` or `frogg.app` strings in `apps/` and
+  `packages/` source (`scripts/ci/branding-contribution.mjs`). Product names come from
+  the brand, so upstream features arrive already branded for you.
+
+What can still conflict: shared files you changed on purpose (a custom workflow step,
+macOS signing, a patched component), and the root `package.json` version.
+
+## Merge upstream
+
+<Steps>
+
+1. Start from a clean `main`:
+
+   ```sh
+   git switch main
+   git pull --ff-only origin main
+   git fetch upstream --tags
+   ```
+
+2. See what is coming:
+
+   ```sh
+   git log --oneline main..upstream/main | head -30
+   git diff --stat main...upstream/main -- CHANGELOG.md .github/ packages/branding/
+   ```
+
+   Read the new `CHANGELOG.md` sections. Upgrade notes that affect clients and daemons
+   together are called out there.
+
+3. Merge:
+
+   ```sh
+   git merge --no-ff upstream/main -m "Merge upstream FDE $(git describe --tags --abbrev=0 upstream/main)"
+   ```
+
+4. Reinstall and check the brand still resolves against the new schema and generator:
+
+   ```sh
+   npm ci
+   FDE_BRAND_DIR=brands/acme npm run brand:check
+   FDE_BRAND_DIR=brands/acme node scripts/ci/branding-acceptance.mjs
+   npm run verify -- --fast
+   ```
+
+5. Run the app locally with your brand (`npm run dev:server`, `npm run dev:app`) and
+   look at the screens you care about.
+
+6. Push and let CI run:
+
+   ```sh
+   git push origin main
+   ```
+
+</Steps>
+
+### Merge or rebase?
+
+**Merge.** Your `main` is published: tags, releases and other people's branches point
+at it. Rebasing it onto upstream rewrites those commits. Merges also keep a record of
+exactly which upstream version each release contains.
+
+Rebase is fine for short-lived feature branches that nobody else has pulled.
+
+## Resolve conflicts
+
+| Conflict in                        | Resolution                                                                 |
+| ---------------------------------- | -------------------------------------------------------------------------- |
+| `package.json` / `package-lock.json` version | Take upstream's lockfile, then set the version you intend to ship (see below) and run `npm install` to refresh the lockfile |
+| `CHANGELOG.md`                     | Keep both. Put your fork's entries in their own version sections          |
+| `.github/workflows/*.yml` you customized | Take upstream's file, then reapply your change. Keep customizations small and commented `# acme:` so they are easy to find |
+| `brands/fde/*`                     | Take upstream's version. You should not be editing it                     |
+| Shared source you patched          | Prefer upstreaming the patch (see [contributing back](/docs/fork-and-rebrand/contributing-upstream/)) so the conflict disappears next time |
+
+After resolving:
+
+```sh
+git add -A
+git commit
+npm ci && npm run typecheck
+```
+
+If `brand:check` fails after a merge, compare `packages/branding/src/schema.ts` with the
+previous version. New optional fields do not require changes to your manifest.
+
+## Automate a sync check
+
+Upstream does **not** ship a sync workflow. The following is an **example** you can add to
+your fork as `.github/workflows/upstream-sync.yml`. It opens a pull request when
+upstream has new commits, so the merge still gets CI and review. It is not tested
+upstream; adapt it to your process.
+
+```yaml title=".github/workflows/upstream-sync.yml (example)"
+name: Upstream sync
+on:
+  schedule:
+    - cron: "0 6 * * 1" # Mondays 06:00 UTC
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Merge upstream into a sync branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add upstream https://github.com/frogg-app/fde.git
+          git fetch upstream main --tags
+          if [ -z "$(git rev-list HEAD..upstream/main)" ]; then
+            echo "Already up to date."; exit 0
+          fi
+          branch="upstream-sync/$(date +%Y-%m-%d)"
+          git switch -c "$branch"
+          if ! git merge --no-ff upstream/main -m "Merge upstream FDE"; then
+            git merge --abort
+            gh issue create --title "Upstream sync needs a manual merge" \
+              --body "Merging upstream/main into main conflicts. Merge locally and resolve."
+            exit 0
+          fi
+          git push origin "$branch"
+          gh pr create --base main --head "$branch" \
+            --title "Merge upstream FDE" \
+            --body "Automated merge of frogg-app/fde main. Review CHANGELOG.md for upgrade notes."
+```
+
+A push by `GITHUB_TOKEN` does not trigger other workflows. If you want CI on the sync
+pull request, push with a GitHub App token or fine-grained PAT instead, or re-run CI from
+the pull request.
+
+## Version your releases
+
+The root `package.json` version is your product version. Release tags must equal it.
+Desktop and daemon updates compare these versions with semver.
+
+Recommended scheme:
+
+- **Ship upstream versions.** After merging upstream 0.6.20, release your fork as
+  `v0.6.20`. Users can map your release to upstream's changelog directly.
+- **Fork-only fixes** between upstream releases: bump the patch (`0.6.21`). On the next
+  upstream merge, set the version to whichever is higher, plus one patch.
+- **Betas** use a prerelease suffix: `npm run version:all:beta:patch` gives
+  `0.6.21-beta.1`. Stable clients ignore them.
+
+Avoid build metadata such as `0.6.20+acme.1`. Semver ignores it when comparing, so
+updaters do not see `+acme.2` as newer than `+acme.1`, and Docker tags cannot contain `+`.
+
+## Upgrade cadence
+
+- Merge upstream at least every few weeks. Small merges resolve in minutes.
+- Read each `CHANGELOG.md` section for notes marked as coordinated client and daemon
+  upgrades. Release those to your users with the same care upstream describes.
+- After a merge that changes `.github/workflows/release.yml` or `scripts/release/`,
+  cut a beta release first and confirm the update path from your previous release.
