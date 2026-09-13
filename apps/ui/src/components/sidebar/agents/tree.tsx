@@ -238,7 +238,7 @@ function ChildDiscoveryStatus({
 }
 
 const styles = StyleSheet.create((theme) => ({
-  tree: { paddingLeft: theme.spacing[4], marginBottom: theme.spacing[2] },
+  tree: { paddingLeft: theme.spacing[8], marginBottom: theme.spacing[2] },
   row: { flexDirection: "row", alignItems: "center" },
   disclosure: { width: 28, paddingHorizontal: 0, flexShrink: 0 },
   link: {

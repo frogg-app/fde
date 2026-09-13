@@ -21,13 +21,18 @@ export interface SubagentRowPresentationData {
 }
 
 export function buildSubagentRowPresentationData(row: SubagentRow): SubagentRowPresentationData {
-  // The task distinguishes siblings in a fan-out, so it names the row when present. Providers
-  // own the compact secondary context because model, effort, and usage semantics differ.
+  // The subagent's name (or type, when unnamed) leads the row; the task it was given follows as
+  // context. Providers fold the name into their compact subtitle, so it is stripped to avoid
+  // repeating it beside the label.
   const description = resolveRowLabel(row.description);
   const title = resolveRowLabel(row.title);
-  const label = description ?? title;
-  const providerSubtitle = row.kind === "provider" ? resolveRowLabel(row.subtitle) : null;
-  const subtitle = providerSubtitle ?? (description ? title : null);
+  const label = title ?? description;
+  const providerSubtitle =
+    row.kind === "provider" ? stripLeadingPart(resolveRowLabel(row.subtitle), title) : null;
+  const subtitle =
+    [description !== label ? description : null, providerSubtitle]
+      .filter((part): part is string => !!part)
+      .join(" · ") || null;
   const status = presentationStatus(row);
   return {
     key: `${row.kind}_subagent_${row.id}`,
@@ -80,11 +85,17 @@ export function buildSubagentPillPresentation(
   const counts = summarizeSubagentStatus(rows);
   if (counts.length === 0) {
     const label = totalLabel(t, rows.length);
-    return { segments: [{ bucket: null, text: label }], accessibilityLabel: label };
+    return {
+      segments: [{ bucket: null, text: label }],
+      accessibilityLabel: label,
+    };
   }
   const labels = counts.map(({ bucket, count }) => statusLabel(t, bucket, count));
   return {
-    segments: counts.map(({ bucket }, index) => ({ bucket, text: labels[index] ?? "" })),
+    segments: counts.map(({ bucket }, index) => ({
+      bucket,
+      text: labels[index] ?? "",
+    })),
     // Marks separate the segments on screen; a screen reader needs the pause spelled out.
     accessibilityLabel: labels.join(", "),
   };
@@ -138,4 +149,10 @@ export function resolveRowLabel(title: string | null | undefined): string | null
     return null;
   }
   return normalized;
+}
+
+function stripLeadingPart(subtitle: string | null, part: string | null): string | null {
+  if (!subtitle || !part) return subtitle;
+  if (subtitle === part) return null;
+  return subtitle.startsWith(`${part} · `) ? subtitle.slice(part.length + 3) : subtitle;
 }

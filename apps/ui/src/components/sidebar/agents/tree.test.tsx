@@ -34,7 +34,10 @@ vi.hoisted(() => {
 
 // This test mounts sidebar rows; full pane registration pulls native Markdown into jsdom.
 vi.mock("@/panels/register-panels", () => ({ ensurePanelsRegistered() {} }));
-vi.mock("expo-router", () => ({ useLocalSearchParams: () => ({}), usePathname: () => "/" }));
+vi.mock("expo-router", () => ({
+  useLocalSearchParams: () => ({}),
+  usePathname: () => "/",
+}));
 
 const i18n = createInstance();
 await i18n.init({ lng: "en", resources: { en: { translation: en } } });
@@ -42,7 +45,11 @@ const child: SidebarAgentNode = {
   key: "host\0provider\0parent\0child",
   serverId: "host",
   workspaceId: "workspace",
-  target: { kind: "provider_subagent", parentAgentId: "parent", subagentId: "child" },
+  target: {
+    kind: "provider_subagent",
+    parentAgentId: "parent",
+    subagentId: "child",
+  },
   row: {
     kind: "provider",
     id: "child",
@@ -92,17 +99,23 @@ describe("sidebar subagent interaction", () => {
         />
       </I18nextProvider>,
     );
-    const childButton = screen.getByRole("button", { name: "Inspect the runtime" });
+    const childButton = screen.getByRole("button", { name: "Worker" });
     expect(childButton.getAttribute("aria-selected")).toBe("true");
     fireEvent.click(childButton);
     expect(onOpen).toHaveBeenCalledWith(child);
     fireEvent.click(
-      screen.getByRole("button", { name: "Collapse subagents for Build the sidebar" }),
+      screen.getByRole("button", {
+        name: "Collapse subagents for Build the sidebar",
+      }),
     );
-    expect(screen.queryByRole("button", { name: "Inspect the runtime" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Worker" })).toBeNull();
     expect(onOpen).toHaveBeenCalledTimes(1);
-    fireEvent.click(screen.getByRole("button", { name: "Expand subagents for Build the sidebar" }));
-    expect(screen.getAllByRole("button", { name: "Inspect the runtime" })).toHaveLength(1);
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Expand subagents for Build the sidebar",
+      }),
+    );
+    expect(screen.getAllByRole("button", { name: "Worker" })).toHaveLength(1);
   });
 
   it("reveals a newly spawned child unless the parent was explicitly collapsed", () => {
@@ -119,15 +132,17 @@ describe("sidebar subagent interaction", () => {
       </I18nextProvider>
     );
     const view = render(renderBranch({ ...parent, children: [] }));
-    expect(screen.queryByRole("button", { name: "Inspect the runtime" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Worker" })).toBeNull();
     view.rerender(renderBranch(parent));
-    expect(screen.getAllByRole("button", { name: "Inspect the runtime" })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: "Worker" })).toHaveLength(1);
     fireEvent.click(
-      screen.getByRole("button", { name: "Collapse subagents for Build the sidebar" }),
+      screen.getByRole("button", {
+        name: "Collapse subagents for Build the sidebar",
+      }),
     );
     view.rerender(renderBranch({ ...parent, children: [] }));
     view.rerender(renderBranch(parent));
-    expect(screen.queryByRole("button", { name: "Inspect the runtime" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Worker" })).toBeNull();
   });
 
   it("exposes discovery failure and retries without opening another session", () => {
@@ -165,7 +180,7 @@ describe("sidebar subagent interaction", () => {
       </I18nextProvider>,
     );
     expect(screen.getAllByText("Offline · showing saved activity")).toHaveLength(1);
-    expect(screen.getAllByRole("button", { name: "Inspect the runtime" })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: "Worker" })).toHaveLength(1);
   });
 });
 
@@ -205,7 +220,7 @@ describe("workspace agent disclosure", () => {
   it("puts live children directly below a singleton workspace and removes its disclosure when they finish", () => {
     const view = render(workspaceTree([parent]));
     expect(screen.queryByTestId("sidebar-agent-fde-parent")).toBeNull();
-    expect(screen.getAllByRole("button", { name: "Inspect the runtime" })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: "Worker" })).toHaveLength(1);
     expect(
       screen
         .getByRole("button", { name: "Collapse agents in Workspace" })
@@ -264,7 +279,12 @@ describe("workspace agent disclosure", () => {
   );
 });
 
-const pendingHistory = { connected: true, pending: true, failed: false, retry: vi.fn() };
+const pendingHistory = {
+  connected: true,
+  pending: true,
+  failed: false,
+  retry: vi.fn(),
+};
 const failedHistory = { ...pendingHistory, pending: false, failed: true };
 const loadedHistory = { ...pendingHistory, pending: false };
 

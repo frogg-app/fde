@@ -215,12 +215,12 @@ describe("buildSubagentRowPresentationData for provider rows", () => {
     };
   }
 
-  it("names the row after the task and demotes the subagent type", () => {
+  it("names the row after the subagent and follows it with the task", () => {
     const presentation = buildSubagentRowPresentationData(
-      providerRow({ title: "general-purpose", description: "Reply with banana" }),
+      providerRow({ title: "banana_child", description: "Reply with banana" }),
     );
-    expect(presentation.label).toBe("Reply with banana");
-    expect(presentation.subtitle).toBe("general-purpose");
+    expect(presentation.label).toBe("banana_child");
+    expect(presentation.subtitle).toBe("Reply with banana");
   });
 
   it("tells two siblings of the same type apart", () => {
@@ -230,7 +230,7 @@ describe("buildSubagentRowPresentationData for provider rows", () => {
     const right = buildSubagentRowPresentationData(
       providerRow({ id: "b", description: "Reply with banana" }),
     );
-    expect(left.label).not.toBe(right.label);
+    expect(left.subtitle).not.toBe(right.subtitle);
   });
 
   it("keeps type-as-label and an empty subtitle when a provider reports no task", () => {
@@ -273,19 +273,25 @@ describe("provider-owned row subtitles", () => {
   it("displays provider context without interpreting it", () => {
     expect(
       buildSubagentRowPresentationData(
-        providerRow({ subtitle: "general-purpose · Opus 5 · High · 16.5k tokens" }),
+        providerRow({
+          subtitle: "general-purpose · Opus 5 · High · 16.5k tokens",
+        }),
       ).subtitle,
-    ).toBe("general-purpose · Opus 5 · High · 16.5k tokens");
+    ).toBe("Reply with banana · Opus 5 · High · 16.5k tokens");
   });
 
-  it("falls back to the type when an older provider sends no subtitle", () => {
-    expect(buildSubagentRowPresentationData(providerRow()).subtitle).toBe("general-purpose");
+  it("shows just the task when an older provider sends no subtitle", () => {
+    expect(buildSubagentRowPresentationData(providerRow()).subtitle).toBe("Reply with banana");
   });
 
   it("does not duplicate the type when it is already the primary label", () => {
     expect(
       buildSubagentRowPresentationData(
-        providerRow({ description: null, subtitle: null, title: "general-purpose" }),
+        providerRow({
+          description: null,
+          subtitle: null,
+          title: "general-purpose",
+        }),
       ).subtitle,
     ).toBe("");
   });
