@@ -80,6 +80,15 @@
   for a standalone APK that can coexist with production. Preserve license and
   speech-model notices in standalone daemon bundles.
 
+## 0.6.9 - 2026-09-13
+
+- Add the FDE release skill, versioned JSON update discovery, explicit runtime and
+  minimum-client compatibility, and a publication gate verifying exact payload
+  names, platform coverage, sizes and both hashes against downloaded binaries.
+- Add repeatable local build timing reports and document measured Linux versus CI
+  performance; native Windows comparison and installed-update acceptance remain
+  unverified. Local Wine cross-packaging failed before producing an installer.
+
 ## 0.6.8 - 2026-09-13
 
 - Match the actual Linux `x86_64.AppImage` filename when generating Electron

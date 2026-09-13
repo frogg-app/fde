@@ -65,6 +65,12 @@ Return changed behavior, files/commits, checks run, and remaining integration or
 platform gaps. The coordinating session integrates through the branch/PR workflow
 and runs full typecheck; agents must not independently merge through old checkouts.
 
+## Release skill
+
+Use [fde-release](skills/fde-release/SKILL.md) for builds, benchmarks, update-feed
+changes, packaging migrations and publication. It preserves the installed-client
+update contract across local and CI artifact production.
+
 ## Working here
 
 - Install JS workspaces with root `npm ci`. Run `npm run dev:server` and

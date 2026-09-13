@@ -1,4 +1,5 @@
-import { rcompare, valid } from "semver";
+import { gte, rcompare, valid } from "semver";
+import { fetchReleaseDescriptor, parseReleaseDescriptor } from "./release-descriptor.js";
 import { mkdirSync, renameSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
@@ -49,7 +50,7 @@ async function fetchPublishedReleases(url: string): Promise<unknown> {
   return response.json();
 }
 
-export async function resolveElectronUpdateFeed(input: {
+async function resolveLegacyFeed(input: {
   override?: string;
   releaseBase: string | null;
   releaseChannel: "stable" | "beta";
@@ -84,4 +85,42 @@ export async function resolveElectronUpdateFeed(input: {
     url: `${input.releaseBase!.replace(/\/$/, "")}/download/${encodeURIComponent(release.tag)}`,
     channel: release.version.includes("-") ? "electron-beta" : "electron-latest",
   };
+}
+
+/** Published JSON selects a version-pinned feed; payload names and hashes come from its manifests. */
+export async function resolveElectronUpdateFeed(input: {
+  override?: string;
+  releaseBase: string | null;
+  releaseChannel: "stable" | "beta";
+  fetchReleases?: (url: string) => Promise<unknown>;
+  currentVersion?: string;
+  fetchDescriptor?: (url: string) => Promise<unknown | null>;
+}): Promise<ElectronUpdateFeed | null> {
+  const legacy = await resolveLegacyFeed(input);
+  if (!legacy || input.override?.trim()) return legacy;
+  const base = new URL(input.releaseBase!);
+  if (base.hostname !== "github.com" || !/^\/[^/]+\/[^/]+\/releases\/?$/.test(base.pathname))
+    return legacy;
+  const raw = await (input.fetchDescriptor ?? fetchReleaseDescriptor)(
+    `${legacy.url}/electron-release.json`,
+  );
+  if (raw === null) return legacy;
+  const descriptor = parseReleaseDescriptor(raw);
+  if (
+    !input.currentVersion ||
+    !valid(input.currentVersion) ||
+    !gte(input.currentVersion, descriptor.minimumClientVersion)
+  ) {
+    throw new Error(
+      `This release requires a manual upgrade from clients older than ${descriptor.minimumClientVersion}.`,
+    );
+  }
+  if (input.releaseChannel === "stable" && descriptor.channel !== "electron-latest") {
+    throw new Error("Stable update feed points to a prerelease.");
+  }
+  const url = `${input.releaseBase!.replace(/\/$/, "")}/download/v${descriptor.version}`;
+  if (input.releaseChannel === "beta" && url !== legacy.url) {
+    throw new Error("Release descriptor version does not match the selected release.");
+  }
+  return { url, channel: descriptor.channel };
 }

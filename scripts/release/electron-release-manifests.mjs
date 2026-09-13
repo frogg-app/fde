@@ -22,17 +22,35 @@ export async function buildElectronReleaseManifests({ version, assets, out }) {
         `Expected ${expected} Electron update assets for ${platform || "Windows"}, found ${files.length}`,
       );
   }
+  if (
+    !groups["-mac"].some((name) => name.endsWith("-mac-x64.zip")) ||
+    !groups["-mac"].some((name) => name.endsWith("-mac-arm64.zip"))
+  ) {
+    throw new Error("Electron Mac updates require one x64 and one arm64 payload");
+  }
   await mkdir(out, { recursive: true });
   const channel = version.includes("-") ? "electron-beta" : "electron-latest";
   const releaseDate = new Date().toISOString();
+  const platforms = {};
   for (const [platform, groupNames] of Object.entries(groups)) {
     const files = [];
     for (const url of groupNames) {
       const file = path.join(assets, url);
       const hash = createHash("sha512");
-      for await (const chunk of createReadStream(file)) hash.update(chunk);
-      files.push({ url, sha512: hash.digest("base64"), size: (await stat(file)).size });
+      const sha256 = createHash("sha256");
+      for await (const chunk of createReadStream(file)) {
+        hash.update(chunk);
+        sha256.update(chunk);
+      }
+      files.push({
+        url,
+        sha256: sha256.digest("hex"),
+        sha512: hash.digest("base64"),
+        size: (await stat(file)).size,
+      });
     }
+    const manifestName = `${channel}${platform}.yml`;
+    platforms[platform || "-win"] = { manifest: manifestName, files };
     // JSON is valid YAML; the generic Electron provider reads these channel files.
     const manifest = { version, files, path: files[0].url, sha512: files[0].sha512, releaseDate };
     await writeFile(
@@ -40,6 +58,26 @@ export async function buildElectronReleaseManifests({ version, assets, out }) {
       `${JSON.stringify(manifest, null, 2)}\n`,
     );
   }
+  await writeFile(
+    path.join(out, "electron-release.json"),
+    `${JSON.stringify(
+      {
+        schemaVersion: 1,
+        version,
+        runtime: "electron",
+        channel,
+        minimumClientVersion: "0.6.0",
+        migration: {
+          tauri: "manual-install",
+          reason:
+            "Installer layout and portable runtime changed; do not alias old updater archives.",
+        },
+        platforms,
+      },
+      null,
+      2,
+    )}\n`,
+  );
   const sums = [];
   for (const name of names) {
     const file = path.join(assets, name);

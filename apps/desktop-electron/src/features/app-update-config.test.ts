@@ -5,8 +5,11 @@ import { it, expect, vi } from "vitest";
 import {
   writeElectronUpdateConfig,
   resolveElectronUpdateUrl,
-  resolveElectronUpdateFeed,
+  resolveElectronUpdateFeed as resolveFeed,
 } from "./app-update-config.js";
+
+const resolveElectronUpdateFeed = (input: Parameters<typeof resolveFeed>[0]) =>
+  resolveFeed({ currentVersion: "0.6.9", fetchDescriptor: async () => null, ...input });
 
 it("provides updater download cache metadata for an explicitly configured feed", () => {
   const root = mkdtempSync(path.join(tmpdir(), "electron-update-config-"));
@@ -125,4 +128,89 @@ it("surfaces release discovery failures and rejects insecure overrides", async (
       override: "http://updates.example.com",
     }),
   ).rejects.toThrow("HTTPS");
+});
+
+it("pins stable discovery using JSON instead of guessing payload filenames", async () => {
+  const fetchDescriptor = vi.fn(async () => ({
+    schemaVersion: 1,
+    minimumClientVersion: "0.6.0",
+    runtime: "electron",
+    version: "0.6.9",
+    channel: "electron-latest",
+  }));
+  await expect(
+    resolveElectronUpdateFeed({ releaseBase, releaseChannel: "stable", fetchDescriptor }),
+  ).resolves.toEqual({ url: `${releaseBase}/download/v0.6.9`, channel: "electron-latest" });
+  expect(fetchDescriptor).toHaveBeenCalledWith(
+    `${releaseBase}/latest/download/electron-release.json`,
+  );
+});
+
+it("rejects incompatible descriptors and propagates discovery failures", async () => {
+  for (const raw of [
+    {},
+    { schemaVersion: 2, runtime: "electron", version: "0.6.9", channel: "electron-latest" },
+    {
+      schemaVersion: 1,
+      minimumClientVersion: "0.6.0",
+      runtime: "tauri",
+      version: "0.6.9",
+      channel: "electron-latest",
+    },
+    {
+      schemaVersion: 1,
+      minimumClientVersion: "0.6.0",
+      runtime: "electron",
+      version: "0.7.0-beta.1",
+      channel: "electron-beta",
+    },
+  ]) {
+    await expect(
+      resolveElectronUpdateFeed({
+        releaseBase,
+        releaseChannel: "stable",
+        fetchDescriptor: async () => raw,
+      }),
+    ).rejects.toThrow();
+  }
+  await expect(
+    resolveElectronUpdateFeed({
+      releaseBase,
+      releaseChannel: "stable",
+      fetchDescriptor: async () => {
+        throw new Error("offline");
+      },
+    }),
+  ).rejects.toThrow("offline");
+  await expect(
+    resolveElectronUpdateFeed({
+      releaseBase,
+      releaseChannel: "beta",
+      fetchReleases: async () => [{ tag_name: "v0.6.9", draft: false }],
+      fetchDescriptor: async () => ({
+        schemaVersion: 1,
+        minimumClientVersion: "0.6.0",
+        runtime: "electron",
+        version: "0.6.8",
+        channel: "electron-latest",
+      }),
+    }),
+  ).rejects.toThrow("does not match");
+});
+
+it("requires a manual migration when the release raises its minimum client version", async () => {
+  await expect(
+    resolveElectronUpdateFeed({
+      releaseBase,
+      releaseChannel: "stable",
+      currentVersion: "0.6.9",
+      fetchDescriptor: async () => ({
+        schemaVersion: 1,
+        runtime: "electron",
+        version: "0.8.0",
+        minimumClientVersion: "0.7.0",
+        channel: "electron-latest",
+      }),
+    }),
+  ).rejects.toThrow("manual upgrade");
 });

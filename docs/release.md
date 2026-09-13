@@ -29,6 +29,10 @@ not visible to app update checks. If only metadata generation fails, it can be
 repaired against the exact existing binaries without rebuilding or moving the tag.
 Verify manifest filenames, sizes and hashes before publishing the completed release.
 
+See [the versioned release contract](release-contract.md) for JSON discovery,
+compatibility rules and the automated asset verification gate. Use the
+[release skill](../skills/fde-release/SKILL.md) when operating this workflow.
+
 ## Desktop updates
 
 Publish Electron channel metadata alongside the matching installers and update

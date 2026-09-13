@@ -165,6 +165,7 @@ class ElectronAppUpdateRuntime implements AppUpdateRuntime {
         override: process.env.FDE_ELECTRON_UPDATE_URL,
         releaseBase: brand.distribution.releaseBase,
         releaseChannel: this.releaseChannel,
+        currentVersion: app.getVersion(),
       });
       if (feed) {
         autoUpdater.updateConfigPath = writeElectronUpdateConfig(
