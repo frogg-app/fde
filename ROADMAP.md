@@ -1,6 +1,6 @@
 # Frogg roadmap
 
-Source baseline: **0.6.13** (daemon recovery fixes; publication not yet verified). Electron is the production app-only desktop;
+Source baseline: **1.0.0** (full release build and publication pending). Electron is the production app-only desktop;
 Node daemons remain separately installed. [Changelog](CHANGELOG.md) records
 completed work and [upgrade notes](website/src/content/docs/docs/self-hosting/updates.mdx) describe the coordinated
 namespace migration. Unchecked items are validation/backlog work, not active tasks.

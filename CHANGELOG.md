@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.0.0 — 2026-09-13
+
+First major Frogg release, with independently installed Node daemons and an app-only
+Electron desktop client for Windows, macOS and Linux, plus Android and web clients.
+
 - Keep window headers draggable with both sidebars open, exclude settings-modal
   headers from dragging, and place the explorer close toggle in its panel toolbar.
 - Use Windows separators for generated NSIS includes and installer bitmap paths.
@@ -20,6 +25,10 @@
   branded window. An older all-users install is removed once, with administrator approval
   and app data kept, so updates never leave two copies. The window's copy, colours and
   artwork come from the new optional `installer` block in `brand.json`.
+
+Installed-client upgrade and physical-device validation remain separate from artifact
+build checks. See the [migration notes](website/src/content/docs/docs/self-hosting/updates.mdx#moving-from-fde)
+for the coordinated FDE-to-Frogg transition.
 
 ## 0.7.0 — 2026-09-13
 

@@ -66,7 +66,7 @@ Point at a mirror with `FROGG_RELEASE_BASE` (`<base>/download/v<version>/<asset>
 
 ## Moving from FDE
 
-Frogg was called FDE before 0.8. The first time the daemon starts, it moves `~/.fde` to
+Frogg was called FDE before 1.0. The first time the daemon starts, it moves `~/.fde` to
 `~/.frogg`. It rewrites the stored workspace and agent paths, repairs the git worktrees it
 moved, and moves their Claude Code sessions so agents can resume. The move is skipped while an
 FDE daemon is still running, when `FROGG_HOME` is set, or when `~/.frogg` already has data.
