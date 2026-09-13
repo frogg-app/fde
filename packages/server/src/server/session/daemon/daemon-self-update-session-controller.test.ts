@@ -24,6 +24,7 @@ function createController(input: {
   updater: TestUpdater;
   daemonVersion?: string | null;
   desktopManaged?: boolean;
+  versionedUpdate?: DaemonSelfUpdateSessionControllerOptions["versionedUpdate"];
 }): ControllerHarness {
   const emitted: SessionOutboundMessage[] = [];
   const restartIntents: RestartIntent[] = [];
@@ -39,6 +40,7 @@ function createController(input: {
     },
     sessionLogger: createTestLogger(),
     updater: input.updater,
+    versionedUpdate: input.versionedUpdate,
   });
 
   return { controller, emitted, restartIntents };
@@ -176,3 +178,37 @@ describe("DaemonSelfUpdateSessionController", () => {
     expect(restartIntents).toEqual([]);
   });
 });
+
+for (const success of [true, false]) {
+  test(`versioned legacy update returns ${success} without npm or a second restart`, async () => {
+    const result = {
+      success,
+      error: success ? null : "download failed",
+      newVersion: success ? "0.6.10" : null,
+    };
+    const { controller, emitted, restartIntents } = createController({
+      updater: {
+        async update() {
+          throw new Error("npm updater must not run");
+        },
+      },
+      versionedUpdate: {
+        async startLegacy() {
+          return result;
+        },
+      },
+    });
+    await controller.dispatch(updateRequest);
+    expect(emitted).toEqual([
+      {
+        type: "daemon.update.response",
+        payload: {
+          requestId: "update-1",
+          previousVersion: "0.1.15",
+          ...result,
+        },
+      },
+    ]);
+    expect(restartIntents).toEqual([]);
+  });
+}

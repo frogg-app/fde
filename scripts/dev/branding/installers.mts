@@ -5,6 +5,21 @@ import path from "node:path";
 import { root, outputRoot, type BrandBuild } from "./resolve.mjs";
 
 const quote = (value: string) => `'${value.replaceAll("'", `'\\''`)}'`;
+/** Remote Bash scripts must use LF even when generated from a Windows checkout. */
+export function renderInstallerScript(
+  source: string,
+  defaults: string,
+  applicationId: string,
+): string {
+  const normalized = source.replaceAll("\r\n", "\n");
+  const pattern = /# BEGIN BRAND DEFAULTS[^\n]*\n[\s\S]*?# END BRAND DEFAULTS/;
+  if (!pattern.test(normalized)) throw new Error("Installer has no distribution defaults block");
+  return normalized.replace(
+    pattern,
+    () => `# Generated distribution: ${applicationId}\n${defaults}`,
+  );
+}
+
 export async function generateInstallers(build: BrandBuild): Promise<void> {
   const b = build.brand;
   const fields = {
@@ -34,18 +49,15 @@ export async function generateInstallers(build: BrandBuild): Promise<void> {
   await mkdir(path.join(outputRoot, "scripts"), { recursive: true });
   for (const file of ["install.sh", "uninstall.sh", "install-docker.sh", "uninstall-docker.sh"]) {
     const source = await readFile(path.join(root, "deploy", file), "utf8");
-    const pattern = /# BEGIN BRAND DEFAULTS[^\n]*\n[\s\S]*?# END BRAND DEFAULTS/;
-    if (!pattern.test(source)) throw new Error(`${file} has no distribution defaults block`);
-    scripts[`/${file}`] = source.replace(
-      pattern,
-      () => `# Generated distribution: ${b.applicationId}\n${defaults}`,
-    );
+    scripts[`/${file}`] = renderInstallerScript(source, defaults, b.applicationId);
     await writeFile(path.join(outputRoot, "scripts", file), scripts[`/${file}`]);
   }
-  const probe = (await readFile(path.join(root, "deploy/probe.sh.in"), "utf8")).replace(
-    /@(ID|ENV_PREFIX|CLI|SERVICE|APPLICATION_ID|LEGACY)@/g,
-    (_match, key: keyof typeof fields) => fields[key],
-  );
+  const probe = (await readFile(path.join(root, "deploy/probe.sh.in"), "utf8"))
+    .replaceAll("\r\n", "\n")
+    .replace(
+      /@(ID|ENV_PREFIX|CLI|SERVICE|APPLICATION_ID|LEGACY)@/g,
+      (_match, key: keyof typeof fields) => fields[key],
+    );
   await writeFile(path.join(outputRoot, "scripts/probe.sh"), probe);
   await writeFile(
     path.join(root, "packages/branding/src/generated/installers.ts"),

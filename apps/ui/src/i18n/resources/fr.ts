@@ -1071,6 +1071,12 @@ export const fr: TranslationResources = {
     },
   },
   sidebar: {
+    hostsMenu: {
+      trigger: "Hôtes",
+      addHost: "Ajouter un hôte",
+      hosts: "Vos hôtes",
+      noHosts: "Aucun hôte pour le moment",
+    },
     display: {
       trigger: "Préférences d'affichage",
       heading: "Affichage",
@@ -1698,6 +1704,9 @@ export const fr: TranslationResources = {
       connect: "Se connecter",
       connecting: "Connexion…",
       needsPairing: "Appairage requis",
+      needsUpgrade: "Mettre à jour le daemon",
+      upgradeHint:
+        "Cet hôte exécute le daemon {{version}}. Cette application nécessite la version 0.6.0 ou ultérieure du daemon. Mettez à jour le daemon sur cet hôte, redémarrez son service, puis relancez la recherche. Si vous avez déjà installé une mise à jour, l’ancien daemon est toujours en cours d’exécution.",
       pairingHint:
         "Obtenez un lien d'appairage : lancez `{{cliName}} daemon pair` sur l'hôte ou ouvrez son adresse web, puis scannez-le ou collez-le ici.",
     },

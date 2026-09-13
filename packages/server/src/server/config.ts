@@ -315,7 +315,9 @@ function resolveTlsFromEnv(
 
 function validateRelayEndpoint(enabled: boolean, endpoint: string): void {
   if (enabled && !endpoint)
-    throw new Error("Configure a relay endpoint before enabling relay for this product.");
+    throw new Error(
+      "Configure a relay endpoint before enabling relay for this product. For direct or SSH connections, set daemon.relay.enabled to false in config.json; for relay access, set daemon.relay.endpoint to your relay server.",
+    );
 }
 
 function resolveRelayConfig(input: ResolveRelayInput): ResolvedRelay {

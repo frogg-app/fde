@@ -1047,6 +1047,12 @@ export const ko: TranslationResources = {
     },
   },
   sidebar: {
+    hostsMenu: {
+      trigger: "호스트",
+      addHost: "호스트 추가",
+      hosts: "내 호스트",
+      noHosts: "아직 호스트가 없습니다",
+    },
     display: {
       trigger: "표시 설정",
       heading: "표시",
@@ -1661,6 +1667,9 @@ export const ko: TranslationResources = {
       connect: "연결",
       connecting: "연결 중…",
       needsPairing: "페어링 필요",
+      needsUpgrade: "데몬 업데이트",
+      upgradeHint:
+        "이 호스트에서 데몬 {{version}} 버전이 실행 중입니다. 이 앱에는 데몬 0.6.0 이상이 필요합니다. 이 호스트의 데몬을 업데이트하고 서비스를 다시 시작한 후 다시 검색하세요. 이미 업데이트를 설치했다면 이전 데몬이 아직 실행 중입니다.",
       pairingHint:
         "페어링 링크 받기: 호스트에서 `{{cliName}} daemon pair`를 실행하거나 웹 주소를 연 다음, 여기에서 스캔하거나 붙여넣으세요.",
     },

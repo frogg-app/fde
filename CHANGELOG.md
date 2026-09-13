@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+- Default daemon startup, port-only listen targets, service installation, Nix and
+  SSH deployment to `0.0.0.0`, preserving explicitly configured addresses.
+  Expand generated daemon configuration with editable defaults and provide
+  explicit formatting for existing `config.json` files.
+- Start directory browsing at the daemon home and list immediate subdirectories.
+  Keep directory selection and parent navigation pinned above the folder list,
+  distinguish navigation from adding a project, and fix `~` navigation.
+- Add network-scan cancellation, retain discovered servers when cancelled, and
+  simplify scan status and spacing. Remove per-address probe diagnostics from
+  the main connection flow.
+- Validate the server build, full workspace typecheck, focused regression suites,
+  and real-browser directory navigation/selection/retry. Add an artifact-only
+  workflow for Windows x64, Android arm64 and Linux x64 daemon builds. Installed
+  client validation and release publication remain separate checks.
+
 - Align workspace cards consistently with disclosure chevrons on the right, and make
   subagent cards compact single-line rows with a small additional indent.
 
@@ -83,22 +98,35 @@
   for a standalone APK that can coexist with production. Preserve license and
   speech-model notices in standalone daemon bundles.
 
-## 0.6.12
+## 0.6.13 - 2026-09-13
 
-- Default daemon startup, port-only listen targets, service installation, Nix and
-  SSH deployment to `0.0.0.0`, preserving explicitly configured addresses.
-  Expand generated daemon configuration with editable defaults and provide
-  explicit formatting for existing `config.json` files.
-- Start directory browsing at the daemon home and list immediate subdirectories.
-  Keep directory selection and parent navigation pinned above the folder list,
-  distinguish navigation from adding a project, and fix `~` navigation.
-- Add network-scan cancellation, retain discovered servers when cancelled, and
-  simplify scan status and spacing. Remove per-address probe diagnostics from
-  the main connection flow.
-- Validate the server build, full workspace typecheck, focused regression suites,
-  and real-browser directory navigation/selection/retry. Add an artifact-only
-  workflow for Windows x64, Android arm64 and Linux x64 daemon builds. Installed
-  client validation and release publication remain separate checks.
+- Allow `fde start --no-relay` to override invalid saved relay settings by
+  keeping its already-running check independent of startup validation and applying
+  worker flags before validating configuration, including independent execution.
+- Keep `fde status` usable with invalid relay settings or malformed configuration:
+  show process information and a diagnostic note, with unknown configuration
+  values represented explicitly.
+- Print real host interface addresses in native installer web UI URLs,
+  preserving explicit listeners and IPv6 URL brackets. Report unavailable network
+  addresses and Unix sockets without a placeholder URL.
+
+- Repair daemon lifecycle and script-install updates: stop no longer
+  requires valid startup configuration, and matching systemd/launchd services
+  stop through their owner. Installer activation stops the old same-home daemon
+  and verifies the running version and health before reporting success.
+- Route older update requests for versioned installations through the release
+  updater, and hide the duplicate npm update control for those installations.
+- Explain pre-0.6 daemon incompatibility in network discovery and failed direct
+  connections; include relay configuration recovery in startup errors.
+  Automated checks cover these paths; native installed-update acceptance remains
+  separate from source validation.
+
+- Normalize generated deployment shell scripts to LF and tolerate verified
+  concurrent bundle staging on Windows.
+- Include product-level release discovery and verified update manifests from main.
+  Linux packaged daemon startup, web UI, Electron-origin WebSocket connectivity,
+  invalid-config diagnostics and repeated shutdown passed. Native installed-update
+  and physical-device acceptance remain unverified.
 
 ## 0.6.11 - 2026-09-13
 

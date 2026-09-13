@@ -1038,6 +1038,12 @@ export const ar: TranslationResources = {
     },
   },
   sidebar: {
+    hostsMenu: {
+      trigger: "المضيفون",
+      addHost: "إضافة مضيف",
+      hosts: "مضيفوك",
+      noHosts: "لا يوجد مضيفون بعد",
+    },
     display: {
       trigger: "تفضيلات العرض",
       heading: "العرض",
@@ -1647,6 +1653,9 @@ export const ar: TranslationResources = {
       connect: "اتصال",
       connecting: "جارٍ الاتصال…",
       needsPairing: "يحتاج إلى اقتران",
+      needsUpgrade: "تحديث الخدمة الخلفية",
+      upgradeHint:
+        "يشغّل هذا المضيف الإصدار {{version}} من الخدمة الخلفية. يتطلب هذا التطبيق الإصدار 0.6.0 أو أحدث. حدّث الخدمة الخلفية على هذا المضيف، ثم أعد تشغيل خدمتها وافحص الشبكة مجددًا. إذا كنت قد ثبّت تحديثًا بالفعل، فلا تزال الخدمة الخلفية القديمة قيد التشغيل.",
       pairingHint:
         "احصل على رابط اقتران: شغّل `{{cliName}} daemon pair` على المضيف أو افتح عنوانه على الويب، ثم امسحه أو الصقه هنا.",
     },

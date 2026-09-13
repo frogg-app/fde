@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ComponentType, ReactNode } from "react";
 import { ScrollView, Text, View, type PressableStateCallbackType } from "react-native";
 import { EditingTextInput as TextInput } from "@/components/ui/text-input";
-import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StyleSheet, useUnistyles } from "react-native-unistyles";
 import { useTranslation } from "react-i18next";
@@ -23,7 +22,6 @@ import {
   type ServiceUrlBehavior,
 } from "@/hooks/use-settings";
 import { useHosts } from "@/runtime/host-runtime";
-import { resolveActiveHostServerId } from "@/types/host-connection";
 import { BackHeader } from "@/components/headers/back-header";
 import { ScreenHeader } from "@/components/headers/screen-header";
 import { AddHostMethodModal } from "@/components/add-host-method-modal";
@@ -71,18 +69,17 @@ import { MetadataGenerationPage } from "@/screens/settings/metadata-generation-p
 import ProjectsScreen from "@/screens/projects-screen";
 import ProjectSettingsScreen from "@/screens/project-settings-screen";
 import { useIsCompactFormFactor } from "@/constants/layout";
-import { useLocalDaemonServerId } from "@/hooks/use-is-local-daemon";
 import { useKeyboardShortcutsAvailable } from "@/keyboard/availability";
 import type { HostSectionSlug, SettingsSectionSlug } from "@/utils/host-routes";
-import { useLastWorkspaceSelection } from "@/stores/navigation-active-workspace-store";
 import {
   leaveSettings,
   leaveSettingsFor,
   navigateSettings,
+  resolveSettingsScope,
   returnFromSettings,
   type SettingsView,
 } from "@/navigation/settings-navigation";
-import { SettingsSidebar, useSortedHosts } from "@/screens/settings/settings-sidebar";
+import { SettingsSidebar } from "@/screens/settings/settings-sidebar";
 import { HOST_SECTION_ITEMS, SIDEBAR_SECTION_ITEMS } from "@/screens/settings/section-items";
 import { isNative, isWeb } from "@/constants/platform";
 
@@ -495,33 +492,13 @@ export default function SettingsScreen({ view, openAddHostIntent = null }: Setti
   const insets = useSafeAreaInsets();
   const insetBottomStyle = useMemo(() => ({ paddingBottom: insets.bottom }), [insets.bottom]);
   const hosts = useHosts();
-  const localServerId = useLocalDaemonServerId();
-  const sortedHosts = useSortedHosts(hosts, localServerId);
-  const lastWorkspaceSelection = useLastWorkspaceSelection();
-  const routedSettingsHostServerId =
-    view.kind === "host" || view.kind === "project" ? view.serverId : null;
-  const [selectedSettingsHostServerId, setSelectedSettingsHostServerId] = useState<string | null>(
-    routedSettingsHostServerId ?? lastWorkspaceSelection?.serverId ?? null,
-  );
-  useFocusEffect(
-    useCallback(() => {
-      setSelectedSettingsHostServerId(
-        routedSettingsHostServerId ?? lastWorkspaceSelection?.serverId ?? null,
-      );
-    }, [lastWorkspaceSelection?.serverId, routedSettingsHostServerId]),
-  );
-
-  // The host the four sections scope to: the host on the active view, otherwise
-  // the picker choice, otherwise the connected local daemon, otherwise the first host.
-  const activeHostServerId = useMemo(() => {
-    if (view.kind === "host" || view.kind === "project") return view.serverId;
-    return resolveActiveHostServerId({
-      selectedServerId: selectedSettingsHostServerId,
-      localServerId,
-      hosts,
-      orderedHosts: sortedHosts,
-    });
-  }, [view, selectedSettingsHostServerId, localServerId, hosts, sortedHosts]);
+  const scope = resolveSettingsScope(view);
+  const scopedHostServerId = scope.kind === "host" ? scope.serverId : null;
+  const scopedHostLabel = useMemo(() => {
+    if (!scopedHostServerId) return null;
+    const host = hosts.find((entry) => entry.serverId === scopedHostServerId);
+    return host?.label?.trim() || scopedHostServerId;
+  }, [hosts, scopedHostServerId]);
 
   const handleSendBehaviorChange = useCallback(
     (behavior: SendBehavior) => {
@@ -636,32 +613,12 @@ export default function SettingsScreen({ view, openAddHostIntent = null }: Setti
     navigateSettings({ kind: "section", section });
   }, []);
 
-  // Picker: choose the host for host-section rows. If the user is already on a
-  // host detail view, keep that detail section and swap only the host.
-  const handleSelectHost = useCallback(
-    (serverId: string) => {
-      setSelectedSettingsHostServerId(serverId);
-      if (view.kind === "project") {
-        navigateSettings({ kind: "host", serverId, section: "projects" });
-        return;
-      }
-      if (view.kind !== "host") {
-        return;
-      }
-      navigateSettings({ kind: "host", serverId, section: view.section });
-    },
-    [view],
-  );
-
   const handleSelectHostSection = useCallback(
     (section: HostSectionSlug) => {
-      if (!activeHostServerId) {
-        handleAddHost();
-        return;
-      }
-      navigateSettings({ kind: "host", serverId: activeHostServerId, section });
+      if (!scopedHostServerId) return;
+      navigateSettings({ kind: "host", serverId: scopedHostServerId, section });
     },
-    [activeHostServerId, handleAddHost],
+    [scopedHostServerId],
   );
 
   const handleScanQr = useCallback(() => {
@@ -673,12 +630,13 @@ export default function SettingsScreen({ view, openAddHostIntent = null }: Setti
   }, [closeAddConnectionFlow]);
 
   // The removed host's routes must not stay in history, so the compact stack
-  // replaces its way back to the root list.
+  // replaces its way back to the root list; the host's settings modal just closes.
   const handleHostRemoved = useCallback(() => {
-    const target: SettingsView = isCompactLayout
-      ? { kind: "root" }
-      : { kind: "section", section: "general" };
-    navigateSettings(target, { replace: true });
+    if (!isCompactLayout) {
+      leaveSettings();
+      return;
+    }
+    navigateSettings({ kind: "root" }, { replace: true });
   }, [isCompactLayout]);
 
   const handleBackFromDetail = useCallback(() => {
@@ -832,19 +790,16 @@ export default function SettingsScreen({ view, openAddHostIntent = null }: Setti
     </>
   );
 
-  // Mobile root: full-screen sidebar-as-list.
-  if (isCompactLayout && view.kind === "root") {
+  // Mobile root: full-screen sidebar-as-list, for the app or for one host.
+  if (isCompactLayout && (view.kind === "root" || view.kind === "hostRoot")) {
     return (
       <View style={styles.container}>
-        <BackHeader title={t("settings.title")} onBack={handleBackToWorkspace} />
+        <BackHeader title={scopedHostLabel ?? t("settings.title")} onBack={handleBackToWorkspace} />
         <ScrollView style={styles.scrollView} contentContainerStyle={insetBottomStyle}>
           <SettingsSidebar
             view={view}
             onSelectSection={handleSelectSection}
             onSelectHostSection={handleSelectHostSection}
-            onSelectHost={handleSelectHost}
-            onAddHost={handleAddHost}
-            activeHostServerId={activeHostServerId}
             layout="mobile"
           />
         </ScrollView>
@@ -879,9 +834,6 @@ export default function SettingsScreen({ view, openAddHostIntent = null }: Setti
           view={view}
           onSelectSection={handleSelectSection}
           onSelectHostSection={handleSelectHostSection}
-          onSelectHost={handleSelectHost}
-          onAddHost={handleAddHost}
-          activeHostServerId={activeHostServerId}
           layout="desktop"
         />
         <View style={desktopStyles.contentPane} testID="settings-detail-pane">

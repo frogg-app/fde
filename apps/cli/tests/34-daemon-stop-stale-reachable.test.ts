@@ -161,6 +161,10 @@ try {
   console.log(
     "Test 2: `fde daemon stop` should stop reachable worker instead of saying not_running",
   );
+  await writeFile(
+    join(fdeHome, "config.json"),
+    JSON.stringify({ version: 1, daemon: { relay: { enabled: true } } }),
+  );
   const stopResult =
     await $`FDE_HOME=${fdeHome} FDE_LOCAL_SPEECH_AUTO_DOWNLOAD=${testEnv.FDE_LOCAL_SPEECH_AUTO_DOWNLOAD} FDE_DICTATION_ENABLED=${testEnv.FDE_DICTATION_ENABLED} FDE_VOICE_MODE_ENABLED=${testEnv.FDE_VOICE_MODE_ENABLED} npx fde daemon stop --home ${fdeHome} --json`.nothrow();
   assert.strictEqual(stopResult.exitCode, 0, `stop should succeed: ${stopResult.stderr}`);

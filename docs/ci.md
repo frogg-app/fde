@@ -48,13 +48,11 @@ the root build wrappers in its own runner. Outputs are Actions artifacts retaine
 for 14 days. The workflow has read-only repository permissions, creates no tags or
 GitHub releases, and does not publish Docker images or update feeds.
 
-Pushing the checked commit to the task branch `fde-daemon-listen-all` starts these
-three builds. The branch trigger allows the first run without merging the new
-workflow onto the default branch. Manual dispatch is available once the workflow
-exists on the default branch; it can then select the task branch:
+These builds run only by manual dispatch. Pushing or merging source changes does
+not start them. When builds are requested, select the desired revision:
 
 ```bash
-gh workflow run build-selected.yml --repo frogg-app/fde --ref fde-daemon-listen-all
+gh workflow run build-selected.yml --repo frogg-app/fde --ref main
 gh run list --repo frogg-app/fde --workflow build-selected.yml --limit 5
 gh run download RUN_ID --repo frogg-app/fde --dir selected-builds
 ```

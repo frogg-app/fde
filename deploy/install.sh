@@ -26,6 +26,7 @@
 #   FDE_NO_MODIFY_PATH=1  leave shell startup files unchanged
 #   FDE_LISTEN        daemon listen address for the service (default: 0.0.0.0:9999)
 #   FDE_HOME          daemon state directory for the service (default: ~/.fde)
+#   FDE_HEALTH_TIMEOUT seconds to verify the running version (default: 30)
 set -euo pipefail
 
 # BEGIN BRAND DEFAULTS — replaced only in generated distribution scripts.
@@ -331,18 +332,18 @@ install_systemd_service() {
   fi
   systemctl --user enable "${SERVICE_NAME}" >/dev/null 2>&1 || true
   if systemctl --user is-active --quiet "${SERVICE_NAME}"; then
-    systemctl --user restart "${SERVICE_NAME}"
-    log "restarted ${SERVICE_NAME} (systemd user service)"
-  else
-    systemctl --user start "${SERVICE_NAME}"
-    log "started ${SERVICE_NAME} (systemd user service)"
+    systemctl --user stop "${SERVICE_NAME}"
   fi
+  stop_existing_daemon
+  systemctl --user start "${SERVICE_NAME}"
+  log "started ${SERVICE_NAME} (systemd user service)"
   if [ "$(id -u)" != "0" ]; then
     log "to keep the daemon running after logout: sudo loginctl enable-linger $(id -un)"
   fi
 }
 
 start_detached_daemon() {
+  stop_existing_daemon
   local log_dir
   log_dir="${FDE_INSTALL_DIR}/logs"
   mkdir -p "${log_dir}"
@@ -383,7 +384,7 @@ write_launchd_plist() {
 ${FDE_HOME:+    <key>${BRAND_ENV_PREFIX}_HOME</key><string>$(xml "${FDE_HOME}")</string>}
   </dict>
   <key>RunAtLoad</key><true/>
-  <key>KeepAlive</key><true/>
+  <key>KeepAlive</key><dict><key>SuccessfulExit</key><false/></dict>
   <key>StandardOutPath</key><string>${log_dir}/launchd.log</string>
   <key>StandardErrorPath</key><string>${log_dir}/launchd.log</string>
 </dict>
@@ -398,8 +399,73 @@ install_launchd_agent() {
   local domain
   domain="gui/$(id -u)"
   launchctl bootout "${domain}" "${LAUNCHD_PLIST}" >/dev/null 2>&1 || true
+  stop_existing_daemon
   launchctl bootstrap "${domain}" "${LAUNCHD_PLIST}" || die "launchctl bootstrap failed"
   log "started ${LAUNCHD_LABEL} (launchd agent)"
+}
+
+stop_existing_daemon() {
+  "${FDE_INSTALL_DIR}/current/bin/${BRAND_CLI}" daemon stop --home "${FDE_HOME:-${HOME}/${BRAND_HOME}}" ||
+    die "could not stop the existing daemon; the new version has not been started"
+}
+
+# Inline because the downloaded installer must work without repository files.
+verify_running_daemon() {
+  "${FDE_INSTALL_DIR}/current/node/bin/node" - "${FDE_LISTEN}" "${BUNDLE_VERSION}" "${BRAND_ID}" "${BRAND_APPLICATION_ID}" "${BRAND_LEGACY}" "${FDE_HEALTH_TIMEOUT:-30}" <<'JS' || die "the new daemon could not be verified; inspect ${FDE_HOME:-${HOME}/${BRAND_HOME}}/daemon.log and the service logs"
+const http = require('node:http');
+const [listen, expected, brandId, applicationId, legacy, seconds] = process.argv.slice(2);
+const timeout = Number(seconds) * 1000;
+if (!Number.isFinite(timeout) || timeout <= 0) {
+  console.error('Health timeout must be a positive number of seconds'); process.exit(1);
+}
+const target = listen.replace(/^tcp:\/\//, '');
+const socketPath = target.startsWith('/') ? target : null;
+const address = target.replace(/^0\.0\.0\.0:/, '127.0.0.1:').replace(/^\[?::\]?:/, '[::1]:');
+const deadline = Date.now() + timeout;
+function get(route) {
+  return new Promise((resolve, reject) => {
+    const options = socketPath ? { socketPath, path: route } : new URL(`http://${address}${route}`);
+    const request = http.get(options, (response) => {
+      let body = '';
+      response.setEncoding('utf8');
+      response.on('data', (chunk) => {
+        body += chunk;
+        if (body.length > 65536) request.destroy(new Error(`${route}: response is too large`));
+      });
+      response.on('error', reject);
+      response.on('end', () => {
+        try {
+          if (response.statusCode !== 200) throw new Error(`${route}: HTTP ${response.statusCode}`);
+          resolve({ body: JSON.parse(body), headers: response.headers });
+        } catch (error) { reject(error); }
+      });
+    });
+    const timer = setTimeout(() => request.destroy(new Error(`${route}: timed out`)), Math.max(1, Math.min(1500, deadline - Date.now())));
+    request.once('close', () => clearTimeout(timer));
+    request.on('error', reject);
+  });
+}
+(async function verify() {
+  let reason = 'daemon did not answer';
+  while (Date.now() < deadline) {
+    try {
+      const identity = await get('/api/identity');
+      const version = identity.headers['x-fde-gateway-version'] ?? identity.body.version;
+      const owner = identity.body.brand;
+      const owned = owner ? owner.id === brandId && owner.applicationId === applicationId : legacy === 'true' && identity.body.product === 'fde';
+      if (!owned) throw new Error('another product is listening on the daemon address');
+      if (version !== expected) throw new Error(`daemon reports version ${version ?? 'unknown'}, expected ${expected}`);
+      const health = await get('/api/health');
+      if (health.body.status !== 'ok') throw new Error('daemon health check did not report ok');
+      return;
+    } catch (error) { reason = error.message; }
+    await new Promise((resolve) => setTimeout(resolve, Math.min(1000, Math.max(0, deadline - Date.now()))));
+  }
+  console.error(`Daemon activation failed: ${reason}. Check the service and daemon logs, then rerun the installer.`);
+  process.exitCode = 1;
+})();
+JS
+  log "verified running daemon ${BUNDLE_VERSION}"
 }
 
 # Keep this inline: install.sh also runs standalone through curl | bash.
@@ -444,24 +510,52 @@ configure_shell_path() {
   done
 }
 
+# Use the bundled runtime so this also works on macOS without hostname -I.
+web_ui_urls() {
+  "${FDE_INSTALL_DIR}/current/node/bin/node" - "${FDE_LISTEN}" <<'JS'
+const { networkInterfaces } = require('node:os');
+const listen = process.argv[2].replace(/^tcp:\/\//, '');
+if (listen.startsWith('/')) process.exit(0);
+const separator = listen.lastIndexOf(':');
+const host = listen.slice(0, separator).replace(/^\[|\]$/g, '');
+const port = listen.slice(separator + 1);
+let addresses = [host];
+if (host === '0.0.0.0' || host === '::') {
+  addresses = Object.values(networkInterfaces()).flat()
+    .filter((entry) => !entry.internal && (host === '::' || entry.family === 'IPv4'))
+    .filter((entry) => !entry.scopeid)
+    .map((entry) => entry.address);
+}
+for (const address of new Set(addresses)) {
+  const authority = address.includes(':') ? `[${address}]` : address;
+  process.stdout.write(`http://${authority}:${port}/\n`);
+}
+JS
+}
+
 print_next_steps() {
-  local host port
-  host="${FDE_LISTEN%:*}"
+  local host port urls url listen
+  listen="${FDE_LISTEN#tcp://}"
+  host="${listen%:*}"
   port="${FDE_LISTEN##*:}"
   echo
   log "${BRAND_NAME} daemon ${BUNDLE_VERSION} installed."
   if [ "${FDE_NO_SERVICE}" = "1" ]; then
     log "no service installed; start the daemon with: ${BRAND_CLI} daemon start --listen ${FDE_LISTEN} --web-ui"
   else
-    if [ "${host}" = "127.0.0.1" ] || [ "${host}" = "localhost" ]; then
-      log "web UI: http://${host}:${port}/"
-      log "the daemon listens on loopback; reach it through an SSH tunnel or re-run with FDE_LISTEN=0.0.0.0:${port}"
+    urls="$(web_ui_urls)"
+    if [ -n "${urls}" ]; then
+      while IFS= read -r url; do
+        log "web UI: ${url}"
+      done <<< "${urls}"
+    elif [[ "${listen}" = /* ]]; then
+      log "web UI: listening on Unix socket ${listen}; use a proxy or TCP listener for browser access"
     else
-      if [ "${host}" = "0.0.0.0" ] || [ "${host}" = "::" ]; then
-        log "web UI: http://<this-hosts-network-address>:${port}/"
-      else
-        log "web UI: http://${host}:${port}/"
-      fi
+      log "web UI: no network address detected; check the host's network configuration"
+    fi
+    if [ "${host}" = "127.0.0.1" ] || [ "${host}" = "localhost" ] || [ "${host}" = "[::1]" ] || [ "${host}" = "::1" ]; then
+      log "the daemon listens on loopback; reach it through an SSH tunnel or re-run with FDE_LISTEN=0.0.0.0:${port}"
+    elif [[ "${listen}" != /* ]]; then
       log "the daemon is network-reachable; set a password with: ${BRAND_CLI} daemon set-password"
     fi
   fi
@@ -501,6 +595,7 @@ main() {
       linux) install_systemd_service ;;
       darwin) install_launchd_agent ;;
     esac
+    verify_running_daemon
   fi
   print_next_steps
 }

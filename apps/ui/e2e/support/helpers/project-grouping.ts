@@ -112,8 +112,6 @@ export async function openGroupedProjectSettings(
   page: Page,
   input: { serverId: string; projectName: string },
 ): Promise<void> {
-  await page.getByRole("button", { name: "Settings", exact: true }).click();
-  await expect(page).toHaveURL(/\/settings\/general$/);
   await selectSettingsHost(page, input.serverId);
   await page.locator('[data-testid="settings-host-section-projects"]:visible').click();
   await expect(page).toHaveURL(/\/settings\/hosts\/[^/]+\/projects$/);
@@ -125,6 +123,7 @@ export async function openProjectsForSettingsHost(
   input: { serverId: string; projectName: string },
 ): Promise<void> {
   await selectSettingsHost(page, input.serverId);
+  await page.locator('[data-testid="settings-host-section-projects"]:visible').click();
   await expect(page).toHaveURL(buildProjectsSettingsRoute(input.serverId));
   await openProjectSettings(page, input.projectName);
 }

@@ -9,6 +9,16 @@ import { isNative } from "@/constants/platform";
 import { isElectronRuntime } from "@/desktop/host";
 import type { Theme } from "@/styles/theme";
 
+/** Remote SSH hosts are provisioned by the desktop shell, so only Electron can offer it. */
+export function isRemoteSshAddHostAvailable(): boolean {
+  return isElectronRuntime();
+}
+
+/** QR pairing needs a camera scanner, which only native (non-F-Droid) builds ship. */
+export function isScanQrAddHostAvailable(): boolean {
+  return isNative && !isFdroidBuild;
+}
+
 const ThemedQrCode = withUnistyles(QrCode);
 const ThemedLink2 = withUnistyles(Link2);
 const ThemedClipboardPaste = withUnistyles(ClipboardPaste);
@@ -100,7 +110,7 @@ export function AddHostMethodModal({
         </View>
       </Pressable>
 
-      {isElectronRuntime() ? (
+      {isRemoteSshAddHostAvailable() ? (
         <Pressable
           style={styles.option}
           onPress={handleRemoteSsh}
@@ -118,7 +128,7 @@ export function AddHostMethodModal({
         </Pressable>
       ) : null}
 
-      {isNative && !isFdroidBuild ? (
+      {isScanQrAddHostAvailable() ? (
         <Pressable
           style={styles.option}
           onPress={handleScan}

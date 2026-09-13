@@ -1072,6 +1072,12 @@ export const es: TranslationResources = {
     },
   },
   sidebar: {
+    hostsMenu: {
+      trigger: "Anfitriones",
+      addHost: "Agregar anfitrión",
+      hosts: "Tus anfitriones",
+      noHosts: "Aún no hay anfitriones",
+    },
     display: {
       trigger: "Preferencias de visualización",
       heading: "Visualización",
@@ -1695,6 +1701,9 @@ export const es: TranslationResources = {
       connect: "Conectar",
       connecting: "Conectando…",
       needsPairing: "Necesita emparejamiento",
+      needsUpgrade: "Actualizar daemon",
+      upgradeHint:
+        "Este equipo está ejecutando el daemon {{version}}. Esta aplicación requiere la versión 0.6.0 o posterior del daemon. Actualiza el daemon en este equipo, reinicia su servicio y vuelve a buscar. Si ya instalaste una actualización, el daemon antiguo sigue ejecutándose.",
       pairingHint:
         "Obtén un enlace de emparejamiento: ejecuta `{{cliName}} daemon pair` en el host o abre su dirección web, y luego escanéalo o pégalo aquí.",
     },

@@ -7,6 +7,7 @@ import type { HostProfile } from "@/types/host-connection";
 import { useHostMutations, useHosts } from "@/runtime/host-runtime";
 import { useNetworkScan } from "@/network-scan/use-network-scan";
 import type { DiscoveredServer } from "@/network-scan/types";
+import { resolveDiscoveredConnectionAction } from "@/network-scan/connection-action";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { formatConnectionFailureMessage } from "./add-host-connection-errors";
@@ -161,9 +162,9 @@ function NetworkServerRow({
     void handleConnect();
   }, [handleConnect]);
 
-  // An unclaimed daemon refuses LAN clients until one redeems a pairing link,
-  // so a bare Connect would only fail with 401: point at the link instead.
-  if (server.pairingRequired) {
+  const connectionAction = resolveDiscoveredConnectionAction(server);
+  // Known pre-0.6 daemons need an upgrade before connection or pairing.
+  if (connectionAction !== "connect") {
     return (
       <View style={styles.row} testID={`network-server-${server.endpoint}`}>
         <View style={styles.rowBody}>
@@ -173,12 +174,23 @@ function NetworkServerRow({
           <Text style={styles.rowSubtext} numberOfLines={1}>
             {subtext}
           </Text>
-          <Text style={styles.rowHint} testID={`network-server-${server.endpoint}-pairing-hint`}>
-            {t("pairing.networkScan.pairingHint")}
+          <Text
+            style={styles.rowHint}
+            testID={`network-server-${server.endpoint}-${connectionAction === "pair" ? "pairing" : "upgrade"}-hint`}
+          >
+            {connectionAction === "upgrade"
+              ? t("pairing.networkScan.upgradeHint", { version: server.version })
+              : t("pairing.networkScan.pairingHint")}
           </Text>
         </View>
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>{t("pairing.networkScan.needsPairing")}</Text>
+          <Text style={styles.badgeText}>
+            {t(
+              connectionAction === "upgrade"
+                ? "pairing.networkScan.needsUpgrade"
+                : "pairing.networkScan.needsPairing",
+            )}
+          </Text>
         </View>
       </View>
     );

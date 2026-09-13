@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { FolderPlus, GitBranch, Server, Settings, X } from "lucide-react-native";
+import { FolderPlus, GitBranch, Settings, X } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -48,7 +48,7 @@ import { useOwnsWindowChromeCorner, WindowChromeSafeArea } from "@/utils/desktop
 import { useCloseAgentListGesture } from "@/mobile-panels/gestures";
 import { MobilePanelOverlay } from "@/mobile-panels/presentation";
 import { buildSettingsRoute } from "@/utils/host-routes";
-import { openAddHostFlow } from "@/hosts/add-host-flow";
+import { HostsMenu } from "@/components/sidebar/hosts-menu";
 import { SidebarAgentListSkeleton } from "./sidebar-agent-list-skeleton";
 import { SidebarCalloutSlot } from "./sidebar-callout-slot";
 import { SidebarWorkspaceList } from "./sidebar-workspace-list";
@@ -75,14 +75,14 @@ interface SidebarSharedProps {
   toggleProjectCollapsed: (projectViewKey: string) => void;
   handleRefresh: () => void;
   handleOpenProject: () => void;
-  handleAddHost: () => void;
+  /** Runs before a Hosts menu action leaves the sidebar. */
+  handleBeforeHostsAction?: () => void;
   handleSettings: () => void;
   labels: SidebarLabels;
 }
 
 interface SidebarLabels {
   addProject: string;
-  addHost: string;
   settings: string;
   closeSidebar: string;
 }
@@ -161,15 +161,9 @@ export const LeftSidebar = memo(function LeftSidebar({ active }: { active: boole
     router.push(buildSettingsRoute());
   }, []);
 
-  const handleAddHost = useCallback(() => {
-    if (isCompactLayout) showMobileAgent();
-    openAddHostFlow();
-  }, [isCompactLayout, showMobileAgent]);
-
   const labels = useMemo(
     (): SidebarLabels => ({
       addProject: t("sidebar.actions.addProject"),
-      addHost: t("settings.addHost"),
       settings: t("sidebar.actions.settings"),
       closeSidebar: t("sidebar.actions.closeSidebar"),
     }),
@@ -207,7 +201,7 @@ export const LeftSidebar = memo(function LeftSidebar({ active }: { active: boole
             insetsBottom={insets.bottom}
             closeSidebar={showMobileAgent}
             handleOpenProject={handleOpenProjectMobile}
-            handleAddHost={handleAddHost}
+            handleBeforeHostsAction={showMobileAgent}
             handleSettings={handleSettingsMobile}
           />
         </RetainedPanelActivity>
@@ -223,7 +217,6 @@ export const LeftSidebar = memo(function LeftSidebar({ active }: { active: boole
           insetsTop={insets.top}
           active={active}
           handleOpenProject={handleOpenProjectDesktop}
-          handleAddHost={handleAddHost}
           handleSettings={handleSettingsDesktop}
         />
       </RetainedPanelActivity>
@@ -248,12 +241,14 @@ function IconTooltipContent({
 
 function SidebarFooter({
   handleOpenProject,
-  handleAddHost,
+  handleBeforeHostsAction,
   handleSettings,
   labels,
-}: Pick<SidebarSharedProps, "handleOpenProject" | "handleAddHost" | "handleSettings" | "labels">) {
+}: Pick<
+  SidebarSharedProps,
+  "handleOpenProject" | "handleBeforeHostsAction" | "handleSettings" | "labels"
+>) {
   const newAgentKeys = useShortcutKeys("new-agent");
-  const addHostKeys = useShortcutKeys("add-host");
   const settingsKeys = useShortcutKeys("toggle-settings");
 
   return (
@@ -267,15 +262,7 @@ function SidebarFooter({
         nativeID="sidebar-add-project"
         variant="compact"
       />
-      <SidebarHeaderRow
-        icon={Server}
-        onPress={handleAddHost}
-        label={labels.addHost}
-        shortcutKeys={addHostKeys}
-        testID="sidebar-add-host"
-        nativeID="sidebar-add-host"
-        variant="compact"
-      />
+      <HostsMenu onBeforeAction={handleBeforeHostsAction} />
       <SidebarHeaderRow
         icon={Settings}
         onPress={handleSettings}
@@ -308,7 +295,7 @@ function MobileSidebar({
   toggleProjectCollapsed,
   handleRefresh,
   handleOpenProject,
-  handleAddHost,
+  handleBeforeHostsAction,
   handleSettings,
   labels,
   insetsTop,
@@ -387,7 +374,7 @@ function MobileSidebar({
 
         <SidebarFooter
           handleOpenProject={handleOpenProject}
-          handleAddHost={handleAddHost}
+          handleBeforeHostsAction={handleBeforeHostsAction}
           handleSettings={handleSettings}
           labels={labels}
         />
@@ -414,7 +401,7 @@ function DesktopSidebar({
   toggleProjectCollapsed,
   handleRefresh,
   handleOpenProject,
-  handleAddHost,
+  handleBeforeHostsAction,
   handleSettings,
   labels,
   insetsTop,
@@ -558,7 +545,7 @@ function DesktopSidebar({
 
         <SidebarFooter
           handleOpenProject={handleOpenProject}
-          handleAddHost={handleAddHost}
+          handleBeforeHostsAction={handleBeforeHostsAction}
           handleSettings={handleSettings}
           labels={labels}
         />

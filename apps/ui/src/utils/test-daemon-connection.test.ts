@@ -286,4 +286,71 @@ describe("test-daemon-connection connectToDaemon", () => {
       message: "Transport error",
     });
   });
+  it("explains a pre-0.6 daemon after a failed manual direct connection", async () => {
+    probe.failNextConnection(new Error("Transport closed (code 1006)"), null);
+    const urls: string[] = [];
+    await expect(
+      connectToDaemon(
+        {
+          id: "direct:lan:9999",
+          type: "directTcp",
+          endpoint: "lan:9999",
+        },
+        undefined,
+        {
+          ...probe.deps,
+          readDirectDaemonVersion: async (url) => {
+            urls.push(url);
+            return "0.3.1";
+          },
+        },
+      ),
+    ).rejects.toMatchObject({
+      message:
+        "This host is running daemon 0.3.1. This app requires daemon 0.6.0 or later. Update the daemon on this host and restart its service, then connect again. If you already installed an update, the old daemon is still running.",
+      lastError: "Transport closed (code 1006)",
+    });
+    expect(urls).toEqual(["ws://lan:9999/ws"]);
+    expect(probe.closedClients).toHaveLength(1);
+  });
+
+  it.each([null, "0.6.7"])(
+    "preserves the connection failure when daemon version is %s",
+    async (version) => {
+      probe.failNextConnection(new Error("Transport closed (code 1006)"), null);
+      await expect(
+        connectToDaemon(
+          {
+            id: "direct:lan:9999",
+            type: "directTcp",
+            endpoint: "lan:9999",
+          },
+          undefined,
+          { ...probe.deps, readDirectDaemonVersion: async () => version },
+        ),
+      ).rejects.toMatchObject({ message: "Transport closed (code 1006)" });
+    },
+  );
+
+  it("does not probe identity on a successful direct connection", async () => {
+    const urls: string[] = [];
+    const result = await connectToDaemon(
+      {
+        id: "direct:lan:9999",
+        type: "directTcp",
+        endpoint: "lan:9999",
+      },
+      undefined,
+      {
+        ...probe.deps,
+        readDirectDaemonVersion: async (url) => {
+          urls.push(url);
+          return "0.3.1";
+        },
+      },
+    );
+    expect(result.serverId).toBe("srv_probe_test");
+    expect(urls).toEqual([]);
+    await result.client.close();
+  });
 });

@@ -1,8 +1,6 @@
 name: Build selected clients and daemon
 
 on:
-  push:
-    branches: [fde-daemon-listen-all]
   workflow_dispatch:
 
 permissions:

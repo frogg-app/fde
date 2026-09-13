@@ -3,6 +3,8 @@ import type { DaemonClientConfig } from "@fde/client/internal/daemon-client";
 import type { HostConnection } from "@/types/host-connection";
 import { getOrCreateClientId } from "./client-id";
 import { resolveAppVersion } from "./app-version";
+import { readDirectDaemonVersion } from "./direct-daemon-version";
+import { resolveDiscoveredConnectionAction } from "@/network-scan/connection-action";
 import {
   buildDaemonWebSocketUrl,
   buildRelayWebSocketUrl,
@@ -22,6 +24,7 @@ export interface DaemonProbeClient {
 }
 
 export interface DaemonConnectionDependencies<TClient extends DaemonProbeClient> {
+  readDirectDaemonVersion?(websocketUrl: string): Promise<string | null>;
   getClientId(): Promise<string>;
   resolveAppVersion(): string | null;
   createDesktopTransportFactory(): DaemonClientConfig["transportFactory"] | null;
@@ -30,6 +33,7 @@ export interface DaemonConnectionDependencies<TClient extends DaemonProbeClient>
 }
 
 const defaultDaemonConnectionDependencies: DaemonConnectionDependencies<DaemonClient> = {
+  readDirectDaemonVersion,
   getClientId: getOrCreateClientId,
   resolveAppVersion,
   createDesktopTransportFactory: createDesktopDaemonTransportFactory,
@@ -294,5 +298,19 @@ export async function connectToDaemon(
   deps: DaemonConnectionDependencies<DaemonProbeClient> = defaultDaemonConnectionDependencies,
 ): Promise<{ client: DaemonProbeClient; serverId: string; hostname: string | null }> {
   const config = await buildClientConfig(connection, options?.serverId, options, deps);
-  return connectAndProbe(config, resolveTimeout(connection, options), deps);
+  try {
+    return await connectAndProbe(config, resolveTimeout(connection, options), deps);
+  } catch (error) {
+    if (connection.type === "directTcp" && deps.readDirectDaemonVersion) {
+      const version = await deps.readDirectDaemonVersion(config.url).catch(() => null);
+      if (resolveDiscoveredConnectionAction({ version, pairingRequired: null }) === "upgrade") {
+        const message = `This host is running daemon ${version}. This app requires daemon 0.6.0 or later. Update the daemon on this host and restart its service, then connect again. If you already installed an update, the old daemon is still running.`;
+        throw new DaemonConnectionTestError(message, {
+          reason: message,
+          lastError: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+    throw error;
+  }
 }

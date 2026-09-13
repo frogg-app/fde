@@ -63,7 +63,7 @@ test("selected builds cannot publish releases, tags, containers, or load signing
     selectedWorkflow,
     /contents: write|secrets\.|gh (?:release|api)|git push|docker\/build-push-action/,
   );
-  assert.match(selectedWorkflow, /branches: \[fde-daemon-listen-all\]/);
+  assert.doesNotMatch(selectedWorkflow, /^  (?:push|pull_request):/m);
   assert.match(selectedWorkflow, /workflow_dispatch:/);
   assert.equal((selectedWorkflow.match(/uses: actions\/upload-artifact@/g) ?? []).length, 3);
   assert.equal((selectedWorkflow.match(/if-no-files-found: error/g) ?? []).length, 3);
