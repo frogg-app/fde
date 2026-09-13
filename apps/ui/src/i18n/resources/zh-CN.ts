@@ -1615,6 +1615,9 @@ export const zhCN: TranslationResources = {
       connect: "连接",
       connecting: "连接中…",
       needsPairing: "需要配对",
+      needsUpgrade: "更新守护进程",
+      upgradeHint:
+        "此主机正在运行守护进程 {{version}}。此应用需要 0.6.0 或更高版本的守护进程。请更新此主机上的守护进程，重启其服务，然后重新扫描。如果您已安装更新，则说明旧的守护进程仍在运行。",
       pairingHint:
         "获取配对链接：在主机上运行 `{{cliName}} daemon pair`，或打开其网页地址，然后在此扫描或粘贴。",
     },

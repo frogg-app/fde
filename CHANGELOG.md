@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- Repair daemon lifecycle and script-install updates in 0.6.11: stop no longer
+  requires valid startup configuration, and matching systemd/launchd services
+  stop through their owner. Installer activation stops the old same-home daemon
+  and verifies the running version and health before reporting success.
+- Route older update requests for versioned installations through the release
+  updater, and hide the duplicate npm update control for those installations.
+- Explain pre-0.6 daemon incompatibility in network discovery and failed direct
+  connections; include relay configuration recovery in startup errors.
+  Automated checks cover these paths; native installed-update acceptance remains
+  separate from source validation.
+
 - Align workspace cards consistently with disclosure chevrons on the right, and make
   subagent cards compact single-line rows with a small additional indent.
 

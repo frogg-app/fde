@@ -1656,6 +1656,9 @@ export const ja: TranslationResources = {
       connect: "接続",
       connecting: "接続中…",
       needsPairing: "ペアリングが必要",
+      needsUpgrade: "デーモンを更新",
+      upgradeHint:
+        "このホストではデーモン {{version}} が実行されています。このアプリにはデーモン 0.6.0 以降が必要です。このホストのデーモンを更新してサービスを再起動し、もう一度スキャンしてください。すでに更新をインストールした場合は、古いデーモンがまだ実行されています。",
       pairingHint:
         "ペアリングリンクを取得: ホストで `{{cliName}} daemon pair` を実行するか、その Web アドレスを開き、ここでスキャンまたは貼り付けてください。",
     },

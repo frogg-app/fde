@@ -1,3 +1,4 @@
+import type { DaemonUpdateService } from "./daemon-update-service.js";
 import type pino from "pino";
 import type { SessionInboundMessage, SessionOutboundMessage } from "../../messages.js";
 import {
@@ -29,6 +30,7 @@ export interface DaemonSelfUpdateSessionControllerOptions {
   emitLifecycleIntent: (intent: DaemonSelfUpdateRestartIntent) => void;
   sessionLogger: pino.Logger;
   updater?: Pick<DaemonSelfUpdater, "update">;
+  versionedUpdate?: Pick<DaemonUpdateService, "startLegacy">;
 }
 
 function isDaemonSelfUpdateMessage(msg: SessionInboundMessage): msg is DaemonUpdateRequest {
@@ -43,6 +45,7 @@ export class DaemonSelfUpdateSessionController {
   private readonly emitLifecycleIntent: (intent: DaemonSelfUpdateRestartIntent) => void;
   private readonly sessionLogger: pino.Logger;
   private readonly updater: Pick<DaemonSelfUpdater, "update">;
+  private readonly versionedUpdate: Pick<DaemonUpdateService, "startLegacy"> | undefined;
 
   constructor(options: DaemonSelfUpdateSessionControllerOptions) {
     this.clientId = options.clientId;
@@ -52,6 +55,7 @@ export class DaemonSelfUpdateSessionController {
     this.emitLifecycleIntent = options.emitLifecycleIntent;
     this.sessionLogger = options.sessionLogger;
     this.updater = options.updater ?? daemonSelfUpdater;
+    this.versionedUpdate = options.versionedUpdate;
   }
 
   dispatch(msg: SessionInboundMessage): Promise<void> | undefined {
@@ -65,12 +69,14 @@ export class DaemonSelfUpdateSessionController {
     const previousVersion = this.daemonVersion;
 
     try {
-      const result = await this.updater.update({
-        daemonVersion: previousVersion,
-        desktopManaged: this.desktopManaged,
-        onProgress: (phase) => this.emitProgress(msg.requestId, phase),
-        logger: this.sessionLogger,
-      });
+      const result = this.versionedUpdate
+        ? await this.versionedUpdate.startLegacy()
+        : await this.updater.update({
+            daemonVersion: previousVersion,
+            desktopManaged: this.desktopManaged,
+            onProgress: (phase) => this.emitProgress(msg.requestId, phase),
+            logger: this.sessionLogger,
+          });
 
       this.emitResponse({
         requestId: msg.requestId,
@@ -79,7 +85,7 @@ export class DaemonSelfUpdateSessionController {
         previousVersion,
         newVersion: result.newVersion,
       });
-      if (!result.success) {
+      if (!result.success || this.versionedUpdate) {
         return;
       }
 

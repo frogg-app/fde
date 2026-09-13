@@ -1,3 +1,4 @@
+import type { DaemonSelfUpdateResult } from "./daemon-self-updater.js";
 import { brand } from "@fde/branding";
 import { spawn, type ChildProcess } from "node:child_process";
 import { randomUUID } from "node:crypto";
@@ -96,6 +97,7 @@ export class DaemonUpdateService {
   private readonly listen: string | null;
   private readonly getListen: (() => string | null) | undefined;
   private readonly retainAcrossGatewayRestart: boolean;
+  private completion: Promise<CliResultEvent | null> | null = null;
   private runStartedAt = 0;
   private handedOff = false;
   private readonly logger: pino.Logger;
@@ -208,18 +210,41 @@ export class DaemonUpdateService {
       ...(input.version ? ["--to", input.version] : []),
     ];
     // Runs detached from the response: the CLI keeps reporting until it hands off.
-    const completion = this.runCli(args, runId)
-      .then((result) => this.finishRun(runId, result))
+    this.completion = this.runCli(args, runId)
+      .then((result) => {
+        this.finishRun(runId, result);
+        return result;
+      })
       .catch((error: unknown) => {
         this.logger.error({ err: error, runId }, "self-update run failed");
-        this.finishRun(runId, {
+        const result: CliResultEvent = {
           event: "result",
           status: "failed",
           reason: error instanceof Error ? error.message : String(error),
-        });
+        };
+        this.finishRun(runId, result);
+        return result;
       });
-    void completion;
     return { accepted: true, runId, targetVersion: input.version ?? null, error: null };
+  }
+
+  /** Older clients wait for staging/handoff before expecting a reconnect. */
+  async startLegacy(): Promise<DaemonSelfUpdateResult> {
+    const started = await this.start();
+    if (!started.accepted) {
+      return { success: false, error: started.error, newVersion: null };
+    }
+    const result = await this.completion;
+    const success = result?.status === "handoff";
+    const reason =
+      result?.status === "up_to_date"
+        ? `Daemon is already up to date (${result.currentVersion ?? this.daemonVersion}); no restart is needed`
+        : (result?.reason ?? "Daemon update failed before restart");
+    return {
+      success,
+      error: success ? null : reason,
+      newVersion: result?.targetVersion ?? result?.currentVersion ?? null,
+    };
   }
 
   private reconcileHandoff(): void {

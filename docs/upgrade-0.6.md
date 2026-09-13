@@ -21,6 +21,14 @@ No official relay endpoint is configured by default. Existing paired hosts that
 relied on an old hosted relay need a real operator-configured relay or a direct/SSH
 connection. Do not substitute an invented hosted endpoint.
 
+If an existing `config.json` has `daemon.relay.enabled: true` without an endpoint,
+startup fails with a configuration error. For direct or SSH access, set
+`daemon.relay.enabled` to `false` in `$FDE_HOME/config.json` (normally
+`~/.fde/config.json`) and rerun the installer. To retain relay access, configure
+`daemon.relay.endpoint` with your operator-provided endpoint instead. Installation
+does not silently overwrite an explicit relay setting. `fde stop` does not require
+a valid startup configuration.
+
 ## Namespace changes
 
 - Environment configuration uses `FDE_*`; the daemon state root is `FDE_HOME`.
@@ -48,6 +56,27 @@ lifecycle and complete installed-update acceptance remain unverified. See the
 [independent execution specification](plans/independent-execution-service.md).
 
 ## Verify and recover
+
+Network discovery identifies known pre-0.6 daemon versions and shows an update
+instruction instead of attempting an incompatible connection. If discovery still
+reports the old version after installation, the old daemon is still serving that
+address; verify the running service and restart it before scanning again. Unknown
+versions remain connectable because discovery alone cannot establish compatibility.
+After a failed manual direct connection, the app also checks the identity endpoint
+for a known pre-0.6 version and presents the same upgrade guidance. If that probe
+fails or reports a current version, the original connection error is retained.
+
+The repaired installer stops the daemon recorded in the selected state directory
+before activating the installed version. It then checks `/api/identity` and
+`/api/health`; a stale version or startup failure exits with an error instead of
+reporting a successful installation. `FDE_NO_SERVICE=1` installs files only and
+does not perform activation checks. Set `FDE_HEALTH_TIMEOUT` to adjust the default
+30-second activation deadline.
+
+For script installations, use `fde update` or the host settings **Daemon updates**
+section. Older update requests also use the versioned release updater instead of
+requiring a global npm installation. The CLI hands off restart and rollback to
+its update supervisor.
 
 After both sides are upgraded, verify pairing, reconnect, plugins, permissions,
 terminal access and agent resume on an isolated workload. Verify installed desktop

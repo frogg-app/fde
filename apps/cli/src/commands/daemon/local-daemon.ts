@@ -6,6 +6,7 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import { loadConfig, resolveFdeHome, spawnProcess } from "@fde/server";
 import treeKill from "tree-kill";
+import { stopOwnedDaemonService } from "./service/stop.js";
 import { tryConnectToDaemon } from "../../utils/client.js";
 
 export interface DaemonStartOptions {
@@ -44,12 +45,18 @@ export interface LocalDaemonState {
   stalePidFile: boolean;
 }
 
+type LocalDaemonProcessState = Pick<
+  LocalDaemonState,
+  "home" | "listen" | "logPath" | "pidPath" | "pidInfo" | "running" | "stalePidFile"
+>;
+
 export interface DetachedStartResult {
   pid: number | null;
   logPath: string;
 }
 
 export interface StopLocalDaemonOptions {
+  stopService?: boolean;
   home?: string;
   timeoutMs?: number;
   killTimeoutMs?: number;
@@ -62,7 +69,12 @@ export interface StopLocalDaemonResult {
   pid: number | null;
   forced: boolean;
   usedLifecycleRpc: boolean;
-  reason: "not_running" | "lifecycle_shutdown_rpc" | "owner_pid_signal" | "owner_pid_sigkill";
+  reason:
+    | "not_running"
+    | "lifecycle_shutdown_rpc"
+    | "owner_pid_signal"
+    | "owner_pid_sigkill"
+    | "service_manager";
   message: string;
 }
 
@@ -403,7 +415,7 @@ async function waitForPidExit(pid: number, timeoutMs: number): Promise<boolean> 
 }
 
 async function waitForDaemonUnreachable(
-  state: LocalDaemonState,
+  state: LocalDaemonProcessState,
   timeoutMs: number,
 ): Promise<boolean> {
   const host = resolveTcpHostFromListen(state.listen);
@@ -440,7 +452,7 @@ async function waitForDaemonUnreachable(
   return poll();
 }
 
-function removeStalePidFile(state: LocalDaemonState): void {
+function removeStalePidFile(state: LocalDaemonProcessState): void {
   if (!state.stalePidFile) {
     return;
   }
@@ -453,7 +465,7 @@ function removeStalePidFile(state: LocalDaemonState): void {
 }
 
 function createNotRunningStopResult(
-  state: LocalDaemonState,
+  state: LocalDaemonProcessState,
   pid: number | null,
   message: string,
 ): StopLocalDaemonResult {
@@ -469,7 +481,7 @@ function createNotRunningStopResult(
 }
 
 function createStopTimeoutError(
-  state: LocalDaemonState,
+  state: LocalDaemonProcessState,
   pid: number | null,
   timeoutMs: number,
 ): Error {
@@ -487,7 +499,7 @@ function createStopTimeoutError(
 }
 
 async function signalDaemonOwnerForStop(
-  state: LocalDaemonState,
+  state: LocalDaemonProcessState,
   pid: number | null,
 ): Promise<StopLocalDaemonResult | null> {
   if (pid === null) {
@@ -503,7 +515,7 @@ async function signalDaemonOwnerForStop(
 }
 
 async function waitForStopAfterRequest(args: {
-  state: LocalDaemonState;
+  state: LocalDaemonProcessState;
   pid: number | null;
   timeoutMs: number;
   killTimeoutMs: number;
@@ -577,21 +589,29 @@ export function resolveLocalDaemonState(options: { home?: string } = {}): LocalD
   };
   const home = resolveFdeHome(env);
   const config = loadConfig(home, { env });
-  const pidPath = pidFilePath(home);
-  const logPath = path.join(home, DAEMON_LOG_FILENAME);
-  const pidInfo = existsSync(pidPath) ? readPidFile(pidPath) : null;
-  const running = pidInfo ? isProcessRunning(pidInfo.pid) : false;
-  const listen = pidInfo?.listen ?? config.listen;
+  const state = resolveLocalDaemonProcessState(home);
 
   return {
-    home,
-    listen,
+    ...state,
+    listen: state.pidInfo?.listen ?? config.listen,
     relayEnabled: config.relayEnabled ?? true,
     relayEndpoint:
       config.relayPublicEndpoint ?? config.relayEndpoint ?? brand.services.relayEndpoint ?? "",
     relayUseTls: config.relayUseTls ?? false,
     relayPublicUseTls: config.relayPublicUseTls ?? config.relayUseTls ?? false,
-    logPath,
+  };
+}
+
+function resolveLocalDaemonProcessState(home: string): LocalDaemonProcessState {
+  const pidPath = pidFilePath(home);
+  const pidInfo = existsSync(pidPath) ? readPidFile(pidPath) : null;
+  const running = pidInfo ? isProcessRunning(pidInfo.pid) : false;
+  return {
+    home,
+    // Shutdown targets the recorded owner, even when startup config is invalid.
+    // No PID listen target means signal the owner; never probe a default port.
+    listen: pidInfo?.listen ?? "",
+    logPath: path.join(home, DAEMON_LOG_FILENAME),
     pidPath,
     pidInfo,
     running,
@@ -700,7 +720,7 @@ export function startLocalDaemonForeground(
 }
 
 async function requestLifecycleShutdown(
-  state: LocalDaemonState,
+  state: LocalDaemonProcessState,
   timeoutMs: number,
 ): Promise<LifecycleShutdownAttempt> {
   const host = resolveTcpHostFromListen(state.listen);
@@ -750,24 +770,49 @@ export async function stopLocalDaemon(
 ): Promise<StopLocalDaemonResult> {
   const timeoutMs = options.timeoutMs ?? DEFAULT_STOP_TIMEOUT_MS;
   const killTimeoutMs = options.killTimeoutMs ?? DEFAULT_KILL_TIMEOUT_MS;
-  const state = resolveLocalDaemonState({ home: options.home });
+  const state = resolveLocalDaemonProcessState(resolveLocalFdeHome(options.home));
   const deadline = Date.now() + timeoutMs;
   const remainingTimeoutMs = () => Math.max(1, deadline - Date.now());
 
+  if (!state.pidInfo) {
+    return createNotRunningStopResult(state, null, "Daemon is not running");
+  }
+
+  const serviceStop =
+    state.running && options.stopService
+      ? stopOwnedDaemonService({
+          pid: state.pidInfo.pid,
+          preserveExecution:
+            process.env.FDE_EXECUTION_SERVICE === "1" ||
+            existsSync(path.join(state.home, "execution-service")),
+        })
+      : false;
+  if (serviceStop === true) {
+    if (!(await waitForPidExit(state.pidInfo.pid, remainingTimeoutMs()))) {
+      throw createStopTimeoutError(state, state.pidInfo.pid, timeoutMs);
+    }
+    return {
+      action: "stopped",
+      home: state.home,
+      pid: state.pidInfo.pid,
+      forced: false,
+      usedLifecycleRpc: false,
+      reason: "service_manager",
+      message: "Daemon service stopped",
+    };
+  }
+
   const shutdownAttempt = await requestLifecycleShutdown(state, remainingTimeoutMs());
   const lifecycleRequested = shutdownAttempt.requested;
-
-  if (!state.pidInfo || (!state.running && !lifecycleRequested)) {
-    const staleSuffix =
-      state.stalePidFile && state.pidInfo ? ` (stale PID file for ${state.pidInfo.pid})` : "";
+  if (!state.running && !lifecycleRequested) {
     return createNotRunningStopResult(
       state,
-      state.pidInfo?.pid ?? null,
-      `Daemon is not running${staleSuffix}`,
+      state.pidInfo.pid,
+      `Daemon is not running (stale PID file for ${state.pidInfo.pid})`,
     );
   }
 
-  const pid = state.pidInfo?.pid ?? null;
+  const pid = state.pidInfo.pid;
   const fallbackMessage = shutdownAttempt.requested ? null : shutdownAttempt.reason;
   if (!lifecycleRequested) {
     const notRunningResult = await signalDaemonOwnerForStop(state, pid);
@@ -779,9 +824,14 @@ export async function stopLocalDaemon(
     pid,
     timeoutMs: remainingTimeoutMs(),
     killTimeoutMs,
-    force: options.force,
+    force: options.force && serviceStop !== "preserve_execution",
   });
   if (!stopped) {
+    if (serviceStop === "preserve_execution" && options.force) {
+      throw new Error(
+        "Daemon did not stop gracefully. Refusing to force a service configured to kill retained execution. Reinstall the daemon service with FDE_EXECUTION_SERVICE=1 (KillMode=process), then retry.",
+      );
+    }
     throw createStopTimeoutError(state, pid, timeoutMs);
   }
 

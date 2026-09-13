@@ -156,7 +156,7 @@ ${plistEntry("FDE_LISTEN", input.listen)}${plistEntry(
     input.fdeHome ? plistEntry(`${brand.envPrefix}_HOME`, input.fdeHome) : ""
   }  </dict>
   <key>RunAtLoad</key><true/>
-  <key>KeepAlive</key><true/>
+  <key>KeepAlive</key><dict><key>SuccessfulExit</key><false/></dict>
   <key>StandardOutPath</key><string>${xml(logPath)}</string>
   <key>StandardErrorPath</key><string>${xml(logPath)}</string>
 </dict>

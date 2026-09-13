@@ -1,5 +1,7 @@
+import { createServer } from "node:http";
+import { promisify } from "node:util";
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
 import {
   mkdtempSync,
   mkdirSync,
@@ -110,15 +112,18 @@ test("Fish honors XDG_CONFIG_HOME and does not duplicate configuration", (t) => 
   assert.equal(readFileSync(file, "utf8"), config);
 });
 
-test("the native installer listens on every network interface and starts without systemd", (t) => {
+test("the native installer listens on every network interface and starts without systemd", async (t) => {
   const f = fixture(t, "bash", { FDE_NO_SERVICE: "0" });
   const shimDir = path.join(f.home, "shim");
   mkdirSync(shimDir);
   writeFileSync(path.join(shimDir, "systemctl"), "#!/bin/sh\nexit 1\n", { mode: 0o755 });
   f.env.PATH = `${shimDir}:/usr/bin:/bin`;
-  const output = f.run();
+  const service = await daemonFixture(t);
+  f.env.FDE_LISTEN = `0.0.0.0:${service.port}`;
+  const { stdout: output } = await promisify(execFile)("bash", [installer], { env: f.env });
   const unit = readFileSync(path.join(f.home, ".config/systemd/user/fde-daemon.service"), "utf8");
-  assert.match(unit, /^Environment=FDE_LISTEN=0\.0\.0\.0:9999$/m);
+  assert.ok(unit.includes(`Environment=FDE_LISTEN=0.0.0.0:${service.port}`));
+  assert.match(output, /verified running daemon 0.0.1/);
   assert.match(output, /started the daemon for this login/);
 });
 
@@ -130,3 +135,74 @@ for (const shell of ["bash", "fish", "unknown"]) {
       assert.equal(existsSync(path.join(f.home, file)), false);
   });
 }
+
+async function daemonFixture(t, version = "0.0.1", health = "ok") {
+  const server = createServer((request, response) => {
+    response.setHeader("content-type", "application/json");
+    response.end(
+      JSON.stringify(
+        request.url === "/api/identity" ? { version, product: "fde" } : { status: health },
+      ),
+    );
+  });
+  await new Promise((resolve) => server.listen(0, "0.0.0.0", resolve));
+  t.after(() => new Promise((resolve) => server.close(resolve)));
+  return { port: server.address().port };
+}
+
+for (const [version, health, expected] of [
+  ["0.3.1", "ok", /daemon reports version 0.3.1, expected 0.0.1/],
+  ["0.0.1", "failed", /daemon health check did not report ok/],
+]) {
+  test(`installer refuses success for daemon ${version} with health ${health}`, async (t) => {
+    const service = await daemonFixture(t, version, health);
+    const f = fixture(t, "bash", {
+      FDE_NO_SERVICE: "0",
+      FDE_HEALTH_TIMEOUT: "0.1",
+      FDE_LISTEN: `0.0.0.0:${service.port}`,
+    });
+    const shimDir = path.join(f.home, "shim");
+    mkdirSync(shimDir);
+    writeFileSync(path.join(shimDir, "systemctl"), "#!/bin/sh\nexit 0\n", { mode: 0o755 });
+    f.env.PATH = `${shimDir}:/usr/bin:/bin`;
+    await assert.rejects(promisify(execFile)("bash", [installer], { env: f.env }), (error) => {
+      assert.match(error.stderr, expected);
+      assert.doesNotMatch(error.stdout, /verified running daemon|FDE daemon 0.0.1 installed/);
+      return true;
+    });
+  });
+}
+
+test("repeat service installation stops the service and detached owner before activation", async (t) => {
+  const service = await daemonFixture(t);
+  const f = fixture(t, "bash", { FDE_NO_SERVICE: "0", FDE_LISTEN: `0.0.0.0:${service.port}` });
+  const shimDir = path.join(f.home, "shim");
+  mkdirSync(shimDir);
+  f.env.FDE_TEST_COMMAND_LOG = path.join(f.home, "commands");
+  writeFileSync(
+    path.join(shimDir, "systemctl"),
+    '#!/bin/sh\nprintf "systemctl %s\\n" "$*" >> "$FDE_TEST_COMMAND_LOG"\n',
+    { mode: 0o755 },
+  );
+  f.env.PATH = `${shimDir}:/usr/bin:/bin`;
+  // Stage the bundle without starting a real host service.
+  execFileSync("bash", [installer], { env: { ...f.env, FDE_NO_SERVICE: "1" } });
+  writeFileSync(
+    path.join(f.env.FDE_INSTALL_DIR, "current/bin/fde"),
+    '#!/bin/sh\nprintf "fde %s\\n" "$*" >> "$FDE_TEST_COMMAND_LOG"\n',
+    { mode: 0o755 },
+  );
+  await promisify(execFile)("bash", [installer], { env: f.env });
+  assert.equal(
+    readFileSync(f.env.FDE_TEST_COMMAND_LOG, "utf8"),
+    [
+      "systemctl --user daemon-reload",
+      "systemctl --user enable fde-daemon",
+      "systemctl --user is-active --quiet fde-daemon",
+      "systemctl --user stop fde-daemon",
+      `fde daemon stop --home ${f.home}/.fde`,
+      "systemctl --user start fde-daemon",
+      "",
+    ].join("\n"),
+  );
+});
