@@ -510,24 +510,52 @@ configure_shell_path() {
   done
 }
 
+# Use the bundled runtime so this also works on macOS without hostname -I.
+web_ui_urls() {
+  "${FDE_INSTALL_DIR}/current/node/bin/node" - "${FDE_LISTEN}" <<'JS'
+const { networkInterfaces } = require('node:os');
+const listen = process.argv[2].replace(/^tcp:\/\//, '');
+if (listen.startsWith('/')) process.exit(0);
+const separator = listen.lastIndexOf(':');
+const host = listen.slice(0, separator).replace(/^\[|\]$/g, '');
+const port = listen.slice(separator + 1);
+let addresses = [host];
+if (host === '0.0.0.0' || host === '::') {
+  addresses = Object.values(networkInterfaces()).flat()
+    .filter((entry) => !entry.internal && (host === '::' || entry.family === 'IPv4'))
+    .filter((entry) => !entry.scopeid)
+    .map((entry) => entry.address);
+}
+for (const address of new Set(addresses)) {
+  const authority = address.includes(':') ? `[${address}]` : address;
+  process.stdout.write(`http://${authority}:${port}/\n`);
+}
+JS
+}
+
 print_next_steps() {
-  local host port
-  host="${FDE_LISTEN%:*}"
+  local host port urls url listen
+  listen="${FDE_LISTEN#tcp://}"
+  host="${listen%:*}"
   port="${FDE_LISTEN##*:}"
   echo
   log "${BRAND_NAME} daemon ${BUNDLE_VERSION} installed."
   if [ "${FDE_NO_SERVICE}" = "1" ]; then
     log "no service installed; start the daemon with: ${BRAND_CLI} daemon start --listen ${FDE_LISTEN} --web-ui"
   else
-    if [ "${host}" = "127.0.0.1" ] || [ "${host}" = "localhost" ]; then
-      log "web UI: http://${host}:${port}/"
-      log "the daemon listens on loopback; reach it through an SSH tunnel or re-run with FDE_LISTEN=0.0.0.0:${port}"
+    urls="$(web_ui_urls)"
+    if [ -n "${urls}" ]; then
+      while IFS= read -r url; do
+        log "web UI: ${url}"
+      done <<< "${urls}"
+    elif [[ "${listen}" = /* ]]; then
+      log "web UI: listening on Unix socket ${listen}; use a proxy or TCP listener for browser access"
     else
-      if [ "${host}" = "0.0.0.0" ] || [ "${host}" = "::" ]; then
-        log "web UI: http://<this-hosts-network-address>:${port}/"
-      else
-        log "web UI: http://${host}:${port}/"
-      fi
+      log "web UI: no network address detected; check the host's network configuration"
+    fi
+    if [ "${host}" = "127.0.0.1" ] || [ "${host}" = "localhost" ] || [ "${host}" = "[::1]" ] || [ "${host}" = "::1" ]; then
+      log "the daemon listens on loopback; reach it through an SSH tunnel or re-run with FDE_LISTEN=0.0.0.0:${port}"
+    elif [[ "${listen}" != /* ]]; then
       log "the daemon is network-reachable; set a password with: ${BRAND_CLI} daemon set-password"
     fi
   fi

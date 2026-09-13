@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Allow `fde start --no-relay` to override invalid saved relay settings by
+  keeping its already-running check independent of startup validation and applying
+  worker flags before validating configuration, including independent execution.
+- Keep `fde status` usable with invalid relay settings or malformed configuration:
+  show process information and a diagnostic note, with unknown configuration
+  values represented explicitly.
+- In 0.6.12, print real host interface addresses in native installer web UI URLs,
+  preserving explicit listeners and IPv6 URL brackets. Report unavailable network
+  addresses and Unix sockets without a placeholder URL.
+
 - Repair daemon lifecycle and script-install updates in 0.6.11: stop no longer
   requires valid startup configuration, and matching systemd/launchd services
   stop through their owner. Installer activation stops the old same-home daemon

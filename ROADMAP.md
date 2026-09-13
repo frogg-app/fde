@@ -1,6 +1,6 @@
 # FDE roadmap
 
-Source baseline: **0.6.11** (daemon recovery fixes; publication not yet verified). Electron is the production app-only desktop;
+Source baseline: **0.6.12** (daemon recovery fixes; publication not yet verified). Electron is the production app-only desktop;
 Node daemons remain separately installed. [Changelog](CHANGELOG.md) records
 completed work and [upgrade notes](docs/upgrade-0.6.md) describe the coordinated
 namespace migration. Unchecked items are validation/backlog work, not active tasks.

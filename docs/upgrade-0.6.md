@@ -27,7 +27,10 @@ startup fails with a configuration error. For direct or SSH access, set
 `~/.fde/config.json`) and rerun the installer. To retain relay access, configure
 `daemon.relay.endpoint` with your operator-provided endpoint instead. Installation
 does not silently overwrite an explicit relay setting. `fde stop` does not require
-a valid startup configuration.
+a valid startup configuration. `fde status` reports the process state alongside
+the configuration error and uses unknown values for settings it cannot resolve.
+For a temporary direct launch, `fde start --no-relay` overrides the saved relay
+setting for that process; update the configuration before using the login service.
 
 ## Namespace changes
 
@@ -71,7 +74,11 @@ before activating the installed version. It then checks `/api/identity` and
 `/api/health`; a stale version or startup failure exits with an error instead of
 reporting a successful installation. `FDE_NO_SERVICE=1` installs files only and
 does not perform activation checks. Set `FDE_HEALTH_TIMEOUT` to adjust the default
-30-second activation deadline.
+30-second activation deadline. The installer prints the host’s non-loopback
+interface addresses for wildcard listeners, preserving the configured port.
+On hosts with multiple interfaces, it prints each available URL. Explicit
+listener addresses are printed directly; Unix sockets need a proxy or TCP
+listener for browser access.
 
 For script installations, use `fde update` or the host settings **Daemon updates**
 section. Older update requests also use the versioned release updater instead of

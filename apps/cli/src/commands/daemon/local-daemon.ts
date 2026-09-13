@@ -602,6 +602,22 @@ export function resolveLocalDaemonState(options: { home?: string } = {}): LocalD
   };
 }
 
+type LocalDaemonDiagnosticState =
+  | (LocalDaemonState & { configError: null })
+  | (LocalDaemonProcessState & { configError: string });
+
+export function resolveLocalDaemonDiagnosticState(
+  options: { home?: string } = {},
+): LocalDaemonDiagnosticState {
+  const state = resolveLocalDaemonProcessState(resolveLocalFdeHome(options.home));
+  try {
+    return { ...resolveLocalDaemonState(options), configError: null };
+  } catch (error) {
+    if (error instanceof ForeignDaemonError) throw error;
+    return { ...state, configError: getErrorMessage(error) };
+  }
+}
+
 function resolveLocalDaemonProcessState(home: string): LocalDaemonProcessState {
   const pidPath = pidFilePath(home);
   const pidInfo = existsSync(pidPath) ? readPidFile(pidPath) : null;

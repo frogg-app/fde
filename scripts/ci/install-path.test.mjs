@@ -11,7 +11,7 @@ import {
   rmSync,
   symlinkSync,
 } from "node:fs";
-import { tmpdir } from "node:os";
+import { networkInterfaces, tmpdir } from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 
@@ -123,6 +123,13 @@ test("the native installer listens on every network interface and starts without
   const { stdout: output } = await promisify(execFile)("bash", [installer], { env: f.env });
   const unit = readFileSync(path.join(f.home, ".config/systemd/user/fde-daemon.service"), "utf8");
   assert.ok(unit.includes(`Environment=FDE_LISTEN=0.0.0.0:${service.port}`));
+  const addresses = Object.values(networkInterfaces())
+    .flat()
+    .filter((entry) => !entry.internal && entry.family === "IPv4");
+  for (const { address } of addresses) {
+    assert.ok(output.includes(`web UI: http://${address}:${service.port}/`));
+  }
+  assert.ok(!output.includes("<this-hosts-network-address>"));
   assert.match(output, /verified running daemon 0.0.1/);
   assert.match(output, /started the daemon for this login/);
 });
