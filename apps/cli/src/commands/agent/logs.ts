@@ -49,7 +49,11 @@ export function formatAgentActivityTranscript(
     return "";
   }
   return curateAgentActivity(
-    timelineItems,
+    // COMPAT(pluginTimelineItems): older daemons can still send plugin rows; they are not shown.
+    // Remove after 2027-09-13.
+    timelineItems.filter(
+      (item): item is Exclude<AgentTimelineItem, { type: "plugin" }> => item.type !== "plugin",
+    ),
     tailCount !== undefined ? { maxItems: tailCount } : undefined,
   );
 }

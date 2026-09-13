@@ -339,6 +339,17 @@ export interface CompactionTimelineItem {
   preTokens?: number;
 }
 
+// COMPAT(pluginTimelineItems): plugins were removed after v0.7.0. Older daemons can still send
+// these items; clients parse and ignore them. Remove after 2027-09-13.
+export interface LegacyPluginTimelineItem {
+  type: "plugin";
+  id: string;
+  pluginId: string;
+  kind: string;
+  version: number;
+  data: JsonValue;
+}
+
 export interface AgentTaskItem {
   text: string;
   completed: boolean;
@@ -354,7 +365,8 @@ export type AgentTimelineItem =
   | ToolCallTimelineItem
   | { type: "todo"; items: AgentTaskItem[] }
   | { type: "error"; message: string }
-  | CompactionTimelineItem;
+  | CompactionTimelineItem
+  | LegacyPluginTimelineItem;
 
 export type AgentStreamEvent =
   | { type: "thread_started"; sessionId: string; provider: AgentProvider }

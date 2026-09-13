@@ -5976,3 +5976,77 @@ test("waitForFinish with timeout=0 omits timeoutMs and has no client deadline", 
     vi.useRealTimers();
   }
 });
+
+test("resolves a timeline page from an older daemon that still holds plugin items", async () => {
+  const mock = createMockTransport();
+  const client = new DaemonClient({
+    url: "ws://test",
+    clientId: "clsk_unit_test",
+    logger: noopLogger,
+    reconnect: { enabled: false },
+    transportFactory: () => mock.transport,
+  });
+  clients.push(client);
+
+  const connectPromise = client.connect();
+  mock.triggerOpen();
+  await connectPromise;
+
+  const response = client.fetchAgentTimeline("agent_cli", {
+    requestId: "req-plugin",
+    timeout: 1000,
+  });
+  mock.triggerMessage(
+    wrapSessionMessage({
+      type: "fetch_agent_timeline_response",
+      payload: {
+        requestId: "req-plugin",
+        agentId: "agent_cli",
+        agent: null,
+        direction: "tail",
+        projection: "projected",
+        epoch: "epoch-1",
+        reset: false,
+        staleCursor: false,
+        gap: false,
+        window: { minSeq: 1, maxSeq: 2, nextSeq: 3 },
+        startCursor: { epoch: "epoch-1", seq: 1 },
+        endCursor: { epoch: "epoch-1", seq: 2 },
+        hasOlder: false,
+        hasNewer: false,
+        entries: [
+          {
+            timestamp: "2026-09-13T00:00:00.000Z",
+            provider: "claude",
+            seqStart: 1,
+            seqEnd: 1,
+            sourceSeqRanges: [{ startSeq: 1, endSeq: 1 }],
+            collapsed: [],
+            item: { type: "assistant_message", text: "done" },
+          },
+          {
+            timestamp: "2026-09-13T00:00:01.000Z",
+            provider: "claude",
+            seqStart: 2,
+            seqEnd: 2,
+            sourceSeqRanges: [{ startSeq: 2, endSeq: 2 }],
+            collapsed: [],
+            item: {
+              type: "plugin",
+              id: "review-1",
+              pluginId: "review",
+              kind: "review",
+              version: 1,
+              data: { status: "running" },
+            },
+          },
+        ],
+        error: null,
+      },
+    }),
+  );
+
+  await expect(response).resolves.toMatchObject({
+    entries: [{ item: { type: "assistant_message" } }, { item: { type: "plugin" } }],
+  });
+});
