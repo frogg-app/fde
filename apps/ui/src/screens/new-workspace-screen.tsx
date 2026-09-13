@@ -1,3 +1,4 @@
+import { useNewWorkspaceDraftNavigation } from "./new-workspace/use-draft-navigation";
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import type { ReactElement, RefObject } from "react";
 import { useTranslation } from "react-i18next";
@@ -108,7 +109,6 @@ import {
 } from "./new-workspace-picker-item";
 import {
   clearPickerPrAttachmentForTargetChange,
-  initialPickerSelectionState,
   reducePickerSelection,
   syncPickerPrAttachment,
 } from "./new-workspace-picker-state";
@@ -177,6 +177,7 @@ interface NewWorkspaceScreenProps {
   projectId?: string;
   displayName?: string;
   draftId?: string;
+  resumeDraft?: boolean;
   /** Overrides the remembered isolation for this visit (see useWorkspaceIsolation). */
   initialIsolation?: "local" | "worktree";
 }
@@ -975,8 +976,10 @@ function buildComposerConfig(input: {
   workspaceDirectory: string | null;
   sourceDirectory: string | null;
   initialSetup?: WorkspaceDraftTabSetup | null;
+  restoredSetup?: WorkspaceDraftTabSetup;
 }): Parameters<typeof useAgentInputDraft>[0]["composer"] {
-  const { serverId, isConnected, workspaceDirectory, sourceDirectory, initialSetup } = input;
+  const { serverId, isConnected, workspaceDirectory, sourceDirectory } = input;
+  const initialSetup = input.restoredSetup ?? input.initialSetup;
   const workingDir = workspaceDirectory || sourceDirectory || undefined;
   return {
     initialServerId: serverId || null,
@@ -1545,14 +1548,41 @@ function useNewWorkspaceFormStack(input: NewWorkspaceFormStackInput): ReactEleme
   );
 }
 
-export function NewWorkspaceScreen({
+export function NewWorkspaceScreen(props: NewWorkspaceScreenProps) {
+  const navigation = useNewWorkspaceDraftNavigation(props.draftId, props.resumeDraft);
+  const route = navigation.initialDraft.route;
+  return (
+    <NewWorkspaceForm
+      {...props}
+      serverId={route.serverId ?? props.serverId}
+      sourceDirectory={route.sourceDirectory ?? props.sourceDirectory}
+      projectId={route.projectId ?? props.projectId}
+      displayName={route.displayName ?? props.displayName}
+      initialIsolation={route.isolation ?? props.initialIsolation}
+      navigation={navigation}
+    />
+  );
+}
+
+function NewWorkspaceForm({
   serverId,
   sourceDirectory: sourceDirectoryProp,
   projectId,
   displayName: displayNameProp,
   draftId,
   initialIsolation,
-}: NewWorkspaceScreenProps) {
+  navigation: {
+    initialDraft,
+    remember: rememberDraft,
+    complete: completeDraft,
+    recordCreatedWorkspace,
+    begin: beginSubmission,
+    fail: failSubmission,
+    pendingAction,
+    errorMessage,
+    createdWorkspace,
+  },
+}: NewWorkspaceScreenProps & { navigation: ReturnType<typeof useNewWorkspaceDraftNavigation> }) {
   const queryClient = useQueryClient();
   const { theme } = useUnistyles();
   const { t } = useTranslation();
@@ -1580,11 +1610,6 @@ export function NewWorkspaceScreen({
   // COMPAT(workspaceMultiplicity): added in v0.1.97, drop the gate when floor >= v0.1.97
   const supportsWorkspaceMultiplicity = useHostFeature(selectedServerId, "workspaceMultiplicity");
   const supportsForgeSearch = useHostFeature(selectedServerId, "forgeSearch");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [createdWorkspace, setCreatedWorkspace] = useState<ReturnType<
-    typeof normalizeWorkspaceDescriptor
-  > | null>(null);
-  const [pendingAction, setPendingAction] = useState<"chat" | "empty" | "terminal" | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [projectPickerOpen, setProjectPickerOpen] = useState(false);
   const openAddProjectPicker = useOpenAddProject();
@@ -1613,12 +1638,14 @@ export function NewWorkspaceScreen({
   // reads live from preferences so the async load can't race a frozen
   // initializer. Both go through `resolveLaunchTarget`, so a profile deleted
   // daemon-side falls back to chat rather than leaving a dead selection.
-  const [manualLaunchTarget, setManualLaunchTarget] = useState<LaunchTarget | null>(null);
+  const [manualLaunchTarget, setManualLaunchTarget] = useState<LaunchTarget | null>(
+    initialDraft.launchTarget,
+  );
   const launchTarget = useMemo(
     () => resolveLaunchTarget(manualLaunchTarget ?? formPreferences.launchTarget, terminalProfiles),
     [manualLaunchTarget, formPreferences.launchTarget, terminalProfiles],
   );
-  const [terminalPromptText, setTerminalPromptText] = useState("");
+  const [terminalPromptText, setTerminalPromptText] = useState(initialDraft.terminalPromptText);
   const {
     isTerminalLaunch,
     selectedTerminalProfile,
@@ -1681,12 +1708,13 @@ export function NewWorkspaceScreen({
       workspaceDirectory: workspace?.workspaceDirectory ?? null,
       sourceDirectory: selectedSourceDirectory,
       initialSetup: forkDraftSetup?.setup,
+      restoredSetup: initialDraft.composerSetup,
     }),
   });
   const composerState = chatDraft.composerState;
   const [pickerSelection, dispatchPickerSelection] = useReducer(
     reducePickerSelection,
-    initialPickerSelectionState,
+    initialDraft.pickerSelection,
   );
   const selectedItem = pickerSelection.selectedItem;
 
@@ -1721,12 +1749,38 @@ export function NewWorkspaceScreen({
     ? getWorktreeSupportForHostProject({ project: selectedProject, serverId: selectedServerId })
     : "unsupported";
   const isPending = isNewWorkspacePending({ pendingAction, isDraftHandoffActive });
-  const { effectiveIsolation, setIsolation, canCreateWorktree, showRefPicker } =
+  const { isolation, effectiveIsolation, setIsolation, canCreateWorktree, showRefPicker } =
     useWorkspaceIsolation({
       supportsMultiplicity: supportsWorkspaceMultiplicity,
       worktreeSupport,
       initialIsolation,
     });
+
+  // Keep navigation metadata separate from the existing text/attachment draft owner.
+  useEffect(() => {
+    rememberDraft({
+      route: {
+        serverId: selectedServerId,
+        sourceDirectory: selectedSourceDirectory ?? undefined,
+        projectId: selectedProject
+          ? (getHostProjectId(selectedProject, selectedServerId) ?? undefined)
+          : undefined,
+        displayName: selectedProject?.projectName,
+        draftId,
+        isolation,
+      },
+      pickerSelection,
+      launchTarget,
+      terminalPromptText,
+      composerSetup: composerState?.selectedProvider
+        ? buildWorkspaceDraftSetupFromComposer({
+            cwd: selectedSourceDirectory ?? "",
+            provider: composerState.selectedProvider,
+            composerState,
+          })
+        : undefined,
+    });
+  });
 
   const branchSuggestionsQuery = useQuery({
     queryKey: [
@@ -2023,7 +2077,7 @@ export function NewWorkspaceScreen({
             serverId: selectedServerId,
             createFailedMessage: t("newWorkspace.errors.createWorktreeFailed"),
           });
-      setCreatedWorkspace(normalizedWorkspace);
+      recordCreatedWorkspace(normalizedWorkspace);
       return normalizedWorkspace;
     },
     [
@@ -2032,6 +2086,7 @@ export function NewWorkspaceScreen({
       effectiveIsolation,
       mergeWorkspaces,
       queryClient,
+      recordCreatedWorkspace,
       selectedItem,
       selectedProject,
       selectedServerId,
@@ -2044,12 +2099,12 @@ export function NewWorkspaceScreen({
 
   const handleSubmitNewWorkspace = useCallback(
     async (payload: MessagePayload) => {
+      const action = isEmptyWorkspaceSubmission(payload) ? "empty" : "chat";
+      if (!beginSubmission(action)) return;
       try {
-        setErrorMessage(null);
         await composerState?.persistFormPreferences();
         await updateFormPreferences({ launchTarget });
         if (isEmptyWorkspaceSubmission(payload)) {
-          setPendingAction("empty");
           await runCreateEmptyWorkspace({
             payload,
             ensureWorkspace,
@@ -2057,10 +2112,10 @@ export function NewWorkspaceScreen({
             navigate: (targetServerId, workspaceId) =>
               navigateToWorkspace({ serverId: targetServerId, workspaceId }),
           });
+          completeDraft();
           return;
         }
 
-        setPendingAction("chat");
         await runCreateChatAgent({
           payload,
           composerState,
@@ -2075,15 +2130,18 @@ export function NewWorkspaceScreen({
             selectModel: t("newWorkspace.errors.selectModel"),
           },
         });
+        completeDraft();
       } catch (error) {
         const message = toErrorMessage(error);
-        setPendingAction(null);
-        setErrorMessage(message);
+        failSubmission(message);
         toast.error(message);
       }
     },
     [
       composerState,
+      beginSubmission,
+      failSubmission,
+      completeDraft,
       draftId,
       chatDraft.clear,
       ensureWorkspace,
@@ -2098,10 +2156,9 @@ export function NewWorkspaceScreen({
   );
 
   const handleSubmitTerminalLaunch = useCallback(async () => {
+    if (!beginSubmission("terminal")) return;
     try {
-      setErrorMessage(null);
       await updateFormPreferences({ launchTarget });
-      setPendingAction("terminal");
       await runCreateTerminalWorkspace({
         cwd: selectedSourceDirectory ?? "",
         prompt: terminalPromptText,
@@ -2128,13 +2185,17 @@ export function NewWorkspaceScreen({
         navigate: (targetServerId, workspaceId, target) =>
           navigateToWorkspace({ serverId: targetServerId, workspaceId, target }),
       });
+      completeDraft();
+      setTerminalPromptText("");
     } catch (error) {
       const message = toErrorMessage(error);
-      setPendingAction(null);
-      setErrorMessage(message);
+      failSubmission(message);
       toast.error(message);
     }
   }, [
+    beginSubmission,
+    failSubmission,
+    completeDraft,
     ensureWorkspace,
     launchTarget,
     selectedServerId,

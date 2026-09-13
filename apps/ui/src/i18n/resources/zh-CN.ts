@@ -1036,6 +1036,7 @@ export const zhCN: TranslationResources = {
     },
   },
   sidebar: {
+    workspaceDraft: "新建工作区（草稿）",
     hostsMenu: {
       trigger: "主机",
       addHost: "添加主机",

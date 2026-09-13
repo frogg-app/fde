@@ -4,6 +4,9 @@
 
 - Fix Nix installation collisions from redundant self-links and inspect macOS
   branded executables through their actual bundle metadata.
+- Restore unfinished workspace forms from the sidebar with their project, prompt,
+  attachments, provider selections, isolation and starting reference. Keep pending
+  submissions locked across navigation and retain failed launches for retry.
 
 - Preserve exact prior Linux/macOS desktop update payloads in selected development
   releases, with independent platform versions and strict continuity verification.

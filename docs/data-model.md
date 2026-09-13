@@ -566,6 +566,17 @@ source code, prompts, and tool output; encrypted-at-rest storage is a separate s
 }
 ```
 
+Unfinished new-workspace forms also retain session-only navigation metadata in
+`new-workspace-navigation-store`: host/project, isolation, starting reference,
+launch target, terminal prompt, and composer selections. The sidebar resumes
+that exact form; an explicit New Workspace action keeps its requested context.
+Text and attachment bytes remain owned by the existing draft and attachment stores.
+Submission state survives route remounts, preventing duplicate creates while a
+request is pending and retaining a created workspace for retry after launch failure.
+Successful handoff removes the sidebar entry. A form lifetime identifier prevents
+a delayed completion from removing a newer form or resurrecting a completed one.
+These navigation entries do not survive an app reload.
+
 ### Attachment Store (Web)
 
 **IndexedDB database:** `fde-attachment-bytes`, object store: `attachments`

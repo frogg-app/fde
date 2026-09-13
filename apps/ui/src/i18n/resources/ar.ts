@@ -1044,6 +1044,7 @@ export const ar: TranslationResources = {
     },
   },
   sidebar: {
+    workspaceDraft: "مساحة عمل جديدة (مسودة)",
     hostsMenu: {
       trigger: "المضيفون",
       addHost: "إضافة مضيف",

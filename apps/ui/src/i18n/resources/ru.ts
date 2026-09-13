@@ -1062,6 +1062,7 @@ export const ru: TranslationResources = {
     },
   },
   sidebar: {
+    workspaceDraft: "Новое рабочее пространство (черновик)",
     hostsMenu: {
       trigger: "Хосты",
       addHost: "Добавить хост",
