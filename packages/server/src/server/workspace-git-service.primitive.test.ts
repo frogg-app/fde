@@ -917,7 +917,7 @@ describe("WorkspaceGitServiceImpl primitive refresh entrypoint", () => {
     service.dispose();
   });
 
-  test("quiet observed workspaces do not refresh git on the observation re-ensure timer", async () => {
+  test("quiet observed workspaces only run the worktree safety refresh, never forge work", async () => {
     let nowMs = 0;
     const getCheckoutStatus = vi.fn(async (cwd: string) => createCheckoutStatus(cwd));
     const getPullRequestStatus = vi.fn(async () => createPullRequestStatusResult());
@@ -936,7 +936,8 @@ describe("WorkspaceGitServiceImpl primitive refresh entrypoint", () => {
     await vi.advanceTimersByTimeAsync(120_000);
     await flushPromises();
 
-    expect(getCheckoutStatus).toHaveBeenCalledTimes(1);
+    // Initial snapshot plus the 30s worktree safety refreshes that settle inside the window.
+    expect(getCheckoutStatus).toHaveBeenCalledTimes(4);
     expect(getPullRequestStatus).toHaveBeenCalledTimes(1);
     expect(getPullRequestStatus).toHaveBeenCalledWith(
       REPO_CWD,
@@ -991,7 +992,8 @@ describe("WorkspaceGitServiceImpl primitive refresh entrypoint", () => {
     await flushPromises();
 
     expect(subscribe).toHaveBeenCalledTimes(2);
-    expect(getCheckoutStatus).toHaveBeenCalledTimes(1);
+    // The worktree safety refresh also fired inside the window.
+    expect(getCheckoutStatus).toHaveBeenCalledTimes(2);
 
     subscription.unsubscribe();
     service.dispose();
@@ -1523,7 +1525,8 @@ describe("WorkspaceGitServiceImpl primitive refresh entrypoint", () => {
     await vi.advanceTimersByTimeAsync(120_000);
     await flushPromises();
 
-    expect(getCheckoutStatus).toHaveBeenCalledTimes(1);
+    // One safety-refresh timer per target, not per subscriber.
+    expect(getCheckoutStatus).toHaveBeenCalledTimes(4);
 
     first.unsubscribe();
     second.unsubscribe();

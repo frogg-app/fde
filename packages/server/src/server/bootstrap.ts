@@ -1108,6 +1108,9 @@ export async function createFdeDaemon(
     providerDefinitions: initialAgentManagerState.providerDefinitions,
     registry: agentStorage,
     appendSystemPrompt: config.appendSystemPrompt,
+    onWorkspaceFilesMayHaveChanged: ({ cwd }) => {
+      workspaceGitService.onWorkspaceFilesMayHaveChanged(cwd);
+    },
     onWorkspaceStateMayHaveChanged: ({ cwd }) => {
       workspaceGitService.onWorkspaceStateMayHaveChanged(cwd);
     },
