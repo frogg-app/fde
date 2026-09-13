@@ -43,6 +43,13 @@ test("production packages use branded identity and register branded deep links",
   ]);
   assert.ok(config.win.target.includes("nsis"));
   assert.ok(config.win.target.includes("zip"));
+  assert.equal(config.nsis.oneClick, true);
+  assert.equal(config.nsis.perMachine, false);
+  assert.equal(
+    config.nsis.include,
+    path.join(root, ".generated/branding/windows-installer/installer.nsh"),
+  );
+  assert.equal(config.nsis.shortcutName, "Sample");
   assert.ok(config.mac.target.includes("dmg"));
   assert.ok(config.linux.target.includes("AppImage"));
 });

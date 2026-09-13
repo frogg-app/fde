@@ -28,6 +28,49 @@ test("custom defaults have independent identities and no upstream services", () 
   assert.equal(brand.links.docs, null);
   assert.equal(storageKey(brand, "settings"), "com.acme.studio:settings");
 });
+test("installer presentation defaults to the dark palette and accepts overrides", () => {
+  const brand = resolveBrandManifest({
+    ...minimal,
+    colors: {
+      dark: {
+        accent: "#c4b5fd",
+        accentForeground: "#27143d",
+        background: "#20152e",
+        foreground: "#faf5ff",
+      },
+    },
+  });
+  assert.equal(brand.installer.colors.background, "#20152e");
+  assert.equal(brand.installer.colors.accent, "#c4b5fd");
+  assert.equal(brand.installer.copy.ready, "Acme Studio is ready");
+  const custom = resolveBrandManifest({
+    ...minimal,
+    installer: {
+      tagline: "Build with {name}",
+      colors: { success: "#00ff00" },
+      copy: { installing: "Setting up {name}" },
+    },
+  });
+  assert.equal(custom.installer.tagline, "Build with Acme Studio");
+  assert.equal(custom.installer.colors.success, "#00ff00");
+  assert.equal(custom.installer.copy.installing, "Setting up Acme Studio");
+  for (const installer of [
+    { colors: { success: "green" } },
+    { copy: { unknown: "x" } },
+    { tagline: "x".repeat(81) },
+  ]) {
+    assert.equal(BrandManifestSchema.safeParse({ ...minimal, installer }).success, false);
+  }
+  assert.throws(
+    () =>
+      resolveBrandManifest({
+        ...minimal,
+        installer: { colors: { background: "#ffffff", foreground: "#fefefe" } },
+      }),
+    /installer colors require text contrast/,
+  );
+});
+
 test("invalid identity, unsupported version, unknown fields and bad contrast are rejected", () => {
   for (const patch of [
     { id: "../fde" },
@@ -56,7 +99,11 @@ test("invalid identity, unsupported version, unknown fields and bad contrast are
 });
 test("updates require a source and signed mode requires a public key", () => {
   assert.throws(
-    () => resolveBrandManifest({ ...minimal, distribution: { updates: "github-release" } }),
+    () =>
+      resolveBrandManifest({
+        ...minimal,
+        distribution: { updates: "github-release" },
+      }),
     /repository/,
   );
   assert.throws(
@@ -67,14 +114,21 @@ test("updates require a source and signed mode requires a public key", () => {
       }),
     /updaterPublicKey/,
   );
-  const brand = resolveBrandManifest({ ...minimal, distribution: { repository: "acme/studio" } });
+  const brand = resolveBrandManifest({
+    ...minimal,
+    distribution: { repository: "acme/studio" },
+  });
   assert.equal(brand.distribution.releasesApi, "https://api.github.com/repos/acme/studio/releases");
 });
 test("custom home selection ignores inherited FDE homes", () => {
   const brand = resolveBrandManifest(minimal);
   assert.equal(brandEnv(brand, { FDE_HOME: "/fde" }, "HOME"), undefined);
   assert.equal(brandEnv(brand, { ACME_HOME: " /acme " }, "HOME"), "/acme");
-  const official = resolveBrandManifest({ ...minimal, id: "fde", envPrefix: "FDE" });
+  const official = resolveBrandManifest({
+    ...minimal,
+    id: "fde",
+    envPrefix: "FDE",
+  });
   assert.equal(brandEnv(official, { FDE_HOME: "/official" }, "HOME"), "/official");
 });
 test("management accepts legacy metadata only for FDE and rejects other products", () => {
