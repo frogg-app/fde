@@ -1,0 +1,86 @@
+/*
+ * Design tokens shared by the landing page and the Starlight docs.
+ * `data-theme` on <html> is the single source of truth ("dark" by default).
+ * Brand accent is the origami-frog cyan from brands/fde/brand.json.
+ */
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --fde-bg: #0e1211;
+  --fde-bg-elevated: #151a19;
+  --fde-surface: #1a201f;
+  --fde-surface-2: #222a28;
+  --fde-border: rgb(255 255 255 / 0.08);
+  --fde-border-strong: rgb(255 255 255 / 0.16);
+  --fde-text: #f4f7f6;
+  --fde-text-muted: #a3adab;
+  --fde-text-faint: #8a9492;
+  --fde-accent: #25b5c8;
+  --fde-accent-bright: #7fd9e6;
+  --fde-accent-fg: #07222b;
+  --fde-accent-soft: rgb(37 181 200 / 0.14);
+  --fde-accent-glow: rgb(37 181 200 / 0.45);
+  --fde-violet: #8b7cf6;
+  --fde-success: #3fcf8e;
+  --fde-warning: #f5b84a;
+  --fde-danger: #f87171;
+  --fde-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 40px -12px rgb(0 0 0 / 0.6);
+  --fde-shadow-lg: 0 2px 4px rgb(0 0 0 / 0.35), 0 30px 80px -20px rgb(0 0 0 / 0.75);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --fde-bg: #f7f9fa;
+  --fde-bg-elevated: #ffffff;
+  --fde-surface: #ffffff;
+  --fde-surface-2: #eef2f4;
+  --fde-border: rgb(15 30 40 / 0.1);
+  --fde-border-strong: rgb(15 30 40 / 0.2);
+  --fde-text: #121718;
+  --fde-text-muted: #4d5a5e;
+  --fde-text-faint: #647176;
+  --fde-accent: #045b9d;
+  --fde-accent-bright: #0a78c9;
+  --fde-accent-fg: #ffffff;
+  --fde-accent-soft: rgb(10 120 201 / 0.1);
+  --fde-accent-glow: rgb(10 120 201 / 0.3);
+  --fde-violet: #6d5bd0;
+  --fde-success: #11845b;
+  --fde-warning: #a15c00;
+  --fde-danger: #c0362c;
+  --fde-shadow: 0 1px 2px rgb(15 30 40 / 0.06), 0 12px 32px -12px rgb(15 30 40 / 0.18);
+  --fde-shadow-lg: 0 2px 4px rgb(15 30 40 / 0.06), 0 30px 70px -24px rgb(15 30 40 / 0.28);
+}
+
+:root {
+  --fde-radius-sm: 0.5rem;
+  --fde-radius: 0.75rem;
+  --fde-radius-lg: 1.25rem;
+  --fde-font:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    "Noto Sans", sans-serif;
+  --fde-font-mono:
+    ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --fde-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --fde-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --fde-fast: 140ms;
+  --fde-med: 260ms;
+  --fde-focus: 0 0 0 2px var(--fde-bg), 0 0 0 4px var(--fde-accent-bright);
+}
+
+/* Cross-document view transitions: zero JS, progressive (browsers without support just navigate). */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 180ms;
+  animation-timing-function: var(--fde-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
+}

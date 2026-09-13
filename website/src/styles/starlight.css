@@ -1,0 +1,143 @@
+/* Starlight re-themed onto the FDE tokens so the docs and the landing page read as one site. */
+
+:root,
+:root[data-theme="dark"] {
+  --sl-font: var(--fde-font);
+  --sl-font-mono: var(--fde-font-mono);
+
+  --sl-color-white: #ffffff;
+  --sl-color-gray-1: #e8eeec;
+  --sl-color-gray-2: #c3ccca;
+  --sl-color-gray-3: #8e9997;
+  --sl-color-gray-4: #5b6563;
+  --sl-color-gray-5: #333b39;
+  --sl-color-gray-6: #1a201f;
+  --sl-color-black: #0e1211;
+
+  --sl-color-accent-low: #0b3a42;
+  --sl-color-accent: #25b5c8;
+  --sl-color-accent-high: #aeeaf2;
+
+  --sl-color-bg-nav: rgb(14 18 17 / 0.82);
+  --sl-color-bg-sidebar: #0e1211;
+  --sl-color-hairline: rgb(255 255 255 / 0.07);
+  --sl-color-hairline-light: rgb(255 255 255 / 0.12);
+  --sl-color-backdrop-overlay: rgb(5 8 8 / 0.7);
+}
+
+:root[data-theme="light"] {
+  --sl-color-white: #121718;
+  --sl-color-gray-1: #1f2729;
+  --sl-color-gray-2: #333d40;
+  --sl-color-gray-3: #4d5a5e;
+  --sl-color-gray-4: #7b878b;
+  --sl-color-gray-5: #c7d0d3;
+  --sl-color-gray-6: #eaeff1;
+  --sl-color-gray-7: #f4f7f8;
+  --sl-color-black: #ffffff;
+
+  --sl-color-accent-low: #d4e8f7;
+  --sl-color-accent: #045b9d;
+  --sl-color-accent-high: #033e6b;
+
+  --sl-color-bg-nav: rgb(255 255 255 / 0.85);
+  --sl-color-bg-sidebar: #f7f9fa;
+  --sl-color-hairline: rgb(15 30 40 / 0.08);
+  --sl-color-hairline-light: rgb(15 30 40 / 0.12);
+}
+
+/* Frosted header, like the landing page. */
+header.header {
+  backdrop-filter: saturate(1.4) blur(12px);
+  -webkit-backdrop-filter: saturate(1.4) blur(12px);
+  border-bottom-color: var(--sl-color-hairline);
+}
+
+/* Faint accent glow at the top of every docs page. */
+.main-frame::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 22rem;
+  pointer-events: none;
+  background: radial-gradient(
+    60rem 18rem at 70% -6rem,
+    var(--fde-accent-soft),
+    transparent 70%
+  );
+  z-index: 0;
+}
+
+.site-title img {
+  height: 1.9rem;
+  width: auto;
+}
+
+/* Sidebar: pill-shaped current page with an accent rail. */
+.sidebar-content a {
+  border-radius: var(--fde-radius-sm);
+  transition:
+    background-color var(--fde-fast) var(--fde-ease),
+    color var(--fde-fast) var(--fde-ease);
+}
+
+.sidebar-content a:hover {
+  background-color: var(--fde-accent-soft);
+}
+
+.sidebar-content a[aria-current="page"],
+.sidebar-content a[aria-current="page"]:hover {
+  background: var(--fde-accent-soft);
+  color: var(--sl-color-text-accent);
+  box-shadow: inset 2px 0 0 var(--fde-accent);
+  font-weight: 600;
+}
+
+/* Visible, consistent focus rings everywhere. */
+:where(a, button, select, input, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--fde-accent-bright);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.sl-markdown-content a:not(:where(.not-content *)) {
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: 1px;
+  transition: text-decoration-color var(--fde-fast) var(--fde-ease);
+}
+
+.sl-markdown-content a:not(:where(.not-content *)):hover {
+  text-decoration-thickness: 2px;
+}
+
+/* Cards and link cards lift on hover. */
+.card,
+.sl-link-card {
+  border-radius: var(--fde-radius) !important;
+  transition:
+    transform var(--fde-med) var(--fde-ease),
+    box-shadow var(--fde-med) var(--fde-ease),
+    border-color var(--fde-med) var(--fde-ease);
+}
+
+.sl-link-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--fde-shadow);
+}
+
+.expressive-code .frame {
+  border-radius: var(--fde-radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sl-link-card:hover {
+    transform: none;
+  }
+}
+
+/* Calmer sidebar group headings. */
+.sidebar-content .group-label .large {
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: var(--sl-color-white);
+}

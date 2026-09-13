@@ -1,0 +1,202 @@
+---
+/**
+ * A rounded, shadowed screenshot with click-to-zoom.
+ *
+ *   import shot from "@/assets/docs/getting-started/pairing.png";
+ *   <Screenshot src={shot} alt="The pairing dialog" caption="Scan the code from your phone." />
+ *
+ * `lightSrc` (optional) is shown instead of `src` while the site is in light theme.
+ */
+import type { ImageMetadata } from "astro";
+import { getImage } from "astro:assets";
+
+interface Props {
+  src: ImageMetadata | string;
+  alt: string;
+  caption?: string;
+  lightSrc?: ImageMetadata | string;
+  /** Rendered width in CSS pixels (the image is never upscaled). Default: fills the column. */
+  width?: number;
+  /** "frame" adds a subtle border; "bare" drops it for images that carry their own window chrome. */
+  variant?: "frame" | "bare";
+}
+
+const { src, alt, caption, lightSrc, width, variant = "frame" } = Astro.props;
+
+async function render(source: ImageMetadata | string) {
+  if (typeof source === "string") {
+    return { inline: source, zoom: source, width: undefined, height: undefined, srcset: undefined };
+  }
+  const inlineWidths = [480, 720, 960, 1440].filter((w) => w < source.width);
+  const inline = await getImage({
+    src: source,
+    widths: [...inlineWidths, Math.min(source.width, 1920)],
+    format: "webp",
+  });
+  const zoom = await getImage({ src: source, width: Math.min(source.width, 2400), format: "webp" });
+  return {
+    inline: inline.src,
+    srcset: inline.srcSet.attribute,
+    zoom: zoom.src,
+    width: source.width,
+    height: source.height,
+  };
+}
+
+const primary = await render(src);
+const light = lightSrc ? await render(lightSrc) : undefined;
+const sizes = width ? `(min-width: ${width}px) ${width}px, 100vw` : "(min-width: 72rem) 45rem, 100vw";
+const style = width ? `max-width:${width}px` : undefined;
+---
+
+<figure class:list={["fde-screenshot not-content", `variant-${variant}`]} style={style}>
+  <button
+    type="button"
+    class="zoom-trigger"
+    aria-label={`Enlarge screenshot: ${alt}`}
+    data-zoom={primary.zoom}
+    data-zoom-light={light?.zoom}
+    data-alt={alt}
+  >
+    <img
+      class:list={["shot", { "shot-dark": !!light }]}
+      src={primary.inline}
+      srcset={primary.srcset}
+      sizes={sizes}
+      width={primary.width}
+      height={primary.height}
+      alt={alt}
+      loading="lazy"
+      decoding="async"
+    />
+    {
+      light && (
+        <img
+          class="shot shot-light"
+          src={light.inline}
+          srcset={light.srcset}
+          sizes={sizes}
+          width={light.width}
+          height={light.height}
+          alt={alt}
+          loading="lazy"
+          decoding="async"
+        />
+      )
+    }
+    <span class="zoom-hint" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="16" height="16"
+        ><path
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          d="M10.5 17a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13ZM15.5 15.5 20 20M10.5 8v5M8 10.5h5"></path></svg
+      >
+    </span>
+  </button>
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<script>
+  import { openLightbox } from "./lightbox";
+
+  document.addEventListener("click", (event) => {
+    const trigger = (event.target as Element | null)?.closest<HTMLButtonElement>(
+      ".fde-screenshot .zoom-trigger",
+    );
+    if (!trigger) return;
+    const isLight = document.documentElement.dataset.theme === "light";
+    const src = (isLight && trigger.dataset.zoomLight) || trigger.dataset.zoom;
+    if (!src) return;
+    const visible = [...trigger.querySelectorAll<HTMLImageElement>("img")].find(
+      (img) => img.offsetParent !== null,
+    );
+    openLightbox({ src, alt: trigger.dataset.alt ?? "", origin: visible ?? trigger, returnFocus: trigger });
+  });
+</script>
+
+<style>
+  .fde-screenshot {
+    margin: 1.75rem auto;
+    display: grid;
+    gap: 0.6rem;
+  }
+  .zoom-trigger {
+    position: relative;
+    display: block;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: zoom-in;
+    border-radius: var(--fde-radius);
+    transition: transform var(--fde-med) var(--fde-ease);
+  }
+  .shot {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: var(--fde-radius);
+    background: var(--fde-surface-2);
+    box-shadow: var(--fde-shadow);
+    transition: box-shadow var(--fde-med) var(--fde-ease);
+  }
+  .variant-frame .shot {
+    outline: 1px solid var(--fde-border-strong);
+    outline-offset: -1px;
+  }
+  .shot-light {
+    display: none;
+  }
+  :global([data-theme="light"]) .shot-light {
+    display: block;
+  }
+  :global([data-theme="light"]) .shot-dark {
+    display: none;
+  }
+  .zoom-hint {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.6rem;
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    color: #fff;
+    background: rgb(0 0 0 / 0.55);
+    backdrop-filter: blur(6px);
+    opacity: 0;
+    transform: scale(0.85);
+    transition:
+      opacity var(--fde-fast) var(--fde-ease),
+      transform var(--fde-med) var(--fde-ease-spring);
+  }
+  .zoom-trigger:hover .shot,
+  .zoom-trigger:focus-visible .shot {
+    box-shadow: var(--fde-shadow-lg);
+  }
+  .zoom-trigger:hover .zoom-hint,
+  .zoom-trigger:focus-visible .zoom-hint {
+    opacity: 1;
+    transform: scale(1);
+  }
+  .zoom-trigger:active {
+    transform: scale(0.992);
+  }
+  .zoom-trigger:focus-visible {
+    outline: 2px solid var(--fde-accent-bright);
+    outline-offset: 4px;
+  }
+  figcaption {
+    text-align: center;
+    font-size: var(--sl-text-sm, 0.875rem);
+    color: var(--fde-text-muted);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .zoom-trigger,
+    .zoom-hint {
+      transition: none;
+    }
+  }
+</style>

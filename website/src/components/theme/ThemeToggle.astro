@@ -1,0 +1,101 @@
+---
+interface Props {
+  class?: string;
+}
+const { class: className } = Astro.props;
+---
+
+<fde-theme-toggle class:list={["theme-toggle", className]}>
+  <button type="button" aria-label="Switch to light theme" title="Toggle theme">
+    <svg class="sun" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+      <circle cx="12" cy="12" r="4.2" fill="currentColor"></circle>
+      <g stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"></path>
+      </g>
+    </svg>
+    <svg class="moon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+      <path fill="currentColor" d="M20.4 14.6A8.5 8.5 0 0 1 9.4 3.6a8.5 8.5 0 1 0 11 11Z"></path>
+    </svg>
+  </button>
+</fde-theme-toggle>
+
+<script>
+  class FdeThemeToggle extends HTMLElement {
+    connectedCallback() {
+      const button = this.querySelector("button");
+      if (!button) return;
+      const sync = () => {
+        const next = document.documentElement.dataset.theme === "light" ? "dark" : "light";
+        button.setAttribute("aria-label", `Switch to ${next} theme`);
+      };
+      sync();
+      button.addEventListener("click", () => {
+        const next = document.documentElement.dataset.theme === "light" ? "dark" : "light";
+        const apply = () => {
+          document.documentElement.dataset.theme = next;
+          try {
+            localStorage.setItem("starlight-theme", next);
+          } catch {}
+          document.querySelectorAll("fde-theme-toggle button").forEach((b) =>
+            b.setAttribute("aria-label", `Switch to ${next === "light" ? "dark" : "light"} theme`),
+          );
+        };
+        const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown };
+        if (doc.startViewTransition && !reduced) doc.startViewTransition(apply);
+        else apply();
+      });
+    }
+  }
+  if (!customElements.get("fde-theme-toggle")) customElements.define("fde-theme-toggle", FdeThemeToggle);
+</script>
+
+<style>
+  .theme-toggle {
+    display: inline-flex;
+  }
+  button {
+    display: inline-grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 999px;
+    border: 1px solid var(--fde-border);
+    background: transparent;
+    color: var(--fde-text-muted);
+    cursor: pointer;
+    transition:
+      color var(--fde-fast) var(--fde-ease),
+      background-color var(--fde-fast) var(--fde-ease),
+      border-color var(--fde-fast) var(--fde-ease),
+      transform var(--fde-fast) var(--fde-ease);
+  }
+  button:hover {
+    color: var(--fde-text);
+    background: var(--fde-accent-soft);
+    border-color: var(--fde-border-strong);
+  }
+  button:active {
+    transform: scale(0.92);
+  }
+  button:focus-visible {
+    outline: 2px solid var(--fde-accent-bright);
+    outline-offset: 2px;
+  }
+  svg {
+    grid-area: 1 / 1;
+    transition:
+      transform var(--fde-med) var(--fde-ease-spring),
+      opacity var(--fde-fast) var(--fde-ease);
+  }
+  :global([data-theme="dark"]) .sun,
+  :global([data-theme="light"]) .moon {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.5);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    svg {
+      transition: none;
+    }
+  }
+</style>

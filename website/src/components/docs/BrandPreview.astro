@@ -1,0 +1,932 @@
+---
+/**
+ * Interactive brand playground: pick a name and colours, watch a mock app window re-theme,
+ * copy or download the matching `brand.json` (schema: packages/branding/brand.schema.json).
+ *
+ *   <BrandPreview />
+ *   <BrandPreview name="Acme Studio" publisher="Acme" />
+ */
+interface Props {
+  name?: string;
+  publisher?: string;
+}
+const { name = "Acme Studio", publisher = "Acme" } = Astro.props;
+
+const presets = [
+  {
+    label: "Acme (brands/example)",
+    light: { accent: "#6d28d9", background: "#faf5ff", foreground: "#27143d" },
+    dark: { accent: "#c4b5fd", background: "#20152e", foreground: "#faf5ff" },
+  },
+  {
+    label: "FDE",
+    light: { accent: "#045b9d", background: "#ffffff", foreground: "#18181b" },
+    dark: { accent: "#25b5c8", background: "#181b1a", foreground: "#fafafa" },
+  },
+  {
+    label: "Ember",
+    light: { accent: "#c2410c", background: "#fffaf5", foreground: "#2b1a10" },
+    dark: { accent: "#fb923c", background: "#1c1512", foreground: "#fdf4ec" },
+  },
+  {
+    label: "Moss",
+    light: { accent: "#15803d", background: "#f6faf6", foreground: "#142318" },
+    dark: { accent: "#4ade80", background: "#111a14", foreground: "#effaf2" },
+  },
+];
+---
+
+<fde-brand-preview class="fde-brand not-content" data-presets={JSON.stringify(presets)}>
+  <div class="layout">
+  <div class="controls" role="group" aria-label="Brand settings">
+    <div class="presets" role="group" aria-label="Start from a preset">
+      {
+        presets.map((preset, index) => (
+          <button type="button" class="chip" data-preset={index} aria-pressed={index === 0 ? "true" : "false"}>
+            <span class="swatch" style={`--a:${preset.dark.accent};--b:${preset.dark.background}`} aria-hidden="true" />
+            {preset.label.split(" ")[0]}
+          </button>
+        ))
+      }
+    </div>
+
+    <div class="controls-col">
+    <label class="field">
+      <span>App name</span>
+      <input name="name" type="text" value={name} maxlength="160" autocomplete="off" spellcheck="false" />
+    </label>
+    <div class="row">
+      <label class="field">
+        <span>Publisher</span>
+        <input name="publisher" type="text" value={publisher} maxlength="160" autocomplete="off" />
+      </label>
+      <label class="field">
+        <span>Daemon port</span>
+        <input name="daemonPort" type="number" min="1024" max="65535" value="10099" inputmode="numeric" />
+      </label>
+    </div>
+    <p class="derived"><span>id</span> <code data-out="id"></code> <span>app id</span> <code data-out="applicationId"></code></p>
+    </div>
+    <div class="controls-col">
+
+    <div class="mode-tabs" role="tablist" aria-label="Palette to edit">
+      <button type="button" role="tab" data-mode="dark" aria-selected="true">Dark</button>
+      <button type="button" role="tab" data-mode="light" aria-selected="false">Light</button>
+    </div>
+
+    <div class="colors">
+      {
+        ["accent", "background", "foreground"].map((key) => (
+          <label class="color">
+            <input type="color" data-color={key} aria-label={`${key} colour`} />
+            <span class="color-text">
+              <span class="color-name">{key}</span>
+              <input type="text" data-color-hex={key} maxlength="7" spellcheck="false" aria-label={`${key} hex value`} />
+            </span>
+          </label>
+        ))
+      }
+    </div>
+    <ul class="checks" aria-live="polite"></ul>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="mock" data-mock aria-label="Preview of the themed app" role="img">
+      <div class="m-titlebar">
+        <span class="m-dots"><i></i><i></i><i></i></span>
+        <span class="m-title" data-out="name"></span>
+      </div>
+      <div class="m-body">
+        <aside class="m-sidebar">
+          <div class="m-brand"><span class="m-glyph" data-out="initial"></span><span data-out="name"></span></div>
+          <div class="m-section">Workspaces</div>
+          <div class="m-item active"><span class="m-dot running"></span>api-server</div>
+          <div class="m-item sub"><span class="m-dot done"></span>fix flaky test</div>
+          <div class="m-item"><span class="m-dot idle"></span>mobile-app</div>
+          <div class="m-item"><span class="m-dot idle"></span>docs</div>
+          <div class="m-host"><span class="m-dot done"></span>build-box · connected</div>
+        </aside>
+        <main class="m-main">
+          <div class="m-header">
+            <span>api-server</span><span class="m-badge">Claude</span>
+          </div>
+          <div class="m-msg user">Add rate limiting to the upload endpoint</div>
+          <div class="m-msg agent">
+            I'll add a token bucket in <span class="m-code">middleware/limit.ts</span> and cover it with tests.
+          </div>
+          <div class="m-tool"><span class="m-check">✓</span> Edited 3 files <span class="m-plus">+84</span> <span class="m-minus">−6</span></div>
+          <div class="m-tool running"><span class="m-spinner"></span> Running <span class="m-code">npm test</span></div>
+          <div class="m-composer">
+            <span>Message the agent…</span>
+            <span class="m-send" aria-hidden="true">↑</span>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <div class="output">
+      <div class="output-bar">
+        <span><code>brands/<span data-out="id"></span>/brand.json</code></span>
+        <span class="output-actions">
+          <button type="button" class="btn" data-action="download"><span class="label">Download</span></button>
+          <button type="button" class="btn primary" data-action="copy"><span class="label">Copy JSON</span></button>
+        </span>
+      </div>
+      <pre tabindex="0"><code data-out="json"></code></pre>
+      <span class="sr-status" role="status" aria-live="polite"></span>
+    </div>
+  </div>
+  </div>
+</fde-brand-preview>
+
+<script>
+  import { copyWithFeedback } from "./copy";
+
+  type Mode = "light" | "dark";
+  type Palette = { accent: string; background: string; foreground: string };
+  type Preset = { label: string } & Record<Mode, Palette>;
+
+  const HEX = /^#[0-9a-f]{6}$/i;
+
+  function luminance(hex: string): number {
+    const [r, g, b] = [1, 3, 5].map((i) => {
+      const c = parseInt(hex.slice(i, i + 2), 16) / 255;
+      return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  }
+  function contrast(a: string, b: string): number {
+    const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+    return (hi + 0.05) / (lo + 0.05);
+  }
+  function onColor(accent: string): string {
+    return contrast(accent, "#ffffff") >= contrast(accent, "#111111") ? "#ffffff" : "#111111";
+  }
+  function slugify(value: string): string {
+    const slug = value
+      .toLowerCase()
+      .normalize("NFKD")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^[^a-z]+/, "")
+      .replace(/-+$/, "")
+      .slice(0, 48)
+      .replace(/-+$/, "");
+    return slug || "my-app";
+  }
+
+  class FdeBrandPreview extends HTMLElement {
+    private presets: Preset[] = [];
+    private palettes!: Record<Mode, Palette>;
+    private mode: Mode = "dark";
+
+    connectedCallback() {
+      this.presets = JSON.parse(this.dataset.presets ?? "[]");
+      this.palettes = structuredClone({ light: this.presets[0].light, dark: this.presets[0].dark });
+      this.mode = document.documentElement.dataset.theme === "light" ? "light" : "dark";
+      this.querySelectorAll("[data-mode]").forEach((b) =>
+        b.setAttribute("aria-selected", String((b as HTMLElement).dataset.mode === this.mode)),
+      );
+
+      this.addEventListener("input", (e) => this.onInput(e));
+      this.addEventListener("click", (e) => this.onClick(e));
+      this.addEventListener("keydown", (e) => this.onKey(e));
+      this.render();
+    }
+
+    private get<T extends HTMLElement>(selector: string): T {
+      return this.querySelector<T>(selector)!;
+    }
+
+    private onInput(event: Event) {
+      const target = event.target as HTMLInputElement;
+      const key = (target.dataset.color ?? target.dataset.colorHex) as keyof Palette | undefined;
+      if (key) {
+        let value = target.value.trim();
+        if (target.dataset.colorHex && !value.startsWith("#")) value = `#${value}`;
+        if (!HEX.test(value)) {
+          target.setAttribute("aria-invalid", "true");
+          return;
+        }
+        target.removeAttribute("aria-invalid");
+        this.palettes[this.mode][key] = value.toLowerCase();
+        this.clearPreset();
+      }
+      this.render(target);
+    }
+
+    private onClick(event: Event) {
+      const el = (event.target as Element).closest<HTMLElement>("button");
+      if (!el || !this.contains(el)) return;
+      if (el.dataset.preset) {
+        const preset = this.presets[Number(el.dataset.preset)];
+        this.palettes = structuredClone({ light: preset.light, dark: preset.dark });
+        this.querySelectorAll("[data-preset]").forEach((b) => b.setAttribute("aria-pressed", String(b === el)));
+        this.flash();
+        this.render();
+      } else if (el.dataset.mode) {
+        this.setMode(el.dataset.mode as Mode);
+      } else if (el.dataset.action === "copy") {
+        void copyWithFeedback(el, this.json(), this.get(".sr-status"));
+      } else if (el.dataset.action === "download") {
+        const blob = new Blob([this.json() + "\n"], { type: "application/json" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "brand.json";
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+        this.get(".sr-status").textContent = "brand.json downloaded";
+      }
+    }
+
+    private onKey(event: KeyboardEvent) {
+      const tab = (event.target as Element).closest<HTMLElement>("[role=tab]");
+      if (!tab || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+      event.preventDefault();
+      const next = this.mode === "dark" ? "light" : "dark";
+      this.setMode(next);
+      this.get<HTMLElement>(`[data-mode=${next}]`).focus();
+    }
+
+    private setMode(mode: Mode) {
+      this.mode = mode;
+      this.querySelectorAll("[data-mode]").forEach((b) =>
+        b.setAttribute("aria-selected", String((b as HTMLElement).dataset.mode === mode)),
+      );
+      this.flash();
+      this.render();
+    }
+
+    private clearPreset() {
+      this.querySelectorAll("[data-preset]").forEach((b) => b.setAttribute("aria-pressed", "false"));
+    }
+
+    private flash() {
+      const mock = this.get("[data-mock]");
+      mock.classList.remove("retheme");
+      void mock.offsetWidth;
+      mock.classList.add("retheme");
+    }
+
+    private field(name: string): string {
+      return this.get<HTMLInputElement>(`input[name=${name}]`).value.trim();
+    }
+
+    private manifest() {
+      const name = this.field("name") || "My App";
+      const publisher = this.field("publisher");
+      const id = slugify(name);
+      const pub = slugify(publisher || id).replace(/-/g, "");
+      const port = Number(this.field("daemonPort")) || 10099;
+      const palette = (mode: Mode) => ({
+        accent: this.palettes[mode].accent,
+        accentForeground: onColor(this.palettes[mode].accent),
+        background: this.palettes[mode].background,
+        foreground: this.palettes[mode].foreground,
+      });
+      return {
+        schemaVersion: 1,
+        id,
+        name,
+        ...(publisher ? { publisher } : {}),
+        applicationId: `com.${pub || "example"}.${id.replace(/-/g, "")}`,
+        daemonPort: port,
+        assets: { icon: "./icon.svg" },
+        colors: { light: palette("light"), dark: palette("dark") },
+      };
+    }
+
+    private json(): string {
+      return JSON.stringify(this.manifest(), null, 2);
+    }
+
+    private render(source?: HTMLInputElement) {
+      const m = this.manifest();
+      const p = m.colors[this.mode];
+      const mock = this.get<HTMLElement>("[data-mock]");
+      mock.style.setProperty("--m-accent", p.accent);
+      mock.style.setProperty("--m-accent-fg", p.accentForeground);
+      mock.style.setProperty("--m-bg", p.background);
+      mock.style.setProperty("--m-fg", p.foreground);
+
+      this.querySelectorAll<HTMLElement>("[data-out=name]").forEach((el) => (el.textContent = m.name));
+      this.querySelectorAll<HTMLElement>("[data-out=id]").forEach((el) => (el.textContent = m.id));
+      this.get("[data-out=applicationId]").textContent = m.applicationId;
+      this.get("[data-out=initial]").textContent = [...m.name][0]?.toUpperCase() ?? "?";
+      this.get("[data-out=json]").textContent = this.json();
+
+      for (const key of ["accent", "background", "foreground"] as const) {
+        const picker = this.get<HTMLInputElement>(`[data-color=${key}]`);
+        const hex = this.get<HTMLInputElement>(`[data-color-hex=${key}]`);
+        if (picker !== source) picker.value = p[key];
+        if (hex !== source) {
+          hex.value = p[key];
+          hex.removeAttribute("aria-invalid");
+        }
+      }
+
+      const checks: [boolean, string][] = [];
+      const text = contrast(p.foreground, p.background);
+      const accent = contrast(p.accent, p.background);
+      checks.push([text >= 4.5, `Text on background ${text.toFixed(1)}:1 ${text >= 4.5 ? "passes" : "needs 4.5:1"}`]);
+      checks.push([accent >= 3, `Accent on background ${accent.toFixed(1)}:1 ${accent >= 3 ? "passes" : "needs 3:1"}`]);
+      if (m.id === "fde" || m.applicationId.startsWith("app.frogg.")) {
+        checks.push([false, "FDE identities are reserved for the official build; pick another name"]);
+      }
+      if (m.daemonPort === 9999) {
+        checks.push([false, "Port 9999 is FDE's; a different port lets both run side by side"]);
+      }
+      if (m.daemonPort < 1024 || m.daemonPort > 65535) {
+        checks.push([false, "Daemon port must be between 1024 and 65535"]);
+      }
+      this.get("ul.checks").innerHTML = checks
+        .map(([ok, msg]) => `<li class="${ok ? "ok" : "warn"}"><span aria-hidden="true">${ok ? "✓" : "!"}</span>${msg}</li>`)
+        .join("");
+    }
+  }
+
+  if (!customElements.get("fde-brand-preview")) customElements.define("fde-brand-preview", FdeBrandPreview);
+</script>
+
+<style>
+  .fde-brand {
+    display: block;
+    margin: 2rem 0;
+    padding: 1rem;
+    border-radius: var(--fde-radius-lg);
+    background: var(--fde-bg-elevated);
+    border: 1px solid var(--fde-border);
+    box-shadow: var(--fde-shadow);
+    font-family: var(--fde-font);
+    color: var(--fde-text);
+  }
+  .fde-brand {
+    container-type: inline-size;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.25rem;
+  }
+  .controls {
+    display: grid;
+    gap: 0.8rem;
+    align-content: start;
+  }
+  .controls-col {
+    display: grid;
+    gap: 0.8rem;
+    align-content: start;
+  }
+  @container (min-width: 40rem) {
+    .controls {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 1.25rem;
+    }
+    .presets {
+      grid-column: 1 / -1;
+    }
+  }
+  @container (min-width: 68rem) {
+    .layout {
+      grid-template-columns: 18rem minmax(0, 1fr);
+    }
+    .controls {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+  .presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .chip,
+  .mode-tabs button,
+  .btn {
+    font: 500 0.8rem var(--fde-font);
+    color: var(--fde-text);
+    background: var(--fde-surface-2);
+    border: 1px solid var(--fde-border);
+    border-radius: 999px;
+    cursor: pointer;
+    transition:
+      background-color var(--fde-fast) var(--fde-ease),
+      border-color var(--fde-fast) var(--fde-ease),
+      transform var(--fde-fast) var(--fde-ease),
+      color var(--fde-fast) var(--fde-ease);
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.65rem 0.3rem 0.35rem;
+    min-height: 2rem;
+  }
+  .chip:hover,
+  .btn:hover,
+  .mode-tabs button:hover {
+    border-color: var(--fde-border-strong);
+  }
+  .chip:active,
+  .btn:active,
+  .mode-tabs button:active {
+    transform: scale(0.95);
+  }
+  .chip[aria-pressed="true"] {
+    border-color: var(--fde-accent);
+    background: var(--fde-accent-soft);
+  }
+  .swatch {
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--a) 50%, var(--b) 50%);
+    box-shadow: inset 0 0 0 1px rgb(128 128 128 / 0.4);
+  }
+  .field {
+    display: grid;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    color: var(--fde-text-muted);
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 6.5rem;
+    gap: 0.6rem;
+  }
+  input[type="text"],
+  input[type="number"] {
+    width: 100%;
+    font: 0.9rem var(--fde-font);
+    color: var(--fde-text);
+    background: var(--fde-bg);
+    border: 1px solid var(--fde-border-strong);
+    border-radius: var(--fde-radius-sm);
+    padding: 0.45rem 0.6rem;
+    min-height: 2.4rem;
+    transition:
+      border-color var(--fde-fast) var(--fde-ease),
+      box-shadow var(--fde-fast) var(--fde-ease);
+  }
+  input:focus-visible {
+    outline: none;
+    border-color: var(--fde-accent);
+    box-shadow: 0 0 0 3px var(--fde-accent-soft);
+  }
+  input[aria-invalid="true"] {
+    border-color: var(--fde-danger);
+  }
+  .derived {
+    margin: 0;
+    font-size: 0.72rem;
+    color: var(--fde-text-faint);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.4rem;
+    align-items: baseline;
+  }
+  .derived code {
+    font-size: 0.72rem;
+    color: var(--fde-text-muted);
+    background: var(--fde-surface-2);
+    padding: 0.05rem 0.35rem;
+    border-radius: 4px;
+    word-break: break-all;
+  }
+  .mode-tabs {
+    display: inline-grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 0.2rem;
+    gap: 0.2rem;
+    border-radius: 999px;
+    background: var(--fde-surface-2);
+    border: 1px solid var(--fde-border);
+  }
+  .mode-tabs button {
+    border-color: transparent;
+    background: transparent;
+    padding: 0.35rem;
+    min-height: 2rem;
+  }
+  .mode-tabs button[aria-selected="true"] {
+    background: var(--fde-bg-elevated);
+    border-color: var(--fde-border-strong);
+    box-shadow: var(--fde-shadow);
+  }
+  .colors {
+    display: grid;
+    gap: 0.45rem;
+  }
+  .color {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.35rem;
+    border-radius: var(--fde-radius-sm);
+    border: 1px solid var(--fde-border);
+    background: var(--fde-bg);
+  }
+  .color:focus-within {
+    border-color: var(--fde-accent);
+  }
+  input[type="color"] {
+    appearance: none;
+    width: 2.2rem;
+    height: 2.2rem;
+    padding: 0;
+    border: 0;
+    border-radius: 0.45rem;
+    background: none;
+    cursor: pointer;
+    flex: none;
+  }
+  input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+  }
+  input[type="color"]::-webkit-color-swatch {
+    border: 1px solid rgb(128 128 128 / 0.35);
+    border-radius: 0.45rem;
+  }
+  input[type="color"]::-moz-color-swatch {
+    border: 1px solid rgb(128 128 128 / 0.35);
+    border-radius: 0.45rem;
+  }
+  .color-text {
+    display: grid;
+    flex: 1;
+    min-width: 0;
+  }
+  .color-name {
+    font-size: 0.7rem;
+    text-transform: capitalize;
+    color: var(--fde-text-faint);
+  }
+  .color-text input {
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font-family: var(--fde-font-mono);
+    font-size: 0.85rem;
+  }
+  .color-text input:focus-visible {
+    box-shadow: none;
+  }
+  .checks {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.3rem;
+    font-size: 0.75rem;
+  }
+  .checks :global(li) {
+    display: flex;
+    gap: 0.4rem;
+    align-items: baseline;
+    color: var(--fde-text-muted);
+  }
+  .checks :global(li span) {
+    flex: none;
+    width: 1rem;
+    height: 1rem;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    font-size: 0.65rem;
+    font-weight: 700;
+  }
+  .checks :global(li.ok span) {
+    background: color-mix(in srgb, var(--fde-success) 20%, transparent);
+    color: var(--fde-success);
+  }
+  .checks :global(li.warn span) {
+    background: color-mix(in srgb, var(--fde-warning) 20%, transparent);
+    color: var(--fde-warning);
+  }
+
+  .stage {
+    display: grid;
+    gap: 1rem;
+    min-width: 0;
+  }
+
+  /* ---- Mock app window ---- */
+  .mock {
+    --m-surface: color-mix(in oklab, var(--m-fg) 5%, var(--m-bg));
+    --m-surface-2: color-mix(in oklab, var(--m-fg) 9%, var(--m-bg));
+    --m-border: color-mix(in oklab, var(--m-fg) 13%, var(--m-bg));
+    --m-muted: color-mix(in oklab, var(--m-fg) 62%, var(--m-bg));
+    --m-accent-soft: color-mix(in oklab, var(--m-accent) 16%, var(--m-bg));
+    border-radius: 0.8rem;
+    overflow: hidden;
+    background: var(--m-bg);
+    color: var(--m-fg);
+    border: 1px solid var(--m-border);
+    box-shadow: var(--fde-shadow-lg);
+    font-size: 0.78rem;
+    line-height: 1.45;
+    transition:
+      background-color 320ms var(--fde-ease),
+      color 320ms var(--fde-ease),
+      border-color 320ms var(--fde-ease);
+  }
+  .mock * {
+    transition:
+      background-color 320ms var(--fde-ease),
+      color 320ms var(--fde-ease),
+      border-color 320ms var(--fde-ease);
+  }
+  .mock.retheme {
+    animation: retheme 420ms var(--fde-ease);
+  }
+  @keyframes retheme {
+    40% {
+      transform: scale(0.992);
+    }
+  }
+  .m-titlebar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--m-surface);
+    border-bottom: 1px solid var(--m-border);
+  }
+  .m-dots {
+    display: inline-flex;
+    gap: 0.3rem;
+  }
+  .m-dots i {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    background: var(--m-border);
+  }
+  .m-title {
+    flex: 1;
+    text-align: center;
+    font-weight: 600;
+    color: var(--m-muted);
+    margin-right: 2.4rem;
+  }
+  .m-body {
+    display: grid;
+    grid-template-columns: 11rem minmax(0, 1fr);
+    min-height: 17rem;
+  }
+  .m-sidebar {
+    padding: 0.6rem;
+    border-right: 1px solid var(--m-border);
+    background: var(--m-surface);
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  .m-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .m-glyph {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 1.35rem;
+    height: 1.35rem;
+    border-radius: 0.35rem;
+    background: var(--m-accent);
+    color: var(--m-accent-fg);
+    font-size: 0.72rem;
+  }
+  .m-section {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--m-muted);
+    margin: 0.25rem 0 0.15rem;
+  }
+  .m-item {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.28rem 0.45rem;
+    border-radius: 0.4rem;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .m-item.sub {
+    padding-left: 1.3rem;
+    color: var(--m-muted);
+  }
+  .m-item.active {
+    background: var(--m-accent-soft);
+    box-shadow: inset 2px 0 0 var(--m-accent);
+  }
+  .m-host {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.68rem;
+    color: var(--m-muted);
+  }
+  .m-dot {
+    flex: none;
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background: var(--m-border);
+  }
+  .m-dot.running {
+    background: var(--m-accent);
+    box-shadow: 0 0 0 0 var(--m-accent);
+    animation: ping 1.6s var(--fde-ease) infinite;
+  }
+  .m-dot.done {
+    background: #22c55e;
+  }
+  @keyframes ping {
+    70% {
+      box-shadow: 0 0 0 5px transparent;
+    }
+  }
+  .m-main {
+    padding: 0.7rem 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+  .m-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 600;
+  }
+  .m-badge {
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    color: var(--m-accent);
+    background: var(--m-accent-soft);
+  }
+  .m-msg {
+    max-width: 90%;
+    padding: 0.45rem 0.6rem;
+    border-radius: 0.6rem;
+  }
+  .m-msg.user {
+    align-self: flex-end;
+    background: var(--m-surface-2);
+  }
+  .m-code {
+    font-family: var(--fde-font-mono);
+    font-size: 0.72rem;
+    padding: 0 0.25rem;
+    border-radius: 0.25rem;
+    background: var(--m-surface-2);
+  }
+  .m-tool {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.35rem 0.55rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--m-border);
+    color: var(--m-muted);
+    font-size: 0.72rem;
+  }
+  .m-check {
+    color: #22c55e;
+  }
+  .m-plus {
+    color: #22c55e;
+  }
+  .m-minus {
+    color: #ef4444;
+  }
+  .m-spinner {
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 50%;
+    border: 2px solid var(--m-accent-soft);
+    border-top-color: var(--m-accent);
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  .m-composer {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.35rem 0.35rem 0.35rem 0.7rem;
+    border-radius: 0.7rem;
+    border: 1px solid var(--m-border);
+    background: var(--m-surface);
+    color: var(--m-muted);
+  }
+  .m-send {
+    display: grid;
+    place-items: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 0.5rem;
+    background: var(--m-accent);
+    color: var(--m-accent-fg);
+    font-weight: 700;
+  }
+  @container (max-width: 30rem) {
+    .m-body {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .m-sidebar {
+      display: none;
+    }
+  }
+
+  /* ---- JSON output ---- */
+  .output {
+    position: relative;
+    border-radius: var(--fde-radius);
+    border: 1px solid var(--fde-border);
+    background: var(--fde-bg);
+    overflow: hidden;
+  }
+  .output-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    padding: 0.4rem 0.45rem 0.4rem 0.75rem;
+    border-bottom: 1px solid var(--fde-border);
+    font-size: 0.75rem;
+    color: var(--fde-text-muted);
+  }
+  .output-actions {
+    display: inline-flex;
+    gap: 0.35rem;
+  }
+  .btn {
+    padding: 0.3rem 0.8rem;
+    min-height: 2rem;
+  }
+  .btn.primary {
+    background: var(--fde-accent);
+    color: var(--fde-accent-fg);
+    border-color: transparent;
+  }
+  .btn.primary:hover {
+    background: var(--fde-accent-bright);
+  }
+  .btn[data-state="copied"] {
+    background: var(--fde-success);
+    color: #fff;
+  }
+  .btn[data-state="failed"] {
+    background: var(--fde-danger);
+    color: #fff;
+  }
+  .chip:focus-visible,
+  .btn:focus-visible,
+  .mode-tabs button:focus-visible,
+  pre:focus-visible {
+    outline: 2px solid var(--fde-accent-bright);
+    outline-offset: 2px;
+  }
+  pre {
+    margin: 0;
+    padding: 0.75rem 0.9rem;
+    max-height: 16rem;
+    overflow: auto;
+    font: 0.78rem/1.55 var(--fde-font-mono);
+    color: var(--fde-text);
+    background: transparent;
+  }
+  .sr-status {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mock,
+    .mock *,
+    .mock.retheme {
+      transition: none;
+      animation: none !important;
+    }
+  }
+</style>

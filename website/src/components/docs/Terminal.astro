@@ -1,0 +1,204 @@
+---
+/**
+ * A styled terminal block with a copy button.
+ *
+ *   <Terminal code="curl -fsSL https://frogg.app/install.sh | bash" />
+ *   <Terminal title="On the host" code={["fde daemon status", "fde daemon pair"]} output="Daemon running on 0.0.0.0:9999" />
+ *
+ * Only `code` is copied (one command per line, prompts never included). Lines starting with `#`
+ * render as comments and are left out of the copied text. `output` is shown dimmed and not copied.
+ */
+interface Props {
+  code: string | string[];
+  title?: string;
+  output?: string | string[];
+  /** Prompt glyph shown before each command. Default "$". Use "" for none, ">" for PowerShell. */
+  prompt?: string;
+  class?: string;
+}
+
+const { code, title = "Terminal", output, prompt = "$", class: className } = Astro.props;
+const lines = (Array.isArray(code) ? code : code.split("\n")).map((l) => l.replace(/\s+$/u, ""));
+const outputLines = output ? (Array.isArray(output) ? output : output.split("\n")) : [];
+const copyText = lines.filter((l) => l.trim() && !l.trimStart().startsWith("#")).join("\n");
+---
+
+<div class:list={["fde-terminal not-content", className]}>
+  <div class="bar">
+    <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+    <span class="title">{title}</span>
+    <button type="button" class="copy" data-copy={copyText} aria-label="Copy command to clipboard">
+      <svg class="icon-copy" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"
+        ><rect x="8" y="8" width="12" height="12" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"
+        ></rect><path d="M16 8V6.5A2.5 2.5 0 0 0 13.5 4h-7A2.5 2.5 0 0 0 4 6.5v7A2.5 2.5 0 0 0 6.5 16H8" fill="none" stroke="currentColor" stroke-width="2"></path></svg
+      >
+      <svg class="icon-check" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"
+        ><path d="m5 12.5 4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path></svg
+      >
+      <span class="label">Copy</span>
+    </button>
+  </div>
+  <pre tabindex="0"><code>{
+    lines.map((line) =>
+      line.trimStart().startsWith("#") ? (
+        <span class="line comment">{line}</span>
+      ) : line.trim() ? (
+        <span class="line">{prompt && <span class="prompt" aria-hidden="true">{prompt} </span>}<span class="cmd">{line}</span></span>
+      ) : (
+        <span class="line"> </span>
+      ),
+    )
+  }{outputLines.map((line) => <span class="line out">{line || " "}</span>)}</code></pre>
+  <span class="sr-status" role="status" aria-live="polite"></span>
+</div>
+
+<script>
+  import { copyWithFeedback } from "./copy";
+
+  document.addEventListener("click", (event) => {
+    const button = (event.target as Element | null)?.closest<HTMLButtonElement>(".fde-terminal .copy");
+    if (!button) return;
+    const status = button.closest(".fde-terminal")?.querySelector<HTMLElement>(".sr-status") ?? null;
+    void copyWithFeedback(button, button.dataset.copy ?? "", status);
+  });
+</script>
+
+<style>
+  .fde-terminal {
+    position: relative;
+    --term-bg: #0b0f0f;
+    --term-bar: #131918;
+    --term-text: #e6eeec;
+    --term-dim: #8b9795;
+    margin: 1.25rem 0;
+    border-radius: var(--fde-radius);
+    background: var(--term-bg);
+    border: 1px solid rgb(255 255 255 / 0.1);
+    box-shadow: var(--fde-shadow);
+    overflow: hidden;
+    color: var(--term-text);
+    font-family: var(--fde-font-mono);
+  }
+  .bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.45rem 0.5rem 0.45rem 0.85rem;
+    background: var(--term-bar);
+    border-bottom: 1px solid rgb(255 255 255 / 0.06);
+  }
+  .dots {
+    display: inline-flex;
+    gap: 0.35rem;
+  }
+  .dots i {
+    width: 0.62rem;
+    height: 0.62rem;
+    border-radius: 50%;
+    background: #3a4442;
+  }
+  .dots i:first-child {
+    background: #25b5c8;
+  }
+  .title {
+    flex: 1;
+    font-size: 0.75rem;
+    color: var(--term-dim);
+    font-family: var(--fde-font);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .copy {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 2rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    border: 1px solid rgb(255 255 255 / 0.12);
+    background: rgb(255 255 255 / 0.04);
+    color: var(--term-text);
+    font: 500 0.75rem var(--fde-font);
+    cursor: pointer;
+    transition:
+      background-color var(--fde-fast) var(--fde-ease),
+      border-color var(--fde-fast) var(--fde-ease),
+      color var(--fde-fast) var(--fde-ease),
+      transform var(--fde-fast) var(--fde-ease);
+  }
+  .copy:hover {
+    background: rgb(37 181 200 / 0.18);
+    border-color: rgb(127 217 230 / 0.45);
+  }
+  .copy:active {
+    transform: scale(0.94);
+  }
+  .copy:focus-visible {
+    outline: 2px solid #7fd9e6;
+    outline-offset: 2px;
+  }
+  .icon-check {
+    display: none;
+  }
+  .copy[data-state="copied"] {
+    color: #3fcf8e;
+    border-color: rgb(63 207 142 / 0.5);
+    background: rgb(63 207 142 / 0.12);
+  }
+  .copy[data-state="copied"] .icon-copy {
+    display: none;
+  }
+  .copy[data-state="copied"] .icon-check {
+    display: block;
+    animation: pop 320ms var(--fde-ease-spring);
+  }
+  .copy[data-state="failed"] {
+    color: #f87171;
+    border-color: rgb(248 113 113 / 0.5);
+  }
+  pre {
+    margin: 0;
+    padding: 0.9rem 1rem 1rem;
+    overflow-x: auto;
+    font-size: 0.875rem;
+    line-height: 1.7;
+    background: transparent;
+  }
+  pre:focus-visible {
+    outline: 2px solid #7fd9e6;
+    outline-offset: -2px;
+  }
+  .line {
+    display: block;
+    white-space: pre;
+  }
+  .prompt {
+    color: #25b5c8;
+    user-select: none;
+  }
+  .comment,
+  .out {
+    color: var(--term-dim);
+  }
+  .sr-status {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  @keyframes pop {
+    from {
+      transform: scale(0.4);
+    }
+    to {
+      transform: scale(1);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .copy[data-state="copied"] .icon-check {
+      animation: none;
+    }
+  }
+</style>
