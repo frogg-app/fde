@@ -18,9 +18,11 @@ interface SettingsModalState {
 
 const GENERAL_VIEW: SettingsView = { kind: "section", section: "general" };
 
-/** The compact root list has no wide equivalent; the modal opens on General instead. */
+/** The compact root lists have no wide equivalent; the modal opens on their first section instead. */
 function resolveModalView(view: SettingsView): SettingsView {
-  return view.kind === "root" ? GENERAL_VIEW : view;
+  if (view.kind === "root") return GENERAL_VIEW;
+  if (view.kind === "hostRoot") return { kind: "host", serverId: view.serverId, section: "host" };
+  return view;
 }
 
 export const useSettingsModalStore = create<SettingsModalState>((set) => ({

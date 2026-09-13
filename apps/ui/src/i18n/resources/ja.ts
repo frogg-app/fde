@@ -1043,6 +1043,12 @@ export const ja: TranslationResources = {
     },
   },
   sidebar: {
+    hostsMenu: {
+      trigger: "ホスト",
+      addHost: "ホストを追加",
+      hosts: "ホスト一覧",
+      noHosts: "ホストはまだありません",
+    },
     display: {
       trigger: "表示設定",
       heading: "表示",

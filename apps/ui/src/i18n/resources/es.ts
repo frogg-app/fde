@@ -1063,6 +1063,12 @@ export const es: TranslationResources = {
     },
   },
   sidebar: {
+    hostsMenu: {
+      trigger: "Anfitriones",
+      addHost: "Agregar anfitrión",
+      hosts: "Tus anfitriones",
+      noHosts: "Aún no hay anfitriones",
+    },
     display: {
       trigger: "Preferencias de visualización",
       heading: "Visualización",

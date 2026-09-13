@@ -5,6 +5,7 @@ import path from "node:path";
 import { parseArgs } from "node:util";
 import { portableCommand } from "../dev/npm-command.mjs";
 import { writeElectronChecksums } from "./electron-checksums.mjs";
+import { writeElectronInstallerZips } from "./electron-installer-zip.mjs";
 
 const root = path.resolve(import.meta.dirname, "../..");
 const desktop = path.join(root, "apps/desktop-electron");
@@ -61,4 +62,7 @@ const result = spawnSync(
 if (result.error) throw result.error;
 if (result.status !== 0) process.exit(result.status ?? 1);
 
-if (!values.dir) await writeElectronChecksums(path.join(desktop, "release"));
+if (!values.dir) {
+  if (platform === "win") await writeElectronInstallerZips(path.join(desktop, "release"));
+  await writeElectronChecksums(path.join(desktop, "release"));
+}

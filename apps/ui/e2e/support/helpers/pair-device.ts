@@ -200,6 +200,7 @@ export async function expectPairingDisconnected(page: Page): Promise<void> {
 
 export async function switchPairDeviceToHost(page: Page, serverId: string): Promise<void> {
   await selectSettingsHost(page, serverId);
+  await page.locator('[data-testid="settings-host-section-pair-device"]:visible').click();
   await expectAppRoute(page, buildSettingsHostSectionRoute(serverId, "pair-device"));
   await expect(page.getByTestId("host-page-pair-device-row")).toBeVisible();
 }

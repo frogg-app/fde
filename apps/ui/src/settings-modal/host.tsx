@@ -4,7 +4,9 @@ import { useTranslation } from "react-i18next";
 import { StyleSheet } from "react-native-unistyles";
 import { AdaptiveModalSheet, type SheetHeader } from "@/components/adaptive-modal-sheet";
 import { SETTINGS_DESKTOP_SPLIT_MIN_WIDTH, useIsCompactFormFactor } from "@/constants/layout";
-import { buildSettingsViewRoute } from "@/navigation/settings-navigation";
+import { HostStatusDot } from "@/components/host-status-dot";
+import { buildSettingsViewRoute, resolveSettingsScope } from "@/navigation/settings-navigation";
+import { useHosts } from "@/runtime/host-runtime";
 import SettingsScreen from "@/screens/settings-screen";
 import { useSettingsModalStore } from "@/settings-modal/store";
 import { WindowChromeRegion } from "@/utils/desktop-window";
@@ -24,7 +26,21 @@ export function SettingsModalHost() {
   const openAddHostIntent = useSettingsModalStore((state) => state.openAddHostIntent);
   const close = useSettingsModalStore((state) => state.close);
   const isCompactLayout = useIsCompactFormFactor();
-  const header = useMemo<SheetHeader>(() => ({ title: t("settings.title") }), [t]);
+  const hosts = useHosts();
+  const scopedHostServerId = useMemo(() => {
+    if (!view) return null;
+    const scope = resolveSettingsScope(view);
+    return scope.kind === "host" ? scope.serverId : null;
+  }, [view]);
+  const scopedHostLabel = scopedHostServerId
+    ? hosts.find((host) => host.serverId === scopedHostServerId)?.label?.trim() ||
+      scopedHostServerId
+    : null;
+  // App settings and a host's settings share this modal; a host's is titled with the host.
+  const header = useMemo<SheetHeader>(() => {
+    if (!scopedHostServerId || !scopedHostLabel) return { title: t("settings.title") };
+    return { title: scopedHostLabel, leading: <HostStatusDot serverId={scopedHostServerId} /> };
+  }, [scopedHostLabel, scopedHostServerId, t]);
 
   useEffect(() => {
     if (!isCompactLayout || view === null) return;

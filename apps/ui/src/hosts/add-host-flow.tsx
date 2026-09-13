@@ -6,24 +6,29 @@ import { AddHostModal } from "@/components/add-host-modal";
 import { AddRemoteSshHostModal } from "@/components/add-remote-ssh-host-modal";
 import { PairLinkModal } from "@/components/pair-link-modal";
 
-type AddHostStep = "methods" | "direct" | "remote-ssh" | "pair-link";
+export type AddHostStep = "methods" | "direct" | "remote-ssh" | "pair-link";
 
 interface AddHostFlowState {
   step: AddHostStep | null;
-  open: () => void;
+  open: (step?: AddHostStep) => void;
   close: () => void;
   setStep: (step: AddHostStep) => void;
 }
 
 const useAddHostFlowStore = create<AddHostFlowState>((set) => ({
   step: null,
-  open: () => set({ step: "methods" }),
+  open: (step = "methods") => set({ step }),
   close: () => set({ step: null }),
   setStep: (step) => set({ step }),
 }));
 
-export function openAddHostFlow(): void {
-  useAddHostFlowStore.getState().open();
+/** Opens the add-host flow on the method picker, or straight on one method's form. */
+export function openAddHostFlow(step?: AddHostStep): void {
+  useAddHostFlowStore.getState().open(step);
+}
+
+export function openPairScan(): void {
+  router.push("/pair-scan?source=workspace");
 }
 
 export function AddHostFlowHost() {
@@ -37,7 +42,7 @@ export function AddHostFlowHost() {
   const returnToMethods = useCallback(() => setStep("methods"), [setStep]);
   const scanQr = useCallback(() => {
     close();
-    router.push("/pair-scan?source=workspace");
+    openPairScan();
   }, [close]);
 
   const visible = step !== null;

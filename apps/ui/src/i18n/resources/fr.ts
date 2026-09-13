@@ -1062,6 +1062,12 @@ export const fr: TranslationResources = {
     },
   },
   sidebar: {
+    hostsMenu: {
+      trigger: "Hôtes",
+      addHost: "Ajouter un hôte",
+      hosts: "Vos hôtes",
+      noHosts: "Aucun hôte pour le moment",
+    },
     display: {
       trigger: "Préférences d'affichage",
       heading: "Affichage",

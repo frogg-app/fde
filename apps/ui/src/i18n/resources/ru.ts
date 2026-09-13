@@ -1047,6 +1047,12 @@ export const ru: TranslationResources = {
     },
   },
   sidebar: {
+    hostsMenu: {
+      trigger: "Хосты",
+      addHost: "Добавить хост",
+      hosts: "Ваши хосты",
+      noHosts: "Хостов пока нет",
+    },
     display: {
       trigger: "Настройки отображения",
       heading: "Отображение",

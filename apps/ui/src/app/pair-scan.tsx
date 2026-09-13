@@ -8,7 +8,7 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import type { BarcodeScanningResult, BarcodeSettings } from "expo-camera";
 import { hasPairingCode } from "@fde/protocol/connection-offer";
 import { usePairWithOffer } from "@/pairing/use-pair-with-offer";
-import { buildHostRootRoute, buildSettingsHostRoute } from "@/utils/host-routes";
+import { buildHostRootRoute, buildSettingsHostSectionRoute } from "@/utils/host-routes";
 import { isWeb } from "@/constants/platform";
 import { BackHeader } from "@/components/headers/back-header";
 import { ClaimOfferPanel } from "@/components/claim-offer-panel";
@@ -135,7 +135,7 @@ export default function PairScanScreen() {
         router.replace(buildHostRootRoute(serverId));
         return;
       }
-      router.replace(buildSettingsHostRoute(serverId));
+      router.replace(buildSettingsHostSectionRoute(serverId, "connections"));
     },
     [router, source],
   );

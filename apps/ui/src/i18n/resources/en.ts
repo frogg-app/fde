@@ -1038,6 +1038,12 @@ export const en = {
     },
   },
   sidebar: {
+    hostsMenu: {
+      trigger: "Hosts",
+      addHost: "Add a host",
+      hosts: "Your hosts",
+      noHosts: "No hosts yet",
+    },
     display: {
       trigger: "Display preferences",
       heading: "Display",

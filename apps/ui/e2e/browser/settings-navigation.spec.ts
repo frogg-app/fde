@@ -2,8 +2,8 @@ import { test, expect } from "../support/fixtures";
 import {
   buildHostWorkspaceRoute,
   buildOpenProjectRoute,
+  buildSettingsHostRoute,
   buildSettingsHostSectionRoute,
-  buildSettingsRoute,
   buildSettingsSectionRoute,
 } from "@/utils/host-routes";
 import { gotoAppShell, openSettings } from "../support/helpers/app";
@@ -24,7 +24,8 @@ import {
   expectSettingsBackButton,
   expectSettingsClosed,
   expectSettingsHeader,
-  expectSettingsHostPickerLabel,
+  expectHostSettingsSectionSelected,
+  expectHostSettingsTitle,
   expectSettingsModalOpen,
   expectSettingsSidebarHidden,
   expectSettingsSidebarSections,
@@ -81,12 +82,13 @@ test.describe("Settings sidebar navigation", () => {
     await verifyLegacyHostSettingsRedirect(page);
   });
 
-  test("the main sidebar Add host button opens only the add-host method modal", async ({
+  test("the sidebar Hosts menu lists add-host methods and hosts without opening settings", async ({
     page,
   }) => {
     await gotoAppShell(page);
     await openAddHostFlow(page);
-    await expectAddHostMethodOptions(page);
+    await expect(page.getByTestId("sidebar-hosts-add-pair-link")).toBeVisible();
+    await expect(page.getByTestId(`sidebar-hosts-item-${getServerId()}`)).toBeVisible();
     await expect(page.getByTestId("settings-modal")).toHaveCount(0);
   });
 
@@ -98,16 +100,25 @@ test.describe("Settings sidebar navigation", () => {
     await expect(page.getByTestId("settings-modal")).toHaveCount(0);
   });
 
-  test("the settings host picker only switches hosts", async ({ page }) => {
+  test("app settings list only app sections", async ({ page }) => {
     await gotoAppShell(page);
     await openSettings(page);
 
-    await page.getByTestId("settings-host-picker").click();
+    const sidebar = page.getByTestId("settings-sidebar");
+    await expect(sidebar.getByTestId("settings-section-general")).toBeVisible();
+    await expect(sidebar.locator('[data-testid^="settings-host-section-"]')).toHaveCount(0);
+  });
 
-    const picker = page.getByTestId("combobox-desktop-container");
-    await expect(picker).toBeVisible();
-    await expect(picker.getByText("Add host", { exact: true })).toHaveCount(0);
-    await expect(picker.getByText("Enable built-in daemon", { exact: true })).toHaveCount(0);
+  test("a host from the Hosts menu opens settings with only that host's sections", async ({
+    page,
+  }) => {
+    await gotoAppShell(page);
+    await selectSettingsHost(page, getServerId());
+
+    const sidebar = page.getByTestId("settings-sidebar");
+    await expect(sidebar.getByTestId("settings-host-section-host")).toBeVisible();
+    await expect(sidebar.locator('[data-testid^="settings-section-"]')).toHaveCount(0);
+    await expectHostSettingsSectionSelected(page, "host");
   });
 
   test("direct connection advanced URI round-trips SSL and password into the form", async ({
@@ -171,7 +182,7 @@ test.describe("Settings sidebar navigation", () => {
 
     await test.step("a modal owns Escape", async () => {
       await clickSettingsBackToWorkspace(page);
-      await openAddHostFlow(page);
+      await page.keyboard.press("Control+H");
       await expect(page.getByText("Add connection", { exact: true })).toBeVisible();
 
       await page.keyboard.press("Escape");
@@ -220,9 +231,7 @@ test.describe("Settings — compact master-detail", () => {
     await expectSettingsBackButton(page);
   });
 
-  test("tapping a host section row pushes /settings/hosts/[serverId]/connections", async ({
-    page,
-  }) => {
+  test("a host's section row pushes /settings/hosts/[serverId]/connections", async ({ page }) => {
     await gotoAppShell(page);
     await openCompactSettings(page, buildOpenProjectRoute());
 
@@ -231,41 +240,37 @@ test.describe("Settings — compact master-detail", () => {
     await expectSettingsSidebarHidden(page);
   });
 
-  test("back from a host detail returns to the /settings list", async ({ page }) => {
+  test("back from a host detail returns to that host's section list", async ({ page }) => {
     await gotoAppShell(page);
-    await openCompactSettings(page, buildOpenProjectRoute());
 
     await openCompactSettingsHost(page);
     await goBackInSettings(page);
-    await expectAppRoute(page, buildSettingsRoute());
+    await expectAppRoute(page, buildSettingsHostRoute(getServerId()));
     await expectSettingsSidebarVisible(page);
+    await expect(page.getByTestId("settings-host-section-host")).toBeVisible();
   });
 
-  test("sidebar Settings opens host Overview and backs through the settings list", async ({
+  test("Hosts menu opens the host's section list and backs out to the workspace", async ({
     page,
     withWorkspace,
   }) => {
-    const workspace = await withWorkspace({ prefix: "host-picker-settings-back-" });
+    const workspace = await withWorkspace({ prefix: "hosts-menu-settings-back-" });
     const workspaceRoute = buildHostWorkspaceRoute(getServerId(), workspace.workspaceId);
 
     await openWorkspace(page, workspace);
-    await page.getByRole("button", { name: "Open menu", exact: true }).click();
-    await page.getByTestId("sidebar-settings").click();
-    await openCompactSettingsHost(page);
+    await selectSettingsHost(page, getServerId());
+    await expectAppRoute(page, buildSettingsHostRoute(getServerId()));
 
+    await page.getByTestId("settings-host-section-host").click();
     await expectAppRoute(page, buildSettingsHostSectionRoute(getServerId(), "host"));
     await expect(page.getByText("Overview", { exact: true })).toBeVisible();
 
     await goBackInSettings(page);
-    await expectCompactSettingsList(page);
-
     await goBackInSettings(page);
     await expectAppRoute(page, workspaceRoute);
   });
 
-  test("switching the host picker on the settings list scopes host rows without navigating", async ({
-    page,
-  }) => {
+  test("the Hosts menu opens the chosen host's settings titled with its name", async ({ page }) => {
     const primaryServerId = getServerId();
     const secondaryServerId = "srv_e2e_settings_secondary";
     const secondaryHostLabel = "Stable horse";
@@ -276,13 +281,12 @@ test.describe("Settings — compact master-detail", () => {
       { serverId: secondaryServerId, label: secondaryHostLabel, endpoint },
     ]);
     await gotoAppShell(page);
-    await openCompactSettings(page, buildOpenProjectRoute());
 
     await selectSettingsHost(page, secondaryServerId);
 
-    await expectAppRoute(page, buildSettingsRoute());
+    await expectAppRoute(page, buildSettingsHostRoute(secondaryServerId));
     await expectSettingsSidebarVisible(page);
-    await expectSettingsHostPickerLabel(page, secondaryHostLabel);
+    await expectHostSettingsTitle(page, secondaryHostLabel);
 
     await openSettingsHostSection(page, secondaryServerId, "connections");
   });

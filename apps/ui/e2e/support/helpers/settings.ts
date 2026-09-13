@@ -49,8 +49,8 @@ export async function openSettingsSection(page: Page, section: SettingsSection):
 }
 
 export async function openSettingsHost(page: Page): Promise<void> {
-  // Host sections are now flat top-level rows under the Host group. Navigate by
-  // clicking the Connections section row; the picker only matters when >1 host.
+  // App settings list no host sections; host settings open from the sidebar Hosts menu.
+  await ensureHostSettingsOpen(page, getServerId());
   await page.getByTestId("settings-host-section-connections").click();
   await expectHostSettingsView(page);
   await expect(page.getByTestId("host-page-connections-card")).toBeVisible();
@@ -61,13 +61,46 @@ export async function openSettingsHostSection(
   serverId: string,
   section: HostSection,
 ): Promise<void> {
-  await page.getByTestId(`settings-host-section-${section}`).click();
+  await ensureHostSettingsOpen(page, serverId);
+  await page.locator(`[data-testid="settings-host-section-${section}"]:visible`).click();
   if (await isSettingsModalPresented(page)) {
     await expectHostSettingsSectionSelected(page, section);
     return;
   }
   // Compact layouts push a full-screen detail route instead of selecting a row.
   await expectAppRoute(page, buildSettingsHostSectionRoute(serverId, section));
+}
+
+/** Opens the sidebar Hosts menu, leaving any open settings surface first. */
+export async function openHostsMenu(page: Page): Promise<void> {
+  if (await isSettingsModalPresented(page)) {
+    await clickSettingsBackToWorkspace(page);
+  }
+  const hosts = page.locator('[data-testid="sidebar-hosts"]:visible').first();
+  if (!(await hosts.isVisible().catch(() => false))) {
+    // Compact: settings routes and workspaces hide the sidebar behind the menu button.
+    while (/\/settings(\/|$)/.test(new URL(page.url()).pathname)) {
+      await goBackInSettings(page);
+    }
+    await page.getByRole("button", { name: "Open menu", exact: true }).first().click();
+  }
+  await expect(hosts).toHaveText("Hosts");
+  await hosts.click();
+  await expect(page.locator('[data-testid="sidebar-hosts-add-direct"]:visible')).toBeVisible();
+}
+
+/** Opens one host's settings from the sidebar Hosts menu. */
+export async function selectSettingsHost(page: Page, serverId: string): Promise<void> {
+  await openHostsMenu(page);
+  await page.locator(`[data-testid="sidebar-hosts-item-${serverId}"]:visible`).click();
+}
+
+/** Host sections only exist inside a host's settings, so open them unless they are already shown. */
+async function ensureHostSettingsOpen(page: Page, serverId: string): Promise<void> {
+  const hostSectionRow = page.locator('[data-testid^="settings-host-section-"]:visible').first();
+  if (await hostSectionRow.isVisible().catch(() => false)) return;
+  await selectSettingsHost(page, serverId);
+  await expect(hostSectionRow).toBeVisible();
 }
 
 /** Wide layouts present settings in a modal; compact layouts use the full-screen routes. */
@@ -92,17 +125,25 @@ export async function expectSettingsHeader(page: Page, title: string): Promise<v
   await expect(page.getByTestId("settings-detail-header-title")).toHaveText(title);
 }
 
+/** Opens the sidebar Hosts menu, which lists the add-host methods. */
 export async function openAddHostFlow(page: Page): Promise<void> {
-  const addHost = page.locator('[data-testid="sidebar-add-host"]:visible').first();
-  await expect(addHost).toHaveText("Add host");
-  await addHost.click();
-  await expect(page.getByText("Add connection", { exact: true })).toBeVisible();
+  await openHostsMenu(page);
 }
 
+/** Picks an add-host method from the Hosts menu, or from the method modal when that is open. */
 export async function selectHostConnectionType(
   page: Page,
   type: "direct" | "relay",
 ): Promise<void> {
+  const menuItem = page
+    .locator(
+      `[data-testid="${type === "direct" ? "sidebar-hosts-add-direct" : "sidebar-hosts-add-pair-link"}"]:visible`,
+    )
+    .first();
+  if (await menuItem.isVisible().catch(() => false)) {
+    await menuItem.click();
+    return;
+  }
   const label = type === "direct" ? "Direct connection" : "Paste pairing link";
   await page.getByRole("button", { name: label }).click();
 }
@@ -176,15 +217,9 @@ export async function seedSavedSettingsHosts(
   );
 }
 
-export async function selectSettingsHost(page: Page, serverId: string): Promise<void> {
-  await page.locator('[data-testid="settings-host-picker"]:visible').click();
-  await page.locator(`[data-testid="settings-host-picker-item-${serverId}"]:visible`).click();
-}
-
-export async function expectSettingsHostPickerLabel(page: Page, label: string): Promise<void> {
-  await expect(
-    page.getByTestId("settings-host-picker").getByText(label, { exact: true }),
-  ).toBeVisible();
+/** Host settings are titled with the host: the modal title on wide layouts, the header on compact. */
+export async function expectHostSettingsTitle(page: Page, label: string): Promise<void> {
+  await expect(page.getByText(label, { exact: true }).first()).toBeVisible();
 }
 
 export async function expectCompactSettingsList(page: Page): Promise<void> {
@@ -245,7 +280,7 @@ export async function clickSettingsBackToWorkspace(page: Page): Promise<void> {
  */
 export async function expectHostSettingsView(page: Page): Promise<void> {
   await expectHostSettingsSectionSelected(page, "connections");
-  await expect(page.getByTestId("settings-host-picker")).toBeVisible();
+  await expect(page.locator('[data-testid^="settings-section-"]:visible')).toHaveCount(0);
   await expect(page.getByTestId("settings-detail-pane")).toBeVisible();
 }
 
@@ -262,7 +297,8 @@ export async function verifyLegacyHostSettingsRedirect(page: Page): Promise<void
 
 export async function openCompactSettingsHost(page: Page): Promise<void> {
   const serverId = getServerId();
-  await page.getByTestId("settings-host-section-connections").click();
+  await selectSettingsHost(page, serverId);
+  await page.locator('[data-testid="settings-host-section-connections"]:visible').click();
   await expectHostSettingsUrl(page, serverId);
 }
 
@@ -442,7 +478,7 @@ export async function expectRetiredSidebarSectionsAbsent(page: Page): Promise<vo
   await expect(sidebar.getByTestId("settings-host-section-usage")).toBeVisible();
   await expect(sidebar.getByTestId("settings-host-section-host")).toBeVisible();
 
-  // The old per-host entry rows are replaced by the host picker.
+  // Hosts are picked from the sidebar Hosts menu, not listed in settings.
   await expect(sidebar.locator('[data-testid^="settings-host-entry-"]')).toHaveCount(0);
 }
 
@@ -450,15 +486,9 @@ export async function expectHostPageVisible(page: Page, _serverId: string): Prom
   await expect(page.getByTestId("host-page-connections-card")).toBeVisible();
 }
 
-export async function expectLocalHostEntryFirst(page: Page, _serverId: string): Promise<void> {
-  const sidebar = page.getByTestId("settings-sidebar");
-  await expect(sidebar).toBeVisible({ timeout: 15_000 });
-
-  // Single-host fixture: the picker is a non-interactive chip (no dropdown to
-  // open) that surfaces the local host by its label. The per-row connection
-  // endpoint only appears on dropdown rows in the multi-host case, which this
-  // fixture does not exercise.
-  const picker = sidebar.getByTestId("settings-host-picker");
-  await expect(picker).toBeVisible();
-  await expect(picker.getByText(TEST_HOST_LABEL, { exact: true })).toBeVisible();
+export async function expectLocalHostEntryFirst(page: Page, serverId: string): Promise<void> {
+  await openHostsMenu(page);
+  const firstHost = page.locator('[data-testid^="sidebar-hosts-item-"]:visible').first();
+  await expect(firstHost).toHaveAttribute("data-testid", `sidebar-hosts-item-${serverId}`);
+  await expect(firstHost).toContainText(TEST_HOST_LABEL);
 }
