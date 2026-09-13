@@ -1,7 +1,9 @@
+import { projectImportCopies } from "./project-import";
 import { en, type TranslationResources } from "./en";
 import { pluginSettings } from "./plugin-settings";
 
 export const es: TranslationResources = {
+  projectImport: projectImportCopies["es"],
   directoryBrowser: {
     choose: "Usar este directorio",
     parent: "Ir al directorio superior",
@@ -1078,6 +1080,7 @@ export const es: TranslationResources = {
     },
   },
   sidebar: {
+    workspaceDraft: "Nuevo espacio de trabajo (borrador)",
     hostsMenu: {
       trigger: "Anfitriones",
       addHost: "Agregar anfitrión",

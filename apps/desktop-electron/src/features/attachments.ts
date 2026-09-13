@@ -1,5 +1,6 @@
+import { copySizedAttachmentFile, readSizedAttachmentFile } from "./attachment-file-access.js";
 import { resolveFdeHome } from "../integrations/storage-paths.js";
-import { copyFile, mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, readdir, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const ATTACHMENTS_DIRNAME = "desktop-attachments";
@@ -137,20 +138,13 @@ export async function copyAttachmentFileToManagedStorage(input: {
     extension: input.extension,
   });
 
-  if (sourcePath !== targetPath) {
-    await copyFile(sourcePath, targetPath);
-  }
-
-  const fileInfo = await stat(targetPath);
-  return {
-    path: targetPath,
-    byteSize: fileInfo.size,
-  };
+  const byteSize = await copySizedAttachmentFile({ source: sourcePath, target: targetPath });
+  return { path: targetPath, byteSize };
 }
 
 export async function readManagedFileBase64(input: { path?: unknown }): Promise<string> {
   const filePath = resolveManagedAttachmentPath(input.path);
-  const bytes = await readFile(filePath);
+  const bytes = await readSizedAttachmentFile(filePath);
   return bytes.toString("base64");
 }
 

@@ -1,7 +1,9 @@
+import { projectImportCopies } from "./project-import";
 import { en, type TranslationResources } from "./en";
 import { pluginSettings } from "./plugin-settings";
 
 export const ar: TranslationResources = {
+  projectImport: projectImportCopies["ar"],
   directoryBrowser: {
     choose: "استخدام هذا المجلد",
     parent: "الانتقال إلى المجلد الأب",
@@ -1044,6 +1046,7 @@ export const ar: TranslationResources = {
     },
   },
   sidebar: {
+    workspaceDraft: "مساحة عمل جديدة (مسودة)",
     hostsMenu: {
       trigger: "المضيفون",
       addHost: "إضافة مضيف",

@@ -1,7 +1,9 @@
+import { projectImportCopies } from "./project-import";
 import { en, type TranslationResources } from "./en";
 import { pluginSettings } from "./plugin-settings";
 
 export const ja: TranslationResources = {
+  projectImport: projectImportCopies["ja"],
   directoryBrowser: {
     choose: "このディレクトリを使用",
     parent: "親ディレクトリへ移動",
@@ -1058,6 +1060,7 @@ export const ja: TranslationResources = {
     },
   },
   sidebar: {
+    workspaceDraft: "新しいワークスペース（下書き）",
     hostsMenu: {
       trigger: "ホスト",
       addHost: "ホストを追加",

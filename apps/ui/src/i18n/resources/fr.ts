@@ -1,7 +1,9 @@
+import { projectImportCopies } from "./project-import";
 import { en, type TranslationResources } from "./en";
 import { pluginSettings } from "./plugin-settings";
 
 export const fr: TranslationResources = {
+  projectImport: projectImportCopies["fr"],
   directoryBrowser: {
     choose: "Utiliser ce dossier",
     parent: "Aller au dossier parent",
@@ -1077,6 +1079,7 @@ export const fr: TranslationResources = {
     },
   },
   sidebar: {
+    workspaceDraft: "Nouvel espace de travail (brouillon)",
     hostsMenu: {
       trigger: "Hôtes",
       addHost: "Ajouter un hôte",

@@ -1,3 +1,4 @@
+import { i18n } from "@/i18n/i18next";
 import {
   isCompleteGitRemote,
   parseGitHubRemoteUrl,
@@ -6,7 +7,12 @@ import {
 import { shortenPath } from "@/utils/shorten-path";
 import type { AddProjectHost, GithubRepositoryChoice } from "./model";
 
-export type AddProjectMethodId = "directory-search" | "browse" | "github" | "new-directory";
+export type AddProjectMethodId =
+  | "directory-search"
+  | "browse"
+  | "github"
+  | "new-directory"
+  | "import";
 
 export interface AddProjectMethodOption {
   id: AddProjectMethodId;
@@ -62,6 +68,12 @@ export function buildAddProjectMethods(host: AddProjectHost): AddProjectMethodOp
       : "Update this host to create directories",
     disabled: !host.canCreateDirectory,
   });
+  if (host.canImportProject)
+    options.push({
+      id: "import",
+      label: i18n.t("projectImport.title"),
+      description: i18n.t("projectImport.description"),
+    });
   return options;
 }
 

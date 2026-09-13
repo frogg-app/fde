@@ -1,4 +1,6 @@
+import { projectImportCopies } from "./project-import";
 export const en = {
+  projectImport: projectImportCopies["en"],
   directoryBrowser: {
     choose: "Use this directory",
     parent: "Go to parent",
@@ -1053,6 +1055,7 @@ export const en = {
     },
   },
   sidebar: {
+    workspaceDraft: "New workspace (draft)",
     hostsMenu: {
       trigger: "Hosts",
       addHost: "Add a host",

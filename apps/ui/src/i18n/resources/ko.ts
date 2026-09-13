@@ -1,7 +1,9 @@
+import { projectImportCopies } from "./project-import";
 import { en, type TranslationResources } from "./en";
 import { pluginSettings } from "./plugin-settings";
 
 export const ko: TranslationResources = {
+  projectImport: projectImportCopies["ko"],
   directoryBrowser: {
     choose: "이 디렉터리 사용",
     parent: "상위 디렉터리로 이동",
@@ -1053,6 +1055,7 @@ export const ko: TranslationResources = {
     },
   },
   sidebar: {
+    workspaceDraft: "새 작업 공간 (초안)",
     hostsMenu: {
       trigger: "호스트",
       addHost: "호스트 추가",
