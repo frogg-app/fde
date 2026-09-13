@@ -42,7 +42,7 @@ test.describe("Settings host selection", () => {
 
       await openSettings(page);
 
-      await openSettingsHostSection(page, remoteDaemon.serverId, "connections");
+      await openSettingsHostSection(page, remoteDaemon.serverId, "host");
     } finally {
       await remoteWorkspace.cleanup().catch(() => undefined);
       await remoteDaemon.close().catch(() => undefined);

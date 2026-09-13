@@ -31,6 +31,7 @@ import { EditingTextInput as TextInput } from "@/components/ui/text-input";
 import { SettingsTextAreaCard } from "@/components/settings-textarea";
 import { SettingsGroup } from "@/screens/settings/settings-group";
 import { SettingsSection } from "@/screens/settings/settings-section";
+import { ProviderAgentDefinitionsSection } from "@/agent-definitions";
 import { settingsStyles } from "@/styles/settings";
 import { useProjects } from "@/hooks/use-projects";
 import type { ProjectEditFormSnapshot } from "@/projects/edit-form";
@@ -319,6 +320,13 @@ function ProjectSettingsBody({
         onBackToProjects,
         showBackToProjects,
       })}
+
+      {isHostGone ? null : (
+        <ProviderAgentDefinitionsSection
+          serverId={selectedHost.serverId}
+          cwd={selectedHost.repoRoot}
+        />
+      )}
     </View>
   );
 }
@@ -385,7 +393,9 @@ function renderContent({
     );
   }
 
-  const formKey = `${selectedHost.serverId}::${selectedHost.repoRoot}::${revisionToKey(loadedRevision)}`;
+  const formKey = `${selectedHost.serverId}::${
+    selectedHost.repoRoot
+  }::${revisionToKey(loadedRevision)}`;
   return (
     <ProjectConfigForm
       key={formKey}
@@ -631,7 +641,10 @@ function ProjectConfigForm({
         entry.type.trim().length === 0 &&
         entry.portText.trim().length === 0;
       if (!isEmpty) return d;
-      return { ...d, scripts: d.scripts.filter((row) => row.id !== editingScriptId) };
+      return {
+        ...d,
+        scripts: d.scripts.filter((row) => row.id !== editingScriptId),
+      };
     });
     setEditingScriptId(null);
   }, [editingScriptId, updateDraft]);

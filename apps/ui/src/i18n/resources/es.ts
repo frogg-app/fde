@@ -2840,6 +2840,21 @@ export const es: TranslationResources = {
       agents: {
         unavailable: "Connect to this host to manage agents",
       },
+      agentDefinitions: {
+        title: "Definiciones de agentes",
+        description:
+          "Agentes que tus proveedores cargan desde este host. FDE solo los enumera; edita los archivos para cambiarlos.",
+        projectTitle: "Definiciones de agentes del proyecto",
+        projectDescription:
+          "Agentes que tus proveedores cargan desde el directorio de este proyecto.",
+        empty: "No se encontraron definiciones de agentes",
+        loadFailed: "No se pudieron cargar las definiciones de agentes",
+        unsupported: "Actualiza el daemon de este host para ver las definiciones de agentes",
+        open: "Abrir en el editor",
+        copyPath: "Copiar ruta",
+        scopeUser: "Usuario",
+        scopeProject: "Proyecto",
+      },
       workspaces: {
         unavailable: "Connect to this host to manage workspaces",
       },

@@ -239,7 +239,9 @@ export const MutableDaemonConfigSchema = z
     catalogRefreshTimeoutMs: z.number().int().positive().optional(),
     browserTools: MutableBrowserToolsConfigSchema.default({ enabled: false }),
     providers: z.record(z.string(), MutableDaemonProviderConfigSchema).default({}),
-    metadataGeneration: MutableMetadataGenerationConfigSchema.default({ providers: [] }),
+    metadataGeneration: MutableMetadataGenerationConfigSchema.default({
+      providers: [],
+    }),
     autoArchiveAfterMerge: z.boolean().default(false),
     enableTerminalAgentHooks: z.boolean().default(false),
     appendSystemPrompt: z.string().default(""),
@@ -949,7 +951,10 @@ export const CompanionSessionStartRequestSchema = z.object({
   requestId: z.string(),
   conversation: CompanionConversationOptionsSchema.optional(),
   voiceTransport: z
-    .object({ kind: z.literal("codex-webrtc"), sdp: z.string().min(1).max(65536) })
+    .object({
+      kind: z.literal("codex-webrtc"),
+      sdp: z.string().min(1).max(65536),
+    })
     .optional(),
 });
 
@@ -2714,6 +2719,13 @@ export const ProjectIconRequestSchema = z.object({
   requestId: z.string(),
 });
 
+export const AgentProviderDefinitionsListRequestSchema = z.object({
+  type: z.literal("agent.provider_definitions.list.request"),
+  // Project root to scan for project-level definitions; omit for user-level only.
+  cwd: z.string().optional(),
+  requestId: z.string(),
+});
+
 export const ProjectIconGetRequestSchema = z.object({
   type: z.literal("project.icon.get.request"),
   projectId: z.string(),
@@ -3178,6 +3190,7 @@ export const SessionInboundMessageSchema = z.discriminatedUnion("type", [
   FileEntryDeleteRequestSchema,
   ProjectIconRequestSchema,
   ProjectIconGetRequestSchema,
+  AgentProviderDefinitionsListRequestSchema,
   FileDownloadTokenRequestSchema,
   FileUploadRequestSchema,
   ClearAgentAttentionMessageSchema,
@@ -3532,6 +3545,8 @@ export const ServerInfoStatusPayloadSchema = z
         directorySync: z.boolean().optional(),
         // COMPAT(workspaceLabels): added in v0.5.0, remove after 2027-08-14.
         workspaceLabels: z.boolean().optional(),
+        // COMPAT(providerAgentDefinitions): added in v0.6.20, remove after 2027-09-13.
+        providerAgentDefinitions: z.boolean().optional(),
         // COMPAT(spokenNotifications): added in v0.1.14, remove gate after 2027-09-03.
         spokenNotifications: z.boolean().optional(),
         // COMPAT(checkoutForgeSetAutoMerge): added in v0.2.0-beta.1. Remove the
@@ -4774,11 +4789,17 @@ export const HubRelationshipStatusSchema = z.object({
 });
 export const HubManagementDaemonConnectResponseSchema = z.object({
   type: z.literal("hub.management.daemon.connect.response"),
-  payload: z.object({ requestId: z.string(), status: HubRelationshipStatusSchema }),
+  payload: z.object({
+    requestId: z.string(),
+    status: HubRelationshipStatusSchema,
+  }),
 });
 export const HubManagementDaemonGetStatusResponseSchema = z.object({
   type: z.literal("hub.management.daemon.get_status.response"),
-  payload: z.object({ requestId: z.string(), status: HubRelationshipStatusSchema }),
+  payload: z.object({
+    requestId: z.string(),
+    status: HubRelationshipStatusSchema,
+  }),
 });
 export const HubManagementDaemonDisconnectResponseSchema = z.object({
   type: z.literal("hub.management.daemon.disconnect.response"),
@@ -4790,7 +4811,10 @@ export const HubManagementDaemonDisconnectResponseSchema = z.object({
 });
 export const HubManagementDaemonPermissionsUpdateResponseSchema = z.object({
   type: z.literal("hub.management.daemon.permissions.update.response"),
-  payload: z.object({ requestId: z.string(), status: HubRelationshipStatusSchema }),
+  payload: z.object({
+    requestId: z.string(),
+    status: HubRelationshipStatusSchema,
+  }),
 });
 
 export const DaemonGetPairingOfferResponseSchema = z.object({
@@ -5907,6 +5931,24 @@ export const ProjectIconResponseSchema = z.object({
   }),
 });
 
+export const AgentProviderDefinitionSchema = z.object({
+  provider: z.string(),
+  scope: z.enum(["user", "project"]),
+  name: z.string(),
+  description: z.string().nullable(),
+  path: z.string(),
+});
+
+export const AgentProviderDefinitionsListResponseSchema = z.object({
+  type: z.literal("agent.provider_definitions.list.response"),
+  payload: z.object({
+    cwd: z.string().nullable(),
+    definitions: z.array(AgentProviderDefinitionSchema),
+    error: z.string().nullable(),
+    requestId: z.string(),
+  }),
+});
+
 export const ProjectIconGetResponseSchema = z.object({
   type: z.literal("project.icon.get.response"),
   payload: z.object({
@@ -6567,6 +6609,7 @@ export const SessionOutboundMessageSchema = z.discriminatedUnion("type", [
   FileUpdateSchema,
   ProjectIconResponseSchema,
   ProjectIconGetResponseSchema,
+  AgentProviderDefinitionsListResponseSchema,
   FileDownloadTokenResponseSchema,
   FileUploadResponseSchema,
   ListProviderModelsResponseMessageSchema,
@@ -7031,6 +7074,13 @@ export type ProjectIconRequest = z.infer<typeof ProjectIconRequestSchema>;
 export type ProjectIconResponse = z.infer<typeof ProjectIconResponseSchema>;
 export type ProjectIconGetRequest = z.infer<typeof ProjectIconGetRequestSchema>;
 export type ProjectIconGetResponse = z.infer<typeof ProjectIconGetResponseSchema>;
+export type AgentProviderDefinition = z.infer<typeof AgentProviderDefinitionSchema>;
+export type AgentProviderDefinitionsListRequest = z.infer<
+  typeof AgentProviderDefinitionsListRequestSchema
+>;
+export type AgentProviderDefinitionsListResponse = z.infer<
+  typeof AgentProviderDefinitionsListResponseSchema
+>;
 export type ProjectIcon = z.infer<typeof ProjectIconSchema>;
 export type FileDownloadTokenRequest = z.infer<typeof FileDownloadTokenRequestSchema>;
 export type FileDownloadTokenResponse = z.infer<typeof FileDownloadTokenResponseSchema>;

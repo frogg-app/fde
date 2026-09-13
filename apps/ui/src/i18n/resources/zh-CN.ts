@@ -2737,6 +2737,19 @@ export const zhCN: TranslationResources = {
       agents: {
         unavailable: "连接到这个 Host 以管理 Agent",
       },
+      agentDefinitions: {
+        title: "智能体定义",
+        description: "你的提供方从此主机加载的智能体。FDE 仅列出它们；如需修改请编辑文件。",
+        projectTitle: "项目智能体定义",
+        projectDescription: "你的提供方从此项目目录加载的智能体。",
+        empty: "未找到智能体定义",
+        loadFailed: "无法加载智能体定义",
+        unsupported: "请更新此主机的守护进程以列出智能体定义",
+        open: "在编辑器中打开",
+        copyPath: "复制路径",
+        scopeUser: "用户",
+        scopeProject: "项目",
+      },
       workspaces: {
         unavailable: "连接到这个 Host 以管理 Workspace",
       },

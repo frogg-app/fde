@@ -2823,6 +2823,20 @@ export const ptBR: TranslationResources = {
       agents: {
         unavailable: "Conecte-se a este host para gerenciar agentes",
       },
+      agentDefinitions: {
+        title: "Definições de agentes",
+        description:
+          "Agentes que seus provedores carregam deste host. O FDE apenas os lista; edite os arquivos para alterá-los.",
+        projectTitle: "Definições de agentes do projeto",
+        projectDescription: "Agentes que seus provedores carregam do diretório deste projeto.",
+        empty: "Nenhuma definição de agente encontrada",
+        loadFailed: "Não foi possível carregar as definições de agentes",
+        unsupported: "Atualize o daemon deste host para listar as definições de agentes",
+        open: "Abrir no editor",
+        copyPath: "Copiar caminho",
+        scopeUser: "Usuário",
+        scopeProject: "Projeto",
+      },
       workspaces: {
         unavailable: "Conecte-se a este host para gerenciar workspaces",
       },

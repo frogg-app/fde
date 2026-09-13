@@ -173,6 +173,7 @@ import {
 import { ScheduleSession } from "./session/schedule/schedule-session.js";
 import { ProviderCatalogSession } from "./session/provider/provider-catalog-session.js";
 import { WorkspaceFilesSession } from "./session/files/workspace-files-session.js";
+import { listProviderAgentDefinitions } from "./agent/provider-agent-definitions.js";
 import { AgentConfigSession } from "./session/agent-config/agent-config-session.js";
 import { ProjectConfigSession } from "./session/project-config/project-config-session.js";
 import { DaemonSession, type DaemonRuntimeConfig } from "./session/daemon/daemon-session.js";
@@ -2158,6 +2159,8 @@ export class Session {
         return this.handleAgentTimelineListPromptsRequest(msg, source);
       case "agent.provider_subagents.list.request":
         return this.handleProviderSubagentListRequest(msg);
+      case "agent.provider_definitions.list.request":
+        return this.handleProviderAgentDefinitionsListRequest(msg);
       case "agent.provider_subagents.timeline.get.request":
         return this.handleProviderSubagentTimelineRequest(msg);
       case "agent.timeline.set_subscription.request": {
@@ -7124,6 +7127,29 @@ export class Session {
         },
         source,
       );
+    }
+  }
+
+  private async handleProviderAgentDefinitionsListRequest(
+    msg: Extract<SessionInboundMessage, { type: "agent.provider_definitions.list.request" }>,
+  ): Promise<void> {
+    const cwd = msg.cwd?.trim() ? msg.cwd.trim() : null;
+    try {
+      const definitions = await listProviderAgentDefinitions({ projectRoot: cwd });
+      this.emit({
+        type: "agent.provider_definitions.list.response",
+        payload: { requestId: msg.requestId, cwd, definitions, error: null },
+      });
+    } catch (error) {
+      this.emit({
+        type: "agent.provider_definitions.list.response",
+        payload: {
+          requestId: msg.requestId,
+          cwd,
+          definitions: [],
+          error: getErrorMessage(error),
+        },
+      });
     }
   }
 
