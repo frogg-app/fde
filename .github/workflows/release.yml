@@ -582,7 +582,7 @@ jobs:
           retention-days: 7
 
   updater-manifest:
-    name: Electron updater manifests
+    name: Release metadata and update compatibility
     needs: [meta, desktop]
     if: inputs.only != 'android' && needs.meta.outputs.build_all == 'true'
     runs-on: ubuntu-latest
@@ -597,8 +597,8 @@ jobs:
           pattern: release-assets-*
           path: release-assets
           merge-multiple: true
-      - name: Build Electron channel manifests and checksums
-        run: node scripts/release/electron-release-manifests.mjs --version ${{ needs.meta.outputs.version }} --assets release-assets --out electron-metadata
+      - name: Build release metadata and compatibility manifests
+        run: node scripts/release/build-release-metadata.mjs --version ${{ needs.meta.outputs.version }} --assets release-assets --out release-metadata
       - name: Upload metadata
         env:
           GH_TOKEN: ${{ github.token }}
@@ -606,7 +606,7 @@ jobs:
         run: |
           flags=()
           if [ "$CLOBBER" = "true" ]; then flags+=(--clobber); fi
-          gh release upload "$RELEASE_TAG" electron-metadata/* "${flags[@]}"
+          gh release upload "$RELEASE_TAG" release-metadata/* "${flags[@]}"
       - name: Verify uploaded update contract
         env:
           GH_TOKEN: ${{ github.token }}

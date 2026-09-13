@@ -7,19 +7,13 @@ it("falls back only for a missing descriptor, not network or malformed metadata"
   const fetcher = vi.fn();
   vi.stubGlobal("fetch", fetcher);
   fetcher.mockResolvedValueOnce(new Response("missing", { status: 404 }));
-  await expect(
-    fetchReleaseDescriptor("https://example.test/electron-release.json"),
-  ).resolves.toBeNull();
+  await expect(fetchReleaseDescriptor("https://example.test/release.json")).resolves.toBeNull();
   fetcher.mockResolvedValueOnce(new Response("unavailable", { status: 503 }));
-  await expect(
-    fetchReleaseDescriptor("https://example.test/electron-release.json"),
-  ).rejects.toThrow("503");
+  await expect(fetchReleaseDescriptor("https://example.test/release.json")).rejects.toThrow("503");
   fetcher.mockResolvedValueOnce(new Response("invalid JSON", { status: 200 }));
-  await expect(
-    fetchReleaseDescriptor("https://example.test/electron-release.json"),
-  ).rejects.toThrow();
+  await expect(fetchReleaseDescriptor("https://example.test/release.json")).rejects.toThrow();
   fetcher.mockRejectedValueOnce(new Error("offline"));
-  await expect(
-    fetchReleaseDescriptor("https://example.test/electron-release.json"),
-  ).rejects.toThrow("offline");
+  await expect(fetchReleaseDescriptor("https://example.test/release.json")).rejects.toThrow(
+    "offline",
+  );
 });
