@@ -1,6 +1,6 @@
 # FDE roadmap
 
-Release baseline: **0.6.6**. Electron is the production app-only desktop;
+Release baseline: **0.6.7**. Electron is the production app-only desktop;
 Node daemons remain separately installed. [Changelog](CHANGELOG.md) records
 completed work and [upgrade notes](docs/upgrade-0.6.md) describe the coordinated
 namespace migration. Unchecked items are validation/backlog work, not active tasks.

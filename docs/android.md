@@ -162,6 +162,9 @@ node scripts/release/smoke-android-apk.mjs --serial DEVICE_SERIAL \
 The check installs the APK, cold-launches it twice, and requires a stable process
 and foreground activity for 30 seconds per launch. It records timestamp-scoped
 logcat, crash logs, screenshots and a JSON result without clearing device logs.
+An `am start -W` display timeout is recorded separately; the process and foreground
+checks still run for the full observation window. Inspect the final screenshot
+to distinguish rendered application content from a splash screen.
 The Android startup diagnostic workflow can run the same check against an existing
 Actions APK artifact using a hardware-accelerated Google APIs emulator.
 

@@ -91,9 +91,15 @@ export async function smokeAndroidApk(options, dependencies = {}) {
       adb(["shell", "am", "force-stop", config.appId]);
       const launch = adb(["shell", "am", "start", "-W", "-n", `${config.appId}/.MainActivity`]);
       write(`launch-${attempt}.txt`, launch);
-      if (/Error:|Exception|Status: timeout/.test(launch))
-        throw new Error(`Activity launch ${attempt} failed`);
-      const observation = { attempt, pid: null, samples: [] };
+      if (/Error:|Exception/.test(launch)) throw new Error(`Activity launch ${attempt} failed`);
+      // am start -W has its own short display deadline; observe the actual process
+      // and foreground state even when that wait expires on a busy emulator.
+      const observation = {
+        attempt,
+        activityWaitTimedOut: /Status: timeout/.test(launch),
+        pid: null,
+        samples: [],
+      };
       launches.push(observation);
       for (let second = 0; second <= config.seconds; second++) {
         const pid = adb(["shell", "pidof", config.appId], { required: false }).trim();

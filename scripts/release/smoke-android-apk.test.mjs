@@ -29,7 +29,7 @@ function fakeAdb(overrides = {}) {
       } else if (key.startsWith("shell am start")) {
         launches++;
         samples = 0;
-        stdout = "Status: ok\n";
+        stdout = overrides.launchOutput ?? "Status: ok\n";
       } else if (key.startsWith("shell pidof")) {
         samples++;
         stdout = overrides.pid?.(launches, samples) ?? `${launches}234\n`;
@@ -145,4 +145,23 @@ test("requires an explicit device and APK before issuing any adb command", async
     smokeAndroidApk({ serial: "device", apk: "x.apk", seconds: 0 }),
     /--seconds/,
   );
+});
+
+test("observes timed-out activity waits without accepting a crashed or backgrounded app", async () => {
+  const launchOutput = "Status: timeout\n";
+  await runCase({ launchOutput }, async ({ result }) => {
+    assert.equal(result.passed, true);
+    assert.equal(result.launches.length, 2);
+    assert.ok(result.launches.every((launch) => launch.activityWaitTimedOut));
+    assert.ok(result.launches.every((launch) => launch.samples.length === 3));
+  });
+  for (const overrides of [{ pid: () => "" }, { activity: () => "other.app/.MainActivity" }]) {
+    await runCase({ launchOutput, ...overrides }, async ({ result }) => {
+      assert.equal(result.passed, false);
+    });
+  }
+  await runCase({ launchOutput: "Error: Activity class does not exist" }, async ({ result }) => {
+    assert.equal(result.passed, false);
+    assert.match(result.failure, /Activity launch 1 failed/);
+  });
 });

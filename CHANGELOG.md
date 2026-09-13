@@ -80,6 +80,12 @@
   for a standalone APK that can coexist with production. Preserve license and
   speech-model notices in standalone daemon bundles.
 
+## 0.6.7 - 2026-09-13
+
+- Continue Android process and foreground checks when the system activity-display
+  wait times out. Preserve the timeout in evidence and still reject process exits,
+  restarts and foreground loss; rendered content requires screenshot inspection.
+
 ## 0.6.6 - 2026-09-13
 
 - Correct the roadmap to record the Android launch repair and successful emulator
