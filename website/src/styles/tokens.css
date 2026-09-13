@@ -18,6 +18,7 @@
   --fde-accent: #25b5c8;
   --fde-accent-bright: #7fd9e6;
   --fde-accent-fg: #07222b;
+  --fde-link: #7fd9e6;
   --fde-accent-soft: rgb(37 181 200 / 0.14);
   --fde-accent-glow: rgb(37 181 200 / 0.45);
   --fde-violet: #8b7cf6;
@@ -42,6 +43,7 @@
   --fde-accent: #045b9d;
   --fde-accent-bright: #0a78c9;
   --fde-accent-fg: #ffffff;
+  --fde-link: #045b9d;
   --fde-accent-soft: rgb(10 120 201 / 0.1);
   --fde-accent-glow: rgb(10 120 201 / 0.3);
   --fde-violet: #6d5bd0;

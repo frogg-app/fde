@@ -21,7 +21,7 @@ export default defineConfig({
   site: "https://frogg.app",
   trailingSlash: "ignore",
   prefetch: { prefetchAll: true, defaultStrategy: "hover" },
-  build: { inlineStylesheets: "auto" },
+  build: { inlineStylesheets: "always" },
   integrations: [
     starlight({
       title: "FDE",

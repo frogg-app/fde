@@ -42,11 +42,7 @@ svg {
 }
 
 a {
-  color: var(--fde-accent-bright);
-}
-
-:root[data-theme="light"] a {
-  color: var(--fde-accent);
+  color: var(--fde-link);
 }
 
 ::selection {
