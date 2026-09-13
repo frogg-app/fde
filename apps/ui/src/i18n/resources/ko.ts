@@ -2,6 +2,15 @@ import { en, type TranslationResources } from "./en";
 import { pluginSettings } from "./plugin-settings";
 
 export const ko: TranslationResources = {
+  directoryBrowser: {
+    choose: "이 디렉터리 사용",
+    parent: "상위 디렉터리로 이동",
+    navigatePath: "{{path}}로 이동",
+    navigate: "디렉터리로 이동",
+    empty: "하위 디렉터리 없음",
+    placeholder: "하위 디렉터리 필터링 또는 경로 입력...",
+    failed: "이 디렉터리를 나열할 수 없습니다",
+  },
   common: {
     back: "뒤로",
     loading: "불러오는 중...",

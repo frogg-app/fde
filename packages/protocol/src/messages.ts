@@ -2726,6 +2726,7 @@ const FileExplorerFileSchema = z.object({
 
 const FileExplorerDirectorySchema = z.object({
   path: z.string(),
+  absolutePath: z.string().optional(),
   entries: z.array(FileExplorerEntrySchema),
 });
 

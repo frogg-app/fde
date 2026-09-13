@@ -2,6 +2,15 @@ import { en, type TranslationResources } from "./en";
 import { pluginSettings } from "./plugin-settings";
 
 export const zhCN: TranslationResources = {
+  directoryBrowser: {
+    choose: "使用此目录",
+    parent: "转到上级目录",
+    navigatePath: "转到 {{path}}",
+    navigate: "转到目录",
+    empty: "没有子目录",
+    placeholder: "筛选子目录或输入路径...",
+    failed: "无法列出此目录",
+  },
   common: {
     back: "返回",
     loading: "加载中...",

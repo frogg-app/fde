@@ -120,10 +120,14 @@ export function buildManualGithubRepositoryChoices(query: string): GithubReposit
 }
 
 export function parentDirectory(path: string): string | null {
-  const trimmed = path.replace(/[\\/]+$/, "");
-  const index = Math.max(trimmed.lastIndexOf("/"), trimmed.lastIndexOf("\\"));
+  const normalized = path.replace(/\\/g, "/");
+  const trimmed = normalized.replace(/\/+$/, "");
+  if (!trimmed || /^[A-Za-z]:$/.test(trimmed)) return null;
+  if (/^\/\/[^/]+\/[^/]+$/.test(trimmed)) return null;
+  const index = trimmed.lastIndexOf("/");
   if (index < 0) return null;
-  if (index === 0) return trimmed.slice(0, 1);
+  if (index === 0) return "/";
+  if (index === 2 && /^[A-Za-z]:/.test(trimmed)) return `${trimmed.slice(0, 2)}/`;
   return trimmed.slice(0, index);
 }
 

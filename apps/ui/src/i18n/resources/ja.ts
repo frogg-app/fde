@@ -2,6 +2,15 @@ import { en, type TranslationResources } from "./en";
 import { pluginSettings } from "./plugin-settings";
 
 export const ja: TranslationResources = {
+  directoryBrowser: {
+    choose: "このディレクトリを使用",
+    parent: "親ディレクトリへ移動",
+    navigatePath: "{{path}} に移動",
+    navigate: "ディレクトリへ移動",
+    empty: "サブディレクトリはありません",
+    placeholder: "サブディレクトリを絞り込むかパスを入力...",
+    failed: "このディレクトリを一覧表示できません",
+  },
   common: {
     back: "戻る",
     loading: "読み込み中...",

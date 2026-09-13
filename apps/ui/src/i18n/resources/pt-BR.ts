@@ -2,6 +2,15 @@ import { en, type TranslationResources } from "./en";
 import { pluginSettings } from "./plugin-settings";
 
 export const ptBR: TranslationResources = {
+  directoryBrowser: {
+    choose: "Usar este diretório",
+    parent: "Ir para o diretório pai",
+    navigatePath: "Navegar para {{path}}",
+    navigate: "Navegar para o diretório",
+    empty: "Nenhum subdiretório",
+    placeholder: "Filtrar subdiretórios ou inserir um caminho...",
+    failed: "Não foi possível listar este diretório",
+  },
   common: {
     back: "Voltar",
     loading: "Carregando...",

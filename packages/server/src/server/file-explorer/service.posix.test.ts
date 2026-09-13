@@ -12,6 +12,26 @@ async function createTempDir(prefix: string): Promise<string> {
 }
 
 describe.skipIf(isPlatform("win32"))("service POSIX-only", () => {
+  it("lists immediate subdirectories and identifies in-root directory symlinks", async () => {
+    const root = await createTempDir("fde-directory-picker-");
+    try {
+      await mkdir(path.join(root, "child", "grandchild"), { recursive: true });
+      await symlink("child", path.join(root, "link"));
+      const result = await listDirectoryEntries({ root });
+      expect(result.absolutePath).toBe(root);
+      expect(
+        result.entries
+          .map(({ name, kind }) => ({ name, kind }))
+          .sort((a, b) => a.name.localeCompare(b.name)),
+      ).toEqual([
+        { name: "child", kind: "directory" },
+        { name: "link", kind: "directory" },
+      ]);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it("lists directory entries even when a dangling symlink exists", async () => {
     const root = await createTempDir("fde-file-explorer-");
 
@@ -27,6 +47,7 @@ describe.skipIf(isPlatform("win32"))("service POSIX-only", () => {
       });
 
       expect(result.path).toBe("packages/server");
+      expect(result.absolutePath).toBe(serverDir);
       const names = result.entries.map((entry) => entry.name);
       expect(names).toContain("README.md");
       expect(names).not.toContain("AGENTS.md");

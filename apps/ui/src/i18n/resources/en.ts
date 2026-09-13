@@ -1,4 +1,13 @@
 export const en = {
+  directoryBrowser: {
+    choose: "Use this directory",
+    parent: "Go to parent",
+    navigatePath: "Navigate to {{path}}",
+    navigate: "Navigate to directory",
+    empty: "No subdirectories",
+    placeholder: "Filter subdirectories or enter a path...",
+    failed: "Unable to list this directory",
+  },
   common: {
     back: "Back",
     loading: "Loading...",

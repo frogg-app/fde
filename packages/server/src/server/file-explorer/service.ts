@@ -52,6 +52,7 @@ export interface FileExplorerEntry {
 
 export interface FileExplorerDirectory {
   path: string;
+  absolutePath: string;
   entries: FileExplorerEntry[];
 }
 
@@ -186,6 +187,7 @@ export async function listDirectoryEntries({
 
   return {
     path: normalizeRelativePath({ root, targetPath: directoryPath.requestedPath }),
+    absolutePath: directoryPath.requestedPath,
     entries,
   };
 }
@@ -842,7 +844,7 @@ async function buildEntryPayload({
   return {
     name,
     path: normalizeRelativePath({ root, targetPath }),
-    kind,
+    kind: stats.isDirectory() ? "directory" : kind,
     size: stats.size,
     modifiedAt: stats.mtime.toISOString(),
   };

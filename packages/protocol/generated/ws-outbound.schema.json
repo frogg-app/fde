@@ -42564,6 +42564,9 @@
                             "path": {
                               "type": "string"
                             },
+                            "absolutePath": {
+                              "type": "string"
+                            },
                             "entries": {
                               "type": "array",
                               "items": {

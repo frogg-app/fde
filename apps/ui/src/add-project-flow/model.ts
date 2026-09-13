@@ -29,7 +29,12 @@ interface SearchPageState extends PageState {
 export type AddProjectPage =
   | ({ kind: "host" } & SearchPageState)
   | ({ kind: "method"; hostId: string; isSubmitting: boolean } & PageState)
-  | ({ kind: "directory-search"; hostId: string; isSubmitting: boolean } & SearchPageState)
+  | ({
+      kind: "directory-search";
+      hostId: string;
+      directory: string;
+      isSubmitting: boolean;
+    } & SearchPageState)
   | ({ kind: "github-search"; hostId: string } & SearchPageState)
   | ({
       kind: "github-location";
@@ -152,6 +157,7 @@ export function openDirectorySearchPage(
 ): AddProjectFlowState {
   return pushAddProjectPage(state, {
     ...searchPage("directory-search"),
+    directory: "~",
     hostId,
     isSubmitting: false,
   });
@@ -215,6 +221,9 @@ export function setAddProjectPageInput(
       return { ...current, name: value, activeIndex: 0, error: null };
     }
     if (current.kind === "method") return current;
+    if (current.kind === "directory-search") {
+      return { ...current, query: value, activeIndex: value.trim() ? -1 : 0, error: null };
+    }
     return { ...current, query: value, activeIndex: 0, error: null };
   });
   if (page.kind !== "github-location") return updated;

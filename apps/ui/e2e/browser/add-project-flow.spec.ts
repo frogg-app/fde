@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { mkdtemp, rm, stat } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { test, expect } from "../support/fixtures";
@@ -223,10 +223,12 @@ test.describe("Add Project command-center flow", () => {
 
     await page.keyboard.press("Enter");
     await expectAddProjectPage(page, "directory-search");
-    await page.keyboard.type(projectPickerFixture.fuzzyQuery);
+    await addProjectFlowInput(page).fill(projectPickerFixture.projectPath);
+    await page.getByTestId("add-project-flow-navigate-directory").click();
     await expect(addProjectFlow(page)).toContainText(projectPickerFixture.projectName, {
       timeout: 30_000,
     });
+    await expect(page.getByTestId("add-project-flow-choose-directory")).toBeEnabled();
     await page.keyboard.press("Enter");
 
     const projectId = await expectOpenedProject(page, projectPickerFixture.projectName);
@@ -238,6 +240,59 @@ test.describe("Add Project command-center flow", () => {
       projectPath: projectPickerFixture.projectPath,
     });
     await expectProjectHasNoWorkspaces(projectId);
+  });
+
+  test("directory browsing starts at home, navigates children, and recovers from a failed path", async ({
+    page,
+  }) => {
+    const root = await mkdtemp(path.join(tmpdir(), "fde-e2e-browse-"));
+    const child = path.join(root, "child");
+    const missing = path.join(root, "missing");
+    try {
+      await mkdir(path.join(child, "grandchild"), { recursive: true });
+      await gotoAppShell(page);
+      await openAddProjectFlow(page);
+      await chooseAddProjectMethod(page, "directory-search");
+      const choose = page.getByTestId("add-project-flow-choose-directory");
+      await expect(choose).toBeEnabled();
+      await addProjectFlowInput(page).fill("~");
+      await page.getByTestId("add-project-flow-navigate-directory").click();
+      await expect(addProjectFlowInput(page)).toHaveValue("");
+      await expect(choose).toBeEnabled();
+      await expect(choose).toContainText("~");
+
+      await addProjectFlowInput(page).fill(root);
+      await page.keyboard.press("Enter");
+      await expect(choose).toContainText(root);
+      const childRow = page.getByTestId(`add-project-flow-path-${encodeURIComponent(child)}`);
+      await expect(childRow).toBeVisible();
+      await expect(
+        page.getByTestId(
+          `add-project-flow-path-${encodeURIComponent(path.join(child, "grandchild"))}`,
+        ),
+      ).toHaveCount(0);
+      await childRow.click();
+      await expect(choose).toContainText(child);
+      await page.getByTestId("add-project-flow-parent-directory").click();
+      await expect(childRow).toBeVisible();
+
+      await addProjectFlowInput(page).fill(missing);
+      await page.keyboard.press("Enter");
+      await expect(page.getByTestId("add-project-flow-query-error")).toBeVisible();
+      await expect(choose).toBeDisabled();
+      await expect(childRow).toHaveCount(0);
+      await mkdir(missing);
+      await page.getByTestId("add-project-flow-retry-directory").click();
+      await expect(choose).toBeEnabled();
+      await expect(choose).toContainText(missing);
+      await expect(page.getByTestId("add-project-flow-query-error")).toHaveCount(0);
+      await addProjectFlowBack(page).click();
+      await chooseAddProjectMethod(page, "directory-search");
+      await expect(choose).toBeEnabled();
+      await expect(choose).toContainText("~");
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
   });
 
   test("a complete repository URL remains selectable without a GitHub search result", async ({

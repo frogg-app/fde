@@ -33,6 +33,16 @@ const HOST: AddProjectHost = {
 };
 
 describe("Add Project navigation", () => {
+  it("starts every directory browsing session at home", () => {
+    let state = openAddProjectFlow({ hosts: [HOST] });
+    state = openDirectorySearchPage(state, HOST.serverId);
+    expect(currentAddProjectPage(state)).toMatchObject({ directory: "~", query: "" });
+    state = setAddProjectPageInput(state, "/tmp");
+    state = backAddProjectPage(state)!;
+    state = openDirectorySearchPage(state, HOST.serverId);
+    expect(currentAddProjectPage(state)).toMatchObject({ directory: "~", query: "" });
+  });
+
   it("skips a single connected host without adding it to history", () => {
     const state = openAddProjectFlow({ hosts: [HOST] });
 

@@ -2,6 +2,15 @@ import { en, type TranslationResources } from "./en";
 import { pluginSettings } from "./plugin-settings";
 
 export const ar: TranslationResources = {
+  directoryBrowser: {
+    choose: "استخدام هذا المجلد",
+    parent: "الانتقال إلى المجلد الأب",
+    navigatePath: "الانتقال إلى {{path}}",
+    navigate: "الانتقال إلى المجلد",
+    empty: "لا توجد مجلدات فرعية",
+    placeholder: "تصفية المجلدات الفرعية أو إدخال مسار...",
+    failed: "تعذر عرض محتويات هذا المجلد",
+  },
   common: {
     back: "خلف",
     loading: "تحميل...",

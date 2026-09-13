@@ -2,6 +2,15 @@ import { en, type TranslationResources } from "./en";
 import { pluginSettings } from "./plugin-settings";
 
 export const es: TranslationResources = {
+  directoryBrowser: {
+    choose: "Usar este directorio",
+    parent: "Ir al directorio superior",
+    navigatePath: "Navegar a {{path}}",
+    navigate: "Navegar al directorio",
+    empty: "No hay subdirectorios",
+    placeholder: "Filtrar subdirectorios o introducir una ruta...",
+    failed: "No se puede listar este directorio",
+  },
   common: {
     back: "Atrás",
     loading: "Cargando...",

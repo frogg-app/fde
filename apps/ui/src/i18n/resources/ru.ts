@@ -2,6 +2,15 @@ import { en, type TranslationResources } from "./en";
 import { pluginSettings } from "./plugin-settings";
 
 export const ru: TranslationResources = {
+  directoryBrowser: {
+    choose: "Использовать этот каталог",
+    parent: "Перейти к родительскому каталогу",
+    navigatePath: "Перейти в {{path}}",
+    navigate: "Перейти в каталог",
+    empty: "Нет подкаталогов",
+    placeholder: "Фильтровать подкаталоги или ввести путь...",
+    failed: "Не удалось получить содержимое каталога",
+  },
   common: {
     back: "Назад",
     loading: "Загрузка...",
