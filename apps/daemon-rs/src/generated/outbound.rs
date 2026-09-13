@@ -34,34 +34,6 @@ pub enum SessionMessage {
     HubExecutionAgentStream(HubExecutionAgentStream),
     #[serde(rename = "browser.automation.execute.request")]
     BrowserAutomationExecuteRequest(BrowserAutomationExecuteRequest),
-    #[serde(rename = "plugin.catalog.get.response")]
-    PluginCatalogGetResponse(PluginCatalogGetResponse),
-    #[serde(rename = "plugin.list.response")]
-    PluginListResponse(PluginListResponse),
-    #[serde(rename = "plugin.logs.get.response")]
-    PluginLogsGetResponse(PluginLogsGetResponse),
-    #[serde(rename = "plugin.directory.install.response")]
-    PluginDirectoryInstallResponse(PluginDirectoryInstallResponse),
-    #[serde(rename = "plugin.directory.inspect.response")]
-    PluginDirectoryInspectResponse(PluginDirectoryInspectResponse),
-    #[serde(rename = "plugin.source.install.response")]
-    PluginSourceInstallResponse(PluginSourceInstallResponse),
-    #[serde(rename = "plugin.source.status.response")]
-    PluginSourceStatusResponse(PluginSourceStatusResponse),
-    #[serde(rename = "plugin.source.update.response")]
-    PluginSourceUpdateResponse(PluginSourceUpdateResponse),
-    #[serde(rename = "plugin.reload.response")]
-    PluginReloadResponse(PluginReloadResponse),
-    #[serde(rename = "plugin.enable.response")]
-    PluginEnableResponse(PluginEnableResponse),
-    #[serde(rename = "plugin.disable.response")]
-    PluginDisableResponse(PluginDisableResponse),
-    #[serde(rename = "plugin.remove.response")]
-    PluginRemoveResponse(PluginRemoveResponse),
-    #[serde(rename = "plugin.rpc.invoke.response")]
-    PluginRpcInvokeResponse(PluginRpcInvokeResponse),
-    #[serde(rename = "agent.timeline.append.response")]
-    AgentTimelineAppendResponse(AgentTimelineAppendResponse),
     #[serde(rename = "agent.skills.get_status.response")]
     AgentSkillsGetStatusResponse(AgentSkillsGetStatusResponse),
     #[serde(rename = "agent.skills.reconcile.response")]
@@ -374,6 +346,8 @@ pub enum SessionMessage {
     ProjectIconResponse(ProjectIconResponse),
     #[serde(rename = "project.icon.get.response")]
     ProjectIconGetResponse(ProjectIconGetResponse),
+    #[serde(rename = "agent.provider_definitions.list.response")]
+    AgentProviderDefinitionsListResponse(AgentProviderDefinitionsListResponse),
     #[serde(rename = "file_download_token_response")]
     FileDownloadTokenResponse(FileDownloadTokenResponse),
     #[serde(rename = "file.upload.response")]
@@ -1581,453 +1555,6 @@ pub struct BrowserAutomationExecuteRequest {
     #[serde(rename = "workspaceId", skip_serializing_if = "Option::is_none")]
     pub workspace_id: Option<String>,
     pub command: serde_json::Value,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginCatalogGetResponse {
-    pub payload: PluginCatalogGetResponsePayload,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginCatalogGetResponsePayload {
-    #[serde(rename = "requestId")]
-    pub request_id: String,
-    pub plugins: Vec<PluginCatalogGetResponsePayloadPluginsItem>,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginCatalogGetResponsePayloadPluginsItem {
-    pub id: String,
-    #[serde(rename = "clientBundle")]
-    pub client_bundle: String,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginListResponse {
-    pub payload: PluginListResponsePayload,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginListResponsePayload {
-    #[serde(rename = "requestId")]
-    pub request_id: String,
-    pub plugins: Vec<PluginListResponsePayloadPluginsItem>,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginListResponsePayloadPluginsItem {
-    pub id: String,
-    pub path: String,
-    pub enabled: bool,
-    pub status: PluginListResponsePayloadPluginsItemStatus,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub source: Option<PluginListResponsePayloadPluginsItemSource>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub remote: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub r#ref: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub commit: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub error: Option<String>,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum PluginListResponsePayloadPluginsItemStatus {
-    #[serde(rename = "running")]
-    Running,
-    #[serde(rename = "disabled")]
-    Disabled,
-    #[serde(rename = "failed")]
-    Failed,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum PluginListResponsePayloadPluginsItemSource {
-    #[serde(rename = "directory")]
-    Directory,
-    #[serde(rename = "git")]
-    Git,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginLogsGetResponse {
-    pub payload: PluginLogsGetResponsePayload,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginLogsGetResponsePayload {
-    #[serde(rename = "requestId")]
-    pub request_id: String,
-    #[serde(rename = "pluginId")]
-    pub plugin_id: String,
-    pub entries: Vec<PluginLogsGetResponsePayloadEntriesItem>,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginLogsGetResponsePayloadEntriesItem {
-    pub sequence: i64,
-    pub timestamp: String,
-    pub stream: PluginLogsGetResponsePayloadEntriesItemStream,
-    pub message: String,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum PluginLogsGetResponsePayloadEntriesItemStream {
-    #[serde(rename = "stdout")]
-    Stdout,
-    #[serde(rename = "stderr")]
-    Stderr,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginDirectoryInstallResponse {
-    pub payload: PluginDirectoryInstallResponsePayload,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginDirectoryInstallResponsePayload {
-    #[serde(rename = "requestId")]
-    pub request_id: String,
-    pub plugin: PluginDirectoryInstallResponsePayloadPlugin,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginDirectoryInstallResponsePayloadPlugin {
-    pub id: String,
-    pub path: String,
-    pub enabled: bool,
-    pub status: PluginDirectoryInstallResponsePayloadPluginStatus,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub source: Option<PluginDirectoryInstallResponsePayloadPluginSource>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub remote: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub r#ref: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub commit: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub error: Option<String>,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum PluginDirectoryInstallResponsePayloadPluginStatus {
-    #[serde(rename = "running")]
-    Running,
-    #[serde(rename = "disabled")]
-    Disabled,
-    #[serde(rename = "failed")]
-    Failed,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum PluginDirectoryInstallResponsePayloadPluginSource {
-    #[serde(rename = "directory")]
-    Directory,
-    #[serde(rename = "git")]
-    Git,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginDirectoryInspectResponse {
-    pub payload: PluginDirectoryInspectResponsePayload,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginDirectoryInspectResponsePayload {
-    #[serde(rename = "requestId")]
-    pub request_id: String,
-    pub id: String,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginSourceInstallResponse {
-    pub payload: PluginSourceInstallResponsePayload,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginSourceInstallResponsePayload {
-    #[serde(rename = "requestId")]
-    pub request_id: String,
-    pub plugin: PluginSourceInstallResponsePayloadPlugin,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginSourceInstallResponsePayloadPlugin {
-    pub id: String,
-    pub path: String,
-    pub enabled: bool,
-    pub status: PluginSourceInstallResponsePayloadPluginStatus,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub source: Option<PluginSourceInstallResponsePayloadPluginSource>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub remote: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub r#ref: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub commit: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub error: Option<String>,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum PluginSourceInstallResponsePayloadPluginStatus {
-    #[serde(rename = "running")]
-    Running,
-    #[serde(rename = "disabled")]
-    Disabled,
-    #[serde(rename = "failed")]
-    Failed,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum PluginSourceInstallResponsePayloadPluginSource {
-    #[serde(rename = "directory")]
-    Directory,
-    #[serde(rename = "git")]
-    Git,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginSourceStatusResponse {
-    pub payload: PluginSourceStatusResponsePayload,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginSourceStatusResponsePayload {
-    #[serde(rename = "requestId")]
-    pub request_id: String,
-    pub plugins: Vec<PluginSourceStatusResponsePayloadPluginsItem>,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginSourceStatusResponsePayloadPluginsItem {
-    pub id: String,
-    pub source: PluginSourceStatusResponsePayloadPluginsItemSource,
-    pub path: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub remote: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub r#ref: Option<String>,
-    #[serde(rename = "currentCommit", skip_serializing_if = "Option::is_none")]
-    pub current_commit: Option<String>,
-    #[serde(rename = "latestCommit", skip_serializing_if = "Option::is_none")]
-    pub latest_commit: Option<String>,
-    #[serde(rename = "commitsBehind", skip_serializing_if = "Option::is_none")]
-    pub commits_behind: Option<i64>,
-    #[serde(rename = "updateAvailable", skip_serializing_if = "Option::is_none")]
-    pub update_available: Option<bool>,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum PluginSourceStatusResponsePayloadPluginsItemSource {
-    #[serde(rename = "directory")]
-    Directory,
-    #[serde(rename = "git")]
-    Git,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginSourceUpdateResponse {
-    pub payload: PluginSourceUpdateResponsePayload,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginSourceUpdateResponsePayload {
-    #[serde(rename = "requestId")]
-    pub request_id: String,
-    pub plugins: Vec<PluginSourceUpdateResponsePayloadPluginsItem>,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginSourceUpdateResponsePayloadPluginsItem {
-    pub id: String,
-    #[serde(rename = "previousCommit")]
-    pub previous_commit: String,
-    #[serde(rename = "currentCommit")]
-    pub current_commit: String,
-    pub commits: i64,
-    pub updated: bool,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginReloadResponse {
-    pub payload: PluginReloadResponsePayload,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginReloadResponsePayload {
-    #[serde(rename = "requestId")]
-    pub request_id: String,
-    pub plugin: PluginReloadResponsePayloadPlugin,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginReloadResponsePayloadPlugin {
-    pub id: String,
-    pub path: String,
-    pub enabled: bool,
-    pub status: PluginReloadResponsePayloadPluginStatus,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub source: Option<PluginReloadResponsePayloadPluginSource>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub remote: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub r#ref: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub commit: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub error: Option<String>,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum PluginReloadResponsePayloadPluginStatus {
-    #[serde(rename = "running")]
-    Running,
-    #[serde(rename = "disabled")]
-    Disabled,
-    #[serde(rename = "failed")]
-    Failed,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum PluginReloadResponsePayloadPluginSource {
-    #[serde(rename = "directory")]
-    Directory,
-    #[serde(rename = "git")]
-    Git,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginEnableResponse {
-    pub payload: PluginEnableResponsePayload,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginEnableResponsePayload {
-    #[serde(rename = "requestId")]
-    pub request_id: String,
-    pub plugin: PluginEnableResponsePayloadPlugin,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginEnableResponsePayloadPlugin {
-    pub id: String,
-    pub path: String,
-    pub enabled: bool,
-    pub status: PluginEnableResponsePayloadPluginStatus,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub source: Option<PluginEnableResponsePayloadPluginSource>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub remote: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub r#ref: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub commit: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub error: Option<String>,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum PluginEnableResponsePayloadPluginStatus {
-    #[serde(rename = "running")]
-    Running,
-    #[serde(rename = "disabled")]
-    Disabled,
-    #[serde(rename = "failed")]
-    Failed,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum PluginEnableResponsePayloadPluginSource {
-    #[serde(rename = "directory")]
-    Directory,
-    #[serde(rename = "git")]
-    Git,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginDisableResponse {
-    pub payload: PluginDisableResponsePayload,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginDisableResponsePayload {
-    #[serde(rename = "requestId")]
-    pub request_id: String,
-    pub plugin: PluginDisableResponsePayloadPlugin,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginDisableResponsePayloadPlugin {
-    pub id: String,
-    pub path: String,
-    pub enabled: bool,
-    pub status: PluginDisableResponsePayloadPluginStatus,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub source: Option<PluginDisableResponsePayloadPluginSource>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub remote: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub r#ref: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub commit: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub error: Option<String>,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum PluginDisableResponsePayloadPluginStatus {
-    #[serde(rename = "running")]
-    Running,
-    #[serde(rename = "disabled")]
-    Disabled,
-    #[serde(rename = "failed")]
-    Failed,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum PluginDisableResponsePayloadPluginSource {
-    #[serde(rename = "directory")]
-    Directory,
-    #[serde(rename = "git")]
-    Git,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginRemoveResponse {
-    pub payload: PluginRemoveResponsePayload,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginRemoveResponsePayload {
-    #[serde(rename = "requestId")]
-    pub request_id: String,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginRpcInvokeResponse {
-    pub payload: PluginRpcInvokeResponsePayload,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginRpcInvokeResponsePayload {
-    #[serde(rename = "requestId")]
-    pub request_id: String,
-    pub output: serde_json::Value,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct AgentTimelineAppendResponse {
-    pub payload: AgentTimelineAppendResponsePayload,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct AgentTimelineAppendResponsePayload {
-    #[serde(rename = "requestId")]
-    pub request_id: String,
-    pub seq: i64,
-    pub epoch: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -7171,10 +6698,6 @@ pub struct GetDaemonConfigResponsePayloadConfig {
     pub agent_profiles: Option<Vec<GetDaemonConfigResponsePayloadConfigAgentProfilesItem>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub skills: Option<GetDaemonConfigResponsePayloadConfigSkills>,
-    #[serde(rename = "pluginsEnabled", skip_serializing_if = "Option::is_none")]
-    pub plugins_enabled: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub plugins: Option<serde_json::Value>,
     #[serde(rename = "autoUpdate", skip_serializing_if = "Option::is_none")]
     pub auto_update: Option<GetDaemonConfigResponsePayloadConfigAutoUpdate>,
 }
@@ -7336,10 +6859,6 @@ pub struct SetDaemonConfigResponsePayloadConfig {
     pub agent_profiles: Option<Vec<SetDaemonConfigResponsePayloadConfigAgentProfilesItem>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub skills: Option<SetDaemonConfigResponsePayloadConfigSkills>,
-    #[serde(rename = "pluginsEnabled", skip_serializing_if = "Option::is_none")]
-    pub plugins_enabled: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub plugins: Option<serde_json::Value>,
     #[serde(rename = "autoUpdate", skip_serializing_if = "Option::is_none")]
     pub auto_update: Option<SetDaemonConfigResponsePayloadConfigAutoUpdate>,
 }
@@ -9069,6 +8588,40 @@ pub struct ProjectIconGetResponsePayload {
     pub error: Option<String>,
     #[serde(rename = "requestId")]
     pub request_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AgentProviderDefinitionsListResponse {
+    pub payload: AgentProviderDefinitionsListResponsePayload,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AgentProviderDefinitionsListResponsePayload {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cwd: Option<String>,
+    pub definitions: Vec<AgentProviderDefinitionsListResponsePayloadDefinitionsItem>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+    #[serde(rename = "requestId")]
+    pub request_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AgentProviderDefinitionsListResponsePayloadDefinitionsItem {
+    pub provider: String,
+    pub scope: AgentProviderDefinitionsListResponsePayloadDefinitionsItemScope,
+    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    pub path: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum AgentProviderDefinitionsListResponsePayloadDefinitionsItemScope {
+    #[serde(rename = "user")]
+    User,
+    #[serde(rename = "project")]
+    Project,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

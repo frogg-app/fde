@@ -192,34 +192,6 @@ pub enum SessionMessage {
     HubManagementDaemonPermissionsUpdateRequest(HubManagementDaemonPermissionsUpdateRequest),
     #[serde(rename = "diagnostics.request")]
     DiagnosticsRequest(DiagnosticsRequest),
-    #[serde(rename = "plugin.catalog.get.request")]
-    PluginCatalogGetRequest(PluginCatalogGetRequest),
-    #[serde(rename = "plugin.list.request")]
-    PluginListRequest(PluginListRequest),
-    #[serde(rename = "plugin.logs.get.request")]
-    PluginLogsGetRequest(PluginLogsGetRequest),
-    #[serde(rename = "plugin.directory.install.request")]
-    PluginDirectoryInstallRequest(PluginDirectoryInstallRequest),
-    #[serde(rename = "plugin.directory.inspect.request")]
-    PluginDirectoryInspectRequest(PluginDirectoryInspectRequest),
-    #[serde(rename = "plugin.source.install.request")]
-    PluginSourceInstallRequest(PluginSourceInstallRequest),
-    #[serde(rename = "plugin.source.status.request")]
-    PluginSourceStatusRequest(PluginSourceStatusRequest),
-    #[serde(rename = "plugin.source.update.request")]
-    PluginSourceUpdateRequest(PluginSourceUpdateRequest),
-    #[serde(rename = "plugin.reload.request")]
-    PluginReloadRequest(PluginReloadRequest),
-    #[serde(rename = "plugin.enable.request")]
-    PluginEnableRequest(PluginEnableRequest),
-    #[serde(rename = "plugin.disable.request")]
-    PluginDisableRequest(PluginDisableRequest),
-    #[serde(rename = "plugin.remove.request")]
-    PluginRemoveRequest(PluginRemoveRequest),
-    #[serde(rename = "plugin.rpc.invoke.request")]
-    PluginRpcInvokeRequest(PluginRpcInvokeRequest),
-    #[serde(rename = "agent.timeline.append.request")]
-    AgentTimelineAppendRequest(AgentTimelineAppendRequest),
     #[serde(rename = "agent.skills.get_status.request")]
     AgentSkillsGetStatusRequest(AgentSkillsGetStatusRequest),
     #[serde(rename = "agent.skills.reconcile.request")]
@@ -414,6 +386,8 @@ pub enum SessionMessage {
     ProjectIconRequest(ProjectIconRequest),
     #[serde(rename = "project.icon.get.request")]
     ProjectIconGetRequest(ProjectIconGetRequest),
+    #[serde(rename = "agent.provider_definitions.list.request")]
+    AgentProviderDefinitionsListRequest(AgentProviderDefinitionsListRequest),
     #[serde(rename = "file_download_token_request")]
     FileDownloadTokenRequest(FileDownloadTokenRequest),
     #[serde(rename = "file.upload.request")]
@@ -1414,130 +1388,6 @@ pub struct DiagnosticsRequest {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginCatalogGetRequest {
-    #[serde(rename = "requestId")]
-    pub request_id: String,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginListRequest {
-    #[serde(rename = "requestId")]
-    pub request_id: String,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginLogsGetRequest {
-    #[serde(rename = "requestId")]
-    pub request_id: String,
-    #[serde(rename = "pluginId")]
-    pub plugin_id: String,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginDirectoryInstallRequest {
-    #[serde(rename = "requestId")]
-    pub request_id: String,
-    pub path: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub id: Option<String>,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginDirectoryInspectRequest {
-    #[serde(rename = "requestId")]
-    pub request_id: String,
-    pub path: String,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginSourceInstallRequest {
-    #[serde(rename = "requestId")]
-    pub request_id: String,
-    pub source: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub id: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub r#ref: Option<String>,
-    #[serde(rename = "pluginPath", skip_serializing_if = "Option::is_none")]
-    pub plugin_path: Option<String>,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginSourceStatusRequest {
-    #[serde(rename = "requestId")]
-    pub request_id: String,
-    #[serde(rename = "pluginId", skip_serializing_if = "Option::is_none")]
-    pub plugin_id: Option<String>,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginSourceUpdateRequest {
-    #[serde(rename = "requestId")]
-    pub request_id: String,
-    #[serde(rename = "pluginId", skip_serializing_if = "Option::is_none")]
-    pub plugin_id: Option<String>,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginReloadRequest {
-    #[serde(rename = "requestId")]
-    pub request_id: String,
-    #[serde(rename = "pluginId")]
-    pub plugin_id: String,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginEnableRequest {
-    #[serde(rename = "requestId")]
-    pub request_id: String,
-    #[serde(rename = "pluginId")]
-    pub plugin_id: String,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginDisableRequest {
-    #[serde(rename = "requestId")]
-    pub request_id: String,
-    #[serde(rename = "pluginId")]
-    pub plugin_id: String,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginRemoveRequest {
-    #[serde(rename = "requestId")]
-    pub request_id: String,
-    #[serde(rename = "pluginId")]
-    pub plugin_id: String,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PluginRpcInvokeRequest {
-    #[serde(rename = "requestId")]
-    pub request_id: String,
-    #[serde(rename = "pluginId")]
-    pub plugin_id: String,
-    pub method: String,
-    pub input: serde_json::Value,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct AgentTimelineAppendRequest {
-    #[serde(rename = "requestId")]
-    pub request_id: String,
-    #[serde(rename = "agentId")]
-    pub agent_id: String,
-    pub item: AgentTimelineAppendRequestItem,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct AgentTimelineAppendRequestItem {
-    pub id: String,
-    pub kind: String,
-    pub version: i64,
-    pub data: serde_json::Value,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct AgentSkillsGetStatusRequest {
     #[serde(rename = "requestId")]
     pub request_id: String,
@@ -1614,10 +1464,6 @@ pub struct SetDaemonConfigRequestConfig {
     pub terminal_profiles: Option<Vec<SetDaemonConfigRequestConfigTerminalProfilesItem>>,
     #[serde(rename = "agentProfiles", skip_serializing_if = "Option::is_none")]
     pub agent_profiles: Option<Vec<SetDaemonConfigRequestConfigAgentProfilesItem>>,
-    #[serde(rename = "pluginsEnabled", skip_serializing_if = "Option::is_none")]
-    pub plugins_enabled: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub plugins: Option<serde_json::Value>,
     #[serde(rename = "autoUpdate", skip_serializing_if = "Option::is_none")]
     pub auto_update: Option<SetDaemonConfigRequestConfigAutoUpdate>,
 }
@@ -3055,6 +2901,14 @@ pub struct ProjectIconRequest {
 pub struct ProjectIconGetRequest {
     #[serde(rename = "projectId")]
     pub project_id: String,
+    #[serde(rename = "requestId")]
+    pub request_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AgentProviderDefinitionsListRequest {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cwd: Option<String>,
     #[serde(rename = "requestId")]
     pub request_id: String,
 }
