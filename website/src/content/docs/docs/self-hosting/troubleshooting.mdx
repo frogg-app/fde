@@ -29,7 +29,7 @@ shows the daemon's version and update state; **Settings → Diagnostics** collec
 | `Another FDE daemon is already running (PID n)` | A daemon already uses this `FDE_HOME`. `fde stop`, or use another home |
 | `Daemon failed to start in background` | Read the log lines printed after it. Common: port in use, invalid config |
 | `[Config] Invalid config in ~/.fde/config.json` | A key is misspelt or has the wrong type. The message names the path. See [configuration](/docs/reference/configuration/) |
-| `Configure a relay endpoint before enabling relay` | `daemon.relay.enabled` without an endpoint. Disable relay or set `daemon.relay.endpoint` |
+| Log: `Relay is enabled but no relay endpoint is configured` | Relay is on with no endpoint, so the daemon runs without relay and pairing offers are direct only. Set the endpoint in host settings, **Pair devices**, or `daemon.relay.endpoint`, or turn relay off |
 | Service stops when you log out (Linux) | `sudo loginctl enable-linger $USER` |
 | Changes to `config.json` ignored | `fde reload`; check its output for paths that need `fde restart` or are pinned by env vars |
 

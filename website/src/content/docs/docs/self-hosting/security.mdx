@@ -88,10 +88,14 @@ A relay lets clients reach a daemon with no inbound connectivity. Traffic is end
 encrypted (Curve25519 key exchange, XSalsa20-Poly1305) with the daemon's public key from
 the pairing offer, so the relay cannot read it.
 
-FDE does not operate a public relay, and none is configured by default. `packages/relay`
-is a Cloudflare Durable Object implementation you can deploy yourself; then set
-`daemon.relay.enabled` and `daemon.relay.endpoint`. Operating it is not otherwise
-documented here.
+FDE does not operate a public relay, and no brand ships a relay endpoint. `packages/relay`
+is a Cloudflare Durable Object implementation you can deploy yourself. Then set the
+endpoint in the app under host settings, **Pair devices**, or with `daemon.relay.endpoint`
+or `FDE_RELAY_ENDPOINT`, and enable relay. TLS to the relay is on by default. Operating a
+relay is not otherwise documented here.
+
+If relay is enabled without an endpoint, the daemon starts, logs a warning and reports
+relay as unavailable in pairing offers.
 
 ## MCP endpoint
 

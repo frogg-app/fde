@@ -20,6 +20,7 @@ import {
   Sparkles,
   Blocks,
   PanelsTopLeft,
+  AudioLines,
 } from "lucide-react-native";
 import type { HostSectionSlug, SettingsSectionSlug } from "@/utils/host-routes";
 
@@ -34,6 +35,7 @@ export interface SidebarSectionItem {
 
 export const SIDEBAR_SECTION_ITEMS: SidebarSectionItem[] = [
   { id: "general", labelKey: "settings.sections.general", icon: Settings },
+  { id: "companion", labelKey: "companion.title", icon: AudioLines },
   { id: "appearance", labelKey: "settings.sections.appearance", icon: Palette },
   {
     id: "layout",

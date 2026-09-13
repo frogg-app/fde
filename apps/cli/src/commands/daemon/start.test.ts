@@ -87,17 +87,17 @@ describe("daemon start feedback", () => {
   });
 
   test.each([false, true])(
-    "invalid persisted relay does not block precheck (running=%s)",
+    "schema-invalid persisted relay does not block precheck (running=%s)",
     async (running) => {
       const home = await mkdtemp(path.join(os.tmpdir(), "fde-start-config-"));
       try {
         await writeFile(
           path.join(home, "config.json"),
-          JSON.stringify({ version: 1, daemon: { relay: { enabled: true } } }),
+          JSON.stringify({ version: 1, daemon: { relay: { enabled: "yes" } } }),
         );
         if (running)
           await writeFile(path.join(home, "fde.pid"), JSON.stringify({ pid: process.pid }));
-        expect(() => loadConfig(home, { env: {} })).toThrow("Configure a relay endpoint");
+        expect(() => loadConfig(home, { env: {} })).toThrow("[Config] Invalid config");
         const runtime = new FakeStartRuntime();
         runtime.resolveState = resolveLocalDaemonDiagnosticState;
         await runStart({ home, relay: false }, runtime);

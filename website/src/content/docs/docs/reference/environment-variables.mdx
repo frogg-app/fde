@@ -35,10 +35,10 @@ installer variables use the brand's prefix: for Acme, `ACME_HOME`, `ACME_INSTALL
 
 | Variable                            | Meaning |
 | ----------------------------------- | ------- |
-| `FDE_RELAY_ENABLED`                 | Enable relay (needs an endpoint) |
-| `FDE_RELAY_ENDPOINT`                | Relay `host:port` |
+| `FDE_RELAY_ENABLED`                 | Enable relay. Without an endpoint, relay stays inactive |
+| `FDE_RELAY_ENDPOINT`                | Relay `host:port`. Overrides `daemon.relay.endpoint` and locks the app's endpoint setting |
 | `FDE_RELAY_PUBLIC_ENDPOINT`         | Endpoint advertised to clients |
-| `FDE_RELAY_USE_TLS`, `FDE_RELAY_PUBLIC_USE_TLS` | TLS for the relay |
+| `FDE_RELAY_USE_TLS`, `FDE_RELAY_PUBLIC_USE_TLS` | TLS for the relay. Default `true`; `false` only for a plaintext test relay |
 | `FDE_SERVICE_PROXY_LISTEN`          | Separate listener for workspace service URLs |
 | `FDE_SERVICE_PROXY_PUBLIC_BASE_URL` | Public base URL for service links |
 

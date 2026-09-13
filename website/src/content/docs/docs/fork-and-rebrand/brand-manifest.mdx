@@ -124,9 +124,10 @@ that would use it.
 | Key              | Rule                              | Default | Meaning                                                  |
 | ---------------- | --------------------------------- | ------- | -------------------------------------------------------- |
 | `pairingUrl`     | HTTP(S) URL                       | none    | Hosted pairing page, e.g. `https://pair.acme.example`    |
-| `relayEndpoint`  | `host:port`                       | none    | Relay the daemon and clients use when relay is enabled   |
-| `relayUseTls`    | boolean                           | `true`  | Use TLS to reach `relayEndpoint`                         |
 | `allowedOrigins` | array of URLs                     | `[]`    | Default CORS origins in a new daemon config (hosted web app origins) |
+
+A brand cannot ship a relay endpoint; `relayEndpoint` and `relayUseTls` are rejected.
+Each daemon owner configures their own relay.
 
 A custom brand inherits **none** of FDE's hosted services. Without `pairingUrl`, pairing
 links use your native scheme (`acme://pair#offer=...`) and direct connections still

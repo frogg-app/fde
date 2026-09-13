@@ -595,8 +595,7 @@ export function resolveLocalDaemonState(options: { home?: string } = {}): LocalD
     ...state,
     listen: state.pidInfo?.listen ?? config.listen,
     relayEnabled: config.relayEnabled ?? true,
-    relayEndpoint:
-      config.relayPublicEndpoint ?? config.relayEndpoint ?? brand.services.relayEndpoint ?? "",
+    relayEndpoint: config.relayPublicEndpoint ?? config.relayEndpoint ?? "",
     relayUseTls: config.relayUseTls ?? false,
     relayPublicUseTls: config.relayPublicUseTls ?? config.relayUseTls ?? false,
   };

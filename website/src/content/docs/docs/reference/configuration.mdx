@@ -94,13 +94,19 @@ It only works for installs made with `install.sh`. See [updates](/docs/self-host
 
 | Key                          | Type    | Default          | Meaning |
 | ---------------------------- | ------- | ---------------- | ------- |
-| `daemon.relay.enabled`       | boolean | `false`          | Connect to a relay. Fails at startup without an endpoint |
-| `daemon.relay.endpoint`      | string  | brand default (none for FDE) | `host:port` of your relay |
+| `daemon.relay.enabled`       | boolean | `false`          | Connect to a relay. Without an endpoint the daemon still starts, logs a warning and runs no relay |
+| `daemon.relay.endpoint`      | string  | unset            | `host:port` of your relay. Also settable in the app under host settings, **Pair devices** |
 | `daemon.relay.publicEndpoint` | string | `endpoint`       | Endpoint advertised to clients |
-| `daemon.relay.useTls`        | boolean | `true` for the brand's endpoint, else `false` | TLS to the relay |
+| `daemon.relay.useTls`        | boolean | `true`           | TLS to the relay. Set `false` only for a plaintext test relay |
 | `daemon.relay.publicUseTls`  | boolean | `useTls`         | TLS advertised to clients |
 
-FDE does not operate a public relay. Deploy `packages/relay` yourself to use one.
+FDE does not operate a public relay, and no brand ships a relay endpoint. Deploy
+`packages/relay` yourself to use one.
+
+The endpoint comes from `FDE_RELAY_ENDPOINT`, then `daemon.relay.endpoint`. Setting it
+in the app writes `daemon.relay.endpoint` and `daemon.relay.useTls` and applies them
+without a restart. While `FDE_RELAY_ENDPOINT`, `FDE_RELAY_USE_TLS` or a relay TLS CLI flag
+is set, the app shows the endpoint read-only.
 
 ### Service proxy
 
@@ -190,7 +196,8 @@ See [plugins](/docs/plugins/).
 
 ## Reload behaviour
 
-`fde reload` applies these without a restart: `daemon.relay.enabled`, `daemon.mcp.*`,
+`fde reload` applies these without a restart: `daemon.relay.enabled`,
+`daemon.relay.endpoint`, `daemon.relay.useTls`, `daemon.mcp.*`,
 `daemon.browserTools.enabled`, `daemon.hostnames`, `daemon.cors.allowedOrigins`,
 `daemon.trustedProxies`, `daemon.auth.trustLan`, `daemon.git.*`,
 `daemon.autoArchiveAfterMerge`, `daemon.autoUpdate`, `daemon.enableTerminalAgentHooks`,

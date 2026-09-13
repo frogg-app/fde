@@ -31,7 +31,6 @@ import { resolveGitProcessPolicy } from "../utils/git-process-scheduler.js";
 import type { DaemonAutoUpdateConfig } from "@fde/protocol/messages";
 
 const DEFAULT_PORT = brand.daemonPort;
-const DEFAULT_RELAY_ENDPOINT = brand.services.relayEndpoint ?? "";
 const DEFAULT_APP_BASE_URL = brand.services.pairingUrl ?? "";
 /**
  * Bases written into config.json by earlier releases as *their* default. A home
@@ -291,6 +290,7 @@ interface ResolveRelayInput {
 interface ResolvedRelay {
   enabled: boolean;
   enabledMutable: boolean;
+  endpointMutable: boolean;
   endpoint: string;
   publicEndpoint: string;
   useTls: boolean;
@@ -313,11 +313,20 @@ function resolveTlsFromEnv(
   return persistedValue ?? fallback;
 }
 
-function validateRelayEndpoint(enabled: boolean, endpoint: string): void {
-  if (enabled && !endpoint)
-    throw new Error(
-      "Configure a relay endpoint before enabling relay for this product. For direct or SSH connections, set daemon.relay.enabled to false in config.json; for relay access, set daemon.relay.endpoint to your relay server.",
-    );
+/**
+ * TLS is on unless the owner explicitly turns it off. A relay endpoint is
+ * always one the owner configured, and a public relay without TLS is the
+ * exception (local test relays), so plaintext has to be asked for.
+ */
+const DEFAULT_RELAY_USE_TLS = true;
+
+/** Env/CLI endpoint or TLS overrides own the endpoint for this launch. */
+function isRelayEndpointMutable(input: ResolveRelayInput): boolean {
+  return (
+    input.env.FDE_RELAY_ENDPOINT === undefined &&
+    input.cliRelayUseTls === undefined &&
+    input.env.FDE_RELAY_USE_TLS === undefined
+  );
 }
 
 function resolveRelayConfig(input: ResolveRelayInput): ResolvedRelay {
@@ -329,11 +338,13 @@ function resolveRelayConfig(input: ResolveRelayInput): ResolvedRelay {
     environmentEnabled ??
     input.persisted.daemon?.relay?.enabled ??
     input.enabledFallback;
-  const endpoint =
+  // No default endpoint: relay only runs against an endpoint the owner configured.
+  // Enabled without an endpoint is valid; the relay runtime stays inactive.
+  const endpoint = (
     input.env.FDE_RELAY_ENDPOINT ??
     input.persisted.daemon?.relay?.endpoint ??
-    DEFAULT_RELAY_ENDPOINT;
-  validateRelayEndpoint(enabled, endpoint);
+    ""
+  ).trim();
   const publicEndpoint =
     input.env.FDE_RELAY_PUBLIC_ENDPOINT ??
     input.persisted.daemon?.relay?.publicEndpoint ??
@@ -343,7 +354,7 @@ function resolveRelayConfig(input: ResolveRelayInput): ResolvedRelay {
     resolveTlsFromEnv(
       input.env.FDE_RELAY_USE_TLS,
       input.persisted.daemon?.relay?.useTls,
-      endpoint === DEFAULT_RELAY_ENDPOINT,
+      DEFAULT_RELAY_USE_TLS,
     );
   const publicUseTls = resolveTlsFromEnv(
     input.env.FDE_RELAY_PUBLIC_USE_TLS,
@@ -353,6 +364,7 @@ function resolveRelayConfig(input: ResolveRelayInput): ResolvedRelay {
   return {
     enabled,
     enabledMutable: input.cliRelayEnabled === undefined && environmentEnabled === undefined,
+    endpointMutable: isRelayEndpointMutable(input),
     endpoint,
     publicEndpoint,
     useTls,
@@ -619,11 +631,7 @@ export function resolveConfigFromPersisted(
   const resolvedOptions = options ?? {};
   const env = resolvedOptions.env ?? process.env;
   const cli = resolvedOptions.cli;
-  const relayEnabledFallback =
-    resolvedOptions.relayEnabledFallback ??
-    (brand.legacyFde &&
-      Boolean(DEFAULT_RELAY_ENDPOINT) &&
-      persisted.daemon?.relay?.enabled === undefined);
+  const relayEnabledFallback = resolvedOptions.relayEnabledFallback ?? false;
 
   const listen = resolveListenAddress(env, cli, persisted);
   const {
@@ -693,6 +701,7 @@ export function resolveConfigFromPersisted(
     agentClients: {},
     relayEnabled: relay.enabled,
     relayEnabledMutable: relay.enabledMutable,
+    relayEndpointMutable: relay.endpointMutable,
     relayEndpoint: relay.endpoint,
     relayPublicEndpoint: relay.publicEndpoint,
     relayUseTls: relay.useTls,

@@ -1036,6 +1036,40 @@ const x = 1;
     expect(shortstat).toBeNull();
   });
 
+  it("reports nothing for a branch already squash-merged into its remote base", async () => {
+    const { cloneDir } = setupRemoteTrackingMain(repoDir, tempDir);
+    execFileSync("git", ["checkout", "-b", "feature/squashed"], { cwd: repoDir });
+    commitFile(repoDir, "feature.txt", "one\ntwo\n", "feature");
+    // Land the same content on main as an unrelated (squash) commit, then add more on main.
+    commitFile(cloneDir, "feature.txt", "one\ntwo\n", "squash feature");
+    commitFile(cloneDir, "later.txt", "later\n", "later work");
+    execFileSync("git", ["push"], { cwd: cloneDir });
+    execFileSync("git", ["fetch", "origin"], { cwd: repoDir });
+
+    expect(await getCheckoutShortstat(repoDir, undefined, { force: true })).toBeNull();
+
+    writeFileSync(join(repoDir, "feature.txt"), "one\ntwo\nthree\n");
+    expect(await getCheckoutShortstat(repoDir, undefined, { force: true })).toEqual({
+      additions: 1,
+      deletions: 0,
+    });
+  });
+
+  it("counts only the unmerged part of a partially merged branch", async () => {
+    const { cloneDir } = setupRemoteTrackingMain(repoDir, tempDir);
+    execFileSync("git", ["checkout", "-b", "feature/partial"], { cwd: repoDir });
+    commitFile(repoDir, "a.txt", "a1\na2\n", "a");
+    commitFile(repoDir, "b.txt", "b1\n", "b");
+    commitFile(cloneDir, "a.txt", "a1\na2\n", "cherry-picked a");
+    execFileSync("git", ["push"], { cwd: cloneDir });
+    execFileSync("git", ["fetch", "origin"], { cwd: repoDir });
+
+    expect(await getCheckoutShortstat(repoDir, undefined, { force: true })).toEqual({
+      additions: 1,
+      deletions: 0,
+    });
+  });
+
   it("reports outgoing changes when the base branch is ahead of its remote", async () => {
     setupRemoteTrackingMain(repoDir, tempDir);
     commitFile(repoDir, "file.txt", "local one\nlocal two\n", "local update");

@@ -8,7 +8,7 @@ import { resolveLocalDaemonDiagnosticState } from "./local-daemon.js";
 import { runStatusCommand, selectRelayStatus } from "./status.js";
 
 test.each([
-  ["invalid relay", JSON.stringify({ version: 1, daemon: { relay: { enabled: true } } })],
+  ["invalid relay", JSON.stringify({ version: 1, daemon: { relay: { enabled: "yes" } } })],
   ["malformed JSON", "{broken"],
 ])(
   "status reports %s as a diagnostic without a default network probe",
@@ -39,7 +39,7 @@ test("status retains the recorded owner and listen target when config is invalid
   try {
     await writeFile(
       path.join(home, "config.json"),
-      JSON.stringify({ version: 1, daemon: { relay: { enabled: true } } }),
+      JSON.stringify({ version: 1, daemon: { relay: { enabled: "yes" } } }),
     );
     await writeFile(
       path.join(home, "fde.pid"),
@@ -51,9 +51,7 @@ test("status retains the recorded owner and listen target when config is invalid
       running: true,
       listen: "127.0.0.1:1",
       pidInfo: { pid: process.pid },
-      configError: expect.stringContaining(
-        "Configure a relay endpoint before enabling relay for this product.",
-      ),
+      configError: expect.stringContaining("[Config] Invalid config"),
     });
     const result = await runStatusCommand({ home }, new Command());
     expect(result.data).toEqual(

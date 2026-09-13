@@ -1626,6 +1626,12 @@ pub struct SetDaemonConfigRequestConfig {
 pub struct SetDaemonConfigRequestConfigRelay {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub enabled: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub endpoint: Option<String>,
+    #[serde(rename = "useTls", skip_serializing_if = "Option::is_none")]
+    pub use_tls: Option<bool>,
+    #[serde(rename = "endpointMutable", skip_serializing_if = "Option::is_none")]
+    pub endpoint_mutable: Option<bool>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

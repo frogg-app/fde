@@ -186,6 +186,12 @@ const MutableBrowserToolsConfigSchema = z
 const MutableRelayConfigSchema = z
   .object({
     enabled: z.boolean(),
+    // COMPAT(relayEndpointConfig): added in v0.6.20, remove optionality after 2027-09-30.
+    // Empty string means no relay endpoint is configured; relay stays inactive.
+    endpoint: z.string().optional(),
+    useTls: z.boolean().optional(),
+    // False when a launch override (env/CLI) controls the endpoint.
+    endpointMutable: z.boolean().optional(),
   })
   .passthrough();
 
@@ -3683,6 +3689,8 @@ export const ServerInfoStatusPayloadSchema = z
         daemonConfigReload: z.boolean().optional(),
         // COMPAT(relayConfig): added in v0.2.6, remove gate after 2027-01-31.
         relayConfig: z.boolean().optional(),
+        // COMPAT(relayEndpointConfig): added in v0.6.20, remove gate after 2027-09-30.
+        relayEndpointConfig: z.boolean().optional(),
         // COMPAT(pushTokenRevocation): added in v0.3.2, remove gate after 2027-02-10.
         pushTokenRevocation: z.boolean().optional(),
         // COMPAT(plugins): added in v0.3.0, remove gate after 2027-08-07.

@@ -152,8 +152,8 @@ where state lives: CLI, home directory, installer env prefix, services, scheme, 
 ### Do I need a pairing service or relay?
 
 No. Users connect directly over the LAN, a VPN such as Tailscale, or SSH from the
-desktop app. Pairing links fall back to your URL scheme. Add `services.pairingUrl` or a
-relay only if you operate them.
+desktop app. Pairing links fall back to your URL scheme. Add `services.pairingUrl` only if you
+operate a pairing page. A relay is configured per daemon, not in the brand.
 
 ### Can I change my `id` or `applicationId` after shipping?
 

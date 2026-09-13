@@ -8,7 +8,7 @@ import { expect, test } from "vitest";
 import { stopLocalDaemon } from "./local-daemon.js";
 
 test.each([
-  ["invalid relay", JSON.stringify({ version: 1, daemon: { relay: { enabled: true } } })],
+  ["invalid relay", JSON.stringify({ version: 1, daemon: { relay: { enabled: "yes" } } })],
   ["malformed JSON", "{broken"],
 ])("stop recovers a recorded owner despite %s config", async (_label, config) => {
   const home = await mkdtemp(path.join(os.tmpdir(), "fde-stop-recovery-"));
@@ -24,9 +24,7 @@ test.each([
     await once(owner.stdout, "data");
     await writeFile(path.join(home, "config.json"), config);
     if (_label === "invalid relay") {
-      expect(() => loadConfig(home, { env: {} })).toThrow(
-        "Configure a relay endpoint before enabling relay for this product.",
-      );
+      expect(() => loadConfig(home, { env: {} })).toThrow("[Config] Invalid config");
     }
     await writeFile(
       path.join(home, "fde.pid"),

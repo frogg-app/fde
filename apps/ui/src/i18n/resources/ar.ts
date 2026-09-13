@@ -1835,6 +1835,8 @@ export const ar: TranslationResources = {
       directConnectionHint:
         "بدون التتابع، اتصل مباشرة عبر TCP أو Tailscale أو شبكة VPN أخرى. لن يتم إنشاء رمز QR.",
       updateRequired: "حدّث المضيف لتمكين التتابع من {{brandName}} Desktop.",
+      endpointRequired:
+        "لا توجد نقطة نهاية مرحّل مهيأة لهذا المضيف. اضبطها في إعدادات المضيف ضمن إقران الأجهزة، ثم فعّل المرحّل.",
       unavailable: "عرض الاقتران غير متاح.",
       hint: "قم بمسح رمز QR هذا باستخدام {{brandName}} على هاتفك، أو انسخ الرابط أدناه.",
       securityWarning:
@@ -2710,6 +2712,19 @@ export const ar: TranslationResources = {
         title: "إقران الأجهزة",
         rowTitle: "إقران جهاز",
         rowHint: "امسح رمز QR ضوئيًا أو انسخ رابطًا لتوصيل هاتفك بهذا المضيف",
+      },
+      relayEndpoint: {
+        title: "نقطة نهاية المرحّل",
+        hint: "خادم المرحّل الذي يتصل عبره هذا المضيف، بصيغة host:port. اتركه فارغًا لإبقاء المرحّل متوقفًا.",
+        placeholder: "relay.example.com:443",
+        accessibilityLabel: "نقطة نهاية المرحّل",
+        useTls: "استخدام TLS",
+        useTlsHint: "أوقفه فقط لمرحّل محلي بدون TLS.",
+        save: "حفظ",
+        saving: "جارٍ الحفظ...",
+        saveFailed: "تعذّر حفظ نقطة نهاية المرحّل.",
+        overridden:
+          "مضبوط عبر خيار تشغيل للخدمة (FDE_RELAY_ENDPOINT أو FDE_RELAY_USE_TLS). غيّره حيث تُشغَّل الخدمة.",
       },
       skills: {
         ...en.settings.host.skills,

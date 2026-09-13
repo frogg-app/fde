@@ -197,7 +197,8 @@ A custom brand must set `FDE_WEB_DEPLOY_PROJECT`; only stock FDE defaults to a p
 
 ## Relay
 
-No relay is configured for custom brands, and stock FDE ships none either. To offer
-connections from outside the LAN without a VPN, deploy `packages/relay` yourself and
-set `services.relayEndpoint` (and `relayUseTls`). Operating a relay is outside the
-scope of these pages.
+A brand cannot ship a relay endpoint, and stock FDE has none. To offer connections from
+outside the LAN without a VPN, deploy `packages/relay` yourself and have each daemon owner
+set the endpoint: in the app under host settings, **Pair devices**, or with
+`daemon.relay.endpoint` or `FDE_RELAY_ENDPOINT`. Operating a relay is outside the scope of
+these pages.

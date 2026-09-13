@@ -3386,6 +3386,15 @@
                       "properties": {
                         "enabled": {
                           "type": "boolean"
+                        },
+                        "endpoint": {
+                          "type": "string"
+                        },
+                        "useTls": {
+                          "type": "boolean"
+                        },
+                        "endpointMutable": {
+                          "type": "boolean"
                         }
                       },
                       "additionalProperties": {}

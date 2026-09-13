@@ -47,7 +47,7 @@ aarch64 Linux and macOS, and a NixOS module.
 | `services.fde.listenAddress`      | `0.0.0.0` | Listen address |
 | `services.fde.openFirewall`       | `false` | Open the port in the firewall |
 | `services.fde.hostnames`          | `[]`    | Allowed hostnames, or `true` |
-| `services.fde.relay.enable`       | `false` | Connect to a relay (`relay.host`, `relay.port` (443), `relay.useTls`, `relay.publicUseTls`) |
+| `services.fde.relay.enable`       | `false` | Connect to a relay (`relay.host` (required), `relay.port` (443), `relay.useTls` (`true`), `relay.publicUseTls`). Sets `FDE_RELAY_ENDPOINT`, so the app shows the endpoint read-only |
 | `services.fde.inheritUserEnvironment` | `true` when `user` is not `fde` | Give the service the user's environment, so agent CLIs and logins are found |
 | `services.fde.environment`        | `{}`    | Extra environment variables |
 | `services.fde.settings`           | `{}`    | Written to `config.json` on every start |

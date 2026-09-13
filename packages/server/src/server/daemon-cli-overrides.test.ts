@@ -20,17 +20,17 @@ describe("daemon startup flag overrides", () => {
     expect(reloaded.relayEnabled).toBe(false);
   });
 
-  test("explicit relay enable still requires an endpoint", () => {
-    expect(() =>
-      resolveConfigFromPersisted(
-        "/tmp/fde-cli-overrides",
-        { version: 1 },
-        {
-          env: {},
-          cli: parseDaemonCliOverrides(["--relay"]),
-        },
-      ),
-    ).toThrow("Configure a relay endpoint");
+  test("explicit relay enable without an endpoint resolves with relay inactive", () => {
+    const config = resolveConfigFromPersisted(
+      "/tmp/fde-cli-overrides",
+      { version: 1 },
+      {
+        env: {},
+        cli: parseDaemonCliOverrides(["--relay"]),
+      },
+    );
+    expect(config.relayEnabled).toBe(true);
+    expect(config.relayEndpoint).toBe("");
   });
 
   test("keeps all supported flags and negative-flag precedence", () => {

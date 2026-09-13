@@ -101,9 +101,11 @@ Details that matter:
   reach one of them (same network or a VPN). Override the advertised address with
   `FDE_PRIMARY_LAN_IP`.
 
-In the app, host settings **Pair device** first asks whether to enable relay. FDE does
+In the app, host settings **Pair a device** first asks whether to enable relay. FDE does
 not run a public relay; choose **Not now** unless you
-[operate one](/docs/self-hosting/security/#relay).
+[operate one](/docs/self-hosting/security/#relay). If the host has no relay endpoint, the
+dialog says so and offers only **Not now**. Set the endpoint, and whether to use TLS, in
+the **Relay endpoint** card on the same **Pair devices** page, then pair again.
 
 <Screenshot src={appPairDeviceImg} alt="Pair a device dialog asking whether to enable relay" />
 

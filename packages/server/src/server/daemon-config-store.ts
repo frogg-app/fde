@@ -14,7 +14,7 @@ type MutableDaemonConfigPatch = import("@fde/protocol/messages").MutableDaemonCo
 type ProviderOverride = import("./agent/provider-launch-config.js").ProviderOverride;
 
 interface SupportedMutableConfigPatch {
-  relay?: { enabled?: boolean };
+  relay?: { enabled?: boolean; endpoint?: string; useTls?: boolean };
   mcp?: { injectIntoAgents?: boolean };
   browserTools?: { enabled?: boolean };
   providers?: MutableDaemonConfig["providers"];
@@ -168,6 +168,8 @@ function isEqualValue(a: unknown, b: unknown): boolean {
 
 const RELOADABLE_PATHS = [
   "daemon.relay.enabled",
+  "daemon.relay.endpoint",
+  "daemon.relay.useTls",
   "daemon.mcp.enabled",
   "daemon.mcp.injectIntoAgents",
   "daemon.browserTools.enabled",
@@ -194,6 +196,8 @@ const RELOADABLE_PATHS = [
 
 const PERSISTED_TO_MUTABLE_PATH = new Map<string, string>([
   ["daemon.relay.enabled", "relay.enabled"],
+  ["daemon.relay.endpoint", "relay.endpoint"],
+  ["daemon.relay.useTls", "relay.useTls"],
   ["daemon.mcp.enabled", "mcp.enabled"],
   ["daemon.mcp.injectIntoAgents", "mcp.injectIntoAgents"],
   ["daemon.browserTools.enabled", "browserTools.enabled"],
@@ -253,9 +257,19 @@ function compactOwnedPaths(paths: readonly string[], owners: readonly string[]):
   return Array.from(compacted).sort();
 }
 
+function pickRelayPatch(
+  relay: MutableDaemonConfigPatch["relay"],
+): Pick<SupportedMutableConfigPatch, "relay"> {
+  const picked: NonNullable<SupportedMutableConfigPatch["relay"]> = {};
+  if (relay?.enabled !== undefined) picked.enabled = relay.enabled;
+  if (relay?.endpoint !== undefined) picked.endpoint = relay.endpoint.trim();
+  if (relay?.useTls !== undefined) picked.useTls = relay.useTls;
+  return Object.keys(picked).length > 0 ? { relay: picked } : {};
+}
+
 function pickSupportedPatchFields(patch: MutableDaemonConfigPatch): SupportedMutableConfigPatch {
   return {
-    ...(patch.relay?.enabled !== undefined ? { relay: { enabled: patch.relay.enabled } } : {}),
+    ...pickRelayPatch(patch.relay),
     ...(patch.mcp?.injectIntoAgents !== undefined
       ? { mcp: { injectIntoAgents: patch.mcp.injectIntoAgents } }
       : {}),
@@ -311,6 +325,7 @@ export class DaemonConfigStore {
   private readonly applyListeners = new Set<ConfigApplyListener>();
   private readonly fieldChangeHandlers = new Map<string, Set<FieldChangeHandler>>();
   private readonly relayEnabledMutable: boolean;
+  private readonly relayEndpointMutable: boolean;
   private readonly reloadSource: DaemonConfigReloadSource | undefined;
   private readonly startupPersisted: PersistedConfig;
   private lastKnownPersisted: PersistedConfig;
@@ -321,6 +336,7 @@ export class DaemonConfigStore {
     logger?: LoggerLike,
     options: {
       relayEnabledMutable?: boolean;
+      relayEndpointMutable?: boolean;
       reloadSource?: DaemonConfigReloadSource;
       startupPersisted?: PersistedConfig;
     } = {},
@@ -332,6 +348,7 @@ export class DaemonConfigStore {
       relay: initial.relay ?? { enabled: true },
     });
     this.relayEnabledMutable = options.relayEnabledMutable ?? true;
+    this.relayEndpointMutable = options.relayEndpointMutable ?? true;
     this.reloadSource = options.reloadSource;
     this.startupPersisted = options.startupPersisted ?? loadPersistedConfig(fdeHome, this.logger);
     this.lastKnownPersisted = this.startupPersisted;
@@ -354,6 +371,14 @@ export class DaemonConfigStore {
     if (parsedPatch.relay?.enabled !== undefined && !this.relayEnabledMutable) {
       throw new Error(
         "Relay is controlled by a daemon launch override. Remove FDE_RELAY_ENABLED or the relay CLI flag before changing it here.",
+      );
+    }
+    if (
+      (parsedPatch.relay?.endpoint !== undefined || parsedPatch.relay?.useTls !== undefined) &&
+      !this.relayEndpointMutable
+    ) {
+      throw new Error(
+        "Relay endpoint is controlled by a daemon launch override. Remove FDE_RELAY_ENDPOINT, FDE_RELAY_USE_TLS, or the relay TLS CLI flag before changing it here.",
       );
     }
     const { removeProviders = [], ...configPatch } = parsedPatch;
@@ -562,6 +587,7 @@ export class DaemonConfigStore {
         patch,
         removeProviders,
         persistRelayEnabled: this.relayEnabledMutable,
+        persistRelayEndpoint: this.relayEndpointMutable,
       });
     const nextPersisted = merge(persisted);
     const knownNext = merge(this.lastKnownPersisted);
@@ -575,9 +601,13 @@ function mergeMutablePatchIntoPersistedConfig(params: {
   patch: Omit<SupportedMutableConfigPatch, "removeProviders">;
   removeProviders: readonly string[];
   persistRelayEnabled: boolean;
+  persistRelayEndpoint: boolean;
 }): PersistedConfig {
-  const { persisted, patch, removeProviders, persistRelayEnabled } = params;
-  const daemon = mergeMutableDaemonPatch(persisted.daemon, patch, persistRelayEnabled);
+  const { persisted, patch, removeProviders, persistRelayEnabled, persistRelayEndpoint } = params;
+  const daemon = mergeMutableDaemonPatch(persisted.daemon, patch, {
+    persistRelayEnabled,
+    persistRelayEndpoint,
+  });
   const agents = mergeMutableAgentPatch(persisted.agents, patch, removeProviders);
   return {
     ...persisted,
@@ -632,15 +662,32 @@ function mergeMutableAgentPatch(
   return Object.keys(next).length > 0 ? (next as PersistedConfig["agents"]) : undefined;
 }
 
+function mergeMutableRelayPatch(
+  persistedRelay: NonNullable<PersistedConfig["daemon"]>["relay"],
+  patch: SupportedMutableConfigPatch["relay"],
+  relayPersistence: { persistRelayEnabled: boolean; persistRelayEndpoint: boolean },
+): NonNullable<PersistedConfig["daemon"]>["relay"] {
+  const updates: Record<string, unknown> = {};
+  if (relayPersistence.persistRelayEnabled && patch?.enabled !== undefined) {
+    updates["enabled"] = patch.enabled;
+  }
+  if (relayPersistence.persistRelayEndpoint && patch?.endpoint !== undefined) {
+    updates["endpoint"] = patch.endpoint;
+  }
+  if (relayPersistence.persistRelayEndpoint && patch?.useTls !== undefined) {
+    updates["useTls"] = patch.useTls;
+  }
+  return Object.keys(updates).length > 0 ? { ...persistedRelay, ...updates } : persistedRelay;
+}
+
 function mergeMutableDaemonPatch(
   persistedDaemon: PersistedConfig["daemon"],
   patch: Omit<SupportedMutableConfigPatch, "removeProviders">,
-  persistRelayEnabled: boolean,
+  relayPersistence: { persistRelayEnabled: boolean; persistRelayEndpoint: boolean },
 ): PersistedConfig["daemon"] {
   const next = { ...persistedDaemon } as NonNullable<PersistedConfig["daemon"]>;
-  if (persistRelayEnabled && patch.relay?.enabled !== undefined) {
-    next.relay = { ...next.relay, enabled: patch.relay.enabled };
-  }
+  const relay = mergeMutableRelayPatch(next.relay, patch.relay, relayPersistence);
+  if (relay !== next.relay) next.relay = relay;
   if (patch.mcp?.injectIntoAgents !== undefined) {
     next.mcp = { ...next.mcp, injectIntoAgents: patch.mcp.injectIntoAgents };
   }

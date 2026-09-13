@@ -1850,6 +1850,8 @@ export const ko: TranslationResources = {
       directConnectionHint:
         "릴레이 없이 TCP, Tailscale 또는 다른 VPN을 통해 직접 연결하세요. QR 코드가 생성되지 않습니다.",
       updateRequired: "{{brandName}} 데스크톱에서 릴레이를 활성화하려면 호스트를 업데이트하세요.",
+      endpointRequired:
+        "이 호스트에 릴레이 엔드포인트가 설정되어 있지 않습니다. 호스트 설정의 기기 페어링에서 설정한 다음 릴레이를 켜세요.",
       unavailable: "페어링 정보를 사용할 수 없습니다.",
       hint: "휴대폰의 {{brandName}}로 이 QR 코드를 스캔하거나 아래 링크를 복사하세요.",
       securityWarning:
@@ -2729,6 +2731,19 @@ export const ko: TranslationResources = {
         title: "기기 페어링",
         rowTitle: "기기 페어링",
         rowHint: "QR 코드를 스캔하거나 링크를 복사하여 휴대폰을 이 호스트에 연결하세요",
+      },
+      relayEndpoint: {
+        title: "릴레이 엔드포인트",
+        hint: "이 호스트가 연결에 사용하는 릴레이 서버(host:port 형식). 비워 두면 릴레이가 꺼진 상태로 유지됩니다.",
+        placeholder: "relay.example.com:443",
+        accessibilityLabel: "릴레이 엔드포인트",
+        useTls: "TLS 사용",
+        useTlsHint: "TLS가 없는 로컬 릴레이인 경우에만 끄세요.",
+        save: "저장",
+        saving: "저장 중...",
+        saveFailed: "릴레이 엔드포인트를 저장하지 못했습니다.",
+        overridden:
+          "데몬 실행 재정의(FDE_RELAY_ENDPOINT 또는 FDE_RELAY_USE_TLS)로 설정되어 있습니다. 데몬을 시작하는 곳에서 변경하세요.",
       },
       skills: {
         ...en.settings.host.skills,

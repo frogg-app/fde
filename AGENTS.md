@@ -17,6 +17,8 @@ Documentation lives in `website/src/content/docs/docs/` and is published at
 https://frogg.app/docs/. Read the pages relevant to the task; there is no need to load
 them all.
 
+- [ROADMAP.md](ROADMAP.md): the to-do list: priorities, open work and verification
+  gaps. An unchecked item does not mean work is active.
 - [CHANGELOG.md](CHANGELOG.md): completed work and release history.
 - [Architecture](website/src/content/docs/docs/contributing/architecture.mdx): system
   boundaries and code map.
@@ -98,7 +100,8 @@ update contract across local and CI artifact production.
 - Root `package.json` owns the version. Use `npm run version:sync-internal` to
   sync internal workspace versions; see
   [release process](website/src/content/docs/docs/contributing/release-process.mdx).
-- Record completed work in the changelog and distinguish implementation from
+- Update ROADMAP.md items with implementation, record completed work in the
+  changelog, and distinguish implementation from
   platform validation.
 - Preserve inherited Apache-2.0 headers and `NOTICE`. Use the FDE wire/env/deep-link
   namespace; coordinate breaking upgrades across clients and daemons.

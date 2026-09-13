@@ -700,10 +700,11 @@ export default function SettingsScreen({ view, openAddHostIntent = null }: Setti
                   handleTerminalScrollbackLinesChange={handleTerminalScrollbackLinesChange}
                 />
                 <VoiceAlertsSection />
-                <CompanionSection />
                 {isDesktopApp ? <BrowserDataSection /> : null}
               </>
             );
+          case "companion":
+            return <CompanionSection />;
           case "appearance":
             return <AppearanceSection />;
           case "editor":
