@@ -1,0 +1,206 @@
+---
+title: Release process
+description: Version FDE, tag a release, and understand what the release workflow builds, signs, verifies and publishes.
+sidebar:
+  order: 6
+---
+
+import { Steps } from "@/components/docs";
+
+This page describes how the official FDE repository releases. If you maintain a fork, start with
+[Build and release](/docs/fork-and-rebrand/build-and-release/) for brand variables and secrets.
+
+## Versions
+
+The root `package.json` `version` is the only version. Never edit a workspace version by hand.
+
+```bash
+npm run version:sync-internal
+```
+
+This runs `scripts/release/sync-workspace-versions.mjs`. It sets every workspace `version` to
+the root version and rewrites internal `@fde/*` dependency ranges: `*` for private workspaces,
+the exact version for publishable ones. It also updates the version in the inactive Tauri and
+Rust manifests.
+
+Give every release a `CHANGELOG.md` section headed `## <version>`, for example
+`## 0.6.19 — 2026-09-13`. The workflow uses that section as the release notes. Without it, the
+notes only say that no changelog entry exists.
+
+## Cut a stable release
+
+<Steps>
+
+1. Add the changelog section for the next version and merge your work.
+
+2. From a clean checkout of the release branch, run one of:
+
+   ```bash
+   npm run release:patch
+   npm run release:minor
+   npm run release:major
+   ```
+
+   Each one runs three steps:
+
+   - `release:check`: `npm install`, typechecks and clean builds of the library, server and CLI
+     workspaces, then `npm pack --dry-run` for each publishable package.
+   - `version:all:<mode>`: runs `npm version <next> --include-workspace-root` with the message
+     `chore(release): cut <version>`. npm's `version` hook syncs workspace versions, reinstalls,
+     and stages the result.
+   - `release:push`: creates the annotated tag `v<version>` if it is missing, pushes `HEAD` to
+     the current branch (or `--branch <name>`), then pushes the tag.
+
+3. Watch the **Release** workflow the tag starts. It publishes only when every required job
+   passes.
+
+</Steps>
+
+`release:push` refuses to continue when the local tag is not on `HEAD`, or when the remote tag
+points at a different commit. It never moves an existing tag.
+
+## Version modes
+
+`scripts/release/set-release-version.mjs` computes the next version. Preview it without changing
+anything:
+
+```bash
+node scripts/release/set-release-version.mjs --mode beta-patch --print
+```
+
+| Mode         | npm script                      | From `0.6.19`   | From `0.6.20-beta.1` |
+| ------------ | ------------------------------- | --------------- | -------------------- |
+| `patch`      | `version:all:patch`             | `0.6.20`        | error                |
+| `minor`      | `version:all:minor`             | `0.7.0`         | error                |
+| `major`      | `version:all:major`             | `1.0.0`         | error                |
+| `beta-patch` | `version:all:beta:patch`        | `0.6.20-beta.1` | error                |
+| `beta-minor` | `version:all:beta:minor`        | `0.7.0-beta.1`  | error                |
+| `beta-major` | `version:all:beta:major`        | `1.0.0-beta.1`  | error                |
+| `beta-next`  | `version:all:beta:next`         | error           | `0.6.20-beta.2`      |
+| `promote`    | `version:all:promote`           | error           | `0.6.20`             |
+
+Only `-beta.N` prereleases are accepted. There are no `release:beta` or `release:promote`
+scripts. For a beta, run `npm run release:check`, the `version:all:beta:*` script, then
+`npm run release:push`.
+
+## The release workflow
+
+`.github/workflows/release.yml` runs on a pushed `v*` tag or by manual dispatch.
+
+| Job                | What it does                                                                                     |
+| ------------------ | ------------------------------------------------------------------------------------------------ |
+| `meta`             | Fails unless the tag matches `package.json`. Marks `-*` versions as prerelease. Detects optional secrets, picks the platform matrix, extracts release notes from `CHANGELOG.md`, creates a **draft** release, uploads the install and uninstall scripts |
+| `ui`               | Exports the web UI once (`npm run build:ui`)                                                     |
+| `desktop`          | Matrix: Windows x64, Linux x64 (`ubuntu-22.04`), macOS arm64 and x64. Runs `npm run build:desktop -- --target <target>` and uploads installers. Runs the Electron smoke test on the packaged Linux build |
+| `daemon-build`     | Builds the server stack and bundles the shared web UI into the daemon                            |
+| `daemon-bundle`    | Matrix: `linux-x64`, `linux-arm64`, `darwin-arm64`, `darwin-x64`, `win-x64`, `win-arm64`. Packs each bundle with a `.sha256` sidecar |
+| `android`          | Builds the arm64-v8a APK with `scripts/release/build-android-apk.mjs --serial`                   |
+| `updater-manifest` | Full builds only. Generates `release.json`, the Electron channel manifests and `SHA256SUMS-desktop` from the uploaded binaries, then runs `verify-release-assets.mjs` |
+| `docker`           | Only with Docker Hub credentials. Builds `deploy/docker/base/Dockerfile` for `linux/amd64` and pushes it |
+| `publish`          | Clears the draft flag only if `meta`, `desktop`, `daemon-bundle`, `android` and `updater-manifest` succeeded, `docker` succeeded or was skipped, and the run built all platforms |
+
+Manual dispatch inputs:
+
+- `tag` (required): an existing tag to build.
+- `only`: `all` or `android`. `android` runs only `meta` and `android`.
+- `platforms`: `default` builds Windows x64 desktop, `linux-x64` and `win-x64` daemon bundles,
+  and the APK. `all` builds the full matrix. A tag push always builds everything.
+
+A manual run with `platforms: default` or `only: android` skips `updater-manifest` and `publish`,
+so its release stays a draft.
+
+Uploads skip file names that already exist on the release. Only the workflow run that created
+the release may overwrite (`--clobber`) its own assets.
+
+### Build selected
+
+`.github/workflows/build-selected.yml` builds workflow artifacts, not a release. Run it manually
+with `target` set to `all`, `windows`, `daemon` or `android`. CI also calls it on every push to
+`main`. It produces the Windows x64 client (after the desktop unit tests), the Linux x64 daemon
+bundle, and a debug-signed arm64 APK. Artifacts are kept for 14 days.
+
+## Release assets
+
+Names come from `brand.artifactPrefix` (`FDE`). Real examples from v0.6.19:
+
+| Asset                                          | Source                                     |
+| ---------------------------------------------- | ------------------------------------------ |
+| `FDE-0.6.19-win-x64.exe`, `.exe.blockmap`      | electron-builder NSIS                      |
+| `FDE-0.6.19-win-x64.zip`, `FDE-0.6.19-win-x64-installer.zip` | portable ZIP, zipped installer |
+| `FDE-<v>-linux-x86_64.AppImage`, `FDE-<v>-mac-{arm64,x64}.zip` | Update payloads the manifests require |
+| `FDE-0.6.19-linux-x86_64-daemon.tar.gz` + `.sha256` | daemon bundle (Windows bundles are `.zip`) |
+| `fde-daemon-0.6.19-linux-x64.tar.gz` + `.sha256` | legacy daemon name, still produced for the official brand |
+| `FDE-0.6.19-android-arm64-v8a-unsigned.apk`    | debug-signed APK                           |
+| `release.json`                                 | product update descriptor                  |
+| `electron-latest.yml`, `electron-latest-linux.yml`, `electron-latest-mac.yml` | Electron update feeds (`electron-beta*` for betas) |
+| `SHA256SUMS-desktop`                           | checksums of the desktop assets            |
+| `install.sh`, `uninstall.sh`, `install-docker.sh`, `uninstall-docker.sh` | install scripts   |
+
+Other desktop files (`.dmg`, `.deb`, Linux `.tar.gz`) follow the electron-builder pattern
+`FDE-<version>-<os>-<arch>.<ext>`. Check real names with
+`gh release view <tag> --json assets` rather than guessing.
+
+## Secrets
+
+All secrets are optional. Without them the release still builds, with the limits noted.
+
+| Purpose                     | Secrets                                                                                 | Without them |
+| --------------------------- | --------------------------------------------------------------------------------------- | ------------ |
+| Windows code signing (Azure Trusted Signing) | `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `TRUSTED_SIGNING_ENDPOINT`, `TRUSTED_SIGNING_ACCOUNT`, `TRUSTED_SIGNING_PROFILE` | Windows binaries are unsigned |
+| Android release keystore    | `FDE_ANDROID_KEYSTORE_BASE64`, `FDE_ANDROID_KEYSTORE_PASSWORD`, `FDE_ANDROID_KEY_ALIAS` (default `fde`), `FDE_ANDROID_KEY_PASSWORD` | APK is debug-signed and named `-unsigned` |
+| Docker Hub                  | `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`                                                  | `docker` job is skipped |
+| External brand repository   | `BRANDING_READ_TOKEN`                                                                    | Only needed for a private brand repository |
+
+macOS builds are not signed or notarized (`CSC_IDENTITY_AUTO_DISCOVERY=false`, `notarize: false`).
+
+### Android signing
+
+The published APK is currently debug-signed with the public Expo/React Native debug key and
+named `-unsigned`. Android identifies an app by its signing key. Every APK published so far is
+debug-signed, so switching to a release key would stop existing installs from updating in place;
+users would have to uninstall and lose app data. Until that migration is planned, the workflow
+warns and keeps shipping debug-signed APKs. Do not treat them as a distributable,
+trusted build.
+
+### Docker tags
+
+The image name comes from `distribution.dockerImage` in the brand (`froggapp/fde`). The job
+pushes the exact version, plus `<major>.<minor>`, `<major>` and `latest` for stable versions.
+If the exact version tag already exists, nothing is pushed. Fix a bad image by releasing a new
+patch version.
+
+## Release rules
+
+These come from `skills/fde-release/SKILL.md`. Follow them for every release, local or CI.
+
+- **Preserve the update path.** Installed clients discover updates through `release.json` and
+  the Electron channel manifests. Keep the discovery name stable and keep compatibility
+  manifests that shipped clients still read. Every existing update protocol needs a working
+  automatic path or explicit manual migration instructions.
+- **Never overwrite a versioned binary** with a different build. If only metadata is missing,
+  regenerate it from the unchanged binaries:
+
+  ```bash
+  node scripts/release/build-release-metadata.mjs --version VERSION --assets ASSETS --out METADATA
+  node scripts/release/verify-release-assets.mjs --repo OWNER/REPO --tag vVERSION
+  ```
+
+- **Build from one identified revision** and lockfile. Do not run two builds in the same
+  worktree; they share output directories.
+- **Keep the desktop app-only.** Daemon bundles are separate distributions. Do not bundle a
+  daemon to make a desktop test pass.
+- **Do not publish an incomplete release** by clearing the draft flag by hand. Fix the failed job
+  first. Stop retrying when the same deterministic failure repeats.
+- **Do not mark a beta as Latest.**
+- **Keep tags** when you delete superseded drafts.
+- **Report what was validated.** A successful upload is not a tested update. Separate packaging
+  success, emulator launches and real installed-update checks, and list untested platforms in the
+  release notes.
+
+### Partial releases
+
+When only some platforms are rebuilt, `build-release-metadata.mjs` accepts
+`--retain-desktop-from <previous release.json>`. It keeps the Linux and macOS feed entries at
+their earlier version, and the verifier requires those files and hashes to match the earlier
+release. v0.6.19 shipped this way with the v0.6.13 Linux and macOS payloads. This path is manual:
+build with `build-selected.yml`, upload, generate and verify metadata, then publish.

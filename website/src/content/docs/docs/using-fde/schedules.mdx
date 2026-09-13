@@ -1,0 +1,84 @@
+---
+title: Schedules and heartbeats
+description: Run prompts on a cadence or cron expression with schedules, and let agents check back on themselves with heartbeats.
+sidebar:
+  order: 4
+---
+
+Schedules run a prompt repeatedly. Schedules created with the CLI start a new agent for
+each run; the MCP tools can also target an existing agent. They run on the daemon, so they keep going with every client closed.
+
+:::note
+Schedules have no screens in the app yet. Manage them with the CLI or the MCP tools.
+:::
+
+## Create a schedule
+
+```sh
+# Every weekday at 09:00 Berlin time, in a fresh agent
+fde schedule create --cron "0 9 * * 1-5" --timezone Europe/Berlin \
+  --name "dependency check" --provider claude --cwd ~/code/api \
+  "Check for outdated dependencies and open a summary."
+
+# Every 30 minutes, at most 12 runs, first run immediately
+fde schedule create --every 30m --max-runs 12 --run-now --cwd ~/code/api \
+  "Run the flaky test suite and report failures."
+```
+
+| Flag                     | Meaning |
+| ------------------------ | ------- |
+| `--every <duration>`     | Interval preset: `5m`, `1h` |
+| `--cron <expr>`          | Five-field cron expression |
+| `--run-now`              | Fire one run immediately on creation |
+| `--timezone <tz>`        | IANA time zone for cron. Default UTC |
+| `--provider`, `--mode`, `--thinking` | Agent settings for new-agent runs |
+| `--cwd <path>`           | Directory for new agents. Required with `--host` |
+| `--max-runs <n>`, `--expires-in <duration>` | Complete the schedule after a count or time |
+| `--name <name>`          | Display name |
+
+## Manage
+
+```sh
+fde schedule ls
+fde schedule inspect <id>
+fde schedule logs <id>
+fde schedule pause <id>
+fde schedule resume <id>
+fde schedule run-once <id>     # extra run, cadence unchanged
+fde schedule update <id> --every 1h --no-max-runs
+fde schedule delete <id>
+```
+
+## Behaviour
+
+- A run is skipped if the previous run of the same schedule is still going.
+- For an existing-agent target, the prompt is delivered into the agent's conversation.
+  The run fails if the agent already has a run in flight or ends waiting on a permission.
+- A schedule completes when it reaches `--max-runs` or `--expires-in`, or when its target
+  agent is archived or deleted.
+- Runs interrupted by a daemon restart are recovered on startup.
+- Schedules are stored in `~/.fde/schedules/`.
+
+## Heartbeats
+
+A heartbeat is a cron schedule that prompts **the agent that created it**. Agents use it to
+check on long-running work: a deploy, a CI run, a subagent.
+
+Inside an agent (where `FDE_AGENT_ID` is set):
+
+```sh
+fde agent heartbeat create --cron "*/10 * * * *" --max-runs 6 \
+  "Check the CI run for this branch; stop the heartbeat when it finishes."
+fde agent heartbeat update <id> --cron "*/30 * * * *"
+fde agent heartbeat delete <id>
+```
+
+With the FDE MCP tools, agents use `create_heartbeat` and `delete_heartbeat`. Archiving an
+agent completes its heartbeats.
+
+## MCP tools
+
+`create_schedule`, `list_schedules`, `inspect_schedule`, `update_schedule`,
+`pause_schedule`, `resume_schedule`, `run_schedule_once`, `schedule_logs`,
+`delete_schedule`. Creating a schedule with the same name and target as an existing one
+updates it instead of adding a duplicate. See [MCP](/docs/agents-and-providers/mcp/).

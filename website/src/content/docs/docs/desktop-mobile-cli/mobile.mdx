@@ -1,0 +1,61 @@
+---
+title: Android and iOS
+description: Install the Android app from GitHub releases, pair it with a daemon, and understand signing and iOS status.
+sidebar:
+  order: 2
+---
+
+The mobile app is the same interface as desktop and web, built with Expo. It connects to
+your daemons; agents keep running on the daemon when the phone sleeps.
+
+## Android
+
+| | |
+| --- | --- |
+| Download | `FDE-<version>-android-arm64-v8a-unsigned.apk` from [GitHub releases](https://github.com/frogg-app/fde/releases/latest) |
+| Devices  | arm64 phones and tablets, Android 10 (API 29) or later |
+| Store    | Not on Google Play or F-Droid |
+
+Install it by opening the APK on the phone and allowing installs from your browser or file
+manager.
+
+:::caution[Debug-signed builds]
+Published APKs are signed with the public React Native debug key, which is why the file
+name ends in `-unsigned`. Anyone could sign an APK with the same key, so only install APKs
+downloaded from the official release page. When FDE switches to a release key, existing
+installs will not update in place: you will need to uninstall (losing app data) and
+reinstall.
+:::
+
+### Connect
+
+- **Scan QR code**: run `fde auth pair` on the daemon host and scan the code.
+- **Paste pairing link**: open or paste the `https://pair.frogg.app/code/...` link.
+- **Direct connection**: enter the daemon's LAN, VPN or Tailscale address and port.
+
+A phone off your home network needs a route to the daemon: a VPN such as Tailscale, or a
+relay you operate. FDE does not provide a public relay. See
+[connect and pair](/docs/getting-started/connect-and-pair/).
+
+### Voice and notifications
+
+- Dictation, voice alerts and Companion work on Android. Companion offers **Call** and
+  **Media** audio modes; Companion on physical devices is still in preview.
+- Push notifications need a build with Firebase configuration. Whether the published APK
+  receives them has not been verified for these docs.
+
+## iOS
+
+There is no iOS release. The app builds for iOS from source (`npm run ios --workspace=@fde/app`
+on a Mac with Xcode), and branding CI builds an unsigned simulator app, but no App Store or
+TestFlight distribution exists.
+
+## Build from source
+
+```sh
+npm ci
+npm run android:development --workspace=@fde/app   # debug build on a connected device
+node scripts/release/build-android-apk.mjs --abi arm64-v8a --out-dir release-assets
+```
+
+Requires JDK 21 and the Android SDK. See [development setup](/docs/contributing/development-setup/).

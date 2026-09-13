@@ -1,0 +1,37 @@
+---
+title: Getting started
+description: Install an FDE daemon, connect a client, and run your first agent.
+sidebar:
+  order: 0
+  label: Overview
+---
+
+import { Steps, LinkCard, CardGrid } from "@/components/docs";
+
+FDE runs coding agents on a machine you control and lets you follow and steer them from a
+desktop app, browser, phone or terminal.
+
+<Steps>
+
+1. **[Install the daemon](/docs/getting-started/install/)** on the machine with your code
+   and agent CLIs.
+2. **[Connect a client](/docs/getting-started/connect-and-pair/)**: the desktop app, the
+   daemon's web app, Android, or the CLI.
+3. **[Run your first agent](/docs/getting-started/first-agent/)** in a project.
+
+</Steps>
+
+The short version, on Linux or macOS:
+
+```sh
+curl -fsSL https://frogg.app/install.sh | bash
+fde status
+```
+
+Then open `http://<that-machine>:9999/` in a browser, or add it as a host in the desktop app.
+
+<CardGrid>
+  <LinkCard title="Install" href="/docs/getting-started/install/" description="Daemon on Linux, macOS, Windows, Docker or Nix; clients." />
+  <LinkCard title="Connect and pair" href="/docs/getting-started/connect-and-pair/" description="Direct, SSH and pairing links; LAN trust and passwords." />
+  <LinkCard title="Your first agent" href="/docs/getting-started/first-agent/" description="Projects, prompts, permissions and review." />
+</CardGrid>

@@ -1,0 +1,107 @@
+---
+title: Agents and the timeline
+description: Start, steer, queue, fork, stop and archive agents; read the timeline; work with subagents and attachments.
+sidebar:
+  order: 2
+---
+
+import { Screenshot } from "@/components/docs";
+import appAgentTimelineImg from "@/assets/docs/app/agent-timeline.png";
+
+An agent is one conversation with a provider (Claude Code, Codex, OpenCode...) running
+on the daemon in a workspace. The daemon keeps its state and timeline, so every client
+sees the same agent and it keeps running when clients disconnect.
+
+<Screenshot src={appAgentTimelineImg} alt="Agent timeline in a workspace" />
+
+## States
+
+| State          | Meaning |
+| -------------- | ------- |
+| `initializing` | The provider process is starting |
+| `running`      | A turn is in progress |
+| `idle`         | Waiting for your next message |
+| `error`        | The provider failed; the timeline shows why |
+| `closed`       | The runtime stopped. The agent can be resumed from its history |
+
+## Start an agent
+
+In a workspace, type in the composer and pick:
+
+- **Model** and, where the provider offers one, a **thinking** level,
+- **Mode**, which decides what runs without asking (see [permissions](/docs/using-fde/permissions/)).
+
+Mention files with `@`, use `/` for provider commands and skills, and attach images or
+files with **+** or drag and drop.
+
+From the CLI:
+
+```sh
+fde agent run --provider codex/gpt-5.5 --mode auto --cwd ~/code/api "Add rate limiting to /login"
+```
+
+## Steer or queue
+
+While an agent is running, **Enter** steers the active turn with your new message and
+**Cmd/Ctrl+Enter** queues it for after the turn. Swap these in **Settings → General →
+Default send**.
+
+## The timeline
+
+The timeline shows messages, tool calls (reads, edits, shell commands), diffs, permission
+requests and results. Per message you can copy it, **rewind** to it, or **fork chat from
+here** to start a new agent with the conversation up to that point.
+
+Read it from a terminal:
+
+```sh
+fde agent logs <id> --tail 50
+fde agent logs <id> --follow --filter tools
+```
+
+## Stop, archive, delete
+
+| Action  | CLI                      | Effect |
+| ------- | ------------------------ | ------ |
+| Stop    | `fde agent stop <id>`    | Interrupts the current turn (stop button in the composer) |
+| Archive | `fde agent archive <id>` | Closes the runtime and hides the agent; history is kept |
+| Delete  | `fde agent delete <id>`  | Removes the agent |
+| Reload  | `fde agent reload <id>`  | Restarts the provider process, for example to pick up new skills, MCP servers or a login |
+
+Archiving a parent archives its subagents, except those open elsewhere or in another
+workspace, which are detached instead.
+
+## Subagents
+
+Agents can create agents. With the FDE MCP tools or the `fde` CLI, an agent runs
+`fde agent run` (or `create_agent`) and the child is labelled with its parent. Children
+created this way run in the background and notify the parent when they finish. Provider
+native subagents (for example Claude Code tasks) also appear under their parent.
+
+Make a subagent independent without stopping it:
+
+```sh
+fde agent detach <child-id>
+```
+
+## After a daemon restart
+
+Agents that were in the middle of a turn when the daemon stopped are resumed with a
+continuation prompt when it starts again, if the interruption was less than an hour ago.
+
+To keep agent processes alive across daemon restarts entirely, opt in to independent
+execution with `FDE_EXECUTION_SERVICE=1` on the daemon. It is off by default; check it
+with `fde execution-status`.
+
+## Scripted use
+
+`fde agent run` waits for the agent by default and exits when it is idle. Useful flags for
+automation:
+
+```sh
+fde agent run --wait-timeout 10m --output-schema ./result.schema.json --json \
+  --provider claude "Summarize open TODOs as JSON"
+fde agent run -d --label ticket=ENG-142 "Investigate ENG-142"
+fde agent ls --label ticket=ENG-142
+fde agent wait <id> --timeout 600
+```

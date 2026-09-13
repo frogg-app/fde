@@ -1,0 +1,51 @@
+---
+title: Skills
+description: The orchestration skills the daemon installs into Claude Code, Codex and other agents, and how to choose, update or remove them.
+sidebar:
+  order: 4
+---
+
+Skills are instruction files that teach agents to use FDE through the `fde` CLI:
+creating agents, handing off work, running schedules. The daemon ships a bundle and
+installs it into the skill directories agent CLIs read.
+
+## Where they go
+
+On the daemon host, the selected skills are copied to:
+
+- `~/.agents/skills/`
+- `~/.claude/skills/`
+- `~/.codex/skills/`
+
+Custom brands prefix the directory names, for example `acme-fde-handoff`, so two products
+never overwrite each other's skills.
+
+## Manage
+
+**Host settings → Agents → Orchestration skills** shows whether the installed copies are
+up to date, and lets you update, choose or uninstall them. Uninstall removes only the
+skills FDE manages.
+
+Choose a subset in config:
+
+```json title="~/.fde/config.json"
+{ "agents": { "skills": { "selection": { "mode": "custom", "skills": ["fde", "fde-handoff"] } } } }
+```
+
+`{ "mode": "all" }` (the default) follows the bundle as it gains skills. Reload agents
+afterwards (`fde agent reload <id>`) so they see changes.
+
+## The bundle
+
+| Skill               | Use |
+| ------------------- | --- |
+| `fde`               | Reference for managing projects, workspaces, scripts, agents, schedules and heartbeats through the CLI |
+| `fde-handoff`       | Hand the current task to another agent with full context |
+| `fde-advisor`       | Ask a single agent for a second opinion |
+| `fde-committee`     | Two high-reasoning agents do root-cause analysis and produce a plan |
+| `fde-help`          | Answer questions about FDE setup, configuration and troubleshooting |
+| `fde-plugin`        | Build and manage FDE plugins |
+| `fde-dev`, `fde-docs`, `fde-i18n`, `fde-rpc`, `fde-release`, `fde-build-monitor` | Working on the FDE repository itself |
+
+Invoke a skill in the composer with `/` or by describing the task; the agent CLI decides
+when a skill applies.

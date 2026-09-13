@@ -1,0 +1,74 @@
+---
+title: Permissions
+description: Permission modes per provider, answering approval requests from the app, CLI or MCP, and running agents unattended.
+sidebar:
+  order: 3
+---
+
+import { Screenshot } from "@/components/docs";
+import appPermissionRequestImg from "@/assets/docs/app/permission-request.png";
+
+Each provider has **modes** that decide which actions run without asking. When an agent
+hits an action its mode does not allow, it pauses and raises a **permission request**.
+Every connected client sees it and can answer it.
+
+<Screenshot src={appPermissionRequestImg} alt="Permission request for an Edit with Deny and Accept" />
+
+## Modes by provider
+
+| Provider   | Modes (default in bold) | Unattended mode |
+| ---------- | ----------------------- | --------------- |
+| Claude     | `plan`, `default` ("Always ask"), `acceptEdits`, **`auto`**, `bypassPermissions` | `bypassPermissions` |
+| Codex      | `auto`, **`auto-review`**, `full-access` | `full-access` |
+| Copilot    | **agent**, plan, allow-all | allow-all |
+| OpenCode   | `build`, `plan`; plus an **Auto accept** toggle | Auto accept |
+| Oh My Pi   | **`full`**, `write`, `ask` | `full` |
+| Pi         | No modes; only question prompts | — |
+| ACP agents | Whatever the agent reports; plus an **Auto accept** toggle | Auto accept |
+
+List a provider's modes with `fde provider ls` or an agent's with
+`fde agent mode <id> --list`. Change mode mid-conversation from the composer or with
+`fde agent mode <id> <mode>`.
+
+Claude `auto` uses Claude Code's own classifier; Codex `auto-review` adds Codex's
+automatic reviewer to on-request approvals. The daemon does not add rules of its own on
+top of a provider's mode.
+
+## Answer requests
+
+- **App**: **Accept** or **Deny** on the request card. Some requests offer extra choices
+  from the provider (for example "always allow this command").
+- **CLI**:
+
+  ```sh
+  fde permissions ls
+  fde permissions allow <agent-id> [request-id]
+  fde permissions allow <agent-id> --all
+  fde permissions deny <agent-id> --message "Use the staging database" --interrupt
+  ```
+
+  `--input '<json>'` allows the action with edited tool input.
+
+- **MCP**: `list_pending_permissions` and `respond_to_permission`, for agents that
+  supervise other agents.
+
+Pending requests raise desktop notifications. The daemon also sends push notifications
+to mobile devices when no client has been active recently.
+
+## Run unattended
+
+Pick the provider's unattended mode, or tell the orchestrating agent to create children
+**unattended**: the daemon then picks each target provider's unattended mode and turns
+on Auto accept for ACP agents. A child on the same provider inherits its parent's mode.
+
+:::caution
+Unattended modes run commands and edit files without asking. Use them in worktrees,
+containers or disposable machines.
+:::
+
+## Daemon access is separate
+
+Permission modes control what an **agent** may do. Who may control the **daemon** is set
+by LAN trust, pairing and passwords; see [connect and pair](/docs/getting-started/connect-and-pair/)
+and [security](/docs/self-hosting/security/). Every paired device currently has full
+access.
