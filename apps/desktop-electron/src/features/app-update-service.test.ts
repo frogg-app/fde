@@ -497,7 +497,7 @@ describe("app update service", () => {
 
     expect(result.installed).toBe(true);
     expect(runtime.installedVersions).toEqual(["1.2.5"]);
-    expect(runtime.installModes).toEqual([{ isSilent: false, isForceRunAfter: true }]);
+    expect(runtime.installModes).toEqual([{ isSilent: true, isForceRunAfter: true }]);
   });
 
   it("waits for a stale active download before downloading and installing the rechecked version", async () => {

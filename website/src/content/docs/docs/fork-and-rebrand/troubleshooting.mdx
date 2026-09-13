@@ -12,7 +12,7 @@ sidebar:
 Your manifest reuses a Frogg identity. Change whichever applies:
 
 - `id`, `cliName`, `desktopBinaryName` or `scheme` equal to `frogg`,
-- `homeDir` of `.frogg` or `envPrefix` of `Frogg`,
+- `homeDir` of `.frogg` or `envPrefix` of `FROGG`,
 - `applicationId` or `launchdLabel` starting with `app.frogg.` or `sh.frogg.`,
 - `serviceName` of `frogg` or `frogg-daemon`.
 
@@ -99,7 +99,7 @@ an intentional change to Frogg's own identity upstream, a maintainer applies the
 
 ### `New product literals need brand values/interpolation`
 
-A pull request added a string containing `Frogg`, `Frogg` or `frogg.app` in `apps/` or
+A pull request added a string containing `Frogg` or `frogg.app` in `apps/` or
 `packages/`. Use `brand.name`, `brand.links.*` or i18n interpolation instead. See
 [contributing back](/docs/fork-and-rebrand/contributing-upstream/#keep-brand-changes-out).
 

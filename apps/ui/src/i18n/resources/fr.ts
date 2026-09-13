@@ -1425,7 +1425,7 @@ export const fr: TranslationResources = {
         versionReady: "{{version}}est prêt à être installé.",
         newVersionReady: "Une nouvelle version est prête à être installée.",
         restartWarning:
-          "La mise à niveau de l'application arrêtera l'exécution des agents et fermera les sessions de terminal.",
+          "L'application va redémarrer. Les agents et terminaux en cours continuent sur leurs hôtes.",
       },
     },
     settings: {

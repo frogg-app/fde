@@ -26,6 +26,32 @@ const palette = z.strictObject({
   accentBright: color.optional(),
 });
 const assetPath = z.string().min(1);
+/** Windows installer copy: `{name}` expands to the brand name. */
+const installerCopy = text.max(80);
+const installer = z.strictObject({
+  tagline: installerCopy.optional(),
+  colors: z
+    .strictObject({
+      background: color.optional(),
+      surface: color.optional(),
+      foreground: color.optional(),
+      mutedForeground: color.optional(),
+      accent: color.optional(),
+      accentBright: color.optional(),
+      success: color.optional(),
+      danger: color.optional(),
+    })
+    .optional(),
+  copy: z
+    .strictObject({
+      installing: installerCopy.optional(),
+      migrating: installerCopy.optional(),
+      ready: installerCopy.optional(),
+      launching: installerCopy.optional(),
+      elevationRequired: text.max(240).optional(),
+    })
+    .optional(),
+});
 
 export const BrandManifestSchema = z.strictObject({
   schemaVersion: z.literal(1),
@@ -66,6 +92,7 @@ export const BrandManifestSchema = z.strictObject({
     faviconDark: assetPath.optional(),
   }),
   colors: z.strictObject({ light: palette.optional(), dark: palette.optional() }).optional(),
+  installer: installer.optional(),
   links: z
     .strictObject({
       website: url.optional(),
@@ -135,8 +162,61 @@ export function resolveBrandManifest(input: unknown) {
       dark: { ...dark, accentBright: dark.accentBright ?? dark.accent },
     },
     ...resolveLinksAndServices(manifest, repository),
+    installer: resolveInstaller(manifest, dark),
     distribution,
   };
+}
+
+/** Installer presentation defaults follow the dark palette so a brand needs no extra fields. */
+function resolveInstaller(manifest: BrandManifest, dark: z.infer<typeof palette>) {
+  const input = manifest.installer ?? {};
+  const name = manifest.name;
+  const expand = (value: string) => value.replaceAll("{name}", name);
+  const colors = {
+    background: dark.background,
+    surface: mix(dark.background, dark.foreground, 0.06),
+    foreground: dark.foreground,
+    mutedForeground: mix(dark.foreground, dark.background, 0.4),
+    accent: dark.accent,
+    accentBright: dark.accentBright ?? dark.accent,
+    success: "#3fcf8e",
+    danger: "#f87171",
+    ...input.colors,
+  };
+  if (contrast(colors.background, colors.foreground) < 4.5)
+    throw new Error("installer colors require text contrast of at least 4.5:1");
+  const copy = {
+    installing: "Installing {name}",
+    migrating: "Moving {name} to your account",
+    ready: "{name} is ready",
+    launching: "Launching {name}",
+    elevationRequired:
+      "{name} is installed for all users. Approve the administrator prompt so it can move to your account without leaving a second copy.",
+    ...input.copy,
+  };
+  const distinctFullName = manifest.fullName !== name ? manifest.fullName : undefined;
+  return {
+    tagline: expand(input.tagline ?? distinctFullName ?? "Run and monitor AI coding agents"),
+    colors,
+    copy: Object.fromEntries(
+      Object.entries(copy).map(([key, value]) => [key, expand(value)]),
+    ) as typeof copy,
+  };
+}
+
+function mix(from: string, to: string, amount: number): string {
+  const channel = (value: string, offset: number) =>
+    Number.parseInt(value.slice(offset, offset + 2), 16);
+  return (
+    "#" +
+    [1, 3, 5]
+      .map((offset) =>
+        Math.round(channel(from, offset) + (channel(to, offset) - channel(from, offset)) * amount)
+          .toString(16)
+          .padStart(2, "0"),
+      )
+      .join("")
+  );
 }
 export type Brand = ReturnType<typeof resolveBrandManifest>;
 

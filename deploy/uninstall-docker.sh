@@ -5,7 +5,7 @@ set -euo pipefail
 BRAND_ID='frogg'
 BRAND_NAME='Frogg'
 BRAND_APPLICATION_ID='app.frogg.frogg'
-BRAND_ENV_PREFIX='Frogg'
+BRAND_ENV_PREFIX='FROGG'
 BRAND_SERVICE='frogg-daemon'
 BRAND_LEGACY='true'
 # END BRAND DEFAULTS

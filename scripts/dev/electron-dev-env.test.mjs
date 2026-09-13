@@ -23,7 +23,7 @@ test("official-brand daemon also overrides inherited primary listen variable", (
   const env = electronDevEnvironment({
     state: "/isolated",
     port: 18235,
-    brand: { envPrefix: "Frogg" },
+    brand: { envPrefix: "FROGG" },
     env: { FROGG_LISTEN: "0.0.0.0:9999" },
   });
   assert.equal(env.FROGG_LISTEN, "0.0.0.0:0");

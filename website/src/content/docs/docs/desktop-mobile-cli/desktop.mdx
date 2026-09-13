@@ -5,6 +5,10 @@ sidebar:
   order: 1
 ---
 
+import { Screenshot } from "@/components/docs";
+import installerProgress from "@/assets/docs/desktop/windows-installer-progress.png";
+import installerMigrating from "@/assets/docs/desktop/windows-installer-migrating.png";
+
 The desktop app is a client. It connects to daemons you install separately, on the same
 computer or elsewhere, and never starts, bundles or stops a daemon. Closing it leaves
 agents running.
@@ -15,12 +19,37 @@ From [GitHub releases](https://github.com/frogg-app/frogg/releases/latest):
 
 | Platform | Files |
 | -------- | ----- |
-| Windows x64 | `Frogg-<version>-win-x64.exe` (installer, per-user, choose directory), `Frogg-<version>-win-x64.zip` (portable), `Frogg-<version>-win-x64-installer.zip` (the installer, zipped for browsers that block `.exe`) |
+| Windows x64 | `Frogg-<version>-win-x64.exe` (one-click installer, per-user), `Frogg-<version>-win-x64.zip` (portable), `Frogg-<version>-win-x64-installer.zip` (the installer, zipped for browsers that block `.exe`) |
 | macOS    | `Frogg-<version>-mac-arm64.dmg` (Apple silicon), `Frogg-<version>-mac-x64.dmg` (Intel), plus `.zip` |
 | Linux x64 | `Frogg-<version>-linux-x86_64.AppImage`, `Frogg-<version>-linux-amd64.deb`, `Frogg-<version>-linux-x64.tar.gz` |
 
 macOS builds are not notarized, and Windows builds may be unsigned. See
 [install](/docs/getting-started/install/#2-install-a-client) for the first-launch steps.
+
+### Windows installer
+
+The Windows installer has no wizard. Double-click it and a small window shows install
+progress, then the app opens. It installs for the current user under
+`%LOCALAPPDATA%\Programs\<name>` and needs no administrator rights. An existing per-user
+install is updated in place, in its current folder.
+
+<Screenshot src={installerProgress} alt="Windows installer showing install progress" />
+
+If an older release is installed for all users (for example under `C:\Program Files`), the
+installer removes it first so you do not end up with two copies:
+
+1. Windows asks once for administrator approval to run the old uninstaller.
+2. The old copy and its all-users shortcuts are removed. App data in `%APPDATA%` is kept.
+3. The app is installed for your account.
+
+If you decline the prompt, the installer offers to retry and otherwise stops with the old
+copy untouched. Automatic updates take the same path, so the first update of an all-users
+install shows the administrator prompt once.
+
+<Screenshot src={installerMigrating} alt="Windows installer moving an all-users install to the current account" />
+
+For scripted installs, run the installer with `/S`. Add `/D=<folder>` (last argument) to
+choose the install folder.
 
 :::note
 Upgrading from the pre-0.6 desktop app (the Tauri shell) is manual: install the new app
@@ -65,7 +94,9 @@ Remote hosts need Linux or macOS with `bash` and `curl`, and outbound access to 
 ## Updates
 
 The app checks GitHub releases and downloads updates in the background, then installs
-them when you quit.
+them when you quit. On Windows the update runs the installer silently; an all-users install
+from an older release asks for administrator approval once while it moves to your account
+(see [Windows installer](#windows-installer)).
 
 - Channel: **Stable** (default) or **Beta**, in settings.
 - AppImage installs do not update on quit; download the new AppImage.

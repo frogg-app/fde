@@ -9,6 +9,10 @@
   moved git worktrees and moving their Claude Code sessions. `FDE_*` variables are no longer
   read; the daemon lists any it finds with their `FROGG_*` names. Desktop and mobile apps need
   a fresh install.
+- Replace the Windows installer wizard with a one-click, per-user installer in a small
+  branded window. An older all-users install is removed once, with administrator approval
+  and app data kept, so updates never leave two copies. The window's copy, colours and
+  artwork come from the new optional `installer` block in `brand.json`.
 
 ## 0.7.0 — 2026-09-13
 

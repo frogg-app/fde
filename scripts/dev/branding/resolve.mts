@@ -25,7 +25,7 @@ export function resolveBrand(directory?: string) {
         ["frogg"].includes(name),
       ) ||
       [".frogg"].includes(brand.homeDir) ||
-      ["Frogg"].includes(brand.envPrefix) ||
+      ["FROGG"].includes(brand.envPrefix) ||
       brand.applicationId.startsWith("app.frogg.") ||
       brand.applicationId.startsWith("sh.frogg.") ||
       ["frogg-daemon", "frogg"].includes(brand.serviceName) ||

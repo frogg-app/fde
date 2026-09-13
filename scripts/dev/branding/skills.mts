@@ -38,7 +38,7 @@ export async function generateSkills({ brand }: BrandBuild) {
           .replaceAll("FROGG_HOME", `${brand.envPrefix}_HOME`)
           .replaceAll("127.0.0.1:9999", `127.0.0.1:${brand.daemonPort}`);
         // Capitalized prose names are presentation; SDK symbols such as useFrogg stay intact.
-        text = text.replace(/\b(?:Frogg|Frogg)\b/g, () => brand.name);
+        text = text.replace(/\bFrogg\b/g, () => brand.name);
         // Bundled descriptions are single-line plain YAML. Quote the generated
         // value so punctuation in a public product name cannot alter frontmatter.
         text = text.replace(/^---\r?\n[\s\S]*?\r?\n---/, (header) =>

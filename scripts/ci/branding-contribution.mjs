@@ -6,6 +6,28 @@ function git(args) {
   return execFileSync("git", args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
 }
 const changed = git(["diff", "--name-only", base, "HEAD"]).trim().split("\n").filter(Boolean);
+// Compare a renamed file against its previous path.
+const previousPaths = new Map(
+  git(["diff", "--name-status", "-M", base, "HEAD"])
+    .split("\n")
+    .filter((line) => line.startsWith("R"))
+    .map((line) => line.split("\t"))
+    .map(([, from, to]) => [to, from]),
+);
+// COMPAT(fdeRename): the product was FDE until the rename to Frogg. Read base literals under
+// the new name so renamed strings are not reported as new. Remove once main has no FDE names.
+function renameLegacyNames(source) {
+  return source
+    .replace(
+      /Frogg Development Environment \(FDE\)|FDE \(Frogg Development Environment\)|Frogg Development Environment/g,
+      "Frogg",
+    )
+    .replace(/\b([Aa])n FDE\b/g, "$1 Frogg")
+    .replace(/(?<![A-Za-z0-9])fde(?![a-z0-9])/g, "frogg")
+    .replace(/Fde(?![a-z])/g, "Frogg")
+    .replace(/(?<![A-Z0-9])FDE(?=_)|(?<=_)FDE(?![A-Z0-9])/g, "FROGG")
+    .replace(/(?<![A-Z0-9])FDE(?![A-Z0-9])/g, "Frogg");
+}
 const tracked = git(["ls-files"]).split("\n");
 const generated = tracked.filter(
   (file) =>
@@ -46,7 +68,7 @@ function literals(file, source) {
         ts.isTemplateHead(node) ||
         ts.isTemplateMiddle(node) ||
         ts.isTemplateTail(node)) &&
-      /\b(?:Frogg|Frogg)\b|frogg\.app/.test(node.text)
+      /\bFrogg\b|frogg\.app/.test(node.text)
     )
       values.add(node.text);
     ts.forEachChild(node, visit);
@@ -64,7 +86,7 @@ for (const file of changed.filter(
   if (!existsSync(file)) continue;
   let previous = "";
   try {
-    previous = git(["show", `${base}:${file}`]);
+    previous = renameLegacyNames(git(["show", `${base}:${previousPaths.get(file) ?? file}`]));
   } catch {
     /* A new source file. */
   }

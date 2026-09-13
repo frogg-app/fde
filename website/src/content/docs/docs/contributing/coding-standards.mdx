@@ -90,7 +90,7 @@ Product identity comes from the selected brand, so a fork can rebuild without co
 `scripts/ci/branding-contribution.mjs` enforces this in `branding.yml`. It compares your branch
 with `origin/main` (override with `BRANDING_BASE_REF`) and fails when:
 
-- a new string literal in `apps/` or `packages/` source matches `Frogg`, `Frogg` or `frogg.app` and
+- a new string literal in `apps/` or `packages/` source matches `Frogg` or `frogg.app` and
   is not in `scripts/ci/branding-literals.json`. Tests, `generated/` paths and
   `packages/branding/` are skipped. Literals that already existed in the file are allowed.
 - any `.generated/`, `packages/branding/src/generated/` or `.branding-input/` file is tracked.

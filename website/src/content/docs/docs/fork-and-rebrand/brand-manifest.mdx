@@ -5,6 +5,9 @@ sidebar:
   order: 4
 ---
 
+import { Screenshot } from "@/components/docs";
+import acmeInstaller from "@/assets/docs/desktop/windows-installer-acme.png";
+
 The contract is `packages/branding/src/schema.ts`, exported as JSON Schema in
 `packages/branding/brand.schema.json`. The manifest is strict: unknown keys fail.
 Asset paths are relative to `brand.json`.
@@ -104,6 +107,49 @@ Rules:
   contrast (WCAG AA) or preparation fails.
 - `light` and `dark` are each optional. A missing palette falls back to neutral grey.
 - Users can still pick other themes. The brand palette is the default.
+
+## Windows installer
+
+Optional. The one-click Windows installer window is generated from the brand: `name`,
+`assets.icon` and the dark palette by default. Override any part under `installer`.
+
+```json
+"installer": {
+  "tagline": "Agents for the Acme team",
+  "colors": { "background": "#140d1f", "success": "#34d399" },
+  "copy": { "ready": "{name} is ready to go" }
+}
+```
+
+| Key | Default | Meaning |
+| --- | ------- | ------- |
+| `tagline` | `fullName` when it differs from `name`, otherwise "Run and monitor AI coding agents" | Line under the product name |
+| `colors.background` | `colors.dark.background` | Window background |
+| `colors.surface` | `background` mixed 6% toward `foreground` | Progress track and logo ring |
+| `colors.foreground` | `colors.dark.foreground` | Product name |
+| `colors.mutedForeground` | `foreground` mixed 40% toward `background` | Tagline and status text |
+| `colors.accent` | `colors.dark.accent` | Progress bar and glow |
+| `colors.accentBright` | `colors.dark.accentBright` | Reserved highlight |
+| `colors.success` | `#3fcf8e` | Finished state |
+| `colors.danger` | `#f87171` | Reserved error state |
+| `copy.installing` | `Installing {name}` | Status while installing |
+| `copy.migrating` | `Moving {name} to your account` | Status while removing an older all-users install |
+| `copy.ready` | `{name} is ready` | Finished state |
+| `copy.launching` | `Launching {name}` | Shown just before the app starts |
+| `copy.elevationRequired` | Explains the administrator prompt | Retry dialog when that prompt is declined |
+
+Rules:
+
+- `{name}` in `tagline` and `copy` expands to `name`. Copy is 1 to 80 characters
+  (`elevationRequired` up to 240), with no control characters.
+- `colors.background`/`colors.foreground` must reach 4.5:1 contrast.
+- `brand:prepare` writes the installer include, brand defines and logo artwork for 100%,
+  125%, 150% and 200% display scaling to `.generated/branding/windows-installer/`. The
+  desktop build passes it to electron-builder as `nsis.include`.
+- Fresh installs go to `%LOCALAPPDATA%\Programs\<name>`, or `<id>` when `name` has
+  characters Windows folder names cannot use.
+
+<Screenshot src={acmeInstaller} alt="Windows installer built from brands/example" />
 
 ## Links
 
