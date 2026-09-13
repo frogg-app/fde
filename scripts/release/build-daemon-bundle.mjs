@@ -192,7 +192,7 @@ function excludeBuildArtifacts(relativePath) {
 }
 
 async function stageWorkspaces(daemonDir, rootPackage) {
-  for (const notice of ["LICENSE", "NOTICE", "docs/speech-model-notices.md"]) {
+  for (const notice of ["LICENSE", "NOTICE", "licenses/speech-model-notices.md"]) {
     await copyFile(path.join(REPO_ROOT, notice), path.join(daemonDir, path.basename(notice)));
   }
   for (const workspace of DAEMON_WORKSPACES) {
