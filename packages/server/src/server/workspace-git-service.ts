@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
-import { basename, join, resolve } from "node:path";
+import { basename, join, resolve, sep } from "node:path";
 import { LRUCache } from "lru-cache";
 import pLimit from "p-limit";
 import type pino from "pino";
@@ -79,6 +79,12 @@ const WORKSPACE_GIT_WATCH_DEBOUNCE_MS = 1_000;
 const BACKGROUND_GIT_FETCH_INTERVAL_MS = 180_000;
 const FETCH_METADATA_ECHO_TTL_MS = 5_000;
 export const WORKSPACE_GIT_OBSERVATION_REENSURE_INTERVAL_MS = 60_000;
+/**
+ * Backstop recompute of the worktree diff stat while someone is watching a workspace. Watchers are
+ * the primary signal, but they can drop events silently (inotify limits, network filesystems)
+ * and the stat is user-facing, so it must never sit stale for long.
+ */
+export const WORKSPACE_GIT_WORKTREE_SAFETY_REFRESH_INTERVAL_MS = 30_000;
 const FORGE_PR_STATUS_POLL_FAST_INTERVAL_MS = 20_000;
 const FORGE_PR_STATUS_POLL_SLOW_INTERVAL_MS = 120_000;
 const FORGE_PR_STATUS_POLL_ERROR_BACKOFF_CAP_MS = 300_000;
@@ -394,6 +400,7 @@ interface WorkspaceGitTarget {
   debounceTimer: NodeJS.Timeout | null;
   pendingDebounceRequest: WorkspaceGitRefreshRequest | null;
   observationReensureTimer: NodeJS.Timeout | null;
+  worktreeSafetyRefreshTimer: NodeJS.Timeout | null;
   forgePrStatusPollSubscription: { unsubscribe: () => void } | null;
   forgePrStatusPollKey: string | null;
   refreshState: WorkspaceGitRefreshState;
@@ -938,6 +945,37 @@ export class WorkspaceGitServiceImpl implements WorkspaceGitService {
     }
   }
 
+  /**
+   * An agent finished a turn or a file-touching tool call. Recompute the worktree state (diff
+   * stat, dirty flag) without the forge round-trip `onWorkspaceStateMayHaveChanged` pays for.
+   * `cwd` may be a subdirectory of the workspace.
+   */
+  onWorkspaceFilesMayHaveChanged(cwd: string): void {
+    this.assertNotDisposed();
+    const target = this.findWorkspaceTargetContaining(resolve(cwd));
+    if (!target) {
+      return;
+    }
+    this.scheduleWorkspaceRefresh(target, {
+      force: true,
+      scope: "worktree",
+      reason: "agent-activity",
+    });
+  }
+
+  private findWorkspaceTargetContaining(cwd: string): WorkspaceGitTarget | null {
+    const exact = this.workspaceTargets.get(cwd);
+    if (exact && !exact.closed) {
+      return exact;
+    }
+    let best: WorkspaceGitTarget | null = null;
+    for (const target of this.workspaceTargets.values()) {
+      if (target.closed || !cwd.startsWith(`${target.cwd}${sep}`)) continue;
+      if (!best || target.cwd.length > best.cwd.length) best = target;
+    }
+    return best;
+  }
+
   onWorkspaceStateMayHaveChanged(cwd: string): void {
     this.assertNotDisposed();
     const normalizedCwd = resolve(cwd);
@@ -1136,6 +1174,7 @@ export class WorkspaceGitServiceImpl implements WorkspaceGitService {
       debounceTimer: null,
       pendingDebounceRequest: null,
       observationReensureTimer: null,
+      worktreeSafetyRefreshTimer: null,
       forgePrStatusPollSubscription: null,
       forgePrStatusPollKey: null,
       refreshState: { status: "idle" },
@@ -2386,6 +2425,31 @@ export class WorkspaceGitServiceImpl implements WorkspaceGitService {
       );
     }
 
+    if (!target.worktreeSafetyRefreshTimer) {
+      const safetyRefresh = () => {
+        if (!this.isActiveObservedWorkspaceTarget(target) || target.listeners.size === 0) {
+          target.worktreeSafetyRefreshTimer = null;
+          return;
+        }
+        target.worktreeSafetyRefreshTimer = setTimeout(
+          safetyRefresh,
+          WORKSPACE_GIT_WORKTREE_SAFETY_REFRESH_INTERVAL_MS,
+        );
+        target.worktreeSafetyRefreshTimer.unref?.();
+        this.scheduleWorkspaceRefresh(target, {
+          force: true,
+          scope: "worktree",
+          reason: "worktree-safety-refresh",
+          queueIfBusy: false,
+        });
+      };
+      target.worktreeSafetyRefreshTimer = setTimeout(
+        safetyRefresh,
+        WORKSPACE_GIT_WORKTREE_SAFETY_REFRESH_INTERVAL_MS,
+      );
+      target.worktreeSafetyRefreshTimer.unref?.();
+    }
+
     this.updateForgePrStatusPollForTarget(target);
   }
 
@@ -3325,6 +3389,10 @@ export class WorkspaceGitServiceImpl implements WorkspaceGitService {
     if (target.observationReensureTimer) {
       clearTimeout(target.observationReensureTimer);
       target.observationReensureTimer = null;
+    }
+    if (target.worktreeSafetyRefreshTimer) {
+      clearTimeout(target.worktreeSafetyRefreshTimer);
+      target.worktreeSafetyRefreshTimer = null;
     }
     this.stopForgePrStatusPollForTarget(target);
     target.listeners.clear();
