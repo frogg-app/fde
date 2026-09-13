@@ -22,6 +22,20 @@ pub struct Session {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum SessionMessage {
+    #[serde(rename = "project.import.prepare.response")]
+    ProjectImportPrepareResponse(ProjectImportPrepareResponse),
+    #[serde(rename = "project.import.upload.response")]
+    ProjectImportUploadResponse(ProjectImportUploadResponse),
+    #[serde(rename = "project.import.preview.response")]
+    ProjectImportPreviewResponse(ProjectImportPreviewResponse),
+    #[serde(rename = "project.import.commit.response")]
+    ProjectImportCommitResponse(ProjectImportCommitResponse),
+    #[serde(rename = "project.import.cancel.response")]
+    ProjectImportCancelResponse(ProjectImportCancelResponse),
+    #[serde(rename = "project.import.list.response")]
+    ProjectImportListResponse(ProjectImportListResponse),
+    #[serde(rename = "project.import.read.response")]
+    ProjectImportReadResponse(ProjectImportReadResponse),
     #[serde(rename = "hub.execution.agent.create.response")]
     HubExecutionAgentCreateResponse(HubExecutionAgentCreateResponse),
     #[serde(rename = "hub.execution.agent.validate.response")]
@@ -444,6 +458,436 @@ pub enum SessionMessage {
     DaemonUpdateGetStatusResponse(DaemonUpdateGetStatusResponse),
     #[serde(rename = "daemon.update.run.progress")]
     DaemonUpdateRunProgress(DaemonUpdateRunProgress),
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportPrepareResponse {
+    pub payload: ProjectImportPrepareResponsePayload,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportPrepareResponsePayload {
+    #[serde(rename = "requestId")]
+    pub request_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+    #[serde(rename = "importId", skip_serializing_if = "Option::is_none")]
+    pub import_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cwd: Option<String>,
+    #[serde(rename = "projectId", skip_serializing_if = "Option::is_none")]
+    pub project_id: Option<String>,
+    #[serde(rename = "workspaceId", skip_serializing_if = "Option::is_none")]
+    pub workspace_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sessions: Option<Vec<ProjectImportPrepareResponsePayloadSessionsItem>>,
+    #[serde(rename = "fileCount", skip_serializing_if = "Option::is_none")]
+    pub file_count: Option<f64>,
+    #[serde(rename = "totalBytes", skip_serializing_if = "Option::is_none")]
+    pub total_bytes: Option<f64>,
+    #[serde(rename = "importedAgentIds", skip_serializing_if = "Option::is_none")]
+    pub imported_agent_ids: Option<Vec<String>>,
+    #[serde(
+        rename = "importedTranscriptIds",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub imported_transcript_ids: Option<Vec<String>>,
+    #[serde(
+        rename = "skippedTranscriptIds",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub skipped_transcript_ids: Option<Vec<String>>,
+    #[serde(rename = "skippedAgentIds", skip_serializing_if = "Option::is_none")]
+    pub skipped_agent_ids: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub failures: Option<Vec<ProjectImportPrepareResponsePayloadFailuresItem>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportPrepareResponsePayloadSessionsItem {
+    pub id: String,
+    pub provider: String,
+    pub title: String,
+    #[serde(rename = "sourcePath")]
+    pub source_path: String,
+    pub mode: ProjectImportPrepareResponsePayloadSessionsItemMode,
+    #[serde(
+        rename = "alreadyImportedAgentId",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub already_imported_agent_id: Option<String>,
+    #[serde(rename = "messageCount")]
+    pub message_count: serde_json::Value,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum ProjectImportPrepareResponsePayloadSessionsItemMode {
+    #[serde(rename = "resumable")]
+    Resumable,
+    #[serde(rename = "transcript")]
+    Transcript,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportPrepareResponsePayloadFailuresItem {
+    #[serde(rename = "sessionId")]
+    pub session_id: String,
+    pub error: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportUploadResponse {
+    pub payload: ProjectImportUploadResponsePayload,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportUploadResponsePayload {
+    #[serde(rename = "requestId")]
+    pub request_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+    #[serde(rename = "importId", skip_serializing_if = "Option::is_none")]
+    pub import_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cwd: Option<String>,
+    #[serde(rename = "projectId", skip_serializing_if = "Option::is_none")]
+    pub project_id: Option<String>,
+    #[serde(rename = "workspaceId", skip_serializing_if = "Option::is_none")]
+    pub workspace_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sessions: Option<Vec<ProjectImportUploadResponsePayloadSessionsItem>>,
+    #[serde(rename = "fileCount", skip_serializing_if = "Option::is_none")]
+    pub file_count: Option<f64>,
+    #[serde(rename = "totalBytes", skip_serializing_if = "Option::is_none")]
+    pub total_bytes: Option<f64>,
+    #[serde(rename = "importedAgentIds", skip_serializing_if = "Option::is_none")]
+    pub imported_agent_ids: Option<Vec<String>>,
+    #[serde(
+        rename = "importedTranscriptIds",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub imported_transcript_ids: Option<Vec<String>>,
+    #[serde(
+        rename = "skippedTranscriptIds",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub skipped_transcript_ids: Option<Vec<String>>,
+    #[serde(rename = "skippedAgentIds", skip_serializing_if = "Option::is_none")]
+    pub skipped_agent_ids: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub failures: Option<Vec<ProjectImportUploadResponsePayloadFailuresItem>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportUploadResponsePayloadSessionsItem {
+    pub id: String,
+    pub provider: String,
+    pub title: String,
+    #[serde(rename = "sourcePath")]
+    pub source_path: String,
+    pub mode: ProjectImportUploadResponsePayloadSessionsItemMode,
+    #[serde(
+        rename = "alreadyImportedAgentId",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub already_imported_agent_id: Option<String>,
+    #[serde(rename = "messageCount")]
+    pub message_count: serde_json::Value,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum ProjectImportUploadResponsePayloadSessionsItemMode {
+    #[serde(rename = "resumable")]
+    Resumable,
+    #[serde(rename = "transcript")]
+    Transcript,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportUploadResponsePayloadFailuresItem {
+    #[serde(rename = "sessionId")]
+    pub session_id: String,
+    pub error: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportPreviewResponse {
+    pub payload: ProjectImportPreviewResponsePayload,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportPreviewResponsePayload {
+    #[serde(rename = "requestId")]
+    pub request_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+    #[serde(rename = "importId", skip_serializing_if = "Option::is_none")]
+    pub import_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cwd: Option<String>,
+    #[serde(rename = "projectId", skip_serializing_if = "Option::is_none")]
+    pub project_id: Option<String>,
+    #[serde(rename = "workspaceId", skip_serializing_if = "Option::is_none")]
+    pub workspace_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sessions: Option<Vec<ProjectImportPreviewResponsePayloadSessionsItem>>,
+    #[serde(rename = "fileCount", skip_serializing_if = "Option::is_none")]
+    pub file_count: Option<f64>,
+    #[serde(rename = "totalBytes", skip_serializing_if = "Option::is_none")]
+    pub total_bytes: Option<f64>,
+    #[serde(rename = "importedAgentIds", skip_serializing_if = "Option::is_none")]
+    pub imported_agent_ids: Option<Vec<String>>,
+    #[serde(
+        rename = "importedTranscriptIds",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub imported_transcript_ids: Option<Vec<String>>,
+    #[serde(
+        rename = "skippedTranscriptIds",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub skipped_transcript_ids: Option<Vec<String>>,
+    #[serde(rename = "skippedAgentIds", skip_serializing_if = "Option::is_none")]
+    pub skipped_agent_ids: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub failures: Option<Vec<ProjectImportPreviewResponsePayloadFailuresItem>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportPreviewResponsePayloadSessionsItem {
+    pub id: String,
+    pub provider: String,
+    pub title: String,
+    #[serde(rename = "sourcePath")]
+    pub source_path: String,
+    pub mode: ProjectImportPreviewResponsePayloadSessionsItemMode,
+    #[serde(
+        rename = "alreadyImportedAgentId",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub already_imported_agent_id: Option<String>,
+    #[serde(rename = "messageCount")]
+    pub message_count: serde_json::Value,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum ProjectImportPreviewResponsePayloadSessionsItemMode {
+    #[serde(rename = "resumable")]
+    Resumable,
+    #[serde(rename = "transcript")]
+    Transcript,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportPreviewResponsePayloadFailuresItem {
+    #[serde(rename = "sessionId")]
+    pub session_id: String,
+    pub error: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportCommitResponse {
+    pub payload: ProjectImportCommitResponsePayload,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportCommitResponsePayload {
+    #[serde(rename = "requestId")]
+    pub request_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+    #[serde(rename = "importId", skip_serializing_if = "Option::is_none")]
+    pub import_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cwd: Option<String>,
+    #[serde(rename = "projectId", skip_serializing_if = "Option::is_none")]
+    pub project_id: Option<String>,
+    #[serde(rename = "workspaceId", skip_serializing_if = "Option::is_none")]
+    pub workspace_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sessions: Option<Vec<ProjectImportCommitResponsePayloadSessionsItem>>,
+    #[serde(rename = "fileCount", skip_serializing_if = "Option::is_none")]
+    pub file_count: Option<f64>,
+    #[serde(rename = "totalBytes", skip_serializing_if = "Option::is_none")]
+    pub total_bytes: Option<f64>,
+    #[serde(rename = "importedAgentIds", skip_serializing_if = "Option::is_none")]
+    pub imported_agent_ids: Option<Vec<String>>,
+    #[serde(
+        rename = "importedTranscriptIds",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub imported_transcript_ids: Option<Vec<String>>,
+    #[serde(
+        rename = "skippedTranscriptIds",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub skipped_transcript_ids: Option<Vec<String>>,
+    #[serde(rename = "skippedAgentIds", skip_serializing_if = "Option::is_none")]
+    pub skipped_agent_ids: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub failures: Option<Vec<ProjectImportCommitResponsePayloadFailuresItem>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportCommitResponsePayloadSessionsItem {
+    pub id: String,
+    pub provider: String,
+    pub title: String,
+    #[serde(rename = "sourcePath")]
+    pub source_path: String,
+    pub mode: ProjectImportCommitResponsePayloadSessionsItemMode,
+    #[serde(
+        rename = "alreadyImportedAgentId",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub already_imported_agent_id: Option<String>,
+    #[serde(rename = "messageCount")]
+    pub message_count: serde_json::Value,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum ProjectImportCommitResponsePayloadSessionsItemMode {
+    #[serde(rename = "resumable")]
+    Resumable,
+    #[serde(rename = "transcript")]
+    Transcript,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportCommitResponsePayloadFailuresItem {
+    #[serde(rename = "sessionId")]
+    pub session_id: String,
+    pub error: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportCancelResponse {
+    pub payload: ProjectImportCancelResponsePayload,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportCancelResponsePayload {
+    #[serde(rename = "requestId")]
+    pub request_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+    #[serde(rename = "importId", skip_serializing_if = "Option::is_none")]
+    pub import_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cwd: Option<String>,
+    #[serde(rename = "projectId", skip_serializing_if = "Option::is_none")]
+    pub project_id: Option<String>,
+    #[serde(rename = "workspaceId", skip_serializing_if = "Option::is_none")]
+    pub workspace_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sessions: Option<Vec<ProjectImportCancelResponsePayloadSessionsItem>>,
+    #[serde(rename = "fileCount", skip_serializing_if = "Option::is_none")]
+    pub file_count: Option<f64>,
+    #[serde(rename = "totalBytes", skip_serializing_if = "Option::is_none")]
+    pub total_bytes: Option<f64>,
+    #[serde(rename = "importedAgentIds", skip_serializing_if = "Option::is_none")]
+    pub imported_agent_ids: Option<Vec<String>>,
+    #[serde(
+        rename = "importedTranscriptIds",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub imported_transcript_ids: Option<Vec<String>>,
+    #[serde(
+        rename = "skippedTranscriptIds",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub skipped_transcript_ids: Option<Vec<String>>,
+    #[serde(rename = "skippedAgentIds", skip_serializing_if = "Option::is_none")]
+    pub skipped_agent_ids: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub failures: Option<Vec<ProjectImportCancelResponsePayloadFailuresItem>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportCancelResponsePayloadSessionsItem {
+    pub id: String,
+    pub provider: String,
+    pub title: String,
+    #[serde(rename = "sourcePath")]
+    pub source_path: String,
+    pub mode: ProjectImportCancelResponsePayloadSessionsItemMode,
+    #[serde(
+        rename = "alreadyImportedAgentId",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub already_imported_agent_id: Option<String>,
+    #[serde(rename = "messageCount")]
+    pub message_count: serde_json::Value,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum ProjectImportCancelResponsePayloadSessionsItemMode {
+    #[serde(rename = "resumable")]
+    Resumable,
+    #[serde(rename = "transcript")]
+    Transcript,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportCancelResponsePayloadFailuresItem {
+    #[serde(rename = "sessionId")]
+    pub session_id: String,
+    pub error: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportListResponse {
+    pub payload: ProjectImportListResponsePayload,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportListResponsePayload {
+    #[serde(rename = "requestId")]
+    pub request_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub conversations: Option<Vec<ProjectImportListResponsePayloadConversationsItem>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportListResponsePayloadConversationsItem {
+    pub id: String,
+    pub provider: String,
+    pub title: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportReadResponse {
+    pub payload: ProjectImportReadResponsePayload,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportReadResponsePayload {
+    #[serde(rename = "requestId")]
+    pub request_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub title: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub messages: Option<Vec<ProjectImportReadResponsePayloadMessagesItem>>,
+    #[serde(rename = "nextOffset", skip_serializing_if = "Option::is_none")]
+    pub next_offset: Option<f64>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportReadResponsePayloadMessagesItem {
+    pub role: ProjectImportReadResponsePayloadMessagesItemRole,
+    pub text: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum ProjectImportReadResponsePayloadMessagesItemRole {
+    #[serde(rename = "user")]
+    User,
+    #[serde(rename = "assistant")]
+    Assistant,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -6705,6 +7149,12 @@ pub struct GetDaemonConfigResponsePayloadConfig {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct GetDaemonConfigResponsePayloadConfigRelay {
     pub enabled: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub endpoint: Option<String>,
+    #[serde(rename = "useTls", skip_serializing_if = "Option::is_none")]
+    pub use_tls: Option<bool>,
+    #[serde(rename = "endpointMutable", skip_serializing_if = "Option::is_none")]
+    pub endpoint_mutable: Option<bool>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -6866,6 +7316,12 @@ pub struct SetDaemonConfigResponsePayloadConfig {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SetDaemonConfigResponsePayloadConfigRelay {
     pub enabled: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub endpoint: Option<String>,
+    #[serde(rename = "useTls", skip_serializing_if = "Option::is_none")]
+    pub use_tls: Option<bool>,
+    #[serde(rename = "endpointMutable", skip_serializing_if = "Option::is_none")]
+    pub endpoint_mutable: Option<bool>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

@@ -367,7 +367,7 @@ export class ClaudeQuotaProvider implements ProviderUsageFetcher {
     const resp = await this.callClaudeApi(oauth.accessToken);
 
     if (resp === "NEEDS_AUTH") {
-      // Read-only on credentials; the Claude CLI owns refresh. See docs/providers.md.
+      // Read-only on credentials; the Claude CLI owns refresh. See agents-and-providers/providers.mdx.
       return unavailableUsage(this);
     }
 

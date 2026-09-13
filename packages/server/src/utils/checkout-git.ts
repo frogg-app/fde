@@ -2720,15 +2720,11 @@ async function getCheckoutShortstatUncached(
       return null;
     }
 
-    const [{ stdout }, untrackedAdditions] = await Promise.all([
-      getRunGitCommand(context)(["diff", "--shortstat", mergeBase], {
-        cwd,
-        envOverlay: READ_ONLY_GIT_ENV,
-      }),
+    const run = getRunGitCommand(context);
+    const [tracked, untrackedAdditions] = await Promise.all([
+      getUnmergedTrackedShortstat({ run, cwd, comparisonRef, mergeBase }),
       countUntrackedAdditions(cwd, context, options?.throwOnGitError),
     ]);
-
-    const tracked = parseCheckoutShortstat(stdout);
 
     if (tracked) {
       return { additions: tracked.additions + untrackedAdditions, deletions: tracked.deletions };
@@ -2740,6 +2736,54 @@ async function getCheckoutShortstatUncached(
   } catch (error) {
     return handleShortstatGitError(error, options?.throwOnGitError);
   }
+}
+
+/**
+ * Tracked lines this checkout would still add to `comparisonRef`.
+ *
+ * Diffing from the merge-base alone over-counts once the base already holds some of the branch:
+ * after a squash or rebase merge the merge-base never moves, so a fully merged branch kept
+ * reporting its whole original diff. Instead, merge HEAD into the base in memory
+ * (`merge-tree --write-tree`, no worktree or index writes) and count what that merge adds, plus
+ * uncommitted changes against HEAD. A conflicting merge falls back to the merge-base diff.
+ */
+async function getUnmergedTrackedShortstat(input: {
+  run: ReturnType<typeof getRunGitCommand>;
+  cwd: string;
+  comparisonRef: string;
+  mergeBase: string;
+}): Promise<CheckoutShortstat | null> {
+  const { run, cwd, comparisonRef, mergeBase } = input;
+  const gitOptions = { cwd, envOverlay: READ_ONLY_GIT_ENV };
+  let mergedTree: string | null = null;
+  try {
+    const { stdout } = await run(["merge-tree", "--write-tree", comparisonRef, "HEAD"], gitOptions);
+    mergedTree = stdout.split("\n")[0]?.trim() || null;
+  } catch {
+    // Conflicts exit non-zero; older git lacks --write-tree. Either way, use the merge-base diff.
+    mergedTree = null;
+  }
+  if (!mergedTree) {
+    const { stdout } = await run(["diff", "--shortstat", mergeBase], gitOptions);
+    return parseCheckoutShortstat(stdout);
+  }
+  const [committed, uncommitted] = await Promise.all([
+    run(["diff", "--shortstat", comparisonRef, mergedTree], gitOptions),
+    run(["diff", "--shortstat", "HEAD"], gitOptions),
+  ]);
+  return sumShortstats(
+    parseCheckoutShortstat(committed.stdout),
+    parseCheckoutShortstat(uncommitted.stdout),
+  );
+}
+
+function sumShortstats(
+  a: CheckoutShortstat | null,
+  b: CheckoutShortstat | null,
+): CheckoutShortstat | null {
+  if (!a) return b;
+  if (!b) return a;
+  return { additions: a.additions + b.additions, deletions: a.deletions + b.deletions };
 }
 
 async function resolveShortstatComparisonRef(input: {

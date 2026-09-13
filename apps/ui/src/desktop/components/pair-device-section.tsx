@@ -22,7 +22,7 @@ import {
   type EditingTextInputHandle,
 } from "@/components/ui/text-input";
 
-const RELAY_DOCS_URL = brandDocsUrl("security");
+const RELAY_DOCS_URL = brandDocsUrl("self-hosting/security/#relay");
 const FLEX_ONE_STYLE = { flex: 1 } as const;
 const ThemedLoadingSpinner = withUnistyles(LoadingSpinner);
 const ThemedShieldCheck = withUnistyles(ShieldCheck);
@@ -45,11 +45,14 @@ export function PairDeviceSection({ serverId, onClose }: PairDeviceSectionProps)
   const isDisconnected =
     runtimeSnapshot?.connectionStatus === "offline" ||
     runtimeSnapshot?.connectionStatus === "error";
-  const { patchConfig } = useDaemonConfig(serverId);
+  const { config: daemonConfig, patchConfig } = useDaemonConfig(serverId);
   const [copied, setCopied] = useState(false);
   const serverFeatures = client?.getLastServerInfoMessage()?.features;
   const supportsPairingRpc = serverFeatures?.daemonStatusRpc === true;
   const canConfigureRelay = supportsPairingRpc && serverFeatures?.relayConfig === true;
+  // Only daemons that report the endpoint can say it is missing; older daemons keep the old flow.
+  const endpointMissing =
+    serverFeatures?.relayEndpointConfig === true && !daemonConfig?.relay?.endpoint;
 
   const pairingQuery = useFetchQuery({
     queryKey: daemonPairingOfferQueryKey(serverId),
@@ -67,6 +70,9 @@ export function PairDeviceSection({ serverId, onClose }: PairDeviceSectionProps)
     mutationFn: async () => {
       if (client?.getLastServerInfoMessage()?.features?.relayConfig !== true) {
         throw new Error(t("pairing.device.updateRequired"));
+      }
+      if (endpointMissing) {
+        throw new Error(t("pairing.device.endpointRequired"));
       }
       const config = await patchConfig({ relay: { enabled: true } });
       if (!config) throw new Error(t("workspace.terminal.hostDisconnected"));
@@ -114,6 +120,7 @@ export function PairDeviceSection({ serverId, onClose }: PairDeviceSectionProps)
         error={pairingQuery.error}
         offer={pairingQuery.data}
         canConfigureRelay={canConfigureRelay}
+        endpointMissing={endpointMissing}
         enablePending={enableRelay.isPending}
         enableError={enableRelay.error}
         qrSvg={qrSvg}
@@ -134,6 +141,7 @@ interface PairDeviceBodyProps {
   error: Error | null;
   offer: { relayEnabled: boolean; url: string } | undefined;
   canConfigureRelay: boolean;
+  endpointMissing: boolean;
   enablePending: boolean;
   enableError: Error | null;
   qrSvg: string | null;
@@ -202,11 +210,18 @@ function RelayConsent(props: PairDeviceBodyProps) {
       {!props.canConfigureRelay ? (
         <Alert variant="warning" description={t("pairing.device.updateRequired")} />
       ) : null}
+      {props.canConfigureRelay && props.endpointMissing ? (
+        <Alert
+          variant="warning"
+          description={t("pairing.device.endpointRequired")}
+          testID="pair-device-endpoint-required"
+        />
+      ) : null}
       <View style={styles.actions}>
         <Button variant="secondary" style={FLEX_ONE_STYLE} onPress={props.onClose}>
           {t("pairing.device.notNow")}
         </Button>
-        {props.canConfigureRelay ? (
+        {props.canConfigureRelay && !props.endpointMissing ? (
           <Button
             variant="default"
             style={FLEX_ONE_STYLE}

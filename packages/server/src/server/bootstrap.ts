@@ -391,7 +391,7 @@ export interface FdeDaemonConfig {
   allowedHosts?: HostnamesConfig;
   hostnames?: HostnamesConfig;
   trustedProxies?: true | string[];
-  /** Treat private-network clients like loopback (docs/permissions.md, "Trusted LAN"). */
+  /** Treat private-network clients like loopback (self-hosting/security.mdx, "Access policy"). */
   trustLan?: boolean;
   mcpEnabled?: boolean;
   mcpInjectIntoAgents?: boolean;
@@ -414,6 +414,7 @@ export interface FdeDaemonConfig {
   agentStoragePath: string;
   relayEnabled?: boolean;
   relayEnabledMutable?: boolean;
+  relayEndpointMutable?: boolean;
   relayEndpoint?: string;
   relayPublicEndpoint?: string;
   relayUseTls?: boolean;
@@ -582,13 +583,23 @@ function resolveAutoUpdate(config: FdeDaemonConfig): DaemonAutoUpdateConfig {
 }
 
 const BRAND_PAIRING_URL = brand.services.pairingUrl ?? "";
-const BRAND_RELAY_ENDPOINT = brand.services.relayEndpoint ?? "";
+
+function createInitialMutableRelayConfig(
+  config: FdeDaemonConfig,
+): NonNullable<MutableDaemonConfig["relay"]> {
+  return {
+    enabled: config.relayEnabled ?? true,
+    endpoint: config.relayEndpoint ?? "",
+    useTls: config.relayUseTls ?? true,
+    endpointMutable: config.relayEndpointMutable ?? true,
+  };
+}
 
 function createInitialMutableDaemonConfig(config: FdeDaemonConfig): MutableDaemonConfig {
   const providers = config.providerOverrides ?? {};
 
   const initialConfig: MutableDaemonConfig = {
-    relay: { enabled: config.relayEnabled ?? true },
+    relay: createInitialMutableRelayConfig(config),
     mcp: {
       enabled: config.mcpEnabled ?? true,
       injectIntoAgents: config.mcpInjectIntoAgents ?? true,
@@ -645,6 +656,7 @@ export async function createFdeDaemon(
   const initialMutableConfig = createInitialMutableDaemonConfig(config);
   const daemonConfigStore = new DaemonConfigStore(config.fdeHome, initialMutableConfig, logger, {
     relayEnabledMutable: config.relayEnabledMutable ?? true,
+    relayEndpointMutable: config.relayEndpointMutable ?? true,
     startupPersisted: config.configReload?.startupPersisted,
     reloadSource: {
       resolve: (persisted) => {
@@ -669,7 +681,7 @@ export async function createFdeDaemon(
 
   const serverId = getOrCreateServerId(config.fdeHome, { logger });
   const daemonKeyPair = await loadOrCreateDaemonKeyPair(config.fdeHome, logger);
-  // Paired principals/credentials and the first-run claim gate (docs/permissions.md).
+  // Paired principals/credentials and the first-run claim gate (getting-started/connect-and-pair.mdx).
   const claimStore = createClaimStore(config.fdeHome);
   const claimOffers = createClaimOfferStore();
   const authConfig: DaemonAuthConfig = {
@@ -880,9 +892,15 @@ export async function createFdeDaemon(
     listenTarget: publicListenTarget,
     relay: () => {
       const live = relayRuntime?.getConfig();
+      const publicEndpoint = live?.publicEndpoint ?? config.relayPublicEndpoint ?? "";
+      const endpoint = live?.endpoint ?? config.relayEndpoint ?? "";
       return {
-        enabled: live?.enabled ?? daemonConfigStore.get().relay?.enabled ?? false,
-        publicEndpoint: live?.publicEndpoint ?? config.relayPublicEndpoint ?? BRAND_RELAY_ENDPOINT,
+        // Enabled without a configured endpoint means relay is unavailable.
+        enabled:
+          (live?.enabled ?? daemonConfigStore.get().relay?.enabled ?? false) &&
+          endpoint.length > 0 &&
+          publicEndpoint.length > 0,
+        publicEndpoint,
         publicUseTls: live?.publicUseTls ?? config.relayPublicUseTls ?? false,
       };
     },
@@ -1080,6 +1098,9 @@ export async function createFdeDaemon(
     providerDefinitions: initialAgentManagerState.providerDefinitions,
     registry: agentStorage,
     appendSystemPrompt: config.appendSystemPrompt,
+    onWorkspaceFilesMayHaveChanged: ({ cwd }) => {
+      workspaceGitService.onWorkspaceFilesMayHaveChanged(cwd);
+    },
     onWorkspaceStateMayHaveChanged: ({ cwd }) => {
       workspaceGitService.onWorkspaceStateMayHaveChanged(cwd);
     },
@@ -1853,9 +1874,9 @@ export async function createFdeDaemon(
               agentManager.setAppendSystemPrompt(typeof value === "string" ? value : "");
             });
             const relayEnabled = config.relayEnabled ?? true;
-            const relayEndpoint = config.relayEndpoint ?? BRAND_RELAY_ENDPOINT;
+            const relayEndpoint = config.relayEndpoint ?? "";
             const relayPublicEndpoint = config.relayPublicEndpoint ?? relayEndpoint;
-            const relayUseTls = config.relayUseTls ?? relayEndpoint === BRAND_RELAY_ENDPOINT;
+            const relayUseTls = config.relayUseTls ?? true;
             const relayPublicUseTls = config.relayPublicUseTls ?? relayUseTls;
             if (boundListenTarget.type === "tcp") {
               logger.info(
@@ -1882,7 +1903,7 @@ export async function createFdeDaemon(
             }
 
             // Self-update lives next to the listener: the CLI verifies the restarted
-            // daemon on this exact address (docs/install.md "Updating").
+            // daemon on this exact address (self-hosting/updates.mdx).
             const updateService = new DaemonUpdateService({
               install: describeDaemonInstall({ desktopManaged: config.desktopManaged === true }),
               daemonVersion,
@@ -2004,6 +2025,15 @@ export async function createFdeDaemon(
             daemonConfigStore.onFieldChange("relay.enabled", (value) => {
               relayRuntime?.setEnabled(value === true);
             });
+            const applyRelayEndpoint = () => {
+              const relay = daemonConfigStore.get().relay;
+              relayRuntime?.setEndpoint({
+                endpoint: relay?.endpoint ?? "",
+                useTls: relay?.useTls ?? true,
+              });
+            };
+            daemonConfigStore.onFieldChange("relay.endpoint", applyRelayEndpoint);
+            daemonConfigStore.onFieldChange("relay.useTls", applyRelayEndpoint);
             await hubRelationships.start();
           };
 

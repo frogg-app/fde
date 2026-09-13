@@ -6,9 +6,12 @@ pre-commit:
       exclude:
         - "package-lock.json"
         - "**/package-lock.json"
+        - "website/**"
       run: npm run format:check:files -- {staged_files}
     - name: lint
       glob: "*.{js,jsx,ts,tsx}"
+      exclude:
+        - "website/**"
       run: npm run lint -- {staged_files}
     - name: typecheck
       run: node scripts/ci/typecheck-staged.mjs

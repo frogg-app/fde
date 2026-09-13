@@ -1,0 +1,646 @@
+---
+title: Plugin reference
+description: Manifest, entry point, every PluginContext method, SDK exports, configuration, storage, limits and CLI commands for FDE plugins.
+sidebar:
+  order: 2
+---
+
+This page documents the plugin contract as implemented in the `@fde/plugin` package and the
+daemon's plugin runtime. For a walkthrough, start with the [plugins guide](/docs/plugins/).
+
+## Project layout
+
+```text
+my-plugin/
+  fde-plugin.json    manifest (required)
+  index.ts           entry point (required)
+  *.client.tsx       app-only code
+  *.server.ts        daemon-only code
+  *.shared.ts        code used by both
+```
+
+The daemon looks for `index.ts`. `index.tsx` is still accepted as a legacy entry name.
+
+## Manifest: `fde-plugin.json`
+
+```json title="fde-plugin.json"
+{
+  "id": "review",
+  "build": [
+    ["npm", "ci"],
+    ["npm", "run", "build"]
+  ]
+}
+```
+
+| Key     | Type         | Required | Meaning |
+| ------- | ------------ | -------- | ------- |
+| `id`    | string       | yes      | Default runtime ID. Must match `^[a-z][a-z0-9-]*$` |
+| `build` | `string[][]` | no       | Preparation commands for Git installs. At least one command; each is an argv array of non-empty strings |
+
+The schema is strict: any other key fails the install.
+
+- `id` is only a default. `fde plugin install --id` picks a different runtime ID, and the
+  configuration key is what the runtime uses afterwards. Changing the manifest does not rename an
+  existing installation.
+- `build` runs only for Git installs and updates, not for directory installs or reloads. Each
+  command runs from the plugin directory in the staged checkout, without a shell. Output goes to
+  the daemon log. A non-zero exit discards the candidate and keeps any installed version. FDE does
+  not detect lockfiles or choose a package manager.
+
+## Entry point
+
+`index.ts` must have exactly one default export: a function with one named parameter and a block
+body. It must return a cleanup function.
+
+```ts title="index.ts"
+import type { PluginContext } from "@fde/plugin";
+
+export default function contribute(plugin: PluginContext) {
+  // register contributions
+  return () => {
+    // release timers, watchers, sockets you created
+  };
+}
+```
+
+The compiler reads this function syntactically. It keeps statements of the form
+`plugin.<method>(...)` for the target bundle and deletes the rest:
+
+| Bundle | Keeps | Removes from `index.ts` |
+| ------ | ----- | ----------------------- |
+| Server | `plugin.handle` | every `plugin.add*` call; imports of `*.client` modules |
+| Client | every `plugin.add*` call | `plugin.handle`; imports of `*.server` modules |
+
+Call registrations directly on the parameter, as expression statements (they may be nested in
+blocks). A registration made through an alias or a helper function is not removed. The server
+context only has `handle` and the client context has no `handle`, so such a call throws in one of
+the two bundles.
+
+Cleanup can be async. In the server subprocess the daemon awaits it before exit; errors are
+logged. When a plugin stops, FDE also removes its registrations, unmounts its UI, rejects pending
+RPCs, closes its daemon session and ends the subprocess.
+
+### Bundling
+
+| | Server bundle | Client bundle |
+| --- | --- | --- |
+| Runs in | Node subprocess on the daemon host (target `node20`) | App JavaScript runtime (target `es2020`) |
+| Provided by host | `@fde/plugin`, `@fde/plugin/server`, `zod` | `@fde/plugin`, `@fde/plugin/server`, `@fde/plugin/react-native`, `react`, `react/jsx-runtime`, `react-native`, `@tanstack/react-query`, `zod` |
+| Replaced by empty modules | `react`, `react/jsx-runtime`, `react-native`, `@tanstack/react-query`, `@fde/plugin/react-native` | `node:*` |
+| Other imports | Bundled from the plugin's files and `node_modules`; Node built-ins load normally | Bundled from the plugin's files and `node_modules`. A module the app does not provide throws `Module "x" is not available in plugin client code` |
+
+JSX uses the automatic runtime, so client files do not need to import `React`.
+
+## IDs
+
+| ID | Rule |
+| --- | --- |
+| Plugin ID | `^[a-z][a-z0-9-]*$` |
+| Surface, sidebar item, panel, Command Center item, attachment source, theme, transformer IDs; slash command `name`; renderer `kind` | `^[a-z][a-z0-9-]*$`, unique per plugin per type |
+| RPC method `name` | `^[a-z][a-z0-9._-]*$`, unique per plugin |
+
+Icons are [Lucide](https://lucide.dev/icons/) component names such as `Blocks` or `CircleDot`. An
+unknown icon on a sidebar item, panel, Command Center item or attachment source fails plugin
+evaluation in the app.
+
+## PluginContext
+
+```ts
+interface PluginContext {
+  handle(contract, handler): void;
+  addSurface(id, Component): void;
+  addSidebarItem(contribution): void;
+  addWorkspacePanel(contribution): void;
+  addCommandCenterItem(contribution): void;
+  addClientSlashCommand(contribution): void;
+  addClientSide(contribution): void;
+  addAttachmentSource(contribution): void;
+  addTheme(contribution): void;
+  addTimelineTransformer(contribution): void;
+  addTimelineRenderer(contribution): void;
+}
+```
+
+### `handle`
+
+```ts
+handle<I extends ZodType, O extends ZodType>(
+  contract: PluginRpcContract<I, O>,
+  handler: (input: z.output<I>, context: { fde: FdeApi }) => z.input<O> | Promise<z.input<O>>,
+): void
+```
+
+Registers a server RPC handler. The subprocess parses `input` with the contract, runs the handler,
+then parses its return value with `output`. `context.fde` is an FDE API bound to the plugin's own
+daemon session, which lives as long as the subprocess.
+
+```ts
+plugin.handle(readNotesRpc, async ({ path }, { fde }) => {
+  const { config } = await fde.config.get();
+  return { text: await readFile(path, "utf8"), pluginsEnabled: config.pluginsEnabled === true };
+});
+```
+
+### `addSurface`
+
+```ts
+addSurface(id: string, Component: ComponentType<PluginSurfaceProps>): void
+```
+
+Registers a full-screen view. FDE owns the route, header, host picker, close action and error
+boundary. The component owns the body.
+
+```tsx
+plugin.addSurface("main", MainSurface);
+```
+
+### `addSidebarItem`
+
+```ts
+addSidebarItem(contribution: { id: string; title: string; icon: string; surface: string }): void
+```
+
+Adds a sidebar entry that opens a surface. `surface` must name a surface registered by the same
+plugin, or evaluation fails.
+
+```ts
+plugin.addSidebarItem({ id: "main", title: "Notes", icon: "NotebookPen", surface: "main" });
+```
+
+When the same plugin ID and sidebar item exist on several connected hosts, the sidebar shows one
+entry and the screen header offers a host picker. The selected host supplies the bundle, RPCs and
+FDE API.
+
+### `addWorkspacePanel`
+
+```ts
+addWorkspacePanel(contribution:
+  | { id; title; icon; locations?; context: "workspace"; Component: ComponentType<PluginWorkspacePanelProps> }
+  | { id; title; icon; locations?; context: "agent";     Component: ComponentType<PluginAgentPanelProps> }
+): void
+```
+
+Adds a tab type beside agents, terminals, files and diffs. `locations` is a non-empty, duplicate-free
+subset of `["workspace", "explorer"]` and defaults to `["workspace"]`. Panels are opened with
+`openPanel` from a command, slash command or client-side entry.
+
+| Props | Extra fields |
+| ----- | ------------ |
+| `PluginWorkspacePanelProps` | `context: "workspace"`, `workspaceId` |
+| `PluginAgentPanelProps` | `context: "agent"`, `workspaceId`, `agentId` |
+
+```ts
+plugin.addWorkspacePanel({
+  id: "counter",
+  title: "Plugin counter",
+  icon: "Blocks",
+  context: "workspace",
+  locations: ["workspace", "explorer"],
+  Component: CounterPanel,
+});
+```
+
+### `addCommandCenterItem`
+
+```ts
+addCommandCenterItem(contribution: {
+  id: string; title: string; icon: string; keywords?: readonly string[];
+  context: "global" | "workspace" | "agent";
+  onSelect(context): void | Promise<void>;
+}): void
+```
+
+Adds a Command Center entry. The callback's argument depends on `context`:
+
+| `context` | Callback receives |
+| --------- | ----------------- |
+| `global` | `fde`, `rpc`, `openSurface` |
+| `workspace` | the above, plus `workspace` snapshot and `openPanel(id, { location? })` |
+| `agent` | the above, plus `agent` snapshot |
+
+`rpc(contract, input)` calls a plugin RPC on the selected host. `openSurface(id)` opens one of the
+plugin's surfaces. `openPanel` throws if the panel is not registered or does not support the
+requested location; for an agent panel it opens against the current agent.
+
+```ts
+plugin.addCommandCenterItem({
+  id: "open-counter",
+  title: "Open plugin counter",
+  icon: "Blocks",
+  context: "workspace",
+  onSelect: ({ openPanel }) => openPanel("counter"),
+});
+```
+
+### `addClientSlashCommand`
+
+```ts
+addClientSlashCommand(contribution: {
+  name: string; description: string; argumentHint: string;
+  context: "workspace" | "agent";
+  onSubmit(context: CommandContext & { args: string }): void | Promise<void>;
+}): void
+```
+
+Handles `/name args` in the composer inside the app. Nothing is sent to the agent. `args` is the
+trimmed text after the name. The context matches the Command Center context of the same kind.
+An `agent` command is only offered where there is an agent, so not on drafts; use `workspace`
+there.
+
+Precedence: built-in commands and their aliases win, then plugin commands in catalog order, then
+provider commands. Plugin commands do not run when the composer has attachments.
+
+```ts
+plugin.addClientSlashCommand({
+  name: "review",
+  description: "Run the review bot",
+  argumentHint: "[scope]",
+  context: "agent",
+  async onSubmit({ args, agent, rpc, openPanel }) {
+    await rpc(startReviewRpc, { agentId: agent.id, scope: args });
+    openPanel("review");
+  },
+});
+```
+
+### `addClientSide`
+
+```ts
+addClientSide(contribution: (client: PluginClientContext) => PluginCleanup): void
+```
+
+Registers one headless client entry point per plugin (a second call fails). It runs once per
+plugin installation in each connected app and never in the daemon.
+
+```ts
+interface PluginClientContext {
+  fde: FdeApi;
+  rpc(contract, input): Promise<Output>;
+  openSurface(id: string): void;
+  openPanel(id: string, options: { workspaceId: string; agentId?: string; location? }): void;
+  addComposerPill(contribution: PluginComposerPillContribution): PluginCleanup;
+}
+```
+
+`addComposerPill` adds a button to one agent's composer track bar, next to Tasks and Subagents.
+It returns an idempotent removal function.
+
+```ts
+interface PluginComposerPillContribution {
+  id: string;
+  title: string;
+  workspaceId: string;
+  agentId: string;
+  Component: ComponentType<PluginComposerPillProps>; // host props + workspaceId, agentId
+  onPress(): void | Promise<void>;
+}
+```
+
+FDE owns the pressable, chrome, pending state and error reporting. The component renders the icon
+and label.
+
+```ts
+plugin.addClientSide((client) => {
+  const unsubscribe = client.fde.agents.subscribe((update) => {
+    if (update.kind !== "upsert" || !update.agent.workspaceId) return;
+    const { id: agentId, workspaceId } = update.agent;
+    client.addComposerPill({
+      id: "review", title: "Open review", workspaceId, agentId, Component: ReviewPill,
+      onPress: () => client.openPanel("review", { workspaceId, agentId }),
+    });
+  });
+  return unsubscribe;
+});
+```
+
+Pills are removed when the plugin, the client entry point or the host connection goes away.
+
+### `addAttachmentSource`
+
+```ts
+addAttachmentSource(contribution: {
+  id: string; title: string; icon: string;
+  pickerTitle: string; searchPlaceholder: string;
+  search: PluginRpcContract; // input { query: string }, output { items: PluginAttachmentItem[] }
+}): void
+```
+
+Adds a searchable resource to the composer's attachment menu. The app calls `search` with
+`{ query }` and validates the result as:
+
+```ts
+interface PluginAttachmentItem {
+  id: string;
+  identifier: string;
+  title: string;
+  subtitle?: string;
+  url: string;      // must be a URL
+  text: string;     // full text snapshot submitted with the prompt
+  resourceType: string;
+}
+```
+
+Register the handler for the same contract with `plugin.handle`. Attachment sources are scoped to
+the composer's host and are not merged across hosts.
+
+```ts
+plugin.handle(searchIssuesRpc, searchIssues);
+plugin.addAttachmentSource(defineAttachmentSource({
+  id: "issues", title: "Linear issue", icon: "CircleDot",
+  pickerTitle: "Attach Linear issue", searchPlaceholder: "Search by identifier or title",
+  search: searchIssuesRpc,
+}));
+```
+
+### `addTheme`
+
+```ts
+addTheme(contribution: {
+  id: string;
+  name: string;                     // 1-60 characters
+  appearance: "light" | "dark";
+  colors: {
+    background: string; foreground: string; raised: string; control: string;
+    border: string; accent?: string; mutedForeground: string; ring: string;
+  };
+}): void
+```
+
+Adds a theme under **Settings → Appearance**. Colors are `#rgb`, `#rrggbb` or `#rrggbbaa`. FDE
+expands the palette into its full token set; `accent` defaults to `foreground`. Hosts advertise
+support with `server_info.features.pluginThemes`.
+
+```ts
+plugin.addTheme({
+  id: "mocha", name: "Catppuccin Mocha", appearance: "dark",
+  colors: {
+    background: "#1e1e2e", foreground: "#cdd6f4", raised: "#313244", control: "#45475a",
+    border: "#45475a", accent: "#cba6f7", mutedForeground: "#a6adc8", ring: "#6c7086",
+  },
+});
+```
+
+### `addTimelineTransformer`
+
+```ts
+addTimelineTransformer<T extends AgentTimelineItem["type"]>(contribution: {
+  id: string;
+  query: { itemType: T };
+  transform(input: { item: Extract<AgentTimelineItem, { type: T }>; phase: "streaming" | "complete" }):
+    { items: PluginTimelineItem[] } | undefined;
+}): void
+
+interface PluginTimelineItem {
+  type: "plugin";
+  id?: string;
+  kind: string;
+  version: number;
+  data: JsonValue;
+}
+```
+
+Rewrites built-in timeline items in the app while it builds the view, for fetched history and live
+updates. The daemon's stored timeline is not changed.
+
+- `itemType` is one of `user_message`, `assistant_message`, `reasoning`, `tool_call`, `todo`,
+  `error`, `compaction`.
+- Return `undefined` to keep the item, `{ items: [...] }` to replace it, `{ items: [] }` to hide it.
+- The transform must be synchronous and deterministic. `data` must be JSON.
+- Output IDs derive from the source item, so a streaming item keeps its mounted component. Set
+  `id` to distinguish several outputs from one source; the default is the output index.
+- For each source item, the first transformer (in plugin order) that returns a result wins.
+- A transformer that throws is skipped and logged as `[Plugins] Timeline transformer failed`.
+
+```ts
+plugin.addTimelineTransformer({
+  id: "inline-thinking",
+  query: { itemType: "reasoning" },
+  transform: ({ item, phase }) => ({
+    items: [{ type: "plugin", kind: "inline-thinking", version: 1, data: { text: item.text, phase } }],
+  }),
+});
+```
+
+### `addTimelineRenderer`
+
+```ts
+addTimelineRenderer<S extends ZodType>(contribution: {
+  kind: string;
+  version: number;   // integer >= 1
+  schema: S;
+  Component: ComponentType<PluginTimelineItemProps<z.output<S>>>;
+}): void
+```
+
+Draws plugin timeline items of one `kind` and `version`, whether produced by a transformer or
+appended by the daemon. `data` is validated with `schema` first. Props are the host props plus
+`agentId`, `item: { type, kind, version, data }` and `timestamp: Date`. An item whose plugin is not
+running on that host, has no matching renderer, or fails the schema shows
+"Plugin timeline item unavailable."
+
+```ts
+plugin.addTimelineRenderer({
+  kind: "inline-thinking",
+  version: 1,
+  schema: z.object({ text: z.string(), phase: z.enum(["streaming", "complete"]) }),
+  Component: InlineThinking,
+});
+```
+
+### Appending timeline items from the daemon
+
+A server handler can add a plugin item to an agent's timeline through the FDE API:
+
+```ts
+plugin.handle(publishReviewRpc, async ({ agentId, verdict }, { fde }) => {
+  await fde.agents.ref(agentId).timeline.append({
+    type: "plugin",
+    id: "review",
+    kind: "review-result",
+    version: 1,
+    data: { verdict },
+  });
+  return {};
+});
+```
+
+- Only plugin sessions may append. The daemon stamps `pluginId`; plugin code cannot set it.
+- Serialized `data` is limited to 64 KiB (65,536 bytes). Larger appends are rejected.
+- Appending again with the same `id` replaces the earlier item.
+- Hosts that support this advertise `server_info.features.pluginTimelineItems`.
+
+## Component props
+
+Every surface, panel, pill and timeline renderer receives the host props:
+
+```ts
+interface PluginHostProps {
+  theme: { colors: {
+    surface0; surface1; surface2; border; foreground; foregroundMuted;
+    accent; accentForeground; statusSuccess; statusWarning; statusDanger;
+  } };                                                // all strings
+  host: { id: string; label: string };
+  layout: { compact: boolean; platform: "ios" | "android" | "web" };
+}
+```
+
+Surfaces and panels also get optional `navigation: { openAgent({ agentId }), openWorkspace({ workspaceId }) }`.
+It is undefined on older app versions, so hide dependent controls when it is absent.
+
+Plugin UI runs on desktop and mobile in every theme. Set text colors from `theme.colors`; unstyled
+text is black and unreadable in dark themes. Use `layout.compact` for spacing.
+
+## Client state hooks
+
+```ts
+useWorkspace<S>(workspaceId: string, selector: (w: PluginWorkspaceSnapshot) => S): S | null
+useAgent<S>(agentId: string, selector: (a: PluginAgentSnapshot) => S): S | null
+```
+
+Read app state synchronously. Selector results are compared shallowly, so select only what you
+render. The hooks work in workspace panels, composer pills and timeline renderers; elsewhere they
+throw `Plugin state hooks must run inside a workspace panel`.
+
+| Snapshot | Fields |
+| -------- | ------ |
+| `PluginWorkspaceSnapshot` | `id`, `projectId`, `projectDisplayName`, `projectRootPath`, `directory`, `projectKind` (`git`, `non_git`, `directory`), `kind` (`directory`, `local_checkout`, `checkout`, `worktree`), `name`, `title`, `status` (`needs_input`, `failed`, `running`, `attention`, `done`), `statusEnteredAt`, `archivingAt`, `diffStat` |
+| `PluginAgentSnapshot` | `id`, `workspaceId`, `provider`, `status` (`initializing`, `idle`, `running`, `error`, `closed`), `createdAt`, `updatedAt`, `lastActivityAt`, `title`, `cwd`, `model`, `currentModeId`, `thinkingOptionId`, `requiresAttention`, `attentionReason` (`finished`, `error`, `permission`, or null), `parentAgentId`, `labels` |
+
+## Package exports
+
+Only these three specifiers resolve inside a plugin. The daemon and app supply them at runtime.
+
+### `@fde/plugin`
+
+| Export | Kind | Where it works |
+| ------ | ---- | -------------- |
+| `useFde(): FdeApi` | hook | Client components. Borrows the selected host's connection |
+| `useRpc(contract): (input) => Promise<output>` | hook | Client components |
+| `useWorkspace`, `useAgent` | hooks | See [client state hooks](#client-state-hooks) |
+| `Icon` | component | Client. Same as in `@fde/plugin/react-native` |
+| `defineRpc`, `defineAttachmentSource` | functions | Both. Re-exported from `@fde/plugin/server` |
+| `PluginContext`, `PluginSurfaceProps`, `PluginWorkspacePanelProps`, `PluginAgentPanelProps`, `PluginComposerPillProps`, `PluginClientContext`, `PluginTimelineItemProps`, `PluginTimelineTransformerContribution`, `PluginThemeContribution`, `PluginWorkspaceSnapshot`, `PluginAgentSnapshot`, and the other `Plugin*` contracts | types | Type-only |
+
+`PluginAttachmentItemSchema` and `PluginAttachmentSearchPayloadSchema` are exported for types, but
+neither runtime provides them. Define the Zod schema in your plugin, as the Linear example does.
+
+### `@fde/plugin/server`
+
+| Export | Meaning |
+| ------ | ------- |
+| `defineRpc({ name, input, output })` | Returns a typed contract; throws if `name` is invalid |
+| `defineAttachmentSource(definition)` | Identity helper that types an attachment source |
+| `PluginRpcContract`, `PluginHandlerContext`, `PluginAttachmentItem`, `PluginAttachmentSearchPayload`, `PluginAttachmentSourceContribution` | Types |
+
+Import contracts from here in `*.shared.ts` files so both bundles can use them.
+
+### `@fde/plugin/react-native`
+
+Client only.
+
+| Export | Signature |
+| ------ | --------- |
+| `Icon` | `<Icon name="Blocks" size={14} color={theme.colors.foregroundMuted} />`. An unknown name renders nothing |
+| `Modal` | `<Modal title icon? open onOpenChange><Modal.Content>…</Modal.Content></Modal>` |
+| `useToast()` | `{ show(message, { variant?: "default" \| "info" \| "success" \| "warning" \| "error", durationMs? }), error(message) }` |
+| `useRevealedText(text, phase)` | Paces streaming text for timeline renderers |
+
+`@fde/plugin/host` also exists in the package, but it is the app's internal integration API and
+is not available to plugin code.
+
+## Configuration
+
+Plugin state lives at the root of `$FDE_HOME/config.json` (`FDE_HOME` defaults to `~/.fde`):
+
+```json title="~/.fde/config.json"
+{
+  "pluginsEnabled": true,
+  "plugins": {
+    "hello-plugin": { "source": "directory", "path": "/home/me/plugins/hello-plugin", "enabled": true }
+  }
+}
+```
+
+| Key | Type | Default | Meaning |
+| --- | ---- | ------- | ------- |
+| `pluginsEnabled` | boolean | `false` | Global switch. Applied live by `fde reload` |
+| `plugins` | object | `{}` | Map of runtime ID to source |
+| `plugins.<id>.source` | `"directory"` | | Only source type. Git installs are stored as directory sources pointing at the managed checkout |
+| `plugins.<id>.path` | string | | Plugin directory on the daemon host |
+| `plugins.<id>.enabled` | boolean | `true` when absent | Per-plugin switch |
+
+Manage `plugins` with the CLI or the app. `fde reload` does not apply manual edits to it. See
+[daemon configuration](/docs/reference/configuration/).
+
+## Storage
+
+| Path | Contents |
+| ---- | -------- |
+| `$FDE_HOME/config.json` | `pluginsEnabled` and `plugins` |
+| `$FDE_HOME/plugins/sources.json` | Git source metadata: remote, requested ref, tracking branch, commit, plugin path, checkout root |
+| `$FDE_HOME/plugins/<id>/<commit12>-<uuid>/checkout` | Managed Git checkout. Replaced on update; deleted on remove |
+| `$FDE_HOME/plugins/.staging/` | Temporary clones during install and update |
+| `$FDE_HOME/daemon.log` | Plugin output copies, Git `build` output |
+
+Directory installs are never copied or deleted.
+
+## Limits
+
+| Limit | Value |
+| ----- | ----- |
+| RPC call timeout | 30 s |
+| Subprocess initialization timeout | 30 s |
+| Plugin timeline item `data` | 64 KiB serialized |
+| Log tail per plugin | 500 entries or 256 KiB, in memory |
+| Log line | 16 KiB (longer lines are truncated) |
+| Git clone, fetch, checkout | 120 s per command |
+| Git `build` output kept for errors | last 64 KiB per stream |
+
+## Host features
+
+The daemon advertises plugin support in `server_info.features`. Clients check these before using a
+capability.
+
+| Feature | Gates |
+| ------- | ----- |
+| `plugins` | Plugin catalog and client bundles |
+| `pluginManagement` | List, install directory, reload, enable, disable, remove |
+| `pluginLogs` | `fde plugin logs` and the Logs view |
+| `pluginGitManagement` | Git install, `status`, `update` |
+| `pluginThemes` | `addTheme` |
+| `pluginTimelineItems` | `timeline.append` for plugin items |
+
+## CLI
+
+All `fde plugin` commands except `init` accept `--host <host>` (`host:port`, `tcp://host:port` or
+`ssh://user@host`; default is the local socket or pipe, then `localhost:9999`) and `--json`. The
+global `--format`, `--quiet` and `--no-headers` options also apply. See the
+[CLI reference](/docs/desktop-mobile-cli/cli/).
+
+| Command | Arguments and flags | Effect |
+| ------- | ------------------- | ------ |
+| `fde plugin init <directory>` | `--id <id>`, `--json` | Writes a new project into an empty or missing directory. ID defaults to the directory name |
+| `fde plugin ls` | | Lists `PLUGIN`, `STATUS`, `ENABLED`, `DIRECTORY`, `ERROR` |
+| `fde plugin install <source>` (alias `add`) | `--id <id>`, `--ref <ref>`, `--path <path>` | Installs from a directory, a Git source, or `source:plugin/path`. `--path` is the legacy form of the `:plugin/path` suffix |
+| `fde plugin status [id]` | | Fetches tracked branches and lists `PLUGIN`, `SOURCE`, `CURRENT`, `LATEST`, `COMMITS`, `REF` |
+| `fde plugin update [id]` | `--all` | Updates one Git plugin, or all with `--all`. Exactly one of the two is required |
+| `fde plugin reload <id>` | | Stops, recompiles and starts. Fails if the plugin or the global switch is off |
+| `fde plugin enable <id>` | | Sets `enabled: true`; starts it when plugins are globally on |
+| `fde plugin disable <id>` | | Stops it and sets `enabled: false` |
+| `fde plugin remove <id>` | | Stops it, removes configuration and logs, and deletes a managed Git checkout |
+| `fde plugin logs <id>` | | Lists `TIME`, `STREAM`, `MESSAGE` |
+| `fde reload` | | Re-reads `config.json`; applies `pluginsEnabled` |
+
+Git source forms:
+
+| Form | Example |
+| ---- | ------- |
+| GitHub shorthand | `owner/repository` |
+| URL | `https://…`, `ssh://…`, `git://…`, `file://…` |
+| scp-style | `git@example.com:team/repo.git` |
+| Subdirectory | append `:relative/path`, for example `owner/monorepo:plugins/review` |
+
+`--ref` accepts a branch (tracked by `status` and `update`), a tag or a commit (both pinned).
+Without `--ref`, the remote default branch is tracked. Credentials in URLs are redacted from
+output and errors.

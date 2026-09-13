@@ -1,0 +1,140 @@
+---
+title: Contribute features back
+description: Build shared features on branches based on upstream/main, keep brand changes out, and open pull requests against frogg-app/fde.
+sidebar:
+  order: 8
+---
+
+import { Steps } from "@/components/docs";
+
+Every feature you upstream is one you no longer carry through merges. Keep product
+identity out of those pull requests and they apply cleanly to FDE and to every other
+fork.
+
+## The rule
+
+**Base shared work on `upstream/main`, not on your product `main`.** Your `main` contains
+your brand directory, your version numbers, maybe workflow tweaks. A branch cut from it
+drags all of that into the pull request.
+
+```text
+upstream/main ──●──●──●──────────●───────────────▶ frogg-app/fde
+                 \                \
+                  \                feature/timeline-filter ──●──●  (PR to upstream)
+                   \
+your main ─────────●──●(brand)──●(merge upstream)──●(merge feature)──▶ acme-corp/fde
+```
+
+## Workflow
+
+<Steps>
+
+1. **Create the branch from upstream** in its own worktree, so your branded checkout
+   keeps running:
+
+   ```sh
+   git fetch upstream
+   git worktree add ../fde-timeline-filter -b feature/timeline-filter upstream/main
+   cd ../fde-timeline-filter
+   npm ci
+   ```
+
+2. **Build and test with stock FDE.** Leave `FDE_BRAND_DIR` unset so you see what
+   upstream reviewers will see:
+
+   ```sh
+   unset FDE_BRAND_DIR
+   npm run dev:server   # terminal 1
+   npm run dev:app      # terminal 2
+   ```
+
+3. **Also check with the example brand** if your change shows the product name, links,
+   icons or anything else that comes from the brand:
+
+   ```sh
+   FDE_BRAND_DIR=brands/example npm run build:ui
+   FDE_BRAND_DIR=brands/example node scripts/ci/branding-acceptance.mjs
+   ```
+
+4. **Run the checks upstream CI runs** on your changes:
+
+   ```sh
+   node scripts/ci/verify.mjs --changed=upstream/main
+   BRANDING_BASE_REF=upstream/main node scripts/ci/branding-contribution.mjs
+   ```
+
+5. **Push to your fork and open the pull request against upstream:**
+
+   ```sh
+   git push -u origin feature/timeline-filter
+   gh pr create --repo frogg-app/fde --base main \
+     --head acme-corp:feature/timeline-filter \
+     --title "Add a timeline filter for tool calls"
+   ```
+
+6. **Use it in your product before it merges**, if you need to:
+
+   ```sh
+   cd ../acme-studio
+   git merge feature/timeline-filter
+   ```
+
+   When upstream merges the PR, your next upstream merge brings in the same commits and
+   git resolves it without conflict.
+
+</Steps>
+
+## Keep brand changes out
+
+A pull request to upstream must not contain:
+
+- anything under `brands/<your-id>/`, or changes to `brands/fde/`,
+- your product's version numbers or `CHANGELOG.md` release sections (follow upstream's
+  PR template for its own version and changelog entry),
+- repository-variable or secret references specific to your fork,
+- generated output (`.generated/`, `apps/ui/.generated/`, `packages/branding/src/generated/`,
+  `.branding-input/`), which CI rejects outright,
+- new hard-coded product strings.
+
+The last point is enforced. `scripts/ci/branding-contribution.mjs` scans string literals
+added in `apps/` and `packages/` source and fails on any new `FDE`, `Fde` or
+`frogg.app`:
+
+```text
+New product literals need brand values/interpolation, or an exact compatibility/attribution allowlist entry.
+```
+
+Read product identity from the brand instead:
+
+```ts
+import { brand } from "@fde/branding";
+
+const title = `${brand.name} settings`;
+const home = `~/${brand.homeDir}`;
+const docs = brand.links.docs; // may be null for custom brands
+```
+
+In UI copy, use the i18n interpolation the app already uses (for example
+`{{brandFullName}}`). Treat every link and service in `brand` as optional: custom brands
+often leave them unset.
+
+## Moved a commit to the wrong branch?
+
+If you built the feature on your product `main`, move just those commits:
+
+```sh
+git switch -c feature/timeline-filter upstream/main
+git cherry-pick <first-feature-commit>^..<last-feature-commit>
+```
+
+Then check `git diff upstream/main --stat` shows only the feature's files.
+
+## Before you open the PR
+
+- [ ] Branch is based on `upstream/main`.
+- [ ] `git diff upstream/main --stat` lists no brand, version or workflow-selection files.
+- [ ] The feature works with stock FDE and `brands/example`.
+- [ ] Docs updated in `website/src/content/docs/docs/` for user-visible changes.
+- [ ] The upstream PR template checklist is complete (version, changelog, checks).
+
+See [contributing](/docs/contributing/) for the full upstream workflow.

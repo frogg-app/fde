@@ -1,0 +1,118 @@
+---
+title: Providers
+description: The agent CLIs FDE runs — Claude Code, Codex, Copilot, OpenCode, Pi, Oh My Pi and ACP agents — and how to install, detect and configure them.
+sidebar:
+  order: 1
+---
+
+import { Screenshot } from "@/components/docs";
+import appHostProvidersImg from "@/assets/docs/app/host-providers.png";
+
+FDE does not ship a model or an agent of its own. The daemon runs agent CLIs that you
+install and sign in to on the daemon host. Each one is a **provider**.
+
+<Screenshot src={appHostProvidersImg} alt="Host settings, Providers" />
+
+## Built-in providers
+
+| ID         | Name      | Runs                                   | Default mode | Enabled |
+| ---------- | --------- | -------------------------------------- | ------------ | ------- |
+| `claude`   | Claude    | `claude` (Claude Code, via the Agent SDK) | `auto`    | yes |
+| `codex`    | Codex     | `codex app-server`                     | `auto-review` | yes |
+| `copilot`  | Copilot   | `copilot --acp`                        | agent        | yes |
+| `opencode` | OpenCode  | `opencode` server with a bridge plugin | set by OpenCode | yes |
+| `pi`       | Pi        | `pi --mode rpc` (`PI_COMMAND` overrides) | none       | yes |
+| `omp`      | Oh My Pi  | `omp` (`OMP_COMMAND` overrides)        | `full`       | **no** |
+
+Any agent that speaks the [Agent Client Protocol](https://agentclientprotocol.com) can be
+added as a custom provider; see [custom providers](/docs/agents-and-providers/custom-providers/).
+
+## Install and sign in
+
+Install the CLI and log in **as the user the daemon runs as**. FDE uses each CLI's own
+authentication and never asks for your provider credentials.
+
+```sh
+# examples; follow each vendor's instructions
+npm install -g @anthropic-ai/claude-code && claude
+npm install -g @openai/codex && codex login
+```
+
+The daemon finds binaries on its `PATH`. A service installed by `install.sh` inherits the
+`PATH` of the shell that ran the installer. If you install a CLI later into a directory
+that was not on that `PATH`, re-run the installer or point the provider at the binary with
+a `command` override.
+
+After installing, refresh:
+
+```sh
+fde restart
+fde provider ls
+```
+
+```text
+PROVIDER  LABEL     STATUS     ENABLED   DEFAULT MODE
+claude    Claude    available  Enabled   auto
+codex     Codex     available  Enabled   auto-review
+copilot   Copilot   not found  Enabled   ...
+opencode  OpenCode  not found  Enabled   default
+pi        Pi        not found  Enabled   default
+omp       Oh My Pi  not found  Disabled  full
+```
+
+## Diagnose
+
+```sh
+fde provider diagnostic claude
+```
+
+It shows how the command resolved, the binary version, auth status (for Claude, the
+output of `claude auth status`) and relevant environment. In the app, expand a provider in
+**host settings → Providers**.
+
+## Models, modes and thinking
+
+Models are discovered from each provider at runtime:
+
+```sh
+fde provider models claude
+fde provider models codex --thinking
+```
+
+Pick them per agent in the composer, or on the CLI with `--provider codex/gpt-5.5`,
+`--model`, `--mode` and `--thinking`. Modes are covered in
+[permissions](/docs/using-fde/permissions/).
+
+Some providers expose toggles in the composer: **Fast mode** (Claude, Codex), **Plan mode**
+(Codex) and **Auto accept** (OpenCode and ACP agents).
+
+## Enable, disable, reorder
+
+Toggle providers in **host settings → Providers**, or in config:
+
+```json title="~/.fde/config.json"
+{
+  "agents": {
+    "providers": {
+      "omp": { "enabled": true },
+      "copilot": { "enabled": false },
+      "claude": { "command": ["/opt/claude/bin/claude"], "order": 1 }
+    }
+  }
+}
+```
+
+Apply with `fde reload`.
+
+## Usage and limits
+
+**Host settings → Usage** shows provider-reported quota where the provider exposes it
+(for example Claude, Codex and Kimi). FDE reads those credentials read-only; the CLIs own
+token refresh.
+
+## Provider environment
+
+Agents inherit the daemon's environment plus anything you set per provider (`env` in
+config) or per run (`fde agent run --env KEY=value`). Common variables:
+`ANTHROPIC_API_KEY`, `ANTHROPIC_BASE_URL`, `CLAUDE_CONFIG_DIR`, `CODEX_HOME`,
+`OPENAI_API_KEY`, `OPENAI_BASE_URL`.

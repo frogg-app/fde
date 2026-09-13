@@ -779,10 +779,11 @@ export default function SettingsScreen({
                   }
                 />
                 <VoiceAlertsSection />
-                <CompanionSection />
                 {isDesktopApp ? <BrowserDataSection /> : null}
               </>
             );
+          case "companion":
+            return <CompanionSection />;
           case "appearance":
             return <AppearanceSection />;
           case "editor":

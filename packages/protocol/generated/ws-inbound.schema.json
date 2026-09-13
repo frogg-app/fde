@@ -138,6 +138,209 @@
               "properties": {
                 "type": {
                   "type": "string",
+                  "const": "project.import.prepare.request"
+                },
+                "requestId": {
+                  "type": "string"
+                },
+                "source": {
+                  "type": "string",
+                  "enum": [
+                    "daemon",
+                    "client"
+                  ]
+                },
+                "cwd": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 4096
+                },
+                "projectId": {
+                  "type": "string"
+                },
+                "conversationDirectory": {
+                  "type": "string",
+                  "maxLength": 4096
+                }
+              },
+              "required": [
+                "type",
+                "requestId",
+                "source",
+                "cwd"
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "project.import.upload.request"
+                },
+                "requestId": {
+                  "type": "string"
+                },
+                "importId": {
+                  "type": "string"
+                },
+                "path": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 1024
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "code",
+                    "conversation"
+                  ]
+                },
+                "offset": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 16777216
+                },
+                "contentBase64": {
+                  "type": "string",
+                  "maxLength": 262148
+                },
+                "complete": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "type",
+                "requestId",
+                "importId",
+                "path",
+                "kind",
+                "offset",
+                "contentBase64",
+                "complete"
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "project.import.preview.request"
+                },
+                "requestId": {
+                  "type": "string"
+                },
+                "importId": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type",
+                "requestId",
+                "importId"
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "project.import.commit.request"
+                },
+                "requestId": {
+                  "type": "string"
+                },
+                "importId": {
+                  "type": "string"
+                },
+                "sessionIds": {
+                  "maxItems": 500,
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "type",
+                "requestId",
+                "importId",
+                "sessionIds"
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "project.import.cancel.request"
+                },
+                "requestId": {
+                  "type": "string"
+                },
+                "importId": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type",
+                "requestId",
+                "importId"
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "project.import.list.request"
+                },
+                "requestId": {
+                  "type": "string"
+                },
+                "projectId": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type",
+                "requestId",
+                "projectId"
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "project.import.read.request"
+                },
+                "requestId": {
+                  "type": "string"
+                },
+                "projectId": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                },
+                "offset": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "type",
+                "requestId",
+                "projectId",
+                "id"
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
                   "const": "companion.session.start.request"
                 },
                 "requestId": {
@@ -3052,6 +3255,15 @@
                       "type": "object",
                       "properties": {
                         "enabled": {
+                          "type": "boolean"
+                        },
+                        "endpoint": {
+                          "type": "string"
+                        },
+                        "useTls": {
+                          "type": "boolean"
+                        },
+                        "endpointMutable": {
                           "type": "boolean"
                         }
                       },

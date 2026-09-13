@@ -29,7 +29,6 @@ let
     homeDir = manifest.homeDir or ".${manifest.id}";
     envPrefix = manifest.envPrefix or (lib.toUpper (builtins.replaceStrings [ "-" ] [ "_" ] manifest.id));
     serviceName = manifest.serviceName or "${manifest.id}-daemon";
-    legacyFde = brandSource == null;
   };
 in
 buildNpmPackage rec {
@@ -159,10 +158,6 @@ buildNpmPackage rec {
       --add-flags "$out/lib/fde/apps/cli/dist/index.js" \
       --set NODE_PATH "$out/lib/fde/node_modules"
 
-    ${lib.optionalString identity.legacyFde ''
-      ln -s fde $out/bin/fde
-      ln -s fde-server $out/bin/fde-server
-    ''}
     runHook postInstall
   '';
 

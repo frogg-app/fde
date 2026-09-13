@@ -1,0 +1,120 @@
+---
+import { Image } from "astro:assets";
+import SiteLayout from "../layouts/SiteLayout.astro";
+import logo from "../assets/brand/fde-logo.png";
+---
+
+<SiteLayout title="Page not found · FDE" description="This page does not exist." noindex>
+  <section class="nf">
+    <div class="glow" aria-hidden="true"></div>
+    <Image src={logo} alt="" width={120} height={94} densities={[1, 2]} loading="eager" class="frog" />
+    <p class="code">404</p>
+    <h1>This lily pad is empty.</h1>
+    <p class="lead">The page you were looking for has hopped somewhere else, or never existed.</p>
+    <p class="path"><code data-path></code></p>
+    <div class="actions">
+      <a class="btn btn-primary" href="/docs/">Browse the docs</a>
+      <a class="btn" href="/">Back home</a>
+    </div>
+    <p class="help">
+      Following a link from FDE itself? <a href="https://github.com/frogg-app/fde/issues/new">Tell us</a> so we can fix it.
+    </p>
+  </section>
+</SiteLayout>
+
+<script>
+  const el = document.querySelector<HTMLElement>("[data-path]");
+  if (el) el.textContent = location.pathname;
+</script>
+
+<style>
+  .nf {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    text-align: center;
+    padding: clamp(4rem, 12vw, 8rem) var(--site-pad) 2rem;
+    isolation: isolate;
+  }
+  .glow {
+    position: absolute;
+    top: 2rem;
+    left: 50%;
+    width: 34rem;
+    height: 22rem;
+    margin-left: -17rem;
+    z-index: -1;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, var(--fde-accent-glow), transparent);
+    opacity: 0.5;
+  }
+  .frog {
+    width: 120px;
+    height: auto;
+    animation: hop 2.6s var(--fde-ease) infinite;
+  }
+  @keyframes hop {
+    0%,
+    60%,
+    100% {
+      transform: translateY(0) rotate(0);
+    }
+    30% {
+      transform: translateY(-22px) rotate(-6deg);
+    }
+  }
+  .code {
+    margin: 1rem 0 0;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    color: var(--fde-accent-bright);
+  }
+  :global([data-theme="light"]) .code {
+    color: var(--fde-accent);
+  }
+  h1 {
+    margin: 0.5rem 0 0;
+    font-size: clamp(2rem, 6vw, 3.25rem);
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+  }
+  .lead {
+    margin: 1rem 0 0;
+    max-width: 32rem;
+    color: var(--fde-text-muted);
+    font-size: 1.1rem;
+  }
+  .path {
+    margin: 1rem 0 0;
+  }
+  .path code:empty {
+    display: none;
+  }
+  .path code {
+    font-family: var(--fde-font-mono);
+    font-size: 0.85rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.4rem;
+    background: var(--fde-surface-2);
+    color: var(--fde-text-muted);
+    word-break: break-all;
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 2rem;
+  }
+  .help {
+    margin: 2rem 0 0;
+    font-size: 0.9rem;
+    color: var(--fde-text-faint);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .frog {
+      animation: none !important;
+    }
+  }
+</style>

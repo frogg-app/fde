@@ -1,0 +1,47 @@
+---
+import { Image } from "astro:assets";
+import logo from "../../assets/brand/fde-logo.png";
+---
+
+<a href="/" class="site-title sl-flex fde-site-title">
+  <Image src={logo} alt="" width={40} height={31} densities={[1, 2]} loading="eager" />
+  <span>FDE</span>
+  <span class="docs-badge">Docs</span>
+</a>
+
+<style>
+  .fde-site-title {
+    align-items: center;
+    gap: 0.6rem;
+    font-size: var(--sl-text-h4);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--sl-color-white);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .fde-site-title img {
+    height: 1.75rem;
+    width: auto;
+    transition: transform var(--fde-med) var(--fde-ease-spring);
+  }
+  .fde-site-title:hover img {
+    transform: rotate(-8deg) scale(1.06);
+  }
+  .docs-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--sl-color-text-accent);
+    background: var(--fde-accent-soft);
+    border: 1px solid var(--fde-border);
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .fde-site-title img {
+      transition: none;
+    }
+  }
+</style>

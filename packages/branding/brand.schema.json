@@ -208,13 +208,6 @@
           "type": "string",
           "format": "uri"
         },
-        "relayEndpoint": {
-          "type": "string",
-          "pattern": "^[a-zA-Z0-9.[\\]:-]+$"
-        },
-        "relayUseTls": {
-          "type": "boolean"
-        },
         "allowedOrigins": {
           "type": "array",
           "items": {

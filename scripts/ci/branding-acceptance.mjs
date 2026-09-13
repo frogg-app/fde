@@ -56,7 +56,6 @@ try {
   assert.equal(b.scheme, "atlas");
   assert.equal(b.distribution.updateMode, "disabled");
   assert.equal(b.services.pairingUrl, null);
-  assert.equal(b.services.relayEndpoint, null);
   const releaseDir = path.join(scratch, "native release");
   const releaseOut = path.join(scratch, "public artifacts");
   await mkdir(path.join(releaseDir, "bundle/deb"), { recursive: true });

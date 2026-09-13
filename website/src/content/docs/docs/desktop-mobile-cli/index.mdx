@@ -1,0 +1,27 @@
+---
+title: Desktop, mobile and CLI
+description: The clients that connect to an FDE daemon.
+sidebar:
+  order: 0
+  label: Overview
+---
+
+import { CardGrid, LinkCard } from "@/components/docs";
+
+All clients talk to the same daemon and see the same projects, agents and permission
+requests, live. Use several at once.
+
+| Client  | Platforms | Distribution |
+| ------- | --------- | ------------ |
+| Desktop | Windows x64, macOS (arm64, x64), Linux x64 | GitHub releases |
+| Web     | Any modern browser | Served by the daemon |
+| Android | arm64, Android 10+ | APK on GitHub releases |
+| iOS     | Not released | Build from source |
+| CLI     | Linux, macOS, Windows | Installed with the daemon |
+
+<CardGrid>
+  <LinkCard title="Desktop app" href="/docs/desktop-mobile-cli/desktop/" description="Remote SSH, deploy, updates, deep links." />
+  <LinkCard title="Android and iOS" href="/docs/desktop-mobile-cli/mobile/" description="Install the APK and pair your phone." />
+  <LinkCard title="Web app" href="/docs/desktop-mobile-cli/web/" description="Use a daemon from any browser." />
+  <LinkCard title="CLI reference" href="/docs/desktop-mobile-cli/cli/" description="Every fde command and flag." />
+</CardGrid>

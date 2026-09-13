@@ -1,0 +1,98 @@
+---
+title: Desktop app
+description: The Electron desktop app for Windows, macOS and Linux — connecting to daemons, Remote SSH and deploy, updates, deep links and notifications.
+sidebar:
+  order: 1
+---
+
+The desktop app is a client. It connects to daemons you install separately, on the same
+computer or elsewhere, and never starts, bundles or stops a daemon. Closing it leaves
+agents running.
+
+## Download
+
+From [GitHub releases](https://github.com/frogg-app/fde/releases/latest):
+
+| Platform | Files |
+| -------- | ----- |
+| Windows x64 | `FDE-<version>-win-x64.exe` (installer, per-user, choose directory), `FDE-<version>-win-x64.zip` (portable), `FDE-<version>-win-x64-installer.zip` (the installer, zipped for browsers that block `.exe`) |
+| macOS    | `FDE-<version>-mac-arm64.dmg` (Apple silicon), `FDE-<version>-mac-x64.dmg` (Intel), plus `.zip` |
+| Linux x64 | `FDE-<version>-linux-x86_64.AppImage`, `FDE-<version>-linux-amd64.deb`, `FDE-<version>-linux-x64.tar.gz` |
+
+macOS builds are not notarized, and Windows builds may be unsigned. See
+[install](/docs/getting-started/install/#2-install-a-client) for the first-launch steps.
+
+:::note
+Upgrading from the pre-0.6 desktop app (the Tauri shell) is manual: install the new app
+and add or re-pair your hosts.
+:::
+
+## Connect to daemons
+
+**Hosts** in the sidebar adds connections. The desktop app supports every method, including
+**Remote SSH**. One window can use several hosts at once; each project belongs to one host.
+
+## Remote SSH
+
+Remote SSH reaches a daemon through your system OpenSSH client, so it honours
+`~/.ssh/config`: users, ports, keys, agents and jump hosts. The app picks hosts from your
+SSH config or takes `user@host`.
+
+- The connection forwards stdio to `127.0.0.1:<daemon port>` on the remote host (default
+  9999). The daemon does not need to be reachable on the network.
+- If the host refuses your keys but allows passwords, the app asks for the SSH password.
+  It is kept in memory only.
+- A separate **daemon password** field is for daemons with a password; it is saved with the
+  host.
+
+### Deploy a daemon over SSH
+
+If SSH works but no daemon answers, the app offers to **Deploy** one. You can also deploy
+from the host's settings.
+
+1. The app probes the host: OS, architecture, Docker, systemd user services, `curl`, and
+   any existing install.
+2. It pipes the same `install.sh` (or `install-docker.sh`) you would run by hand over SSH.
+   Nothing is uploaded: the host downloads the release bundle from GitHub itself.
+3. It installs the version that matches the app, listening on `0.0.0.0:9999` by default.
+   Choose `127.0.0.1` to keep the daemon reachable only through SSH.
+4. The log streams into the dialog, and the connection retries when the install finishes.
+
+The same screen can **uninstall** the daemon. Daemon state in `~/.fde` is kept.
+
+Remote hosts need Linux or macOS with `bash` and `curl`, and outbound access to GitHub.
+
+## Updates
+
+The app checks GitHub releases and downloads updates in the background, then installs
+them when you quit.
+
+- Channel: **Stable** (default) or **Beta**, in settings.
+- AppImage installs do not update on quit; download the new AppImage.
+- A release can require a manual upgrade from very old clients; the app says so.
+- Unpackaged development builds never update.
+
+Updating the app does not update your daemons. Update each daemon from its host settings
+or with `fde update`; see [updates](/docs/self-hosting/updates/).
+
+## Open projects and links
+
+- `fde .` (or any directory) on the command line opens that directory as a project in the
+  desktop app.
+- `fde://` links open the app: agent links (`fde://h/<serverId>/agent/<agentId>`) and
+  pairing links (`fde://pair#offer=...`).
+- Launching the app again focuses the running instance.
+
+## Notifications
+
+Agents that finish, fail or need a permission raise system notifications. Clicking one
+focuses the window that sent it.
+
+## Also in the desktop app
+
+- **Open in editor** for files and workspaces (VS Code, Cursor, Zed, JetBrains IDEs and
+  others it detects).
+- A built-in browser panel for workspace services.
+- Network scan for daemons on the LAN in **Direct connection**.
+
+There is no system tray icon. On Windows and Linux, closing the last window quits the app.

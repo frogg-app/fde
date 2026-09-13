@@ -1,0 +1,176 @@
+---
+title: Environment variables
+description: Environment variables read by the FDE daemon, CLI and installers, and the variables FDE sets for agents, terminals and workspace services.
+sidebar:
+  order: 2
+---
+
+Booleans accept `1`, `true`, `yes`, `on` and `0`, `false`, `no`, `off`. Environment
+variables override [`config.json`](/docs/reference/configuration/); CLI flags override both.
+
+:::note[Custom brands]
+Low-level daemon variables keep the `FDE_` prefix in every brand. The home directory and
+installer variables use the brand's prefix: for Acme, `ACME_HOME`, `ACME_INSTALL_DIR`,
+`ACME_VERSION` and so on.
+:::
+
+## Daemon: core
+
+| Variable                | Default                   | Meaning |
+| ----------------------- | ------------------------- | ------- |
+| `FDE_HOME`              | `~/.fde`                  | State directory |
+| `FDE_LISTEN`            | `0.0.0.0:9999`            | Listen target (`host:port`, port, socket or pipe) |
+| `PORT`                  |                           | Port used only when neither `FDE_LISTEN` nor `daemon.listen` is set |
+| `FDE_PASSWORD`          |                           | Plaintext password, hashed at startup. Overrides `daemon.auth.password`. Also read by the CLI as its credential |
+| `FDE_TRUST_LAN`         | `true`                    | Treat private-network clients like loopback |
+| `FDE_HOSTNAMES`         |                           | Comma-separated allowed hosts, or `true`. Legacy alias `FDE_ALLOWED_HOSTS` |
+| `FDE_CORS_ORIGINS`      |                           | Comma-separated extra origins, or `*` |
+| `FDE_TRUSTED_PROXIES`   | `loopback`                | Comma-separated proxy IPs, `true`, or `false` |
+| `FDE_WEB_UI_ENABLED`    | `false`                   | Serve the web app. Installed services set it to `true` |
+| `FDE_WEB_UI_DIST_DIR`   | bundled                   | Serve another web build |
+| `FDE_PAIRING_BASE_URL`  | `https://pair.frogg.app`  | Pairing link base. Legacy alias `FDE_APP_BASE_URL` |
+| `FDE_PRIMARY_LAN_IP`    | detected                  | LAN address advertised in pairing offers |
+
+## Daemon: relay and service proxy
+
+| Variable                            | Meaning |
+| ----------------------------------- | ------- |
+| `FDE_RELAY_ENABLED`                 | Enable relay. Without an endpoint, relay stays inactive |
+| `FDE_RELAY_ENDPOINT`                | Relay `host:port`. Overrides `daemon.relay.endpoint` and locks the app's endpoint setting |
+| `FDE_RELAY_PUBLIC_ENDPOINT`         | Endpoint advertised to clients |
+| `FDE_RELAY_USE_TLS`, `FDE_RELAY_PUBLIC_USE_TLS` | TLS for the relay. Default `true`; `false` only for a plaintext test relay |
+| `FDE_SERVICE_PROXY_LISTEN`          | Separate listener for workspace service URLs |
+| `FDE_SERVICE_PROXY_PUBLIC_BASE_URL` | Public base URL for service links |
+
+## Daemon: logging and diagnostics
+
+| Variable                                  | Default                | Meaning |
+| ----------------------------------------- | ---------------------- | ------- |
+| `FDE_LOG_LEVEL` (alias `FDE_LOG`)         | `info`                 | `trace`, `debug`, `info`, `warn`, `error`, `fatal` |
+| `FDE_LOG_FORMAT`                          | `json`                 | `json` or `pretty` |
+| `FDE_LOG_CONSOLE_LEVEL`, `FDE_LOG_CONSOLE_FORMAT` |                |  |
+| `FDE_LOG_FILE_LEVEL`, `FDE_LOG_FILE_PATH` | `info`, `$FDE_HOME/daemon.log` |  |
+| `FDE_LOG_FILE_ROTATE_SIZE`, `FDE_LOG_FILE_ROTATE_COUNT` | `10m`, `3` |  |
+| `FDE_GIT_TRACE_FILE`                      |                        | Append every git command the daemon runs to this file |
+| `MCP_DEBUG`                               |                        | `1` logs MCP traffic |
+
+## Daemon: git, providers and execution
+
+| Variable                              | Default   | Meaning |
+| ------------------------------------- | --------- | ------- |
+| `FDE_GIT_MAX_PROCESSES_PER_SECOND`    | `2048`    | Git spawn rate limit |
+| `FDE_GIT_MAX_PROCESS_CONCURRENCY`     | `8`       | Concurrent git processes (legacy alias `FDE_GIT_CONCURRENCY`) |
+| `FDE_PROVIDER_REFRESH_TIMEOUT_MS`     | `120000`  | Provider catalog refresh deadline |
+| `FDE_EXECUTION_SERVICE`               |           | `1` opts in to independent execution: agent runtimes survive daemon restarts. Check with `fde execution-status` |
+
+Provider CLIs read their own variables (`ANTHROPIC_API_KEY`, `CLAUDE_CONFIG_DIR`,
+`CODEX_HOME`, `OPENAI_API_KEY`, `PI_COMMAND`, `OMP_COMMAND` and others). The daemon passes
+its environment to the agents it starts, so set them where the daemon runs.
+
+## Daemon: updates
+
+| Variable             | Default                                           | Meaning |
+| -------------------- | ------------------------------------------------- | ------- |
+| `FDE_AUTO_UPDATE`    |                                                   | Overrides `daemon.autoUpdate.enabled` |
+| `FDE_INSTALL_DIR`    | `~/.local/share/fde` (`%LOCALAPPDATA%\fde` on Windows) | Versioned install root |
+| `FDE_RELEASES_API`   | `https://api.github.com/repos/frogg-app/fde/releases` | Release discovery |
+| `FDE_RELEASE_BASE`   | `https://github.com/frogg-app/fde/releases`       | Download mirror (`<base>/download/v<version>/<asset>`) |
+| `FDE_GITHUB_TOKEN`   |                                                   | Token for rate limits or a private repository. `GH_TOKEN`, `GITHUB_TOKEN` or `gh auth token` are tried after a 403/429 |
+
+## Daemon: voice and Companion
+
+| Variable                              | Meaning |
+| ------------------------------------- | ------- |
+| `FDE_VOICE`                           | Master switch for voice features |
+| `FDE_VOICE_NOTIFICATIONS`             | Spoken agent alerts |
+| `FDE_DICTATION_ENABLED`, `FDE_DICTATION_STT_PROVIDER`, `FDE_DICTATION_LOCAL_STT_MODEL`, `FDE_DICTATION_LANGUAGE` | Dictation |
+| `FDE_VOICE_MODE_ENABLED`, `FDE_VOICE_LLM_PROVIDER`, `FDE_VOICE_STT_PROVIDER`, `FDE_VOICE_LOCAL_STT_MODEL`, `FDE_VOICE_LANGUAGE`, `FDE_VOICE_TURN_DETECTION_PROVIDER` | Voice mode |
+| `FDE_VOICE_TTS_PROVIDER`, `FDE_VOICE_LOCAL_TTS_MODEL`, `FDE_VOICE_LOCAL_TTS_SPEAKER_ID`, `FDE_VOICE_LOCAL_TTS_SPEED` | Speech output |
+| `FDE_LOCAL_MODELS_DIR`                | Local speech model directory |
+| `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_STT_API_KEY`, `OPENAI_STT_BASE_URL`, `OPENAI_TTS_API_KEY`, `OPENAI_TTS_BASE_URL` | OpenAI speech credentials |
+| `STT_MODEL`, `STT_CONFIDENCE_THRESHOLD`, `TTS_MODEL`, `TTS_VOICE` | OpenAI speech models |
+| `FDE_COMPANION_ENABLED`, `FDE_COMPANION_BACKEND`, `FDE_COMPANION_MODEL` | Companion |
+| `ANTHROPIC_API_KEY`, `ANTHROPIC_BASE_URL` | Companion `api` backend only |
+
+## CLI
+
+| Variable          | Meaning |
+| ----------------- | ------- |
+| `FDE_HOST`        | Default daemon for commands (`host:port`, `tcp://host:port`, `ssh://user@host`). Without it the CLI tries the local socket or pipe, then the configured listen address, then `localhost:9999` |
+| `FDE_PASSWORD`    | Password sent to the daemon |
+| `FDE_PAIRING_QR`  | `0` hides the QR code in `fde auth pair` |
+| `FDE_AUTOSTART`   | `0` or `1`: answer the autostart question in non-interactive `fde onboard` |
+
+## Installers
+
+`install.sh` (Linux and macOS):
+
+| Variable              | Default                     | Meaning |
+| --------------------- | --------------------------- | ------- |
+| `FDE_VERSION`         | latest release              | Release to install |
+| `FDE_INSTALL_DIR`     | `~/.local/share/fde`        | Install root |
+| `FDE_BIN_DIR`         | `~/.local/bin`              | Where `fde` is linked |
+| `FDE_RELEASE_BASE`    | GitHub releases             | Download base |
+| `FDE_BUNDLE_URL`      |                             | Exact bundle URL (plus its `.sha256`) |
+| `FDE_BUNDLE_FILE`     |                             | Install from a local bundle |
+| `FDE_NO_SERVICE`      |                             | `1` skips the systemd/launchd service |
+| `FDE_NO_MODIFY_PATH`  |                             | `1` leaves shell startup files alone |
+| `FDE_LISTEN`          | `0.0.0.0:9999`              | Service listen address |
+| `FDE_HOME`            | `~/.fde`                    | Service state directory |
+| `FDE_HEALTH_TIMEOUT`  | `30`                        | Seconds to wait for the new daemon |
+
+`uninstall.sh` also reads `FDE_PURGE=1` to delete `FDE_HOME`.
+
+`install-docker.sh`:
+
+| Variable             | Default                    | Meaning |
+| -------------------- | -------------------------- | ------- |
+| `FDE_VERSION`        | `latest`                   | Image tag |
+| `FDE_IMAGE`          | `froggapp/fde:$FDE_VERSION` | Full image reference |
+| `FDE_HOME`           | `~/.fde`                   | Host state directory |
+| `FDE_PORT`           | `9999`                     | Host port |
+| `FDE_BIND`           | `0.0.0.0`                  | Host bind address |
+| `FDE_WORKSPACE`      |                            | Host directory mounted at `/workspace` |
+| `FDE_PASSWORD`       |                            | Daemon password |
+| `FDE_CONTAINER`      | `fde-daemon`               | Container name |
+| `FDE_NO_PULL`        |                            | `1` skips `docker pull` |
+| `FDE_UPDATE`         |                            | `1` is the same as `--update` |
+| `FDE_HEALTH_TIMEOUT` | `90`                       | Seconds to wait on update |
+
+## Desktop app
+
+| Variable                  | Meaning |
+| ------------------------- | ------- |
+| `FDE_ELECTRON_UPDATE_URL` | HTTPS update feed override, for testing |
+
+## Set by FDE for child processes
+
+Agents:
+
+| Variable        | Value |
+| --------------- | ----- |
+| `FDE_AGENT_ID`  | The agent's ID. CLI commands run inside an agent use it as the caller |
+| `FDE_AGENT_CWD` | The agent's working directory |
+
+Terminals: `FDE_TERMINAL_ID`, `FDE_WORKSPACE_ID`, plus activity-hook variables.
+
+Worktree `setup` and `teardown` commands:
+
+| Variable                   | Value |
+| -------------------------- | ----- |
+| `FDE_SOURCE_CHECKOUT_PATH` | The original checkout (alias `FDE_ROOT_PATH`) |
+| `FDE_WORKTREE_PATH`        | The new worktree |
+| `FDE_BRANCH_NAME`          | Its branch |
+| `FDE_WORKTREE_PORT`        | A port reserved for the worktree |
+
+Workspace services (`scripts` with `"type": "service"` in `fde.json`):
+
+| Variable                    | Value |
+| --------------------------- | ----- |
+| `HOST`                      | `127.0.0.1` when the daemon listens on loopback, otherwise `0.0.0.0` |
+| `FDE_PORT`                  | This service's port |
+| `FDE_URL`                   | This service's proxy URL |
+| `FDE_SERVICE_<NAME>_PORT`   | Port of every service in the workspace |
+| `FDE_SERVICE_<NAME>_URL`    | URL of every service in the workspace |
+
+`<NAME>` is the script name uppercased, with other characters replaced by `_`.

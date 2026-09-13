@@ -1,0 +1,142 @@
+---
+import { Image } from "astro:assets";
+import logo from "../../assets/brand/fde-logo.png";
+
+const repo = "https://github.com/frogg-app/fde";
+const columns = [
+  {
+    title: "Product",
+    links: [
+      { href: "/#features", label: "Features" },
+      { href: "/#download", label: "Download" },
+      { href: "/#companion", label: "Companion" },
+      { href: `${repo}/blob/main/CHANGELOG.md`, label: "Changelog" },
+    ],
+  },
+  {
+    title: "Docs",
+    links: [
+      { href: "/docs/getting-started/", label: "Getting started" },
+      { href: "/docs/self-hosting/", label: "Self-hosting" },
+      { href: "/docs/fork-and-rebrand/", label: "Fork & rebrand" },
+      { href: "/docs/plugins/", label: "Plugins" },
+    ],
+  },
+  {
+    title: "Project",
+    links: [
+      { href: repo, label: "GitHub" },
+      { href: `${repo}/releases`, label: "Releases" },
+      { href: `${repo}/issues`, label: "Issues" },
+      { href: "/docs/contributing/", label: "Contributing" },
+    ],
+  },
+];
+---
+
+<footer class="site-footer">
+  <div class="inner">
+    <div class="about">
+      <a class="brand" href="/">
+        <Image src={logo} alt="" width={32} height={25} densities={[1, 2]} />
+        <span>FDE</span>
+      </a>
+      <p>Frogg Development Environment. Run and monitor coding agents on hardware you control.</p>
+      <p class="fine">
+        Apache-2.0. FDE is a fork of <a href="https://github.com/getpaseo/paseo">Paseo</a>.
+      </p>
+    </div>
+    {
+      columns.map((col) => (
+        <nav aria-label={col.title}>
+          <h2>{col.title}</h2>
+          <ul>
+            {col.links.map((link) => (
+              <li>
+                <a href={link.href}>{link.label}</a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      ))
+    }
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid var(--fde-border);
+    background: var(--fde-bg-elevated);
+    margin-top: 4rem;
+  }
+  .inner {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: var(--site-width);
+    margin: 0 auto;
+    padding: 3rem var(--site-pad) 3.5rem;
+  }
+  .about {
+    grid-column: 1 / -1;
+    max-width: 22rem;
+  }
+  @media (min-width: 48rem) {
+    .inner {
+      grid-template-columns: 2fr repeat(3, minmax(0, 1fr));
+    }
+    .about {
+      grid-column: auto;
+    }
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 750;
+    color: var(--fde-text);
+    text-decoration: none;
+  }
+  .brand img {
+    width: 32px;
+    height: auto;
+  }
+  p {
+    margin: 0.75rem 0 0;
+    color: var(--fde-text-muted);
+    font-size: 0.9rem;
+  }
+  .fine {
+    font-size: 0.8rem;
+    color: var(--fde-text-faint);
+  }
+  .fine a {
+    color: inherit;
+  }
+  h2 {
+    margin: 0 0 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 650;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--fde-text-faint);
+  }
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.15rem;
+  }
+  ul a {
+    display: inline-block;
+    padding: 0.3rem 0;
+    color: var(--fde-text-muted);
+    text-decoration: none;
+    font-size: 0.92rem;
+    transition: color var(--fde-fast) var(--fde-ease);
+  }
+  ul a:hover {
+    color: var(--fde-accent-bright);
+  }
+</style>

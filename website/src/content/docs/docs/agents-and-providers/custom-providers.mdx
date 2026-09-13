@@ -1,0 +1,164 @@
+---
+title: Custom providers
+description: Override built-in providers and add new ones — Claude- or Codex-compatible endpoints, ACP agents, custom binaries, models and environment.
+sidebar:
+  order: 2
+---
+
+Custom providers live in `agents.providers` in `~/.fde/config.json`. Use them to:
+
+- run a built-in provider against another endpoint (a proxy, a gateway, a compatible model),
+- add an [ACP](https://agentclientprotocol.com) agent such as Gemini CLI,
+- change a built-in's binary, environment or model list,
+- turn providers on or off.
+
+Apply changes with `fde reload`.
+
+## Add from the app
+
+**Host settings → Providers → Add provider** lists known ACP agents (Gemini, Goose,
+Cursor, Kimi, Qwen Code and about thirty more) with their install links. Adding one writes
+the same config shown below. The list is built into the app, not fetched from the daemon.
+
+## Schema
+
+```json
+{
+  "agents": {
+    "providers": {
+      "<id>": {
+        "extends": "claude | codex | copilot | opencode | pi | omp | acp",
+        "label": "Shown in the app",
+        "description": "Optional",
+        "command": ["binary", "arg1"],
+        "env": { "KEY": "value" },
+        "params": {},
+        "models": [{ "id": "model-id", "label": "Model", "isDefault": true }],
+        "additionalModels": [{ "id": "extra-model", "label": "Extra" }],
+        "disallowedTools": ["WebSearch"],
+        "enabled": true,
+        "order": 10
+      }
+    }
+  }
+}
+```
+
+| Key                | Meaning |
+| ------------------ | ------- |
+| `<id>`             | Lowercase: `^[a-z][a-z0-9-]*$`. A built-in ID overrides that provider |
+| `extends`          | Required for new IDs. The implementation to reuse. `acp` is any ACP agent |
+| `label`            | Required for new IDs |
+| `command`          | Argv array that replaces the default launch command. Required with `extends: "acp"` |
+| `env`              | Merged over the base provider's environment |
+| `params`           | Provider-specific options (below) |
+| `models`           | Replaces the discovered model list |
+| `additionalModels` | Adds to the discovered list |
+| `disallowedTools`  | Merged with the base provider's |
+| `enabled`, `order` | Visibility and position |
+
+Models accept `{ id, label, description?, isDefault?, thinkingOptions?: [{ id, label, description?, isDefault? }] }`.
+
+A derived provider keeps the base provider's modes and permission behaviour.
+
+## Examples
+
+### Claude Code against a compatible endpoint
+
+```json
+{
+  "agents": {
+    "providers": {
+      "zai": {
+        "extends": "claude",
+        "label": "Z.ai GLM",
+        "env": {
+          "ANTHROPIC_BASE_URL": "https://api.z.ai/api/anthropic",
+          "ANTHROPIC_AUTH_TOKEN": "..."
+        },
+        "disallowedTools": ["WebSearch"],
+        "models": [{ "id": "glm-5.1", "label": "GLM 5.1", "isDefault": true }]
+      }
+    }
+  }
+}
+```
+
+### Codex against another OpenAI-compatible endpoint
+
+```json
+{
+  "agents": {
+    "providers": {
+      "company-codex": {
+        "extends": "codex",
+        "label": "Company Codex",
+        "env": {
+          "OPENAI_BASE_URL": "https://llm-gateway.example.com/v1",
+          "OPENAI_API_KEY": "..."
+        }
+      }
+    }
+  }
+}
+```
+
+When `OPENAI_BASE_URL` is set, FDE configures Codex with a custom model provider using the
+Responses wire API. With `OPENAI_API_KEY` in `env`, Codex uses that key instead of a
+ChatGPT login.
+
+### An ACP agent
+
+```json
+{
+  "agents": {
+    "providers": {
+      "gemini": {
+        "extends": "acp",
+        "label": "Gemini",
+        "command": ["gemini", "--acp"],
+        "params": { "supportsMcpServers": false }
+      }
+    }
+  }
+}
+```
+
+### Override a built-in
+
+```json
+{
+  "agents": {
+    "providers": {
+      "claude": { "command": ["/opt/claude/bin/claude"], "additionalModels": [{ "id": "claude-opus-4-8[1m]", "label": "Opus 4.8 1M" }] },
+      "copilot": { "enabled": false },
+      "omp": { "enabled": true }
+    }
+  }
+}
+```
+
+## `params`
+
+| Provider base | Param | Meaning |
+| ------------- | ----- | ------- |
+| `acp`         | `supportsMcpServers` | `false` stops FDE from passing MCP servers to the agent |
+| `acp`         | `clientCapabilities` | `{ fs: { readTextFile, writeTextFile }, terminal }` advertised to the agent |
+| `pi`          | `sessionDir`, `rpcTimeoutMs` | Session storage; RPC timeout (default 60 s) |
+| `omp`         | `sessionDir`, `rpcTimeoutMs`, `smolModel`, `slowModel`, `planModel` | |
+
+## Secrets
+
+`env` values are stored in plain text in `config.json` (private file permissions). If you
+prefer, leave them out and export the variables in the daemon's environment instead: a
+systemd drop-in, launchd plist, Docker `-e`, or Nix `environmentFile`.
+
+## Check it
+
+```sh
+fde reload
+fde provider ls
+fde provider diagnostic zai
+fde provider models zai
+fde agent run --provider zai "Say hello"
+```

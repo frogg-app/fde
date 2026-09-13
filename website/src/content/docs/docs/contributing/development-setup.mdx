@@ -1,0 +1,251 @@
+---
+title: Development setup
+description: Install dependencies, build the workspaces in order, run the dev daemon and clients, and check a change before you push.
+sidebar:
+  order: 2
+---
+
+import { Steps } from "@/components/docs";
+
+This page covers working on the FDE monorepo itself. Commands run from the repository root
+unless stated otherwise.
+
+## Prerequisites
+
+- **Node.js 22.** Root `package.json` requires `>=22`; `.tool-versions` pins `nodejs 22.20.0`.
+  CI uses Node 22.
+- **npm.** The repo uses npm workspaces (`packages/*`, `apps/*`) and a committed
+  `package-lock.json`.
+- **git.** Dev scripts use `git rev-parse --show-toplevel` to find the checkout root.
+- **bash** for the dev scripts on macOS and Linux. On Windows use `npm run dev:win` (PowerShell).
+
+`.tool-versions` also lists `rust`, `java` and `android-sdk`. Rust is only needed for the
+inactive reference sources in `apps/desktop` and `apps/daemon-rs`. Java and the Android SDK
+are needed for Android builds, see [Platform builds](#platform-builds).
+
+## Install
+
+```bash
+npm ci
+```
+
+Install runs two hooks:
+
+- `postinstall` applies `patches/*.patch` (`scripts/ci/postinstall-patches.mjs`) and runs
+  `npm run brand:prepare`, which writes the selected brand to `.generated/branding/`.
+- `prepare` installs the lefthook git hooks. It is skipped when `LEFTHOOK=0` or `CI=true`.
+
+A new git worktree has no `node_modules`. Run `npm ci` in it before anything else, or the
+pre-commit hook fails with `oxfmt: not found`.
+
+## Build order
+
+Workspaces import each other's built `dist/` output, not sibling `src/` files. npm does not
+order the builds for you. The dependency chain is:
+
+```
+protocol → client → highlight, plugin, relay → server → cli
+```
+
+Use the root scripts. They encode the order.
+
+| Script                    | Builds                                                         |
+| ------------------------- | -------------------------------------------------------------- |
+| `npm run build:protocol`  | `@fde/protocol`                                                |
+| `npm run build:client`    | `@fde/protocol`, then `@fde/client`                            |
+| `npm run build:server-deps` | client chain, then highlight, plugin and relay in parallel  |
+| `npm run build:server`    | server deps, then `@fde/server` and `@fde/cli`                 |
+| `npm run build:app-deps`  | highlight, client, plugin and `@fde/expo-two-way-audio`        |
+| `npm run build:ui`        | Expo web export of `apps/ui` (runs `build:app-deps` first)     |
+| `npm run build:desktop`   | web UI, then the Electron app-only shell                       |
+| `npm run build:daemon-web-ui` | copies the web export into `packages/server/dist/server/web-ui` |
+
+Most `build:*` scripts have a `:clean` variant, for example `npm run build:server:clean`,
+which removes stale `dist/` first.
+
+Which build to run after a change:
+
+- `packages/protocol` or `packages/client`: `npm run build:client`.
+- `packages/server`, `apps/cli`, `packages/relay` or `packages/highlight`: `npm run build:server`.
+- Anything `apps/ui` consumes: `npm run build:app-deps`.
+
+## Run the dev stack
+
+Run the daemon and the client in separate terminals.
+
+```bash
+npm run dev:server   # daemon on 0.0.0.0:6768
+npm run dev:app      # Expo (Metro) on port 8081, pointed at the dev daemon
+```
+
+- `dev:server` runs `build:server-deps` once, then watches protocol, client and server with
+  `concurrently`. If the deps are already built, skip that step with
+  `FDE_SKIP_DEV_SERVER_BUILD=1 npm run dev:server`.
+- `dev:app` sets `EXPO_PUBLIC_LOCAL_DAEMON` to the dev daemon endpoint and passes the current
+  git branch as `EXPO_PUBLIC_FDE_DEV_BUILD_LABEL`. `EXPO_PUBLIC_*` values are inlined at bundle
+  time. Restart Metro after changing them.
+- `npm run dev` is an alias for `dev:server`.
+- `npm run dev:desktop` runs the Electron shell against a web dev server on port
+  `18000 + <offset derived from the checkout path>` (override with `FDE_ELECTRON_UI_PORT`).
+  State lives in `.dev/electron/`. The shell is app-only: it never starts a daemon. Run a
+  daemon yourself, for example `dev:server`, and add it as a host in the app.
+- `npm run dev:win` runs `scripts/dev/dev.ps1`. It builds server and app deps, then runs the
+  daemon watcher and Metro together in one PowerShell terminal.
+
+The dev daemon and Expo bind `0.0.0.0` so they are reachable from other machines on the LAN.
+
+Ports 6768 and 8081 are the defaults for the official brand. A custom brand selected with
+`FDE_BRAND_DIR` uses its `daemonPort` and `daemonPort + 1` instead. Port 9999 is the default
+port of a separately installed daemon; keep it free of dev work.
+
+## Dev state
+
+`FDE_HOME` holds agents, projects, worktrees, `config.json` and `daemon.log`. The dev scripts
+default it to `.dev/fde-home` inside the current checkout, so dev work never touches `~/.fde`.
+
+```bash
+FDE_HOME=~/.fde-blue npm run dev:server                 # explicit home
+FDE_DEV_SEED_HOME=~/.fde npm run dev:server             # copy JSON metadata from another home
+FDE_DEV_SEED_HOME=~/.fde FDE_DEV_RESET_HOME=1 npm run dev:server   # clear, then reseed
+```
+
+Seeding copies `agents/**/*.json`, `projects/**/*.json` and `config.json`. It skips a home that
+already has data unless `FDE_DEV_RESET_HOME=1` is set.
+
+:::caution
+In `scripts/dev/dev-home.sh`, `FDE_DEV_RESET_HOME` only takes effect together with
+`FDE_DEV_SEED_HOME`. On its own it does nothing.
+:::
+
+## Run the CLI from source
+
+```bash
+npm run cli -- ls -a -g
+npm run cli -- daemon status
+```
+
+`npm run cli` runs `apps/cli/src/index.ts` with `tsx` through `scripts/dev/dev-home.sh`. It uses
+the checkout's `.dev/fde-home` and the dev daemon endpoint. An installed `fde` binary is a
+different build; use `npm run cli` to test CLI changes.
+
+## Several checkouts at once
+
+Each checkout or worktree gets its own `.dev/fde-home` automatically. Give each one its own
+ports:
+
+```bash
+FDE_LISTEN=0.0.0.0:6868 npm run dev:server
+FDE_LISTEN=0.0.0.0:6868 EXPO_PORT=8181 npm run dev:app
+```
+
+`dev:app` derives the daemon endpoint from `FDE_LISTEN`. Set `FDE_DEV_DAEMON_ENDPOINT` to point
+it somewhere else. `npm run worktree:status` lists what every worktree has committed and left
+uncommitted.
+
+## Working on FDE inside FDE
+
+The repo's own `fde.json` configures worktrees created by an FDE daemon. See
+[Project config](/docs/reference/project-config/) for the format.
+
+`worktree.setup` runs, in order: `npm ci`, `scripts/mobile/seed-ios-native-cache.mjs`,
+`scripts/dev/seed-worktree-dev-state.mjs` (copies the source checkout's `.dev/fde-home` and
+`packages/server/.env`), `npm run build:server`, and the `@fde/expo-two-way-audio` build.
+
+| Script          | Type    | What it runs                                                              |
+| --------------- | ------- | ------------------------------------------------------------------------- |
+| `daemon`        | service | `scripts/dev/dev-daemon.sh` on `FDE_PORT`, skipping the deps build        |
+| `app`           | service | `scripts/dev/dev-app.sh` with Metro on `FDE_PORT`, pointed at the `daemon` service |
+| `desktop`       | service | `./packages/desktop/scripts/dev.sh`                                       |
+| `ios-simulator` | service | `scripts/mobile/fde-ios-simulator-service.sh` (macOS only)                |
+| `typecheck`     | script  | `npm run typecheck`                                                       |
+
+:::caution
+The `desktop` service points at `packages/desktop/scripts/dev.sh`, which does not exist in the
+repo. Use `npm run dev:desktop` instead until the entry is fixed.
+:::
+
+## Check a change
+
+<Steps>
+
+1. Run the checks your diff can break:
+
+   ```bash
+   node scripts/ci/verify.mjs --changed          # format, lint, typecheck, unit tests
+   node scripts/ci/verify.mjs --changed --fast   # same, without tests
+   ```
+
+   `--changed` compares against the merge base with `origin/main` (or `main`). Use
+   `--changed=<ref>` for another base. It formats and lints only changed files, and typechecks
+   and unit-tests only the workspaces those files belong to. It adds `npm run test:scripts`
+   when `scripts/ci/` or `scripts/release/` changed.
+
+2. Before merging, run the full typecheck:
+
+   ```bash
+   npm run typecheck
+   ```
+
+3. For a local stand-in for CI, run everything in parallel:
+
+   ```bash
+   npm run verify            # format, lint, typecheck, script tests, unit tests
+   npm run verify -- --fast  # format, lint, typecheck only
+   ```
+
+</Steps>
+
+The individual gates are `npm run format:check` (oxfmt), `npm run lint` (oxlint),
+`npm run typecheck` and `npm run knip` (unused files and exports; not run by CI).
+
+### Git hooks
+
+`lefthook.yml` runs three pre-commit jobs in parallel on staged files: an oxfmt check, oxlint,
+and `scripts/ci/typecheck-staged.mjs`, which typechecks only the workspaces that contain staged
+sources. Fix formatting with `npm run format`.
+
+### Typecheck gotchas
+
+- On a fresh checkout `npm run typecheck` fails: `@fde/app` cannot resolve `@fde/client` and
+  `@fde/cli` cannot resolve `@fde/server`. Run `npm run build:server` and
+  `npm run build:app-deps` once, then typecheck. CI does the same.
+- A downstream error that says a field you just added to `packages/protocol` does not exist
+  means `dist/` is stale. Run `npm run build:client` before you debug the error.
+- `pretypecheck` runs `brand:prepare` and builds `@fde/expo-two-way-audio`.
+- `npm run typecheck:server` checks relay, protocol, client, server and cli only. It is the
+  fastest gate for daemon and protocol work.
+
+## Platform builds
+
+These are the prerequisites the build scripts and workflows require. Treat anything not listed
+as unvalidated.
+
+**Desktop (Electron).** Install the Electron binary, then build for one target:
+
+```bash
+npm run install:electron --workspace=@fde/desktop-electron
+npm run build:desktop -- --target linux-x64   # linux|darwin|win - x64|arm64
+```
+
+Output goes to `apps/desktop-electron/release/`. macOS artifacts must be built on macOS
+(`build-electron.mjs` refuses otherwise). Windows signing uses Azure Trusted Signing only when
+`TRUSTED_SIGNING_ACCOUNT`, `TRUSTED_SIGNING_ENDPOINT` and `TRUSTED_SIGNING_PROFILE` are set.
+macOS builds are not notarized.
+
+**Android.** Needs Java (CI uses Temurin 21) and an Android SDK in `ANDROID_HOME` or
+`ANDROID_SDK_ROOT`.
+
+```bash
+node scripts/release/build-android-apk.mjs --abi arm64-v8a --serial --out-dir release-assets
+npm run android --workspace=@fde/app   # dev client via expo run:android
+```
+
+`--serial` limits Gradle to one worker for machines with about 8 GB of RAM. Without the
+`FDE_ANDROID_KEYSTORE*` variables the APK is debug-signed; see
+[Release process](/docs/contributing/release-process/#android-signing).
+
+**iOS.** macOS only. Needs Xcode with an iOS Simulator runtime. `npm run ios --workspace=@fde/app`
+builds and launches the dev client with `expo run:ios`. CI builds an unsigned simulator app in
+`branding.yml`. FDE does not publish iOS builds.
+
+Next: [Architecture](/docs/contributing/architecture/) and [Testing](/docs/contributing/testing/).

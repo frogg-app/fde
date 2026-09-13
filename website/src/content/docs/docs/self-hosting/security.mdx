@@ -1,0 +1,114 @@
+---
+title: Security and access
+description: How the daemon authenticates clients — LAN trust, pairing, passwords, host and origin checks, TLS, relays and the MCP endpoint.
+sidebar:
+  order: 4
+---
+
+An FDE daemon can run commands on its host through agents and terminals. Treat access to
+it like SSH access to that machine.
+
+## Access policy
+
+| Client connects from | No password | Password set |
+| -------------------- | ----------- | ------------ |
+| Loopback | Allowed | Password |
+| Private network (RFC 1918, link-local, `fc00::/7`) | Allowed while `trustLan` is on (default) | Password |
+| Anywhere else, including CGNAT `100.64.0.0/10` (Tailscale) | Paired-device credential | Password |
+
+Unauthenticated routes: `/api/identity` (version and brand, used by LAN scans),
+`/api/health`, and the pairing setup routes. The web app's static files load without
+credentials; its API calls do not.
+
+### Recommended settings
+
+| Deployment | Settings |
+| ---------- | -------- |
+| Laptop, daemon on the same machine | Defaults, or `--listen 127.0.0.1:9999` if nothing else should connect |
+| Home or office LAN you control | Defaults |
+| Shared or untrusted LAN | `fde auth trust-lan off` and pair devices, or set a password |
+| Tailscale / VPN | Pair devices (CGNAT addresses are not "private"), or set a password |
+| Docker | Set `FDE_PASSWORD`; container networking hides real client addresses |
+| Public internet | Do not expose the daemon directly. Use a VPN, SSH, or a TLS reverse proxy plus a password |
+
+## Pairing
+
+Paired devices hold a random credential; the daemon stores only its SHA-256 in
+`~/.fde/principals.json` (mode 0600). Pairing tokens are single-use and expire after 10
+minutes. See [connect and pair](/docs/getting-started/connect-and-pair/).
+
+Limits:
+
+- Every paired device has full access. Per-device permissions are recorded but not enforced.
+- There is no per-device revoke. `fde auth reset-claim` removes all devices.
+
+## Passwords
+
+`fde auth set-password` stores a bcrypt hash in `daemon.auth.password`. `FDE_PASSWORD` in
+the daemon's environment overrides it. A password applies to every client, including
+loopback, the web app and the MCP endpoint.
+
+## Host and origin checks
+
+- **Host header**: requests must use `localhost`, an IP address, the pairing host, or a
+  hostname in `daemon.hostnames` / `FDE_HOSTNAMES`. Others get `403 Invalid Host header`.
+  This blocks DNS-rebinding attacks from web pages.
+- **CORS**: browsers may call the daemon only from its own origin, the desktop app, and
+  `daemon.cors.allowedOrigins` / `FDE_CORS_ORIGINS`. Avoid `*` outside development.
+- **Proxies**: `X-Forwarded-For` is honoured only from `daemon.trustedProxies` (loopback by
+  default).
+
+## TLS and reverse proxies
+
+The daemon serves plain HTTP and WebSocket. For TLS, terminate it in a proxy:
+
+```text title="Caddyfile"
+fde.example.com {
+  reverse_proxy 127.0.0.1:9999
+}
+```
+
+```json title="~/.fde/config.json"
+{
+  "daemon": {
+    "listen": "127.0.0.1:9999",
+    "hostnames": ["fde.example.com"],
+    "trustedProxies": ["loopback"],
+    "auth": { "trustLan": false }
+  }
+}
+```
+
+Keep the proxy in `trustedProxies`, and set a password or pair devices. If the proxy is not
+trusted, every proxied request looks like loopback and passes without credentials. Clients connect with **Use SSL** on, port 443.
+
+## Relay
+
+A relay lets clients reach a daemon with no inbound connectivity. Traffic is end-to-end
+encrypted (Curve25519 key exchange, XSalsa20-Poly1305) with the daemon's public key from
+the pairing offer, so the relay cannot read it.
+
+FDE does not operate a public relay, and no brand ships a relay endpoint. `packages/relay`
+is a Cloudflare Durable Object implementation you can deploy yourself. Then set the
+endpoint in the app under host settings, **Pair devices**, or with `daemon.relay.endpoint`
+or `FDE_RELAY_ENDPOINT`, and enable relay. TLS to the relay is on by default. Operating a
+relay is not otherwise documented here.
+
+If relay is enabled without an endpoint, the daemon starts, logs a warning and reports
+relay as unavailable in pairing offers.
+
+## MCP endpoint
+
+`/mcp/agents` lets agents control the daemon. Agents started by the daemon receive a
+per-run token. With no password set, other clients that pass the access policy can use it
+too. Disable it with `daemon.mcp.enabled: false` if you do not use agent orchestration.
+
+## Plugins
+
+Plugins are trusted, unsandboxed code that runs in the daemon's host process tree and in
+the app. Install only plugins you would run as your own user. They are off by default
+(`pluginsEnabled: false`).
+
+## Reporting vulnerabilities
+
+See `SECURITY.md` in the repository.

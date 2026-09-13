@@ -27,6 +27,7 @@ import { AdaptiveModalSheet, type SheetHeader } from "@/components/adaptive-moda
 import { SettingsTextAreaCard } from "@/components/settings-textarea";
 import { Alert as InlineAlert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Field, FormTextInput } from "@/components/ui/form-field";
 import { StatusBadge, type StatusBadgeVariant } from "@/components/ui/status-badge";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -255,6 +256,7 @@ export function HostPairDevicePage({ serverId }: { serverId: string }) {
   return (
     <SettingsSection title={t("settings.host.pairDevices.title")}>
       <PairDeviceRow serverId={serverId} />
+      <RelayEndpointCard serverId={serverId} />
     </SettingsSection>
   );
 }
@@ -1204,6 +1206,99 @@ function AppendSystemPromptCard({ serverId }: { serverId: string }) {
   );
 }
 
+function RelayEndpointCard({ serverId }: { serverId: string }) {
+  const { t } = useTranslation();
+  const isConnected = useHostRuntimeIsConnected(serverId);
+  const supportsEndpointConfig = useSessionStore(
+    (state) => state.sessions[serverId]?.serverInfo?.features?.relayEndpointConfig === true,
+  );
+  const { config, patchConfig } = useDaemonConfig(serverId);
+  const persistedEndpoint = config?.relay?.endpoint ?? "";
+  const persistedUseTls = config?.relay?.useTls !== false;
+  const editable = config?.relay?.endpointMutable !== false;
+  const [draft, setDraft] = useState(persistedEndpoint);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveFailed, setSaveFailed] = useState(false);
+
+  useEffect(() => {
+    setDraft(persistedEndpoint);
+  }, [persistedEndpoint]);
+
+  const hasChanges = draft.trim() !== persistedEndpoint;
+
+  const save = useCallback(
+    (patch: { endpoint?: string; useTls?: boolean }) => {
+      setIsSaving(true);
+      setSaveFailed(false);
+      void patchConfig({ relay: patch })
+        .catch((error) => {
+          console.error("[HostPage] Failed to save relay endpoint", error);
+          setSaveFailed(true);
+        })
+        .finally(() => setIsSaving(false));
+    },
+    [patchConfig],
+  );
+  const handleSave = useCallback(() => save({ endpoint: draft.trim() }), [draft, save]);
+  const handleUseTlsChange = useCallback((next: boolean) => save({ useTls: next }), [save]);
+
+  if (!isConnected || !supportsEndpointConfig || !config) return null;
+
+  return (
+    <View style={settingsStyles.card} testID="host-page-relay-endpoint-card">
+      <View style={styles.relayEndpointBody}>
+        <Field
+          label={t("settings.host.relayEndpoint.title")}
+          hint={
+            editable
+              ? t("settings.host.relayEndpoint.hint")
+              : t("settings.host.relayEndpoint.overridden")
+          }
+          error={saveFailed ? t("settings.host.relayEndpoint.saveFailed") : null}
+        >
+          <FormTextInput
+            initialValue={persistedEndpoint}
+            resetKey={persistedEndpoint}
+            onChangeText={setDraft}
+            placeholder={t("settings.host.relayEndpoint.placeholder")}
+            autoCapitalize="none"
+            autoCorrect={false}
+            editable={editable && !isSaving}
+            accessibilityLabel={t("settings.host.relayEndpoint.accessibilityLabel")}
+            testID="host-page-relay-endpoint-input"
+          />
+        </Field>
+        <View style={styles.appendPromptActions}>
+          <Button
+            variant="default"
+            size="sm"
+            onPress={handleSave}
+            disabled={!editable || !hasChanges || isSaving}
+            testID="host-page-relay-endpoint-save"
+          >
+            {isSaving
+              ? t("settings.host.relayEndpoint.saving")
+              : t("settings.host.relayEndpoint.save")}
+          </Button>
+        </View>
+      </View>
+      <View style={[settingsStyles.row, settingsStyles.rowBorder]}>
+        <View style={settingsStyles.rowContent}>
+          <Text style={settingsStyles.rowTitle}>{t("settings.host.relayEndpoint.useTls")}</Text>
+          <Text style={settingsStyles.rowHint}>{t("settings.host.relayEndpoint.useTlsHint")}</Text>
+        </View>
+        <Switch
+          value={persistedUseTls}
+          onValueChange={handleUseTlsChange}
+          disabled={!editable || isSaving}
+          accessibilityLabel={t("settings.host.relayEndpoint.useTls")}
+          testID="host-page-relay-endpoint-tls-switch"
+        />
+      </View>
+    </View>
+  );
+}
+
 function PairDeviceRow({ serverId }: { serverId: string }) {
   const { t } = useTranslation();
   const { theme } = useUnistyles();
@@ -1876,6 +1971,10 @@ const styles = StyleSheet.create((theme) => ({
     alignItems: "center",
     gap: theme.spacing[2],
     marginTop: theme.spacing[4],
+  },
+  relayEndpointBody: {
+    gap: theme.spacing[3],
+    padding: theme.spacing[4],
   },
   appendPromptActions: {
     flexDirection: "row",

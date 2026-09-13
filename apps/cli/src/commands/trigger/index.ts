@@ -37,7 +37,7 @@ export const TRIGGERS_DISABLED_MESSAGE =
   "service that could create workspaces and run agents\n" +
   "here. Nothing connects to it now.\n" +
   "\n" +
-  'Track this at ROADMAP.md under "Triggers".';
+  "Follow progress at https://github.com/frogg-app/fde/issues.";
 
 function addDisabledSubcommand(parent: Command, spec: { name: string; description: string }): void {
   parent

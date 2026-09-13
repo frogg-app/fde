@@ -1,0 +1,84 @@
+---
+title: Your first agent
+description: Add a project, start an agent, approve its changes and review the result, in the app or from the CLI.
+sidebar:
+  order: 3
+---
+
+import { Screenshot, Steps, Tabs, TabItem } from "@/components/docs";
+import appHomeImg from "@/assets/docs/app/home.png";
+import appPermissionRequestImg from "@/assets/docs/app/permission-request.png";
+import appAgentTimelineImg from "@/assets/docs/app/agent-timeline.png";
+
+This assumes a daemon is installed and at least one provider shows `available` in
+`fde status`.
+
+<Tabs syncKey="client">
+<TabItem label="App">
+
+<Steps>
+
+1. **Add a project.** On the home screen choose **Add a project** and pick a folder on
+   the daemon host. A git repository gets branch, diff and worktree features.
+
+   <Screenshot src={appHomeImg} alt="Home screen with Add a project, Import session and Setup providers" />
+
+2. **Open its workspace.** The project appears in the sidebar with a workspace for the
+   current checkout (here `main`).
+
+3. **Write a prompt** in the composer. Pick the model and the permission mode below it.
+   **Always ask** prompts before edits and commands.
+
+4. **Approve or deny.** The agent pauses on actions its mode does not allow and shows the
+   exact change.
+
+   <Screenshot src={appPermissionRequestImg} alt="A permission request showing an Edit diff with Deny and Accept" />
+
+5. **Review.** The timeline shows every tool call and message. Use the diff panel and the
+   **Commit** action in the header when you are happy.
+
+   <Screenshot src={appAgentTimelineImg} alt="Completed agent timeline with a summary of changes" />
+
+</Steps>
+
+</TabItem>
+<TabItem label="CLI">
+
+```sh
+cd ~/code/acme-api
+fde project create .
+fde agent run --provider claude --mode default \
+  "Add a GET /version endpoint that returns the package version, and document it in README.md"
+```
+
+Pending approvals from another terminal:
+
+```sh
+fde permissions ls
+fde permissions allow <agent-id> --all
+```
+
+Follow and continue the conversation:
+
+```sh
+fde agent logs <agent-id> --follow
+fde agent send <agent-id> "Also add a test for /version"
+```
+
+</TabItem>
+</Tabs>
+
+## What just happened
+
+- The agent runs **on the daemon**, using the provider CLI installed there, in the
+  project directory. Closing the app does not stop it.
+- Every client connected to that daemon sees the same agent, timeline and pending
+  permissions, live.
+- Work in a separate branch without touching your checkout by creating a **worktree
+  workspace**. See [projects and workspaces](/docs/using-fde/projects-and-workspaces/).
+
+## Next
+
+- [Agents and the timeline](/docs/using-fde/agents/)
+- [Permissions](/docs/using-fde/permissions/)
+- [Providers](/docs/agents-and-providers/providers/)

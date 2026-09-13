@@ -1,0 +1,225 @@
+---
+title: Daemon configuration
+description: Every key in the daemon's config.json, with defaults, precedence and reload behaviour.
+sidebar:
+  order: 1
+---
+
+The daemon reads `$FDE_HOME/config.json`. `FDE_HOME` defaults to `~/.fde`. A custom brand
+uses its own home and variable, for example `~/.acme` and `ACME_HOME`.
+
+## Basics
+
+- The file is created on first start with the defaults below, with private permissions.
+- The schema is **strict**: unknown keys fail startup with
+  `[Config] Invalid config in <path>`. Only `daemon.mcp` and `daemon.browserTools` accept
+  extra keys.
+- Environment variables and CLI flags override the file. See
+  [environment variables](/docs/reference/environment-variables/).
+- Apply changes with `fde reload`. It reports which paths applied live, which need
+  `fde restart`, and which are pinned by an env var or flag.
+- `fde config-format` rewrites the file with consistent formatting and keeps your values.
+- The app's host settings edit the same file.
+
+## Default file
+
+This is exactly what a new daemon writes (0.6.19):
+
+```json title="~/.fde/config.json"
+{
+  "version": 1,
+  "daemon": {
+    "listen": "0.0.0.0:9999",
+    "mcp": { "enabled": true, "injectIntoAgents": false },
+    "browserTools": { "enabled": false },
+    "git": { "maxProcessesPerSecond": 2048, "maxProcessConcurrency": 8 },
+    "autoArchiveAfterMerge": false,
+    "autoUpdate": { "enabled": false, "channel": "stable", "checkIntervalHours": 24, "quietHours": null },
+    "enableTerminalAgentHooks": false,
+    "appendSystemPrompt": "",
+    "cors": { "allowedOrigins": [] },
+    "relay": { "enabled": false }
+  },
+  "app": { "pairingBaseUrl": "https://pair.frogg.app" },
+  "pluginsEnabled": false,
+  "plugins": {},
+  "log": { "level": "info", "format": "json" }
+}
+```
+
+## `daemon`
+
+### Listening and access
+
+| Key                     | Type                    | Default          | Meaning |
+| ----------------------- | ----------------------- | ---------------- | ------- |
+| `daemon.listen`         | string                  | `0.0.0.0:9999`   | Listen target. Forms: `host:port`, `9999`, `:9999`, `[::1]:9999`, a Unix socket path (`/run/fde.sock`, `~/fde.sock`, `unix://...`) or a Windows pipe (`\\.\pipe\fde`, `pipe://fde`). Precedence: `--listen` > `FDE_LISTEN` > this key > `0.0.0.0:$PORT` > `0.0.0.0:9999` |
+| `daemon.hostnames`      | `true` or string[]      | unset            | Allowed `Host` headers (DNS-rebinding protection). `localhost`, `*.localhost`, IP addresses and the pairing host are always allowed. A leading `.` matches subdomains. `true` allows any host |
+| `daemon.allowedHosts`   | same                    | unset            | Legacy alias of `hostnames` |
+| `daemon.trustedProxies` | `true` or string[]      | `["loopback"]`   | Proxies whose `X-Forwarded-For` is trusted. Entries are IPs or `"loopback"` |
+| `daemon.cors.allowedOrigins` | string[]           | `[]`             | Extra browser origins. `"*"` allows any. The daemon's own origins and the desktop app origin are always allowed |
+| `daemon.auth.password`  | bcrypt hash             | unset            | Require a password from every client. Set it with `fde auth set-password`; do not write it by hand |
+| `daemon.auth.trustLan`  | boolean                 | `true`           | Treat private-network clients like loopback (no credential needed) when no password is set |
+
+See [security and access](/docs/self-hosting/security/) for how these combine.
+
+### Agents and tools
+
+| Key                               | Type    | Default | Meaning |
+| --------------------------------- | ------- | ------- | ------- |
+| `daemon.mcp.enabled`              | boolean | `true`  | Serve the agent MCP endpoint at `/mcp/agents` |
+| `daemon.mcp.injectIntoAgents`     | boolean | `false` | Give agents the daemon's `fde` MCP server automatically |
+| `daemon.browserTools.enabled`     | boolean | `false` | Expose browser automation tools over MCP |
+| `daemon.appendSystemPrompt`       | string  | `""`    | Text appended to every agent's system prompt |
+| `daemon.autoArchiveAfterMerge`    | boolean | `false` | Archive agents after their branch merges |
+| `daemon.enableTerminalAgentHooks` | boolean | `false` | Install activity hooks for agent CLIs started in terminals |
+| `daemon.terminalProfiles`         | array   | built-in profiles | `[{ id, name, command, args?, icon? }]`. `[]` means none |
+| `daemon.agentProfiles`            | array   | unset   | Saved agent presets: `[{ id, name, provider, model?, modeId?, thinkingOptionId?, featureValues?, notes?, icon?, color? }]` |
+| `daemon.git.maxProcessesPerSecond` | integer | `2048` | Git process spawn rate limit |
+| `daemon.git.maxProcessConcurrency` | integer | `8`    | Concurrent git processes |
+
+### Updates
+
+| Key                                  | Type                    | Default    | Meaning |
+| ------------------------------------ | ----------------------- | ---------- | ------- |
+| `daemon.autoUpdate.enabled`          | boolean                 | `false`    | Let the daemon update itself |
+| `daemon.autoUpdate.channel`          | `stable` or `beta`      | `stable`   | Release channel |
+| `daemon.autoUpdate.checkIntervalHours` | number                | `24`       | Hours between checks. The first check is 5 minutes after start |
+| `daemon.autoUpdate.quietHours`       | `[start, end]` or null  | `null`     | Local hours (0-23) when updates wait. The window may wrap midnight |
+
+The auto-updater defers by 15 minutes while agents are running or during quiet hours.
+It only works for installs made with `install.sh`. See [updates](/docs/self-hosting/updates/).
+
+### Relay
+
+| Key                          | Type    | Default          | Meaning |
+| ---------------------------- | ------- | ---------------- | ------- |
+| `daemon.relay.enabled`       | boolean | `false`          | Connect to a relay. Without an endpoint the daemon still starts, logs a warning and runs no relay |
+| `daemon.relay.endpoint`      | string  | unset            | `host:port` of your relay. Also settable in the app under host settings, **Pair devices** |
+| `daemon.relay.publicEndpoint` | string | `endpoint`       | Endpoint advertised to clients |
+| `daemon.relay.useTls`        | boolean | `true`           | TLS to the relay. Set `false` only for a plaintext test relay |
+| `daemon.relay.publicUseTls`  | boolean | `useTls`         | TLS advertised to clients |
+
+FDE does not operate a public relay, and no brand ships a relay endpoint. Deploy
+`packages/relay` yourself to use one.
+
+The endpoint comes from `FDE_RELAY_ENDPOINT`, then `daemon.relay.endpoint`. Setting it
+in the app writes `daemon.relay.endpoint` and `daemon.relay.useTls` and applies them
+without a restart. While `FDE_RELAY_ENDPOINT`, `FDE_RELAY_USE_TLS` or a relay TLS CLI flag
+is set, the app shows the endpoint read-only.
+
+### Service proxy
+
+| Key                                  | Type    | Meaning |
+| ------------------------------------ | ------- | ------- |
+| `daemon.serviceProxy.listen`         | string  | Separate listener for workspace service URLs |
+| `daemon.serviceProxy.publicBaseUrl`  | URL     | Public base for service links, e.g. `https://dev.example.com` |
+| `daemon.serviceProxy.enabled`        | boolean | Compatibility key only; slated for removal |
+
+## `app`
+
+| Key                  | Type   | Default                 | Meaning |
+| -------------------- | ------ | ----------------------- | ------- |
+| `app.pairingBaseUrl` | string | `https://pair.frogg.app` | Base of pairing links (`<base>/code/<offer>`) |
+| `app.baseUrl`        | string | unset                   | Legacy name; `pairingBaseUrl` wins |
+
+## `agents`
+
+| Key                                  | Type    | Default  | Meaning |
+| ------------------------------------ | ------- | -------- | ------- |
+| `agents.providers`                   | object  | unset    | Built-in provider overrides and custom providers. See [custom providers](/docs/agents-and-providers/custom-providers/) |
+| `agents.catalogRefreshTimeoutMs`     | integer | `120000` | Deadline for refreshing a provider's models and modes |
+| `agents.metadataGeneration.providers` | array  | unset    | Ordered `[{ provider, model?, thinkingOptionId? }]` used to generate titles, branch names, commit messages and PR text |
+| `agents.skills.selection`            | object  | all      | `{ "mode": "all" }` or `{ "mode": "custom", "skills": ["fde", "fde-plugin"] }`. See [skills](/docs/agents-and-providers/skills/) |
+
+## `worktrees`
+
+| Key                       | Type   | Default              | Meaning |
+| ------------------------- | ------ | -------------------- | ------- |
+| `worktrees.root`          | string | `$FDE_HOME/worktrees` | Where managed worktrees are created. Relative paths resolve against `FDE_HOME` |
+| `worktrees.servicePorts`  | object | unset                | Fallback port allocation for workspace services: `{ "range": "3000-3999" }` or `{ "portScript": "./ports.sh" }` |
+
+A project's own `fde.json` takes precedence. See [project config](/docs/reference/project-config/).
+
+## `features`
+
+| Key                                     | Type    | Default | Meaning |
+| --------------------------------------- | ------- | ------- | ------- |
+| `features.voice.enabled`                | boolean | on if the local speech runtime is available | Master switch for dictation, voice mode and spoken alerts |
+| `features.voice.notifications.enabled`  | boolean | master switch | Spoken agent alerts |
+| `features.dictation.enabled`            | boolean | master switch | Speech-to-text in the composer |
+| `features.dictation.stt.provider`       | `local` or `openai` | `local` | |
+| `features.dictation.stt.model` / `.language` / `.confidenceThreshold` | | | |
+| `features.voiceMode.enabled`            | boolean | master switch | Voice conversations with an agent |
+| `features.voiceMode.llm.{provider,model}` | string | | |
+| `features.voiceMode.stt.{provider,model,language}` | | `local` | |
+| `features.voiceMode.turnDetection.provider` | `local` or `openai` | `local` | |
+| `features.voiceMode.tts.{provider,model,voice,speakerId,speed}` | | `local` | OpenAI voices: alloy, echo, fable, onyx, nova, shimmer |
+| `features.companion.enabled`            | boolean | on unless voice is off | Allow Companion on this daemon |
+| `features.companion.backend`            | `subscription`, `claude`, `codex`, `api` | `subscription` | See [Companion](/docs/using-fde/voice-and-companion/) |
+| `features.companion.model`              | string  | `claude-haiku-4-5` (Claude), `gpt-5.6-luna` (Codex) | |
+| `features.companion.nativeVoicePreview` | boolean | `false` | Experimental Codex native voice transport |
+| `features.webUi.enabled`                | boolean | `false` | Serve the web app from the daemon |
+| `features.webUi.distDir`                | string  | bundled | Serve a different web build |
+
+## `providers` (speech credentials)
+
+These are credentials for voice features, not agent providers.
+
+| Key                                          | Meaning |
+| -------------------------------------------- | ------- |
+| `providers.openai.apiKey`, `.baseUrl`        | Shared OpenAI speech credentials |
+| `providers.openai.stt.{apiKey,baseUrl}`      | Override for speech-to-text |
+| `providers.openai.tts.{apiKey,baseUrl}`      | Override for text-to-speech |
+| `providers.anthropic.{apiKey,baseUrl}`       | Used only by the Companion `api` backend |
+| `providers.local.modelsDir`                  | Local speech models. Default `$FDE_HOME/models/local-speech` |
+
+## `plugins`
+
+| Key              | Type    | Default | Meaning |
+| ---------------- | ------- | ------- | ------- |
+| `pluginsEnabled` | boolean | `false` | Global switch. Requires `fde reload` |
+| `plugins`        | object  | `{}`    | `{ "<id>": { "source": "directory", "path": "/abs/path", "enabled": true } }` |
+
+See [plugins](/docs/plugins/).
+
+## `log`
+
+| Key                        | Default                 | Meaning |
+| -------------------------- | ----------------------- | ------- |
+| `log.level`, `log.format`  | `info`, `json`          | Legacy global settings (`trace` ... `fatal`; `pretty` or `json`) |
+| `log.console.{level,format}` |                       | Console output |
+| `log.file.level`           | `info`                  | |
+| `log.file.path`            | `$FDE_HOME/daemon.log`  | Relative paths resolve against `FDE_HOME` |
+| `log.file.rotate.maxSize`  | `10m`                   | |
+| `log.file.rotate.maxFiles` | `3`                     | |
+
+## Reload behaviour
+
+`fde reload` applies these without a restart: `daemon.relay.enabled`,
+`daemon.relay.endpoint`, `daemon.relay.useTls`, `daemon.mcp.*`,
+`daemon.browserTools.enabled`, `daemon.hostnames`, `daemon.cors.allowedOrigins`,
+`daemon.trustedProxies`, `daemon.auth.trustLan`, `daemon.git.*`,
+`daemon.autoArchiveAfterMerge`, `daemon.autoUpdate`, `daemon.enableTerminalAgentHooks`,
+`daemon.appendSystemPrompt`, `daemon.terminalProfiles`, `daemon.agentProfiles`,
+`app.pairingBaseUrl`, `agents.*` and `pluginsEnabled`.
+
+Everything else, including `daemon.listen`, `daemon.auth.password`, `features`,
+`plugins` and `log`, needs `fde restart`.
+
+## Other files in `FDE_HOME`
+
+| Path                    | Contents |
+| ----------------------- | -------- |
+| `daemon.log`            | Daemon log (rotated) |
+| `fde.pid`               | Running daemon lock |
+| `agents/`               | Agent records |
+| `projects/`             | `projects.json`, `workspaces.json` |
+| `schedules/`            | Schedules and heartbeats |
+| `principals.json`       | Paired devices (hashed credentials) |
+| `worktrees/`            | Managed git worktrees |
+| `uploads/`              | Files attached to prompts |
+| `project-conversations/` | Imported text conversation history |
+| `project-import-staging/` | Uploads for imports in progress (removed after an hour idle) |
+| `plugins/`              | Git-installed plugins |
+| `models/local-speech/`  | Local speech models |

@@ -1,3 +1,19 @@
+import {
+  ProjectImportPrepareRequestSchema,
+  ProjectImportPrepareResponseSchema,
+  ProjectImportUploadRequestSchema,
+  ProjectImportUploadResponseSchema,
+  ProjectImportPreviewRequestSchema,
+  ProjectImportPreviewResponseSchema,
+  ProjectImportCommitRequestSchema,
+  ProjectImportCommitResponseSchema,
+  ProjectImportCancelRequestSchema,
+  ProjectImportCancelResponseSchema,
+  ProjectImportListRequestSchema,
+  ProjectImportListResponseSchema,
+  ProjectImportReadRequestSchema,
+  ProjectImportReadResponseSchema,
+} from "./project-import/messages.js";
 import { z } from "zod";
 import { TerminalActivitySchema } from "./terminal-activity.js";
 import { CLIENT_CAPS } from "./client-capabilities.js";
@@ -186,6 +202,12 @@ const MutableBrowserToolsConfigSchema = z
 const MutableRelayConfigSchema = z
   .object({
     enabled: z.boolean(),
+    // COMPAT(relayEndpointConfig): added in v0.6.20, remove optionality after 2027-09-30.
+    // Empty string means no relay endpoint is configured; relay stays inactive.
+    endpoint: z.string().optional(),
+    useTls: z.boolean().optional(),
+    // False when a launch override (env/CLI) controls the endpoint.
+    endpointMutable: z.boolean().optional(),
   })
   .passthrough();
 
@@ -3044,6 +3066,13 @@ export const HubExecutionControlRequestSchema = z.object({
 export type HubExecutionControlRequest = z.infer<typeof HubExecutionControlRequestSchema>;
 
 export const SessionInboundMessageSchema = z.discriminatedUnion("type", [
+  ProjectImportPrepareRequestSchema,
+  ProjectImportUploadRequestSchema,
+  ProjectImportPreviewRequestSchema,
+  ProjectImportCommitRequestSchema,
+  ProjectImportCancelRequestSchema,
+  ProjectImportListRequestSchema,
+  ProjectImportReadRequestSchema,
   CompanionSessionStartRequestSchema,
   CompanionSessionStopRequestSchema,
   CompanionAudioChunkMessageSchema,
@@ -3575,6 +3604,8 @@ export const ServerInfoStatusPayloadSchema = z
         daemonConfigReload: z.boolean().optional(),
         // COMPAT(relayConfig): added in v0.2.6, remove gate after 2027-01-31.
         relayConfig: z.boolean().optional(),
+        // COMPAT(relayEndpointConfig): added in v0.6.20, remove gate after 2027-09-30.
+        relayEndpointConfig: z.boolean().optional(),
         // COMPAT(pushTokenRevocation): added in v0.3.2, remove gate after 2027-02-10.
         pushTokenRevocation: z.boolean().optional(),
         // COMPAT(skillManagement): added in v0.4.0, remove gate after 2027-08-16.
@@ -3599,6 +3630,8 @@ export const ServerInfoStatusPayloadSchema = z
         projectRemove: z.boolean().optional(),
         // COMPAT(projectAdd): added in v0.1.97, drop the gate when floor >= v0.1.97.
         projectAdd: z.boolean().optional(),
+        // COMPAT(projectImport): added in v0.7.0, remove after 2027-03-13 once daemon floor >= v0.7.0.
+        projectImport: z.boolean().optional(),
         // COMPAT(worktreeRestore): added in v0.1.97, drop the gate when floor >= v0.1.97
         worktreeRestore: z.boolean().optional(),
         // COMPAT(workspaceRecovery): added in v0.1.105, remove after 2027-01-11 once daemon floor >= v0.1.105.
@@ -6447,6 +6480,13 @@ export const AgentSkillsImportLegacySelectionResponseSchema = z.object({
 });
 
 export const SessionOutboundMessageSchema = z.discriminatedUnion("type", [
+  ProjectImportPrepareResponseSchema,
+  ProjectImportUploadResponseSchema,
+  ProjectImportPreviewResponseSchema,
+  ProjectImportCommitResponseSchema,
+  ProjectImportCancelResponseSchema,
+  ProjectImportListResponseSchema,
+  ProjectImportReadResponseSchema,
   HubExecutionAgentCreateResponseSchema,
   HubExecutionAgentValidateResponseSchema,
   HubExecutionControlResponseSchema,

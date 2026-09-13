@@ -1,3 +1,4 @@
+import { AttachmentSizeError, MAX_FILE_SIZE_BYTES } from "@/attachments/file-size";
 import { CompanionMark } from "@/companion/mark";
 import { useCompanionStore } from "@/companion/store";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -166,6 +167,13 @@ type AttachmentListUpdater =
   | ((prev: UserComposerAttachment[]) => UserComposerAttachment[]);
 
 const EMPTY_ATTACHMENT_SCOPE_KEYS: readonly string[] = [];
+
+function fileUploadErrorMessage(error: unknown, t: ReturnType<typeof useTranslation>["t"]): string {
+  if (error instanceof AttachmentSizeError) {
+    return t("composer.errors.fileTooLarge", { size: "50MB", fileName: error.fileName });
+  }
+  return error instanceof Error ? error.message : t("composer.errors.uploadFailed");
+}
 
 function noop() {}
 const noopCallback = () => {};
@@ -951,8 +959,6 @@ interface ComposerProps {
   placeholder?: string;
 }
 
-const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
-
 const EMPTY_ARRAY: readonly QueuedMessage[] = [];
 const StableMessageInput = memo(MessageInput);
 
@@ -1665,9 +1671,7 @@ function ComposerContentImpl({
         addFiles(uploaded);
       } catch (error) {
         console.error("[Composer] Failed to upload file:", error);
-        toastErrorRef.current(
-          error instanceof Error ? error.message : t("composer.errors.uploadFailed"),
-        );
+        toastErrorRef.current(fileUploadErrorMessage(error, t));
       } finally {
         setIsUploadingFile(false);
       }
@@ -1686,9 +1690,7 @@ function ComposerContentImpl({
       await uploadPickedFiles(files);
     } catch (error) {
       console.error("[Composer] Failed to upload file:", error);
-      toastErrorRef.current(
-        error instanceof Error ? error.message : t("composer.errors.uploadFailed"),
-      );
+      toastErrorRef.current(fileUploadErrorMessage(error, t));
     }
   }, [client, pickFiles, t, uploadPickedFiles]);
 
@@ -1704,9 +1706,7 @@ function ComposerContentImpl({
         await uploadPickedFiles(files);
       } catch (error) {
         console.error("[Composer] Failed to upload dropped files:", error);
-        toastErrorRef.current(
-          error instanceof Error ? error.message : t("composer.errors.uploadFailed"),
-        );
+        toastErrorRef.current(fileUploadErrorMessage(error, t));
       }
     },
     [client, isConnected, t, uploadPickedFiles],

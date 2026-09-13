@@ -1,3 +1,4 @@
+import { ProjectImportDialog } from "@/project-import/dialog";
 import { buildDirectoryBrowserRows } from "@/add-project-flow/directory-browser";
 import { i18n } from "@/i18n/i18next";
 import { router } from "expo-router";
@@ -310,10 +311,13 @@ function setPageStatus(
 // The product flow is intentionally one cohesive page-stack state machine.
 // eslint-disable-next-line complexity
 export function AddProjectFlow({ request, onClose }: AddProjectFlowProps) {
+  const [importVisible, setImportVisible] = useState(false);
+  const closeImport = useCallback(() => setImportVisible(false), []);
   const hosts = useHosts();
   const hostIds = useMemo(() => hosts.map((host) => host.serverId), [hosts]);
   const connectionStatuses = useHostRuntimeConnectionStatuses(hostIds);
   const projectAddByHost = useHostFeatureMap(hostIds, "projectAdd");
+  const projectImportByHost = useHostFeatureMap(hostIds, "projectImport");
   // COMPAT(stableProjectIdentity): added in v0.1.109, remove gate after 2027-01-15.
   const stableProjectIdentityByHost = useHostFeatureMap(hostIds, "stableProjectIdentity");
   // COMPAT(projectGithubClone): added in v0.1.108, remove gate after 2027-01-15.
@@ -335,6 +339,7 @@ export function AddProjectFlow({ request, onClose }: AddProjectFlowProps) {
             serverId: host.serverId,
             label: host.label,
             canAddProject,
+            canImportProject: projectImportByHost.get(host.serverId) === true,
             canBrowse: canAddProject && getIsElectronRuntime() && localServerId === host.serverId,
             canCloneGithubRepositories: githubCloneByHost.get(host.serverId) === true,
             canSearchGithubRepositories: githubSearchByHost.get(host.serverId) === true,
@@ -350,6 +355,7 @@ export function AddProjectFlow({ request, onClose }: AddProjectFlowProps) {
       hosts,
       localServerId,
       projectAddByHost,
+      projectImportByHost,
       stableProjectIdentityByHost,
     ],
   );
@@ -519,7 +525,9 @@ export function AddProjectFlow({ request, onClose }: AddProjectFlowProps) {
   const selectMethod = useCallback(
     (method: AddProjectMethodId) => {
       if (!hostId) return;
-      if (method === "directory-search") {
+      if (method === "import") {
+        setImportVisible(true);
+      } else if (method === "directory-search") {
         setState((current) => openDirectorySearchPage(current, hostId));
       } else if (method === "browse") {
         void browse();
@@ -866,6 +874,9 @@ export function AddProjectFlow({ request, onClose }: AddProjectFlowProps) {
     page.kind === "new-directory-name" && page.name.trim()
       ? joinDirectoryPath(page.parentPath, page.name.trim())
       : null;
+
+  if (importVisible && client && host)
+    return <ProjectImportDialog client={client} hostLabel={host.label} onClose={closeImport} />;
 
   const modal = (
     <Modal visible transparent animationType="fade" onRequestClose={isWeb ? undefined : handleBack}>

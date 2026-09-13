@@ -89,7 +89,7 @@ const METADATA_PROMPT_FIELDS: Record<MetadataPromptKey, MetadataPromptField> = {
   },
 };
 
-const WORKTREE_DOCS_URL = brandDocsUrl("worktrees");
+const WORKTREE_DOCS_URL = brandDocsUrl("using-fde/projects-and-workspaces/");
 
 type ReadProjectConfigData = Awaited<ReturnType<DaemonClient["readProjectConfig"]>>;
 

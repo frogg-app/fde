@@ -9,9 +9,9 @@ Thirteen steps across seven hand-edited files, in a fixed order. Skipping one us
 a typecheck error in an unrelated package or a CI job that fails on generated artifacts, so
 follow the order.
 
-Read [docs/rpc-namespacing.md](../../docs/rpc-namespacing.md) and
-[docs/protocol-compatibility.md](../../docs/protocol-compatibility.md) before designing the
-message. The rules that bite:
+Read the protocol section of the coding standards
+(`website/src/content/docs/docs/contributing/coding-standards.mdx`, published at
+https://frogg.app/docs/contributing/coding-standards/) before designing the message. The rules that bite:
 
 - Dotted names, direction last: `checkout.forge.set_auto_merge.request` / `.response`. Never add
   a new flat snake_case name.

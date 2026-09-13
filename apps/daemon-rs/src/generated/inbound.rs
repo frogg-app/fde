@@ -94,6 +94,20 @@ pub struct Session {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum SessionMessage {
+    #[serde(rename = "project.import.prepare.request")]
+    ProjectImportPrepareRequest(ProjectImportPrepareRequest),
+    #[serde(rename = "project.import.upload.request")]
+    ProjectImportUploadRequest(ProjectImportUploadRequest),
+    #[serde(rename = "project.import.preview.request")]
+    ProjectImportPreviewRequest(ProjectImportPreviewRequest),
+    #[serde(rename = "project.import.commit.request")]
+    ProjectImportCommitRequest(ProjectImportCommitRequest),
+    #[serde(rename = "project.import.cancel.request")]
+    ProjectImportCancelRequest(ProjectImportCancelRequest),
+    #[serde(rename = "project.import.list.request")]
+    ProjectImportListRequest(ProjectImportListRequest),
+    #[serde(rename = "project.import.read.request")]
+    ProjectImportReadRequest(ProjectImportReadRequest),
     #[serde(rename = "companion.session.start.request")]
     CompanionSessionStartRequest(CompanionSessionStartRequest),
     #[serde(rename = "companion.session.stop.request")]
@@ -476,6 +490,96 @@ pub enum SessionMessage {
     LoopLogs(LoopLogs),
     #[serde(rename = "loop/stop")]
     LoopStop(LoopStop),
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportPrepareRequest {
+    #[serde(rename = "requestId")]
+    pub request_id: String,
+    pub source: ProjectImportPrepareRequestSource,
+    pub cwd: String,
+    #[serde(rename = "projectId", skip_serializing_if = "Option::is_none")]
+    pub project_id: Option<String>,
+    #[serde(
+        rename = "conversationDirectory",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub conversation_directory: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum ProjectImportPrepareRequestSource {
+    #[serde(rename = "daemon")]
+    Daemon,
+    #[serde(rename = "client")]
+    Client,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportUploadRequest {
+    #[serde(rename = "requestId")]
+    pub request_id: String,
+    #[serde(rename = "importId")]
+    pub import_id: String,
+    pub path: String,
+    pub kind: ProjectImportUploadRequestKind,
+    pub offset: i64,
+    #[serde(rename = "contentBase64")]
+    pub content_base64: String,
+    pub complete: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum ProjectImportUploadRequestKind {
+    #[serde(rename = "code")]
+    Code,
+    #[serde(rename = "conversation")]
+    Conversation,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportPreviewRequest {
+    #[serde(rename = "requestId")]
+    pub request_id: String,
+    #[serde(rename = "importId")]
+    pub import_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportCommitRequest {
+    #[serde(rename = "requestId")]
+    pub request_id: String,
+    #[serde(rename = "importId")]
+    pub import_id: String,
+    #[serde(rename = "sessionIds")]
+    pub session_ids: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportCancelRequest {
+    #[serde(rename = "requestId")]
+    pub request_id: String,
+    #[serde(rename = "importId")]
+    pub import_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportListRequest {
+    #[serde(rename = "requestId")]
+    pub request_id: String,
+    #[serde(rename = "projectId")]
+    pub project_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ProjectImportReadRequest {
+    #[serde(rename = "requestId")]
+    pub request_id: String,
+    #[serde(rename = "projectId")]
+    pub project_id: String,
+    pub id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub offset: Option<i64>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -1472,6 +1576,12 @@ pub struct SetDaemonConfigRequestConfig {
 pub struct SetDaemonConfigRequestConfigRelay {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub enabled: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub endpoint: Option<String>,
+    #[serde(rename = "useTls", skip_serializing_if = "Option::is_none")]
+    pub use_tls: Option<bool>,
+    #[serde(rename = "endpointMutable", skip_serializing_if = "Option::is_none")]
+    pub endpoint_mutable: Option<bool>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

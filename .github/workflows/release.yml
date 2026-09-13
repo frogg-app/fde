@@ -5,7 +5,8 @@ name: Release
 # Electron updater manifests, the Android APK (release-
 # signed when the keystore secrets are set, otherwise debug-signed and named
 # `-unsigned`; see the android job) and the
-# Docker image (when Docker Hub credentials are configured). docs/ci.md explains
+# Docker image (when Docker Hub credentials are configured).
+# website/src/content/docs/docs/contributing/release-process.mdx explains
 # the flow, the asset names and the secrets.
 
 on:
@@ -476,13 +477,13 @@ jobs:
       # (0.1.18 and earlier) is debug-signed. Android identifies an app by its
       # signing key, so switching to a release key now would stop those installs
       # updating: they would have to be uninstalled first, losing their data.
-      # Until that migration is planned (docs/android.md "Signing"), a missing
+      # Until that migration is planned (release-process.mdx, "Android signing"), a missing
       # keystore is a warning and the APK ships `-unsigned`, matching what is
       # already installed. It must not be treated as a distributable build.
       - name: Warn when the release keystore is missing
         if: needs.meta.outputs.android_signing != 'true'
         run: |
-          echo "::warning::No Android release keystore for $RELEASE_TAG; the APK is signed with the publicly known Expo/React Native debug key and is published as -unsigned. Set FDE_ANDROID_KEYSTORE_BASE64, FDE_ANDROID_KEYSTORE_PASSWORD, FDE_ANDROID_KEY_ALIAS and FDE_ANDROID_KEY_PASSWORD to sign it, and see docs/android.md before doing so: existing debug-signed installs cannot update to a release-signed APK."
+          echo "::warning::No Android release keystore for $RELEASE_TAG; the APK is signed with the publicly known Expo/React Native debug key and is published as -unsigned. Set FDE_ANDROID_KEYSTORE_BASE64, FDE_ANDROID_KEYSTORE_PASSWORD, FDE_ANDROID_KEY_ALIAS and FDE_ANDROID_KEY_PASSWORD to sign it, and see https://frogg.app/docs/contributing/release-process/ before doing so: existing debug-signed installs cannot update to a release-signed APK."
 
       - uses: actions/checkout@v7
         with:
@@ -532,7 +533,7 @@ jobs:
         run: node scripts/ci/npm-retry.mjs ci
 
       # The keystore is a base64-encoded .jks/.keystore in a secret; without it
-      # the APK is debug-signed and named `-unsigned` (see docs/android.md).
+      # the APK is debug-signed and named `-unsigned` (see release-process.mdx).
       - name: Prepare release keystore
         if: needs.meta.outputs.android_signing == 'true'
         env:

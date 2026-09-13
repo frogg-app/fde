@@ -1,0 +1,121 @@
+---
+title: Docker
+description: Run the FDE daemon in a container, add agent CLIs, persist state, and update with rollback.
+sidebar:
+  order: 2
+---
+
+:::caution[Build the image yourself for now]
+`froggapp/fde` on Docker Hub currently has only 0.1.x tags, and `latest` is 0.1.14.
+Clients from 0.6 on require daemon 0.6.0 or later, so the published image does not work
+with current apps. Build from source as shown below until a current image is published.
+:::
+
+## Build the image
+
+From a checkout of the release you want:
+
+```sh
+git clone https://github.com/frogg-app/fde.git && cd fde
+git checkout v0.6.19
+npm ci
+scripts/release/build-docker.sh          # builds froggapp/fde:<version> for this machine
+```
+
+`--platform linux/arm64` builds another architecture; `--push` builds amd64 and arm64 and
+pushes (set `FDE_IMAGE_REPO` to push to your own registry).
+
+## Run it
+
+```yaml title="compose.yaml"
+services:
+  fde:
+    image: froggapp/fde:0.6.19
+    container_name: fde-daemon
+    restart: unless-stopped
+    ports:
+      - "0.0.0.0:9999:9999"
+    environment:
+      FDE_PASSWORD: "change-me"
+      # FDE_HOSTNAMES: "fde.example.com,.lan"
+    volumes:
+      - ./fde-home:/home/fde/.fde   # agents, config, pairing
+      - ./workspace:/workspace      # code the agents work on
+```
+
+```sh
+docker compose up -d
+docker logs -f fde-daemon
+```
+
+Open `http://<host>:9999/`.
+
+What the image does:
+
+- Runs `fde daemon start --foreground` on `0.0.0.0:9999` as user `fde` (uid 1000), with the
+  web app on and JSON logs.
+- Fixes ownership of mounted volumes, then drops privileges.
+- Health check: `GET /api/health`.
+- `CLAUDE_CONFIG_DIR` and `CODEX_HOME` point inside `/home/fde`, so provider logins
+  persist in the `fde-home` volume.
+- Warns in the log while the daemon is unclaimed.
+
+Inside a container every client address looks like the Docker bridge, not your LAN.
+**Set a password** (`FDE_PASSWORD`) or pair devices; do not rely on LAN trust.
+
+## Add agent CLIs
+
+The base image has no agent CLIs. Extend it:
+
+```dockerfile title="Dockerfile.agents"
+FROM froggapp/fde:0.6.19
+USER root
+RUN npm install -g @anthropic-ai/claude-code @openai/codex opencode-ai
+```
+
+Leave the user as root; the entrypoint drops to `fde` for the daemon and its agents. Then
+sign in inside the container:
+
+```sh
+docker exec -it -u fde fde-daemon claude
+docker exec -it -u fde fde-daemon codex login
+```
+
+`deploy/docker/Dockerfile.agents.example` in the repository is the same pattern.
+
+## Install script
+
+`install-docker.sh` wraps `docker run` with sensible defaults and safe updates:
+
+```sh
+curl -fsSL https://frogg.app/install-docker.sh | FDE_IMAGE=froggapp/fde:0.6.19 FDE_NO_PULL=1 bash
+```
+
+`FDE_NO_PULL=1` uses the image you built locally instead of pulling from Docker Hub.
+
+It runs container `fde-daemon` with `--restart unless-stopped`, maps
+`$FDE_BIND:$FDE_PORT` to 9999, mounts `$FDE_HOME` (default `~/.fde`) and optionally
+`$FDE_WORKSPACE` at `/workspace`, and passes `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`,
+`ANTHROPIC_BASE_URL`, `OPENAI_BASE_URL` and `FDE_HOSTNAMES` through if set. All variables are
+in the [environment reference](/docs/reference/environment-variables/#installers).
+
+Useful afterwards:
+
+```sh
+docker exec fde-daemon fde auth pair
+docker exec fde-daemon fde auth claim-status
+```
+
+## Update
+
+```sh
+curl -fsSL https://frogg.app/install-docker.sh | FDE_IMAGE=froggapp/fde:0.6.20 FDE_NO_PULL=1 bash -s -- --update
+```
+
+`--update` keeps the old container as `fde-daemon-previous`, starts the new one, and rolls
+back if it is not healthy within `FDE_HEALTH_TIMEOUT` seconds (default 90). `fde update` does not work inside a container.
+
+## Uninstall
+
+Run `uninstall-docker.sh` from the release assets. It removes only containers labelled as
+this product; the state directory stays.

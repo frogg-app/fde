@@ -4,6 +4,7 @@ import { useCallback, useMemo, type ComponentType } from "react";
 import { useTranslation } from "react-i18next";
 import { View, type StyleProp, type ViewStyle } from "react-native";
 import { SidebarHeaderRow } from "@/components/sidebar/sidebar-header-row";
+import { useSettings } from "@/hooks/use-settings";
 import { useShortcutKeys } from "@/hooks/use-shortcut-keys";
 import {
   builtinSidebarNavLabelKey,
@@ -13,7 +14,11 @@ import {
 import { useSidebarNavItems } from "@/sidebar-nav/use-sidebar-nav-items";
 import { useCompanionStore } from "@/companion/store";
 import { useKeyboardShortcutsStore } from "@/stores/keyboard-shortcuts-store";
-import { buildOpenProjectRoute, buildSessionsRoute } from "@/utils/host-routes";
+import {
+  buildOpenProjectRoute,
+  buildSessionsRoute,
+  buildSettingsSectionRoute,
+} from "@/utils/host-routes";
 
 interface SidebarNavRowProps {
   onBeforeNavigate?: () => void;
@@ -90,10 +95,13 @@ function SidebarCompanionRow({ onBeforeNavigate }: SidebarNavRowProps) {
   const { t } = useTranslation();
   const shortcutKeys = useShortcutKeys(builtinSidebarNavShortcutAction("companion"));
   const openCompanion = useCompanionStore((state) => state.open);
+  const companionEnabled = useSettings((settings) => settings.companionEnabled);
   const handlePress = useCallback(() => {
     onBeforeNavigate?.();
-    openCompanion();
-  }, [onBeforeNavigate, openCompanion]);
+    // Companion is opt-in; while it is off the row leads to where it is turned on.
+    if (companionEnabled) openCompanion();
+    else router.push(buildSettingsSectionRoute("companion"));
+  }, [companionEnabled, onBeforeNavigate, openCompanion]);
 
   return (
     <SidebarHeaderRow

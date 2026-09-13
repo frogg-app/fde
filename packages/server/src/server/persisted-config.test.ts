@@ -861,3 +861,41 @@ describe.skipIf(process.platform === "win32")("persisted config file permissions
     }
   });
 });
+
+describe("loadPersistedConfig Paseo-era defaults", () => {
+  test("drops the Paseo app origin and base URL but keeps owner values", () => {
+    const home = createTempHome();
+    try {
+      writeFileSync(
+        path.join(home, "config.json"),
+        JSON.stringify({
+          version: 1,
+          daemon: {
+            cors: { allowedOrigins: ["https://app.paseo.sh", "https://example.test"] },
+            relay: { enabled: false },
+          },
+          app: { baseUrl: "https://app.paseo.sh" },
+          agents: { providers: { pi: { enabled: false } } },
+        }),
+      );
+
+      const config = loadPersistedConfig(home);
+
+      expect(config.daemon?.cors?.allowedOrigins).toEqual(["https://example.test"]);
+      expect(config.app).toBeUndefined();
+      expect(config.agents?.providers?.pi?.enabled).toBe(false);
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
+  test("new configs carry no Paseo origin", () => {
+    const home = createTempHome();
+    try {
+      const config = loadPersistedConfig(home);
+      expect(JSON.stringify(config)).not.toContain("paseo.sh");
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+});

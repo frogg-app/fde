@@ -31,6 +31,8 @@ function reloadableConfig(
   return {
     relay: {
       enabled: daemon.relay?.enabled ?? options.relayEnabledFallback ?? true,
+      endpoint: daemon.relay?.endpoint ?? "",
+      useTls: daemon.relay?.useTls ?? true,
     },
     mcp: { enabled: true, injectIntoAgents: false },
     browserTools: { enabled: daemon.browserTools?.enabled ?? false },
@@ -126,6 +128,70 @@ describe("DaemonConfigStore", () => {
 
     expect(changes).toEqual([true]);
     expect(loadPersistedConfig(fdeHome).daemon?.relay?.enabled).toBe(true);
+  });
+
+  test("patch persists the relay endpoint and TLS and emits their field changes", () => {
+    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-daemon-config-store-"));
+    tempDirs.push(fdeHome);
+    const store = new DaemonConfigStore(fdeHome, {
+      relay: { enabled: true, endpoint: "", useTls: true, endpointMutable: true },
+      mcp: { injectIntoAgents: false },
+      browserTools: { enabled: false },
+      providers: {},
+      metadataGeneration: { providers: [] },
+      autoArchiveAfterMerge: false,
+      enableTerminalAgentHooks: false,
+      appendSystemPrompt: "",
+    });
+    const endpoints: unknown[] = [];
+    const tls: unknown[] = [];
+    store.onFieldChange("relay.endpoint", (value) => endpoints.push(value));
+    store.onFieldChange("relay.useTls", (value) => tls.push(value));
+
+    store.patch({ relay: { endpoint: "  relay.example.test:8443 ", useTls: false } });
+
+    expect(endpoints).toEqual(["relay.example.test:8443"]);
+    expect(tls).toEqual([false]);
+    expect(store.get().relay).toMatchObject({
+      enabled: true,
+      endpoint: "relay.example.test:8443",
+      useTls: false,
+    });
+    const relay = loadPersistedConfig(fdeHome).daemon?.relay;
+    expect(relay?.endpoint).toBe("relay.example.test:8443");
+    expect(relay?.useTls).toBe(false);
+
+    store.patch({ relay: { endpoint: "" } });
+    expect(endpoints).toEqual(["relay.example.test:8443", ""]);
+    expect(loadPersistedConfig(fdeHome).daemon?.relay?.endpoint).toBe("");
+  });
+
+  test("rejects relay endpoint patches when a launch override owns the endpoint", () => {
+    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-daemon-config-store-"));
+    tempDirs.push(fdeHome);
+    const store = new DaemonConfigStore(
+      fdeHome,
+      {
+        relay: { enabled: false, endpoint: "env.example.test:443", endpointMutable: false },
+        mcp: { injectIntoAgents: false },
+        browserTools: { enabled: false },
+        providers: {},
+        metadataGeneration: { providers: [] },
+        autoArchiveAfterMerge: false,
+        enableTerminalAgentHooks: false,
+        appendSystemPrompt: "",
+      },
+      undefined,
+      { relayEndpointMutable: false },
+    );
+
+    expect(() => store.patch({ relay: { endpoint: "other.example.test:443" } })).toThrow(
+      "Relay endpoint is controlled by a daemon launch override",
+    );
+    expect(loadPersistedConfig(fdeHome).daemon?.relay?.endpoint).toBeUndefined();
+    // Enabling is still a separate, mutable setting.
+    store.patch({ relay: { enabled: true } });
+    expect(store.get().relay?.enabled).toBe(true);
   });
 
   test("patch round-trips agent profiles through the strictly-parsed persisted config", () => {
@@ -993,8 +1059,8 @@ describe("DaemonConfigStore reload", () => {
     });
 
     expect(store.reload()).toEqual({
-      appliedPaths: ["daemon.relay.enabled"],
-      restartRequiredPaths: ["daemon.relay.endpoint", "daemon.relay.useTls"],
+      appliedPaths: ["daemon.relay.enabled", "daemon.relay.endpoint"].sort(),
+      restartRequiredPaths: [],
       overrideControlledPaths: [],
     });
   });
@@ -1021,11 +1087,9 @@ describe("DaemonConfigStore reload", () => {
     writeConfig(fdeHome, { version: 1 });
 
     expect(store.reload()).toEqual({
-      appliedPaths: ["daemon.browserTools.enabled"],
+      appliedPaths: ["daemon.browserTools.enabled", "daemon.relay.endpoint"],
       restartRequiredPaths: [
         "daemon.listen",
-        "daemon.relay.endpoint",
-        "daemon.relay.useTls",
         "daemon.serviceProxy.listen",
         "daemon.serviceProxy.publicBaseUrl",
       ],
@@ -1042,13 +1106,13 @@ describe("DaemonConfigStore reload", () => {
     writeConfig(fdeHome, {
       version: 1,
       daemon: {
-        relay: { enabled: false, endpoint: "relay.example.test:443" },
+        relay: { enabled: false, publicEndpoint: "relay.example.test:443" },
       },
     });
 
     expect(store.reload()).toEqual({
       appliedPaths: [],
-      restartRequiredPaths: ["daemon.relay.endpoint"],
+      restartRequiredPaths: ["daemon.relay.publicEndpoint"],
       overrideControlledPaths: ["daemon.relay.enabled"],
     });
   });

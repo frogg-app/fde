@@ -25,6 +25,7 @@ import {
 } from "@/components/sidebar-resize-handle-layout";
 import { SidebarHeaderRow } from "@/components/sidebar/sidebar-header-row";
 import { SidebarDisplayPreferencesMenu } from "@/components/sidebar/display-preferences/menu";
+import { SidebarWorkspaceDrafts } from "@/components/sidebar/sidebar-workspace-drafts";
 import { SidebarNavRows } from "@/components/sidebar/sidebar-nav-rows";
 import { SidebarResizeHandle } from "@/components/sidebar-resize-handle";
 import { Shortcut } from "@/components/ui/shortcut";
@@ -347,6 +348,7 @@ function MobileSidebar({
           </Pressable>
         </WindowChromeSafeArea>
 
+        <SidebarWorkspaceDrafts onBeforeNavigate={closeSidebar} />
         {isInitialLoad && !hasActiveHostFilter ? (
           <SidebarAgentListSkeleton />
         ) : (
@@ -519,6 +521,7 @@ function DesktopSidebar({
           <SidebarNavRows style={sidebarHeaderGroupStyle} />
         </View>
 
+        <SidebarWorkspaceDrafts />
         {isInitialLoad && !hasActiveHostFilter ? (
           <SidebarAgentListSkeleton />
         ) : (

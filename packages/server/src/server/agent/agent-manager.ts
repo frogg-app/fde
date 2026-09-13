@@ -274,6 +274,8 @@ export interface AgentManagerOptions {
   registry?: AgentStorage;
   onAgentAttention?: AgentAttentionCallback;
   onWorkspaceStateMayHaveChanged?: (params: { cwd: string }) => void;
+  /** A turn ended or a tool call that can touch files completed; recompute worktree git state. */
+  onWorkspaceFilesMayHaveChanged?: (params: { cwd: string }) => void;
   durableTimelineStore?: AgentTimelineStore;
   terminalManager?: TerminalManager | null;
   mcpBaseUrl?: string;
@@ -695,6 +697,7 @@ export class AgentManager {
   private onAgentAttention?: AgentAttentionCallback;
   private onAgentArchived?: AgentArchivedCallback;
   private onWorkspaceStateMayHaveChanged?: (params: { cwd: string }) => void;
+  private onWorkspaceFilesMayHaveChanged?: (params: { cwd: string }) => void;
   private logger: Logger;
   private readonly rescueTimeouts: Required<AgentManagerRescueTimeouts>;
   private readonly beforeSteerUnavailableFallback?: AgentManagerOptions["beforeSteerUnavailableFallback"];
@@ -706,6 +709,7 @@ export class AgentManager {
     this.durableTimelineStore = options?.durableTimelineStore;
     this.onAgentAttention = options?.onAgentAttention;
     this.onWorkspaceStateMayHaveChanged = options?.onWorkspaceStateMayHaveChanged;
+    this.onWorkspaceFilesMayHaveChanged = options?.onWorkspaceFilesMayHaveChanged;
     this.mcpBaseUrl = options?.mcpBaseUrl ?? null;
     this.mcpAuthToken = options?.mcpAuthToken ?? null;
     this.configureFdeTools(options);
@@ -3863,6 +3867,7 @@ export class AgentManager {
 
     if (!options?.fromHistory) {
       if (isTurnTerminalEvent(event)) {
+        this.onWorkspaceFilesMayHaveChanged?.({ cwd: agent.cwd });
         this.runs.settleTerminalRun(agent.id, eventTurnId);
         if (isForegroundEvent) {
           this.finalizeForegroundTurn(agent, eventTurnId);
@@ -4309,6 +4314,12 @@ export class AgentManager {
       timestamp: row.timestamp,
     });
 
+    if (item.type === "tool_call" && item.status !== "running" && toolCallMayTouchFiles(item)) {
+      const agent = this.agents.get(agentId);
+      if (agent) {
+        this.onWorkspaceFilesMayHaveChanged?.({ cwd: agent.cwd });
+      }
+    }
     if (
       item.type === "tool_call" &&
       item.status === "completed" &&
@@ -4956,6 +4967,19 @@ export class AgentManager {
     }
     return agent;
   }
+}
+
+function toolCallMayTouchFiles(item: Extract<AgentTimelineItem, { type: "tool_call" }>): boolean {
+  const kind = item.detail?.type;
+  // Unknown detail kinds (MCP tools, provider-specific tools) may write too; err toward refreshing.
+  // The service debounces, so a burst of tool calls costs one recompute.
+  return (
+    kind !== "read" &&
+    kind !== "search" &&
+    kind !== "fetch" &&
+    kind !== "plain_text" &&
+    kind !== "plan"
+  );
 }
 
 export function commandMayHaveChangedExternalState(command: string): boolean {

@@ -1,6 +1,8 @@
+import { projectImportCopies } from "./project-import";
 import { en, type TranslationResources } from "./en";
 
 export const fr: TranslationResources = {
+  projectImport: projectImportCopies["fr"],
   directoryBrowser: {
     choose: "Utiliser ce dossier",
     parent: "Aller au dossier parent",
@@ -1076,6 +1078,7 @@ export const fr: TranslationResources = {
     },
   },
   sidebar: {
+    workspaceDraft: "Nouvel espace de travail (brouillon)",
     hostsMenu: {
       trigger: "Hôtes",
       addHost: "Ajouter un hôte",
@@ -1889,6 +1892,8 @@ export const fr: TranslationResources = {
       directConnectionHint:
         "Sans relais, connectez-vous directement via TCP, Tailscale ou un autre VPN. Aucun code QR n’est créé.",
       updateRequired: "Mettez à jour l’hôte pour activer le relais depuis {{brandName}} Desktop.",
+      endpointRequired:
+        "Aucun point de terminaison de relais n'est configuré pour cet hôte. Définissez-en un dans les réglages de l'hôte, sous Associer des appareils, puis activez le relais.",
       unavailable: "Offre de jumelage indisponible.",
       hint: "Scannez ce codeQRavec {{brandName}} sur votre téléphone ou copiez le lien ci-dessous.",
       securityWarning:
@@ -2777,6 +2782,19 @@ export const fr: TranslationResources = {
         title: "Associer des appareils",
         rowTitle: "Associer un appareil",
         rowHint: "Scannez un codeQRou copiez un lien pour connecter votre téléphone à cet hôte",
+      },
+      relayEndpoint: {
+        title: "Point de terminaison du relais",
+        hint: "Serveur relais par lequel cet hôte se connecte, au format hôte:port. Laissez vide pour garder le relais désactivé.",
+        placeholder: "relay.example.com:443",
+        accessibilityLabel: "Point de terminaison du relais",
+        useTls: "Utiliser TLS",
+        useTlsHint: "Désactivez uniquement pour un relais local sans TLS.",
+        save: "Enregistrer",
+        saving: "Enregistrement...",
+        saveFailed: "Impossible d'enregistrer le point de terminaison du relais.",
+        overridden:
+          "Défini par une option de lancement du daemon (FDE_RELAY_ENDPOINT ou FDE_RELAY_USE_TLS). Modifiez-le là où le daemon est lancé.",
       },
       skills: {
         ...en.settings.host.skills,

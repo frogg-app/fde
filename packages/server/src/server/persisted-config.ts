@@ -432,6 +432,45 @@ function getLogger(logger: LoggerLike | undefined): LoggerLike | undefined {
   return logger?.child({ module: "config" });
 }
 
+const PASEO_APP_ORIGIN = "https://app.paseo.sh";
+
+// Paseo-era releases seeded config.json with Paseo's hosted app as a CORS origin
+// and app base URL. Neither was an owner preference, so both are dropped on load.
+function stripPaseoDefaults(root: Record<string, unknown>): void {
+  const daemon = root.daemon;
+  if (daemon && typeof daemon === "object" && !Array.isArray(daemon)) {
+    const cors = (daemon as Record<string, unknown>).cors;
+    if (cors && typeof cors === "object" && !Array.isArray(cors)) {
+      const origins = (cors as Record<string, unknown>).allowedOrigins;
+      if (Array.isArray(origins) && origins.includes(PASEO_APP_ORIGIN)) {
+        const nextCors: Record<string, unknown> = {
+          ...(cors as Record<string, unknown>),
+          allowedOrigins: origins.filter((origin) => origin !== PASEO_APP_ORIGIN),
+        };
+        if ((nextCors.allowedOrigins as unknown[]).length === 0) delete nextCors.allowedOrigins;
+        const nextDaemon: Record<string, unknown> = { ...(daemon as Record<string, unknown>) };
+        if (Object.keys(nextCors).length > 0) nextDaemon.cors = nextCors;
+        else delete nextDaemon.cors;
+        root.daemon = nextDaemon;
+      }
+    }
+  }
+
+  const app = root.app;
+  if (app && typeof app === "object" && !Array.isArray(app)) {
+    const appRecord = app as Record<string, unknown>;
+    if (
+      typeof appRecord.baseUrl === "string" &&
+      appRecord.baseUrl.trim().replace(/\/+$/, "") === PASEO_APP_ORIGIN
+    ) {
+      const nextApp = { ...appRecord };
+      delete nextApp.baseUrl;
+      if (Object.keys(nextApp).length > 0) root.app = nextApp;
+      else delete root.app;
+    }
+  }
+}
+
 // Removed config fields are stripped before parsing so the strict schema does not
 // reject a config written by an older release. The stripped values are discarded,
 // not migrated — there is no back-compat for the removed `providers.openai.voice`
@@ -442,6 +481,7 @@ function stripRemovedConfigFields(parsed: unknown): unknown {
   }
 
   const root = { ...(parsed as Record<string, unknown>) };
+  stripPaseoDefaults(root);
   const providers = root.providers;
   if (!providers || typeof providers !== "object" || Array.isArray(providers)) {
     return root;

@@ -13,6 +13,7 @@
   "bracketSpacing": true,
   "ignorePatterns": [
     "*.lock",
+    "website/**",
     "**/*.gen.ts",
     "**/*.gen.tsx",
     "**/generated/validation/*.aot.ts",

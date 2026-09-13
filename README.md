@@ -1,59 +1,68 @@
-# FDE (Frogg Development Environment)
+<p align="center">
+  <img src="website/src/assets/brand/fde-logo.png" alt="FDE" width="96" />
+</p>
 
-FDE is a self-hosted interface for running and monitoring coding agents across
-Electron desktop, mobile, web and CLI clients. It was forked from
-[Paseo](https://github.com/getpaseo/paseo) v0.7.2 and is maintained independently.
-Credit for the original work goes to Mohamed Boudra and the Paseo contributors;
-see [NOTICE](NOTICE) and [LICENSE](LICENSE).
+<h1 align="center">FDE</h1>
 
-The desktop app connects to independently installed Node daemons. It includes no
-local server, separate Node executable, CLI or provider binaries. Install a daemon
-on your machine or a remote host, then connect directly or through SSH. Remote
-SSH deployment remains available. A self-hosted relay can be configured, but no
-relay service is provided by default. The daemon's default port is **9999**.
+<p align="center"><strong>Frogg Development Environment</strong> · <a href="https://frogg.app/docs/">Documentation</a> · <a href="https://github.com/frogg-app/fde/releases/latest">Download</a></p>
 
-FDE supports agent conversations, projects and isolated workspaces, terminals,
-multiple providers, permissions, notifications, voice replies and Companion.
-Agents belong to the daemon and keep running when you close the desktop client.
-The independent execution service introduced in 0.5 remains opt-in.
+FDE runs AI coding agents such as Claude Code and Codex on a daemon you host, and lets you
+follow, approve and steer them from a desktop app, a browser, your phone or the command
+line. Agents keep running when you close the laptop. Projects get isolated git worktrees,
+permission requests reach every device, and an organization can ship FDE under its own
+brand from a fork.
 
-## Upgrading to 0.6
+![An agent's timeline in an FDE workspace](website/src/assets/docs/app/agent-timeline.png)
 
-Upgrade clients and daemons together. Environment, wire, storage, plugin and skill
-names now use the FDE namespace; links use `fde://` and the desktop bridge is
-`window.fdeDesktop`. This is not a transparent backwards-compatible upgrade.
-Read [upgrade notes](docs/upgrade-0.6.md) before replacing an existing installation.
+## Install
 
-## Development
+The daemon, on the machine with your code (Linux or macOS):
 
-```bash
-npm ci
-npm run dev:server
-npm run dev:app
-npm run dev:desktop
+```sh
+curl -fsSL https://frogg.app/install.sh | bash
 ```
 
-Run the needed development processes in separate terminals. Use isolated ports
-and state when working in parallel. See [development](docs/development.md),
-[building](docs/building.md), and [testing](docs/testing.md).
+Then open `http://<that-machine>:9999/`, or install a client:
 
-## Layout
+| Client  | Download                                                                                                      |
+| ------- | ------------------------------------------------------------------------------------------------------------- |
+| Windows | [`FDE-<version>-win-x64.exe`](https://github.com/frogg-app/fde/releases/latest)                               |
+| macOS   | [`FDE-<version>-mac-arm64.dmg` / `mac-x64.dmg`](https://github.com/frogg-app/fde/releases/latest)             |
+| Linux   | [`FDE-<version>-linux-x86_64.AppImage` / `linux-amd64.deb`](https://github.com/frogg-app/fde/releases/latest) |
+| Android | [`FDE-<version>-android-arm64-v8a-unsigned.apk`](https://github.com/frogg-app/fde/releases/latest)            |
 
-| Path                                   | Responsibility                                    |
-| -------------------------------------- | ------------------------------------------------- |
-| `apps/desktop-electron`                | Production Electron app-only shell                |
-| `apps/ui`                              | Shared Expo desktop/web/mobile UI                 |
-| `apps/cli`                             | CLI and daemon launcher                           |
-| `packages/server`                      | Node daemon, providers, agents, execution and API |
-| `packages/client`, `packages/protocol` | Client library and shared wire contract           |
-| `packages/branding`                    | Product identity                                  |
-| `deploy`, `scripts`, `docs`            | Distribution, tooling and engineering knowledge   |
+Windows daemons, Docker and Nix: see [Install](https://frogg.app/docs/getting-started/install/).
 
-The retired native shell and Rust backend remain inactive references, excluded
-from production releases. Desktop Windows/macOS/Linux, separate daemon targets
-and Android have release workflows; no iOS store release pipeline is present.
-For custom products, start with the [branding guide](docs/branding.md).
+## Features
 
-See [roadmap](ROADMAP.md), [changelog](CHANGELOG.md), [product](docs/product.md),
-and [architecture](docs/architecture.md). Builds and automated tests do not replace
-physical-device voice, sustained memory, signing or installed-update acceptance.
+- **Agents on your own hardware.** Claude Code, Codex, Copilot, OpenCode, Pi and any ACP
+  agent, with their own logins, running on a daemon you control.
+- **Every client, one state.** Desktop (Windows, macOS, Linux), web, Android and CLI see
+  the same projects, timelines and permission requests, live.
+- **Isolated workspaces.** Git worktrees per task, with setup scripts and per-worktree
+  services from `fde.json`.
+- **Orchestration.** Agents start and supervise other agents, schedules and heartbeats
+  through the CLI and MCP tools.
+- **Voice.** Dictation and spoken alerts, plus the experimental Companion preview.
+
+## Fork and rebrand
+
+Ship your own branded FDE from a fork: `npm run brand:init`, set one repository variable,
+tag a release. See [Fork and rebrand](https://frogg.app/docs/fork-and-rebrand/).
+
+## Documentation
+
+- [Getting started](https://frogg.app/docs/getting-started/)
+- [Using FDE](https://frogg.app/docs/using-fde/)
+- [Self-hosting the daemon](https://frogg.app/docs/self-hosting/)
+- [CLI reference](https://frogg.app/docs/desktop-mobile-cli/cli/)
+- [Plugins](https://frogg.app/docs/plugins/)
+- [Contributing](https://frogg.app/docs/contributing/)
+
+The docs source is in [`website/src/content/docs/docs`](website/src/content/docs/docs).
+
+## License
+
+Apache-2.0. FDE is an independently maintained fork of
+[Paseo](https://github.com/getpaseo/paseo) v0.7.2 by Mohamed Boudra and the Paseo
+contributors. See [LICENSE](LICENSE) and [NOTICE](NOTICE).

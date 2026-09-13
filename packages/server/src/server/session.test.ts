@@ -5510,3 +5510,36 @@ describe("agent config setters", () => {
     });
   });
 });
+
+describe("project import dispatch routing", () => {
+  const messagesToRoute: SessionInboundMessage[] = [
+    { type: "project.import.preview.request", requestId: "import-preview", importId: "missing" },
+    {
+      type: "project.import.commit.request",
+      requestId: "import-commit",
+      importId: "missing",
+      sessionIds: [],
+    },
+    { type: "project.import.cancel.request", requestId: "import-cancel", importId: "missing" },
+    {
+      type: "project.import.upload.request",
+      requestId: "import-upload",
+      importId: "missing",
+      path: "a",
+      kind: "code",
+      offset: 0,
+      contentBase64: "",
+      complete: true,
+    },
+  ];
+  test.each(messagesToRoute)("routes $type into correlated import errors", async (message) => {
+    const messages: SessionOutboundMessage[] = [];
+    const session = createSessionForTest({ messages });
+    await session.handleMessage(message);
+    expect(messages).toContainEqual({
+      type: message.type.replace(".request", ".response"),
+      payload: { requestId: message.requestId, error: "Import expired; select the source again" },
+    });
+    await session.cleanup();
+  });
+});

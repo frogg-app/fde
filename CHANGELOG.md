@@ -2,9 +2,34 @@
 
 ## Unreleased
 
+- Check website deployment credentials from the runner workspace before checkout,
+  so an unset Cloudflare token skips deployment as intended.
+
+- Fix Nix installation collisions from redundant self-links and inspect macOS
+  branded executables through their actual bundle metadata.
+- Restore unfinished workspace forms from the sidebar with their project, prompt,
+  attachments, provider selections, isolation and starting reference. Keep pending
+  submissions locked across navigation and retain failed launches for retry.
+- Add project and conversation import from client files or the selected daemon,
+  with preview, canonical project merging, persistent session/history deduplication,
+  bounded transfer and explicit native-session versus text-history presentation.
+
 - Preserve exact prior Linux/macOS desktop update payloads in selected development
   releases, with independent platform versions and strict continuity verification.
 - Record development release target defaults and rename-safe update requirements.
+
+## 0.6.21 — 2026-09-13
+
+- Synchronize internal dependency lockfile pins and regenerate the Nix dependency
+  hash for the attachment pre-read safeguards.
+
+## 0.6.20 — 2026-09-13
+
+- Reject oversized attachment selections before browser/Expo byte reads and Electron
+  managed-file copies or reads, retaining the existing localized 50MB error.
+  Bound native reads when files grow and remove incomplete managed copies.
+- Verify selection preflight and sparse-file rejection; native device picker
+  acceptance remains separate from automated coverage.
 
 ## 0.6.19 — 2026-09-13
 
@@ -71,7 +96,7 @@
 - Default local speech to Kitten nano FP32 Rosie, retain explicit Piper/Kokoro
   overrides, fix native inference-thread configuration and strip presentation
   markdown before synthesis. Add reproducible audio benchmarks and an interactive
-  design harness. See [measurements and platform limits](docs/companion-polish-plan.md).
+  design harness. See [measurements and platform limits](https://github.com/frogg-app/fde/blob/70767eda/docs/companion-polish-plan.md).
 
 - Integrate main through 0.4.1 into the Companion preview, preserving its voice
   controls alongside sidebar/subagent updates, branding and shared build tooling.
@@ -127,7 +152,7 @@
   with an End notification action. Native app rebuilds and physical-device validation
   are required; this does not establish phone-in-pocket reliability.
 - Record implementation, measurements and remaining release gates in
-  [Companion validation](docs/companion-validation.md).
+  [Companion validation](https://github.com/frogg-app/fde/blob/70767eda/docs/companion-validation.md).
 - Add an Android low-memory test build option and independent development app ID
   for a standalone APK that can coexist with production. Preserve license and
   speech-model notices in standalone daemon bundles.
@@ -249,7 +274,7 @@
 - Remove the default hosted relay endpoint. Configure a relay you operate or use
   direct/SSH connections; existing relay-dependent pairing needs reconfiguration.
 - Replace obsolete native/Rust migration and upstream release instructions with
-  current architecture, distribution and [upgrade notes](docs/upgrade-0.6.md).
+  current architecture, distribution and [upgrade notes](https://github.com/frogg-app/fde/blob/70767eda/docs/upgrade-0.6.md).
   Default daemon port remains 9999. Android remains a separate release target;
   no iOS store release pipeline is present.
 - Keep platform installation, signing, sustained memory/voice and actual updater
@@ -283,7 +308,7 @@
   acceptance remain unverified. The feature is not enabled by default or deployed.
 
 - Specify the independent execution boundary, compatibility and lifecycle contracts,
-  rollout, and acceptance criteria in the [implementation spec](docs/plans/independent-execution-service.md).
+  rollout, and acceptance criteria in the [implementation spec](https://github.com/frogg-app/fde/blob/70767eda/docs/plans/independent-execution-service.md).
 
 ## 0.4.3 - 2026-09-12
 
@@ -395,7 +420,7 @@
 - Add fork-owned build-time branding across the UI, desktop/mobile packaging,
   CLI, daemon, pairing pages, provider skills, installers, and deployment inputs.
   Custom products keep independent state and update sources; FDE retains its
-  legacy identity and compatibility. See [the rebranding guide](docs/branding.md).
+  legacy identity and compatibility. See [the rebranding guide](https://github.com/frogg-app/fde/blob/70767eda/docs/branding.md).
 - Add both-brand generation, browser, runtime, and native packaging CI. Platform
   compilation and device acceptance are recorded separately in the branding plan.
 
@@ -606,12 +631,12 @@ Includes the previously unpublished 0.2.1–0.2.6 maintenance fixes.
   writes. MCP agent waits release caller abort listeners. Terminal output pauses
   PTY reads when the headless parser falls behind. Regression tests cover these
   defects; confirmation of the reported device memory growth remains open in the
-  [investigation](docs/memory-lockup-investigation.md).
+  [investigation](https://github.com/frogg-app/fde/blob/70767eda/docs/memory-lockup-investigation.md).
 - Voice lifecycle fixes release Android recording effects, device callbacks,
   AudioTrack and executors, prevent delayed microphone/playback startup after Stop,
   and close speech sessions canceled during connection. Native Android fixes require
   a rebuilt APK; device memory verification remains open.
-- Proposed [settings layout](docs/settings-layout-plan.md) separates App settings
+- Proposed [settings layout](https://github.com/frogg-app/fde/blob/70767eda/docs/settings-layout-plan.md) separates App settings
   and saved host profiles from daemon configuration; the settings redesign is not
   implemented yet.
 
@@ -631,12 +656,12 @@ Includes the previously unpublished 0.2.1–0.2.6 maintenance fixes.
 
 - **Companion: a real-time voice conversation that sits above projects and workspaces.** You talk to it and it answers straight away; it never does the work itself. Anything that needs real thought is handed to a headless subagent while it keeps talking to you, and it drives, starts and reports on the agents running in your workspaces. A fast orchestrator model (`claude-haiku-4-5`) answers over the Messages API rather than the agent provider stack, which launches a CLI per turn and is far too slow for conversation.
 - The Companion never leaves a silence. Text is cut into speakable segments and sent to TTS while the model is still generating, so it starts talking mid-sentence; if nothing has been said 700 ms after you stop, a pre-synthesised filler covers the gap. It keeps its own small notebook of topics and open tasks, which is what lets its context stay tiny — old turns are dropped rather than summarised.
-- The Companion opens from a sidebar row, the command palette or a shortcut, as a sheet on compact layouts and a centred card on desktop: a mic orb, your live transcript, its reply as it speaks, and a strip of current topics you can tap to jump to the agent working on one. It reuses voice mode's audio stack wholesale — VAD, streaming speech-to-text and barge-in — and is advertised through `server_info.capabilities.companion`, so the control never appears when the daemon cannot honour it. Enable with an Anthropic API key; see [docs/companion.md](docs/companion.md).
+- The Companion opens from a sidebar row, the command palette or a shortcut, as a sheet on compact layouts and a centred card on desktop: a mic orb, your live transcript, its reply as it speaks, and a strip of current topics you can tap to jump to the agent working on one. It reuses voice mode's audio stack wholesale — VAD, streaming speech-to-text and barge-in — and is advertised through `server_info.capabilities.companion`, so the control never appears when the daemon cannot honour it. Enable with an Anthropic API key; see [docs/companion.md](https://github.com/frogg-app/fde/blob/70767eda/docs/companion.md).
 - Project skills and tooling for working in this repository: `skills/fde-dev` (build order, dev daemon, the fast verification loop), `skills/fde-rpc` (the thirteen-step checklist for adding a session RPC, including the outbound permission record that is easy to miss), `skills/fde-i18n` (the nine-locale procedure), a `dev-tooling` agent definition, `scripts/dev/worktree-status.mjs`, and `scripts/ci/verify.mjs --changed`, which lints and tests only what you changed.
 - Plugin scaffold tests no longer leak generated directories into the working tree.
-- **Streaming performance on Android and Windows.** Markdown block splitting no longer re-parses the whole message on every animation frame, code fences are not re-tokenized while a reply is still streaming, and the desktop transport coalesces inbound WebSocket frames instead of paying one IPC hop each. The invariants these rely on are written down in [docs/agent-stream-performance.md](docs/agent-stream-performance.md), and the investigation behind them in `docs/performance-investigation-2026-09.html`. Correctness is covered by tests; the size of the win is not — the severity ranking is source-level analysis, with no profiler attached to real Android or Windows hardware.
+- **Streaming performance on Android and Windows.** Markdown block splitting no longer re-parses the whole message on every animation frame, code fences are not re-tokenized while a reply is still streaming, and the desktop transport coalesces inbound WebSocket frames instead of paying one IPC hop each. The invariants these rely on are written down in [docs/agent-stream-performance.md](https://github.com/frogg-app/fde/blob/70767eda/docs/agent-stream-performance.md), and the investigation behind them in `docs/performance-investigation-2026-09.html`. Correctness is covered by tests; the size of the win is not — the severity ranking is source-level analysis, with no profiler attached to real Android or Windows hardware.
 - The open explorer sidebar has its own close button on every desktop layout, so it no longer takes a trip through the workspace menu to dismiss. This control previously existed only on macOS, so Windows and Linux gain a close affordance inside the open panel that they did not have before; mobile is unchanged. It is covered by unit tests but has not been eyeballed on Windows.
-- **Known limitation for this release: the Companion has not been run end to end.** Its unit and browser tests pass and it is gated behind `server_info.capabilities.companion`, so it stays invisible when the daemon cannot honour it — but no one has held a spoken conversation with it. The microphone-to-speaker path is unexercised, and the latency figures in [docs/companion.md](docs/companion.md) measure the model call in isolation rather than the full audio loop. Known follow-ups, none of which affect anything outside the Companion: barge-in does not cancel the in-flight model request, the capability is resolved once at daemon construction so an API-key or flag change needs a restart, and `create_agent` requires an existing workspace id.
+- **Known limitation for this release: the Companion has not been run end to end.** Its unit and browser tests pass and it is gated behind `server_info.capabilities.companion`, so it stays invisible when the daemon cannot honour it — but no one has held a spoken conversation with it. The microphone-to-speaker path is unexercised, and the latency figures in [docs/companion.md](https://github.com/frogg-app/fde/blob/70767eda/docs/companion.md) measure the model call in isolation rather than the full audio loop. Known follow-ups, none of which affect anything outside the Companion: barge-in does not cancel the in-flight model request, the capability is resolved once at daemon construction so an API-key or flag change needs a restart, and `create_agent` requires an existing workspace id.
 
 ## 0.1.19
 
@@ -660,7 +685,7 @@ Includes the previously unpublished 0.2.1–0.2.6 maintenance fixes.
 
 - `install.sh` resolves the newest release even when every release is flagged as a pre-release: `/releases/latest` redirects to the releases index in that case, and the old resolver parsed the word `releases` as a version, so `curl -fsSL https://frogg.app/install.sh | bash` tried to download `fde-daemon-releases-<platform>.tar.gz`. It now validates what it parsed and falls back to the GitHub releases API.
 - Releases carry `install.sh`, `uninstall.sh`, and `install-docker.sh` as assets, so a release pins the installer that shipped with it.
-- New standalone pairing-page service (`deploy/pair`, image `froggapp/fde-pair-page`): the `GET /code/:code` route a daemon serves, bundled with esbuild into a stateless container that answers the public `pair.frogg.app`. A pairing code carries the whole offer, so one deployment serves every daemon's links without contacting any of them. Deployment runbook in [docs/pairing-service.md](docs/pairing-service.md).
+- New standalone pairing-page service (`deploy/pair`, image `froggapp/fde-pair-page`): the `GET /code/:code` route a daemon serves, bundled with esbuild into a stateless container that answers the public `pair.frogg.app`. A pairing code carries the whole offer, so one deployment serves every daemon's links without contacting any of them. Deployment runbook in [docs/pairing-service.md](https://github.com/frogg-app/fde/blob/70767eda/docs/pairing-service.md).
 
 ## 0.1.14
 

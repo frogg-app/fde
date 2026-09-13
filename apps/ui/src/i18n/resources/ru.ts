@@ -1,6 +1,8 @@
+import { projectImportCopies } from "./project-import";
 import { en, type TranslationResources } from "./en";
 
 export const ru: TranslationResources = {
+  projectImport: projectImportCopies["ru"],
   directoryBrowser: {
     choose: "Использовать этот каталог",
     parent: "Перейти к родительскому каталогу",
@@ -1061,6 +1063,7 @@ export const ru: TranslationResources = {
     },
   },
   sidebar: {
+    workspaceDraft: "Новое рабочее пространство (черновик)",
     hostsMenu: {
       trigger: "Хосты",
       addHost: "Добавить хост",
@@ -1871,6 +1874,8 @@ export const ru: TranslationResources = {
       directConnectionHint:
         "Без ретранслятора подключайтесь напрямую через TCP, Tailscale или другую VPN. QR-код создаваться не будет.",
       updateRequired: "Обновите хост, чтобы включить ретранслятор из {{brandName}} Desktop.",
+      endpointRequired:
+        "Для этого хоста не настроен адрес ретранслятора. Укажите его в настройках хоста в разделе «Сопряжение устройств», затем включите ретрансляцию.",
       unavailable: "Данные для сопряжения недоступны.",
       hint: "Отсканируйте этот QR-код с помощью {{brandName}} на телефоне или скопируйте ссылку ниже.",
       securityWarning:
@@ -2760,6 +2765,19 @@ export const ru: TranslationResources = {
         rowTitle: "Подключить устройство",
         rowHint:
           "Отсканируйте QR-код или скопируйте ссылку, чтобы подключить телефон к этому хосту.",
+      },
+      relayEndpoint: {
+        title: "Адрес ретранслятора",
+        hint: "Сервер ретрансляции, через который подключается этот хост, в формате хост:порт. Оставьте пустым, чтобы ретрансляция оставалась выключенной.",
+        placeholder: "relay.example.com:443",
+        accessibilityLabel: "Адрес ретранслятора",
+        useTls: "Использовать TLS",
+        useTlsHint: "Отключайте только для локального ретранслятора без TLS.",
+        save: "Сохранить",
+        saving: "Сохранение...",
+        saveFailed: "Не удалось сохранить адрес ретранслятора.",
+        overridden:
+          "Задано параметром запуска демона (FDE_RELAY_ENDPOINT или FDE_RELAY_USE_TLS). Измените его там, где запускается демон.",
       },
       skills: {
         sectionTitle: "Навыки оркестрации",

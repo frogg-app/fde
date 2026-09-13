@@ -95,4 +95,5 @@ map in `apps/ui/src/i18n/i18next.ts`; the persisted `language` zod enum in
 keys in every resource; and the expectations in
 `apps/ui/src/i18n/locales.test.ts`.
 
-See [docs/i18n.md](../../docs/i18n.md) for the migration batch log and scope rules.
+See the UI copy section of `website/src/content/docs/docs/contributing/coding-standards.mdx` for the
+short version of these rules.
