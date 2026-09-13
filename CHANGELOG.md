@@ -1,7 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.7.0 — 2026-09-13
 
+- Fold host Connections, Metadata and Workspaces settings into Overview. The Agents tab
+  and project settings list provider agent definition files (Claude Code, Codex,
+  OpenCode, Copilot) found on the host.
 - Remove the plugin system: the `@fde/plugin` package, the `fde plugin` CLI, plugin
   RPCs and all plugin UI. Existing plugin folders on disk are left untouched, and a
   saved plugin theme falls back to auto.
