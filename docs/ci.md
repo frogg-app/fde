@@ -42,6 +42,10 @@ transparent compatibility contract.
 
 ## Selected build artifacts
 
+Main CI calls `build-selected.yml`; it is also available for manual runs. Desktop
+PR builds target Windows only. Linux and macOS desktop packaging is outside the
+current CI build scope.
+
 `build-selected.yml` builds Windows x64 Electron clients, Android arm64-v8a,
 and a Linux x64 daemon bundle. Every job checks out the triggering commit and uses
 the root build wrappers in its own runner. Outputs are Actions artifacts retained

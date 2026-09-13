@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.6.16 — 2026-09-13
+
+- Limit main CI artifacts to Windows x64 desktop, Linux x64 daemon, and bundled
+  Android arm64 clients; limit desktop PR builds to Windows.
+
 ## 0.6.15 — 2026-09-13
 
 - Align daemon configuration tests with all-interface listen defaults and explicit

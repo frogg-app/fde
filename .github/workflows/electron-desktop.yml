@@ -21,14 +21,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-22.04
-            target: linux-x64
           - os: windows-latest
             target: win-x64
-          - os: macos-15
-            target: darwin-arm64
-          - os: macos-15-intel
-            target: darwin-x64
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     env:
@@ -45,22 +39,6 @@ jobs:
       - run: npm run typecheck --workspace=@fde/desktop-electron
       - run: npm run test --workspace=@fde/desktop-electron
       - run: npm run build:desktop:electron -- --target ${{ matrix.target }}
-      - name: Smoke Electron startup and relaunch
-        if: runner.os == 'Linux'
-        run: |
-          binary=$(node -p "require('./.generated/branding/brand.json').id")
-          FDE_ELECTRON_SMOKE_EXECUTABLE="$PWD/apps/desktop-electron/release/linux-unpacked/$binary" \
-            xvfb-run -a npm run test:smoke --workspace=@fde/desktop-electron
-        env:
-          FDE_ELECTRON_SMOKE_NO_SANDBOX: "1"
-          FDE_ELECTRON_SMOKE_OUTPUT: ${{ github.workspace }}/.dev/electron-smoke
-      - uses: actions/upload-artifact@v4
-        if: always() && runner.os == 'Linux'
-        with:
-          name: electron-smoke-${{ github.sha }}
-          path: .dev/electron-smoke/
-          if-no-files-found: ignore
-          retention-days: 14
       - uses: actions/upload-artifact@v4
         with:
           name: electron-${{ matrix.target }}-${{ github.sha }}
@@ -70,7 +48,3 @@ jobs:
             apps/desktop-electron/release/SHA256SUMS
             apps/desktop-electron/release/*.exe
             apps/desktop-electron/release/*.zip
-            apps/desktop-electron/release/*.dmg
-            apps/desktop-electron/release/*.AppImage
-            apps/desktop-electron/release/*.deb
-            apps/desktop-electron/release/*.tar.gz

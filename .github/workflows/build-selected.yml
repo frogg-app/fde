@@ -2,6 +2,7 @@ name: Build selected clients and daemon
 
 on:
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
@@ -35,6 +36,8 @@ jobs:
           subdirectory: ${{ vars.FDE_BRAND_SUBDIR }}
       - uses: ./.github/actions/setup-node-deps
       - run: npm run install:electron --workspace=@fde/desktop-electron
+      - run: npm run build:app-deps
+      - run: npm run test --workspace=@fde/desktop-electron
       - name: Build app-only client
         run: npm run build:desktop -- --target win-x64
       - uses: actions/upload-artifact@v7
