@@ -1038,6 +1038,12 @@ export const ko: TranslationResources = {
     },
   },
   sidebar: {
+    hostsMenu: {
+      trigger: "호스트",
+      addHost: "호스트 추가",
+      hosts: "내 호스트",
+      noHosts: "아직 호스트가 없습니다",
+    },
     display: {
       trigger: "표시 설정",
       heading: "표시",

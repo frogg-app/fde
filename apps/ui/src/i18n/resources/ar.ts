@@ -1029,6 +1029,12 @@ export const ar: TranslationResources = {
     },
   },
   sidebar: {
+    hostsMenu: {
+      trigger: "المضيفون",
+      addHost: "إضافة مضيف",
+      hosts: "مضيفوك",
+      noHosts: "لا يوجد مضيفون بعد",
+    },
     display: {
       trigger: "تفضيلات العرض",
       heading: "العرض",

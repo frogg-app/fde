@@ -1054,6 +1054,12 @@ export const ptBR: TranslationResources = {
     },
   },
   sidebar: {
+    hostsMenu: {
+      trigger: "Hosts",
+      addHost: "Adicionar host",
+      hosts: "Seus hosts",
+      noHosts: "Nenhum host ainda",
+    },
     display: {
       trigger: "Preferências de exibição",
       heading: "Exibição",

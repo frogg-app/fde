@@ -168,7 +168,7 @@ export function useKeyboardShortcuts({
       "toggle-agent-list": toggleAgentList,
       "toggle-both-sidebars": toggleBothSidebars,
       "cycle-theme": cycleTheme,
-      "open-add-host": openAddHostFlow,
+      "open-add-host": () => openAddHostFlow(),
     };
 
     const toggleCompanion = (nextOpen: boolean) => {

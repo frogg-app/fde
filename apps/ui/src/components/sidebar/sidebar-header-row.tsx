@@ -6,6 +6,7 @@ import { HEADER_INNER_HEIGHT, HEADER_INNER_HEIGHT_MOBILE } from "@/constants/lay
 import { ICON_SIZE } from "@/styles/theme";
 import type { Theme } from "@/styles/theme";
 import { Shortcut } from "@/components/ui/shortcut";
+import { MenuTrigger } from "@/components/ui/menu";
 import type { ShortcutKey } from "@/utils/format-shortcut";
 
 const foregroundColorMapping = (theme: Theme) => ({ color: theme.colors.foreground });
@@ -16,7 +17,7 @@ type SidebarHeaderRowVariant = "header" | "compact";
 interface SidebarHeaderRowProps {
   icon: LucideIcon;
   label: string;
-  onPress: () => void;
+  onPress?: () => void;
   isActive?: boolean;
   testID?: string;
   nativeID?: string;
@@ -29,6 +30,8 @@ interface SidebarHeaderRowProps {
    */
   variant?: SidebarHeaderRowVariant;
   shortcutKeys?: ShortcutKey[][] | null;
+  /** Render as the trigger of the enclosing `MenuRoot` instead of a plain button. */
+  menuTrigger?: boolean;
 }
 
 export function SidebarHeaderRow({
@@ -41,6 +44,7 @@ export function SidebarHeaderRow({
   accessibilityLabel,
   variant = "header",
   shortcutKeys = null,
+  menuTrigger = false,
 }: SidebarHeaderRowProps) {
   const ThemedIcon = useMemo(() => withUnistyles(Icon), [Icon]);
 
@@ -76,6 +80,23 @@ export function SidebarHeaderRow({
     },
     [ThemedIcon, isActive, label, shortcutKeys],
   );
+
+  if (menuTrigger) {
+    return (
+      <View style={containerStyle}>
+        <MenuTrigger
+          testID={testID}
+          nativeID={nativeID}
+          accessible
+          accessibilityRole="button"
+          accessibilityLabel={accessibilityLabel ?? label}
+          style={buttonStyle}
+        >
+          {renderChildren}
+        </MenuTrigger>
+      </View>
+    );
+  }
 
   return (
     <View style={containerStyle}>

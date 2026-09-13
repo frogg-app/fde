@@ -6,7 +6,7 @@ import { resolveAgentRoute, type AgentRouteLookup } from "@/navigation/agent-rou
 import { AgentRouteResolutionView } from "@/navigation/agent-route-resolution-view";
 import { useSessionStore } from "@/stores/session-store";
 import { getHostRuntimeStore, useHostRuntimeSnapshot, useHosts } from "@/runtime/host-runtime";
-import { buildHostRootRoute, buildSettingsHostRoute } from "@/utils/host-routes";
+import { buildHostRootRoute, buildSettingsHostSectionRoute } from "@/utils/host-routes";
 import { toErrorMessage } from "@/utils/error-messages";
 import { navigateToAgent } from "@/utils/navigate-to-agent";
 
@@ -123,7 +123,7 @@ function HostAgentReadyRouteContent() {
   }, [lookupQuery, resolution.kind, serverId]);
   const handleManageHost = useCallback(() => {
     if (serverId) {
-      router.push(buildSettingsHostRoute(serverId));
+      router.push(buildSettingsHostSectionRoute(serverId, "connections"));
     }
   }, [router, serverId]);
   const handleBack = useCallback(() => {

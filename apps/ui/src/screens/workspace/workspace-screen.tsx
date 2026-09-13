@@ -189,7 +189,7 @@ import { findAdjacentPane } from "@/utils/split-navigation";
 import { supportsDesktopPaneSplits, useIsCompactFormFactor } from "@/constants/layout";
 import { getIsElectron, isNative, isWeb } from "@/constants/platform";
 import type { SurfaceBackdrop } from "@/styles/surface-backdrop";
-import { buildHostRootRoute, buildSettingsHostRoute } from "@/utils/host-routes";
+import { buildHostRootRoute, buildSettingsHostSectionRoute } from "@/utils/host-routes";
 import { useWorkspaceTerminals } from "@/screens/workspace/terminals/use-workspace-terminals";
 import type { TerminalProfile } from "@fde/protocol/messages";
 import {
@@ -1217,7 +1217,7 @@ function useWorkspaceRouteActions(normalizedServerId: string): {
     if (!normalizedServerId) {
       return;
     }
-    router.push(buildSettingsHostRoute(normalizedServerId) as Href);
+    router.push(buildSettingsHostSectionRoute(normalizedServerId, "connections") as Href);
   }, [normalizedServerId, router]);
   const handleDismissMissingWorkspace = useCallback(() => {
     if (router.canGoBack()) {

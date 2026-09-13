@@ -5,6 +5,7 @@ import {
   buildOpenProjectRoute,
   buildProjectSettingsRoute,
   buildProjectsSettingsRoute,
+  buildSettingsHostRoute,
   buildSettingsHostSectionRoute,
   buildSettingsRoute,
   buildSettingsSectionRoute,
@@ -15,6 +16,7 @@ import {
 export type SettingsView =
   | { kind: "root" }
   | { kind: "section"; section: SettingsSectionSlug }
+  | { kind: "hostRoot"; serverId: string }
   | { kind: "host"; serverId: string; section: HostSectionSlug }
   | { kind: "project"; serverId: string; projectId: string };
 
@@ -24,6 +26,8 @@ export function buildSettingsViewRoute(view: SettingsView): Href {
       return buildSettingsRoute();
     case "section":
       return buildSettingsSectionRoute(view.section);
+    case "hostRoot":
+      return buildSettingsHostRoute(view.serverId);
     case "host":
       return buildSettingsHostSectionRoute(view.serverId, view.section);
     case "project":
@@ -50,6 +54,29 @@ export function navigateSettings(view: SettingsView, options?: { replace?: boole
   } else {
     router.push(route);
   }
+}
+
+/**
+ * App settings and host settings are separate surfaces: app settings list only
+ * app sections, and a host's settings list only that host's sections.
+ */
+export type SettingsScope = { kind: "app" } | { kind: "host"; serverId: string };
+
+export function resolveSettingsScope(view: SettingsView): SettingsScope {
+  switch (view.kind) {
+    case "root":
+    case "section":
+      return { kind: "app" };
+    case "hostRoot":
+    case "host":
+    case "project":
+      return { kind: "host", serverId: view.serverId };
+  }
+}
+
+/** Opens a host's settings: its section list on compact layouts, its overview in the modal. */
+export function openHostSettings(serverId: string): void {
+  navigateSettings({ kind: "hostRoot", serverId });
 }
 
 export function openHostOverview(serverId: string): void {
@@ -90,12 +117,13 @@ export function returnFromSettings(view: SettingsView): void {
     return;
   }
 
-  if (view.kind === "root") {
+  if (view.kind === "root" || view.kind === "hostRoot") {
     leaveSettings();
     return;
   }
 
-  const parent =
-    view.kind === "project" ? buildProjectsSettingsRoute(view.serverId) : buildSettingsRoute();
-  router.dismissTo(parent as Href);
+  let parent: Href = buildSettingsRoute();
+  if (view.kind === "project") parent = buildProjectsSettingsRoute(view.serverId);
+  if (view.kind === "host") parent = buildSettingsHostRoute(view.serverId);
+  router.dismissTo(parent);
 }

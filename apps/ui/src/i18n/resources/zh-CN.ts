@@ -1021,6 +1021,12 @@ export const zhCN: TranslationResources = {
     },
   },
   sidebar: {
+    hostsMenu: {
+      trigger: "主机",
+      addHost: "添加主机",
+      hosts: "你的主机",
+      noHosts: "还没有主机",
+    },
     display: {
       trigger: "显示偏好",
       heading: "显示",
