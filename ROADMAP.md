@@ -258,10 +258,6 @@ The docs rewrite (2026-09-13) replaced `docs/` with the Astro/Starlight site in
 - [ ] **Per-device revoke** for paired devices does not exist.
 - [ ] **Schedules have no UI**; CLI/daemon only.
 - [ ] **Push notifications in the published APK** are unverified.
-- [ ] **`@fde/plugin` is not on npm**, so a scaffolded plugin does not typecheck
-      outside the repo.
-- [ ] **Plugin remove confirmation** says the source is not deleted, which is
-      misleading for Git installs.
 - [ ] **`FDE_DEV_RESET_HOME`** does nothing on its own.
 - [ ] **Dangling design-doc references.** Comments in `apps/ui` and
       `.oxlintrc.json` messages still cite deleted docs (unistyles, hover, menus,

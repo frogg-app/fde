@@ -123,7 +123,6 @@ The `fde-i18n` skill (`skills/fde-i18n/SKILL.md`) is the full procedure. The rul
 - Components and hooks use `useTranslation()`. Non-React modules call `i18n.t(...)`.
 - Keys that differ by forge use i18next context: a base key plus an `_mr` sibling. Indeclinable
   tokens such as `PR`/`MR` are interpolated instead.
-- `plugin-settings.ts` has its own per-locale blocks; update all nine.
 
 `apps/ui/src/i18n/resources.test.ts` enforces key parity, matching `{{placeholder}}` names,
 under 25% of strings identical to English per locale, and a blocklist of hard-coded English
@@ -176,7 +175,7 @@ reintroduce upstream names.
 - The deep-link scheme is the brand `scheme` (`fde://` for the official brand).
 - The state directory is the brand `homeDir` (`~/.fde`), and project config is `fde.json` in
   every brand.
-- Wire, environment, storage and plugin names changed in the 0.6 namespace migration. A
+- Wire, environment and storage names changed in the 0.6 namespace migration. A
   breaking change to any of them needs coordinated daemon and client upgrades.
 
 See [Environment variables](/docs/reference/environment-variables/) for the full list.

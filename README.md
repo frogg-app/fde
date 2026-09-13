@@ -56,7 +56,6 @@ tag a release. See [Fork and rebrand](https://frogg.app/docs/fork-and-rebrand/).
 - [Using FDE](https://frogg.app/docs/using-fde/)
 - [Self-hosting the daemon](https://frogg.app/docs/self-hosting/)
 - [CLI reference](https://frogg.app/docs/desktop-mobile-cli/cli/)
-- [Plugins](https://frogg.app/docs/plugins/)
 - [Contributing](https://frogg.app/docs/contributing/)
 
 The docs source is in [`website/src/content/docs/docs`](website/src/content/docs/docs).

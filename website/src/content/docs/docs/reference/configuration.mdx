@@ -41,8 +41,6 @@ This is exactly what a new daemon writes (0.6.19):
     "relay": { "enabled": false }
   },
   "app": { "pairingBaseUrl": "https://pair.frogg.app" },
-  "pluginsEnabled": false,
-  "plugins": {},
   "log": { "level": "info", "format": "json" }
 }
 ```
@@ -130,7 +128,7 @@ is set, the app shows the endpoint read-only.
 | `agents.providers`                   | object  | unset    | Built-in provider overrides and custom providers. See [custom providers](/docs/agents-and-providers/custom-providers/) |
 | `agents.catalogRefreshTimeoutMs`     | integer | `120000` | Deadline for refreshing a provider's models and modes |
 | `agents.metadataGeneration.providers` | array  | unset    | Ordered `[{ provider, model?, thinkingOptionId? }]` used to generate titles, branch names, commit messages and PR text |
-| `agents.skills.selection`            | object  | all      | `{ "mode": "all" }` or `{ "mode": "custom", "skills": ["fde", "fde-plugin"] }`. See [skills](/docs/agents-and-providers/skills/) |
+| `agents.skills.selection`            | object  | all      | `{ "mode": "all" }` or `{ "mode": "custom", "skills": ["fde", "fde-help"] }`. See [skills](/docs/agents-and-providers/skills/) |
 
 ## `worktrees`
 
@@ -174,15 +172,6 @@ These are credentials for voice features, not agent providers.
 | `providers.anthropic.{apiKey,baseUrl}`       | Used only by the Companion `api` backend |
 | `providers.local.modelsDir`                  | Local speech models. Default `$FDE_HOME/models/local-speech` |
 
-## `plugins`
-
-| Key              | Type    | Default | Meaning |
-| ---------------- | ------- | ------- | ------- |
-| `pluginsEnabled` | boolean | `false` | Global switch. Requires `fde reload` |
-| `plugins`        | object  | `{}`    | `{ "<id>": { "source": "directory", "path": "/abs/path", "enabled": true } }` |
-
-See [plugins](/docs/plugins/).
-
 ## `log`
 
 | Key                        | Default                 | Meaning |
@@ -202,10 +191,10 @@ See [plugins](/docs/plugins/).
 `daemon.trustedProxies`, `daemon.auth.trustLan`, `daemon.git.*`,
 `daemon.autoArchiveAfterMerge`, `daemon.autoUpdate`, `daemon.enableTerminalAgentHooks`,
 `daemon.appendSystemPrompt`, `daemon.terminalProfiles`, `daemon.agentProfiles`,
-`app.pairingBaseUrl`, `agents.*` and `pluginsEnabled`.
+`app.pairingBaseUrl` and `agents.*`.
 
-Everything else, including `daemon.listen`, `daemon.auth.password`, `features`,
-`plugins` and `log`, needs `fde restart`.
+Everything else, including `daemon.listen`, `daemon.auth.password`, `features`
+and `log`, needs `fde restart`.
 
 ## Other files in `FDE_HOME`
 
@@ -221,5 +210,4 @@ Everything else, including `daemon.listen`, `daemon.auth.password`, `features`,
 | `uploads/`              | Files attached to prompts |
 | `project-conversations/` | Imported text conversation history |
 | `project-import-staging/` | Uploads for imports in progress (removed after an hour idle) |
-| `plugins/`              | Git-installed plugins |
 | `models/local-speech/`  | Local speech models |
