@@ -68,10 +68,24 @@ export async function verifyReleasePayloads(descriptor, directory) {
     await adapter.verifyPayloads(update, directory);
 }
 
+export function listReleases(gh, repo) {
+  const output = gh([
+    "api",
+    "--paginate",
+    `repos/${repo}/releases?per_page=100`,
+    "--jq",
+    ".[] | @json",
+  ]);
+  return output.trim()
+    ? output
+        .trim()
+        .split("\n")
+        .map((line) => JSON.parse(line))
+    : [];
+}
+
 async function loadPreviousDescriptor(gh, repo, version, directory) {
-  const releases = JSON.parse(
-    gh(["api", "--paginate", "--slurp", `repos/${repo}/releases?per_page=100`]),
-  ).flat();
+  const releases = listReleases(gh, repo);
   const previous = releases
     .filter(
       (release) =>
@@ -111,7 +125,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   )
     throw new Error("Provide --repo OWNER/REPO --tag vVERSION");
   const gh = (args) => execFileSync("gh", args, { encoding: "utf8", maxBuffer: 16 * 1024 * 1024 });
-  const release = JSON.parse(gh(["api", `repos/${values.repo}/releases/tags/${values.tag}`]));
+  const releases = listReleases(gh, values.repo);
+  const release = releases.find((candidate) => candidate.tag_name === values.tag);
+  if (!release) throw new Error(`Release not found: ${values.tag}`);
   const directory = await mkdtemp(path.join(os.tmpdir(), "fde-release-verify-"));
   try {
     gh([

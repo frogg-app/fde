@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.6.19 — 2026-09-13
+
+- Verify draft release assets through paginated release discovery, including on
+  older GitHub CLI versions, so completed drafts can pass the publication gate.
+
 ## 0.6.18 — 2026-09-13
 
 - Add an asynchronous build-monitor skill covering targeted CI repairs, persistent
