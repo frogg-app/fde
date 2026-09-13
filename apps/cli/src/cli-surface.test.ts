@@ -16,7 +16,7 @@ describe("canonical CLI surface", () => {
     for (const name of ["start", "stop", "restart", "status", "update", "onboard"]) {
       expect(help).toContain(name);
     }
-    for (const name of ["agent", "auth", "workspace", "project", "plugin", "schedule"]) {
+    for (const name of ["agent", "auth", "workspace", "project", "schedule"]) {
       expect(help).not.toContain(`  ${name} `);
     }
     expect(help).not.toContain("worktree");
@@ -115,28 +115,5 @@ describe("canonical CLI surface", () => {
     expect(run?.helpInformation()).toContain("--thinking <id>");
     expect(update?.helpInformation()).toContain("--thinking <id>");
     expect(scheduleCreate?.helpInformation()).toContain("--thinking <id>");
-  });
-
-  it("offers the complete local plugin lifecycle", () => {
-    const plugin = createCli().commands.find((command) => command.name() === "plugin");
-
-    expect(plugin?.commands.map((command) => command.name())).toEqual([
-      "init",
-      "ls",
-      "logs",
-      "install",
-      "status",
-      "update",
-      "reload",
-      "enable",
-      "disable",
-      "remove",
-    ]);
-    expect(
-      plugin?.commands.find((command) => command.name() === "init")?.helpInformation(),
-    ).toContain("--id <id>");
-    expect(
-      plugin?.commands.find((command) => command.name() === "install")?.helpInformation(),
-    ).toContain("--id <id>");
   });
 });

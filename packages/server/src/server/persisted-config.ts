@@ -14,8 +14,6 @@ import { ensurePrivateFile, writePrivateFileAtomicSync } from "./private-files.j
 import {
   AgentProfileSchema,
   AgentSkillSelectionSchema,
-  PluginIdSchema,
-  PluginSourceSchema,
   TerminalProfileSchema,
 } from "@fde/protocol/messages";
 import { FdeServicePortAllocationSchema } from "@fde/protocol/fde-config-schema";
@@ -346,8 +344,10 @@ export const PersistedConfigSchema = z
       .optional(),
 
     providers: ProvidersSchema.optional(),
-    pluginsEnabled: z.boolean().optional(),
-    plugins: z.record(PluginIdSchema, PluginSourceSchema).optional(),
+    // COMPAT(pluginsRemoved): plugin support was removed; keys written by older daemons are
+    // accepted and ignored so existing config files still load. Remove after 2027-09-13.
+    pluginsEnabled: z.unknown().optional(),
+    plugins: z.unknown().optional(),
     worktrees: WorktreesConfigSchema.optional(),
     agents: z
       .object({
@@ -416,8 +416,6 @@ const DEFAULT_PERSISTED_CONFIG = PersistedConfigSchema.parse({
   app: {
     pairingBaseUrl: brand.services.pairingUrl ?? "",
   },
-  pluginsEnabled: false,
-  plugins: {},
   log: { level: "info", format: "json" },
 }) as PersistedConfig;
 

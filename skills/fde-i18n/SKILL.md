@@ -66,9 +66,6 @@ it every time, not at the end.
   migrated keys. New keys are unaffected, but **rewording an existing string breaks one of
   these** — update the assertion in the same change.
 
-`plugin-settings.ts` is a separate per-locale block spread into each locale file. A key added
-there needs an entry under all nine locale sub-objects too.
-
 ## Forge-variant copy
 
 Two tiers, and picking the wrong one costs you a key per forge instead of a key per vocabulary
@@ -95,7 +92,7 @@ needs a name for the new one) — all in `apps/ui/src/i18n/locales.ts`, plus
 `REGIONAL_LANGUAGE_LOCALES` and any special case in `resolveSupportedLocale`; the `resources`
 map in `apps/ui/src/i18n/i18next.ts`; the persisted `language` zod enum in
 `apps/ui/src/hooks/use-settings/storage.ts`; the `settings.general.language.options.*` label
-keys in every resource; `plugin-settings.ts`; and the expectations in
+keys in every resource; and the expectations in
 `apps/ui/src/i18n/locales.test.ts`.
 
 See [docs/i18n.md](../../docs/i18n.md) for the migration batch log and scope rules.

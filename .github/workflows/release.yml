@@ -376,7 +376,6 @@ jobs:
             packages/client/dist
             packages/relay/dist
             packages/highlight/dist
-            packages/plugin/dist
             packages/server/dist
           include-hidden-files: true
           retention-days: 7

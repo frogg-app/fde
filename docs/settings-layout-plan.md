@@ -43,10 +43,9 @@ App settings                          Host settings
   Notifications & voice                 Workspaces
   Integrations                          Projects
   Hosts                                 Terminals
-  Permissions                           Plugins
-  Diagnostics                           Metadata generation
-  About                                 Usage
-                                        Access & pairing
+  Permissions                           Metadata generation
+  Diagnostics                           Usage
+  About                                 Access & pairing
                                         Maintenance
 ```
 
@@ -104,7 +103,6 @@ Use the runtime's actual capability/permission results to decide available actio
 | Agents                | Shared agent profiles, skills, and daemon defaults.                                                  |
 | Workspaces / Projects | Existing daemon workspace defaults and per-project settings; retain project identity and navigation. |
 | Terminals             | Daemon terminal profiles/defaults; local renderer and scrollback preferences stay in App settings.   |
-| Plugins               | Daemon plugin configuration; local desktop integrations remain in App settings.                      |
 | Metadata generation   | The daemon's selected generation provider/model.                                                     |
 | Usage                 | Host/provider usage facts; label freshness and refresh failures.                                     |
 | Access & pairing      | Existing daemon pairing and authorization controls; client OS permissions stay in App settings.      |

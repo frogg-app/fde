@@ -16,7 +16,6 @@ import { Button } from "@/components/ui/button";
 import { Shortcut } from "@/components/ui/shortcut";
 import { Switch } from "@/components/ui/switch";
 import { useShortcutKeys } from "@/hooks/use-shortcut-keys";
-import { resolvePluginIcon } from "@/plugins/icons";
 import { SettingsSection } from "@/screens/settings/settings-section";
 import {
   builtinSidebarNavLabelKey,
@@ -50,18 +49,16 @@ function NavIcon({ Icon, color = "" }: { Icon: LucideIcon; color?: string }) {
 const ThemedNavIcon = withUnistyles(NavIcon);
 
 function navItemIcon(item: SidebarNavItem): LucideIcon {
-  return item.kind === "builtin" ? BUILTIN_ICONS[item.id] : resolvePluginIcon(item.group.icon);
+  return BUILTIN_ICONS[item.id];
 }
 
 function navItemLabel(t: TFunction, item: SidebarNavItem): string {
-  return item.kind === "builtin" ? t(builtinSidebarNavLabelKey(item.id)) : item.group.title;
+  return t(builtinSidebarNavLabelKey(item.id));
 }
 
 /** Own component so the row can stay hook-free about which items have a shortcut. */
 function NavItemShortcut({ item }: { item: SidebarNavItem }): ReactElement | null {
-  const chord = useShortcutKeys(
-    item.kind === "builtin" ? builtinSidebarNavShortcutAction(item.id) : null,
-  );
+  const chord = useShortcutKeys(builtinSidebarNavShortcutAction(item.id));
   return chord ? <Shortcut chord={chord} /> : null;
 }
 

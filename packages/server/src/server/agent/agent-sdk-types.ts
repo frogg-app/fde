@@ -1,7 +1,6 @@
 import type {
   AgentProviderNotice,
   AgentTaskItem,
-  JsonValue,
   ProviderOptions,
   ToolPolicy,
 } from "@fde/protocol/agent-types";
@@ -391,15 +390,6 @@ export interface CompactionTimelineItem {
   preTokens?: number;
 }
 
-export interface PluginTimelineItem {
-  type: "plugin";
-  id: string;
-  pluginId: string;
-  kind: string;
-  version: number;
-  data: JsonValue;
-}
-
 export type AgentTimelineItem =
   | { type: "user_message"; text: string; messageId?: string; clientMessageId?: string }
   | { type: "assistant_message"; text: string; messageId?: string }
@@ -407,8 +397,7 @@ export type AgentTimelineItem =
   | ToolCallTimelineItem
   | { type: "todo"; items: AgentTaskItem[] }
   | { type: "error"; message: string }
-  | CompactionTimelineItem
-  | PluginTimelineItem;
+  | CompactionTimelineItem;
 
 export type AgentStreamEvent =
   | { type: "thread_started"; sessionId: string; provider: AgentProvider }

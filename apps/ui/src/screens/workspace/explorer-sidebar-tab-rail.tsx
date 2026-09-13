@@ -34,7 +34,6 @@ import {
 } from "@/workspace-tabs/launcher";
 import { panelSupportsHost } from "@/panels/panel-manifest";
 import type { PanelIconProps } from "@/panels/panel-registry";
-import { panelTargetSupportsHost } from "@/plugins/workspace-panels/locations";
 import type { Theme } from "@/styles/theme";
 import type { SurfaceBackdrop } from "@/styles/surface-backdrop";
 import {
@@ -104,7 +103,7 @@ function ExplorerSidebarTab({
     () => onMoveTabToMain(item.tab.tabId),
     [item.tab.tabId, onMoveTabToMain],
   );
-  const canMoveToMain = panelTargetSupportsHost(normalizedServerId, item.tab.target, "main");
+  const canMoveToMain = panelSupportsHost(item.tab.target.kind, "main");
   const moveToMainLeading = useMemo(
     () => <ThemedArrowLeftToLine size={14} uniProps={mutedColorMapping} />,
     [],

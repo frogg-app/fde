@@ -4,7 +4,6 @@ import { lstat, mkdir, mkdtemp, rename, rm, stat } from "node:fs/promises";
 import { basename, resolve, sep } from "path";
 import { homedir } from "node:os";
 import { CLIENT_CAPS, type ClientCapability } from "@fde/protocol/client-capabilities";
-import { formatPluginSourceReference } from "@fde/protocol/plugin-source-reference";
 import {
   serializeAgentStreamEvent,
   type AgentSnapshotPayload,
@@ -107,8 +106,6 @@ import {
   appendTimelineItemIfAgentKnown,
   emitLiveTimelineItemIfAgentKnown,
 } from "./agent/timeline-append.js";
-import { assertPluginTimelineDataSize } from "./agent/agent-timeline-content.js";
-import { parsePluginClientId } from "./plugins/plugin-session-identity.js";
 import {
   projectTimelineRows,
   selectProjectedTimelinePage,
@@ -455,33 +452,6 @@ export interface SessionOptions {
   workspaceGitService: WorkspaceGitService;
   workspaceAutoName: WorkspaceAutoName;
   daemonConfigStore: DaemonConfigStore;
-  pluginRuntime?: {
-    listPlugins(): import("@fde/protocol/messages").PluginListItem[];
-    getLogs(pluginId: string): import("@fde/protocol/messages").PluginLogEntry[];
-    installDirectory(input: {
-      path: string;
-      id?: string;
-    }): Promise<import("@fde/protocol/messages").PluginListItem>;
-    inspectDirectory(path: string): Promise<{ id: string }>;
-    installSource(input: {
-      source: string;
-      id?: string;
-      ref?: string;
-    }): Promise<import("@fde/protocol/messages").PluginListItem>;
-    statusSources(
-      pluginId?: string,
-    ): Promise<import("@fde/protocol/messages").PluginSourceStatusItem[]>;
-    updateSources(
-      pluginId?: string,
-    ): Promise<import("@fde/protocol/messages").PluginSourceUpdateItem[]>;
-    reloadPlugin(pluginId: string): Promise<import("@fde/protocol/messages").PluginListItem>;
-    enablePlugin(pluginId: string): Promise<import("@fde/protocol/messages").PluginListItem>;
-    disablePlugin(pluginId: string): Promise<import("@fde/protocol/messages").PluginListItem>;
-    removePlugin(pluginId: string): Promise<void>;
-    subscribe(listener: (pluginId: string) => void): () => void;
-    catalog(): Array<{ id: string; clientBundle: string }>;
-    invokePluginRpc(pluginId: string, method: string, input: unknown): Promise<unknown>;
-  };
   orchestrationSkills?: import("./orchestration-skills/index.js").OrchestrationSkills;
   mcpBaseUrl?: string | null;
   stt: Resolvable<SpeechToTextProvider | null>;
@@ -690,11 +660,9 @@ export class Session {
   private readonly daemonConfigStore: DaemonConfigStore;
   private readonly pushNotifications: PushNotifications;
   private readonly spokenAlerts: SessionOptions["spokenAlerts"];
-  private readonly pluginRuntime: SessionOptions["pluginRuntime"];
   private readonly orchestrationSkills: SessionOptions["orchestrationSkills"];
   private unsubscribeAgentEvents: (() => void) | null = null;
   private unsubscribeProjectMutations: (() => void) | null = null;
-  private unsubscribePluginChanges: (() => void) | null = null;
   private unsubscribeWorkspaceMutations: (() => void) | null = null;
   private registryMutationQueue: Promise<void> = Promise.resolve();
   private projectUpdateQueue: Promise<void> = Promise.resolve();
@@ -784,7 +752,6 @@ export class Session {
       workspaceGitService,
       workspaceAutoName,
       daemonConfigStore,
-      pluginRuntime,
       orchestrationSkills,
       stt,
       sttLanguage,
@@ -827,9 +794,7 @@ export class Session {
     this.fdeHome = fdeHome;
     this.projectIcons = new ProjectIconReader(fdeHome);
     this.worktreesRoot = worktreesRoot;
-    this.pluginRuntime = pluginRuntime;
     this.orchestrationSkills = orchestrationSkills;
-    this.unsubscribePluginChanges = this.subscribeToPluginChanges(pluginRuntime);
     this.sessionLogger = logger.child({
       module: "session",
       clientId: this.clientId,
@@ -1974,8 +1939,6 @@ export class Session {
       this.dispatchWorkspaceFileMessage(msg, source) ??
       this.dispatchProviderMessage(msg) ??
       this.dispatchOrchestrationSkillsMessage(msg) ??
-      this.dispatchPluginDirectoryMessage(msg) ??
-      this.dispatchPluginMessage(msg) ??
       this.dispatchTerminalMessage(msg) ??
       this.dispatchScheduleMessage(msg) ??
       this.dispatchMiscMessage(msg);
@@ -2040,158 +2003,6 @@ export class Session {
       default:
         return undefined;
     }
-  }
-
-  private dispatchPluginMessage(msg: SessionInboundMessage): Promise<void> | undefined {
-    if (msg.type === "plugin.list.request") {
-      this.emit({
-        type: "plugin.list.response",
-        payload: { requestId: msg.requestId, plugins: this.pluginRuntime?.listPlugins() ?? [] },
-      });
-      return undefined;
-    }
-    if (msg.type === "plugin.logs.get.request") {
-      if (!this.pluginRuntime) throw new Error("Plugin service is unavailable");
-      this.emit({
-        type: "plugin.logs.get.response",
-        payload: {
-          requestId: msg.requestId,
-          pluginId: msg.pluginId,
-          entries: this.pluginRuntime.getLogs(msg.pluginId),
-        },
-      });
-      return undefined;
-    }
-    if (msg.type === "plugin.reload.request") {
-      if (!this.pluginRuntime) throw new Error("Plugin service is unavailable");
-      return this.pluginRuntime.reloadPlugin(msg.pluginId).then((plugin) => {
-        this.emit({
-          type: "plugin.reload.response",
-          payload: { requestId: msg.requestId, plugin },
-        });
-        return undefined;
-      });
-    }
-    if (msg.type === "plugin.enable.request") {
-      if (!this.pluginRuntime) throw new Error("Plugin service is unavailable");
-      return this.pluginRuntime.enablePlugin(msg.pluginId).then((plugin) => {
-        this.emit({
-          type: "plugin.enable.response",
-          payload: { requestId: msg.requestId, plugin },
-        });
-        return undefined;
-      });
-    }
-    if (msg.type === "plugin.disable.request") {
-      if (!this.pluginRuntime) throw new Error("Plugin service is unavailable");
-      return this.pluginRuntime.disablePlugin(msg.pluginId).then((plugin) => {
-        this.emit({
-          type: "plugin.disable.response",
-          payload: { requestId: msg.requestId, plugin },
-        });
-        return undefined;
-      });
-    }
-    if (msg.type === "plugin.remove.request") {
-      if (!this.pluginRuntime) throw new Error("Plugin service is unavailable");
-      return this.pluginRuntime.removePlugin(msg.pluginId).then(() => {
-        this.emit({ type: "plugin.remove.response", payload: { requestId: msg.requestId } });
-        return undefined;
-      });
-    }
-    if (msg.type === "plugin.catalog.get.request") {
-      this.emit({
-        type: "plugin.catalog.get.response",
-        payload: {
-          requestId: msg.requestId,
-          plugins: this.pluginRuntime?.catalog() ?? [],
-        },
-      });
-      return undefined;
-    }
-    if (msg.type === "plugin.rpc.invoke.request") {
-      if (!this.pluginRuntime) throw new Error("Plugin service is unavailable");
-      return this.pluginRuntime
-        .invokePluginRpc(msg.pluginId, msg.method, msg.input)
-        .then((output) => {
-          this.emit({
-            type: "plugin.rpc.invoke.response",
-            payload: { requestId: msg.requestId, output },
-          });
-          return undefined;
-        });
-    }
-    return undefined;
-  }
-
-  private dispatchPluginDirectoryMessage(msg: SessionInboundMessage): Promise<void> | undefined {
-    if (msg.type === "plugin.source.install.request") {
-      if (!this.pluginRuntime) throw new Error("Plugin service is unavailable");
-      return this.pluginRuntime
-        .installSource({
-          // COMPAT(plugin-source-path): accepted for v0.7 clients; remove after 2027-09-01.
-          source: formatPluginSourceReference(msg.source, msg.pluginPath),
-          ...(msg.id ? { id: msg.id } : {}),
-          ...(msg.ref ? { ref: msg.ref } : {}),
-        })
-        .then((plugin) => {
-          this.emit({
-            type: "plugin.source.install.response",
-            payload: { requestId: msg.requestId, plugin },
-          });
-          return undefined;
-        });
-    }
-    if (msg.type === "plugin.source.status.request") {
-      if (!this.pluginRuntime) throw new Error("Plugin service is unavailable");
-      return this.pluginRuntime.statusSources(msg.pluginId).then((plugins) => {
-        this.emit({
-          type: "plugin.source.status.response",
-          payload: { requestId: msg.requestId, plugins },
-        });
-        return undefined;
-      });
-    }
-    if (msg.type === "plugin.source.update.request") {
-      if (!this.pluginRuntime) throw new Error("Plugin service is unavailable");
-      return this.pluginRuntime.updateSources(msg.pluginId).then((plugins) => {
-        this.emit({
-          type: "plugin.source.update.response",
-          payload: { requestId: msg.requestId, plugins },
-        });
-        return undefined;
-      });
-    }
-    if (msg.type === "plugin.directory.install.request") {
-      if (!this.pluginRuntime) throw new Error("Plugin service is unavailable");
-      return this.pluginRuntime.installDirectory({ path: msg.path, id: msg.id }).then((plugin) => {
-        this.emit({
-          type: "plugin.directory.install.response",
-          payload: { requestId: msg.requestId, plugin },
-        });
-        return undefined;
-      });
-    }
-    if (msg.type === "plugin.directory.inspect.request") {
-      if (!this.pluginRuntime) throw new Error("Plugin service is unavailable");
-      return this.pluginRuntime.inspectDirectory(msg.path).then(({ id }) => {
-        this.emit({
-          type: "plugin.directory.inspect.response",
-          payload: { requestId: msg.requestId, id },
-        });
-        return undefined;
-      });
-    }
-    return undefined;
-  }
-
-  private subscribeToPluginChanges(
-    pluginRuntime: SessionOptions["pluginRuntime"],
-  ): (() => void) | null {
-    if (!pluginRuntime) return null;
-    return pluginRuntime.subscribe((pluginId) => {
-      this.emit({ type: "status", payload: { status: "plugin_catalog_changed", pluginId } });
-    });
   }
 
   private createCompanionSession(input: {
@@ -2343,8 +2154,6 @@ export class Session {
     switch (msg.type) {
       case "fetch_agent_timeline_request":
         return this.handleFetchAgentTimelineRequest(msg, source);
-      case "agent.timeline.append.request":
-        return this.handleAgentTimelineAppendRequest(msg);
       case "agent.timeline.list_prompts.request":
         return this.handleAgentTimelineListPromptsRequest(msg, source);
       case "agent.provider_subagents.list.request":
@@ -7269,22 +7078,6 @@ export class Session {
     }
   }
 
-  private async handleAgentTimelineAppendRequest(
-    msg: Extract<SessionInboundMessage, { type: "agent.timeline.append.request" }>,
-  ): Promise<void> {
-    const pluginId = parsePluginClientId(this.clientId);
-    if (!pluginId) throw new Error("Only plugin sessions can append plugin timeline items");
-    assertPluginTimelineDataSize(msg.item.data);
-    const { seq, epoch } = await this.agentManager.appendTimelineItem(msg.agentId, {
-      ...msg.item,
-      pluginId,
-    });
-    this.emit({
-      type: "agent.timeline.append.response",
-      payload: { requestId: msg.requestId, seq, epoch },
-    });
-  }
-
   private async handleAgentTimelineListPromptsRequest(
     msg: Extract<SessionInboundMessage, { type: "agent.timeline.list_prompts.request" }>,
     source?: object,
@@ -7781,8 +7574,6 @@ export class Session {
     }
     this.unsubscribeProjectMutations?.();
     this.unsubscribeProjectMutations = null;
-    this.unsubscribePluginChanges?.();
-    this.unsubscribePluginChanges = null;
     this.unsubscribeWorkspaceMutations?.();
     this.unsubscribeWorkspaceMutations = null;
     this.workspaceLabelSubscription?.unsubscribe();

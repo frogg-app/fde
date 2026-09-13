@@ -1,16 +1,6 @@
 import type { AgentTimelineItem } from "./agent-sdk-types.js";
-import type { JsonValue } from "@fde/protocol/agent-types";
 
 const TOOL_CALL_CONTENT_MAX_LENGTH = 64 * 1024;
-export const PLUGIN_TIMELINE_DATA_MAX_BYTES = 64 * 1024;
-
-export function assertPluginTimelineDataSize(data: JsonValue): void {
-  const serializedBytes = Buffer.byteLength(JSON.stringify(data), "utf8");
-  if (serializedBytes > PLUGIN_TIMELINE_DATA_MAX_BYTES) {
-    throw new Error(`Plugin timeline item data exceeds ${PLUGIN_TIMELINE_DATA_MAX_BYTES} bytes`);
-  }
-}
-
 function limitFailedShellError(item: AgentTimelineItem): AgentTimelineItem {
   if (
     item.type !== "tool_call" ||

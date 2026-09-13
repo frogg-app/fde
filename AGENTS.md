@@ -40,7 +40,7 @@ Consult the roadmap for their priority and status before starting a planned slic
 - `apps/cli/`: command-line client and daemon launcher.
 - `packages/server/`: daemon, agent lifecycle, providers, WebSocket API, and MCP.
 - `packages/protocol/`, `packages/client/`: shared wire schemas and client library.
-- Other `packages/`: relay, highlighting, plugin SDK, and shared libraries.
+- Other `packages/`: relay, highlighting, and shared libraries.
 - `deploy/`: Docker/Nix packaging. `scripts/dev/`, `scripts/release/`,
   `scripts/ci/`: development, release, and verification helpers.
 

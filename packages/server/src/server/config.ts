@@ -684,8 +684,6 @@ export function resolveConfigFromPersisted(
     terminalProfiles,
     agentProfiles,
     skillSelection: persisted.agents?.skills?.selection,
-    pluginsEnabled: persisted.pluginsEnabled ?? false,
-    plugins: persisted.plugins,
     mcpDebug: env.MCP_DEBUG === "1",
     isDev: resolveFdeNodeEnv(env) === "development",
     agentStoragePath: path.join(fdeHome, "agents"),

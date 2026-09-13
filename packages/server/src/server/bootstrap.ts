@@ -158,7 +158,6 @@ import type {
   AgentProfile,
   AgentSkillSelection,
   FirstAgentContext,
-  PluginSource,
   TerminalProfile,
 } from "@fde/protocol/messages";
 import type {
@@ -218,7 +217,6 @@ import {
   type HubRelationshipRemote,
 } from "./hub/relationship-remote.js";
 import { DaemonExecutions } from "./hub/daemon-executions.js";
-import { PluginService } from "./plugins/index.js";
 import {
   DaemonAutoUpdater,
   DEFAULT_AUTO_UPDATE_CONFIG,
@@ -226,7 +224,6 @@ import {
 import { describeDaemonInstall } from "./session/daemon/daemon-update-install.js";
 import { DaemonUpdateService } from "./session/daemon/daemon-update-service.js";
 import type { DaemonAutoUpdateConfig } from "@fde/protocol/messages";
-import { ManagedPluginSources } from "./plugins/managed-source.js";
 
 const MCP_DEBUG_BATCH_LIMIT = 10;
 const MCP_DEBUG_SECRET = "[redacted]";
@@ -410,8 +407,6 @@ export interface FdeDaemonConfig {
   terminalProfiles?: TerminalProfile[];
   agentProfiles?: AgentProfile[];
   skillSelection?: AgentSkillSelection;
-  pluginsEnabled?: boolean;
-  plugins?: Record<string, PluginSource>;
   staticDir: string;
   mcpDebug: boolean;
   isDev?: boolean;
@@ -616,8 +611,6 @@ function createInitialMutableDaemonConfig(config: FdeDaemonConfig): MutableDaemo
     autoUpdate: resolveAutoUpdate(config),
     enableTerminalAgentHooks: config.enableTerminalAgentHooks ?? false,
     appendSystemPrompt: config.appendSystemPrompt ?? "",
-    pluginsEnabled: config.pluginsEnabled ?? false,
-    plugins: config.plugins ?? {},
     skills: { selection: config.skillSelection },
   };
 
@@ -673,9 +666,6 @@ export async function createFdeDaemon(
   });
   const browserToolsPolicy = new DaemonConfigBrowserToolsPolicy(daemonConfigStore);
   const browserToolsBroker = new BrowserToolsBroker({});
-  const pluginRuntime = new PluginService(logger, daemonConfigStore, daemonVersion, {
-    managedSources: new ManagedPluginSources(config.fdeHome),
-  });
 
   const serverId = getOrCreateServerId(config.fdeHome, { logger });
   const daemonKeyPair = await loadOrCreateDaemonKeyPair(config.fdeHome, logger);
@@ -1980,14 +1970,11 @@ export async function createFdeDaemon(
               browserToolsBroker,
               hubRelationships,
               workspaceSetupRuntime,
-              pluginRuntime,
               orchestrationSkills,
               workspaceLabelService,
               spokenAlerts,
               companion,
             );
-            pluginRuntime.bindFdeSessionHost(wsServer);
-            await pluginRuntime.start();
             wsServer.beginAcceptingConnections();
             {
               const server = wsServer;
@@ -2040,7 +2027,6 @@ export async function createFdeDaemon(
       speechService.start();
       scriptHealthMonitor.start();
     } catch (error) {
-      await pluginRuntime.stopAllPlugins().catch(() => undefined);
       await serviceProxy.stopStandalone().catch(() => undefined);
       await agentProviderRuntime.shutdown().catch(() => undefined);
       if (mainStarted) {
@@ -2053,7 +2039,6 @@ export async function createFdeDaemon(
 
   const stop = async () => {
     autoUpdater?.stop();
-    await pluginRuntime.stopAllPlugins();
     await hubRelationships.stop();
     workspaceReconciliation.dispose();
     scriptHealthMonitor.stop();

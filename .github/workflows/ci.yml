@@ -40,7 +40,7 @@ jobs:
         run: npm run test:scripts
 
       # Workspaces typecheck against each other's dist/ output, so the server stack
-      # (protocol, client, highlight, plugin, relay, server, cli) is built first.
+      # (protocol, client, highlight, relay, server, cli) is built first.
       - name: Build server stack
         run: npm run build:server
 
@@ -63,14 +63,13 @@ jobs:
         # server and CLI dists have to exist too, not just the shared libraries.
         run: npm run build:server
 
-      - name: Test protocol, client, highlight, relay, plugin
+      - name: Test protocol, client, highlight, relay
         run: >-
           npm run test
           --workspace=@fde/protocol
           --workspace=@fde/client
           --workspace=@fde/highlight
           --workspace=@fde/relay
-          --workspace=@fde/plugin
 
       - name: Test cli (unit)
         run: npm run test:unit --workspace=@fde/cli

@@ -6,7 +6,7 @@ permissions on first use. YAML is not a supported configuration format.
 
 New files include editable defaults for the listener, MCP, browser tools, Git
 process limits, merge archiving, terminal hooks, additional system prompt,
-automatic updates, relay, pairing links, plugins, and logging. Optional provider
+automatic updates, relay, pairing links, and logging. Optional provider
 credentials and machine-specific paths are omitted.
 
 To prettify an existing file without changing its settings:
@@ -45,8 +45,6 @@ merging them into the corresponding objects while preserving existing values:
     },
     "relay": { "enabled": false }
   },
-  "pluginsEnabled": false,
-  "plugins": {},
   "log": { "level": "info", "format": "json" }
 }
 ```

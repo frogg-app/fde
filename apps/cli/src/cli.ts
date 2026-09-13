@@ -8,7 +8,6 @@ import {
 } from "./commands/daemon/index.js";
 import { createPermissionsCommand } from "./commands/permissions/index.js";
 import { createProviderCommand } from "./commands/provider/index.js";
-import { createPluginCommand } from "./commands/plugin/index.js";
 import { createProjectCommand } from "./commands/project/index.js";
 import { createScheduleCommand } from "./commands/schedule/index.js";
 import { createScriptCommand } from "./commands/script/index.js";
@@ -68,7 +67,6 @@ export function createCli(): Command {
   groups.push(createScheduleCommand());
   groups.push(createPermissionsCommand());
   groups.push(createProviderCommand());
-  groups.push(createPluginCommand());
   groups.push(createProjectCommand());
   groups.push(createWorkspaceCommand());
   // COMPAT(worktreeCli): legacy command alias added before workspace was the product unit.

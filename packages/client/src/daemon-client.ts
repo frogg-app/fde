@@ -1,7 +1,6 @@
 import type { z } from "zod";
 import { CLIENT_CAPS, type ClientCapability } from "@fde/protocol/client-capabilities";
 import type { AgentAttentionNotificationPayload } from "@fde/protocol/agent-attention-notification";
-import { parsePluginSourceReference } from "@fde/protocol/plugin-source-reference";
 import {
   AgentCreateFailedStatusPayloadSchema,
   AgentCreatedStatusPayloadSchema,
@@ -112,10 +111,6 @@ import type {
   FdeConfigRevision,
   WorkspaceCreateRequest,
   WorkspaceRecoveryState,
-  PluginListItem,
-  PluginLogEntry,
-  PluginSourceStatusItem,
-  PluginSourceUpdateItem,
   AgentSkillSelection,
   AgentSkillsStatus,
   AgentSkillsSaveResult,
@@ -2918,19 +2913,6 @@ export class DaemonClient {
     return payload;
   }
 
-  async appendAgentTimelineItem(
-    agentId: string,
-    item: Omit<import("@fde/protocol/agent-types").PluginTimelineItem, "pluginId">,
-  ): Promise<{ seq: number; epoch: string }> {
-    const requestId = this.createRequestId();
-    const payload = await this.sendCorrelatedSessionRequest({
-      requestId,
-      message: { type: "agent.timeline.append.request", requestId, agentId, item },
-      responseType: "agent.timeline.append.response",
-    });
-    return { seq: payload.seq, epoch: payload.epoch };
-  }
-
   async listAgentTimelinePrompts(
     agentId: string,
     options: { requestId?: string; timeout?: number } = {},
@@ -5038,36 +5020,6 @@ export class DaemonClient {
     });
   }
 
-  async getPluginCatalog(): Promise<Array<{ id: string; clientBundle: string }>> {
-    const requestId = this.createRequestId();
-    const payload = await this.sendCorrelatedSessionRequest({
-      requestId,
-      message: { type: "plugin.catalog.get.request", requestId },
-      responseType: "plugin.catalog.get.response",
-    });
-    return payload.plugins;
-  }
-
-  async listPlugins(): Promise<PluginListItem[]> {
-    const requestId = this.createRequestId();
-    const payload = await this.sendCorrelatedSessionRequest({
-      requestId,
-      message: { type: "plugin.list.request", requestId },
-      responseType: "plugin.list.response",
-    });
-    return payload.plugins;
-  }
-
-  async getPluginLogs(pluginId: string): Promise<PluginLogEntry[]> {
-    const requestId = this.createRequestId();
-    const payload = await this.sendCorrelatedSessionRequest({
-      requestId,
-      message: { type: "plugin.logs.get.request", requestId, pluginId },
-      responseType: "plugin.logs.get.response",
-    });
-    return payload.entries;
-  }
-
   async getAgentSkillsStatus(): Promise<AgentSkillsStatus> {
     const requestId = this.createRequestId();
     return this.sendCorrelatedSessionRequest({
@@ -5121,125 +5073,6 @@ export class DaemonClient {
       },
       responseType: "agent.skills.import_legacy_selection.response",
     });
-  }
-
-  async installDirectoryPlugin(path: string, id?: string): Promise<PluginListItem> {
-    const requestId = this.createRequestId();
-    const payload = await this.sendCorrelatedSessionRequest({
-      requestId,
-      message: { type: "plugin.directory.install.request", requestId, path, ...(id ? { id } : {}) },
-      responseType: "plugin.directory.install.response",
-    });
-    return payload.plugin;
-  }
-
-  async installPluginSource(input: {
-    source: string;
-    id?: string;
-    ref?: string;
-  }): Promise<PluginListItem> {
-    const requestId = this.createRequestId();
-    const reference = parsePluginSourceReference(input.source);
-    const payload = await this.sendCorrelatedSessionRequest({
-      requestId,
-      message: {
-        type: "plugin.source.install.request",
-        requestId,
-        source: reference.source,
-        ...(reference.pluginPath ? { pluginPath: reference.pluginPath } : {}),
-        ...(input.id ? { id: input.id } : {}),
-        ...(input.ref ? { ref: input.ref } : {}),
-      },
-      responseType: "plugin.source.install.response",
-    });
-    return payload.plugin;
-  }
-
-  async getPluginSourceStatus(pluginId?: string): Promise<PluginSourceStatusItem[]> {
-    const requestId = this.createRequestId();
-    const payload = await this.sendCorrelatedSessionRequest({
-      requestId,
-      message: {
-        type: "plugin.source.status.request",
-        requestId,
-        ...(pluginId ? { pluginId } : {}),
-      },
-      responseType: "plugin.source.status.response",
-    });
-    return payload.plugins;
-  }
-
-  async updatePluginSources(pluginId?: string): Promise<PluginSourceUpdateItem[]> {
-    const requestId = this.createRequestId();
-    const payload = await this.sendCorrelatedSessionRequest({
-      requestId,
-      message: {
-        type: "plugin.source.update.request",
-        requestId,
-        ...(pluginId ? { pluginId } : {}),
-      },
-      responseType: "plugin.source.update.response",
-    });
-    return payload.plugins;
-  }
-
-  async inspectDirectoryPlugin(path: string): Promise<{ id: string }> {
-    const requestId = this.createRequestId();
-    return this.sendCorrelatedSessionRequest({
-      requestId,
-      message: { type: "plugin.directory.inspect.request", requestId, path },
-      responseType: "plugin.directory.inspect.response",
-    });
-  }
-
-  async reloadPlugin(pluginId: string): Promise<PluginListItem> {
-    return this.managePlugin("reload", pluginId);
-  }
-
-  async enablePlugin(pluginId: string): Promise<PluginListItem> {
-    return this.managePlugin("enable", pluginId);
-  }
-
-  async disablePlugin(pluginId: string): Promise<PluginListItem> {
-    return this.managePlugin("disable", pluginId);
-  }
-
-  async removePlugin(pluginId: string): Promise<void> {
-    const requestId = this.createRequestId();
-    await this.sendCorrelatedSessionRequest({
-      requestId,
-      message: { type: "plugin.remove.request", requestId, pluginId },
-      responseType: "plugin.remove.response",
-    });
-  }
-
-  private async managePlugin(
-    action: "reload" | "enable" | "disable",
-    pluginId: string,
-  ): Promise<PluginListItem> {
-    const requestId = this.createRequestId();
-    const payload = await this.sendCorrelatedSessionRequest({
-      requestId,
-      message: { type: `plugin.${action}.request`, requestId, pluginId },
-      responseType: `plugin.${action}.response`,
-    });
-    return payload.plugin;
-  }
-
-  async invokePluginRpc(pluginId: string, method: string, input: unknown): Promise<unknown> {
-    const requestId = this.createRequestId();
-    const payload = await this.sendCorrelatedSessionRequest({
-      requestId,
-      message: {
-        type: "plugin.rpc.invoke.request",
-        requestId,
-        pluginId,
-        method,
-        input,
-      },
-      responseType: "plugin.rpc.invoke.response",
-    });
-    return payload.output;
   }
 
   async respondToPermissionAndWait(

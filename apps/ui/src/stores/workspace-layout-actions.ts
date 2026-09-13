@@ -1093,7 +1093,10 @@ export function collectAllPanes(root: SplitNode): SplitPane[] {
 }
 
 function isEphemeralTab(tab: WorkspaceTab): boolean {
-  return tab.target.kind === "commit_diff" || tab.target.kind === "new_tab";
+  // COMPAT(pluginsRemoved): `plugin` tabs can only come from layouts persisted before plugin
+  // support was removed. Remove after 2027-09-13.
+  const kind: string = tab.target.kind;
+  return kind === "commit_diff" || kind === "new_tab" || kind === "plugin";
 }
 
 function stripEphemeralTabsFromNode(node: SplitNodeInternal): SplitNodeInternal {

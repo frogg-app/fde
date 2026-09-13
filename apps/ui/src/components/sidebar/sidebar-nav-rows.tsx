@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import { View, type StyleProp, type ViewStyle } from "react-native";
 import { SidebarHeaderRow } from "@/components/sidebar/sidebar-header-row";
 import { useShortcutKeys } from "@/hooks/use-shortcut-keys";
-import { PluginSidebarItemRow } from "@/plugins/sidebar-items";
 import {
   builtinSidebarNavLabelKey,
   builtinSidebarNavShortcutAction,
@@ -39,15 +38,6 @@ export function SidebarNavRows({ style, onBeforeNavigate }: SidebarNavRowsProps)
   return (
     <View style={style}>
       {visibleItems.map((item) => {
-        if (item.kind === "plugin") {
-          return (
-            <PluginSidebarItemRow
-              key={item.key}
-              group={item.group}
-              onBeforeNavigate={onBeforeNavigate}
-            />
-          );
-        }
         const Row = BUILTIN_ROWS[item.id];
         return <Row key={item.key} onBeforeNavigate={onBeforeNavigate} />;
       })}

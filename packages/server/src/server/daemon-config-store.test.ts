@@ -46,8 +46,6 @@ function reloadableConfig(
     trustLan: daemon.auth?.trustLan ?? true,
     git: reloadableGit(daemon.git),
     app: { baseUrl: "https://pair.frogg.app" },
-    pluginsEnabled: persisted.pluginsEnabled ?? false,
-    plugins: persisted.plugins ?? {},
   };
 }
 
@@ -977,31 +975,6 @@ describe("DaemonConfigStore reload", () => {
     expect(store.reload().appliedPaths).toEqual(["daemon.auth.trustLan"]);
     expect(store.get().trustLan).toBe(true);
     expect(changes).toEqual([false, true]);
-  });
-
-  test("applies the global plugin switch in both directions", () => {
-    const { fdeHome, store, persisted } = createReloadableStore({
-      initialPersisted: { version: 1, pluginsEnabled: false },
-    });
-    const changes: unknown[] = [];
-    store.onFieldChange("pluginsEnabled", (value) => changes.push(value));
-
-    writeConfig(fdeHome, { ...persisted, pluginsEnabled: true });
-    expect(store.reload()).toEqual({
-      appliedPaths: ["pluginsEnabled"],
-      restartRequiredPaths: [],
-      overrideControlledPaths: [],
-    });
-    expect(store.get().pluginsEnabled).toBe(true);
-
-    writeConfig(fdeHome, { ...persisted, pluginsEnabled: false });
-    expect(store.reload()).toEqual({
-      appliedPaths: ["pluginsEnabled"],
-      restartRequiredPaths: [],
-      overrideControlledPaths: [],
-    });
-    expect(store.get().pluginsEnabled).toBe(false);
-    expect(changes).toEqual([true, false]);
   });
 
   test("classifies every leaf when a parent subtree is added", () => {

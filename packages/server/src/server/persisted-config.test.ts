@@ -35,6 +35,18 @@ describe("PersistedConfigSchema daemon auth config", () => {
   });
 });
 
+describe("PersistedConfigSchema removed plugin keys", () => {
+  test("still accepts plugin keys written by older daemons", () => {
+    const parsed = PersistedConfigSchema.parse({
+      version: 1,
+      pluginsEnabled: true,
+      plugins: { review: { source: "directory", path: "/plugins/review" } },
+    });
+
+    expect(parsed.pluginsEnabled).toBe(true);
+  });
+});
+
 describe("PersistedConfigSchema daemon append system prompt config", () => {
   test("accepts optional append system prompt", () => {
     const parsed = PersistedConfigSchema.parse({
@@ -688,7 +700,7 @@ describe("loadPersistedConfig", () => {
         enableTerminalAgentHooks: false,
         autoUpdate: { enabled: false, channel: "stable", checkIntervalHours: 24, quietHours: null },
       });
-      expect(config.pluginsEnabled).toBe(false);
+      expect(config).not.toHaveProperty("pluginsEnabled");
       expect(config.log).toEqual({ level: "info", format: "json" });
       expect(readFileSync(path.join(home, "config.json"), "utf8")).toBe(
         JSON.stringify(config, null, 2) + "\n",

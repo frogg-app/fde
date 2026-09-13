@@ -28,7 +28,6 @@ const NOISE = [
   /(^|\/)\.expo(\/|$)/u,
   /(^|\/)\.dev(\/|$)/u,
   /(^|\/)\.tmp(\/|$)/u,
-  /(^|\/)\.plugin-scaffold-/u,
   /\.tsbuildinfo$/u,
   /\.log$/u,
 ];

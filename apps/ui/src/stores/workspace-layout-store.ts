@@ -59,7 +59,7 @@ import {
 } from "@/stores/workspace-layout-actions";
 import { normalizeWorkspaceTabTarget } from "@/workspace-tabs/identity";
 import { createValidatedPersistStorage } from "@/storage/validated-persist-storage";
-import { panelTargetSupportsHostForWorkspaceKey } from "@/plugins/workspace-panels/locations";
+import { panelSupportsHost } from "@/panels/panel-manifest";
 
 export {
   AMBIENT_PLACEMENT,
@@ -219,22 +219,17 @@ const WorkspaceTabTargetStorageSchema = z.discriminatedUnion("kind", [
   }),
   z.strictObject({ kind: z.literal("setup"), workspaceId: z.string() }),
   z.strictObject({ kind: z.literal("commit_diff"), sha: z.string() }),
-  z.discriminatedUnion("context", [
-    z.strictObject({
-      kind: z.literal("plugin"),
-      pluginId: z.string(),
-      panelId: z.string(),
-      context: z.literal("workspace"),
-    }),
-    z.strictObject({
-      kind: z.literal("plugin"),
-      pluginId: z.string(),
-      panelId: z.string(),
-      context: z.literal("agent"),
-      agentId: z.string(),
-    }),
-  ]),
-]);
+  // COMPAT(pluginsRemoved): plugin panel tabs persisted before plugin support was removed are
+  // still accepted so the rest of the layout survives; hydration strips them. Remove after
+  // 2027-09-13.
+  z.strictObject({
+    kind: z.literal("plugin"),
+    pluginId: z.string(),
+    panelId: z.string(),
+    context: z.enum(["workspace", "agent"]),
+    agentId: z.string().optional(),
+  }),
+]) as unknown as z.ZodType<WorkspaceTabTarget>;
 const WorkspaceTabStorageSchema = z.strictObject({
   tabId: z.string(),
   target: WorkspaceTabTargetStorageSchema,
@@ -662,11 +657,7 @@ function getOpenTabPlacement(
   );
   const requestedPlacement = placement ?? AMBIENT_PLACEMENT;
   const supportsPane = (pane: SplitPane) =>
-    panelTargetSupportsHostForWorkspaceKey(
-      workspaceKey,
-      target,
-      pane.id === explorerSidebarPaneId ? "explorer" : "main",
-    );
+    panelSupportsHost(target.kind, pane.id === explorerSidebarPaneId ? "explorer" : "main");
   const requestedPaneId =
     requestedPlacement.mode === "pane" || requestedPlacement.mode === "prefer"
       ? requestedPlacement.paneId
@@ -1305,14 +1296,7 @@ export function createWorkspaceLayoutStore(
           const movingTab = collectAllTabs(currentLayout.root).find(
             (tab) => tab.tabId === normalizedTabId,
           );
-          if (
-            !movingTab ||
-            !panelTargetSupportsHostForWorkspaceKey(
-              normalizedWorkspaceKey,
-              movingTab.target,
-              "main",
-            )
-          ) {
+          if (!movingTab || !panelSupportsHost(movingTab.target.kind, "main")) {
             return null;
           }
 
@@ -1394,14 +1378,7 @@ export function createWorkspaceLayoutStore(
             );
             const destinationHost =
               normalizedToPaneId === explorerSidebarPaneId ? "explorer" : "main";
-            if (
-              !movingTab ||
-              !panelTargetSupportsHostForWorkspaceKey(
-                normalizedWorkspaceKey,
-                movingTab.target,
-                destinationHost,
-              )
-            ) {
+            if (!movingTab || !panelSupportsHost(movingTab.target.kind, destinationHost)) {
               return state;
             }
             const nextLayout = moveTabToPaneInLayout({

@@ -29,7 +29,6 @@ test("noise patterns cover generated output and local service state", () => {
     "apps/ui/node_modules/react/index.js",
     "packages/relay/.wrangler/state/v3/cache/metadata.sqlite-shm",
     "apps/cli/dist/index.js",
-    "apps/cli/.plugin-scaffold-1iJvZE/index.ts",
     "packages/server/tsconfig.tsbuildinfo",
   ]) {
     assert.equal(isNoise(file), true, file);

@@ -724,9 +724,6 @@ function mergeTimelineIdentityBoundary(
   if (olderIdentity === null || olderIdentity !== streamTimelineItemIdentity(currentFirst)) {
     return null;
   }
-  if (olderLast.kind === "plugin" && currentFirst.kind === "plugin") {
-    return [...olderTail.slice(0, -1), currentFirst, ...currentTail.slice(1)];
-  }
   if (!isAgentToolCallItem(olderLast) || !isAgentToolCallItem(currentFirst)) return null;
   return [
     ...olderTail.slice(0, -1),

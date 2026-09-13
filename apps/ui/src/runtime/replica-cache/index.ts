@@ -5,7 +5,6 @@ import {
   WorkspaceGitHubRuntimePayloadSchema,
 } from "@fde/protocol/messages";
 import { AgentProviderSchema } from "@fde/protocol/provider-manifest";
-import type { PluginTimelineData } from "@fde/plugin";
 import {
   normalizeProjectDescriptor,
   normalizeWorkspaceDescriptor,
@@ -38,17 +37,6 @@ const TimelinePositionSchema = z.strictObject({
   epoch: z.string(),
   seq: z.number().int().nonnegative(),
 });
-const PluginTimelineDataSchema: z.ZodType<PluginTimelineData> = z.lazy(() =>
-  z.union([
-    z.null(),
-    z.boolean(),
-    z.number(),
-    z.string(),
-    z.array(PluginTimelineDataSchema),
-    z.record(z.string(), PluginTimelineDataSchema),
-  ]),
-);
-
 const TimelineItemBaseShape = {
   id: z.string(),
   timelineCursor: TimelinePositionSchema.optional(),
@@ -120,15 +108,6 @@ const StoredTimelineItemSchema = z.discriminatedUnion("kind", [
     kind: z.literal("tool_call"),
     provider: AgentProviderSchema,
     item: AgentTimelineItemPayloadSchema.refine((item) => item.type === "tool_call"),
-  }),
-  z.strictObject({
-    ...TimelineItemBaseShape,
-    kind: z.literal("plugin"),
-    pluginId: z.string(),
-    pluginItemId: z.string(),
-    itemKind: z.string(),
-    version: z.number().int().positive(),
-    data: PluginTimelineDataSchema,
   }),
 ]);
 
@@ -445,40 +424,10 @@ function serializeTimelineItem(item: StreamItem): StoredTimelineItem | null {
         provider: item.payload.data.provider,
         item: serializeAgentToolCall(item.payload.data),
       };
-    case "plugin":
-      return {
-        ...base,
-        kind: item.kind,
-        pluginId: item.pluginId,
-        pluginItemId: item.pluginItemId,
-        itemKind: item.itemKind,
-        version: item.version,
-        data: item.data,
-      };
   }
 }
 
 function deserializeTimelineItem(item: StoredTimelineItem): StreamItem {
-  if (item.kind === "plugin") {
-    return {
-      id: item.id,
-      ...(item.timelineCursor ? { timelineCursor: item.timelineCursor } : {}),
-      ...(item.turnId ? { turnId: item.turnId } : {}),
-      timestamp: new Date(item.timestamp),
-      kind: item.kind,
-      pluginId: item.pluginId,
-      pluginItemId: item.pluginItemId,
-      itemKind: item.itemKind,
-      version: item.version,
-      data: item.data,
-    };
-  }
-  return deserializeBuiltinTimelineItem(item);
-}
-
-function deserializeBuiltinTimelineItem(
-  item: Exclude<StoredTimelineItem, { kind: "plugin" }>,
-): StreamItem {
   const base = {
     id: item.id,
     ...(item.timelineCursor ? { timelineCursor: item.timelineCursor } : {}),

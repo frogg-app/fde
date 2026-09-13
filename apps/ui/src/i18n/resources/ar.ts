@@ -1,5 +1,4 @@
 import { en, type TranslationResources } from "./en";
-import { pluginSettings } from "./plugin-settings";
 
 export const ar: TranslationResources = {
   directoryBrowser: {
@@ -2253,10 +2252,8 @@ export const ar: TranslationResources = {
       providers: "مقدمي الخدمات",
       usage: "الاستخدام",
       terminals: "Terminals",
-      plugins: "Plugins",
       host: "نظرة عامة",
     },
-    plugins: pluginSettings.ar,
     metadataGeneration: {
       title: "إنشاء البيانات الوصفية",
       description:

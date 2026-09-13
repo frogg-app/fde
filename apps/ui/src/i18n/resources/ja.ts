@@ -1,5 +1,4 @@
 import { en, type TranslationResources } from "./en";
-import { pluginSettings } from "./plugin-settings";
 
 export const ja: TranslationResources = {
   directoryBrowser: {
@@ -2284,10 +2283,8 @@ export const ja: TranslationResources = {
       providers: "プロバイダー",
       usage: "使用状況",
       terminals: "ターミナル",
-      plugins: "プラグイン",
       host: "概要",
     },
-    plugins: pluginSettings.ja,
     metadataGeneration: {
       title: "メタデータ生成",
       description:

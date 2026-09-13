@@ -129,7 +129,7 @@ session model already attenuates rather than widens.
 | Permission          | Authority                                                                  |
 | ------------------- | -------------------------------------------------------------------------- |
 | `daemon.read`       | Daemon status, diagnostics, configuration, and provider information        |
-| `daemon.manage`     | Restart, update, configuration changes, providers, skills, and plugins     |
+| `daemon.manage`     | Restart, update, configuration changes, providers, and skills              |
 | `tunnel.manage`     | Relay, Hub, service tunnel, and public endpoint relationships              |
 | `access.manage`     | Pairing invitations, principals, credentials, grants, and revocation       |
 | `workspace.read`    | Projects, workspaces, agents, timelines, files, diffs, and terminal output |

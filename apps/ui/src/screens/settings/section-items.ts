@@ -18,7 +18,6 @@ import {
   Code2,
   Smartphone,
   Sparkles,
-  Blocks,
   PanelsTopLeft,
 } from "lucide-react-native";
 import type { HostSectionSlug, SettingsSectionSlug } from "@/utils/host-routes";
@@ -87,5 +86,4 @@ export const HOST_SECTION_ITEMS: HostSectionItem[] = [
   { id: "providers", labelKey: "settings.hostSections.providers", icon: Boxes },
   { id: "usage", labelKey: "settings.hostSections.usage", icon: Gauge },
   { id: "terminals", labelKey: "settings.hostSections.terminals", icon: SquareTerminal },
-  { id: "plugins", labelKey: "settings.hostSections.plugins", icon: Blocks },
 ];

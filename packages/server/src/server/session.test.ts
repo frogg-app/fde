@@ -323,7 +323,6 @@ interface SessionForTestOptions {
   messages?: unknown[];
   targetedMessages?: Array<{ source: object; message: SessionOutboundMessage }>;
   binaryMessages?: Uint8Array[];
-  pluginRuntime?: SessionOptions["pluginRuntime"];
   orchestrationSkills?: SessionOptions["orchestrationSkills"];
   workspaceLabelService?: WorkspaceLabelService;
 }
@@ -412,7 +411,6 @@ function createSessionForTest(options: SessionForTestOptions = {}): Session {
       })),
       onChange: vi.fn(() => () => {}),
     }),
-    pluginRuntime: options.pluginRuntime,
     orchestrationSkills: options.orchestrationSkills,
     stt: options.stt ?? null,
     tts: null,
@@ -470,89 +468,6 @@ test("routes host-scoped agent skills requests through the daemon owner", async 
     type: "agent.skills.save_selection.response",
     payload: { requestId: "save-skills", ...status, confirmationRequired: null },
   });
-});
-
-test("routes plugin requests and releases its owned catalog subscription on cleanup", async () => {
-  const messages: SessionOutboundMessage[] = [];
-  const listeners = new Set<(pluginId: string) => void>();
-  const releasePluginSubscription = vi.fn((listener: (pluginId: string) => void) => {
-    listeners.delete(listener);
-  });
-  const plugin = {
-    id: "example",
-    path: "/plugins/example",
-    enabled: true,
-    status: "running" as const,
-  };
-  const pluginRuntime: NonNullable<SessionOptions["pluginRuntime"]> = {
-    listPlugins: () => [plugin],
-    getLogs: () => [
-      {
-        sequence: 1,
-        timestamp: "2026-08-16T12:00:00.000Z",
-        stream: "stdout",
-        message: "ready",
-      },
-    ],
-    installDirectory: async () => plugin,
-    inspectDirectory: async () => ({ id: "example" }),
-    reloadPlugin: async () => plugin,
-    enablePlugin: async () => plugin,
-    disablePlugin: async () => ({ ...plugin, enabled: false, status: "disabled" }),
-    removePlugin: async () => undefined,
-    subscribe: (listener) => {
-      listeners.add(listener);
-      return () => releasePluginSubscription(listener);
-    },
-    catalog: () => [{ id: "example", clientBundle: "bundle" }],
-    invokePluginRpc: async () => ({ ok: true }),
-  };
-  const session = createSessionForTest({ messages, pluginRuntime });
-
-  await session.handleMessage({ type: "plugin.list.request", requestId: "list" });
-  await session.handleMessage({
-    type: "plugin.logs.get.request",
-    requestId: "logs",
-    pluginId: "example",
-  });
-  await session.handleMessage({
-    type: "plugin.directory.install.request",
-    requestId: "install",
-    path: "/plugins/example",
-  });
-  await session.handleMessage({
-    type: "plugin.reload.request",
-    requestId: "reload",
-    pluginId: "example",
-  });
-  await session.handleMessage({
-    type: "plugin.disable.request",
-    requestId: "disable",
-    pluginId: "example",
-  });
-  await session.handleMessage({
-    type: "plugin.remove.request",
-    requestId: "remove",
-    pluginId: "example",
-  });
-  for (const listener of listeners) listener("example");
-
-  expect(messages.map((message) => message.type)).toEqual([
-    "plugin.list.response",
-    "plugin.logs.get.response",
-    "plugin.directory.install.response",
-    "plugin.reload.response",
-    "plugin.disable.response",
-    "plugin.remove.response",
-    "status",
-  ]);
-  expect(messages.at(-1)).toEqual({
-    type: "status",
-    payload: { status: "plugin_catalog_changed", pluginId: "example" },
-  });
-  await session.cleanup();
-  expect(listeners.size).toBe(0);
-  expect(releasePluginSubscription).toHaveBeenCalledOnce();
 });
 
 describe("workspace label subscriptions", () => {
@@ -1375,100 +1290,6 @@ function createStoredAgentRecord(
     archivedAt: overrides.archivedAt ?? null,
   };
 }
-
-describe("plugin timeline append RPC", () => {
-  test("stamps the plugin identity and returns the timeline position", async () => {
-    const messages: SessionOutboundMessage[] = [];
-    const appendTimelineItem = vi.fn().mockResolvedValue({ seq: 7, epoch: "epoch-1" });
-    const session = createSessionForTest({
-      clientId: "plugin:review",
-      messages,
-      agentManager: { appendTimelineItem },
-    });
-
-    await session.handleMessage({
-      type: "agent.timeline.append.request",
-      requestId: "append-1",
-      agentId: "agent-1",
-      item: {
-        type: "plugin",
-        id: "review-1",
-        kind: "review",
-        version: 1,
-        data: { status: "running" },
-      },
-    });
-
-    expect(appendTimelineItem).toHaveBeenCalledWith("agent-1", {
-      type: "plugin",
-      id: "review-1",
-      pluginId: "review",
-      kind: "review",
-      version: 1,
-      data: { status: "running" },
-    });
-    expect(messages).toContainEqual({
-      type: "agent.timeline.append.response",
-      payload: { requestId: "append-1", seq: 7, epoch: "epoch-1" },
-    });
-  });
-
-  test("rejects append requests from non-plugin sessions", async () => {
-    const messages: SessionOutboundMessage[] = [];
-    const appendTimelineItem = vi.fn();
-    const session = createSessionForTest({ messages, agentManager: { appendTimelineItem } });
-
-    await session.handleMessage({
-      type: "agent.timeline.append.request",
-      requestId: "append-1",
-      agentId: "agent-1",
-      item: { type: "plugin", id: "review-1", kind: "review", version: 1, data: {} },
-    });
-
-    expect(appendTimelineItem).not.toHaveBeenCalled();
-    expect(messages).toContainEqual(
-      expect.objectContaining({
-        type: "rpc_error",
-        payload: expect.objectContaining({ requestId: "append-1", code: "handler_error" }),
-      }),
-    );
-  });
-
-  test("rejects plugin data larger than the append budget", async () => {
-    const messages: SessionOutboundMessage[] = [];
-    const appendTimelineItem = vi.fn();
-    const session = createSessionForTest({
-      clientId: "plugin:review",
-      messages,
-      agentManager: { appendTimelineItem },
-    });
-
-    await session.handleMessage({
-      type: "agent.timeline.append.request",
-      requestId: "append-large",
-      agentId: "agent-1",
-      item: {
-        type: "plugin",
-        id: "review-1",
-        kind: "review",
-        version: 1,
-        data: { text: "x".repeat(64 * 1024) },
-      },
-    });
-
-    expect(appendTimelineItem).not.toHaveBeenCalled();
-    expect(messages).toContainEqual(
-      expect.objectContaining({
-        type: "rpc_error",
-        payload: expect.objectContaining({
-          requestId: "append-large",
-          code: "handler_error",
-          error: expect.stringContaining("65536 bytes"),
-        }),
-      }),
-    );
-  });
-});
 
 describe("agent detach RPC", () => {
   test("detaches a stored subagent and emits the updated standalone agent", async () => {

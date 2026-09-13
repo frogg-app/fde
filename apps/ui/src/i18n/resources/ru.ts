@@ -1,5 +1,4 @@
 import { en, type TranslationResources } from "./en";
-import { pluginSettings } from "./plugin-settings";
 
 export const ru: TranslationResources = {
   directoryBrowser: {
@@ -2294,10 +2293,8 @@ export const ru: TranslationResources = {
       providers: "Провайдеры",
       usage: "Использование",
       terminals: "Терминалы",
-      plugins: "Плагины",
       host: "Обзор",
     },
-    plugins: pluginSettings.ru,
     metadataGeneration: {
       title: "Генерация метаданных",
       description:

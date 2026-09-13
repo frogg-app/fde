@@ -63,9 +63,6 @@ $FDE_HOME/
 ├── runtime/
 │   └── managed-processes/
 │       └── {recordId}.json              # Helper processes owned by FDE; reconciled on daemon bootstrap
-├── plugins/
-│   ├── sources.json                      # Git origin, ref, commit, and managed checkout ownership
-│   └── {pluginId}/{version}/checkout/    # Source checkout for one installed Git commit
 └── push-tokens.json                     # Expo push notification tokens
 ```
 
@@ -238,8 +235,6 @@ snapshot so a mixed edit can apply its live subset and still name the paths that
       providers: [{ provider, model?, thinkingOptionId? }]
     }
   },
-  pluginsEnabled: boolean,
-  plugins: Record<pluginId, { source: "directory", path: string, enabled?: boolean }>,
   features: {
     dictation: { enabled, stt: { provider, model, language, confidenceThreshold } },
     voiceMode: { enabled, llm, stt: { provider, model, language }, turnDetection, tts: { provider, model, voice, speakerId, speed } }
@@ -254,11 +249,8 @@ snapshot so a mixed edit can apply its live subset and still name the paths that
 
 All fields are optional with sensible defaults.
 
-Git-managed plugins still appear as directory sources in `config.json`. This keeps the plugin
-runtime and protocol config compatible with directory-only clients. `plugins/sources.json` owns the
-Git-specific origin, tracking ref, installed commit, repository subdirectory, and checkout root.
-FDE writes it atomically. An update creates and validates a new version directory before changing
-the configured directory path; successful activation removes the old version.
+Plugin support was removed. A `config.json` that still carries `pluginsEnabled` or `plugins`, and
+any `plugins/` directory left under `$FDE_HOME`, are accepted and ignored; FDE does not delete them.
 
 ### Profile lists
 

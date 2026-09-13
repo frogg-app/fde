@@ -19,11 +19,11 @@ import type { SidebarStateBucket } from "@/utils/sidebar-agent-state";
 import { COMPOSER_PILL_CLEARANCE, composerPillStyles } from "./pill-styles";
 
 /**
- * The strip of pills where a pane's ambient trackers and plugin actions live.
+ * The strip of pills where a pane's ambient trackers live.
  *
- * Trackers expose a count and a detail panel; plugin actions expose their own icon and text.
+ * Trackers expose a count and a detail panel.
  * Trackers used to be stacked cards, so every one of them pushed the composer further down the
- * pane. Built-in and contributed pills share this one-line rail and its deterministic geometry
+ * pane. All pills share this one-line rail and its deterministic geometry
  * on every platform.
  *
  * The bar floats over the transcript with no background, so content remains visible underneath.

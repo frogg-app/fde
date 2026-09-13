@@ -19,14 +19,11 @@ type NewWorkspaceDaemonClient = Pick<
   | "fetchWorkspaces"
   | "getFdeWorktreeList"
   | "getDaemonConfig"
-  | "installDirectoryPlugin"
   | "inspectWorkspaceRecovery"
   | "listProjects"
   | "on"
   | "patchDaemonConfig"
   | "removeProject"
-  | "removePlugin"
-  | "reloadPlugin"
   | "setWorkspaceTitle"
 >;
 

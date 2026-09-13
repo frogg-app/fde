@@ -46,7 +46,7 @@ and state when working in parallel. See [development](docs/development.md),
 | `apps/cli`                             | CLI and daemon launcher                           |
 | `packages/server`                      | Node daemon, providers, agents, execution and API |
 | `packages/client`, `packages/protocol` | Client library and shared wire contract           |
-| `packages/branding`, `packages/plugin` | Product identity and plugin SDK                   |
+| `packages/branding`                    | Product identity                                  |
 | `deploy`, `scripts`, `docs`            | Distribution, tooling and engineering knowledge   |
 
 The retired native shell and Rust backend remain inactive references, excluded

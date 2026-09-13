@@ -97,8 +97,7 @@ facade. App and CLI may import the low-level driver from
 code imports from `@fde/client`.
 
 `FdeApi` is the capability-only boundary over workspaces, agents, providers, and config.
-`FdeClient` adds connection lifecycle. App plugin surfaces borrow an API over their selected
-host's client; plugin subprocesses use the same facade over a host-owned IPC transport.
+`FdeClient` adds connection lifecycle.
 
 ### `apps/ui` — Mobile + web client (Expo)
 

@@ -49,8 +49,6 @@ interface TestFdeDaemonOptions {
   trustLan?: FdeDaemonConfig["trustLan"];
   agentProfiles?: AgentProfile[];
   autoArchiveAfterMerge?: boolean;
-  pluginsEnabled?: FdeDaemonConfig["pluginsEnabled"];
-  plugins?: FdeDaemonConfig["plugins"];
 }
 
 export interface TestFdeDaemon {
@@ -202,8 +200,6 @@ async function prepareTestDaemonConfig(
     downloadTokenTtlMs: options.downloadTokenTtlMs,
     agentProfiles: options.agentProfiles,
     autoArchiveAfterMerge: options.autoArchiveAfterMerge,
-    pluginsEnabled: options.pluginsEnabled,
-    plugins: options.plugins,
   };
   return { config, fdeHomeRoot, fdeHome, staticDir };
 }

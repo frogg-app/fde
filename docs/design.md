@@ -293,8 +293,7 @@ New status pills use `<StatusBadge>`. Identity, shortcut, and interactive link b
 
 ## Sidebar navigation
 
-The default top-level order is Home, Search, History, followed by Companion and
-available plugin entries. Appearance settings can customize navigation visibility
+The default top-level order is Home, Search, History, followed by Companion. Appearance settings can customize navigation visibility
 and order. Workspace creation belongs to each project; there is no global New
 workspace row. The footer contains two stacked, full-width labeled rows: Add project
 and Settings. Host management is reached through Settings, not an unlabeled footer

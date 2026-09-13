@@ -1,5 +1,3 @@
-import type { PluginSidebarGroup } from "@/plugins/sidebar-groups";
-
 export const BUILTIN_SIDEBAR_NAV_IDS = ["home", "search", "history", "companion"] as const;
 export type BuiltinSidebarNavId = (typeof BUILTIN_SIDEBAR_NAV_IDS)[number];
 
@@ -16,14 +14,7 @@ export interface BuiltinSidebarNavItem {
   visible: boolean;
 }
 
-export interface PluginSidebarNavItem {
-  kind: "plugin";
-  key: string;
-  group: PluginSidebarGroup;
-  visible: boolean;
-}
-
-export type SidebarNavItem = BuiltinSidebarNavItem | PluginSidebarNavItem;
+export type SidebarNavItem = BuiltinSidebarNavItem;
 
 const BUILTIN_LABEL_KEYS: Record<BuiltinSidebarNavId, string> = {
   home: "sidebar.actions.home",
@@ -52,18 +43,11 @@ export function builtinSidebarNavShortcutAction(id: BuiltinSidebarNavId): string
   return BUILTIN_SHORTCUT_ACTIONS[id];
 }
 
-export function pluginSidebarNavKey(
-  group: Pick<PluginSidebarGroup, "pluginId" | "contributionId">,
-): string {
-  return `plugin:${group.pluginId}:${group.contributionId}`;
-}
-
 function isBuiltinSidebarNavId(key: string): key is BuiltinSidebarNavId {
   return (BUILTIN_SIDEBAR_NAV_IDS as readonly string[]).includes(key);
 }
 
 export function resolveSidebarNavItems(input: {
-  pluginGroups: readonly PluginSidebarGroup[];
   preferences: readonly SidebarNavPreference[];
 }): SidebarNavItem[] {
   const legacyKeys = input.preferences
@@ -75,7 +59,7 @@ export function resolveSidebarNavItems(input: {
     legacyKeys === "new-workspace,companion,history,search";
   let preferences = input.preferences;
   if (hasLegacyDefaultOrder) {
-    // Reorder only the old builtin slots, preserving plugin placement and visibility.
+    // Reorder only the old builtin slots, preserving the placement of other stored keys.
     const builtinPreferences = input.preferences.filter(({ key }) => isBuiltinSidebarNavId(key));
     builtinPreferences.sort(
       (a, b) =>
@@ -87,9 +71,6 @@ export function resolveSidebarNavItems(input: {
       isBuiltinSidebarNavId(preference.key) ? builtinPreferences[builtinIndex++] : preference,
     );
   }
-  const groupsByKey = new Map(
-    input.pluginGroups.map((group) => [pluginSidebarNavKey(group), group] as const),
-  );
   const items: SidebarNavItem[] = [];
   const placed = new Set<string>();
 
@@ -101,16 +82,7 @@ export function resolveSidebarNavItems(input: {
 
   for (const preference of preferences) {
     if (placed.has(preference.key)) continue;
-    const group = groupsByKey.get(preference.key);
-    if (group) {
-      placed.add(preference.key);
-      items.push({
-        kind: "plugin",
-        key: preference.key,
-        group,
-        visible: preference.visible,
-      });
-    } else if (isBuiltinSidebarNavId(preference.key)) {
+    if (isBuiltinSidebarNavId(preference.key)) {
       placed.add(preference.key);
       items.push({
         kind: "builtin",
@@ -125,23 +97,19 @@ export function resolveSidebarNavItems(input: {
     if (placed.has(id)) continue;
     items.push({ kind: "builtin", key: id, id, visible: true });
   }
-  for (const [key, group] of groupsByKey) {
-    if (placed.has(key)) continue;
-    items.push({ kind: "plugin", key, group, visible: true });
-  }
   return items;
 }
 
 /**
- * Resolved items lead; entries for keys that are not currently available (a plugin that is
- * disconnected right now) follow so an unrelated edit does not erase them.
+ * Resolved items lead; entries for keys that are not currently available (such as items from
+ * removed plugin support) follow so an unrelated edit does not erase them.
  */
 function toPreferences(
   items: readonly SidebarNavItem[],
   previous: readonly SidebarNavPreference[],
 ): SidebarNavPreference[] {
   const remaining = items.map(({ key, visible }) => ({ key, visible }));
-  const availableKeys = new Set(remaining.map((preference) => preference.key));
+  const availableKeys = new Set<string>(remaining.map((preference) => preference.key));
   const preferences: SidebarNavPreference[] = [];
   const seenPrevious = new Set<string>();
 

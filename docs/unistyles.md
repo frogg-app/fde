@@ -335,14 +335,13 @@ If we ever need to avoid the transition entirely, store at least the theme prefe
 
 ## Runtime Theme Patching For User Preferences
 
-Appearance settings (theme, UI/mono font family, font sizes, syntax-highlight theme) are owned by `apps/ui/src/appearance`. Its provider subscribes once and synchronizes Unistyles when settings or plugin contributions change. `applyAppearance` patches every key in `REGISTERED_THEMES`, returning `{ ...theme, fontFamily, fontSize, lineHeight, colors.syntax }`.
+Appearance settings (theme, UI/mono font family, font sizes, syntax-highlight theme) are owned by `apps/ui/src/appearance`. Its provider subscribes once and synchronizes Unistyles when settings change. `applyAppearance` patches every key in `REGISTERED_THEMES`, returning `{ ...theme, fontFamily, fontSize, lineHeight, colors.syntax }`.
 
 This works without `useUnistyles()` because every consumer already reads these tokens through `StyleSheet.create((theme) => …)` (or the `withUnistyles`/`uniProps` path for the markdown renderer), so patching the theme repaints tracked views through the native ShadowRegistry with no React re-render.
 
 Gotchas:
 
 - **Patch all themes, not just the active one.** The active theme can change and adaptive mode can flip light/dark; patching every key keeps the active key current and makes ordering vs `setTheme`/`setAdaptiveThemes` irrelevant. The effect depends on the settings values (not on `theme`), so it cannot loop.
-- **The reserved plugin keys are the exception to that ordering.** A plugin-contributed theme is rebuilt from its palette, which discards the appearance patch, so the appearance provider writes the matching light or dark slot before applying font and syntax preferences. See [plugins.md](plugins.md).
 - **Narrow the discriminated union before spreading.** `updateTheme`'s updater returns the theme union; spreading the union widens `colorScheme` to `"light" | "dark"`, which is assignable to neither concrete member. Branch on `t.colorScheme` so each branch spreads a single narrowed theme type (no `as`).
 - **`lineHeight.diff` is the code/diff line-height axis** — it is coupled to the code-font-size control (≈ `codeFontSize * 1.5`). Do NOT use it for prose. Markdown body line-height scales with content size (`Math.round(theme.fontSize.content * 1.4)`); routing prose through `lineHeight.diff` clips text at small code sizes.
 - **High-churn draft values** (live-while-typing in the appearance preview) bypass the theme: apply them as inline styles marked with `inlineUnistylesStyle` so per-keystroke values don't grow the `#unistyles-web` CSS registry.

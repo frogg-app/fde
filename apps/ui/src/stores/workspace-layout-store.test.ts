@@ -1713,7 +1713,7 @@ describe("workspace-layout-store actions", () => {
     expect(findPaneById(layout.root, paneId)?.focusedTabId).toBe(tabId);
   });
 
-  it("restores workspace and agent plugin panel targets", async () => {
+  it("drops plugin panel tabs persisted before plugin support was removed", async () => {
     const workspaceTarget = {
       kind: "plugin",
       pluginId: "review",
@@ -1727,6 +1727,7 @@ describe("workspace-layout-store actions", () => {
       context: "agent",
       agentId: "agent-1",
     };
+    const fileTarget = { kind: "file", path: "/repo/a.ts" };
     await AsyncStorage.setItem(
       "workspace-layout-state",
       JSON.stringify({
@@ -1737,11 +1738,12 @@ describe("workspace-layout-store actions", () => {
                 kind: "pane",
                 pane: {
                   id: "main",
-                  tabIds: ["workspace-panel", "agent-panel"],
+                  tabIds: ["workspace-panel", "agent-panel", "file-tab"],
                   focusedTabId: "agent-panel",
                   tabs: [
                     { tabId: "workspace-panel", target: workspaceTarget, createdAt: 1 },
                     { tabId: "agent-panel", target: agentTarget, createdAt: 2 },
+                    { tabId: "file-tab", target: fileTarget, createdAt: 3 },
                   ],
                 },
               },
@@ -1759,8 +1761,7 @@ describe("workspace-layout-store actions", () => {
 
     const layout = restored.getState().layoutByWorkspace.workspace;
     expect(layout && collectContentTabs(layout.root).map((tab) => tab.target)).toEqual([
-      workspaceTarget,
-      agentTarget,
+      fileTarget,
     ]);
   });
 
