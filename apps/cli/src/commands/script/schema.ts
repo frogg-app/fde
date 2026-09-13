@@ -1,4 +1,4 @@
-import type { WorkspaceScriptPayload } from "@fde/protocol/messages";
+import type { WorkspaceScriptPayload } from "@frogg/protocol/messages";
 import type { OutputSchema } from "../../output/index.js";
 
 export type WorkspaceScriptRow = WorkspaceScriptPayload;

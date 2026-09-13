@@ -1,12 +1,12 @@
 import { appendFile, mkdir, rm, writeFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 
-import { FileTransferOpcode, type FileTransferFrame } from "@fde/protocol/binary-frames/index";
-import { getErrorMessage } from "@fde/protocol/error-utils";
+import { FileTransferOpcode, type FileTransferFrame } from "@frogg/protocol/binary-frames/index";
+import { getErrorMessage } from "@frogg/protocol/error-utils";
 import type { FileUploadRequest, FileUploadResponse } from "../messages.js";
 
 interface FileUploadStoreOptions {
-  fdeHome: string;
+  froggHome: string;
   staleUploadTimeoutMs?: number;
 }
 
@@ -27,12 +27,12 @@ interface PendingUpload {
 export class FileUploadStore {
   private static readonly defaultStaleUploadTimeoutMs = 10 * 60 * 1000;
 
-  private readonly fdeHome: string;
+  private readonly froggHome: string;
   private readonly staleUploadTimeoutMs: number;
   private readonly pending = new Map<string, PendingUpload>();
 
   constructor(options: FileUploadStoreOptions) {
-    this.fdeHome = options.fdeHome;
+    this.froggHome = options.froggHome;
     this.staleUploadTimeoutMs =
       options.staleUploadTimeoutMs ?? FileUploadStore.defaultStaleUploadTimeoutMs;
   }
@@ -47,7 +47,7 @@ export class FileUploadStore {
     const fileName = sanitizeFileName(request.fileName);
     const attempt = existingUpload ? existingUpload.attempt + 1 : 1;
     const id = buildUploadId(request.requestId, attempt);
-    const uploadDir = join(this.fdeHome, "uploads", id);
+    const uploadDir = join(this.froggHome, "uploads", id);
     const upload: PendingUpload = {
       requestId: request.requestId,
       id,
@@ -104,7 +104,7 @@ export class FileUploadStore {
   }
 
   private async startWriting(upload: PendingUpload): Promise<void> {
-    await mkdir(join(this.fdeHome, "uploads", upload.id), { recursive: true });
+    await mkdir(join(this.froggHome, "uploads", upload.id), { recursive: true });
     await writeFile(upload.path, new Uint8Array());
     upload.started = true;
   }
@@ -177,7 +177,7 @@ export class FileUploadStore {
   }
 
   private async removeUploadDirectory(upload: PendingUpload): Promise<void> {
-    await rm(join(this.fdeHome, "uploads", upload.id), { recursive: true, force: true }).catch(
+    await rm(join(this.froggHome, "uploads", upload.id), { recursive: true, force: true }).catch(
       () => undefined,
     );
   }

@@ -1,7 +1,7 @@
-// CLI exports for @fde/server
-export { createFdeDaemon, type FdeDaemon, type FdeDaemonConfig } from "./bootstrap.js";
+// CLI exports for @frogg/server
+export { createFroggDaemon, type FroggDaemon, type FroggDaemonConfig } from "./bootstrap.js";
 export { loadConfig, type CliConfigOverrides } from "./config.js";
-export { resolveConfiguredHome, resolveFdeHome } from "./fde-home.js";
+export { resolveConfiguredHome, resolveFroggHome } from "./frogg-home.js";
 export { getOrCreateServerId } from "./server-id.js";
 export { createRootLogger, type LogLevel, type LogFormat } from "./logger.js";
 export {
@@ -25,21 +25,21 @@ export {
   decodeOfferFragmentPayload,
   parseConnectionOfferFromUrl,
   type ConnectionOffer,
-} from "@fde/protocol/connection-offer";
-export { buildRelayWebSocketUrl } from "@fde/protocol/daemon-endpoints";
+} from "@frogg/protocol/connection-offer";
+export { buildRelayWebSocketUrl } from "@frogg/protocol/daemon-endpoints";
 export {
   buildDaemonWebSocketUrl,
   deriveLabelFromEndpoint,
   normalizeHostPort,
   parseConnectionUri,
   shouldUseTlsForDefaultHostedRelay,
-} from "@fde/protocol/daemon-endpoints";
-export { PARENT_AGENT_ID_LABEL } from "@fde/protocol/agent-labels";
+} from "@frogg/protocol/daemon-endpoints";
+export { PARENT_AGENT_ID_LABEL } from "@frogg/protocol/agent-labels";
 export {
   DirectTcpHostConnectionSchema,
   type DirectTcpHostConnection,
   type NormalizedDirectTcpHostConnection,
-} from "@fde/protocol/host-connection-schema";
+} from "@frogg/protocol/host-connection-schema";
 export {
   ensureLocalSpeechModels,
   listLocalSpeechModels,
@@ -70,7 +70,7 @@ export {
   AGENT_PROVIDER_DEFINITIONS,
   BUILTIN_PROVIDER_IDS,
   type AgentProviderDefinition,
-} from "@fde/protocol/provider-manifest";
+} from "@frogg/protocol/provider-manifest";
 
 // Agent SDK types for CLI commands
 export type {
@@ -104,7 +104,7 @@ export type {
   AgentSnapshotPayload,
   AgentStreamEventPayload,
   AgentStreamMessage,
-} from "@fde/protocol/messages";
+} from "@frogg/protocol/messages";
 
 export { getExecutionServiceStatus, stopExecutionService } from "./execution-service/client.js";
 export type { ExecutionServiceStatus } from "./execution-service/protocol.js";

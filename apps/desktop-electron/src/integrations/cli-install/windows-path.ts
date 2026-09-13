@@ -6,7 +6,7 @@ function powershell(script: string, value?: string): string {
     encoding: "utf8",
     windowsHide: true,
     timeout: 10_000,
-    env: { ...process.env, FDE_ELECTRON_CLI_PATH_VALUE: value },
+    env: { ...process.env, FROGG_ELECTRON_CLI_PATH_VALUE: value },
   }).trim();
 }
 
@@ -20,10 +20,10 @@ function writeUserPath(value: string): void {
   powershell(
     `
 $ErrorActionPreference = "Stop"
-[Environment]::SetEnvironmentVariable("Path", $env:FDE_ELECTRON_CLI_PATH_VALUE, "User")
-Add-Type -Namespace Fde -Name EnvironmentNotification -MemberDefinition '[System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto, SetLastError = true)] public static extern System.IntPtr SendMessageTimeout(System.IntPtr hWnd, uint Msg, System.UIntPtr wParam, string lParam, uint flags, uint timeout, out System.UIntPtr result);'
+[Environment]::SetEnvironmentVariable("Path", $env:FROGG_ELECTRON_CLI_PATH_VALUE, "User")
+Add-Type -Namespace Frogg -Name EnvironmentNotification -MemberDefinition '[System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto, SetLastError = true)] public static extern System.IntPtr SendMessageTimeout(System.IntPtr hWnd, uint Msg, System.UIntPtr wParam, string lParam, uint flags, uint timeout, out System.UIntPtr result);'
 $result = [System.UIntPtr]::Zero
-[void][Fde.EnvironmentNotification]::SendMessageTimeout([System.IntPtr]0xffff, 0x1a, [System.UIntPtr]::Zero, "Environment", 2, 1000, [ref]$result)
+[void][Frogg.EnvironmentNotification]::SendMessageTimeout([System.IntPtr]0xffff, 0x1a, [System.UIntPtr]::Zero, "Environment", 2, 1000, [ref]$result)
 `,
     value,
   );

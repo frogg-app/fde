@@ -23,7 +23,7 @@ export async function prepareLocalPairingHost(
   additionalHosts: PairingHostInput[] = [],
 ): Promise<void> {
   await page.addInitScript((localServerId) => {
-    (window as unknown as { fdeDesktop: unknown }).fdeDesktop = {
+    (window as unknown as { froggDesktop: unknown }).froggDesktop = {
       platform: "darwin",
       invoke: async (command: string) => {
         if (command === "desktop_daemon_status") {
@@ -51,7 +51,7 @@ export async function prepareLocalPairingHost(
       events: { on: async () => () => undefined },
       opener: {
         openUrl: async (url: string) => {
-          localStorage.setItem("@fde:e2e-opened-url", url);
+          localStorage.setItem("@frogg:e2e-opened-url", url);
         },
       },
     };
@@ -90,7 +90,7 @@ export async function expectRelayConsent(page: Page): Promise<void> {
   const modal = page.getByTestId("host-page-pair-device-card");
   await expect(modal.getByText("Enable relay?", { exact: true })).toBeVisible();
   await expect(modal.getByText(/end-to-end encrypted/)).toBeVisible();
-  await expect(modal.getByRole("link", { name: "Read how Fde relay works" })).toBeVisible();
+  await expect(modal.getByRole("link", { name: "Read how Frogg relay works" })).toBeVisible();
   await expect(modal.getByText(/TCP, Tailscale, or another VPN/)).toBeVisible();
   await expect(modal.getByRole("img", { name: "Pairing QR code" })).toHaveCount(0);
   await expect(modal.getByRole("textbox", { name: "Pairing link" })).toHaveCount(0);
@@ -132,9 +132,9 @@ export async function closePairDeviceModal(page: Page): Promise<void> {
 
 export async function reloadAndOpenPairDevice(page: Page): Promise<void> {
   await page.evaluate(() => {
-    const nonce = localStorage.getItem("@fde:e2e-seed-nonce");
+    const nonce = localStorage.getItem("@frogg:e2e-seed-nonce");
     if (!nonce) throw new Error("Expected e2e seed nonce");
-    localStorage.setItem("@fde:e2e-disable-default-seed-once", nonce);
+    localStorage.setItem("@frogg:e2e-disable-default-seed-once", nonce);
   });
   await page.reload();
   await openPairDeviceModal(page);
@@ -163,9 +163,9 @@ export async function retryRelayAndExpectFailure(
 
 export async function openPairDeviceFromHome(page: Page): Promise<void> {
   await page.evaluate(() => {
-    const nonce = localStorage.getItem("@fde:e2e-seed-nonce");
+    const nonce = localStorage.getItem("@frogg:e2e-seed-nonce");
     if (!nonce) throw new Error("Expected e2e seed nonce");
-    localStorage.setItem("@fde:e2e-disable-default-seed-once", nonce);
+    localStorage.setItem("@frogg:e2e-disable-default-seed-once", nonce);
   });
   await page.goto("/open-project");
   await page.getByTestId("open-project-pair-device").click();
@@ -174,7 +174,9 @@ export async function openPairDeviceFromHome(page: Page): Promise<void> {
 
 export async function expectRelayUpdateRequired(page: Page): Promise<void> {
   const modal = page.getByTestId("host-page-pair-device-card");
-  await expect(modal.getByText("Update the host to enable relay from Fde Desktop.")).toBeVisible();
+  await expect(
+    modal.getByText("Update the host to enable relay from Frogg Desktop."),
+  ).toBeVisible();
   await expect(modal.getByRole("button", { name: "Enable relay", exact: true })).toHaveCount(0);
   await expect(modal.getByRole("textbox", { name: "Pairing link" })).toHaveCount(0);
 }
@@ -206,10 +208,10 @@ export async function switchPairDeviceToHost(page: Page, serverId: string): Prom
 }
 
 export async function openRelaySecurityDocs(page: Page): Promise<void> {
-  await page.getByRole("link", { name: "Read how Fde relay works" }).click();
+  await page.getByRole("link", { name: "Read how Frogg relay works" }).click();
   await expect
-    .poll(() => page.evaluate(() => localStorage.getItem("@fde:e2e-opened-url")))
-    .toBe("https://github.com/frogg-app/fde/docs/security");
+    .poll(() => page.evaluate(() => localStorage.getItem("@frogg:e2e-opened-url")))
+    .toBe("https://github.com/frogg-app/frogg/docs/security");
 }
 
 export function expectDaemonPidUnchanged(

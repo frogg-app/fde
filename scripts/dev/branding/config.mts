@@ -31,7 +31,7 @@ export async function generateConfig(build: BrandBuild): Promise<void> {
   );
   await writeFile(path.join(outputRoot, "brand.json"), json(brand));
   const iconPath = (name: string) => path.join(outputRoot, "icons", name);
-  const embedded = process.env.FDE_EMBED_DAEMON_ARCHIVE;
+  const embedded = process.env.FROGG_EMBED_DAEMON_ARCHIVE;
   const resources: Record<string, string> = {};
   if (embedded) {
     for (const file of [path.resolve(embedded), path.resolve(embedded) + ".sha256"]) {
@@ -41,9 +41,9 @@ export async function generateConfig(build: BrandBuild): Promise<void> {
   }
   const presentation = await nativePresentation(build);
   let devPort = 8081;
-  if (!brand.legacyFde) devPort = brand.daemonPort === 65535 ? 65534 : brand.daemonPort + 1;
+  if (!brand.legacyFrogg) devPort = brand.daemonPort === 65535 ? 65534 : brand.daemonPort + 1;
   const overlay = {
-    productName: brand.legacyFde ? brand.name : brand.id,
+    productName: brand.legacyFrogg ? brand.name : brand.id,
     identifier: brand.applicationId,
     version,
     mainBinaryName: brand.desktopBinaryName,
@@ -79,7 +79,7 @@ export async function generateConfig(build: BrandBuild): Promise<void> {
     await readFile(path.join(root, "apps/ui/public/manifest.json"), "utf8"),
   );
   Object.assign(manifest, {
-    id: brand.legacyFde ? "/" : `/${brand.id}`,
+    id: brand.legacyFrogg ? "/" : `/${brand.id}`,
     name: brand.name,
     short_name: brand.name,
     description: brand.description,
@@ -89,7 +89,7 @@ export async function generateConfig(build: BrandBuild): Promise<void> {
   await writeFile(path.join(uiOutput, "public/manifest.json"), json(manifest));
   let html = await readFile(path.join(root, "apps/ui/public/index.html"), "utf8");
   html = html
-    .replace('content="FDE"', `content="${escapeHtml(brand.name)}"`)
+    .replace('content="Frogg"', `content="${escapeHtml(brand.name)}"`)
     .replaceAll("#25B5C8", brand.colors.dark.accent)
     .replaceAll("#25b5c8", brand.colors.dark.accent)
     .replaceAll("#181b1a", brand.colors.dark.background);
@@ -99,7 +99,7 @@ export async function generateConfig(build: BrandBuild): Promise<void> {
     eas.submit.production.ios = { ascAppId: brand.distribution.iosStoreId };
   else delete eas.submit.production.ios;
   await writeFile(path.join(outputRoot, "eas.json"), json(eas));
-  let revision = process.env.FDE_SOURCE_REVISION ?? "unknown";
+  let revision = process.env.FROGG_SOURCE_REVISION ?? "unknown";
   if (revision === "unknown") {
     try {
       revision = execFileSync("git", ["rev-parse", "HEAD"], {
@@ -108,7 +108,7 @@ export async function generateConfig(build: BrandBuild): Promise<void> {
         stdio: ["ignore", "pipe", "ignore"],
       }).trim();
     } catch {
-      /* Exported source builds provide FDE_SOURCE_REVISION. */
+      /* Exported source builds provide FROGG_SOURCE_REVISION. */
     }
   }
   await writeFile(
@@ -165,7 +165,7 @@ export async function generateConfig(build: BrandBuild): Promise<void> {
     ),
     DEFAULT_PORT: brand.daemonPort,
     DEFAULT_LISTEN: `127.0.0.1:${brand.daemonPort}`,
-    LEGACY_FDE: brand.legacyFde,
+    LEGACY_FROGG: brand.legacyFrogg,
     RELEASES_API: brand.distribution.releasesApi ?? "",
     RELEASE_BASE: brand.distribution.releaseBase ?? "",
     UPDATE_MODE: brand.distribution.updateMode,

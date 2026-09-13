@@ -22,7 +22,7 @@
 }:
 
 let
-  manifest = builtins.fromJSON (builtins.readFile (if brandSource == null then ../../brands/fde/brand.json else brandSource + "/brand.json"));
+  manifest = builtins.fromJSON (builtins.readFile (if brandSource == null then ../../brands/frogg/brand.json else brandSource + "/brand.json"));
   identity = {
     inherit (manifest) id name applicationId daemonPort;
     cliName = manifest.cliName or manifest.id;
@@ -34,7 +34,7 @@ in
 buildNpmPackage rec {
   pname = identity.cliName;
   passthru.brand = identity;
-  FDE_BRAND_DIR = if brandSource == null then "brands/fde" else ".branding-input/selected";
+  FROGG_BRAND_DIR = if brandSource == null then "brands/frogg" else ".branding-input/selected";
   postPatch = lib.optionalString (brandSource != null) ''
     mkdir -p .branding-input/selected
     cp -R ${lib.escapeShellArg (toString brandSource)}/. .branding-input/selected/
@@ -76,7 +76,7 @@ buildNpmPackage rec {
       && (!(lib.hasPrefix ".env" baseName) || baseName == ".env.example")
       && baseName != "target"
       && baseName != "dist"
-      && baseName != ".fde"
+      && baseName != ".frogg"
       && baseName != ".DS_Store";
   };
 
@@ -130,33 +130,33 @@ buildNpmPackage rec {
     # assets read at runtime. The trace script is the single source of
     # truth for what the daemon needs at $out — auditable in plain JS, no
     # npm hoisting / .bin / workspace-symlink footguns.
-    mkdir -p $out/lib/fde
+    mkdir -p $out/lib/frogg
     node scripts/dev/trace-daemon.mjs > daemon-files.txt
 
     while IFS= read -r path; do
       [ -z "$path" ] && continue
-      mkdir -p "$out/lib/fde/$(dirname "$path")"
-      cp -a "$path" "$out/lib/fde/$path"
+      mkdir -p "$out/lib/frogg/$(dirname "$path")"
+      cp -a "$path" "$out/lib/frogg/$path"
     done < daemon-files.txt
 
     # Root package.json lets node resolve the workspace layout when the
     # CLI/server bin starts from $out.
-    cp package.json $out/lib/fde/
+    cp package.json $out/lib/frogg/
 
     # Web UI Assets
-    cp -r packages/server/dist/server/web-ui $out/lib/fde/packages/server/dist/server/
+    cp -r packages/server/dist/server/web-ui $out/lib/frogg/packages/server/dist/server/
 
     # Create wrapper for the server entry point (for systemd / direct use)
     mkdir -p $out/bin
-    # Keep Fde's runtime mode separate from NODE_ENV, which belongs to spawned agents.
+    # Keep Frogg's runtime mode separate from NODE_ENV, which belongs to spawned agents.
     makeWrapper ${nodejs}/bin/node $out/bin/${identity.cliName}-server \
-      --add-flags "$out/lib/fde/packages/server/dist/scripts/supervisor-entrypoint.js" \
-      --set FDE_NODE_ENV production
+      --add-flags "$out/lib/frogg/packages/server/dist/scripts/supervisor-entrypoint.js" \
+      --set FROGG_NODE_ENV production
 
     # Create wrapper for the CLI
     makeWrapper ${nodejs}/bin/node $out/bin/${identity.cliName} \
-      --add-flags "$out/lib/fde/apps/cli/dist/index.js" \
-      --set NODE_PATH "$out/lib/fde/node_modules"
+      --add-flags "$out/lib/frogg/apps/cli/dist/index.js" \
+      --set NODE_PATH "$out/lib/frogg/node_modules"
 
     runHook postInstall
   '';

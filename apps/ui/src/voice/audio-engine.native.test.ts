@@ -14,7 +14,7 @@ const native = vi.hoisted(() => ({
   tearDown: vi.fn(),
   remove: vi.fn(),
 }));
-vi.mock("@fde/expo-two-way-audio", () => ({
+vi.mock("@frogg/expo-two-way-audio", () => ({
   ...native,
   addExpoTwoWayAudioEventListener: () => ({ remove: native.remove }),
 }));

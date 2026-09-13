@@ -14,17 +14,17 @@ describe("server config", () => {
     [{}, {}, {}, "0.0.0.0:9999"],
     [{}, { PORT: "8123" }, {}, "0.0.0.0:8123"],
     [{ daemon: { listen: "127.0.0.1:7001" } }, {}, {}, "127.0.0.1:7001"],
-    [{ daemon: { listen: "127.0.0.1:7001" } }, { FDE_LISTEN: "[::1]:7002" }, {}, "[::1]:7002"],
+    [{ daemon: { listen: "127.0.0.1:7001" } }, { FROGG_LISTEN: "[::1]:7002" }, {}, "[::1]:7002"],
     [
       { daemon: { listen: "127.0.0.1:7001" } },
-      { FDE_LISTEN: "[::1]:7002" },
-      { listen: "/tmp/fde.sock" },
-      "/tmp/fde.sock",
+      { FROGG_LISTEN: "[::1]:7002" },
+      { listen: "/tmp/frogg.sock" },
+      "/tmp/frogg.sock",
     ],
   ])(
     "resolves listen precedence for persisted %j env %j cli %j",
     async (persisted, env, cli, expected) => {
-      const home = await mkdtemp(path.join(os.tmpdir(), "fde-listen-config-"));
+      const home = await mkdtemp(path.join(os.tmpdir(), "frogg-listen-config-"));
       roots.push(home);
       await writeFile(path.join(home, "config.json"), JSON.stringify(persisted));
       expect(loadConfig(home, { env, cli }).listen).toBe(expected);
@@ -35,63 +35,63 @@ describe("server config", () => {
     await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
   });
 
-  test("records when the daemon is managed by Fde Desktop", async () => {
-    const fdeHome = await mkdtemp(path.join(os.tmpdir(), "fde-config-desktop-managed-"));
-    roots.push(fdeHome);
+  test("records when the daemon is managed by Frogg Desktop", async () => {
+    const froggHome = await mkdtemp(path.join(os.tmpdir(), "frogg-config-desktop-managed-"));
+    roots.push(froggHome);
 
-    const desktopConfig = loadConfig(fdeHome, {
-      env: { FDE_DESKTOP_MANAGED: "1" },
+    const desktopConfig = loadConfig(froggHome, {
+      env: { FROGG_DESKTOP_MANAGED: "1" },
     });
-    const standaloneConfig = loadConfig(fdeHome, { env: {} });
+    const standaloneConfig = loadConfig(froggHome, { env: {} });
 
     expect(desktopConfig.desktopManaged).toBe(true);
     expect(standaloneConfig.desktopManaged).toBe(false);
   });
 
   test("loads the provider catalog refresh timeout", async () => {
-    const fdeHome = await mkdtemp(path.join(os.tmpdir(), "fde-config-provider-timeout-"));
-    roots.push(fdeHome);
+    const froggHome = await mkdtemp(path.join(os.tmpdir(), "frogg-config-provider-timeout-"));
+    roots.push(froggHome);
     await writeFile(
-      path.join(fdeHome, "config.json"),
+      path.join(froggHome, "config.json"),
       JSON.stringify({ agents: { catalogRefreshTimeoutMs: 180_000 } }),
     );
 
-    const config = loadConfig(fdeHome, { env: {} });
+    const config = loadConfig(froggHome, { env: {} });
 
     expect(config.providerCatalogRefreshTimeoutMs).toBe(180_000);
   });
 
   test("resolves reload state from the supplied validated snapshot", async () => {
-    const fdeHome = await mkdtemp(path.join(os.tmpdir(), "fde-config-snapshot-"));
-    roots.push(fdeHome);
-    const snapshot = loadPersistedConfig(fdeHome);
+    const froggHome = await mkdtemp(path.join(os.tmpdir(), "frogg-config-snapshot-"));
+    roots.push(froggHome);
+    const snapshot = loadPersistedConfig(froggHome);
     await writeFile(
-      path.join(fdeHome, "config.json"),
+      path.join(froggHome, "config.json"),
       JSON.stringify({
         ...snapshot,
         daemon: { ...snapshot.daemon, browserTools: { enabled: true } },
       }),
     );
 
-    expect(resolveConfigFromPersisted(fdeHome, snapshot, { env: {} }).browserToolsEnabled).toBe(
+    expect(resolveConfigFromPersisted(froggHome, snapshot, { env: {} }).browserToolsEnabled).toBe(
       false,
     );
-    expect(loadConfig(fdeHome, { env: {} }).browserToolsEnabled).toBe(true);
+    expect(loadConfig(froggHome, { env: {} }).browserToolsEnabled).toBe(true);
   });
 
   test("records mutable and startup launch overrides by persisted leaf", async () => {
-    const fdeHome = await mkdtemp(path.join(os.tmpdir(), "fde-config-overrides-"));
-    roots.push(fdeHome);
-    const config = loadConfig(fdeHome, {
+    const froggHome = await mkdtemp(path.join(os.tmpdir(), "frogg-config-overrides-"));
+    roots.push(froggHome);
+    const config = loadConfig(froggHome, {
       env: {
-        FDE_LISTEN: "127.0.0.1:7000",
-        FDE_PASSWORD: "secret",
-        FDE_RELAY_ENDPOINT: "relay.example.test:443",
-        FDE_TRUSTED_PROXIES: "true",
-        FDE_TRUST_LAN: "0",
-        FDE_WEB_UI_ENABLED: "true",
-        FDE_LOG_FILE_PATH: "custom.log",
-        FDE_VOICE_LLM_PROVIDER: "codex",
+        FROGG_LISTEN: "127.0.0.1:7000",
+        FROGG_PASSWORD: "secret",
+        FROGG_RELAY_ENDPOINT: "relay.example.test:443",
+        FROGG_TRUSTED_PROXIES: "true",
+        FROGG_TRUST_LAN: "0",
+        FROGG_WEB_UI_ENABLED: "true",
+        FROGG_LOG_FILE_PATH: "custom.log",
+        FROGG_VOICE_LLM_PROVIDER: "codex",
       },
       cli: { relayUseTls: false },
     });
@@ -114,23 +114,24 @@ describe("server config", () => {
     expect(config.voiceLlmProvider).toBe("codex");
   });
 
-  test("trusts the LAN by default, honors daemon.auth.trustLan, and lets FDE_TRUST_LAN win", async () => {
-    const fdeHome = await mkdtemp(path.join(os.tmpdir(), "fde-config-trust-lan-"));
-    roots.push(fdeHome);
+  test("trusts the LAN by default, honors daemon.auth.trustLan, and lets FROGG_TRUST_LAN win", async () => {
+    const froggHome = await mkdtemp(path.join(os.tmpdir(), "frogg-config-trust-lan-"));
+    roots.push(froggHome);
 
-    expect(loadConfig(fdeHome, { env: {} }).trustLan).toBe(true);
+    expect(loadConfig(froggHome, { env: {} }).trustLan).toBe(true);
 
     await writeFile(
-      path.join(fdeHome, "config.json"),
+      path.join(froggHome, "config.json"),
       JSON.stringify({ version: 1, daemon: { auth: { trustLan: false } } }),
     );
-    expect(loadConfig(fdeHome, { env: {} }).trustLan).toBe(false);
-    expect(loadConfig(fdeHome, { env: { FDE_TRUST_LAN: "1" } }).trustLan).toBe(true);
-    expect(loadConfig(fdeHome, { env: { FDE_TRUST_LAN: "off" } }).trustLan).toBe(false);
+    expect(loadConfig(froggHome, { env: {} }).trustLan).toBe(false);
+    expect(loadConfig(froggHome, { env: { FROGG_TRUST_LAN: "1" } }).trustLan).toBe(true);
+    expect(loadConfig(froggHome, { env: { FROGG_TRUST_LAN: "off" } }).trustLan).toBe(false);
     expect(
-      loadConfig(fdeHome, { env: { FDE_TRUST_LAN: "1" } }).configReload?.overrideControlledPaths,
+      loadConfig(froggHome, { env: { FROGG_TRUST_LAN: "1" } }).configReload
+        ?.overrideControlledPaths,
     ).toEqual(["daemon.auth.trustLan"]);
-    expect(loadConfig(fdeHome, { env: {} }).configReload?.overrideControlledPaths).toEqual([]);
+    expect(loadConfig(froggHome, { env: {} }).configReload?.overrideControlledPaths).toEqual([]);
   });
 
   test.each([
@@ -166,7 +167,7 @@ describe("server config", () => {
     },
   ])("classifies speech overrides for $name", ({ providers, expected }) => {
     const config = resolveConfigFromPersisted(
-      "/tmp/fde-speech-override-classification",
+      "/tmp/frogg-speech-override-classification",
       {
         version: 1,
         features: {
@@ -181,9 +182,9 @@ describe("server config", () => {
       {
         env: {
           OPENAI_API_KEY: "test-api-key",
-          FDE_DICTATION_LOCAL_STT_MODEL: "parakeet-tdt-0.6b-v2-int8",
-          FDE_VOICE_LOCAL_STT_MODEL: "parakeet-tdt-0.6b-v2-int8",
-          FDE_VOICE_LOCAL_TTS_MODEL: "kokoro-en-v0_19",
+          FROGG_DICTATION_LOCAL_STT_MODEL: "parakeet-tdt-0.6b-v2-int8",
+          FROGG_VOICE_LOCAL_STT_MODEL: "parakeet-tdt-0.6b-v2-int8",
+          FROGG_VOICE_LOCAL_TTS_MODEL: "kokoro-en-v0_19",
           STT_CONFIDENCE_THRESHOLD: "0.5",
           STT_MODEL: "whisper-1",
           TTS_MODEL: "tts-1",
@@ -207,7 +208,7 @@ describe("server config", () => {
   });
 
   test("resolves bundled web UI path from globally installed compiled modules", async () => {
-    const packageRoot = await mkdtemp(path.join(os.tmpdir(), "fde-config-compiled-"));
+    const packageRoot = await mkdtemp(path.join(os.tmpdir(), "frogg-config-compiled-"));
     roots.push(packageRoot);
     await mkdir(path.join(packageRoot, "dist", "server", "web-ui"), { recursive: true });
 
@@ -219,7 +220,7 @@ describe("server config", () => {
   });
 
   test("resolves packaged desktop web UI path from resources app-dist", async () => {
-    const packageRoot = await mkdtemp(path.join(os.tmpdir(), "fde-config-packaged-"));
+    const packageRoot = await mkdtemp(path.join(os.tmpdir(), "frogg-config-packaged-"));
     roots.push(packageRoot);
     await mkdir(path.join(packageRoot, "app-dist"), { recursive: true });
 
@@ -230,7 +231,7 @@ describe("server config", () => {
             packageRoot,
             "app.asar",
             "node_modules",
-            "@fde",
+            "@frogg",
             "server",
             "dist",
             "server",

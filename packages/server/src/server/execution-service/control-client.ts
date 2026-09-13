@@ -21,7 +21,7 @@ export async function executionControlRequest(
         method: data === undefined ? "GET" : "POST",
         headers: {
           authorization: `Bearer ${descriptor.token}`,
-          "x-fde-execution-instance": descriptor.instanceId,
+          "x-frogg-execution-instance": descriptor.instanceId,
           ...(data === undefined
             ? {}
             : { "content-type": "application/json", "content-length": Buffer.byteLength(data) }),

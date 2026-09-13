@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import net from "node:net";
 
 export type HostnamesConfig = true | string[] | undefined;
@@ -40,8 +40,8 @@ function matchesHostnamePattern(hostname: string, pattern: string): boolean {
 }
 
 /**
- * The hostname FDE pairing links use. An owner who reverse-proxies it to their
- * daemon should not also have to set `FDE_HOSTNAMES`, and the name resolves
+ * The hostname Frogg pairing links use. An owner who reverse-proxies it to their
+ * daemon should not also have to set `FROGG_HOSTNAMES`, and the name resolves
  * to whatever that owner points it at, so allowing it costs nothing.
  */
 export const PAIRING_HOSTNAME = brand.services.pairingUrl

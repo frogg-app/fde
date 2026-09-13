@@ -1,6 +1,6 @@
 ---
 title: Coding standards
-description: Formatting, lint and type rules, licensing, product-name and i18n rules, protocol change rules, and the FDE namespace.
+description: Formatting, lint and type rules, licensing, product-name and i18n rules, protocol change rules, and the Frogg namespace.
 sidebar:
   order: 5
 ---
@@ -71,13 +71,13 @@ anything longer. Split by responsibility, not by pulling out single functions.
 
 ## Shell scripts
 
-Tracked Bash scripts start with `#!/usr/bin/env bash`. Worktree lifecycle commands in `fde.json`
+Tracked Bash scripts start with `#!/usr/bin/env bash`. Worktree lifecycle commands in `frogg.json`
 must also run under PowerShell on Windows, so put portable logic in a Node script
 (`node ./scripts/<area>/<name>.mjs`), as `scripts/dev/seed-worktree-dev-state.mjs` does.
 
 ## Licensing
 
-FDE is Apache-2.0 and a fork of Paseo.
+Frogg is Apache-2.0 and a fork of Paseo.
 
 - Keep `LICENSE` and `NOTICE` intact, including the Paseo attribution in `NOTICE`.
 - Preserve any existing license or copyright header when you edit or move a file.
@@ -90,16 +90,16 @@ Product identity comes from the selected brand, so a fork can rebuild without co
 `scripts/ci/branding-contribution.mjs` enforces this in `branding.yml`. It compares your branch
 with `origin/main` (override with `BRANDING_BASE_REF`) and fails when:
 
-- a new string literal in `apps/` or `packages/` source matches `FDE`, `Fde` or `frogg.app` and
+- a new string literal in `apps/` or `packages/` source matches `Frogg`, `Frogg` or `frogg.app` and
   is not in `scripts/ci/branding-literals.json`. Tests, `generated/` paths and
   `packages/branding/` are skipped. Literals that already existed in the file are allowed.
 - any `.generated/`, `packages/branding/src/generated/` or `.branding-input/` file is tracked.
-- `brands/fde/` changes without the `branding:official` pull request label.
+- `brands/frogg/` changes without the `branding:official` pull request label.
 
 Instead of a literal:
 
 ```ts
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 
 const title = `${brand.name} settings`;
 ```
@@ -112,7 +112,7 @@ with a `reason`. Run the check locally with `node scripts/ci/branding-contributi
 
 ## UI copy and i18n
 
-The `fde-i18n` skill (`skills/fde-i18n/SKILL.md`) is the full procedure. The rules:
+The `frogg-i18n` skill (`skills/frogg-i18n/SKILL.md`) is the full procedure. The rules:
 
 - Client copy lives in `apps/ui/src/i18n/resources/`: `en.ts` plus `ar`, `es`, `fr`, `ja`, `ko`,
   `pt-BR`, `ru` and `zh-CN`. Keys are nested by product surface.
@@ -130,12 +130,12 @@ phrases. It also pins some existing strings, so rewording one means updating its
 
 ```bash
 npx vitest run apps/ui/src/i18n/resources.test.ts --bail=1
-npm run typecheck --workspace=@fde/app
+npm run typecheck --workspace=@frogg/app
 ```
 
 ## Protocol and RPC changes
 
-The `fde-rpc` skill (`skills/fde-rpc/SKILL.md`) lists the ordered file changes for a new
+The `frogg-rpc` skill (`skills/frogg-rpc/SKILL.md`) lists the ordered file changes for a new
 session RPC. The rules:
 
 - Names are dotted with the direction last and a verb operation:
@@ -157,7 +157,7 @@ session RPC. The rules:
 Verify with:
 
 ```bash
-npm run build --workspace=@fde/protocol
+npm run build --workspace=@frogg/protocol
 npm run typecheck:server
 npx vitest run packages/server/src/server/authorization/index.test.ts --bail=1
 ```
@@ -165,15 +165,15 @@ npx vitest run packages/server/src/server/authorization/index.test.ts --bail=1
 A `TS2353` error on your new key in `operation-permissions.ts` usually means a stale protocol
 build. Run `npm run build:client` before you change the entry.
 
-## FDE namespace
+## Frogg namespace
 
-FDE uses its own names on the wire, in the environment, in storage and in deep links. Do not
+Frogg uses its own names on the wire, in the environment, in storage and in deep links. Do not
 reintroduce upstream names.
 
-- Environment variables use the brand's `envPrefix`: `FDE_HOME`, `FDE_LISTEN`, and so on. Read
-  them through `brandEnv` from `@fde/branding/identity` in code that must work for other brands.
-- The deep-link scheme is the brand `scheme` (`fde://` for the official brand).
-- The state directory is the brand `homeDir` (`~/.fde`), and project config is `fde.json` in
+- Environment variables use the brand's `envPrefix`: `FROGG_HOME`, `FROGG_LISTEN`, and so on. Read
+  them through `brandEnv` from `@frogg/branding/identity` in code that must work for other brands.
+- The deep-link scheme is the brand `scheme` (`frogg://` for the official brand).
+- The state directory is the brand `homeDir` (`~/.frogg`), and project config is `frogg.json` in
   every brand.
 - Wire, environment and storage names changed in the 0.6 namespace migration. A
   breaking change to any of them needs coordinated daemon and client upgrades.

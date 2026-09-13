@@ -1,11 +1,11 @@
-# Example child image that adds agent CLIs to the FDE daemon image.
+# Example child image that adds agent CLIs to the Frogg daemon image.
 #
 # Build:
-#   docker build -f deploy/docker/Dockerfile.agents.example -t fde-with-agents .
+#   docker build -f deploy/docker/Dockerfile.agents.example -t frogg-with-agents .
 #
-# Then set `image: fde-with-agents` in deploy/docker/docker-compose.example.yml.
+# Then set `image: frogg-with-agents` in deploy/docker/docker-compose.example.yml.
 
-FROM froggapp/fde:0.1.6
+FROM froggapp/frogg:0.1.6
 
 # The bundled Node runtime is on PATH, so npm -g works for Node-based agents.
 USER root
@@ -15,4 +15,4 @@ RUN npm install -g \
   opencode-ai
 
 # Leave the image user as root. The entrypoint prepares mounted volumes, then
-# drops the daemon and launched agents to the non-root `fde` user.
+# drops the daemon and launched agents to the non-root `frogg` user.

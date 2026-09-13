@@ -1,9 +1,9 @@
 ---
-name: fde-docs
-description: Update FDE's documentation when code changes. Use when a change affects user-visible behavior, UI, config.json keys, environment variables, fde.json, brand.json, CLI commands or flags, protocol-visible features, install/update paths, or the branding, build or release pipeline; when asked to "update the docs", "document this", "add a docs page", "refresh screenshots"; when the website build or link check fails; or when reviewing a PR for missing docs.
+name: frogg-docs
+description: Update Frogg's documentation when code changes. Use when a change affects user-visible behavior, UI, config.json keys, environment variables, frogg.json, brand.json, CLI commands or flags, protocol-visible features, install/update paths, or the branding, build or release pipeline; when asked to "update the docs", "document this", "add a docs page", "refresh screenshots"; when the website build or link check fails; or when reviewing a PR for missing docs.
 ---
 
-# Updating FDE docs
+# Updating Frogg docs
 
 The docs are Astro Starlight pages in `website/src/content/docs/docs/`, published at
 https://frogg.app/docs/. The code is the source of truth: read the code for every claim.
@@ -15,9 +15,9 @@ Docs change when the diff touches any of these. Otherwise tick "not needed" in t
 
 - UI a user sees or clicks (update screenshots too)
 - `config.json` schema (`packages/server/src/server/persisted-config.ts`, `config.ts`)
-- environment variables (`process.env.FDE_*`, installer variables in `deploy/*.sh`)
+- environment variables (`process.env.FROGG_*`, installer variables in `deploy/*.sh`)
 - CLI commands, flags, output (`apps/cli/src/**`)
-- `fde.json` (`packages/protocol/src/fde-config-schema.ts`)
+- `frogg.json` (`packages/protocol/src/frogg-config-schema.ts`)
 - protocol-visible features and `server_info` capabilities clients rely on
 - providers, permissions modes, MCP tools, skills bundle (`skills/`)
 - install, update, pairing, relay, security defaults
@@ -30,14 +30,14 @@ Docs change when the diff touches any of these. Otherwise tick "not needed" in t
 | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | `deploy/install.sh`, `install-docker.sh`, release asset names                                                                                                                             | `getting-started/install.mdx`, `desktop-mobile-cli/desktop.mdx`                    |
 | Pairing, claim gate, LAN trust, passwords (`packages/server/src/server/{access-policy,auth,claim-*,setup-routes,pairing-*}.ts`, `apps/cli/src/commands/daemon/{pair,claim,trust-lan}.ts`) | `getting-started/connect-and-pair.mdx`, `self-hosting/security.mdx`                |
-| Projects, workspaces, worktrees, scripts, services                                                                                                                                        | `using-fde/projects-and-workspaces.mdx`, `reference/project-config.mdx`            |
-| Agent lifecycle, timeline, subagents                                                                                                                                                      | `using-fde/agents.mdx`                                                             |
-| Permission modes (`packages/protocol/src/provider-manifest.ts`)                                                                                                                           | `using-fde/permissions.mdx`                                                        |
-| Schedules, heartbeats (`packages/server/src/server/schedule/`)                                                                                                                            | `using-fde/schedules.mdx`                                                          |
-| Speech, voice alerts, Companion (`packages/server/src/server/{speech,companion}/`)                                                                                                        | `using-fde/voice-and-companion.mdx`                                                |
+| Projects, workspaces, worktrees, scripts, services                                                                                                                                        | `using-frogg/projects-and-workspaces.mdx`, `reference/project-config.mdx`          |
+| Agent lifecycle, timeline, subagents                                                                                                                                                      | `using-frogg/agents.mdx`                                                           |
+| Permission modes (`packages/protocol/src/provider-manifest.ts`)                                                                                                                           | `using-frogg/permissions.mdx`                                                      |
+| Schedules, heartbeats (`packages/server/src/server/schedule/`)                                                                                                                            | `using-frogg/schedules.mdx`                                                        |
+| Speech, voice alerts, Companion (`packages/server/src/server/{speech,companion}/`)                                                                                                        | `using-frogg/voice-and-companion.mdx`                                              |
 | Providers, provider registry                                                                                                                                                              | `agents-and-providers/providers.mdx`                                               |
 | `agents.providers` overrides, ACP catalog (`apps/ui/src/data/acp-provider-catalog.ts`)                                                                                                    | `agents-and-providers/custom-providers.mdx`                                        |
-| MCP tools (`packages/server/src/server/agent/tools/fde-tools.ts`)                                                                                                                         | `agents-and-providers/mcp.mdx`                                                     |
+| MCP tools (`packages/server/src/server/agent/tools/frogg-tools.ts`)                                                                                                                       | `agents-and-providers/mcp.mdx`                                                     |
 | Bundled skills (`skills/`, `orchestration-skills/`)                                                                                                                                       | `agents-and-providers/skills.mdx`                                                  |
 | Electron app (`apps/desktop-electron/`), SSH deploy, updater                                                                                                                              | `desktop-mobile-cli/desktop.mdx`                                                   |
 | Expo mobile, Android APK, iOS                                                                                                                                                             | `desktop-mobile-cli/mobile.mdx`                                                    |
@@ -58,10 +58,10 @@ Docs change when the diff touches any of these. Otherwise tick "not needed" in t
 | Test tooling, CI jobs                                                                                                                                                                     | `contributing/testing.mdx`                                                         |
 
 Page paths are also a URL contract. The app and CLI link to `<brand links.docs>/` plus:
-`using-fde/projects-and-workspaces/`, `reference/project-config/#metadatageneration`,
+`using-frogg/projects-and-workspaces/`, `reference/project-config/#metadatageneration`,
 `agents-and-providers/skills/`, `desktop-mobile-cli/cli/`, `reference/configuration/`,
 `self-hosting/security/#relay`, `getting-started/connect-and-pair/#direct-connection`
-(`rg -n 'brandDocsUrl|DOCS_BASE' apps`), and the `fde-help` skill fetches
+(`rg -n 'brandDocsUrl|DOCS_BASE' apps`), and the `frogg-help` skill fetches
 `self-hosting/troubleshooting.md`. Moving or renaming those pages or headings
 means updating the links in the same PR.
 
@@ -72,7 +72,6 @@ and skills that quote the changed commands (`rg -n '<old command>' skills .claud
 
 - Task-oriented, short sentences, expert audience, no marketing.
 - Real commands, real config, real output. Run commands where you can; never invent output.
-- "an FDE", never "a FDE".
 - Document only what exists. Say plainly when something is partial, preview, experimental or
   unvalidated on a platform.
 - Root-relative links with a trailing slash: `/docs/self-hosting/updates/`.
@@ -110,21 +109,21 @@ Never mock UI. Capture from a real daemon's web app with `scripts/docs/capture-s
 ```sh
 npm ci
 npm run build:server && npm run build:daemon-web-ui
-FDE_HOME=/tmp/fde-docs-home node apps/cli/bin/fde start --listen 0.0.0.0:17900 --web-ui --no-relay
+FROGG_HOME=/tmp/frogg-docs-home node apps/cli/bin/frogg start --listen 0.0.0.0:17900 --web-ui --no-relay
 node scripts/docs/capture-screenshots.mjs --list
 node scripts/docs/capture-screenshots.mjs --url http://127.0.0.1:17900 --seed
 node scripts/docs/capture-screenshots.mjs --url http://127.0.0.1:17900 --only app/host-providers
-FDE_HOME=/tmp/fde-docs-home node apps/cli/bin/fde stop
+FROGG_HOME=/tmp/frogg-docs-home node apps/cli/bin/frogg stop
 ```
 
-- Use your own port and `FDE_HOME`; never capture from someone else's daemon. Unset
-  `FDE_AGENT_ID` if you run the CLI from inside an agent.
+- Use your own port and `FROGG_HOME`; never capture from someone else's daemon. Unset
+  `FROGG_AGENT_ID` if you run the CLI from inside an agent.
 - `--seed` creates a demo repo and project. `app/agent-timeline` and
   `app/permission-request` need an agent run (provider credits) in that project: run
-  `fde agent run --provider claude/claude-haiku-4-5 --mode default ...` and capture while a
+  `frogg agent run --provider claude/claude-haiku-4-5 --mode default ...` and capture while a
   permission is pending.
 - Terminal images (for example `fork/brand-check`) run real commands and render the output.
-- Branded shots: build with `FDE_BRAND_DIR=brands/example` in a separate worktree, start that
+- Branded shots: build with `FROGG_BRAND_DIR=brands/example` in a separate worktree, start that
   daemon, capture with `--brand-tag acme --only fork/home`. The script composes
   `fork/stock-vs-acme.png` when both home shots exist.
 - Add new shots to the `webShots` table in the script so the next person can regenerate them.
@@ -139,7 +138,7 @@ npm run build && npm run linkcheck
 ```
 
 A clean build and link check are required before committing docs. The site also generates
-`/llms.txt` and a Markdown copy of every page, which the `fde-help` skill reads.
+`/llms.txt` and a Markdown copy of every page, which the `frogg-help` skill reads.
 
 ## Checklist
 

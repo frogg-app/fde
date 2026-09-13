@@ -16,12 +16,12 @@ import pino, { type Logger } from "pino";
 import type { SessionOutboundMessage, WorkspaceDescriptorPayload } from "./messages.js";
 import {
   buildAgentSessionConfig,
-  createFdeWorktreeWorkflow,
-  handleFdeWorktreeArchiveRequest,
-  handleFdeWorktreeListRequest,
+  createFroggWorktreeWorkflow,
+  handleFroggWorktreeArchiveRequest,
+  handleFroggWorktreeListRequest,
   resolveGitCreateBaseBranch,
   runWorktreeSetupInBackground,
-  handleCreateFdeWorktreeRequest,
+  handleCreateFroggWorktreeRequest,
   handleWorkspaceSetupStatusRequest,
 } from "./worktree-session.js";
 import {
@@ -42,9 +42,9 @@ import {
 import type { ForgeService } from "../services/forge-service.js";
 import { areEquivalentPaths } from "../utils/path.js";
 import {
-  createFdeWorktree as createFdeWorktreeService,
-  type CreateFdeWorktreeFn,
-} from "./fde-worktree-service.js";
+  createFroggWorktree as createFroggWorktreeService,
+  type CreateFroggWorktreeFn,
+} from "./frogg-worktree-service.js";
 import { WorkspaceGitServiceImpl } from "./workspace-git-service.js";
 import type { WorkspaceGitService } from "./workspace-git-service.js";
 import { isPlatform } from "../test-utils/platform.js";
@@ -56,7 +56,7 @@ interface LegacyCreateWorktreeTestOptions {
   baseBranch: string;
   worktreeSlug: string;
   runSetup?: boolean;
-  fdeHome?: string;
+  froggHome?: string;
 }
 
 function createLegacyWorktreeForTest(
@@ -75,7 +75,7 @@ function createLegacyWorktreeForTest(
       branchName: options.branchName,
     },
     runSetup: options.runSetup ?? true,
-    fdeHome: options.fdeHome,
+    froggHome: options.froggHome,
   });
 }
 
@@ -88,8 +88,8 @@ function createLogger(): Logger {
 }
 
 function createWorkflowForRequestTest(options: {
-  fdeHome: string;
-  createFdeWorktree?: CreateFdeWorktreeFn;
+  froggHome: string;
+  createFroggWorktree?: CreateFroggWorktreeFn;
   warmWorkspaceGitData?: (workspace: PersistedWorkspaceRecord) => Promise<void>;
   onSetupStarted?: (input: {
     requestCwd: string;
@@ -99,13 +99,13 @@ function createWorkflowForRequestTest(options: {
     shouldBootstrap: boolean;
   }) => void;
 }) {
-  return async (input: Parameters<CreateFdeWorktreeFn>[0]) => {
-    const createFdeWorktree =
-      options.createFdeWorktree ?? createFdeWorktreeForTest({ fdeHome: options.fdeHome });
-    return createFdeWorktreeWorkflow(
+  return async (input: Parameters<CreateFroggWorktreeFn>[0]) => {
+    const createFroggWorktree =
+      options.createFroggWorktree ?? createFroggWorktreeForTest({ froggHome: options.froggHome });
+    return createFroggWorktreeWorkflow(
       {
-        fdeHome: options.fdeHome,
-        createFdeWorktree,
+        froggHome: options.froggHome,
+        createFroggWorktree,
         warmWorkspaceGitData: options.warmWorkspaceGitData ?? (async () => {}),
         autoNameWorkspaceBranchForFirstAgent: () => {},
         emitWorkspaceUpdateForWorkspaceId: async () => {},
@@ -289,15 +289,15 @@ function createWorkspaceDescriptor(input: {
   };
 }
 
-function createFdeWorktreeForTest(options: {
-  fdeHome: string;
+function createFroggWorktreeForTest(options: {
+  froggHome: string;
   events?: string[];
-}): CreateFdeWorktreeFn {
+}): CreateFroggWorktreeFn {
   const projects = new Map<string, PersistedProjectRecord>();
   const workspaces = new Map<string, PersistedWorkspaceRecord>();
   const workspaceGitService = new WorkspaceGitServiceImpl({
     logger: createLogger(),
-    fdeHome: options.fdeHome,
+    froggHome: options.froggHome,
     deps: {
       forgeOverrides: { github: createGitHubServiceStub() },
     },
@@ -368,7 +368,7 @@ function createFdeWorktreeForTest(options: {
   });
 
   return (input, serviceOptions) => {
-    return createFdeWorktreeService(input, {
+    return createFroggWorktreeService(input, {
       github: createGitHubServiceStub(),
       ...(serviceOptions?.resolveDefaultBranch
         ? { resolveDefaultBranch: serviceOptions.resolveDefaultBranch }
@@ -379,13 +379,13 @@ function createFdeWorktreeForTest(options: {
   };
 }
 
-describe("handleFdeWorktreeListRequest", () => {
+describe("handleFroggWorktreeListRequest", () => {
   test("lists worktrees through the workspace git service", async () => {
     const emitted: SessionOutboundMessage[] = [];
     const workspaceGitService = {
       listWorktrees: vi.fn().mockResolvedValue([
         {
-          path: "/tmp/fde-home/worktrees/repo/feature",
+          path: "/tmp/frogg-home/worktrees/repo/feature",
           createdAt: "2026-04-12T00:00:00.000Z",
           branchName: "feature",
           head: "abc123",
@@ -393,14 +393,14 @@ describe("handleFdeWorktreeListRequest", () => {
       ]),
     };
 
-    await handleFdeWorktreeListRequest(
+    await handleFroggWorktreeListRequest(
       {
         emit: (message) => emitted.push(message),
-        fdeHome: "/tmp/fde-home",
+        froggHome: "/tmp/frogg-home",
         workspaceGitService: workspaceGitService as unknown as WorkspaceGitService,
       },
       {
-        type: "fde_worktree_list_request",
+        type: "frogg_worktree_list_request",
         cwd: "/tmp/repo",
         requestId: "request-worktrees",
       },
@@ -409,11 +409,11 @@ describe("handleFdeWorktreeListRequest", () => {
     expect(workspaceGitService.listWorktrees).toHaveBeenCalledTimes(1);
     expect(workspaceGitService.listWorktrees).toHaveBeenCalledWith("/tmp/repo");
     expect(emitted).toContainEqual({
-      type: "fde_worktree_list_response",
+      type: "frogg_worktree_list_response",
       payload: {
         worktrees: [
           {
-            worktreePath: "/tmp/fde-home/worktrees/repo/feature",
+            worktreePath: "/tmp/frogg-home/worktrees/repo/feature",
             createdAt: "2026-04-12T00:00:00.000Z",
             branchName: "feature",
             head: "abc123",
@@ -453,16 +453,16 @@ describe("resolveGitCreateBaseBranch", () => {
 describe("create-agent worktree setup boundary", () => {
   test("agent setup continuation starts setup for the created agent timeline", async () => {
     const { tempDir, repoDir } = createGitRepo();
-    const fdeHome = path.join(tempDir, ".fde");
+    const froggHome = path.join(tempDir, ".frogg");
     const appendedItems: Array<{ name: string; status: string }> = [];
     const liveItems: Array<{ name: string; status: string }> = [];
     const workspaceSetupEvents: SessionOutboundMessage[] = [];
 
     try {
-      const result = await createFdeWorktreeWorkflow(
+      const result = await createFroggWorktreeWorkflow(
         {
-          fdeHome,
-          createFdeWorktree: createFdeWorktreeForTest({ fdeHome }),
+          froggHome,
+          createFroggWorktree: createFroggWorktreeForTest({ froggHome }),
           warmWorkspaceGitData: async () => {},
           autoNameWorkspaceBranchForFirstAgent: () => {},
           emitWorkspaceUpdateForWorkspaceId: async () => {},
@@ -481,7 +481,7 @@ describe("create-agent worktree setup boundary", () => {
           cwd: repoDir,
           worktreeSlug: "agent-setup-after-create",
           runSetup: false,
-          fdeHome,
+          froggHome,
         },
         {
           setupContinuation: {
@@ -515,7 +515,7 @@ describe("create-agent worktree setup boundary", () => {
 
       await vi.waitFor(() => {
         expect(appendedItems).toContainEqual({
-          name: "fde_worktree_setup",
+          name: "frogg_worktree_setup",
           status: "completed",
         });
       });
@@ -549,7 +549,7 @@ function createArchiveWorkspaceRecordMutator(
   };
 }
 
-function createGitRepo(options?: { fdeConfig?: Record<string, unknown> }) {
+function createGitRepo(options?: { froggConfig?: Record<string, unknown> }) {
   const tempDir = realpathSync.native(mkdtempSync(path.join(tmpdir(), "worktree-session-test-")));
   const repoDir = path.join(tempDir, "repo");
   mkdirSync(repoDir, { recursive: true });
@@ -557,8 +557,8 @@ function createGitRepo(options?: { fdeConfig?: Record<string, unknown> }) {
   execFileSync("git", ["config", "user.email", "test@test.com"], { cwd: repoDir, stdio: "pipe" });
   execFileSync("git", ["config", "user.name", "Test"], { cwd: repoDir, stdio: "pipe" });
   writeFileSync(path.join(repoDir, "README.md"), "hello\n");
-  if (options?.fdeConfig) {
-    writeFileSync(path.join(repoDir, "fde.json"), JSON.stringify(options.fdeConfig, null, 2));
+  if (options?.froggConfig) {
+    writeFileSync(path.join(repoDir, "frogg.json"), JSON.stringify(options.froggConfig, null, 2));
   }
   execFileSync("git", ["add", "."], { cwd: repoDir, stdio: "pipe" });
   execFileSync("git", ["-c", "commit.gpgsign=false", "commit", "-m", "initial"], {
@@ -612,7 +612,7 @@ describe("runWorktreeSetupInBackground", () => {
     const sourceWorkspaceCwd = path.join(repoDir, "packages", "app");
     mkdirSync(sourceWorkspaceCwd, { recursive: true });
     writeFileSync(
-      path.join(sourceWorkspaceCwd, "fde.json"),
+      path.join(sourceWorkspaceCwd, "frogg.json"),
       JSON.stringify({
         worktree: {
           setup: ["pwd > setup-cwd.txt"],
@@ -625,20 +625,20 @@ describe("runWorktreeSetupInBackground", () => {
       stdio: "pipe",
     });
 
-    const fdeHome = path.join(tempDir, ".fde");
+    const froggHome = path.join(tempDir, ".frogg");
     const createdWorktree = await createLegacyWorktreeForTest({
       branchName: "feature-subdirectory-setup",
       cwd: repoDir,
       baseBranch: "main",
       worktreeSlug: "feature-subdirectory-setup",
       runSetup: false,
-      fdeHome,
+      froggHome,
     });
     const workspaceCwd = path.join(createdWorktree.worktreePath, "packages", "app");
 
     await runWorktreeSetupInBackground(
       {
-        fdeHome,
+        froggHome,
         emitWorkspaceUpdateForWorkspaceId: async () => {},
         cacheWorkspaceSetupSnapshot: () => {},
         emit: () => {},
@@ -664,7 +664,7 @@ describe("runWorktreeSetupInBackground", () => {
 
   test("emits running then completed snapshots for no-setup workspaces without auto-starting scripts", async () => {
     const { tempDir, repoDir } = createGitRepo({
-      fdeConfig: {
+      froggConfig: {
         scripts: {
           web: {
             command: "npm run dev",
@@ -674,14 +674,14 @@ describe("runWorktreeSetupInBackground", () => {
     });
     cleanupPaths.push(tempDir);
 
-    const fdeHome = path.join(tempDir, ".fde");
+    const froggHome = path.join(tempDir, ".frogg");
     const createdWorktree = await createLegacyWorktreeForTest({
       branchName: "feature-no-setup",
       cwd: repoDir,
       baseBranch: "main",
       worktreeSlug: "feature-no-setup",
       runSetup: false,
-      fdeHome,
+      froggHome,
     });
     const worktreePath = createdWorktree.worktreePath;
     const emitted: SessionOutboundMessage[] = [];
@@ -693,7 +693,7 @@ describe("runWorktreeSetupInBackground", () => {
 
     await runWorktreeSetupInBackground(
       {
-        fdeHome,
+        froggHome,
         emitWorkspaceUpdateForWorkspaceId,
         cacheWorkspaceSetupSnapshot: (workspaceId, snapshot) =>
           snapshots.set(workspaceId, snapshot),
@@ -766,21 +766,21 @@ describe("runWorktreeSetupInBackground", () => {
     const { tempDir, repoDir } = createGitRepo();
     cleanupPaths.push(tempDir);
 
-    writeFileSync(path.join(repoDir, "fde.json"), "{ invalid json\n");
-    execFileSync("git", ["add", "fde.json"], { cwd: repoDir, stdio: "pipe" });
+    writeFileSync(path.join(repoDir, "frogg.json"), "{ invalid json\n");
+    execFileSync("git", ["add", "frogg.json"], { cwd: repoDir, stdio: "pipe" });
     execFileSync("git", ["-c", "commit.gpgsign=false", "commit", "-m", "broken config"], {
       cwd: repoDir,
       stdio: "pipe",
     });
 
-    const fdeHome = path.join(tempDir, ".fde");
+    const froggHome = path.join(tempDir, ".frogg");
     const createdWorktree = await createLegacyWorktreeForTest({
       branchName: "broken-feature",
       cwd: repoDir,
       baseBranch: "main",
       worktreeSlug: "broken-feature",
       runSetup: false,
-      fdeHome,
+      froggHome,
     });
     const worktreePath = createdWorktree.worktreePath;
     const emitted: SessionOutboundMessage[] = [];
@@ -792,7 +792,7 @@ describe("runWorktreeSetupInBackground", () => {
 
     await runWorktreeSetupInBackground(
       {
-        fdeHome,
+        froggHome,
         emitWorkspaceUpdateForWorkspaceId,
         cacheWorkspaceSetupSnapshot: (snapshotWorkspaceId, snapshot) =>
           snapshots.set(snapshotWorkspaceId, snapshot),
@@ -823,11 +823,13 @@ describe("runWorktreeSetupInBackground", () => {
     expect(progressMessages[0]?.payload.status).toBe("running");
     expect(progressMessages[0]?.payload.error).toBeNull();
     expect(progressMessages[1]?.payload.status).toBe("failed");
-    expect(progressMessages[1]?.payload.error).toMatch(/Failed to parse fde\.json at .*fde\.json/);
+    expect(progressMessages[1]?.payload.error).toMatch(
+      /Failed to parse frogg\.json at .*frogg\.json/,
+    );
     expect(progressMessages[1]?.payload.detail.commands).toEqual([]);
     expect(snapshots.get(workspaceId)).toMatchObject({
       status: "failed",
-      error: expect.stringMatching(/Failed to parse fde\.json at .*fde\.json/),
+      error: expect.stringMatching(/Failed to parse frogg\.json at .*frogg\.json/),
     });
     expect(archiveWorkspaceRecord).toHaveBeenCalledWith(workspaceId);
     expect(emitWorkspaceUpdateForWorkspaceId).toHaveBeenCalledWith(workspaceId);
@@ -838,7 +840,7 @@ describe("runWorktreeSetupInBackground", () => {
     "emits running setup snapshots before completed for real setup commands",
     async () => {
       const { tempDir, repoDir } = createGitRepo({
-        fdeConfig: {
+        froggConfig: {
           worktree: {
             setup: ["sh -c \"printf 'phase-one\\\\n'; sleep 0.1; printf 'phase-two\\\\n'\""],
           },
@@ -846,14 +848,14 @@ describe("runWorktreeSetupInBackground", () => {
       });
       cleanupPaths.push(tempDir);
 
-      const fdeHome = path.join(tempDir, ".fde");
+      const froggHome = path.join(tempDir, ".frogg");
       const createdWorktree = await createLegacyWorktreeForTest({
         branchName: "feature-running-setup",
         cwd: repoDir,
         baseBranch: "main",
         worktreeSlug: "feature-running-setup",
         runSetup: false,
-        fdeHome,
+        froggHome,
       });
       const worktreePath = createdWorktree.worktreePath;
       const emitted: SessionOutboundMessage[] = [];
@@ -864,7 +866,7 @@ describe("runWorktreeSetupInBackground", () => {
 
       await runWorktreeSetupInBackground(
         {
-          fdeHome,
+          froggHome,
           emitWorkspaceUpdateForWorkspaceId,
           cacheWorkspaceSetupSnapshot: (workspaceId, snapshot) =>
             snapshots.set(workspaceId, snapshot),
@@ -956,7 +958,7 @@ describe("runWorktreeSetupInBackground", () => {
 
   test("emits completed when reusing an existing worktree without bootstrapping or auto-starting scripts", async () => {
     const { tempDir, repoDir } = createGitRepo({
-      fdeConfig: {
+      froggConfig: {
         worktree: {
           setup: ["printf 'ran' > setup-ran.txt"],
         },
@@ -969,14 +971,14 @@ describe("runWorktreeSetupInBackground", () => {
     });
     cleanupPaths.push(tempDir);
 
-    const fdeHome = path.join(tempDir, ".fde");
+    const froggHome = path.join(tempDir, ".frogg");
     const existingWorktree = await createLegacyWorktreeForTest({
       branchName: "reused-worktree",
       cwd: repoDir,
       baseBranch: "main",
       worktreeSlug: "reused-worktree",
       runSetup: false,
-      fdeHome,
+      froggHome,
     });
 
     const emitted: SessionOutboundMessage[] = [];
@@ -988,7 +990,7 @@ describe("runWorktreeSetupInBackground", () => {
 
     await runWorktreeSetupInBackground(
       {
-        fdeHome,
+        froggHome,
         emitWorkspaceUpdateForWorkspaceId,
         cacheWorkspaceSetupSnapshot: (workspaceId, snapshot) =>
           snapshots.set(workspaceId, snapshot),
@@ -1050,7 +1052,7 @@ describe("runWorktreeSetupInBackground", () => {
 
   test("keeps setup completed without attempting script launch afterward", async () => {
     const { tempDir, repoDir } = createGitRepo({
-      fdeConfig: {
+      froggConfig: {
         scripts: {
           web: {
             command: "npm run dev",
@@ -1060,14 +1062,14 @@ describe("runWorktreeSetupInBackground", () => {
     });
     cleanupPaths.push(tempDir);
 
-    const fdeHome = path.join(tempDir, ".fde");
+    const froggHome = path.join(tempDir, ".frogg");
     const createdWorktree = await createLegacyWorktreeForTest({
       branchName: "feature-service-failure",
       cwd: repoDir,
       baseBranch: "main",
       worktreeSlug: "feature-service-failure",
       runSetup: false,
-      fdeHome,
+      froggHome,
     });
     const worktreePath = createdWorktree.worktreePath;
     const emitted: SessionOutboundMessage[] = [];
@@ -1083,7 +1085,7 @@ describe("runWorktreeSetupInBackground", () => {
 
     await runWorktreeSetupInBackground(
       {
-        fdeHome,
+        froggHome,
         emitWorkspaceUpdateForWorkspaceId,
         cacheWorkspaceSetupSnapshot: (workspaceId, snapshot) =>
           snapshots.set(workspaceId, snapshot),
@@ -1136,7 +1138,7 @@ describe("runWorktreeSetupInBackground", () => {
 
   test("does not auto-start scripts in socket mode", async () => {
     const { tempDir, repoDir } = createGitRepo({
-      fdeConfig: {
+      froggConfig: {
         scripts: {
           web: {
             command: "npm run dev",
@@ -1146,14 +1148,14 @@ describe("runWorktreeSetupInBackground", () => {
     });
     cleanupPaths.push(tempDir);
 
-    const fdeHome = path.join(tempDir, ".fde");
+    const froggHome = path.join(tempDir, ".frogg");
     const createdWorktree = await createLegacyWorktreeForTest({
       branchName: "feature-socket-mode",
       cwd: repoDir,
       baseBranch: "main",
       worktreeSlug: "feature-socket-mode",
       runSetup: false,
-      fdeHome,
+      froggHome,
     });
     const worktreePath = createdWorktree.worktreePath;
     const emitted: SessionOutboundMessage[] = [];
@@ -1165,7 +1167,7 @@ describe("runWorktreeSetupInBackground", () => {
 
     await runWorktreeSetupInBackground(
       {
-        fdeHome,
+        froggHome,
         emitWorkspaceUpdateForWorkspaceId,
         cacheWorkspaceSetupSnapshot: (workspaceId, snapshot) =>
           snapshots.set(workspaceId, snapshot),
@@ -1206,7 +1208,7 @@ describe("runWorktreeSetupInBackground", () => {
           status: "completed",
           detail: {
             type: "worktree_setup",
-            worktreePath: "/repo/.fde/worktrees/feature-a",
+            worktreePath: "/repo/.frogg/worktrees/feature-a",
             branchName: "feature-a",
             log: "done",
             commands: [],
@@ -1237,7 +1239,7 @@ describe("runWorktreeSetupInBackground", () => {
           status: "completed",
           detail: {
             type: "worktree_setup",
-            worktreePath: "/repo/.fde/worktrees/feature-a",
+            worktreePath: "/repo/.frogg/worktrees/feature-a",
             branchName: "feature-a",
             log: "done",
             commands: [],
@@ -1274,7 +1276,7 @@ describe("runWorktreeSetupInBackground", () => {
   });
 });
 
-describe("handleCreateFdeWorktreeRequest", () => {
+describe("handleCreateFroggWorktreeRequest", () => {
   const cleanupPaths: string[] = [];
 
   afterEach(() => {
@@ -1289,19 +1291,19 @@ describe("handleCreateFdeWorktreeRequest", () => {
 
     const emitted: SessionOutboundMessage[] = [];
     const logger = createLogger();
-    const fdeHome = path.join(tempDir, ".fde");
+    const froggHome = path.join(tempDir, ".frogg");
 
-    await handleCreateFdeWorktreeRequest(
+    await handleCreateFroggWorktreeRequest(
       {
-        fdeHome,
+        froggHome,
         describeWorkspaceRecord: async (result) =>
           createWorkspaceDescriptor({ workspace: result.workspace, repoDir }),
         emit: (message) => emitted.push(message),
         sessionLogger: logger,
-        createFdeWorktreeWorkflow: createWorkflowForRequestTest({ fdeHome }),
+        createFroggWorktreeWorkflow: createWorkflowForRequestTest({ froggHome }),
       },
       {
-        type: "create_fde_worktree_request",
+        type: "create_frogg_worktree_request",
         requestId: "req-pr-worktree",
         cwd: repoDir,
         worktreeSlug: "review-pr-123",
@@ -1314,8 +1316,8 @@ describe("handleCreateFdeWorktreeRequest", () => {
     const response = emitted.find(
       (
         message,
-      ): message is Extract<SessionOutboundMessage, { type: "create_fde_worktree_response" }> =>
-        message.type === "create_fde_worktree_response",
+      ): message is Extract<SessionOutboundMessage, { type: "create_frogg_worktree_response" }> =>
+        message.type === "create_frogg_worktree_response",
     );
 
     expect(response?.payload.error).toBeNull();
@@ -1346,14 +1348,14 @@ describe("handleCreateFdeWorktreeRequest", () => {
 
     const result = await buildAgentSessionConfig(
       {
-        fdeHome: path.join(tempDir, ".fde"),
+        froggHome: path.join(tempDir, ".frogg"),
         sessionLogger: createLogger(),
         workspaceGitService: {
           resolveRepoRoot: vi.fn(async () => repoDir),
           resolveDefaultBranch: vi.fn(async () => "main"),
         } as unknown as WorkspaceGitService,
-        createFdeWorktree: createFdeWorktreeForTest({
-          fdeHome: path.join(tempDir, ".fde"),
+        createFroggWorktree: createFroggWorktreeForTest({
+          froggHome: path.join(tempDir, ".frogg"),
           events,
         }),
         checkoutExistingBranch: async () => {
@@ -1391,17 +1393,17 @@ describe("handleCreateFdeWorktreeRequest", () => {
   test("buildAgentSessionConfig uses the normalized new branch name as the worktree slug fallback", async () => {
     const { tempDir, repoDir } = createGitRepo();
     cleanupPaths.push(tempDir);
-    const fdeHome = path.join(tempDir, ".fde");
+    const froggHome = path.join(tempDir, ".frogg");
 
     const result = await buildAgentSessionConfig(
       {
-        fdeHome,
+        froggHome,
         sessionLogger: createLogger(),
         workspaceGitService: {
           resolveRepoRoot: vi.fn(async () => repoDir),
           resolveDefaultBranch: vi.fn(async () => "main"),
         } as unknown as WorkspaceGitService,
-        createFdeWorktree: createFdeWorktreeForTest({ fdeHome }),
+        createFroggWorktree: createFroggWorktreeForTest({ froggHome }),
         checkoutExistingBranch: async () => {
           throw new Error("should not checkout existing branch");
         },
@@ -1424,7 +1426,7 @@ describe("handleCreateFdeWorktreeRequest", () => {
   });
 
   test("buildAgentSessionConfig passes prompt and attachment context into worktree creation", async () => {
-    const createFdeWorktree = vi.fn(async () => ({
+    const createFroggWorktree = vi.fn(async () => ({
       worktree: {
         branchName: "fix-attached-pr-context",
         worktreePath: "/tmp/worktrees/fix-attached-pr-context",
@@ -1455,7 +1457,7 @@ describe("handleCreateFdeWorktreeRequest", () => {
           mimeType: "application/github-pr",
           number: 123,
           title: "Fix worktree naming",
-          url: "https://github.com/frogg-app/fde/pull/123",
+          url: "https://github.com/frogg-app/frogg/pull/123",
           baseRefName: "main",
           headRefName: "fix/worktree-naming",
         },
@@ -1468,7 +1470,7 @@ describe("handleCreateFdeWorktreeRequest", () => {
         workspaceGitService: {
           resolveDefaultBranch: vi.fn(async () => "main"),
         } as unknown as WorkspaceGitService,
-        createFdeWorktree,
+        createFroggWorktree,
         checkoutExistingBranch: async () => {
           throw new Error("should not checkout existing branch");
         },
@@ -1488,7 +1490,7 @@ describe("handleCreateFdeWorktreeRequest", () => {
       firstAgentContext,
     );
 
-    expect(createFdeWorktree).toHaveBeenCalledWith(
+    expect(createFroggWorktree).toHaveBeenCalledWith(
       expect.objectContaining({
         firstAgentContext,
       }),
@@ -1501,14 +1503,14 @@ describe("handleCreateFdeWorktreeRequest", () => {
     const invalidate = vi.fn();
     const createBranchFromBase = vi.fn(async () => {});
     const checkoutExistingBranch = vi.fn(async () => ({ source: "local" as const }));
-    const createFdeWorktree = vi.fn(async () => {
+    const createFroggWorktree = vi.fn(async () => {
       throw new Error("should not create worktree");
     });
 
     await buildAgentSessionConfig(
       {
         sessionLogger: createLogger(),
-        createFdeWorktree,
+        createFroggWorktree,
         checkoutExistingBranch,
         createBranchFromBase,
         workspaceGitService: { invalidateForge: invalidate } as unknown as WorkspaceGitService,
@@ -1536,7 +1538,7 @@ describe("handleCreateFdeWorktreeRequest", () => {
     await buildAgentSessionConfig(
       {
         sessionLogger: createLogger(),
-        createFdeWorktree,
+        createFroggWorktree,
         checkoutExistingBranch,
         createBranchFromBase,
         workspaceGitService: { invalidateForge: invalidate } as unknown as WorkspaceGitService,
@@ -1554,19 +1556,19 @@ describe("handleCreateFdeWorktreeRequest", () => {
     expect(invalidate).toHaveBeenCalledWith("/tmp/repo");
   });
 
-  test("createFdeWorktreeForTest forwards the default branch resolver for branch-off intents", async () => {
+  test("createFroggWorktreeForTest forwards the default branch resolver for branch-off intents", async () => {
     const { tempDir, repoDir } = createGitRepo();
     cleanupPaths.push(tempDir);
-    const fdeHome = path.join(tempDir, ".fde");
+    const froggHome = path.join(tempDir, ".frogg");
     const resolveDefaultBranch = vi.fn(async () => "main");
 
-    const result = await createFdeWorktreeForTest({ fdeHome })(
+    const result = await createFroggWorktreeForTest({ froggHome })(
       {
         cwd: repoDir,
         worktreeSlug: "resolver-feature",
         action: "branch-off",
         runSetup: false,
-        fdeHome,
+        froggHome,
       },
       { resolveDefaultBranch },
     );
@@ -1582,22 +1584,22 @@ describe("handleCreateFdeWorktreeRequest", () => {
   });
 });
 
-describe("handleCreateFdeWorktreeRequest", () => {
+describe("handleCreateFroggWorktreeRequest", () => {
   test("registers a pending workspace and emits a successful create response", async () => {
     const { tempDir, repoDir } = createGitRepo();
-    const fdeHome = path.join(tempDir, ".fde");
+    const froggHome = path.join(tempDir, ".frogg");
     const emitted: SessionOutboundMessage[] = [];
     const events: string[] = [];
 
     try {
-      await handleCreateFdeWorktreeRequest(
+      await handleCreateFroggWorktreeRequest(
         {
-          fdeHome,
+          froggHome,
           sessionLogger: createLogger(),
           emit: (message) => emitted.push(message),
-          createFdeWorktreeWorkflow: createWorkflowForRequestTest({
-            fdeHome,
-            createFdeWorktree: createFdeWorktreeForTest({ fdeHome, events }),
+          createFroggWorktreeWorkflow: createWorkflowForRequestTest({
+            froggHome,
+            createFroggWorktree: createFroggWorktreeForTest({ froggHome, events }),
           }),
           describeWorkspaceRecord: vi.fn(async (result) => ({
             id: result.workspace.workspaceId,
@@ -1614,7 +1616,7 @@ describe("handleCreateFdeWorktreeRequest", () => {
             gitRuntime: {
               currentBranch: "single-call",
               remoteUrl: null,
-              isFdeOwnedWorktree: true,
+              isFroggOwnedWorktree: true,
               isDirty: false,
               aheadBehind: null,
               aheadOfOrigin: null,
@@ -1624,7 +1626,7 @@ describe("handleCreateFdeWorktreeRequest", () => {
           })),
         },
         {
-          type: "create_fde_worktree_request",
+          type: "create_frogg_worktree_request",
           cwd: repoDir,
           worktreeSlug: "single-call",
           requestId: "req-single-call",
@@ -1635,8 +1637,8 @@ describe("handleCreateFdeWorktreeRequest", () => {
       const response = emitted.find(
         (
           message,
-        ): message is Extract<SessionOutboundMessage, { type: "create_fde_worktree_response" }> =>
-          message.type === "create_fde_worktree_response",
+        ): message is Extract<SessionOutboundMessage, { type: "create_frogg_worktree_response" }> =>
+          message.type === "create_frogg_worktree_response",
       );
       expect(response?.payload.error).toBeNull();
     } finally {
@@ -1646,22 +1648,22 @@ describe("handleCreateFdeWorktreeRequest", () => {
 
   test("creates the worktree before emitting the response", async () => {
     const { tempDir, repoDir } = createGitRepo();
-    const fdeHome = path.join(tempDir, ".fde");
+    const froggHome = path.join(tempDir, ".frogg");
     const emitted: SessionOutboundMessage[] = [];
     const backgroundWork = vi.fn(async () => {});
     const warmWorkspaceGitData = vi.fn(async () => {});
     let registeredWorktreePath: string | null = null;
 
     try {
-      await handleCreateFdeWorktreeRequest(
+      await handleCreateFroggWorktreeRequest(
         {
-          fdeHome,
+          froggHome,
           sessionLogger: createLogger(),
           emit: (message) => emitted.push(message),
-          createFdeWorktreeWorkflow: createWorkflowForRequestTest({
-            fdeHome,
-            createFdeWorktree: async (input) => {
-              const result = await createFdeWorktreeForTest({ fdeHome })(input);
+          createFroggWorktreeWorkflow: createWorkflowForRequestTest({
+            froggHome,
+            createFroggWorktree: async (input) => {
+              const result = await createFroggWorktreeForTest({ froggHome })(input);
               expect(existsSync(result.worktree.worktreePath)).toBe(true);
               registeredWorktreePath = result.worktree.worktreePath;
               return result;
@@ -1674,7 +1676,7 @@ describe("handleCreateFdeWorktreeRequest", () => {
           ),
         },
         {
-          type: "create_fde_worktree_request",
+          type: "create_frogg_worktree_request",
           cwd: repoDir,
           worktreeSlug: "response-after-create",
           requestId: "req-1",
@@ -1684,13 +1686,13 @@ describe("handleCreateFdeWorktreeRequest", () => {
       const response = emitted.find(
         (
           message,
-        ): message is Extract<SessionOutboundMessage, { type: "create_fde_worktree_response" }> =>
-          message.type === "create_fde_worktree_response",
+        ): message is Extract<SessionOutboundMessage, { type: "create_frogg_worktree_response" }> =>
+          message.type === "create_frogg_worktree_response",
       );
       expect(response?.payload.error).toBeNull();
       expect(response?.payload.workspace?.id).toBeTruthy();
       expect(emitted.map((message) => message.type).slice(0, 2)).toEqual([
-        "create_fde_worktree_response",
+        "create_frogg_worktree_response",
         "workspace_update",
       ]);
       const workspaceUpdate = emitted[1];
@@ -1731,22 +1733,22 @@ describe("handleCreateFdeWorktreeRequest", () => {
 
   test("emits a machine-readable error code for invalid worktree intent", async () => {
     const { tempDir, repoDir } = createGitRepo();
-    const fdeHome = path.join(tempDir, ".fde");
+    const froggHome = path.join(tempDir, ".frogg");
     const emitted: SessionOutboundMessage[] = [];
 
     try {
-      await handleCreateFdeWorktreeRequest(
+      await handleCreateFroggWorktreeRequest(
         {
-          fdeHome,
+          froggHome,
           sessionLogger: createLogger(),
           emit: (message) => emitted.push(message),
-          createFdeWorktreeWorkflow: createWorkflowForRequestTest({ fdeHome }),
+          createFroggWorktreeWorkflow: createWorkflowForRequestTest({ froggHome }),
           describeWorkspaceRecord: vi.fn(async (result) =>
             createWorkspaceDescriptor({ workspace: result.workspace, repoDir }),
           ),
         },
         {
-          type: "create_fde_worktree_request",
+          type: "create_frogg_worktree_request",
           cwd: repoDir,
           action: "checkout",
           requestId: "req-missing-target",
@@ -1756,8 +1758,8 @@ describe("handleCreateFdeWorktreeRequest", () => {
       const response = emitted.find(
         (
           message,
-        ): message is Extract<SessionOutboundMessage, { type: "create_fde_worktree_response" }> =>
-          message.type === "create_fde_worktree_response",
+        ): message is Extract<SessionOutboundMessage, { type: "create_frogg_worktree_response" }> =>
+          message.type === "create_frogg_worktree_response",
       );
       expect(response?.payload.workspace).toBeNull();
       expect(response?.payload.error).toBe('action "checkout" requires refName or checkoutSource');
@@ -1769,22 +1771,22 @@ describe("handleCreateFdeWorktreeRequest", () => {
 
   test("emits a machine-readable error code for unknown checkout branches", async () => {
     const { tempDir, repoDir } = createGitRepo();
-    const fdeHome = path.join(tempDir, ".fde");
+    const froggHome = path.join(tempDir, ".frogg");
     const emitted: SessionOutboundMessage[] = [];
 
     try {
-      await handleCreateFdeWorktreeRequest(
+      await handleCreateFroggWorktreeRequest(
         {
-          fdeHome,
+          froggHome,
           sessionLogger: createLogger(),
           emit: (message) => emitted.push(message),
-          createFdeWorktreeWorkflow: createWorkflowForRequestTest({ fdeHome }),
+          createFroggWorktreeWorkflow: createWorkflowForRequestTest({ froggHome }),
           describeWorkspaceRecord: vi.fn(async (result) =>
             createWorkspaceDescriptor({ workspace: result.workspace, repoDir }),
           ),
         },
         {
-          type: "create_fde_worktree_request",
+          type: "create_frogg_worktree_request",
           cwd: repoDir,
           action: "checkout",
           refName: "missing-branch",
@@ -1795,8 +1797,8 @@ describe("handleCreateFdeWorktreeRequest", () => {
       const response = emitted.find(
         (
           message,
-        ): message is Extract<SessionOutboundMessage, { type: "create_fde_worktree_response" }> =>
-          message.type === "create_fde_worktree_response",
+        ): message is Extract<SessionOutboundMessage, { type: "create_frogg_worktree_response" }> =>
+          message.type === "create_frogg_worktree_response",
       );
       expect(response?.payload.workspace).toBeNull();
       expect(response?.payload.error).toBe("Unknown branch: missing-branch");
@@ -1807,7 +1809,7 @@ describe("handleCreateFdeWorktreeRequest", () => {
   });
 });
 
-describe("handleFdeWorktreeArchiveRequest worktree scope", () => {
+describe("handleFroggWorktreeArchiveRequest worktree scope", () => {
   const cleanupPaths: string[] = [];
 
   afterEach(() => {
@@ -1820,14 +1822,14 @@ describe("handleFdeWorktreeArchiveRequest worktree scope", () => {
     const { tempDir, repoDir } = createGitRepo();
     cleanupPaths.push(tempDir);
 
-    const fdeHome = path.join(tempDir, ".fde");
+    const froggHome = path.join(tempDir, ".frogg");
     const created = await createLegacyWorktreeForTest({
       branchName: "archive-worktree-scope",
       cwd: repoDir,
       baseBranch: "main",
       worktreeSlug: "archive-worktree-scope",
       runSetup: false,
-      fdeHome,
+      froggHome,
     });
     const sharedCwd = created.worktreePath;
     const workspaceA = "ws-worktree-scope-A";
@@ -1840,9 +1842,9 @@ describe("handleFdeWorktreeArchiveRequest worktree scope", () => {
     const listActiveWorkspaces = vi.fn(async () => activeWorkspaces);
     const emitted: SessionOutboundMessage[] = [];
 
-    await handleFdeWorktreeArchiveRequest(
+    await handleFroggWorktreeArchiveRequest(
       {
-        fdeHome,
+        froggHome,
         github: createGitHubServiceStub(),
         workspaceGitService: {
           getSnapshot: vi.fn(async () => null),
@@ -1870,7 +1872,7 @@ describe("handleFdeWorktreeArchiveRequest worktree scope", () => {
         sessionLogger: createLogger(),
       },
       {
-        type: "fde_worktree_archive_request",
+        type: "frogg_worktree_archive_request",
         requestId: "req-worktree-scope",
         worktreePath: sharedCwd,
         repoRoot: repoDir,
@@ -1882,7 +1884,7 @@ describe("handleFdeWorktreeArchiveRequest worktree scope", () => {
     expect(archivedWorkspaceRecords).toContain(workspaceB);
     expect(existsSync(sharedCwd)).toBe(false);
     expect(
-      emitted.find((message) => message.type === "fde_worktree_archive_response"),
+      emitted.find((message) => message.type === "frogg_worktree_archive_response"),
     ).toMatchObject({
       payload: {
         success: true,
@@ -1895,14 +1897,14 @@ describe("handleFdeWorktreeArchiveRequest worktree scope", () => {
     const { tempDir, repoDir } = createGitRepo();
     cleanupPaths.push(tempDir);
 
-    const fdeHome = path.join(tempDir, ".fde");
+    const froggHome = path.join(tempDir, ".frogg");
     const created = await createLegacyWorktreeForTest({
       branchName: "archive-default-scope",
       cwd: repoDir,
       baseBranch: "main",
       worktreeSlug: "archive-default-scope",
       runSetup: false,
-      fdeHome,
+      froggHome,
     });
     const workspaceId = "ws-default-scope";
     const activeWorkspaces = [
@@ -1911,9 +1913,9 @@ describe("handleFdeWorktreeArchiveRequest worktree scope", () => {
     const archivedWorkspaceRecords: string[] = [];
     const emitted: SessionOutboundMessage[] = [];
 
-    await handleFdeWorktreeArchiveRequest(
+    await handleFroggWorktreeArchiveRequest(
       {
-        fdeHome,
+        froggHome,
         github: createGitHubServiceStub(),
         workspaceGitService: {
           getSnapshot: vi.fn(async () => null),
@@ -1945,7 +1947,7 @@ describe("handleFdeWorktreeArchiveRequest worktree scope", () => {
         sessionLogger: createLogger(),
       },
       {
-        type: "fde_worktree_archive_request",
+        type: "frogg_worktree_archive_request",
         requestId: "req-default-scope",
         worktreePath: created.worktreePath,
         repoRoot: repoDir,
@@ -1955,7 +1957,7 @@ describe("handleFdeWorktreeArchiveRequest worktree scope", () => {
     expect(archivedWorkspaceRecords).toEqual([workspaceId]);
     expect(existsSync(created.worktreePath)).toBe(false);
     expect(
-      emitted.find((message) => message.type === "fde_worktree_archive_response"),
+      emitted.find((message) => message.type === "frogg_worktree_archive_response"),
     ).toMatchObject({
       payload: {
         success: true,
@@ -1968,14 +1970,14 @@ describe("handleFdeWorktreeArchiveRequest worktree scope", () => {
     const { tempDir, repoDir } = createGitRepo();
     cleanupPaths.push(tempDir);
 
-    const fdeHome = path.join(tempDir, ".fde");
+    const froggHome = path.join(tempDir, ".frogg");
     const created = await createLegacyWorktreeForTest({
       branchName: "archive-default-scope-sibling",
       cwd: repoDir,
       baseBranch: "main",
       worktreeSlug: "archive-default-scope-sibling",
       runSetup: false,
-      fdeHome,
+      froggHome,
     });
     const sharedCwd = created.worktreePath;
     const workspaceA = "ws-default-scope-sibling-A";
@@ -1987,9 +1989,9 @@ describe("handleFdeWorktreeArchiveRequest worktree scope", () => {
     const archivedWorkspaceRecords: string[] = [];
     const emitted: SessionOutboundMessage[] = [];
 
-    await handleFdeWorktreeArchiveRequest(
+    await handleFroggWorktreeArchiveRequest(
       {
-        fdeHome,
+        froggHome,
         github: createGitHubServiceStub(),
         workspaceGitService: {
           getSnapshot: vi.fn(async () => null),
@@ -2021,7 +2023,7 @@ describe("handleFdeWorktreeArchiveRequest worktree scope", () => {
         sessionLogger: createLogger(),
       },
       {
-        type: "fde_worktree_archive_request",
+        type: "frogg_worktree_archive_request",
         requestId: "req-default-scope-sibling",
         worktreePath: sharedCwd,
         repoRoot: repoDir,
@@ -2031,7 +2033,7 @@ describe("handleFdeWorktreeArchiveRequest worktree scope", () => {
     expect(archivedWorkspaceRecords).toEqual([workspaceA]);
     expect(existsSync(sharedCwd)).toBe(true);
     expect(
-      emitted.find((message) => message.type === "fde_worktree_archive_response"),
+      emitted.find((message) => message.type === "frogg_worktree_archive_response"),
     ).toMatchObject({
       payload: {
         success: true,
@@ -2044,14 +2046,14 @@ describe("handleFdeWorktreeArchiveRequest worktree scope", () => {
     const { tempDir, repoDir } = createGitRepo();
     cleanupPaths.push(tempDir);
 
-    const fdeHome = path.join(tempDir, ".fde");
+    const froggHome = path.join(tempDir, ".frogg");
     const created = await createLegacyWorktreeForTest({
       branchName: "archive-delete-flag",
       cwd: repoDir,
       baseBranch: "main",
       worktreeSlug: "archive-delete-flag",
       runSetup: false,
-      fdeHome,
+      froggHome,
     });
     const sharedCwd = created.worktreePath;
     const workspaceA = "ws-delete-flag-a";
@@ -2065,7 +2067,7 @@ describe("handleFdeWorktreeArchiveRequest worktree scope", () => {
     const listActiveWorkspaces = vi.fn(async () => activeWorkspaces);
 
     const deps = {
-      fdeHome,
+      froggHome,
       github: createGitHubServiceStub(),
       workspaceGitService: {
         getSnapshot: vi.fn(async () => null),
@@ -2095,8 +2097,8 @@ describe("handleFdeWorktreeArchiveRequest worktree scope", () => {
 
     // First archive: a sibling workspace still references the directory, so the
     // retained deleteWorktreeFromDisk:true flag must NOT force removal.
-    await handleFdeWorktreeArchiveRequest(deps, {
-      type: "fde_worktree_archive_request",
+    await handleFroggWorktreeArchiveRequest(deps, {
+      type: "frogg_worktree_archive_request",
       requestId: "req-delete-flag-first",
       worktreePath: sharedCwd,
       repoRoot: repoDir,
@@ -2114,8 +2116,8 @@ describe("handleFdeWorktreeArchiveRequest worktree scope", () => {
 
     // Second archive: last reference, so removal is derived even though the flag
     // is still ignored.
-    await handleFdeWorktreeArchiveRequest(deps, {
-      type: "fde_worktree_archive_request",
+    await handleFroggWorktreeArchiveRequest(deps, {
+      type: "frogg_worktree_archive_request",
       requestId: "req-delete-flag-second",
       worktreePath: sharedCwd,
       repoRoot: repoDir,
@@ -2127,7 +2129,7 @@ describe("handleFdeWorktreeArchiveRequest worktree scope", () => {
     expect(archivedWorkspaceRecords).toEqual([workspaceB]);
     expect(existsSync(sharedCwd)).toBe(false);
     expect(
-      emitted.filter((message) => message.type === "fde_worktree_archive_response"),
+      emitted.filter((message) => message.type === "frogg_worktree_archive_response"),
     ).toHaveLength(2);
   });
 });

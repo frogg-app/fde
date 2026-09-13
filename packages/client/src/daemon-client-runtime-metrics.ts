@@ -1,4 +1,4 @@
-import type { SessionOutboundMessage } from "@fde/protocol/messages";
+import type { SessionOutboundMessage } from "@frogg/protocol/messages";
 
 interface RuntimeMetricsLogger {
   info(obj: object, msg?: string): void;

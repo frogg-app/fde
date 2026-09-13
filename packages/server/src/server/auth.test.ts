@@ -55,12 +55,12 @@ describe("daemon bearer validator", () => {
     expect(extractHttpBearerToken(undefined)).toBeNull();
   });
 
-  test("extracts WebSocket fde bearer subprotocol tokens", () => {
-    const protocol = extractWsBearerProtocol("chat, fde.bearer.secret.with.dots");
+  test("extracts WebSocket frogg bearer subprotocol tokens", () => {
+    const protocol = extractWsBearerProtocol("chat, frogg.bearer.secret.with.dots");
 
-    expect(protocol).toBe("fde.bearer.secret.with.dots");
+    expect(protocol).toBe("frogg.bearer.secret.with.dots");
     expect(extractWsBearerToken(protocol)).toBe("secret.with.dots");
-    expect(extractWsBearerToken("fde.other.secret")).toBeNull();
+    expect(extractWsBearerToken("frogg.other.secret")).toBeNull();
   });
 
   test("bypasses bearer auth for preflight, liveness, and capability-token routes", () => {
@@ -150,7 +150,7 @@ describe("bearer requirement by client locality", () => {
   });
 
   function policyFor(trustLan: boolean): DaemonAccessPolicy {
-    const home = mkdtempSync(path.join(tmpdir(), "fde-auth-matrix-"));
+    const home = mkdtempSync(path.join(tmpdir(), "frogg-auth-matrix-"));
     homes.push(home);
     return createAccessPolicy({
       claimStore: createClaimStore(home),

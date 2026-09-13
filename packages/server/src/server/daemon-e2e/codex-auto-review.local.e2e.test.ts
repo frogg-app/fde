@@ -12,7 +12,7 @@ import { describe, expect, test } from "vitest";
 
 import { CodexAppServerAgentClient } from "../agent/providers/codex-app-server-agent.js";
 import { createMessageCollector } from "../test-utils/message-collector.js";
-import { createTestFdeDaemon } from "../test-utils/fde-daemon.js";
+import { createTestFroggDaemon } from "../test-utils/frogg-daemon.js";
 import { DaemonClient } from "../test-utils/daemon-client.js";
 
 const QA_REPORT_PATH = "/tmp/codex-auto-review-qa.md";
@@ -269,7 +269,7 @@ async function runScenario(modeId: "auto" | "auto-review") {
       : [approvalToolCallSse(), finalAnswerSse()],
   );
   const { logger, records } = createTraceLogger();
-  const daemon = await createTestFdeDaemon({
+  const daemon = await createTestFroggDaemon({
     agentClients: {
       codex: new CodexAppServerAgentClient(logger, {
         env: {

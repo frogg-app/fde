@@ -1,6 +1,6 @@
 default_platform(:ios)
 
-APP_IDENTIFIER = "sh.fde"
+APP_IDENTIFIER = "sh.frogg"
 
 platform :ios do
   desc "Submit the latest TestFlight build to App Store Review"

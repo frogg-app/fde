@@ -1,11 +1,11 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { z } from "zod";
 import { ensureValidJson } from "../../json-utils.js";
 import type { Logger } from "pino";
 
 import type { AgentMode, AgentProvider, AgentSessionConfig } from "../agent-sdk-types.js";
 import type { AgentManager } from "../agent-manager.js";
-import { AgentProfileSchema } from "@fde/protocol/messages";
+import { AgentProfileSchema } from "@frogg/protocol/messages";
 import type { DaemonConfigStore } from "../../daemon-config-store.js";
 import {
   AgentFeatureSchema,
@@ -35,10 +35,10 @@ import {
 import { createAgentCommand, type CreateAgentFromMcpInput } from "../create-agent/create.js";
 import type { VoiceCallerContext, VoiceSpeakHandler } from "../../voice-types.js";
 import type { FirstAgentContext } from "../../messages.js";
-import { everyMsToFiveFieldCron } from "@fde/protocol/schedule/cadence";
+import { everyMsToFiveFieldCron } from "@frogg/protocol/schedule/cadence";
 import { expandUserPath, isSameOrDescendantPath, resolvePathFromBase } from "../../path-utils.js";
 import type { TerminalManager } from "../../../terminal/terminal-manager.js";
-import type { CreateFdeWorktreeWorkflowFn } from "../../worktree-session.js";
+import type { CreateFroggWorktreeWorkflowFn } from "../../worktree-session.js";
 import type { ScheduleService } from "../../schedule/service.js";
 import {
   ScheduleRunSchema,
@@ -46,7 +46,7 @@ import {
   StoredScheduleSchema,
   type ScheduleCadence,
   type UpdateScheduleInput,
-} from "@fde/protocol/schedule/types";
+} from "@frogg/protocol/schedule/types";
 import type { ProviderSnapshotManager } from "../provider-snapshot-manager.js";
 import {
   AgentModelSchema,
@@ -81,20 +81,20 @@ import { resolveWorktreeSourceCwd } from "../../workspace-source.js";
 import type { WorkspaceScriptsService } from "../../session/workspace-scripts/workspace-scripts-service.js";
 import {
   type ArchiveCommandDependencies,
-  type CreateFdeWorktreeCommandInput,
-  createFdeWorktreeCommand,
+  type CreateFroggWorktreeCommandInput,
+  createFroggWorktreeCommand,
 } from "../../worktree/commands.js";
 import { registerBrowserTools } from "../../browser-tools/tools.js";
 import type { BrowserToolsBroker } from "../../browser-tools/broker.js";
 import type {
-  FdeToolCatalog,
-  FdeToolConfig,
-  FdeToolDefinition,
-  FdeToolExecutionContext,
-  FdeToolResult,
+  FroggToolCatalog,
+  FroggToolConfig,
+  FroggToolDefinition,
+  FroggToolExecutionContext,
+  FroggToolResult,
 } from "./types.js";
 
-export interface FdeToolHostDependencies {
+export interface FroggToolHostDependencies {
   agentManager: AgentManager;
   agentStorage: AgentStorage;
   terminalManager?: TerminalManager | null;
@@ -121,7 +121,7 @@ export interface FdeToolHostDependencies {
   workspaceScripts?: Pick<WorkspaceScriptsService, "list" | "launch" | "stop">;
   markWorkspaceArchiving?: ArchiveDependencies["markWorkspaceArchiving"];
   clearWorkspaceArchiving?: ArchiveDependencies["clearWorkspaceArchiving"];
-  createFdeWorktree?: CreateFdeWorktreeWorkflowFn;
+  createFroggWorktree?: CreateFroggWorktreeWorkflowFn;
   // Mints a fresh directory workspace for a cwd and returns its id.
   ensureWorkspaceForCreate?: (
     cwd: string,
@@ -129,7 +129,7 @@ export interface FdeToolHostDependencies {
   ) => Promise<string>;
   browserToolsEnabled?: boolean;
   browserToolsBroker?: BrowserToolsBroker | null;
-  fdeHome?: string;
+  froggHome?: string;
   worktreesRoot?: string;
   /**
    * ID of the agent that is using this tool catalog.
@@ -208,7 +208,7 @@ interface WorkspaceWorktreeOptions {
 }
 
 type WorkspaceWorktreeTarget = Pick<
-  CreateFdeWorktreeCommandInput,
+  CreateFroggWorktreeCommandInput,
   "action" | "branchName" | "refName" | "checkoutSource"
 >;
 
@@ -539,7 +539,7 @@ function resolveTerminalKeyToken(key: string, literal: boolean): string {
   }
 }
 
-export function createFdeToolCatalog(options: FdeToolHostDependencies): FdeToolCatalog {
+export function createFroggToolCatalog(options: FroggToolHostDependencies): FroggToolCatalog {
   const {
     agentManager,
     agentStorage,
@@ -553,10 +553,10 @@ export function createFdeToolCatalog(options: FdeToolHostDependencies): FdeToolC
     resolveCallerContext,
     logger,
   } = options;
-  const childLogger = logger.child({ module: "agent", component: "fde-tool-catalog" });
+  const childLogger = logger.child({ module: "agent", component: "frogg-tool-catalog" });
   const callerContext = callerAgentId ? (resolveCallerContext?.(callerAgentId) ?? null) : null;
 
-  const parseToolInput = async (tool: FdeToolDefinition, input: unknown): Promise<unknown> => {
+  const parseToolInput = async (tool: FroggToolDefinition, input: unknown): Promise<unknown> => {
     const inputSchema = tool.inputSchema;
     if (!inputSchema) {
       return input;
@@ -570,12 +570,12 @@ export function createFdeToolCatalog(options: FdeToolHostDependencies): FdeToolC
     return schema.parseAsync(input);
   };
 
-  const tools = new Map<string, FdeToolDefinition>();
+  const tools = new Map<string, FroggToolDefinition>();
   const registerTool = (
     name: string,
-    config: FdeToolConfig,
+    config: FroggToolConfig,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Tool handlers are schema-validated at registration boundaries.
-    handler: (input: any, context: FdeToolExecutionContext) => Promise<FdeToolResult>,
+    handler: (input: any, context: FroggToolExecutionContext) => Promise<FroggToolResult>,
   ) => {
     tools.set(name, {
       name,
@@ -583,22 +583,22 @@ export function createFdeToolCatalog(options: FdeToolHostDependencies): FdeToolC
       description: config.description ?? name,
       inputSchema: config.inputSchema,
       outputSchema: config.outputSchema,
-      handler: handler as FdeToolDefinition["handler"],
+      handler: handler as FroggToolDefinition["handler"],
     });
   };
-  const toCatalog = (): FdeToolCatalog => ({
+  const toCatalog = (): FroggToolCatalog => ({
     tools,
-    getTool(name: string): FdeToolDefinition | undefined {
+    getTool(name: string): FroggToolDefinition | undefined {
       return tools.get(name);
     },
     async executeTool(
       name: string,
       input: unknown,
-      context: FdeToolExecutionContext = {},
-    ): Promise<FdeToolResult> {
+      context: FroggToolExecutionContext = {},
+    ): Promise<FroggToolResult> {
       const tool = tools.get(name);
       if (!tool) {
-        throw new Error(`FDE tool not found: ${name}`);
+        throw new Error(`Frogg tool not found: ${name}`);
       }
       return tool.handler(await parseToolInput(tool, input), context);
     },
@@ -1305,11 +1305,11 @@ export function createFdeToolCatalog(options: FdeToolHostDependencies): FdeToolC
           prNumber,
           forge,
         });
-        const result = await createFdeWorktreeCommand(
+        const result = await createFroggWorktreeCommand(
           {
-            fdeHome: options.fdeHome,
+            froggHome: options.froggHome,
             worktreesRoot: options.worktreesRoot,
-            createFdeWorktreeWorkflow: options.createFdeWorktree,
+            createFroggWorktreeWorkflow: options.createFroggWorktree,
           },
           {
             cwd,
@@ -1440,11 +1440,11 @@ export function createFdeToolCatalog(options: FdeToolHostDependencies): FdeToolC
           agentManager,
           agentStorage,
           logger: childLogger,
-          fdeHome: options.fdeHome,
+          froggHome: options.froggHome,
           worktreesRoot: options.worktreesRoot,
           terminalManager,
           providerSnapshotManager,
-          createFdeWorktree: options.createFdeWorktree,
+          createFroggWorktree: options.createFroggWorktree,
           ...(options.ensureWorkspaceForCreate
             ? { ensureWorkspaceForCreate: options.ensureWorkspaceForCreate }
             : {}),
@@ -2265,7 +2265,7 @@ export function createFdeToolCatalog(options: FdeToolHostDependencies): FdeToolC
       description: `Start one configured workspace script through ${brand.name}'s managed workspace-script launcher.`,
       inputSchema: {
         workspaceId: z.string().describe("Workspace ID containing the configured script."),
-        scriptName: z.string().min(1).describe("Configured fde.json script name to start."),
+        scriptName: z.string().min(1).describe("Configured frogg.json script name to start."),
       },
       outputSchema: {
         script: WorkspaceScriptPayloadSchema,
@@ -2291,7 +2291,7 @@ export function createFdeToolCatalog(options: FdeToolHostDependencies): FdeToolC
       description: "Stop a running workspace script through its supervised terminal lifecycle.",
       inputSchema: {
         workspaceId: z.string().describe("Workspace ID containing the running script."),
-        scriptName: z.string().min(1).describe("Configured fde.json script name to stop."),
+        scriptName: z.string().min(1).describe("Configured frogg.json script name to stop."),
       },
       outputSchema: {
         script: WorkspaceScriptPayloadSchema,
@@ -3163,7 +3163,7 @@ interface ArchiveWorktreeCommandContext {
 }
 
 function archiveWorktreeDependencies(
-  options: FdeToolHostDependencies,
+  options: FroggToolHostDependencies,
   context: ArchiveWorktreeCommandContext,
 ): ArchiveCommandDependencies {
   if (!options.github) {
@@ -3191,8 +3191,8 @@ function archiveWorktreeDependencies(
     throw new Error("Workspace archiving clearer is required to archive worktrees");
   }
   return {
-    fdeHome: options.fdeHome,
-    fdeWorktreesBaseRoot: options.worktreesRoot,
+    froggHome: options.froggHome,
+    froggWorktreesBaseRoot: options.worktreesRoot,
     github: options.github,
     workspaceGitService: options.workspaceGitService,
     agentManager: context.agentManager,

@@ -1,4 +1,4 @@
-import type { ProjectIconSource } from "@fde/protocol/messages";
+import type { ProjectIconSource } from "@frogg/protocol/messages";
 
 /**
  * What the user asked the icon to become. A URL is client-side only: the caller

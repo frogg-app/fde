@@ -1,12 +1,12 @@
 import { readFileSync } from "node:fs";
-import { AGENT_HOOK_PROVIDERS } from "@fde/server/agent-hooks";
+import { AGENT_HOOK_PROVIDERS } from "@frogg/server/agent-hooks";
 import { describe, expect, it } from "vitest";
 import { runHooksCommand } from "./hooks.js";
 
 const hookEnv = {
-  FDE_TERMINAL_ID: "terminal-1",
-  FDE_ACTIVITY_TOKEN: "token-1",
-  FDE_TERMINAL_ACTIVITY_URL: "http://127.0.0.1:9999/api/terminal-activity",
+  FROGG_TERMINAL_ID: "terminal-1",
+  FROGG_ACTIVITY_TOKEN: "token-1",
+  FROGG_TERMINAL_ACTIVITY_URL: "http://127.0.0.1:9999/api/terminal-activity",
 };
 
 function inputFrom(value: string) {
@@ -60,13 +60,13 @@ async function runHook(agent: string, event: string, input = ttyInput()) {
 function expectPostedState(fetch: RecordingFetch, state: string) {
   expect(fetch.calls).toEqual([
     {
-      url: hookEnv.FDE_TERMINAL_ACTIVITY_URL,
+      url: hookEnv.FROGG_TERMINAL_ACTIVITY_URL,
       init: {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          terminalId: hookEnv.FDE_TERMINAL_ID,
-          token: hookEnv.FDE_ACTIVITY_TOKEN,
+          terminalId: hookEnv.FROGG_TERMINAL_ID,
+          token: hookEnv.FROGG_ACTIVITY_TOKEN,
           state,
         }),
         signal: expect.any(AbortSignal),

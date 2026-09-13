@@ -2,7 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import type { IncomingMessage, OutgoingHttpHeaders } from "node:http";
 import { isIP } from "node:net";
 
-const PREFIX = "x-fde-execution-";
+const PREFIX = "x-frogg-execution-";
 const TOKEN = `${PREFIX}token`;
 const PEER = `${PREFIX}peer`;
 

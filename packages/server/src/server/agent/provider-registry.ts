@@ -1,5 +1,5 @@
 import type { Logger } from "pino";
-import type { ProviderOptions, ToolPolicy } from "@fde/protocol/agent-types";
+import type { ProviderOptions, ToolPolicy } from "@frogg/protocol/agent-types";
 import { z } from "zod";
 
 import type {
@@ -59,7 +59,7 @@ import {
   DEV_AGENT_PROVIDER_DEFINITIONS,
   getAgentProviderDefinition,
   type AgentProviderDefinition,
-} from "@fde/protocol/provider-manifest";
+} from "@frogg/protocol/provider-manifest";
 
 function isNonEmptyStringArray(value: string[]): value is [string, ...string[]] {
   return value.length > 0;

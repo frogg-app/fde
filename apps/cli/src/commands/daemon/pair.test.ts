@@ -72,7 +72,7 @@ describe("daemon pair workflow", () => {
 
   test("interactive consent enables relay and prints the refreshed offer", async () => {
     const resolveOffer = vi
-      .fn<(options: { fdeHome: string; enableRelay?: boolean }) => Promise<PairingOffer>>()
+      .fn<(options: { froggHome: string; enableRelay?: boolean }) => Promise<PairingOffer>>()
       .mockResolvedValueOnce(disabledOffer)
       .mockResolvedValueOnce(enabledOffer);
     const output = createRecordedOutput();
@@ -174,10 +174,10 @@ describe("daemon pair workflow", () => {
     expect(stdout).toContain("Access: password set");
   });
 
-  test("FDE_PAIRING_QR=0 turns the terminal QR off", () => {
+  test("FROGG_PAIRING_QR=0 turns the terminal QR off", () => {
     expect(pairingQrEnabled({})).toBe(true);
-    expect(pairingQrEnabled({ FDE_PAIRING_QR: "1" })).toBe(true);
-    expect(pairingQrEnabled({ FDE_PAIRING_QR: "0" })).toBe(false);
-    expect(pairingQrEnabled({ FDE_PAIRING_QR: "off" })).toBe(false);
+    expect(pairingQrEnabled({ FROGG_PAIRING_QR: "1" })).toBe(true);
+    expect(pairingQrEnabled({ FROGG_PAIRING_QR: "0" })).toBe(false);
+    expect(pairingQrEnabled({ FROGG_PAIRING_QR: "off" })).toBe(false);
   });
 });

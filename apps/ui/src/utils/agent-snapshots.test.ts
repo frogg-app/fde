@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { AgentSnapshotPayload } from "@fde/protocol/messages";
-import { PARENT_AGENT_ID_LABEL } from "@fde/protocol/agent-labels";
+import type { AgentSnapshotPayload } from "@frogg/protocol/messages";
+import { PARENT_AGENT_ID_LABEL } from "@frogg/protocol/agent-labels";
 import { normalizeAgentSnapshot, projectAgentSnapshot } from "./agent-snapshots";
 
 function createSnapshot(

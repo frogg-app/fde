@@ -5,7 +5,7 @@ import {
   buildPairingUrl,
   encodeOfferFragmentPayload,
   type ConnectionOfferV3,
-} from "@fde/protocol/connection-offer";
+} from "@frogg/protocol/connection-offer";
 import { createClaimOfferStore } from "./claim-offer-store.js";
 import { EXPIRED_PAIRING_MESSAGE } from "./pairing-code-page.js";
 import { mountPairingCodeRoutes, resolvePairingCode } from "./pairing-code-route.js";
@@ -20,7 +20,7 @@ function buildOffer(input: {
 }): ConnectionOfferV3 {
   return {
     v: 3,
-    product: "fde",
+    product: "frogg",
     serverId: input.serverId ?? SERVER_ID,
     hostname: "devbox",
     daemonPublicKeyB64: "pubkey",
@@ -59,7 +59,7 @@ describe("pairing code page", () => {
       expect(response.status).toBe(200);
       expect(response.headers.get("content-type")).toContain("text/html");
       expect(html).toContain(code);
-      expect(html).toContain(`fde://pair#offer=${code}`);
+      expect(html).toContain(`frogg://pair#offer=${code}`);
       expect(html).toContain("<svg");
       expect(html).toContain("Pair this browser");
       expect(html).toContain("devbox");

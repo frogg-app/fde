@@ -65,7 +65,7 @@ describe("serializeAgentStreamEvent", () => {
       provider: "claude",
       item: {
         type: "user_message",
-        text: "<fde-instructions>\nX\n</fde-instructions>\n\nHello",
+        text: "<frogg-instructions>\nX\n</frogg-instructions>\n\nHello",
         messageId: "m1",
       },
     };
@@ -112,7 +112,7 @@ describe("serializeAgentStreamEvent", () => {
       item: {
         type: "tool_call",
         callId: "call_unknown",
-        name: "fde_voice.speak",
+        name: "frogg_voice.speak",
         status: "completed",
         detail: {
           type: "unknown",

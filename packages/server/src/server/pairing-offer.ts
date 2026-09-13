@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import type { Logger } from "pino";
 
 import { createConnectionOfferV2, encodeOfferToPairingUrl } from "./connection-offer.js";
@@ -13,7 +13,7 @@ export interface LocalPairingOffer {
 }
 
 export async function generateLocalPairingOffer(args: {
-  fdeHome: string;
+  froggHome: string;
   relayEnabled?: boolean;
   relayEndpoint?: string;
   relayPublicEndpoint?: string;
@@ -38,8 +38,8 @@ export async function generateLocalPairingOffer(args: {
   const relayUseTls = args.relayUseTls ?? true;
   const relayPublicUseTls = args.relayPublicUseTls ?? relayUseTls;
   const appBaseUrl = args.appBaseUrl ?? brand.services.pairingUrl ?? "";
-  const serverId = getOrCreateServerId(args.fdeHome, { logger: args.logger });
-  const daemonKeyPair = await loadOrCreateDaemonKeyPair(args.fdeHome, args.logger);
+  const serverId = getOrCreateServerId(args.froggHome, { logger: args.logger });
+  const daemonKeyPair = await loadOrCreateDaemonKeyPair(args.froggHome, args.logger);
   const offer = await createConnectionOfferV2({
     serverId,
     daemonPublicKeyB64: daemonKeyPair.publicKeyB64,

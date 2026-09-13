@@ -29,23 +29,23 @@ afterEach(async () => {
 describe("Hub init planning", () => {
   it("prints direct resumable commands for declined login continuations", () => {
     expect(hubLoginResumeCommand("connect", "https://hub.test")).toBe(
-      "fde hub connect https://hub.test",
+      "frogg hub connect https://hub.test",
     );
-    expect(hubLoginResumeCommand("init", "https://hub.test")).toBe("fde hub init");
+    expect(hubLoginResumeCommand("init", "https://hub.test")).toBe("frogg hub init");
   });
   it("includes login only when there is no active login", () => {
-    expect(planHubInitOpening({ loggedIn: false, fdeDirectoryExists: false })).toEqual({
+    expect(planHubInitOpening({ loggedIn: false, froggDirectoryExists: false })).toEqual({
       replaceExisting: false,
       steps: ["login", "connect", "project", "scaffold"],
     });
-    expect(planHubInitOpening({ loggedIn: true, fdeDirectoryExists: false })).toEqual({
+    expect(planHubInitOpening({ loggedIn: true, froggDirectoryExists: false })).toEqual({
       replaceExisting: false,
       steps: ["connect", "project", "scaffold"],
     });
   });
 
-  it("plans a confirmed replacement for an existing .fde directory", () => {
-    expect(planHubInitOpening({ loggedIn: true, fdeDirectoryExists: true })).toEqual({
+  it("plans a confirmed replacement for an existing .frogg directory", () => {
+    expect(planHubInitOpening({ loggedIn: true, froggDirectoryExists: true })).toEqual({
       replaceExisting: true,
       steps: ["connect", "project", "scaffold"],
     });
@@ -109,7 +109,7 @@ describe("Hub init scaffold", () => {
   });
 
   it.each([
-    ["github", { repo: "frogg-app/fde", user: "boudra" }],
+    ["github", { repo: "frogg-app/frogg", user: "boudra" }],
     ["slack", { workspace: "T123456", user: "U123456" }],
     ["discord", { guild: "123456789", user: "987654321" }],
   ] satisfies readonly [HubInitProvider, Record<string, string>][])(
@@ -127,14 +127,14 @@ describe("Hub init scaffold", () => {
         provider,
         providerFilters,
       });
-      await mkdir(path.join(cwd, ".fde", "workflows"), { recursive: true });
-      await writeFile(path.join(cwd, ".fde", "hub.yml"), scaffold.hub);
+      await mkdir(path.join(cwd, ".frogg", "workflows"), { recursive: true });
+      await writeFile(path.join(cwd, ".frogg", "hub.yml"), scaffold.hub);
       await writeFile(path.join(cwd, scaffold.workflowPath), scaffold.workflow);
 
-      const bundle = await discoverHubBundle({ cwd, project: "fde" });
+      const bundle = await discoverHubBundle({ cwd, project: "frogg" });
       expect(bundle.workflowCount).toBe(1);
       expect(bundle.files.map((file) => file.path)).toEqual([
-        ".fde/hub.yml",
+        ".frogg/hub.yml",
         scaffold.workflowPath,
       ]);
       const parsed = YAML.parse(scaffold.workflow) as {
@@ -150,10 +150,10 @@ describe("Hub init scaffold", () => {
 
       let validatedPaths: readonly string[] = [];
       const result = await runHubDeploy(
-        { project: "fde", hub: "https://hub.test", dryRun: true },
+        { project: "frogg", hub: "https://hub.test", dryRun: true },
         {
           cwd,
-          env: { FDE_HUB_API_KEY: "test-key" },
+          env: { FROGG_HUB_API_KEY: "test-key" },
           reporter: { progress() {} },
           hub: {
             async validateConfiguration(input) {
@@ -167,25 +167,25 @@ describe("Hub init scaffold", () => {
           },
         },
       );
-      expect(result.data).toMatchObject({ projectSlug: "fde", valid: true, workflows: 1 });
-      expect(validatedPaths).toEqual([".fde/hub.yml", scaffold.workflowPath]);
+      expect(result.data).toMatchObject({ projectSlug: "frogg", valid: true, workflows: 1 });
+      expect(validatedPaths).toEqual([".frogg/hub.yml", scaffold.workflowPath]);
     },
   );
 });
 
 describe("GitHub origin detection", () => {
   it.each([
-    ["git@github.com:frogg-app/fde.git", "frogg-app/fde"],
-    ["ssh://git@github.com/frogg-app/fde.git", "frogg-app/fde"],
-    ["https://github.com/frogg-app/fde.git", "frogg-app/fde"],
-    ["https://gitlab.com/frogg-app/fde.git", undefined],
+    ["git@github.com:frogg-app/frogg.git", "frogg-app/frogg"],
+    ["ssh://git@github.com/frogg-app/frogg.git", "frogg-app/frogg"],
+    ["https://github.com/frogg-app/frogg.git", "frogg-app/frogg"],
+    ["https://gitlab.com/frogg-app/frogg.git", undefined],
   ])("resolves %s", (remote, expected) => {
     expect(githubRepositoryFromRemote(remote)).toBe(expected);
   });
 });
 
 async function temporaryDirectory(): Promise<string> {
-  const directory = await mkdtemp(path.join(tmpdir(), "fde-hub-init-"));
+  const directory = await mkdtemp(path.join(tmpdir(), "frogg-hub-init-"));
   directories.push(directory);
   return directory;
 }

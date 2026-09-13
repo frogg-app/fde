@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { app } from "electron";
-import { brandIdentity } from "@fde/branding";
+import { brandIdentity } from "@frogg/branding";
 import { stageDaemonBundle } from "./bundle-staging.js";
 import { assertPathExists } from "./package-paths.js";
 import type {
@@ -69,7 +69,7 @@ export function resolveNodeExecPath(): string {
           process.platform === "win32" ? "node.exe" : "bin/node",
         ),
       })
-    : process.env.FDE_NODE_EXECUTABLE || "node";
+    : process.env.FROGG_NODE_EXECUTABLE || "node";
 }
 
 export function createNodeEntrypointInvocation(input: {
@@ -80,7 +80,7 @@ export function createNodeEntrypointInvocation(input: {
 }): NodeEntrypointInvocation {
   const env: NodeJS.ProcessEnv = {
     ...input.baseEnv,
-    FDE_NODE_ENV: app.isPackaged ? "production" : "development",
+    FROGG_NODE_ENV: app.isPackaged ? "production" : "development",
   };
   delete env.ELECTRON_RUN_AS_NODE;
   return {

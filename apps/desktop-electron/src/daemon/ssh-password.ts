@@ -8,15 +8,15 @@ export async function createSshPasswordEnvironment(password?: string): Promise<{
   cleanup(): void;
 }> {
   if (!password) return { env: { ...process.env }, cleanup() {} };
-  const directory = await mkdtemp(path.join(tmpdir(), "fde-electron-askpass-"));
+  const directory = await mkdtemp(path.join(tmpdir(), "frogg-electron-askpass-"));
   const windows = process.platform === "win32";
   const helper = path.join(directory, windows ? "askpass.cmd" : "askpass.sh");
   try {
     await writeFile(
       helper,
       windows
-        ? '@echo off\r\npowershell -NoProfile -NonInteractive -Command "[Console]::Out.Write($env:FDE_SSH_PW)"\r\n'
-        : '#!/bin/sh\nprintf %s "$FDE_SSH_PW"\n',
+        ? '@echo off\r\npowershell -NoProfile -NonInteractive -Command "[Console]::Out.Write($env:FROGG_SSH_PW)"\r\n'
+        : '#!/bin/sh\nprintf %s "$FROGG_SSH_PW"\n',
       { mode: 0o700 },
     );
   } catch (error) {
@@ -28,8 +28,8 @@ export async function createSshPasswordEnvironment(password?: string): Promise<{
       ...process.env,
       SSH_ASKPASS: helper,
       SSH_ASKPASS_REQUIRE: "force",
-      DISPLAY: process.env.DISPLAY || "fde",
-      FDE_SSH_PW: password,
+      DISPLAY: process.env.DISPLAY || "frogg",
+      FROGG_SSH_PW: password,
     },
     cleanup() {
       void rm(directory, { recursive: true, force: true }).catch(() => undefined);

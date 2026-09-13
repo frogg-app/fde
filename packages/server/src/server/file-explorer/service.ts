@@ -491,7 +491,7 @@ export async function writeExplorerFile({
 
   const temporaryPath = path.join(
     path.dirname(filePath.resolvedPath),
-    `.${path.basename(filePath.resolvedPath)}.fde-${randomUUID()}.tmp`,
+    `.${path.basename(filePath.resolvedPath)}.frogg-${randomUUID()}.tmp`,
   );
   let temporaryHandle: FileHandle | null = null;
   try {

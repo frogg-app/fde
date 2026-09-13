@@ -1,5 +1,5 @@
-export const PARENT_AGENT_ID_LABEL = "fde.parent-agent-id";
-const OPEN_AGENT_TAB_LABEL_PREFIX = "fde.open-agent-tab.";
+export const PARENT_AGENT_ID_LABEL = "frogg.parent-agent-id";
+const OPEN_AGENT_TAB_LABEL_PREFIX = "frogg.open-agent-tab.";
 
 export function getOpenAgentTabLabel(clientId: string): string {
   return `${OPEN_AGENT_TAB_LABEL_PREFIX}${clientId}`;

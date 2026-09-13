@@ -1,9 +1,9 @@
 import type {
-  FdeConfigRaw,
-  FdeMetadataGeneration,
-  FdeMetadataGenerationEntry,
-  FdeScriptEntryRaw,
-} from "@fde/protocol/messages";
+  FroggConfigRaw,
+  FroggMetadataGeneration,
+  FroggMetadataGenerationEntry,
+  FroggScriptEntryRaw,
+} from "@frogg/protocol/messages";
 
 export type LifecycleOriginalKind = "string" | "array" | "missing";
 
@@ -17,7 +17,7 @@ export interface ProjectScriptDraft {
   commandOriginalKind: LifecycleOriginalKind;
   type: string;
   portText: string;
-  rawEntry: FdeScriptEntryRaw;
+  rawEntry: FroggScriptEntryRaw;
 }
 
 export interface ProjectConfigDraft {
@@ -27,7 +27,7 @@ export interface ProjectConfigDraft {
   teardownOriginalKind: LifecycleOriginalKind;
   scripts: ProjectScriptDraft[];
   metadataPrompts: Record<MetadataPromptKey, string>;
-  metadataGenerationBase: FdeMetadataGeneration | undefined;
+  metadataGenerationBase: FroggMetadataGeneration | undefined;
 }
 
 interface LifecycleProjection {
@@ -106,7 +106,7 @@ function emptyMetadataPrompts(): Record<MetadataPromptKey, string> {
   };
 }
 
-export function configToDraft(config: FdeConfigRaw | null | undefined): ProjectConfigDraft {
+export function configToDraft(config: FroggConfigRaw | null | undefined): ProjectConfigDraft {
   const worktree = config?.worktree ?? {};
   const setup = projectLifecycle(worktree.setup);
   const teardown = projectLifecycle(worktree.teardown);
@@ -148,10 +148,10 @@ export function configToDraft(config: FdeConfigRaw | null | undefined): ProjectC
 
 interface ApplyDraftInput {
   draft: ProjectConfigDraft;
-  base: FdeConfigRaw | null | undefined;
+  base: FroggConfigRaw | null | undefined;
 }
 
-export function applyDraftToConfig(input: ApplyDraftInput): FdeConfigRaw {
+export function applyDraftToConfig(input: ApplyDraftInput): FroggConfigRaw {
   const baseConfig = input.base ?? {};
   const baseWorktree = baseConfig.worktree ?? {};
 
@@ -172,7 +172,7 @@ export function applyDraftToConfig(input: ApplyDraftInput): FdeConfigRaw {
     nextWorktree.teardown = nextTeardown;
   }
 
-  const nextScripts: Record<string, FdeScriptEntryRaw> = {};
+  const nextScripts: Record<string, FroggScriptEntryRaw> = {};
   for (const row of input.draft.scripts) {
     const trimmedName = row.name.trim();
     if (trimmedName.length === 0) {
@@ -198,7 +198,7 @@ export function applyDraftToConfig(input: ApplyDraftInput): FdeConfigRaw {
     } else {
       nextEntry.port = nextPort;
     }
-    nextScripts[trimmedName] = nextEntry as FdeScriptEntryRaw;
+    nextScripts[trimmedName] = nextEntry as FroggScriptEntryRaw;
   }
 
   const nextMetadataGeneration: Record<string, unknown> = {
@@ -207,7 +207,7 @@ export function applyDraftToConfig(input: ApplyDraftInput): FdeConfigRaw {
   for (const key of METADATA_PROMPT_KEYS) {
     const text = input.draft.metadataPrompts[key];
     const baseEntry = input.draft.metadataGenerationBase?.[key] as
-      | FdeMetadataGenerationEntry
+      | FroggMetadataGenerationEntry
       | undefined;
     if (text.trim().length === 0) {
       if (baseEntry) {
@@ -242,5 +242,5 @@ export function applyDraftToConfig(input: ApplyDraftInput): FdeConfigRaw {
   } else {
     result.metadataGeneration = nextMetadataGeneration;
   }
-  return result as FdeConfigRaw;
+  return result as FroggConfigRaw;
 }

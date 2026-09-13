@@ -99,8 +99,8 @@ describe("Add Project navigation", () => {
   it("restores the GitHub destination query and active parent when reopening a repository", () => {
     const repository = {
       id: "repo-1",
-      nameWithOwner: "frogg-app/fde",
-      cloneUrl: "git@github.com:frogg-app/fde.git",
+      nameWithOwner: "frogg-app/frogg",
+      cloneUrl: "git@github.com:frogg-app/frogg.git",
       description: null,
       visibility: "public",
       updatedAt: null,
@@ -159,39 +159,39 @@ describe("Add Project options", () => {
   });
 
   it("offers manual URL and protocol-specific owner/repo clone choices", () => {
-    expect(buildManualGithubRepositoryChoices("git@github.com:frogg-app/fde.git")).toEqual([
+    expect(buildManualGithubRepositoryChoices("git@github.com:frogg-app/frogg.git")).toEqual([
       expect.objectContaining({
-        id: "manual:git@github.com:frogg-app/fde.git",
-        nameWithOwner: "frogg-app/fde",
-        cloneUrl: "git@github.com:frogg-app/fde.git",
+        id: "manual:git@github.com:frogg-app/frogg.git",
+        nameWithOwner: "frogg-app/frogg",
+        cloneUrl: "git@github.com:frogg-app/frogg.git",
       }),
     ]);
-    expect(buildManualGithubRepositoryChoices("frogg-app/fde")).toEqual([
-      expect.objectContaining({ cloneProtocol: "https", cloneUrl: "frogg-app/fde" }),
-      expect.objectContaining({ cloneProtocol: "ssh", cloneUrl: "frogg-app/fde" }),
+    expect(buildManualGithubRepositoryChoices("frogg-app/frogg")).toEqual([
+      expect.objectContaining({ cloneProtocol: "https", cloneUrl: "frogg-app/frogg" }),
+      expect.objectContaining({ cloneProtocol: "ssh", cloneUrl: "frogg-app/frogg" }),
     ]);
-    expect(buildManualGithubRepositoryChoices("fde")).toEqual([]);
+    expect(buildManualGithubRepositoryChoices("frogg")).toEqual([]);
   });
 
   it("shows final clone paths while retaining parent paths as values", () => {
     expect(
       buildCloneLocationOptions({
         parents: ["~/dev", "~/workspace"],
-        repositoryName: "fde",
-        existingPaths: ["~/workspace/fde"],
+        repositoryName: "frogg",
+        existingPaths: ["~/workspace/frogg"],
       }),
     ).toEqual([
       {
         id: "~/dev",
         path: "~/dev",
-        displayPath: "~/dev/fde",
+        displayPath: "~/dev/frogg",
         secondaryText: "Parent directory: ~/dev",
         disabled: false,
       },
       {
         id: "~/workspace",
         path: "~/workspace",
-        displayPath: "~/workspace/fde",
+        displayPath: "~/workspace/frogg",
         secondaryText: "Already exists",
         disabled: true,
       },

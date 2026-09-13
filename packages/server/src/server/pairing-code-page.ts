@@ -1,15 +1,15 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 /**
  * The pairing landing page behind `https://pair.frogg.app/code/<code>`: the
  * daemon renders it itself, so an owner can point that hostname at their own
  * daemon with a reverse proxy and nothing about pairing leaves their machine.
  *
  * The page is self-contained (inline CSS, inline SVG QR) and shows the code in
- * every form a person might need it: an "Open in FDE" deep link, a QR to scan
+ * every form a person might need it: an "Open in Frogg" deep link, a QR to scan
  * with a phone, and the raw code to type in by hand. An invalid, unknown, or
  * expired code renders one generic message and nothing else.
  */
-import { buildPairingDeepLink } from "@fde/protocol/connection-offer";
+import { buildPairingDeepLink } from "@frogg/protocol/connection-offer";
 import { escapeHtml, PAIRING_PAGE_STYLES } from "./pairing-page-chrome.js";
 
 export const EXPIRED_PAIRING_MESSAGE = "This pairing link has expired";

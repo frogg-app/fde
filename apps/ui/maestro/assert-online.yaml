@@ -1,8 +1,8 @@
-appId: sh.fde
+appId: sh.frogg
 ---
 - runFlow:
     when:
-      visible: "Open in.*Fde.*\\?"
+      visible: "Open in.*Frogg.*\\?"
     commands:
       - tapOn: "Open"
 

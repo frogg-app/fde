@@ -2,8 +2,8 @@
  * @vitest-environment jsdom
  */
 import { act } from "@testing-library/react";
-import type { DaemonClient } from "@fde/client/internal/daemon-client";
-import type { WorkspaceScriptPayload } from "@fde/protocol/messages";
+import type { DaemonClient } from "@frogg/client/internal/daemon-client";
+import type { WorkspaceScriptPayload } from "@frogg/protocol/messages";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createRoot, type Root } from "react-dom/client";
 import React from "react";
@@ -65,9 +65,9 @@ interface RenderCounts {
 const runningScript: WorkspaceScriptPayload = {
   scriptName: "web",
   type: "service",
-  hostname: "web.fde.localhost",
+  hostname: "web.frogg.localhost",
   port: 3000,
-  proxyUrl: "http://web.fde.localhost:9999",
+  proxyUrl: "http://web.frogg.localhost:9999",
   lifecycle: "running",
   health: "healthy",
   exitCode: null,

@@ -4,11 +4,11 @@
 //
 // Usage:
 //   node scripts/docs/capture-screenshots.mjs --url http://127.0.0.1:17900 [--only a,b] [--list]
-//     [--out website/src/assets/docs] [--brand-tag fde]
+//     [--out website/src/assets/docs] [--brand-tag frogg]
 //
-// Prerequisites (see skills/fde-docs/SKILL.md, "Screenshots"):
+// Prerequisites (see skills/frogg-docs/SKILL.md, "Screenshots"):
 //   - A daemon built from this checkout with its web UI (`npm run build:server &&
-//     npm run build:daemon-web-ui`), started on its own port and FDE_HOME with
+//     npm run build:daemon-web-ui`), started on its own port and FROGG_HOME with
 //     `--web-ui`. Never point this at a daemon you did not start.
 //   - For the workspace shots, a project with at least one agent. `--seed` creates
 //     a demo git repository and project through the CLI; running the demo agent is
@@ -33,7 +33,7 @@ const { values } = parseArgs({
     url: { type: "string" },
     out: { type: "string", default: path.join(root, "website/src/assets/docs") },
     only: { type: "string" },
-    "brand-tag": { type: "string", default: "fde" },
+    "brand-tag": { type: "string", default: "frogg" },
     seed: { type: "boolean", default: false },
     list: { type: "boolean", default: false },
   },
@@ -48,7 +48,7 @@ const terminalShots = {
     title: "brand:check",
     commands: [
       ["npm", "run", "--silent", "brand:check", "--", "--brand", "brands/example"],
-      ["npm", "run", "--silent", "brand:check", "--", "--brand", "brands/fde"],
+      ["npm", "run", "--silent", "brand:check", "--", "--brand", "brands/frogg"],
       [
         "npm",
         "run",
@@ -237,18 +237,22 @@ function writeBrandFixtures() {
 }
 
 function seedDemoProject(base) {
-  const repo = mkdtempSync(path.join(os.tmpdir(), "fde-docs-demo-"));
+  const repo = mkdtempSync(path.join(os.tmpdir(), "frogg-docs-demo-"));
   const git = (...args) => execFileSync("git", args, { cwd: repo, stdio: "ignore" });
   writeFileSync(path.join(repo, "README.md"), "# acme-api\n\nA tiny HTTP service.\n");
   git("init", "-q", "-b", "main");
   git("add", "-A");
   git("-c", "user.name=Docs", "-c", "user.email=docs@example.com", "commit", "-qm", "Initial");
-  const env = { ...process.env, FDE_HOST: new URL(base).host };
-  delete env.FDE_AGENT_ID;
-  execFileSync(process.execPath, [path.join(root, "apps/cli/bin/fde"), "project", "create", repo], {
-    env,
-    stdio: "inherit",
-  });
+  const env = { ...process.env, FROGG_HOST: new URL(base).host };
+  delete env.FROGG_AGENT_ID;
+  execFileSync(
+    process.execPath,
+    [path.join(root, "apps/cli/bin/frogg"), "project", "create", repo],
+    {
+      env,
+      stdio: "inherit",
+    },
+  );
   console.log(`Seeded demo project at ${repo}. Run an agent in it for the workspace shots.`);
 }
 
@@ -296,7 +300,7 @@ async function writeImage(name, buffer) {
 /** Side-by-side stock vs custom brand, once both home shots exist. */
 async function composeBrandComparison() {
   const dir = path.join(values.out, "fork");
-  const left = path.join(dir, "home-fde.png");
+  const left = path.join(dir, "home-frogg.png");
   const right = path.join(dir, "home-acme.png");
   if (!existsSync(left) || !existsSync(right)) return;
   const width = 760;
@@ -321,7 +325,7 @@ async function composeBrandComparison() {
     },
   })
     .composite([
-      caption("Stock FDE (brands/fde)", 0),
+      caption("Stock Frogg (brands/frogg)", 0),
       caption("Acme Studio (brands/example)", width + gap),
       { input: await tile(left), left: pad, top: pad + label },
       { input: await tile(right), left: pad + width + gap, top: pad + label },

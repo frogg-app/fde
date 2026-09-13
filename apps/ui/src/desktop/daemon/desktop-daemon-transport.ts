@@ -1,5 +1,5 @@
-import type { DaemonTransport, DaemonTransportFactory } from "@fde/client/internal/daemon-client";
-import { validatePort, validateSshHost } from "@fde/protocol/ssh-transport";
+import type { DaemonTransport, DaemonTransportFactory } from "@frogg/client/internal/daemon-client";
+import { validatePort, validateSshHost } from "@frogg/protocol/ssh-transport";
 import type {
   DesktopDaemonTransportTarget,
   LocalTransportErrorDetail,
@@ -12,7 +12,7 @@ import {
 } from "./local-daemon-transport-rpc";
 import { getSessionSshPassword, type SshPasswordKey } from "./ssh-session-passwords";
 
-const DESKTOP_TRANSPORT_SCHEME = "fde+desktop:";
+const DESKTOP_TRANSPORT_SCHEME = "frogg+desktop:";
 
 function encodeBinaryToBase64(data: Uint8Array | ArrayBuffer): string {
   const bytes = data instanceof ArrayBuffer ? new Uint8Array(data) : data;
@@ -105,7 +105,7 @@ export class DesktopTransportError extends Error {
  * The session the shell is asked to open: the parsed target plus, for
  * Remote SSH, the ssh password remembered for this app session (never part
  * of the URL) and the WebSocket subprotocols the daemon client wants
- * (`fde.bearer.<daemon password>`), which the shell puts on the handshake.
+ * (`frogg.bearer.<daemon password>`), which the shell puts on the handshake.
  */
 export function buildOpenSessionInput(input: {
   sessionId: string;

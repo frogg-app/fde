@@ -1,4 +1,4 @@
-appId: sh.fde
+appId: sh.frogg
 ---
 - launchApp:
     clearState: true

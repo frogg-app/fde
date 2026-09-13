@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import type { Command } from "commander";
 import { connectToDaemon, getDaemonHost } from "../../utils/client.js";
 import type {
@@ -7,7 +7,7 @@ import type {
   CommandError,
   AnyCommandResult,
 } from "../../output/index.js";
-import type { AgentMode } from "@fde/protocol/agent-types";
+import type { AgentMode } from "@frogg/protocol/agent-types";
 
 /** Result for setting mode */
 export interface SetModeResult {

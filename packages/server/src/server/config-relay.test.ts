@@ -7,13 +7,13 @@ import { loadConfig, resolveConfigFromPersisted } from "./config.js";
 
 const roots: string[] = [];
 
-async function createFdeHome(config: unknown): Promise<string> {
-  const root = await mkdtemp(path.join(os.tmpdir(), "fde-config-relay-"));
+async function createFroggHome(config: unknown): Promise<string> {
+  const root = await mkdtemp(path.join(os.tmpdir(), "frogg-config-relay-"));
   roots.push(root);
-  const fdeHome = path.join(root, ".fde");
-  await mkdir(fdeHome, { recursive: true });
-  await writeFile(path.join(fdeHome, "config.json"), JSON.stringify(config, null, 2));
-  return fdeHome;
+  const froggHome = path.join(root, ".frogg");
+  await mkdir(froggHome, { recursive: true });
+  await writeFile(path.join(froggHome, "config.json"), JSON.stringify(config, null, 2));
+  return froggHome;
 }
 
 describe("daemon relay config", () => {
@@ -22,12 +22,12 @@ describe("daemon relay config", () => {
   });
 
   test("starts locally when relay has no configured endpoint", async () => {
-    const home = await createFdeHome({ version: 1, daemon: { relay: {} } });
+    const home = await createFroggHome({ version: 1, daemon: { relay: {} } });
     expect(loadConfig(home, { env: {} }).relayEnabled).toBe(false);
   });
 
   test("loads an enabled self-hosted relay with an explicit endpoint", async () => {
-    const home = await createFdeHome({
+    const home = await createFroggHome({
       version: 1,
       daemon: { relay: { enabled: true, endpoint: "relay.example.invalid:443", useTls: true } },
     });
@@ -38,32 +38,32 @@ describe("daemon relay config", () => {
   });
 
   test("accepts a relay opt-in without an endpoint and leaves the endpoint empty", async () => {
-    const home = await createFdeHome({ version: 1, daemon: { relay: { enabled: true } } });
+    const home = await createFroggHome({ version: 1, daemon: { relay: { enabled: true } } });
     const config = loadConfig(home, { env: {} });
     expect(config.relayEnabled).toBe(true);
     expect(config.relayEndpoint).toBe("");
     expect(config.relayEndpointMutable).toBe(true);
-    expect(() => loadConfig(home, { env: { FDE_RELAY_ENABLED: "true" } })).not.toThrow();
+    expect(() => loadConfig(home, { env: { FROGG_RELAY_ENABLED: "true" } })).not.toThrow();
   });
 
   test("defaults relay TLS on for a configured endpoint unless explicitly disabled", async () => {
-    const home = await createFdeHome({
+    const home = await createFroggHome({
       version: 1,
       daemon: { relay: { enabled: true, endpoint: "relay.example.invalid:8080" } },
     });
     expect(loadConfig(home, { env: {} }).relayUseTls).toBe(true);
-    expect(loadConfig(home, { env: { FDE_RELAY_USE_TLS: "false" } }).relayUseTls).toBe(false);
+    expect(loadConfig(home, { env: { FROGG_RELAY_USE_TLS: "false" } }).relayUseTls).toBe(false);
   });
 
   test("marks the endpoint immutable under an endpoint launch override", async () => {
-    const home = await createFdeHome({ version: 1 });
-    const config = loadConfig(home, { env: { FDE_RELAY_ENDPOINT: "relay.example.invalid:443" } });
+    const home = await createFroggHome({ version: 1 });
+    const config = loadConfig(home, { env: { FROGG_RELAY_ENDPOINT: "relay.example.invalid:443" } });
     expect(config.relayEndpoint).toBe("relay.example.invalid:443");
     expect(config.relayEndpointMutable).toBe(false);
   });
 
   test("keeps explicit persisted relay state and marks it mutable", async () => {
-    const home = await createFdeHome({
+    const home = await createFroggHome({
       version: 1,
       daemon: { relay: { enabled: false } },
     });
@@ -73,7 +73,7 @@ describe("daemon relay config", () => {
   });
 
   test("removing enabled from a modern config keeps relay disabled", async () => {
-    const home = await createFdeHome({
+    const home = await createFroggHome({
       version: 1,
       daemon: { relay: { enabled: false } },
     });
@@ -91,7 +91,7 @@ describe("daemon relay config", () => {
   });
 
   test("keeps an unconfigured relay disabled across reloads", async () => {
-    const home = await createFdeHome({ version: 1, daemon: { relay: {} } });
+    const home = await createFroggHome({ version: 1, daemon: { relay: {} } });
     const startup = loadConfig(home, { env: {} });
     const reloaded = resolveConfigFromPersisted(
       home,
@@ -106,12 +106,12 @@ describe("daemon relay config", () => {
   });
 
   test("marks environment relay overrides immutable", async () => {
-    const home = await createFdeHome({
+    const home = await createFroggHome({
       version: 1,
       daemon: { relay: { enabled: false } },
     });
     const config = loadConfig(home, {
-      env: { FDE_RELAY_ENABLED: "true", FDE_RELAY_ENDPOINT: "relay.example.invalid:443" },
+      env: { FROGG_RELAY_ENABLED: "true", FROGG_RELAY_ENDPOINT: "relay.example.invalid:443" },
     });
     expect(config.relayEnabled).toBe(true);
     expect(config.relayEnabledMutable).toBe(false);
@@ -120,18 +120,18 @@ describe("daemon relay config", () => {
   test.each(["", "treu"])(
     "ignores invalid relay override %j without locking config",
     async (value) => {
-      const home = await createFdeHome({
+      const home = await createFroggHome({
         version: 1,
         daemon: { relay: { enabled: false } },
       });
-      const config = loadConfig(home, { env: { FDE_RELAY_ENABLED: value } });
+      const config = loadConfig(home, { env: { FROGG_RELAY_ENABLED: value } });
       expect(config.relayEnabled).toBe(false);
       expect(config.relayEnabledMutable).toBe(true);
     },
   );
 
   test("loads relay TLS from env, persisted config, and the TLS default", async () => {
-    const persistedHome = await createFdeHome({
+    const persistedHome = await createFroggHome({
       version: 1,
       daemon: {
         relay: {
@@ -142,7 +142,7 @@ describe("daemon relay config", () => {
     });
     expect(loadConfig(persistedHome, { env: {} }).relayUseTls).toBe(true);
 
-    const envHome = await createFdeHome({
+    const envHome = await createFroggHome({
       version: 1,
       daemon: {
         relay: {
@@ -151,9 +151,9 @@ describe("daemon relay config", () => {
         },
       },
     });
-    expect(loadConfig(envHome, { env: { FDE_RELAY_USE_TLS: "true" } }).relayUseTls).toBe(true);
+    expect(loadConfig(envHome, { env: { FROGG_RELAY_USE_TLS: "true" } }).relayUseTls).toBe(true);
 
-    const hostedHome = await createFdeHome({
+    const hostedHome = await createFroggHome({
       version: 1,
       daemon: { relay: {} },
     });
@@ -161,29 +161,29 @@ describe("daemon relay config", () => {
   });
 
   test("relayPublicUseTls falls back to relayUseTls when unset", async () => {
-    const home = await createFdeHome({ version: 1, daemon: { relay: {} } });
+    const home = await createFroggHome({ version: 1, daemon: { relay: {} } });
     // Both sides share the TLS default, even while relay is disabled.
     expect(loadConfig(home, { env: {} }).relayPublicUseTls).toBe(true);
   });
 
-  test("FDE_RELAY_PUBLIC_USE_TLS overrides relayUseTls for public side", async () => {
-    const home = await createFdeHome({ version: 1, daemon: { relay: {} } });
+  test("FROGG_RELAY_PUBLIC_USE_TLS overrides relayUseTls for public side", async () => {
+    const home = await createFroggHome({ version: 1, daemon: { relay: {} } });
     const config = loadConfig(home, {
-      env: { FDE_RELAY_USE_TLS: "false", FDE_RELAY_PUBLIC_USE_TLS: "true" },
+      env: { FROGG_RELAY_USE_TLS: "false", FROGG_RELAY_PUBLIC_USE_TLS: "true" },
     });
     expect(config.relayUseTls).toBe(false);
     expect(config.relayPublicUseTls).toBe(true);
   });
 
-  test("relayPublicUseTls falls back to relayUseTls when only FDE_RELAY_USE_TLS is set", async () => {
-    const home = await createFdeHome({ version: 1, daemon: { relay: {} } });
-    const config = loadConfig(home, { env: { FDE_RELAY_USE_TLS: "false" } });
+  test("relayPublicUseTls falls back to relayUseTls when only FROGG_RELAY_USE_TLS is set", async () => {
+    const home = await createFroggHome({ version: 1, daemon: { relay: {} } });
+    const config = loadConfig(home, { env: { FROGG_RELAY_USE_TLS: "false" } });
     expect(config.relayUseTls).toBe(false);
     expect(config.relayPublicUseTls).toBe(false);
   });
 
   test("persisted publicUseTls overrides relayUseTls fallback", async () => {
-    const home = await createFdeHome({
+    const home = await createFroggHome({
       version: 1,
       daemon: { relay: { useTls: false, publicUseTls: true } },
     });
@@ -199,7 +199,7 @@ describe("daemon service proxy config", () => {
   });
 
   test("loads public base URL from env before persisted config", async () => {
-    const home = await createFdeHome({
+    const home = await createFroggHome({
       version: 1,
       daemon: {
         serviceProxy: {
@@ -209,7 +209,7 @@ describe("daemon service proxy config", () => {
     });
 
     const config = loadConfig(home, {
-      env: { FDE_SERVICE_PROXY_PUBLIC_BASE_URL: "https://env.example.com/" },
+      env: { FROGG_SERVICE_PROXY_PUBLIC_BASE_URL: "https://env.example.com/" },
     });
 
     expect(config.serviceProxy).toEqual({
@@ -219,7 +219,7 @@ describe("daemon service proxy config", () => {
   });
 
   test("does not synthesize a standalone service listener from enabled true", async () => {
-    const home = await createFdeHome({
+    const home = await createFroggHome({
       version: 1,
       daemon: { serviceProxy: { enabled: true } },
     });
@@ -231,7 +231,7 @@ describe("daemon service proxy config", () => {
   });
 
   test("enabled false suppresses optional service proxy layers only", async () => {
-    const home = await createFdeHome({
+    const home = await createFroggHome({
       version: 1,
       daemon: {
         serviceProxy: {
@@ -248,14 +248,14 @@ describe("daemon service proxy config", () => {
     });
   });
 
-  test("rejects invalid FDE_SERVICE_PROXY_PUBLIC_BASE_URL values", async () => {
-    const home = await createFdeHome({ version: 1 });
+  test("rejects invalid FROGG_SERVICE_PROXY_PUBLIC_BASE_URL values", async () => {
+    const home = await createFroggHome({ version: 1 });
 
     expect(() =>
       loadConfig(home, {
-        env: { FDE_SERVICE_PROXY_PUBLIC_BASE_URL: "not-a-url" },
+        env: { FROGG_SERVICE_PROXY_PUBLIC_BASE_URL: "not-a-url" },
       }),
-    ).toThrow("Invalid FDE_SERVICE_PROXY_PUBLIC_BASE_URL: not-a-url");
+    ).toThrow("Invalid FROGG_SERVICE_PROXY_PUBLIC_BASE_URL: not-a-url");
   });
 });
 
@@ -265,13 +265,13 @@ describe("daemon trusted proxy config", () => {
   });
 
   test("trusts loopback proxies by default", async () => {
-    const home = await createFdeHome({ version: 1 });
+    const home = await createFroggHome({ version: 1 });
 
     expect(loadConfig(home, { env: {} }).trustedProxies).toEqual(["loopback"]);
   });
 
   test("loads trusted proxies from persisted config", async () => {
-    const home = await createFdeHome({
+    const home = await createFroggHome({
       version: 1,
       daemon: {
         trustedProxies: ["loopback", "10.0.0.0/8"],
@@ -281,8 +281,8 @@ describe("daemon trusted proxy config", () => {
     expect(loadConfig(home, { env: {} }).trustedProxies).toEqual(["loopback", "10.0.0.0/8"]);
   });
 
-  test("FDE_TRUSTED_PROXIES overrides persisted config", async () => {
-    const home = await createFdeHome({
+  test("FROGG_TRUSTED_PROXIES overrides persisted config", async () => {
+    const home = await createFroggHome({
       version: 1,
       daemon: {
         trustedProxies: ["loopback"],
@@ -290,21 +290,21 @@ describe("daemon trusted proxy config", () => {
     });
 
     const config = loadConfig(home, {
-      env: { FDE_TRUSTED_PROXIES: "loopback,172.16.0.0/12" },
+      env: { FROGG_TRUSTED_PROXIES: "loopback,172.16.0.0/12" },
     });
 
     expect(config.trustedProxies).toEqual(["loopback", "172.16.0.0/12"]);
   });
 
-  test("FDE_TRUSTED_PROXIES supports explicit trust-all and trust-none modes", async () => {
-    const trustAllHome = await createFdeHome({ version: 1 });
-    expect(loadConfig(trustAllHome, { env: { FDE_TRUSTED_PROXIES: "true" } }).trustedProxies).toBe(
-      true,
-    );
-
-    const trustNoneHome = await createFdeHome({ version: 1 });
+  test("FROGG_TRUSTED_PROXIES supports explicit trust-all and trust-none modes", async () => {
+    const trustAllHome = await createFroggHome({ version: 1 });
     expect(
-      loadConfig(trustNoneHome, { env: { FDE_TRUSTED_PROXIES: "false" } }).trustedProxies,
+      loadConfig(trustAllHome, { env: { FROGG_TRUSTED_PROXIES: "true" } }).trustedProxies,
+    ).toBe(true);
+
+    const trustNoneHome = await createFroggHome({ version: 1 });
+    expect(
+      loadConfig(trustNoneHome, { env: { FROGG_TRUSTED_PROXIES: "false" } }).trustedProxies,
     ).toEqual([]);
   });
 });
@@ -314,8 +314,8 @@ describe("daemon worktree root config", () => {
     await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
   });
 
-  test("resolves relative worktrees.root against FDE_HOME", async () => {
-    const home = await createFdeHome({
+  test("resolves relative worktrees.root against FROGG_HOME", async () => {
+    const home = await createFroggHome({
       version: 1,
       worktrees: { root: "custom-worktrees" },
     });
@@ -324,13 +324,13 @@ describe("daemon worktree root config", () => {
   });
 
   test("keeps absolute worktrees.root absolute", async () => {
-    const home = await createFdeHome({
+    const home = await createFroggHome({
       version: 1,
-      worktrees: { root: path.join(os.tmpdir(), "fde-custom-worktrees") },
+      worktrees: { root: path.join(os.tmpdir(), "frogg-custom-worktrees") },
     });
 
     expect(loadConfig(home, { env: {} }).worktreesRoot).toBe(
-      path.join(os.tmpdir(), "fde-custom-worktrees"),
+      path.join(os.tmpdir(), "frogg-custom-worktrees"),
     );
   });
 });

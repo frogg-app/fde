@@ -1,6 +1,6 @@
 {
   "platforms": ["android"],
   "android": {
-    "modules": ["sh.fde.trace.FdeNativeTraceModule"]
+    "modules": ["sh.frogg.trace.FroggNativeTraceModule"]
   }
 }

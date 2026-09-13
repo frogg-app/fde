@@ -1,5 +1,5 @@
-import type { ForgeSearchItem } from "@fde/protocol/messages";
-import type { ActiveTurnBehavior } from "@fde/protocol/messages";
+import type { ForgeSearchItem } from "@frogg/protocol/messages";
+import type { ActiveTurnBehavior } from "@frogg/protocol/messages";
 import type {
   AttachmentMetadata,
   ComposerAttachment,

@@ -5,7 +5,7 @@ import { mergeClaudeHooks } from "./hooks.js";
 describe("mergeClaudeHooks", () => {
   const own = { PreToolUse: [{ hooks: [vi.fn()] }] } as never;
 
-  it("keeps Fde's hooks when the user configured none", () => {
+  it("keeps Frogg's hooks when the user configured none", () => {
     expect(mergeClaudeHooks(own, undefined)).toEqual(own);
     expect(mergeClaudeHooks(own, null)).toEqual(own);
   });
@@ -15,12 +15,12 @@ describe("mergeClaudeHooks", () => {
     const merged = mergeClaudeHooks(own, { PreToolUse: [{ hooks: [userHook] }] }) as {
       PreToolUse: unknown[];
     };
-    // Both must survive: dropping Fde's would silently stop effort being observed, and
+    // Both must survive: dropping Frogg's would silently stop effort being observed, and
     // dropping the user's would break their configuration.
     expect(merged.PreToolUse).toHaveLength(2);
   });
 
-  it("carries through events Fde does not register", () => {
+  it("carries through events Frogg does not register", () => {
     const merged = mergeClaudeHooks(own, { SessionStart: [{ hooks: [vi.fn()] }] }) as Record<
       string,
       unknown[]

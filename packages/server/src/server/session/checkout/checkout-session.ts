@@ -1,8 +1,8 @@
 import type pino from "pino";
 import { isAbsolute } from "node:path";
-import { getErrorMessage } from "@fde/protocol/error-utils";
-import { getForgeDefinitionOrNeutral } from "@fde/protocol/forge-manifest";
-import { validateBranchSlug } from "@fde/protocol/branch-slug";
+import { getErrorMessage } from "@frogg/protocol/error-utils";
+import { getForgeDefinitionOrNeutral } from "@frogg/protocol/forge-manifest";
+import { validateBranchSlug } from "@frogg/protocol/branch-slug";
 import type {
   BranchSuggestionsRequest,
   CheckoutCommitsListRequest,
@@ -122,7 +122,7 @@ export interface CheckoutSessionOptions {
   github: ForgeService;
   checkoutDiffManager: CheckoutDiffSubscriber;
   gitMetadataGenerator: GitMetadataGenerator;
-  fdeHome: string;
+  froggHome: string;
   worktreesRoot: string | undefined;
   logger: pino.Logger;
 }
@@ -138,7 +138,7 @@ export interface CheckoutSessionOptions {
  * workspace git observer streams branch changes through emitStatusUpdate().
  */
 export class CheckoutSession {
-  private static readonly FDE_STASH_PREFIX = "fde-auto-stash:";
+  private static readonly FROGG_STASH_PREFIX = "frogg-auto-stash:";
 
   private readonly host: CheckoutSessionHost;
   private readonly gitMutation: Pick<
@@ -149,7 +149,7 @@ export class CheckoutSession {
   private readonly github: ForgeService;
   private readonly checkoutDiffManager: CheckoutDiffSubscriber;
   private readonly gitMetadataGenerator: GitMetadataGenerator;
-  private readonly fdeHome: string;
+  private readonly froggHome: string;
   private readonly worktreesRoot: string | undefined;
   private readonly logger: pino.Logger;
   private readonly diffSubscriptions = new Map<string, () => void>();
@@ -162,7 +162,7 @@ export class CheckoutSession {
     this.github = options.github;
     this.checkoutDiffManager = options.checkoutDiffManager;
     this.gitMetadataGenerator = options.gitMetadataGenerator;
-    this.fdeHome = options.fdeHome;
+    this.froggHome = options.froggHome;
     this.worktreesRoot = options.worktreesRoot;
     this.logger = options.logger;
   }
@@ -259,7 +259,7 @@ export class CheckoutSession {
           behindOfOrigin: null,
           hasRemote: false,
           remoteUrl: null,
-          isFdeOwnedWorktree: false,
+          isFroggOwnedWorktree: false,
           error: toCheckoutError(error),
           requestId,
         },
@@ -638,8 +638,8 @@ export class CheckoutSession {
     try {
       const branchLabel = msg.branch?.trim() ?? "";
       const message = branchLabel
-        ? `${CheckoutSession.FDE_STASH_PREFIX} ${branchLabel}`
-        : `${CheckoutSession.FDE_STASH_PREFIX} unnamed`;
+        ? `${CheckoutSession.FROGG_STASH_PREFIX} ${branchLabel}`
+        : `${CheckoutSession.FROGG_STASH_PREFIX} unnamed`;
       await runGitCommand(["stash", "push", "--include-untracked", "-m", message], {
         cwd,
         timeout: 120_000,
@@ -685,9 +685,9 @@ export class CheckoutSession {
     msg: Extract<SessionInboundMessage, { type: "stash_list_request" }>,
   ): Promise<void> {
     const { cwd, requestId } = msg;
-    const fdeOnly = msg.fdeOnly !== false;
+    const froggOnly = msg.froggOnly !== false;
     try {
-      const entries = await this.workspaceGitService.listStashes(cwd, { fdeOnly });
+      const entries = await this.workspaceGitService.listStashes(cwd, { froggOnly });
 
       this.host.emit({
         type: "stash_list_response",
@@ -775,7 +775,7 @@ export class CheckoutSession {
           baseRef,
           mode: msg.strategy === "squash" ? "squash" : "merge",
         },
-        { fdeHome: this.fdeHome, worktreesRoot: this.worktreesRoot },
+        { froggHome: this.froggHome, worktreesRoot: this.worktreesRoot },
       );
       await Promise.all([
         this.gitMutation.notifyGitMutation(mutatedCwd, "merge-to-base", { invalidateForge: true }),

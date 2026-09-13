@@ -2,8 +2,8 @@ import type {
   DaemonClient,
   FetchAgentHistoryOptions,
   FetchAgentHistoryPageInfo,
-} from "@fde/client/internal/daemon-client";
-import type { AgentSearchMatch } from "@fde/protocol/messages";
+} from "@frogg/client/internal/daemon-client";
+import type { AgentSearchMatch } from "@frogg/protocol/messages";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useCallback, useMemo, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";

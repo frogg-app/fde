@@ -391,7 +391,7 @@ async fn connect(target: &TransportTarget, protocols: &[String]) -> Result<Endpo
 }
 
 /// The upgrade request: `protocols` become one `Sec-WebSocket-Protocol`
-/// header (the daemon echoes the `fde.bearer.*` entry it accepted).
+/// header (the daemon echoes the `frogg.bearer.*` entry it accepted).
 fn build_request(
     url: &str,
     protocols: &[String],
@@ -436,12 +436,12 @@ mod tests {
         assert!(plain.headers().get("Sec-WebSocket-Protocol").is_none());
         let with = build_request(
             "ws://127.0.0.1:9999/ws",
-            &["fde.bearer.pw".to_string(), "other".to_string()],
+            &["frogg.bearer.pw".to_string(), "other".to_string()],
         )
         .unwrap();
         assert_eq!(
             with.headers().get("Sec-WebSocket-Protocol").unwrap(),
-            "fde.bearer.pw, other"
+            "frogg.bearer.pw, other"
         );
         assert_eq!(with.uri().path(), "/ws");
     }

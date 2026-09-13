@@ -70,7 +70,7 @@ function firstDefined(values: Array<string | undefined>): string | undefined {
 export function resolveCompanionModel(inputs: CompanionModelInputs): string {
   const configured = firstDefined([
     inputs.persisted.features?.companion?.model,
-    inputs.env.FDE_COMPANION_MODEL,
+    inputs.env.FROGG_COMPANION_MODEL,
   ]);
   return configured ?? DEFAULT_COMPANION_MODEL;
 }
@@ -82,7 +82,7 @@ export function resolveCompanionModelConfig(inputs: CompanionModelInputs): Compa
   const apiKey = firstDefined([anthropic?.apiKey, inputs.env.ANTHROPIC_API_KEY]);
   const selection =
     inputs.persisted.features?.companion?.backend ??
-    inputs.env.FDE_COMPANION_BACKEND ??
+    inputs.env.FROGG_COMPANION_BACKEND ??
     "subscription";
   if (selection === "api" && apiKey) {
     const baseUrl = firstDefined([anthropic?.baseUrl, inputs.env.ANTHROPIC_BASE_URL]);
@@ -98,7 +98,7 @@ export function resolveCompanionModelConfig(inputs: CompanionModelInputs): Compa
       model:
         firstDefined([
           inputs.persisted.features?.companion?.model,
-          inputs.env.FDE_COMPANION_MODEL,
+          inputs.env.FROGG_COMPANION_MODEL,
         ]) ?? "gpt-5.6-luna",
     };
   }

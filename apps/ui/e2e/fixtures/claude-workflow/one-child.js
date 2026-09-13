@@ -1,7 +1,7 @@
 export const meta = {
-  name: "fde-workflow-row-qa",
+  name: "frogg-workflow-row-qa",
   description: "Verify the workflow row lifecycle",
-  whenToUse: "Fde real-provider QA only",
+  whenToUse: "Frogg real-provider QA only",
   phases: [{ title: "Verify", detail: "one child returns a fixed marker" }],
 };
 
@@ -16,7 +16,7 @@ const child = await agent(
   `First use Bash to run this command and wait for it to exit:
 while [ ! -f ${JSON.stringify(gatePath)} ]; do sleep 0.2; done
 
-Then return exactly this JSON object and do nothing else: {"marker":"FDE_WORKFLOW_ROW_OK"}`,
+Then return exactly this JSON object and do nothing else: {"marker":"FROGG_WORKFLOW_ROW_OK"}`,
   {
     label: "workflow-row-child",
     phase: "Verify",

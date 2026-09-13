@@ -1,6 +1,6 @@
 import type { ITheme } from "@xterm/xterm";
 import type { TextStyle } from "react-native";
-import type { TerminalCell } from "@fde/protocol/messages";
+import type { TerminalCell } from "@frogg/protocol/messages";
 
 import { darkTheme } from "@/styles/theme";
 import { toXtermTheme } from "@/utils/to-xterm-theme";

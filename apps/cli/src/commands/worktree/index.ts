@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { Command } from "commander";
 import { runLsCommand } from "./ls.js";
 import { runArchiveCommand } from "./archive.js";

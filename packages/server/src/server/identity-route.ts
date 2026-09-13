@@ -1,4 +1,4 @@
-import { brandIdentity } from "@fde/branding";
+import { brandIdentity } from "@frogg/branding";
 import type { IncomingMessage } from "node:http";
 import type { RequestHandler } from "express";
 
@@ -8,7 +8,7 @@ import type { RequestHandler } from "express";
  * nothing a `hello` handshake would not, and it never includes credentials or
  * the claim token.
  */
-export const IDENTITY_PRODUCT = "fde";
+export const IDENTITY_PRODUCT = "frogg";
 
 export interface DaemonIdentity {
   product: typeof IDENTITY_PRODUCT;

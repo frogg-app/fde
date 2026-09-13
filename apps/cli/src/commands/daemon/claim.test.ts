@@ -1,7 +1,7 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { createClaimStore } from "@fde/server";
+import { createClaimStore } from "@frogg/server";
 import { afterEach, describe, expect, test } from "vitest";
 
 import { describeClaimStatus, resetClaim } from "./claim.js";
@@ -10,7 +10,7 @@ import { resolveLoopbackHttpBase } from "./daemon-http.js";
 const homes: string[] = [];
 
 function createHome(): string {
-  const home = mkdtempSync(path.join(os.tmpdir(), "fde-cli-claim-"));
+  const home = mkdtempSync(path.join(os.tmpdir(), "frogg-cli-claim-"));
   homes.push(home);
   return home;
 }
@@ -51,6 +51,6 @@ describe("daemon claim-status / reset-claim", () => {
     expect(resolveLoopbackHttpBase("[::]:9999")).toBe("http://127.0.0.1:9999");
     expect(resolveLoopbackHttpBase("192.168.1.5:9999")).toBe("http://192.168.1.5:9999");
     expect(resolveLoopbackHttpBase("9998")).toBe("http://127.0.0.1:9998");
-    expect(resolveLoopbackHttpBase("/tmp/fde.sock")).toBeNull();
+    expect(resolveLoopbackHttpBase("/tmp/frogg.sock")).toBeNull();
   });
 });

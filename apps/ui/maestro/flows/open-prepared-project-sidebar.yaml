@@ -1,6 +1,6 @@
 # NOTE: Render through the workspace-create shell scripts before running when
-# using ${FDE_MAESTRO_*}. Maestro does not substitute environment vars.
-appId: ${FDE_MAESTRO_APP_ID}
+# using ${FROGG_MAESTRO_*}. Maestro does not substitute environment vars.
+appId: ${FROGG_MAESTRO_APP_ID}
 ---
 # Start from the connected home screen and leave the Android sidebar open with
 # the prepared project visible.
@@ -18,5 +18,5 @@ appId: ${FDE_MAESTRO_APP_ID}
     timeout: 10000
 
 - extendedWaitUntil:
-    visible: ${FDE_MAESTRO_PROJECT_NAME}
+    visible: ${FROGG_MAESTRO_PROJECT_NAME}
     timeout: 30000

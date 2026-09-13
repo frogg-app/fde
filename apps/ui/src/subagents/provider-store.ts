@@ -2,12 +2,12 @@ import type {
   AgentStreamEventPayload,
   ProviderSubagentDescriptorPayload,
   SessionOutboundMessage,
-} from "@fde/protocol/messages";
-import type { DaemonClient } from "@fde/client/internal/daemon-client";
+} from "@frogg/protocol/messages";
+import type { DaemonClient } from "@frogg/client/internal/daemon-client";
 import { create } from "zustand";
 import { applyStreamEvent } from "@/types/stream";
 import type { StreamItem } from "@/types/stream";
-import type { AgentLifecycleStatus } from "@fde/protocol/agent-lifecycle";
+import type { AgentLifecycleStatus } from "@frogg/protocol/agent-lifecycle";
 
 type ProviderSubagentTimelineItem = Extract<
   Extract<SessionOutboundMessage, { type: "agent.provider_subagents.update" }>["payload"],

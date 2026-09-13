@@ -1,5 +1,5 @@
-import { brand } from "@fde/branding";
-import type { MutableDaemonConfig } from "@fde/protocol/messages";
+import { brand } from "@frogg/branding";
+import type { MutableDaemonConfig } from "@frogg/protocol/messages";
 
 export const BROWSER_TOOLS_TITLE = "Browser tools";
 export const BROWSER_TOOLS_WARNING = `Allow agents to access and control ${brand.name} browser tabs, including logged-in browser state. Only enable this for agents you trust.`;

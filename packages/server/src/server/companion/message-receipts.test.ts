@@ -5,7 +5,7 @@ import { expect, it } from "vitest";
 import { CompanionMessageReceipts } from "./message-receipts.js";
 
 it("retains accepted request IDs across a daemon restart", async () => {
-  const directory = await mkdtemp(path.join(tmpdir(), "fde-companion-receipts-"));
+  const directory = await mkdtemp(path.join(tmpdir(), "frogg-companion-receipts-"));
   try {
     const filePath = path.join(directory, "messages.json");
     const before = new CompanionMessageReceipts(filePath);
@@ -20,7 +20,7 @@ it("retains accepted request IDs across a daemon restart", async () => {
 });
 
 it("does not accept a retry when saving the original receipt failed", async () => {
-  const directory = await mkdtemp(path.join(tmpdir(), "fde-companion-receipts-"));
+  const directory = await mkdtemp(path.join(tmpdir(), "frogg-companion-receipts-"));
   try {
     const parent = path.join(directory, "not-a-directory");
     await writeFile(parent, "occupied");

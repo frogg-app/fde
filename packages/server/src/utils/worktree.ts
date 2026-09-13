@@ -17,35 +17,35 @@ import {
   buildStringCommandShellInvocation,
   createStringCommandShellEnv,
 } from "./string-command-shell.js";
-import { readFdeConfigJson, resolveFdeConfigPath } from "./fde-config-file.js";
+import { readFroggConfigJson, resolveFroggConfigPath } from "./frogg-config-file.js";
 export {
-  FdeConfigRawSchema,
-  FdeLifecycleCommandRawSchema,
-  FdeScriptEntryRawSchema,
-  FdeWorktreeConfigRawSchema,
-  FdeConfigSchema,
-  type FdeConfig,
-  type FdeConfigRaw,
-} from "@fde/protocol/fde-config-schema";
-import { FdeConfigSchema, type FdeConfig } from "@fde/protocol/fde-config-schema";
+  FroggConfigRawSchema,
+  FroggLifecycleCommandRawSchema,
+  FroggScriptEntryRawSchema,
+  FroggWorktreeConfigRawSchema,
+  FroggConfigSchema,
+  type FroggConfig,
+  type FroggConfigRaw,
+} from "@frogg/protocol/frogg-config-schema";
+import { FroggConfigSchema, type FroggConfig } from "@frogg/protocol/frogg-config-schema";
 import {
-  createFdeWorktreeChangeRequestHint,
+  createFroggWorktreeChangeRequestHint,
   normalizeBaseRefName,
-  type FdeWorktreeChangeRequestHint,
-  readFdeWorktreeMetadata,
-  readFdeWorktreeRuntimePort,
-  writeFdeWorktreeMetadata,
-  writeFdeWorktreeRuntimeMetadata,
+  type FroggWorktreeChangeRequestHint,
+  readFroggWorktreeMetadata,
+  readFroggWorktreeRuntimePort,
+  writeFroggWorktreeMetadata,
+  writeFroggWorktreeRuntimeMetadata,
 } from "./worktree-metadata.js";
 import { runGitCommand } from "./run-git-command.js";
 import { spawnProcess } from "./spawn.js";
-import { resolveFdeHome } from "../server/fde-home.js";
-import { createExternalProcessEnv } from "../server/fde-env.js";
+import { resolveFroggHome } from "../server/frogg-home.js";
+import { createExternalProcessEnv } from "../server/frogg-env.js";
 import { parseGitRevParsePath, resolveGitRevParsePath } from "./git-rev-parse-path.js";
 import { expandTilde, getRealpathAwareRelativePath, isPathInsideRoot } from "./path.js";
 import { terminateWithTreeKill } from "./tree-kill.js";
 
-export { slugify, validateBranchSlug } from "@fde/protocol/branch-slug";
+export { slugify, validateBranchSlug } from "@frogg/protocol/branch-slug";
 
 const execFileAsync = promisify(execFile);
 const READ_ONLY_GIT_ENV = {
@@ -59,11 +59,11 @@ export interface WorktreeConfig {
 
 export interface WorktreeRuntimeEnv {
   [key: string]: string;
-  FDE_SOURCE_CHECKOUT_PATH: string;
-  FDE_ROOT_PATH: string;
-  FDE_WORKTREE_PATH: string;
-  FDE_BRANCH_NAME: string;
-  FDE_WORKTREE_PORT: string;
+  FROGG_SOURCE_CHECKOUT_PATH: string;
+  FROGG_ROOT_PATH: string;
+  FROGG_WORKTREE_PATH: string;
+  FROGG_BRANCH_NAME: string;
+  FROGG_WORKTREE_PORT: string;
 }
 
 export interface WorktreeSetupCommandResult {
@@ -149,26 +149,26 @@ export class WorktreeTeardownError extends Error {
   }
 }
 
-export interface FdeWorktreeInfo {
+export interface FroggWorktreeInfo {
   path: string;
   createdAt: string;
   branchName?: string;
   head?: string;
 }
 
-export interface FdeWorktreeOwnership {
+export interface FroggWorktreeOwnership {
   allowed: boolean;
   repoRoot?: string;
   worktreeRoot?: string;
   worktreePath?: string;
 }
 
-export interface FdeWorktreeOwnershipOptions extends WorktreeRootOptions {
+export interface FroggWorktreeOwnershipOptions extends WorktreeRootOptions {
   knownGitCommonDir?: string | null;
 }
 
 export interface WorktreeRootOptions {
-  fdeHome?: string;
+  froggHome?: string;
   worktreesRoot?: string;
 }
 
@@ -209,7 +209,7 @@ export interface CreateWorktreeOptions {
   worktreeSlug: string;
   source: WorktreeSource;
   runSetup: boolean;
-  fdeHome?: string;
+  froggHome?: string;
   worktreesRoot?: string;
 }
 
@@ -245,47 +245,47 @@ export class InvalidGitBranchNameError extends Error {
   }
 }
 
-export type ReadFdeConfigResult =
-  | { ok: true; config: FdeConfig | null }
+export type ReadFroggConfigResult =
+  | { ok: true; config: FroggConfig | null }
   | { ok: false; configPath: string; error: unknown };
 
-export function readFdeConfig(repoRoot: string): ReadFdeConfigResult {
+export function readFroggConfig(repoRoot: string): ReadFroggConfigResult {
   try {
-    const json = readFdeConfigJson(repoRoot);
+    const json = readFroggConfigJson(repoRoot);
     if (json === null) {
       return { ok: true, config: null };
     }
-    return { ok: true, config: FdeConfigSchema.parse(json) };
+    return { ok: true, config: FroggConfigSchema.parse(json) };
   } catch (error) {
-    return { ok: false, configPath: resolveFdeConfigPath(repoRoot), error };
+    return { ok: false, configPath: resolveFroggConfigPath(repoRoot), error };
   }
 }
 
-export function fdeConfigParseError(failure: { configPath: string; error: unknown }): Error {
+export function froggConfigParseError(failure: { configPath: string; error: unknown }): Error {
   const detail = failure.error instanceof Error ? failure.error.message : String(failure.error);
-  return new Error(`Failed to parse fde.json at ${failure.configPath}: ${detail}`, {
+  return new Error(`Failed to parse frogg.json at ${failure.configPath}: ${detail}`, {
     cause: failure.error,
   });
 }
 
-function readFdeConfigOrThrow(repoRoot: string): FdeConfig | null {
-  const result = readFdeConfig(repoRoot);
+function readFroggConfigOrThrow(repoRoot: string): FroggConfig | null {
+  const result = readFroggConfig(repoRoot);
   if (!result.ok) {
-    throw fdeConfigParseError(result);
+    throw froggConfigParseError(result);
   }
   return result.config;
 }
 
 export function getWorktreeSetupCommands(repoRoot: string): string[] {
-  return readFdeConfigOrThrow(repoRoot)?.worktree?.setup ?? [];
+  return readFroggConfigOrThrow(repoRoot)?.worktree?.setup ?? [];
 }
 
 export function getWorktreeTeardownCommands(repoRoot: string): string[] {
-  return readFdeConfigOrThrow(repoRoot)?.worktree?.teardown ?? [];
+  return readFroggConfigOrThrow(repoRoot)?.worktree?.teardown ?? [];
 }
 
 export function getWorktreeTerminalSpecs(repoRoot: string): WorktreeTerminalConfig[] {
-  const terminals = readFdeConfigOrThrow(repoRoot)?.worktree?.terminals;
+  const terminals = readFroggConfigOrThrow(repoRoot)?.worktree?.terminals;
   if (!Array.isArray(terminals) || terminals.length === 0) {
     return [];
   }
@@ -318,7 +318,7 @@ export function getWorktreeTerminalSpecs(repoRoot: string): WorktreeTerminalConf
   return specs;
 }
 
-export function getScriptConfigs(config: FdeConfig | null): Map<string, ScriptConfig> {
+export function getScriptConfigs(config: FroggConfig | null): Map<string, ScriptConfig> {
   const scripts = config?.scripts;
   if (!scripts || typeof scripts !== "object") {
     return new Map();
@@ -640,7 +640,7 @@ export async function runWorktreeSetupCommands(options: {
   signal?: AbortSignal;
   onEvent?: (event: WorktreeSetupCommandProgressEvent) => void;
 }): Promise<WorktreeSetupCommandResult[]> {
-  // Read fde.json from the worktree (it will have the same content as the source repo)
+  // Read frogg.json from the worktree (it will have the same content as the source repo)
   const setupCommands = getWorktreeSetupCommands(options.worktreePath);
   if (setupCommands.length === 0) {
     return [];
@@ -721,12 +721,12 @@ export async function resolveWorktreeRuntimeEnv(options: {
   const branchName =
     options.branchName ?? (await resolveBranchNameForWorktreePath(options.worktreePath));
 
-  let worktreePort = readFdeWorktreeRuntimePort(options.worktreePath);
+  let worktreePort = readFroggWorktreeRuntimePort(options.worktreePath);
   if (worktreePort === null) {
     worktreePort = await getAvailablePort();
-    const metadata = readFdeWorktreeMetadata(options.worktreePath);
+    const metadata = readFroggWorktreeMetadata(options.worktreePath);
     if (metadata) {
-      writeFdeWorktreeRuntimeMetadata(options.worktreePath, { worktreePort });
+      writeFroggWorktreeRuntimeMetadata(options.worktreePath, { worktreePort });
     }
   } else {
     await assertPortAvailable(worktreePort);
@@ -736,12 +736,12 @@ export async function resolveWorktreeRuntimeEnv(options: {
     // Source checkout path is the original git repo root (shared across worktrees), not the
     // worktree itself. This allows setup scripts to copy local files (e.g. .env) from the
     // source checkout.
-    FDE_SOURCE_CHECKOUT_PATH: repoRootPath,
+    FROGG_SOURCE_CHECKOUT_PATH: repoRootPath,
     // Backward-compatible alias.
-    FDE_ROOT_PATH: repoRootPath,
-    FDE_WORKTREE_PATH: options.worktreePath,
-    FDE_BRANCH_NAME: branchName,
-    FDE_WORKTREE_PORT: String(worktreePort),
+    FROGG_ROOT_PATH: repoRootPath,
+    FROGG_WORKTREE_PATH: options.worktreePath,
+    FROGG_BRANCH_NAME: branchName,
+    FROGG_WORKTREE_PORT: String(worktreePort),
   };
 }
 
@@ -764,19 +764,19 @@ export async function runWorktreeTeardownCommands(options: {
     options.repoRootPath ?? (await inferRepoRootPathFromWorktreePath(options.worktreePath));
   const branchName =
     options.branchName ?? (await resolveBranchNameForWorktreePath(options.worktreePath));
-  const worktreePort = readFdeWorktreeRuntimePort(options.worktreePath);
+  const worktreePort = readFroggWorktreeRuntimePort(options.worktreePath);
 
   const teardownEnv: NodeJS.ProcessEnv = createStringCommandShellEnv(
     createExternalProcessEnv(process.env, {
       // Source checkout path is the original git repo root (shared across worktrees), not the
       // worktree itself. This allows lifecycle scripts to copy or clean resources using paths
       // from the source checkout.
-      FDE_SOURCE_CHECKOUT_PATH: repoRootPath,
+      FROGG_SOURCE_CHECKOUT_PATH: repoRootPath,
       // Backward-compatible alias.
-      FDE_ROOT_PATH: repoRootPath,
-      FDE_WORKTREE_PATH: options.worktreePath,
-      FDE_BRANCH_NAME: branchName,
-      ...(worktreePort !== null ? { FDE_WORKTREE_PORT: String(worktreePort) } : {}),
+      FROGG_ROOT_PATH: repoRootPath,
+      FROGG_WORKTREE_PATH: options.worktreePath,
+      FROGG_BRANCH_NAME: branchName,
+      ...(worktreePort !== null ? { FROGG_WORKTREE_PORT: String(worktreePort) } : {}),
     }),
   );
 
@@ -799,12 +799,12 @@ export async function runWorktreeTeardownCommands(options: {
   return results;
 }
 
-export async function seedFdeConfigFile(options: {
+export async function seedFroggConfigFile(options: {
   sourceCwd: string;
   targetCwd: string;
 }): Promise<void> {
-  const sourceConfigPath = join(options.sourceCwd, "fde.json");
-  const targetConfigPath = join(options.targetCwd, "fde.json");
+  const sourceConfigPath = join(options.sourceCwd, "frogg.json");
+  const targetConfigPath = join(options.targetCwd, "frogg.json");
   await copyFile(sourceConfigPath, targetConfigPath, fsConstants.COPYFILE_EXCL).catch((error) => {
     const code = (error as NodeJS.ErrnoException).code;
     if (code !== "EEXIST" && code !== "ENOENT") throw error;
@@ -850,26 +850,26 @@ export async function deriveWorktreeProjectHash(cwd: string): Promise<string> {
   }
 }
 
-export function resolveFdeWorktreesBaseRoot(options?: WorktreeRootOptions): string {
+export function resolveFroggWorktreesBaseRoot(options?: WorktreeRootOptions): string {
   if (options?.worktreesRoot) {
     const expandedRoot = expandTilde(options.worktreesRoot);
     if (isAbsolute(expandedRoot)) {
       return resolve(expandedRoot);
     }
-    const home = options.fdeHome ? resolve(options.fdeHome) : resolveFdeHome();
+    const home = options.froggHome ? resolve(options.froggHome) : resolveFroggHome();
     return resolve(home, expandedRoot);
   }
 
-  const home = options?.fdeHome ? resolve(options.fdeHome) : resolveFdeHome();
+  const home = options?.froggHome ? resolve(options.froggHome) : resolveFroggHome();
   return join(home, "worktrees");
 }
 
-export async function getFdeWorktreesRoot(
+export async function getFroggWorktreesRoot(
   cwd: string,
-  fdeHome?: string,
+  froggHome?: string,
   worktreesRoot?: string,
 ): Promise<string> {
-  const baseRoot = resolveFdeWorktreesBaseRoot({ fdeHome, worktreesRoot });
+  const baseRoot = resolveFroggWorktreesBaseRoot({ froggHome, worktreesRoot });
   const projectHash = await deriveWorktreeProjectHash(cwd);
   return join(baseRoot, projectHash);
 }
@@ -877,10 +877,10 @@ export async function getFdeWorktreesRoot(
 export async function computeWorktreePath(
   cwd: string,
   slug: string,
-  fdeHome?: string,
+  froggHome?: string,
   worktreesRoot?: string,
 ): Promise<string> {
-  const projectWorktreesRoot = await getFdeWorktreesRoot(cwd, fdeHome, worktreesRoot);
+  const projectWorktreesRoot = await getFroggWorktreesRoot(cwd, froggHome, worktreesRoot);
   return join(projectWorktreesRoot, slug);
 }
 
@@ -929,10 +929,10 @@ function resolveRepoRootFromGitCommonDir(commonDir: string): string {
     : normalizedCommonDir;
 }
 
-export async function isFdeOwnedWorktreeCwd(
+export async function isFroggOwnedWorktreeCwd(
   cwd: string,
-  options?: FdeWorktreeOwnershipOptions,
-): Promise<FdeWorktreeOwnership> {
+  options?: FroggWorktreeOwnershipOptions,
+): Promise<FroggWorktreeOwnership> {
   const resolvedCwd = normalizePathForOwnership(cwd);
 
   // repoRoot is best-effort: git may be unreachable from the worktree (e.g. a
@@ -950,11 +950,11 @@ export async function isFdeOwnedWorktreeCwd(
     }
   }
 
-  const worktreesBaseRoot = resolveFdeWorktreesBaseRoot(options);
+  const worktreesBaseRoot = resolveFroggWorktreesBaseRoot(options);
   const relativePath = getRealpathAwareRelativePath(worktreesBaseRoot, resolvedCwd);
 
   // Ownership is defined by the path living under <worktrees-root>/<hash>/<slug>[/...].
-  // The <hash>/<slug> prefix is Fde-private — nothing else writes there — so the
+  // The <hash>/<slug> prefix is Frogg-private — nothing else writes there — so the
   // path shape alone is sufficient proof of ownership, even when git has already
   // forgotten about the worktree.
   if (relativePath === null) {
@@ -983,11 +983,11 @@ export async function isFdeOwnedWorktreeCwd(
   };
 }
 
-type ParsedFdeWorktreeInfo = Omit<FdeWorktreeInfo, "createdAt">;
+type ParsedFroggWorktreeInfo = Omit<FroggWorktreeInfo, "createdAt">;
 
-function parseWorktreeList(output: string): ParsedFdeWorktreeInfo[] {
-  const entries: ParsedFdeWorktreeInfo[] = [];
-  let current: ParsedFdeWorktreeInfo | null = null;
+function parseWorktreeList(output: string): ParsedFroggWorktreeInfo[] {
+  const entries: ParsedFroggWorktreeInfo[] = [];
+  let current: ParsedFroggWorktreeInfo | null = null;
 
   for (const line of output.split("\n")) {
     if (line.startsWith("worktree ")) {
@@ -1034,16 +1034,16 @@ function resolveWorktreeCreatedAtIso(worktreePath: string): string {
   }
 }
 
-export async function listFdeWorktrees({
+export async function listFroggWorktrees({
   cwd,
-  fdeHome,
+  froggHome,
   worktreesRoot,
 }: {
   cwd: string;
-  fdeHome?: string;
+  froggHome?: string;
   worktreesRoot?: string;
-}): Promise<FdeWorktreeInfo[]> {
-  const projectWorktreesRoot = await getFdeWorktreesRoot(cwd, fdeHome, worktreesRoot);
+}): Promise<FroggWorktreeInfo[]> {
+  const projectWorktreesRoot = await getFroggWorktreesRoot(cwd, froggHome, worktreesRoot);
   const { stdout } = await runGitCommand(["worktree", "list", "--porcelain"], {
     cwd,
     envOverlay: READ_ONLY_GIT_ENV,
@@ -1057,25 +1057,25 @@ export async function listFdeWorktrees({
     );
 }
 
-export interface DeleteFdeWorktreeOptions {
+export interface DeleteFroggWorktreeOptions {
   cwd: string | null;
   worktreePath?: string;
   teardownCwds?: string[];
   worktreeSlug?: string;
   worktreesRoot?: string;
-  fdeHome?: string;
+  froggHome?: string;
   worktreesBaseRoot?: string;
 }
 
-export async function deleteFdeWorktree({
+export async function deleteFroggWorktree({
   cwd,
   worktreePath,
   teardownCwds,
   worktreeSlug,
   worktreesRoot,
-  fdeHome,
+  froggHome,
   worktreesBaseRoot,
-}: DeleteFdeWorktreeOptions): Promise<void> {
+}: DeleteFroggWorktreeOptions): Promise<void> {
   if (!worktreePath && !worktreeSlug) {
     throw new Error("worktreePath or worktreeSlug is required");
   }
@@ -1087,15 +1087,15 @@ export async function deleteFdeWorktree({
   if (worktreesRoot) {
     resolvedWorktreesRoot = worktreesRoot;
   } else if (cwd) {
-    resolvedWorktreesRoot = await getFdeWorktreesRoot(cwd, fdeHome, worktreesBaseRoot);
+    resolvedWorktreesRoot = await getFroggWorktreesRoot(cwd, froggHome, worktreesBaseRoot);
   } else {
-    throw new Error("cwd or worktreesRoot is required to delete an FDE worktree");
+    throw new Error("cwd or worktreesRoot is required to delete a Frogg worktree");
   }
 
   const requestedPath = worktreePath ?? join(resolvedWorktreesRoot, worktreeSlug!);
   const resolvedRequested = normalizePathForOwnership(requestedPath);
-  const ownership = await isFdeOwnedWorktreeCwd(requestedPath, {
-    fdeHome,
+  const ownership = await isFroggOwnedWorktreeCwd(requestedPath, {
+    froggHome,
     worktreesRoot: worktreesBaseRoot,
   });
   const resolvedWorktree =
@@ -1106,7 +1106,7 @@ export async function deleteFdeWorktree({
     resolvedWorktree,
   );
   if (relativeWorktreePath === null || relativeWorktreePath === "") {
-    throw new Error("Refusing to delete non-FDE worktree");
+    throw new Error("Refusing to delete non-Frogg worktree");
   }
 
   if (await pathExists(resolvedWorktree)) {
@@ -1143,13 +1143,13 @@ export async function deleteFdeWorktree({
   }
 }
 
-export async function rollbackCreatedFdeWorktree(
-  options: DeleteFdeWorktreeOptions,
+export async function rollbackCreatedFroggWorktree(
+  options: DeleteFroggWorktreeOptions,
   cause: unknown,
 ): Promise<never> {
   let cleanupError: unknown;
   try {
-    await deleteFdeWorktree(options);
+    await deleteFroggWorktree(options);
   } catch (error) {
     cleanupError = error;
   }
@@ -1213,11 +1213,11 @@ export const createWorktree = async ({
   source,
   worktreeSlug,
   runSetup,
-  fdeHome,
+  froggHome,
   worktreesRoot,
 }: CreateWorktreeOptions): Promise<WorktreeConfig> => {
   const sourcePlan = await resolveWorktreeSourcePlan({ cwd, source, desiredSlug: worktreeSlug });
-  let worktreePath = join(await getFdeWorktreesRoot(cwd, fdeHome, worktreesRoot), worktreeSlug);
+  let worktreePath = join(await getFroggWorktreesRoot(cwd, froggHome, worktreesRoot), worktreeSlug);
   mkdirSync(dirname(worktreePath), { recursive: true });
 
   // Also handle worktree path collision
@@ -1250,7 +1250,7 @@ export const createWorktree = async ({
     });
   }
 
-  writeFdeWorktreeMetadata(worktreePath, {
+  writeFroggWorktreeMetadata(worktreePath, {
     baseRefName: sourcePlan.metadataBaseRefName,
     ...(sourcePlan.metadataBaseRef ? { baseRef: sourcePlan.metadataBaseRef } : {}),
     ...(sourcePlan.changeRequestLookupTarget
@@ -1258,7 +1258,7 @@ export const createWorktree = async ({
       : {}),
   });
 
-  await seedFdeConfigFile({ sourceCwd: cwd, targetCwd: worktreePath });
+  await seedFroggConfigFile({ sourceCwd: cwd, targetCwd: worktreePath });
 
   if (runSetup) {
     await runWorktreeSetupCommands({
@@ -1287,7 +1287,7 @@ interface WorktreeSourcePlan {
   // upstream — so comparisons and actions read the ref and the UI reads the name.
   metadataBaseRefName: string;
   metadataBaseRef?: string;
-  changeRequestLookupTarget?: FdeWorktreeChangeRequestHint;
+  changeRequestLookupTarget?: FroggWorktreeChangeRequestHint;
   addArguments: string[];
   pushRemote?: {
     name: string;
@@ -1321,7 +1321,7 @@ async function resolveWorktreeSourcePlan({
         branchName: newBranchName,
         metadataBaseRefName: normalizedBaseBranch,
         metadataBaseRef: resolvedBaseBranch,
-        changeRequestLookupTarget: createFdeWorktreeChangeRequestHint({
+        changeRequestLookupTarget: createFroggWorktreeChangeRequestHint({
           headRef: newBranchName,
           localBranchName: newBranchName,
         }),
@@ -1345,7 +1345,7 @@ async function resolveWorktreeSourcePlan({
         return {
           branchName,
           metadataBaseRefName: source.branchName,
-          changeRequestLookupTarget: createFdeWorktreeChangeRequestHint({
+          changeRequestLookupTarget: createFroggWorktreeChangeRequestHint({
             headRef: branchName,
             localBranchName: branchName,
           }),
@@ -1356,7 +1356,7 @@ async function resolveWorktreeSourcePlan({
       return {
         branchName: source.branchName,
         metadataBaseRefName: source.branchName,
-        changeRequestLookupTarget: createFdeWorktreeChangeRequestHint({
+        changeRequestLookupTarget: createFroggWorktreeChangeRequestHint({
           headRef: source.branchName,
           localBranchName: source.branchName,
         }),
@@ -1388,7 +1388,7 @@ async function resolveWorktreeSourcePlan({
         : undefined;
       const remotePlan: Pick<WorktreeSourcePlan, "pushRemote" | "trackingRemote"> = {};
       if (source.pushRemoteUrl) {
-        const remoteName = `fde-pr-${changeRequestNumber}`;
+        const remoteName = `frogg-pr-${changeRequestNumber}`;
         remotePlan.pushRemote = {
           name: remoteName,
           url: source.pushRemoteUrl,
@@ -1399,7 +1399,7 @@ async function resolveWorktreeSourcePlan({
         const originUrl = await getWorktreeRemotePushUrl(cwd, "origin");
         if (originUrl) {
           remotePlan.pushRemote = {
-            name: `fde-pr-${changeRequestNumber}`,
+            name: `frogg-pr-${changeRequestNumber}`,
             url: originUrl,
             headRef: source.headRef,
             track: false,
@@ -1413,7 +1413,7 @@ async function resolveWorktreeSourcePlan({
       return {
         branchName: localBranchName,
         metadataBaseRefName: normalizedBaseRefName,
-        changeRequestLookupTarget: createFdeWorktreeChangeRequestHint({
+        changeRequestLookupTarget: createFroggWorktreeChangeRequestHint({
           headRef: source.headRef,
           ...(source.headRepositoryOwner
             ? { headRepositoryOwner: source.headRepositoryOwner }
@@ -1602,10 +1602,10 @@ async function validateGitBranchName(cwd: string, branchName: string): Promise<v
 function normalizeRequiredBaseBranch(baseBranch: string): string {
   const normalizedBaseBranch = normalizeBaseRefName(baseBranch);
   if (!normalizedBaseBranch) {
-    throw new Error("Base branch is required when creating an FDE worktree");
+    throw new Error("Base branch is required when creating a Frogg worktree");
   }
   if (normalizedBaseBranch === "HEAD") {
-    throw new Error("Base branch cannot be HEAD when creating an FDE worktree");
+    throw new Error("Base branch cannot be HEAD when creating a Frogg worktree");
   }
   return normalizedBaseBranch;
 }

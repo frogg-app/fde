@@ -1,5 +1,5 @@
-import { brand, brandIdentity } from "@fde/branding";
-import { installedSkillName } from "@fde/branding/skills";
+import { brand, brandIdentity } from "@frogg/branding";
+import { installedSkillName } from "@frogg/branding/skills";
 import { createHash, randomUUID } from "node:crypto";
 import {
   cp,
@@ -53,18 +53,18 @@ interface CapturedDirectory {
   backupPath: string | null;
 }
 
-const MANIFEST_OWNER = brand.legacyFde
-  ? "fde-skills-transaction"
+const MANIFEST_OWNER = brand.legacyFrogg
+  ? "frogg-skills-transaction"
   : `${brand.applicationId}-skills-transaction`;
 const MANIFEST_FILENAME = "transaction.json";
-const TRANSACTION_PREFIX = brand.legacyFde
-  ? ".fde-skills-transaction-"
+const TRANSACTION_PREFIX = brand.legacyFrogg
+  ? ".frogg-skills-transaction-"
   : `.${brand.id}-skills-transaction-`;
-const RECOVERED_PREFIX = brand.legacyFde
-  ? ".fde-skills-recovered-"
+const RECOVERED_PREFIX = brand.legacyFrogg
+  ? ".frogg-skills-recovered-"
   : `.${brand.id}-skills-recovered-`;
 const BACKUP_DIRNAME = "backup";
-const MANAGED_FILES_MANIFEST = ".fde-managed-files.json";
+const MANAGED_FILES_MANIFEST = ".frogg-managed-files.json";
 
 async function isDirectory(target: string): Promise<boolean> {
   const info = await stat(target).catch(() => null);
@@ -200,7 +200,7 @@ async function listAllFiles(rootDir: string): Promise<string[]> {
 }
 
 async function expectedSyncedFiles(sourceDir: string, name: string): Promise<Map<string, Buffer>> {
-  const logical = brand.legacyFde ? name : name.slice(brand.id.length + 1);
+  const logical = brand.legacyFrogg ? name : name.slice(brand.id.length + 1);
   const skillDir = path.join(sourceDir, logical);
   const files = new Map<string, Buffer>();
   const hashes: Record<string, string> = {};

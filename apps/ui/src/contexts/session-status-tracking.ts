@@ -1,4 +1,4 @@
-import type { AgentLifecycleStatus } from "@fde/protocol/agent-lifecycle";
+import type { AgentLifecycleStatus } from "@frogg/protocol/agent-lifecycle";
 import type { Agent } from "@/stores/session-store";
 
 export function reconcilePreviousAgentStatuses(

@@ -1,6 +1,6 @@
-import { brandEnv } from "@fde/branding/identity";
-import { brand } from "@fde/branding";
-import { loadConfig, resolveFdeHome } from "@fde/server";
+import { brandEnv } from "@frogg/branding/identity";
+import { brand } from "@frogg/branding";
+import { loadConfig, resolveFroggHome } from "@frogg/server";
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
@@ -16,7 +16,7 @@ import {
 } from "./plan.js";
 
 /**
- * Installs and removes the "start FDE when I log in" service: a systemd user
+ * Installs and removes the "start Frogg when I log in" service: a systemd user
  * unit, a launchd agent, or a Windows logon task (see plan.ts). Every step is
  * idempotent — installing twice rewrites the same unit and restarts the
  * service; uninstalling something that is not there is not an error.
@@ -53,7 +53,7 @@ export function resolveCliCommand(env: NodeJS.ProcessEnv = process.env): Service
 
   const entry = process.argv[1];
   if (entry) {
-    // A bundle install keeps a rolling `current/bin/fde` symlink; prefer it so
+    // A bundle install keeps a rolling `current/bin/frogg` symlink; prefer it so
     // the service survives an upgrade to a new version directory.
     const versionsIndex = entry.split(path.sep).indexOf("versions");
     if (versionsIndex > 0) {
@@ -80,11 +80,11 @@ function buildPlanInput(
   const homeDir = options.homeDir ?? os.homedir();
   const configuredHome =
     options.home ?? brandEnv(brand, env, "HOME") ?? path.join(homeDir, brand.homeDir);
-  const fdeHome = resolveFdeHome({ ...env, [`${brand.envPrefix}_HOME`]: configuredHome });
-  const explicitListen = options.listen?.trim() || env.FDE_LISTEN?.trim() || undefined;
+  const froggHome = resolveFroggHome({ ...env, [`${brand.envPrefix}_HOME`]: configuredHome });
+  const explicitListen = options.listen?.trim() || env.FROGG_LISTEN?.trim() || undefined;
   const configControlsListen = action === "install" && explicitListen === undefined;
   const configuredListen = configControlsListen
-    ? loadConfig(fdeHome, { env: { ...env, FDE_LISTEN: undefined } }).listen
+    ? loadConfig(froggHome, { env: { ...env, FROGG_LISTEN: undefined } }).listen
     : DEFAULT_SERVICE_LISTEN;
   const listen = explicitListen ?? configuredListen;
   const persistListen = explicitListen !== undefined;
@@ -93,7 +93,7 @@ function buildPlanInput(
   // Windows tasks carry no environment block, so the settings ride on argv.
   if (platform === "win32") {
     if (persistListen) args.push("--listen", listen);
-    args.push("--home", fdeHome);
+    args.push("--home", froggHome);
   }
 
   return {
@@ -103,7 +103,7 @@ function buildPlanInput(
     command: { program: cli.program, args },
     listen,
     persistListen,
-    fdeHome,
+    froggHome,
     pathPrepend: path.dirname(cli.program),
   };
 }
@@ -143,7 +143,7 @@ export function installLoginService(options: ServiceActionOptions = {}): Service
     label: plan.label,
     file: plan.file?.path ?? null,
     listen: input.listen,
-    home: input.fdeHome ?? null,
+    home: input.froggHome ?? null,
     command: describeCommand(plan, input),
     warnings,
     hints: plan.hints,
@@ -167,7 +167,7 @@ export function uninstallLoginService(options: ServiceActionOptions = {}): Servi
     label: plan.label,
     file: plan.file?.path ?? null,
     listen: input.listen,
-    home: input.fdeHome ?? null,
+    home: input.froggHome ?? null,
     command: describeCommand(plan, input),
     warnings: [],
     hints: [],

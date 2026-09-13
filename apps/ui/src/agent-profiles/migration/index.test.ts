@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { AgentProfile } from "@fde/protocol/messages";
+import type { AgentProfile } from "@frogg/protocol/messages";
 import { LegacyFavoriteProfileMigration } from ".";
 
 class MemoryStorage {
@@ -97,7 +97,7 @@ class FakeProfileHost {
   }
 }
 
-const PREFERENCES_KEY = "@fde:create-agent-preferences";
+const PREFERENCES_KEY = "@frogg:create-agent-preferences";
 
 function migrationStorage() {
   return new MemoryStorage({

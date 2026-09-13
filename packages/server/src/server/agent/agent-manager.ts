@@ -1,16 +1,19 @@
 import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
 import { stat } from "node:fs/promises";
-import { AGENT_LIFECYCLE_STATUSES, type AgentLifecycleStatus } from "@fde/protocol/agent-lifecycle";
+import {
+  AGENT_LIFECYCLE_STATUSES,
+  type AgentLifecycleStatus,
+} from "@frogg/protocol/agent-lifecycle";
 import {
   getParentAgentIdFromLabels,
   hasOpenAgentTab,
   isDelegatedAgent,
   isOpenAgentTabLabel,
   PARENT_AGENT_ID_LABEL,
-} from "@fde/protocol/agent-labels";
+} from "@frogg/protocol/agent-labels";
 import type { Logger } from "pino";
-import type { ProviderOptions, ToolPolicy } from "@fde/protocol/agent-types";
+import type { ProviderOptions, ToolPolicy } from "@frogg/protocol/agent-types";
 import { z } from "zod";
 import type { TerminalManager } from "../../terminal/terminal-manager.js";
 
@@ -70,9 +73,9 @@ import {
 } from "./agent-run-state.js";
 import { invokeRewindCapability, type RewindMode } from "./rewind/rewind.js";
 import { isSystemInjectedEnvelope } from "./agent-prompt.js";
-import { stripInternalFdeMcpServer, withRuntimeFdeMcpServer } from "./runtime-mcp-config.js";
+import { stripInternalFroggMcpServer, withRuntimeFroggMcpServer } from "./runtime-mcp-config.js";
 import { resolveCreateAgentTitles } from "./create-agent-title.js";
-import type { FdeToolCatalogFactory } from "./tools/types.js";
+import type { FroggToolCatalogFactory } from "./tools/types.js";
 import {
   ProviderSubagentStore,
   type ProviderSubagentDescriptor,
@@ -170,7 +173,7 @@ function buildStoredAgentConfig(record: StoredAgentRecord): AgentSessionConfig {
     config.systemPrompt = record.config.systemPrompt;
   }
   if (record.config.mcpServers != null) config.mcpServers = record.config.mcpServers;
-  return stripInternalFdeMcpServer(config);
+  return stripInternalFroggMcpServer(config);
 }
 
 export { AGENT_LIFECYCLE_STATUSES, type AgentLifecycleStatus };
@@ -280,8 +283,8 @@ export interface AgentManagerOptions {
   terminalManager?: TerminalManager | null;
   mcpBaseUrl?: string;
   mcpAuthToken?: string;
-  fdeToolsEnabled?: boolean;
-  fdeToolCatalogFactory?: FdeToolCatalogFactory;
+  froggToolsEnabled?: boolean;
+  froggToolCatalogFactory?: FroggToolCatalogFactory;
   appendSystemPrompt?: string;
   agentStreamCoalesceWindowMs?: number;
   rescueTimeouts?: AgentManagerRescueTimeouts;
@@ -691,8 +694,8 @@ export class AgentManager {
   private readonly agentStreamCoalescer: AgentStreamCoalescer;
   private mcpBaseUrl: string | null;
   private readonly mcpAuthToken: string | null;
-  private fdeToolsEnabled = true;
-  private fdeToolCatalogFactory: FdeToolCatalogFactory | null = null;
+  private froggToolsEnabled = true;
+  private froggToolCatalogFactory: FroggToolCatalogFactory | null = null;
   private appendSystemPrompt: string;
   private onAgentAttention?: AgentAttentionCallback;
   private onAgentArchived?: AgentArchivedCallback;
@@ -712,7 +715,7 @@ export class AgentManager {
     this.onWorkspaceFilesMayHaveChanged = options?.onWorkspaceFilesMayHaveChanged;
     this.mcpBaseUrl = options?.mcpBaseUrl ?? null;
     this.mcpAuthToken = options?.mcpAuthToken ?? null;
-    this.configureFdeTools(options);
+    this.configureFroggTools(options);
     this.appendSystemPrompt = options.appendSystemPrompt ?? "";
     this.logger = options.logger.child({ module: "agent", component: "agent-manager" });
     this.rescueTimeouts = {
@@ -736,9 +739,9 @@ export class AgentManager {
     });
   }
 
-  private configureFdeTools(options: AgentManagerOptions): void {
-    this.fdeToolsEnabled = options.fdeToolsEnabled ?? true;
-    this.fdeToolCatalogFactory = options.fdeToolCatalogFactory ?? null;
+  private configureFroggTools(options: AgentManagerOptions): void {
+    this.froggToolsEnabled = options.froggToolsEnabled ?? true;
+    this.froggToolCatalogFactory = options.froggToolCatalogFactory ?? null;
   }
 
   registerClient(provider: AgentProvider, client: AgentClient): void {
@@ -790,12 +793,12 @@ export class AgentManager {
     this.acceptingAgentRegistrations = false;
   }
 
-  setFdeToolsEnabled(enabled: boolean): void {
-    this.fdeToolsEnabled = enabled;
+  setFroggToolsEnabled(enabled: boolean): void {
+    this.froggToolsEnabled = enabled;
   }
 
-  setFdeToolCatalogFactory(factory: FdeToolCatalogFactory | null): void {
-    this.fdeToolCatalogFactory = factory;
+  setFroggToolCatalogFactory(factory: FroggToolCatalogFactory | null): void {
+    this.froggToolCatalogFactory = factory;
   }
 
   /**
@@ -1304,7 +1307,9 @@ export class AgentManager {
     );
     let handedToRegistration = false;
     try {
-      const importedConfig = await this.normalizeConfig(stripInternalFdeMcpServer(imported.config));
+      const importedConfig = await this.normalizeConfig(
+        stripInternalFroggMcpServer(imported.config),
+      );
       const timelineRows = buildImportedTimelineRows(imported.timeline);
       const initialTitle = resolveImportedAgentTitle(importedConfig, timelineRows);
 
@@ -1336,7 +1341,7 @@ export class AgentManager {
   // config swaps). When `rehydrateFromDisk` is set, the timeline is wiped so a
   // new epoch is minted and provider history is re-streamed — this is what the
   // user-facing "Reload agent" action wants when the on-disk session was
-  // mutated outside Fde.
+  // mutated outside Frogg.
   reloadAgentSession(
     agentId: string,
     overrides?: Partial<AgentSessionConfig>,
@@ -4814,9 +4819,9 @@ export class AgentManager {
     agentId: string,
     env?: Record<string, string>,
   ): Promise<PreparedSessionConfig> {
-    const storedConfig = await this.normalizeConfig(stripInternalFdeMcpServer(config), { env });
+    const storedConfig = await this.normalizeConfig(stripInternalFroggMcpServer(config), { env });
     const launchConfig = this.applyDaemonAppendSystemPrompt(
-      withRuntimeFdeMcpServer({
+      withRuntimeFroggMcpServer({
         config: storedConfig,
         agentId,
         mcpBaseUrl: this.mcpBaseUrl,
@@ -4849,16 +4854,16 @@ export class AgentManager {
       agentId,
       env: {
         ...env,
-        FDE_AGENT_ID: agentId,
-        FDE_AGENT_CWD: cwd,
+        FROGG_AGENT_ID: agentId,
+        FROGG_AGENT_CWD: cwd,
       },
     };
     if (
-      this.fdeToolsEnabled &&
-      client.capabilities.supportsNativeFdeTools &&
-      this.fdeToolCatalogFactory
+      this.froggToolsEnabled &&
+      client.capabilities.supportsNativeFroggTools &&
+      this.froggToolCatalogFactory
     ) {
-      context.fdeTools = await this.fdeToolCatalogFactory({ callerAgentId: agentId });
+      context.froggTools = await this.froggToolCatalogFactory({ callerAgentId: agentId });
     }
     return context;
   }
@@ -4867,7 +4872,7 @@ export class AgentManager {
     launchConfig: AgentSessionConfig,
     launchContext: AgentLaunchContext,
   ): AgentSessionConfig {
-    return launchContext.fdeTools ? stripInternalFdeMcpServer(launchConfig) : launchConfig;
+    return launchContext.froggTools ? stripInternalFroggMcpServer(launchConfig) : launchConfig;
   }
 
   private async requireAvailableClient(options: { provider: AgentProvider }): Promise<AgentClient> {

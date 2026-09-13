@@ -15,7 +15,7 @@ import {
   WORKSPACE_LABEL_COLORS,
   type WorkspaceLabelColor,
   type WorkspaceLabelDefinition,
-} from "@fde/protocol/workspace-labels";
+} from "@frogg/protocol/workspace-labels";
 import {
   MenuHint,
   MenuItem,

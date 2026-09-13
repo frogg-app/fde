@@ -1,7 +1,7 @@
 import { Platform } from "react-native";
 import { getElectronHost } from "@/desktop/electron/host";
 import type { BrowserKeyboardPolicy } from "@/desktop/browser/shortcuts";
-import type { SessionInboundMessage, SessionOutboundMessage } from "@fde/protocol/messages";
+import type { SessionInboundMessage, SessionOutboundMessage } from "@frogg/protocol/messages";
 
 type BrowserAutomationExecuteRequest = Extract<
   SessionOutboundMessage,
@@ -218,7 +218,7 @@ export interface DesktopHostBridge {
 
 declare global {
   interface Window {
-    fdeDesktop?: DesktopHostBridge;
+    froggDesktop?: DesktopHostBridge;
   }
 }
 

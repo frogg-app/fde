@@ -1,11 +1,11 @@
-import { getFdeToolLeafName } from "./tool-name-normalization.js";
+import { getFroggToolLeafName } from "./tool-name-normalization.js";
 
-export interface FdeToolDetailField {
+export interface FroggToolDetailField {
   label: string;
   value: string;
 }
 
-export type FdeToolDetailSection =
+export type FroggToolDetailSection =
   | {
       kind: "prose";
       title: string;
@@ -14,7 +14,7 @@ export type FdeToolDetailSection =
   | {
       kind: "fields";
       title: string;
-      fields: FdeToolDetailField[];
+      fields: FroggToolDetailField[];
     };
 
 interface ToolDetailSpec {
@@ -282,7 +282,7 @@ function fieldsFromValue(
   order?: readonly string[],
   omittedKey?: string,
   includedKeys?: readonly string[],
-): FdeToolDetailField[] {
+): FroggToolDetailField[] {
   if (value === null || value === undefined) return [];
   if (!isRecord(value)) {
     const formatted = formatValue(value);
@@ -320,16 +320,16 @@ function unwrapMcpResult(output: unknown): unknown {
   return output;
 }
 
-export function buildFdeToolDetailSections(
+export function buildFroggToolDetailSections(
   toolName: string,
   input: unknown,
   output: unknown,
-): FdeToolDetailSection[] | null {
-  const leafName = getFdeToolLeafName(toolName);
+): FroggToolDetailSection[] | null {
+  const leafName = getFroggToolLeafName(toolName);
   if (!leafName) return null;
 
   const spec = TOOL_SPECS[leafName] ?? {};
-  const sections: FdeToolDetailSection[] = [];
+  const sections: FroggToolDetailSection[] = [];
   if (spec.promptField && isRecord(input)) {
     const prompt = input[spec.promptField];
     if (typeof prompt === "string" && prompt.length > 0) {

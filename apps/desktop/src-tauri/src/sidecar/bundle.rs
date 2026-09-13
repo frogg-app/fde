@@ -36,12 +36,12 @@ fn is_windows() -> bool {
     cfg!(target_os = "windows")
 }
 
-/// `FDE-<version>-<platform>-<arch>-daemon.tar.gz` (or `.zip` on Windows).
+/// `Frogg-<version>-<platform>-<arch>-daemon.tar.gz` (or `.zip` on Windows).
 pub fn archive_name(version: &str) -> String {
     crate::branding::daemon_artifact(version, platform_name(), arch_name())
 }
 
-/// Default download URL of a release bundle. `FDE_DAEMON_BUNDLE_URL` replaces
+/// Default download URL of a release bundle. `FROGG_DAEMON_BUNDLE_URL` replaces
 /// it wholesale (a `file://` or http URL of the archive; the checksum sidecar
 /// is that URL plus `.sha256`).
 pub fn archive_url(version: &str) -> Result<String, String> {
@@ -75,7 +75,7 @@ impl InstalledBundle {
         cli_entry_in(&self.dir)
     }
 
-    /// `bin/fde` (or `bin/fde.cmd`): what the daemon gets as `FDE_CLI`.
+    /// `bin/frogg` (or `bin/frogg.cmd`): what the daemon gets as `FROGG_CLI`.
     pub fn launcher(&self) -> PathBuf {
         self.dir.join("bin").join(if is_windows() {
             format!("{}.cmd", crate::branding::CLI_NAME)
@@ -261,11 +261,11 @@ mod tests {
     #[test]
     fn names_follow_the_release_convention() {
         let name = archive_name("0.1.6");
-        assert!(name.starts_with("fde-daemon-0.1.6-"));
+        assert!(name.starts_with("frogg-daemon-0.1.6-"));
         assert!(name.ends_with(".tar.gz") || name.ends_with(".zip"));
         assert!(archive_url("0.1.6")
             .unwrap()
-            .starts_with("https://github.com/frogg-app/fde/releases/download/v0.1.6/"));
+            .starts_with("https://github.com/frogg-app/frogg/releases/download/v0.1.6/"));
     }
 
     #[test]

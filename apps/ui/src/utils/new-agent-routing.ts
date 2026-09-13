@@ -38,9 +38,9 @@ export function resolveSelectedAgentForNewAgent(input: {
   return parseHostAgentRouteFromPathname(input.pathname) ?? parseAgentKey(input.selectedAgentId);
 }
 
-function inferMainRepoRootFromFdeWorktreePath(cwd: string): string | null {
+function inferMainRepoRootFromFroggWorktreePath(cwd: string): string | null {
   const normalizedPath = cwd.replace(/\\/g, "/");
-  const marker = "/.fde/worktrees";
+  const marker = "/.frogg/worktrees";
   const markerIndex = normalizedPath.indexOf(marker);
   if (markerIndex <= 0) {
     return null;
@@ -58,14 +58,14 @@ export function resolveNewAgentWorkingDir(
   cwd: string,
   checkout: CheckoutStatusPayload | null,
 ): string {
-  const explicitMainRepoRoot = checkout?.isFdeOwnedWorktree
+  const explicitMainRepoRoot = checkout?.isFroggOwnedWorktree
     ? checkout.mainRepoRoot?.trim() || null
     : null;
   if (explicitMainRepoRoot) {
     return explicitMainRepoRoot;
   }
 
-  return inferMainRepoRootFromFdeWorktreePath(cwd) ?? cwd;
+  return inferMainRepoRootFromFroggWorktreePath(cwd) ?? cwd;
 }
 
 /**

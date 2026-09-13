@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, test } from "vitest";
-import type { FdeConfigRaw } from "@fde/protocol/fde-config-schema";
+import type { FroggConfigRaw } from "@frogg/protocol/frogg-config-schema";
 import { hasUncommittedWorktreeSetupChanges } from "./worktree-setup-commit-status.js";
 
 const tempDirs: string[] = [];
@@ -14,7 +14,7 @@ afterEach(() => {
   }
 });
 
-function makeGitRepo(config?: FdeConfigRaw): string {
+function makeGitRepo(config?: FroggConfigRaw): string {
   const repoRoot = realpathSync(mkdtempSync(join(tmpdir(), "worktree-setup-status-test-")));
   tempDirs.push(repoRoot);
   execFileSync("git", ["init", "-b", "main"], { cwd: repoRoot });
@@ -27,8 +27,8 @@ function makeGitRepo(config?: FdeConfigRaw): string {
   return repoRoot;
 }
 
-function writeConfig(repoRoot: string, config: FdeConfigRaw): void {
-  writeFileSync(join(repoRoot, "fde.json"), `${JSON.stringify(config, null, 2)}\n`);
+function writeConfig(repoRoot: string, config: FroggConfigRaw): void {
+  writeFileSync(join(repoRoot, "frogg.json"), `${JSON.stringify(config, null, 2)}\n`);
 }
 
 describe("worktree setup commit status", () => {
@@ -50,7 +50,7 @@ describe("worktree setup commit status", () => {
       true,
     );
 
-    execFileSync("git", ["add", "fde.json"], { cwd: repoRoot });
+    execFileSync("git", ["add", "frogg.json"], { cwd: repoRoot });
     await expect(hasUncommittedWorktreeSetupChanges({ repoRoot, currentConfig })).resolves.toBe(
       true,
     );
@@ -81,12 +81,12 @@ describe("worktree setup commit status", () => {
     );
   });
 
-  test("resolves fde.json relative to a nested project root", async () => {
+  test("resolves frogg.json relative to a nested project root", async () => {
     const repoRoot = makeGitRepo();
     const projectRoot = join(repoRoot, "packages", "app");
     mkdirSync(projectRoot, { recursive: true });
     writeConfig(projectRoot, { worktree: { setup: "npm ci" } });
-    execFileSync("git", ["add", "packages/app/fde.json"], { cwd: repoRoot });
+    execFileSync("git", ["add", "packages/app/frogg.json"], { cwd: repoRoot });
     execFileSync("git", ["commit", "-m", "add nested config"], { cwd: repoRoot });
     const currentConfig = { worktree: { setup: "npm install" } };
     writeConfig(projectRoot, currentConfig);

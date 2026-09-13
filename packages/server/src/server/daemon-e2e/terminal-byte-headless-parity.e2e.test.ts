@@ -6,13 +6,13 @@ import { fileURLToPath } from "node:url";
 import { Terminal as HeadlessTerminal, type IBufferCell, type IBufferLine } from "@xterm/headless";
 import { expect, test } from "vitest";
 
-import type { TerminalCell, TerminalState } from "@fde/protocol/messages";
-import { renderTerminalSnapshotToAnsi } from "@fde/protocol/terminal-snapshot";
-import type { TerminalStreamEvent } from "@fde/client/internal/terminal-stream-router";
+import type { TerminalCell, TerminalState } from "@frogg/protocol/messages";
+import { renderTerminalSnapshotToAnsi } from "@frogg/protocol/terminal-snapshot";
+import type { TerminalStreamEvent } from "@frogg/client/internal/terminal-stream-router";
 import { DaemonClient } from "../test-utils/daemon-client.js";
-import { createTestFdeDaemon } from "../test-utils/fde-daemon.js";
+import { createTestFroggDaemon } from "../test-utils/frogg-daemon.js";
 
-const BYTE_DONE_MARKER = "__FDE_BYTE_PACKAGE_LOCK_DONE__";
+const BYTE_DONE_MARKER = "__FROGG_BYTE_PACKAGE_LOCK_DONE__";
 const BYTE_TEST_SIZE = { rows: 24, cols: 100 };
 
 interface PackageLockTerminalCwd {
@@ -25,7 +25,7 @@ interface CreatedTerminal {
 }
 
 test("byte-stream headless terminal matches daemon state after high-output attach and restore", async () => {
-  const daemon = await createTestFdeDaemon();
+  const daemon = await createTestFroggDaemon();
   const client = new DaemonClient({
     url: `ws://127.0.0.1:${daemon.port}/ws`,
     appVersion: "0.1.96",
@@ -218,7 +218,7 @@ function waitForTerminalStreamEvent<TType extends TerminalStreamEvent["type"]>(
 }
 
 async function createPackageLockTerminalCwd(): Promise<PackageLockTerminalCwd> {
-  const cwd = await mkdtemp(path.join(tmpdir(), "fde-byte-package-lock-"));
+  const cwd = await mkdtemp(path.join(tmpdir(), "frogg-byte-package-lock-"));
   return {
     path: cwd,
     gatePath: path.join(cwd, "start-package-lock-output"),

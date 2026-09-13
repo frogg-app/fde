@@ -1,1 +1,1 @@
-export { BrandLogo as FdeLogo } from "./brand-logo";
+export { BrandLogo as FroggLogo } from "./brand-logo";

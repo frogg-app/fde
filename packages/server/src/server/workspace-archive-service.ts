@@ -7,8 +7,8 @@ import type { AgentStorage, StoredAgentRecord } from "./agent/agent-storage.js";
 import type { WorkspaceGitService } from "./workspace-git-service.js";
 import type { ForgeService } from "../services/forge-service.js";
 import {
-  deleteFdeWorktree,
-  isFdeOwnedWorktreeCwd,
+  deleteFroggWorktree,
+  isFroggOwnedWorktreeCwd,
   runWorktreeTeardownCommands,
   WorktreeTeardownError,
 } from "../utils/worktree.js";
@@ -23,13 +23,13 @@ import { runWithGitCommandPriority } from "../utils/run-git-command.js";
 
 export type ActiveWorkspaceRef = Pick<
   PersistedWorkspaceRecord,
-  "workspaceId" | "cwd" | "kind" | "worktreeRoot" | "isFdeOwnedWorktree" | "mainRepoRoot"
+  "workspaceId" | "cwd" | "kind" | "worktreeRoot" | "isFroggOwnedWorktree" | "mainRepoRoot"
 >;
 
 export interface ArchiveDependencies {
-  fdeHome?: string;
+  froggHome?: string;
   // Base directory that may hold worktrees across repositories.
-  fdeWorktreesBaseRoot?: string;
+  froggWorktreesBaseRoot?: string;
   github: ForgeService;
   workspaceGitService: Pick<WorkspaceGitService, "getSnapshot">;
   agentManager: Pick<AgentManager, "listAgents" | "getAgent" | "archiveAgent" | "archiveSnapshot">;
@@ -89,9 +89,9 @@ export async function requireActiveWorkspaceForArchive(
 
 interface BackingDirectory {
   path: string;
-  isFdeOwnedWorktree: boolean;
+  isFroggOwnedWorktree: boolean;
   mainRepoRoot: string | null;
-  fdeWorktreesRoot: string | null;
+  froggWorktreesRoot: string | null;
 }
 
 interface ArchiveTarget {
@@ -117,7 +117,7 @@ export async function resolveWorkspaceIdAtPath(
 
 // Resolves the in-scope record set, tears each down
 // (agents + terminals + record), then removes the backing directory iff it is
-// Fde-owned AND no active workspace still references it.
+// Frogg-owned AND no active workspace still references it.
 export async function archiveByScope(
   dependencies: ArchiveDependencies,
   request: ArchiveByScopeRequest,
@@ -267,22 +267,22 @@ async function stopWorkspaceSetups(
 
 async function resolveWorkspaceBackingDirectory(
   workspace: ActiveWorkspaceRef,
-  dependencies: Pick<ArchiveDependencies, "fdeHome" | "fdeWorktreesBaseRoot">,
+  dependencies: Pick<ArchiveDependencies, "froggHome" | "froggWorktreesBaseRoot">,
 ): Promise<BackingDirectory> {
-  if (workspace.isFdeOwnedWorktree && workspace.worktreeRoot && workspace.mainRepoRoot) {
+  if (workspace.isFroggOwnedWorktree && workspace.worktreeRoot && workspace.mainRepoRoot) {
     return {
       path: resolve(workspace.worktreeRoot),
-      isFdeOwnedWorktree: true,
+      isFroggOwnedWorktree: true,
       mainRepoRoot: workspace.mainRepoRoot,
-      fdeWorktreesRoot: null,
+      froggWorktreesRoot: null,
     };
   }
   if (workspace.kind !== "worktree") {
     return {
       path: resolve(workspace.cwd),
-      isFdeOwnedWorktree: false,
+      isFroggOwnedWorktree: false,
       mainRepoRoot: workspace.mainRepoRoot ?? null,
-      fdeWorktreesRoot: null,
+      froggWorktreesRoot: null,
     };
   }
 
@@ -297,18 +297,18 @@ async function resolveWorkspaceBackingDirectory(
 
 async function resolveBackingDirectory(
   cwd: string,
-  dependencies: Pick<ArchiveDependencies, "fdeHome" | "fdeWorktreesBaseRoot">,
+  dependencies: Pick<ArchiveDependencies, "froggHome" | "froggWorktreesBaseRoot">,
 ): Promise<BackingDirectory> {
   const options = {
-    fdeHome: dependencies.fdeHome,
-    worktreesRoot: dependencies.fdeWorktreesBaseRoot,
+    froggHome: dependencies.froggHome,
+    worktreesRoot: dependencies.froggWorktreesBaseRoot,
   };
-  const ownership = await isFdeOwnedWorktreeCwd(cwd, options);
+  const ownership = await isFroggOwnedWorktreeCwd(cwd, options);
   return {
     path: resolve(ownership.allowed && ownership.worktreePath ? ownership.worktreePath : cwd),
-    isFdeOwnedWorktree: ownership.allowed,
+    isFroggOwnedWorktree: ownership.allowed,
     mainRepoRoot: ownership.repoRoot ?? null,
-    fdeWorktreesRoot: ownership.worktreeRoot ?? null,
+    froggWorktreesRoot: ownership.worktreeRoot ?? null,
   };
 }
 
@@ -352,7 +352,7 @@ async function maybeRemoveDirectory(
   archivedWorkspaceIds: string[],
 ): Promise<boolean> {
   const backing = target.backing;
-  if (!backing?.isFdeOwnedWorktree) {
+  if (!backing?.isFroggOwnedWorktree) {
     return false;
   }
 
@@ -399,13 +399,13 @@ async function maybeRemoveDirectory(
   }
 
   try {
-    await deleteFdeWorktree({
+    await deleteFroggWorktree({
       cwd: backing.mainRepoRoot,
       worktreePath: backing.path,
       teardownCwds: [],
-      worktreesRoot: backing.fdeWorktreesRoot ?? undefined,
-      fdeHome: dependencies.fdeHome,
-      worktreesBaseRoot: dependencies.fdeWorktreesBaseRoot,
+      worktreesRoot: backing.froggWorktreesRoot ?? undefined,
+      froggHome: dependencies.froggHome,
+      worktreesBaseRoot: dependencies.froggWorktreesBaseRoot,
     });
     dependencies.github.invalidate({ cwd: backing.path });
     return true;
@@ -497,7 +497,7 @@ async function isDirectoryUnreferenced(
   activeWorkspaces: ActiveWorkspaceRef[],
   targetDir: string,
   archivedWorkspaceIds: ReadonlySet<string>,
-  dependencies: Pick<ArchiveDependencies, "fdeHome" | "fdeWorktreesBaseRoot">,
+  dependencies: Pick<ArchiveDependencies, "froggHome" | "froggWorktreesBaseRoot">,
 ): Promise<boolean> {
   const target = resolve(targetDir);
   const matchesTarget = createRealpathAwarePathMatcher(target);

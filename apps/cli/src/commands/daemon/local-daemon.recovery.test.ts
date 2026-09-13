@@ -1,4 +1,4 @@
-import { loadConfig } from "@fde/server";
+import { loadConfig } from "@frogg/server";
 import { spawn } from "node:child_process";
 import { once } from "node:events";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
@@ -11,7 +11,7 @@ test.each([
   ["invalid relay", JSON.stringify({ version: 1, daemon: { relay: { enabled: "yes" } } })],
   ["malformed JSON", "{broken"],
 ])("stop recovers a recorded owner despite %s config", async (_label, config) => {
-  const home = await mkdtemp(path.join(os.tmpdir(), "fde-stop-recovery-"));
+  const home = await mkdtemp(path.join(os.tmpdir(), "frogg-stop-recovery-"));
   const owner = spawn(
     process.execPath,
     ["-e", "console.log('ready'); setInterval(() => {}, 1000)"],
@@ -27,7 +27,7 @@ test.each([
       expect(() => loadConfig(home, { env: {} })).toThrow("[Config] Invalid config");
     }
     await writeFile(
-      path.join(home, "fde.pid"),
+      path.join(home, "frogg.pid"),
       JSON.stringify({ pid: owner.pid, listen: "127.0.0.1:1" }),
     );
     const result = await stopLocalDaemon({ home, timeoutMs: 2000 });
@@ -46,7 +46,7 @@ test.each([
 });
 
 test("stop with no recorded owner ignores invalid startup config and its listen address", async () => {
-  const home = await mkdtemp(path.join(os.tmpdir(), "fde-stop-empty-"));
+  const home = await mkdtemp(path.join(os.tmpdir(), "frogg-stop-empty-"));
   try {
     await writeFile(path.join(home, "config.json"), "{broken");
     expect(await stopLocalDaemon({ home })).toMatchObject({

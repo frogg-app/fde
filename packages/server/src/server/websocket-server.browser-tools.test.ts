@@ -5,9 +5,9 @@ import type {
   BrowserAutomationCommandName,
   BrowserAutomationExecuteRequest,
   BrowserAutomationExecuteResponse,
-} from "@fde/protocol/browser-automation/rpc-schemas";
-import { BROWSER_AUTOMATION_COMMAND_NAMES } from "@fde/protocol/browser-automation/rpc-schemas";
-import { CLIENT_CAPS } from "@fde/protocol/client-capabilities";
+} from "@frogg/protocol/browser-automation/rpc-schemas";
+import { BROWSER_AUTOMATION_COMMAND_NAMES } from "@frogg/protocol/browser-automation/rpc-schemas";
+import { CLIENT_CAPS } from "@frogg/protocol/client-capabilities";
 import type pino from "pino";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -293,7 +293,7 @@ function createVoiceAssistantWebSocketServer(params: {
     createStub<AgentManager>(agentManager),
     createStub<AgentStorage>({}),
     createStub<DownloadTokenStore>({}),
-    "/tmp/fde-browser-tools-websocket-test",
+    "/tmp/frogg-browser-tools-websocket-test",
     createStub<DaemonConfigStore>(daemonConfigStore),
     null,
     { allowedOrigins: new Set(["*"]) },

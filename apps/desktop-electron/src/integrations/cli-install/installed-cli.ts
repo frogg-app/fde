@@ -1,6 +1,6 @@
 import { promises as fs } from "node:fs";
 
-const WINDOWS_MARKER = "rem FDE Electron managed CLI launcher";
+const WINDOWS_MARKER = "rem Frogg Electron managed CLI launcher";
 export function windowsCliLauncher(shimPath: string): string {
   if (/[\r\n"]/.test(shimPath)) throw new Error("Unsupported CLI launcher path");
   return [

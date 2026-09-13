@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { Command } from "commander";
 import { connectToDaemon, getDaemonHost } from "../../utils/client.js";
 import type { CommandOptions } from "../../output/index.js";
@@ -6,10 +6,10 @@ import {
   fetchProjectedTimelineItems,
   LIVE_HISTORY_FETCH_TIMEOUT_MS,
 } from "../../utils/timeline.js";
-import type { DaemonClient } from "@fde/client/internal/daemon-client";
-import type { AgentTimelineItem } from "@fde/protocol/agent-types";
-import type { AgentStreamMessage } from "@fde/protocol/messages";
-import { curateAgentActivity } from "@fde/server";
+import type { DaemonClient } from "@frogg/client/internal/daemon-client";
+import type { AgentTimelineItem } from "@frogg/protocol/agent-types";
+import type { AgentStreamMessage } from "@frogg/protocol/messages";
+import { curateAgentActivity } from "@frogg/server";
 
 export function addLogsOptions(cmd: Command): Command {
   return cmd

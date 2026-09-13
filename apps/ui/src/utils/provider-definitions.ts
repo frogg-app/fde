@@ -1,10 +1,10 @@
-import type { ProviderSnapshotEntry } from "@fde/protocol/agent-types";
+import type { ProviderSnapshotEntry } from "@frogg/protocol/agent-types";
 import {
   type AgentModeColorTier,
   type AgentModeIcon,
   type AgentProviderDefinition,
   type AgentProviderModeDefinition,
-} from "@fde/protocol/provider-manifest";
+} from "@frogg/protocol/provider-manifest";
 
 function buildProviderModes(entry: ProviderSnapshotEntry): AgentProviderModeDefinition[] {
   const entryModes = entry.modes ?? [];

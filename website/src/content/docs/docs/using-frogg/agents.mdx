@@ -29,16 +29,16 @@ sees the same agent and it keeps running when clients disconnect.
 In a workspace, type in the composer and pick:
 
 - **Model** and, where the provider offers one, a **thinking** level,
-- **Mode**, which decides what runs without asking (see [permissions](/docs/using-fde/permissions/)).
+- **Mode**, which decides what runs without asking (see [permissions](/docs/using-frogg/permissions/)).
 
 Mention files with `@`, use `/` for provider commands and skills, and attach images or
 files with **+** or drag and drop. Each file can be at most 50 MB; larger files are
-rejected with an error before FDE reads them.
+rejected with an error before Frogg reads them.
 
 From the CLI:
 
 ```sh
-fde agent run --provider codex/gpt-5.5 --mode auto --cwd ~/code/api "Add rate limiting to /login"
+frogg agent run --provider codex/gpt-5.5 --mode auto --cwd ~/code/api "Add rate limiting to /login"
 ```
 
 ## Steer or queue
@@ -56,33 +56,33 @@ here** to start a new agent with the conversation up to that point.
 Read it from a terminal:
 
 ```sh
-fde agent logs <id> --tail 50
-fde agent logs <id> --follow --filter tools
+frogg agent logs <id> --tail 50
+frogg agent logs <id> --follow --filter tools
 ```
 
 ## Stop, archive, delete
 
 | Action  | CLI                      | Effect |
 | ------- | ------------------------ | ------ |
-| Stop    | `fde agent stop <id>`    | Interrupts the current turn (stop button in the composer) |
-| Archive | `fde agent archive <id>` | Closes the runtime and hides the agent; history is kept |
-| Delete  | `fde agent delete <id>`  | Removes the agent |
-| Reload  | `fde agent reload <id>`  | Restarts the provider process, for example to pick up new skills, MCP servers or a login |
+| Stop    | `frogg agent stop <id>`    | Interrupts the current turn (stop button in the composer) |
+| Archive | `frogg agent archive <id>` | Closes the runtime and hides the agent; history is kept |
+| Delete  | `frogg agent delete <id>`  | Removes the agent |
+| Reload  | `frogg agent reload <id>`  | Restarts the provider process, for example to pick up new skills, MCP servers or a login |
 
 Archiving a parent archives its subagents, except those open elsewhere or in another
 workspace, which are detached instead.
 
 ## Subagents
 
-Agents can create agents. With the FDE MCP tools or the `fde` CLI, an agent runs
-`fde agent run` (or `create_agent`) and the child is labelled with its parent. Children
+Agents can create agents. With the Frogg MCP tools or the `frogg` CLI, an agent runs
+`frogg agent run` (or `create_agent`) and the child is labelled with its parent. Children
 created this way run in the background and notify the parent when they finish. Provider
 native subagents (for example Claude Code tasks) also appear under their parent.
 
 Make a subagent independent without stopping it:
 
 ```sh
-fde agent detach <child-id>
+frogg agent detach <child-id>
 ```
 
 ## After a daemon restart
@@ -91,18 +91,18 @@ Agents that were in the middle of a turn when the daemon stopped are resumed wit
 continuation prompt when it starts again, if the interruption was less than an hour ago.
 
 To keep agent processes alive across daemon restarts entirely, opt in to independent
-execution with `FDE_EXECUTION_SERVICE=1` on the daemon. It is off by default; check it
-with `fde execution-status`.
+execution with `FROGG_EXECUTION_SERVICE=1` on the daemon. It is off by default; check it
+with `frogg execution-status`.
 
 ## Scripted use
 
-`fde agent run` waits for the agent by default and exits when it is idle. Useful flags for
+`frogg agent run` waits for the agent by default and exits when it is idle. Useful flags for
 automation:
 
 ```sh
-fde agent run --wait-timeout 10m --output-schema ./result.schema.json --json \
+frogg agent run --wait-timeout 10m --output-schema ./result.schema.json --json \
   --provider claude "Summarize open TODOs as JSON"
-fde agent run -d --label ticket=ENG-142 "Investigate ENG-142"
-fde agent ls --label ticket=ENG-142
-fde agent wait <id> --timeout 600
+frogg agent run -d --label ticket=ENG-142 "Investigate ENG-142"
+frogg agent ls --label ticket=ENG-142
+frogg agent wait <id> --timeout 600
 ```

@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { DaemonClient } from "./test-utils/index.js";
-import { createTestFdeDaemon } from "./test-utils/fde-daemon.js";
+import { createTestFroggDaemon } from "./test-utils/frogg-daemon.js";
 import { createTestLogger } from "../test-utils/test-logger.js";
 import { AgentStorage } from "./agent/agent-storage.js";
 import { getAskModeConfig } from "./daemon-e2e/agent-configs.js";
@@ -104,7 +104,7 @@ function createSnapshotStormClients(): SnapshotStormProviderClient[] {
 }
 
 async function createSnapshotStormDaemon(clients: SnapshotStormProviderClient[]) {
-  return createTestFdeDaemon({
+  return createTestFroggDaemon({
     mcpEnabled: false,
     isDev: true,
     agentClients: {
@@ -152,10 +152,10 @@ function collectProviderSnapshotUpdateBytes(client: DaemonClient): {
 // active stays done. Both registry files must exist on disk before the daemon starts:
 // bootstrapWorkspaceRegistries skips materialization when both files are
 // present, leaving these seeded records untouched.
-function seedSameCwdWorkspaces(): { fdeHomeRoot: string; cwd: string } {
-  const fdeHomeRoot = mkdtempSync(path.join(tmpdir(), "fde-same-cwd-home-"));
-  const cwd = mkdtempSync(path.join(tmpdir(), "fde-same-cwd-dir-"));
-  const projectsDir = path.join(fdeHomeRoot, ".fde", "projects");
+function seedSameCwdWorkspaces(): { froggHomeRoot: string; cwd: string } {
+  const froggHomeRoot = mkdtempSync(path.join(tmpdir(), "frogg-same-cwd-home-"));
+  const cwd = mkdtempSync(path.join(tmpdir(), "frogg-same-cwd-dir-"));
+  const projectsDir = path.join(froggHomeRoot, ".frogg", "projects");
   mkdirSync(projectsDir, { recursive: true });
 
   const project = createPersistedProjectRecord({
@@ -193,14 +193,14 @@ function seedSameCwdWorkspaces(): { fdeHomeRoot: string; cwd: string } {
     JSON.stringify([workspaceA, workspaceB]),
   );
 
-  return { fdeHomeRoot, cwd };
+  return { froggHomeRoot, cwd };
 }
 
-async function seedWorkspaceWithLegacyAgent(): Promise<{ fdeHomeRoot: string; cwd: string }> {
-  const fdeHomeRoot = mkdtempSync(path.join(tmpdir(), "fde-legacy-agent-home-"));
-  const cwd = mkdtempSync(path.join(tmpdir(), "fde-legacy-agent-dir-"));
-  const fdeHome = path.join(fdeHomeRoot, ".fde");
-  const projectsDir = path.join(fdeHome, "projects");
+async function seedWorkspaceWithLegacyAgent(): Promise<{ froggHomeRoot: string; cwd: string }> {
+  const froggHomeRoot = mkdtempSync(path.join(tmpdir(), "frogg-legacy-agent-home-"));
+  const cwd = mkdtempSync(path.join(tmpdir(), "frogg-legacy-agent-dir-"));
+  const froggHome = path.join(froggHomeRoot, ".frogg");
+  const projectsDir = path.join(froggHome, "projects");
   mkdirSync(projectsDir, { recursive: true });
 
   const project = createPersistedProjectRecord({
@@ -224,7 +224,7 @@ async function seedWorkspaceWithLegacyAgent(): Promise<{ fdeHomeRoot: string; cw
   writeFileSync(path.join(projectsDir, "projects.json"), JSON.stringify([project]));
   writeFileSync(path.join(projectsDir, "workspaces.json"), JSON.stringify([workspace]));
 
-  const agentStorage = new AgentStorage(path.join(fdeHome, "agents"), createTestLogger());
+  const agentStorage = new AgentStorage(path.join(froggHome, "agents"), createTestLogger());
   await agentStorage.initialize();
   await agentStorage.upsert({
     id: "legacy-cwd-only-agent",
@@ -244,7 +244,7 @@ async function seedWorkspaceWithLegacyAgent(): Promise<{ fdeHomeRoot: string; cw
     archivedAt: null,
   });
 
-  return { fdeHomeRoot, cwd };
+  return { froggHomeRoot, cwd };
 }
 
 async function statusByWorkspaceId(client: DaemonClient): Promise<Map<string, string>> {
@@ -280,8 +280,8 @@ async function waitForPermission(client: DaemonClient, agentId: string) {
 }
 
 test("daemon bootstrap migrates cwd-only legacy agents before same-cwd workspaces are added", async () => {
-  const { fdeHomeRoot, cwd } = await seedWorkspaceWithLegacyAgent();
-  const daemon = await createTestFdeDaemon({ fdeHomeRoot });
+  const { froggHomeRoot, cwd } = await seedWorkspaceWithLegacyAgent();
+  const daemon = await createTestFroggDaemon({ froggHomeRoot });
   const client = new DaemonClient({
     url: `ws://127.0.0.1:${daemon.port}/ws`,
     appVersion: "0.1.82",
@@ -325,8 +325,8 @@ test("daemon bootstrap migrates cwd-only legacy agents before same-cwd workspace
 });
 
 test("workspace.create directory source with firstAgentContext generates a daemon-visible workspace title", async () => {
-  const cwd = mkdtempSync(path.join(tmpdir(), "fde-named-local-dir-"));
-  const daemon = await createTestFdeDaemon({
+  const cwd = mkdtempSync(path.join(tmpdir(), "frogg-named-local-dir-"));
+  const daemon = await createTestFroggDaemon({
     agentClients: { mock: new MockLoadTestAgentClient() },
   });
   const client = new DaemonClient({
@@ -363,7 +363,7 @@ test("workspace.create directory source with firstAgentContext generates a daemo
 }, 20_000);
 
 test("local workspace auto-title does not broadcast provider snapshot warm-up to clients", async () => {
-  const cwd = mkdtempSync(path.join(tmpdir(), "fde-title-snapshot-storm-"));
+  const cwd = mkdtempSync(path.join(tmpdir(), "frogg-title-snapshot-storm-"));
   const stormClients = createSnapshotStormClients();
   const daemon = await createSnapshotStormDaemon(stormClients);
   const client = new DaemonClient({
@@ -411,8 +411,8 @@ test("local workspace auto-title does not broadcast provider snapshot warm-up to
 }, 20_000);
 
 test("create_agent_request with workspaceId does not retitle an existing workspace", async () => {
-  const cwd = mkdtempSync(path.join(tmpdir(), "fde-agent-submit-title-"));
-  const daemon = await createTestFdeDaemon({
+  const cwd = mkdtempSync(path.join(tmpdir(), "frogg-agent-submit-title-"));
+  const daemon = await createTestFroggDaemon({
     agentClients: { mock: new MockLoadTestAgentClient() },
   });
   const client = new DaemonClient({
@@ -454,8 +454,8 @@ test("create_agent_request with workspaceId does not retitle an existing workspa
 }, 20_000);
 
 test("creating another same-cwd local workspace keeps running status on the owning workspace only", async () => {
-  const cwd = mkdtempSync(path.join(tmpdir(), "fde-running-same-cwd-create-"));
-  const daemon = await createTestFdeDaemon({
+  const cwd = mkdtempSync(path.join(tmpdir(), "frogg-running-same-cwd-create-"));
+  const daemon = await createTestFroggDaemon({
     agentClients: { mock: new MockLoadTestAgentClient() },
   });
   const client = new DaemonClient({
@@ -529,8 +529,8 @@ test("creating another same-cwd local workspace keeps running status on the owni
 }, 30_000);
 
 test("two workspaces sharing one cwd compute agent status per workspaceId", async () => {
-  const { fdeHomeRoot, cwd } = seedSameCwdWorkspaces();
-  const daemon = await createTestFdeDaemon({ fdeHomeRoot });
+  const { froggHomeRoot, cwd } = seedSameCwdWorkspaces();
+  const daemon = await createTestFroggDaemon({ froggHomeRoot });
   const client = new DaemonClient({
     url: `ws://127.0.0.1:${daemon.port}/ws`,
     appVersion: "0.1.82",

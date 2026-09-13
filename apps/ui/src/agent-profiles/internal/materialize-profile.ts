@@ -1,4 +1,4 @@
-import type { AgentConfigApply, AgentProfile } from "@fde/protocol/messages";
+import type { AgentConfigApply, AgentProfile } from "@frogg/protocol/messages";
 
 /**
  * A profile with its blank fields resolved away. Storage keeps every field

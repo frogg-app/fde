@@ -1,7 +1,7 @@
 import { useCallback, useRef } from "react";
 import { useIsCompactFormFactor } from "@/constants/layout";
-import type { DaemonClient } from "@fde/client/internal/daemon-client";
-import type { AgentAttentionNotificationPayload } from "@fde/protocol/agent-attention-notification";
+import type { DaemonClient } from "@frogg/client/internal/daemon-client";
+import type { AgentAttentionNotificationPayload } from "@frogg/protocol/agent-attention-notification";
 import { useSettings } from "@/hooks/use-settings";
 import { useSessionStore } from "@/stores/session-store";
 import { readWorkspaceVoiceAlertsEnabled } from "@/stores/workspace-voice-alerts-store";

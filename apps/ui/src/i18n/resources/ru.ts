@@ -731,7 +731,7 @@ export const ru: TranslationResources = {
       },
       routes: {
         public: "Обратный прокси",
-        fde: "Запоминающийся адрес",
+        frogg: "Запоминающийся адрес",
         direct: "Прямой адрес",
       },
       states: {
@@ -2076,7 +2076,7 @@ export const ru: TranslationResources = {
   serviceUrl: {
     title: "Открыть URL сервиса",
     message: "Открыть {{url}}?",
-    inFde: "В {{brandName}}",
+    inFrogg: "В {{brandName}}",
     externalBrowser: "Внешний браузер",
     dontAskAgain: "Больше не спрашивать",
   },
@@ -2203,7 +2203,7 @@ export const ru: TranslationResources = {
       one: "использован {{count}} другой инструмент",
       other: "использованы другие инструменты ({{count}})",
     },
-    fdeCalls: {
+    froggCalls: {
       one: "выполнен {{count}} вызов {{brandName}}",
       other: "выполнены вызовы {{brandName}} ({{count}})",
     },
@@ -2712,13 +2712,13 @@ export const ru: TranslationResources = {
           docker: {
             label: "Docker",
             available: "Доступен",
-            container: "Доступен, контейнер fde-daemon существует",
+            container: "Доступен, контейнер frogg-daemon существует",
             missing: "Недоступен",
           },
           curlMissing: "На хосте нет curl; нативная установка нуждается в нём для загрузки пакета.",
           noService:
             "Без пользовательского менеджера служб демон не перезапустится после перезагрузки.",
-          installDir: "Нативные установки размещаются в {{home}}/.local/share/fde",
+          installDir: "Нативные установки размещаются в {{home}}/.local/share/frogg",
           failed: "Не удалось проверить хост. {{detail}}",
         },
         method: {
@@ -2746,7 +2746,7 @@ export const ru: TranslationResources = {
         uninstall: {
           title: "Удалить демон?",
           message:
-            "Останавливает службу и удаляет установку {{brandName}} с {{host}}. Состояние демона (~/.fde) сохраняется.",
+            "Останавливает службу и удаляет установку {{brandName}} с {{host}}. Состояние демона (~/.frogg) сохраняется.",
         },
         log: {
           running: "Выполняется на {{host}}...",
@@ -2777,7 +2777,7 @@ export const ru: TranslationResources = {
         saving: "Сохранение...",
         saveFailed: "Не удалось сохранить адрес ретранслятора.",
         overridden:
-          "Задано параметром запуска демона (FDE_RELAY_ENDPOINT или FDE_RELAY_USE_TLS). Измените его там, где запускается демон.",
+          "Задано параметром запуска демона (FROGG_RELAY_ENDPOINT или FROGG_RELAY_USE_TLS). Измените его там, где запускается демон.",
       },
       skills: {
         sectionTitle: "Навыки оркестрации",
@@ -2850,7 +2850,7 @@ export const ru: TranslationResources = {
       agentDefinitions: {
         title: "Определения агентов",
         description:
-          "Агенты, которые ваши провайдеры загружают с этого хоста. FDE только показывает их список; чтобы изменить агента, отредактируйте файл.",
+          "Агенты, которые ваши провайдеры загружают с этого хоста. Frogg только показывает их список; чтобы изменить агента, отредактируйте файл.",
         projectTitle: "Определения агентов проекта",
         projectDescription: "Агенты, которые ваши провайдеры загружают из каталога этого проекта.",
         empty: "Определения агентов не найдены",
@@ -3120,13 +3120,13 @@ export const ru: TranslationResources = {
         savedToast: "Проект обновлён",
       },
       readFailures: {
-        invalidTitle: "Не удалось разобрать fde.json",
+        invalidTitle: "Не удалось разобрать frogg.json",
         invalidDescription: "Исправьте файл на диске, затем загрузите его заново.",
         missingTitle: "У этого хоста нет этого проекта",
         missingSingleHost: "У выбранного хоста нет записей об этом проекте.",
-        transportTitle: "Не удалось загрузить fde.json.",
+        transportTitle: "Не удалось загрузить frogg.json.",
         transportFallback: "Хост не ответил.",
-        failedTitle: "Не удалось загрузить fde.json.",
+        failedTitle: "Не удалось загрузить frogg.json.",
         failedDescription: "Загрузите данные заново, чтобы повторить попытку.",
       },
       worktree: {
@@ -3137,7 +3137,7 @@ export const ru: TranslationResources = {
           "Дополнительную информацию и переменные среды, доступные для этих команд, см. в документации.",
         setup: "Настройка",
         setupAccessibility: "Команды настройки worktree",
-        uncommittedTitle: "Закоммитьте изменения в fde.json",
+        uncommittedTitle: "Закоммитьте изменения в frogg.json",
         uncommittedDescription:
           "Новые worktree используют скрипт настройки из выбранной базовой ветки.",
         teardown: "Удаление",
@@ -3163,7 +3163,7 @@ export const ru: TranslationResources = {
         editScript: "Изменить {{name}}",
         runAsService: "Запускать как сервис",
         serviceHint:
-          "{{brandName}} управляет процессом и назначает порт через переменную $FDE_PORT.",
+          "{{brandName}} управляет процессом и назначает порт через переменную $FROGG_PORT.",
         actions: {
           add: "Добавить скрипт",
           edit: "Редактировать",
@@ -3184,9 +3184,9 @@ export const ru: TranslationResources = {
       },
       writeFailures: {
         staleTitle: "Конфигурация изменена на диске",
-        staleDescription: "Перед сохранением загрузите с диска последнюю версию fde.json.",
-        failedTitle: "Не удалось сохранить fde.json.",
-        failedDescription: "Повторите попытку или загрузите с диска последнюю версию fde.json.",
+        staleDescription: "Перед сохранением загрузите с диска последнюю версию frogg.json.",
+        failedTitle: "Не удалось сохранить frogg.json.",
+        failedDescription: "Повторите попытку или загрузите с диска последнюю версию frogg.json.",
       },
       actions: {
         reload: "Загрузить заново",

@@ -42,7 +42,7 @@ describe("Claude workflow replay", () => {
           runId: RUN_ID,
           timestamp: "2026-08-06T08:04:46.347Z",
           summary: "Runs one deterministic child and returns its structured result",
-          workflowName: "fde-workflow-one-child",
+          workflowName: "frogg-workflow-one-child",
           status: "completed",
           startTime: 1786003484150,
           defaultModel: "claude-sonnet-5",
@@ -54,7 +54,7 @@ describe("Claude workflow replay", () => {
       runId: RUN_ID,
       timestamp: "2026-08-06T08:04:46.347Z",
       summary: "Runs one deterministic child and returns its structured result",
-      workflowName: "fde-workflow-one-child",
+      workflowName: "frogg-workflow-one-child",
       status: "completed",
       startTime: 1786003484150,
       defaultModel: "claude-sonnet-5",
@@ -118,9 +118,9 @@ describe("Claude workflow replay", () => {
     const workflow = parseClaudeWorkflowRun(
       JSON.stringify({
         runId: RUN_ID,
-        summary: "Inspect Fde",
+        summary: "Inspect Frogg",
         status: "completed",
-        result: { report: "What Fde is\nA local-first coding-agent environment." },
+        result: { report: "What Frogg is\nA local-first coding-agent environment." },
         script: "SECRET WORKFLOW SOURCE",
         workflowProgress: [{ promptPreview: "SECRET CHILD PROMPT" }],
       }),
@@ -138,7 +138,7 @@ describe("Claude workflow replay", () => {
       id: TOOL_CALL_ID,
       item: {
         type: "assistant_message",
-        text: "What Fde is\nA local-first coding-agent environment.",
+        text: "What Frogg is\nA local-first coding-agent environment.",
       },
     });
     expect(JSON.stringify(observations)).not.toContain("SECRET WORKFLOW SOURCE");
@@ -146,10 +146,10 @@ describe("Claude workflow replay", () => {
   });
 
   it("does not duplicate a result already present in the child transcript", () => {
-    const report = "What Fde is\nA local-first coding-agent environment.";
+    const report = "What Frogg is\nA local-first coding-agent environment.";
     const observations = observeReplayWorkflows({
       workflows: [
-        { runId: RUN_ID, summary: "Inspect Fde", status: "completed", result: { report } },
+        { runId: RUN_ID, summary: "Inspect Frogg", status: "completed", result: { report } },
       ],
       parentEntries: parentEntries(),
       entriesByRunId: new Map([[RUN_ID, [{} as never]]]),

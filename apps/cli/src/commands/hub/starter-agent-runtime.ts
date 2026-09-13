@@ -1,4 +1,4 @@
-import type { ProviderSnapshotEntry } from "@fde/protocol/agent-types";
+import type { ProviderSnapshotEntry } from "@frogg/protocol/agent-types";
 
 export interface HubStarterAgentRuntime {
   provider: string;

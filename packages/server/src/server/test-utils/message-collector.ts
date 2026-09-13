@@ -1,5 +1,5 @@
-import type { DaemonClient } from "@fde/client/internal/daemon-client";
-import type { SessionOutboundMessage } from "@fde/protocol/messages";
+import type { DaemonClient } from "@frogg/client/internal/daemon-client";
+import type { SessionOutboundMessage } from "@frogg/protocol/messages";
 
 export interface MessageCollector {
   messages: SessionOutboundMessage[];

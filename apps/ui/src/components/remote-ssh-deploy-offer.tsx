@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { View } from "react-native";
 import { StyleSheet } from "react-native-unistyles";
-import type { SshTransportTarget } from "@fde/protocol/ssh-transport";
+import type { SshTransportTarget } from "@frogg/protocol/ssh-transport";
 import { SshDeployCard } from "@/components/ssh-deploy/ssh-deploy-card";
 import { Alert } from "@/components/ui/alert";
 import type { SshDeployTarget } from "@/desktop/ssh-deploy/ssh-deploy";
@@ -24,7 +24,7 @@ export interface RemoteSshDeployOfferProps {
 
 /**
  * Shown under a failed Remote SSH connect: if ssh itself works and the host
- * has no FDE daemon, offers to deploy one right here. Silent while probing,
+ * has no Frogg daemon, offers to deploy one right here. Silent while probing,
  * when the probe fails (the ssh error is already on screen), and when a
  * daemon is installed (the failure is something else).
  */
@@ -41,7 +41,7 @@ export function RemoteSshDeployOffer({ target, enabled, onDeployed }: RemoteSshD
   if (
     !enabled ||
     state.status !== "ready" ||
-    state.probe.hasFde.installed ||
+    state.probe.hasFrogg.installed ||
     state.probe.hasDockerContainer
   ) {
     return null;

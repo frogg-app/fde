@@ -1,13 +1,13 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 const ANSI_PATTERN = new RegExp(`${String.fromCharCode(0x1b)}\\[[0-9;]*m`, "g");
 
 interface PairingInstructions {
   url: string;
   qr: string | null;
   columns?: number;
-  /** When set, the same offer as a `fde://pair#offer=…` link for the desktop app. */
+  /** When set, the same offer as a `frogg://pair#offer=…` link for the desktop app. */
   deepLink?: string | null;
-  /** `FDE_PAIRING_QR=0`: drop the QR section instead of explaining its absence. */
+  /** `FROGG_PAIRING_QR=0`: drop the QR section instead of explaining its absence. */
   qrDisabled?: boolean;
 }
 

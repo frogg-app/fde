@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import type { DaemonClient } from "@fde/client/internal/daemon-client";
-import type { WorkspaceDescriptorPayload } from "@fde/protocol/messages";
+import type { DaemonClient } from "@frogg/client/internal/daemon-client";
+import type { WorkspaceDescriptorPayload } from "@frogg/protocol/messages";
 
 import {
   normalizeWorkspaceDescriptor,
@@ -404,9 +404,9 @@ describe("normalizeWorkspaceDescriptor", () => {
       {
         scriptName: "web",
         type: "service" as const,
-        hostname: "web.fde.localhost",
+        hostname: "web.frogg.localhost",
         port: 3000,
-        proxyUrl: "http://web.fde.localhost:9999",
+        proxyUrl: "http://web.frogg.localhost:9999",
         lifecycle: "running" as const,
         health: "healthy" as const,
         exitCode: null,
@@ -434,9 +434,9 @@ describe("normalizeWorkspaceDescriptor", () => {
       {
         scriptName: "web",
         type: "service",
-        hostname: "web.fde.localhost",
+        hostname: "web.frogg.localhost",
         port: 3000,
-        proxyUrl: "http://web.fde.localhost:9999",
+        proxyUrl: "http://web.frogg.localhost:9999",
         lifecycle: "running",
         health: "healthy",
         exitCode: null,
@@ -589,7 +589,7 @@ describe("normalizeWorkspaceDescriptor", () => {
           currentBranch: "main",
           remoteUrl: "https://github.com/acme/app.git",
           worktreeRoot: "/repo/app",
-          isFdeOwnedWorktree: false,
+          isFroggOwnedWorktree: false,
           mainRepoRoot: null,
         },
       },
@@ -604,7 +604,7 @@ describe("normalizeWorkspaceDescriptor", () => {
         currentBranch: "main",
         remoteUrl: "https://github.com/acme/app.git",
         worktreeRoot: "/repo/app",
-        isFdeOwnedWorktree: false,
+        isFroggOwnedWorktree: false,
         mainRepoRoot: null,
       },
     });
@@ -627,9 +627,9 @@ describe("mergeWorkspaces", () => {
           {
             scriptName: "web",
             type: "service",
-            hostname: "web.fde.localhost",
+            hostname: "web.frogg.localhost",
             port: 3000,
-            proxyUrl: "http://web.fde.localhost:9999",
+            proxyUrl: "http://web.frogg.localhost:9999",
             lifecycle: "running",
             health: "healthy",
             exitCode: null,
@@ -643,9 +643,9 @@ describe("mergeWorkspaces", () => {
       {
         scriptName: "web",
         type: "service",
-        hostname: "web.fde.localhost",
+        hostname: "web.frogg.localhost",
         port: 3000,
-        proxyUrl: "http://web.fde.localhost:9999",
+        proxyUrl: "http://web.frogg.localhost:9999",
         lifecycle: "running",
         health: "healthy",
         exitCode: null,

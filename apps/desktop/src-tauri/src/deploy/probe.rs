@@ -1,5 +1,5 @@
 //! `ssh_deploy_probe`: a POSIX `sh` snippet reports what the remote host has
-//! (OS, architecture, Docker, systemd user session, curl, an existing FDE
+//! (OS, architecture, Docker, systemd user session, curl, an existing Frogg
 //! install) as one JSON line, which the desktop UI turns into the deploy card.
 
 use std::path::Path;
@@ -15,7 +15,7 @@ use super::ssh;
 
 const PROBE_TIMEOUT: Duration = Duration::from_secs(45);
 const OUTPUT_LIMIT: usize = 64 * 1024;
-const MARKER: &str = "FDE_PROBE ";
+const MARKER: &str = "FROGG_PROBE ";
 
 /// Runs under `sh -s` on Linux and macOS. `docker info` (not just the binary)
 /// decides `hasDocker`, so a socket the user cannot reach counts as absent.
@@ -39,20 +39,20 @@ pub fn parse_probe_output(stdout: &str) -> Result<Value, String> {
             .to_string()
     };
     let flag = |key: &str| raw.get(key).and_then(Value::as_bool).unwrap_or(false);
-    let fde = raw.get("hasFde").and_then(Value::as_object);
-    let installed = fde
+    let frogg = raw.get("hasFrogg").and_then(Value::as_object);
+    let installed = frogg
         .and_then(|f| f.get("installed"))
         .and_then(Value::as_bool)
         .unwrap_or(false);
-    let version = fde
+    let version = frogg
         .and_then(|f| f.get("version"))
         .and_then(Value::as_str)
         .map(str::trim)
         .filter(|v| !v.is_empty())
         .map(|v| v.trim_start_matches('v').to_string());
-    let mut has_fde = json!({ "installed": installed });
+    let mut has_frogg = json!({ "installed": installed });
     if let Some(version) = version {
-        has_fde["version"] = Value::String(version);
+        has_frogg["version"] = Value::String(version);
     }
     Ok(json!({
         "os": text("os"),
@@ -60,7 +60,7 @@ pub fn parse_probe_output(stdout: &str) -> Result<Value, String> {
         "hasDocker": flag("hasDocker"),
         "hasSystemdUser": flag("hasSystemdUser"),
         "hasCurl": flag("hasCurl"),
-        "hasFde": has_fde,
+        "hasFrogg": has_frogg,
         "hasDockerContainer": flag("hasDockerContainer"),
         "homeDir": text("homeDir"),
     }))
@@ -128,23 +128,23 @@ mod tests {
     #[test]
     fn parses_marker_line_and_drops_empty_version() {
         let out =
-            "Welcome banner\nFDE_PROBE {\"os\":\"Linux\",\"arch\":\"x86_64\",\"hasDocker\":true,\
-                   \"hasSystemdUser\":false,\"hasCurl\":true,\"hasFde\":{\"installed\":false,\
+            "Welcome banner\nFROGG_PROBE {\"os\":\"Linux\",\"arch\":\"x86_64\",\"hasDocker\":true,\
+                   \"hasSystemdUser\":false,\"hasCurl\":true,\"hasFrogg\":{\"installed\":false,\
                    \"version\":\"\"},\"hasDockerContainer\":false,\"homeDir\":\"/home/me\"}\n";
         let parsed = parse_probe_output(out).unwrap();
         assert_eq!(parsed["os"], "Linux");
         assert_eq!(parsed["hasDocker"], true);
-        assert_eq!(parsed["hasFde"], json!({ "installed": false }));
+        assert_eq!(parsed["hasFrogg"], json!({ "installed": false }));
         assert_eq!(parsed["homeDir"], "/home/me");
     }
 
     #[test]
     fn keeps_version_without_v_prefix() {
-        let out = "FDE_PROBE {\"os\":\"Darwin\",\"arch\":\"arm64\",\"hasFde\":{\"installed\":true,\
+        let out = "FROGG_PROBE {\"os\":\"Darwin\",\"arch\":\"arm64\",\"hasFrogg\":{\"installed\":true,\
                    \"version\":\"v0.1.6\"},\"homeDir\":\"/Users/me\"}";
         let parsed = parse_probe_output(out).unwrap();
         assert_eq!(
-            parsed["hasFde"],
+            parsed["hasFrogg"],
             json!({ "installed": true, "version": "0.1.6" })
         );
         assert_eq!(parsed["hasCurl"], false);
@@ -153,7 +153,7 @@ mod tests {
     #[test]
     fn rejects_output_without_marker_or_with_bad_json() {
         assert!(parse_probe_output("sh: uname: not found\n").is_err());
-        assert!(parse_probe_output("FDE_PROBE {nope").is_err());
+        assert!(parse_probe_output("FROGG_PROBE {nope").is_err());
     }
 
     #[cfg(unix)]
@@ -172,6 +172,6 @@ mod tests {
             .unwrap();
         assert_eq!(parsed["os"], String::from_utf8_lossy(&uname.stdout).trim());
         assert_eq!(parsed["homeDir"], std::env::var("HOME").unwrap());
-        assert!(parsed["hasFde"]["installed"].is_boolean());
+        assert!(parsed["hasFrogg"]["installed"].is_boolean());
     }
 }

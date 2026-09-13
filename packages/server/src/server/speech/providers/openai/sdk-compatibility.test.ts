@@ -17,14 +17,14 @@ describe("OpenAI SDK speech transport compatibility", () => {
       },
       maxRetries: 0,
     });
-    const result = await provider.synthesizeSpeech("Hello from FDE");
+    const result = await provider.synthesizeSpeech("Hello from Frogg");
     expect(requests).toHaveLength(1);
     expect(requests[0].url).toBe("https://speech.example.test/v1/audio/speech");
     expect(requests[0].headers.get("authorization")).toBe("Bearer test-only");
     expect(await requests[0].json()).toEqual({
       model: "tts-1",
       voice: "alloy",
-      input: "Hello from FDE",
+      input: "Hello from Frogg",
       response_format: "pcm",
     });
     const chunks: Buffer[] = [];

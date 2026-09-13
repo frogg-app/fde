@@ -5,34 +5,42 @@ import {
   desktopArtifactName,
   legacyDesktopSuffix,
 } from "../../packages/branding/src/artifact-contract.mjs";
-const official = { legacyFde: true, artifactPrefix: "FDE", daemonArtifactPrefix: "fde-daemon" };
-const custom = { legacyFde: false, artifactPrefix: "Atlas", daemonArtifactPrefix: "atlas-runtime" };
+const official = {
+  legacyFrogg: true,
+  artifactPrefix: "Frogg",
+  daemonArtifactPrefix: "frogg-daemon",
+};
+const custom = {
+  legacyFrogg: false,
+  artifactPrefix: "Atlas",
+  daemonArtifactPrefix: "atlas-runtime",
+};
 
-test("FDE consumers retain historical release names and use the new platform convention", () => {
+test("Frogg consumers retain historical release names and use the new platform convention", () => {
   assert.equal(
     daemonArtifactName(official, "0.2.15", "darwin", "x64"),
-    "fde-daemon-0.2.15-darwin-x64.tar.gz",
+    "frogg-daemon-0.2.15-darwin-x64.tar.gz",
   );
   assert.equal(
     daemonArtifactName(official, "0.2.16", "darwin", "x64"),
-    "FDE-0.2.16-mac-x86_64-daemon.tar.gz",
+    "Frogg-0.2.16-mac-x86_64-daemon.tar.gz",
   );
   assert.equal(
     daemonArtifactName(official, "1.2.3", "win", "arm64"),
-    "FDE-1.2.3-win-arm64-daemon.zip",
+    "Frogg-1.2.3-win-arm64-daemon.zip",
   );
   assert.equal(
     desktopArtifactName(official, "0.2.15+build", "linux-x86_64.deb"),
-    "FDE-0.2.15+build-amd64.deb",
+    "Frogg-0.2.15+build-amd64.deb",
   );
   assert.equal(
     desktopArtifactName(official, "0.2.16-beta.1", "win-x64-setup.zip"),
-    "FDE-0.2.16-beta.1-win-x64-setup.zip",
+    "Frogg-0.2.16-beta.1-win-x64-setup.zip",
   );
   assert.equal(legacyDesktopSuffix("mac-aarch64.app.tar.gz.sig"), "aarch64.app.tar.gz.sig");
 });
 
-test("custom distribution overrides never turn into FDE artifact names", () => {
+test("custom distribution overrides never turn into Frogg artifact names", () => {
   for (const version of ["0.2.15", "1.2.3"]) {
     assert.equal(
       daemonArtifactName(custom, version, "linux", "x64"),

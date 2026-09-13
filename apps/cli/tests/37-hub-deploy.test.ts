@@ -6,9 +6,9 @@ import type { AddressInfo } from "node:net";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { runLocalFde } from "./helpers/local-cli.js";
+import { runLocalFrogg } from "./helpers/local-cli.js";
 
-const cwd = await mkdtemp(path.join(tmpdir(), "fde-hub-installed-"));
+const cwd = await mkdtemp(path.join(tmpdir(), "frogg-hub-installed-"));
 const requests: Array<{ url: string | undefined; body: unknown }> = [];
 const server = createServer((request, response) => {
   let body = "";
@@ -36,21 +36,21 @@ const server = createServer((request, response) => {
 });
 
 try {
-  const workflows = path.join(cwd, ".fde", "workflows");
+  const workflows = path.join(cwd, ".frogg", "workflows");
   await mkdir(path.join(workflows, "partials"), { recursive: true });
   const files = [
     {
-      path: ".fde/hub.yml",
+      path: ".frogg/hub.yml",
       content:
         "environments:\n  studio:\n    kind: daemon\n    daemon: local\n    cwd: /workspace\nagents:\n  codex-safe:\n    provider: codex\n    options:\n      sandbox_workspace_write:\n        writable_roots: [/var/cache/npm]\n        network_access: false\n",
     },
     {
-      path: ".fde/workflows/run.yml",
+      path: ".frogg/workflows/run.yml",
       content:
-        "name: run\non: manual.run\nmax_runtime: 1h\ninputs:\n  repo:\n    type: string\n    choices: [studio]\n  agent:\n    type: string\n    choices: [codex-safe]\nsteps:\n  - id: work\n    environment: ${{ fde.inputs.repo }}\n    max_runtime: 30m\n    idle_timeout: 5m\n    agent: ${{ fde.inputs.agent }}\n    prompt:\n      - include: partials/instructions.md\n      - text: ${{ fde.prompt }}\n",
+        "name: run\non: manual.run\nmax_runtime: 1h\ninputs:\n  repo:\n    type: string\n    choices: [studio]\n  agent:\n    type: string\n    choices: [codex-safe]\nsteps:\n  - id: work\n    environment: ${{ frogg.inputs.repo }}\n    max_runtime: 30m\n    idle_timeout: 5m\n    agent: ${{ frogg.inputs.agent }}\n    prompt:\n      - include: partials/instructions.md\n      - text: ${{ frogg.prompt }}\n",
     },
     {
-      path: ".fde/workflows/partials/instructions.md",
+      path: ".frogg/workflows/partials/instructions.md",
       content: "Keep structured provider options unchanged.\n",
     },
   ];
@@ -59,7 +59,7 @@ try {
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   const address = server.address() as AddressInfo;
   const origin = `http://127.0.0.1:${address.port}`;
-  const validate = await runLocalFde(
+  const validate = await runLocalFrogg(
     [
       "hub",
       "deploy",
@@ -83,7 +83,7 @@ try {
     origin,
   });
 
-  const install = await runLocalFde(
+  const install = await runLocalFrogg(
     ["hub", "deploy", "-p", "studio", "--hub", origin, "--api-key", "test-secret", "--json"],
     {},
     cwd,

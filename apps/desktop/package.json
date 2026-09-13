@@ -1,8 +1,8 @@
 {
-  "name": "@fde/desktop",
+  "name": "@frogg/desktop",
   "version": "0.7.0",
   "private": true,
-  "description": "FDE (Frogg Development Environment) desktop shell (Tauri v2)",
+  "description": "Frogg desktop shell (Tauri v2)",
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {
@@ -16,7 +16,7 @@
     "test:harness": "npm run build:bridge && node --test test/*.harness.mjs"
   },
   "dependencies": {
-    "@fde/branding": "*"
+    "@frogg/branding": "*"
   },
   "devDependencies": {
     "@tauri-apps/api": "^2.11.1",

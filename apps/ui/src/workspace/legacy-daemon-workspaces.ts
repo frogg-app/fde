@@ -2,11 +2,11 @@ import type {
   DaemonClient,
   FetchAgentsEntry,
   FetchAgentsOptions,
-} from "@fde/client/internal/daemon-client";
+} from "@frogg/client/internal/daemon-client";
 import {
   deriveAgentStateBucket,
   getWorkspaceStateBucketPriority,
-} from "@fde/protocol/agent-state-bucket";
+} from "@frogg/protocol/agent-state-bucket";
 import type {
   Agent,
   DaemonServerInfo,
@@ -335,7 +335,7 @@ function createLegacyWorkspace(
       ? {
           currentBranch: checkout.currentBranch,
           remoteUrl: checkout.remoteUrl,
-          isFdeOwnedWorktree: checkout.isFdeOwnedWorktree,
+          isFroggOwnedWorktree: checkout.isFroggOwnedWorktree,
           isDirty: null,
           aheadBehind: null,
           aheadOfOrigin: null,
@@ -353,7 +353,7 @@ function resolveLegacyWorkspaceKind(
   if (!checkout.isGit) {
     return "directory";
   }
-  if (checkout.isFdeOwnedWorktree) {
+  if (checkout.isFroggOwnedWorktree) {
     return "worktree";
   }
   return "checkout";

@@ -1,6 +1,6 @@
 import { expect, type Page } from "@playwright/test";
-import type { TerminalProfile } from "@fde/protocol/messages";
-import { DEFAULT_TERMINAL_PROFILES } from "@fde/protocol/terminal-profiles";
+import type { TerminalProfile } from "@frogg/protocol/messages";
+import { DEFAULT_TERMINAL_PROFILES } from "@frogg/protocol/terminal-profiles";
 import { connectNewWorkspaceDaemonClient } from "./new-workspace";
 import { waitForTerminalContent } from "./terminal-perf";
 

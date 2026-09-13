@@ -16,9 +16,9 @@ import { CompanionNotebookStore } from "../src/server/companion/store.js";
 import { defineCompanionTool } from "../src/server/companion/tools/index.js";
 import { SherpaOnnxTTS } from "../src/server/speech/providers/local/sherpa/sherpa-tts.js";
 
-if (process.env.FDE_COMPANION_BENCH !== "1")
+if (process.env.FROGG_COMPANION_BENCH !== "1")
   throw new Error(
-    "Set FDE_COMPANION_BENCH=1 to use your subscription allowance for this benchmark.",
+    "Set FROGG_COMPANION_BENCH=1 to use your subscription allowance for this benchmark.",
   );
 const provider =
   process.argv.find((arg) => arg.startsWith("--provider="))?.split("=")[1] ?? "claude";
@@ -26,7 +26,7 @@ if (provider !== "claude" && provider !== "codex")
   throw new Error("Expected --provider=claude or --provider=codex");
 const count = Number(process.argv.find((arg) => arg.startsWith("--turns="))?.split("=")[1] ?? 30);
 if (!Number.isInteger(count) || count < 1 || count > 100) throw new Error("Expected 1–100 turns");
-const cwd = await mkdtemp(path.join(tmpdir(), "fde-companion-benchmark-"));
+const cwd = await mkdtemp(path.join(tmpdir(), "frogg-companion-benchmark-"));
 const logger = pino({ level: "error" });
 let verifiedStatusCalls = 0;
 const tools = [
@@ -48,7 +48,7 @@ const backend = (provider === "claude" ? createCompanionCliBackend : createCompa
   tools,
   logger,
 });
-const ttsDir = process.env.FDE_COMPANION_BENCH_TTS_DIR;
+const ttsDir = process.env.FROGG_COMPANION_BENCH_TTS_DIR;
 const tts = ttsDir
   ? new SherpaOnnxTTS({ preset: "piper-ljspeech-medium", modelDir: ttsDir }, logger)
   : null;

@@ -1,9 +1,9 @@
-import { createTestFdeDaemon, type TestFdeDaemon } from "./fde-daemon.js";
+import { createTestFroggDaemon, type TestFroggDaemon } from "./frogg-daemon.js";
 import { DaemonClient } from "./daemon-client.js";
 import { createTestAgentClients } from "./fake-agent-client.js";
 
 export interface DaemonTestContext {
-  daemon: TestFdeDaemon;
+  daemon: TestFroggDaemon;
   client: DaemonClient;
   cleanup: () => Promise<void>;
 }
@@ -33,9 +33,9 @@ export interface DaemonTestContext {
  * ```
  */
 export async function createDaemonTestContext(
-  options?: Parameters<typeof createTestFdeDaemon>[0],
+  options?: Parameters<typeof createTestFroggDaemon>[0],
 ): Promise<DaemonTestContext> {
-  const daemon = await createTestFdeDaemon({
+  const daemon = await createTestFroggDaemon({
     agentClients: createTestAgentClients(),
     ...options,
   });

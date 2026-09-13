@@ -5,21 +5,21 @@ import { dirname, join } from "node:path";
 // Worktree setup runs through a stable script shell: bash on macOS/Linux, but PowerShell
 // on Windows. POSIX-only command strings (`VAR=1 cmd` env prefixes, `$VAR` expansion, `cp`,
 // `./scripts/*.sh`) cannot express this step portably, so the seeding lives in Node — the
-// one interpreter every Fde checkout already depends on.
+// one interpreter every Frogg checkout already depends on.
 
-const sourceRoot = process.env.FDE_SOURCE_CHECKOUT_PATH;
-const targetRoot = process.env.FDE_WORKTREE_PATH || process.cwd();
+const sourceRoot = process.env.FROGG_SOURCE_CHECKOUT_PATH;
+const targetRoot = process.env.FROGG_WORKTREE_PATH || process.cwd();
 
 if (!sourceRoot || sourceRoot === targetRoot) {
   process.exit(0);
 }
 
-seedFdeHome();
+seedFroggHome();
 copyServerEnv();
 
-function seedFdeHome() {
-  const source = process.env.FDE_DEV_SEED_HOME || join(sourceRoot, ".dev/fde-home");
-  const target = join(targetRoot, ".dev/fde-home");
+function seedFroggHome() {
+  const source = process.env.FROGG_DEV_SEED_HOME || join(sourceRoot, ".dev/frogg-home");
+  const target = join(targetRoot, ".dev/frogg-home");
 
   if (!existsSync(source)) {
     console.log(`  Seed:    skipped (${source} missing)`);
@@ -31,7 +31,7 @@ function seedFdeHome() {
     return;
   }
 
-  if (process.env.FDE_DEV_RESET_HOME === "1") {
+  if (process.env.FROGG_DEV_RESET_HOME === "1") {
     rmSync(target, { recursive: true, force: true });
   } else if (hasEntries(target)) {
     console.log(`  Seed:    skipped (${target} already has data)`);

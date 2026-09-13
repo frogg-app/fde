@@ -3,7 +3,7 @@ import { mkdtemp, mkdir, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, it } from "vitest";
-import type { ProviderSnapshotEntry } from "@fde/protocol/agent-types";
+import type { ProviderSnapshotEntry } from "@frogg/protocol/agent-types";
 import type { HubCredentialStore, StoredHubCredential } from "./credentials.js";
 import type { HubDaemonClient, HubStatus } from "./daemon-client.js";
 import type { HubHttpClient } from "./hub-client/index.js";
@@ -35,7 +35,7 @@ describe("Hub guided setup continuation", () => {
       {
         env: {},
         credentials,
-        flow: { authorize: async () => "fde_cli_prefix_durable-secret" },
+        flow: { authorize: async () => "frogg_cli_prefix_durable-secret" },
         isInteractive: () => true,
         continueGuidedSetup: (origin) => continueHubGuidedSetup(origin, environment),
         reporter: { progress() {} },
@@ -43,18 +43,18 @@ describe("Hub guided setup continuation", () => {
     );
 
     assert.deepEqual(prompts.confirmations, [
-      "Connect this daemon to FDE Hub?\n\nConnecting lets Hub identify this daemon and show whether it is online.\nIt does not allow Hub to create workspaces or run agents.",
+      "Connect this daemon to Frogg Hub?\n\nConnecting lets Hub identify this daemon and show whether it is online.\nIt does not allow Hub to create workspaces or run agents.",
       "Allow Hub automations to run agents on this daemon?\n\nThis lets workflows triggered from GitHub, Slack, Discord, Linear, and other integrations create workspaces and run agents here.\n\nAgents can access files and run commands allowed by their workspace runtime.",
     ]);
     assert.deepEqual(prompts.selections, []);
     assert.deepEqual(prompts.messages, [
-      "Daemon connected with no permissions.\n\nEnable Hub automations later:\n  fde hub permissions grant hub.execute",
-      "Configure triggers in Hub: https://hub.test/triggers\nOr scaffold triggers as code: fde hub init",
+      "Daemon connected with no permissions.\n\nEnable Hub automations later:\n  frogg hub permissions grant hub.execute",
+      "Configure triggers in Hub: https://hub.test/triggers\nOr scaffold triggers as code: frogg hub init",
     ]);
     assert.deepEqual(calls, [{ operation: "token", origin: "https://hub.test" }]);
     assert.equal(daemon.connections, 1);
     assert.deepEqual(daemon.snapshotCwds, []);
-    await assert.rejects(readFile(path.join(cwd, ".fde", "hub.yml")), { code: "ENOENT" });
+    await assert.rejects(readFile(path.join(cwd, ".frogg", "hub.yml")), { code: "ENOENT" });
   });
 
   it("prints exact actionable resume commands for login continuation declines", async () => {
@@ -69,8 +69,8 @@ describe("Hub guided setup continuation", () => {
       setupEnvironment(cwd, credentials, daemon, connectDeclined, []),
     );
     assert.deepEqual(connectDeclined.messages, [
-      "Skipped daemon connection. Connect later with: fde hub connect https://hub.test",
-      "Configure triggers in Hub: https://hub.test/triggers\nOr scaffold triggers as code: fde hub init",
+      "Skipped daemon connection. Connect later with: frogg hub connect https://hub.test",
+      "Configure triggers in Hub: https://hub.test/triggers\nOr scaffold triggers as code: frogg hub init",
     ]);
   });
 
@@ -90,7 +90,7 @@ describe("Hub guided setup continuation", () => {
     assert.deepEqual(prompts.confirmations, []);
     assert.deepEqual(prompts.messages, [
       "This daemon is already connected to https://hub.test. Permissions: None.",
-      "Configure triggers in Hub: https://hub.test/triggers\nOr scaffold triggers as code: fde hub init",
+      "Configure triggers in Hub: https://hub.test/triggers\nOr scaffold triggers as code: frogg hub init",
     ]);
   });
 
@@ -106,7 +106,7 @@ describe("Hub guided setup continuation", () => {
       {
         env: {},
         credentials,
-        flow: { authorize: async () => "fde_cli_prefix_durable-secret" },
+        flow: { authorize: async () => "frogg_cli_prefix_durable-secret" },
         isInteractive: () => true,
         continueGuidedSetup: (origin) =>
           continueHubGuidedSetup(
@@ -120,23 +120,23 @@ describe("Hub guided setup continuation", () => {
     );
 
     assert.deepEqual(prompts.messages, [
-      "Skipped daemon connection. Connect later with: fde hub connect https://hub.test",
-      "Configure triggers in Hub: https://hub.test/triggers\nOr scaffold triggers as code: fde hub init",
+      "Skipped daemon connection. Connect later with: frogg hub connect https://hub.test",
+      "Configure triggers in Hub: https://hub.test/triggers\nOr scaffold triggers as code: frogg hub init",
     ]);
   });
 
   it("keeps hub init's existing replacement confirmation", async () => {
     const cwd = await temporaryDirectory();
-    await mkdir(path.join(cwd, ".fde"));
+    await mkdir(path.join(cwd, ".frogg"));
     const prompts = new PromptAnswers([false], [], []);
 
     await assert.rejects(
       runHubGuidedSetup(
         setupEnvironment(cwd, new MemoryCredentials(), new SetupDaemon(), prompts, []),
       ),
-      /Existing .fde\/ bundle left unchanged/u,
+      /Existing .frogg\/ bundle left unchanged/u,
     );
-    assert.deepEqual(prompts.confirmations, ["Replace the existing .fde/ Hub bundle?"]);
+    assert.deepEqual(prompts.confirmations, ["Replace the existing .frogg/ Hub bundle?"]);
   });
 
   it("writes the explicitly selected Claude mode when the daemon has no default", async () => {
@@ -168,7 +168,7 @@ describe("Hub guided setup continuation", () => {
       ["Auto"],
     ]);
     assert.match(
-      await readFile(path.join(cwd, ".fde", "hub.yml"), "utf8"),
+      await readFile(path.join(cwd, ".frogg", "hub.yml"), "utf8"),
       /provider: claude\n    model: sonnet\n    mode: auto/u,
     );
     assert.deepEqual(
@@ -195,7 +195,7 @@ describe("Hub guided setup continuation", () => {
     );
 
     assert.equal(daemon.snapshotCwds.length, 0);
-    await assert.rejects(readFile(path.join(cwd, ".fde", "hub.yml")), { code: "ENOENT" });
+    await assert.rejects(readFile(path.join(cwd, ".frogg", "hub.yml")), { code: "ENOENT" });
   });
 
   it("waits for fresh-daemon provider discovery before offering runtime choices", async () => {
@@ -249,7 +249,7 @@ function setupEnvironment(
         options.setupResources ?? {
           github: [],
           discord: [],
-          slack: [{ teamId: "T123", teamName: "Fde" }],
+          slack: [{ teamId: "T123", teamName: "Frogg" }],
         }
       );
     },
@@ -283,7 +283,7 @@ function setupEnvironment(
     env: {},
     credentials,
     hub,
-    login: { authorize: async () => "fde_cli_prefix_durable-secret" },
+    login: { authorize: async () => "frogg_cli_prefix_durable-secret" },
     daemon: { connect: async () => daemon },
     reporter: { progress() {} },
     cwd: () => cwd,
@@ -441,7 +441,7 @@ function disconnectedStatus(): HubStatus {
 }
 
 async function temporaryDirectory(): Promise<string> {
-  const directory = await mkdtemp(path.join(tmpdir(), "fde-hub-init-flow-"));
+  const directory = await mkdtemp(path.join(tmpdir(), "frogg-hub-init-flow-"));
   directories.push(directory);
   return directory;
 }

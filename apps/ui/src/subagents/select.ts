@@ -4,10 +4,10 @@ import equal from "fast-deep-equal";
 import { useStoreWithEqualityFn } from "zustand/traditional";
 import { useSessionStore, type Agent } from "@/stores/session-store";
 import { refreshProviderSubagents, useProviderSubagentStore } from "./provider-store";
-import type { ProviderSubagentDescriptorPayload } from "@fde/protocol/messages";
+import type { ProviderSubagentDescriptorPayload } from "@frogg/protocol/messages";
 
-export interface FdeSubagentRow {
-  kind: "fde";
+export interface FroggSubagentRow {
+  kind: "frogg";
   id: Agent["id"];
   provider: Agent["provider"];
   title: Agent["title"];
@@ -36,7 +36,7 @@ export interface ProviderSubagentRow {
   createdAt: Date;
 }
 
-export type SubagentRow = FdeSubagentRow | ProviderSubagentRow;
+export type SubagentRow = FroggSubagentRow | ProviderSubagentRow;
 
 type SessionStoreSnapshot = ReturnType<typeof useSessionStore.getState>;
 type ProviderSubagentStoreSnapshot = ReturnType<typeof useProviderSubagentStore.getState>;
@@ -51,7 +51,7 @@ const EMPTY_PROVIDER_SUBAGENT_ROWS: ProviderSubagentRow[] = [];
 
 function toSubagentRow(agent: Agent): SubagentRow {
   return {
-    kind: "fde",
+    kind: "frogg",
     id: agent.id,
     provider: agent.provider,
     title: agent.title,
@@ -132,7 +132,7 @@ export function useSubagentsForParent(params: SelectSubagentsParams): SubagentRo
   // for instance. The params object is destructured so a fresh literal at the call site
   // does not defeat this either.
   const { serverId, parentAgentId } = params;
-  const selectFdeRows = useCallback(
+  const selectFroggRows = useCallback(
     (state: SessionStoreSnapshot) =>
       selectSubagentsForParent(state, { serverId, parentAgentId }, pendingArchiveIds),
     [serverId, parentAgentId, pendingArchiveIds],
@@ -142,7 +142,7 @@ export function useSubagentsForParent(params: SelectSubagentsParams): SubagentRo
       selectProviderSubagentsForParent(state, { serverId, parentAgentId }, supported),
     [serverId, parentAgentId, supported],
   );
-  const fdeRows = useStoreWithEqualityFn(useSessionStore, selectFdeRows, equal);
+  const froggRows = useStoreWithEqualityFn(useSessionStore, selectFroggRows, equal);
   const providerRows = useStoreWithEqualityFn(useProviderSubagentStore, selectProviderRows, equal);
   const client = useSessionStore((state) => state.sessions[params.serverId]?.client ?? null);
 
@@ -154,9 +154,9 @@ export function useSubagentsForParent(params: SelectSubagentsParams): SubagentRo
   }, [client, params.parentAgentId, params.serverId, supported]);
 
   return useMemo(() => {
-    if (providerRows.length === 0) return fdeRows;
-    const rows = [...fdeRows, ...providerRows];
+    if (providerRows.length === 0) return froggRows;
+    const rows = [...froggRows, ...providerRows];
     rows.sort((left, right) => left.createdAt.getTime() - right.createdAt.getTime());
     return rows;
-  }, [fdeRows, providerRows]);
+  }, [froggRows, providerRows]);
 }

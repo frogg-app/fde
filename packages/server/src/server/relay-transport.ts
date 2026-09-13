@@ -6,8 +6,8 @@ import {
   createDaemonChannel,
   type Transport as RelayTransport,
   type KeyPair,
-} from "@fde/relay/e2ee";
-import { buildRelayWebSocketUrl } from "@fde/protocol/daemon-endpoints";
+} from "@frogg/relay/e2ee";
+import { buildRelayWebSocketUrl } from "@frogg/protocol/daemon-endpoints";
 import type { ExternalSocketMetadata } from "./websocket-server.js";
 import { createEncryptedRelaySocket } from "./websocket/encrypted-relay-socket.js";
 

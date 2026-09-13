@@ -9,7 +9,7 @@ const OLD_GIT_PATH_FORMAT_ECHO = `--path-format=absolute\n${VALID_WINDOWS_ROOT}\
 const tempDirs: string[] = [];
 
 function makeTempDir(): string {
-  const dir = mkdtempSync(join(tmpdir(), "fde-checkout-git-"));
+  const dir = mkdtempSync(join(tmpdir(), "frogg-checkout-git-"));
   tempDirs.push(dir);
   return dir;
 }

@@ -1,5 +1,5 @@
 import { platform } from "node:os";
-import { execCommand } from "@fde/server";
+import { execCommand } from "@frogg/server";
 
 export interface NodePathFromPidResult {
   nodePath: string | null;

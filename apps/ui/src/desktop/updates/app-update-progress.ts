@@ -1,5 +1,5 @@
 // Pure helpers for the app update install flow: the progress state fed by
-// `fde:event:app-update-progress` and the text the Settings section shows
+// `frogg:event:app-update-progress` and the text the Settings section shows
 // for each install kind.
 
 import { listenToDesktopEvent, type DesktopEventUnlisten } from "@/desktop/electron/events";

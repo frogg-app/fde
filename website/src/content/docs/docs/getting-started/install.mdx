@@ -1,19 +1,19 @@
 ---
 title: Install
-description: Install the FDE daemon on the machine that holds your code, then install a client — desktop, web, Android or CLI.
+description: Install the Frogg daemon on the machine that holds your code, then install a client — desktop, web, Android or CLI.
 sidebar:
   order: 1
 ---
 
 import { Tabs, TabItem } from "@/components/docs";
 
-An FDE has two parts:
+A Frogg has two parts:
 
 - **The daemon** runs on the machine with your code and your agent CLIs (Claude Code,
   Codex, OpenCode...). It owns agents, workspaces and history. Agents keep running when
   every client disconnects.
 - **Clients** connect to one or more daemons: the desktop app, the web app served by the
-  daemon, the Android app and the `fde` CLI.
+  daemon, the Android app and the `frogg` CLI.
 
 The desktop app does **not** include a daemon. Install the daemon first, even if it is on
 the same computer.
@@ -31,9 +31,9 @@ The script:
 
 - downloads the self-contained daemon bundle (Node runtime, daemon, CLI, web app) for
   your platform from GitHub releases and verifies its SHA-256,
-- installs it to `~/.local/share/fde/versions/<version>` and links `fde` into `~/.local/bin`,
-- registers a **systemd user service** `fde-daemon` (Linux) or **launchd agent**
-  `app.frogg.fde-daemon` (macOS) listening on `0.0.0.0:9999` with the web app enabled,
+- installs it to `~/.local/share/frogg/versions/<version>` and links `frogg` into `~/.local/bin`,
+- registers a **systemd user service** `frogg-daemon` (Linux) or **launchd agent**
+  `app.frogg.frogg-daemon` (macOS) listening on `0.0.0.0:9999` with the web app enabled,
 - waits until the new daemon reports healthy.
 
 Re-running it upgrades in place. On Linux, keep the daemon running after you log out:
@@ -48,13 +48,13 @@ CLIs first so the daemon can find them.
 </TabItem>
 <TabItem label="Windows">
 
-There is no Windows install script. Download `FDE-<version>-win-x64-daemon.zip` (or
-`win-arm64`) from [the latest release](https://github.com/frogg-app/fde/releases/latest),
+There is no Windows install script. Download `Frogg-<version>-win-x64-daemon.zip` (or
+`win-arm64`) from [the latest release](https://github.com/frogg-app/frogg/releases/latest),
 unpack it, and run:
 
 ```powershell
-.\bin\fde.cmd start
-.\bin\fde.cmd install-service   # start at login (scheduled task)
+.\bin\frogg.cmd start
+.\bin\frogg.cmd install-service   # start at login (scheduled task)
 ```
 
 Windows daemon installs have not had the same validation as Linux and macOS.
@@ -66,10 +66,10 @@ Windows daemon installs have not had the same validation as Linux and macOS.
 curl -fsSL https://frogg.app/install-docker.sh | bash
 ```
 
-This runs container `fde-daemon` on port 9999 with state in `~/.fde`.
+This runs container `frogg-daemon` on port 9999 with state in `~/.frogg`.
 
 :::caution[Published images are out of date]
-At the time of writing, `froggapp/fde` on Docker Hub only has 0.1.x tags, and `latest`
+At the time of writing, `froggapp/frogg` on Docker Hub only has 0.1.x tags, and `latest`
 points to 0.1.14. Current clients require daemon 0.6.0 or later. Build the image from
 source until a 0.6 image is published. See [Docker](/docs/self-hosting/docker/).
 :::
@@ -81,13 +81,13 @@ The flake lives in `deploy/nix`:
 
 ```nix
 {
-  inputs.fde.url = "github:frogg-app/fde?dir=deploy/nix";
-  outputs = { nixpkgs, fde, ... }: {
+  inputs.frogg.url = "github:frogg-app/frogg?dir=deploy/nix";
+  outputs = { nixpkgs, frogg, ... }: {
     nixosConfigurations.box = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       modules = [
-        fde.nixosModules.default
-        { services.fde = { enable = true; openFirewall = true; }; }
+        frogg.nixosModules.default
+        { services.frogg = { enable = true; openFirewall = true; }; }
       ];
     };
   };
@@ -102,13 +102,13 @@ See [Nix](/docs/self-hosting/nix/) for every option.
 Check it:
 
 ```sh
-fde status
+frogg status
 ```
 
 ```text
 KEY               VALUE
 Local Daemon      running
-FDE Home          /home/you/.fde
+Frogg Home          /home/you/.frogg
 Listen            0.0.0.0:9999
 Daemon Version    0.6.19
 LAN Trusted       true
@@ -120,15 +120,15 @@ Providers
 ```
 
 If a provider shows `not found`, install its CLI where the daemon can see it, then
-`fde restart`. See [providers](/docs/agents-and-providers/providers/).
+`frogg restart`. See [providers](/docs/agents-and-providers/providers/).
 
 ## 2. Install a client
 
 | Client      | Get it |
 | ----------- | ------ |
-| **Desktop** (Windows, macOS, Linux) | [GitHub releases](https://github.com/frogg-app/fde/releases/latest): `FDE-<version>-win-x64.exe`, `FDE-<version>-mac-arm64.dmg` / `mac-x64.dmg`, `FDE-<version>-linux-x86_64.AppImage` / `linux-amd64.deb` |
+| **Desktop** (Windows, macOS, Linux) | [GitHub releases](https://github.com/frogg-app/frogg/releases/latest): `Frogg-<version>-win-x64.exe`, `Frogg-<version>-mac-arm64.dmg` / `mac-x64.dmg`, `Frogg-<version>-linux-x86_64.AppImage` / `linux-amd64.deb` |
 | **Web**     | Already there: open `http://<daemon-host>:9999/` |
-| **Android** | `FDE-<version>-android-arm64-v8a-unsigned.apk` from releases. See [mobile](/docs/desktop-mobile-cli/mobile/) |
+| **Android** | `Frogg-<version>-android-arm64-v8a-unsigned.apk` from releases. See [mobile](/docs/desktop-mobile-cli/mobile/) |
 | **CLI**     | Installed with the daemon. See the [CLI reference](/docs/desktop-mobile-cli/cli/) |
 
 :::note[Release coverage]
@@ -148,8 +148,8 @@ Continue with [connect and pair](/docs/getting-started/connect-and-pair/).
 ## Uninstall
 
 ```sh
-curl -fsSL https://frogg.app/uninstall.sh | bash            # keeps ~/.fde
-FDE_PURGE=1 bash <(curl -fsSL https://frogg.app/uninstall.sh)  # also deletes ~/.fde
+curl -fsSL https://frogg.app/uninstall.sh | bash            # keeps ~/.frogg
+FROGG_PURGE=1 bash <(curl -fsSL https://frogg.app/uninstall.sh)  # also deletes ~/.frogg
 ```
 
 For Docker, run `uninstall-docker.sh` from the release assets.

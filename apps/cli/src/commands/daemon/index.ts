@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { Command, Option } from "commander";
 import { runConfigFormatCommand } from "./config-format.js";
 import { startCommand } from "./start.js";
@@ -25,9 +25,9 @@ function resolveHostnamesOption(hostnames: unknown, allowedHosts: unknown): stri
 /**
  * Daemon lifecycle, attached directly to the root.
  *
- * `fde` is the daemon's own binary, so `fde daemon start` said the same thing
+ * `frogg` is the daemon's own binary, so `frogg daemon start` said the same thing
  * twice. These are the verbs you reach for most and they now sit at the top
- * level; the pairing and access verbs live under `fde auth` instead.
+ * level; the pairing and access verbs live under `frogg auth` instead.
  */
 export function addDaemonLifecycleCommands(program: Command): Command {
   program.addCommand(startCommand());

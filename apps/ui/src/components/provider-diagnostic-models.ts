@@ -1,4 +1,4 @@
-import type { AgentModelDefinition } from "@fde/protocol/agent-types";
+import type { AgentModelDefinition } from "@frogg/protocol/agent-types";
 import { filterSelectableModels } from "@/provider-selection/model-catalog";
 
 export interface ProviderDiscoveredModelsCache {

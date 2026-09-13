@@ -4,23 +4,23 @@ import { mkdir, mkdtemp, rm } from "node:fs/promises";
 
 import pino from "pino";
 import {
-  createFdeDaemon,
-  type FdeDaemonConfig,
-  type FdeOpenAIConfig,
-  type FdeSpeechConfig,
+  createFroggDaemon,
+  type FroggDaemonConfig,
+  type FroggOpenAIConfig,
+  type FroggSpeechConfig,
 } from "../bootstrap.js";
 import type { AgentClient, AgentProvider } from "../agent/agent-sdk-types.js";
 import { createTestAgentClients } from "./fake-agent-client.js";
 import type { PushNotificationSender } from "../push/index.js";
-import type { AgentProfile } from "@fde/protocol/messages";
+import type { AgentProfile } from "@frogg/protocol/messages";
 
-interface TestFdeDaemonOptions {
+interface TestFroggDaemonOptions {
   daemonVersion?: string;
   desktopManaged?: boolean;
   downloadTokenTtlMs?: number;
   corsAllowedOrigins?: string[];
   listen?: string;
-  logger?: Parameters<typeof createFdeDaemon>[1];
+  logger?: Parameters<typeof createFroggDaemon>[1];
   mcpEnabled?: boolean;
   mcpDebug?: boolean;
   isDev?: boolean;
@@ -31,31 +31,31 @@ interface TestFdeDaemonOptions {
   daemonStatusRpcCapability?: boolean;
   relayConfigCapability?: boolean;
   agentClients?: Partial<Record<AgentProvider, AgentClient>>;
-  providerOverrides?: FdeDaemonConfig["providerOverrides"];
-  fdeHomeRoot?: string;
+  providerOverrides?: FroggDaemonConfig["providerOverrides"];
+  froggHomeRoot?: string;
   staticDir?: string;
   cleanup?: boolean;
-  openai?: FdeOpenAIConfig;
-  speech?: FdeSpeechConfig;
-  voiceLlmProvider?: FdeDaemonConfig["voiceLlmProvider"];
+  openai?: FroggOpenAIConfig;
+  speech?: FroggSpeechConfig;
+  voiceLlmProvider?: FroggDaemonConfig["voiceLlmProvider"];
   voiceLlmProviderExplicit?: boolean;
   voiceLlmModel?: string | null;
   dictationFinalTimeoutMs?: number;
-  auth?: FdeDaemonConfig["auth"];
+  auth?: FroggDaemonConfig["auth"];
   pushNotificationSender?: PushNotificationSender;
-  serviceProxy?: FdeDaemonConfig["serviceProxy"];
-  webUi?: FdeDaemonConfig["webUi"];
-  trustedProxies?: FdeDaemonConfig["trustedProxies"];
-  trustLan?: FdeDaemonConfig["trustLan"];
+  serviceProxy?: FroggDaemonConfig["serviceProxy"];
+  webUi?: FroggDaemonConfig["webUi"];
+  trustedProxies?: FroggDaemonConfig["trustedProxies"];
+  trustLan?: FroggDaemonConfig["trustLan"];
   agentProfiles?: AgentProfile[];
   autoArchiveAfterMerge?: boolean;
 }
 
-export interface TestFdeDaemon {
-  config: FdeDaemonConfig;
-  daemon: Awaited<ReturnType<typeof createFdeDaemon>>;
+export interface TestFroggDaemon {
+  config: FroggDaemonConfig;
+  daemon: Awaited<ReturnType<typeof createFroggDaemon>>;
   port: number;
-  fdeHome: string;
+  froggHome: string;
   staticDir: string;
   close: () => Promise<void>;
 }
@@ -63,7 +63,7 @@ export interface TestFdeDaemon {
 const TEST_DAEMON_START_TIMEOUT_MS = 20_000;
 
 async function startDaemonWithTimeout(
-  daemon: Awaited<ReturnType<typeof createFdeDaemon>>,
+  daemon: Awaited<ReturnType<typeof createFroggDaemon>>,
   timeoutMs: number,
 ): Promise<void> {
   await new Promise<void>((resolve, reject) => {
@@ -89,16 +89,16 @@ async function startDaemonWithTimeout(
   });
 }
 
-export async function createTestFdeDaemon(
-  options: TestFdeDaemonOptions = {},
-): Promise<TestFdeDaemon> {
+export async function createTestFroggDaemon(
+  options: TestFroggDaemonOptions = {},
+): Promise<TestFroggDaemon> {
   const maxAttempts = 8;
   let lastError: unknown;
 
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    const { config, fdeHomeRoot, fdeHome, staticDir } = await prepareTestDaemonConfig(options);
+    const { config, froggHomeRoot, froggHome, staticDir } = await prepareTestDaemonConfig(options);
     const logger = options.logger ?? pino({ level: "silent" });
-    const daemon = await createFdeDaemon(config, logger, {
+    const daemon = await createFroggDaemon(config, logger, {
       serverFeatureOverrides: {
         daemonStatusRpc: options.daemonStatusRpcCapability,
         relayConfig: options.relayConfigCapability,
@@ -117,7 +117,7 @@ export async function createTestFdeDaemon(
         if (options.cleanup ?? true) {
           await new Promise((r) => setTimeout(r, 50));
           await Promise.all([
-            rm(fdeHomeRoot, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 }),
+            rm(froggHomeRoot, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 }),
             rm(staticDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 }),
           ]);
         }
@@ -127,7 +127,7 @@ export async function createTestFdeDaemon(
         config,
         daemon,
         port: listenTarget.port,
-        fdeHome,
+        froggHome,
         staticDir,
         close,
       };
@@ -135,7 +135,7 @@ export async function createTestFdeDaemon(
       lastError = error;
       await daemon.stop().catch(() => undefined);
       await Promise.all([
-        rm(fdeHomeRoot, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 }),
+        rm(froggHomeRoot, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 }),
         rm(staticDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 }),
       ]);
 
@@ -152,23 +152,24 @@ export async function createTestFdeDaemon(
 }
 
 interface PreparedTestDaemonConfig {
-  config: FdeDaemonConfig;
-  fdeHomeRoot: string;
-  fdeHome: string;
+  config: FroggDaemonConfig;
+  froggHomeRoot: string;
+  froggHome: string;
   staticDir: string;
 }
 
 async function prepareTestDaemonConfig(
-  options: TestFdeDaemonOptions,
+  options: TestFroggDaemonOptions,
 ): Promise<PreparedTestDaemonConfig> {
-  const fdeHomeRoot = options.fdeHomeRoot ?? (await mkdtemp(path.join(os.tmpdir(), "fde-home-")));
-  const fdeHome = path.join(fdeHomeRoot, ".fde");
-  await mkdir(fdeHome, { recursive: true });
-  const staticDir = options.staticDir ?? (await mkdtemp(path.join(os.tmpdir(), "fde-static-")));
+  const froggHomeRoot =
+    options.froggHomeRoot ?? (await mkdtemp(path.join(os.tmpdir(), "frogg-home-")));
+  const froggHome = path.join(froggHomeRoot, ".frogg");
+  await mkdir(froggHome, { recursive: true });
+  const staticDir = options.staticDir ?? (await mkdtemp(path.join(os.tmpdir(), "frogg-static-")));
   const listenHost = options.listen ?? "127.0.0.1";
-  const config: FdeDaemonConfig = {
+  const config: FroggDaemonConfig = {
     listen: `${listenHost}:0`,
-    fdeHome,
+    froggHome,
     daemonVersion: options.daemonVersion,
     desktopManaged: options.desktopManaged,
     corsAllowedOrigins: options.corsAllowedOrigins ?? [],
@@ -179,7 +180,7 @@ async function prepareTestDaemonConfig(
     isDev: options.isDev,
     agentClients: options.agentClients ?? createTestAgentClients(),
     providerOverrides: options.providerOverrides,
-    agentStoragePath: path.join(fdeHome, "agents"),
+    agentStoragePath: path.join(froggHome, "agents"),
     relayEnabled: options.relayEnabled ?? false,
     relayEndpoint: options.relayEndpoint ?? "relay.example.test:443",
     relayUseTls: options.relayUseTls,
@@ -201,7 +202,7 @@ async function prepareTestDaemonConfig(
     agentProfiles: options.agentProfiles,
     autoArchiveAfterMerge: options.autoArchiveAfterMerge,
   };
-  return { config, fdeHomeRoot, fdeHome, staticDir };
+  return { config, froggHomeRoot, froggHome, staticDir };
 }
 
 function isAddressInUseError(error: unknown): boolean {

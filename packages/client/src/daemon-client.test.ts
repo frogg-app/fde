@@ -6,13 +6,13 @@ import {
   type DaemonTransport,
   type Logger,
 } from "./daemon-client";
-import { CLIENT_CAPS } from "@fde/protocol/client-capabilities";
-import { BROWSER_AUTOMATION_COMMAND_NAMES } from "@fde/protocol/browser-automation/rpc-schemas";
+import { CLIENT_CAPS } from "@frogg/protocol/client-capabilities";
+import { BROWSER_AUTOMATION_COMMAND_NAMES } from "@frogg/protocol/browser-automation/rpc-schemas";
 import {
   decodeFileTransferFrame,
   encodeFileTransferFrame,
   FileTransferOpcode,
-} from "@fde/protocol/binary-frames/index";
+} from "@frogg/protocol/binary-frames/index";
 import {
   asUint8Array,
   decodeTerminalResizePayload,
@@ -20,7 +20,7 @@ import {
   encodeTerminalSnapshotPayload,
   encodeTerminalStreamFrame,
   TerminalStreamOpcode,
-} from "@fde/protocol/terminal-stream-protocol";
+} from "@frogg/protocol/terminal-stream-protocol";
 
 expectTypeOf<"getGitDiff" extends keyof DaemonClient ? true : false>().toEqualTypeOf<false>();
 expectTypeOf<
@@ -203,30 +203,30 @@ test("traces WebSocket frames, message types, and JSON parse duration", async ()
   expect(recorder.records).toEqual([
     {
       phase: "begin",
-      name: "fde.ws.message.outbound",
+      name: "frogg.ws.message.outbound",
       args: { envelopeType: "hello", messageType: "hello" },
     },
     { phase: "end" },
     {
       phase: "begin",
-      name: "fde.ws.frame.outbound",
+      name: "frogg.ws.frame.outbound",
       args: { kind: "text", size: expect.any(String) },
     },
     { phase: "end" },
     {
       phase: "begin",
-      name: "fde.ws.frame.inbound",
+      name: "frogg.ws.frame.inbound",
       args: { kind: "text", size: expect.any(String) },
     },
     {
       phase: "begin",
-      name: "fde.ws.json.parse",
+      name: "frogg.ws.json.parse",
       args: { size: expect.any(String) },
     },
     { phase: "end" },
     {
       phase: "begin",
-      name: "fde.ws.message.inbound",
+      name: "frogg.ws.message.inbound",
       args: { envelopeType: "session", messageType: "status" },
     },
     { phase: "end" },
@@ -237,7 +237,7 @@ test("traces WebSocket frames, message types, and JSON parse duration", async ()
 test("does not infer browser automation capabilities from Electron runtime", async () => {
   vi.stubGlobal("navigator", {
     userAgent:
-      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Fde/0.1.89 Chrome/146 Electron/41.2.0 Safari/537.36",
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Frogg/0.1.89 Chrome/146 Electron/41.2.0 Safari/537.36",
   });
   const mock = createMockTransport();
   const client = new DaemonClient({
@@ -631,7 +631,7 @@ test("dedupes in-flight checkout status requests per agentId", async () => {
         error: null,
         requestId: request.requestId,
         isGit: false,
-        isFdeOwnedWorktree: false,
+        isFroggOwnedWorktree: false,
         repoRoot: null,
         currentBranch: null,
         isDirty: null,
@@ -703,7 +703,7 @@ test("passes password as HTTP bearer header and WebSocket subprotocol", async ()
   expect(transportFactory).toHaveBeenCalledWith({
     url: "ws://test",
     headers: { Authorization: "Bearer shared-secret" },
-    protocols: ["fde.bearer.shared-secret"],
+    protocols: ["frogg.bearer.shared-secret"],
   });
 });
 
@@ -2305,7 +2305,7 @@ test("uploadFile sends metadata request and file bytes as binary chunks", async 
           fileName: "notes.txt",
           mimeType: "text/plain",
           size: 11,
-          path: "/tmp/fde-uploads/upload_req-upload/notes.txt",
+          path: "/tmp/frogg-uploads/upload_req-upload/notes.txt",
         },
         error: null,
       },
@@ -2320,7 +2320,7 @@ test("uploadFile sends metadata request and file bytes as binary chunks", async 
       fileName: "notes.txt",
       mimeType: "text/plain",
       size: 11,
-      path: "/tmp/fde-uploads/upload_req-upload/notes.txt",
+      path: "/tmp/frogg-uploads/upload_req-upload/notes.txt",
     },
     error: null,
   });
@@ -2356,14 +2356,14 @@ test("normalizes workspace_setup_progress into a workspace-scoped daemon event",
         status: "running",
         detail: {
           type: "worktree_setup",
-          worktreePath: "/tmp/project/.fde/worktrees/feature-a",
+          worktreePath: "/tmp/project/.frogg/worktrees/feature-a",
           branchName: "feature-a",
           log: "phase-one\n",
           commands: [
             {
               index: 1,
               command: "npm install",
-              cwd: "/tmp/project/.fde/worktrees/feature-a",
+              cwd: "/tmp/project/.frogg/worktrees/feature-a",
               log: "phase-one\n",
               status: "running",
               exitCode: null,
@@ -2383,14 +2383,14 @@ test("normalizes workspace_setup_progress into a workspace-scoped daemon event",
       status: "running",
       detail: {
         type: "worktree_setup",
-        worktreePath: "/tmp/project/.fde/worktrees/feature-a",
+        worktreePath: "/tmp/project/.frogg/worktrees/feature-a",
         branchName: "feature-a",
         log: "phase-one\n",
         commands: [
           {
             index: 1,
             command: "npm install",
-            cwd: "/tmp/project/.fde/worktrees/feature-a",
+            cwd: "/tmp/project/.frogg/worktrees/feature-a",
             log: "phase-one\n",
             status: "running",
             exitCode: null,
@@ -2421,7 +2421,7 @@ test("sends create_agent_request with workspace and caller identity", async () =
 
   const createPromise = client.createAgent({
     provider: "codex",
-    cwd: "/tmp/project/.fde/worktrees/feature-a",
+    cwd: "/tmp/project/.frogg/worktrees/feature-a",
     workspaceId: "ws-feature-a",
     callerAgentId: "parent-agent",
     title: "Compat agent",
@@ -2535,7 +2535,7 @@ test("sends structured attachments with create_agent_request", async () => {
         mimeType: "application/github-pr",
         number: 123,
         title: "Fix race in worktree setup",
-        url: "https://github.com/frogg-app/fde/pull/123",
+        url: "https://github.com/frogg-app/frogg/pull/123",
         baseRefName: "main",
         headRefName: "fix/worktree-race",
       },
@@ -2550,7 +2550,7 @@ test("sends structured attachments with create_agent_request", async () => {
       mimeType: "application/github-pr",
       number: 123,
       title: "Fix race in worktree setup",
-      url: "https://github.com/frogg-app/fde/pull/123",
+      url: "https://github.com/frogg-app/frogg/pull/123",
       baseRefName: "main",
       headRefName: "fix/worktree-race",
     },
@@ -2684,7 +2684,7 @@ test("omitting create_agent_request worktree base-ref fields preserves legacy wi
   await expect(createPromise).rejects.toThrow("legacy git shape sentinel");
 });
 
-test("sends structured first-agent context attachments with create_fde_worktree_request", async () => {
+test("sends structured first-agent context attachments with create_frogg_worktree_request", async () => {
   const logger = createMockLogger();
   const mock = createMockTransport();
 
@@ -2701,7 +2701,7 @@ test("sends structured first-agent context attachments with create_fde_worktree_
   mock.triggerOpen();
   await connectPromise;
 
-  const createPromise = client.createFdeWorktree({
+  const createPromise = client.createFroggWorktree({
     cwd: "/tmp/project",
     worktreeSlug: "review-pr-123",
     firstAgentContext: {
@@ -2711,7 +2711,7 @@ test("sends structured first-agent context attachments with create_fde_worktree_
           mimeType: "application/github-pr",
           number: 123,
           title: "Fix race in worktree setup",
-          url: "https://github.com/frogg-app/fde/pull/123",
+          url: "https://github.com/frogg-app/frogg/pull/123",
         },
       ],
     },
@@ -2728,13 +2728,13 @@ test("sends structured first-agent context attachments with create_fde_worktree_
       mimeType: "application/github-pr",
       number: 123,
       title: "Fix race in worktree setup",
-      url: "https://github.com/frogg-app/fde/pull/123",
+      url: "https://github.com/frogg-app/frogg/pull/123",
     },
   ]);
 
   mock.triggerMessage(
     wrapSessionMessage({
-      type: "create_fde_worktree_response",
+      type: "create_frogg_worktree_response",
       payload: {
         requestId: request.requestId,
         workspace: null,
@@ -2825,12 +2825,12 @@ test("searches GitHub repositories through the dotted RPC", async () => {
   await connectPromise;
 
   const searchPromise = client.searchGithubRepositories(
-    { query: "fde", limit: 10 },
+    { query: "frogg", limit: 10 },
     "req-repositories",
   );
   expect(parseSentFrame(mock.sent[0])).toEqual({
     type: "workspace.github.search_repositories.request",
-    query: "fde",
+    query: "frogg",
     limit: 10,
     requestId: "req-repositories",
   });
@@ -2843,13 +2843,13 @@ test("searches GitHub repositories through the dotted RPC", async () => {
         requestId: "req-repositories",
         repositories: [
           {
-            id: "R_fde",
-            name: "fde",
-            nameWithOwner: "frogg-app/fde",
+            id: "R_frogg",
+            name: "frogg",
+            nameWithOwner: "frogg-app/frogg",
             description: "Development environment in your pocket",
             visibility: "public",
             updatedAt: "2026-07-15T10:00:00Z",
-            cloneUrl: "git@github.com:frogg-app/fde.git",
+            cloneUrl: "git@github.com:frogg-app/frogg.git",
           },
         ],
         available: true,
@@ -2863,13 +2863,13 @@ test("searches GitHub repositories through the dotted RPC", async () => {
     requestId: "req-repositories",
     repositories: [
       {
-        id: "R_fde",
-        name: "fde",
-        nameWithOwner: "frogg-app/fde",
+        id: "R_frogg",
+        name: "frogg",
+        nameWithOwner: "frogg-app/frogg",
         description: "Development environment in your pocket",
         visibility: "public",
         updatedAt: "2026-07-15T10:00:00Z",
-        cloneUrl: "git@github.com:frogg-app/fde.git",
+        cloneUrl: "git@github.com:frogg-app/frogg.git",
       },
     ],
     available: true,
@@ -3046,7 +3046,7 @@ test("sends project.remove.request", async () => {
   await expect(removePromise).resolves.toEqual({ removedWorkspaceIds: ["ws-main"] });
 });
 
-test("sends worktree base-ref fields in create_fde_worktree_request", async () => {
+test("sends worktree base-ref fields in create_frogg_worktree_request", async () => {
   const logger = createMockLogger();
   const mock = createMockTransport();
 
@@ -3063,7 +3063,7 @@ test("sends worktree base-ref fields in create_fde_worktree_request", async () =
   mock.triggerOpen();
   await connectPromise;
 
-  const createPromise = client.createFdeWorktree(
+  const createPromise = client.createFroggWorktree(
     {
       cwd: "/tmp/project",
       projectId: "remote:github.com/acme/project",
@@ -3078,7 +3078,7 @@ test("sends worktree base-ref fields in create_fde_worktree_request", async () =
   expect(mock.sent).toHaveLength(1);
   const request = parseSentFrame(mock.sent[0]);
   expect(request).toEqual({
-    type: "create_fde_worktree_request",
+    type: "create_frogg_worktree_request",
     cwd: "/tmp/project",
     projectId: "remote:github.com/acme/project",
     worktreeSlug: "review-pr-123",
@@ -3090,7 +3090,7 @@ test("sends worktree base-ref fields in create_fde_worktree_request", async () =
 
   mock.triggerMessage(
     wrapSessionMessage({
-      type: "create_fde_worktree_response",
+      type: "create_frogg_worktree_response",
       payload: {
         requestId: request.requestId,
         workspace: null,
@@ -3108,7 +3108,7 @@ test("sends worktree base-ref fields in create_fde_worktree_request", async () =
   });
 });
 
-test("omitting create_fde_worktree_request worktree base-ref fields preserves legacy wire shape", async () => {
+test("omitting create_frogg_worktree_request worktree base-ref fields preserves legacy wire shape", async () => {
   const logger = createMockLogger();
   const mock = createMockTransport();
 
@@ -3125,7 +3125,7 @@ test("omitting create_fde_worktree_request worktree base-ref fields preserves le
   mock.triggerOpen();
   await connectPromise;
 
-  const createPromise = client.createFdeWorktree(
+  const createPromise = client.createFroggWorktree(
     {
       cwd: "/tmp/project",
       worktreeSlug: "feature-a",
@@ -3137,7 +3137,7 @@ test("omitting create_fde_worktree_request worktree base-ref fields preserves le
     JSON.stringify({
       type: "session",
       message: {
-        type: "create_fde_worktree_request",
+        type: "create_frogg_worktree_request",
         cwd: "/tmp/project",
         worktreeSlug: "feature-a",
         requestId: "req-worktree-legacy",
@@ -3147,7 +3147,7 @@ test("omitting create_fde_worktree_request worktree base-ref fields preserves le
 
   mock.triggerMessage(
     wrapSessionMessage({
-      type: "create_fde_worktree_response",
+      type: "create_frogg_worktree_response",
       payload: {
         requestId: "req-worktree-legacy",
         workspace: null,
@@ -3705,7 +3705,7 @@ test("requests directory suggestions via RPC", async () => {
       message: {
         type: "directory_suggestions_response",
         payload: {
-          directories: ["/Users/test/projects/fde"],
+          directories: ["/Users/test/projects/frogg"],
           entries: [{ path: "README.md", kind: "file" }],
           error: null,
           requestId: "req-directories",
@@ -3715,7 +3715,7 @@ test("requests directory suggestions via RPC", async () => {
   );
 
   await expect(promise).resolves.toEqual({
-    directories: ["/Users/test/projects/fde"],
+    directories: ["/Users/test/projects/frogg"],
     entries: [{ path: "README.md", kind: "file" }],
     error: null,
     requestId: "req-directories",
@@ -3909,7 +3909,7 @@ test("requests GitHub check details via namespaced RPC", async () => {
     {
       cwd: "/tmp/project",
       repoOwner: "frogg-app",
-      repoName: "fde",
+      repoName: "frogg",
       checkRunId: 12345,
       workflowRunId: 456,
     },
@@ -3922,7 +3922,7 @@ test("requests GitHub check details via namespaced RPC", async () => {
     type: "checkout.github.get_check_details.request",
     cwd: "/tmp/project",
     repoOwner: "frogg-app",
-    repoName: "fde",
+    repoName: "frogg",
     checkRunId: 12345,
     workflowRunId: 456,
     requestId: "req-check-details",

@@ -19,7 +19,7 @@ const svg = `
   <text x="80" y="570" font-family="DejaVu Sans Mono, monospace" font-size="26" fill="#7fd9e6">frogg.app</text>
 </svg>`;
 
-const logo = await sharp("src/assets/brand/fde-logo.png").resize({ width: 190 }).toBuffer();
+const logo = await sharp("src/assets/brand/frogg-logo.png").resize({ width: 190 }).toBuffer();
 await sharp(Buffer.from(svg))
   .composite([{ input: logo, left: 80, top: 70 }])
   .png({ compressionLevel: 9, palette: true, quality: 90 })

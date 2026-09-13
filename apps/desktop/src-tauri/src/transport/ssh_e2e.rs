@@ -2,7 +2,7 @@
 //! script honours `-W host:port` by bridging stdio to that TCP port (socat),
 //! so the WebSocket handshake and frames flow over the child's stdin/stdout
 //! exactly as they do through OpenSSH. Needs a daemon listening on
-//! `127.0.0.1:$FDE_TEST_DAEMON_PORT` (default 6797) and `socat` on PATH;
+//! `127.0.0.1:$FROGG_TEST_DAEMON_PORT` (default 6797) and `socat` on PATH;
 //! skips otherwise.
 
 use std::os::unix::fs::PermissionsExt;
@@ -15,7 +15,7 @@ use tokio::sync::mpsc;
 use super::ssh::SSH_PROGRAM_ENV;
 use super::{EventSink, TransportManager};
 
-/// `FDE_SSH` is process-global; tests that set it take this lock.
+/// `FROGG_SSH` is process-global; tests that set it take this lock.
 static ENV_LOCK: Mutex<()> = Mutex::new(());
 
 const FAKE_SSH: &str = r#"#!/bin/sh
@@ -55,7 +55,7 @@ exec socat STDIO "TCP:$target"
 "#;
 
 fn daemon_port() -> u16 {
-    std::env::var("FDE_TEST_DAEMON_PORT")
+    std::env::var("FROGG_TEST_DAEMON_PORT")
         .ok()
         .and_then(|v| v.parse().ok())
         .unwrap_or(6797)
@@ -113,7 +113,7 @@ fn open_args(id: &str, host: &str, port: u16) -> Value {
 fn remote_ssh_over_stdio_round_trips_and_reports_ssh_failures() {
     let port = daemon_port();
     if !daemon_reachable(port) {
-        eprintln!("skipping: no daemon on 127.0.0.1:{port} (set FDE_TEST_DAEMON_PORT)");
+        eprintln!("skipping: no daemon on 127.0.0.1:{port} (set FROGG_TEST_DAEMON_PORT)");
         return;
     }
     if !socat_available() {
@@ -137,7 +137,7 @@ fn remote_ssh_over_stdio_round_trips_and_reports_ssh_failures() {
         );
         let hello = json!({
             "type": "hello",
-            "clientId": "fde-transport-test",
+            "clientId": "frogg-transport-test",
             "clientType": "cli",
             "protocolVersion": 1
         });
@@ -232,7 +232,7 @@ fn missing_ssh_executable_is_an_immediate_error() {
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
     let previous = std::env::var_os(SSH_PROGRAM_ENV);
-    std::env::set_var(SSH_PROGRAM_ENV, "/nonexistent/fde-ssh-missing");
+    std::env::set_var(SSH_PROGRAM_ENV, "/nonexistent/frogg-ssh-missing");
     tauri::async_runtime::block_on(async {
         let (manager, mut events) = new_manager();
         manager
@@ -249,13 +249,13 @@ fn missing_ssh_executable_is_an_immediate_error() {
     }
 }
 
-/// A daemon started with `FDE_PASSWORD=hunter2` on
-/// `127.0.0.1:$FDE_TEST_DAEMON_PASSWORD_PORT` (default 6798): without the
+/// A daemon started with `FROGG_PASSWORD=hunter2` on
+/// `127.0.0.1:$FROGG_TEST_DAEMON_PASSWORD_PORT` (default 6798): without the
 /// bearer subprotocol it closes the tunnelled socket with 4401 "Password
-/// required"; with `fde.bearer.hunter2` on the handshake the session opens.
+/// required"; with `frogg.bearer.hunter2` on the handshake the session opens.
 #[test]
 fn daemon_password_travels_as_the_bearer_subprotocol() {
-    let port = std::env::var("FDE_TEST_DAEMON_PASSWORD_PORT")
+    let port = std::env::var("FROGG_TEST_DAEMON_PASSWORD_PORT")
         .ok()
         .and_then(|v| v.parse().ok())
         .unwrap_or(6798);
@@ -290,7 +290,7 @@ fn daemon_password_travels_as_the_bearer_subprotocol() {
 
         let (manager, mut events) = new_manager();
         let mut wrong = open_args("pw-wrong", "ok-host", port);
-        wrong["protocols"] = json!(["fde.bearer.nope"]);
+        wrong["protocols"] = json!(["frogg.bearer.nope"]);
         manager.open(&wrong).unwrap();
         assert_eq!(
             next_event(&mut events, Duration::from_secs(10)).await["kind"],
@@ -302,7 +302,7 @@ fn daemon_password_travels_as_the_bearer_subprotocol() {
 
         let (manager, mut events) = new_manager();
         let mut right = open_args("pw-ok", "ok-host", port);
-        right["protocols"] = json!(["fde.bearer.hunter2"]);
+        right["protocols"] = json!(["frogg.bearer.hunter2"]);
         manager.open(&right).unwrap();
         assert_eq!(
             next_event(&mut events, Duration::from_secs(10)).await,
@@ -310,7 +310,7 @@ fn daemon_password_travels_as_the_bearer_subprotocol() {
         );
         let hello = json!({
             "type": "hello",
-            "clientId": "fde-transport-test",
+            "clientId": "frogg-transport-test",
             "clientType": "cli",
             "protocolVersion": 1
         });

@@ -3,7 +3,7 @@ import {
   isGitHubHost,
   parseGitHubRemoteUrl,
   parseGitRemoteLocation,
-} from "@fde/protocol/git-remote";
+} from "@frogg/protocol/git-remote";
 import { findExecutable } from "../executable-resolution/executable-resolution.js";
 import { runGitCommand } from "../utils/run-git-command.js";
 import { execCommand } from "../utils/spawn.js";
@@ -716,7 +716,7 @@ type BatchPollPrNode = z.infer<typeof BatchPollPrNodeSchema>;
 type BatchPollRepository = z.infer<typeof BatchPollRepositorySchema>;
 
 const BATCH_PR_STATUS_FRAGMENT = `
-fragment FdePollPullRequest on PullRequest {
+fragment FroggPollPullRequest on PullRequest {
   number
   url
   title
@@ -782,12 +782,12 @@ function buildBatchPullRequestStatusQuery(
       entry.headRef,
     )}, first: ${BATCH_PR_CANDIDATE_LIMIT}, orderBy: {field: CREATED_AT, direction: DESC}) {
       nodes {
-        ...FdePollPullRequest
+        ...FroggPollPullRequest
       }
     }
   }`,
   );
-  return `query FdeBatchPullRequestStatus {
+  return `query FroggBatchPullRequestStatus {
   rateLimit {
     limit
     remaining
@@ -844,7 +844,7 @@ function buildBatchPullRequestChecksQuery(
     }
   }`,
   );
-  return `query FdeBatchPullRequestChecks {
+  return `query FroggBatchPullRequestChecks {
   rateLimit {
     limit
     remaining

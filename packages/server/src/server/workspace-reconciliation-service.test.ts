@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import type { ProjectCheckoutLitePayload } from "@fde/protocol/messages";
+import type { ProjectCheckoutLitePayload } from "@frogg/protocol/messages";
 import type pino from "pino";
 import { afterEach, describe, expect, test } from "vitest";
 import {
@@ -152,7 +152,7 @@ function createWorkspaceGitServiceStub(
           currentBranch: null,
           remoteUrl: null,
           worktreeRoot: null,
-          isFdeOwnedWorktree: false,
+          isFroggOwnedWorktree: false,
           mainRepoRoot: null,
         };
       }
@@ -162,7 +162,7 @@ function createWorkspaceGitServiceStub(
         currentBranch: metadata.currentBranch ?? metadata.workspaceDisplayName,
         remoteUrl: metadata.gitRemote ?? null,
         worktreeRoot: null,
-        isFdeOwnedWorktree: false,
+        isFroggOwnedWorktree: false,
         mainRepoRoot: null,
       };
     },
@@ -179,7 +179,7 @@ function createCheckout(
     currentBranch: null,
     remoteUrl: null,
     worktreeRoot: null,
-    isFdeOwnedWorktree: false,
+    isFroggOwnedWorktree: false,
     mainRepoRoot: null,
     ...overrides,
   };
@@ -700,7 +700,7 @@ describe("WorkspaceReconciliationService", () => {
       branch: null,
       worktreeRoot: null,
       baseBranch: null,
-      isFdeOwnedWorktree: false,
+      isFroggOwnedWorktree: false,
       mainRepoRoot: null,
       createdAt: timestamp,
       updatedAt: expect.any(String),
@@ -820,8 +820,8 @@ describe("WorkspaceReconciliationService", () => {
   test("keeps legacy duplicate projects and workspace membership intact", async () => {
     const repoDir = createTempGitRepo("reconcile-duplicate-project-");
     tempDirs.push(repoDir);
-    const canonicalWorktreeDir = path.join(repoDir, ".fde", "worktrees", "focused-bat");
-    const duplicateWorktreeDir = path.join(repoDir, ".fde", "worktrees", "gigantic-blowfish");
+    const canonicalWorktreeDir = path.join(repoDir, ".frogg", "worktrees", "focused-bat");
+    const duplicateWorktreeDir = path.join(repoDir, ".frogg", "worktrees", "gigantic-blowfish");
     mkdirSync(canonicalWorktreeDir, { recursive: true });
     mkdirSync(duplicateWorktreeDir, { recursive: true });
     const { projects, workspaces, projectRegistry, workspaceRegistry } = createTestRegistries();
@@ -1509,7 +1509,7 @@ describe("WorkspaceReconciliationService", () => {
       createCheckout(rootPath, {
         isGit: true,
         worktreeRoot: rootPath,
-        isFdeOwnedWorktree: true,
+        isFroggOwnedWorktree: true,
         mainRepoRoot: "/tmp/main-repo",
       }),
     );
@@ -1558,14 +1558,14 @@ describe("WorkspaceReconciliationService", () => {
         directory: rootPath,
         fields: {
           worktreeRoot: rootPath,
-          isFdeOwnedWorktree: true,
+          isFroggOwnedWorktree: true,
           mainRepoRoot: "/tmp/main-repo",
         },
       },
     ]);
     expect(workspaces.get("w1")).toMatchObject({
       worktreeRoot: rootPath,
-      isFdeOwnedWorktree: true,
+      isFroggOwnedWorktree: true,
       mainRepoRoot: "/tmp/main-repo",
     });
   });

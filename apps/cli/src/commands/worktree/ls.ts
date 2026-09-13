@@ -1,8 +1,8 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import type { Command } from "commander";
 import { basename, join, sep } from "node:path";
-import { resolveFdeHomePath } from "../../utils/fde-home.js";
-import type { DaemonClient } from "@fde/client/internal/daemon-client";
+import { resolveFroggHomePath } from "../../utils/frogg-home.js";
+import type { DaemonClient } from "@frogg/client/internal/daemon-client";
 import { connectToDaemon, getDaemonHost } from "../../utils/client.js";
 import type { CommandOptions, ListResult, OutputSchema, CommandError } from "../../output/index.js";
 
@@ -28,14 +28,14 @@ function extractWorktreeName(path: string): string {
   return basename(path);
 }
 
-export { resolveFdeHomePath } from "../../utils/fde-home.js";
+export { resolveFroggHomePath } from "../../utils/frogg-home.js";
 
-export function resolveFdeWorktreesDir(): string {
-  return join(resolveFdeHomePath(), "worktrees");
+export function resolveFroggWorktreesDir(): string {
+  return join(resolveFroggHomePath(), "worktrees");
 }
 
 function isAgentInManagedWorktree(agentCwd: string): boolean {
-  const worktreesDir = resolveFdeWorktreesDir();
+  const worktreesDir = resolveFroggWorktreesDir();
   return agentCwd === worktreesDir || agentCwd.startsWith(worktreesDir + sep);
 }
 
@@ -80,7 +80,7 @@ export async function runLsCommand(
     const agents = agentsPayload.entries.map((entry) => entry.agent);
 
     // Get worktree list from daemon
-    const response = await client.getFdeWorktreeList({});
+    const response = await client.getFroggWorktreeList({});
 
     await client.close();
 

@@ -728,7 +728,7 @@ export const ptBR: TranslationResources = {
       },
       routes: {
         public: "Proxy reverso",
-        fde: "Memorable",
+        frogg: "Memorable",
         direct: "Direta",
       },
       states: {
@@ -2078,7 +2078,7 @@ export const ptBR: TranslationResources = {
   serviceUrl: {
     title: "Abrir URL do serviço",
     message: "Abrir {{url}}?",
-    inFde: "No {{brandName}}",
+    inFrogg: "No {{brandName}}",
     externalBrowser: "Navegador externo",
     dontAskAgain: "Não perguntar novamente",
   },
@@ -2204,7 +2204,7 @@ export const ptBR: TranslationResources = {
       one: "usou {{count}} outra ferramenta",
       other: "usou {{count}} outras ferramentas",
     },
-    fdeCalls: {
+    froggCalls: {
       one: "chamou o {{brandName}} {{count}} vez",
       other: "chamou o {{brandName}} {{count}} vezes",
     },
@@ -2708,14 +2708,14 @@ export const ptBR: TranslationResources = {
           docker: {
             label: "Docker",
             available: "Disponível",
-            container: "Disponível, contêiner fde-daemon presente",
+            container: "Disponível, contêiner frogg-daemon presente",
             missing: "Não disponível",
           },
           curlMissing:
             "O curl não está no host; a instalação nativa precisa dele para baixar o pacote.",
           noService:
             "Sem um gerenciador de serviços de usuário, o daemon não reiniciará após uma reinicialização.",
-          installDir: "Instalações nativas vão para {{home}}/.local/share/fde",
+          installDir: "Instalações nativas vão para {{home}}/.local/share/frogg",
           failed: "Não foi possível inspecionar o host. {{detail}}",
         },
         method: {
@@ -2743,7 +2743,7 @@ export const ptBR: TranslationResources = {
         uninstall: {
           title: "Desinstalar o daemon?",
           message:
-            "Para o serviço e remove a instalação do {{brandName}} de {{host}}. O estado do daemon (~/.fde) é mantido.",
+            "Para o serviço e remove a instalação do {{brandName}} de {{host}}. O estado do daemon (~/.frogg) é mantido.",
         },
         log: {
           running: "Executando em {{host}}...",
@@ -2773,7 +2773,7 @@ export const ptBR: TranslationResources = {
         saving: "Salvando...",
         saveFailed: "Não foi possível salvar o endpoint do relay.",
         overridden:
-          "Definido por uma opção de inicialização do daemon (FDE_RELAY_ENDPOINT ou FDE_RELAY_USE_TLS). Altere onde o daemon é iniciado.",
+          "Definido por uma opção de inicialização do daemon (FROGG_RELAY_ENDPOINT ou FROGG_RELAY_USE_TLS). Altere onde o daemon é iniciado.",
       },
       skills: {
         ...en.settings.host.skills,
@@ -2844,7 +2844,7 @@ export const ptBR: TranslationResources = {
       agentDefinitions: {
         title: "Definições de agentes",
         description:
-          "Agentes que seus provedores carregam deste host. O FDE apenas os lista; edite os arquivos para alterá-los.",
+          "Agentes que seus provedores carregam deste host. O Frogg apenas os lista; edite os arquivos para alterá-los.",
         projectTitle: "Definições de agentes do projeto",
         projectDescription: "Agentes que seus provedores carregam do diretório deste projeto.",
         empty: "Nenhuma definição de agente encontrada",
@@ -3114,13 +3114,13 @@ export const ptBR: TranslationResources = {
         savedToast: "Projeto atualizado",
       },
       readFailures: {
-        invalidTitle: "Não foi possível analisar fde.json",
+        invalidTitle: "Não foi possível analisar frogg.json",
         invalidDescription: "Corrija o arquivo no disco e recarregue.",
         missingTitle: "Este host não tem este projeto",
         missingSingleHost: "O host selecionado não tem registro deste projeto.",
-        transportTitle: "Não foi possível carregar fde.json",
+        transportTitle: "Não foi possível carregar frogg.json",
         transportFallback: "O host não respondeu.",
-        failedTitle: "Não foi possível carregar fde.json",
+        failedTitle: "Não foi possível carregar frogg.json",
         failedDescription: "Recarregue para tentar novamente.",
       },
       worktree: {
@@ -3131,7 +3131,7 @@ export const ptBR: TranslationResources = {
           "Veja a documentação para mais detalhes e as variáveis de ambiente disponíveis para estes comandos",
         setup: "Configuração",
         setupAccessibility: "Comandos de configuração do worktree",
-        uncommittedTitle: "Faça commit das alterações no fde.json",
+        uncommittedTitle: "Faça commit das alterações no frogg.json",
         uncommittedDescription:
           "Novos worktrees usam o script de configuração do branch base selecionado.",
         teardown: "Desmontagem",
@@ -3156,7 +3156,7 @@ export const ptBR: TranslationResources = {
         newScript: "Novo script",
         editScript: "Editar {{name}}",
         runAsService: "Executar como serviço",
-        serviceHint: "O {{brandName}} supervisiona o processo e atribui uma porta via $FDE_PORT",
+        serviceHint: "O {{brandName}} supervisiona o processo e atribui uma porta via $FROGG_PORT",
         actions: {
           add: "Adicionar script",
           edit: "Editar",
@@ -3175,8 +3175,8 @@ export const ptBR: TranslationResources = {
       },
       writeFailures: {
         staleTitle: "Configuração alterada no disco",
-        staleDescription: "Recarregue para buscar o fde.json mais recente antes de salvar.",
-        failedTitle: "Não foi possível salvar fde.json",
+        staleDescription: "Recarregue para buscar o frogg.json mais recente antes de salvar.",
+        failedTitle: "Não foi possível salvar frogg.json",
         failedDescription: "Tente novamente ou recarregue a versão mais recente do disco.",
       },
       actions: {

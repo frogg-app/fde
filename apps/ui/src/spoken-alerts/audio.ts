@@ -1,4 +1,4 @@
-import type { NotificationAudio } from "@fde/protocol/messages";
+import type { NotificationAudio } from "@frogg/protocol/messages";
 import type { AudioPlaybackSource } from "@/voice/audio-engine-types";
 
 const BASE64_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";

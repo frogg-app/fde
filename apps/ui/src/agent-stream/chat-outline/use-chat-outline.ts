@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
-import type { AgentTimelinePromptIndexPayload } from "@fde/client/internal/daemon-client";
+import type { AgentTimelinePromptIndexPayload } from "@frogg/client/internal/daemon-client";
 import { isWeb } from "@/constants/platform";
 import { useStableEvent } from "@/hooks/use-stable-event";
 import { getHostRuntimeStore } from "@/runtime/host-runtime";

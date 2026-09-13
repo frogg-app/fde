@@ -10,7 +10,7 @@ const schema = JSON.stringify({
 async function main() {
   const ctx = await createE2ETestContext({ timeout: 180000 });
   try {
-    const run = await ctx.fde(
+    const run = await ctx.frogg(
       [
         "run",
         "--provider",
@@ -29,14 +29,14 @@ async function main() {
     console.log("RUN STDOUT\n" + run.stdout);
     console.log("RUN STDERR\n" + run.stderr);
 
-    const ls = await ctx.fde(["ls", "--json"]);
+    const ls = await ctx.frogg(["ls", "--json"]);
     console.log("LS\n" + ls.stdout);
     const agents = JSON.parse(ls.stdout);
     const agentId = agents[0]?.id;
     if (agentId) {
-      const inspect = await ctx.fde(["inspect", agentId]);
+      const inspect = await ctx.frogg(["inspect", agentId]);
       console.log("INSPECT\n" + inspect.stdout);
-      const logs = await ctx.fde(["logs", "--tail", "100", agentId], { timeout: 30000 });
+      const logs = await ctx.frogg(["logs", "--tail", "100", agentId], { timeout: 30000 });
       console.log("LOGS\n" + logs.stdout);
     }
   } finally {

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { CheckoutPrStatusSchema } from "@fde/protocol/messages";
+import { CheckoutPrStatusSchema } from "@frogg/protocol/messages";
 import { i18n } from "@/i18n/i18next";
 
 import { buildGitActions, type BuildGitActionsInput } from "./policy";
@@ -70,7 +70,7 @@ function createInput(
     pullRequestMergeable: "UNKNOWN",
     mergeCapability: deriveMergeCapability(pullRequestGithub),
     hasRemote: false,
-    isFdeOwnedWorktree: false,
+    isFroggOwnedWorktree: false,
     isOnBaseBranch: true,
     hasUncommittedChanges: false,
     baseRefAvailable: true,
@@ -202,11 +202,11 @@ describe("git-actions-policy", () => {
     });
   });
 
-  it("keeps push available for a no-upstream Fde worktree with local commits", () => {
+  it("keeps push available for a no-upstream Frogg worktree with local commits", () => {
     const actions = buildGitActions(
       createInput({
         hasRemote: true,
-        isFdeOwnedWorktree: true,
+        isFroggOwnedWorktree: true,
         isOnBaseBranch: false,
         aheadCount: 1,
         aheadOfOrigin: null,
@@ -414,7 +414,7 @@ describe("git-actions-policy", () => {
   it("keeps archive workspace out of Git actions for checkouts and worktrees", () => {
     const localCheckout = buildGitActions(createInput({ hasUncommittedChanges: true }));
     const worktree = buildGitActions(
-      createInput({ hasUncommittedChanges: true, isFdeOwnedWorktree: true }),
+      createInput({ hasUncommittedChanges: true, isFroggOwnedWorktree: true }),
     );
 
     expect(localCheckout.secondary.some((action) => action.id === "archive-workspace")).toBe(false);
@@ -429,7 +429,7 @@ describe("git-actions-policy", () => {
   });
 
   it("does not promote archive for an idle app-owned worktree", () => {
-    const actions = buildGitActions(createInput({ isFdeOwnedWorktree: true }));
+    const actions = buildGitActions(createInput({ isFroggOwnedWorktree: true }));
 
     expect(actions.primary).toBeNull();
   });
@@ -1051,7 +1051,7 @@ describe("git-actions-policy", () => {
         pullRequestState: "open",
         pullRequestMergeable: "MERGEABLE",
         pullRequestGithub: githubStatus(),
-        isFdeOwnedWorktree: true,
+        isFroggOwnedWorktree: true,
       }),
     );
 

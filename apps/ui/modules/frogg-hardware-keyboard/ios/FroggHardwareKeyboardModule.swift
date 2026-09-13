@@ -3,19 +3,19 @@ import UIKit
 
 private let hardwareSubmitEventName = "onHardwareKeyboardSubmit"
 
-private weak var activeModule: FdeHardwareKeyboardModule?
+private weak var activeModule: FroggHardwareKeyboardModule?
 private var isHardwareSubmitEnabled = false
 
 @objc
-public class FdeHardwareKeyboardReactDelegateHandler: ExpoReactDelegateHandler {
+public class FroggHardwareKeyboardReactDelegateHandler: ExpoReactDelegateHandler {
   public override func createRootViewController() -> UIViewController? {
-    return FdeHardwareKeyboardRootViewController()
+    return FroggHardwareKeyboardRootViewController()
   }
 }
 
-public class FdeHardwareKeyboardModule: Module {
+public class FroggHardwareKeyboardModule: Module {
   public func definition() -> ModuleDefinition {
-    Name("FdeHardwareKeyboard")
+    Name("FroggHardwareKeyboard")
 
     Events(hardwareSubmitEventName)
 
@@ -42,7 +42,7 @@ public class FdeHardwareKeyboardModule: Module {
   }
 }
 
-private final class FdeHardwareKeyboardRootViewController: UIViewController {
+private final class FroggHardwareKeyboardRootViewController: UIViewController {
   override var keyCommands: [UIKeyCommand]? {
     guard isHardwareSubmitEnabled && UIDevice.current.userInterfaceIdiom == .pad else {
       return super.keyCommands
@@ -68,7 +68,7 @@ private final class FdeHardwareKeyboardRootViewController: UIViewController {
   }
 
   private func canSubmitCurrentTextInput() -> Bool {
-    guard let responder = UIResponder.fdeCurrentFirstResponder else {
+    guard let responder = UIResponder.froggCurrentFirstResponder else {
       return false
     }
     guard let textInput = responder as? UITextInput else {
@@ -81,7 +81,7 @@ private final class FdeHardwareKeyboardRootViewController: UIViewController {
 private extension UIResponder {
   private static weak var currentFirstResponder: UIResponder?
 
-  static var fdeCurrentFirstResponder: UIResponder? {
+  static var froggCurrentFirstResponder: UIResponder? {
     currentFirstResponder = nil
     UIApplication.shared.sendAction(
       #selector(captureCurrentFirstResponder(_:)),

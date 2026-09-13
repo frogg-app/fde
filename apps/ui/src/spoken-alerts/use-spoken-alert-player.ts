@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import type { DaemonClient } from "@fde/client/internal/daemon-client";
+import type { DaemonClient } from "@frogg/client/internal/daemon-client";
 import { isWeb } from "@/constants/platform";
 import { useVoiceAudioEngineOptional } from "@/contexts/voice-context";
 import { UnsupportedAlertAudioError, toAlertPlaybackSource } from "./audio";

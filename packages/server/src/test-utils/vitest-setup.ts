@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { mkdirSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -11,19 +11,19 @@ dotenv.config({ path: path.resolve(serverRoot, ".env.test"), override: true });
 dotenv.config({ path: path.resolve(serverRoot, "../.env") });
 
 // Every worker gets its own throwaway home. Without this, any code path that resolves the
-// default home (`~/.fde`) reads and writes the developer's real state — and with 20 workers
+// default home (`~/.frogg`) reads and writes the developer's real state — and with 20 workers
 // sharing it, tests corrupt each other and can disturb a running daemon.
-if (!process.env[`${brand.envPrefix}_HOME`] && !(brand.legacyFde && process.env.FDE_HOME)) {
+if (!process.env[`${brand.envPrefix}_HOME`] && !(brand.legacyFrogg && process.env.FROGG_HOME)) {
   const workerHome = path.join(
     os.tmpdir(),
-    `fde-test-home-${process.pid}-${process.env.VITEST_WORKER_ID ?? "0"}`,
+    `frogg-test-home-${process.pid}-${process.env.VITEST_WORKER_ID ?? "0"}`,
   );
   mkdirSync(workerHome, { recursive: true, mode: 0o700 });
   process.env[`${brand.envPrefix}_HOME`] = workerHome;
-  process.env.FDE_HOME = workerHome;
+  process.env.FROGG_HOME = workerHome;
 }
 
-process.env.FDE_SUPERVISED = "0";
+process.env.FROGG_SUPERVISED = "0";
 process.env.GIT_TERMINAL_PROMPT = "0";
 process.env.GIT_SSH_COMMAND = "ssh -oBatchMode=yes";
 process.env.SSH_ASKPASS = "/usr/bin/false";

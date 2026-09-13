@@ -1,9 +1,9 @@
-import type { AgentProviderDefinition } from "@fde/protocol/provider-manifest";
+import type { AgentProviderDefinition } from "@frogg/protocol/provider-manifest";
 import type {
   AgentModelDefinition,
   AgentProvider,
   ProviderSnapshotEntry,
-} from "@fde/protocol/agent-types";
+} from "@frogg/protocol/agent-types";
 import {
   mergeProviderPreferences,
   type FormPreferences,

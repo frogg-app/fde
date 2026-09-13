@@ -85,7 +85,7 @@ export async function installTerminalRenderProbe(page: Page): Promise<void> {
   await page.addInitScript(() => {
     interface ProbeTerm {
       write?: (data: string | Uint8Array, callback?: () => void) => void;
-      __fdeRenderProbeWriteWrapped?: boolean;
+      __froggRenderProbeWriteWrapped?: boolean;
     }
     interface ProbeState {
       term: ProbeTerm | undefined;
@@ -107,9 +107,9 @@ export async function installTerminalRenderProbe(page: Page): Promise<void> {
 
     const win = window as unknown as Record<string, unknown> & {
       __terminalRenderProbe?: ProbeState;
-      __fdeTerminal?: ProbeTerm;
+      __froggTerminal?: ProbeTerm;
     };
-    const existingDescriptor = Object.getOwnPropertyDescriptor(win, "__fdeTerminal");
+    const existingDescriptor = Object.getOwnPropertyDescriptor(win, "__froggTerminal");
     const getExisting = () =>
       existingDescriptor?.get ? existingDescriptor.get.call(win) : existingDescriptor?.value;
 
@@ -184,7 +184,7 @@ export async function installTerminalRenderProbe(page: Page): Promise<void> {
       value: probe,
     });
 
-    Object.defineProperty(win, "__fdeTerminal", {
+    Object.defineProperty(win, "__froggTerminal", {
       configurable: true,
       get() {
         return probe.term;
@@ -201,7 +201,7 @@ export async function installTerminalRenderProbe(page: Page): Promise<void> {
         probe.events.push({ at: performance.now(), type: "set" });
         probe.term = next;
 
-        if (next?.write && !next.__fdeRenderProbeWriteWrapped) {
+        if (next?.write && !next.__froggRenderProbeWriteWrapped) {
           const originalWrite = next.write.bind(next);
           next.write = (data: string | Uint8Array, callback?: () => void) => {
             const text = typeof data === "string" ? data : new TextDecoder().decode(data);
@@ -229,7 +229,7 @@ export async function installTerminalRenderProbe(page: Page): Promise<void> {
             }
             return originalWrite(data, callback);
           };
-          next.__fdeRenderProbeWriteWrapped = true;
+          next.__froggRenderProbeWriteWrapped = true;
         }
       },
     });
@@ -644,22 +644,22 @@ export async function installTerminalKeystrokeStressProbe(page: Page): Promise<v
     Object.defineProperty(InstrumentedWebSocket, "CLOSED", { value: NativeWebSocket.CLOSED });
     window.WebSocket = InstrumentedWebSocket as typeof WebSocket;
 
-    const existingDescriptor = Object.getOwnPropertyDescriptor(window, "__fdeTerminal");
+    const existingDescriptor = Object.getOwnPropertyDescriptor(window, "__froggTerminal");
     const getExisting = () =>
       existingDescriptor?.get ? existingDescriptor.get.call(window) : existingDescriptor?.value;
 
     let terminal = getExisting();
-    Object.defineProperty(window, "__fdeTerminal", {
+    Object.defineProperty(window, "__froggTerminal", {
       configurable: true,
       get() {
         return terminal;
       },
       set(next: {
         write?: (data: string | Uint8Array, callback?: () => void) => void;
-        __fdeKeystrokeProbeWriteWrapped?: boolean;
+        __froggKeystrokeProbeWriteWrapped?: boolean;
       }) {
         terminal = next;
-        if (next?.write && !next.__fdeKeystrokeProbeWriteWrapped) {
+        if (next?.write && !next.__froggKeystrokeProbeWriteWrapped) {
           const originalWrite = next.write.bind(next);
           next.write = (data: string | Uint8Array, callback?: () => void) => {
             const text = typeof data === "string" ? data : new TextDecoder().decode(data);
@@ -675,7 +675,7 @@ export async function installTerminalKeystrokeStressProbe(page: Page): Promise<v
               callback?.();
             });
           };
-          next.__fdeKeystrokeProbeWriteWrapped = true;
+          next.__froggKeystrokeProbeWriteWrapped = true;
         }
       },
     });

@@ -194,13 +194,13 @@ describe("workspace navigation", () => {
       pathname: "/",
       params: {
         serverId: "server-1",
-        workspaceId: "b64_L3RtcC9mZGUtbWlzc2luZy13b3Jrc3BhY2U",
+        workspaceId: "b64_L3RtcC9mcm9nZy1taXNzaW5nLXdvcmtzcGFjZQ",
       },
     });
 
     expect(selection).toEqual({
       serverId: "server-1",
-      workspaceId: "/tmp/fde-missing-workspace",
+      workspaceId: "/tmp/frogg-missing-workspace",
     });
   });
 

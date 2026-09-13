@@ -6,7 +6,7 @@ import { expect, test } from "vitest";
 import { runConfigFormatCommand } from "./config-format.js";
 
 test("formats the selected daemon home and reports its path", async () => {
-  const home = mkdtempSync(path.join(tmpdir(), "fde-config-format-"));
+  const home = mkdtempSync(path.join(tmpdir(), "frogg-config-format-"));
   const configPath = path.join(home, "config.json");
   const original = { daemon: { listen: "127.0.0.1:8123" } };
   try {

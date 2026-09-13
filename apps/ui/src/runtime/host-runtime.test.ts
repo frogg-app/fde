@@ -4,10 +4,10 @@ import type {
   ConnectionState,
   FetchAgentsEntry,
   FetchAgentsOptions,
-} from "@fde/client/internal/daemon-client";
-import type { ConnectionOffer } from "@fde/protocol/connection-offer";
-import type { SessionOutboundMessage } from "@fde/protocol/messages";
-import type { AgentPermissionRequest } from "@fde/protocol/agent-types";
+} from "@frogg/client/internal/daemon-client";
+import type { ConnectionOffer } from "@frogg/protocol/connection-offer";
+import type { SessionOutboundMessage } from "@frogg/protocol/messages";
+import type { AgentPermissionRequest } from "@frogg/protocol/agent-types";
 import type { HostConnection, HostProfile } from "@/types/host-connection";
 import { defaultHostAppearance } from "@/hosts/appearance";
 import { useSessionStore, type Agent } from "@/stores/session-store";
@@ -209,7 +209,7 @@ class FakeDaemonClient {
 
 afterEach(() => {
   vi.useRealTimers();
-  delete (globalThis as Record<string, unknown>).__FDE_INITIAL_DAEMON_CONNECTION__;
+  delete (globalThis as Record<string, unknown>).__FROGG_INITIAL_DAEMON_CONNECTION__;
   delete (globalThis as { window?: unknown }).window;
 });
 
@@ -322,7 +322,7 @@ function makeFetchAgentsEntry(input: {
         currentBranch: null,
         remoteUrl: null,
         worktreeRoot: null,
-        isFdeOwnedWorktree: false,
+        isFroggOwnedWorktree: false,
         mainRepoRoot: null,
       },
     },
@@ -1441,8 +1441,8 @@ describe("HostRuntimeStore", () => {
     const host = makeHost({ connections: [makeHost().connections[0]!] });
     const revocation = createDeferred<void>();
     const storage = createMemoryHostRuntimeStorage({
-      "@fde:daemon-registry": JSON.stringify([host]),
-      "@fde:e2e": "1",
+      "@frogg:daemon-registry": JSON.stringify([host]),
+      "@frogg:e2e": "1",
     });
     const store = new HostRuntimeStore({
       storage,
@@ -1467,8 +1467,8 @@ describe("HostRuntimeStore", () => {
     const host = makeHost({ connections: [makeHost().connections[0]!] });
     const revokedServerIds: string[] = [];
     const storage = createMemoryHostRuntimeStorage({
-      "@fde:daemon-registry": JSON.stringify([host]),
-      "@fde:e2e": "1",
+      "@frogg:daemon-registry": JSON.stringify([host]),
+      "@frogg:e2e": "1",
     });
     const store = new HostRuntimeStore({
       storage,
@@ -1497,8 +1497,8 @@ describe("HostRuntimeStore", () => {
         return backingStore.readAll();
       },
     };
-    await storage.setItem("@fde:daemon-registry", JSON.stringify([host]));
-    await storage.setItem("@fde:e2e", "1");
+    await storage.setItem("@frogg:daemon-registry", JSON.stringify([host]));
+    await storage.setItem("@frogg:e2e", "1");
     const session = useSessionStore.getState();
 
     const store = new HostRuntimeStore({
@@ -1576,7 +1576,7 @@ describe("HostRuntimeStore", () => {
   it("exposes the default appearance for a host stored before the field existed", async () => {
     const storage = createMemoryHostRuntimeStorage();
     await storage.setItem(
-      "@fde:daemon-registry",
+      "@frogg:daemon-registry",
       JSON.stringify([
         {
           serverId: "srv_legacy",
@@ -1588,7 +1588,7 @@ describe("HostRuntimeStore", () => {
         },
       ]),
     );
-    await storage.setItem("@fde:e2e", "1");
+    await storage.setItem("@frogg:e2e", "1");
     const store = createAppearanceStore(storage);
 
     const registryLoaded = onceHostListMatches(store, () => store.isHostRegistryLoaded());
@@ -1603,8 +1603,8 @@ describe("HostRuntimeStore", () => {
   it("records a chosen host color and writes it through to storage", async () => {
     const host = makeHost({ serverId: "srv_appearance", updatedAt: new Date(0).toISOString() });
     const storage = createMemoryHostRuntimeStorage();
-    await storage.setItem("@fde:daemon-registry", JSON.stringify([host]));
-    await storage.setItem("@fde:e2e", "1");
+    await storage.setItem("@frogg:daemon-registry", JSON.stringify([host]));
+    await storage.setItem("@frogg:e2e", "1");
     const store = createAppearanceStore(storage);
 
     const registryLoaded = onceHostListMatches(store, () => store.isHostRegistryLoaded());
@@ -1622,7 +1622,7 @@ describe("HostRuntimeStore", () => {
     expect(updated?.appearance).toEqual({ color: "teal", badgeDisplay: null });
     expect(updated?.updatedAt).not.toBe(host.updatedAt);
 
-    const persisted = await storage.getItem("@fde:daemon-registry");
+    const persisted = await storage.getItem("@frogg:daemon-registry");
     expect(JSON.parse(persisted ?? "[]")[0].appearance).toEqual({
       color: "teal",
       badgeDisplay: null,
@@ -1637,8 +1637,8 @@ describe("HostRuntimeStore", () => {
       appearance: { color: "amber", badgeDisplay: null },
     });
     const storage = createMemoryHostRuntimeStorage();
-    await storage.setItem("@fde:daemon-registry", JSON.stringify([host]));
-    await storage.setItem("@fde:e2e", "1");
+    await storage.setItem("@frogg:daemon-registry", JSON.stringify([host]));
+    await storage.setItem("@frogg:e2e", "1");
     const store = createAppearanceStore(storage);
 
     const registryLoaded = onceHostListMatches(store, () => store.isHostRegistryLoaded());
@@ -1654,7 +1654,7 @@ describe("HostRuntimeStore", () => {
 
     expect(store.getHosts()[0]?.appearance).toEqual({ color: "amber", badgeDisplay: "icon" });
 
-    const persisted = await storage.getItem("@fde:daemon-registry");
+    const persisted = await storage.getItem("@frogg:daemon-registry");
     expect(JSON.parse(persisted ?? "[]")[0].appearance).toEqual({
       color: "amber",
       badgeDisplay: "icon",
@@ -1666,8 +1666,8 @@ describe("HostRuntimeStore", () => {
   it("keeps host appearance unchanged when persistence fails", async () => {
     const host = makeHost({ serverId: "srv_appearance" });
     const storage = createMemoryHostRuntimeStorage();
-    await storage.setItem("@fde:daemon-registry", JSON.stringify([host]));
-    await storage.setItem("@fde:e2e", "1");
+    await storage.setItem("@frogg:daemon-registry", JSON.stringify([host]));
+    await storage.setItem("@frogg:e2e", "1");
     const store = createAppearanceStore(storage);
 
     const registryLoaded = onceHostListMatches(store, () => store.isHostRegistryLoaded());
@@ -1687,8 +1687,8 @@ describe("HostRuntimeStore", () => {
   it("serializes overlapping host appearance writes", async () => {
     const host = makeHost({ serverId: "srv_appearance" });
     const storage = createMemoryHostRuntimeStorage();
-    await storage.setItem("@fde:daemon-registry", JSON.stringify([host]));
-    await storage.setItem("@fde:e2e", "1");
+    await storage.setItem("@frogg:daemon-registry", JSON.stringify([host]));
+    await storage.setItem("@frogg:e2e", "1");
     const store = createAppearanceStore(storage);
 
     const registryLoaded = onceHostListMatches(store, () => store.isHostRegistryLoaded());
@@ -1713,7 +1713,7 @@ describe("HostRuntimeStore", () => {
     await Promise.all([color, display]);
 
     expect(store.getHosts()[0]?.appearance).toEqual({ color: "teal", badgeDisplay: "icon" });
-    const persistedHosts = JSON.parse((await storage.getItem("@fde:daemon-registry")) ?? "[]");
+    const persistedHosts = JSON.parse((await storage.getItem("@frogg:daemon-registry")) ?? "[]");
     expect(persistedHosts[0]?.appearance).toEqual({ color: "teal", badgeDisplay: "icon" });
     store.syncHosts([]);
   });
@@ -2075,7 +2075,7 @@ describe("HostRuntimeStore", () => {
         entries: [
           makeFetchAgentsEntry({
             id: "agent-recent",
-            cwd: "/workspaces/fde",
+            cwd: "/workspaces/frogg",
             updatedAt: "2026-03-04T12:00:00.000Z",
             title: "Recent agent",
           }),
@@ -2088,7 +2088,7 @@ describe("HostRuntimeStore", () => {
         entries: [
           makeFetchAgentsEntry({
             id: "agent-stale-attention",
-            cwd: "/workspaces/fde-pr67-review",
+            cwd: "/workspaces/frogg-pr67-review",
             updatedAt: "2026-02-20T08:00:00.000Z",
             title: "Needs triage",
             requiresAttention: true,
@@ -3032,7 +3032,7 @@ describe("HostRuntimeStore", () => {
     useSessionStore.getState().setAgents(host.serverId, () => {
       const stale = makeFetchAgentsEntry({
         id: "agent-archived",
-        cwd: "/workspaces/fde",
+        cwd: "/workspaces/frogg",
         updatedAt: "2026-03-30T15:29:00.000Z",
         archivedAt: null,
         title: "Stale active copy",
@@ -3197,7 +3197,7 @@ describe("HostRuntimeStore", () => {
 
     await store.upsertDirectConnection({
       serverId: "srv_tls_password",
-      endpoint: "example.fde.test:7443",
+      endpoint: "example.frogg.test:7443",
       useTls: true,
       password: "shared-secret",
       label: "tls host",
@@ -3206,9 +3206,9 @@ describe("HostRuntimeStore", () => {
     const host = store.getHosts().find((entry) => entry.serverId === "srv_tls_password");
     expect(host?.connections).toEqual([
       {
-        id: "direct:example.fde.test:7443",
+        id: "direct:example.frogg.test:7443",
         type: "directTcp",
-        endpoint: "example.fde.test:7443",
+        endpoint: "example.frogg.test:7443",
         useTls: true,
         password: "shared-secret",
       },
@@ -3450,7 +3450,7 @@ describe("HostRuntimeStore", () => {
 
     const url = encodeOfferUrl({
       v: 3,
-      product: "fde",
+      product: "frogg",
       serverId: "srv_claim",
       hostname: "devbox",
       daemonPublicKeyB64: "pk_test_offer",
@@ -3532,7 +3532,7 @@ describe("readInitialDaemonConnectionHint", () => {
   });
 
   it("parses a valid listen-only hint", () => {
-    (globalThis as Record<string, unknown>).__FDE_INITIAL_DAEMON_CONNECTION__ = {
+    (globalThis as Record<string, unknown>).__FROGG_INITIAL_DAEMON_CONNECTION__ = {
       listen: "localhost:9999",
     };
     expect(readInitialDaemonConnectionHint({ isWebRuntime: true })).toEqual({
@@ -3542,21 +3542,21 @@ describe("readInitialDaemonConnectionHint", () => {
   });
 
   it("preserves useTls when explicitly true", () => {
-    (globalThis as Record<string, unknown>).__FDE_INITIAL_DAEMON_CONNECTION__ = {
-      listen: "fde.example.com:443",
+    (globalThis as Record<string, unknown>).__FROGG_INITIAL_DAEMON_CONNECTION__ = {
+      listen: "frogg.example.com:443",
       useTls: true,
     };
     expect(readInitialDaemonConnectionHint({ isWebRuntime: true })).toEqual({
-      listen: "fde.example.com:443",
+      listen: "frogg.example.com:443",
       useTls: true,
     });
   });
 
   it("ignores invalid shapes", () => {
-    (globalThis as Record<string, unknown>).__FDE_INITIAL_DAEMON_CONNECTION__ = "localhost:9999";
+    (globalThis as Record<string, unknown>).__FROGG_INITIAL_DAEMON_CONNECTION__ = "localhost:9999";
     expect(readInitialDaemonConnectionHint({ isWebRuntime: true })).toBeNull();
 
-    (globalThis as Record<string, unknown>).__FDE_INITIAL_DAEMON_CONNECTION__ = {
+    (globalThis as Record<string, unknown>).__FROGG_INITIAL_DAEMON_CONNECTION__ = {
       useTls: true,
     };
     expect(readInitialDaemonConnectionHint({ isWebRuntime: true })).toBeNull();

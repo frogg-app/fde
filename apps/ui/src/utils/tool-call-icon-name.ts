@@ -1,7 +1,7 @@
-import type { ToolCallDetail, ToolCallIconName } from "@fde/protocol/agent-types";
-import { isFdeToolName } from "@fde/protocol/tool-name-normalization";
+import type { ToolCallDetail, ToolCallIconName } from "@frogg/protocol/agent-types";
+import { isFroggToolName } from "@frogg/protocol/tool-name-normalization";
 
-export type ToolCallIcon = ToolCallIconName | "fde";
+export type ToolCallIcon = ToolCallIconName | "frogg";
 
 const TOOL_DETAIL_ICON_NAMES: Record<ToolCallDetail["type"], ToolCallIcon> = {
   shell: "square_terminal",
@@ -31,8 +31,8 @@ export function resolveToolCallIconName(toolName: string, detail?: ToolCallDetai
   if (lowerName === "speak") {
     return "mic_vocal";
   }
-  if (isFdeToolName(lowerName)) {
-    return "fde";
+  if (isFroggToolName(lowerName)) {
+    return "frogg";
   }
   if (lowerName === "task") {
     return "bot";

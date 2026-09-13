@@ -6,7 +6,7 @@ import { readValidatedString } from "@/storage/validated-storage";
 
 type EditorTargetId = string;
 
-const PREFERRED_EDITOR_STORAGE_KEY = "@fde:preferred-editor";
+const PREFERRED_EDITOR_STORAGE_KEY = "@frogg:preferred-editor";
 const PREFERRED_EDITOR_QUERY_KEY = ["preferred-editor"];
 
 async function loadPreferredEditor(): Promise<EditorTargetId | null> {

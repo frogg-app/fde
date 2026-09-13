@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 import { lstat, mkdir, mkdtemp, rename, rm, stat } from "node:fs/promises";
 import { basename, resolve, sep } from "path";
 import { homedir } from "node:os";
-import { CLIENT_CAPS, type ClientCapability } from "@fde/protocol/client-capabilities";
+import { CLIENT_CAPS, type ClientCapability } from "@frogg/protocol/client-capabilities";
 import {
   serializeAgentStreamEvent,
   type AgentSnapshotPayload,
@@ -30,8 +30,8 @@ import type {
   TerminalWorkspaceContributionChangedEvent,
 } from "../terminal/terminal-manager.js";
 import { TerminalSessionController } from "../terminal/terminal-session-controller.js";
-import type { TerminalActivity } from "@fde/protocol/terminal-activity";
-import type { BinaryFrame } from "@fde/protocol/binary-frames/index";
+import type { TerminalActivity } from "@frogg/protocol/terminal-activity";
+import type { BinaryFrame } from "@frogg/protocol/binary-frames/index";
 import { CursorError } from "./pagination/cursor.js";
 import { SortablePager, type SortSpec } from "./pagination/sortable-pager.js";
 import { describeAgentHistoryMatches, rankAgentHistoryCandidates } from "./agent-history-search.js";
@@ -64,9 +64,9 @@ import {
 import type { DaemonConfigStore } from "./daemon-config-store.js";
 import { loadPersistedConfig } from "./persisted-config.js";
 import { releaseWorkspaceServicePortPlan } from "./workspace-service-port-registry.js";
-import { getErrorMessage, getErrorMessageOr } from "@fde/protocol/error-utils";
-import { getAgentStatusPriority } from "@fde/protocol/agent-state-bucket";
-import { getParentAgentIdFromLabels } from "@fde/protocol/agent-labels";
+import { getErrorMessage, getErrorMessageOr } from "@frogg/protocol/error-utils";
+import { getAgentStatusPriority } from "@frogg/protocol/agent-state-bucket";
+import { getParentAgentIdFromLabels } from "@frogg/protocol/agent-labels";
 import type { WorkspaceGitRuntimeSnapshot, WorkspaceGitService } from "./workspace-git-service.js";
 import type { ProjectUpdate } from "./workspace-reconciliation-service.js";
 import {
@@ -238,19 +238,19 @@ import {
 } from "./workspace-directory.js";
 import { shouldEmitPendingBootstrapUpdate } from "./workspace-bootstrap-dedupe.js";
 import {
-  createFdeWorktree,
-  type CreateFdeWorktreeInput,
-  type CreateFdeWorktreeResult,
-} from "./fde-worktree-service.js";
+  createFroggWorktree,
+  type CreateFroggWorktreeInput,
+  type CreateFroggWorktreeResult,
+} from "./frogg-worktree-service.js";
 import { WorkspaceAutoName } from "./workspace-auto-name.js";
 import {
   buildAgentSessionConfig as buildWorktreeAgentSessionConfig,
-  createFdeWorktreeWorkflow as createWorktreeWorkflow,
-  type CreateFdeWorktreeSetupContinuationInput,
-  type CreateFdeWorktreeWorkflowResult,
-  handleCreateFdeWorktreeRequest as handleCreateWorktreeRequest,
-  handleFdeWorktreeArchiveRequest as handleWorktreeArchiveRequest,
-  handleFdeWorktreeListRequest as handleWorktreeListRequest,
+  createFroggWorktreeWorkflow as createWorktreeWorkflow,
+  type CreateFroggWorktreeSetupContinuationInput,
+  type CreateFroggWorktreeWorkflowResult,
+  handleCreateFroggWorktreeRequest as handleCreateWorktreeRequest,
+  handleFroggWorktreeArchiveRequest as handleWorktreeArchiveRequest,
+  handleFroggWorktreeListRequest as handleWorktreeListRequest,
   handleWorkspaceSetupStatusRequest as handleWorkspaceSetupStatusRequestMessage,
 } from "./worktree-session.js";
 import { archiveByScope, type ActiveWorkspaceRef } from "./workspace-archive-service.js";
@@ -263,7 +263,7 @@ function resolveWorkspaceSetupRuntime(
   return runtime ?? new WorkspaceSetupRuntime();
 }
 import { WorktreeRequestError, toWorktreeWireError } from "./worktree-errors.js";
-import { parseGitRemoteLocation } from "@fde/protocol/git-remote";
+import { parseGitRemoteLocation } from "@frogg/protocol/git-remote";
 import {
   createProjectDirectory,
   ProjectDirectoryRequestError,
@@ -277,9 +277,9 @@ type ProviderSubagentManagerEvent = Extract<
   { type: "provider_subagent" }
 >["event"];
 
-// FDE never shipped the pre-0.1.45 / pre-0.1.105 Fde clients that the old version gates
-// existed for, and FDE's version numbers restarted at 0.1.x, so gating on the client's app
-// version would wrongly treat every FDE client as legacy (hiding providers and using the legacy
+// Frogg never shipped the pre-0.1.45 / pre-0.1.105 Frogg clients that the old version gates
+// existed for, and Frogg's version numbers restarted at 0.1.x, so gating on the client's app
+// version would wrongly treat every Frogg client as legacy (hiding providers and using the legacy
 // workspace restore). All providers are visible and explicit workspace recovery is always used.
 function errorToFriendlyMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
@@ -437,7 +437,7 @@ export interface SessionOptions {
   downloadTokenStore: DownloadTokenStore;
   pushNotifications: PushNotifications;
   spokenAlerts?: SpokenAlertService | null;
-  fdeHome: string;
+  froggHome: string;
   worktreesRoot?: string;
   agentManager: AgentManager;
   agentStorage: AgentStorage;
@@ -643,7 +643,7 @@ export class Session {
     | ((workspace: PersistedWorkspaceRecord) => Promise<void>)
     | null;
   private readonly sessionLogger: pino.Logger;
-  private readonly fdeHome: string;
+  private readonly froggHome: string;
   private readonly projectIcons: ProjectIconReader;
   private readonly worktreesRoot: string | undefined;
   private readonly rewindInitiators = new Map<string, object | undefined>();
@@ -741,7 +741,7 @@ export class Session {
       downloadTokenStore,
       pushNotifications,
       spokenAlerts,
-      fdeHome,
+      froggHome,
       worktreesRoot,
       agentManager,
       agentStorage,
@@ -796,8 +796,8 @@ export class Session {
     this.onWorkspaceRecovered = onWorkspaceRecovered ?? null;
     this.pushNotifications = pushNotifications;
     this.spokenAlerts = spokenAlerts;
-    this.fdeHome = fdeHome;
-    this.projectIcons = new ProjectIconReader(fdeHome);
+    this.froggHome = froggHome;
+    this.projectIcons = new ProjectIconReader(froggHome);
     this.worktreesRoot = worktreesRoot;
     this.orchestrationSkills = orchestrationSkills;
     this.sessionLogger = logger.child({
@@ -812,7 +812,7 @@ export class Session {
         hasBinaryChannel: () => this.onBinaryMessage !== null,
       },
       downloadTokenStore,
-      fdeHome,
+      froggHome,
       logger: this.sessionLogger,
     });
     this.agentManager = agentManager;
@@ -837,7 +837,7 @@ export class Session {
       workspaceGitService: this.workspaceGitService,
       logger: this.sessionLogger,
     });
-    this.projectImport = new ProjectImportService(this.fdeHome, {
+    this.projectImport = new ProjectImportService(this.froggHome, {
       listNative: async (cwd) => {
         const sessions = await this.agentManager.listImportableSessions({ cwd, limit: 500 });
         const result = [];
@@ -884,7 +884,7 @@ export class Session {
       },
     });
     this.workspaceRecovery = createWorkspaceRecoveryService({
-      fdeHome: this.fdeHome,
+      froggHome: this.froggHome,
       worktreesRoot: this.worktreesRoot,
       getWorkspace: (workspaceId) => this.workspaceRegistry.get(workspaceId),
       getProject: (projectId) => this.projectRegistry.get(projectId),
@@ -914,7 +914,7 @@ export class Session {
           getFocusedSelection: (cwd) => this.getFocusedAgentSelectionForCwd(cwd),
         }),
       }),
-      fdeHome: this.fdeHome,
+      froggHome: this.froggHome,
       worktreesRoot: this.worktreesRoot,
       logger: this.sessionLogger,
     });
@@ -982,7 +982,7 @@ export class Session {
         emitLifecycleIntent: (intent) => this.emitLifecycleIntent(intent),
       },
       clientId: this.clientId,
-      fdeHome: this.fdeHome,
+      froggHome: this.froggHome,
       serverId,
       daemonVersion,
       daemonRuntimeConfig,
@@ -1036,14 +1036,14 @@ export class Session {
       logger: this.sessionLogger,
     });
     this.createAgentLifecycleDispatch = new CreateAgentLifecycleDispatch({
-      fdeHome: this.fdeHome,
+      froggHome: this.froggHome,
       worktreesRoot: this.worktreesRoot,
       agentManager: this.agentManager,
       agentStorage: this.agentStorage,
       github: this.github,
       workspaceGitService: this.workspaceGitService,
-      createFdeWorktreeWorkflow: (input, workflowOptions) =>
-        this.createFdeWorktreeWorkflow(input, workflowOptions),
+      createFroggWorktreeWorkflow: (input, workflowOptions) =>
+        this.createFroggWorktreeWorkflow(input, workflowOptions),
       archiveAgentForClose: (agentId) => this.archiveAgentForClose(agentId),
       findWorkspaceIdForCwd: (cwd) => this.findWorkspaceIdForCwd(cwd),
       listActiveWorkspaces: () => this.listActiveWorkspaceRefs(),
@@ -1082,7 +1082,7 @@ export class Session {
       logger: this.sessionLogger,
       emit: (message) => this.emit(message),
       spawnWorkspaceScript,
-      globalServicePorts: loadPersistedConfig(this.fdeHome).worktrees?.servicePorts,
+      globalServicePorts: loadPersistedConfig(this.froggHome).worktrees?.servicePorts,
     });
     this.subscribeToOptionalManagers();
     this.workspaceDirectory = new WorkspaceDirectory({
@@ -2454,12 +2454,12 @@ export class Session {
         return this.handleFetchWorkspacesRequest(msg);
       case "project.list.request":
         return this.handleProjectListRequest(msg);
-      case "fde_worktree_list_request":
-        return this.handleFdeWorktreeListRequest(msg);
-      case "fde_worktree_archive_request":
-        return this.handleFdeWorktreeArchiveRequest(msg);
-      case "create_fde_worktree_request":
-        return this.handleCreateFdeWorktreeRequest(msg);
+      case "frogg_worktree_list_request":
+        return this.handleFroggWorktreeListRequest(msg);
+      case "frogg_worktree_archive_request":
+        return this.handleFroggWorktreeArchiveRequest(msg);
+      case "create_frogg_worktree_request":
+        return this.handleCreateFroggWorktreeRequest(msg);
       case "workspace_setup_status_request":
         return this.handleWorkspaceSetupStatusRequest(msg);
       // COMPAT(desktopEditorBridge): added in v0.1.88, remove after 2026-12-03 once old clients no longer call daemon editor RPCs.
@@ -3102,7 +3102,7 @@ export class Session {
     const { projectId, requestId } = request;
     try {
       const updated = await setProjectCustomIcon({
-        fdeHome: this.fdeHome,
+        froggHome: this.froggHome,
         projectId,
         source: request.source,
         projects: this.projectRegistry,
@@ -3191,7 +3191,7 @@ export class Session {
 
         await this.projectRegistry.remove(resolvedProjectId);
         await removeProjectCustomIcon({
-          fdeHome: this.fdeHome,
+          froggHome: this.froggHome,
           projectId: resolvedProjectId,
         }).catch((error) => {
           this.sessionLogger.warn(
@@ -3492,7 +3492,7 @@ export class Session {
       }`,
     );
 
-    let createdWorktreeForCleanup: CreateFdeWorktreeWorkflowResult | null = null;
+    let createdWorktreeForCleanup: CreateFroggWorktreeWorkflowResult | null = null;
     let createdAgentId: string | null = null;
     try {
       const requestedCwd = resolve(config.cwd);
@@ -3534,7 +3534,7 @@ export class Session {
           agentManager: this.agentManager,
           agentStorage: this.agentStorage,
           logger: this.sessionLogger,
-          fdeHome: this.fdeHome,
+          froggHome: this.froggHome,
           worktreesRoot: this.worktreesRoot,
           providerSnapshotManager: this.providerSnapshotManager,
         },
@@ -3623,7 +3623,7 @@ export class Session {
 
   private async resolveSessionCreateAgentIntent(input: {
     request: CreateAgentRequestMessage;
-    createdWorktree: CreateFdeWorktreeWorkflowResult | null;
+    createdWorktree: CreateFroggWorktreeWorkflowResult | null;
     workspacePromptTitle: string | null;
   }): Promise<ResolvedSessionCreateAgentIntent> {
     const { request, createdWorktree } = input;
@@ -4052,17 +4052,17 @@ export class Session {
     firstAgentContext?: FirstAgentContext,
   ): Promise<{
     sessionConfig: AgentSessionConfig;
-    setupContinuation?: CreateFdeWorktreeWorkflowResult["setupContinuation"];
+    setupContinuation?: CreateFroggWorktreeWorkflowResult["setupContinuation"];
     createdWorkspaceId?: string;
   }> {
     return buildWorktreeAgentSessionConfig(
       {
-        fdeHome: this.fdeHome,
+        froggHome: this.froggHome,
         worktreesRoot: this.worktreesRoot,
         sessionLogger: this.sessionLogger,
         workspaceGitService: this.workspaceGitService,
-        createFdeWorktree: (input, serviceOptions) =>
-          this.createFdeWorktreeWorkflow(input, {
+        createFroggWorktree: (input, serviceOptions) =>
+          this.createFroggWorktreeWorkflow(input, {
             ...serviceOptions,
             setupContinuation: {
               kind: "agent",
@@ -4365,26 +4365,26 @@ export class Session {
     }
   }
 
-  private async handleFdeWorktreeListRequest(
-    msg: Extract<SessionInboundMessage, { type: "fde_worktree_list_request" }>,
+  private async handleFroggWorktreeListRequest(
+    msg: Extract<SessionInboundMessage, { type: "frogg_worktree_list_request" }>,
   ): Promise<void> {
     return handleWorktreeListRequest(
       {
         emit: (message) => this.emit(message),
-        fdeHome: this.fdeHome,
+        froggHome: this.froggHome,
         workspaceGitService: this.workspaceGitService,
       },
       msg,
     );
   }
 
-  private async handleFdeWorktreeArchiveRequest(
-    msg: Extract<SessionInboundMessage, { type: "fde_worktree_archive_request" }>,
+  private async handleFroggWorktreeArchiveRequest(
+    msg: Extract<SessionInboundMessage, { type: "frogg_worktree_archive_request" }>,
   ): Promise<void> {
     return handleWorktreeArchiveRequest(
       {
-        fdeHome: this.fdeHome,
-        fdeWorktreesBaseRoot: this.worktreesRoot,
+        froggHome: this.froggHome,
+        froggWorktreesBaseRoot: this.worktreesRoot,
         github: this.github,
         workspaceGitService: this.workspaceGitService,
         agentManager: this.agentManager,
@@ -4857,7 +4857,7 @@ export class Session {
     }
 
     const worktreeSlug =
-      workspace.isFdeOwnedWorktree && workspace.worktreeRoot
+      workspace.isFroggOwnedWorktree && workspace.worktreeRoot
         ? basename(workspace.worktreeRoot)
         : undefined;
 
@@ -4902,7 +4902,7 @@ export class Session {
     return {
       currentBranch: snapshot.git.currentBranch,
       remoteUrl: snapshot.git.remoteUrl,
-      isFdeOwnedWorktree: snapshot.git.isFdeOwnedWorktree,
+      isFroggOwnedWorktree: snapshot.git.isFroggOwnedWorktree,
       isDirty: snapshot.git.isDirty,
       aheadBehind: snapshot.git.aheadBehind,
       aheadOfOrigin: snapshot.git.aheadOfOrigin,
@@ -4947,7 +4947,7 @@ export class Session {
   }
 
   private async describeCreatedWorktreeWorkspace(
-    result: CreateFdeWorktreeResult,
+    result: CreateFroggWorktreeResult,
   ): Promise<WorkspaceDescriptorPayload> {
     const projectRecord = await this.projectRegistry.get(result.workspace.projectId);
     return {
@@ -4981,7 +4981,7 @@ export class Session {
       gitRuntime: {
         currentBranch: result.worktree.branchName || null,
         remoteUrl: null,
-        isFdeOwnedWorktree: true,
+        isFroggOwnedWorktree: true,
         isDirty: false,
         aheadBehind: null,
         aheadOfOrigin: null,
@@ -5178,13 +5178,13 @@ export class Session {
     await this.restoreWorkspaceAndEmit(record.workspaceId);
   }
 
-  private async createFdeWorktree(
-    input: CreateFdeWorktreeInput,
+  private async createFroggWorktree(
+    input: CreateFroggWorktreeInput,
     options?: {
       resolveDefaultBranch?: (repoRoot: string) => Promise<string>;
     },
-  ): Promise<CreateFdeWorktreeResult> {
-    const result = await createFdeWorktree(input, {
+  ): Promise<CreateFroggWorktreeResult> {
+    const result = await createFroggWorktree(input, {
       github: this.github,
       ...(options?.resolveDefaultBranch
         ? { resolveDefaultBranch: options.resolveDefaultBranch }
@@ -5213,7 +5213,7 @@ export class Session {
         cwd: workspace.cwd,
         kind: workspace.kind,
         worktreeRoot: workspace.worktreeRoot,
-        isFdeOwnedWorktree: workspace.isFdeOwnedWorktree,
+        isFroggOwnedWorktree: workspace.isFroggOwnedWorktree,
         mainRepoRoot: workspace.mainRepoRoot,
       }));
   }
@@ -6064,7 +6064,7 @@ export class Session {
 
     const sourceCwd = await resolveWorktreeSourceCwd(source, this.projectRegistry);
 
-    const result = await this.createFdeWorktreeWorkflow(
+    const result = await this.createFroggWorktreeWorkflow(
       {
         cwd: sourceCwd,
         projectId: source.projectId,
@@ -6403,7 +6403,7 @@ export class Session {
         }
       }
 
-      const cloneStagingPath = await mkdtemp(resolve(targetParent, ".fde-clone-"));
+      const cloneStagingPath = await mkdtemp(resolve(targetParent, ".frogg-clone-"));
       try {
         await runGitCommand(["clone", repo.cloneUrl, cloneStagingPath], {
           cwd: targetParent,
@@ -6578,35 +6578,35 @@ export class Session {
     });
   }
 
-  private async handleCreateFdeWorktreeRequest(
-    request: Extract<SessionInboundMessage, { type: "create_fde_worktree_request" }>,
+  private async handleCreateFroggWorktreeRequest(
+    request: Extract<SessionInboundMessage, { type: "create_frogg_worktree_request" }>,
   ): Promise<void> {
     return handleCreateWorktreeRequest(
       {
-        fdeHome: this.fdeHome,
+        froggHome: this.froggHome,
         worktreesRoot: this.worktreesRoot,
         describeWorkspaceRecord: (result) => this.describeCreatedWorktreeWorkspace(result),
         emit: (message) => this.emit(message),
         sessionLogger: this.sessionLogger,
-        createFdeWorktreeWorkflow: (input) => this.createFdeWorktreeWorkflow(input),
+        createFroggWorktreeWorkflow: (input) => this.createFroggWorktreeWorkflow(input),
       },
       request,
     );
   }
 
-  private async createFdeWorktreeWorkflow(
-    input: CreateFdeWorktreeInput,
+  private async createFroggWorktreeWorkflow(
+    input: CreateFroggWorktreeInput,
     options?: {
       resolveDefaultBranch?: (repoRoot: string) => Promise<string>;
-      setupContinuation?: CreateFdeWorktreeSetupContinuationInput;
+      setupContinuation?: CreateFroggWorktreeSetupContinuationInput;
     },
-  ): Promise<CreateFdeWorktreeWorkflowResult> {
+  ): Promise<CreateFroggWorktreeWorkflowResult> {
     return createWorktreeWorkflow(
       {
-        fdeHome: this.fdeHome,
+        froggHome: this.froggHome,
         worktreesRoot: this.worktreesRoot,
-        createFdeWorktree: (workflowInput, serviceOptions) =>
-          this.createFdeWorktree(workflowInput, serviceOptions),
+        createFroggWorktree: (workflowInput, serviceOptions) =>
+          this.createFroggWorktree(workflowInput, serviceOptions),
         warmWorkspaceGitData: (workspace) => this.warmWorkspaceGitDataForWorkspace(workspace),
         autoNameWorkspaceBranchForFirstAgent: (autoNameInput) =>
           this.workspaceAutoName.scheduleForWorktree(autoNameInput, {
@@ -6660,8 +6660,8 @@ export class Session {
 
       await archiveByScope(
         {
-          fdeHome: this.fdeHome,
-          fdeWorktreesBaseRoot: this.worktreesRoot,
+          froggHome: this.froggHome,
+          froggWorktreesBaseRoot: this.worktreesRoot,
           github: this.github,
           workspaceGitService: this.workspaceGitService,
           agentManager: this.agentManager,

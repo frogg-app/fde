@@ -1,23 +1,23 @@
 ---
 title: Web app
-description: Use FDE in a browser, served directly by your daemon.
+description: Use Frogg in a browser, served directly by your daemon.
 sidebar:
   order: 3
 ---
 
-Every daemon can serve the full app to a browser. There is no hosted FDE web app; you
+Every daemon can serve the full app to a browser. There is no hosted Frogg web app; you
 open your own daemon's address.
 
 ## Turn it on
 
-Daemons installed with `install.sh`, Docker, Nix or `fde install-service` already serve
+Daemons installed with `install.sh`, Docker, Nix or `frogg install-service` already serve
 it. For a daemon you start by hand:
 
 ```sh
-fde start --web-ui
+frogg start --web-ui
 ```
 
-or set `features.webUi.enabled: true` in config, or `FDE_WEB_UI_ENABLED=true`.
+or set `features.webUi.enabled: true` in config, or `FROGG_WEB_UI_ENABLED=true`.
 
 Then open `http://<daemon-host>:9999/`.
 
@@ -43,5 +43,5 @@ hostname to `daemon.hostnames`; see [security](/docs/self-hosting/security/#tls-
 
 ## Serve a different build
 
-`features.webUi.distDir` (or `FDE_WEB_UI_DIST_DIR`) serves another web export, for example
+`features.webUi.distDir` (or `FROGG_WEB_UI_DIST_DIR`) serves another web export, for example
 one you built with `npm run build:ui`.

@@ -31,7 +31,7 @@ export function isAppForeground(activity, appId) {
 /** Two cold launches verify that the packaged app stays alive and foreground without Metro. */
 export async function smokeAndroidApk(options, dependencies = {}) {
   const config = {
-    appId: "app.frogg.fde",
+    appId: "app.frogg.frogg",
     seconds: 30,
     adb: "adb",
     outDir: "dist/android-startup-smoke",
@@ -145,7 +145,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     options: {
       serial: { type: "string" },
       apk: { type: "string" },
-      "app-id": { type: "string", default: "app.frogg.fde" },
+      "app-id": { type: "string", default: "app.frogg.frogg" },
       adb: { type: "string", default: "adb" },
       "out-dir": { type: "string", default: "dist/android-startup-smoke" },
       seconds: { type: "string", default: "30" },

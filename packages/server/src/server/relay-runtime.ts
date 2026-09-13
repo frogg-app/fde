@@ -1,5 +1,5 @@
 import type pino from "pino";
-import type { KeyPair } from "@fde/relay/e2ee";
+import type { KeyPair } from "@frogg/relay/e2ee";
 import type { ExternalSocketMetadata } from "./websocket-server.js";
 import {
   startRelayTransport,
@@ -41,7 +41,7 @@ export function createRelayRuntime(options: RelayRuntimeOptions): RelayRuntime {
     if (transport) return;
     if (!config.endpoint) {
       options.logger.warn(
-        "Relay is enabled but no relay endpoint is configured; relay stays inactive until one is set (daemon.relay.endpoint, FDE_RELAY_ENDPOINT, or host settings)",
+        "Relay is enabled but no relay endpoint is configured; relay stays inactive until one is set (daemon.relay.endpoint, FROGG_RELAY_ENDPOINT, or host settings)",
       );
       return;
     }

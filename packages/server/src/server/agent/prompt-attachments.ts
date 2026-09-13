@@ -1,5 +1,5 @@
-import { getForgeDefinitionOrNeutral } from "@fde/protocol/forge-manifest";
-import type { AgentAttachment } from "@fde/protocol/messages";
+import { getForgeDefinitionOrNeutral } from "@frogg/protocol/forge-manifest";
+import type { AgentAttachment } from "@frogg/protocol/messages";
 import type { AgentPromptContentBlock, AgentPromptInput } from "./agent-sdk-types.js";
 
 const REVIEW_LINE_MARKERS = { add: "+", remove: "-", context: " " } as const;
@@ -89,7 +89,7 @@ export function renderPromptAttachmentAsText(attachment: AgentAttachment): strin
       return attachment.text;
     }
     case "review": {
-      const lines = [`FDE review attachment (${attachment.mode})`, `CWD: ${attachment.cwd}`];
+      const lines = [`Frogg review attachment (${attachment.mode})`, `CWD: ${attachment.cwd}`];
       if (attachment.baseRef) {
         lines.push(`Base: ${attachment.baseRef}`);
       }

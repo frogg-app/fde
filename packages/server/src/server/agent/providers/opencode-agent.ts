@@ -348,7 +348,7 @@ type OpenCodeAgentConfig = Omit<AgentSessionConfig, "providerOptions"> & {
   providerOptions: OpenCodeProviderOptions;
 };
 
-const OPENCODE_SESSION_ENV_KEYS = new Set(["FDE_AGENT_ID", "FDE_AGENT_CWD"]);
+const OPENCODE_SESSION_ENV_KEYS = new Set(["FROGG_AGENT_ID", "FROGG_AGENT_CWD"]);
 
 function requiresDedicatedOpenCodeServer(
   config: OpenCodeAgentConfig,
@@ -1409,7 +1409,7 @@ export class OpenCodeAgentClient implements AgentClient {
     this.bridge = deps.bridge;
     this.capabilities = {
       ...OPENCODE_CAPABILITIES,
-      ...(this.bridge ? { supportsNativeFdeTools: true } : {}),
+      ...(this.bridge ? { supportsNativeFroggTools: true } : {}),
     };
     this.runtimeSettings = runtimeSettings;
     this.createOpenCodeClient = deps.createClient ?? createSdkOpenCodeClient;
@@ -1563,7 +1563,7 @@ export class OpenCodeAgentClient implements AgentClient {
     return this.bridge.bindSession({
       sessionId,
       env: launchContext.env ?? {},
-      tools: launchContext.fdeTools,
+      tools: launchContext.froggTools,
     });
   }
 

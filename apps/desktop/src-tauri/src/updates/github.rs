@@ -1,4 +1,4 @@
-//! The GitHub Releases API call. `FDE_GITHUB_TOKEN` (optional) raises the
+//! The GitHub Releases API call. `FROGG_GITHUB_TOKEN` (optional) raises the
 //! rate limit and lets a private repository answer; its value is never logged.
 
 use std::time::Duration;
@@ -37,7 +37,7 @@ fn headers(app_version: &str, token: Option<&str>) -> Result<HeaderMap, String> 
     );
     if let Some(token) = token {
         let mut value = HeaderValue::from_str(&format!("Bearer {token}"))
-            .map_err(|_| "FDE_GITHUB_TOKEN contains characters that are not valid in a header")?;
+            .map_err(|_| "FROGG_GITHUB_TOKEN contains characters that are not valid in a header")?;
         value.set_sensitive(true);
         headers.insert(AUTHORIZATION, value);
     }
@@ -67,8 +67,8 @@ pub async fn fetch_releases(
     let status = response.status();
     if !status.is_success() {
         let hint = match status.as_u16() {
-            403 | 429 => " (GitHub rate limit; set FDE_GITHUB_TOKEN to raise it)",
-            404 => " (repository or releases not found; FDE_GITHUB_TOKEN is needed for a private repository)",
+            403 | 429 => " (GitHub rate limit; set FROGG_GITHUB_TOKEN to raise it)",
+            404 => " (repository or releases not found; FROGG_GITHUB_TOKEN is needed for a private repository)",
             _ => "",
         };
         return Err(format!("release check failed: HTTP {status}{hint}"));
@@ -88,7 +88,7 @@ mod tests {
     #[test]
     fn builds_headers_without_leaking_the_token() {
         let built = headers("1.2.3", Some("ghp_secret")).unwrap();
-        assert_eq!(built[USER_AGENT], "FDE/1.2.3");
+        assert_eq!(built[USER_AGENT], "Frogg/1.2.3");
         assert_eq!(built[ACCEPT], "application/vnd.github+json");
         let auth = &built[AUTHORIZATION];
         assert!(auth.is_sensitive(), "token header must be marked sensitive");
@@ -101,12 +101,12 @@ mod tests {
     #[test]
     fn reads_token_from_env_only_when_non_empty() {
         // Env is process-wide; run the two cases in sequence in one test.
-        std::env::remove_var("FDE_GITHUB_TOKEN");
+        std::env::remove_var("FROGG_GITHUB_TOKEN");
         assert_eq!(github_token(), None);
-        std::env::set_var("FDE_GITHUB_TOKEN", "  ");
+        std::env::set_var("FROGG_GITHUB_TOKEN", "  ");
         assert_eq!(github_token(), None);
-        std::env::set_var("FDE_GITHUB_TOKEN", " tok ");
+        std::env::set_var("FROGG_GITHUB_TOKEN", " tok ");
         assert_eq!(github_token().as_deref(), Some("tok"));
-        std::env::remove_var("FDE_GITHUB_TOKEN");
+        std::env::remove_var("FROGG_GITHUB_TOKEN");
     }
 }

@@ -23,7 +23,7 @@ describe("daemon reload output", () => {
         "Warning: These changes require a daemon restart:",
         "  daemon.listen",
         "",
-        "Run: fde daemon restart",
+        "Run: frogg daemon restart",
         "",
         "Warning: These settings are controlled by daemon launch overrides:",
         "  app.baseUrl",

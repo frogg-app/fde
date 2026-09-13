@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { delimiter, join } from "node:path";
 import * as pty from "node-pty";
 import { afterEach, describe, expect, it } from "vitest";
-import { createTerminal, resolveFdeCliBinDir, type TerminalSession } from "../../terminal.js";
+import { createTerminal, resolveFroggCliBinDir, type TerminalSession } from "../../terminal.js";
 import { installRegisteredAgentHooks } from "../provider-registry.js";
 
 interface ActivityPost {
@@ -144,11 +144,11 @@ describe.skipIf(!claudeAvailability.available)(
       const recorder = await createActivityRecorder();
       const terminalId = "real-claude-terminal";
       const token = "real-claude-token";
-      const configDir = createTempDir("fde-real-claude-config-");
-      const cwd = createTempDir("fde-real-claude-cwd-");
-      const fdeCliBinDir = resolveFdeCliBinDir();
-      if (!fdeCliBinDir) {
-        throw new Error("Could not resolve fde CLI bin directory");
+      const configDir = createTempDir("frogg-real-claude-config-");
+      const cwd = createTempDir("frogg-real-claude-cwd-");
+      const froggCliBinDir = resolveFroggCliBinDir();
+      if (!froggCliBinDir) {
+        throw new Error("Could not resolve frogg CLI bin directory");
       }
 
       installRegisteredAgentHooks({ configDir });
@@ -164,10 +164,10 @@ describe.skipIf(!claudeAvailability.available)(
             cwd,
             env: {
               ...process.env,
-              FDE_TERMINAL_ID: terminalId,
-              FDE_ACTIVITY_TOKEN: token,
-              FDE_TERMINAL_ACTIVITY_URL: recorder.url,
-              PATH: [fdeCliBinDir, process.env.PATH].filter(isString).join(delimiter),
+              FROGG_TERMINAL_ID: terminalId,
+              FROGG_ACTIVITY_TOKEN: token,
+              FROGG_TERMINAL_ACTIVITY_URL: recorder.url,
+              PATH: [froggCliBinDir, process.env.PATH].filter(isString).join(delimiter),
             },
           },
         );
@@ -196,10 +196,10 @@ describe.skipIf(!claudeAvailability.available)(
         if (post.state === "idle") session?.setActivity("idle");
         if (post.state === "needs-input") session?.setActivity("attention");
       });
-      const configDir = createTempDir("fde-real-claude-interrupt-config-");
-      const fdeCliBinDir = resolveFdeCliBinDir();
-      if (!fdeCliBinDir) {
-        throw new Error("Could not resolve fde CLI bin directory");
+      const configDir = createTempDir("frogg-real-claude-interrupt-config-");
+      const froggCliBinDir = resolveFroggCliBinDir();
+      if (!froggCliBinDir) {
+        throw new Error("Could not resolve frogg CLI bin directory");
       }
 
       installRegisteredAgentHooks({ configDir });
@@ -213,10 +213,10 @@ describe.skipIf(!claudeAvailability.available)(
           args: ["--settings", join(configDir, "settings.json")],
           env: {
             ...process.env,
-            FDE_TERMINAL_ID: terminalId,
-            FDE_ACTIVITY_TOKEN: token,
-            FDE_TERMINAL_ACTIVITY_URL: recorder.url,
-            PATH: [fdeCliBinDir, process.env.PATH].filter(isString).join(delimiter),
+            FROGG_TERMINAL_ID: terminalId,
+            FROGG_ACTIVITY_TOKEN: token,
+            FROGG_TERMINAL_ACTIVITY_URL: recorder.url,
+            PATH: [froggCliBinDir, process.env.PATH].filter(isString).join(delimiter),
           },
         });
 

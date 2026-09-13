@@ -69,9 +69,9 @@ pub fn format_ssh_failure(stderr: &str, code: Option<i32>, signal: Option<i32>) 
 }
 
 /// Environment variable that pins the ssh executable (diagnostics, tests).
-pub const SSH_PROGRAM_ENV: &str = "FDE_SSH";
+pub const SSH_PROGRAM_ENV: &str = "FROGG_SSH";
 
-/// The ssh executables to try, in order: `$FDE_SSH` when set, else `ssh` on
+/// The ssh executables to try, in order: `$FROGG_SSH` when set, else `ssh` on
 /// `PATH`, and on Windows the in-box OpenSSH client as a fallback for shells
 /// launched with a PATH that lacks `System32\OpenSSH` (Explorer, the
 /// installer's "run after install" step, a portable zip started from a

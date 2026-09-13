@@ -35,7 +35,7 @@ export function buildWorkspaceServiceEnv(
 
   const env: Record<string, string> = {
     HOST: resolveServiceBindHost(options.daemonListenHost),
-    FDE_PORT: String(selfPeer.port),
+    FROGG_PORT: String(selfPeer.port),
   };
 
   const selfProxyUrl = buildServiceProxyUrl({
@@ -46,12 +46,12 @@ export function buildWorkspaceServiceEnv(
     serviceProxyPublicBaseUrl: options.serviceProxyPublicBaseUrl,
   });
   if (selfProxyUrl) {
-    env.FDE_URL = selfProxyUrl;
+    env.FROGG_URL = selfProxyUrl;
   }
 
   for (const peer of options.peers) {
     const envName = normalizeServiceEnvName(peer.scriptName);
-    env[`FDE_SERVICE_${envName}_PORT`] = String(peer.port);
+    env[`FROGG_SERVICE_${envName}_PORT`] = String(peer.port);
 
     const peerProxyUrl = buildServiceProxyUrl({
       projectSlug: options.projectSlug,
@@ -61,7 +61,7 @@ export function buildWorkspaceServiceEnv(
       serviceProxyPublicBaseUrl: options.serviceProxyPublicBaseUrl,
     });
     if (peerProxyUrl) {
-      env[`FDE_SERVICE_${envName}_URL`] = peerProxyUrl;
+      env[`FROGG_SERVICE_${envName}_URL`] = peerProxyUrl;
     }
   }
 

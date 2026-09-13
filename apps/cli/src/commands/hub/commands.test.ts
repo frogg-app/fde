@@ -54,14 +54,14 @@ describe("Hub commands", () => {
       {
         env: {},
         credentials,
-        flow: { authorize: async () => "fde_cli_prefix_durable-secret" },
+        flow: { authorize: async () => "frogg_cli_prefix_durable-secret" },
         reporter: quietReporter,
       },
     );
 
     assert.deepEqual(credentials.active(), {
       origin: "https://hub.test",
-      credential: "fde_cli_prefix_durable-secret",
+      credential: "frogg_cli_prefix_durable-secret",
     });
     assert.deepEqual(result.data, { origin: "https://hub.test", status: "logged_in" });
     assert.equal(JSON.stringify(result).includes("durable-secret"), false);
@@ -104,7 +104,7 @@ describe("Hub commands", () => {
         flow: {
           authorize: async () => {
             events.push("login");
-            return "fde_cli_prefix_durable-secret";
+            return "frogg_cli_prefix_durable-secret";
           },
         },
         isInteractive: () => true,
@@ -135,7 +135,7 @@ describe("Hub commands", () => {
       await runHubLogin("https://hub.test", options, {
         env: {},
         credentials,
-        flow: { authorize: async () => "fde_cli_prefix_durable-secret" },
+        flow: { authorize: async () => "frogg_cli_prefix_durable-secret" },
         isInteractive: () => interactive,
         continueGuidedSetup: async () => {
           continuationCount += 1;
@@ -333,7 +333,7 @@ describe("Hub commands", () => {
       ),
       {
         code: "HUB_ORIGIN_REQUIRED",
-        message: "Configure a Hub URL with --hub, FDE_HUB_URL, or an existing Hub login.",
+        message: "Configure a Hub URL with --hub, FROGG_HUB_URL, or an existing Hub login.",
       },
     );
 
@@ -351,7 +351,7 @@ describe("Hub commands", () => {
     const result = await runHubProjects(
       { hub: "https://explicit.test", apiKey: "explicit-secret", json: true },
       {
-        env: { FDE_HUB_URL: "https://env.test", FDE_HUB_API_KEY: "env-secret" },
+        env: { FROGG_HUB_URL: "https://env.test", FROGG_HUB_API_KEY: "env-secret" },
         credentials,
         hub: {
           listProjects: async (origin, credential) => {
@@ -359,8 +359,8 @@ describe("Hub commands", () => {
             return [
               {
                 id: "a50e05af-4f20-4c8f-8dcc-58e5ea360663",
-                slug: "fde",
-                name: "Fde",
+                slug: "frogg",
+                name: "Frogg",
               },
             ];
           },
@@ -377,8 +377,8 @@ describe("Hub commands", () => {
       projects: [
         {
           id: "a50e05af-4f20-4c8f-8dcc-58e5ea360663",
-          slug: "fde",
-          name: "Fde",
+          slug: "frogg",
+          name: "Frogg",
         },
       ],
     });

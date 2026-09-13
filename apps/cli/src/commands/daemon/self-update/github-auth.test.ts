@@ -41,11 +41,11 @@ describe("release credential fallback", () => {
   });
 
   test.each([
-    { FDE_RELEASES_API: "https://mirror.example/releases" },
-    { FDE_RELEASES_API: "http://api.github.com/repos/frogg-app/fde/releases" },
-    { FDE_RELEASES_API: "https://api.github.com/other/releases" },
-    { FDE_RELEASES_API: "https://api.github.com.evil.test/releases" },
-    { FDE_RELEASE_BASE: "https://mirror.example/releases" },
+    { FROGG_RELEASES_API: "https://mirror.example/releases" },
+    { FROGG_RELEASES_API: "http://api.github.com/repos/frogg-app/frogg/releases" },
+    { FROGG_RELEASES_API: "https://api.github.com/other/releases" },
+    { FROGG_RELEASES_API: "https://api.github.com.evil.test/releases" },
+    { FROGG_RELEASE_BASE: "https://mirror.example/releases" },
   ])("never reuses credentials for overridden sources: %j", async (overrides) => {
     const fetcher = vi.fn<typeof fetch>().mockImplementation(async () => limited());
     const readGhToken = vi.fn(async () => "test-gh-token");
@@ -60,14 +60,19 @@ describe("release credential fallback", () => {
     expect(readGhToken).not.toHaveBeenCalled();
   });
 
-  test("explicit FDE token wins and is never replaced after an authentication failure", async () => {
+  test("explicit Frogg token wins and is never replaced after an authentication failure", async () => {
     const fetcher = vi.fn<typeof fetch>().mockImplementation(async () => limited());
     const readGhToken = vi.fn(async () => "test-gh-token");
     await expect(
-      fetchReleases(resolveReleaseSource({ FDE_GITHUB_TOKEN: "test-explicit" }), "test", fetcher, {
-        env: { GH_TOKEN: "test-ambient" },
-        readGhToken,
-      }),
+      fetchReleases(
+        resolveReleaseSource({ FROGG_GITHUB_TOKEN: "test-explicit" }),
+        "test",
+        fetcher,
+        {
+          env: { GH_TOKEN: "test-ambient" },
+          readGhToken,
+        },
+      ),
     ).rejects.toThrow("HTTP 403");
     expect(fetcher).toHaveBeenCalledTimes(1);
     expect(fetcher.mock.calls[0][1]?.headers).toHaveProperty(

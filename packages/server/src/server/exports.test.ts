@@ -3,8 +3,8 @@ import { expect, test } from "vitest";
 test("keeps daemon-client APIs out of the server public entry", async () => {
   const serverExports = await import("./exports.js");
 
-  expect(serverExports.createFdeDaemon).toBeTypeOf("function");
-  expect(serverExports.resolveFdeHome).toBeTypeOf("function");
+  expect(serverExports.createFroggDaemon).toBeTypeOf("function");
+  expect(serverExports.resolveFroggHome).toBeTypeOf("function");
 
   for (const name of [
     "DaemonClient",

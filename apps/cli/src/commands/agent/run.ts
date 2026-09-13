@@ -1,7 +1,7 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { Command, Option } from "commander";
-import { getStructuredAgentResponse, StructuredAgentResponseError } from "@fde/server";
-import type { AgentSnapshotPayload } from "@fde/protocol/messages";
+import { getStructuredAgentResponse, StructuredAgentResponseError } from "@frogg/server";
+import type { AgentSnapshotPayload } from "@frogg/protocol/messages";
 import { connectToDaemon, getDaemonHost } from "../../utils/client.js";
 import type {
   CommandOptions,
@@ -533,10 +533,10 @@ export async function resolveExistingRunWorkspace(
   } satisfies CommandError;
 }
 
-// Workspace policy for `fde run`. Precedence:
+// Workspace policy for `frogg run`. Precedence:
 //   1. --workspace <id>            -> run in that existing workspace
-//   2. $FDE_AGENT_ID             -> daemon resolves the caller's workspace
-//   3. $FDE_WORKSPACE_ID         -> exported by workspace terminals
+//   2. $FROGG_AGENT_ID             -> daemon resolves the caller's workspace
+//   3. $FROGG_WORKSPACE_ID         -> exported by workspace terminals
 //   4. --new-workspace <kind>      -> mint a new workspace explicitly
 //   5. bare run                    -> mint a new local-backed workspace for cwd
 async function resolveRunWorkspace(
@@ -555,7 +555,7 @@ async function resolveRunWorkspace(
     return { cwd };
   }
 
-  const ambientWorkspaceId = newWorkspace ? undefined : process.env.FDE_WORKSPACE_ID?.trim();
+  const ambientWorkspaceId = newWorkspace ? undefined : process.env.FROGG_WORKSPACE_ID?.trim();
   if (ambientWorkspaceId) {
     console.error(`Using workspace ${ambientWorkspaceId}`);
     return resolveExistingRunWorkspace(client, ambientWorkspaceId);
@@ -577,7 +577,7 @@ async function resolveRunWorkspace(
   const label = branch ? `${result.workspace.name} (${branch})` : result.workspace.name;
   console.error(`Created workspace ${result.workspace.id} - ${label}`);
   console.error(
-    "Tip: pass --workspace <id> (or set FDE_WORKSPACE_ID) to run in an existing workspace.",
+    "Tip: pass --workspace <id> (or set FROGG_WORKSPACE_ID) to run in an existing workspace.",
   );
   return { id: result.workspace.id, cwd: result.workspace.workspaceDirectory ?? cwd };
 }
@@ -752,7 +752,7 @@ export async function runRunCommand(
 }
 
 export function resolveRunCallerAgentId(
-  env: { FDE_AGENT_ID?: string } = process.env,
+  env: { FROGG_AGENT_ID?: string } = process.env,
 ): string | undefined {
-  return env.FDE_AGENT_ID?.trim() || undefined;
+  return env.FROGG_AGENT_ID?.trim() || undefined;
 }

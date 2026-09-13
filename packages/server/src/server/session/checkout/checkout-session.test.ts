@@ -169,7 +169,7 @@ function makeCheckoutSession(options?: {
     checkoutDiffManager:
       options?.diff ?? createFakeDiffSubscriber({ cwd: "", files: [], error: null }).subscriber,
     gitMetadataGenerator,
-    fdeHome: "/tmp/fde-home",
+    froggHome: "/tmp/frogg-home",
     worktreesRoot: undefined,
     logger: pino({ level: "silent" }),
   });
@@ -189,7 +189,7 @@ function createGitSnapshot(
       mainRepoRoot: cwd,
       currentBranch,
       remoteUrl: null,
-      isFdeOwnedWorktree: false,
+      isFroggOwnedWorktree: false,
       isDirty: overrides?.isDirty ?? false,
       baseRef: null,
       aheadBehind: null,
@@ -1384,12 +1384,12 @@ describe("CheckoutSession", () => {
   });
 
   describe("stash list", () => {
-    it("returns stash entries scoped to fde stashes by default", async () => {
-      const listStashesCalls: Array<{ cwd: string; fdeOnly: boolean | undefined }> = [];
+    it("returns stash entries scoped to frogg stashes by default", async () => {
+      const listStashesCalls: Array<{ cwd: string; froggOnly: boolean | undefined }> = [];
       const { checkout, emitted } = makeCheckoutSession({
         git: {
           listStashes: async (cwd, opts) => {
-            listStashesCalls.push({ cwd, fdeOnly: opts?.fdeOnly });
+            listStashesCalls.push({ cwd, froggOnly: opts?.froggOnly });
             return [];
           },
         },
@@ -1401,7 +1401,7 @@ describe("CheckoutSession", () => {
         requestId: "sl1",
       });
 
-      expect(listStashesCalls).toEqual([{ cwd: "/repo", fdeOnly: true }]);
+      expect(listStashesCalls).toEqual([{ cwd: "/repo", froggOnly: true }]);
       expect(emitted).toEqual([
         {
           type: "stash_list_response",

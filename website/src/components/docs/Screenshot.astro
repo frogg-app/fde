@@ -49,7 +49,7 @@ const sizes = width ? `(min-width: ${width}px) ${width}px, 100vw` : "(min-width:
 const style = width ? `max-width:${width}px` : undefined;
 ---
 
-<figure class:list={["fde-screenshot not-content", `variant-${variant}`]} style={style}>
+<figure class:list={["frogg-screenshot not-content", `variant-${variant}`]} style={style}>
   <button
     type="button"
     class="zoom-trigger"
@@ -103,7 +103,7 @@ const style = width ? `max-width:${width}px` : undefined;
 
   document.addEventListener("click", (event) => {
     const trigger = (event.target as Element | null)?.closest<HTMLButtonElement>(
-      ".fde-screenshot .zoom-trigger",
+      ".frogg-screenshot .zoom-trigger",
     );
     if (!trigger) return;
     const isLight = document.documentElement.dataset.theme === "light";
@@ -117,7 +117,7 @@ const style = width ? `max-width:${width}px` : undefined;
 </script>
 
 <style>
-  .fde-screenshot {
+  .frogg-screenshot {
     margin: 1.75rem auto;
     display: grid;
     gap: 0.6rem;
@@ -129,20 +129,20 @@ const style = width ? `max-width:${width}px` : undefined;
     border: 0;
     background: none;
     cursor: zoom-in;
-    border-radius: var(--fde-radius);
-    transition: transform var(--fde-med) var(--fde-ease);
+    border-radius: var(--frogg-radius);
+    transition: transform var(--frogg-med) var(--frogg-ease);
   }
   .shot {
     display: block;
     width: 100%;
     height: auto;
-    border-radius: var(--fde-radius);
-    background: var(--fde-surface-2);
-    box-shadow: var(--fde-shadow);
-    transition: box-shadow var(--fde-med) var(--fde-ease);
+    border-radius: var(--frogg-radius);
+    background: var(--frogg-surface-2);
+    box-shadow: var(--frogg-shadow);
+    transition: box-shadow var(--frogg-med) var(--frogg-ease);
   }
   .variant-frame .shot {
-    outline: 1px solid var(--fde-border-strong);
+    outline: 1px solid var(--frogg-border-strong);
     outline-offset: -1px;
   }
   .shot-light {
@@ -169,12 +169,12 @@ const style = width ? `max-width:${width}px` : undefined;
     opacity: 0;
     transform: scale(0.85);
     transition:
-      opacity var(--fde-fast) var(--fde-ease),
-      transform var(--fde-med) var(--fde-ease-spring);
+      opacity var(--frogg-fast) var(--frogg-ease),
+      transform var(--frogg-med) var(--frogg-ease-spring);
   }
   .zoom-trigger:hover .shot,
   .zoom-trigger:focus-visible .shot {
-    box-shadow: var(--fde-shadow-lg);
+    box-shadow: var(--frogg-shadow-lg);
   }
   .zoom-trigger:hover .zoom-hint,
   .zoom-trigger:focus-visible .zoom-hint {
@@ -185,13 +185,13 @@ const style = width ? `max-width:${width}px` : undefined;
     transform: scale(0.992);
   }
   .zoom-trigger:focus-visible {
-    outline: 2px solid var(--fde-accent-bright);
+    outline: 2px solid var(--frogg-accent-bright);
     outline-offset: 4px;
   }
   figcaption {
     text-align: center;
     font-size: var(--sl-text-sm, 0.875rem);
-    color: var(--fde-text-muted);
+    color: var(--frogg-text-muted);
   }
   @media (prefers-reduced-motion: reduce) {
     .zoom-trigger,

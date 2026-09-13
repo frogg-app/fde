@@ -14,7 +14,7 @@ export async function generateDeployment({
   await mkdir(directory, { recursive: true });
   const defaults = {
     ID: b.id,
-    LEGACY_FDE: b.legacyFde ? "1" : "0",
+    LEGACY_FROGG: b.legacyFrogg ? "1" : "0",
     APPLICATION_ID: b.applicationId,
     NAME: b.name,
     CLI: b.cliName,
@@ -36,15 +36,15 @@ export async function generateDeployment({
         build: {
           context: root,
           dockerfile: "deploy/docker/base/Dockerfile",
-          args: { FDE_BRAND_DIR: brandInput },
+          args: { FROGG_BRAND_DIR: brandInput },
         },
         container_name: b.serviceName,
         ports: [`${b.daemonPort}:${b.daemonPort}`],
         environment: {
-          [`${b.envPrefix}_HOME`]: `/home/fde/${b.homeDir}`,
-          FDE_LISTEN: `0.0.0.0:${b.daemonPort}`,
+          [`${b.envPrefix}_HOME`]: `/home/frogg/${b.homeDir}`,
+          FROGG_LISTEN: `0.0.0.0:${b.daemonPort}`,
         },
-        volumes: [`./${b.id}-state:/home/fde/${b.homeDir}`],
+        volumes: [`./${b.id}-state:/home/frogg/${b.homeDir}`],
         labels: { "app.brand.id": b.id, "app.brand.application-id": b.applicationId },
         restart: "unless-stopped",
       },
@@ -70,8 +70,11 @@ export async function generateDeployment({
         : {}),
       vars:
         kind === "pair"
-          ? { FDE_PAIRING_BASE_URL: baseUrl ?? "", FDE_PAIR_ROOT_REDIRECT: b.links.website ?? "" }
-          : { FDE_INSTALL_CACHE_SECONDS: "300" },
+          ? {
+              FROGG_PAIRING_BASE_URL: baseUrl ?? "",
+              FROGG_PAIR_ROOT_REDIRECT: b.links.website ?? "",
+            }
+          : { FROGG_INSTALL_CACHE_SECONDS: "300" },
     };
     await writeFile(
       path.join(directory, `${kind}-worker.json`),

@@ -18,7 +18,7 @@ interface TcpServerHandle {
 
 function createWorkspaceRepo(options?: {
   branchName?: string;
-  fdeConfig?: Record<string, unknown>;
+  froggConfig?: Record<string, unknown>;
 }): { tempDir: string; repoDir: string; cleanup: () => void } {
   const tempDir = realpathSync(mkdtempSync(path.join(tmpdir(), "script-health-monitor-")));
   const repoDir = path.join(tempDir, "repo");
@@ -33,8 +33,8 @@ function createWorkspaceRepo(options?: {
   });
   execFileSync("git", ["config", "user.name", "Test"], { cwd: repoDir, stdio: "pipe" });
   writeFileSync(path.join(repoDir, "README.md"), "hello\n");
-  if (options?.fdeConfig) {
-    writeFileSync(path.join(repoDir, "fde.json"), JSON.stringify(options.fdeConfig, null, 2));
+  if (options?.froggConfig) {
+    writeFileSync(path.join(repoDir, "frogg.json"), JSON.stringify(options.froggConfig, null, 2));
   }
   execFileSync("git", ["add", "."], { cwd: repoDir, stdio: "pipe" });
   execFileSync("git", ["-c", "commit.gpgsign=false", "commit", "-m", "initial"], {
@@ -428,7 +428,7 @@ describe("ScriptHealthMonitor", () => {
     servers.add(service.server);
 
     const workspace = createWorkspaceRepo({
-      fdeConfig: {
+      froggConfig: {
         scripts: {
           typecheck: { command: "npm run typecheck" },
           api: { type: "service", command: "npm run api", port: service.port },

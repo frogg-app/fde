@@ -249,7 +249,7 @@ describe("claude tool-call mapper", () => {
       mapClaudeCompletedToolCall({
         callId: "claude-glob-1",
         name: "Glob",
-        input: { pattern: "**/.claude/commands/fde*" },
+        input: { pattern: "**/.claude/commands/frogg*" },
         output: {
           durationMs: 7,
           numFiles: 2,
@@ -264,7 +264,7 @@ describe("claude tool-call mapper", () => {
     expect(item.name).toBe("Glob");
     expect(item.detail).toEqual({
       type: "search",
-      query: "**/.claude/commands/fde*",
+      query: "**/.claude/commands/frogg*",
       toolName: "glob",
       filePaths: ["a.txt", "b.txt"],
       numFiles: 2,
@@ -280,7 +280,7 @@ describe("claude tool-call mapper", () => {
         name: "Grep",
         input: {
           pattern: '\\\\\\"cli\\\\\\""',
-          path: "/workspaces/fde/packages/desktop/src",
+          path: "/workspaces/frogg/packages/desktop/src",
           output_mode: "content",
           "-n": true,
         },
@@ -401,7 +401,7 @@ describe("claude tool-call mapper", () => {
     const item = expectMapped(
       mapClaudeCompletedToolCall({
         callId: "claude-speak-1",
-        name: "mcp__fde__speak",
+        name: "mcp__frogg__speak",
         input: { text: "Voice response from Claude." },
         output: { ok: true },
       }),
@@ -419,7 +419,7 @@ describe("claude tool-call mapper", () => {
     const item = expectMapped(
       mapClaudeCompletedToolCall({
         callId: "claude-speak-2",
-        name: "mcp__fde_voice__speak",
+        name: "mcp__frogg_voice__speak",
         input: { text: "Hey! I can hear you." },
         output: { ok: true },
       }),

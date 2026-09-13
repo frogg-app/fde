@@ -27,7 +27,7 @@ describe("desktop opener", () => {
     for (const input of [
       "file:///private/data",
       "javascript:alert(1)",
-      "fde://settings",
+      "frogg://settings",
       "/docs",
       null,
     ]) {

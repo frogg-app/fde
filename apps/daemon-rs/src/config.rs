@@ -4,7 +4,7 @@
 use std::net::SocketAddr;
 
 pub struct Config {
-    /// Address to bind. `FDE_LISTEN` (host:port) wins over `FDE_PORT`.
+    /// Address to bind. `FROGG_LISTEN` (host:port) wins over `FROGG_PORT`.
     pub listen: SocketAddr,
     /// Upstream Node daemon for message types not yet implemented natively.
     /// `None` means run standalone and reject unknown types instead of proxying.
@@ -25,12 +25,12 @@ impl Config {
     /// `persisted_listen` is `daemon.listen` from config.json; env wins over it,
     /// matching the Node daemon's precedence.
     pub fn from_env(persisted_listen: Option<&str>) -> anyhow::Result<Self> {
-        let listen = match std::env::var("FDE_LISTEN") {
+        let listen = match std::env::var("FROGG_LISTEN") {
             Ok(v) if !v.trim().is_empty() => parse_listen(v.trim())?,
             _ => match persisted_listen.map(str::trim).filter(|v| !v.is_empty()) {
                 Some(value) => parse_listen(value)?,
                 None => {
-                    let port = std::env::var("FDE_PORT")
+                    let port = std::env::var("FROGG_PORT")
                         .ok()
                         .and_then(|p| p.trim().parse::<u16>().ok())
                         .unwrap_or(DEFAULT_PORT);
@@ -39,25 +39,25 @@ impl Config {
             },
         };
 
-        let web_ui_enabled = std::env::var("FDE_WEB_UI_ENABLED")
+        let web_ui_enabled = std::env::var("FROGG_WEB_UI_ENABLED")
             .map(|v| v != "0" && v != "false")
             .unwrap_or(true);
         // Ships next to the daemon in a release build; overridable for dev.
-        let web_ui_dist = std::env::var("FDE_RS_WEB_UI_DIST")
+        let web_ui_dist = std::env::var("FROGG_RS_WEB_UI_DIST")
             .ok()
             .map(std::path::PathBuf::from)
             .filter(|p| p.is_dir());
 
         Ok(Self {
             listen,
-            upstream: std::env::var("FDE_RS_UPSTREAM")
+            upstream: std::env::var("FROGG_RS_UPSTREAM")
                 .ok()
                 .filter(|v| !v.is_empty()),
             web_ui_dist: web_ui_dist.filter(|_| web_ui_enabled),
-            native_terminals: std::env::var("FDE_RS_NATIVE_TERMINALS")
+            native_terminals: std::env::var("FROGG_RS_NATIVE_TERMINALS")
                 .map(|v| v == "1" || v == "true")
                 .unwrap_or(false),
-            validate_protocol: std::env::var("FDE_RS_VALIDATE_PROTOCOL")
+            validate_protocol: std::env::var("FROGG_RS_VALIDATE_PROTOCOL")
                 .map(|v| v == "1" || v == "true")
                 .unwrap_or(false),
         })
@@ -71,10 +71,10 @@ fn parse_listen(value: &str) -> anyhow::Result<SocketAddr> {
     }
     let (host, port) = value
         .rsplit_once(':')
-        .ok_or_else(|| anyhow::anyhow!("FDE_LISTEN must be host:port or port, got {value:?}"))?;
+        .ok_or_else(|| anyhow::anyhow!("FROGG_LISTEN must be host:port or port, got {value:?}"))?;
     let port: u16 = port
         .parse()
-        .map_err(|_| anyhow::anyhow!("FDE_LISTEN has a non-numeric port: {value:?}"))?;
+        .map_err(|_| anyhow::anyhow!("FROGG_LISTEN has a non-numeric port: {value:?}"))?;
     let host = host.trim_matches(|c| c == '[' || c == ']');
     let ip = if host == "localhost" {
         "127.0.0.1".parse()?

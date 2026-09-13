@@ -1,5 +1,5 @@
 {
-  description = "Fde - self-hosted daemon for AI coding agents";
+  description = "Frogg - self-hosted daemon for AI coding agents";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -25,21 +25,21 @@
         system:
         let
           pkgs = pkgsFor system;
-          fde = pkgs.callPackage ./package.nix { };
+          frogg = pkgs.callPackage ./package.nix { };
         in
         {
-          default = fde;
-          fde = fde;
-          fde = fde;
+          default = frogg;
+          frogg = frogg;
+          frogg = frogg;
         }
       );
 
-      nixosModules.default = self.nixosModules.fde;
-      nixosModules.fde =
+      nixosModules.default = self.nixosModules.frogg;
+      nixosModules.frogg =
         { pkgs, lib, ... }:
         {
           imports = [ ./module.nix ./branded-module.nix ];
-          services.fde.package = lib.mkDefault self.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          services.frogg.package = lib.mkDefault self.packages.${pkgs.stdenv.hostPlatform.system}.default;
         };
 
       devShells = forAllSystems (

@@ -1,11 +1,11 @@
 import type { normalizeWorkspaceDescriptor } from "@/stores/session-store";
-import type { AgentAttachment } from "@fde/protocol/messages";
+import type { AgentAttachment } from "@frogg/protocol/messages";
 import type { WorkspaceTabTarget } from "@/workspace-tabs/model";
 import {
   profileTakesPrompt,
   substitutePrompt,
   type SubstitutableCommand,
-} from "@fde/protocol/terminal-profiles";
+} from "@frogg/protocol/terminal-profiles";
 
 export interface CreatedTerminal {
   terminalId: string;

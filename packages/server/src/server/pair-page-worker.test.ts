@@ -1,17 +1,17 @@
 import { describe, expect, test } from "vitest";
 
-import { encodeOfferFragmentPayload } from "@fde/protocol/connection-offer";
+import { encodeOfferFragmentPayload } from "@frogg/protocol/connection-offer";
 import { createPairPageApp } from "./pair-page-server.js";
 import { handlePairPageRequest } from "./pair-page-worker.js";
 import { EXPIRED_PAIRING_MESSAGE } from "./pairing-code-page.js";
 
 const BASE_URL = "https://pair.example";
-const ENV = { FDE_PAIRING_BASE_URL: BASE_URL, FDE_PAIR_ROOT_REDIRECT: "https://frogg.example" };
+const ENV = { FROGG_PAIRING_BASE_URL: BASE_URL, FROGG_PAIR_ROOT_REDIRECT: "https://frogg.example" };
 
 function codeFor(expiresAt: string): string {
   return encodeOfferFragmentPayload({
     v: 3,
-    product: "fde",
+    product: "frogg",
     serverId: "srv_someone_elses_daemon",
     hostname: "devbox",
     daemonPublicKeyB64: "pubkey",
@@ -43,7 +43,7 @@ describe("pairing page worker", () => {
 
     expect(response.status).toBe(200);
     expect(html).toContain(code);
-    expect(html).toContain(`fde://pair#offer=${code}`);
+    expect(html).toContain(`frogg://pair#offer=${code}`);
     expect(html).toContain("<svg");
     // It issues no codes, so it can never pair the browser looking at the page,
     // and it never echoes back the hostname from a foreign offer.
@@ -83,7 +83,7 @@ describe("pairing page worker", () => {
   test("answers healthz", async () => {
     const response = await get("/healthz");
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ ok: true, service: "fde-pair-page" });
+    expect(await response.json()).toEqual({ ok: true, service: "frogg-pair-page" });
   });
 
   /**

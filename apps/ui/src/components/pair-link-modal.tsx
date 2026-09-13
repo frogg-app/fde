@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 import { StyleSheet, useUnistyles } from "react-native-unistyles";
 import { Link } from "lucide-react-native";
-import { hasPairingCode } from "@fde/protocol/connection-offer";
+import { hasPairingCode } from "@frogg/protocol/connection-offer";
 import type { HostProfile } from "@/types/host-connection";
 import { usePairWithOffer, type PairSuccess } from "@/pairing/use-pair-with-offer";
 import { AdaptiveModalSheet, AdaptiveTextInput, type SheetHeader } from "./adaptive-modal-sheet";
@@ -60,7 +60,7 @@ export interface PairLinkModalProps {
 
 /**
  * "Paste pairing link": accepts `https://pair.frogg.app/code/<code>`, a
- * `?code=` link, `fde://pair#offer=…`, Fde's
+ * `?code=` link, `frogg://pair#offer=…`, Frogg's
  * `https://app.example.com/#offer=…`, or a bare `#offer=` fragment. A relay (v2) offer pairs and closes as before; a claim
  * (v3) offer runs the claim flow and shows its outcome before closing.
  */

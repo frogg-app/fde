@@ -11,7 +11,7 @@ import appPermissionRequestImg from "@/assets/docs/app/permission-request.png";
 import appAgentTimelineImg from "@/assets/docs/app/agent-timeline.png";
 
 This assumes a daemon is installed and at least one provider shows `available` in
-`fde status`.
+`frogg status`.
 
 <Tabs syncKey="client">
 <TabItem label="App">
@@ -46,23 +46,23 @@ This assumes a daemon is installed and at least one provider shows `available` i
 
 ```sh
 cd ~/code/acme-api
-fde project create .
-fde agent run --provider claude --mode default \
+frogg project create .
+frogg agent run --provider claude --mode default \
   "Add a GET /version endpoint that returns the package version, and document it in README.md"
 ```
 
 Pending approvals from another terminal:
 
 ```sh
-fde permissions ls
-fde permissions allow <agent-id> --all
+frogg permissions ls
+frogg permissions allow <agent-id> --all
 ```
 
 Follow and continue the conversation:
 
 ```sh
-fde agent logs <agent-id> --follow
-fde agent send <agent-id> "Also add a test for /version"
+frogg agent logs <agent-id> --follow
+frogg agent send <agent-id> "Also add a test for /version"
 ```
 
 </TabItem>
@@ -75,10 +75,10 @@ fde agent send <agent-id> "Also add a test for /version"
 - Every client connected to that daemon sees the same agent, timeline and pending
   permissions, live.
 - Work in a separate branch without touching your checkout by creating a **worktree
-  workspace**. See [projects and workspaces](/docs/using-fde/projects-and-workspaces/).
+  workspace**. See [projects and workspaces](/docs/using-frogg/projects-and-workspaces/).
 
 ## Next
 
-- [Agents and the timeline](/docs/using-fde/agents/)
-- [Permissions](/docs/using-fde/permissions/)
+- [Agents and the timeline](/docs/using-frogg/agents/)
+- [Permissions](/docs/using-frogg/permissions/)
 - [Providers](/docs/agents-and-providers/providers/)

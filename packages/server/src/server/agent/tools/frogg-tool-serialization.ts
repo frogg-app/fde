@@ -8,7 +8,7 @@ import {
 } from "@modelcontextprotocol/sdk/server/zod-compat.js";
 import { toJsonSchemaCompat } from "@modelcontextprotocol/sdk/server/zod-json-schema-compat.js";
 
-import type { FdeToolDefinition, FdeToolResult } from "./types.js";
+import type { FroggToolDefinition, FroggToolResult } from "./types.js";
 
 const EMPTY_OBJECT_JSON_SCHEMA: Record<string, unknown> = {
   type: "object",
@@ -47,7 +47,7 @@ function formatStructuredContentForModel(structuredContent: unknown): string {
   return summary.length > 0 ? `${summary.join("\n")}\n\n${json}` : json;
 }
 
-export function addModelVisibleStructuredContent(result: FdeToolResult): FdeToolResult {
+export function addModelVisibleStructuredContent(result: FroggToolResult): FroggToolResult {
   if (result.structuredContent === undefined || result.content.length > 0) {
     return result;
   }
@@ -63,7 +63,9 @@ export function addModelVisibleStructuredContent(result: FdeToolResult): FdeTool
   };
 }
 
-export function serializeFdeToolInputParameters(tool: FdeToolDefinition): Record<string, unknown> {
+export function serializeFroggToolInputParameters(
+  tool: FroggToolDefinition,
+): Record<string, unknown> {
   const schema = normalizeObjectSchema(
     tool.inputSchema as AnySchema | ZodRawShapeCompat | undefined,
   );

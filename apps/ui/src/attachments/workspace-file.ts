@@ -1,4 +1,4 @@
-import type { AgentAttachment } from "@fde/protocol/messages";
+import type { AgentAttachment } from "@frogg/protocol/messages";
 import type {
   UserComposerAttachment,
   WorkspaceFileComposerAttachment,

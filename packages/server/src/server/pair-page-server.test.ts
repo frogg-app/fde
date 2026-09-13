@@ -1,13 +1,13 @@
 import { describe, expect, test } from "vitest";
 
-import { encodeOfferFragmentPayload } from "@fde/protocol/connection-offer";
+import { encodeOfferFragmentPayload } from "@frogg/protocol/connection-offer";
 import { EXPIRED_PAIRING_MESSAGE } from "./pairing-code-page.js";
 import { createPairPageApp } from "./pair-page-server.js";
 
 function codeFor(expiresAt: string): string {
   return encodeOfferFragmentPayload({
     v: 3,
-    product: "fde",
+    product: "frogg",
     serverId: "srv_someone_elses_daemon",
     hostname: "devbox",
     daemonPublicKeyB64: "pubkey",
@@ -38,7 +38,7 @@ describe("standalone pairing page service", () => {
 
       expect(response.status).toBe(200);
       expect(html).toContain(code);
-      expect(html).toContain(`fde://pair#offer=${code}`);
+      expect(html).toContain(`frogg://pair#offer=${code}`);
       expect(html).toContain("<svg");
       // It issued no codes, so it can never pair the browser looking at it,
       // and it says nothing about the daemon the code belongs to.

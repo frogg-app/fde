@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "FDE",
-  "short_name": "FDE",
-  "description": "Frogg Development Environment: monitor and control AI coding agents from anywhere.",
+  "name": "Frogg",
+  "short_name": "Frogg",
+  "description": "Frogg: monitor and control AI coding agents from anywhere.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

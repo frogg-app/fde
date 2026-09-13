@@ -1,7 +1,7 @@
 #!/usr/bin/env npx tsx
 
 /**
- * Regression: `fde daemon stop` must only act on daemon ownership state and
+ * Regression: `frogg daemon stop` must only act on daemon ownership state and
  * must not discover/kill processes via home-scoped `ps` command heuristics.
  */
 
@@ -15,9 +15,9 @@ import { $ } from "zx";
 $.verbose = false;
 
 const testEnv = {
-  FDE_LOCAL_SPEECH_AUTO_DOWNLOAD: process.env.FDE_LOCAL_SPEECH_AUTO_DOWNLOAD ?? "0",
-  FDE_DICTATION_ENABLED: process.env.FDE_DICTATION_ENABLED ?? "0",
-  FDE_VOICE_MODE_ENABLED: process.env.FDE_VOICE_MODE_ENABLED ?? "0",
+  FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD: process.env.FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD ?? "0",
+  FROGG_DICTATION_ENABLED: process.env.FROGG_DICTATION_ENABLED ?? "0",
+  FROGG_VOICE_MODE_ENABLED: process.env.FROGG_VOICE_MODE_ENABLED ?? "0",
 };
 
 function sleep(ms: number): Promise<void> {
@@ -52,7 +52,7 @@ async function waitForRunning(pid: number, timeoutMs: number): Promise<void> {
 
 console.log("=== Daemon Stop Ownership Regression ===\n");
 
-const fdeHome = await mkdtemp(join(tmpdir(), "fde-stop-ownership-"));
+const froggHome = await mkdtemp(join(tmpdir(), "frogg-stop-ownership-"));
 let decoyProcess: ChildProcess | null = null;
 
 try {
@@ -69,7 +69,7 @@ try {
     {
       env: {
         ...process.env,
-        FDE_HOME: fdeHome,
+        FROGG_HOME: froggHome,
       },
       stdio: "ignore",
       detached: process.platform !== "win32",
@@ -85,7 +85,7 @@ try {
   console.log("Test 2: daemon stop should report not_running and leave decoy untouched");
 
   const stopResult =
-    await $`FDE_HOME=${fdeHome} FDE_LOCAL_SPEECH_AUTO_DOWNLOAD=${testEnv.FDE_LOCAL_SPEECH_AUTO_DOWNLOAD} FDE_DICTATION_ENABLED=${testEnv.FDE_DICTATION_ENABLED} FDE_VOICE_MODE_ENABLED=${testEnv.FDE_VOICE_MODE_ENABLED} npx fde daemon stop --home ${fdeHome} --json`.nothrow();
+    await $`FROGG_HOME=${froggHome} FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD=${testEnv.FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD} FROGG_DICTATION_ENABLED=${testEnv.FROGG_DICTATION_ENABLED} FROGG_VOICE_MODE_ENABLED=${testEnv.FROGG_VOICE_MODE_ENABLED} npx frogg daemon stop --home ${froggHome} --json`.nothrow();
   assert.strictEqual(stopResult.exitCode, 0, `stop should succeed: ${stopResult.stderr}`);
 
   const parsed = JSON.parse(stopResult.stdout) as { action?: unknown };
@@ -114,8 +114,8 @@ try {
     }
   }
 
-  await $`FDE_HOME=${fdeHome} npx fde daemon stop --home ${fdeHome} --force`.nothrow();
-  await rm(fdeHome, { recursive: true, force: true });
+  await $`FROGG_HOME=${froggHome} npx frogg daemon stop --home ${froggHome} --force`.nothrow();
+  await rm(froggHome, { recursive: true, force: true });
 }
 
 console.log("=== Daemon stop ownership regression test passed ===");

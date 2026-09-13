@@ -16,11 +16,11 @@ import { createWorkspaceProvisioningService } from "./session/workspace-provisio
 import { createTestLogger } from "../test-utils/test-logger.js";
 import {
   attemptFirstAgentBranchAutoName,
-  createFdeWorktree,
-  type CreateFdeWorktreeDeps,
-} from "./fde-worktree-service.js";
-import { readFdeWorktreeMetadata } from "../utils/worktree-metadata.js";
-import { createWorktree, getFdeWorktreesRoot } from "../utils/worktree.js";
+  createFroggWorktree,
+  type CreateFroggWorktreeDeps,
+} from "./frogg-worktree-service.js";
+import { readFroggWorktreeMetadata } from "../utils/worktree-metadata.js";
+import { createWorktree, getFroggWorktreesRoot } from "../utils/worktree.js";
 import { isPlatform } from "../test-utils/platform.js";
 import { areEquivalentPaths, createRealpathAwarePathMatcher } from "../utils/path.js";
 import { deriveProjectKey } from "./project-key.js";
@@ -54,13 +54,13 @@ test("creates a worktree and registers it in the source workspace project withou
   deps.workspaces.set(sourceWorkspace.workspaceId, sourceWorkspace);
   deps.workspaceGitService.getSnapshot = vi.fn(deps.workspaceGitService.getSnapshot);
 
-  const result = await createFdeWorktree(
+  const result = await createFroggWorktree(
     {
       cwd: repoDir,
       worktreeSlug: "feature-one",
       title: "Feature One",
       runSetup: false,
-      fdeHome: path.join(tempDir, ".fde"),
+      froggHome: path.join(tempDir, ".frogg"),
     },
     deps,
   );
@@ -110,12 +110,12 @@ test("refreshes a source project that became Git while creating a worktree", asy
   deps.projects.set(sourceProject.projectId, sourceProject);
   deps.workspaces.set(sourceWorkspace.workspaceId, sourceWorkspace);
 
-  const result = await createFdeWorktree(
+  const result = await createFroggWorktree(
     {
       cwd: repoDir,
       worktreeSlug: "project-became-git",
       runSetup: false,
-      fdeHome: path.join(tempDir, ".fde"),
+      froggHome: path.join(tempDir, ".frogg"),
     },
     deps,
   );
@@ -144,12 +144,12 @@ test("repairs a legacy source workspace whose project record is missing", async 
   });
   deps.workspaces.set(sourceWorkspace.workspaceId, sourceWorkspace);
 
-  const result = await createFdeWorktree(
+  const result = await createFroggWorktree(
     {
       cwd: repoDir,
       worktreeSlug: "repaired-source",
       runSetup: false,
-      fdeHome: path.join(tempDir, ".fde"),
+      froggHome: path.join(tempDir, ".frogg"),
     },
     deps,
   );
@@ -188,12 +188,12 @@ test("uses an equivalent source workspace path when creating a worktree", async 
   deps.projects.set(sourceProject.projectId, sourceProject);
   deps.workspaces.set(sourceWorkspace.workspaceId, sourceWorkspace);
 
-  const result = await createFdeWorktree(
+  const result = await createFroggWorktree(
     {
       cwd: sourceDir,
       worktreeSlug: "equivalent-source",
       runSetup: false,
-      fdeHome: path.join(tempDir, ".fde"),
+      froggHome: path.join(tempDir, ".frogg"),
     },
     deps,
   );
@@ -216,13 +216,13 @@ test("creates a worktree workspace at the selected project subdirectory", async 
   });
   deps.projects.set(project.projectId, project);
 
-  const result = await createFdeWorktree(
+  const result = await createFroggWorktree(
     {
       cwd: sourceDir,
       projectId: project.projectId,
       worktreeSlug: "selected-subdirectory",
       runSetup: false,
-      fdeHome: path.join(tempDir, ".fde"),
+      froggHome: path.join(tempDir, ".frogg"),
     },
     deps,
   );
@@ -243,20 +243,20 @@ test("seeds an uncommitted exact-project config into the mapped worktree directo
   writeFileSync(path.join(sourceDir, "package.json"), "{}\n");
   commitAll(repoDir, "add subproject");
   const config = JSON.stringify({ worktree: { setup: ["npm install"] } });
-  writeFileSync(path.join(sourceDir, "fde.json"), config);
+  writeFileSync(path.join(sourceDir, "frogg.json"), config);
 
-  const result = await createFdeWorktree(
+  const result = await createFroggWorktree(
     {
       cwd: sourceDir,
       worktreeSlug: "seed-nested-config",
       runSetup: false,
-      fdeHome: path.join(tempDir, ".fde"),
+      froggHome: path.join(tempDir, ".frogg"),
     },
     createDeps(),
   );
 
-  expect(readFileSync(path.join(result.workspace.cwd, "fde.json"), "utf8")).toBe(config);
-  expect(existsSync(path.join(result.worktree.worktreePath, "fde.json"))).toBe(false);
+  expect(readFileSync(path.join(result.workspace.cwd, "frogg.json"), "utf8")).toBe(config);
+  expect(existsSync(path.join(result.worktree.worktreePath, "frogg.json"))).toBe(false);
 });
 
 test("does not overwrite a committed exact-project config with source checkout edits", async () => {
@@ -266,24 +266,24 @@ test("does not overwrite a committed exact-project config with source checkout e
   mkdirSync(sourceDir, { recursive: true });
   writeFileSync(path.join(sourceDir, "package.json"), "{}\n");
   const committedConfig = JSON.stringify({ worktree: { setup: ["npm ci"] } });
-  writeFileSync(path.join(sourceDir, "fde.json"), committedConfig);
+  writeFileSync(path.join(sourceDir, "frogg.json"), committedConfig);
   commitAll(repoDir, "add subproject config");
   writeFileSync(
-    path.join(sourceDir, "fde.json"),
+    path.join(sourceDir, "frogg.json"),
     JSON.stringify({ worktree: { setup: ["npm install"] } }),
   );
 
-  const result = await createFdeWorktree(
+  const result = await createFroggWorktree(
     {
       cwd: sourceDir,
       worktreeSlug: "preserve-nested-config",
       runSetup: false,
-      fdeHome: path.join(tempDir, ".fde"),
+      froggHome: path.join(tempDir, ".frogg"),
     },
     createDeps(),
   );
 
-  expect(readFileSync(path.join(result.workspace.cwd, "fde.json"), "utf8")).toBe(committedConfig);
+  expect(readFileSync(path.join(result.workspace.cwd, "frogg.json"), "utf8")).toBe(committedConfig);
   expect(
     execFileSync("git", ["status", "--porcelain"], {
       cwd: result.worktree.worktreePath,
@@ -301,18 +301,21 @@ test("removes a new worktree when its ref does not contain the selected project 
   writeFileSync(path.join(sourceDir, "package.json"), "{}\n");
   commitAll(repoDir, "add subproject");
   const deps = createDeps();
-  const fdeHome = path.join(tempDir, ".fde");
-  const worktreePath = path.join(await getFdeWorktreesRoot(repoDir, fdeHome), "missing-subproject");
+  const froggHome = path.join(tempDir, ".frogg");
+  const worktreePath = path.join(
+    await getFroggWorktreesRoot(repoDir, froggHome),
+    "missing-subproject",
+  );
 
   await expect(
-    createFdeWorktree(
+    createFroggWorktree(
       {
         cwd: sourceDir,
         action: "checkout",
         refName: "without-subproject",
         worktreeSlug: "missing-subproject",
         runSetup: false,
-        fdeHome,
+        froggHome,
       },
       deps,
     ),
@@ -330,20 +333,20 @@ test("removes a new worktree when its ref does not contain the selected project 
 test("removes a new worktree when workspace persistence fails", async () => {
   const { repoDir, tempDir } = createGitRepo();
   cleanupPaths.push(tempDir);
-  const fdeHome = path.join(tempDir, ".fde");
+  const froggHome = path.join(tempDir, ".frogg");
   const worktreePath = path.join(
-    await getFdeWorktreesRoot(repoDir, fdeHome),
+    await getFroggWorktreesRoot(repoDir, froggHome),
     "persistence-failure",
   );
 
   await expect(
-    createFdeWorktree(
+    createFroggWorktree(
       {
         cwd: repoDir,
         projectId: "missing-project",
         worktreeSlug: "persistence-failure",
         runSetup: false,
-        fdeHome,
+        froggHome,
       },
       createDeps(),
     ),
@@ -357,32 +360,32 @@ test("removes a new worktree when workspace persistence fails", async () => {
   ).toBe(false);
 });
 
-test("maps a nested cwd from an existing Fde worktree into the next worktree", async () => {
+test("maps a nested cwd from an existing Frogg worktree into the next worktree", async () => {
   const { repoDir, tempDir } = createGitRepo();
   cleanupPaths.push(tempDir);
-  const fdeHome = path.join(tempDir, ".fde");
+  const froggHome = path.join(tempDir, ".frogg");
   const projectDir = path.join(repoDir, "packages", "app");
   mkdirSync(projectDir, { recursive: true });
   writeFileSync(path.join(projectDir, "package.json"), "{}\n");
   commitAll(repoDir, "add subproject");
   const deps = createDeps();
-  const source = await createFdeWorktree(
+  const source = await createFroggWorktree(
     {
       cwd: repoDir,
       worktreeSlug: "source-worktree",
       runSetup: false,
-      fdeHome,
+      froggHome,
     },
     deps,
   );
   const sourceCwd = path.join(source.worktree.worktreePath, "packages", "app");
 
-  const created = await createFdeWorktree(
+  const created = await createFroggWorktree(
     {
       cwd: sourceCwd,
       worktreeSlug: "nested-worktree",
       runSetup: false,
-      fdeHome,
+      froggHome,
     },
     deps,
   );
@@ -394,25 +397,25 @@ test("maps a nested cwd from an existing Fde worktree into the next worktree", a
 test("rejects source checkout planning before creating a worktree", async () => {
   const { repoDir, tempDir } = createGitRepo();
   cleanupPaths.push(tempDir);
-  const fdeHome = path.join(tempDir, ".fde");
+  const froggHome = path.join(tempDir, ".frogg");
   const deps = createDeps();
   deps.workspaceGitService.getCheckout = async () => {
     throw new Error("source checkout unavailable");
   };
 
   await expect(
-    createFdeWorktree(
+    createFroggWorktree(
       {
         cwd: repoDir,
         worktreeSlug: "must-not-create",
         runSetup: false,
-        fdeHome,
+        froggHome,
       },
       deps,
     ),
   ).rejects.toThrow("source checkout unavailable");
 
-  expect(existsSync(path.join(fdeHome, "worktrees"))).toBe(false);
+  expect(existsSync(path.join(froggHome, "worktrees"))).toBe(false);
   expect(Array.from(deps.workspaces.values())).toEqual([]);
 });
 
@@ -435,13 +438,13 @@ test("registers a new worktree in the existing root project after the main check
   deps.projects.set(sourceProject.projectId, sourceProject);
   deps.workspaces.set(existingWorktree.workspaceId, existingWorktree);
 
-  const result = await createFdeWorktree(
+  const result = await createFroggWorktree(
     {
       cwd: repoDir,
       projectId: sourceProject.projectId,
       worktreeSlug: "second-worktree",
       runSetup: false,
-      fdeHome: path.join(tempDir, ".fde"),
+      froggHome: path.join(tempDir, ".frogg"),
     },
     deps,
   );
@@ -464,13 +467,13 @@ test("an explicit project FK remains unchanged when its worktree comes from anot
   };
   deps.projects.set(project.projectId, project);
 
-  const result = await createFdeWorktree(
+  const result = await createFroggWorktree(
     {
       cwd: repoDir,
       projectId: project.projectId,
       worktreeSlug: "attached-worktree",
       runSetup: false,
-      fdeHome: path.join(tempDir, ".fde"),
+      froggHome: path.join(tempDir, ".frogg"),
     },
     deps,
   );
@@ -493,14 +496,14 @@ test.skipIf(isPlatform("win32"))(
   async () => {
     const { repoDir, tempDir } = createGitRepo();
     cleanupPaths.push(tempDir);
-    const fdeHome = path.join(tempDir, ".fde");
+    const froggHome = path.join(tempDir, ".frogg");
     const firstDeps = createDeps();
-    const first = await createFdeWorktree(
+    const first = await createFroggWorktree(
       {
         cwd: repoDir,
         worktreeSlug: "reuse-me",
         runSetup: false,
-        fdeHome,
+        froggHome,
       },
       firstDeps,
     );
@@ -511,12 +514,12 @@ test.skipIf(isPlatform("win32"))(
       workspaces: firstDeps.workspaces,
     });
 
-    const second = await createFdeWorktree(
+    const second = await createFroggWorktree(
       {
         cwd: repoDir,
         worktreeSlug: "reuse-me",
         runSetup: false,
-        fdeHome,
+        froggHome,
       },
       deps,
     );
@@ -534,18 +537,18 @@ test("renames an eligible unnamed branch-off worktree once on first agent contex
   cleanupPaths.push(tempDir);
   const deps = createDeps();
 
-  const created = await createFdeWorktree(
+  const created = await createFroggWorktree(
     {
       cwd: repoDir,
       worktreeSlug: "dazzling-yak",
       runSetup: false,
-      fdeHome: path.join(tempDir, ".fde"),
+      froggHome: path.join(tempDir, ".frogg"),
     },
     deps,
   );
 
   expect(created.worktree.branchName).toBe("dazzling-yak");
-  expect(readFdeWorktreeMetadata(created.worktree.worktreePath)).toMatchObject({
+  expect(readFroggWorktreeMetadata(created.worktree.worktreePath)).toMatchObject({
     version: 2,
     firstAgentBranchAutoName: {
       status: "pending",
@@ -572,7 +575,7 @@ test("renames an eligible unnamed branch-off worktree once on first agent contex
     branchName: "renamed-from-agent-context",
   });
   expect(branchAfterFirst).toBe("renamed-from-agent-context");
-  expect(readFdeWorktreeMetadata(created.worktree.worktreePath)).toMatchObject({
+  expect(readFroggWorktreeMetadata(created.worktree.worktreePath)).toMatchObject({
     version: 2,
     firstAgentBranchAutoName: {
       status: "attempted",
@@ -603,12 +606,12 @@ test("falls back to a numeric suffix when the desired branch name already exists
   execFileSync("git", ["branch", "renamed-from-agent-context"], { cwd: repoDir, stdio: "pipe" });
   execFileSync("git", ["branch", "renamed-from-agent-context-2"], { cwd: repoDir, stdio: "pipe" });
 
-  const created = await createFdeWorktree(
+  const created = await createFroggWorktree(
     {
       cwd: repoDir,
       worktreeSlug: "dazzling-yak",
       runSetup: false,
-      fdeHome: path.join(tempDir, ".fde"),
+      froggHome: path.join(tempDir, ".frogg"),
     },
     createDeps(),
   );
@@ -639,13 +642,13 @@ test("renames the branch even when the app supplies a random placeholder slug", 
   cleanupPaths.push(tempDir);
   const deps = createDeps();
 
-  const created = await createFdeWorktree(
+  const created = await createFroggWorktree(
     {
       cwd: repoDir,
       worktreeSlug: "dazzling-yak",
       firstAgentContext: { prompt: "Investigate the failing login flow" },
       runSetup: false,
-      fdeHome: path.join(tempDir, ".fde"),
+      froggHome: path.join(tempDir, ".frogg"),
     },
     deps,
   );
@@ -677,7 +680,7 @@ test("renames the branch from a github_pr attachment when no prompt is supplied"
   cleanupPaths.push(tempDir);
   const deps = createDeps();
 
-  const created = await createFdeWorktree(
+  const created = await createFroggWorktree(
     {
       cwd: repoDir,
       worktreeSlug: "dazzling-yak",
@@ -693,7 +696,7 @@ test("renames the branch from a github_pr attachment when no prompt is supplied"
         ],
       },
       runSetup: false,
-      fdeHome: path.join(tempDir, ".fde"),
+      froggHome: path.join(tempDir, ".frogg"),
     },
     deps,
   );
@@ -732,13 +735,13 @@ test("renames the branch from a github_pr attachment when no prompt is supplied"
 test("leaves the branch alone when generated branch text is invalid", async () => {
   const { repoDir, tempDir } = createGitRepo();
   cleanupPaths.push(tempDir);
-  const created = await createFdeWorktree(
+  const created = await createFroggWorktree(
     {
       cwd: repoDir,
       worktreeSlug: "dazzling-yak",
       firstAgentContext: { prompt: "Name this branch" },
       runSetup: false,
-      fdeHome: path.join(tempDir, ".fde"),
+      froggHome: path.join(tempDir, ".frogg"),
     },
     createDeps(),
   );
@@ -759,7 +762,7 @@ test("leaves the branch alone when generated branch text is invalid", async () =
       .toString()
       .trim(),
   ).toBe("dazzling-yak");
-  expect(readFdeWorktreeMetadata(created.worktree.worktreePath)).toMatchObject({
+  expect(readFroggWorktreeMetadata(created.worktree.worktreePath)).toMatchObject({
     version: 2,
     firstAgentBranchAutoName: {
       status: "attempted",
@@ -777,18 +780,18 @@ test("does not mark checkout branch worktrees as eligible for first-agent rename
   execFileSync("git", ["commit", "-m", "dev"], { cwd: repoDir, stdio: "pipe" });
   execFileSync("git", ["checkout", "main"], { cwd: repoDir, stdio: "pipe" });
 
-  const created = await createFdeWorktree(
+  const created = await createFroggWorktree(
     {
       cwd: repoDir,
       action: "checkout",
       refName: "dev",
       runSetup: false,
-      fdeHome: path.join(tempDir, ".fde"),
+      froggHome: path.join(tempDir, ".frogg"),
     },
     createDeps(),
   );
 
-  expect(readFdeWorktreeMetadata(created.worktree.worktreePath)).toMatchObject({
+  expect(readFroggWorktreeMetadata(created.worktree.worktreePath)).toMatchObject({
     version: 1,
     baseRefName: "dev",
   });
@@ -816,18 +819,18 @@ test("does not mark GitHub PR checkout worktrees as eligible for first-agent ren
   const { repoDir, tempDir } = createGitHubPrRemoteRepo();
   cleanupPaths.push(tempDir);
 
-  const created = await createFdeWorktree(
+  const created = await createFroggWorktree(
     {
       cwd: repoDir,
       action: "checkout",
       githubPrNumber: 123,
       runSetup: false,
-      fdeHome: path.join(tempDir, ".fde"),
+      froggHome: path.join(tempDir, ".frogg"),
     },
     createDeps(),
   );
 
-  expect(readFdeWorktreeMetadata(created.worktree.worktreePath)).toMatchObject({
+  expect(readFroggWorktreeMetadata(created.worktree.worktreePath)).toMatchObject({
     version: 1,
     baseRefName: "main",
   });
@@ -849,17 +852,17 @@ test("does not mark GitHub PR checkout worktrees as eligible for first-agent ren
 });
 
 test("does not mutate registries or broadcast when core worktree creation fails", async () => {
-  const tempDir = mkdtempSync(path.join(tmpdir(), "fde-worktree-service-"));
+  const tempDir = mkdtempSync(path.join(tmpdir(), "frogg-worktree-service-"));
   cleanupPaths.push(tempDir);
   const deps = createDeps();
 
   await expect(
-    createFdeWorktree(
+    createFroggWorktree(
       {
         cwd: tempDir,
         worktreeSlug: "not-git",
         runSetup: false,
-        fdeHome: path.join(tempDir, ".fde"),
+        froggHome: path.join(tempDir, ".frogg"),
       },
       deps,
     ),
@@ -869,14 +872,14 @@ test("does not mutate registries or broadcast when core worktree creation fails"
   expect(deps.workspaces.size).toBe(0);
 });
 
-// Worktree restore (Unit 3): recreate a deleted Fde-owned worktree from its
+// Worktree restore (Unit 3): recreate a deleted Frogg-owned worktree from its
 // kept branch via createWorktree's checkout-branch source.
 test.skipIf(isPlatform("win32"))(
   "recreates a deleted worktree on the same kept branch without creating a suffixed branch",
   async () => {
     const { repoDir, tempDir } = createGitRepo();
     cleanupPaths.push(tempDir);
-    const fdeHome = path.join(tempDir, ".fde");
+    const froggHome = path.join(tempDir, ".frogg");
 
     execFileSync("git", ["branch", "restore-me"], { cwd: repoDir, stdio: "pipe" });
 
@@ -885,7 +888,7 @@ test.skipIf(isPlatform("win32"))(
       worktreeSlug: "restore-me",
       source: { kind: "checkout-branch", branchName: "restore-me" },
       runSetup: false,
-      fdeHome,
+      froggHome,
     });
     expect(existsSync(created.worktreePath)).toBe(true);
 
@@ -900,7 +903,7 @@ test.skipIf(isPlatform("win32"))(
       worktreeSlug: "restore-me",
       source: { kind: "checkout-branch", branchName: "restore-me" },
       runSetup: false,
-      fdeHome,
+      froggHome,
     });
 
     expect(recreated.worktreePath).toBe(created.worktreePath);
@@ -926,7 +929,7 @@ test.skipIf(isPlatform("win32"))(
 );
 
 // The default archive path (scope "workspace", worktreePath only) resolves
-// repoRoot=null, so deleteFdeWorktree's `git worktree remove`/`prune` is
+// repoRoot=null, so deleteFroggWorktree's `git worktree remove`/`prune` is
 // skipped: the directory is rm-ed but the admin registration survives, pinning
 // the branch as "already checked out". Restore must self-heal by pruning the
 // stale registration before recreating, regardless of how it was archived.
@@ -935,7 +938,7 @@ test.skipIf(isPlatform("win32"))(
   async () => {
     const { repoDir, tempDir } = createGitRepo();
     cleanupPaths.push(tempDir);
-    const fdeHome = path.join(tempDir, ".fde");
+    const froggHome = path.join(tempDir, ".frogg");
 
     execFileSync("git", ["branch", "restore-me"], { cwd: repoDir, stdio: "pipe" });
 
@@ -944,7 +947,7 @@ test.skipIf(isPlatform("win32"))(
       worktreeSlug: "restore-me",
       source: { kind: "checkout-branch", branchName: "restore-me" },
       runSetup: false,
-      fdeHome,
+      froggHome,
     });
     expect(existsSync(created.worktreePath)).toBe(true);
 
@@ -967,7 +970,7 @@ test.skipIf(isPlatform("win32"))(
         worktreeSlug: "restore-me",
         source: { kind: "checkout-branch", branchName: "restore-me" },
         runSetup: false,
-        fdeHome,
+        froggHome,
       }),
     ).rejects.toThrow("missing but already registered worktree");
 
@@ -979,7 +982,7 @@ test.skipIf(isPlatform("win32"))(
       worktreeSlug: "restore-me",
       source: { kind: "checkout-branch", branchName: "restore-me" },
       runSetup: false,
-      fdeHome,
+      froggHome,
     });
 
     expect(recreated.worktreePath).toBe(created.worktreePath);
@@ -1007,7 +1010,7 @@ test.skipIf(isPlatform("win32"))(
         worktreeSlug: "gone-branch",
         source: { kind: "checkout-branch", branchName: "gone-branch" },
         runSetup: false,
-        fdeHome: path.join(tempDir, ".fde"),
+        froggHome: path.join(tempDir, ".frogg"),
       }),
     ).rejects.toMatchObject({ name: "UnknownBranchError" });
   },
@@ -1018,7 +1021,7 @@ test.skipIf(isPlatform("win32"))(
   async () => {
     const { repoDir, tempDir } = createGitRepo();
     cleanupPaths.push(tempDir);
-    const fdeHome = path.join(tempDir, ".fde");
+    const froggHome = path.join(tempDir, ".frogg");
 
     execFileSync("git", ["branch", "busy-branch"], { cwd: repoDir, stdio: "pipe" });
     const first = await createWorktree({
@@ -1026,7 +1029,7 @@ test.skipIf(isPlatform("win32"))(
       worktreeSlug: "busy-branch",
       source: { kind: "checkout-branch", branchName: "busy-branch" },
       runSetup: false,
-      fdeHome,
+      froggHome,
     });
     expect(existsSync(first.worktreePath)).toBe(true);
 
@@ -1035,7 +1038,7 @@ test.skipIf(isPlatform("win32"))(
       worktreeSlug: "busy-branch-again",
       source: { kind: "checkout-branch", branchName: "busy-branch" },
       runSetup: false,
-      fdeHome,
+      froggHome,
     });
 
     expect(second.branchName).toBe("busy-branch-1");
@@ -1043,7 +1046,7 @@ test.skipIf(isPlatform("win32"))(
   },
 );
 
-interface TestDeps extends CreateFdeWorktreeDeps {
+interface TestDeps extends CreateFroggWorktreeDeps {
   projects: Map<string, PersistedProjectRecord>;
   workspaces: Map<string, PersistedWorkspaceRecord>;
 }
@@ -1226,7 +1229,7 @@ function createWorkspaceGitServiceStub(): WorkspaceGitService {
           currentBranch: snapshot.git.currentBranch,
           remoteUrl: snapshot.git.remoteUrl,
           worktreeRoot: snapshot.git.repoRoot,
-          isFdeOwnedWorktree: snapshot.git.isFdeOwnedWorktree,
+          isFroggOwnedWorktree: snapshot.git.isFroggOwnedWorktree,
           mainRepoRoot: snapshot.git.mainRepoRoot,
         };
       } catch {
@@ -1236,7 +1239,7 @@ function createWorkspaceGitServiceStub(): WorkspaceGitService {
           currentBranch: null,
           remoteUrl: null,
           worktreeRoot: null,
-          isFdeOwnedWorktree: false,
+          isFroggOwnedWorktree: false,
           mainRepoRoot: null,
         };
       }
@@ -1293,7 +1296,7 @@ function createWorkspaceGitSnapshot(cwd: string): WorkspaceGitRuntimeSnapshot {
       mainRepoRoot,
       currentBranch,
       remoteUrl: null,
-      isFdeOwnedWorktree: repoRoot !== mainRepoRoot,
+      isFroggOwnedWorktree: repoRoot !== mainRepoRoot,
       isDirty: false,
       baseRef: "main",
       aheadBehind: null,
@@ -1311,7 +1314,7 @@ function createWorkspaceGitSnapshot(cwd: string): WorkspaceGitRuntimeSnapshot {
 }
 
 function createGitRepo(): { tempDir: string; repoDir: string } {
-  const tempDir = mkdtempSync(path.join(tmpdir(), "fde-worktree-service-"));
+  const tempDir = mkdtempSync(path.join(tmpdir(), "frogg-worktree-service-"));
   const repoDir = path.join(tempDir, "repo");
   execFileSync("git", ["init", repoDir], { stdio: "pipe" });
   execFileSync("git", ["config", "user.email", "test@example.com"], {

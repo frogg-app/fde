@@ -62,7 +62,7 @@ describe("desktop window chrome", () => {
 
   it("serializes the validated mode for preload", () => {
     expect(windowChromeModeArgument("custom-windows")).toBe(
-      "--fde-window-chrome-mode=custom-windows",
+      "--frogg-window-chrome-mode=custom-windows",
     );
   });
 });

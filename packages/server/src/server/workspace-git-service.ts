@@ -4,8 +4,8 @@ import { basename, join, resolve, sep } from "node:path";
 import { LRUCache } from "lru-cache";
 import pLimit from "p-limit";
 import type pino from "pino";
-import type { ProjectCheckoutLitePayload } from "@fde/protocol/messages";
-import { parseGitRemoteLocation } from "@fde/protocol/git-remote";
+import type { ProjectCheckoutLitePayload } from "@frogg/protocol/messages";
+import { parseGitRemoteLocation } from "@frogg/protocol/git-remote";
 import type { CheckoutContext } from "../utils/checkout-git.js";
 import {
   type BranchCheckoutResolution,
@@ -52,7 +52,7 @@ import {
   type RunGitCommand,
 } from "../utils/run-git-command.js";
 import { branchNameFromRef } from "../utils/worktree-metadata.js";
-import { listFdeWorktrees, type FdeWorktreeInfo } from "../utils/worktree.js";
+import { listFroggWorktrees, type FroggWorktreeInfo } from "../utils/worktree.js";
 import { READ_ONLY_GIT_ENV } from "./checkout-git-utils.js";
 import { classifyGitMetadataPath, getPrunedGitMetadataPaths } from "./git-metadata-event-rules.js";
 import {
@@ -138,7 +138,7 @@ export interface WorkspaceGitRuntimeSnapshot {
     mainRepoRoot: string | null;
     currentBranch: string | null;
     remoteUrl: string | null;
-    isFdeOwnedWorktree: boolean;
+    isFroggOwnedWorktree: boolean;
     isDirty: boolean | null;
     baseRef: string | null;
     aheadBehind: { ahead: number; behind: number } | null;
@@ -278,19 +278,19 @@ export interface WorkspaceGitBranchSuggestionsOptions {
 }
 
 export interface WorkspaceGitStashListOptions {
-  fdeOnly?: boolean;
+  froggOnly?: boolean;
 }
 
 export interface WorkspaceGitStashEntry {
   index: number;
   message: string;
   branch: string | null;
-  isFde: boolean;
+  isFrogg: boolean;
 }
 
 export type WorkspaceGitBranchValidationResult = BranchCheckoutResolution;
 export type WorkspaceGitBranchSuggestion = BranchSuggestion;
-export type WorkspaceGitWorktreeInfo = FdeWorktreeInfo;
+export type WorkspaceGitWorktreeInfo = FroggWorktreeInfo;
 
 export type WorkspaceGitSnapshotOptions =
   | {
@@ -349,7 +349,7 @@ interface WorkspaceGitServiceDependencies {
   resolveBranchCheckout: typeof resolveBranchCheckout;
   resolveRepositoryDefaultBranch: typeof resolveRepositoryDefaultBranch;
   listBranchSuggestions: typeof listBranchSuggestions;
-  listFdeWorktrees: typeof listFdeWorktrees;
+  listFroggWorktrees: typeof listFroggWorktrees;
   /**
    * Adapter instances to bind by forge id instead of building from the registry
    * — the injection seam for the daemon's shared GitHub adapter and for test
@@ -371,7 +371,7 @@ interface WorkspaceGitServiceDependencies {
 
 interface WorkspaceGitServiceOptions {
   logger: pino.Logger;
-  fdeHome: string;
+  froggHome: string;
   worktreesRoot?: string;
   fileObserver?: FileObserver;
   deps?: Partial<WorkspaceGitServiceDependencies>;
@@ -506,7 +506,7 @@ function buildDefaultWorkspaceGitServiceDeps(
     resolveBranchCheckout,
     resolveRepositoryDefaultBranch,
     listBranchSuggestions,
-    listFdeWorktrees,
+    listFroggWorktrees,
     resolveAbsoluteGitDir,
     hasOriginRemote,
     runGitFetch: fetchWorkspaceGitRemote,
@@ -526,7 +526,7 @@ function resolveWorkspaceGitServiceDeps(
 
 export class WorkspaceGitServiceImpl implements WorkspaceGitService {
   private readonly logger: pino.Logger;
-  private readonly fdeHome: string;
+  private readonly froggHome: string;
   private readonly worktreesRoot: string | undefined;
   private readonly fileObserver: FileObserver;
   private readonly deps: WorkspaceGitServiceDependencies;
@@ -580,7 +580,7 @@ export class WorkspaceGitServiceImpl implements WorkspaceGitService {
   private watcherErrorCallbackCount = 0;
   constructor(options: WorkspaceGitServiceOptions) {
     this.logger = options.logger.child({ module: "workspace-git-service" });
-    this.fdeHome = options.fdeHome;
+    this.froggHome = options.froggHome;
     this.worktreesRoot = options.worktreesRoot;
     this.fileObserver = options.fileObserver ?? createFileObserver();
     this.deps = resolveWorkspaceGitServiceDeps(
@@ -704,7 +704,7 @@ export class WorkspaceGitServiceImpl implements WorkspaceGitService {
     this.assertNotDisposed();
     const normalizedCwd = resolve(cwd);
     const status = await this.deps.getCheckoutStatus(normalizedCwd, {
-      fdeHome: this.fdeHome,
+      froggHome: this.froggHome,
       worktreesRoot: this.worktreesRoot,
       logger: this.logger,
     });
@@ -714,7 +714,7 @@ export class WorkspaceGitServiceImpl implements WorkspaceGitService {
         currentBranch: null,
         remoteUrl: null,
         repoRoot: null,
-        isFdeOwnedWorktree: false,
+        isFroggOwnedWorktree: false,
         mainRepoRoot: null,
       });
     }
@@ -723,7 +723,7 @@ export class WorkspaceGitServiceImpl implements WorkspaceGitService {
       currentBranch: status.currentBranch,
       remoteUrl: status.remoteUrl,
       repoRoot: status.repoRoot,
-      isFdeOwnedWorktree: status.isFdeOwnedWorktree,
+      isFroggOwnedWorktree: status.isFroggOwnedWorktree,
       mainRepoRoot: status.mainRepoRoot,
     });
   }
@@ -744,7 +744,7 @@ export class WorkspaceGitServiceImpl implements WorkspaceGitService {
     const key = this.buildCheckoutDiffCacheKey(normalizedCwd, normalizedOptions);
     return this.readAuxiliaryCache(this.checkoutDiffCache, key, readOptions, () =>
       this.deps.getCheckoutDiff(normalizedCwd, normalizedOptions, {
-        fdeHome: this.fdeHome,
+        froggHome: this.froggHome,
         worktreesRoot: this.worktreesRoot,
       }),
     );
@@ -835,14 +835,14 @@ export class WorkspaceGitServiceImpl implements WorkspaceGitService {
   ): Promise<WorkspaceGitStashEntry[]> {
     this.assertNotDisposed();
     const normalizedCwd = resolve(cwd);
-    const fdeOnly = options?.fdeOnly !== false;
-    const key = JSON.stringify(["stashes", normalizedCwd, fdeOnly]);
+    const froggOnly = options?.froggOnly !== false;
+    const key = JSON.stringify(["stashes", normalizedCwd, froggOnly]);
     return this.readAuxiliaryCache(this.stashListCache, key, readOptions, async () => {
       const { stdout } = await this.deps.runGitCommand(["stash", "list", "--format=%gd%x00%s"], {
         cwd: normalizedCwd,
         envOverlay: READ_ONLY_GIT_ENV,
       });
-      return parseWorkspaceGitStashList(stdout, { fdeOnly });
+      return parseWorkspaceGitStashList(stdout, { froggOnly });
     });
   }
 
@@ -854,9 +854,9 @@ export class WorkspaceGitServiceImpl implements WorkspaceGitService {
     const repoRoot = await this.resolveRepoRoot(cwdOrRepoRoot, options);
     const key = JSON.stringify(["worktrees", repoRoot]);
     return this.readAuxiliaryCache(this.worktreeListCache, key, options, () =>
-      this.deps.listFdeWorktrees({
+      this.deps.listFroggWorktrees({
         cwd: repoRoot,
-        fdeHome: this.fdeHome,
+        froggHome: this.froggHome,
         worktreesRoot: this.worktreesRoot,
       }),
     );
@@ -868,7 +868,7 @@ export class WorkspaceGitServiceImpl implements WorkspaceGitService {
       throw new Error("Create worktree requires a git repository");
     }
 
-    return snapshot.git.isFdeOwnedWorktree
+    return snapshot.git.isFroggOwnedWorktree
       ? (snapshot.git.mainRepoRoot ?? snapshot.git.repoRoot ?? resolve(cwd))
       : (snapshot.git.repoRoot ?? resolve(cwd));
   }
@@ -1287,7 +1287,7 @@ export class WorkspaceGitServiceImpl implements WorkspaceGitService {
       return target.latestFacts;
     }
     return this.loadCheckoutFacts(target, {
-      fdeHome: this.fdeHome,
+      froggHome: this.froggHome,
       logger: this.logger,
     });
   }
@@ -2633,7 +2633,7 @@ export class WorkspaceGitServiceImpl implements WorkspaceGitService {
       target.latestFacts?.isGit && target.latestFacts.currentBranch === git.currentBranch
         ? target.latestFacts.pullRequestLookupTarget
         : null;
-    if (target.latestFacts?.isGit && target.latestFacts.fdeWorktree.isFdeOwnedWorktree) {
+    if (target.latestFacts?.isGit && target.latestFacts.froggWorktree.isFroggOwnedWorktree) {
       return lookupTarget;
     }
     if (lookupTarget) {
@@ -2954,7 +2954,7 @@ export class WorkspaceGitServiceImpl implements WorkspaceGitService {
       { aheadBehind: latestGit.aheadBehind, diffStat: latestGit.diffStat },
       movedRemoteRefs,
       {
-        fdeHome: this.fdeHome,
+        froggHome: this.froggHome,
         worktreesRoot: this.worktreesRoot,
         logger: this.logger,
         facts,
@@ -2986,7 +2986,7 @@ export class WorkspaceGitServiceImpl implements WorkspaceGitService {
 
     target.lastShellOutAtMs = this.deps.now().getTime();
     const context: CheckoutContext = {
-      fdeHome: this.fdeHome,
+      froggHome: this.froggHome,
       worktreesRoot: this.worktreesRoot,
       logger: this.logger,
       facts,
@@ -3013,7 +3013,7 @@ export class WorkspaceGitServiceImpl implements WorkspaceGitService {
     const cwd = target.cwd;
     const previousForgePrStatusPollKey = this.getForgePrStatusPollKey(target);
     const baseContext: CheckoutContext = {
-      fdeHome: this.fdeHome,
+      froggHome: this.froggHome,
       worktreesRoot: this.worktreesRoot,
       logger: this.logger,
       runGitCommand: runRefreshGitCommand,
@@ -3045,7 +3045,7 @@ export class WorkspaceGitServiceImpl implements WorkspaceGitService {
       mainRepoRoot: checkoutStatus.mainRepoRoot,
       currentBranch: checkoutStatus.currentBranch,
       remoteUrl: checkoutStatus.remoteUrl,
-      isFdeOwnedWorktree: checkoutStatus.isFdeOwnedWorktree,
+      isFroggOwnedWorktree: checkoutStatus.isFroggOwnedWorktree,
       isDirty: refreshWorktree
         ? checkoutStatus.isDirty
         : (target.latestGit?.isDirty ?? checkoutStatus.isDirty),
@@ -3518,7 +3518,7 @@ function buildForgeSnapshot(
 
 function parseWorkspaceGitStashList(
   stdout: string,
-  options: { fdeOnly: boolean },
+  options: { froggOnly: boolean },
 ): WorkspaceGitStashEntry[] {
   const entries: WorkspaceGitStashEntry[] = [];
   const lines = stdout.trim().split("\n").filter(Boolean);
@@ -3537,16 +3537,16 @@ function parseWorkspaceGitStashList(
     }
 
     const index = Number(indexMatch[1]);
-    const prefix = "fde-auto-stash:";
+    const prefix = "frogg-auto-stash:";
     const prefixIdx = subject.indexOf(prefix);
-    const isFde = prefixIdx >= 0;
-    const branch = isFde ? subject.slice(prefixIdx + prefix.length).trim() || null : null;
+    const isFrogg = prefixIdx >= 0;
+    const branch = isFrogg ? subject.slice(prefixIdx + prefix.length).trim() || null : null;
 
-    if (options.fdeOnly && !isFde) {
+    if (options.froggOnly && !isFrogg) {
       continue;
     }
 
-    entries.push({ index, message: subject, branch, isFde });
+    entries.push({ index, message: subject, branch, isFrogg });
   }
 
   return entries;
@@ -3561,7 +3561,7 @@ function buildNotGitSnapshot(cwd: string): WorkspaceGitRuntimeSnapshot {
       mainRepoRoot: null,
       currentBranch: null,
       remoteUrl: null,
-      isFdeOwnedWorktree: false,
+      isFroggOwnedWorktree: false,
       isDirty: null,
       baseRef: null,
       aheadBehind: null,

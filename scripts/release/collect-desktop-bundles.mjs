@@ -6,9 +6,9 @@ import {
 // Copies the bundles `cargo tauri build` wrote under <release-dir>/bundle/ into one
 // flat directory with the release asset names in packages/branding/src/artifact-contract.mjs:
 //
-//   FDE-<version>-linux-x86_64.deb      FDE-<version>-linux-x86_64.AppImage
-//   FDE-<version>-win-x64-setup.zip     FDE-<version>-win-x64-portable.zip
-//   FDE-<version>-mac-<arch>.dmg        FDE-<version>-mac-<arch>.app.tar.gz
+//   Frogg-<version>-linux-x86_64.deb      Frogg-<version>-linux-x86_64.AppImage
+//   Frogg-<version>-win-x64-setup.zip     Frogg-<version>-win-x64-portable.zip
+//   Frogg-<version>-mac-<arch>.dmg        Frogg-<version>-mac-<arch>.app.tar.gz
 //
 // A `.sig` next to any bundle (present when TAURI_SIGNING_PRIVATE_KEY was set)
 // is copied under the renamed name plus `.sig`.
@@ -153,7 +153,7 @@ export function collectDesktopBundles({ platform, arch, version, releaseDir, out
   if (renames.length === 0) {
     throw new Error(`No bundles found under ${releaseDir}. Run the Tauri build first.`);
   }
-  if (brand.legacyFde) {
+  if (brand.legacyFrogg) {
     const prefix = `${brand.artifactPrefix}-${version}-`;
     const aliases = renames.flatMap(({ from, to }) => {
       const legacy = prefix + legacyDesktopSuffix(to.slice(prefix.length));

@@ -36,8 +36,8 @@ Terminal-styled command block with a copy button ("Copied" confirmation, screen-
 
 ```mdx
 <Terminal code="curl -fsSL https://frogg.app/install.sh | bash" />
-<Terminal title="On the host" code={["fde daemon status", "# comments are not copied", "fde daemon pair"]} output="…" />
-<Terminal title="PowerShell" prompt=">" code="fde --version" />
+<Terminal title="On the host" code={["frogg daemon status", "# comments are not copied", "frogg daemon pair"]} output="…" />
+<Terminal title="PowerShell" prompt=">" code="frogg --version" />
 ```
 
 | Prop     | Type                 | Notes                                                    |

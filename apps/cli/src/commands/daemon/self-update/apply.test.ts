@@ -16,7 +16,7 @@ import { waitForDaemonVersion } from "./verify.js";
 
 const dirs: string[] = [];
 function makeInstallDir(): string {
-  const dir = mkdtempSync(path.join(os.tmpdir(), "fde-self-update-apply-"));
+  const dir = mkdtempSync(path.join(os.tmpdir(), "frogg-self-update-apply-"));
   dirs.push(dir);
   return dir;
 }

@@ -14,7 +14,7 @@ import path from "node:path";
 import { localBuildSteps, runLocalBuild } from "./build-local.mjs";
 
 function fixture(t) {
-  const root = mkdtempSync(path.join(tmpdir(), "fde-local-build-"));
+  const root = mkdtempSync(path.join(tmpdir(), "frogg-local-build-"));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   writeFileSync(path.join(root, "package.json"), JSON.stringify({ version: "0.3.2" }));
   return root;

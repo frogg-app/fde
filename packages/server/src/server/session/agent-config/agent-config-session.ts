@@ -1,7 +1,7 @@
 import type pino from "pino";
 import { v4 as uuidv4 } from "uuid";
-import { getErrorMessage, getErrorMessageOr } from "@fde/protocol/error-utils";
-import type { AgentConfigApply } from "@fde/protocol/messages";
+import { getErrorMessage, getErrorMessageOr } from "@frogg/protocol/error-utils";
+import type { AgentConfigApply } from "@frogg/protocol/messages";
 import type { AgentProviderNotice } from "../../agent/agent-sdk-types.js";
 import type { SessionInboundMessage, SessionOutboundMessage } from "../../messages.js";
 

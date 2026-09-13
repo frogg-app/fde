@@ -10,9 +10,9 @@ describe("runCli", () => {
       createCliParseArgv({
         argv: [],
         cwd: process.cwd(),
-        nodeArgv: ["node", "fde"],
+        nodeArgv: ["node", "frogg"],
       }),
-    ).toEqual(["node", "fde", "--help"]);
+    ).toEqual(["node", "frogg", "--help"]);
   });
 
   it("routes explicit root relay flags to onboard", () => {
@@ -20,16 +20,16 @@ describe("runCli", () => {
       createCliParseArgv({
         argv: ["--relay"],
         cwd: process.cwd(),
-        nodeArgv: ["node", "fde"],
+        nodeArgv: ["node", "frogg"],
       }),
-    ).toEqual(["node", "fde", "onboard", "--relay"]);
+    ).toEqual(["node", "frogg", "onboard", "--relay"]);
     expect(
       createCliParseArgv({
         argv: ["--no-relay"],
         cwd: process.cwd(),
-        nodeArgv: ["node", "fde"],
+        nodeArgv: ["node", "frogg"],
       }),
-    ).toEqual(["node", "fde", "onboard", "--no-relay"]);
+    ).toEqual(["node", "frogg", "onboard", "--no-relay"]);
   });
 
   it("preserves known CLI command argv", () => {
@@ -37,22 +37,22 @@ describe("runCli", () => {
       createCliParseArgv({
         argv: ["daemon", "set-password"],
         cwd: process.cwd(),
-        nodeArgv: ["node", "fde"],
+        nodeArgv: ["node", "frogg"],
       }),
-    ).toEqual(["node", "fde", "daemon", "set-password"]);
+    ).toEqual(["node", "frogg", "daemon", "set-password"]);
   });
 
   it("recognizes legacy daemon commands even beside a directory named daemon", () => {
-    const root = mkdtempSync(path.join(tmpdir(), "fde-cli-legacy-"));
+    const root = mkdtempSync(path.join(tmpdir(), "frogg-cli-legacy-"));
     mkdirSync(path.join(root, "daemon"));
     try {
       expect(
         createCliParseArgv({
           argv: ["daemon", "start", "--foreground"],
           cwd: root,
-          nodeArgv: ["node", "fde"],
+          nodeArgv: ["node", "frogg"],
         }),
-      ).toEqual(["node", "fde", "daemon", "start", "--foreground"]);
+      ).toEqual(["node", "frogg", "daemon", "start", "--foreground"]);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -63,13 +63,13 @@ describe("runCli", () => {
       createCliParseArgv({
         argv: ["hooks", "claude", "UserPromptSubmit"],
         cwd: process.cwd(),
-        nodeArgv: ["node", "fde"],
+        nodeArgv: ["node", "frogg"],
       }),
-    ).toEqual(["node", "fde", "hooks", "claude", "UserPromptSubmit"]);
+    ).toEqual(["node", "frogg", "hooks", "claude", "UserPromptSubmit"]);
   });
 
   it("classifies existing unknown directories as open-project invocations", () => {
-    const root = mkdtempSync(path.join(tmpdir(), "fde-cli-run-"));
+    const root = mkdtempSync(path.join(tmpdir(), "frogg-cli-run-"));
     const project = path.join(root, "repository");
     mkdirSync(project);
 
@@ -78,7 +78,7 @@ describe("runCli", () => {
         createCliParseArgv({
           argv: ["repository"],
           cwd: root,
-          nodeArgv: ["node", "fde"],
+          nodeArgv: ["node", "frogg"],
         }),
       ).toEqual({
         kind: "open-project",

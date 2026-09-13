@@ -1,16 +1,19 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { existsSync, readFileSync } from "node:fs";
-import { loadConfig, resolveFdeHome } from "@fde/server";
+import { loadConfig, resolveFroggHome } from "@frogg/server";
 import {
   buildDaemonWebSocketUrl,
   buildRelayWebSocketUrl,
   normalizeHostPort,
   parseConnectionUri,
   shouldUseTlsForDefaultHostedRelay,
-} from "@fde/protocol/daemon-endpoints";
-import { parseConnectionOfferFromUrl, type ConnectionOffer } from "@fde/protocol/connection-offer";
-import { parseSshTransportUri } from "@fde/protocol/ssh-transport";
-import { DaemonClient, type WebSocketLike } from "@fde/client/internal/daemon-client";
+} from "@frogg/protocol/daemon-endpoints";
+import {
+  parseConnectionOfferFromUrl,
+  type ConnectionOffer,
+} from "@frogg/protocol/connection-offer";
+import { parseSshTransportUri } from "@frogg/protocol/ssh-transport";
+import { DaemonClient, type WebSocketLike } from "@frogg/client/internal/daemon-client";
 import path from "node:path";
 import { WebSocket } from "ws";
 import { getOrCreateCliClientId } from "./client-id.js";
@@ -30,7 +33,7 @@ export interface DaemonConnectionCommandError {
 
 const DEFAULT_HOST = `localhost:${brand.daemonPort}`;
 const DEFAULT_TIMEOUT = 15000;
-const PID_FILENAME = "fde.pid";
+const PID_FILENAME = "frogg.pid";
 
 type DaemonTarget =
   | {
@@ -128,8 +131,8 @@ function isTcpDaemonHost(host: string | null): host is string {
   return host !== null && !isIpcDaemonHost(host);
 }
 
-function readPidSocketTarget(fdeHome: string): string | null {
-  const pidPath = path.join(fdeHome, PID_FILENAME);
+function readPidSocketTarget(froggHome: string): string | null {
+  const pidPath = path.join(froggHome, PID_FILENAME);
   if (!existsSync(pidPath)) {
     return null;
   }
@@ -147,24 +150,24 @@ function readPidSocketTarget(fdeHome: string): string | null {
   }
 }
 
-function resolveConfiguredIpcDaemonHost(env: NodeJS.ProcessEnv, fdeHome: string): string | null {
-  const directEnvHost = normalizeDaemonHost(env.FDE_LISTEN ?? "");
+function resolveConfiguredIpcDaemonHost(env: NodeJS.ProcessEnv, froggHome: string): string | null {
+  const directEnvHost = normalizeDaemonHost(env.FROGG_LISTEN ?? "");
   if (isIpcDaemonHost(directEnvHost)) {
     return directEnvHost;
   }
 
-  const pidHost = normalizeDaemonHost(readPidSocketTarget(fdeHome) ?? "");
+  const pidHost = normalizeDaemonHost(readPidSocketTarget(froggHome) ?? "");
   if (isIpcDaemonHost(pidHost)) {
     return pidHost;
   }
 
-  const config = loadConfig(fdeHome, { env });
+  const config = loadConfig(froggHome, { env });
   const configuredHost = normalizeDaemonHost(config.listen);
   return isIpcDaemonHost(configuredHost) ? configuredHost : null;
 }
 
-function resolveConfiguredTcpDaemonHost(env: NodeJS.ProcessEnv, fdeHome: string): string | null {
-  const configuredHost = normalizeDaemonHost(loadConfig(fdeHome, { env }).listen);
+function resolveConfiguredTcpDaemonHost(env: NodeJS.ProcessEnv, froggHome: string): string | null {
+  const configuredHost = normalizeDaemonHost(loadConfig(froggHome, { env }).listen);
   if (!isTcpDaemonHost(configuredHost)) {
     return null;
   }
@@ -172,13 +175,13 @@ function resolveConfiguredTcpDaemonHost(env: NodeJS.ProcessEnv, fdeHome: string)
 }
 
 export function resolveDefaultDaemonHosts(env: NodeJS.ProcessEnv = process.env): string[] {
-  const fdeHome = resolveFdeHome(env);
+  const froggHome = resolveFroggHome(env);
   const candidates: string[] = [];
-  const configuredIpcHost = resolveConfiguredIpcDaemonHost(env, fdeHome);
+  const configuredIpcHost = resolveConfiguredIpcDaemonHost(env, froggHome);
   if (configuredIpcHost) {
     candidates.push(configuredIpcHost);
   }
-  const configuredTcpHost = resolveConfiguredTcpDaemonHost(env, fdeHome);
+  const configuredTcpHost = resolveConfiguredTcpDaemonHost(env, froggHome);
   if (configuredTcpHost) {
     candidates.push(configuredTcpHost);
   }
@@ -187,7 +190,7 @@ export function resolveDefaultDaemonHosts(env: NodeJS.ProcessEnv = process.env):
 }
 
 function resolveDaemonHostCandidates(options?: ConnectOptions): string[] {
-  const explicitHost = options?.host ?? process.env.FDE_HOST;
+  const explicitHost = options?.host ?? process.env.FROGG_HOST;
   if (explicitHost) {
     return [explicitHost];
   }
@@ -246,7 +249,7 @@ export function resolveDaemonPassword(host: string): string | undefined {
     const fromUri = parseConnectionUri(trimmed).password;
     if (fromUri) return fromUri;
   }
-  const fromEnv = process.env.FDE_PASSWORD;
+  const fromEnv = process.env.FROGG_PASSWORD;
   return fromEnv && fromEnv.length > 0 ? fromEnv : undefined;
 }
 
@@ -358,7 +361,7 @@ export async function connectToDaemon(options?: ConnectOptions): Promise<DaemonC
   const clientId = await getOrCreateCliClientId();
   const nodeWebSocketFactory = createNodeWebSocketFactory();
 
-  const explicitHost = options?.host ?? process.env.FDE_HOST;
+  const explicitHost = options?.host ?? process.env.FROGG_HOST;
   if (explicitHost?.trim().startsWith("ssh://")) {
     const target = parseSshTransportUri(explicitHost.trim());
     const tunnel = await createSshTunnel(target);

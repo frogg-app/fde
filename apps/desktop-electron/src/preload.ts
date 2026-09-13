@@ -5,15 +5,15 @@ import type { DesktopWindowChromeMode } from "./window/chrome.js";
 // This preload runs in Electron's sandbox and is tsc-compiled (not bundled), so it MUST
 // NOT emit any runtime module load other than "electron" — a require() of a local or
 // third-party module throws and aborts the preload before exposeInMainWorld runs, leaving
-// window.fdeDesktop undefined (the 0.1.108 regression, #2103). Keep this literal in sync
-// with FDE_BROWSER_PROFILE_PARTITION in features/browser-profile.ts; preload-sandbox.test.ts
+// window.froggDesktop undefined (the 0.1.108 regression, #2103). Keep this literal in sync
+// with FROGG_BROWSER_PROFILE_PARTITION in features/browser-profile.ts; preload-sandbox.test.ts
 // guards both the no-local-import rule and this drift. Type-only imports are fine (erased at emit).
-const FDE_BROWSER_PROFILE_PARTITION = "persist:fde-browser";
+const FROGG_BROWSER_PROFILE_PARTITION = "persist:frogg-browser";
 
 type EventHandler = (payload: unknown) => void;
 
 function readWindowChromeMode(): DesktopWindowChromeMode {
-  const prefix = "--fde-window-chrome-mode=";
+  const prefix = "--frogg-window-chrome-mode=";
   const value = process.argv.find((argument) => argument.startsWith(prefix))?.slice(prefix.length);
   if (value === "native-mac" || value === "custom-windows" || value === "custom-linux") {
     return value;
@@ -29,24 +29,24 @@ interface AttachedBrowserRegistration {
   webContentsId: number;
 }
 
-contextBridge.exposeInMainWorld("fdeDesktop", {
+contextBridge.exposeInMainWorld("froggDesktop", {
   network: {
-    localAddresses: () => ipcRenderer.invoke("fde:network:localAddresses"),
-    reverseLookup: (ip: string) => ipcRenderer.invoke("fde:network:reverseLookup", ip),
+    localAddresses: () => ipcRenderer.invoke("frogg:network:localAddresses"),
+    reverseLookup: (ip: string) => ipcRenderer.invoke("frogg:network:reverseLookup", ip),
     probeIdentity: (url: string, requestId?: string) =>
-      ipcRenderer.invoke("fde:network:probeIdentity", url, requestId),
-    cancelProbe: (requestId: string) => ipcRenderer.invoke("fde:network:cancelProbe", requestId),
+      ipcRenderer.invoke("frogg:network:probeIdentity", url, requestId),
+    cancelProbe: (requestId: string) => ipcRenderer.invoke("frogg:network:cancelProbe", requestId),
   },
   platform: process.platform,
   supportsLocalDaemon: false,
   windowChromeMode: readWindowChromeMode(),
   invoke: (command: string, args?: Record<string, unknown>) =>
-    ipcRenderer.invoke("fde:invoke", command, args),
+    ipcRenderer.invoke("frogg:invoke", command, args),
   getPendingOpenProject: () =>
-    ipcRenderer.invoke("fde:get-pending-open-project") as Promise<string | null>,
+    ipcRenderer.invoke("frogg:get-pending-open-project") as Promise<string | null>,
   agentNavigation: {
     ready: () =>
-      ipcRenderer.invoke("fde:agent-navigation:ready") as Promise<{
+      ipcRenderer.invoke("frogg:agent-navigation:ready") as Promise<{
         serverId: string;
         agentId: string;
       } | null>,
@@ -56,92 +56,93 @@ contextBridge.exposeInMainWorld("fdeDesktop", {
       const listener = (_ipcEvent: Electron.IpcRendererEvent, payload: unknown) => {
         handler(payload);
       };
-      ipcRenderer.on(`fde:event:${event}`, listener);
+      ipcRenderer.on(`frogg:event:${event}`, listener);
       return Promise.resolve(() => {
-        ipcRenderer.removeListener(`fde:event:${event}`, listener);
+        ipcRenderer.removeListener(`frogg:event:${event}`, listener);
       });
     },
   },
   window: {
     openNew: (options?: { pendingOpenProjectPath?: string | null }) =>
-      ipcRenderer.invoke("fde:window:openNew", options),
+      ipcRenderer.invoke("frogg:window:openNew", options),
     getCurrentWindow: () => ({
-      minimize: () => ipcRenderer.invoke("fde:window:minimize"),
-      close: () => ipcRenderer.invoke("fde:window:close"),
-      toggleMaximize: () => ipcRenderer.invoke("fde:window:toggleMaximize"),
-      isMaximized: () => ipcRenderer.invoke("fde:window:isMaximized"),
+      minimize: () => ipcRenderer.invoke("frogg:window:minimize"),
+      close: () => ipcRenderer.invoke("frogg:window:close"),
+      toggleMaximize: () => ipcRenderer.invoke("frogg:window:toggleMaximize"),
+      isMaximized: () => ipcRenderer.invoke("frogg:window:isMaximized"),
       setFullscreen: (fullscreen: boolean) =>
-        ipcRenderer.invoke("fde:window:setFullscreen", fullscreen),
-      isFullscreen: () => ipcRenderer.invoke("fde:window:isFullscreen"),
+        ipcRenderer.invoke("frogg:window:setFullscreen", fullscreen),
+      isFullscreen: () => ipcRenderer.invoke("frogg:window:isFullscreen"),
       updateChrome: (update: { backgroundColor?: string; trafficLightOffsetY?: number }) =>
-        ipcRenderer.invoke("fde:window:updateChrome", update),
+        ipcRenderer.invoke("frogg:window:updateChrome", update),
       onResized: (handler: EventHandler): (() => void) => {
         const listener = (_ipcEvent: Electron.IpcRendererEvent, payload: unknown) => {
           handler(payload);
         };
-        ipcRenderer.on("fde:window:resized", listener);
+        ipcRenderer.on("frogg:window:resized", listener);
         return () => {
-          ipcRenderer.removeListener("fde:window:resized", listener);
+          ipcRenderer.removeListener("frogg:window:resized", listener);
         };
       },
-      setBadgeCount: (count?: number) => ipcRenderer.invoke("fde:window:setBadgeCount", count),
+      setBadgeCount: (count?: number) => ipcRenderer.invoke("frogg:window:setBadgeCount", count),
     }),
   },
   dialog: {
     ask: (message: string, options?: Record<string, unknown>) =>
-      ipcRenderer.invoke("fde:dialog:ask", message, options),
+      ipcRenderer.invoke("frogg:dialog:ask", message, options),
     askWithCheckbox: (message: string, options: Record<string, unknown>) =>
-      ipcRenderer.invoke("fde:dialog:askWithCheckbox", message, options),
-    open: (options?: Record<string, unknown>) => ipcRenderer.invoke("fde:dialog:open", options),
+      ipcRenderer.invoke("frogg:dialog:askWithCheckbox", message, options),
+    open: (options?: Record<string, unknown>) => ipcRenderer.invoke("frogg:dialog:open", options),
   },
   notification: {
-    isSupported: () => ipcRenderer.invoke("fde:notification:isSupported"),
+    isSupported: () => ipcRenderer.invoke("frogg:notification:isSupported"),
     sendNotification: (payload: { title: string; body?: string; data?: Record<string, unknown> }) =>
-      ipcRenderer.invoke("fde:notification:send", payload),
+      ipcRenderer.invoke("frogg:notification:send", payload),
   },
   opener: {
-    openUrl: (url: string) => ipcRenderer.invoke("fde:opener:openUrl", url),
+    openUrl: (url: string) => ipcRenderer.invoke("frogg:opener:openUrl", url),
   },
   editor: {
-    listTargets: () => ipcRenderer.invoke("fde:editor:listTargets"),
+    listTargets: () => ipcRenderer.invoke("frogg:editor:listTargets"),
     openTarget: (input: {
       editorId: string;
       workspacePath: string;
       filePath?: string;
       line?: number;
       column?: number;
-    }) => ipcRenderer.invoke("fde:editor:openTarget", input),
+    }) => ipcRenderer.invoke("frogg:editor:openTarget", input),
   },
   webUtils: {
     getPathForFile: (file: File) => webUtils.getPathForFile(file),
   },
   menu: {
     showContextMenu: (input?: Record<string, unknown>) =>
-      ipcRenderer.invoke("fde:menu:showContextMenu", input),
+      ipcRenderer.invoke("frogg:menu:showContextMenu", input),
     setCapturingShortcut: (capturing: boolean) =>
-      ipcRenderer.invoke("fde:menu:set-capturing-shortcut", capturing),
+      ipcRenderer.invoke("frogg:menu:set-capturing-shortcut", capturing),
   },
   browser: {
     setShortcutPolicy: (input: BrowserKeyboardPolicy) =>
-      ipcRenderer.invoke("fde:browser:set-shortcut-policy", input),
-    profilePartition: FDE_BROWSER_PROFILE_PARTITION,
+      ipcRenderer.invoke("frogg:browser:set-shortcut-policy", input),
+    profilePartition: FROGG_BROWSER_PROFILE_PARTITION,
     registerAttachedBrowser: (input: AttachedBrowserRegistration) =>
-      ipcRenderer.invoke("fde:browser:register-attached", input),
+      ipcRenderer.invoke("frogg:browser:register-attached", input),
     unregisterWorkspaceBrowser: (browserId: string) =>
-      ipcRenderer.invoke("fde:browser:unregister-workspace-browser", browserId),
+      ipcRenderer.invoke("frogg:browser:unregister-workspace-browser", browserId),
     setWorkspaceActiveBrowser: (input: { workspaceId: string; browserId: string | null }) =>
-      ipcRenderer.invoke("fde:browser:set-workspace-active-browser", input),
-    focus: (browserId: string) => ipcRenderer.invoke("fde:browser:focus", browserId),
-    openDevTools: (browserId: string) => ipcRenderer.invoke("fde:browser:open-devtools", browserId),
+      ipcRenderer.invoke("frogg:browser:set-workspace-active-browser", input),
+    focus: (browserId: string) => ipcRenderer.invoke("frogg:browser:focus", browserId),
+    openDevTools: (browserId: string) =>
+      ipcRenderer.invoke("frogg:browser:open-devtools", browserId),
     clearProfile: (legacyBrowserIds: string[]) =>
-      ipcRenderer.invoke("fde:browser:clear-profile", legacyBrowserIds),
+      ipcRenderer.invoke("frogg:browser:clear-profile", legacyBrowserIds),
     executeAutomationCommand: (request: Record<string, unknown>) =>
-      ipcRenderer.invoke("fde:browser:execute-automation-command", request),
+      ipcRenderer.invoke("frogg:browser:execute-automation-command", request),
     captureElement: (
       browserId: string,
       rect: { x: number; y: number; width: number; height: number },
-    ) => ipcRenderer.invoke("fde:browser:capture-element", browserId, rect),
+    ) => ipcRenderer.invoke("frogg:browser:capture-element", browserId, rect),
     copyElement: (payload: { text?: string; imageDataUrl?: string }) =>
-      ipcRenderer.invoke("fde:browser:copy-element", payload),
+      ipcRenderer.invoke("frogg:browser:copy-element", payload),
   },
 });

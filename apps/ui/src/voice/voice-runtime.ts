@@ -1,5 +1,5 @@
 import { Buffer } from "buffer";
-import type { AgentStreamEventPayload, SessionOutboundMessage } from "@fde/protocol/messages";
+import type { AgentStreamEventPayload, SessionOutboundMessage } from "@frogg/protocol/messages";
 import { resolveVoiceUnavailableMessage } from "@/utils/server-info-capabilities";
 import type { DaemonServerInfo } from "@/stores/session-store";
 import type { AudioEngine, AudioPlaybackSource } from "@/voice/audio-engine-types";
@@ -11,7 +11,7 @@ import {
 } from "@/utils/thinking-tone.native-pcm";
 
 const PCM_MIME_TYPE = "audio/pcm;rate=16000;bits=16";
-const KEEP_AWAKE_TAG = "fde:voice";
+const KEEP_AWAKE_TAG = "frogg:voice";
 const THINKING_TONE_REPEAT_GAP_MS = 350;
 
 type TurnEventType = Extract<

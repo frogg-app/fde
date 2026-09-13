@@ -11,7 +11,8 @@ export function configureDesktopProcess(APP_NAME: string, profileName = APP_NAME
   app.setPath("userData", path.join(app.getPath("appData"), profileName));
   let devWorktreeName: string | null = null;
   const forcedUserDataDir =
-    process.env.FDE_ELECTRON_USER_DATA?.trim() || process.env.FDE_ELECTRON_USER_DATA_DIR?.trim();
+    process.env.FROGG_ELECTRON_USER_DATA?.trim() ||
+    process.env.FROGG_ELECTRON_USER_DATA_DIR?.trim();
   if (forcedUserDataDir) {
     app.setPath("userData", forcedUserDataDir);
     log.info("[dev-user-data] forced userData dir:", forcedUserDataDir);
@@ -23,7 +24,7 @@ export function configureDesktopProcess(APP_NAME: string, profileName = APP_NAME
         windowsHide: true,
       }).trim();
       devWorktreeName = path.basename(topLevel);
-      // Main checkout (e.g. "fde") gets default userData — only worktrees diverge.
+      // Main checkout (e.g. "frogg") gets default userData — only worktrees diverge.
       const commonDir = path.resolve(
         topLevel,
         execFileSync("git", ["rev-parse", "--git-common-dir"], {
@@ -48,10 +49,10 @@ export function configureDesktopProcess(APP_NAME: string, profileName = APP_NAME
     }
   }
 
-  // Allow users to pass Chromium flags via FDE_ELECTRON_FLAGS for debugging
+  // Allow users to pass Chromium flags via FROGG_ELECTRON_FLAGS for debugging
   // rendering issues (e.g. "--disable-gpu --ozone-platform=x11").
   // Must run before app.whenReady().
-  const electronFlags = process.env.FDE_ELECTRON_FLAGS?.trim();
+  const electronFlags = process.env.FROGG_ELECTRON_FLAGS?.trim();
   if (electronFlags) {
     for (const token of electronFlags.split(/\s+/)) {
       const [key, ...rest] = token.replace(/^--/, "").split("=");

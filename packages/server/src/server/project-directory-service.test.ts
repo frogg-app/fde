@@ -16,7 +16,7 @@ describe("project directory creation", () => {
   });
 
   async function createRoot(): Promise<string> {
-    const root = await mkdtemp(join(tmpdir(), "fde-project-directory-"));
+    const root = await mkdtemp(join(tmpdir(), "frogg-project-directory-"));
     roots.push(root);
     return root;
   }

@@ -2,40 +2,40 @@ import { existsSync, readFileSync, renameSync, rmSync, statSync, writeFileSync }
 import { join } from "node:path";
 import { createHash, randomUUID } from "node:crypto";
 import {
-  FdeConfigRawSchema,
-  type FdeConfigRaw,
-  type FdeConfigRevision,
+  FroggConfigRawSchema,
+  type FroggConfigRaw,
+  type FroggConfigRevision,
   type ProjectConfigRpcError,
-} from "@fde/protocol/fde-config-schema";
+} from "@frogg/protocol/frogg-config-schema";
 export {
-  FdeConfigRevisionSchema,
+  FroggConfigRevisionSchema,
   ProjectConfigRpcErrorSchema,
-  type FdeConfigRevision,
+  type FroggConfigRevision,
   type ProjectConfigRpcError,
-} from "@fde/protocol/fde-config-schema";
+} from "@frogg/protocol/frogg-config-schema";
 
-export const FDE_CONFIG_FILE_NAME = "fde.json";
+export const FROGG_CONFIG_FILE_NAME = "frogg.json";
 
-export type ReadFdeConfigForEditResult =
-  | { ok: true; config: FdeConfigRaw | null; revision: FdeConfigRevision | null }
+export type ReadFroggConfigForEditResult =
+  | { ok: true; config: FroggConfigRaw | null; revision: FroggConfigRevision | null }
   | { ok: false; error: ProjectConfigRpcError };
 
-export type WriteFdeConfigForEditResult =
-  | { ok: true; config: FdeConfigRaw; revision: FdeConfigRevision }
+export type WriteFroggConfigForEditResult =
+  | { ok: true; config: FroggConfigRaw; revision: FroggConfigRevision }
   | { ok: false; error: ProjectConfigRpcError };
 
-export interface WriteFdeConfigForEditInput {
+export interface WriteFroggConfigForEditInput {
   repoRoot: string;
-  config: FdeConfigRaw;
-  expectedRevision: FdeConfigRevision | null;
+  config: FroggConfigRaw;
+  expectedRevision: FroggConfigRevision | null;
 }
 
-export function resolveFdeConfigPath(repoRoot: string): string {
-  return join(repoRoot, FDE_CONFIG_FILE_NAME);
+export function resolveFroggConfigPath(repoRoot: string): string {
+  return join(repoRoot, FROGG_CONFIG_FILE_NAME);
 }
 
-export function statFdeConfigPath(repoRoot: string): FdeConfigRevision | null {
-  const configPath = resolveFdeConfigPath(repoRoot);
+export function statFroggConfigPath(repoRoot: string): FroggConfigRevision | null {
+  const configPath = resolveFroggConfigPath(repoRoot);
   if (!existsSync(configPath)) {
     return null;
   }
@@ -43,28 +43,28 @@ export function statFdeConfigPath(repoRoot: string): FdeConfigRevision | null {
   return {
     mtimeMs: stats.mtimeMs,
     size: stats.size,
-    contentHash: hashFdeConfigFile(configPath),
+    contentHash: hashFroggConfigFile(configPath),
   };
 }
 
-export function readFdeConfigJson(repoRoot: string): unknown {
-  const configPath = resolveFdeConfigPath(repoRoot);
+export function readFroggConfigJson(repoRoot: string): unknown {
+  const configPath = resolveFroggConfigPath(repoRoot);
   if (!existsSync(configPath)) {
     return null;
   }
   return JSON.parse(readFileSync(configPath, "utf8"));
 }
 
-export function readFdeConfigForEdit(repoRoot: string): ReadFdeConfigForEditResult {
+export function readFroggConfigForEdit(repoRoot: string): ReadFroggConfigForEditResult {
   try {
-    const json = readFdeConfigJson(repoRoot);
+    const json = readFroggConfigJson(repoRoot);
     if (json === null) {
       return { ok: true, config: null, revision: null };
     }
     return {
       ok: true,
-      config: FdeConfigRawSchema.parse(json),
-      revision: statFdeConfigPath(repoRoot),
+      config: FroggConfigRawSchema.parse(json),
+      revision: statFroggConfigPath(repoRoot),
     };
   } catch {
     return {
@@ -74,25 +74,25 @@ export function readFdeConfigForEdit(repoRoot: string): ReadFdeConfigForEditResu
   }
 }
 
-export function writeFdeConfigForEdit(
-  input: WriteFdeConfigForEditInput,
-): WriteFdeConfigForEditResult {
-  const parsed = FdeConfigRawSchema.safeParse(input.config);
+export function writeFroggConfigForEdit(
+  input: WriteFroggConfigForEditInput,
+): WriteFroggConfigForEditResult {
+  const parsed = FroggConfigRawSchema.safeParse(input.config);
   if (!parsed.success) {
     return { ok: false, error: { code: "invalid_project_config" } };
   }
 
-  const configPath = resolveFdeConfigPath(input.repoRoot);
+  const configPath = resolveFroggConfigPath(input.repoRoot);
   const tempPath = join(
     input.repoRoot,
-    `.${FDE_CONFIG_FILE_NAME}.${process.pid}.${randomUUID()}.tmp`,
+    `.${FROGG_CONFIG_FILE_NAME}.${process.pid}.${randomUUID()}.tmp`,
   );
 
   try {
     writeFileSync(tempPath, `${JSON.stringify(parsed.data, null, 2)}\n`);
-    const currentRevision = statFdeConfigPath(input.repoRoot);
-    if (!fdeConfigRevisionsEqual(currentRevision, input.expectedRevision)) {
-      removeTempFdeConfig(tempPath);
+    const currentRevision = statFroggConfigPath(input.repoRoot);
+    if (!froggConfigRevisionsEqual(currentRevision, input.expectedRevision)) {
+      removeTempFroggConfig(tempPath);
       return {
         ok: false,
         error: { code: "stale_project_config", currentRevision },
@@ -100,20 +100,20 @@ export function writeFdeConfigForEdit(
     }
 
     renameSync(tempPath, configPath);
-    const revision = statFdeConfigPath(input.repoRoot);
+    const revision = statFroggConfigPath(input.repoRoot);
     if (!revision) {
       return { ok: false, error: { code: "write_failed" } };
     }
     return { ok: true, config: parsed.data, revision };
   } catch {
-    removeTempFdeConfig(tempPath);
+    removeTempFroggConfig(tempPath);
     return { ok: false, error: { code: "write_failed" } };
   }
 }
 
-function fdeConfigRevisionsEqual(
-  left: FdeConfigRevision | null,
-  right: FdeConfigRevision | null,
+function froggConfigRevisionsEqual(
+  left: FroggConfigRevision | null,
+  right: FroggConfigRevision | null,
 ): boolean {
   if (left === null || right === null) {
     return left === right;
@@ -126,11 +126,11 @@ function fdeConfigRevisionsEqual(
   return left.mtimeMs === right.mtimeMs && left.size === right.size;
 }
 
-function hashFdeConfigFile(configPath: string): string {
+function hashFroggConfigFile(configPath: string): string {
   return createHash("sha256").update(readFileSync(configPath)).digest("hex");
 }
 
-function removeTempFdeConfig(tempPath: string): void {
+function removeTempFroggConfig(tempPath: string): void {
   try {
     rmSync(tempPath, { force: true });
   } catch {

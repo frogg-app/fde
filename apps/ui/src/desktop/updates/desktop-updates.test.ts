@@ -50,10 +50,10 @@ describe("desktop-updates helpers", () => {
     const { parseLocalDaemonVersionResult } = await loadModuleForPlatform("web");
 
     expect(
-      parseLocalDaemonVersionResult({ version: null, error: "fde command not found in PATH" }),
+      parseLocalDaemonVersionResult({ version: null, error: "frogg command not found in PATH" }),
     ).toEqual({
       version: null,
-      error: "fde command not found in PATH",
+      error: "frogg command not found in PATH",
     });
   });
 
@@ -128,9 +128,9 @@ describe("desktop-updates helpers", () => {
         body: "## Notes",
         date: "2026-09-01T00:00:00Z",
         errorMessage: null,
-        asset: { name: "FDE-0.2.0-linux-x86_64.deb", size: 12345, url: "https://x" },
+        asset: { name: "Frogg-0.2.0-linux-x86_64.deb", size: 12345, url: "https://x" },
         installKind: "linux-deb",
-        releaseUrl: "https://github.com/frogg-app/fde/releases/tag/v0.2.0",
+        releaseUrl: "https://github.com/frogg-app/frogg/releases/tag/v0.2.0",
         strategy: "github-release",
         channel: "stable",
         checkedAt: 1_700_000_000_000,
@@ -144,10 +144,10 @@ describe("desktop-updates helpers", () => {
       date: "2026-09-01T00:00:00Z",
       errorMessage: null,
       notes: "## Notes",
-      assetName: "FDE-0.2.0-linux-x86_64.deb",
+      assetName: "Frogg-0.2.0-linux-x86_64.deb",
       assetSize: 12345,
       installKind: "linux-deb",
-      releaseUrl: "https://github.com/frogg-app/fde/releases/tag/v0.2.0",
+      releaseUrl: "https://github.com/frogg-app/frogg/releases/tag/v0.2.0",
       strategy: "github-release",
       checkedAt: 1_700_000_000_000,
     });
@@ -178,7 +178,7 @@ describe("desktop-updates helpers", () => {
     const { buildMacAppleSiliconDownloadUrl } = await loadModuleForPlatform("web");
 
     expect(buildMacAppleSiliconDownloadUrl("v0.1.64")).toBe(
-      "https://github.com/frogg-app/fde/releases/download/v0.1.64/FDE-0.1.64-aarch64.dmg",
+      "https://github.com/frogg-app/frogg/releases/download/v0.1.64/Frogg-0.1.64-aarch64.dmg",
     );
     expect(buildMacAppleSiliconDownloadUrl(null)).toBeNull();
   });

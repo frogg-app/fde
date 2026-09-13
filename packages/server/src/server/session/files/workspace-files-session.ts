@@ -1,10 +1,10 @@
 import type pino from "pino";
-import { getErrorMessage } from "@fde/protocol/error-utils";
+import { getErrorMessage } from "@frogg/protocol/error-utils";
 import {
   encodeFileTransferFrame,
   FileTransferOpcode,
   type FileTransferFrame,
-} from "@fde/protocol/binary-frames/index";
+} from "@frogg/protocol/binary-frames/index";
 import type {
   FileDownloadTokenRequest,
   FileEntryCreateRequest,
@@ -50,7 +50,7 @@ export interface WorkspaceFilesSessionHost {
 export interface WorkspaceFilesSessionOptions {
   host: WorkspaceFilesSessionHost;
   downloadTokenStore: DownloadTokenStore;
-  fdeHome: string;
+  froggHome: string;
   logger: pino.Logger;
   fileObserver?: FileObserver;
 }
@@ -74,7 +74,7 @@ export class WorkspaceFilesSession {
     this.host = options.host;
     this.downloadTokenStore = options.downloadTokenStore;
     this.logger = options.logger;
-    this.fileUploads = new FileUploadStore({ fdeHome: options.fdeHome });
+    this.fileUploads = new FileUploadStore({ froggHome: options.froggHome });
     this.fileObserver = options.fileObserver ?? workspaceFileObserver;
   }
 

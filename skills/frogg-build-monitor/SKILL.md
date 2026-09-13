@@ -1,14 +1,14 @@
 ---
-name: fde-build-monitor
-description: Monitor FDE CI after pushes in a background agent, diagnose and fix build failures, retry individual targets, and coordinate isolated local and hosted builds to reduce waiting. Use when pushing updates that need build supervision or managing CI/build queues.
+name: frogg-build-monitor
+description: Monitor Frogg CI after pushes in a background agent, diagnose and fix build failures, retry individual targets, and coordinate isolated local and hosted builds to reduce waiting. Use when pushing updates that need build supervision or managing CI/build queues.
 ---
 
-# FDE build monitor
+# Frogg build monitor
 
 Keep development moving while one dedicated agent owns build follow-through. A skill
 is instructions, not a running service: create or resume the monitor and confirm its
-heartbeat before claiming that future pushes are watched. Use the `fde` skill for
-agent/workspace/heartbeat operations and `fde-release` for artifact and update rules.
+heartbeat before claiming that future pushes are watched. Use the `frogg` skill for
+agent/workspace/heartbeat operations and `frogg-release` for artifact and update rules.
 
 ## Start or resume independently
 
@@ -18,10 +18,10 @@ agent/workspace/heartbeat operations and `fde-release` for artifact and update r
   developer's active checkout. Use configured agent profiles and their notes; if
   none fit, discover available providers and use a supported default.
 - Pass repository, branch, requested targets, known runs, source SHA, allowed fixes
-  and integration scope. Preserve existing user authorization. Current FDE targets
+  and integration scope. Preserve existing user authorization. Current Frogg targets
   are Windows x64 Electron client, Linux x64 Node daemon, Android arm64 client.
-- In the monitor agent, create one five-minute heartbeat using the available FDE
-  heartbeat tool or `fde agent heartbeat create --help`. Each tick checks new runs,
+- In the monitor agent, create one five-minute heartbeat using the available Frogg
+  heartbeat tool or `frogg agent heartbeat create --help`. Each tick checks new runs,
   advances existing repairs/builds, records results, then yields. Do not sit in an
   endless shell polling loop. Stop/delete the heartbeat when monitoring is cancelled.
 - Store a small ledger in the monitor workspace's `.dev/build-monitor/`: repository,
@@ -30,7 +30,7 @@ agent/workspace/heartbeat operations and `fde-release` for artifact and update r
   start/end times and blocked reasons. Atomically update it. Treat unknown state as
   unknown; an old successful artifact does not validate a new commit.
 - Report transitions and actionable blockers through the agent's finish notification
-  or its FDE thread, not repeated "still running" messages. A coordinator may yield
+  or its Frogg thread, not repeated "still running" messages. A coordinator may yield
   as soon as the monitor and recurring check are confirmed active.
 
 ## Inspect without restarting work
@@ -82,7 +82,7 @@ gh workflow run build-selected.yml --repo OWNER/REPO --ref FIX_BRANCH -f target=
   and report evidence and the next required decision; keep unrelated targets moving.
 - Never publish a release, overwrite immutable artifacts, move tags, change signing
   keys, weaken permissions/tests, or alter live daemons as a side effect of monitoring.
-  Existing explicit publication authorization is handled through `fde-release`.
+  Existing explicit publication authorization is handled through `frogg-release`.
 
 ## Place builds by capacity and expected completion
 

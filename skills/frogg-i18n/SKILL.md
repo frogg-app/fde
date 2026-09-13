@@ -1,6 +1,6 @@
 ---
-name: fde-i18n
-description: Add, change, or translate user-facing UI copy in the FDE Expo client. Use when writing any new visible string in apps/ui, when the i18n resource parity test fails, when a locale file fails typecheck with a missing property, or when adding forge-variant (pull request / merge request) wording. Covers the nine locales, the type gate, and every invariant resources.test.ts enforces.
+name: frogg-i18n
+description: Add, change, or translate user-facing UI copy in the Frogg Expo client. Use when writing any new visible string in apps/ui, when the i18n resource parity test fails, when a locale file fails typecheck with a missing property, or when adding forge-variant (pull request / merge request) wording. Covers the nine locales, the type gate, and every invariant resources.test.ts enforces.
 ---
 
 # Adding UI strings
@@ -42,10 +42,10 @@ Group keys by product surface, not by component mechanics.
 
 ```bash
 npx vitest run apps/ui/src/i18n/resources.test.ts --bail=1
-npm run typecheck --workspace=@fde/app
+npm run typecheck --workspace=@frogg/app
 ```
 
-The workspace name for `apps/ui` is `@fde/app`. The parity test runs in about two seconds — run
+The workspace name for `apps/ui` is `@frogg/app`. The parity test runs in about two seconds — run
 it every time, not at the end.
 
 ## What resources.test.ts enforces

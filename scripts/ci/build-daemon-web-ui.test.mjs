@@ -7,7 +7,7 @@ import { brotliDecompressSync, gunzipSync } from "node:zlib";
 import { packageDaemonWebUi } from "./build-daemon-web-ui.mjs";
 
 test("packages a shared export with intact assets and valid compressed representations", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "fde-web-package-"));
+  const root = await mkdtemp(join(tmpdir(), "frogg-web-package-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const source = join(root, "source");
   const target = join(root, "target");
@@ -31,7 +31,7 @@ test("packages a shared export with intact assets and valid compressed represent
 });
 
 test("rejects a missing or incomplete shared export before removing the previous package", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "fde-web-missing-"));
+  const root = await mkdtemp(join(tmpdir(), "frogg-web-missing-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const source = join(root, "source");
   const target = join(root, "target");
@@ -44,7 +44,7 @@ test("rejects a missing or incomplete shared export before removing the previous
 });
 
 test("a shared web export must match the selected brand before replacing daemon assets", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "fde-web-brand-"));
+  const root = await mkdtemp(join(tmpdir(), "frogg-web-brand-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const source = join(root, "source");
   const target = join(root, "target");

@@ -5,7 +5,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Command } from "commander";
-import { isBearerTokenValid } from "@fde/server";
+import { isBearerTokenValid } from "@frogg/server";
 import {
   runSetPasswordCommand,
   setDaemonPasswordInConfig,
@@ -14,8 +14,8 @@ import {
 
 console.log("=== Daemon Set Password Command ===\n");
 
-const root = await mkdtemp(join(tmpdir(), "fde-set-password-"));
-const fdeHome = join(root, ".fde");
+const root = await mkdtemp(join(tmpdir(), "frogg-set-password-"));
+const froggHome = join(root, ".frogg");
 
 function promptSequence(values: string[]): PromptPassword {
   return async () => {
@@ -30,9 +30,9 @@ function promptSequence(values: string[]): PromptPassword {
 try {
   {
     console.log("Test 1: setDaemonPasswordInConfig writes hash and preserves config fields");
-    await mkdir(fdeHome, { recursive: true });
+    await mkdir(froggHome, { recursive: true });
     await writeFile(
-      join(fdeHome, "config.json"),
+      join(froggHome, "config.json"),
       `${JSON.stringify(
         {
           version: 1,
@@ -47,11 +47,11 @@ try {
       )}\n`,
     );
 
-    const result = await setDaemonPasswordInConfig("shared-secret", { home: fdeHome });
-    const config = JSON.parse(await readFile(join(fdeHome, "config.json"), "utf-8"));
+    const result = await setDaemonPasswordInConfig("shared-secret", { home: froggHome });
+    const config = JSON.parse(await readFile(join(froggHome, "config.json"), "utf-8"));
 
-    assert.strictEqual(result.configPath, join(fdeHome, "config.json"));
-    assert.strictEqual(result.restartCommand, "fde daemon restart");
+    assert.strictEqual(result.configPath, join(froggHome, "config.json"));
+    assert.strictEqual(result.restartCommand, "frogg daemon restart");
     assert.strictEqual(config.daemon.listen, "127.0.0.1:9999");
     assert.strictEqual(config.daemon.relay.enabled, false);
     assert.notStrictEqual(config.daemon.auth.password, "shared-secret");
@@ -67,12 +67,12 @@ try {
     console.log("Test 2: command prompts twice and accepts matching confirmation");
     const result = await runSetPasswordCommand(
       {
-        home: fdeHome,
+        home: froggHome,
         promptPassword: promptSequence(["new-secret", "new-secret"]),
       },
       {} as Command,
     );
-    const config = JSON.parse(await readFile(join(fdeHome, "config.json"), "utf-8"));
+    const config = JSON.parse(await readFile(join(froggHome, "config.json"), "utf-8"));
 
     assert.strictEqual(result.data.action, "password_set");
     assert.strictEqual(
@@ -87,7 +87,7 @@ try {
     await assert.rejects(
       runSetPasswordCommand(
         {
-          home: fdeHome,
+          home: froggHome,
           promptPassword: promptSequence(["first-secret", "second-secret"]),
         },
         {} as Command,

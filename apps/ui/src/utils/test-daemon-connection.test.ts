@@ -1,5 +1,5 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import type { DaemonClientConfig } from "@fde/client/internal/daemon-client";
+import type { DaemonClientConfig } from "@frogg/client/internal/daemon-client";
 import type { DaemonConnectionDependencies, DaemonProbeClient } from "./test-daemon-connection";
 
 class FakeDaemonClient implements DaemonProbeClient {
@@ -46,9 +46,9 @@ class FakeDaemonProbe {
     createDesktopTransportFactory: () => null,
     buildDesktopTransportUrl: (target) => {
       if (target.transportType === "ssh") {
-        return `fde+desktop://ssh?host=${encodeURIComponent(target.host)}`;
+        return `frogg+desktop://ssh?host=${encodeURIComponent(target.host)}`;
       }
-      return `fde+desktop://${target.transportType}?path=${encodeURIComponent(target.transportPath)}`;
+      return `frogg+desktop://${target.transportType}?path=${encodeURIComponent(target.transportPath)}`;
     },
     createClient: (config) => {
       const client = new FakeDaemonClient(this, config);
@@ -141,23 +141,23 @@ describe("test-daemon-connection connectToDaemon", () => {
   it("encodes the local socket target into the client config", async () => {
     const result = await connectToDaemon(
       {
-        id: "socket:/tmp/fde.sock",
+        id: "socket:/tmp/frogg.sock",
         type: "directSocket",
-        path: "/tmp/fde.sock",
+        path: "/tmp/frogg.sock",
       },
       undefined,
       probe.deps,
     );
     await result.client.close();
 
-    expect(probe.createdConfigs()[0]?.url).toBe("fde+desktop://socket?path=%2Ftmp%2Ffde.sock");
+    expect(probe.createdConfigs()[0]?.url).toBe("frogg+desktop://socket?path=%2Ftmp%2Ffrogg.sock");
   });
 
   it("uses the desktop transport for Remote SSH connections", async () => {
     const transportFactory = vi.fn();
     const result = await connectToDaemon(
       {
-        id: "ssh:deploy%40example.com:2222:%2Fkeys%2Ffde",
+        id: "ssh:deploy%40example.com:2222:%2Fkeys%2Ffrogg",
         type: "remoteSsh",
         host: "deploy@example.com",
         sshPort: 2222,
@@ -172,7 +172,7 @@ describe("test-daemon-connection connectToDaemon", () => {
     await result.client.close();
 
     expect(probe.createdConfigs()[0]).toMatchObject({
-      url: "fde+desktop://ssh?host=deploy%40example.com",
+      url: "frogg+desktop://ssh?host=deploy%40example.com",
       transportFactory,
       // Above the shell's 18 s SSH setup window, so ssh's stderr wins over the timer.
       connectTimeoutMs: 20_000,

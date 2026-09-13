@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import path from "node:path";
 import type { Command } from "commander";
 import { isCancel, password as passwordPrompt } from "@clack/prompts";
@@ -7,7 +7,7 @@ import {
   loadPersistedConfig,
   savePersistedConfig,
   type PersistedConfig,
-} from "@fde/server";
+} from "@frogg/server";
 import type {
   CommandError,
   CommandOptions,
@@ -15,7 +15,7 @@ import type {
   OutputSchema,
   SingleResult,
 } from "../../output/index.js";
-import { resolveLocalFdeHome } from "./local-daemon.js";
+import { resolveLocalFroggHome } from "./local-daemon.js";
 
 const CONFIG_FILENAME = "config.json";
 
@@ -82,9 +82,9 @@ export async function setDaemonPasswordInConfig(
   newPassword: string,
   options: SetPasswordOptions = {},
 ): Promise<SetPasswordResult> {
-  const fdeHome = resolveLocalFdeHome(options.home);
-  const configPath = path.join(fdeHome, CONFIG_FILENAME);
-  const persisted = loadPersistedConfig(fdeHome);
+  const froggHome = resolveLocalFroggHome(options.home);
+  const configPath = path.join(froggHome, CONFIG_FILENAME);
+  const persisted = loadPersistedConfig(froggHome);
   const nextConfig: PersistedConfig = {
     ...persisted,
     daemon: {
@@ -96,7 +96,7 @@ export async function setDaemonPasswordInConfig(
     },
   };
 
-  savePersistedConfig(fdeHome, nextConfig);
+  savePersistedConfig(froggHome, nextConfig);
 
   return {
     action: "password_set",

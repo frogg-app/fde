@@ -16,12 +16,12 @@ Schedules have no screens in the app yet. Manage them with the CLI or the MCP to
 
 ```sh
 # Every weekday at 09:00 Berlin time, in a fresh agent
-fde schedule create --cron "0 9 * * 1-5" --timezone Europe/Berlin \
+frogg schedule create --cron "0 9 * * 1-5" --timezone Europe/Berlin \
   --name "dependency check" --provider claude --cwd ~/code/api \
   "Check for outdated dependencies and open a summary."
 
 # Every 30 minutes, at most 12 runs, first run immediately
-fde schedule create --every 30m --max-runs 12 --run-now --cwd ~/code/api \
+frogg schedule create --every 30m --max-runs 12 --run-now --cwd ~/code/api \
   "Run the flaky test suite and report failures."
 ```
 
@@ -39,14 +39,14 @@ fde schedule create --every 30m --max-runs 12 --run-now --cwd ~/code/api \
 ## Manage
 
 ```sh
-fde schedule ls
-fde schedule inspect <id>
-fde schedule logs <id>
-fde schedule pause <id>
-fde schedule resume <id>
-fde schedule run-once <id>     # extra run, cadence unchanged
-fde schedule update <id> --every 1h --no-max-runs
-fde schedule delete <id>
+frogg schedule ls
+frogg schedule inspect <id>
+frogg schedule logs <id>
+frogg schedule pause <id>
+frogg schedule resume <id>
+frogg schedule run-once <id>     # extra run, cadence unchanged
+frogg schedule update <id> --every 1h --no-max-runs
+frogg schedule delete <id>
 ```
 
 ## Behaviour
@@ -57,23 +57,23 @@ fde schedule delete <id>
 - A schedule completes when it reaches `--max-runs` or `--expires-in`, or when its target
   agent is archived or deleted.
 - Runs interrupted by a daemon restart are recovered on startup.
-- Schedules are stored in `~/.fde/schedules/`.
+- Schedules are stored in `~/.frogg/schedules/`.
 
 ## Heartbeats
 
 A heartbeat is a cron schedule that prompts **the agent that created it**. Agents use it to
 check on long-running work: a deploy, a CI run, a subagent.
 
-Inside an agent (where `FDE_AGENT_ID` is set):
+Inside an agent (where `FROGG_AGENT_ID` is set):
 
 ```sh
-fde agent heartbeat create --cron "*/10 * * * *" --max-runs 6 \
+frogg agent heartbeat create --cron "*/10 * * * *" --max-runs 6 \
   "Check the CI run for this branch; stop the heartbeat when it finishes."
-fde agent heartbeat update <id> --cron "*/30 * * * *"
-fde agent heartbeat delete <id>
+frogg agent heartbeat update <id> --cron "*/30 * * * *"
+frogg agent heartbeat delete <id>
 ```
 
-With the FDE MCP tools, agents use `create_heartbeat` and `delete_heartbeat`. Archiving an
+With the Frogg MCP tools, agents use `create_heartbeat` and `delete_heartbeat`. Archiving an
 agent completes its heartbeats.
 
 ## MCP tools

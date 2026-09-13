@@ -37,9 +37,9 @@ export async function materializeProject(cwd: string, upload: ImportUpload): Pro
       "The destination already exists. Merge conversation files only, or select a new destination for project files",
     );
   if (existing) return;
-  const staging = await mkdtemp(path.join(path.dirname(cwd), ".fde-project-import-"));
+  const staging = await mkdtemp(path.join(path.dirname(cwd), ".frogg-project-import-"));
   try {
-    await writeFile(path.join(staging, ".fde-import-owner"), upload.id, {
+    await writeFile(path.join(staging, ".frogg-import-owner"), upload.id, {
       flag: "wx",
       mode: 0o600,
     });
@@ -68,7 +68,7 @@ export async function materializeProject(cwd: string, upload: ImportUpload): Pro
       throw new Error("The destination was created during import; select a new directory");
     // Publish a complete tree. A colliding nonempty directory is never replaced by rename.
     await rename(staging, cwd);
-    await rm(path.join(cwd, ".fde-import-owner")).catch(() => undefined);
+    await rm(path.join(cwd, ".frogg-import-owner")).catch(() => undefined);
   } finally {
     await rm(staging, { recursive: true, force: true });
   }

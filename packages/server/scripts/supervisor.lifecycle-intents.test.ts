@@ -6,8 +6,8 @@ describe("supervisor lifecycle intents", () => {
     const source = readFileSync(new URL("./supervisor.ts", import.meta.url), "utf8");
     const legacyShutdownReason = ["cli", "shutdown"].join("_");
 
-    expect(source).toContain('"fde:shutdown"');
-    expect(source).toContain('"fde:restart"');
+    expect(source).toContain('"frogg:shutdown"');
+    expect(source).toContain('"frogg:restart"');
     expect(source).not.toContain(legacyShutdownReason);
   });
 });

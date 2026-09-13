@@ -1,9 +1,9 @@
 import type pino from "pino";
-import type { DaemonAutoUpdateConfig } from "@fde/protocol/messages";
+import type { DaemonAutoUpdateConfig } from "@frogg/protocol/messages";
 import type { DaemonUpdateService } from "./daemon-update-service.js";
 
 /**
- * Opt-in scheduled self-update (`daemon.autoUpdate` / `FDE_AUTO_UPDATE=1`).
+ * Opt-in scheduled self-update (`daemon.autoUpdate` / `FROGG_AUTO_UPDATE=1`).
  * Checks the release channel on the configured interval and, when a newer
  * version exists, runs the same self-update path a client would; while
  * agents are running the attempt is deferred instead of interrupting them.

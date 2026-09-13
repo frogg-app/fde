@@ -1,5 +1,5 @@
-import type { AgentProvider, ToolCallDetail } from "@fde/protocol/agent-types";
-import type { AgentAttachment, AgentStreamEventPayload } from "@fde/protocol/messages";
+import type { AgentProvider, ToolCallDetail } from "@frogg/protocol/agent-types";
+import type { AgentAttachment, AgentStreamEventPayload } from "@frogg/protocol/messages";
 import type { AttachmentMetadata } from "@/attachments/types";
 import { extractTaskEntriesFromToolCall } from "../utils/tool-call-parsers";
 import { splitMarkdownBlocks } from "@/utils/split-markdown-blocks";

@@ -1,7 +1,7 @@
 import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import type { ProjectCheckoutLitePayload } from "@fde/protocol/messages";
+import type { ProjectCheckoutLitePayload } from "@frogg/protocol/messages";
 import { afterEach, describe, expect, test } from "vitest";
 
 import { createTestLogger } from "../test-utils/test-logger.js";
@@ -256,7 +256,7 @@ class ObservedPlacements {
       currentBranch: branch,
       remoteUrl: null,
       worktreeRoot: rootPath,
-      isFdeOwnedWorktree: false,
+      isFroggOwnedWorktree: false,
       mainRepoRoot: null,
     });
   }
@@ -371,7 +371,7 @@ class ObservedPlacements {
         currentBranch: null,
         remoteUrl: null,
         worktreeRoot: null,
-        isFdeOwnedWorktree: false,
+        isFroggOwnedWorktree: false,
         mainRepoRoot: null,
       }
     );

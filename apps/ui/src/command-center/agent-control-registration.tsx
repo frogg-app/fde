@@ -5,8 +5,8 @@ import type {
   AgentMode,
   AgentProvider,
   AgentSelectOption,
-} from "@fde/protocol/agent-types";
-import type { AgentProviderDefinition } from "@fde/protocol/provider-manifest";
+} from "@frogg/protocol/agent-types";
+import type { AgentProviderDefinition } from "@frogg/protocol/provider-manifest";
 import {
   getAgentFeatureIcon,
   getAgentModeIcon,

@@ -23,8 +23,8 @@ import { navigateToAgent } from "@/utils/navigate-to-agent";
 import { useArchiveAgent } from "@/hooks/use-archive-agent";
 import { HighlightedText } from "@/components/ui/highlighted-text";
 import { StatusBadge, type StatusBadgeVariant } from "@/components/ui/status-badge";
-import type { AgentSearchMatch } from "@fde/protocol/messages";
-import type { MatchRange } from "@fde/protocol/search/text-match";
+import type { AgentSearchMatch } from "@frogg/protocol/messages";
+import type { MatchRange } from "@frogg/protocol/search/text-match";
 
 interface AgentListProps {
   agents: AggregatedAgent[];

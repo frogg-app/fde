@@ -1,4 +1,4 @@
-import type { ForgeSearchKind } from "@fde/protocol/messages";
+import type { ForgeSearchKind } from "@frogg/protocol/messages";
 
 export type ForgeSearchRequestKind = ForgeSearchKind | "github-issue" | "github-pr" | "pr";
 

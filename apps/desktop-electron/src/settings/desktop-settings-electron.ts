@@ -1,6 +1,6 @@
 import { app } from "electron";
 import path from "node:path";
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { createDesktopSettingsStore, type DesktopSettingsStore } from "./desktop-settings.js";
 import { migrateTauriSettings } from "./tauri-migration.js";
 

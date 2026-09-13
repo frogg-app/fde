@@ -45,7 +45,7 @@ const ASSISTANT_MARKDOWN = [
   "",
   '[docs](https://docs.example.com "Reference") and <https://autolink.example.com>.',
   "",
-  "[workspace file](file:///tmp/fde%20notes.md#L4)",
+  "[workspace file](file:///tmp/frogg%20notes.md#L4)",
   "",
   "`https://example.com/generated` stays code, not a generated link.",
   "",
@@ -128,13 +128,13 @@ async function selectAssistantListItemFromMarker(
     hasText: "Direct matches:",
   });
   const item = assistantMessage
-    .locator(`[data-fde-markdown-tag="${listTag}"]`)
+    .locator(`[data-frogg-markdown-tag="${listTag}"]`)
     .filter({ hasText: itemText })
-    .locator(':scope > [data-fde-markdown-tag="li"]')
+    .locator(':scope > [data-frogg-markdown-tag="li"]')
     .filter({ hasText: itemText });
 
   await item.evaluate((element, selectedEndText) => {
-    const marker = element.querySelector(':scope > [data-fde-markdown-list-marker="true"]');
+    const marker = element.querySelector(':scope > [data-frogg-markdown-list-marker="true"]');
     const markerText = marker?.firstChild;
     if (!(markerText instanceof Text)) {
       throw new Error("Expected rendered list marker text");
@@ -174,7 +174,7 @@ async function doubleClickAssistantMarkdownText(
     hasText: "Direct matches:",
   });
   await assistantMessage
-    .locator(`[data-fde-markdown-tag="${tag}"]`)
+    .locator(`[data-frogg-markdown-tag="${tag}"]`)
     .filter({ hasText: text })
     .dblclick({ position: { x: 5, y: 5 } });
 }
@@ -308,7 +308,7 @@ test("copying an assistant selection preserves Markdown structure and links", as
   page,
 }) => {
   await page.addInitScript(() => {
-    localStorage.setItem("@fde:app-settings", JSON.stringify({ uiFontFamily: "serif" }));
+    localStorage.setItem("@frogg:app-settings", JSON.stringify({ uiFontFamily: "serif" }));
   });
   const agent = await seedMockAgentWorkspace({
     repoPrefix: "assistant-selection-copy-",
@@ -335,13 +335,13 @@ test("copying an assistant selection preserves Markdown structure and links", as
       ["s", "struck prose"],
     ]) {
       const formattedProse = assistantMessage
-        .locator(`[data-fde-markdown-tag="${tag}"]`)
+        .locator(`[data-frogg-markdown-tag="${tag}"]`)
         .filter({ hasText: text });
       await expect(formattedProse).toHaveCSS("font-family", "serif");
       await expect(formattedProse).not.toHaveAttribute("data-pmono");
     }
     const inlineCode = assistantMessage
-      .locator('[data-fde-markdown-tag="code"]')
+      .locator('[data-frogg-markdown-tag="code"]')
       .filter({ hasText: "apply_patch" });
     await expect(inlineCode).toHaveAttribute("data-pmono", "");
 
@@ -368,7 +368,9 @@ test("copying an assistant selection preserves Markdown structure and links", as
     expect(clipboard.html).toContain(
       '<a href="https://autolink.example.com/">https://autolink.example.com</a>',
     );
-    expect(clipboard.html).toContain('<a href="file:///tmp/fde%20notes.md#L4">workspace file</a>');
+    expect(clipboard.html).toContain(
+      '<a href="file:///tmp/frogg%20notes.md#L4">workspace file</a>',
+    );
     expect(clipboard.html).toContain("<code>https://example.com/generated</code>");
     expect(clipboard.html).not.toContain(
       '<a href="https://example.com/generated"><code>https://example.com/generated</code></a>',
@@ -540,7 +542,7 @@ test("copying an assistant selection preserves Markdown structure and links", as
     // contains every character in the block.
     await selectAssistantElement(
       page,
-      '[data-fde-markdown-language="typescript"] [data-fde-markdown-tag="code"]',
+      '[data-frogg-markdown-language="typescript"] [data-frogg-markdown-tag="code"]',
     );
     await copySelection(page);
 
@@ -565,18 +567,18 @@ test("copying an assistant selection preserves Markdown structure and links", as
 
     // The block's own Copy button had the same hazard: a Markdown fence body ends in
     // a newline, and the button copied it raw.
-    const typescriptFence = assistantMessage.locator('[data-fde-markdown-language="typescript"]');
+    const typescriptFence = assistantMessage.locator('[data-frogg-markdown-language="typescript"]');
     // The button is opacity 0 / pointerEvents none until the fence is hovered.
     await typescriptFence.hover();
-    await typescriptFence.locator("[data-fde-markdown-ignore]").click();
+    await typescriptFence.locator("[data-frogg-markdown-ignore]").click();
 
     expect(await readPlainClipboard(page)).toBe('const answer = "yes";\n  return answer;');
 
     // A blank line before the closing fence leaves the body ending in two newlines,
     // so stripping only the terminal one still hands the terminal an executable line.
-    const bashFence = assistantMessage.locator('[data-fde-markdown-language="bash"]');
+    const bashFence = assistantMessage.locator('[data-frogg-markdown-language="bash"]');
     await bashFence.hover();
-    await bashFence.locator("[data-fde-markdown-ignore]").click();
+    await bashFence.locator("[data-frogg-markdown-ignore]").click();
 
     expect(await readPlainClipboard(page)).toBe("echo trailing");
   } finally {

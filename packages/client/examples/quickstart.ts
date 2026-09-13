@@ -1,6 +1,6 @@
-import { createFdeClient } from "@fde/client";
+import { createFroggClient } from "@frogg/client";
 
-const client = createFdeClient({ url: "ws://127.0.0.1:9999/ws" });
+const client = createFroggClient({ url: "ws://127.0.0.1:9999/ws" });
 
 await client.connect();
 

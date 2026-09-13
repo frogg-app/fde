@@ -3,9 +3,9 @@ import type {
   AgentTaskItem,
   ProviderOptions,
   ToolPolicy,
-} from "@fde/protocol/agent-types";
-import type { AgentAttachment } from "@fde/protocol/messages";
-import type { FdeToolCatalog } from "./tools/types.js";
+} from "@frogg/protocol/agent-types";
+import type { AgentAttachment } from "@frogg/protocol/messages";
+import type { FroggToolCatalog } from "./tools/types.js";
 
 export type { AgentProviderNotice, AgentTaskItem };
 
@@ -184,7 +184,7 @@ export interface AgentCapabilityFlags {
   supportsSessionListing?: boolean;
   supportsDynamicModes: boolean;
   supportsMcpServers: boolean;
-  supportsNativeFdeTools?: boolean;
+  supportsNativeFroggTools?: boolean;
   supportsReasoningStream: boolean;
   supportsToolInvocations: boolean;
   supportsRewindConversation?: boolean;
@@ -605,10 +605,10 @@ export interface AgentLaunchContext {
   agentId?: string;
   env?: Record<string, string>;
   /**
-   * Runtime-only internal Fde tools. This must never be persisted into
+   * Runtime-only internal Frogg tools. This must never be persisted into
    * AgentSessionConfig; providers may adapt it to their native tool surface.
    */
-  fdeTools?: FdeToolCatalog;
+  froggTools?: FroggToolCatalog;
 }
 
 export interface AgentCreateSessionOptions {
@@ -758,12 +758,12 @@ export interface AgentClient {
   getDiagnostic?(): Promise<{ diagnostic: string }>;
   /**
    * Archive a durable native session (best-effort). Runtime release belongs to AgentSession.close().
-   * Called when Fde archives an agent so the provider's own UI reflects the same state.
+   * Called when Frogg archives an agent so the provider's own UI reflects the same state.
    */
   archiveNativeSession?(handle: AgentPersistenceHandle): Promise<void>;
   /**
    * Unarchive a durable native session in the provider.
-   * Called before Fde clears its archived flag so provider resume can succeed.
+   * Called before Frogg clears its archived flag so provider resume can succeed.
    */
   unarchiveNativeSession?(handle: AgentPersistenceHandle): Promise<void>;
   /**

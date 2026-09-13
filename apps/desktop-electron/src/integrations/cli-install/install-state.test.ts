@@ -9,7 +9,7 @@ describe("installed CLI identity", () => {
   it.skipIf(process.platform === "win32")(
     "rejects dangling and unrelated targets while accepting the selected bundle",
     async () => {
-      const directory = await fs.mkdtemp(path.join(os.tmpdir(), "fde-cli-test-"));
+      const directory = await fs.mkdtemp(path.join(os.tmpdir(), "frogg-cli-test-"));
       const sourcePath = path.join(directory, "bundled");
       const targetPath = path.join(directory, "cli");
       try {
@@ -32,7 +32,7 @@ describe("installed CLI identity", () => {
   );
 
   it("requires the expected Windows wrapper and a present bundled shim", async () => {
-    const directory = await fs.mkdtemp(path.join(os.tmpdir(), "fde-cli-test-"));
+    const directory = await fs.mkdtemp(path.join(os.tmpdir(), "frogg-cli-test-"));
     const sourcePath = path.join(directory, "bundle.cmd");
     const targetPath = path.join(directory, "cli.cmd");
     try {

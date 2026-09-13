@@ -1,9 +1,9 @@
 ---
-name: fde-dev
-description: Build, run, and test the FDE monorepo. Use when starting the dev daemon or the Expo client, when a build or typecheck fails with stale or missing types, when deciding which tests to run, when setting up a fresh worktree, or when asked to "run the app", "start the server", "build it", or "check my change". Covers the workspace build order, the dev daemon on this headless VM, FDE_HOME dev state, and the fast verification loop.
+name: frogg-dev
+description: Build, run, and test the Frogg monorepo. Use when starting the dev daemon or the Expo client, when a build or typecheck fails with stale or missing types, when deciding which tests to run, when setting up a fresh worktree, or when asked to "run the app", "start the server", "build it", or "check my change". Covers the workspace build order, the dev daemon on this headless VM, FROGG_HOME dev state, and the fast verification loop.
 ---
 
-# Working in the FDE monorepo
+# Working in the Frogg monorepo
 
 Real commands for this repo. Prefer them over generic monorepo guesses — the build graph here
 is explicit and skipping a step produces confusing stale-type errors rather than a clear one.
@@ -14,8 +14,8 @@ is explicit and skipping a step produces confusing stale-type errors rather than
 npm ci
 ```
 
-On a fresh checkout `npm run typecheck` fails before anything is built — `@fde/app` cannot
-resolve `@fde/client` and `@fde/cli` cannot resolve `@fde/server`, because those workspaces
+On a fresh checkout `npm run typecheck` fails before anything is built — `@frogg/app` cannot
+resolve `@frogg/client` and `@frogg/cli` cannot resolve `@frogg/server`, because those workspaces
 typecheck against built `dist/`. That is not a broken tree. Run `npm run build:server` and
 `npm run build:app-deps` once, then typecheck.
 
@@ -51,7 +51,7 @@ protocol) before believing the error.
 ## Running the daemon and the client
 
 ```bash
-npm run dev:server   # daemon; pins FDE_LISTEN=0.0.0.0:6768
+npm run dev:server   # daemon; pins FROGG_LISTEN=0.0.0.0:6768
 npm run dev:app      # Expo on 8081, pointed at the dev daemon
 ```
 
@@ -61,7 +61,7 @@ Two terminals — this split is intentional. `npm run dev` is only an alias for 
 concurrently. If the deps are already built and you just want the watchers:
 
 ```bash
-FDE_SKIP_DEV_SERVER_BUILD=1 npm run dev:server
+FROGG_SKIP_DEV_SERVER_BUILD=1 npm run dev:server
 ```
 
 ### This VM is headless and shared
@@ -71,29 +71,29 @@ FDE_SKIP_DEV_SERVER_BUILD=1 npm run dev:server
 - There is no browser here. Never hand out a `localhost` URL. Surface links as
   `http://$(hostname -I | awk '{print $1}'):PORT`.
 - Do not kill processes or free ports you did not start. Another agent's daemon may be on
-  6768; start yours on a different port with `FDE_LISTEN=0.0.0.0:<free port>` instead.
+  6768; start yours on a different port with `FROGG_LISTEN=0.0.0.0:<free port>` instead.
 
 ### Ports
 
-| Port | What                                                                                |
-| ---- | ----------------------------------------------------------------------------------- |
-| 9999 | Installed (packaged) daemon, backed by `~/.fde`. The desktop app never launches one |
-| 6768 | Root-checkout dev daemon (`npm run dev:server`)                                     |
-| 8081 | Expo for `npm run dev:app`                                                          |
+| Port | What                                                                                  |
+| ---- | ------------------------------------------------------------------------------------- |
+| 9999 | Installed (packaged) daemon, backed by `~/.frogg`. The desktop app never launches one |
+| 6768 | Root-checkout dev daemon (`npm run dev:server`)                                       |
+| 8081 | Expo for `npm run dev:app`                                                            |
 
-Inside a FDE-managed worktree service, read the injected service environment
-(`FDE_SERVICE_DAEMON_PORT`, `FDE_PORT`) instead of hardcoding these.
+Inside a Frogg-managed worktree service, read the injected service environment
+(`FROGG_SERVICE_DAEMON_PORT`, `FROGG_PORT`) instead of hardcoding these.
 
 ### Dev state lives in the checkout
 
-`FDE_HOME` holds agents, worktrees, sockets, and the daemon log. The repo dev scripts point
-it at `$ROOT/.dev/fde-home`, so dev state is scoped to the checkout and never touches the
-packaged app's `~/.fde`. The in-repo CLI goes through the same wrapper:
+`FROGG_HOME` holds agents, worktrees, sockets, and the daemon log. The repo dev scripts point
+it at `$ROOT/.dev/frogg-home`, so dev state is scoped to the checkout and never touches the
+packaged app's `~/.frogg`. The in-repo CLI goes through the same wrapper:
 
 ```bash
 npm run cli -- <args>                          # targets this checkout's dev home and daemon
-FDE_HOME=~/.fde-blue npm run dev:server    # explicit home
-FDE_DEV_RESET_HOME=1 npm run dev:server      # clear and reseed the derived worktree home
+FROGG_HOME=~/.frogg-blue npm run dev:server    # explicit home
+FROGG_DEV_RESET_HOME=1 npm run dev:server      # clear and reseed the derived worktree home
 ```
 
 ## Checking a change
@@ -137,16 +137,16 @@ npx vitest run <path> --bail=1 > /tmp/t.log 2>&1   # broad sweep, then read the 
   browser, `*.e2e.test.ts` real daemon, `*.real.e2e.test.ts` real provider (needs credentials
   in `packages/server/.env.test`), `*.local.e2e.test.ts` local-only resource. Put a test in
   the suffix that matches what it actually touches.
-- The workspace package name for `apps/ui` is `@fde/app`. `--workspace=ui` does not exist.
+- The workspace package name for `apps/ui` is `@frogg/app`. `--workspace=ui` does not exist.
 
 ## Where things live
 
-- `apps/` holds deliverables: `desktop-electron` (Electron app-only), `ui` (Expo client, `@fde/app`), `cli`.
+- `apps/` holds deliverables: `desktop-electron` (Electron app-only), `ui` (Expo client, `@frogg/app`), `cli`.
 - `packages/` holds libraries only: `protocol`, `client`, `server`, `relay`, `highlight`.
 - `scripts/` splits into `dev/`, `release/`, `ci/`. New scripts go in one of those, not the root.
 - Documentation lives in `website/src/content/docs/docs/` (published at https://frogg.app/docs/).
   Read the relevant page before non-trivial work; `contributing/development-setup.mdx` covers
   platform builds not repeated here. Changes users can see need a docs update in the same PR;
-  use the `fde-docs` skill.
+  use the `frogg-docs` skill.
 - Version source of truth is the root `package.json`; workspace versions are synced by
   `scripts/release/sync-workspace-versions.mjs`. Do not hand-edit a workspace version.

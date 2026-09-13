@@ -3,8 +3,8 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, expect, test, vi } from "vitest";
 
-vi.mock("@fde/branding", async () => {
-  const { resolveBrandManifest } = await import("@fde/branding/schema");
+vi.mock("@frogg/branding", async () => {
+  const { resolveBrandManifest } = await import("@frogg/branding/schema");
   return {
     brand: resolveBrandManifest({
       schemaVersion: 1,
@@ -16,8 +16,8 @@ vi.mock("@fde/branding", async () => {
     }),
   };
 });
-import { brand } from "@fde/branding";
-import { resolveFdeHomePath } from "../../utils/fde-home.js";
+import { brand } from "@frogg/branding";
+import { resolveFroggHomePath } from "../../utils/frogg-home.js";
 import { readBundleManifest, bundleAssetName, bundleLauncherPath } from "./self-update/bundle.js";
 import { resolveReleaseSource, fetchReleases } from "./self-update/releases.js";
 import { resolveInstallDir, setCurrentVersion } from "./self-update/layout.js";
@@ -32,8 +32,10 @@ function scratch() {
 }
 
 test("homes, commands, artifacts and services use the independent identity", () => {
-  expect(resolveFdeHomePath({ FDE_HOME: "/foreign", ACME_HOME: "/own" })).toBe("/own");
-  expect(resolveInstallDir({ FDE_INSTALL_DIR: "/foreign", ACME_INSTALL_DIR: "/own" })).toBe("/own");
+  expect(resolveFroggHomePath({ FROGG_HOME: "/foreign", ACME_HOME: "/own" })).toBe("/own");
+  expect(resolveInstallDir({ FROGG_INSTALL_DIR: "/foreign", ACME_INSTALL_DIR: "/own" })).toBe(
+    "/own",
+  );
   expect(bundleAssetName("1.2.3", { platform: "linux", arch: "x64" })).toBe(
     "acme-daemon-1.2.3-linux-x64.tar.gz",
   );
@@ -44,12 +46,12 @@ test("homes, commands, artifacts and services use the independent identity", () 
     env: {},
     command: { program: "/Acme Studio/bin/acme", args: ["daemon", "start"] },
     listen: "127.0.0.1:10099",
-    fdeHome: "/state with spaces",
+    froggHome: "/state with spaces",
   });
   expect(plan.label).toBe("acme-daemon");
   expect(plan.file?.contents).toContain('ExecStart="/Acme Studio/bin/acme"');
   expect(plan.file?.contents).toContain('Environment="ACME_HOME=/state with spaces"');
-  expect(plan.file?.contents).not.toContain("FDE_HOME");
+  expect(plan.file?.contents).not.toContain("FROGG_HOME");
 });
 
 test("legacy and foreign bundles fail before switching an installation", () => {
@@ -61,7 +63,7 @@ test("legacy and foreign bundles fail before switching an installation", () => {
   expect(() => setCurrentVersion(root, "1.2.3")).toThrow(/another product/);
   writeFileSync(
     path.join(version, "manifest.json"),
-    JSON.stringify({ ...manifest, brand: { id: "fde", applicationId: "app.frogg.fde" } }),
+    JSON.stringify({ ...manifest, brand: { id: "frogg", applicationId: "app.frogg.frogg" } }),
   );
   expect(() => readBundleManifest(version)).toThrow(/another product/);
   writeFileSync(
@@ -76,9 +78,9 @@ test("legacy and foreign bundles fail before switching an installation", () => {
   expect(() => setCurrentVersion(root, "1.2.3")).not.toThrow();
 });
 
-test("disabled custom updates make no requests and inherit no FDE endpoints", async () => {
+test("disabled custom updates make no requests and inherit no Frogg endpoints", async () => {
   const source = resolveReleaseSource({
-    FDE_RELEASE_BASE: "https://github.com/frogg-app/fde/releases",
+    FROGG_RELEASE_BASE: "https://github.com/frogg-app/frogg/releases",
   });
   expect(source.apiUrl).toBe("");
   expect(source.releaseBase).toBe("");

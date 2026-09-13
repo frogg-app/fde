@@ -108,7 +108,7 @@ mod tests {
             ssh_password: None,
         };
         assert_eq!(
-            build_exec_args(&target, "FDE_VERSION='1' bash -s"),
+            build_exec_args(&target, "FROGG_VERSION='1' bash -s"),
             [
                 "-T",
                 "-o",
@@ -118,7 +118,7 @@ mod tests {
                 "-p",
                 "2222",
                 "dev@box",
-                "FDE_VERSION='1' bash -s"
+                "FROGG_VERSION='1' bash -s"
             ]
         );
         let plain = SshTarget {

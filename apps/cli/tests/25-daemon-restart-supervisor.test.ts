@@ -18,9 +18,9 @@ $.verbose = false;
 
 const pollIntervalMs = 100;
 const testEnv = {
-  FDE_LOCAL_SPEECH_AUTO_DOWNLOAD: process.env.FDE_LOCAL_SPEECH_AUTO_DOWNLOAD ?? "0",
-  FDE_DICTATION_ENABLED: process.env.FDE_DICTATION_ENABLED ?? "0",
-  FDE_VOICE_MODE_ENABLED: process.env.FDE_VOICE_MODE_ENABLED ?? "0",
+  FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD: process.env.FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD ?? "0",
+  FROGG_DICTATION_ENABLED: process.env.FROGG_DICTATION_ENABLED ?? "0",
+  FROGG_VOICE_MODE_ENABLED: process.env.FROGG_VOICE_MODE_ENABLED ?? "0",
 };
 
 function sleep(ms: number): Promise<void> {
@@ -74,9 +74,9 @@ interface DaemonStatus {
   pid: number | null;
 }
 
-async function readDaemonStatus(fdeHome: string): Promise<DaemonStatus> {
+async function readDaemonStatus(froggHome: string): Promise<DaemonStatus> {
   const result =
-    await $`FDE_HOME=${fdeHome} FDE_LOCAL_SPEECH_AUTO_DOWNLOAD=${testEnv.FDE_LOCAL_SPEECH_AUTO_DOWNLOAD} FDE_DICTATION_ENABLED=${testEnv.FDE_DICTATION_ENABLED} FDE_VOICE_MODE_ENABLED=${testEnv.FDE_VOICE_MODE_ENABLED} npx fde daemon status --home ${fdeHome} --json`.nothrow();
+    await $`FROGG_HOME=${froggHome} FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD=${testEnv.FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD} FROGG_DICTATION_ENABLED=${testEnv.FROGG_DICTATION_ENABLED} FROGG_VOICE_MODE_ENABLED=${testEnv.FROGG_VOICE_MODE_ENABLED} npx frogg daemon status --home ${froggHome} --json`.nothrow();
   if (result.exitCode !== 0) {
     return { localDaemon: null, pid: null };
   }
@@ -94,8 +94,8 @@ async function readDaemonStatus(fdeHome: string): Promise<DaemonStatus> {
   }
 }
 
-async function readCapturedSupervisorLogs(fdeHome: string, recentLogs: string): Promise<string> {
-  const durableLogs = await readFile(join(fdeHome, "daemon.log"), "utf8").catch(() => "");
+async function readCapturedSupervisorLogs(froggHome: string, recentLogs: string): Promise<string> {
+  const durableLogs = await readFile(join(froggHome, "daemon.log"), "utf8").catch(() => "");
   return `${recentLogs}\n${durableLogs}`;
 }
 
@@ -119,7 +119,7 @@ async function waitFor(
 console.log("=== Daemon Restart (supervisor regression) ===\n");
 
 const port = await getAvailablePort();
-const fdeHome = await mkdtemp(join(tmpdir(), "fde-restart-supervisor-"));
+const froggHome = await mkdtemp(join(tmpdir(), "frogg-restart-supervisor-"));
 const cliRoot = join(import.meta.dirname, "..");
 const host = `127.0.0.1:${port}`;
 
@@ -127,7 +127,7 @@ let supervisorProcess: ChildProcess | null = null;
 let recentSupervisorLogs = "";
 
 try {
-  console.log("Test 1: start supervisor-entrypoint in dev mode with isolated FDE_HOME");
+  console.log("Test 1: start supervisor-entrypoint in dev mode with isolated FROGG_HOME");
 
   supervisorProcess = spawn(
     process.execPath,
@@ -137,9 +137,9 @@ try {
       env: {
         ...process.env,
         ...testEnv,
-        FDE_HOME: fdeHome,
-        FDE_LISTEN: host,
-        FDE_RELAY_ENABLED: "false",
+        FROGG_HOME: froggHome,
+        FROGG_LISTEN: host,
+        FROGG_RELAY_ENABLED: "false",
         CI: "true",
       },
       stdio: ["ignore", "pipe", "pipe"],
@@ -155,7 +155,7 @@ try {
 
   await waitFor(
     async () => {
-      const status = await readDaemonStatus(fdeHome);
+      const status = await readDaemonStatus(froggHome);
       return (
         status.localDaemon === "running" && status.pid !== null && isProcessRunning(status.pid)
       );
@@ -164,7 +164,7 @@ try {
     "daemon did not become running in time",
   );
 
-  const statusBeforeRestart = await readDaemonStatus(fdeHome);
+  const statusBeforeRestart = await readDaemonStatus(froggHome);
   const supervisorPid = statusBeforeRestart.pid;
   assert.strictEqual(
     statusBeforeRestart.localDaemon,
@@ -216,7 +216,7 @@ try {
     "worker pid should change after restart",
   );
 
-  const statusAfterRestart = await readDaemonStatus(fdeHome);
+  const statusAfterRestart = await readDaemonStatus(froggHome);
   assert.strictEqual(
     statusAfterRestart.localDaemon,
     "running",
@@ -227,7 +227,7 @@ try {
     supervisorPid,
     "supervisor pid should remain stable across restart",
   );
-  const capturedSupervisorLogs = await readCapturedSupervisorLogs(fdeHome, recentSupervisorLogs);
+  const capturedSupervisorLogs = await readCapturedSupervisorLogs(froggHome, recentSupervisorLogs);
   assert(
     capturedSupervisorLogs.includes('"msg":"Worker requested restart"') &&
       capturedSupervisorLogs.includes('"reason":"settings_update"'),
@@ -254,8 +254,8 @@ try {
     });
   }
 
-  await $`FDE_HOME=${fdeHome} FDE_LOCAL_SPEECH_AUTO_DOWNLOAD=${testEnv.FDE_LOCAL_SPEECH_AUTO_DOWNLOAD} FDE_DICTATION_ENABLED=${testEnv.FDE_DICTATION_ENABLED} FDE_VOICE_MODE_ENABLED=${testEnv.FDE_VOICE_MODE_ENABLED} npx fde daemon stop --home ${fdeHome} --force`.nothrow();
-  await rm(fdeHome, { recursive: true, force: true });
+  await $`FROGG_HOME=${froggHome} FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD=${testEnv.FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD} FROGG_DICTATION_ENABLED=${testEnv.FROGG_DICTATION_ENABLED} FROGG_VOICE_MODE_ENABLED=${testEnv.FROGG_VOICE_MODE_ENABLED} npx frogg daemon stop --home ${froggHome} --force`.nothrow();
+  await rm(froggHome, { recursive: true, force: true });
 }
 
 if (recentSupervisorLogs.trim().length === 0) {

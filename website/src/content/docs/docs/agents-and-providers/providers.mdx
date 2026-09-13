@@ -1,6 +1,6 @@
 ---
 title: Providers
-description: The agent CLIs FDE runs — Claude Code, Codex, Copilot, OpenCode, Pi, Oh My Pi and ACP agents — and how to install, detect and configure them.
+description: The agent CLIs Frogg runs — Claude Code, Codex, Copilot, OpenCode, Pi, Oh My Pi and ACP agents — and how to install, detect and configure them.
 sidebar:
   order: 1
 ---
@@ -8,7 +8,7 @@ sidebar:
 import { Screenshot } from "@/components/docs";
 import appHostProvidersImg from "@/assets/docs/app/host-providers.png";
 
-FDE does not ship a model or an agent of its own. The daemon runs agent CLIs that you
+Frogg does not ship a model or an agent of its own. The daemon runs agent CLIs that you
 install and sign in to on the daemon host. Each one is a **provider**.
 
 <Screenshot src={appHostProvidersImg} alt="Host settings, Providers" />
@@ -29,7 +29,7 @@ added as a custom provider; see [custom providers](/docs/agents-and-providers/cu
 
 ## Install and sign in
 
-Install the CLI and log in **as the user the daemon runs as**. FDE uses each CLI's own
+Install the CLI and log in **as the user the daemon runs as**. Frogg uses each CLI's own
 authentication and never asks for your provider credentials.
 
 ```sh
@@ -46,8 +46,8 @@ a `command` override.
 After installing, refresh:
 
 ```sh
-fde restart
-fde provider ls
+frogg restart
+frogg provider ls
 ```
 
 ```text
@@ -63,7 +63,7 @@ omp       Oh My Pi  not found  Disabled  full
 ## Diagnose
 
 ```sh
-fde provider diagnostic claude
+frogg provider diagnostic claude
 ```
 
 It shows how the command resolved, the binary version, auth status (for Claude, the
@@ -75,13 +75,13 @@ output of `claude auth status`) and relevant environment. In the app, expand a p
 Models are discovered from each provider at runtime:
 
 ```sh
-fde provider models claude
-fde provider models codex --thinking
+frogg provider models claude
+frogg provider models codex --thinking
 ```
 
 Pick them per agent in the composer, or on the CLI with `--provider codex/gpt-5.5`,
 `--model`, `--mode` and `--thinking`. Modes are covered in
-[permissions](/docs/using-fde/permissions/).
+[permissions](/docs/using-frogg/permissions/).
 
 Some providers expose toggles in the composer: **Fast mode** (Claude, Codex), **Plan mode**
 (Codex) and **Auto accept** (OpenCode and ACP agents).
@@ -90,7 +90,7 @@ Some providers expose toggles in the composer: **Fast mode** (Claude, Codex), **
 
 Toggle providers in **host settings → Providers**, or in config:
 
-```json title="~/.fde/config.json"
+```json title="~/.frogg/config.json"
 {
   "agents": {
     "providers": {
@@ -102,17 +102,17 @@ Toggle providers in **host settings → Providers**, or in config:
 }
 ```
 
-Apply with `fde reload`.
+Apply with `frogg reload`.
 
 ## Usage and limits
 
 **Host settings → Usage** shows provider-reported quota where the provider exposes it
-(for example Claude, Codex and Kimi). FDE reads those credentials read-only; the CLIs own
+(for example Claude, Codex and Kimi). Frogg reads those credentials read-only; the CLIs own
 token refresh.
 
 ## Provider environment
 
 Agents inherit the daemon's environment plus anything you set per provider (`env` in
-config) or per run (`fde agent run --env KEY=value`). Common variables:
+config) or per run (`frogg agent run --env KEY=value`). Common variables:
 `ANTHROPIC_API_KEY`, `ANTHROPIC_BASE_URL`, `CLAUDE_CONFIG_DIR`, `CODEX_HOME`,
 `OPENAI_API_KEY`, `OPENAI_BASE_URL`.

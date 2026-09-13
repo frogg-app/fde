@@ -7,7 +7,7 @@ import {
   type DaemonSelfUpdatePhase,
   type DaemonSelfUpdater,
 } from "./daemon-self-updater.js";
-import { getErrorMessage } from "@fde/protocol/error-utils";
+import { getErrorMessage } from "@frogg/protocol/error-utils";
 
 type DaemonUpdateRequest = Extract<SessionInboundMessage, { type: "daemon.update.request" }>;
 

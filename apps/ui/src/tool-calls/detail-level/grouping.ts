@@ -1,4 +1,4 @@
-import type { ToolCallDetail } from "@fde/protocol/agent-types";
+import type { ToolCallDetail } from "@frogg/protocol/agent-types";
 import type { StreamItem, ToolCallItem } from "@/types/stream";
 
 export interface ToolCallDescriptor {

@@ -38,13 +38,13 @@ export async function generateInstallers(build: BrandBuild): Promise<void> {
     PORT: String(b.daemonPort),
     RELEASE_BASE: b.distribution.releaseBase ?? "",
     DOCKER_IMAGE: b.distribution.dockerImage ?? "",
-    LEGACY: String(b.legacyFde),
+    LEGACY: String(b.legacyFrogg),
   };
   const defaults =
     Object.entries(fields)
       .map(([key, value]) => `BRAND_${key}=${quote(value)}`)
       .join("\n") +
-    `\nBRAND_COMMANDS=(${(b.legacyFde ? [b.cliName, "fde"] : [b.cliName]).map(quote).join(" ")})`;
+    `\nBRAND_COMMANDS=(${(b.legacyFrogg ? [b.cliName, "frogg"] : [b.cliName]).map(quote).join(" ")})`;
   const scripts: Record<string, string> = {};
   await mkdir(path.join(outputRoot, "scripts"), { recursive: true });
   for (const file of ["install.sh", "uninstall.sh", "install-docker.sh", "uninstall-docker.sh"]) {

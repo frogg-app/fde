@@ -15,7 +15,7 @@ const supervisor = spawn(process.execPath, supervisorArgs, {
   stdio: "inherit",
   env: {
     ...process.env,
-    FDE_LOG_FORMAT: process.env.FDE_LOG_FORMAT ?? "pretty",
+    FROGG_LOG_FORMAT: process.env.FROGG_LOG_FORMAT ?? "pretty",
   },
 });
 

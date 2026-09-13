@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { resolveElectronUpdateFeed } from "./app-update-config.js";
 import { writeElectronUpdateConfig, resolveElectronUpdateUrl } from "./app-update-config.js";
 import { existsSync } from "node:fs";
@@ -117,7 +117,7 @@ class ElectronAppUpdateRuntime implements AppUpdateRuntime {
     }
     autoUpdater.autoDownload = true;
     autoUpdater.autoRunAppAfterInstall = true;
-    // Fde revalidates the current manifest before explicitly installing on quit.
+    // Frogg revalidates the current manifest before explicitly installing on quit.
     // Electron's built-in handler would install an older download without checking
     // whether a newer release has superseded it.
     autoUpdater.autoInstallOnAppQuit = false;
@@ -136,7 +136,7 @@ class ElectronAppUpdateRuntime implements AppUpdateRuntime {
     this.configured = true;
 
     // electron-updater logs every emitted error before consumers can classify it.
-    // Fde reports genuine check, runtime, and install failures through the
+    // Frogg reports genuine check, runtime, and install failures through the
     // callbacks below, so leave internal error logging disabled to avoid both
     // duplicate logs and expected missing-channel noise.
     const updaterLogger = autoUpdater.logger;
@@ -162,7 +162,7 @@ class ElectronAppUpdateRuntime implements AppUpdateRuntime {
   async checkForUpdates(): Promise<RuntimeUpdateCheckResult | null> {
     try {
       const feed = await resolveElectronUpdateFeed({
-        override: process.env.FDE_ELECTRON_UPDATE_URL,
+        override: process.env.FROGG_ELECTRON_UPDATE_URL,
         releaseBase: brand.distribution.releaseBase,
         releaseChannel: this.releaseChannel,
         currentVersion: app.getVersion(),
@@ -302,7 +302,7 @@ export async function installAppUpdateOnQuit({
 
 function resolveUpdateUrl(): string | null {
   return resolveElectronUpdateUrl(
-    process.env.FDE_ELECTRON_UPDATE_URL,
+    process.env.FROGG_ELECTRON_UPDATE_URL,
     brand.distribution.releaseBase,
   );
 }

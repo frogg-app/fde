@@ -7,18 +7,18 @@ import { resolveSpeechConfig } from "./speech-config-resolver.js";
 
 describe("resolveSpeechConfig", () => {
   test("spoken notifications follow the voice umbrella and honour their own opt-outs", () => {
-    const fdeHome = "/tmp/fde-home";
+    const froggHome = "/tmp/frogg-home";
     const resolve = (env: NodeJS.ProcessEnv, persistedInput: unknown) =>
       resolveSpeechConfig({
-        fdeHome,
+        froggHome,
         env,
         persisted: PersistedConfigSchema.parse(persistedInput),
         localRuntimeAvailable: true,
       }).speech.notifications;
 
     expect(resolve({}, {})).toEqual({ enabled: true });
-    expect(resolve({ FDE_VOICE: "0" }, {})).toEqual({ enabled: false });
-    expect(resolve({ FDE_VOICE_NOTIFICATIONS: "0" }, {})).toEqual({
+    expect(resolve({ FROGG_VOICE: "0" }, {})).toEqual({ enabled: false });
+    expect(resolve({ FROGG_VOICE_NOTIFICATIONS: "0" }, {})).toEqual({
       enabled: false,
     });
     expect(resolve({}, { features: { voice: { notifications: { enabled: false } } } })).toEqual({
@@ -36,7 +36,7 @@ describe("resolveSpeechConfig", () => {
     ).toEqual({ enabled: false });
     expect(
       resolveSpeechConfig({
-        fdeHome,
+        froggHome,
         env: {} as NodeJS.ProcessEnv,
         persisted: PersistedConfigSchema.parse({}),
         localRuntimeAvailable: false,
@@ -45,12 +45,12 @@ describe("resolveSpeechConfig", () => {
   });
 
   test("resolves local-first defaults without env overrides", () => {
-    const fdeHome = "/tmp/fde-home";
+    const froggHome = "/tmp/frogg-home";
     const persisted = PersistedConfigSchema.parse({});
     const env = {} as NodeJS.ProcessEnv;
 
     const result = resolveSpeechConfig({
-      fdeHome,
+      froggHome,
       env,
       persisted,
     });
@@ -77,7 +77,7 @@ describe("resolveSpeechConfig", () => {
       enabled: true,
     });
     expect(result.speech.local).toEqual({
-      modelsDir: path.join(fdeHome, "models", "local-speech"),
+      modelsDir: path.join(froggHome, "models", "local-speech"),
       models: {
         dictationStt: "parakeet-tdt-0.6b-v2-int8",
         voiceStt: "parakeet-tdt-0.6b-v2-int8",
@@ -108,22 +108,22 @@ describe("resolveSpeechConfig", () => {
       },
     });
     const env = {
-      FDE_DICTATION_LOCAL_STT_MODEL: "parakeet-tdt-0.6b-v2-int8",
-      FDE_VOICE_LOCAL_STT_MODEL: "parakeet-tdt-0.6b-v2-int8",
-      FDE_VOICE_LOCAL_TTS_MODEL: "kokoro-en-v0_19",
-      FDE_VOICE_LOCAL_TTS_SPEAKER_ID: "5",
-      FDE_VOICE_LOCAL_TTS_SPEED: "1.35",
-      FDE_DICTATION_LANGUAGE: "es",
-      FDE_VOICE_LANGUAGE: "pt",
-      FDE_LOCAL_MODELS_DIR: "/tmp/models",
+      FROGG_DICTATION_LOCAL_STT_MODEL: "parakeet-tdt-0.6b-v2-int8",
+      FROGG_VOICE_LOCAL_STT_MODEL: "parakeet-tdt-0.6b-v2-int8",
+      FROGG_VOICE_LOCAL_TTS_MODEL: "kokoro-en-v0_19",
+      FROGG_VOICE_LOCAL_TTS_SPEAKER_ID: "5",
+      FROGG_VOICE_LOCAL_TTS_SPEED: "1.35",
+      FROGG_DICTATION_LANGUAGE: "es",
+      FROGG_VOICE_LANGUAGE: "pt",
+      FROGG_LOCAL_MODELS_DIR: "/tmp/models",
       OPENAI_API_KEY: "env-key",
-      FDE_VOICE_STT_PROVIDER: "openai",
-      FDE_DICTATION_STT_PROVIDER: "local",
-      FDE_VOICE_TTS_PROVIDER: "local",
+      FROGG_VOICE_STT_PROVIDER: "openai",
+      FROGG_DICTATION_STT_PROVIDER: "local",
+      FROGG_VOICE_TTS_PROVIDER: "local",
     } as NodeJS.ProcessEnv;
 
     const result = resolveSpeechConfig({
-      fdeHome: "/tmp/fde-home",
+      froggHome: "/tmp/frogg-home",
       env,
       persisted,
     });
@@ -189,10 +189,10 @@ describe("resolveSpeechConfig", () => {
     });
 
     const result = resolveSpeechConfig({
-      fdeHome: "/tmp/fde-home",
+      froggHome: "/tmp/frogg-home",
       env: {
-        FDE_DICTATION_LANGUAGE: "es",
-        FDE_VOICE_LANGUAGE: "  ",
+        FROGG_DICTATION_LANGUAGE: "es",
+        FROGG_VOICE_LANGUAGE: "  ",
       } as NodeJS.ProcessEnv,
       persisted,
     });
@@ -212,7 +212,7 @@ describe("resolveSpeechConfig", () => {
     });
 
     const result = resolveSpeechConfig({
-      fdeHome: "/tmp/fde-home",
+      froggHome: "/tmp/frogg-home",
       env: {} as NodeJS.ProcessEnv,
       persisted,
     });
@@ -251,13 +251,13 @@ describe("resolveSpeechConfig", () => {
     const persisted = PersistedConfigSchema.parse({});
     const env = {} as NodeJS.ProcessEnv;
     const withRuntime = resolveSpeechConfig({
-      fdeHome: "/tmp/fde-home",
+      froggHome: "/tmp/frogg-home",
       env,
       persisted,
       localRuntimeAvailable: true,
     });
     const withoutRuntime = resolveSpeechConfig({
-      fdeHome: "/tmp/fde-home",
+      froggHome: "/tmp/frogg-home",
       env,
       persisted,
       localRuntimeAvailable: false,
@@ -279,8 +279,8 @@ describe("resolveSpeechConfig", () => {
       features: { dictation: { enabled: true }, voiceMode: { enabled: true } },
     });
     const off = resolveSpeechConfig({
-      fdeHome: "/tmp/fde-home",
-      env: { FDE_VOICE: "0" } as NodeJS.ProcessEnv,
+      froggHome: "/tmp/frogg-home",
+      env: { FROGG_VOICE: "0" } as NodeJS.ProcessEnv,
       persisted: explicitOn,
       localRuntimeAvailable: true,
     });
@@ -296,7 +296,7 @@ describe("resolveSpeechConfig", () => {
     expect(
       enabledFlags(
         resolveSpeechConfig({
-          fdeHome: "/tmp/fde-home",
+          froggHome: "/tmp/frogg-home",
           env: {} as NodeJS.ProcessEnv,
           persisted: persistedOff,
           localRuntimeAvailable: true,
@@ -305,10 +305,10 @@ describe("resolveSpeechConfig", () => {
     ).toEqual({ dictation: false, voice: false, hasLocalConfig: false });
 
     const forcedOn = resolveSpeechConfig({
-      fdeHome: "/tmp/fde-home",
+      froggHome: "/tmp/frogg-home",
       env: {
-        FDE_VOICE: "1",
-        FDE_VOICE_MODE_ENABLED: "0",
+        FROGG_VOICE: "1",
+        FROGG_VOICE_MODE_ENABLED: "0",
       } as NodeJS.ProcessEnv,
       persisted: PersistedConfigSchema.parse({}),
       localRuntimeAvailable: false,

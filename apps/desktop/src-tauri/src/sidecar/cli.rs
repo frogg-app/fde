@@ -1,8 +1,8 @@
-//! Running the bundled CLI (`fde daemon status --json`, `fde daemon stop …`).
+//! Running the bundled CLI (`frogg daemon status --json`, `frogg daemon stop …`).
 //! A port of Electron's `daemon/cli/external.ts`. The shell runs the bundle's
-//! own Node binary on the CLI entrypoint directly rather than the `bin/fde`
+//! own Node binary on the CLI entrypoint directly rather than the `bin/frogg`
 //! launcher, which sidesteps `cmd.exe` quoting on Windows and shell lookups
-//! everywhere else; the launchers stay for humans and `FDE_CLI`.
+//! everywhere else; the launchers stay for humans and `FROGG_CLI`.
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -47,21 +47,21 @@ impl CliInvocation {
 
     fn base_env(bundle_launcher: &Path) -> BTreeMap<String, String> {
         let mut env = BTreeMap::new();
-        env.insert("FDE_NODE_ENV".into(), "production".into());
+        env.insert("FROGG_NODE_ENV".into(), "production".into());
         env.insert(
             crate::branding::env_key("CLI"),
             bundle_launcher.to_string_lossy().into_owned(),
         );
-        // Provider/tool contracts still consume the internal FDE_CLI key.
+        // Provider/tool contracts still consume the internal FROGG_CLI key.
         env.insert(
-            "FDE_CLI".into(),
+            "FROGG_CLI".into(),
             bundle_launcher.to_string_lossy().into_owned(),
         );
         env
     }
 
     /// Environment for status/stop probes: production mode and the launcher
-    /// path, plus the daemon home so the CLI looks at the same `fde.pid`.
+    /// path, plus the daemon home so the CLI looks at the same `frogg.pid`.
     pub fn probe_env(bundle: &InstalledBundle, home: &Path) -> BTreeMap<String, String> {
         let mut env = Self::base_env(&bundle.launcher());
         env.insert(
@@ -197,10 +197,10 @@ fn run_on_exit_with_timeout(
 
 fn stop_exit_helper(mut child: std::process::Child) {
     // This is only the helper we just spawned, never the daemon or a WebView2
-    // process. Reap off the event thread so even a slow OS exit cannot hold FDE.
+    // process. Reap off the event thread so even a slow OS exit cannot hold Frogg.
     let _ = child.kill();
     let _ = std::thread::Builder::new()
-        .name("fde-exit-cli-reaper".into())
+        .name("frogg-exit-cli-reaper".into())
         .spawn(move || {
             let _ = child.wait();
         });
@@ -273,7 +273,7 @@ mod tests {
                 "sidecar::cli::tests::exit_cli_fixture".into(),
                 "--nocapture".into(),
             ],
-            env: BTreeMap::from([("FDE_EXIT_CLI_TEST_MODE".into(), mode.into())]),
+            env: BTreeMap::from([("FROGG_EXIT_CLI_TEST_MODE".into(), mode.into())]),
         }
     }
 
@@ -302,7 +302,7 @@ mod tests {
     #[test]
     #[ignore]
     fn exit_cli_fixture() {
-        match std::env::var("FDE_EXIT_CLI_TEST_MODE").as_deref() {
+        match std::env::var("FROGG_EXIT_CLI_TEST_MODE").as_deref() {
             Ok("hang") => std::thread::sleep(Duration::from_secs(60)),
             Ok("output") => {
                 use std::io::Write;
@@ -325,10 +325,10 @@ mod tests {
         assert_eq!(invocation.args[0], "--disable-warning=DEP0040");
         assert_eq!(invocation.args[1], bundle().cli_entry().to_string_lossy());
         assert_eq!(&invocation.args[2..], ["daemon", "status", "--json"]);
-        let env = CliInvocation::probe_env(&bundle(), Path::new("/home/u/.fde"));
-        assert_eq!(env["FDE_NODE_ENV"], "production");
-        assert_eq!(env["FDE_HOME"], "/home/u/.fde");
-        assert_eq!(env["FDE_CLI"], bundle().launcher().to_string_lossy());
+        let env = CliInvocation::probe_env(&bundle(), Path::new("/home/u/.frogg"));
+        assert_eq!(env["FROGG_NODE_ENV"], "production");
+        assert_eq!(env["FROGG_HOME"], "/home/u/.frogg");
+        assert_eq!(env["FROGG_CLI"], bundle().launcher().to_string_lossy());
     }
 
     #[test]

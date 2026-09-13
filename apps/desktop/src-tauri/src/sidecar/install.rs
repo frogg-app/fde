@@ -1,7 +1,7 @@
 //! Installing a bundle: download the archive and its `.sha256`, verify,
 //! extract into a staging directory, validate, rename into place, flip the
 //! `current` marker. Progress reaches the webview as
-//! `fde:event:local-daemon-install-event`.
+//! `frogg:event:local-daemon-install-event`.
 
 use std::fs;
 use std::path::Path;
@@ -57,7 +57,7 @@ pub async fn install_from_url(
     result
 }
 
-/// Installs the release bundle for `version` (or `FDE_DAEMON_BUNDLE_URL`).
+/// Installs the release bundle for `version` (or `FROGG_DAEMON_BUNDLE_URL`).
 pub async fn install_version(sidecar: &Sidecar, version: &str) -> Result<InstalledBundle, String> {
     if crate::branding::env_value("DAEMON_BUNDLE_URL").is_none() {
         if let Some(archive) = &sidecar.embedded_bundle {
@@ -172,7 +172,7 @@ mod tests {
         } else {
             "b/node/bin/node"
         };
-        let archive = dir.join(format!("fde-daemon-{version}-test.tar.gz"));
+        let archive = dir.join(format!("frogg-daemon-{version}-test.tar.gz"));
         make_tar_gz(
             &archive,
             &[
@@ -230,7 +230,7 @@ mod tests {
             Arc::new(move |event| sink.lock().unwrap().push(event)),
         );
         let url = fake_bundle_archive(dir.path(), "1.0.0");
-        let sidecar_path = dir.path().join("fde-daemon-1.0.0-test.tar.gz.sha256");
+        let sidecar_path = dir.path().join("frogg-daemon-1.0.0-test.tar.gz.sha256");
         fs::write(&sidecar_path, format!("{}  x\n", "0".repeat(64))).unwrap();
 
         let error = install_from_url(&sidecar, &url, "1.0.0").await.unwrap_err();
@@ -242,8 +242,8 @@ mod tests {
     #[test]
     fn names_archive_from_url_or_convention() {
         assert_eq!(
-            archive_file_name("http://x/y/fde-daemon-1-linux-x64.tar.gz?a=1", "1"),
-            "fde-daemon-1-linux-x64.tar.gz"
+            archive_file_name("http://x/y/frogg-daemon-1-linux-x64.tar.gz?a=1", "1"),
+            "frogg-daemon-1-linux-x64.tar.gz"
         );
         assert_eq!(
             archive_file_name("http://x/latest", "1"),

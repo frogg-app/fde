@@ -20,14 +20,14 @@ runs:
   using: composite
   steps:
     - name: Validate external revision
-      if: env.FDE_BRAND_DIR == '' && inputs.repository != ''
+      if: env.FROGG_BRAND_DIR == '' && inputs.repository != ''
       shell: bash
       env:
         BRAND_REVISION: ${{ inputs.revision }}
       run: |
-        [[ "$BRAND_REVISION" =~ ^[a-fA-F0-9]{40}$ ]] || { echo 'FDE_BRAND_REVISION must be a pinned 40-character commit SHA'; exit 1; }
+        [[ "$BRAND_REVISION" =~ ^[a-fA-F0-9]{40}$ ]] || { echo 'FROGG_BRAND_REVISION must be a pinned 40-character commit SHA'; exit 1; }
     - uses: actions/checkout@v7
-      if: env.FDE_BRAND_DIR == '' && inputs.repository != ''
+      if: env.FROGG_BRAND_DIR == '' && inputs.repository != ''
       with:
         repository: ${{ inputs.repository }}
         ref: ${{ inputs.revision }}
@@ -37,13 +37,13 @@ runs:
     - name: Select brand directory
       shell: bash
       env:
-        SELECTED_BRAND: ${{ env.FDE_BRAND_DIR }}
+        SELECTED_BRAND: ${{ env.FROGG_BRAND_DIR }}
         REPOSITORY_BRAND: ${{ inputs.directory }}
         EXTERNAL_REPOSITORY: ${{ inputs.repository }}
         EXTERNAL_SUBDIR: ${{ inputs.subdirectory }}
       run: |
         if [ -n "$SELECTED_BRAND" ]; then selected="$SELECTED_BRAND";
         elif [ -n "$EXTERNAL_REPOSITORY" ]; then selected=".branding-source/${EXTERNAL_SUBDIR:-.}";
-        else selected="${REPOSITORY_BRAND:-brands/fde}"; fi
+        else selected="${REPOSITORY_BRAND:-brands/frogg}"; fi
         test -f "$selected/brand.json" || { echo "Missing manifest: $selected/brand.json"; exit 1; }
-        echo "FDE_BRAND_DIR=$selected" >> "$GITHUB_ENV"
+        echo "FROGG_BRAND_DIR=$selected" >> "$GITHUB_ENV"

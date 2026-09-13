@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { i18n } from "@/i18n/i18next";
-import type { FdeSubagentRow, ProviderSubagentRow, SubagentRow } from "./select";
+import type { FroggSubagentRow, ProviderSubagentRow, SubagentRow } from "./select";
 import {
   buildSubagentPillPresentation,
   buildSubagentRowPresentationData,
@@ -8,9 +8,11 @@ import {
   resolveRowLabel,
 } from "./track-presentation";
 
-function row(overrides: Partial<FdeSubagentRow> & Pick<FdeSubagentRow, "id">): FdeSubagentRow {
+function row(
+  overrides: Partial<FroggSubagentRow> & Pick<FroggSubagentRow, "id">,
+): FroggSubagentRow {
   return {
-    kind: "fde",
+    kind: "frogg",
     id: overrides.id,
     provider: overrides.provider ?? "codex",
     title: overrides.title ?? `Agent ${overrides.id}`,
@@ -163,7 +165,7 @@ describe("resolveRowLabel", () => {
 describe("buildSubagentRowPresentationData", () => {
   it("namespaces the key with a subagent prefix", () => {
     expect(buildSubagentRowPresentationData(row({ id: "child-a" })).key).toBe(
-      "fde_subagent_child-a",
+      "frogg_subagent_child-a",
     );
   });
 

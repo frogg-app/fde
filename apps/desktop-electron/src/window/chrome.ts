@@ -1,6 +1,6 @@
 export type DesktopWindowChromeMode = "native-mac" | "custom-windows" | "custom-linux";
 
-const WINDOW_CHROME_MODE_ARGUMENT_PREFIX = "--fde-window-chrome-mode=";
+const WINDOW_CHROME_MODE_ARGUMENT_PREFIX = "--frogg-window-chrome-mode=";
 
 function systemWindowChromeMode(platform: NodeJS.Platform): DesktopWindowChromeMode {
   if (platform === "darwin") return "native-mac";
@@ -17,12 +17,12 @@ export function resolveDesktopWindowChromeMode(input: {
   const override = input.override?.trim().toLowerCase();
   if (!override) return systemWindowChromeMode(input.platform);
   if (input.isPackaged) {
-    throw new Error("FDE_DESKTOP_WINDOW_CONTROLS is only available in development builds");
+    throw new Error("FROGG_DESKTOP_WINDOW_CONTROLS is only available in development builds");
   }
   if (override === "windows") return "custom-windows";
   if (override === "linux") return "custom-linux";
   throw new Error(
-    `Unsupported FDE_DESKTOP_WINDOW_CONTROLS value: ${input.override}. Use windows or linux.`,
+    `Unsupported FROGG_DESKTOP_WINDOW_CONTROLS value: ${input.override}. Use windows or linux.`,
   );
 }
 

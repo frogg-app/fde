@@ -9,8 +9,8 @@
 #   scripts/release/build-pair-page-docker.sh --platform linux/arm64
 #
 # Environment:
-#   FDE_PAIR_IMAGE_REPO   image repository (default: froggapp/fde-pair-page)
-#   FDE_PLATFORMS         platforms for --push builds (default: linux/amd64,linux/arm64)
+#   FROGG_PAIR_IMAGE_REPO   image repository (default: froggapp/frogg-pair-page)
+#   FROGG_PLATFORMS         platforms for --push builds (default: linux/amd64,linux/arm64)
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -18,9 +18,9 @@ ROOT_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 cd "$ROOT_DIR"
 node --import tsx scripts/dev/brand.mts prepare >&2
 brand_input="$(node --import tsx scripts/dev/brand.mts stage)"
-REPO="${FDE_PAIR_IMAGE_REPO:-$(node -p 'require("./.generated/branding/brand.json").distribution.pairingImage || ""')}"
+REPO="${FROGG_PAIR_IMAGE_REPO:-$(node -p 'require("./.generated/branding/brand.json").distribution.pairingImage || ""')}"
 [[ -n "$REPO" ]] || { echo 'Configure distribution.pairingImage before building this image' >&2; exit 1; }
-PLATFORMS="${FDE_PLATFORMS:-linux/amd64,linux/arm64}"
+PLATFORMS="${FROGG_PLATFORMS:-linux/amd64,linux/arm64}"
 
 push=0
 platform=""
@@ -57,4 +57,4 @@ else
 fi
 
 echo "building ${REPO}:${version} (tags: ${tags[*]})"
-docker buildx build "${args[@]}" --build-arg "FDE_BRAND_DIR=$brand_input" --build-arg "FDE_SOURCE_REVISION=$(git rev-parse HEAD)" "${ROOT_DIR}"
+docker buildx build "${args[@]}" --build-arg "FROGG_BRAND_DIR=$brand_input" --build-arg "FROGG_SOURCE_REVISION=$(git rev-parse HEAD)" "${ROOT_DIR}"

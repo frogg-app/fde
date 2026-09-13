@@ -80,7 +80,7 @@ export function AssistantMarkdownLink({
 
   const anchor = (
     <a
-      {...(unwrapForMarkdownCopy ? { "data-fde-markdown-unwrap": "true" } : {})}
+      {...(unwrapForMarkdownCopy ? { "data-frogg-markdown-unwrap": "true" } : {})}
       href={source.href}
       title={source.title}
       onClickCapture={preventAnchorNavigation}

@@ -2,7 +2,7 @@ import AsyncStorage from "@/storage/brand-storage";
 import { z } from "zod";
 import { readValidatedString } from "@/storage/validated-storage";
 
-const CLIENT_ID_STORAGE_KEY = "@fde:client-id-v1";
+const CLIENT_ID_STORAGE_KEY = "@frogg:client-id-v1";
 
 export interface ClientIdStorage {
   getItem(key: string): Promise<string | null>;

@@ -22,7 +22,7 @@ import type {
   SessionOutboundMessage,
   WorkspaceDescriptorPayload,
   WorkspaceCreateRequest,
-} from "@fde/protocol/messages";
+} from "@frogg/protocol/messages";
 import { DaemonClient } from "./daemon-client.js";
 import type {
   FetchAgentsEntry,
@@ -48,14 +48,14 @@ export type ConnectionState =
   | { status: "disconnected"; reason?: string }
   | { status: "disposed" };
 
-export interface FdeLogger {
+export interface FroggLogger {
   debug(obj: object, msg?: string): void;
   info(obj: object, msg?: string): void;
   warn(obj: object, msg?: string): void;
   error(obj: object, msg?: string): void;
 }
 
-export interface FdeClientConfig {
+export interface FroggClientConfig {
   url: string;
   clientId?: string;
   appVersion?: string;
@@ -63,7 +63,7 @@ export interface FdeClientConfig {
   password?: string;
   authHeader?: string;
   suppressSendErrors?: boolean;
-  logger?: FdeLogger;
+  logger?: FroggLogger;
   connectTimeoutMs?: number;
   e2ee?: {
     enabled?: boolean;
@@ -78,120 +78,126 @@ export interface FdeClientConfig {
   runtimeMetricsWindowMs?: number;
 }
 
-export type FdeWorkspace = WorkspaceDescriptorPayload;
-export type FdeAgent = AgentSnapshotPayload;
-export type FdeAgentListOptions = FetchAgentsOptions;
-export type FdeProject = WorkspaceProjectDescriptorPayload;
-export type FdeProjectListOptions = Omit<ProjectListRequestMessage, "type" | "requestId"> & {
+export type FroggWorkspace = WorkspaceDescriptorPayload;
+export type FroggAgent = AgentSnapshotPayload;
+export type FroggAgentListOptions = FetchAgentsOptions;
+export type FroggProject = WorkspaceProjectDescriptorPayload;
+export type FroggProjectListOptions = Omit<ProjectListRequestMessage, "type" | "requestId"> & {
   requestId?: string;
 };
-export type FdeProjectListResult = ProjectListResponseMessage["payload"];
+export type FroggProjectListResult = ProjectListResponseMessage["payload"];
 
-export interface FdeAgentListResult {
+export interface FroggAgentListResult {
   requestId: string;
   subscriptionId?: string | null;
   entries: FetchAgentsEntry[];
   pageInfo: FetchAgentsPageInfo;
 }
-export type FdeWorkspaceListOptions = Omit<FetchWorkspacesRequestMessage, "type" | "requestId"> & {
+export type FroggWorkspaceListOptions = Omit<
+  FetchWorkspacesRequestMessage,
+  "type" | "requestId"
+> & {
   requestId?: string;
 };
 
-export interface FdeWorkspaceListResult {
+export interface FroggWorkspaceListResult {
   requestId: string;
   subscriptionId?: string | null;
-  entries: FdeWorkspace[];
+  entries: FroggWorkspace[];
   pageInfo: FetchWorkspacesResponseMessage["payload"]["pageInfo"];
 }
 
-export interface FdeWorkspaceOpenOptions {
+export interface FroggWorkspaceOpenOptions {
   cwd: string;
   requestId?: string;
 }
 
-export type FdeWorkspaceCreateOptions = Omit<WorkspaceCreateRequest, "type" | "requestId"> & {
+export type FroggWorkspaceCreateOptions = Omit<WorkspaceCreateRequest, "type" | "requestId"> & {
   requestId?: string;
 };
 
-export interface FdeWorkspaceArchiveResult {
+export interface FroggWorkspaceArchiveResult {
   requestId: string;
   workspaceId: string;
   archivedAt: string | null;
   error: string | null;
 }
 
-export type FdeWorkspaceUpdate = Extract<
+export type FroggWorkspaceUpdate = Extract<
   SessionOutboundMessage,
   { type: "workspace_update" }
 >["payload"];
 
-export type FdeWorkspaceUpdateHandler = (update: FdeWorkspaceUpdate) => void;
+export type FroggWorkspaceUpdateHandler = (update: FroggWorkspaceUpdate) => void;
 
-export interface FdeWorkspaceHandle {
+export interface FroggWorkspaceHandle {
   readonly id: string;
   readonly projectId: string | null;
   readonly directory: string | null;
   readonly name: string | null;
-  readonly status: FdeWorkspace["status"] | null;
+  readonly status: FroggWorkspace["status"] | null;
   readonly agents: {
-    create(options: FdeWorkspaceAgentCreateOptions): Promise<FdeAgentHandle>;
+    create(options: FroggWorkspaceAgentCreateOptions): Promise<FroggAgentHandle>;
   };
-  current(): FdeWorkspace | null;
-  refresh(options?: { requestId?: string }): Promise<FdeWorkspace | null>;
+  current(): FroggWorkspace | null;
+  refresh(options?: { requestId?: string }): Promise<FroggWorkspace | null>;
   setTitle(title: string | null, requestId?: string): Promise<{ title: string | null }>;
-  archive(requestId?: string): Promise<FdeWorkspaceArchiveResult>;
+  archive(requestId?: string): Promise<FroggWorkspaceArchiveResult>;
   /**
    * Subscribes to already-emitted daemon workspace_update events for this id.
    * This returns a local unsubscribe function; it does not own app cache state or
    * send a daemon unsubscribe RPC. Call `workspaces.list({ subscribe: {} })` when
    * the daemon should start streaming workspace directory updates.
    */
-  subscribe(handler: (update: FdeWorkspaceUpdate) => void): () => void;
+  subscribe(handler: (update: FroggWorkspaceUpdate) => void): () => void;
 }
 
-export interface FdeProjectActions {
-  list(options?: FdeProjectListOptions): Promise<FdeProjectListResult>;
+export interface FroggProjectActions {
+  list(options?: FroggProjectListOptions): Promise<FroggProjectListResult>;
 }
 
-export interface FdeWorkspaceActions {
-  list(options?: FdeWorkspaceListOptions): Promise<FdeWorkspaceListResult>;
-  ref(workspace: string | FdeWorkspace): FdeWorkspaceHandle;
-  open(input: string | FdeWorkspaceOpenOptions, requestId?: string): Promise<FdeWorkspaceHandle>;
-  create(options: FdeWorkspaceCreateOptions): Promise<FdeWorkspaceHandle>;
-  archive(
-    workspace: string | FdeWorkspaceHandle,
+export interface FroggWorkspaceActions {
+  list(options?: FroggWorkspaceListOptions): Promise<FroggWorkspaceListResult>;
+  ref(workspace: string | FroggWorkspace): FroggWorkspaceHandle;
+  open(
+    input: string | FroggWorkspaceOpenOptions,
     requestId?: string,
-  ): Promise<FdeWorkspaceArchiveResult>;
+  ): Promise<FroggWorkspaceHandle>;
+  create(options: FroggWorkspaceCreateOptions): Promise<FroggWorkspaceHandle>;
+  archive(
+    workspace: string | FroggWorkspaceHandle,
+    requestId?: string,
+  ): Promise<FroggWorkspaceArchiveResult>;
   /**
    * Local event subscription over the low-level driver's workspace_update stream.
    * The returned function only removes this SDK listener.
    */
-  subscribe(handler: FdeWorkspaceUpdateHandler): () => void;
+  subscribe(handler: FroggWorkspaceUpdateHandler): () => void;
 }
 
-type FdeAgentSessionConfig = CreateAgentRequestMessage["config"];
-export type FdeAgentProvider = FdeAgentSessionConfig["provider"];
+type FroggAgentSessionConfig = CreateAgentRequestMessage["config"];
+export type FroggAgentProvider = FroggAgentSessionConfig["provider"];
 
-export type FdeProviderFeatureValues = Record<string, unknown>;
+export type FroggProviderFeatureValues = Record<string, unknown>;
 
-export interface FdeAgentConfig {
+export interface FroggAgentConfig {
   /** Provider and model in `provider/model` format. */
   provider: string;
-  modeId?: FdeAgentSessionConfig["modeId"];
-  thinkingOptionId?: FdeAgentSessionConfig["thinkingOptionId"];
-  featureValues?: FdeProviderFeatureValues;
+  modeId?: FroggAgentSessionConfig["modeId"];
+  thinkingOptionId?: FroggAgentSessionConfig["thinkingOptionId"];
+  featureValues?: FroggProviderFeatureValues;
   /** JSON-safe provider-native settings, validated by the selected provider. */
-  options?: FdeAgentSessionConfig["providerOptions"];
-  systemPrompt?: FdeAgentSessionConfig["systemPrompt"];
-  toolPolicy?: FdeAgentSessionConfig["toolPolicy"];
-  mcpServers?: FdeAgentSessionConfig["mcpServers"];
+  options?: FroggAgentSessionConfig["providerOptions"];
+  systemPrompt?: FroggAgentSessionConfig["systemPrompt"];
+  toolPolicy?: FroggAgentSessionConfig["toolPolicy"];
+  mcpServers?: FroggAgentSessionConfig["mcpServers"];
 }
 
-export interface FdeAgentCreateOptions {
-  config: FdeAgentConfig;
+export interface FroggAgentCreateOptions {
+  config: FroggAgentConfig;
   cwd: string;
-  parent?: string | FdeAgentHandle;
-  title?: FdeAgentSessionConfig["title"];
+  parent?: string | FroggAgentHandle;
+  title?: FroggAgentSessionConfig["title"];
   env?: CreateAgentRequestMessage["env"];
   prompt?: string;
   clientMessageId?: string;
@@ -205,14 +211,14 @@ export interface FdeAgentCreateOptions {
   labels?: Record<string, string>;
 }
 
-export type FdeWorkspaceAgentCreateOptions = Omit<FdeAgentCreateOptions, "cwd">;
+export type FroggWorkspaceAgentCreateOptions = Omit<FroggAgentCreateOptions, "cwd">;
 
-export interface FdeAgentRefetchResult {
-  agent: FdeAgent;
+export interface FroggAgentRefetchResult {
+  agent: FroggAgent;
   project: ProjectPlacementPayload | null;
 }
 
-export interface FdeAgentTimelineRefetchOptions {
+export interface FroggAgentTimelineRefetchOptions {
   direction?: FetchAgentTimelineDirection;
   cursor?: FetchAgentTimelineCursor;
   limit?: number;
@@ -220,45 +226,45 @@ export interface FdeAgentTimelineRefetchOptions {
   requestId?: string;
 }
 
-export interface FdeAgentSendOptions {
+export interface FroggAgentSendOptions {
   messageId?: string;
   images?: Array<{ data: string; mimeType: string }>;
   attachments?: SendAgentMessageRequest["attachments"];
 }
 
-export interface FdeAgentRunOptions extends FdeAgentSendOptions {
+export interface FroggAgentRunOptions extends FroggAgentSendOptions {
   timeoutMs?: number;
 }
 
-export type FdeAgentRunResult = WaitForFinishResult;
+export type FroggAgentRunResult = WaitForFinishResult;
 
-export interface FdeAgentCommandsOptions {
+export interface FroggAgentCommandsOptions {
   requestId?: string;
 }
 
-export type FdeAgentCommandsResult = ListCommandsResponse["payload"];
+export type FroggAgentCommandsResult = ListCommandsResponse["payload"];
 
-export type FdeAgentUpdate = Extract<SessionOutboundMessage, { type: "agent_update" }>["payload"];
+export type FroggAgentUpdate = Extract<SessionOutboundMessage, { type: "agent_update" }>["payload"];
 
-export type FdeAgentStream = Extract<SessionOutboundMessage, { type: "agent_stream" }>["payload"];
+export type FroggAgentStream = Extract<SessionOutboundMessage, { type: "agent_stream" }>["payload"];
 
-export type FdeAgentUpdateHandler = (update: FdeAgentUpdate) => void;
+export type FroggAgentUpdateHandler = (update: FroggAgentUpdate) => void;
 
-export interface FdeAgentTimelineHandle {
+export interface FroggAgentTimelineHandle {
   /**
    * Fetches a fresh timeline page through the existing daemon RPC. If the daemon
    * includes an agent snapshot in the response, the parent handle is updated to
    * that value.
    */
-  refetch(options?: FdeAgentTimelineRefetchOptions): Promise<FetchAgentTimelinePayload>;
+  refetch(options?: FroggAgentTimelineRefetchOptions): Promise<FetchAgentTimelinePayload>;
   /**
    * Local listener for agent_stream events matching this handle id. It does not
    * retain timeline entries or own application cache state.
    */
-  subscribe(handler: (event: FdeAgentStream) => void): () => void;
+  subscribe(handler: (event: FroggAgentStream) => void): () => void;
 }
 
-export interface FdeAgentHandle {
+export interface FroggAgentHandle {
   readonly id: string;
   /**
    * `workspaceId` through `archivedAt` mirror the last snapshot this handle
@@ -269,24 +275,24 @@ export interface FdeAgentHandle {
    */
   readonly workspaceId: string | null;
   readonly cwd: string | null;
-  readonly status: FdeAgent["status"] | null;
-  readonly capabilities: FdeAgent["capabilities"] | null;
-  readonly availableModes: FdeAgent["availableModes"] | null;
-  readonly pendingPermissions: FdeAgent["pendingPermissions"] | null;
-  readonly activeTurn: NonNullable<FdeAgent["activeTurn"]> | null;
-  readonly lastUsage: NonNullable<FdeAgent["lastUsage"]> | null;
-  readonly lastError: NonNullable<FdeAgent["lastError"]> | null;
-  readonly features: NonNullable<FdeAgent["features"]> | null;
-  readonly runtimeInfo: NonNullable<FdeAgent["runtimeInfo"]> | null;
-  readonly archivedAt: NonNullable<FdeAgent["archivedAt"]> | null;
-  readonly timeline: FdeAgentTimelineHandle;
-  current(): FdeAgent | null;
-  refresh(requestId?: string): Promise<FdeAgentRefetchResult | null>;
-  send(text: string, options?: FdeAgentSendOptions): Promise<void>;
+  readonly status: FroggAgent["status"] | null;
+  readonly capabilities: FroggAgent["capabilities"] | null;
+  readonly availableModes: FroggAgent["availableModes"] | null;
+  readonly pendingPermissions: FroggAgent["pendingPermissions"] | null;
+  readonly activeTurn: NonNullable<FroggAgent["activeTurn"]> | null;
+  readonly lastUsage: NonNullable<FroggAgent["lastUsage"]> | null;
+  readonly lastError: NonNullable<FroggAgent["lastError"]> | null;
+  readonly features: NonNullable<FroggAgent["features"]> | null;
+  readonly runtimeInfo: NonNullable<FroggAgent["runtimeInfo"]> | null;
+  readonly archivedAt: NonNullable<FroggAgent["archivedAt"]> | null;
+  readonly timeline: FroggAgentTimelineHandle;
+  current(): FroggAgent | null;
+  refresh(requestId?: string): Promise<FroggAgentRefetchResult | null>;
+  send(text: string, options?: FroggAgentSendOptions): Promise<void>;
   /** Sends a prompt and resolves when that turn finishes or needs attention. */
-  run(text: string, options?: FdeAgentRunOptions): Promise<FdeAgentRunResult>;
+  run(text: string, options?: FroggAgentRunOptions): Promise<FroggAgentRunResult>;
   /** Waits for the current turn, including one started with `prompt`. */
-  waitForFinish(timeoutMs?: number): Promise<FdeAgentRunResult>;
+  waitForFinish(timeoutMs?: number): Promise<FroggAgentRunResult>;
   /**
    * Asks the running session for the slash commands and skills it actually
    * loaded. Providers answer from the live session, so this sees built-in and
@@ -294,84 +300,84 @@ export interface FdeAgentHandle {
    * `error` string; a provider that cannot answer reports it there rather than
    * rejecting.
    */
-  commands(options?: FdeAgentCommandsOptions): Promise<FdeAgentCommandsResult>;
+  commands(options?: FroggAgentCommandsOptions): Promise<FroggAgentCommandsResult>;
   archive(): Promise<{ archivedAt: string }>;
   detach(): Promise<void>;
-  subscribe(handler: (update: FdeAgentUpdate) => void): () => void;
+  subscribe(handler: (update: FroggAgentUpdate) => void): () => void;
 }
 
-export interface FdeAgentActions {
-  list(options?: FdeAgentListOptions): Promise<FdeAgentListResult>;
-  ref(agent: string | FdeAgent): FdeAgentHandle;
-  create(options: FdeAgentCreateOptions): Promise<FdeAgentHandle>;
+export interface FroggAgentActions {
+  list(options?: FroggAgentListOptions): Promise<FroggAgentListResult>;
+  ref(agent: string | FroggAgent): FroggAgentHandle;
+  create(options: FroggAgentCreateOptions): Promise<FroggAgentHandle>;
   /**
    * Local event subscription over the low-level driver's agent_update stream.
    * The returned function only removes this SDK listener.
    */
-  subscribe(handler: FdeAgentUpdateHandler): () => void;
+  subscribe(handler: FroggAgentUpdateHandler): () => void;
 }
 
-export type FdeProviderModelsResult = ListProviderModelsResponseMessage["payload"];
-export type FdeProviderModesResult = ListProviderModesResponseMessage["payload"];
-type FdeProviderFeaturesDraft = ListProviderFeaturesRequestMessage["draftConfig"];
-export interface FdeProviderFeaturesInput extends Omit<
-  FdeProviderFeaturesDraft,
+export type FroggProviderModelsResult = ListProviderModelsResponseMessage["payload"];
+export type FroggProviderModesResult = ListProviderModesResponseMessage["payload"];
+type FroggProviderFeaturesDraft = ListProviderFeaturesRequestMessage["draftConfig"];
+export interface FroggProviderFeaturesInput extends Omit<
+  FroggProviderFeaturesDraft,
   "provider" | "model"
 > {
   /** Provider and model in `provider/model` format. */
   provider: string;
 }
-export type FdeProviderFeaturesResult = ListProviderFeaturesResponseMessage["payload"];
-export type FdeProviderAvailabilityResult = ListAvailableProvidersResponse["payload"];
-export type FdeProviderSnapshotResult = GetProvidersSnapshotResponseMessage["payload"];
-export type FdeProviderSnapshotUpdate = Extract<
+export type FroggProviderFeaturesResult = ListProviderFeaturesResponseMessage["payload"];
+export type FroggProviderAvailabilityResult = ListAvailableProvidersResponse["payload"];
+export type FroggProviderSnapshotResult = GetProvidersSnapshotResponseMessage["payload"];
+export type FroggProviderSnapshotUpdate = Extract<
   SessionOutboundMessage,
   { type: "providers_snapshot_update" }
 >["payload"];
-export type FdeProviderRefreshResult = RefreshProvidersSnapshotResponseMessage["payload"];
-export type FdeProviderDiagnosticResult = ProviderDiagnosticResponseMessage["payload"];
+export type FroggProviderRefreshResult = RefreshProvidersSnapshotResponseMessage["payload"];
+export type FroggProviderDiagnosticResult = ProviderDiagnosticResponseMessage["payload"];
 
-export interface FdeProviderListOptions {
+export interface FroggProviderListOptions {
   cwd?: string;
   requestId?: string;
 }
 
-export interface FdeProviderRefreshOptions {
+export interface FroggProviderRefreshOptions {
   cwd?: string;
-  providers?: FdeAgentProvider[];
+  providers?: FroggAgentProvider[];
   requestId?: string;
 }
 
-export interface FdeProviderWaitOptions extends FdeProviderListOptions {
+export interface FroggProviderWaitOptions extends FroggProviderListOptions {
   timeoutMs?: number;
 }
 
-export interface FdeProviderActions {
+export interface FroggProviderActions {
   listModels(
-    provider: FdeAgentProvider,
-    options?: FdeProviderListOptions,
-  ): Promise<FdeProviderModelsResult>;
+    provider: FroggAgentProvider,
+    options?: FroggProviderListOptions,
+  ): Promise<FroggProviderModelsResult>;
   listModes(
-    provider: FdeAgentProvider,
-    options?: FdeProviderListOptions,
-  ): Promise<FdeProviderModesResult>;
+    provider: FroggAgentProvider,
+    options?: FroggProviderListOptions,
+  ): Promise<FroggProviderModesResult>;
   listFeatures(
-    draftConfig: FdeProviderFeaturesInput,
+    draftConfig: FroggProviderFeaturesInput,
     options?: { requestId?: string },
-  ): Promise<FdeProviderFeaturesResult>;
-  listAvailable(options?: { requestId?: string }): Promise<FdeProviderAvailabilityResult>;
-  snapshot(options?: FdeProviderListOptions): Promise<FdeProviderSnapshotResult>;
+  ): Promise<FroggProviderFeaturesResult>;
+  listAvailable(options?: { requestId?: string }): Promise<FroggProviderAvailabilityResult>;
+  snapshot(options?: FroggProviderListOptions): Promise<FroggProviderSnapshotResult>;
   /** Resolves after the daemon's lazy provider discovery has finished. */
-  waitForReady(options?: FdeProviderWaitOptions): Promise<FdeProviderSnapshotResult>;
-  refresh(options?: FdeProviderRefreshOptions): Promise<FdeProviderRefreshResult>;
+  waitForReady(options?: FroggProviderWaitOptions): Promise<FroggProviderSnapshotResult>;
+  refresh(options?: FroggProviderRefreshOptions): Promise<FroggProviderRefreshResult>;
   diagnostic(
-    provider: FdeAgentProvider,
+    provider: FroggAgentProvider,
     options?: { requestId?: string },
-  ): Promise<FdeProviderDiagnosticResult>;
-  subscribe(handler: (update: FdeProviderSnapshotUpdate) => void): () => void;
+  ): Promise<FroggProviderDiagnosticResult>;
+  subscribe(handler: (update: FroggProviderSnapshotUpdate) => void): () => void;
 }
 
-export interface FdeConfigActions {
+export interface FroggConfigActions {
   /**
    * Reads daemon config through the existing config RPC. Provider profiles,
    * custom provider entries, keys/env, custom binaries, and provider enablement
@@ -391,29 +397,29 @@ export interface FdeConfigActions {
   ): Promise<{ requestId: string; config: MutableDaemonConfig }>;
 }
 
-export interface FdeApi {
-  readonly workspaces: FdeWorkspaceActions;
-  readonly projects: FdeProjectActions;
-  readonly agents: FdeAgentActions;
-  readonly providers: FdeProviderActions;
-  readonly config: FdeConfigActions;
+export interface FroggApi {
+  readonly workspaces: FroggWorkspaceActions;
+  readonly projects: FroggProjectActions;
+  readonly agents: FroggAgentActions;
+  readonly providers: FroggProviderActions;
+  readonly config: FroggConfigActions;
 }
 
-export interface FdeClient extends FdeApi {
+export interface FroggClient extends FroggApi {
   connect(): Promise<void>;
   close(): Promise<void>;
   ensureConnected(): void;
   getConnectionState(): ConnectionState;
 }
 
-export function createFdeClient(config: FdeClientConfig): FdeClient {
+export function createFroggClient(config: FroggClientConfig): FroggClient {
   const daemonClient = new DaemonClient({
     ...config,
     clientId: config.clientId ?? createGeneratedClientId(),
     clientType: "cli",
   });
   return {
-    ...createFdeApi(daemonClient),
+    ...createFroggApi(daemonClient),
     connect: () => daemonClient.connect(),
     close: () => daemonClient.close(),
     ensureConnected: () => daemonClient.ensureConnected(),
@@ -421,10 +427,10 @@ export function createFdeClient(config: FdeClientConfig): FdeClient {
   };
 }
 
-export function createFdeApi(daemonClient: DaemonClient): FdeApi {
+export function createFroggApi(daemonClient: DaemonClient): FroggApi {
   const createAgentHandle = createAgentHandleFactory(daemonClient);
   const createAgent = async (
-    options: FdeAgentCreateOptions,
+    options: FroggAgentCreateOptions,
     placement?: { workspaceId: string; cwd: string },
   ) => {
     const { config: agentConfig, cwd, parent, title, prompt, ...requestOptions } = options;
@@ -505,12 +511,12 @@ export function createFdeApi(daemonClient: DaemonClient): FdeApi {
   };
 }
 
-type WorkspaceHandleFactory = (workspace: string | FdeWorkspace) => FdeWorkspaceHandle;
-type AgentHandleFactory = (agent: string | FdeAgent) => FdeAgentHandle;
+type WorkspaceHandleFactory = (workspace: string | FroggWorkspace) => FroggWorkspaceHandle;
+type AgentHandleFactory = (agent: string | FroggAgent) => FroggAgentHandle;
 type CreateAgent = (
-  options: FdeAgentCreateOptions,
+  options: FroggAgentCreateOptions,
   placement?: { workspaceId: string; cwd: string },
-) => Promise<FdeAgentHandle>;
+) => Promise<FroggAgentHandle>;
 
 function createWorkspaceHandleFactory(
   daemonClient: DaemonClient,
@@ -597,7 +603,7 @@ function createAgentHandleFactory(daemonClient: DaemonClient): AgentHandleFactor
     const id = typeof agent === "string" ? agent : agent.id;
     let current = typeof agent === "string" ? null : agent;
 
-    const handle: FdeAgentHandle = {
+    const handle: FroggAgentHandle = {
       id,
       timeline: {
         refetch: async (options) => {
@@ -713,9 +719,9 @@ function createAgentHandleFactory(daemonClient: DaemonClient): AgentHandleFactor
 async function openWorkspace(
   daemonClient: DaemonClient,
   createWorkspaceHandle: WorkspaceHandleFactory,
-  input: string | FdeWorkspaceOpenOptions,
+  input: string | FroggWorkspaceOpenOptions,
   requestId?: string,
-): Promise<FdeWorkspaceHandle> {
+): Promise<FroggWorkspaceHandle> {
   const options = typeof input === "string" ? { cwd: input, requestId } : input;
   const result = await daemonClient.openProject(options.cwd, options.requestId);
   if (result.error || !result.workspace) {
@@ -724,11 +730,11 @@ async function openWorkspace(
   return createWorkspaceHandle(result.workspace);
 }
 
-function resolveWorkspaceId(workspace: string | FdeWorkspaceHandle): string {
+function resolveWorkspaceId(workspace: string | FroggWorkspaceHandle): string {
   return typeof workspace === "string" ? workspace : workspace.id;
 }
 
-function resolveAgentId(agent: string | FdeAgentHandle): string {
+function resolveAgentId(agent: string | FroggAgentHandle): string {
   return typeof agent === "string" ? agent : agent.id;
 }
 
@@ -745,8 +751,8 @@ function parseProviderModel(selection: string): { provider: string; model: strin
 
 function waitForProvidersReady(
   daemonClient: DaemonClient,
-  options: FdeProviderWaitOptions = {},
-): Promise<FdeProviderSnapshotResult> {
+  options: FroggProviderWaitOptions = {},
+): Promise<FroggProviderSnapshotResult> {
   // COMPAT(providersSnapshotCwd): added in v0.3.2, remove gate after 2027-02-10.
   if (daemonClient.getLastServerInfoMessage()?.features?.providersSnapshotCwd !== true) {
     return Promise.reject(new Error("Update the host to wait for provider discovery."));
@@ -758,14 +764,14 @@ function waitForProvidersReady(
     let settled = false;
     let requestId: string | null = null;
     let snapshotCwd: string | undefined;
-    const pendingUpdates = new Map<string | undefined, FdeProviderSnapshotUpdate>();
-    let latestEntries: FdeProviderSnapshotResult["entries"] = [];
+    const pendingUpdates = new Map<string | undefined, FroggProviderSnapshotUpdate>();
+    let latestEntries: FroggProviderSnapshotResult["entries"] = [];
 
     const cleanup = () => {
       clearTimeout(timeout);
       unsubscribe();
     };
-    const finish = (snapshot: FdeProviderSnapshotResult) => {
+    const finish = (snapshot: FroggProviderSnapshotResult) => {
       if (settled) return;
       settled = true;
       cleanup();
@@ -777,7 +783,7 @@ function waitForProvidersReady(
       cleanup();
       reject(error instanceof Error ? error : new Error(String(error)));
     };
-    const updateMatches = (update: FdeProviderSnapshotUpdate) => update.cwd === snapshotCwd;
+    const updateMatches = (update: FroggProviderSnapshotUpdate) => update.cwd === snapshotCwd;
 
     const unsubscribe = daemonClient.on("providers_snapshot_update", (message) => {
       const update = message.payload;
@@ -830,5 +836,5 @@ function createGeneratedClientId(): string {
     typeof globalThis.crypto?.randomUUID === "function"
       ? globalThis.crypto.randomUUID()
       : Math.random().toString(36).slice(2);
-  return `fde-sdk-${randomId}`;
+  return `frogg-sdk-${randomId}`;
 }

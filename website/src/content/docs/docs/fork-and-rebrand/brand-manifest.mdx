@@ -51,7 +51,7 @@ Where they show up:
 - **`homeDir`** and **`envPrefix`**: the daemon state directory (`~/.acme`) and the
   variable that overrides it (`ACME_HOME`). Installer overrides also use the prefix:
   `ACME_INSTALL_DIR`, `ACME_BIN_DIR`, `ACME_VERSION`, `ACME_BUNDLE_URL`, `ACME_LISTEN`
-  and so on. Low-level daemon settings such as `FDE_LISTEN` keep the `FDE_` name.
+  and so on. Low-level daemon settings such as `FROGG_LISTEN` keep the `FROGG_` name.
 - **`scheme`**: deep links (`acme://`) registered by the desktop app and mobile app.
 - **`serviceName`** / **`launchdLabel`**: the systemd user unit and launchd agent the
   installer creates, and the Docker container name.
@@ -128,7 +128,7 @@ that would use it.
 A brand cannot ship a relay endpoint; `relayEndpoint` and `relayUseTls` are rejected.
 Each daemon owner configures their own relay.
 
-A custom brand inherits **none** of FDE's hosted services. Without `pairingUrl`, pairing
+A custom brand inherits **none** of Frogg's hosted services. Without `pairingUrl`, pairing
 links use your native scheme (`acme://pair#offer=...`) and direct connections still
 work.
 
@@ -154,7 +154,7 @@ With `repository` set:
 - `install.sh` downloads daemon bundles from the same releases,
 - `<cliName> update` on a daemon host (for Acme, `acme update`) uses the same releases.
 
-Custom products never fall back to FDE's releases.
+Custom products never fall back to Frogg's releases.
 
 ## Resolved output
 
@@ -168,4 +168,4 @@ adds derived values you cannot set directly:
 | `distribution.releasesApi`   | `https://api.github.com/repos/<repository>/releases`    |
 | `distribution.releaseBase`   | `https://github.com/<repository>/releases`              |
 | `distribution.updateMode`    | Resolved `updates`                                      |
-| `legacyFde`                  | `true` only for `brands/fde`                            |
+| `legacyFrogg`                  | `true` only for `brands/frogg`                            |

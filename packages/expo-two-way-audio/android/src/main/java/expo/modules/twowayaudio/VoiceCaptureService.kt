@@ -15,7 +15,7 @@ class VoiceCaptureService : Service() {
     override fun onCreate() {
         super.onCreate()
         val manager = getSystemService(NotificationManager::class.java)
-        val channelId = "fde_voice_capture"
+        val channelId = "frogg_voice_capture"
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             manager.createNotificationChannel(NotificationChannel(channelId, "Voice conversation", NotificationManager.IMPORTANCE_LOW))
         }

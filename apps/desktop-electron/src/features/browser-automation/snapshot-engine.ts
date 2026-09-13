@@ -368,7 +368,7 @@ function buildRuntimeElementExpression(metadata: BrowserRefMetadata): string {
 }
 
 function buildResolveExpression(metadata: BrowserRefMetadata): string {
-  return `window.__FDE_BROWSER_AUTOMATION__?.resolve(${JSON.stringify(
+  return `window.__FROGG_BROWSER_AUTOMATION__?.resolve(${JSON.stringify(
     metadata.ref,
   )}, ${JSON.stringify(metadata.fingerprint)}) ?? { ok: false, reason: 'stale_ref' }`;
 }

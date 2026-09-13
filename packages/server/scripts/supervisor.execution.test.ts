@@ -9,7 +9,7 @@ const supervisorUrl = new URL("./supervisor.ts", import.meta.url).href;
 test.concurrent.each(["environment", "directory"])(
   "supervisor force-kills only the gateway when execution is identified by %s",
   async (mode) => {
-    const home = await mkdtemp(path.join(os.tmpdir(), "fde-supervisor-execution-"));
+    const home = await mkdtemp(path.join(os.tmpdir(), "frogg-supervisor-execution-"));
     const runner = path.join(home, "runner.mjs");
     const worker = path.join(home, "worker.mjs");
     if (mode === "directory") await mkdir(path.join(home, "execution-service"));
@@ -22,7 +22,7 @@ test.concurrent.each(["environment", "directory"])(
       process.stdout.write('DESCENDANT=' + child.pid + '\\n');
       process.on('SIGTERM', () => {});
       process.on('message', () => {});
-      process.send({ type: 'fde:shutdown', reason: 'force_kill_probe' });
+      process.send({ type: 'frogg:shutdown', reason: 'force_kill_probe' });
       setInterval(() => {}, 1000);
     `,
     );
@@ -38,8 +38,8 @@ test.concurrent.each(["environment", "directory"])(
     const child = spawn(process.execPath, ["--import", "tsx", runner], {
       env: {
         ...process.env,
-        FDE_HOME: home,
-        FDE_EXECUTION_SERVICE: mode === "environment" ? "1" : "",
+        FROGG_HOME: home,
+        FROGG_EXECUTION_SERVICE: mode === "environment" ? "1" : "",
       },
       stdio: ["ignore", "pipe", "pipe"],
     });

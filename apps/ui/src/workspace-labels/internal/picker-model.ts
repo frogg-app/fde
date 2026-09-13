@@ -1,5 +1,5 @@
-import type { WorkspaceLabelDefinition } from "@fde/protocol/workspace-labels";
-import { workspaceLabelKey } from "@fde/protocol/workspace-labels";
+import type { WorkspaceLabelDefinition } from "@frogg/protocol/workspace-labels";
+import { workspaceLabelKey } from "@frogg/protocol/workspace-labels";
 
 export interface WorkspaceLabelPickerRow extends WorkspaceLabelDefinition {
   assigned: boolean;

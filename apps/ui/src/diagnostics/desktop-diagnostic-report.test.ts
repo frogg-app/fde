@@ -12,17 +12,17 @@ function makeSources(): DesktopDiagnosticSources {
       listen: "127.0.0.1:9999",
       hostname: "host",
       pid: 4242,
-      home: "/fde/home",
+      home: "/frogg/home",
       version: "1.2.3",
       desktopManaged: true,
       error: null,
     }),
     getDaemonLogs: async () => ({
-      logPath: "/fde/home/daemon.log",
+      logPath: "/frogg/home/daemon.log",
       contents: "daemon line one\ndaemon line two",
     }),
     getAppLogs: async () => ({
-      logPath: "/logs/Fde/main.log",
+      logPath: "/logs/Frogg/main.log",
       contents: "[login-shell-env] start\n[login-shell-env] failed",
     }),
   };
@@ -81,8 +81,8 @@ describe("desktop diagnostic report", () => {
     const report = result.sections.join("\n\n");
 
     expect(result.status).toBe("done");
-    expect(report).toContain("  Log path: /fde/home/daemon.log");
-    expect(report).toContain("  App log path: /logs/Fde/main.log");
+    expect(report).toContain("  Log path: /frogg/home/daemon.log");
+    expect(report).toContain("  App log path: /logs/Frogg/main.log");
     expect(report).toContain("Desktop daemon log tail\n  daemon line one\n  daemon line two");
     expect(report).toContain(
       "Desktop app log tail\n  [login-shell-env] start\n  [login-shell-env] failed",

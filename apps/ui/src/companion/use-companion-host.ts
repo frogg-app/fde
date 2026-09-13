@@ -1,5 +1,5 @@
 import { useCompanionStore } from "./store";
-import type { ServerCapabilities } from "@fde/protocol/messages";
+import type { ServerCapabilities } from "@frogg/protocol/messages";
 import { useSettings } from "@/hooks/use-settings";
 import { useShallow } from "zustand/react/shallow";
 import { useActiveWorkspaceSelection } from "@/stores/navigation-active-workspace-store";

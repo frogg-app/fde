@@ -7,7 +7,7 @@ import { escapeRegex } from "./regex";
  * accessor instead of re-reading the env var.
  *
  * The port-9999 guard is a hard guardrail: 9999 is the developer's default
- * daemon (9999 before the FDE fork), which manages real agents. The e2e port
+ * daemon (9999 before the Frogg fork), which manages real agents. The e2e port
  * is never legitimately either,
  * so refusing it here keeps every test off the developer daemon.
  */

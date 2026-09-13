@@ -4,7 +4,7 @@ import type {
   CompanionAudioOutputMessage,
   CompanionNotebookEntry,
   CompanionConversationOptions,
-} from "@fde/protocol/messages";
+} from "@frogg/protocol/messages";
 import type { AudioEngine, AudioPlaybackSource } from "@/voice/audio-engine-types";
 import { decodeAudioChunk, toAudioPlaybackSource } from "@/voice/playback-source";
 import { pcm16Rms } from "@/voice/speaking-level";

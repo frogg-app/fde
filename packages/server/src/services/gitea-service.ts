@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { CHECK_TRAIT_ACTION_REQUIRED, CHECK_TRAIT_WARNING } from "@fde/protocol/check-traits";
-import { mapGiteaCommitState } from "@fde/protocol/gitea-status";
+import { CHECK_TRAIT_ACTION_REQUIRED, CHECK_TRAIT_WARNING } from "@frogg/protocol/check-traits";
+import { mapGiteaCommitState } from "@frogg/protocol/gitea-status";
 import pLimit from "p-limit";
-import { parseGitHubRemoteIdentity, parseGitRemoteLocation } from "@fde/protocol/git-remote";
+import { parseGitHubRemoteIdentity, parseGitRemoteLocation } from "@frogg/protocol/git-remote";
 import { findExecutable } from "../executable-resolution/executable-resolution.js";
 import { runGitCommand } from "../utils/run-git-command.js";
 import { execCommand } from "../utils/spawn.js";
@@ -1174,7 +1174,7 @@ function redactTeaArgs(args: string[]): string[] {
 }
 
 /**
- * Probe whether a host is a Gitea instance Fde can talk to. tea has no
+ * Probe whether a host is a Gitea instance Frogg can talk to. tea has no
  * per-repo auth check (it keeps per-instance logins), so a configured tea login
  * for the host is the signal: it means tea both recognizes the host as Gitea and
  * holds a usable token for it. Mirrors the role of `glab auth status` for GitLab.
@@ -1323,7 +1323,7 @@ const inFlightFamilyProbes = new Map<string, Promise<GiteaFamilySoftware | null>
 
 /**
  * Resolve which Gitea-family forge id a host maps to for the open registry:
- * null when there is no usable `tea` login (Fde cannot operate the host),
+ * null when there is no usable `tea` login (Frogg cannot operate the host),
  * otherwise the detected software. Concurrent calls for the same host — the
  * gitea and forgejo registrations probing in parallel — share one probe so
  * detection runs once.

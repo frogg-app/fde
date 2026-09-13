@@ -3,10 +3,10 @@ import type { ClaudeOptions } from "./query.js";
 type ClaudeHooks = NonNullable<ClaudeOptions["hooks"]>;
 
 /**
- * Combine Fde's observation hooks with any the user configured, per event.
+ * Combine Frogg's observation hooks with any the user configured, per event.
  *
  * Neither side wins: Claude Code runs every matcher registered for an event, so appending keeps
- * a user's hooks working while Fde keeps observing. Assigning either one would silently drop
+ * a user's hooks working while Frogg keeps observing. Assigning either one would silently drop
  * the other, and the failure would be invisible — effort would simply stop appearing.
  */
 export function mergeClaudeHooks(own: ClaudeHooks, extra: unknown): ClaudeHooks {

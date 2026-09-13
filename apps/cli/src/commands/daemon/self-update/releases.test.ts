@@ -30,7 +30,7 @@ function release(
     tag_name: tag,
     prerelease: options.prerelease ?? false,
     draft: options.draft ?? false,
-    html_url: `https://github.com/frogg-app/fde/releases/tag/${tag}`,
+    html_url: `https://github.com/frogg-app/frogg/releases/tag/${tag}`,
     assets,
   } satisfies GitHubRelease;
 }
@@ -111,8 +111,8 @@ describe("selectRelease", () => {
 describe("release source", () => {
   test("reads env overrides and never puts the token anywhere but the header", () => {
     const source = resolveReleaseSource({
-      FDE_RELEASE_BASE: "http://127.0.0.1:9990/",
-      FDE_GITHUB_TOKEN: " tok ",
+      FROGG_RELEASE_BASE: "http://127.0.0.1:9990/",
+      FROGG_GITHUB_TOKEN: " tok ",
     });
     expect(source).toMatchObject({
       releaseBase: "http://127.0.0.1:9990",
@@ -120,11 +120,11 @@ describe("release source", () => {
       token: "tok",
     });
     expect(resolveReleaseSource({}).releaseBaseOverridden).toBe(false);
-    expect(githubHeaders("tok", "FDE/1.0.0")).toMatchObject({
+    expect(githubHeaders("tok", "Frogg/1.0.0")).toMatchObject({
       authorization: "Bearer tok",
-      "user-agent": "FDE/1.0.0",
+      "user-agent": "Frogg/1.0.0",
     });
-    expect(githubHeaders(null, "FDE/1.0.0")).not.toHaveProperty("authorization");
+    expect(githubHeaders(null, "Frogg/1.0.0")).not.toHaveProperty("authorization");
     expect(releaseDownloadUrl("http://127.0.0.1:9990/", "0.1.14", "x.tar.gz")).toBe(
       "http://127.0.0.1:9990/download/v0.1.14/x.tar.gz",
     );
@@ -135,18 +135,18 @@ describe("release source", () => {
     const limited = () =>
       Promise.resolve(new Response("", { status: 403 })) as unknown as ReturnType<typeof fetch>;
     await expect(
-      fetchReleases(source, "FDE/1", limited, { env: {}, readGhToken: async () => null }),
+      fetchReleases(source, "Frogg/1", limited, { env: {}, readGhToken: async () => null }),
     ).rejects.toThrow(/rate limit/);
     const junk = () =>
       Promise.resolve(
         new Response(JSON.stringify({ nope: 1 }), { status: 200 }),
       ) as unknown as ReturnType<typeof fetch>;
-    await expect(fetchReleases(source, "FDE/1", junk)).rejects.toThrow(/unexpected JSON/);
+    await expect(fetchReleases(source, "Frogg/1", junk)).rejects.toThrow(/unexpected JSON/);
     const ok = (url: string | URL | Request) => {
       expect(String(url)).toContain("per_page=30");
       return Promise.resolve(new Response(JSON.stringify([release("v0.1.13")]), { status: 200 }));
     };
-    const releases = await fetchReleases(source, "FDE/1", ok as unknown as typeof fetch);
+    const releases = await fetchReleases(source, "Frogg/1", ok as unknown as typeof fetch);
     expect(releases[0]?.tag_name).toBe("v0.1.13");
   });
 });

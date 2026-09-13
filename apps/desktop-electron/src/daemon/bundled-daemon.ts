@@ -1,7 +1,7 @@
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { app } from "electron";
-import { brandIdentity } from "@fde/branding";
+import { brandIdentity } from "@frogg/branding";
 import { createBundledDaemonService } from "./bundle-service.js";
 import {
   resolveDaemonBundleRoot,

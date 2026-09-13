@@ -11,12 +11,12 @@ import type {
   TerminalWorkspaceContributionChangedEvent,
 } from "./terminal-manager.js";
 import {
-  resolveFdeCliBinDir,
-  resolveFdeCliExecutablePath,
+  resolveFroggCliBinDir,
+  resolveFroggCliExecutablePath,
   type TerminalSession,
 } from "./terminal.js";
-import type { TerminalState } from "@fde/protocol/messages";
-import type { TerminalActivity } from "@fde/protocol/terminal-activity";
+import type { TerminalState } from "@frogg/protocol/messages";
+import type { TerminalActivity } from "@frogg/protocol/terminal-activity";
 import type {
   TerminalWorkerRequest,
   TerminalWorkerToParentMessage,
@@ -215,10 +215,10 @@ it("delivers rapid small writes complete and in order through worker coalescing"
     await manager.createTerminal({
       workspaceId: "ws-test",
       cwd,
-      env: { FDE_TERMINAL_BURST_GATE: burstGatePath },
+      env: { FROGG_TERMINAL_BURST_GATE: burstGatePath },
       ...nodeTerminalCommand(`
       const fs = require("node:fs");
-      const gatePath = process.env.FDE_TERMINAL_BURST_GATE;
+      const gatePath = process.env.FROGG_TERMINAL_BURST_GATE;
       const gate = setInterval(() => {
         if (!gatePath || !fs.existsSync(gatePath)) {
           return;
@@ -423,7 +423,7 @@ it("keeps registered cwd env inheritance behind the worker manager interface", a
 
   manager.registerCwdEnv({
     cwd,
-    env: { FDE_WORKER_TERMINAL_TEST: "worker-env" },
+    env: { FROGG_WORKER_TERMINAL_TEST: "worker-env" },
   });
   trackTerminal(
     await manager.createTerminal({
@@ -432,7 +432,7 @@ it("keeps registered cwd env inheritance behind the worker manager interface", a
       ...nodeTerminalCommand(`
       require("node:fs").writeFileSync(
         ${JSON.stringify(markerPath)},
-        process.env.FDE_WORKER_TERMINAL_TEST ?? "",
+        process.env.FROGG_WORKER_TERMINAL_TEST ?? "",
       );
       setInterval(() => {}, 1000);
     `),
@@ -461,10 +461,10 @@ it("injects parent-minted terminal activity env through the worker", async () =>
         require("node:fs").writeFileSync(
           ${JSON.stringify(envPath)},
           JSON.stringify({
-            terminalId: process.env.FDE_TERMINAL_ID,
-            token: process.env.FDE_ACTIVITY_TOKEN,
-            url: process.env.FDE_TERMINAL_ACTIVITY_URL,
-            hookCli: process.env.FDE_HOOK_CLI,
+            terminalId: process.env.FROGG_TERMINAL_ID,
+            token: process.env.FROGG_ACTIVITY_TOKEN,
+            url: process.env.FROGG_TERMINAL_ACTIVITY_URL,
+            hookCli: process.env.FROGG_HOOK_CLI,
             path: process.env.PATH ?? process.env.Path,
           }),
         );
@@ -482,18 +482,18 @@ it("injects parent-minted terminal activity env through the worker", async () =>
     hookCli?: string;
     path?: string;
   };
-  const fdeCliBinDir = resolveFdeCliBinDir();
-  const fdeCliPath = resolveFdeCliExecutablePath();
-  expect(fdeCliBinDir).not.toBeNull();
-  expect(fdeCliPath).not.toBeNull();
+  const froggCliBinDir = resolveFroggCliBinDir();
+  const froggCliPath = resolveFroggCliExecutablePath();
+  expect(froggCliBinDir).not.toBeNull();
+  expect(froggCliPath).not.toBeNull();
   expect(env.terminalId).toBe(session.id);
   expect(env.token).toEqual(expect.any(String));
   expect(env.token).not.toBe("");
   expect(env.url).toBe(activityUrl);
-  expect(env.hookCli).toBe(fdeCliPath);
+  expect(env.hookCli).toBe(froggCliPath);
   expect(manager.validateTerminalActivityToken(session.id, env.token ?? "")).toBe("valid");
   await expect(manager.setTerminalActivity(session.id, "attention")).resolves.toBe(true);
-  expect(env.path?.split(delimiter)[0]).toBe(fdeCliBinDir);
+  expect(env.path?.split(delimiter)[0]).toBe(froggCliBinDir);
 });
 
 it("starts the default shell through the worker and accepts quoted commands", async () => {

@@ -2,4 +2,4 @@ export {
   buildToolCallDisplayModel,
   type ToolCallDisplayInput,
   type ToolCallDisplayModel,
-} from "@fde/protocol/tool-call-display";
+} from "@frogg/protocol/tool-call-display";

@@ -57,7 +57,7 @@ async function get(port: number, headers: Record<string, string> = {}, localAddr
         body += chunk;
       });
       res.on("end", () =>
-        resolve({ status: res.statusCode, body, version: res.headers["x-fde-gateway-version"] }),
+        resolve({ status: res.statusCode, body, version: res.headers["x-frogg-gateway-version"] }),
       );
     });
     req.on("error", reject);
@@ -73,7 +73,9 @@ it("preserves HTTP identity and auth headers while replacing forged metadata", a
         JSON.stringify({
           peer: req.socket.remoteAddress,
           headers: req.headers,
-          privateHeaders: req.rawHeaders.filter((header) => header.startsWith("x-fde-execution-")),
+          privateHeaders: req.rawHeaders.filter((header) =>
+            header.startsWith("x-frogg-execution-"),
+          ),
         }),
       );
     }),
@@ -90,9 +92,9 @@ it("preserves HTTP identity and auth headers while replacing forged metadata", a
     front.port,
     {
       ...headers,
-      "x-fde-execution-peer": "127.0.0.1",
-      "x-fde-execution-token": token,
-      "x-fde-execution-extra": "forged",
+      "x-frogg-execution-peer": "127.0.0.1",
+      "x-frogg-execution-token": token,
+      "x-frogg-execution-extra": "forged",
     },
     "127.0.0.2",
   );
@@ -111,13 +113,13 @@ it("rejects invalid, incomplete and non-loopback gateway claims", async () => {
   );
   expect((await get(port)).status).toBe(200);
   const claims: Record<string, string>[] = [
-    { "x-fde-execution-peer": "127.0.0.1" },
-    { "x-fde-execution-peer": "127.0.0.1", "x-fde-execution-token": "wrong" },
-    { "x-fde-execution-peer": "bad-address", "x-fde-execution-token": token },
+    { "x-frogg-execution-peer": "127.0.0.1" },
+    { "x-frogg-execution-peer": "127.0.0.1", "x-frogg-execution-token": "wrong" },
+    { "x-frogg-execution-peer": "bad-address", "x-frogg-execution-token": token },
     {
-      "x-fde-execution-peer": "127.0.0.1",
-      "x-fde-execution-token": token,
-      "x-fde-execution-extra": "bad",
+      "x-frogg-execution-peer": "127.0.0.1",
+      "x-frogg-execution-token": token,
+      "x-frogg-execution-extra": "bad",
     },
   ];
   for (const headers of claims) expect((await get(port, headers)).status).toBe(403);
@@ -125,7 +127,7 @@ it("rejects invalid, incomplete and non-loopback gateway claims", async () => {
     (
       await get(
         port,
-        { "x-fde-execution-peer": "127.0.0.1", "x-fde-execution-token": token },
+        { "x-frogg-execution-peer": "127.0.0.1", "x-frogg-execution-token": token },
         "127.0.0.2",
       )
     ).status,
@@ -170,7 +172,7 @@ it("forwards WebSocket identity and messages and closes upgraded sockets on stop
   const front = await gateway(port);
   const client = new WebSocket(`ws://127.0.0.1:${front.port}`, {
     localAddress: "127.0.0.2",
-    headers: { "x-fde-execution-peer": "127.0.0.1" },
+    headers: { "x-frogg-execution-peer": "127.0.0.1" },
   });
   const [identity] = await once(client, "message");
   expect(identity.toString()).toBe("127.0.0.2");
@@ -216,12 +218,14 @@ it("restores IPC and successive original peers on one keep-alive runtime connect
     return { status: res.statusCode, body };
   }
   expect(
-    await peer({ "x-fde-execution-token": token, "x-fde-execution-peer": "198.51.100.2" }),
+    await peer({ "x-frogg-execution-token": token, "x-frogg-execution-peer": "198.51.100.2" }),
   ).toEqual({ status: 200, body: "198.51.100.2" });
-  expect(await peer({ "x-fde-execution-token": token, "x-fde-execution-peer": "ipc" })).toEqual({
-    status: 200,
-    body: "ipc",
-  });
+  expect(await peer({ "x-frogg-execution-token": token, "x-frogg-execution-peer": "ipc" })).toEqual(
+    {
+      status: 200,
+      body: "ipc",
+    },
+  );
   expect(await peer({})).toEqual({ status: 200, body: "127.0.0.1" });
 });
 
@@ -234,7 +238,7 @@ it("rejects duplicated forwarding headers", async () => {
   );
   const socket = connect(port, "127.0.0.1");
   socket.write(
-    `GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\nx-fde-execution-token: ${token}\r\nx-fde-execution-peer: ipc\r\nx-fde-execution-peer: ipc\r\n\r\n`,
+    `GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\nx-frogg-execution-token: ${token}\r\nx-frogg-execution-peer: ipc\r\nx-frogg-execution-peer: ipc\r\n\r\n`,
   );
   const [chunk] = await once(socket, "data");
   expect(chunk.toString().split("\r\n")[0]).toBe("HTTP/1.1 403 Forbidden");
@@ -283,11 +287,16 @@ it("removes private credentials from an already-read distinct header view", asyn
       const distinct = req.headersDistinct;
       restoreExecutionRequest(req, token);
       res.end(
-        JSON.stringify(Object.keys(distinct).filter((name) => name.startsWith("x-fde-execution-"))),
+        JSON.stringify(
+          Object.keys(distinct).filter((name) => name.startsWith("x-frogg-execution-")),
+        ),
       );
     }),
   );
-  const result = await get(port, { "x-fde-execution-token": token, "x-fde-execution-peer": "ipc" });
+  const result = await get(port, {
+    "x-frogg-execution-token": token,
+    "x-frogg-execution-peer": "ipc",
+  });
   expect(result.body).toBe("[]");
 });
 

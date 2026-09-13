@@ -8,12 +8,12 @@ import type { StructuredAgentGenerationWithFallbackOptions } from "./agent/agent
 import {
   attemptFirstAgentBranchAutoName,
   type AttemptFirstAgentBranchAutoNameResult,
-} from "./fde-worktree-service.js";
+} from "./frogg-worktree-service.js";
 import { createNoopWorkspaceGitService } from "./test-utils/workspace-git-service-stub.js";
 import { generateBranchNameFromFirstAgentContext } from "./worktree-branch-name-generator.js";
 import {
-  writeFdeWorktreeFirstAgentBranchAutoNameMetadata,
-  writeFdeWorktreeMetadata,
+  writeFroggWorktreeFirstAgentBranchAutoNameMetadata,
+  writeFroggWorktreeMetadata,
 } from "../utils/worktree-metadata.js";
 
 const cleanupPaths: string[] = [];
@@ -228,9 +228,9 @@ describe("generateBranchNameFromFirstAgentContext", () => {
   });
 
   test.each([
-    ["fde.json missing", undefined],
-    ["fde.json exists but invalid JSON", "{ nope"],
-    ["fde.json valid but missing metadataGeneration", {}],
+    ["frogg.json missing", undefined],
+    ["frogg.json exists but invalid JSON", "{ nope"],
+    ["frogg.json valid but missing metadataGeneration", {}],
     [
       "metadataGeneration exists but missing branchName",
       { metadataGeneration: { commitMessage: { instructions: "Use Conventional Commits." } } },
@@ -291,11 +291,11 @@ describe("generateBranchNameFromFirstAgentContext", () => {
   });
 
   test("keeps the branch slug validator fallback when instructions are present", async () => {
-    const repoRoot = createTempDir("fde-branch-config-");
-    const worktreeRoot = createTempDir("fde-branch-worktree-");
+    const repoRoot = createTempDir("frogg-branch-config-");
+    const worktreeRoot = createTempDir("frogg-branch-worktree-");
     mkdirSync(path.join(worktreeRoot, ".git"));
-    writeFdeWorktreeMetadata(worktreeRoot, { baseRefName: "main" });
-    writeFdeWorktreeFirstAgentBranchAutoNameMetadata(worktreeRoot, {
+    writeFroggWorktreeMetadata(worktreeRoot, { baseRefName: "main" });
+    writeFroggWorktreeFirstAgentBranchAutoNameMetadata(worktreeRoot, {
       placeholderBranchName: "dazzling-yak",
     });
     writeConfig(repoRoot, {
@@ -338,9 +338,9 @@ describe("generateBranchNameFromFirstAgentContext", () => {
 });
 
 async function generateBranchPromptWithConfig(config: unknown): Promise<{ prompt: string }> {
-  const repoRoot = createTempDir("fde-branch-config-");
+  const repoRoot = createTempDir("frogg-branch-config-");
   if (typeof config === "string") {
-    writeFileSync(path.join(repoRoot, "fde.json"), config);
+    writeFileSync(path.join(repoRoot, "frogg.json"), config);
   } else if (config !== undefined) {
     writeConfig(repoRoot, config);
   }
@@ -373,5 +373,5 @@ function createTempDir(prefix: string): string {
 }
 
 function writeConfig(repoRoot: string, config: unknown): void {
-  writeFileSync(path.join(repoRoot, "fde.json"), `${JSON.stringify(config)}\n`);
+  writeFileSync(path.join(repoRoot, "frogg.json"), `${JSON.stringify(config)}\n`);
 }

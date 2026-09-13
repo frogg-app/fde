@@ -12,30 +12,30 @@ import {
 } from "./worktree-core.js";
 import {
   mapWorkspaceRelativeCwdToWorktree,
-  rollbackCreatedFdeWorktree,
-  seedFdeConfigFile,
+  rollbackCreatedFroggWorktree,
+  seedFroggConfigFile,
   validateBranchSlug,
   type WorktreeConfig,
 } from "../utils/worktree.js";
 import { getCurrentBranch, localBranchExists, renameCurrentBranch } from "../utils/checkout-git.js";
 import {
-  markFdeWorktreeFirstAgentBranchAutoNameAttempted,
+  markFroggWorktreeFirstAgentBranchAutoNameAttempted,
   normalizeBaseRefName,
-  readFdeWorktreeMetadata,
-  writeFdeWorktreeFirstAgentBranchAutoNameMetadata,
+  readFroggWorktreeMetadata,
+  writeFroggWorktreeFirstAgentBranchAutoNameMetadata,
 } from "../utils/worktree-metadata.js";
 import type { WorktreeCreationIntent } from "./resolve-worktree-creation-intent.js";
 import { resolveFirstAgentPromptTitle } from "./agent/create-agent-title.js";
 import { buildAgentBranchNameSeed } from "./agent/prompt-attachments.js";
-import type { FirstAgentContext } from "@fde/protocol/messages";
+import type { FirstAgentContext } from "@frogg/protocol/messages";
 import { runWithGitCommandPriority } from "../utils/run-git-command.js";
 
-export interface CreateFdeWorktreeInput extends CreateWorktreeCoreInput {
+export interface CreateFroggWorktreeInput extends CreateWorktreeCoreInput {
   projectId?: string;
   title?: string;
 }
 
-export interface CreateFdeWorktreeResult {
+export interface CreateFroggWorktreeResult {
   worktree: WorktreeConfig;
   intent: WorktreeCreationIntent;
   workspace: PersistedWorkspaceRecord;
@@ -43,12 +43,12 @@ export interface CreateFdeWorktreeResult {
   created: boolean;
 }
 
-export type CreateFdeWorktreeFn = (
-  input: CreateFdeWorktreeInput,
+export type CreateFroggWorktreeFn = (
+  input: CreateFroggWorktreeInput,
   options?: {
     resolveDefaultBranch?: (repoRoot: string) => Promise<string>;
   },
-) => Promise<CreateFdeWorktreeResult>;
+) => Promise<CreateFroggWorktreeResult>;
 
 export interface AttemptFirstAgentBranchAutoNameResult {
   attempted: boolean;
@@ -56,22 +56,22 @@ export interface AttemptFirstAgentBranchAutoNameResult {
   branchName: string | null;
 }
 
-export interface CreateFdeWorktreeDeps extends CreateWorktreeCoreDeps {
+export interface CreateFroggWorktreeDeps extends CreateWorktreeCoreDeps {
   workspaceGitService: WorkspaceGitService;
   workspaceProvisioning: Pick<WorkspaceProvisioningService, "createWorkspaceForWorktree">;
 }
 
-export async function createFdeWorktree(
-  input: CreateFdeWorktreeInput,
-  deps: CreateFdeWorktreeDeps,
-): Promise<CreateFdeWorktreeResult> {
-  return runWithGitCommandPriority("high", () => createFdeWorktreeWithPriority(input, deps));
+export async function createFroggWorktree(
+  input: CreateFroggWorktreeInput,
+  deps: CreateFroggWorktreeDeps,
+): Promise<CreateFroggWorktreeResult> {
+  return runWithGitCommandPriority("high", () => createFroggWorktreeWithPriority(input, deps));
 }
 
-async function createFdeWorktreeWithPriority(
-  input: CreateFdeWorktreeInput,
-  deps: CreateFdeWorktreeDeps,
-): Promise<CreateFdeWorktreeResult> {
+async function createFroggWorktreeWithPriority(
+  input: CreateFroggWorktreeInput,
+  deps: CreateFroggWorktreeDeps,
+): Promise<CreateFroggWorktreeResult> {
   const workspaceCwdPlan = await planWorkspaceCwdForWorktree(input.cwd, deps.workspaceGitService);
   const createdWorktree = await createWorktreeCore(input, deps);
   try {
@@ -85,7 +85,7 @@ async function createFdeWorktreeWithPriority(
     }
 
     if (createdWorktree.created) {
-      await seedFdeConfigFile({
+      await seedFroggConfigFile({
         sourceCwd: workspaceCwdPlan.inputCwd,
         targetCwd: workspaceCwd,
       });
@@ -115,12 +115,12 @@ async function createFdeWorktreeWithPriority(
     if (!createdWorktree.created) {
       throw error;
     }
-    return rollbackCreatedFdeWorktree(
+    return rollbackCreatedFroggWorktree(
       {
         cwd: createdWorktree.repoRoot,
         worktreePath: createdWorktree.worktree.worktreePath,
         ...(input.runSetup === false ? { teardownCwds: [] } : {}),
-        fdeHome: input.fdeHome,
+        froggHome: input.froggHome,
         worktreesBaseRoot: input.worktreesRoot,
       },
       error,
@@ -166,9 +166,9 @@ export async function attemptFirstAgentBranchAutoName(options: {
     return { attempted: false, renamed: false, branchName: null };
   }
 
-  let metadata: ReturnType<typeof readFdeWorktreeMetadata>;
+  let metadata: ReturnType<typeof readFroggWorktreeMetadata>;
   try {
-    metadata = readFdeWorktreeMetadata(options.cwd);
+    metadata = readFroggWorktreeMetadata(options.cwd);
   } catch {
     return { attempted: false, renamed: false, branchName: null };
   }
@@ -183,11 +183,11 @@ export async function attemptFirstAgentBranchAutoName(options: {
   const getCurrentBranchImpl = options.getCurrentBranch ?? getCurrentBranch;
   const placeholderBranchName = metadata.firstAgentBranchAutoName.placeholderBranchName;
   if ((await getCurrentBranchImpl(options.cwd)) !== placeholderBranchName) {
-    markFdeWorktreeFirstAgentBranchAutoNameAttempted(options.cwd);
+    markFroggWorktreeFirstAgentBranchAutoNameAttempted(options.cwd);
     return { attempted: true, renamed: false, branchName: null };
   }
 
-  markFdeWorktreeFirstAgentBranchAutoNameAttempted(options.cwd);
+  markFroggWorktreeFirstAgentBranchAutoNameAttempted(options.cwd);
 
   const branchName = await options.generateBranchNameFromContext({
     cwd: options.cwd,
@@ -256,7 +256,7 @@ function maybeMarkFirstAgentBranchAutoNameEligible(options: {
     return;
   }
 
-  writeFdeWorktreeFirstAgentBranchAutoNameMetadata(createdWorktree.worktree.worktreePath, {
+  writeFroggWorktreeFirstAgentBranchAutoNameMetadata(createdWorktree.worktree.worktreePath, {
     placeholderBranchName: createdWorktree.worktree.branchName,
   });
 }

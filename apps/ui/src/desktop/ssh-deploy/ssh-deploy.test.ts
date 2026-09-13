@@ -15,7 +15,7 @@ const probe: SshDeployProbe = {
   hasDocker: true,
   hasSystemdUser: true,
   hasCurl: true,
-  hasFde: { installed: true, version: "0.1.6" },
+  hasFrogg: { installed: true, version: "0.1.6" },
   hasDockerContainer: false,
   homeDir: "/home/me",
 };
@@ -29,7 +29,7 @@ describe("parseSshDeployProbe", () => {
         hasDocker: true,
         hasSystemdUser: true,
         hasCurl: true,
-        hasFde: { installed: true, version: "0.1.6" },
+        hasFrogg: { installed: true, version: "0.1.6" },
         hasDockerContainer: false,
         homeDir: "/home/me",
       }),
@@ -37,17 +37,17 @@ describe("parseSshDeployProbe", () => {
   });
 
   it("treats a missing or blank version as unknown and non-boolean flags as false", () => {
-    expect(parseSshDeployProbe({ hasFde: { installed: false }, hasDocker: "yes" })).toEqual({
+    expect(parseSshDeployProbe({ hasFrogg: { installed: false }, hasDocker: "yes" })).toEqual({
       os: "",
       arch: "",
       hasDocker: false,
       hasSystemdUser: false,
       hasCurl: false,
-      hasFde: { installed: false, version: null },
+      hasFrogg: { installed: false, version: null },
       hasDockerContainer: false,
       homeDir: "",
     });
-    expect(parseSshDeployProbe({ hasFde: { installed: true, version: "  " } }).hasFde).toEqual({
+    expect(parseSshDeployProbe({ hasFrogg: { installed: true, version: "  " } }).hasFrogg).toEqual({
       installed: true,
       version: null,
     });
@@ -111,7 +111,7 @@ describe("deploy card helpers", () => {
     );
     expect(
       sshDeployPrimaryAction(
-        { ...probe, hasFde: { installed: false, version: null } },
+        { ...probe, hasFrogg: { installed: false, version: null } },
         "native",
         "1",
       ),

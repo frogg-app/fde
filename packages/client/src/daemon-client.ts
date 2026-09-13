@@ -1,6 +1,6 @@
 import type { z } from "zod";
-import { CLIENT_CAPS, type ClientCapability } from "@fde/protocol/client-capabilities";
-import type { AgentAttentionNotificationPayload } from "@fde/protocol/agent-attention-notification";
+import { CLIENT_CAPS, type ClientCapability } from "@frogg/protocol/client-capabilities";
+import type { AgentAttentionNotificationPayload } from "@frogg/protocol/agent-attention-notification";
 import {
   AgentCreateFailedStatusPayloadSchema,
   AgentCreatedStatusPayloadSchema,
@@ -16,8 +16,8 @@ import {
   type ActiveTurnBehavior,
   type NotificationAudio,
   type ServerInfoStatusPayload,
-} from "@fde/protocol/messages";
-import { validateWSOutboundMessage } from "@fde/protocol/validation/ws-outbound";
+} from "@frogg/protocol/messages";
+import { validateWSOutboundMessage } from "@frogg/protocol/validation/ws-outbound";
 import type {
   CompanionNotebook,
   CompanionSessionStartResponse,
@@ -27,7 +27,7 @@ import type {
   ProjectPlacementPayload,
   AgentPermissionResolvedMessage,
   CreateAgentRequestMessage,
-  CreateFdeWorktreeRequest,
+  CreateFroggWorktreeRequest,
   FileDownloadTokenResponse,
   FileUploadResponse,
   FileExplorerResponse,
@@ -65,8 +65,8 @@ import type {
   GitHubSearchResponse,
   GitHubSearchRequest,
   DirectorySuggestionsResponse,
-  FdeWorktreeListResponse,
-  FdeWorktreeArchiveResponse,
+  FroggWorktreeListResponse,
+  FroggWorktreeArchiveResponse,
   ProjectIconSource,
   ProjectIconResponse,
   ProjectIconGetResponse,
@@ -107,14 +107,14 @@ import type {
   SessionInboundMessage,
   SessionOutboundMessage,
   SendAgentMessageRequest,
-  FdeConfigRaw,
-  FdeConfigRevision,
+  FroggConfigRaw,
+  FroggConfigRevision,
   WorkspaceCreateRequest,
   WorkspaceRecoveryState,
   AgentSkillSelection,
   AgentSkillsStatus,
   AgentSkillsSaveResult,
-} from "@fde/protocol/messages";
+} from "@frogg/protocol/messages";
 import type {
   AgentPermissionRequest,
   AgentPermissionResponse,
@@ -122,14 +122,14 @@ import type {
   AgentProviderNotice,
   AgentProvider,
   AgentSessionConfig,
-} from "@fde/protocol/agent-types";
+} from "@frogg/protocol/agent-types";
 import type {
   AgentConfigApply,
   MutableDaemonConfig,
   MutableDaemonConfigPatch,
-} from "@fde/protocol/messages";
-import { isRelayClientWebSocketUrl } from "@fde/protocol/daemon-endpoints";
-import { terminalSubscriptionKey } from "@fde/protocol/terminal-subscription-key";
+} from "@frogg/protocol/messages";
+import { isRelayClientWebSocketUrl } from "@frogg/protocol/daemon-endpoints";
+import { terminalSubscriptionKey } from "@frogg/protocol/terminal-subscription-key";
 import {
   asUint8Array,
   decodeFileTransferFrame,
@@ -138,7 +138,7 @@ import {
   FileTransferOpcode,
   TerminalStreamOpcode,
   type FileTransferFrame,
-} from "@fde/protocol/binary-frames/index";
+} from "@frogg/protocol/binary-frames/index";
 import {
   createRelayE2eeTransportFactory,
   createWebSocketTransportFactory,
@@ -160,7 +160,7 @@ import { TerminalStreamRouter, type TerminalStreamEvent } from "./terminal-strea
 import type {
   BrowserAutomationExecuteRequest,
   BrowserAutomationExecuteResponse,
-} from "@fde/protocol/browser-automation/rpc-schemas";
+} from "@frogg/protocol/browser-automation/rpc-schemas";
 
 export interface Logger {
   debug(obj: object, msg?: string): void;
@@ -383,8 +383,8 @@ export interface CreateAgentRequestOptions extends AgentConfigOverrides {
   labels?: Record<string, string>;
 }
 
-export interface CreateFdeWorktreeInput extends Pick<
-  CreateFdeWorktreeRequest,
+export interface CreateFroggWorktreeInput extends Pick<
+  CreateFroggWorktreeRequest,
   | "cwd"
   | "projectId"
   | "worktreeSlug"
@@ -425,11 +425,11 @@ type BranchSuggestionsPayload = BranchSuggestionsResponse["payload"];
 type ForgeSearchPayload = ForgeSearchResponse["payload"];
 type GitHubSearchPayload = GitHubSearchResponse["payload"];
 type DirectorySuggestionsPayload = DirectorySuggestionsResponse["payload"];
-type FdeWorktreeListPayload = FdeWorktreeListResponse["payload"];
-type FdeWorktreeArchivePayload = FdeWorktreeArchiveResponse["payload"];
-type CreateFdeWorktreePayload = Extract<
+type FroggWorktreeListPayload = FroggWorktreeListResponse["payload"];
+type FroggWorktreeArchivePayload = FroggWorktreeArchiveResponse["payload"];
+type CreateFroggWorktreePayload = Extract<
   SessionOutboundMessage,
-  { type: "create_fde_worktree_response" }
+  { type: "create_frogg_worktree_response" }
 >["payload"];
 type WorkspaceCreatePayload = Extract<
   SessionOutboundMessage,
@@ -484,8 +484,8 @@ type ListCommandsDraftConfig = Pick<
 >;
 export interface WriteProjectConfigInput {
   repoRoot: string;
-  config: FdeConfigRaw;
-  expectedRevision: FdeConfigRevision | null;
+  config: FroggConfigRaw;
+  expectedRevision: FroggConfigRevision | null;
   requestId?: string;
 }
 interface ListCommandsOptions {
@@ -1230,7 +1230,7 @@ export class DaemonClient {
     } else if (this.config.authHeader) {
       headers.Authorization = this.config.authHeader;
     }
-    const protocols = password ? [`fde.bearer.${password}`] : undefined;
+    const protocols = password ? [`frogg.bearer.${password}`] : undefined;
 
     try {
       // Reconnect can overlap with browser close/error delivery ordering.
@@ -1557,7 +1557,7 @@ export class DaemonClient {
   }
 
   private sendJsonMessage(envelopeType: string, messageType: string, message: unknown): void {
-    this.traceInstant("fde.ws.message.outbound", {
+    this.traceInstant("frogg.ws.message.outbound", {
       envelopeType,
       messageType,
     });
@@ -1568,7 +1568,7 @@ export class DaemonClient {
     if (!this.transport) {
       throw new Error("Transport not connected");
     }
-    const isOpen = this.beginTraceSection("fde.ws.frame.outbound", {
+    const isOpen = this.beginTraceSection("frogg.ws.frame.outbound", {
       kind: typeof frame === "string" ? "text" : "binary",
       size: String(getTransportFrameSize(frame)),
     });
@@ -1613,7 +1613,7 @@ export class DaemonClient {
       throw new Error(`Transport not connected (status: ${this.connectionState.status})`);
     }
     try {
-      this.traceInstant("fde.ws.message.outbound", {
+      this.traceInstant("frogg.ws.message.outbound", {
         envelopeType: "binary",
         messageType: "binary",
       });
@@ -4377,7 +4377,7 @@ export class DaemonClient {
 
   async stashList(
     cwd: string,
-    options?: { fdeOnly?: boolean },
+    options?: { froggOnly?: boolean },
     requestId?: string,
   ): Promise<StashListPayload> {
     return this.sendCorrelatedSessionRequest({
@@ -4385,28 +4385,28 @@ export class DaemonClient {
       message: {
         type: "stash_list_request",
         cwd,
-        fdeOnly: options?.fdeOnly,
+        froggOnly: options?.froggOnly,
       },
       responseType: "stash_list_response",
     });
   }
 
-  async getFdeWorktreeList(
+  async getFroggWorktreeList(
     input: { cwd?: string; repoRoot?: string },
     requestId?: string,
-  ): Promise<FdeWorktreeListPayload> {
+  ): Promise<FroggWorktreeListPayload> {
     return this.sendCorrelatedSessionRequest({
       requestId,
       message: {
-        type: "fde_worktree_list_request",
+        type: "frogg_worktree_list_request",
         cwd: input.cwd,
         repoRoot: input.repoRoot,
       },
-      responseType: "fde_worktree_list_response",
+      responseType: "frogg_worktree_list_response",
     });
   }
 
-  async archiveFdeWorktree(
+  async archiveFroggWorktree(
     input: {
       worktreePath?: string;
       repoRoot?: string;
@@ -4415,29 +4415,29 @@ export class DaemonClient {
       scope?: "workspace" | "worktree";
     },
     requestId?: string,
-  ): Promise<FdeWorktreeArchivePayload> {
+  ): Promise<FroggWorktreeArchivePayload> {
     return this.sendCorrelatedSessionRequest({
       requestId,
       message: {
-        type: "fde_worktree_archive_request",
+        type: "frogg_worktree_archive_request",
         worktreePath: input.worktreePath,
         repoRoot: input.repoRoot,
         branchName: input.branchName,
         ...(input.workspaceId !== undefined ? { workspaceId: input.workspaceId } : {}),
         ...(input.scope !== undefined ? { scope: input.scope } : {}),
       },
-      responseType: "fde_worktree_archive_response",
+      responseType: "frogg_worktree_archive_response",
     });
   }
 
-  async createFdeWorktree(
-    input: CreateFdeWorktreeInput,
+  async createFroggWorktree(
+    input: CreateFroggWorktreeInput,
     requestId?: string,
-  ): Promise<CreateFdeWorktreePayload> {
+  ): Promise<CreateFroggWorktreePayload> {
     return this.sendCorrelatedSessionRequest({
       requestId,
       message: {
-        type: "create_fde_worktree_request",
+        type: "create_frogg_worktree_request",
         cwd: input.cwd,
         ...(input.projectId !== undefined ? { projectId: input.projectId } : {}),
         worktreeSlug: input.worktreeSlug,
@@ -4449,7 +4449,7 @@ export class DaemonClient {
         ...(input.checkoutSource !== undefined ? { checkoutSource: input.checkoutSource } : {}),
         ...(input.githubPrNumber !== undefined ? { githubPrNumber: input.githubPrNumber } : {}),
       },
-      responseType: "create_fde_worktree_response",
+      responseType: "create_frogg_worktree_response",
     });
   }
 
@@ -5798,7 +5798,7 @@ export class DaemonClient {
   }
 
   private requireDaemonUpdateRunsSupport(): void {
-    // COMPAT(daemonUpdateRuns): added in v0.1.14 (FDE), remove gate after 2027-03-03.
+    // COMPAT(daemonUpdateRuns): added in v0.1.14 (Frogg), remove gate after 2027-03-03.
     if (this.lastServerInfoMessage?.features?.daemonUpdateRuns !== true) {
       throw new Error("Update the host to manage daemon updates from the app.");
     }
@@ -5913,7 +5913,7 @@ export class DaemonClient {
 
     const rawBytes = asUint8Array(rawData);
     const isOpen = this.beginTraceSection(
-      "fde.ws.frame.inbound",
+      "frogg.ws.frame.inbound",
       describeInboundTransportFrame(rawData, rawBytes),
     );
     try {
@@ -5934,7 +5934,7 @@ export class DaemonClient {
     const bytes = rawBytesLength ?? payload.length;
     const startMs = perfNow();
     let parsedJson: unknown;
-    const parseTraceOpen = this.beginTraceSection("fde.ws.json.parse", {
+    const parseTraceOpen = this.beginTraceSection("frogg.ws.json.parse", {
       size: String(bytes),
     });
     try {
@@ -5969,7 +5969,7 @@ export class DaemonClient {
     this.consecutiveLivenessFailures = 0;
 
     if (parsed.data.type === "pong") {
-      this.traceInstant("fde.ws.message.inbound", {
+      this.traceInstant("frogg.ws.message.inbound", {
         envelopeType: "pong",
         messageType: "pong",
       });
@@ -5978,7 +5978,7 @@ export class DaemonClient {
       return;
     }
 
-    this.traceInstant("fde.ws.message.inbound", {
+    this.traceInstant("frogg.ws.message.inbound", {
       envelopeType: "session",
       messageType: parsed.data.message.type,
     });
@@ -5993,7 +5993,7 @@ export class DaemonClient {
   private tryHandleBinaryFrame(rawBytes: Uint8Array): boolean {
     const fileFrame = decodeFileTransferFrame(rawBytes);
     if (fileFrame) {
-      this.traceInstant("fde.ws.message.inbound", {
+      this.traceInstant("frogg.ws.message.inbound", {
         envelopeType: "binary",
         messageType: "file",
         opcode: String(fileFrame.opcode),
@@ -6008,7 +6008,7 @@ export class DaemonClient {
     if (!frame) {
       return false;
     }
-    this.traceInstant("fde.ws.message.inbound", {
+    this.traceInstant("frogg.ws.message.inbound", {
       envelopeType: "binary",
       messageType: "terminal",
       opcode: String(frame.opcode),

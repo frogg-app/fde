@@ -1,22 +1,22 @@
 #!/usr/bin/env npx tsx
 
 import assert from "node:assert";
-import { runLocalFde } from "./helpers/local-cli.ts";
+import { runLocalFrogg } from "./helpers/local-cli.ts";
 import { startTestDaemon } from "./helpers/test-daemon.ts";
 
 console.log("=== Daemon Status Auth ===\n");
 
 const daemon = await startTestDaemon({
-  env: { FDE_PASSWORD: "shared-secret" },
+  env: { FROGG_PASSWORD: "shared-secret" },
 });
 
 try {
   {
     console.log("Test 1: status reports password requirement without marking daemon unreachable");
-    const result = await runLocalFde(["daemon", "status", "--json"], {
-      FDE_HOME: daemon.fdeHome,
-      FDE_HOST: "",
-      FDE_PASSWORD: "",
+    const result = await runLocalFrogg(["daemon", "status", "--json"], {
+      FROGG_HOME: daemon.froggHome,
+      FROGG_HOST: "",
+      FROGG_PASSWORD: "",
     });
 
     assert.strictEqual(result.exitCode, 0, "status should still succeed");
@@ -33,10 +33,10 @@ try {
 
   {
     console.log("Test 2: status reports rejected supplied password separately");
-    const result = await runLocalFde(["daemon", "status", "--json"], {
-      FDE_HOME: daemon.fdeHome,
-      FDE_HOST: "",
-      FDE_PASSWORD: "wrong-secret",
+    const result = await runLocalFrogg(["daemon", "status", "--json"], {
+      FROGG_HOME: daemon.froggHome,
+      FROGG_HOST: "",
+      FROGG_PASSWORD: "wrong-secret",
     });
 
     assert.strictEqual(result.exitCode, 0, "status should still succeed");
@@ -51,10 +51,10 @@ try {
 
   {
     console.log("Test 3: status reaches the same daemon when password is supplied");
-    const result = await runLocalFde(["daemon", "status", "--json"], {
-      FDE_HOME: daemon.fdeHome,
-      FDE_HOST: "",
-      FDE_PASSWORD: "shared-secret",
+    const result = await runLocalFrogg(["daemon", "status", "--json"], {
+      FROGG_HOME: daemon.froggHome,
+      FROGG_HOST: "",
+      FROGG_PASSWORD: "shared-secret",
     });
 
     assert.strictEqual(result.exitCode, 0, "status should succeed with password");

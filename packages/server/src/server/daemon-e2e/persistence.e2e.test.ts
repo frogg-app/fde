@@ -78,11 +78,11 @@ describe("daemon E2E - persistence", () => {
 
   test("timeline survives daemon restart", async () => {
     const cwd = tmpCwd();
-    const fdeHomeRoot = mkdtempSync(path.join(tmpdir(), "fde-home-root-"));
+    const froggHomeRoot = mkdtempSync(path.join(tmpdir(), "frogg-home-root-"));
     try {
       // Start daemon with a stable on-disk home so "restart" can observe persisted timeline.
       await ctx.cleanup();
-      ctx = await createDaemonTestContext({ fdeHomeRoot, cleanup: false });
+      ctx = await createDaemonTestContext({ froggHomeRoot, cleanup: false });
       unsubscribe?.();
       messages = [];
       unsubscribe = ctx.client.subscribeRawMessages((message) => {
@@ -104,7 +104,7 @@ describe("daemon E2E - persistence", () => {
       expect(afterMessage.final?.persistence).toBeTruthy();
 
       await ctx.cleanup();
-      ctx = await createDaemonTestContext({ fdeHomeRoot, cleanup: false });
+      ctx = await createDaemonTestContext({ froggHomeRoot, cleanup: false });
       unsubscribe?.();
       messages = [];
       unsubscribe = ctx.client.subscribeRawMessages((message) => {
@@ -127,7 +127,7 @@ describe("daemon E2E - persistence", () => {
       await ctx.cleanup();
       cleaned = true;
       rmSync(cwd, { recursive: true, force: true });
-      rmSync(fdeHomeRoot, { recursive: true, force: true });
+      rmSync(froggHomeRoot, { recursive: true, force: true });
     }
   }, 30_000);
 });

@@ -1,9 +1,9 @@
-import { DEFAULT_SSH_DAEMON_PORT } from "@fde/protocol/ssh-transport";
+import { DEFAULT_SSH_DAEMON_PORT } from "@frogg/protocol/ssh-transport";
 import { listenToDesktopEvent, type DesktopEventUnlisten } from "@/desktop/electron/events";
 import { invokeDesktopCommand } from "@/desktop/electron/invoke";
 import { getSessionSshPassword } from "@/desktop/daemon/ssh-session-passwords";
 
-/** Desktop bridge event name (`fde:event:` is added by the shell). */
+/** Desktop bridge event name (`frogg:event:` is added by the shell). */
 export const SSH_DEPLOY_EVENT = "ssh-deploy-event";
 export const DEFAULT_SSH_DEPLOY_LISTEN_HOST = "0.0.0.0";
 /** The service manager returns before the daemon binds its port; wait this long before reconnecting. */
@@ -23,7 +23,7 @@ export interface SshDeployProbe {
   hasDocker: boolean;
   hasSystemdUser: boolean;
   hasCurl: boolean;
-  hasFde: { installed: boolean; version: string | null };
+  hasFrogg: { installed: boolean; version: string | null };
   hasDockerContainer: boolean;
   homeDir: string;
 }
@@ -56,15 +56,15 @@ export function parseSshDeployProbe(raw: unknown): SshDeployProbe {
   if (!isRecord(raw)) {
     throw new Error("The probe returned no result.");
   }
-  const fde = isRecord(raw.hasFde) ? raw.hasFde : {};
-  const version = text(fde.version);
+  const frogg = isRecord(raw.hasFrogg) ? raw.hasFrogg : {};
+  const version = text(frogg.version);
   return {
     os: text(raw.os),
     arch: text(raw.arch),
     hasDocker: flag(raw.hasDocker),
     hasSystemdUser: flag(raw.hasSystemdUser),
     hasCurl: flag(raw.hasCurl),
-    hasFde: { installed: flag(fde.installed), version: version || null },
+    hasFrogg: { installed: flag(frogg.installed), version: version || null },
     hasDockerContainer: flag(raw.hasDockerContainer),
     homeDir: text(raw.homeDir),
   };
@@ -116,13 +116,13 @@ export function sshDeployServiceKind(
 
 /** The card's primary action for the current state of the host. */
 export function sshDeployPrimaryAction(
-  probe: Pick<SshDeployProbe, "hasFde" | "hasDockerContainer">,
+  probe: Pick<SshDeployProbe, "hasFrogg" | "hasDockerContainer">,
   method: SshDeployMethod,
   targetVersion: string | null,
 ): "deploy" | "upgrade" | "reinstall" {
-  const installed = method === "docker" ? probe.hasDockerContainer : probe.hasFde.installed;
+  const installed = method === "docker" ? probe.hasDockerContainer : probe.hasFrogg.installed;
   if (!installed) return "deploy";
-  const current = method === "native" ? probe.hasFde.version : null;
+  const current = method === "native" ? probe.hasFrogg.version : null;
   if (current && targetVersion && current === targetVersion.replace(/^v/u, "")) {
     return "reinstall";
   }

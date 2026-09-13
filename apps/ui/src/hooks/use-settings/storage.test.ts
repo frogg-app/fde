@@ -24,7 +24,7 @@ import {
 } from "@/components/sidebar/display-preferences/row-items";
 import { THEME_OPTIONS } from "@/styles/theme";
 
-const LEGACY_SETTINGS_KEY = "@fde:settings";
+const LEGACY_SETTINGS_KEY = "@frogg:settings";
 
 function makeDeps(
   overrides: {
@@ -45,7 +45,7 @@ describe("loadAppSettingsFromStorage", () => {
   it("preserves a persisted steer send behavior", async () => {
     const deps = makeDeps({
       storage: createInMemoryKeyValueStorage({
-        "@fde:app-settings": JSON.stringify({ sendBehavior: "steer" }),
+        "@frogg:app-settings": JSON.stringify({ sendBehavior: "steer" }),
       }),
     });
     expect((await loadAppSettingsFromStorage(deps)).sendBehavior).toBe("steer");
@@ -645,7 +645,7 @@ describe("saveAppSettings", () => {
   it("falls back to the default theme when a removed plugin theme was persisted", async () => {
     const deps = makeDeps({
       storage: createInMemoryKeyValueStorage({
-        "@fde:app-settings": JSON.stringify({
+        "@frogg:app-settings": JSON.stringify({
           theme: "plugin",
           pluginThemeId: "catppuccin/theme/mocha",
           sendBehavior: "steer",

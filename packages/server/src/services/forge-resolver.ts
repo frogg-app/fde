@@ -1,5 +1,5 @@
 import { LRUCache } from "lru-cache";
-import { parseGitRemoteLocation, type GitRemoteLocation } from "@fde/protocol/git-remote";
+import { parseGitRemoteLocation, type GitRemoteLocation } from "@frogg/protocol/git-remote";
 import { resolveSshHostname, type SshHostnameResolver } from "../utils/ssh-hostname.js";
 import { defaultResolveRemoteUrl } from "./forge-cli-command.js";
 import type { ForgeService } from "./forge-service.js";
@@ -82,8 +82,8 @@ export function createForgeResolver(options: CreateForgeResolverOptions = {}): F
   // resolveRemoteUrl spawns `git config` — memoize per cwd so repeated resolve()
   // calls (the PR-status poll hits this every cycle) don't re-spawn it. TTL'd
   // (not permanent, unlike a positive host probe) so a remote added/changed
-  // from outside Fde — `git remote add`/`set-url` run in a terminal — is
-  // still picked up within a cycle instead of staying pinned forever; a Fde
+  // from outside Frogg — `git remote add`/`set-url` run in a terminal — is
+  // still picked up within a cycle instead of staying pinned forever; a Frogg
   // git mutation still busts it immediately via invalidate(cwd).
   const remoteUrlByCwd = new LRUCache<
     string,

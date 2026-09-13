@@ -2,13 +2,16 @@ import { afterEach, describe, expect, test } from "vitest";
 import pino from "pino";
 
 import { DaemonClient } from "../test-utils/daemon-client.js";
-import { createTestFdeDaemon, type TestFdeDaemon } from "../test-utils/fde-daemon.js";
+import { createTestFroggDaemon, type TestFroggDaemon } from "../test-utils/frogg-daemon.js";
 import { generateLocalPairingOffer } from "../pairing-offer.js";
 import { CodexAppServerAgentClient } from "../agent/providers/codex-app-server-agent.js";
-import { buildRelayWebSocketUrl } from "@fde/protocol/daemon-endpoints";
-import { parseConnectionOfferFromUrl, type ConnectionOffer } from "@fde/protocol/connection-offer";
+import { buildRelayWebSocketUrl } from "@frogg/protocol/daemon-endpoints";
+import {
+  parseConnectionOfferFromUrl,
+  type ConnectionOffer,
+} from "@frogg/protocol/connection-offer";
 
-const relayEndpoint = process.env.FDE_LIVE_RELAY_ENDPOINT ?? "fde-relay-next.fly.dev:443";
+const relayEndpoint = process.env.FROGG_LIVE_RELAY_ENDPOINT ?? "frogg-relay-next.fly.dev:443";
 const liveTest = process.env.RUN_LIVE_RELAY_E2E === "1" ? test : test.skip;
 
 function requireOffer(url: string): ConnectionOffer {
@@ -19,9 +22,9 @@ function requireOffer(url: string): ConnectionOffer {
   return offer;
 }
 
-async function pairingOfferFor(daemon: TestFdeDaemon): Promise<ConnectionOffer> {
+async function pairingOfferFor(daemon: TestFroggDaemon): Promise<ConnectionOffer> {
   const pairing = await generateLocalPairingOffer({
-    fdeHome: daemon.fdeHome,
+    froggHome: daemon.froggHome,
     relayEnabled: true,
     relayEndpoint,
     relayPublicEndpoint: relayEndpoint,
@@ -52,7 +55,7 @@ function clientFor(offer: ConnectionOffer): DaemonClient {
 }
 
 describe("live hosted relay", () => {
-  let daemon: TestFdeDaemon | null = null;
+  let daemon: TestFroggDaemon | null = null;
   let client: DaemonClient | null = null;
 
   afterEach(async () => {
@@ -64,7 +67,7 @@ describe("live hosted relay", () => {
     "carries a complete DaemonClient agent workflow through the hosted relay",
     async () => {
       const logger = pino({ level: "silent" });
-      daemon = await createTestFdeDaemon({
+      daemon = await createTestFroggDaemon({
         listen: "127.0.0.1",
         relayEnabled: true,
         relayEndpoint,

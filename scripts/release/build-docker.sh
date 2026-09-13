@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds the FDE daemon image and tags it per the org rules: the exact
+# Builds the Frogg daemon image and tags it per the org rules: the exact
 # version plus the rolling MAJOR.FEATURE, MAJOR, and latest tags. The version
 # is read from the root package.json (single source of truth).
 #
@@ -9,8 +9,8 @@
 #   scripts/release/build-docker.sh --platform linux/arm64
 #
 # Environment:
-#   FDE_IMAGE_REPO   image repository (default: froggapp/fde)
-#   FDE_PLATFORMS    platforms for --push builds (default: linux/amd64,linux/arm64)
+#   FROGG_IMAGE_REPO   image repository (default: froggapp/frogg)
+#   FROGG_PLATFORMS    platforms for --push builds (default: linux/amd64,linux/arm64)
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -18,9 +18,9 @@ ROOT_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 cd "$ROOT_DIR"
 node --import tsx scripts/dev/brand.mts prepare >&2
 brand_input="$(node --import tsx scripts/dev/brand.mts stage)"
-REPO="${FDE_IMAGE_REPO:-$(node -p 'require("./.generated/branding/brand.json").distribution.dockerImage || ""')}"
+REPO="${FROGG_IMAGE_REPO:-$(node -p 'require("./.generated/branding/brand.json").distribution.dockerImage || ""')}"
 [[ -n "$REPO" ]] || { echo 'Configure distribution.dockerImage before building this image' >&2; exit 1; }
-PLATFORMS="${FDE_PLATFORMS:-linux/amd64,linux/arm64}"
+PLATFORMS="${FROGG_PLATFORMS:-linux/amd64,linux/arm64}"
 
 push=0
 platform=""
@@ -48,7 +48,7 @@ fi
 
 args=(
   --file "${ROOT_DIR}/deploy/docker/base/Dockerfile"
-  --build-arg "FDE_VERSION=${version}"
+  --build-arg "FROGG_VERSION=${version}"
   "${tags[@]}"
 )
 if [ "${push}" = "1" ]; then
@@ -61,4 +61,4 @@ else
 fi
 
 echo "building ${REPO}:${version} (tags: ${tags[*]})"
-docker buildx build "${args[@]}" --build-arg "FDE_BRAND_DIR=$brand_input" --build-arg "FDE_SOURCE_REVISION=$(git rev-parse HEAD)" "${ROOT_DIR}"
+docker buildx build "${args[@]}" --build-arg "FROGG_BRAND_DIR=$brand_input" --build-arg "FROGG_SOURCE_REVISION=$(git rev-parse HEAD)" "${ROOT_DIR}"

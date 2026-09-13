@@ -1,5 +1,5 @@
-import { encodeTerminalKeyInput, type TerminalKeyInput } from "@fde/protocol/terminal-key-input";
-import type { TerminalInputModeState } from "@fde/protocol/terminal-input-mode";
+import { encodeTerminalKeyInput, type TerminalKeyInput } from "@frogg/protocol/terminal-key-input";
+import type { TerminalInputModeState } from "@frogg/protocol/terminal-input-mode";
 import { normalizeTerminalTransportKey } from "@/utils/terminal-keys";
 
 export interface TerminalKeyModifierState {

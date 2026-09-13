@@ -6,23 +6,23 @@ import { parseOpenProjectPathFromArgv } from "./open-project-routing";
 
 describe("open-project-routing", () => {
   it("returns a bare absolute path argument", () => {
-    const projectPath = mkdtempSync(path.join(tmpdir(), "fde-open-project-"));
+    const projectPath = mkdtempSync(path.join(tmpdir(), "frogg-open-project-"));
 
     expect(
       parseOpenProjectPathFromArgv({
-        argv: ["/Applications/Fde.app/Contents/MacOS/Fde", projectPath],
+        argv: ["/Applications/Frogg.app/Contents/MacOS/Frogg", projectPath],
         isDefaultApp: false,
       }),
     ).toBe(projectPath);
   });
 
   it("finds a bare absolute path even when Chromium noise args appear first", () => {
-    const projectPath = mkdtempSync(path.join(tmpdir(), "fde-open-project-"));
+    const projectPath = mkdtempSync(path.join(tmpdir(), "frogg-open-project-"));
 
     expect(
       parseOpenProjectPathFromArgv({
         argv: [
-          "/Applications/Fde.app/Contents/MacOS/Fde",
+          "/Applications/Frogg.app/Contents/MacOS/Frogg",
           "--allow-file-access-from-files",
           "--no-sandbox",
           projectPath,
@@ -33,31 +33,31 @@ describe("open-project-routing", () => {
   });
 
   it("does not treat flags as project paths", () => {
-    const projectPath = mkdtempSync(path.join(tmpdir(), "fde-open-project-"));
+    const projectPath = mkdtempSync(path.join(tmpdir(), "frogg-open-project-"));
     const flagLikeDirectory = path.join(projectPath, "--version");
     mkdirSync(flagLikeDirectory);
 
     expect(
       parseOpenProjectPathFromArgv({
-        argv: ["/Applications/Fde.app/Contents/MacOS/Fde", "--version", flagLikeDirectory],
+        argv: ["/Applications/Frogg.app/Contents/MacOS/Frogg", "--version", flagLikeDirectory],
         isDefaultApp: false,
       }),
     ).toBe(flagLikeDirectory);
 
     expect(
       parseOpenProjectPathFromArgv({
-        argv: ["/Applications/Fde.app/Contents/MacOS/Fde", "--version"],
+        argv: ["/Applications/Frogg.app/Contents/MacOS/Frogg", "--version"],
         isDefaultApp: false,
       }),
     ).toBeNull();
   });
 
   it("returns the path from an explicit --open-project flag for backward compatibility", () => {
-    const projectPath = mkdtempSync(path.join(tmpdir(), "fde-open-project-"));
+    const projectPath = mkdtempSync(path.join(tmpdir(), "frogg-open-project-"));
 
     expect(
       parseOpenProjectPathFromArgv({
-        argv: ["/Applications/Fde.app/Contents/MacOS/Fde", "--open-project", projectPath],
+        argv: ["/Applications/Frogg.app/Contents/MacOS/Frogg", "--open-project", projectPath],
         isDefaultApp: false,
       }),
     ).toBe(projectPath);

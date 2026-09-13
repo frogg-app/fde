@@ -2,11 +2,11 @@ import { mkdtemp, mkdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { expect, it } from "vitest";
-import type { SessionOutboundMessage } from "@fde/protocol/messages";
+import type { SessionOutboundMessage } from "@frogg/protocol/messages";
 import { dispatchProjectImport } from "./dispatch.js";
 import { ProjectImportService } from "./service.js";
 it("emits correlated preview and error responses without mutating projects", async () => {
-  const home = await mkdtemp(path.join(tmpdir(), "fde-import-dispatch-"));
+  const home = await mkdtemp(path.join(tmpdir(), "frogg-import-dispatch-"));
   try {
     const cwd = path.join(home, "project");
     await mkdir(cwd);

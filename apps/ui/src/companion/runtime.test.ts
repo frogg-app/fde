@@ -1,4 +1,4 @@
-import type { CompanionAudioOutputMessage } from "@fde/protocol/messages";
+import type { CompanionAudioOutputMessage } from "@frogg/protocol/messages";
 import { describe, expect, it, vi } from "vitest";
 import type { AudioEngine, AudioPlaybackSource } from "@/voice/audio-engine-types";
 import {

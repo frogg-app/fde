@@ -3,11 +3,11 @@ import type {
   AgentModelDefinition,
   AgentProvider,
   ProviderSnapshotEntry,
-} from "@fde/protocol/agent-types";
-import type { AgentProviderDefinition } from "@fde/protocol/provider-manifest";
+} from "@frogg/protocol/agent-types";
+import type { AgentProviderDefinition } from "@frogg/protocol/provider-manifest";
 import type { DraftCommandConfig } from "@/hooks/use-agent-commands-query";
 import { i18n } from "@/i18n/i18next";
-import { compareMatchScores, scoreTextFields } from "@fde/protocol/search/text-match";
+import { compareMatchScores, scoreTextFields } from "@frogg/protocol/search/text-match";
 import { filterSelectableModels } from "./model-catalog";
 
 export interface ProviderSelectionModelRow {

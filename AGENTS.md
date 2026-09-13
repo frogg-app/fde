@@ -1,6 +1,6 @@
 # AGENTS.md
 
-FDE (Frogg Development Environment) runs and monitors coding agents across
+Frogg runs and monitors coding agents across
 Electron desktop, Expo mobile/web, and CLI clients connected to independently
 installed Node daemons. Forked from Paseo v0.7.2, it is maintained independently.
 The desktop is app-only: it never bundles or manages a local daemon. Windows,
@@ -27,8 +27,8 @@ them all.
   [coding standards](website/src/content/docs/docs/contributing/coding-standards.mdx):
   development workflow, test selection, and implementation conventions.
 - [Reference](website/src/content/docs/docs/reference/): `config.json`, environment
-  variables and `fde.json`. User-facing behavior is under `getting-started/`,
-  `using-fde/`, `agents-and-providers/`, `desktop-mobile-cli/` and `self-hosting/`.
+  variables and `frogg.json`. User-facing behavior is under `getting-started/`,
+  `using-frogg/`, `agents-and-providers/`, `desktop-mobile-cli/` and `self-hosting/`.
 - [Fork and rebrand](website/src/content/docs/docs/fork-and-rebrand/): branding, build
   and release pipeline for custom products.
 
@@ -74,18 +74,18 @@ and runs full typecheck; agents must not independently merge through old checkou
 
 ## Documentation rule
 
-Any change to user-visible behavior, configuration (`config.json`, env vars, `fde.json`,
+Any change to user-visible behavior, configuration (`config.json`, env vars, `frogg.json`,
 `brand.json`), CLI commands or flags, protocol-visible features, or the branding, build or
 release pipeline must update the matching docs page in the same PR, and its screenshots when
 the UI changes. Pages live in `website/src/content/docs/docs/<section>/`; images in
-`website/src/assets/docs/`. The [fde-docs skill](skills/fde-docs/SKILL.md) maps code areas to
+`website/src/assets/docs/`. The [frogg-docs skill](skills/frogg-docs/SKILL.md) maps code areas to
 pages and explains screenshots. Preview with `cd website && npm ci && npm run dev`, and check
-with `npm run build && npm run linkcheck`. Write "an FDE", never "a FDE", and never document
+with `npm run build && npm run linkcheck`. Write "Frogg" as a plain name, and never document
 features the code does not have. If no docs change is needed, say so in the PR checklist.
 
 ## Release skill
 
-Use [fde-release](skills/fde-release/SKILL.md) for builds, benchmarks, update-feed
+Use [frogg-release](skills/frogg-release/SKILL.md) for builds, benchmarks, update-feed
 changes, packaging migrations and publication. It preserves the installed-client
 update contract across local and CI artifact production.
 
@@ -105,13 +105,13 @@ update contract across local and CI artifact production.
 - Update ROADMAP.md items with implementation, record completed work in the
   changelog, and distinguish implementation from
   platform validation.
-- Preserve inherited Apache-2.0 headers and `NOTICE`. Use the FDE wire/env/deep-link
+- Preserve inherited Apache-2.0 headers and `NOTICE`. Use the Frogg wire/env/deep-link
   namespace; coordinate breaking upgrades across clients and daemons.
 
 ## Background build monitoring
 
 After pushing changes that need build supervision, use
-[the build monitor skill](skills/fde-build-monitor/SKILL.md). Resume the existing
+[the build monitor skill](skills/frogg-build-monitor/SKILL.md). Resume the existing
 monitor in its isolated workspace instead of waiting for CI in the development
 conversation or starting another monitor. Hand it the pushed SHA, run IDs and
 requested targets. It owns targeted retries, bounded fixes and capacity-aware

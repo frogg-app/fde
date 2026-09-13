@@ -1,5 +1,5 @@
-import type { ProviderSnapshotEntry } from "@fde/protocol/agent-types";
-import type { AgentProfile } from "@fde/protocol/messages";
+import type { ProviderSnapshotEntry } from "@frogg/protocol/agent-types";
+import type { AgentProfile } from "@frogg/protocol/messages";
 import { formatAgentModeLabel, formatThinkingOptionLabel } from "@/agent-controls/labels";
 
 export interface AgentProfileTag {

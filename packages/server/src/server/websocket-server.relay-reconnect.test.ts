@@ -15,8 +15,8 @@ import {
   decodeTerminalStreamFrame,
   encodeTerminalStreamFrame,
   TerminalStreamOpcode,
-} from "@fde/protocol/terminal-stream-protocol";
-import { CLIENT_CAPS } from "@fde/protocol/client-capabilities";
+} from "@frogg/protocol/terminal-stream-protocol";
+import { CLIENT_CAPS } from "@frogg/protocol/client-capabilities";
 
 type SocketListener = (...args: unknown[]) => void;
 
@@ -253,7 +253,7 @@ function createServer(options?: {
     }),
     createStub<AgentStorage>({}),
     createStub<DownloadTokenStore>({}),
-    "/tmp/fde-test",
+    "/tmp/frogg-test",
     createStub<DaemonConfigStore>(daemonConfigStore),
     null,
     { allowedOrigins: new Set(), startPaused: options?.startPaused },

@@ -1,5 +1,5 @@
-import { brand } from "@fde/branding";
-import { brandEnv } from "@fde/branding/identity";
+import { brand } from "@frogg/branding";
+import { brandEnv } from "@frogg/branding/identity";
 import { readBundleManifest } from "./bundle.js";
 import {
   appendFileSync,
@@ -107,7 +107,7 @@ export function writePreviousVersion(installDir: string, version: string | null)
 
 /**
  * Atomically repoints `current`: a fresh link is renamed over the old one so a
- * running `fde` always resolves a complete tree. Windows junctions cannot be
+ * running `frogg` always resolves a complete tree. Windows junctions cannot be
  * renamed over, so there the old link is removed first.
  */
 export function setCurrentVersion(installDir: string, version: string): void {

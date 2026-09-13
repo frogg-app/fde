@@ -29,24 +29,24 @@ describe("resolveFilePreviewReadTarget", () => {
   it("uses the filesystem root for absolute paths outside the workspace", () => {
     expect(
       resolveFilePreviewReadTarget({
-        path: "/tmp/fde-preview.txt",
+        path: "/tmp/frogg-preview.txt",
         workspaceRoot: "/Users/test/project",
       }),
     ).toEqual({
       cwd: "/",
-      path: "/tmp/fde-preview.txt",
+      path: "/tmp/frogg-preview.txt",
     });
   });
 
   it("uses the home root for tilde paths", () => {
     expect(
       resolveFilePreviewReadTarget({
-        path: "~/.fde/plans/file-preview.md",
+        path: "~/.frogg/plans/file-preview.md",
         workspaceRoot: "/Users/test/project",
       }),
     ).toEqual({
       cwd: "~",
-      path: "~/.fde/plans/file-preview.md",
+      path: "~/.frogg/plans/file-preview.md",
     });
   });
 

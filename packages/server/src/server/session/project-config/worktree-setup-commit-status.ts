@@ -1,14 +1,14 @@
 import {
-  FdeConfigRawSchema,
+  FroggConfigRawSchema,
   normalizeLifecycleCommands,
-  type FdeConfigRaw,
-} from "@fde/protocol/fde-config-schema";
+  type FroggConfigRaw,
+} from "@frogg/protocol/frogg-config-schema";
 import { READ_ONLY_GIT_ENV } from "../../checkout-git-utils.js";
 import { runGitCommand } from "../../../utils/run-git-command.js";
 
 export async function hasUncommittedWorktreeSetupChanges(input: {
   repoRoot: string;
-  currentConfig: FdeConfigRaw | null;
+  currentConfig: FroggConfigRaw | null;
 }): Promise<boolean> {
   const gitPath = await resolveConfigGitPath(input.repoRoot);
   const committedConfig = await readCommittedConfig(input.repoRoot, gitPath);
@@ -22,13 +22,13 @@ async function resolveConfigGitPath(repoRoot: string): Promise<string> {
     cwd: repoRoot,
     envOverlay: READ_ONLY_GIT_ENV,
   });
-  return `${stdout.trim()}fde.json`;
+  return `${stdout.trim()}frogg.json`;
 }
 
 async function readCommittedConfig(
   repoRoot: string,
   gitPath: string,
-): Promise<FdeConfigRaw | null> {
+): Promise<FroggConfigRaw | null> {
   await runGitCommand(["rev-parse", "--verify", "HEAD"], {
     cwd: repoRoot,
     envOverlay: READ_ONLY_GIT_ENV,
@@ -46,7 +46,7 @@ async function readCommittedConfig(
     cwd: repoRoot,
     envOverlay: READ_ONLY_GIT_ENV,
   });
-  return FdeConfigRawSchema.parse(JSON.parse(stdout));
+  return FroggConfigRawSchema.parse(JSON.parse(stdout));
 }
 
 function stringArraysEqual(left: string[], right: string[]): boolean {

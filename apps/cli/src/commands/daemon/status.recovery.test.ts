@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { Command } from "commander";
 import { expect, test } from "vitest";
-import { loadConfig } from "@fde/server";
+import { loadConfig } from "@frogg/server";
 import { resolveLocalDaemonDiagnosticState } from "./local-daemon.js";
 import { runStatusCommand, selectRelayStatus } from "./status.js";
 
@@ -13,7 +13,7 @@ test.each([
 ])(
   "status reports %s as a diagnostic without a default network probe",
   async (_label, config) => {
-    const home = await mkdtemp(path.join(os.tmpdir(), "fde-status-recovery-"));
+    const home = await mkdtemp(path.join(os.tmpdir(), "frogg-status-recovery-"));
     try {
       await writeFile(path.join(home, "config.json"), config);
       expect(() => loadConfig(home, { env: {} })).toThrow();
@@ -35,14 +35,14 @@ test.each([
 );
 
 test("status retains the recorded owner and listen target when config is invalid", async () => {
-  const home = await mkdtemp(path.join(os.tmpdir(), "fde-status-owner-"));
+  const home = await mkdtemp(path.join(os.tmpdir(), "frogg-status-owner-"));
   try {
     await writeFile(
       path.join(home, "config.json"),
       JSON.stringify({ version: 1, daemon: { relay: { enabled: "yes" } } }),
     );
     await writeFile(
-      path.join(home, "fde.pid"),
+      path.join(home, "frogg.pid"),
       JSON.stringify({ pid: process.pid, listen: "127.0.0.1:1" }),
     );
     const state = resolveLocalDaemonDiagnosticState({ home });

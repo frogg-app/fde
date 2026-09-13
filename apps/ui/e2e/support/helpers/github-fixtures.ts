@@ -142,8 +142,8 @@ async function seedPr(args: {
   git(["clone", authedUrl, localPath, "--quiet", "-b", branch], basePath);
   // Clean remote URL (no embedded token) so gh can parse owner/repo
   git(["remote", "set-url", "origin", `https://github.com/${fullName}.git`], localPath);
-  git(["config", "user.email", "e2e@fde.test"], localPath);
-  git(["config", "user.name", "Fde E2E"], localPath);
+  git(["config", "user.email", "e2e@frogg.test"], localPath);
+  git(["config", "user.name", "Frogg E2E"], localPath);
   git(["config", "commit.gpgsign", "false"], localPath);
 
   return {
@@ -166,9 +166,9 @@ function seedIssue(args: { spec: IssueSpec; basePath: string }): GhIssueFixture 
   return { number: issueNumber, title: spec.title, url: issueUrl };
 }
 
-// Single namespace for temporary GitHub repos created by Fde tests.
-// Bulk cleanup relies on this prefix being unmistakable — never reuse `fde-`
-// (collides with real repos like `fde`, `fde-website`).
+// Single namespace for temporary GitHub repos created by Frogg tests.
+// Bulk cleanup relies on this prefix being unmistakable — never reuse `frogg-`
+// (collides with real repos like `frogg`, `frogg-website`).
 const TEMP_GITHUB_REPO_PREFIX = "fdetmp-";
 
 export async function createTempGithubRepo(options: {
@@ -184,8 +184,8 @@ export async function createTempGithubRepo(options: {
   // Bootstrap local git repo
   const basePath = await mkdtemp(path.join("/tmp", `${repoName}-base-`));
   git(["init", "-b", defaultBranch], basePath);
-  git(["config", "user.email", "e2e@fde.test"], basePath);
-  git(["config", "user.name", "Fde E2E"], basePath);
+  git(["config", "user.email", "e2e@frogg.test"], basePath);
+  git(["config", "user.name", "Frogg E2E"], basePath);
   git(["config", "commit.gpgsign", "false"], basePath);
   await writeFile(path.join(basePath, "README.md"), "# E2E Test Repo\n");
   git(["add", "README.md"], basePath);
@@ -276,8 +276,8 @@ export async function cloneGithubRepoDefaultBranchOnly(
     ["clone", "--quiet", "--single-branch", "--branch", repo.defaultBranch, authedUrl, clonePath],
     { stdio: ["ignore", "pipe", "pipe"] },
   );
-  git(["config", "user.email", "e2e@fde.test"], clonePath);
-  git(["config", "user.name", "Fde E2E"], clonePath);
+  git(["config", "user.email", "e2e@frogg.test"], clonePath);
+  git(["config", "user.name", "Frogg E2E"], clonePath);
   git(["config", "commit.gpgsign", "false"], clonePath);
 
   return {
@@ -289,16 +289,16 @@ export async function cloneGithubRepoDefaultBranchOnly(
 }
 
 export async function createLocalGithubPrFixture(): Promise<LocalGhPrFixture> {
-  const fixtureRoot = await mkdtemp(path.join("/tmp", "fde-e2e-local-github-pr-"));
+  const fixtureRoot = await mkdtemp(path.join("/tmp", "frogg-e2e-local-github-pr-"));
   const basePath = path.join(fixtureRoot, "base");
   const remotePath = path.join(fixtureRoot, "remote.git");
   const checkoutPath = path.join(fixtureRoot, "main-only");
-  const githubUrl = "https://github.com/fde-e2e/local-fixture.git";
+  const githubUrl = "https://github.com/frogg-e2e/local-fixture.git";
   await mkdir(basePath);
 
   git(["init", "-b", "main"], basePath);
-  git(["config", "user.email", "e2e@fde.test"], basePath);
-  git(["config", "user.name", "Fde E2E"], basePath);
+  git(["config", "user.email", "e2e@frogg.test"], basePath);
+  git(["config", "user.name", "Frogg E2E"], basePath);
   git(["config", "commit.gpgsign", "false"], basePath);
   await writeFile(path.join(basePath, "README.md"), "# Local GitHub fixture\n");
   git(["add", "README.md"], basePath);
@@ -320,15 +320,15 @@ export async function createLocalGithubPrFixture(): Promise<LocalGhPrFixture> {
   );
   git(["remote", "set-url", "origin", githubUrl], checkoutPath);
   git(["config", `url.${remotePath}.insteadOf`, githubUrl], checkoutPath);
-  git(["config", "user.email", "e2e@fde.test"], checkoutPath);
-  git(["config", "user.name", "Fde E2E"], checkoutPath);
+  git(["config", "user.email", "e2e@frogg.test"], checkoutPath);
+  git(["config", "user.name", "Frogg E2E"], checkoutPath);
   git(["config", "commit.gpgsign", "false"], checkoutPath);
 
   return {
     pr: {
       number: 1,
       title: "Use pasted PR as start ref",
-      url: "https://github.com/fde-e2e/local-fixture/pull/1",
+      url: "https://github.com/frogg-e2e/local-fixture/pull/1",
       branch: "pr-branch-1",
       localPath: basePath,
     },

@@ -1,13 +1,13 @@
 [package]
-name = "fde-daemon"
+name = "frogg-daemon"
 version = "0.7.0"
-description = "FDE daemon (Rust) — protocol-compatible front half of the FDE daemon"
+description = "Frogg daemon (Rust) — protocol-compatible front half of the Frogg daemon"
 edition = "2021"
 license = "Apache-2.0"
 rust-version = "1.77.2"
 
 [[bin]]
-name = "fde-daemond"
+name = "frogg-daemond"
 path = "src/main.rs"
 
 [dependencies]

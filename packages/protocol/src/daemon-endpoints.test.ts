@@ -191,7 +191,7 @@ describe("relay websocket URLs", () => {
 });
 
 describe("shouldUseTlsForDefaultHostedRelay", () => {
-  test("returns true for the hosted Fde relay on port 443", () => {
+  test("returns true for the hosted Frogg relay on port 443", () => {
     expect(shouldUseTlsForDefaultHostedRelay("relay.example.test:443")).toBe(true);
   });
 

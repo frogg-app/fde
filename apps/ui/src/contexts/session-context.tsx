@@ -20,24 +20,24 @@ import {
   type TimelineResponsePayload,
   type ViewedTimelineOwner,
 } from "@/timeline/viewed-timeline-sync";
-import type { AgentAttachment, SessionOutboundMessage } from "@fde/protocol/messages";
-import { parseServerInfoStatusPayload } from "@fde/protocol/messages";
+import type { AgentAttachment, SessionOutboundMessage } from "@frogg/protocol/messages";
+import { parseServerInfoStatusPayload } from "@frogg/protocol/messages";
 import {
   buildAgentAttentionNotificationPayload,
   type AgentAttentionReason,
   type AgentAttentionNotificationPayload,
   type NotificationPermissionRequest,
-} from "@fde/protocol/agent-attention-notification";
+} from "@frogg/protocol/agent-attention-notification";
 
 import {
   CompanionMessageRejectedError,
   type DaemonClient,
-} from "@fde/client/internal/daemon-client";
+} from "@frogg/client/internal/daemon-client";
 import { CompanionMessageRejected } from "@/companion/runtime";
 import { getCompanionRuntime, registerCompanionSession } from "@/companion/session-registry";
-import type { AgentSessionConfig } from "@fde/protocol/agent-types";
-import type { GitSetupOptions } from "@fde/protocol/messages";
-import type { AgentPermissionResponse } from "@fde/protocol/agent-types";
+import type { AgentSessionConfig } from "@frogg/protocol/agent-types";
+import type { GitSetupOptions } from "@frogg/protocol/messages";
+import type { AgentPermissionResponse } from "@frogg/protocol/agent-types";
 import { getHostRuntimeStore, useHostRuntimeIsConnected } from "@/runtime/host-runtime";
 import { useVoiceAudioEngineOptional, useVoiceRuntimeOptional } from "@/contexts/voice-context";
 import type { AudioPlaybackSource } from "@/voice/audio-engine-types";

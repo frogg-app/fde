@@ -2,7 +2,7 @@ import {
   deriveAgentStateBucket,
   type AgentAttentionReason,
   type AgentStateBucketInput,
-} from "@fde/protocol/agent-state-bucket";
+} from "@frogg/protocol/agent-state-bucket";
 
 export type SidebarStateBucket = "needs_input" | "failed" | "running" | "attention" | "done";
 export type SidebarAttentionReason = AgentAttentionReason;

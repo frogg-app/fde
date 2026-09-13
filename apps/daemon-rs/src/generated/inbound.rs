@@ -352,12 +352,12 @@ pub enum SessionMessage {
     GithubSearchRequest(GithubSearchRequest),
     #[serde(rename = "directory_suggestions_request")]
     DirectorySuggestionsRequest(DirectorySuggestionsRequest),
-    #[serde(rename = "fde_worktree_list_request")]
-    FdeWorktreeListRequest(FdeWorktreeListRequest),
-    #[serde(rename = "fde_worktree_archive_request")]
-    FdeWorktreeArchiveRequest(FdeWorktreeArchiveRequest),
-    #[serde(rename = "create_fde_worktree_request")]
-    CreateFdeWorktreeRequest(CreateFdeWorktreeRequest),
+    #[serde(rename = "frogg_worktree_list_request")]
+    FroggWorktreeListRequest(FroggWorktreeListRequest),
+    #[serde(rename = "frogg_worktree_archive_request")]
+    FroggWorktreeArchiveRequest(FroggWorktreeArchiveRequest),
+    #[serde(rename = "create_frogg_worktree_request")]
+    CreateFroggWorktreeRequest(CreateFroggWorktreeRequest),
     #[serde(rename = "workspace_setup_status_request")]
     WorkspaceSetupStatusRequest(WorkspaceSetupStatusRequest),
     #[serde(rename = "list_available_editors_request")]
@@ -2589,8 +2589,8 @@ pub struct StashPopRequest {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct StashListRequest {
     pub cwd: String,
-    #[serde(rename = "fdeOnly", skip_serializing_if = "Option::is_none")]
-    pub fde_only: Option<bool>,
+    #[serde(rename = "froggOnly", skip_serializing_if = "Option::is_none")]
+    pub frogg_only: Option<bool>,
     #[serde(rename = "requestId")]
     pub request_id: String,
 }
@@ -2693,7 +2693,7 @@ pub enum DirectorySuggestionsRequestMatchMode {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct FdeWorktreeListRequest {
+pub struct FroggWorktreeListRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cwd: Option<String>,
     #[serde(rename = "repoRoot", skip_serializing_if = "Option::is_none")]
@@ -2703,7 +2703,7 @@ pub struct FdeWorktreeListRequest {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct FdeWorktreeArchiveRequest {
+pub struct FroggWorktreeArchiveRequest {
     #[serde(rename = "worktreePath", skip_serializing_if = "Option::is_none")]
     pub worktree_path: Option<String>,
     #[serde(rename = "repoRoot", skip_serializing_if = "Option::is_none")]
@@ -2713,7 +2713,7 @@ pub struct FdeWorktreeArchiveRequest {
     #[serde(rename = "workspaceId", skip_serializing_if = "Option::is_none")]
     pub workspace_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub scope: Option<FdeWorktreeArchiveRequestScope>,
+    pub scope: Option<FroggWorktreeArchiveRequestScope>,
     #[serde(
         rename = "deleteWorktreeFromDisk",
         skip_serializing_if = "Option::is_none"
@@ -2724,7 +2724,7 @@ pub struct FdeWorktreeArchiveRequest {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum FdeWorktreeArchiveRequestScope {
+pub enum FroggWorktreeArchiveRequestScope {
     #[serde(rename = "workspace")]
     Workspace,
     #[serde(rename = "worktree")]
@@ -2732,7 +2732,7 @@ pub enum FdeWorktreeArchiveRequestScope {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct CreateFdeWorktreeRequest {
+pub struct CreateFroggWorktreeRequest {
     pub cwd: String,
     #[serde(rename = "projectId", skip_serializing_if = "Option::is_none")]
     pub project_id: Option<String>,
@@ -2743,13 +2743,13 @@ pub struct CreateFdeWorktreeRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub attachments: Option<serde_json::Value>,
     #[serde(rename = "firstAgentContext", skip_serializing_if = "Option::is_none")]
-    pub first_agent_context: Option<CreateFdeWorktreeRequestFirstAgentContext>,
+    pub first_agent_context: Option<CreateFroggWorktreeRequestFirstAgentContext>,
     #[serde(rename = "refName", skip_serializing_if = "Option::is_none")]
     pub ref_name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub action: Option<CreateFdeWorktreeRequestAction>,
+    pub action: Option<CreateFroggWorktreeRequestAction>,
     #[serde(rename = "checkoutSource", skip_serializing_if = "Option::is_none")]
-    pub checkout_source: Option<CreateFdeWorktreeRequestCheckoutSource>,
+    pub checkout_source: Option<CreateFroggWorktreeRequestCheckoutSource>,
     #[serde(rename = "githubPrNumber", skip_serializing_if = "Option::is_none")]
     pub github_pr_number: Option<i64>,
     #[serde(rename = "requestId")]
@@ -2757,7 +2757,7 @@ pub struct CreateFdeWorktreeRequest {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct CreateFdeWorktreeRequestFirstAgentContext {
+pub struct CreateFroggWorktreeRequestFirstAgentContext {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub prompt: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -2765,7 +2765,7 @@ pub struct CreateFdeWorktreeRequestFirstAgentContext {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum CreateFdeWorktreeRequestAction {
+pub enum CreateFroggWorktreeRequestAction {
     #[serde(rename = "branch-off")]
     BranchOff,
     #[serde(rename = "checkout")]
@@ -2773,7 +2773,7 @@ pub enum CreateFdeWorktreeRequestAction {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct CreateFdeWorktreeRequestCheckoutSource {
+pub struct CreateFroggWorktreeRequestCheckoutSource {
     pub kind: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub forge: Option<String>,

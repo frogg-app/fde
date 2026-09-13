@@ -26,9 +26,9 @@ Every connected client sees it and can answer it.
 | Pi         | No modes; only question prompts | — |
 | ACP agents | Whatever the agent reports; plus an **Auto accept** toggle | Auto accept |
 
-List a provider's modes with `fde provider ls` or an agent's with
-`fde agent mode <id> --list`. Change mode mid-conversation from the composer or with
-`fde agent mode <id> <mode>`.
+List a provider's modes with `frogg provider ls` or an agent's with
+`frogg agent mode <id> --list`. Change mode mid-conversation from the composer or with
+`frogg agent mode <id> <mode>`.
 
 Claude `auto` uses Claude Code's own classifier; Codex `auto-review` adds Codex's
 automatic reviewer to on-request approvals. The daemon does not add rules of its own on
@@ -41,10 +41,10 @@ top of a provider's mode.
 - **CLI**:
 
   ```sh
-  fde permissions ls
-  fde permissions allow <agent-id> [request-id]
-  fde permissions allow <agent-id> --all
-  fde permissions deny <agent-id> --message "Use the staging database" --interrupt
+  frogg permissions ls
+  frogg permissions allow <agent-id> [request-id]
+  frogg permissions allow <agent-id> --all
+  frogg permissions deny <agent-id> --message "Use the staging database" --interrupt
   ```
 
   `--input '<json>'` allows the action with edited tool input.

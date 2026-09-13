@@ -11,30 +11,30 @@ Clients and daemons update separately. Keep them close: from 0.6, apps require d
 ## Daemons installed with `install.sh`
 
 ```sh
-fde update --check
-fde update
-fde update --channel beta
-fde update --to 0.6.18        # pin a version, including older ones
+frogg update --check
+frogg update
+frogg update --channel beta
+frogg update --to 0.6.18        # pin a version, including older ones
 ```
 
 How it works:
 
-1. Finds the release on GitHub (`frogg-app/fde`) for the channel. **Stable** ignores
+1. Finds the release on GitHub (`frogg-app/frogg`) for the channel. **Stable** ignores
    prereleases (`-beta.N`); **beta** includes them.
 2. Downloads the daemon bundle, verifies its `.sha256`, and unpacks it to
-   `~/.local/share/fde/versions/<version>`.
+   `~/.local/share/frogg/versions/<version>`.
 3. Switches the `current` link, restarts the service, and waits up to 90 seconds for
    `/api/identity` to report the new version and `/api/health` to answer.
 4. If that fails, switches back to the previous version, restarts, and exits with code 2.
 
-The result is recorded in `~/.local/share/fde/last-update.json`; details in
+The result is recorded in `~/.local/share/frogg/last-update.json`; details in
 `self-update.log` next to it. The three newest versions are kept.
 
 The same update runs from the app: **host settings → Overview → Daemon updates**.
 
 ### Automatic updates
 
-```json title="~/.fde/config.json"
+```json title="~/.frogg/config.json"
 {
   "daemon": {
     "autoUpdate": { "enabled": true, "channel": "stable", "checkIntervalHours": 24, "quietHours": [9, 18] }
@@ -49,13 +49,13 @@ minutes.
 ### Rate limits and mirrors
 
 GitHub's API allows 60 unauthenticated requests an hour. On a 403 or 429 the updater tries
-`GH_TOKEN`, `GITHUB_TOKEN` or `gh auth token`; set `FDE_GITHUB_TOKEN` to always use a token.
-Point at a mirror with `FDE_RELEASE_BASE` (`<base>/download/v<version>/<asset>`) and
-`FDE_RELEASES_API`.
+`GH_TOKEN`, `GITHUB_TOKEN` or `gh auth token`; set `FROGG_GITHUB_TOKEN` to always use a token.
+Point at a mirror with `FROGG_RELEASE_BASE` (`<base>/download/v<version>/<asset>`) and
+`FROGG_RELEASES_API`.
 
 ## Not self-updatable
 
-`fde update` refuses and says why for:
+`frogg update` refuses and says why for:
 
 | Install | Update by |
 | ------- | --------- |

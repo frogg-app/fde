@@ -1,5 +1,5 @@
 import type { DaemonSelfUpdateResult } from "./daemon-self-updater.js";
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { spawn, type ChildProcess } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { createInterface } from "node:readline";
@@ -10,12 +10,12 @@ import type {
   DaemonUpdateGetStatusResponse,
   DaemonUpdateRun,
   DaemonUpdateStartResponse,
-} from "@fde/protocol/messages";
+} from "@frogg/protocol/messages";
 import type { SessionOutboundMessage } from "../../messages.js";
 import { readLastUpdateResult, type DaemonInstallInfo } from "./daemon-update-install.js";
 
 /**
- * Runs `fde daemon self-update` for clients. One instance per daemon: it
+ * Runs `frogg daemon self-update` for clients. One instance per daemon: it
  * owns the single in-flight run and broadcasts `daemon.update.run.progress`
  * to every session. The CLI does the work (download, verify, install) and
  * hands off to its detached supervisor. Legacy mode restarts this process;
@@ -34,7 +34,7 @@ export type SpawnUpdateCli = (
 export interface DaemonUpdateServiceOptions {
   install: DaemonInstallInfo;
   daemonVersion: string;
-  fdeHome: string;
+  froggHome: string;
   listen: string | null;
   getListen?: () => string | null;
   retainAcrossGatewayRestart?: boolean;
@@ -93,7 +93,7 @@ const defaultSpawnCli: SpawnUpdateCli = (command, args, options) =>
 export class DaemonUpdateService {
   private readonly install: DaemonInstallInfo;
   private readonly daemonVersion: string;
-  private readonly fdeHome: string;
+  private readonly froggHome: string;
   private readonly listen: string | null;
   private readonly getListen: (() => string | null) | undefined;
   private readonly retainAcrossGatewayRestart: boolean;
@@ -110,7 +110,7 @@ export class DaemonUpdateService {
   constructor(options: DaemonUpdateServiceOptions) {
     this.install = options.install;
     this.daemonVersion = options.daemonVersion;
-    this.fdeHome = options.fdeHome;
+    this.froggHome = options.froggHome;
     this.listen = options.listen;
     this.getListen = options.getListen;
     this.retainAcrossGatewayRestart = options.retainAcrossGatewayRestart === true;
@@ -298,7 +298,7 @@ export class DaemonUpdateService {
       "self-update",
       "--json",
       "--home",
-      this.fdeHome,
+      this.froggHome,
       "--install-dir",
       this.install.installDir,
       ...extraArgs,
@@ -306,12 +306,12 @@ export class DaemonUpdateService {
     const listen = this.getListen ? this.getListen() : this.listen;
     const env: NodeJS.ProcessEnv = {
       ...this.env,
-      [`${brand.envPrefix}_HOME`]: this.fdeHome,
-      FDE_INSTALL_DIR: this.install.installDir,
-      ...(listen ? { FDE_LISTEN: listen } : {}),
+      [`${brand.envPrefix}_HOME`]: this.froggHome,
+      FROGG_INSTALL_DIR: this.install.installDir,
+      ...(listen ? { FROGG_LISTEN: listen } : {}),
     };
-    if (this.getListen && !listen) delete env.FDE_LISTEN;
-    this.logger.info({ launcher, args: extraArgs, runId }, "running fde daemon self-update");
+    if (this.getListen && !listen) delete env.FROGG_LISTEN;
+    this.logger.info({ launcher, args: extraArgs, runId }, "running frogg daemon self-update");
     return new Promise((resolve, reject) => {
       const child = this.spawnCli(launcher, args, { env });
       let result: CliResultEvent | null = null;

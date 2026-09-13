@@ -1,4 +1,4 @@
-import { createFdeClient, type FdeClient } from "@fde/client";
+import { createFroggClient, type FroggClient } from "@frogg/client";
 
 interface Issue {
   id: string;
@@ -7,7 +7,7 @@ interface Issue {
   repositoryPath: string;
 }
 
-export async function startIssue(client: FdeClient, issue: Issue) {
+export async function startIssue(client: FroggClient, issue: Issue) {
   const workspace = await client.workspaces.open(issue.repositoryPath);
   const agent = await workspace.agents.create({
     config: {
@@ -30,6 +30,6 @@ export async function startIssue(client: FdeClient, issue: Issue) {
   return { workspaceId: workspace.id, agentId: agent.id };
 }
 
-export function createClient(url: string): FdeClient {
-  return createFdeClient({ url });
+export function createClient(url: string): FroggClient {
+  return createFroggClient({ url });
 }

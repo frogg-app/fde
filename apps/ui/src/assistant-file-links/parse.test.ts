@@ -351,32 +351,32 @@ describe("parseAssistantFileLink", () => {
 
   it("keeps tilde hrefs as direct home-relative file targets", () => {
     expect(
-      parseAssistantFileLink("~/.fde/plans/file-preview.md", {
+      parseAssistantFileLink("~/.frogg/plans/file-preview.md", {
         workspaceRoot: "/Users/test/project",
       }),
     ).toEqual({
-      raw: "~/.fde/plans/file-preview.md",
-      path: "~/.fde/plans/file-preview.md",
+      raw: "~/.frogg/plans/file-preview.md",
+      path: "~/.frogg/plans/file-preview.md",
       lineStart: undefined,
       lineEnd: undefined,
     });
     expect(
-      parseAssistantFileLink("~/.fde/plans/file-preview.md:12", {
+      parseAssistantFileLink("~/.frogg/plans/file-preview.md:12", {
         workspaceRoot: "/Users/test/project",
       }),
     ).toEqual({
-      raw: "~/.fde/plans/file-preview.md:12",
-      path: "~/.fde/plans/file-preview.md",
+      raw: "~/.frogg/plans/file-preview.md:12",
+      path: "~/.frogg/plans/file-preview.md",
       lineStart: 12,
       lineEnd: undefined,
     });
     expect(
-      parseAssistantFileLink("~\\.fde\\plans\\file-preview.md", {
+      parseAssistantFileLink("~\\.frogg\\plans\\file-preview.md", {
         workspaceRoot: "/Users/test/project",
       }),
     ).toEqual({
-      raw: "~\\.fde\\plans\\file-preview.md",
-      path: "~/.fde/plans/file-preview.md",
+      raw: "~\\.frogg\\plans\\file-preview.md",
+      path: "~/.frogg/plans/file-preview.md",
       lineStart: undefined,
       lineEnd: undefined,
     });
@@ -448,10 +448,10 @@ describe("normalizeInlinePathTarget", () => {
 
   it("keeps tilde paths as home-relative file targets", () => {
     expect(
-      normalizeInlinePathTarget("~/.fde/plans/file-preview.md", "/Users/test/project"),
+      normalizeInlinePathTarget("~/.frogg/plans/file-preview.md", "/Users/test/project"),
     ).toEqual({
-      directory: "~/.fde/plans",
-      file: "~/.fde/plans/file-preview.md",
+      directory: "~/.frogg/plans",
+      file: "~/.frogg/plans/file-preview.md",
     });
   });
 

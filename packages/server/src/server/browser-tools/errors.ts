@@ -1,7 +1,7 @@
 import type {
   BrowserAutomationErrorCode,
   BrowserAutomationExecuteResponse,
-} from "@fde/protocol/browser-automation/rpc-schemas";
+} from "@frogg/protocol/browser-automation/rpc-schemas";
 
 export type BrowserToolsResponsePayload = BrowserAutomationExecuteResponse["payload"];
 export type BrowserToolsErrorPayload = Extract<BrowserToolsResponsePayload, { ok: false }>["error"];

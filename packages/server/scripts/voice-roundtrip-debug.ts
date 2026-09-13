@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import pino from "pino";
 
-import { createTestFdeDaemon } from "../src/server/test-utils/fde-daemon.js";
+import { createTestFroggDaemon } from "../src/server/test-utils/frogg-daemon.js";
 import { DaemonClient } from "../src/server/test-utils/daemon-client.js";
 import { OpenAITTS } from "../src/server/speech/providers/openai/tts.js";
 import { withTimeout } from "../src/utils/promise-timeout.js";
@@ -22,8 +22,8 @@ async function main(): Promise<void> {
     throw new Error("OPENAI_API_KEY is required");
   }
 
-  const logger = pino({ level: process.env.FDE_LOG_LEVEL ?? "info" });
-  const daemon = await createTestFdeDaemon({
+  const logger = pino({ level: process.env.FROGG_LOG_LEVEL ?? "info" });
+  const daemon = await createTestFroggDaemon({
     logger,
     agentClients: {},
     openai: { stt: { apiKey }, tts: { apiKey } },

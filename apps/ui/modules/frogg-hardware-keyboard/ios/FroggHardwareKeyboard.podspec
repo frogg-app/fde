@@ -1,13 +1,13 @@
 require 'json'
 
 Pod::Spec.new do |s|
-  s.name           = 'FdeHardwareKeyboard'
+  s.name           = 'FroggHardwareKeyboard'
   s.version        = '0.1.0'
-  s.summary        = 'Hardware keyboard shortcuts for Fde'
-  s.description    = 'Hardware keyboard shortcuts for Fde'
+  s.summary        = 'Hardware keyboard shortcuts for Frogg'
+  s.description    = 'Hardware keyboard shortcuts for Frogg'
   s.license        = 'Apache-2.0'
   s.author         = 'Paseo'
-  s.homepage       = 'https://github.com/frogg-app/fde'
+  s.homepage       = 'https://github.com/frogg-app/frogg'
   s.platforms      = { :ios => '13.4' }
   s.swift_version  = '5.4'
   s.source         = { :path => '.' }

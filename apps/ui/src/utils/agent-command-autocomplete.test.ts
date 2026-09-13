@@ -9,15 +9,15 @@ import {
 
 describe("filterAndRankCommandAutocompleteEntries", () => {
   const entries = [
-    { source: "provider" as const, command: { name: "fde-committee" } },
+    { source: "provider" as const, command: { name: "frogg-committee" } },
     { source: "provider" as const, command: { name: "commit" } },
-    { source: "provider" as const, command: { name: "fde-advisor" } },
+    { source: "provider" as const, command: { name: "frogg-advisor" } },
   ];
 
   it("ranks command-name prefixes above later word-boundary partial matches", () => {
     const result = filterAndRankCommandAutocompleteEntries(entries, "comm");
 
-    expect(result.map((entry) => entry.command.name)).toEqual(["commit", "fde-committee"]);
+    expect(result.map((entry) => entry.command.name)).toEqual(["commit", "frogg-committee"]);
   });
 
   it("matches client command aliases", () => {

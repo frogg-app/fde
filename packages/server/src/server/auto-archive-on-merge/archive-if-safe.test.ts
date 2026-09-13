@@ -17,9 +17,9 @@ import { createWorktree, type WorktreeConfig } from "../../utils/worktree.js";
 import type { ForgeService } from "../../../services/forge-service.js";
 import type { StoredAgentRecord } from "../agent/agent-storage.js";
 
-const CWD = "/tmp/fde/worktrees/repo/branch";
-const FDE_HOME = "/tmp/fde";
-const WORKTREES_ROOT = "/tmp/fde/worktrees/repo";
+const CWD = "/tmp/frogg/worktrees/repo/branch";
+const FROGG_HOME = "/tmp/frogg";
+const WORKTREES_ROOT = "/tmp/frogg/worktrees/repo";
 
 function createPullRequest(
   overrides?: Partial<NonNullable<WorkspaceGitRuntimeSnapshot["forge"]["pullRequest"]>>,
@@ -47,7 +47,7 @@ function createSnapshot(overrides?: {
       mainRepoRoot: "/tmp/repo",
       currentBranch: "feature",
       remoteUrl: "https://github.com/acme/repo.git",
-      isFdeOwnedWorktree: true,
+      isFroggOwnedWorktree: true,
       isDirty: false,
       baseRef: "main",
       aheadBehind: { ahead: 0, behind: 0 },
@@ -81,7 +81,7 @@ function createLogger(): Logger {
 function createHarness(overrides?: {
   autoArchivedChangeRequestUrl?: string | null;
   snapshot?: WorkspaceGitRuntimeSnapshot;
-  isFdeOwnedWorktreeCwd?: ArchiveIfSafeDependencies["isFdeOwnedWorktreeCwd"];
+  isFroggOwnedWorktreeCwd?: ArchiveIfSafeDependencies["isFroggOwnedWorktreeCwd"];
   archiveByScope?: ArchiveIfSafeDependencies["archiveByScope"];
 }) {
   const getSnapshot = vi.fn(async () =>
@@ -91,7 +91,7 @@ function createHarness(overrides?: {
     getSnapshot,
   } as unknown as AutoArchiveArchiveOptions["workspaceGitService"];
   const options: AutoArchiveArchiveOptions = {
-    fdeHome: FDE_HOME,
+    froggHome: FROGG_HOME,
     daemonConfigStore: {
       get: () => ({ autoArchiveAfterMerge: true }),
     } as unknown as AutoArchiveArchiveOptions["daemonConfigStore"],
@@ -119,18 +119,18 @@ function createHarness(overrides?: {
           removedDirectory: false,
         }) satisfies ArchiveResult),
   ) as unknown as ArchiveIfSafeDependencies["archiveByScope"];
-  const isFdeOwnedWorktreeCwd = vi.fn(
-    overrides?.isFdeOwnedWorktreeCwd ??
+  const isFroggOwnedWorktreeCwd = vi.fn(
+    overrides?.isFroggOwnedWorktreeCwd ??
       (async () => ({
         allowed: true,
         repoRoot: "/tmp/repo",
         worktreeRoot: WORKTREES_ROOT,
         worktreePath: CWD,
       })),
-  ) as unknown as ArchiveIfSafeDependencies["isFdeOwnedWorktreeCwd"];
+  ) as unknown as ArchiveIfSafeDependencies["isFroggOwnedWorktreeCwd"];
   const deps: ArchiveIfSafeDependencies = {
     archiveByScope,
-    isFdeOwnedWorktreeCwd,
+    isFroggOwnedWorktreeCwd,
     killTerminalsForWorkspace: vi.fn(),
   };
   const log = createLogger();
@@ -172,11 +172,11 @@ function createGitRepo(): { tempDir: string; repoDir: string } {
   const repoDir = path.join(tempDir, "repo");
   mkdirSync(repoDir, { recursive: true });
   execFileSync("git", ["init", "-b", "main"], { cwd: repoDir, stdio: "pipe" });
-  execFileSync("git", ["config", "user.email", "test@fde.local"], {
+  execFileSync("git", ["config", "user.email", "test@frogg.local"], {
     cwd: repoDir,
     stdio: "pipe",
   });
-  execFileSync("git", ["config", "user.name", "Fde Test"], {
+  execFileSync("git", ["config", "user.name", "Frogg Test"], {
     cwd: repoDir,
     stdio: "pipe",
   });
@@ -187,9 +187,9 @@ function createGitRepo(): { tempDir: string; repoDir: string } {
   return { tempDir, repoDir };
 }
 
-async function createFdeOwnedWorktree(
+async function createFroggOwnedWorktree(
   repoDir: string,
-  fdeHome: string,
+  froggHome: string,
   worktreeSlug: string,
 ): Promise<WorktreeConfig> {
   return createWorktree({
@@ -201,7 +201,7 @@ async function createFdeOwnedWorktree(
       branchName: worktreeSlug,
     },
     runSetup: false,
-    fdeHome,
+    froggHome,
   });
 }
 
@@ -246,7 +246,7 @@ function createGitHubServiceStub(): ForgeService {
 }
 
 function createRealOutcomeHarness(input: {
-  fdeHome: string;
+  froggHome: string;
   repoDir: string;
   worktreePath: string;
   activeWorkspaces: ActiveWorkspaceRef[];
@@ -260,7 +260,7 @@ function createRealOutcomeHarness(input: {
   vi.spyOn(logger, "error").mockImplementation(() => undefined);
 
   const options: AutoArchiveArchiveOptions = {
-    fdeHome: input.fdeHome,
+    froggHome: input.froggHome,
     daemonConfigStore: {
       get: () => ({ autoArchiveAfterMerge: true }),
     } as unknown as AutoArchiveArchiveOptions["daemonConfigStore"],
@@ -274,7 +274,7 @@ function createRealOutcomeHarness(input: {
             mainRepoRoot: input.repoDir,
             currentBranch: "feature",
             remoteUrl: "https://github.com/acme/repo.git",
-            isFdeOwnedWorktree: true,
+            isFroggOwnedWorktree: true,
             isDirty: false,
             baseRef: "main",
             aheadBehind: { ahead: 0, behind: 0 },
@@ -366,7 +366,7 @@ describe("archiveIfSafe", () => {
 
     await runArchiveIfSafe(harness);
 
-    expect(harness.deps.isFdeOwnedWorktreeCwd).not.toHaveBeenCalled();
+    expect(harness.deps.isFroggOwnedWorktreeCwd).not.toHaveBeenCalled();
     expect(harness.deps.archiveByScope).not.toHaveBeenCalled();
   });
 
@@ -377,7 +377,7 @@ describe("archiveIfSafe", () => {
 
     await runArchiveIfSafe(harness);
 
-    expect(harness.deps.isFdeOwnedWorktreeCwd).not.toHaveBeenCalled();
+    expect(harness.deps.isFroggOwnedWorktreeCwd).not.toHaveBeenCalled();
     expect(harness.deps.archiveByScope).not.toHaveBeenCalled();
   });
 
@@ -391,15 +391,15 @@ describe("archiveIfSafe", () => {
     expect(harness.deps.archiveByScope).toHaveBeenCalledTimes(1);
   });
 
-  test("does nothing when the cwd is not a Fde-owned worktree", async () => {
+  test("does nothing when the cwd is not a Frogg-owned worktree", async () => {
     const harness = createHarness({
-      isFdeOwnedWorktreeCwd: async () => ({ allowed: false, worktreePath: CWD }),
+      isFroggOwnedWorktreeCwd: async () => ({ allowed: false, worktreePath: CWD }),
     });
 
     await runArchiveIfSafe(harness);
 
-    expect(harness.deps.isFdeOwnedWorktreeCwd).toHaveBeenCalledWith(CWD, {
-      fdeHome: FDE_HOME,
+    expect(harness.deps.isFroggOwnedWorktreeCwd).toHaveBeenCalledWith(CWD, {
+      froggHome: FROGG_HOME,
     });
     expect(harness.deps.archiveByScope).not.toHaveBeenCalled();
   });
@@ -419,7 +419,7 @@ describe("archiveIfSafe", () => {
     );
   });
 
-  test("archives a clean Fde-owned worktree after merge", async () => {
+  test("archives a clean Frogg-owned worktree after merge", async () => {
     const harness = createHarness();
 
     await runArchiveIfSafe(harness);
@@ -427,7 +427,7 @@ describe("archiveIfSafe", () => {
     expect(harness.deps.archiveByScope).toHaveBeenCalledTimes(1);
     expect(harness.deps.archiveByScope).toHaveBeenCalledWith(
       expect.objectContaining({
-        fdeHome: FDE_HOME,
+        froggHome: FROGG_HOME,
         workspaceGitService: harness.options.workspaceGitService,
       }),
       {
@@ -505,14 +505,14 @@ describe("archiveIfSafe", () => {
 
   test("real outcome: keeps sibling workspace and directory on last reference", async () => {
     const { tempDir, repoDir } = createGitRepo();
-    const fdeHome = path.join(tempDir, ".fde");
-    const worktree = await createFdeOwnedWorktree(repoDir, fdeHome, "merged-with-sibling");
+    const froggHome = path.join(tempDir, ".frogg");
+    const worktree = await createFroggOwnedWorktree(repoDir, froggHome, "merged-with-sibling");
     const workspaceA = "ws-merged-with-sibling-a";
     const workspaceB = "ws-merged-with-sibling-b";
     const archivedWorkspaceIds = new Set<string>();
 
     const harness = createRealOutcomeHarness({
-      fdeHome,
+      froggHome,
       repoDir,
       worktreePath: worktree.worktreePath,
       activeWorkspaces: [
@@ -536,13 +536,13 @@ describe("archiveIfSafe", () => {
 
   test("real outcome: removes directory when no sibling workspace remains", async () => {
     const { tempDir, repoDir } = createGitRepo();
-    const fdeHome = path.join(tempDir, ".fde");
-    const worktree = await createFdeOwnedWorktree(repoDir, fdeHome, "merged-last-ref");
+    const froggHome = path.join(tempDir, ".frogg");
+    const worktree = await createFroggOwnedWorktree(repoDir, froggHome, "merged-last-ref");
     const workspaceA = "ws-merged-last-ref";
     const archivedWorkspaceIds = new Set<string>();
 
     const harness = createRealOutcomeHarness({
-      fdeHome,
+      froggHome,
       repoDir,
       worktreePath: worktree.worktreePath,
       activeWorkspaces: [{ workspaceId: workspaceA, cwd: worktree.worktreePath, kind: "worktree" }],
@@ -562,8 +562,8 @@ describe("archiveIfSafe", () => {
 
   test("real outcome: an unarchived workspace is not archived again for the same merged PR", async () => {
     const { tempDir, repoDir } = createGitRepo();
-    const fdeHome = path.join(tempDir, ".fde");
-    const worktree = await createFdeOwnedWorktree(repoDir, fdeHome, "merged-then-unarchived");
+    const froggHome = path.join(tempDir, ".frogg");
+    const worktree = await createFroggOwnedWorktree(repoDir, froggHome, "merged-then-unarchived");
     const workspace = {
       workspaceId: "ws-merged-then-unarchived",
       cwd: worktree.worktreePath,
@@ -576,7 +576,7 @@ describe("archiveIfSafe", () => {
     };
     const archivedWorkspaceIds = new Set<string>();
     const harness = createRealOutcomeHarness({
-      fdeHome,
+      froggHome,
       repoDir,
       worktreePath: worktree.worktreePath,
       activeWorkspaces: [workspace, sibling],

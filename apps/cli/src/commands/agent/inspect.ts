@@ -1,7 +1,7 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import type { Command } from "commander";
-import { PARENT_AGENT_ID_LABEL } from "@fde/protocol/agent-labels";
-import type { AgentSnapshotPayload } from "@fde/protocol/messages";
+import { PARENT_AGENT_ID_LABEL } from "@frogg/protocol/agent-labels";
+import type { AgentSnapshotPayload } from "@frogg/protocol/messages";
 import { connectToDaemon, getDaemonHost } from "../../utils/client.js";
 import type { CommandOptions, ListResult, OutputSchema, CommandError } from "../../output/index.js";
 
@@ -150,7 +150,7 @@ function toInspectData(snapshot: AgentSnapshotPayload): AgentInspect {
       id: p.id,
       tool: p.name ?? "unknown",
     })),
-    Worktree: snapshot.labels?.["fde.worktree"] ?? null,
+    Worktree: snapshot.labels?.["frogg.worktree"] ?? null,
     ParentAgentId: snapshot.labels?.[PARENT_AGENT_ID_LABEL] ?? null,
   };
 }

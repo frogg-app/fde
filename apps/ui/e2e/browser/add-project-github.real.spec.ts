@@ -30,7 +30,7 @@ test.describe("Add Project GitHub flow", () => {
     test.skip(!hasGithubAuth(), "Requires GitHub authentication (gh auth login)");
 
     let repository: GhRepoFixture | null = null;
-    const parentDirectory = await mkdtemp(path.join(tmpdir(), "fde-e2e-github-clone-"));
+    const parentDirectory = await mkdtemp(path.join(tmpdir(), "frogg-e2e-github-clone-"));
     let projectId: string | null = null;
 
     try {
@@ -41,8 +41,8 @@ test.describe("Add Project GitHub flow", () => {
       await openAddProjectFlow(page);
       await chooseAddProjectMethod(page, "github");
 
-      await addProjectFlowInput(page).fill("frogg-app/fde");
-      await expect(addProjectFlow(page).getByText("frogg-app/fde", { exact: true })).toBeVisible({
+      await addProjectFlowInput(page).fill("frogg-app/frogg");
+      await expect(addProjectFlow(page).getByText("frogg-app/frogg", { exact: true })).toBeVisible({
         timeout: 30_000,
       });
       await addProjectFlowInput(page).fill("");

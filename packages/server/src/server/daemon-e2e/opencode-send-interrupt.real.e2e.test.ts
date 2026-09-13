@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import pino from "pino";
 
-import { createTestFdeDaemon } from "../test-utils/fde-daemon.js";
+import { createTestFroggDaemon } from "../test-utils/frogg-daemon.js";
 import { DaemonClient, type WaitForFinishResult } from "../test-utils/daemon-client.js";
 import { createMessageCollector } from "../test-utils/message-collector.js";
 import { canRunRealProvider, createRealProviderClients } from "./real-provider-test-config.js";
@@ -247,10 +247,10 @@ async function waitForIdleResolvingPermissions(
 
 async function createHarness(): Promise<{
   client: DaemonClient;
-  daemon: Awaited<ReturnType<typeof createTestFdeDaemon>>;
+  daemon: Awaited<ReturnType<typeof createTestFroggDaemon>>;
 }> {
   const logger = pino({ level: "silent" });
-  const daemon = await createTestFdeDaemon({
+  const daemon = await createTestFroggDaemon({
     agentClients: createRealProviderClients(["opencode"], logger),
     logger,
   });

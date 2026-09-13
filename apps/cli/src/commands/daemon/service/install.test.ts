@@ -11,7 +11,7 @@ import { LAUNCHD_LABEL } from "./plan.js";
  * so the commands fail harmlessly and the file writing is what is under test.
  */
 function scratchHome(): string {
-  return mkdtempSync(path.join(tmpdir(), "fde-service-home-"));
+  return mkdtempSync(path.join(tmpdir(), "frogg-service-home-"));
 }
 
 describe("login service files", () => {
@@ -24,9 +24,9 @@ describe("login service files", () => {
         env: { PATH: "/usr/bin" },
       });
       expect(installed.listen).toBe("0.0.0.0:9999");
-      const configPath = path.join(homeDir, ".fde", "config.json");
+      const configPath = path.join(homeDir, ".frogg", "config.json");
       expect(JSON.parse(readFileSync(configPath, "utf8")).daemon.listen).toBe("0.0.0.0:9999");
-      expect(readFileSync(installed.file!, "utf8")).not.toContain("<key>FDE_LISTEN</key>");
+      expect(readFileSync(installed.file!, "utf8")).not.toContain("<key>FROGG_LISTEN</key>");
     } finally {
       rmSync(homeDir, { recursive: true, force: true });
     }
@@ -41,7 +41,7 @@ describe("login service files", () => {
     "respects config, environment and flag precedence (%s, %s)",
     (listen, envListen, expected, pinned) => {
       const homeDir = scratchHome();
-      const home = path.join(homeDir, ".fde");
+      const home = path.join(homeDir, ".frogg");
       mkdirSync(home);
       writeFileSync(
         path.join(home, "config.json"),
@@ -51,13 +51,13 @@ describe("login service files", () => {
         const installed = installLoginService({
           platform: "darwin",
           homeDir,
-          env: { PATH: "/usr/bin", FDE_HOME: home, FDE_LISTEN: envListen },
+          env: { PATH: "/usr/bin", FROGG_HOME: home, FROGG_LISTEN: envListen },
           listen,
         });
         expect(installed.listen).toBe(expected);
         expect(installed.home).toBe(home);
         const plist = readFileSync(installed.file!, "utf8");
-        expect(plist.includes("<key>FDE_LISTEN</key>")).toBe(pinned);
+        expect(plist.includes("<key>FROGG_LISTEN</key>")).toBe(pinned);
         expect(plist.includes(`<string>${expected}</string>`)).toBe(pinned);
       } finally {
         rmSync(homeDir, { recursive: true, force: true });
@@ -73,7 +73,7 @@ describe("login service files", () => {
         homeDir,
         env: { PATH: "/usr/bin" },
         listen: "127.0.0.1:9991",
-        home: path.join(homeDir, ".fde"),
+        home: path.join(homeDir, ".frogg"),
       });
 
       const plistPath = path.join(homeDir, "Library", "LaunchAgents", `${LAUNCHD_LABEL}.plist`);

@@ -16,10 +16,10 @@ import {
   upsertUserMessage,
   upsertUserMessageAcrossStream,
 } from "./stream";
-import type { AgentProvider, ToolCallDetail } from "@fde/protocol/agent-types";
-import type { AgentStreamEventPayload } from "@fde/protocol/messages";
-import { buildToolCallDisplayModel } from "@fde/protocol/tool-call-display";
-import { timelineItemIdentity } from "@fde/protocol/timeline-identity";
+import type { AgentProvider, ToolCallDetail } from "@frogg/protocol/agent-types";
+import type { AgentStreamEventPayload } from "@frogg/protocol/messages";
+import { buildToolCallDisplayModel } from "@frogg/protocol/tool-call-display";
+import { timelineItemIdentity } from "@frogg/protocol/timeline-identity";
 
 type CanonicalToolStatus = "running" | "completed" | "failed" | "canceled";
 

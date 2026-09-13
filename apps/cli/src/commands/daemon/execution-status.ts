@@ -1,8 +1,8 @@
 import { createRequire } from "node:module";
 import type { Command } from "commander";
-import { getExecutionServiceStatus } from "@fde/server";
+import { getExecutionServiceStatus } from "@frogg/server";
 import type { CommandOptions, OutputSchema, SingleResult } from "../../output/index.js";
-import { resolveLocalFdeHome } from "./local-daemon.js";
+import { resolveLocalFroggHome } from "./local-daemon.js";
 
 interface ExecutionStatusResult {
   status: "running" | "stopped";
@@ -28,12 +28,12 @@ const schema: OutputSchema<ExecutionStatusResult> = {
 };
 
 export interface ExecutionStatusDependencies {
-  resolveHome: typeof resolveLocalFdeHome;
+  resolveHome: typeof resolveLocalFroggHome;
   getStatus: typeof getExecutionServiceStatus;
 }
 
 const defaultDependencies: ExecutionStatusDependencies = {
-  resolveHome: resolveLocalFdeHome,
+  resolveHome: resolveLocalFroggHome,
   getStatus: getExecutionServiceStatus,
 };
 

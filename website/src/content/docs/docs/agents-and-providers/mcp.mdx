@@ -5,7 +5,7 @@ sidebar:
   order: 3
 ---
 
-The daemon serves a Model Context Protocol endpoint so agents can use FDE itself: start
+The daemon serves a Model Context Protocol endpoint so agents can use Frogg itself: start
 other agents, watch them, run workspace scripts, schedule follow-ups. This is how an agent
 orchestrates others.
 
@@ -16,7 +16,7 @@ POST http://<daemon>:9999/mcp/agents
 ```
 
 - Streamable HTTP, stateless.
-- On by default (`daemon.mcp.enabled`). Disable with `fde restart --no-mcp`.
+- On by default (`daemon.mcp.enabled`). Disable with `frogg restart --no-mcp`.
 - Authorization: agents started by the daemon get a per-run capability token. Other
   clients use the daemon password as a bearer token.
 
@@ -29,17 +29,17 @@ under the normal [access rules](/docs/getting-started/connect-and-pair/#who-can-
 
 Injection is **off** by default. Turn it on in host settings, or:
 
-```json title="~/.fde/config.json"
+```json title="~/.frogg/config.json"
 { "daemon": { "mcp": { "injectIntoAgents": true } } }
 ```
 
-Then `fde reload`, and reload existing agents (`fde agent reload <id>`) so they pick it up.
+Then `frogg reload`, and reload existing agents (`frogg agent reload <id>`) so they pick it up.
 
-With injection on, agents get an MCP server named `fde`. OpenCode and Oh My Pi receive the
+With injection on, agents get an MCP server named `frogg`. OpenCode and Oh My Pi receive the
 same tools natively. ACP agents receive the server unless their provider sets
 `params.supportsMcpServers: false`.
 
-Without injection, agents can still use the `fde` CLI from their shell; the bundled
+Without injection, agents can still use the `frogg` CLI from their shell; the bundled
 [skills](/docs/agents-and-providers/skills/) teach them how.
 
 ## Tools
@@ -65,7 +65,7 @@ type, navigate, screenshot, evaluate and more). Off by default.
 
 ## Your own MCP servers
 
-FDE has no global registry of user MCP servers. Agents use the MCP servers configured in
+Frogg has no global registry of user MCP servers. Agents use the MCP servers configured in
 their own provider (for example Claude Code's settings). Programmatic agent creation can
 also pass `mcpServers` per agent.
 

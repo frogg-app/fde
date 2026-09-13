@@ -13,18 +13,26 @@ describe("installed daemon command compatibility", () => {
     },
     {
       source: "desktop and smoke-test startup",
-      argv: ["start", "--listen", "0.0.0.0:9999", "--no-relay", "--web-ui", "--home", "/test/fde"],
-      options: { listen: "0.0.0.0:9999", relay: false, webUi: true, home: "/test/fde" },
+      argv: [
+        "start",
+        "--listen",
+        "0.0.0.0:9999",
+        "--no-relay",
+        "--web-ui",
+        "--home",
+        "/test/frogg",
+      ],
+      options: { listen: "0.0.0.0:9999", relay: false, webUi: true, home: "/test/frogg" },
     },
     {
       source: "desktop daemon health check",
-      argv: ["status", "--home", "/test/fde", "--json"],
-      options: { home: "/test/fde", json: true },
+      argv: ["status", "--home", "/test/frogg", "--json"],
+      options: { home: "/test/frogg", json: true },
     },
     {
       source: "uninstaller and rollback shutdown",
-      argv: ["stop", "--home", "/test/fde", "--force", "--json"],
-      options: { home: "/test/fde", force: true, json: true },
+      argv: ["stop", "--home", "/test/frogg", "--force", "--json"],
+      options: { home: "/test/frogg", force: true, json: true },
     },
     {
       source: "rollback-test update invocation",
@@ -33,12 +41,12 @@ describe("installed daemon command compatibility", () => {
         "--to",
         "0.2.10",
         "--home",
-        "/test/fde",
+        "/test/frogg",
         "--json",
         "--verify-timeout",
         "5",
       ],
-      options: { to: "0.2.10", home: "/test/fde", json: true, verifyTimeout: "5" },
+      options: { to: "0.2.10", home: "/test/frogg", json: true, verifyTimeout: "5" },
     },
     {
       source: "updater detached apply worker",
@@ -56,23 +64,23 @@ describe("installed daemon command compatibility", () => {
     { source: "installer pairing guidance", argv: ["pair", "--json"], options: { json: true } },
     {
       source: "claim diagnostics",
-      argv: ["claim-status", "--home", "/test/fde"],
-      options: { home: "/test/fde" },
+      argv: ["claim-status", "--home", "/test/frogg"],
+      options: { home: "/test/frogg" },
     },
     {
       source: "claim reset",
-      argv: ["reset-claim", "--home", "/test/fde"],
-      options: { home: "/test/fde" },
+      argv: ["reset-claim", "--home", "/test/frogg"],
+      options: { home: "/test/frogg" },
     },
     {
       source: "password guidance",
-      argv: ["set-password", "--home", "/test/fde"],
-      options: { home: "/test/fde" },
+      argv: ["set-password", "--home", "/test/frogg"],
+      options: { home: "/test/frogg" },
     },
     {
       source: "LAN access guidance",
-      argv: ["trust-lan", "off", "--home", "/test/fde"],
-      options: { home: "/test/fde" },
+      argv: ["trust-lan", "off", "--home", "/test/frogg"],
+      options: { home: "/test/frogg" },
     },
     { source: "restart guidance", argv: ["restart", "--no-relay"], options: { relay: false } },
     {
@@ -82,13 +90,13 @@ describe("installed daemon command compatibility", () => {
     },
     {
       source: "service installation",
-      argv: ["install-service", "--home", "/test/fde"],
-      options: { home: "/test/fde" },
+      argv: ["install-service", "--home", "/test/frogg"],
+      options: { home: "/test/frogg" },
     },
     {
       source: "service removal",
-      argv: ["uninstall-service", "--home", "/test/fde"],
-      options: { home: "/test/fde" },
+      argv: ["uninstall-service", "--home", "/test/frogg"],
+      options: { home: "/test/frogg" },
     },
   ])("accepts $source", async ({ argv, options }) => {
     const cli = createCli().exitOverride();

@@ -14,31 +14,31 @@ const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").match
 function ensureDialog(): HTMLDialogElement {
   if (dialog?.isConnected) return dialog;
   dialog = document.createElement("dialog");
-  dialog.className = "fde-lightbox";
+  dialog.className = "frogg-lightbox";
   dialog.setAttribute("aria-label", "Enlarged screenshot");
   dialog.innerHTML = `
-    <button type="button" class="fde-lightbox-close" aria-label="Close (Esc)">
+    <button type="button" class="frogg-lightbox-close" aria-label="Close (Esc)">
       <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
     </button>
-    <img class="fde-lightbox-img" alt="" decoding="async" />
-    <p class="fde-lightbox-hint" aria-hidden="true">Click anywhere or press Esc to close</p>`;
+    <img class="frogg-lightbox-img" alt="" decoding="async" />
+    <p class="frogg-lightbox-hint" aria-hidden="true">Click anywhere or press Esc to close</p>`;
   const style = document.createElement("style");
   style.textContent = `
-    .fde-lightbox{position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;padding:clamp(0.75rem,3vw,2.5rem);border:0;background:transparent;display:none;place-items:center;overflow:hidden;cursor:zoom-out;color:#fff}
-    .fde-lightbox[open]{display:grid}
-    .fde-lightbox::backdrop{background:rgb(4 8 9/.82);backdrop-filter:blur(8px);opacity:0;transition:opacity 220ms ease}
-    .fde-lightbox.is-open::backdrop{opacity:1}
-    .fde-lightbox-img{max-width:100%;max-height:calc(100dvh - 5rem);width:auto;height:auto;border-radius:12px;box-shadow:0 30px 90px -20px rgb(0 0 0/.8);transform-origin:top left;will-change:transform}
-    .fde-lightbox-close{position:absolute;top:1rem;right:1rem;display:grid;place-items:center;width:2.75rem;height:2.75rem;border-radius:999px;border:1px solid rgb(255 255 255/.2);background:rgb(255 255 255/.08);color:#fff;cursor:pointer;transition:background-color 140ms ease,transform 140ms ease}
-    .fde-lightbox-close:hover{background:rgb(255 255 255/.18)}
-    .fde-lightbox-close:active{transform:scale(.92)}
-    .fde-lightbox-close:focus-visible{outline:2px solid #7fd9e6;outline-offset:2px}
-    .fde-lightbox-hint{position:absolute;bottom:.75rem;left:0;right:0;margin:0;text-align:center;font-size:.8rem;opacity:.65}`;
+    .frogg-lightbox{position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;padding:clamp(0.75rem,3vw,2.5rem);border:0;background:transparent;display:none;place-items:center;overflow:hidden;cursor:zoom-out;color:#fff}
+    .frogg-lightbox[open]{display:grid}
+    .frogg-lightbox::backdrop{background:rgb(4 8 9/.82);backdrop-filter:blur(8px);opacity:0;transition:opacity 220ms ease}
+    .frogg-lightbox.is-open::backdrop{opacity:1}
+    .frogg-lightbox-img{max-width:100%;max-height:calc(100dvh - 5rem);width:auto;height:auto;border-radius:12px;box-shadow:0 30px 90px -20px rgb(0 0 0/.8);transform-origin:top left;will-change:transform}
+    .frogg-lightbox-close{position:absolute;top:1rem;right:1rem;display:grid;place-items:center;width:2.75rem;height:2.75rem;border-radius:999px;border:1px solid rgb(255 255 255/.2);background:rgb(255 255 255/.08);color:#fff;cursor:pointer;transition:background-color 140ms ease,transform 140ms ease}
+    .frogg-lightbox-close:hover{background:rgb(255 255 255/.18)}
+    .frogg-lightbox-close:active{transform:scale(.92)}
+    .frogg-lightbox-close:focus-visible{outline:2px solid #7fd9e6;outline-offset:2px}
+    .frogg-lightbox-hint{position:absolute;bottom:.75rem;left:0;right:0;margin:0;text-align:center;font-size:.8rem;opacity:.65}`;
   document.head.append(style);
   document.body.append(dialog);
 
   dialog.addEventListener("click", (event) => {
-    if ((event.target as Element).closest(".fde-lightbox-close") || event.target === dialog || event.target instanceof HTMLImageElement || event.target instanceof HTMLParagraphElement) {
+    if ((event.target as Element).closest(".frogg-lightbox-close") || event.target === dialog || event.target instanceof HTMLImageElement || event.target instanceof HTMLParagraphElement) {
       void closeLightbox();
     }
   });
@@ -70,7 +70,7 @@ function flip(img: HTMLImageElement, from: DOMRect, reverse: boolean): Promise<v
 
 export async function openLightbox(options: OpenOptions): Promise<void> {
   const box = ensureDialog();
-  const img = box.querySelector<HTMLImageElement>(".fde-lightbox-img")!;
+  const img = box.querySelector<HTMLImageElement>(".frogg-lightbox-img")!;
   current = options;
   const originRect = options.origin.getBoundingClientRect();
   // Show the already-loaded inline image instantly, then swap in the full-size one.
@@ -79,7 +79,7 @@ export async function openLightbox(options: OpenOptions): Promise<void> {
   img.alt = options.alt;
   if (inline) img.src = inline;
   box.showModal();
-  box.querySelector<HTMLButtonElement>(".fde-lightbox-close")?.focus({ preventScroll: true });
+  box.querySelector<HTMLButtonElement>(".frogg-lightbox-close")?.focus({ preventScroll: true });
   requestAnimationFrame(() => box.classList.add("is-open"));
   if (!reducedMotion()) await flip(img, originRect, false);
   if (img.src !== new URL(options.src, location.href).href) {
@@ -97,7 +97,7 @@ export async function openLightbox(options: OpenOptions): Promise<void> {
 export async function closeLightbox(): Promise<void> {
   if (!dialog?.open || !current) return;
   const { origin, returnFocus } = current;
-  const img = dialog.querySelector<HTMLImageElement>(".fde-lightbox-img")!;
+  const img = dialog.querySelector<HTMLImageElement>(".frogg-lightbox-img")!;
   dialog.classList.remove("is-open");
   if (!reducedMotion()) await flip(img, origin.getBoundingClientRect(), true);
   dialog.close();

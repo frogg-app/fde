@@ -9,13 +9,13 @@ import { isBearerTokenValid } from "./auth.js";
 const roots: string[] = [];
 const CONFIG_PASSWORD_HASH = "$2b$12$OLxyuuP9uLK30Uzc4wQX0O6liuU/Q1t5P2b0Ebf36mULvpVK3DRZW";
 
-async function createFdeHome(config: unknown): Promise<string> {
-  const root = await mkdtemp(path.join(os.tmpdir(), "fde-config-auth-"));
+async function createFroggHome(config: unknown): Promise<string> {
+  const root = await mkdtemp(path.join(os.tmpdir(), "frogg-config-auth-"));
   roots.push(root);
-  const fdeHome = path.join(root, ".fde");
-  await mkdir(fdeHome, { recursive: true });
-  await writeFile(path.join(fdeHome, "config.json"), JSON.stringify(config, null, 2));
-  return fdeHome;
+  const froggHome = path.join(root, ".frogg");
+  await mkdir(froggHome, { recursive: true });
+  await writeFile(path.join(froggHome, "config.json"), JSON.stringify(config, null, 2));
+  return froggHome;
 }
 
 describe("daemon auth config", () => {
@@ -24,14 +24,14 @@ describe("daemon auth config", () => {
   });
 
   test("loads optional auth password hash from config.json", async () => {
-    const fdeHome = await createFdeHome({
+    const froggHome = await createFroggHome({
       version: 1,
       daemon: {
         auth: { password: CONFIG_PASSWORD_HASH },
       },
     });
 
-    const config = loadConfig(fdeHome, { env: {} });
+    const config = loadConfig(froggHome, { env: {} });
 
     expect(config.auth?.password).toBe(CONFIG_PASSWORD_HASH);
     expect(isBearerTokenValid({ password: config.auth?.password, token: "correct-password" })).toBe(
@@ -39,16 +39,16 @@ describe("daemon auth config", () => {
     );
   });
 
-  test("lets FDE_PASSWORD override config.json auth password hash", async () => {
-    const fdeHome = await createFdeHome({
+  test("lets FROGG_PASSWORD override config.json auth password hash", async () => {
+    const froggHome = await createFroggHome({
       version: 1,
       daemon: {
         auth: { password: CONFIG_PASSWORD_HASH },
       },
     });
 
-    const config = loadConfig(fdeHome, {
-      env: { FDE_PASSWORD: "from-env" },
+    const config = loadConfig(froggHome, {
+      env: { FROGG_PASSWORD: "from-env" },
     });
 
     expect(config.auth?.password).not.toBe(CONFIG_PASSWORD_HASH);

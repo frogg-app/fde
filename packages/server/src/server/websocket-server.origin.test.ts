@@ -5,7 +5,7 @@ import { isWebSocketSameOrigin } from "./websocket-server.js";
 describe("isWebSocketSameOrigin", () => {
   test("accepts exact same-origin websocket upgrades", () => {
     expect(isWebSocketSameOrigin("http://localhost:9999", "localhost:9999")).toBe(true);
-    expect(isWebSocketSameOrigin("https://fde.example.com", "fde.example.com")).toBe(true);
+    expect(isWebSocketSameOrigin("https://frogg.example.com", "frogg.example.com")).toBe(true);
   });
 
   test("accepts loopback aliases on the same port", () => {
@@ -20,6 +20,6 @@ describe("isWebSocketSameOrigin", () => {
 
   test("rejects non-loopback cross-origin upgrades", () => {
     expect(isWebSocketSameOrigin("http://evil.example:32775", "localhost:32775")).toBe(false);
-    expect(isWebSocketSameOrigin("http://127.0.0.1:32775", "fde.example.com:32775")).toBe(false);
+    expect(isWebSocketSameOrigin("http://127.0.0.1:32775", "frogg.example.com:32775")).toBe(false);
   });
 });

@@ -29,12 +29,12 @@ const template = [
 describe("withAndroidReleaseSigning", () => {
   it("adds an env-driven release signing config and keeps the debug one", () => {
     const result = configureReleaseSigning(template);
-    expect(result).toContain('System.getenv("FDE_ANDROID_KEYSTORE")');
+    expect(result).toContain('System.getenv("FROGG_ANDROID_KEYSTORE")');
     expect(result).toContain("storeFile file('debug.keystore')");
     expect(result).toContain(
-      'signingConfig System.getenv("FDE_ANDROID_KEYSTORE") ? signingConfigs.release : signingConfigs.debug',
+      'signingConfig System.getenv("FROGG_ANDROID_KEYSTORE") ? signingConfigs.release : signingConfigs.debug',
     );
-    expect(result).toContain("WARNING: FDE_ANDROID_KEYSTORE is not set");
+    expect(result).toContain("WARNING: FROGG_ANDROID_KEYSTORE is not set");
     // The debug build type is untouched.
     expect(result).toMatch(/debug \{\n {12}signingConfig signingConfigs\.debug\n {8}\}/);
     expect(result).toContain("minifyEnabled enableMinifyInReleaseBuilds");

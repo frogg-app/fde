@@ -17,7 +17,7 @@ const clients: DaemonClient[] = [];
 const gateways: ReturnType<typeof createExecutionGateway>[] = [];
 
 async function prepareRuntime() {
-  const home = await mkdtemp(path.join(tmpdir(), "fde-execution-acceptance-"));
+  const home = await mkdtemp(path.join(tmpdir(), "frogg-execution-acceptance-"));
   homes.push(home);
   const options = {
     home,
@@ -26,11 +26,11 @@ async function prepareRuntime() {
     execArgv: ["--import", "tsx"],
     env: {
       ...process.env,
-      FDE_HOME: home,
-      FDE_NODE_ENV: "development",
-      FDE_RELAY_ENABLED: "false",
-      FDE_LISTEN: "127.0.0.1:0",
-      FDE_SUPERVISED: "0",
+      FROGG_HOME: home,
+      FROGG_NODE_ENV: "development",
+      FROGG_RELAY_ENABLED: "false",
+      FROGG_LISTEN: "127.0.0.1:0",
+      FROGG_SUPERVISED: "0",
     },
   };
   return { home, options };
@@ -249,8 +249,8 @@ test("runtime version upgrade retains resident execution and reports gateway and
   if (target?.type !== "tcp") throw new Error("Expected TCP gateway");
   const response = await fetch(`http://127.0.0.1:${target.port}/api/identity`);
   expect(response.status).toBe(200);
-  expect(response.headers.get("x-fde-gateway-version")).toBe("acceptance-2");
-  expect(response.headers.get("x-fde-execution-version")).toBe("acceptance-1");
+  expect(response.headers.get("x-frogg-gateway-version")).toBe("acceptance-2");
+  expect(response.headers.get("x-frogg-execution-version")).toBe("acceptance-1");
   expect(await response.json()).toMatchObject({ version: "acceptance-1" });
 }, 60_000);
 

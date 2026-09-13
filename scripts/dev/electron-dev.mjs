@@ -13,13 +13,13 @@ const require = createRequire(import.meta.url);
 const root = path.resolve(import.meta.dirname, "../..");
 const state = path.join(root, ".dev/electron");
 const offset = createHash("sha256").update(root).digest().readUInt16BE(0) % 1000;
-const port = Number(process.env.FDE_ELECTRON_UI_PORT ?? 18000 + offset);
+const port = Number(process.env.FROGG_ELECTRON_UI_PORT ?? 18000 + offset);
 mkdirSync(state, { recursive: true });
 const env = electronDevEnvironment({ state, port, brand: loadBrand() });
 for (const args of [
-  ["run", "install:electron", "--workspace=@fde/desktop-electron"],
+  ["run", "install:electron", "--workspace=@frogg/desktop-electron"],
   ["run", "build:app-deps"],
-  ["run", "build:main", "--workspace=@fde/desktop-electron"],
+  ["run", "build:main", "--workspace=@frogg/desktop-electron"],
 ]) {
   const npm = portableCommand("npm", args);
   const result = spawnSync(npm.command, npm.args, {
@@ -85,7 +85,7 @@ launch(
 const deadline = Date.now() + 120000;
 while (!stopping) {
   try {
-    if ((await fetch(env.FDE_DESKTOP_DEV_URL)).ok) break;
+    if ((await fetch(env.FROGG_DESKTOP_DEV_URL)).ok) break;
   } catch {}
   if (Date.now() > deadline) {
     console.error("Electron UI did not become ready within two minutes.");

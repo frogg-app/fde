@@ -7,7 +7,7 @@ import { outputRoot, root, type BrandBuild } from "./resolve.mjs";
 export async function nativePresentation({ brand }: BrandBuild) {
   const packageEntry = path.join(outputRoot, "package.desktop");
   const rpmTemplate = path.join(outputRoot, "package.desktop.hbs");
-  const installName = brand.legacyFde ? brand.name : brand.id;
+  const installName = brand.legacyFrogg ? brand.name : brand.id;
   // Installed desktop entries must bypass a same-named CLI earlier on PATH.
   const fields = `Type=Application\nIcon=${brand.desktopBinaryName}\nCategories=Development;\nTerminal=false\nMimeType=x-scheme-handler/${brand.scheme};\n`;
   await writeFile(
@@ -25,7 +25,7 @@ export async function nativePresentation({ brand }: BrandBuild) {
     desktop,
     `[Desktop Entry]\nType=Application\nName={{comment}}\nExec={{exec}} %U\nIcon={{icon}}\nStartupWMClass={{exec}}\nCategories={{categories}}\nTerminal=false\n{{#if mime_type}}\nMimeType={{mime_type}}\n{{/if}}\n`,
   );
-  if (brand.legacyFde)
+  if (brand.legacyFrogg)
     return {
       bundle: {
         linux: {

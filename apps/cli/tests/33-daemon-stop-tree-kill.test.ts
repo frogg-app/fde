@@ -16,9 +16,9 @@ import { $ } from "zx";
 $.verbose = false;
 
 const testEnv = {
-  FDE_LOCAL_SPEECH_AUTO_DOWNLOAD: process.env.FDE_LOCAL_SPEECH_AUTO_DOWNLOAD ?? "0",
-  FDE_DICTATION_ENABLED: process.env.FDE_DICTATION_ENABLED ?? "0",
-  FDE_VOICE_MODE_ENABLED: process.env.FDE_VOICE_MODE_ENABLED ?? "0",
+  FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD: process.env.FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD ?? "0",
+  FROGG_DICTATION_ENABLED: process.env.FROGG_DICTATION_ENABLED ?? "0",
+  FROGG_VOICE_MODE_ENABLED: process.env.FROGG_VOICE_MODE_ENABLED ?? "0",
 };
 
 function sleep(ms: number): Promise<void> {
@@ -79,13 +79,13 @@ if (process.platform === "win32") {
   process.exit(0);
 }
 
-const fdeHome = await mkdtemp(join(tmpdir(), "fde-stop-tree-kill-"));
-const childPidPath = join(fdeHome, "descendant.pid");
+const froggHome = await mkdtemp(join(tmpdir(), "frogg-stop-tree-kill-"));
+const childPidPath = join(froggHome, "descendant.pid");
 let ownerProcess: ChildProcess | null = null;
 let descendantPid: number | null = null;
 
 try {
-  await mkdir(fdeHome, { recursive: true });
+  await mkdir(froggHome, { recursive: true });
 
   console.log("Test 1: start daemon-owner fixture with a detached descendant");
   ownerProcess = spawn(
@@ -115,7 +115,7 @@ try {
 
   assert(ownerProcess.pid, "owner pid should exist");
   await writeFile(
-    join(fdeHome, "fde.pid"),
+    join(froggHome, "frogg.pid"),
     JSON.stringify({
       pid: ownerProcess.pid,
       listen: "127.0.0.1:1",
@@ -139,7 +139,7 @@ try {
 
   console.log("Test 2: forced daemon stop kills owner and separate-PGID descendant");
   const stopResult =
-    await $`FDE_HOME=${fdeHome} FDE_LOCAL_SPEECH_AUTO_DOWNLOAD=${testEnv.FDE_LOCAL_SPEECH_AUTO_DOWNLOAD} FDE_DICTATION_ENABLED=${testEnv.FDE_DICTATION_ENABLED} FDE_VOICE_MODE_ENABLED=${testEnv.FDE_VOICE_MODE_ENABLED} npx fde daemon stop --home ${fdeHome} --json --timeout 1 --force --kill-timeout 2`.nothrow();
+    await $`FROGG_HOME=${froggHome} FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD=${testEnv.FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD} FROGG_DICTATION_ENABLED=${testEnv.FROGG_DICTATION_ENABLED} FROGG_VOICE_MODE_ENABLED=${testEnv.FROGG_VOICE_MODE_ENABLED} npx frogg daemon stop --home ${froggHome} --json --timeout 1 --force --kill-timeout 2`.nothrow();
   assert.strictEqual(stopResult.exitCode, 0, `stop should succeed: ${stopResult.stderr}`);
   const parsed = JSON.parse(stopResult.stdout) as {
     action?: unknown;
@@ -176,7 +176,7 @@ try {
 } finally {
   killIfRunning(ownerProcess?.pid ?? null);
   killIfRunning(descendantPid);
-  await rm(fdeHome, { recursive: true, force: true });
+  await rm(froggHome, { recursive: true, force: true });
 }
 
 console.log("=== Daemon stop tree kill regression test passed ===");

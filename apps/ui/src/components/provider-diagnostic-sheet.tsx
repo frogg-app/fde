@@ -23,9 +23,9 @@ import { useHostRuntimeClient } from "@/runtime/host-runtime";
 import { settingsStyles } from "@/styles/settings";
 import { resolveProviderLabel } from "@/utils/provider-definitions";
 import { formatTimeAgo } from "@/utils/time";
-import { compareMatchScores, scoreTextFields } from "@fde/protocol/search/text-match";
-import type { AgentModelDefinition, AgentProvider } from "@fde/protocol/agent-types";
-import type { ProviderProfileModel } from "@fde/protocol/provider-config";
+import { compareMatchScores, scoreTextFields } from "@frogg/protocol/search/text-match";
+import type { AgentModelDefinition, AgentProvider } from "@frogg/protocol/agent-types";
+import type { ProviderProfileModel } from "@frogg/protocol/provider-config";
 import {
   resolveProviderDiscoveredModels,
   type ProviderDiscoveredModelsCache,

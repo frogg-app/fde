@@ -2,9 +2,9 @@ import { resolve, dirname, basename } from "path";
 import { existsSync, realpathSync } from "fs";
 import { open as openFile, readFile, stat as statFile } from "fs/promises";
 import { TTLCache } from "@isaacs/ttlcache";
-import type { CheckoutCommit, CheckoutCommitFile } from "@fde/protocol/messages";
-import { parseGitHubRemoteIdentity, parseGitRemoteLocation } from "@fde/protocol/git-remote";
-import { maxBase64EncryptedPlaintextByteLength } from "@fde/relay";
+import type { CheckoutCommit, CheckoutCommitFile } from "@frogg/protocol/messages";
+import { parseGitHubRemoteIdentity, parseGitRemoteLocation } from "@frogg/protocol/git-remote";
+import { maxBase64EncryptedPlaintextByteLength } from "@frogg/relay";
 import type { Logger } from "pino";
 import type { ParsedDiffFile } from "../server/utils/diff-highlighter.js";
 import {
@@ -29,13 +29,13 @@ import {
 } from "../services/forge-cli-command.js";
 import { parseGitRevParsePath, resolveGitRevParsePath } from "./git-rev-parse-path.js";
 import { runGitCommand, type RunGitCommand } from "./run-git-command.js";
-import { isFdeOwnedWorktreeCwd, resolveFdeWorktreesBaseRoot } from "./worktree.js";
+import { isFroggOwnedWorktreeCwd, resolveFroggWorktreesBaseRoot } from "./worktree.js";
 import {
   branchNameFromRef,
-  getFdeWorktreeChangeRequestHintForBranch,
-  type FdeWorktreeMetadata,
-  readFdeWorktreeMetadata,
-  rebindFdeWorktreeChangeRequestHint,
+  getFroggWorktreeChangeRequestHintForBranch,
+  type FroggWorktreeMetadata,
+  readFroggWorktreeMetadata,
+  rebindFroggWorktreeChangeRequestHint,
 } from "./worktree-metadata.js";
 const READ_ONLY_GIT_ENV = {
   GIT_OPTIONAL_LOCKS: "0",
@@ -782,7 +782,7 @@ export interface CheckoutStatus {
   isGit: false;
 }
 
-export interface CheckoutStatusGitNonFde {
+export interface CheckoutStatusGitNonFrogg {
   isGit: true;
   repoRoot: string;
   mainRepoRoot: string | null;
@@ -798,10 +798,10 @@ export interface CheckoutStatusGitNonFde {
   behindOfOrigin: number | null;
   hasRemote: boolean;
   remoteUrl: string | null;
-  isFdeOwnedWorktree: false;
+  isFroggOwnedWorktree: false;
 }
 
-export interface CheckoutStatusGitFde {
+export interface CheckoutStatusGitFrogg {
   isGit: true;
   repoRoot: string;
   mainRepoRoot: string;
@@ -814,10 +814,10 @@ export interface CheckoutStatusGitFde {
   behindOfOrigin: number | null;
   hasRemote: boolean;
   remoteUrl: string | null;
-  isFdeOwnedWorktree: true;
+  isFroggOwnedWorktree: true;
 }
 
-export type CheckoutStatusGit = CheckoutStatusGitNonFde | CheckoutStatusGitFde;
+export type CheckoutStatusGit = CheckoutStatusGitNonFrogg | CheckoutStatusGitFrogg;
 
 export type CheckoutStatusResult = CheckoutStatus | CheckoutStatusGit;
 
@@ -844,7 +844,7 @@ export interface MergeFromBaseOptions {
 }
 
 export interface CheckoutContext {
-  fdeHome?: string;
+  froggHome?: string;
   worktreesRoot?: string;
   logger?: Pick<Logger, "trace" | "warn">;
   facts?: CheckoutSnapshotFacts | null;
@@ -862,7 +862,7 @@ export type CheckoutSnapshotFacts =
       remoteUrl: string | null;
       absoluteGitDir: string | null;
       gitCommonDir: string | null;
-      fdeWorktree: FdeWorktreeForCwd;
+      froggWorktree: FroggWorktreeForCwd;
       storedBaseRef: string | null;
       resolvedBaseRef: string | null;
       mainRepoRoot: string | null;
@@ -1033,17 +1033,17 @@ async function getMainRepoRootFromCommonDir(
     },
   );
   const worktrees = parseWorktreeList(worktreeOut);
-  const nonBareNonFde = worktrees.filter(
+  const nonBareNonFrogg = worktrees.filter(
     (wt) =>
       !wt.isBare &&
-      !isFdeWorktreePath(wt.path, {
-        fdeHome: context?.fdeHome,
+      !isFroggWorktreePath(wt.path, {
+        froggHome: context?.froggHome,
         worktreesRoot: context?.worktreesRoot,
       }),
   );
-  const childrenOfBareRepo = nonBareNonFde.filter((wt) => isDescendantPath(wt.path, normalized));
+  const childrenOfBareRepo = nonBareNonFrogg.filter((wt) => isDescendantPath(wt.path, normalized));
   const mainChild = childrenOfBareRepo.find((wt) => basename(wt.path) === "main");
-  return mainChild?.path ?? childrenOfBareRepo[0]?.path ?? nonBareNonFde[0]?.path ?? normalized;
+  return mainChild?.path ?? childrenOfBareRepo[0]?.path ?? nonBareNonFrogg[0]?.path ?? normalized;
 }
 
 export interface GitWorktreeEntry {
@@ -1052,15 +1052,15 @@ export interface GitWorktreeEntry {
   isBare?: boolean;
 }
 
-/** Check whether a path is under Fde's worktree root. */
-export function isFdeWorktreePath(
+/** Check whether a path is under Frogg's worktree root. */
+export function isFroggWorktreePath(
   p: string,
-  options?: { fdeHome?: string; worktreesRoot?: string },
+  options?: { froggHome?: string; worktreesRoot?: string },
 ): boolean {
-  if (options?.worktreesRoot || options?.fdeHome) {
-    return isDescendantPath(p, resolveFdeWorktreesBaseRoot(options));
+  if (options?.worktreesRoot || options?.froggHome) {
+    return isDescendantPath(p, resolveFroggWorktreesBaseRoot(options));
   }
-  return /[/\\]\.fde[/\\]worktrees[/\\]/.test(p);
+  return /[/\\]\.frogg[/\\]worktrees[/\\]/.test(p);
 }
 
 /** True when `child` is strictly inside `parent` (handles both `/` and `\`). */
@@ -1141,53 +1141,53 @@ export async function renameCurrentBranch(
 
   const currentBranch = await getCurrentBranch(cwd);
   if (currentBranch) {
-    rebindFdeWorktreeChangeRequestHint(worktreeRoot, previousBranch, currentBranch);
+    rebindFroggWorktreeChangeRequestHint(worktreeRoot, previousBranch, currentBranch);
   }
   return { previousBranch, currentBranch };
 }
 
-type FdeWorktreeForCwd =
-  | { isFdeOwnedWorktree: false }
-  | { isFdeOwnedWorktree: true; worktreeRoot: string };
+type FroggWorktreeForCwd =
+  | { isFroggOwnedWorktree: false }
+  | { isFroggOwnedWorktree: true; worktreeRoot: string };
 
-interface FdeWorktreeLookupOptions {
+interface FroggWorktreeLookupOptions {
   context?: CheckoutContext;
   knownWorktreeRoot?: string | null;
   knownGitCommonDir?: string | null;
 }
 
-async function getFdeWorktreeForCwd(
+async function getFroggWorktreeForCwd(
   cwd: string,
-  options: FdeWorktreeLookupOptions = {},
-): Promise<FdeWorktreeForCwd> {
+  options: FroggWorktreeLookupOptions = {},
+): Promise<FroggWorktreeForCwd> {
   // Fast-path reject: non-worktree paths do not need expensive ownership checks.
   if (!/[\\/]worktrees[\\/]/.test(cwd)) {
-    return { isFdeOwnedWorktree: false };
+    return { isFroggOwnedWorktree: false };
   }
 
-  const ownership = await isFdeOwnedWorktreeCwd(cwd, {
-    fdeHome: options.context?.fdeHome,
+  const ownership = await isFroggOwnedWorktreeCwd(cwd, {
+    froggHome: options.context?.froggHome,
     worktreesRoot: options.context?.worktreesRoot,
     knownGitCommonDir: options.knownGitCommonDir,
   });
   if (!ownership.allowed) {
-    return { isFdeOwnedWorktree: false };
+    return { isFroggOwnedWorktree: false };
   }
 
   return {
-    isFdeOwnedWorktree: true,
+    isFroggOwnedWorktree: true,
     worktreeRoot: options.knownWorktreeRoot ?? (await getWorktreeRoot(cwd, options.context)) ?? cwd,
   };
 }
 
 // Worktrees created before baseRef existed only stored the stripped name; it resolves
 // local-first, which is the base they were actually cut from.
-function storedBaseRefFromMetadata(metadata: FdeWorktreeMetadata | null): string | null {
+function storedBaseRefFromMetadata(metadata: FroggWorktreeMetadata | null): string | null {
   return metadata?.baseRef ?? metadata?.baseRefName ?? null;
 }
 
-function readFdeWorktreeBaseRef(worktreeRoot: string): string | null {
-  return storedBaseRefFromMetadata(readFdeWorktreeMetadata(worktreeRoot));
+function readFroggWorktreeBaseRef(worktreeRoot: string): string | null {
+  return storedBaseRefFromMetadata(readFroggWorktreeMetadata(worktreeRoot));
 }
 
 async function getStoredBaseRefForCwd(
@@ -1197,12 +1197,12 @@ async function getStoredBaseRefForCwd(
   if (context?.facts?.isGit) {
     return context.facts.storedBaseRef;
   }
-  const fdeWorktree = await getFdeWorktreeForCwd(cwd, { context });
-  if (!fdeWorktree.isFdeOwnedWorktree) {
+  const froggWorktree = await getFroggWorktreeForCwd(cwd, { context });
+  if (!froggWorktree.isFroggOwnedWorktree) {
     return null;
   }
 
-  return readFdeWorktreeBaseRef(fdeWorktree.worktreeRoot);
+  return readFroggWorktreeBaseRef(froggWorktree.worktreeRoot);
 }
 
 async function getResolvedBaseRefForCwd(
@@ -1709,7 +1709,7 @@ interface CheckoutInspectionContext {
   remoteUrl: string | null;
   absoluteGitDir: string | null;
   gitCommonDir: string | null;
-  fdeWorktree: FdeWorktreeForCwd;
+  froggWorktree: FroggWorktreeForCwd;
 }
 
 async function inspectCheckoutContext(
@@ -1727,7 +1727,7 @@ async function inspectCheckoutContext(
     resolveAbsoluteGitDir(cwd, context),
     resolveGitCommonDir(cwd, context),
   ]);
-  const fdeWorktree = await getFdeWorktreeForCwd(cwd, {
+  const froggWorktree = await getFroggWorktreeForCwd(cwd, {
     context,
     knownWorktreeRoot: root,
     knownGitCommonDir: gitCommonDir,
@@ -1739,7 +1739,7 @@ async function inspectCheckoutContext(
     remoteUrl,
     absoluteGitDir,
     gitCommonDir,
-    fdeWorktree,
+    froggWorktree,
   };
 }
 
@@ -1831,10 +1831,10 @@ function buildPullRequestLookupTargetFromPushConfig(
 }
 
 function buildPullRequestLookupTargetFromMetadata(
-  metadata: FdeWorktreeMetadata | null,
+  metadata: FroggWorktreeMetadata | null,
   currentBranch: string,
 ): PullRequestStatusLookupTarget | null {
-  const target = getFdeWorktreeChangeRequestHintForBranch(metadata, currentBranch);
+  const target = getFroggWorktreeChangeRequestHintForBranch(metadata, currentBranch);
   if (!target) {
     return null;
   }
@@ -1915,7 +1915,7 @@ async function resolvePullRequestLookupTargetFromPushConfig(
 async function resolveFactsPullRequestLookupTarget(input: {
   cwd: string;
   inspected: CheckoutInspectionContext;
-  metadata: FdeWorktreeMetadata | null;
+  metadata: FroggWorktreeMetadata | null;
   branchRemoteName: string | null;
   branchMergeRef: string | null;
   branchRemoteUrl: string | null;
@@ -1968,10 +1968,10 @@ export async function getCheckoutSnapshotFacts(
     return { isGit: false };
   }
 
-  const fdeWorktreeMetadata = inspected.fdeWorktree.isFdeOwnedWorktree
-    ? readFdeWorktreeMetadata(inspected.fdeWorktree.worktreeRoot)
+  const froggWorktreeMetadata = inspected.froggWorktree.isFroggOwnedWorktree
+    ? readFroggWorktreeMetadata(inspected.froggWorktree.worktreeRoot)
     : null;
-  const storedBaseRef = storedBaseRefFromMetadata(fdeWorktreeMetadata);
+  const storedBaseRef = storedBaseRefFromMetadata(froggWorktreeMetadata);
   const resolvedBaseRef = storedBaseRef ?? (await resolveBaseRef(cwd, context));
   const mainRepoRoot = await getMainRepoRootFromCommonDir(
     cwd,
@@ -2013,7 +2013,7 @@ export async function getCheckoutSnapshotFacts(
   let pullRequestLookupTarget = await resolveFactsPullRequestLookupTarget({
     cwd,
     inspected,
-    metadata: fdeWorktreeMetadata,
+    metadata: froggWorktreeMetadata,
     branchRemoteName,
     branchMergeRef,
     branchRemoteUrl,
@@ -2034,7 +2034,7 @@ export async function getCheckoutSnapshotFacts(
     remoteUrl: inspected.remoteUrl,
     absoluteGitDir: inspected.absoluteGitDir,
     gitCommonDir: inspected.gitCommonDir,
-    fdeWorktree: inspected.fdeWorktree,
+    froggWorktree: inspected.froggWorktree,
     storedBaseRef,
     resolvedBaseRef,
     mainRepoRoot,
@@ -2050,7 +2050,7 @@ const PER_FILE_DIFF_MAX_BYTES = 1024 * 1024; // 1MB
 const TOTAL_DIFF_MAX_BYTES = 2 * 1024 * 1024; // 2MB
 const RELAY_MAX_FRAME_BYTES = 32 * 1024 * 1024;
 const CHECKOUT_DIFF_FRAME_HEADROOM_BYTES = 1024 * 1024;
-// Temporary until diffs load lazily per file. The FDE relay's 32 MiB frame limit is
+// Temporary until diffs load lazily per file. The Frogg relay's 32 MiB frame limit is
 // binding: string frames are encrypted and base64-encoded. Reserve 1 MiB plaintext for
 // the surrounding WebSocket JSON envelope after inverting that exact wire expansion.
 export const CHECKOUT_DIFF_MAX_STRUCTURED_BYTES =
@@ -2200,7 +2200,7 @@ export async function getCheckoutStatus(
   const worktreeRoot = facts.worktreeRoot;
   const currentBranch = facts.currentBranch;
   const remoteUrl = facts.remoteUrl;
-  const fdeWorktree = facts.fdeWorktree;
+  const froggWorktree = facts.froggWorktree;
   const isDirty = await isWorkingTreeDirty(cwd, context);
   const hasRemote = remoteUrl !== null;
   const baseRef = facts.resolvedBaseRef;
@@ -2219,7 +2219,7 @@ export async function getCheckoutStatus(
   const aheadOfOrigin = upstreamStatus?.aheadBehind.ahead ?? null;
   const behindOfOrigin = upstreamStatus?.aheadBehind.behind ?? null;
 
-  if (fdeWorktree.isFdeOwnedWorktree && baseRef) {
+  if (froggWorktree.isFroggOwnedWorktree && baseRef) {
     return {
       isGit: true,
       repoRoot: worktreeRoot,
@@ -2233,7 +2233,7 @@ export async function getCheckoutStatus(
       behindOfOrigin,
       hasRemote,
       remoteUrl,
-      isFdeOwnedWorktree: true,
+      isFroggOwnedWorktree: true,
     };
   }
 
@@ -2251,7 +2251,7 @@ export async function getCheckoutStatus(
     behindOfOrigin,
     hasRemote,
     remoteUrl,
-    isFdeOwnedWorktree: false,
+    isFroggOwnedWorktree: false,
   };
 }
 
@@ -4114,7 +4114,7 @@ function getUnavailablePullRequestStatus(
   }
   if (
     facts?.isGit === true &&
-    facts.fdeWorktree.isFdeOwnedWorktree &&
+    facts.froggWorktree.isFroggOwnedWorktree &&
     facts.pullRequestLookupTarget === null
   ) {
     return buildPullRequestStatusResult(null, "authenticated");

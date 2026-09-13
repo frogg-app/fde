@@ -2,9 +2,9 @@ import type { Logger } from "pino";
 
 import {
   addModelVisibleStructuredContent,
-  serializeFdeToolInputParameters,
-} from "../../tools/fde-tool-serialization.js";
-import type { FdeToolCatalog, FdeToolResult } from "../../tools/types.js";
+  serializeFroggToolInputParameters,
+} from "../../tools/frogg-tool-serialization.js";
+import type { FroggToolCatalog, FroggToolResult } from "../../tools/types.js";
 import type { OmpRuntimeSession } from "./runtime.js";
 import {
   OmpRpcHostToolCallRequestSchema,
@@ -24,19 +24,19 @@ interface PendingOmpHostToolCall {
 
 interface OmpHostToolRouterInput {
   runtimeSession: OmpRuntimeSession;
-  catalog: FdeToolCatalog;
+  catalog: FroggToolCatalog;
   logger: Logger;
 }
 
 const routersByRuntimeSession = new WeakMap<OmpRuntimeSession, OmpHostToolRouter>();
 
-export function serializeOmpHostTools(catalog: FdeToolCatalog): OmpRpcHostToolDefinition[] {
+export function serializeOmpHostTools(catalog: FroggToolCatalog): OmpRpcHostToolDefinition[] {
   return [...catalog.tools.values()].map((tool) => {
     const definition: OmpRpcHostToolDefinition = {
       name: tool.name,
       description: tool.description,
       loadMode: "essential",
-      parameters: serializeFdeToolInputParameters(tool),
+      parameters: serializeFroggToolInputParameters(tool),
     };
     if (tool.title) {
       definition.label = tool.title;
@@ -47,7 +47,7 @@ export function serializeOmpHostTools(catalog: FdeToolCatalog): OmpRpcHostToolDe
 
 export async function setOmpHostTools(
   runtimeSession: OmpRuntimeSession,
-  catalog: FdeToolCatalog,
+  catalog: FroggToolCatalog,
 ): Promise<string[]> {
   return await runtimeSession.setHostTools(serializeOmpHostTools(catalog));
 }
@@ -56,7 +56,7 @@ export function handleOmpHostToolRuntimeEvent(
   event: unknown,
   input: {
     runtimeSession: OmpRuntimeSession;
-    fdeTools?: FdeToolCatalog;
+    froggTools?: FroggToolCatalog;
     logger: Logger;
   },
 ): boolean {
@@ -106,10 +106,10 @@ export async function waitForOmpHostToolsIdle(runtimeSession: OmpRuntimeSession)
 
 function getRouter(input: {
   runtimeSession: OmpRuntimeSession;
-  fdeTools?: FdeToolCatalog;
+  froggTools?: FroggToolCatalog;
   logger: Logger;
 }): OmpHostToolRouter | null {
-  if (!input.fdeTools) {
+  if (!input.froggTools) {
     return null;
   }
   const existing = routersByRuntimeSession.get(input.runtimeSession);
@@ -118,7 +118,7 @@ function getRouter(input: {
   }
   const router = new OmpHostToolRouter({
     runtimeSession: input.runtimeSession,
-    catalog: input.fdeTools,
+    catalog: input.froggTools,
     logger: input.logger,
   });
   routersByRuntimeSession.set(input.runtimeSession, router);
@@ -132,7 +132,7 @@ function sendMissingCatalogResult(
   runtimeSession.sendHostToolResult(
     toOmpHostToolErrorResult(
       request.id,
-      `Host tool "${request.toolName}" was called before FDE tools were registered`,
+      `Host tool "${request.toolName}" was called before Frogg tools were registered`,
     ),
   );
 }
@@ -143,7 +143,7 @@ function isOmpHostToolEventType(type: string): boolean {
 
 class OmpHostToolRouter {
   private readonly runtimeSession: OmpRuntimeSession;
-  private readonly catalog: FdeToolCatalog;
+  private readonly catalog: FroggToolCatalog;
   private readonly logger: Logger;
   private readonly pendingCalls = new Map<string, PendingOmpHostToolCall>();
   private readonly idleWaiters = new Set<() => void>();
@@ -223,7 +223,7 @@ class OmpHostToolRouter {
     this.idleWaiters.clear();
   }
 
-  private sendUpdate(callId: string, result: FdeToolResult): void {
+  private sendUpdate(callId: string, result: FroggToolResult): void {
     const update: OmpRpcHostToolUpdate = {
       type: "host_tool_update",
       id: callId,
@@ -233,7 +233,7 @@ class OmpHostToolRouter {
   }
 }
 
-function toOmpHostToolResult(id: string, result: FdeToolResult): OmpRpcHostToolResult {
+function toOmpHostToolResult(id: string, result: FroggToolResult): OmpRpcHostToolResult {
   const modelVisibleResult = addModelVisibleStructuredContent(result);
   const mappedResult = toOmpAgentToolResult(modelVisibleResult);
   return {
@@ -257,7 +257,7 @@ function toOmpHostToolErrorResult(id: string, error: unknown): OmpRpcHostToolRes
   };
 }
 
-function toOmpAgentToolResult(result: FdeToolResult): OmpAgentToolResult {
+function toOmpAgentToolResult(result: FroggToolResult): OmpAgentToolResult {
   const mapped: OmpAgentToolResult = {
     content: result.content.map((item) => ({ ...item })),
   };

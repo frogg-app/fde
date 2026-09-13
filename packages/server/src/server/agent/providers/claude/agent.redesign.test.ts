@@ -328,11 +328,11 @@ test("fails an auto mode turn when Claude Code uses Vertex", async () => {
 });
 
 test("logs redacted query summary and never leaks sentinel secrets", async () => {
-  const envSecret = "FDE_ENV_SENTINEL_SECRET";
-  const runtimeSecret = "FDE_RUNTIME_SENTINEL_SECRET";
-  const systemSecret = "FDE_SYSTEM_PROMPT_SENTINEL_SECRET";
-  const previousEnv = process.env.FDE_TEST_SENTINEL_SECRET;
-  process.env.FDE_TEST_SENTINEL_SECRET = envSecret;
+  const envSecret = "FROGG_ENV_SENTINEL_SECRET";
+  const runtimeSecret = "FROGG_RUNTIME_SENTINEL_SECRET";
+  const systemSecret = "FROGG_SYSTEM_PROMPT_SENTINEL_SECRET";
+  const previousEnv = process.env.FROGG_TEST_SENTINEL_SECRET;
+  process.env.FROGG_TEST_SENTINEL_SECRET = envSecret;
 
   sdkQueryFactory.mockImplementation(() => {
     let step = 0;
@@ -384,7 +384,7 @@ test("logs redacted query summary and never leaks sentinel secrets", async () =>
     queryFactory: sdkQueryFactory,
     runtimeSettings: {
       env: {
-        FDE_RUNTIME_SENTINEL_SECRET: runtimeSecret,
+        FROGG_RUNTIME_SENTINEL_SECRET: runtimeSecret,
       },
     },
     resolveBinary: async () => "/test/claude/bin",
@@ -417,9 +417,9 @@ test("logs redacted query summary and never leaks sentinel secrets", async () =>
   } finally {
     await session.close();
     if (previousEnv === undefined) {
-      delete process.env.FDE_TEST_SENTINEL_SECRET;
+      delete process.env.FROGG_TEST_SENTINEL_SECRET;
     } else {
-      process.env.FDE_TEST_SENTINEL_SECRET = previousEnv;
+      process.env.FROGG_TEST_SENTINEL_SECRET = previousEnv;
     }
   }
 });

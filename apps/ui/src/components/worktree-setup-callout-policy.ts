@@ -1,4 +1,4 @@
-import type { FdeConfigRaw } from "@fde/protocol/messages";
+import type { FroggConfigRaw } from "@frogg/protocol/messages";
 import { i18n } from "@/i18n/i18next";
 import { buildProjectSettingsRoute } from "@/utils/host-routes";
 
@@ -16,7 +16,7 @@ export interface ActiveGitWorkspaceProject {
 
 interface ReadProjectConfigResult {
   ok: boolean;
-  config?: FdeConfigRaw | null;
+  config?: FroggConfigRaw | null;
 }
 
 export interface WorktreeSetupCalloutPolicy {
@@ -68,7 +68,7 @@ export function buildWorktreeSetupCalloutPolicy(
   };
 }
 
-function hasSetupCommands(config: FdeConfigRaw): boolean {
+function hasSetupCommands(config: FroggConfigRaw): boolean {
   const setup = config.worktree?.setup;
   if (typeof setup === "string") {
     return setup.trim().length > 0;

@@ -1,4 +1,4 @@
-import { DEFAULT_SSH_DAEMON_PORT } from "@fde/protocol/ssh-transport";
+import { DEFAULT_SSH_DAEMON_PORT } from "@frogg/protocol/ssh-transport";
 import { invokeDesktopCommand } from "@/desktop/electron/invoke";
 
 export interface SshConfigHost {

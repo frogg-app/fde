@@ -4,7 +4,7 @@ import path from "node:path";
 import { expect, test } from "vitest";
 
 import { DaemonClient } from "../test-utils/daemon-client.js";
-import { createTestFdeDaemon, type TestFdeDaemon } from "../test-utils/fde-daemon.js";
+import { createTestFroggDaemon, type TestFroggDaemon } from "../test-utils/frogg-daemon.js";
 
 const CREATED_AT = "2026-06-29T11:12:42.000Z";
 const HEALTHY_UPDATED_AT = "2026-06-29T11:40:00.000Z";
@@ -16,17 +16,17 @@ interface StaleAgentFixture {
   orphanWorkspaceId: string;
   healthyAgentId: string;
   orphanAgentId: string;
-  fdeHomeRoot: string;
+  froggHomeRoot: string;
   cleanupPaths: string[];
 }
 
 test("agent fetch RPCs tolerate an agent whose workspace project record is gone", async () => {
   const fixture = seedStaleAgentFixture();
-  let daemon: TestFdeDaemon | null = null;
+  let daemon: TestFroggDaemon | null = null;
   let client: DaemonClient | null = null;
 
   try {
-    daemon = await createTestFdeDaemon({ fdeHomeRoot: fixture.fdeHomeRoot, cleanup: false });
+    daemon = await createTestFroggDaemon({ froggHomeRoot: fixture.froggHomeRoot, cleanup: false });
     client = new DaemonClient({ url: `ws://127.0.0.1:${daemon.port}/ws` });
     await client.connect();
 
@@ -75,15 +75,15 @@ test("agent fetch RPCs tolerate an agent whose workspace project record is gone"
 });
 
 function seedStaleAgentFixture(): StaleAgentFixture {
-  const healthyCwd = mkdtempSync(path.join(os.tmpdir(), "fde-healthy-agent-"));
-  const orphanCwd = mkdtempSync(path.join(os.tmpdir(), "fde-orphan-agent-"));
-  const fdeHomeRoot = mkdtempSync(path.join(os.tmpdir(), "fde-orphan-agent-home-"));
-  const fdeHome = path.join(fdeHomeRoot, ".fde");
-  const projectsDir = path.join(fdeHome, "projects");
-  const agentsDir = path.join(fdeHome, "agents");
+  const healthyCwd = mkdtempSync(path.join(os.tmpdir(), "frogg-healthy-agent-"));
+  const orphanCwd = mkdtempSync(path.join(os.tmpdir(), "frogg-orphan-agent-"));
+  const froggHomeRoot = mkdtempSync(path.join(os.tmpdir(), "frogg-orphan-agent-home-"));
+  const froggHome = path.join(froggHomeRoot, ".frogg");
+  const projectsDir = path.join(froggHome, "projects");
+  const agentsDir = path.join(froggHome, "agents");
   const healthyProjectId = "proj-healthy-agent-rpc";
   const healthyWorkspaceId = "ws-healthy-agent-rpc";
-  const orphanWorkspaceId = "c:\\Users\\fde\\stale-project";
+  const orphanWorkspaceId = "c:\\Users\\frogg\\stale-project";
   const orphanProjectId = "proj-removed-agent-rpc";
   const healthyAgentId = "agent-healthy-rpc";
   const orphanAgentId = "agent-orphan-rpc";
@@ -170,8 +170,8 @@ function seedStaleAgentFixture(): StaleAgentFixture {
     orphanWorkspaceId,
     healthyAgentId,
     orphanAgentId,
-    fdeHomeRoot,
-    cleanupPaths: [healthyCwd, orphanCwd, fdeHomeRoot],
+    froggHomeRoot,
+    cleanupPaths: [healthyCwd, orphanCwd, froggHomeRoot],
   };
 }
 

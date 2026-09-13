@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { DaemonClient, FetchAgentsEntry } from "@fde/client/internal/daemon-client";
-import type { AgentSnapshotPayload } from "@fde/protocol/messages";
-import { PARENT_AGENT_ID_LABEL } from "@fde/protocol/agent-labels";
-import type { AgentPermissionRequest } from "@fde/protocol/agent-types";
+import type { DaemonClient, FetchAgentsEntry } from "@frogg/client/internal/daemon-client";
+import type { AgentSnapshotPayload } from "@frogg/protocol/messages";
+import { PARENT_AGENT_ID_LABEL } from "@frogg/protocol/agent-labels";
+import type { AgentPermissionRequest } from "@frogg/protocol/agent-types";
 import { useSessionStore } from "@/stores/session-store";
 import { normalizeAgentSnapshot } from "@/utils/agent-snapshots";
 import { isAgentArchiving, setAgentArchiving } from "@/hooks/use-archive-agent";
@@ -54,7 +54,7 @@ function createEntry(agent: AgentSnapshotPayload): FetchAgentsEntry {
         currentBranch: null,
         remoteUrl: null,
         worktreeRoot: null,
-        isFdeOwnedWorktree: false,
+        isFroggOwnedWorktree: false,
         mainRepoRoot: null,
       },
     },

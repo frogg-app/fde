@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { Command } from "commander";
@@ -55,7 +55,7 @@ export async function runHubExport(
   };
   const origin = resolveHubOrigin(resolution);
   const credential = resolveHubCredential({ ...resolution, origin });
-  const directory = path.resolve(dependencies.cwd(), directoryInput ?? ".fde/triggers");
+  const directory = path.resolve(dependencies.cwd(), directoryInput ?? ".frogg/triggers");
   reportHubProgress(dependencies.reporter, options, `Exporting triggers from ${origin}`);
   const triggers = await dependencies.hub.listTriggers(origin, credential);
   await mkdir(directory, { recursive: true });
@@ -104,7 +104,7 @@ export function addHubExportCommand(parent: Command, dependencies: HubExportDepe
       parent
         .command("export")
         .description("Export active Hub triggers as one YAML file per trigger")
-        .argument("[directory]", "Destination directory", ".fde/triggers")
+        .argument("[directory]", "Destination directory", ".frogg/triggers")
         .option("--hub <origin>", `${brand.name} Hub origin`)
         .option("--api-key <secret>", "Organization API key")
         .option("--force", "Replace trigger files with different contents"),

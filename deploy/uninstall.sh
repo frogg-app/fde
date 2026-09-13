@@ -1,28 +1,28 @@
 #!/usr/bin/env bash
-# Removes an FDE daemon installation made by deploy/install.sh: stops and
+# Removes a Frogg daemon installation made by deploy/install.sh: stops and
 # unregisters the service, removes the bin links and the install directory.
-# Daemon state under ~/.fde is kept unless FDE_PURGE=1.
+# Daemon state under ~/.frogg is kept unless FROGG_PURGE=1.
 #
-# Environment overrides mirror install.sh: FDE_INSTALL_DIR, FDE_BIN_DIR,
-# FDE_HOME (daemon state directory; default ~/.fde).
+# Environment overrides mirror install.sh: FROGG_INSTALL_DIR, FROGG_BIN_DIR,
+# FROGG_HOME (daemon state directory; default ~/.frogg).
 set -euo pipefail
 
 # BEGIN BRAND DEFAULTS — replaced only in generated distribution scripts.
-BRAND_ID='fde'
-BRAND_NAME='FDE'
-BRAND_FULL_NAME='Frogg Development Environment'
-BRAND_APPLICATION_ID='app.frogg.fde'
-BRAND_ENV_PREFIX='FDE'
-BRAND_CLI='fde'
-BRAND_HOME='.fde'
-BRAND_SERVICE='fde-daemon'
-BRAND_LAUNCHD='app.frogg.fde-daemon'
-BRAND_DAEMON_PREFIX='fde-daemon'
+BRAND_ID='frogg'
+BRAND_NAME='Frogg'
+BRAND_FULL_NAME='Frogg'
+BRAND_APPLICATION_ID='app.frogg.frogg'
+BRAND_ENV_PREFIX='Frogg'
+BRAND_CLI='frogg'
+BRAND_HOME='.frogg'
+BRAND_SERVICE='frogg-daemon'
+BRAND_LAUNCHD='app.frogg.frogg-daemon'
+BRAND_DAEMON_PREFIX='frogg-daemon'
 BRAND_PORT='9999'
-BRAND_RELEASE_BASE='https://github.com/frogg-app/fde/releases'
-BRAND_DOCKER_IMAGE='froggapp/fde'
+BRAND_RELEASE_BASE='https://github.com/frogg-app/frogg/releases'
+BRAND_DOCKER_IMAGE='froggapp/frogg'
 BRAND_LEGACY='true'
-BRAND_COMMANDS=(fde fde)
+BRAND_COMMANDS=(frogg frogg)
 # END BRAND DEFAULTS
 
 # Environment names inside this script remain implementation details. Only the
@@ -30,14 +30,14 @@ BRAND_COMMANDS=(fde fde)
 if [ "${BRAND_LEGACY}" != "true" ]; then
   for suffix in INSTALL_DIR BIN_DIR RELEASE_BASE LISTEN VERSION BUNDLE_FILE BUNDLE_URL NO_SERVICE NO_MODIFY_PATH HOME PURGE IMAGE PORT BIND WORKSPACE PASSWORD CONTAINER NO_PULL UPDATE HEALTH_TIMEOUT; do
     key="${BRAND_ENV_PREFIX}_${suffix}"
-    printf -v "FDE_${suffix}" '%s' "${!key-}"
+    printf -v "FROGG_${suffix}" '%s' "${!key-}"
   done
 fi
 
-FDE_INSTALL_DIR="${FDE_INSTALL_DIR:-${HOME}/.local/share/${BRAND_ID}}"
-FDE_BIN_DIR="${FDE_BIN_DIR:-${HOME}/.local/bin}"
-if [ "${BRAND_LEGACY}" = "true" ]; then FDE_HOME="${FDE_HOME:-${FDE_HOME:-${HOME}/${BRAND_HOME}}}"; else FDE_HOME="${FDE_HOME:-${HOME}/${BRAND_HOME}}"; fi
-FDE_PURGE="${FDE_PURGE:-0}"
+FROGG_INSTALL_DIR="${FROGG_INSTALL_DIR:-${HOME}/.local/share/${BRAND_ID}}"
+FROGG_BIN_DIR="${FROGG_BIN_DIR:-${HOME}/.local/bin}"
+if [ "${BRAND_LEGACY}" = "true" ]; then FROGG_HOME="${FROGG_HOME:-${FROGG_HOME:-${HOME}/${BRAND_HOME}}}"; else FROGG_HOME="${FROGG_HOME:-${HOME}/${BRAND_HOME}}"; fi
+FROGG_PURGE="${FROGG_PURGE:-0}"
 
 SERVICE_NAME="${BRAND_SERVICE}"
 LAUNCHD_LABEL="${BRAND_LAUNCHD}"
@@ -47,11 +47,11 @@ log() { printf '[%s] %s\n' "${BRAND_CLI}" "$*"; }
 die() { printf 'error: %s\n' "$*" >&2; exit 1; }
 
 validate_install_owner() {
-  if [ -f "${FDE_INSTALL_DIR}/.brand-identity" ]; then
-    [ "$(cat "${FDE_INSTALL_DIR}/.brand-identity")" = "${BRAND_ID}:${BRAND_APPLICATION_ID}" ] || die "install directory belongs to another product"
-  elif [ -e "${FDE_INSTALL_DIR}/current/manifest.json" ]; then
-    validate_bundle_identity "${FDE_INSTALL_DIR}/current"
-  elif [ "${BRAND_LEGACY}" != "true" ] && [ -d "${FDE_INSTALL_DIR}" ] && [ -n "$(ls -A "${FDE_INSTALL_DIR}")" ]; then
+  if [ -f "${FROGG_INSTALL_DIR}/.brand-identity" ]; then
+    [ "$(cat "${FROGG_INSTALL_DIR}/.brand-identity")" = "${BRAND_ID}:${BRAND_APPLICATION_ID}" ] || die "install directory belongs to another product"
+  elif [ -e "${FROGG_INSTALL_DIR}/current/manifest.json" ]; then
+    validate_bundle_identity "${FROGG_INSTALL_DIR}/current"
+  elif [ "${BRAND_LEGACY}" != "true" ] && [ -d "${FROGG_INSTALL_DIR}" ] && [ -n "$(ls -A "${FROGG_INSTALL_DIR}")" ]; then
     die "install directory has no product ownership metadata"
   fi
 }
@@ -90,8 +90,8 @@ remove_launchd_agent() {
 }
 
 stop_daemon() {
-  if [ -x "${FDE_INSTALL_DIR}/current/bin/${BRAND_CLI}" ]; then
-    "${FDE_INSTALL_DIR}/current/bin/${BRAND_CLI}" daemon stop --home "${FDE_HOME}" >/dev/null 2>&1 || true
+  if [ -x "${FROGG_INSTALL_DIR}/current/bin/${BRAND_CLI}" ]; then
+    "${FROGG_INSTALL_DIR}/current/bin/${BRAND_CLI}" daemon stop --home "${FROGG_HOME}" >/dev/null 2>&1 || true
   fi
 }
 
@@ -104,22 +104,22 @@ main() {
   stop_daemon
 
   for name in "${BRAND_COMMANDS[@]}"; do
-    if [ -L "${FDE_BIN_DIR}/${name}" ] && [ "$(readlink "${FDE_BIN_DIR}/${name}")" = "${FDE_INSTALL_DIR}/current/bin/${name}" ]; then
-      rm -f "${FDE_BIN_DIR}/${name}"
-      log "removed ${FDE_BIN_DIR}/${name}"
+    if [ -L "${FROGG_BIN_DIR}/${name}" ] && [ "$(readlink "${FROGG_BIN_DIR}/${name}")" = "${FROGG_INSTALL_DIR}/current/bin/${name}" ]; then
+      rm -f "${FROGG_BIN_DIR}/${name}"
+      log "removed ${FROGG_BIN_DIR}/${name}"
     fi
   done
 
-  if [ -d "${FDE_INSTALL_DIR}" ]; then
-    rm -rf "${FDE_INSTALL_DIR}"
-    log "removed ${FDE_INSTALL_DIR}"
+  if [ -d "${FROGG_INSTALL_DIR}" ]; then
+    rm -rf "${FROGG_INSTALL_DIR}"
+    log "removed ${FROGG_INSTALL_DIR}"
   fi
 
-  if [ "${FDE_PURGE}" = "1" ] && [ -d "${FDE_HOME}" ]; then
-    rm -rf "${FDE_HOME}"
-    log "removed daemon state ${FDE_HOME}"
+  if [ "${FROGG_PURGE}" = "1" ] && [ -d "${FROGG_HOME}" ]; then
+    rm -rf "${FROGG_HOME}"
+    log "removed daemon state ${FROGG_HOME}"
   else
-    log "daemon state in ${FDE_HOME} was kept (set FDE_PURGE=1 to remove it)"
+    log "daemon state in ${FROGG_HOME} was kept (set FROGG_PURGE=1 to remove it)"
   fi
   log "${BRAND_NAME} uninstalled"
 }

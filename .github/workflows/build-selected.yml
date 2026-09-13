@@ -41,14 +41,14 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/select-brand
         with:
-          directory: ${{ vars.FDE_BRAND_DIR }}
-          repository: ${{ vars.FDE_BRAND_REPOSITORY }}
-          revision: ${{ vars.FDE_BRAND_REVISION }}
-          subdirectory: ${{ vars.FDE_BRAND_SUBDIR }}
+          directory: ${{ vars.FROGG_BRAND_DIR }}
+          repository: ${{ vars.FROGG_BRAND_REPOSITORY }}
+          revision: ${{ vars.FROGG_BRAND_REVISION }}
+          subdirectory: ${{ vars.FROGG_BRAND_SUBDIR }}
       - uses: ./.github/actions/setup-node-deps
-      - run: npm run install:electron --workspace=@fde/desktop-electron
+      - run: npm run install:electron --workspace=@frogg/desktop-electron
       - run: npm run build:app-deps
-      - run: npm run test --workspace=@fde/desktop-electron
+      - run: npm run test --workspace=@frogg/desktop-electron
       - name: Build app-only client
         run: npm run build:desktop -- --target win-x64
       - uses: actions/upload-artifact@v7
@@ -74,10 +74,10 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/select-brand
         with:
-          directory: ${{ vars.FDE_BRAND_DIR }}
-          repository: ${{ vars.FDE_BRAND_REPOSITORY }}
-          revision: ${{ vars.FDE_BRAND_REVISION }}
-          subdirectory: ${{ vars.FDE_BRAND_SUBDIR }}
+          directory: ${{ vars.FROGG_BRAND_DIR }}
+          repository: ${{ vars.FROGG_BRAND_REPOSITORY }}
+          revision: ${{ vars.FROGG_BRAND_REVISION }}
+          subdirectory: ${{ vars.FROGG_BRAND_SUBDIR }}
       - uses: ./.github/actions/setup-node-deps
       - name: Build daemon and its web UI
         run: npm run build:server && npm run build:daemon-web-ui
@@ -104,10 +104,10 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/select-brand
         with:
-          directory: ${{ vars.FDE_BRAND_DIR }}
-          repository: ${{ vars.FDE_BRAND_REPOSITORY }}
-          revision: ${{ vars.FDE_BRAND_REVISION }}
-          subdirectory: ${{ vars.FDE_BRAND_SUBDIR }}
+          directory: ${{ vars.FROGG_BRAND_DIR }}
+          repository: ${{ vars.FROGG_BRAND_REPOSITORY }}
+          revision: ${{ vars.FROGG_BRAND_REVISION }}
+          subdirectory: ${{ vars.FROGG_BRAND_SUBDIR }}
       - name: Free runner disk space for Android
         uses: jlumbroso/free-disk-space@v1.3.1
         with:

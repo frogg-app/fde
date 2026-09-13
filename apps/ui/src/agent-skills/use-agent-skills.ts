@@ -5,7 +5,7 @@ import type {
   AgentSkillSelection,
   AgentSkillsSaveResult,
   AgentSkillsStatus,
-} from "@fde/protocol/messages";
+} from "@frogg/protocol/messages";
 import { useToast } from "@/contexts/toast-context";
 import { useFetchQuery } from "@/data/query";
 import { useHostFeature } from "@/runtime/host-features";

@@ -49,7 +49,7 @@ export async function openCompanionCodex(
     await client.request(
       "initialize",
       {
-        clientInfo: { name: "fde_companion", version: "1.0.0" },
+        clientInfo: { name: "frogg_companion", version: "1.0.0" },
         capabilities: { experimentalApi: true },
       },
       10000,

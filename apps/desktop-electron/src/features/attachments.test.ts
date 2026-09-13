@@ -4,21 +4,21 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { copyAttachmentFileToManagedStorage, readManagedFileBase64 } from "./attachments";
 
-const originalFdeHome = process.env.FDE_HOME;
+const originalFroggHome = process.env.FROGG_HOME;
 let testHome: string | null = null;
 
-async function useTempFdeHome(): Promise<string> {
-  testHome = await mkdtemp(path.join(os.tmpdir(), "fde-desktop-attachments-"));
-  process.env.FDE_HOME = testHome;
+async function useTempFroggHome(): Promise<string> {
+  testHome = await mkdtemp(path.join(os.tmpdir(), "frogg-desktop-attachments-"));
+  process.env.FROGG_HOME = testHome;
   return testHome;
 }
 
 describe("desktop attachment files", () => {
   afterEach(async () => {
-    if (originalFdeHome === undefined) {
-      delete process.env.FDE_HOME;
+    if (originalFroggHome === undefined) {
+      delete process.env.FROGG_HOME;
     } else {
-      process.env.FDE_HOME = originalFdeHome;
+      process.env.FROGG_HOME = originalFroggHome;
     }
 
     if (testHome) {
@@ -28,7 +28,7 @@ describe("desktop attachment files", () => {
   });
 
   it("rejects sparse oversized sources without overwriting managed attachments", async () => {
-    const home = await useTempFdeHome();
+    const home = await useTempFroggHome();
     const sourcePath = path.join(home, "large.zip");
     const source = await open(sourcePath, "w");
     await source.truncate(1024 ** 3);
@@ -47,7 +47,7 @@ describe("desktop attachment files", () => {
   });
 
   it("rejects an oversized managed file before base64 conversion", async () => {
-    const home = await useTempFdeHome();
+    const home = await useTempFroggHome();
     const managed = path.join(home, "desktop-attachments");
     await mkdir(managed);
     const filePath = path.join(managed, "large.bin");
@@ -60,8 +60,8 @@ describe("desktop attachment files", () => {
   });
 
   it("accepts dot-prefixed picker extensions for managed copies", async () => {
-    const fdeHome = await useTempFdeHome();
-    const sourcePath = path.join(fdeHome, "report.md");
+    const froggHome = await useTempFroggHome();
+    const sourcePath = path.join(froggHome, "report.md");
     await writeFile(sourcePath, "# Report\n");
 
     const result = await copyAttachmentFileToManagedStorage({
@@ -71,15 +71,15 @@ describe("desktop attachment files", () => {
     });
 
     expect(result).toEqual({
-      path: path.join(fdeHome, "desktop-attachments", "att_markdown.md"),
+      path: path.join(froggHome, "desktop-attachments", "att_markdown.md"),
       byteSize: 9,
     });
     await expect(readFile(result.path, "utf8")).resolves.toBe("# Report\n");
   });
 
   it("normalizes legacy bare extensions for managed copies", async () => {
-    const fdeHome = await useTempFdeHome();
-    const sourcePath = path.join(fdeHome, "report.md");
+    const froggHome = await useTempFroggHome();
+    const sourcePath = path.join(froggHome, "report.md");
     await writeFile(sourcePath, "# Report\n");
 
     const result = await copyAttachmentFileToManagedStorage({
@@ -89,7 +89,7 @@ describe("desktop attachment files", () => {
     });
 
     expect(result).toEqual({
-      path: path.join(fdeHome, "desktop-attachments", "att_markdown_legacy.md"),
+      path: path.join(froggHome, "desktop-attachments", "att_markdown_legacy.md"),
       byteSize: 9,
     });
     await expect(readFile(result.path, "utf8")).resolves.toBe("# Report\n");

@@ -91,7 +91,7 @@ function shouldIncludeLocalProviderConfig(params: {
 
   return (
     localRequestedByFeature ||
-    params.env.FDE_LOCAL_MODELS_DIR !== undefined ||
+    params.env.FROGG_LOCAL_MODELS_DIR !== undefined ||
     params.persisted.providers?.local?.modelsDir !== undefined
   );
 }
@@ -122,13 +122,13 @@ function buildLocalSpeechLanguageResolutionInput(params: {
   const { env, persisted } = params;
   return {
     dictationLanguage: firstNonEmptyString([
-      env.FDE_DICTATION_LANGUAGE,
+      env.FROGG_DICTATION_LANGUAGE,
       persisted.features?.dictation?.stt?.language,
       DEFAULT_STT_LANGUAGE,
     ]),
     voiceLanguage: firstNonEmptyString([
-      env.FDE_VOICE_LANGUAGE,
-      env.FDE_DICTATION_LANGUAGE,
+      env.FROGG_VOICE_LANGUAGE,
+      env.FROGG_DICTATION_LANGUAGE,
       persisted.features?.voiceMode?.stt?.language,
       persisted.features?.dictation?.stt?.language,
       DEFAULT_STT_LANGUAGE,
@@ -137,22 +137,22 @@ function buildLocalSpeechLanguageResolutionInput(params: {
 }
 
 function buildLocalSpeechResolutionInput(params: {
-  fdeHome: string;
+  froggHome: string;
   env: NodeJS.ProcessEnv;
   persisted: PersistedConfig;
   providers: RequestedSpeechProviders;
   includeProviderConfig: boolean;
 }): Record<string, unknown> {
-  const { fdeHome, env, persisted, providers, includeProviderConfig } = params;
+  const { froggHome, env, persisted, providers, includeProviderConfig } = params;
   return {
     includeProviderConfig,
     modelsDir: firstDefinedValue<string>([
-      env.FDE_LOCAL_MODELS_DIR,
+      env.FROGG_LOCAL_MODELS_DIR,
       persisted.providers?.local?.modelsDir,
-      path.join(fdeHome, DEFAULT_LOCAL_MODELS_SUBDIR),
+      path.join(froggHome, DEFAULT_LOCAL_MODELS_SUBDIR),
     ]),
     dictationLocalSttModel: firstDefinedValue<string>([
-      env.FDE_DICTATION_LOCAL_STT_MODEL,
+      env.FROGG_DICTATION_LOCAL_STT_MODEL,
       persistedLocalFeatureModel(
         providers.dictationStt.provider,
         providers.dictationStt.enabled,
@@ -161,7 +161,7 @@ function buildLocalSpeechResolutionInput(params: {
       DEFAULT_LOCAL_STT_MODEL,
     ]),
     voiceLocalSttModel: firstDefinedValue<string>([
-      env.FDE_VOICE_LOCAL_STT_MODEL,
+      env.FROGG_VOICE_LOCAL_STT_MODEL,
       persistedLocalFeatureModel(
         providers.voiceStt.provider,
         providers.voiceStt.enabled,
@@ -170,7 +170,7 @@ function buildLocalSpeechResolutionInput(params: {
       DEFAULT_LOCAL_STT_MODEL,
     ]),
     voiceLocalTtsModel: firstDefinedValue<string>([
-      env.FDE_VOICE_LOCAL_TTS_MODEL,
+      env.FROGG_VOICE_LOCAL_TTS_MODEL,
       persistedLocalFeatureModel(
         providers.voiceTts.provider,
         providers.voiceTts.enabled,
@@ -180,18 +180,18 @@ function buildLocalSpeechResolutionInput(params: {
     ]),
     ...buildLocalSpeechLanguageResolutionInput({ env, persisted }),
     voiceLocalTtsSpeakerId: firstDefinedValue<string | number>([
-      env.FDE_VOICE_LOCAL_TTS_SPEAKER_ID,
+      env.FROGG_VOICE_LOCAL_TTS_SPEAKER_ID,
       persisted.features?.voiceMode?.tts?.speakerId,
     ]),
     voiceLocalTtsSpeed: firstDefinedValue<string | number>([
-      env.FDE_VOICE_LOCAL_TTS_SPEED,
+      env.FROGG_VOICE_LOCAL_TTS_SPEED,
       persisted.features?.voiceMode?.tts?.speed,
     ]),
   };
 }
 
 export function resolveLocalSpeechConfig(params: {
-  fdeHome: string;
+  froggHome: string;
   env: NodeJS.ProcessEnv;
   persisted: PersistedConfig;
   providers: RequestedSpeechProviders;

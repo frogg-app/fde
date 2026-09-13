@@ -1,5 +1,5 @@
 import type { DraftAgentControlsProps } from "@/composer/agent-controls";
-import type { AgentMode } from "@fde/protocol/agent-types";
+import type { AgentMode } from "@frogg/protocol/agent-types";
 
 export function resolveNextAgentModeId({
   modeOptions,

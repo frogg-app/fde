@@ -1,7 +1,7 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import type { Command } from "commander";
-import type { AgentPermissionRequest } from "@fde/protocol/agent-types";
-import type { AgentSnapshotPayload } from "@fde/protocol/messages";
+import type { AgentPermissionRequest } from "@frogg/protocol/agent-types";
+import type { AgentSnapshotPayload } from "@frogg/protocol/messages";
 import { connectToDaemon, getDaemonHost } from "../../utils/client.js";
 import type { CommandOptions, ListResult, OutputSchema, CommandError } from "../../output/index.js";
 

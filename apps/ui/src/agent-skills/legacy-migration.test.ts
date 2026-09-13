@@ -4,7 +4,7 @@ import { migrateLegacyAgentSkillsSelection } from "./legacy-migration";
 
 describe("legacy agent skills migration", () => {
   it("deletes the legacy file only after the daemon confirms persistence", async () => {
-    const selection = { mode: "custom" as const, skills: ["fde"] };
+    const selection = { mode: "custom" as const, skills: ["frogg"] };
     const order: string[] = [];
     const client = {
       importLegacyAgentSkillsSelection: vi.fn(async () => {

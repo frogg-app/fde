@@ -13,7 +13,7 @@ async function createTempDir(prefix: string): Promise<string> {
 
 describe.skipIf(isPlatform("win32"))("service POSIX-only", () => {
   it("lists immediate subdirectories and identifies in-root directory symlinks", async () => {
-    const root = await createTempDir("fde-directory-picker-");
+    const root = await createTempDir("frogg-directory-picker-");
     try {
       await mkdir(path.join(root, "child", "grandchild"), { recursive: true });
       await symlink("child", path.join(root, "link"));
@@ -33,7 +33,7 @@ describe.skipIf(isPlatform("win32"))("service POSIX-only", () => {
   });
 
   it("lists directory entries even when a dangling symlink exists", async () => {
-    const root = await createTempDir("fde-file-explorer-");
+    const root = await createTempDir("frogg-file-explorer-");
 
     try {
       await mkdir(path.join(root, "packages", "server"), { recursive: true });
@@ -57,8 +57,8 @@ describe.skipIf(isPlatform("win32"))("service POSIX-only", () => {
   });
 
   it("rejects symlinked files that resolve outside the workspace", async () => {
-    const root = await createTempDir("fde-file-explorer-");
-    const outsideRoot = await createTempDir("fde-file-explorer-outside-");
+    const root = await createTempDir("frogg-file-explorer-");
+    const outsideRoot = await createTempDir("frogg-file-explorer-outside-");
 
     try {
       const externalFile = path.join(outsideRoot, "secret.txt");
@@ -78,8 +78,8 @@ describe.skipIf(isPlatform("win32"))("service POSIX-only", () => {
   });
 
   it("skips listed symlink entries that resolve outside the workspace", async () => {
-    const root = await createTempDir("fde-file-explorer-");
-    const outsideRoot = await createTempDir("fde-file-explorer-outside-");
+    const root = await createTempDir("frogg-file-explorer-");
+    const outsideRoot = await createTempDir("frogg-file-explorer-outside-");
 
     try {
       await writeFile(path.join(root, "visible.txt"), "visible\n", "utf-8");
@@ -99,7 +99,7 @@ describe.skipIf(isPlatform("win32"))("service POSIX-only", () => {
   });
 
   it("uses canonical paths for downloadable symlink targets inside the workspace", async () => {
-    const root = await createTempDir("fde-file-explorer-");
+    const root = await createTempDir("frogg-file-explorer-");
 
     try {
       const target = path.join(root, "safe.txt");

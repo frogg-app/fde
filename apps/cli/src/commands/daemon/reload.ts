@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import type { Command } from "commander";
 import { connectToDaemon } from "../../utils/client.js";
 import type { CommandOptions, OutputSchema, SingleResult } from "../../output/index.js";

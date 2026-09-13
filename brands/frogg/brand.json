@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
-  "id": "fde",
-  "name": "FDE",
-  "fullName": "Frogg Development Environment",
+  "id": "frogg",
+  "name": "Frogg",
+  "fullName": "Frogg",
   "publisher": "Frogg App",
-  "description": "Frogg Development Environment: desktop client for local and remote AI coding agents.",
-  "applicationId": "app.frogg.fde",
+  "description": "Frogg: desktop client for local and remote AI coding agents.",
+  "applicationId": "app.frogg.frogg",
   "daemonPort": 9999,
-  "scheme": "fde",
-  "artifactPrefix": "FDE",
+  "scheme": "frogg",
+  "artifactPrefix": "Frogg",
   "assets": {
     "icon": "../../apps/ui/assets/images/icon.png",
     "ios": "../../apps/ui/assets/images/icon-ios.png",
@@ -34,9 +34,9 @@
   },
   "links": {
     "website": "https://frogg.app",
-    "source": "https://github.com/frogg-app/fde",
+    "source": "https://github.com/frogg-app/frogg",
     "docs": "https://frogg.app/docs",
-    "support": "https://github.com/frogg-app/fde/issues",
+    "support": "https://github.com/frogg-app/frogg/issues",
     "installer": "https://frogg.app/install.sh"
   },
   "services": {
@@ -44,9 +44,9 @@
     "allowedOrigins": []
   },
   "distribution": {
-    "repository": "frogg-app/fde",
+    "repository": "frogg-app/frogg",
     "updates": "github-release",
-    "dockerImage": "froggapp/fde",
-    "pairingImage": "froggapp/fde-pair-page"
+    "dockerImage": "froggapp/frogg",
+    "pairingImage": "froggapp/frogg-pair-page"
   }
 }

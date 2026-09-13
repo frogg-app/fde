@@ -164,9 +164,9 @@ describe("resolveGitProcessPolicy", () => {
     expect(
       resolveGitProcessPolicy({
         env: {
-          FDE_GIT_MAX_PROCESSES_PER_SECOND: "12",
-          FDE_GIT_MAX_PROCESS_CONCURRENCY: "7",
-          FDE_GIT_CONCURRENCY: "3",
+          FROGG_GIT_MAX_PROCESSES_PER_SECOND: "12",
+          FROGG_GIT_MAX_PROCESS_CONCURRENCY: "7",
+          FROGG_GIT_CONCURRENCY: "3",
         },
         persisted: { maxProcessesPerSecond: 5, maxProcessConcurrency: 4 },
       }),

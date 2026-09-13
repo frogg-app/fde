@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { ConnectionOfferV3 } from "@fde/protocol/connection-offer";
+import type { ConnectionOfferV3 } from "@frogg/protocol/connection-offer";
 import {
   ClaimOfferError,
   claimDaemon,
@@ -15,7 +15,7 @@ const NOW = Date.parse("2026-09-03T10:00:00.000Z");
 function makeOffer(overrides: Partial<ConnectionOfferV3> = {}): ConnectionOfferV3 {
   return {
     v: 3,
-    product: "fde",
+    product: "frogg",
     serverId: "srv_devbox",
     hostname: "devbox",
     daemonPublicKeyB64: "pk",
@@ -49,7 +49,7 @@ function makeFetch(
     if (!host) throw new TypeError("Failed to fetch");
     if (parsed.pathname === "/api/identity") {
       if (!host.identity) throw new TypeError("Failed to fetch");
-      return jsonResponse(200, { product: "fde", ...host.identity, pairingRequired: true });
+      return jsonResponse(200, { product: "frogg", ...host.identity, pairingRequired: true });
     }
     if (parsed.pathname === "/api/setup/claim" && host.claim) return host.claim(body);
     return jsonResponse(404, { error: "not found" });
@@ -141,7 +141,7 @@ describe("claimDaemon", () => {
       endpoint: "192.168.1.10:9999",
       useTls: false,
       token: "tok_1",
-      label: "FDE on laptop",
+      label: "Frogg on laptop",
       fetchImpl,
     });
     expect(claimed).toEqual({
@@ -152,7 +152,7 @@ describe("claimDaemon", () => {
     expect(fetchImpl.calls[0]).toEqual({
       url: "http://192.168.1.10:9999/api/setup/claim",
       method: "POST",
-      body: { token: "tok_1", label: "FDE on laptop" },
+      body: { token: "tok_1", label: "Frogg on laptop" },
     });
   });
 
@@ -198,7 +198,7 @@ describe("claimDirectOffer", () => {
       },
     });
     const result = await claimDirectOffer(makeOffer(), {
-      label: "FDE on laptop",
+      label: "Frogg on laptop",
       fetchImpl,
       localAddresses: ["192.168.1.7"],
       probeTimeoutMs: 100,

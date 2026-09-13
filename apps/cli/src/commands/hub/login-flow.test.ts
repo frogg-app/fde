@@ -28,14 +28,14 @@ describe("Hub CLI login browser flow", () => {
       {
         status: "authorized",
         interval: 10,
-        credential: "fde_cli_prefix_durable-secret-value",
+        credential: "frogg_cli_prefix_durable-secret-value",
         organizationId: "organization-1",
       },
     ]);
 
     const credential = await journey.authorize();
 
-    assert.equal(credential, "fde_cli_prefix_durable-secret-value");
+    assert.equal(credential, "frogg_cli_prefix_durable-secret-value");
     assert.deepEqual(journey.waits, [5_000, 5_000, 10_000]);
     assert.deepEqual(journey.opened, ["https://hub.test/cli-login?code=ABCD-EFGH"]);
     assert.deepEqual(journey.instructions, ["https://hub.test/cli-login ABCD-EFGH"]);
@@ -47,7 +47,7 @@ describe("Hub CLI login browser flow", () => {
         {
           status: "authorized",
           interval: 5,
-          credential: "fde_cli_prefix_durable-secret-value",
+          credential: "frogg_cli_prefix_durable-secret-value",
           organizationId: "organization-1",
         },
       ],

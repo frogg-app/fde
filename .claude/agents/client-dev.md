@@ -1,9 +1,9 @@
 ---
 name: client-dev
-description: Implement FDE client features and fixes in the shared Expo/React Native UI, client library, and user-facing CLI workflows. Use for workspace views, agent timelines, forms, navigation, voice controls, accessibility, and client connection state. Coordinate server contracts with daemon-dev and native bridge changes with desktop-dev.
+description: Implement Frogg client features and fixes in the shared Expo/React Native UI, client library, and user-facing CLI workflows. Use for workspace views, agent timelines, forms, navigation, voice controls, accessibility, and client connection state. Coordinate server contracts with daemon-dev and native bridge changes with desktop-dev.
 ---
 
-# FDE client development
+# Frogg client development
 
 Deliver the assigned user workflow through implementation, behavioral coverage,
 and relevant documentation. Follow root and scoped `AGENTS.md` instructions and
@@ -23,10 +23,10 @@ Docs live in `website/src/content/docs/docs/`. Start with `contributing/architec
 `contributing/development-setup.mdx` and `contributing/coding-standards.mdx` (UI copy,
 i18n and branding literals). Then select the relevant pages and skills:
 
-- Workflows: `using-fde/*.mdx`, `getting-started/connect-and-pair.mdx`.
-- UI copy: the `fde-i18n` skill. Wire changes: the `fde-rpc` skill.
+- Workflows: `using-frogg/*.mdx`, `getting-started/connect-and-pair.mdx`.
+- UI copy: the `frogg-i18n` skill. Wire changes: the `frogg-rpc` skill.
 - CLI: `desktop-mobile-cli/cli.mdx`.
-- Voice: `using-fde/voice-and-companion.mdx`.
+- Voice: `using-frogg/voice-and-companion.mdx`.
 
 ## Implementation and verification
 
@@ -49,5 +49,5 @@ i18n and branding literals). Then select the relevant pages and skills:
 ## Documentation
 
 Changes users can see (screens, flows, settings, CLI output) update the matching docs page
-and its screenshots in the same change. Follow the `fde-docs` skill
-(`skills/fde-docs/SKILL.md`) or hand the audit to the `docs-writer` agent.
+and its screenshots in the same change. Follow the `frogg-docs` skill
+(`skills/frogg-docs/SKILL.md`) or hand the audit to the `docs-writer` agent.

@@ -3,8 +3,8 @@ import {
   AgentStatusSchema,
   AgentTimelineItemPayloadSchema,
   WorkspaceGitHubRuntimePayloadSchema,
-} from "@fde/protocol/messages";
-import { AgentProviderSchema } from "@fde/protocol/provider-manifest";
+} from "@frogg/protocol/messages";
+import { AgentProviderSchema } from "@frogg/protocol/provider-manifest";
 import {
   normalizeProjectDescriptor,
   normalizeWorkspaceDescriptor,
@@ -131,7 +131,7 @@ const StoredProjectCheckoutSchema = z.union([
     currentBranch: z.null(),
     remoteUrl: z.null(),
     worktreeRoot: z.null(),
-    isFdeOwnedWorktree: z.literal(false),
+    isFroggOwnedWorktree: z.literal(false),
     mainRepoRoot: z.null(),
   }),
   z.strictObject({
@@ -140,7 +140,7 @@ const StoredProjectCheckoutSchema = z.union([
     currentBranch: z.string().nullable(),
     remoteUrl: z.string().nullable(),
     worktreeRoot: z.string(),
-    isFdeOwnedWorktree: z.literal(false),
+    isFroggOwnedWorktree: z.literal(false),
     mainRepoRoot: z.string().nullable(),
   }),
   z.strictObject({
@@ -149,7 +149,7 @@ const StoredProjectCheckoutSchema = z.union([
     currentBranch: z.string().nullable(),
     remoteUrl: z.string().nullable(),
     worktreeRoot: z.string(),
-    isFdeOwnedWorktree: z.literal(true),
+    isFroggOwnedWorktree: z.literal(true),
     mainRepoRoot: z.string(),
   }),
 ]);
@@ -217,7 +217,7 @@ const WorkspaceGitRuntimeSchema = z
   .strictObject({
     currentBranch: z.string().nullable().optional(),
     remoteUrl: z.string().nullable().optional(),
-    isFdeOwnedWorktree: z.boolean().optional(),
+    isFroggOwnedWorktree: z.boolean().optional(),
     isDirty: z.boolean().nullable().optional(),
     aheadBehind: z.strictObject({ ahead: z.number(), behind: z.number() }).nullable().optional(),
     aheadOfOrigin: z.number().nullable().optional(),

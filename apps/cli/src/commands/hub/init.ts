@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import {
   cancel,
   confirm,
@@ -124,13 +124,13 @@ export async function runHubGuidedSetup(
   const activeLogin = environment.credentials.active();
   const opening = planHubInitOpening({
     loggedIn: activeLogin !== null,
-    fdeDirectoryExists: await pathExists(path.join(cwd, ".fde")),
+    froggDirectoryExists: await pathExists(path.join(cwd, ".frogg")),
   });
   if (
     opening.replaceExisting &&
-    !(await requiredConfirm(environment, "Replace the existing .fde/ Hub bundle?", false))
+    !(await requiredConfirm(environment, "Replace the existing .frogg/ Hub bundle?", false))
   ) {
-    throw new HubInitCancelledError("Existing .fde/ bundle left unchanged.");
+    throw new HubInitCancelledError("Existing .frogg/ bundle left unchanged.");
   }
 
   const origin = state.origin ?? (await ensureLogin(activeLogin?.origin, environment));
@@ -165,7 +165,7 @@ export async function runHubGuidedSetup(
   });
   log.success("Dry run passed");
   await writeScaffold(cwd, scaffold, opening.replaceExisting);
-  log.success(`Created .fde/hub.yml and ${scaffold.workflowPath}`);
+  log.success(`Created .frogg/hub.yml and ${scaffold.workflowPath}`);
 
   const deploy = state.deploy ?? (await requiredConfirm(environment, "Deploy now?", true));
   if (deploy) {
@@ -256,7 +256,7 @@ async function ensureLogin(
 ): Promise<string> {
   const origin = await requiredText(environment, {
     message: "Hub URL",
-    initialValue: activeOrigin ?? environment.env.FDE_HUB_URL,
+    initialValue: activeOrigin ?? environment.env.FROGG_HUB_URL,
     validate(value) {
       try {
         normalizeHubOrigin(value ?? "");
@@ -659,9 +659,9 @@ async function writeScaffold(
   scaffold: ReturnType<typeof createHubInitScaffold>,
   replaceExisting: boolean,
 ): Promise<void> {
-  const root = path.join(cwd, ".fde");
-  const staging = path.join(cwd, `.fde-init-${randomUUID()}`);
-  const backup = path.join(cwd, `.fde-backup-${randomUUID()}`);
+  const root = path.join(cwd, ".frogg");
+  const staging = path.join(cwd, `.frogg-init-${randomUUID()}`);
+  const backup = path.join(cwd, `.frogg-backup-${randomUUID()}`);
   let movedExisting = false;
   try {
     await mkdir(path.join(staging, "workflows"), { recursive: true });

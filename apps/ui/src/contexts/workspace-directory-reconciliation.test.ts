@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import type { WorkspaceDescriptorPayload } from "@fde/protocol/messages";
+import type { WorkspaceDescriptorPayload } from "@frogg/protocol/messages";
 import { normalizeWorkspaceDescriptor } from "@/stores/session-store";
 import {
   clearWorkspaceArchivePending,

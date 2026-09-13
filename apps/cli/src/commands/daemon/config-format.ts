@@ -1,7 +1,7 @@
 import type { Command } from "commander";
-import { formatPersistedConfig } from "@fde/server";
+import { formatPersistedConfig } from "@frogg/server";
 import type { CommandOptions, OutputSchema, SingleResult } from "../../output/index.js";
-import { resolveLocalFdeHome } from "./local-daemon.js";
+import { resolveLocalFroggHome } from "./local-daemon.js";
 
 interface ConfigFormatResult {
   configPath: string;
@@ -19,6 +19,6 @@ export async function runConfigFormatCommand(
   options: CommandOptions,
   _command: Command,
 ): Promise<SingleResult<ConfigFormatResult>> {
-  const home = resolveLocalFdeHome(typeof options.home === "string" ? options.home : undefined);
+  const home = resolveLocalFroggHome(typeof options.home === "string" ? options.home : undefined);
   return { type: "single", data: { configPath: formatPersistedConfig(home) }, schema };
 }

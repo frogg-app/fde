@@ -163,8 +163,8 @@ describe("resolveWorktreeCreationIntent", () => {
       baseRefName: "main",
       headRefName: "daemon-shutdown-diagnostics",
       headOwnerLogin: "frogg-app",
-      headRepositorySshUrl: "git@github.com:frogg-app/fde.git",
-      headRepositoryUrl: "https://github.com/frogg-app/fde",
+      headRepositorySshUrl: "git@github.com:frogg-app/frogg.git",
+      headRepositoryUrl: "https://github.com/frogg-app/frogg",
       isCrossRepository: false,
     });
 
@@ -189,8 +189,8 @@ describe("resolveWorktreeCreationIntent", () => {
       baseRefName: "main",
       headRefName: "main",
       headOwnerLogin: "therainisme",
-      headRepositorySshUrl: "git@github.com:therainisme/fde.git",
-      headRepositoryUrl: "https://github.com/therainisme/fde",
+      headRepositorySshUrl: "git@github.com:therainisme/frogg.git",
+      headRepositoryUrl: "https://github.com/therainisme/frogg",
       isCrossRepository: true,
     });
 
@@ -205,7 +205,7 @@ describe("resolveWorktreeCreationIntent", () => {
       checkoutRefs: [{ remoteName: "origin", remoteRef: "refs/pull/526/head" }],
       headRepositoryOwner: "therainisme",
       localBranchName: "therainisme/main",
-      pushRemoteUrl: "git@github.com:therainisme/fde.git",
+      pushRemoteUrl: "git@github.com:therainisme/frogg.git",
     });
     expect(deps.headRefLookups).toEqual([]);
   });

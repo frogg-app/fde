@@ -1,7 +1,7 @@
 import { getDesktopHost, isElectronRuntime } from "@/desktop/host";
 import { listenToDesktopEvent } from "@/desktop/electron/events";
 import { invokeDesktopCommand } from "@/desktop/electron/invoke";
-import type { AgentSkillSelection } from "@fde/protocol/messages";
+import type { AgentSkillSelection } from "@frogg/protocol/messages";
 import {
   parseLocalDaemonInstallEvent,
   type LocalDaemonInstallEvent,
@@ -64,7 +64,7 @@ export interface OpenLocalTransportSessionInput {
   [key: string]: unknown;
   sessionId: string;
   target: DesktopDaemonTransportTarget;
-  /** WebSocket subprotocols for the handshake (`fde.bearer.<daemon password>`). */
+  /** WebSocket subprotocols for the handshake (`frogg.bearer.<daemon password>`). */
   protocols?: string[];
 }
 

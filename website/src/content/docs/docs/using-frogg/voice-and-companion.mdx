@@ -9,7 +9,7 @@ import { Screenshot } from "@/components/docs";
 import appCompanionImg from "@/assets/docs/app/companion.png";
 import appCompanionSettingsImg from "@/assets/docs/app/companion-settings.png";
 
-FDE has three voice features. All speech runs on the daemon, locally by default.
+Frogg has three voice features. All speech runs on the daemon, locally by default.
 
 | Feature          | What it does | Status |
 | ---------------- | ------------ | ------ |
@@ -20,7 +20,7 @@ FDE has three voice features. All speech runs on the daemon, locally by default.
 ## Speech on the daemon
 
 With no configuration, the daemon uses local models (sherpa-onnx) and downloads them in
-the background into `~/.fde/models/local-speech`:
+the background into `~/.frogg/models/local-speech`:
 
 | Role                  | Default model | Alternatives |
 | --------------------- | ------------- | ------------ |
@@ -29,11 +29,11 @@ the background into `~/.fde/models/local-speech`:
 | Voice activity        | Silero VAD | |
 
 Voice features are on when the local speech runtime is available. Turn them off with
-`FDE_VOICE=0` or `"features": { "voice": { "enabled": false } }`.
+`FROGG_VOICE=0` or `"features": { "voice": { "enabled": false } }`.
 
 To use OpenAI for speech instead:
 
-```json title="~/.fde/config.json"
+```json title="~/.frogg/config.json"
 {
   "providers": { "openai": { "apiKey": "sk-..." } },
   "features": {

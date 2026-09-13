@@ -1,6 +1,6 @@
 ---
 title: Self-hosting the daemon
-description: Operate the FDE daemon — services, Docker, Nix, security, updates and troubleshooting.
+description: Operate the Frogg daemon — services, Docker, Nix, security, updates and troubleshooting.
 sidebar:
   order: 0
   label: Overview
@@ -8,23 +8,23 @@ sidebar:
 
 import { CardGrid, LinkCard } from "@/components/docs";
 
-The daemon is the part of FDE that does the work. It runs agents, stores history and serves
+The daemon is the part of Frogg that does the work. It runs agents, stores history and serves
 every client. You host it: on your workstation, a build server, a VM or a container.
 
 | Default         | Value |
 | --------------- | ----- |
 | Port            | `9999` on all interfaces |
-| State           | `~/.fde` (`FDE_HOME`) |
-| Config          | `~/.fde/config.json` |
-| Log             | `~/.fde/daemon.log` |
-| Install root    | `~/.local/share/fde` (`install.sh`) |
-| Service         | `fde-daemon` (systemd user), `app.frogg.fde-daemon` (launchd) |
+| State           | `~/.frogg` (`FROGG_HOME`) |
+| Config          | `~/.frogg/config.json` |
+| Log             | `~/.frogg/daemon.log` |
+| Install root    | `~/.local/share/frogg` (`install.sh`) |
+| Service         | `frogg-daemon` (systemd user), `app.frogg.frogg-daemon` (launchd) |
 
 <CardGrid>
   <LinkCard title="Run the daemon" href="/docs/self-hosting/daemon/" description="Services, listen addresses, logs, several daemons." />
   <LinkCard title="Docker" href="/docs/self-hosting/docker/" description="Container image, agent CLIs, updates." />
   <LinkCard title="Nix" href="/docs/self-hosting/nix/" description="NixOS module and packages." />
   <LinkCard title="Security and access" href="/docs/self-hosting/security/" description="LAN trust, pairing, passwords, TLS, relay." />
-  <LinkCard title="Updates" href="/docs/self-hosting/updates/" description="fde update, channels, rollback, auto-update." />
+  <LinkCard title="Updates" href="/docs/self-hosting/updates/" description="frogg update, channels, rollback, auto-update." />
   <LinkCard title="Troubleshooting" href="/docs/self-hosting/troubleshooting/" description="Symptoms and fixes." />
 </CardGrid>

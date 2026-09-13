@@ -1,7 +1,7 @@
 import type { ITheme } from "@xterm/xterm";
 import xtermCss from "@xterm/xterm/css/xterm.css";
-import type { TerminalState } from "@fde/protocol/messages";
-import type { TerminalInputModeState } from "@fde/protocol/terminal-input-mode";
+import type { TerminalState } from "@frogg/protocol/messages";
+import type { TerminalInputModeState } from "@frogg/protocol/terminal-input-mode";
 import type { PendingTerminalModifiers } from "@/utils/terminal-keys";
 import {
   encodeTerminalOutput,
@@ -91,8 +91,8 @@ declare global {
     ReactNativeWebView?: {
       postMessage?: (data: string) => void;
     };
-    __FDE_TERMINAL_WEBVIEW_RECEIVE__?: (message: InboundMessage) => void;
-    __FDE_TERMINAL_WEBVIEW_BLUR__?: () => void;
+    __FROGG_TERMINAL_WEBVIEW_RECEIVE__?: (message: InboundMessage) => void;
+    __FROGG_TERMINAL_WEBVIEW_BLUR__?: () => void;
   }
 }
 
@@ -100,7 +100,7 @@ const sendToNative = (message: OutboundMessage): void => {
   window.ReactNativeWebView?.postMessage?.(JSON.stringify(message));
 };
 
-const TERMINAL_BACKGROUND_CSS_VAR = "--fde-terminal-background";
+const TERMINAL_BACKGROUND_CSS_VAR = "--frogg-terminal-background";
 const DEFAULT_TERMINAL_BACKGROUND = "#0b0b0b";
 const TERMINAL_TAP_MOVE_TOLERANCE_PX = 8;
 
@@ -542,6 +542,6 @@ root.appendChild(host);
 document.body.appendChild(root);
 
 const bridge = new TerminalWebViewBridge(root, host);
-window.__FDE_TERMINAL_WEBVIEW_RECEIVE__ = bridge.receive;
-window.__FDE_TERMINAL_WEBVIEW_BLUR__ = bridge.blur;
+window.__FROGG_TERMINAL_WEBVIEW_RECEIVE__ = bridge.receive;
+window.__FROGG_TERMINAL_WEBVIEW_BLUR__ = bridge.blur;
 sendToNative({ type: "bridgeReady" });

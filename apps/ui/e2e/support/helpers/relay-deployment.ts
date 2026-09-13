@@ -1,5 +1,5 @@
 import { expect, type Page } from "@playwright/test";
-import { parseConnectionOfferFromUrl } from "@fde/protocol/connection-offer";
+import { parseConnectionOfferFromUrl } from "@frogg/protocol/connection-offer";
 import type { LocalElixirRelay } from "./local-elixir-relay";
 import type { PackagedWebDaemon } from "./packaged-web-daemon";
 import { expectRunningAgentChrome } from "./agent-stream";
@@ -52,13 +52,13 @@ export async function connectDaemonWebAppOnlyThroughRelay(
     const html = await response.text();
     await route.fulfill({
       response,
-      body: html.replace(/<script>window\.__FDE_INITIAL_DAEMON_CONNECTION__=.*?<\/script>/, ""),
+      body: html.replace(/<script>window\.__FROGG_INITIAL_DAEMON_CONNECTION__=.*?<\/script>/, ""),
     });
   });
   await page.addInitScript(
     ({ storedHost, preferences }) => {
-      localStorage.setItem("@fde:daemon-registry", JSON.stringify([storedHost]));
-      localStorage.setItem("@fde:create-agent-preferences", JSON.stringify(preferences));
+      localStorage.setItem("@frogg:daemon-registry", JSON.stringify([storedHost]));
+      localStorage.setItem("@frogg:create-agent-preferences", JSON.stringify(preferences));
     },
     { storedHost: host, preferences: buildCreateAgentPreferences() },
   );

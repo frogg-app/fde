@@ -6,7 +6,7 @@ import { describe, expect, test, vi } from "vitest";
 
 import { ClaudeAgentClient } from "../agent/providers/claude/agent.js";
 import { DaemonClient } from "../test-utils/daemon-client.js";
-import { createTestFdeDaemon } from "../test-utils/fde-daemon.js";
+import { createTestFroggDaemon } from "../test-utils/frogg-daemon.js";
 
 function deferred(): { promise: Promise<void>; resolve: () => void } {
   let resolve!: () => void;
@@ -134,9 +134,9 @@ function createControlledClaudeQueryFactory(resultGate: Promise<void>) {
 describe("daemon E2E (claude live usage)", () => {
   test("publishes renderable active context usage through agent_update", async () => {
     const logger = pino({ level: "silent" });
-    const cwd = mkdtempSync(path.join(tmpdir(), "fde-claude-live-usage-"));
+    const cwd = mkdtempSync(path.join(tmpdir(), "frogg-claude-live-usage-"));
     const resultGate = deferred();
-    const daemon = await createTestFdeDaemon({
+    const daemon = await createTestFroggDaemon({
       agentClients: {
         claude: new ClaudeAgentClient({
           logger,

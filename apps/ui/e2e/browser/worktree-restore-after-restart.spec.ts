@@ -63,10 +63,10 @@ test.describe("Worktree restore after daemon restart", () => {
     const nowIso = new Date().toISOString();
     await page.addInitScript(
       ({ host, preferences }) => {
-        localStorage.setItem("@fde:e2e", "1");
-        localStorage.setItem("@fde:daemon-registry", JSON.stringify([host]));
-        localStorage.removeItem("@fde:settings");
-        localStorage.setItem("@fde:create-agent-preferences", JSON.stringify(preferences));
+        localStorage.setItem("@frogg:e2e", "1");
+        localStorage.setItem("@frogg:daemon-registry", JSON.stringify([host]));
+        localStorage.removeItem("@frogg:settings");
+        localStorage.setItem("@frogg:create-agent-preferences", JSON.stringify(preferences));
       },
       {
         host: buildSeededHost({
@@ -83,7 +83,7 @@ test.describe("Worktree restore after daemon restart", () => {
   test("after archiving a worktree and restarting the daemon, History shows the worktree branch (not main) before any restore", async ({
     page,
   }) => {
-    // A fde worktree is cut on its own branch named after the slug, and the
+    // A frogg worktree is cut on its own branch named after the slug, and the
     // worktree workspace is displayed under the same name. These are the values
     // the History table cells must show after restore — never "main".
     const worktreeSlug = `restart-restore-${randomUUID().slice(0, 8)}`;

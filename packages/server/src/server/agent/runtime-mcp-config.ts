@@ -1,21 +1,21 @@
 import type { AgentSessionConfig, McpServerConfig } from "./agent-sdk-types.js";
 
-const FDE_MCP_SERVER_NAME = "fde";
-const FDE_MCP_PATHNAME = "/mcp/agents";
+const FROGG_MCP_SERVER_NAME = "frogg";
+const FROGG_MCP_PATHNAME = "/mcp/agents";
 
-export function stripInternalFdeMcpServer(config: AgentSessionConfig): AgentSessionConfig {
+export function stripInternalFroggMcpServer(config: AgentSessionConfig): AgentSessionConfig {
   const mcpServers = config.mcpServers;
   if (!mcpServers) {
     return config;
   }
 
-  const fdeServer = mcpServers[FDE_MCP_SERVER_NAME];
-  if (!fdeServer || !isInternalFdeMcpServer(fdeServer)) {
+  const froggServer = mcpServers[FROGG_MCP_SERVER_NAME];
+  if (!froggServer || !isInternalFroggMcpServer(froggServer)) {
     return config;
   }
 
   const nextMcpServers = { ...mcpServers };
-  delete nextMcpServers[FDE_MCP_SERVER_NAME];
+  delete nextMcpServers[FROGG_MCP_SERVER_NAME];
 
   const next = { ...config };
   if (Object.keys(nextMcpServers).length > 0) {
@@ -26,7 +26,7 @@ export function stripInternalFdeMcpServer(config: AgentSessionConfig): AgentSess
   return next;
 }
 
-export function withRuntimeFdeMcpServer(params: {
+export function withRuntimeFroggMcpServer(params: {
   config: AgentSessionConfig;
   agentId: string;
   mcpBaseUrl: string | null;
@@ -37,15 +37,15 @@ export function withRuntimeFdeMcpServer(params: {
    */
   mcpAuthToken: string | null;
 }): AgentSessionConfig {
-  const storedConfig = stripInternalFdeMcpServer(params.config);
-  if (!params.mcpBaseUrl || storedConfig.mcpServers?.[FDE_MCP_SERVER_NAME]) {
+  const storedConfig = stripInternalFroggMcpServer(params.config);
+  if (!params.mcpBaseUrl || storedConfig.mcpServers?.[FROGG_MCP_SERVER_NAME]) {
     return storedConfig;
   }
 
   return {
     ...storedConfig,
     mcpServers: {
-      [FDE_MCP_SERVER_NAME]: {
+      [FROGG_MCP_SERVER_NAME]: {
         type: "http",
         url: `${params.mcpBaseUrl}?callerAgentId=${params.agentId}`,
         ...(params.mcpAuthToken
@@ -57,13 +57,13 @@ export function withRuntimeFdeMcpServer(params: {
   };
 }
 
-function isInternalFdeMcpServer(config: McpServerConfig): boolean {
+function isInternalFroggMcpServer(config: McpServerConfig): boolean {
   if (config.type !== "http" && config.type !== "sse") {
     return false;
   }
 
   try {
-    return new URL(config.url).pathname === FDE_MCP_PATHNAME;
+    return new URL(config.url).pathname === FROGG_MCP_PATHNAME;
   } catch {
     return false;
   }

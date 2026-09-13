@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { SessionOutboundMessage } from "@fde/protocol/messages";
+import type { SessionOutboundMessage } from "@frogg/protocol/messages";
 import { DictationStreamSender } from "@/dictation/dictation-stream-sender";
 
 interface FakeFinish {

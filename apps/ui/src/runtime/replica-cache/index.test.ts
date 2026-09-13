@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { WorkspaceDescriptorPayload } from "@fde/protocol/messages";
+import type { WorkspaceDescriptorPayload } from "@frogg/protocol/messages";
 import {
   normalizeProjectDescriptor,
   normalizeWorkspaceDescriptor,
@@ -115,7 +115,7 @@ function agent(id = "agent-1"): Agent {
       {
         id,
         provider: "codex",
-        cwd: "/repo/fde",
+        cwd: "/repo/frogg",
         workspaceId: "workspace-1",
         model: null,
         createdAt: "2026-07-18T08:00:00.000Z",
@@ -147,9 +147,9 @@ function workspacePayload(): WorkspaceDescriptorPayload {
   return {
     id: "workspace-1",
     projectId: "project-1",
-    projectDisplayName: "Fde",
-    projectRootPath: "/repo/fde",
-    workspaceDirectory: "/repo/fde",
+    projectDisplayName: "Frogg",
+    projectRootPath: "/repo/frogg",
+    workspaceDirectory: "/repo/frogg",
     projectKind: "git",
     workspaceKind: "local_checkout",
     name: "main",
@@ -179,8 +179,8 @@ function directory(
   const workspace = normalizeWorkspaceDescriptor(workspacePayload());
   const project = normalizeProjectDescriptor({
     projectId: "project-1",
-    projectDisplayName: "Fde",
-    projectRootPath: "/repo/fde",
+    projectDisplayName: "Frogg",
+    projectRootPath: "/repo/frogg",
     projectKind: "git",
   });
   return {
@@ -224,7 +224,7 @@ describe("ReplicaCache", () => {
 
     expect(restoredDirectory.agents.get("agent-1")?.title).toBe("Cached agent");
     expect(restoredDirectory.workspaces.get("workspace-1")?.name).toBe("main");
-    expect(restoredDirectory.projects.get("project-1")?.projectDisplayName).toBe("Fde");
+    expect(restoredDirectory.projects.get("project-1")?.projectDisplayName).toBe("Frogg");
     expect(restoredDirectory.checkpoint).toEqual({ agents: { generation: "g", afterSeq: 12 } });
     expect(restoredTimeline).toEqual(timeline());
   });
@@ -342,10 +342,10 @@ describe("ReplicaCache", () => {
       id: "project-1",
       payload: JSON.stringify({
         projectId: "project-1",
-        projectDisplayName: "Fde",
+        projectDisplayName: "Frogg",
         projectCustomName: null,
         projectCustomIconRevision: null,
-        projectRootPath: "/repo/fde",
+        projectRootPath: "/repo/frogg",
         projectKind: "git",
       }),
     });
@@ -354,7 +354,7 @@ describe("ReplicaCache", () => {
     const restored = await cache.readDirectory(SERVER_ID);
 
     expect(restored.agents.size).toBe(0);
-    expect(restored.projects.get("project-1")?.projectDisplayName).toBe("Fde");
+    expect(restored.projects.get("project-1")?.projectDisplayName).toBe("Frogg");
     expect(storage.rows.has(`${SERVER_ID}:agent:agent-1`)).toBe(false);
     expect(storage.rows.has(`${SERVER_ID}:project:project-1`)).toBe(true);
   });

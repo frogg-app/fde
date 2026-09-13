@@ -2,7 +2,7 @@ import { requireNativeModule, type EventSubscription } from "expo-modules-core";
 
 type HardwareKeyboardSubmitHandler = () => void;
 
-interface FdeHardwareKeyboardModule {
+interface FroggHardwareKeyboardModule {
   setHardwareKeyboardSubmitEnabled(enabled: boolean): void;
   addListener(
     eventName: "onHardwareKeyboardSubmit",
@@ -10,7 +10,7 @@ interface FdeHardwareKeyboardModule {
   ): EventSubscription;
 }
 
-const module = requireNativeModule<FdeHardwareKeyboardModule>("FdeHardwareKeyboard");
+const module = requireNativeModule<FroggHardwareKeyboardModule>("FroggHardwareKeyboard");
 
 export function setHardwareKeyboardSubmitEnabled(enabled: boolean) {
   module.setHardwareKeyboardSubmitEnabled(enabled);

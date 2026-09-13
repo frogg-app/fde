@@ -1,4 +1,7 @@
-import type { CompanionNotebookEntry, CompanionNotebookEntryStatus } from "@fde/protocol/messages";
+import type {
+  CompanionNotebookEntry,
+  CompanionNotebookEntryStatus,
+} from "@frogg/protocol/messages";
 import type { SessionState } from "@/stores/session-store";
 import type { SidebarStateBucket } from "@/utils/sidebar-agent-state";
 

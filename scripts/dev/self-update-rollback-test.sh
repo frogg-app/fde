@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# End-to-end check of `fde daemon self-update` and its rollback on one host,
-# without touching any real install: a scratch FDE_INSTALL_DIR and FDE_HOME,
-# a daemon started by hand (FDE_NO_SERVICE=1, so the unmanaged stop/start path
+# End-to-end check of `frogg daemon self-update` and its rollback on one host,
+# without touching any real install: a scratch FROGG_INSTALL_DIR and FROGG_HOME,
+# a daemon started by hand (FROGG_NO_SERVICE=1, so the unmanaged stop/start path
 # is exercised), and a local HTTP server standing in for the GitHub release.
 #
-# From a good bundle it derives two more: a "broken" one (bin/fde exits 1) one
+# From a good bundle it derives two more: a "broken" one (bin/frogg exits 1) one
 # patch level up, and a good one two patch levels up. It then proves that
 #   1. updating to the broken bundle ends in `rolled_back` with the original
 #      daemon answering again, and
@@ -21,7 +21,7 @@ http_port="${3:-9994}"
 listen="0.0.0.0:${port}"
 repo_root="$(cd "$(dirname "$0")/../.." && pwd)"
 
-work="$(mktemp -d "${TMPDIR:-/tmp}/fde-self-update-test.XXXXXX")"
+work="$(mktemp -d "${TMPDIR:-/tmp}/frogg-self-update-test.XXXXXX")"
 install_dir="${work}/install"
 home_dir="${work}/home"
 serve_dir="${work}/release"
@@ -29,8 +29,8 @@ mkdir -p "${install_dir}" "${home_dir}" "${serve_dir}" "${work}/bin"
 
 http_pid=""
 cleanup() {
-  if [ -x "${install_dir}/current/bin/fde" ]; then
-    "${install_dir}/current/bin/fde" daemon stop --home "${home_dir}" --force --json >/dev/null 2>&1 || true
+  if [ -x "${install_dir}/current/bin/frogg" ]; then
+    "${install_dir}/current/bin/frogg" daemon stop --home "${home_dir}" --force --json >/dev/null 2>&1 || true
   fi
   if [ -n "${http_pid}" ]; then kill "${http_pid}" >/dev/null 2>&1 || true; fi
   rm -rf "${work}"
@@ -60,19 +60,19 @@ read_manifest_field() {
 # derive_bundle <src-tree> <version> <broken:0|1> -> writes serve_dir/download/v<version>/<asset>{,.sha256}
 derive_bundle() {
   local src="$1" version="$2" broken="$3"
-  local name="FDE-${version}-${public_platform_arch}-daemon"
-  local bundle_dir_name="fde-daemon-${version}-${platform_arch}"
+  local name="Frogg-${version}-${public_platform_arch}-daemon"
+  local bundle_dir_name="frogg-daemon-${version}-${platform_arch}"
   local staging="${work}/derive/${bundle_dir_name}"
   rm -rf "${staging}"
   mkdir -p "$(dirname "${staging}")"
   cp -a "${src}" "${staging}"
   sed -i "s/\"version\": *\"${base_version}\"/\"version\": \"${version}\"/" "${staging}/manifest.json"
-  # The daemon reports @fde/server's package version on /api/identity.
+  # The daemon reports @frogg/server's package version on /api/identity.
   sed -i "s/\"version\": *\"${base_version}\"/\"version\": \"${version}\"/" \
     "${staging}/daemon/packages/server/package.json" "${staging}/daemon/apps/cli/package.json"
   if [ "${broken}" = "1" ]; then
-    printf '#!/bin/sh\necho "broken bundle: refusing to start" >&2\nexit 1\n' > "${staging}/bin/fde"
-    chmod +x "${staging}/bin/fde"
+    printf '#!/bin/sh\necho "broken bundle: refusing to start" >&2\nexit 1\n' > "${staging}/bin/frogg"
+    chmod +x "${staging}/bin/frogg"
   fi
   local out_dir="${serve_dir}/download/v${version}"
   mkdir -p "${out_dir}"
@@ -101,7 +101,7 @@ bump_patch() {
 }
 
 log "installing ${bundle} into ${install_dir} (no service)"
-FDE_INSTALL_DIR="${install_dir}" FDE_BIN_DIR="${work}/bin" FDE_NO_SERVICE=1 FDE_BUNDLE_FILE="${bundle}" \
+FROGG_INSTALL_DIR="${install_dir}" FROGG_BIN_DIR="${work}/bin" FROGG_NO_SERVICE=1 FROGG_BUNDLE_FILE="${bundle}" \
   bash "${repo_root}/deploy/install.sh" | sed 's/^/  /'
 base_version="$(read_manifest_field "${install_dir}/current/manifest.json" version)"
 bundle_platform="$(read_manifest_field "${install_dir}/current/manifest.json" platform)"
@@ -122,7 +122,7 @@ derive_bundle "${install_dir}/versions/${base_version}" "${good_version}" 0 >/de
 python3 -m http.server --directory "${serve_dir}" --bind 127.0.0.1 "${http_port}" >"${work}/http.log" 2>&1 &
 http_pid=$!
 sleep 1
-broken_asset="download/v${broken_version}/FDE-${broken_version}-${public_platform_arch}-daemon.tar.gz"
+broken_asset="download/v${broken_version}/Frogg-${broken_version}-${public_platform_arch}-daemon.tar.gz"
 if ! curl -fsSI "http://127.0.0.1:${http_port}/${broken_asset}" >/dev/null; then
   echo "served tree:" >&2
   find "${serve_dir}" -type f >&2
@@ -130,18 +130,18 @@ if ! curl -fsSI "http://127.0.0.1:${http_port}/${broken_asset}" >/dev/null; then
   fail "the local release server does not serve ${broken_asset}"
 fi
 
-export FDE_INSTALL_DIR="${install_dir}" FDE_HOME="${home_dir}" FDE_LISTEN="${listen}"
-export FDE_RELEASE_BASE="http://127.0.0.1:${http_port}"
-fde="${install_dir}/current/bin/fde"
+export FROGG_INSTALL_DIR="${install_dir}" FROGG_HOME="${home_dir}" FROGG_LISTEN="${listen}"
+export FROGG_RELEASE_BASE="http://127.0.0.1:${http_port}"
+frogg="${install_dir}/current/bin/frogg"
 
 log "starting daemon ${base_version} on ${listen}"
-"${fde}" daemon start --listen "${listen}" --home "${home_dir}" --no-relay
+"${frogg}" daemon start --listen "${listen}" --home "${home_dir}" --no-relay
 wait_for_version "${base_version}" || fail "daemon ${base_version} did not answer on /api/identity"
 echo "  /api/identity reports ${base_version}"
 
 log "self-update to the broken ${broken_version}: expecting an automatic rollback"
 set +e
-"${fde}" daemon self-update --to "${broken_version}" --home "${home_dir}" --json --verify-timeout 30000 | tee "${work}/broken.jsonl" | sed 's/^/  /'
+"${frogg}" daemon self-update --to "${broken_version}" --home "${home_dir}" --json --verify-timeout 30000 | tee "${work}/broken.jsonl" | sed 's/^/  /'
 broken_exit="${PIPESTATUS[0]}"
 set -e
 grep -q '"status":"rolled_back"' "${work}/broken.jsonl" || fail "expected rolled_back, exit ${broken_exit}"
@@ -153,7 +153,7 @@ echo "  last-update.json: $(tr -d '\n' < "${install_dir}/last-update.json")"
 [ -d "${install_dir}/versions/${broken_version}" ] || fail "the failed version should stay on disk for inspection"
 
 log "self-update to the good ${good_version}: expecting it to apply"
-"${fde}" daemon self-update --to "${good_version}" --home "${home_dir}" --json --verify-timeout 30000 | tee "${work}/good.jsonl" | sed 's/^/  /'
+"${frogg}" daemon self-update --to "${good_version}" --home "${home_dir}" --json --verify-timeout 30000 | tee "${work}/good.jsonl" | sed 's/^/  /'
 grep -q '"status":"applied"' "${work}/good.jsonl" || fail "expected applied"
 [ "$(readlink "${install_dir}/current")" = "versions/${good_version}" ] || fail "current does not point at ${good_version}"
 [ "$(cat "${install_dir}/previous")" = "${base_version}" ] || fail "previous marker should be ${base_version}"
@@ -162,7 +162,7 @@ echo "  current -> $(readlink "${install_dir}/current"), previous = $(cat "${ins
 echo "  last-update.json: $(tr -d '\n' < "${install_dir}/last-update.json")"
 
 log "re-running the same update is a no-op"
-"${install_dir}/current/bin/fde" daemon self-update --to "${good_version}" --home "${home_dir}" --json | grep -q '"status":"up_to_date"' || fail "expected up_to_date on re-run"
+"${install_dir}/current/bin/frogg" daemon self-update --to "${good_version}" --home "${home_dir}" --json | grep -q '"status":"up_to_date"' || fail "expected up_to_date on re-run"
 
 log "self-update.log:"
 sed 's/^/  /' "${install_dir}/self-update.log"

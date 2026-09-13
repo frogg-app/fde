@@ -37,19 +37,19 @@ async function createWorkspaceJourney() {
   cleanupPaths.push(tempDir);
   const repoDir = path.join(tempDir, "repo");
   run(tempDir, ["init", "-b", "main", repoDir]);
-  run(repoDir, ["config", "user.email", "test@fde.local"]);
-  run(repoDir, ["config", "user.name", "Fde Test"]);
+  run(repoDir, ["config", "user.email", "test@frogg.local"]);
+  run(repoDir, ["config", "user.name", "Frogg Test"]);
   writeFileSync(path.join(repoDir, "README.md"), "workspace journey\n");
   run(repoDir, ["add", "README.md"]);
   run(repoDir, ["-c", "commit.gpgsign=false", "commit", "-m", "initial"]);
 
-  const fdeHome = path.join(tempDir, ".fde");
+  const froggHome = path.join(tempDir, ".frogg");
   const worktree = await createWorktree({
     cwd: repoDir,
     worktreeSlug: "workspace",
     source: { kind: "branch-off", baseBranch: "main", branchName: "workspace" },
     runSetup: false,
-    fdeHome,
+    froggHome,
   });
   const workspaceId = "workspace-under-test";
   let active = true;
@@ -70,7 +70,7 @@ async function createWorkspaceJourney() {
         mainRepoRoot: repoDir,
         currentBranch: branch,
         remoteUrl: "https://github.com/acme/repo.git",
-        isFdeOwnedWorktree: true,
+        isFroggOwnedWorktree: true,
         isDirty: false,
         baseRef: "main",
         aheadBehind: { ahead: 0, behind: 0 },

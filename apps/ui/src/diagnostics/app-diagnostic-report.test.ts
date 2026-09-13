@@ -33,21 +33,21 @@ function makeHost(): HostProfile {
         daemonPublicKeyB64: "daemon-public-key-secret",
       },
       {
-        id: "socket:/tmp/fde-secret.sock",
+        id: "socket:/tmp/frogg-secret.sock",
         type: "directSocket",
-        path: "/tmp/fde-secret.sock",
+        path: "/tmp/frogg-secret.sock",
       },
       {
-        id: "pipe:\\\\.\\pipe\\fde-secret",
+        id: "pipe:\\\\.\\pipe\\frogg-secret",
         type: "directPipe",
-        path: "\\\\.\\pipe\\fde-secret",
+        path: "\\\\.\\pipe\\frogg-secret",
       },
     ],
   };
 }
 
 describe("app diagnostics report", () => {
-  test("reports whether the connected daemon is managed by FDE Desktop", () => {
+  test("reports whether the connected daemon is managed by Frogg Desktop", () => {
     const report = formatServerInfoSection({
       status: "server_info",
       serverId: "srv-desktop-managed",
@@ -93,7 +93,7 @@ describe("app diagnostics report", () => {
     expect(report).not.toContain("secret.example.test");
     expect(report).not.toContain("relay.secret.test");
     expect(report).not.toContain("daemon-public-key-secret");
-    expect(report).not.toContain("/tmp/fde-secret.sock");
+    expect(report).not.toContain("/tmp/frogg-secret.sock");
     expect(report).not.toContain("tcp-password");
   });
 
@@ -105,10 +105,10 @@ describe("app diagnostics report", () => {
         "secret.example.test:9999",
         "relay.secret.test:443",
         "daemon-public-key-secret",
-        "/tmp/fde-secret.sock",
-        "\\\\.\\pipe\\fde-secret",
+        "/tmp/frogg-secret.sock",
+        "\\\\.\\pipe\\frogg-secret",
         "password=tcp-password",
-        "fde://pairing-secret",
+        "frogg://pairing-secret",
       ].join("\n"),
       [host],
     );
@@ -116,8 +116,8 @@ describe("app diagnostics report", () => {
     expect(redacted).not.toContain("secret.example.test");
     expect(redacted).not.toContain("relay.secret.test");
     expect(redacted).not.toContain("daemon-public-key-secret");
-    expect(redacted).not.toContain("/tmp/fde-secret.sock");
-    expect(redacted).not.toContain("\\\\.\\pipe\\fde-secret");
+    expect(redacted).not.toContain("/tmp/frogg-secret.sock");
+    expect(redacted).not.toContain("\\\\.\\pipe\\frogg-secret");
     expect(redacted).not.toContain("tcp-password");
     expect(redacted).not.toContain("pairing-secret");
   });

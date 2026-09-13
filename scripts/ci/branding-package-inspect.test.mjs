@@ -8,7 +8,7 @@ import { pathToFileURL } from "node:url";
 
 const source = new URL("./branding-package-inspect.mjs", import.meta.url);
 test("macOS inspection accepts stable bundle names and rejects missing executables or wrong identities", () => {
-  const cwd = mkdtempSync(path.join(os.tmpdir(), "fde-package-inspect-"));
+  const cwd = mkdtempSync(path.join(os.tmpdir(), "frogg-package-inspect-"));
   try {
     // Run the real inspector with a fixture-local brand loader. Preparing a brand
     // in the source checkout races other script tests and changes their identity.

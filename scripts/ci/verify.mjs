@@ -20,8 +20,8 @@ const LINT_EXTENSIONS = /\.(js|jsx|mjs|cjs|ts|tsx)$/u;
 // Unit-test entrypoint per workspace. `test` is the whole suite for several workspaces —
 // including integration and cargo legs — so name the narrow script where one exists.
 const UNIT_TESTS = {
-  "@fde/server": ["npm", ["run", "test:unit", "--workspace=@fde/server"]],
-  "@fde/cli": ["npm", ["run", "test:unit", "--workspace=@fde/cli"]],
+  "@frogg/server": ["npm", ["run", "test:unit", "--workspace=@frogg/server"]],
+  "@frogg/cli": ["npm", ["run", "test:unit", "--workspace=@frogg/cli"]],
 };
 
 function unitTestJob(workspace) {
@@ -45,8 +45,8 @@ function fullJobs() {
             "npx",
             ["vitest", "run", "--root", "packages/server", "--exclude", "**/*.e2e.test.ts"],
           ],
-          ["ui", "npm", ["run", "test", "--workspace=@fde/app"]],
-          ["cli", "npm", ["run", "test:unit", "--workspace=@fde/cli"]],
+          ["ui", "npm", ["run", "test", "--workspace=@frogg/app"]],
+          ["cli", "npm", ["run", "test:unit", "--workspace=@frogg/cli"]],
           ["protocol", "npx", ["vitest", "run", "--root", "packages/protocol"]],
         ]),
   ];

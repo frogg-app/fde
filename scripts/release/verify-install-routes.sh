@@ -3,23 +3,23 @@
 # daemon, verify it runs, uninstall it, and verify it is gone.
 #
 # It runs the whole cycle inside a throwaway container. That is not caution for
-# its own sake: uninstall.sh calls `systemctl --user disable --now fde-daemon`
-# without reference to FDE_INSTALL_DIR, so running it on this host would stop
+# its own sake: uninstall.sh calls `systemctl --user disable --now frogg-daemon`
+# without reference to FROGG_INSTALL_DIR, so running it on this host would stop
 # the real daemon -- which is the parent of any agent session running under it.
 # The container has no systemd and no view of the host's services, so the same
 # script that would be destructive here is inert there.
 #
 # Usage: scripts/release/verify-install-routes.sh [image]
-#        FDE_ROUTE_BASE=https://staging.example scripts/release/verify-install-routes.sh
+#        FROGG_ROUTE_BASE=https://staging.example scripts/release/verify-install-routes.sh
 #
 # Exits non-zero if any step fails, so it works as a post-deploy smoke test for
 # the Worker in deploy/install-worker.
 set -euo pipefail
 
 IMAGE="${1:-ubuntu:24.04}"
-BASE="${FDE_ROUTE_BASE:-https://frogg.app}"
+BASE="${FROGG_ROUTE_BASE:-https://frogg.app}"
 
-echo "=== FDE install-route verification ==="
+echo "=== Frogg install-route verification ==="
 echo "base:  ${BASE}"
 echo "image: ${IMAGE}"
 echo "date:  $(date -Is)"
@@ -32,7 +32,7 @@ echo "--- 1. route reachability ---"
 for script in install.sh uninstall.sh install-docker.sh; do
   code=$(curl -s -o /dev/null -w '%{http_code}' "${BASE}/${script}")
   ctype=$(curl -sI "${BASE}/${script}" | awk -F': ' 'tolower($1)=="content-type"{print $2}' | tr -d '\r')
-  source=$(curl -sI "${BASE}/${script}" | awk -F': ' 'tolower($1)=="x-fde-source"{print $2}' | tr -d '\r')
+  source=$(curl -sI "${BASE}/${script}" | awk -F': ' 'tolower($1)=="x-frogg-source"{print $2}' | tr -d '\r')
   # Read the whole body then take line 1: piping curl into `head` makes curl
   # exit 23 when head closes the pipe, which trips pipefail.
   body=$(curl -fsSL "${BASE}/${script}" 2>/dev/null || true)
@@ -66,7 +66,7 @@ echo
 
 # No service manager in here, so install without one. Everything else is the
 # stock path a new user gets.
-export FDE_NO_SERVICE=1
+export FROGG_NO_SERVICE=1
 
 echo ">>> curl -fsSL \${BASE}/install.sh | bash"
 curl -fsSL "${BASE}/install.sh" | bash
@@ -74,13 +74,13 @@ echo "<<< install exit: $?"
 echo
 
 echo ">>> installed layout"
-ls -l "${HOME}/.local/share/fde" 2>/dev/null || echo "  (no install dir)"
-echo "  current -> $(readlink "${HOME}/.local/share/fde/current" 2>/dev/null || echo none)"
-ls -l "${HOME}/.local/bin/fde" 2>/dev/null || echo "  (no fde link)"
+ls -l "${HOME}/.local/share/frogg" 2>/dev/null || echo "  (no install dir)"
+echo "  current -> $(readlink "${HOME}/.local/share/frogg/current" 2>/dev/null || echo none)"
+ls -l "${HOME}/.local/bin/frogg" 2>/dev/null || echo "  (no frogg link)"
 echo
 
 echo ">>> the installed binary runs"
-ver=$("${HOME}/.local/bin/fde" --version 2>&1) || { echo "  FAIL: fde --version failed: ${ver}"; exit 1; }
+ver=$("${HOME}/.local/bin/frogg" --version 2>&1) || { echo "  FAIL: frogg --version failed: ${ver}"; exit 1; }
 echo "  ${ver}"
 echo
 
@@ -90,16 +90,16 @@ echo "<<< uninstall exit: $?"
 echo
 
 echo ">>> after uninstall"
-if [ -e "${HOME}/.local/share/fde" ]; then
-  echo "  FAIL: install dir still present:"; ls -l "${HOME}/.local/share/fde"; exit 1
+if [ -e "${HOME}/.local/share/frogg" ]; then
+  echo "  FAIL: install dir still present:"; ls -l "${HOME}/.local/share/frogg"; exit 1
 fi
 echo "  install dir removed"
-if [ -e "${HOME}/.local/bin/fde" ]; then
-  echo "  FAIL: fde link still present"; exit 1
+if [ -e "${HOME}/.local/bin/frogg" ]; then
+  echo "  FAIL: frogg link still present"; exit 1
 fi
-echo "  fde link removed"
-# Daemon state is deliberately kept unless FDE_PURGE=1.
-[ -e "${HOME}/.fde" ] && echo "  ~/.fde kept (expected; FDE_PURGE=1 removes it)" || echo "  ~/.fde absent"
+echo "  frogg link removed"
+# Daemon state is deliberately kept unless FROGG_PURGE=1.
+[ -e "${HOME}/.frogg" ] && echo "  ~/.frogg kept (expected; FROGG_PURGE=1 removes it)" || echo "  ~/.frogg absent"
 CONTAINER
 
 echo

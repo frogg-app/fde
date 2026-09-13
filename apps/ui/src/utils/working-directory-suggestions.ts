@@ -1,4 +1,4 @@
-import { scorePathMatch } from "@fde/protocol/search/text-match";
+import { scorePathMatch } from "@frogg/protocol/search/text-match";
 
 export interface BuildWorkingDirectorySuggestionsInput {
   recommendedPaths: string[];

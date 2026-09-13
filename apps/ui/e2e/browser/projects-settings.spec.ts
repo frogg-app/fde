@@ -3,14 +3,14 @@ import path from "node:path";
 import { expect, test as base, type Page } from "../support/fixtures";
 import { connectSeedClient, seedWorkspace } from "../support/helpers/seed-client";
 import {
-  blockFdeConfigWrites,
-  bumpFdeConfigOnDisk,
+  blockFroggConfigWrites,
+  bumpFroggConfigOnDisk,
   chooseProjectIconImage,
   clickReloadProjectSettings,
   clickRetryProjectSettingsSave,
   clickSaveProjectSettings,
-  commitFdeConfig,
-  corruptFdeConfig,
+  commitFroggConfig,
+  corruptFroggConfig,
   editWorktreeSetup,
   expectEmptyScriptList,
   expectProjectHostContextHidden,
@@ -39,10 +39,10 @@ import {
   openProjectSettings,
   openProjects,
   removeProjectScript,
-  restoreFdeConfig,
+  restoreFroggConfig,
   returnToProjectsList,
   saveProjectEdits,
-  unblockFdeConfigWrites,
+  unblockFroggConfigWrites,
 } from "../support/helpers/project-settings";
 import { gotoAppShell } from "../support/helpers/app";
 import { openCompactSettings } from "../support/helpers/settings";
@@ -77,7 +77,7 @@ interface ProjectsSettingsFixtures {
   gitlabRemoteProject: ProjectsSettingsProject;
 }
 
-const initialFdeConfig = {
+const initialFroggConfig = {
   worktree: {
     setup: ["echo initial setup"],
     teardown: "echo cleanup",
@@ -98,7 +98,7 @@ const test = base.extend<ProjectsSettingsFixtures>({
   editableProject: async ({ page: _page }, provide) => {
     const workspace = await seedWorkspace({
       repoPrefix: "projects-settings-",
-      repo: { fdeConfig: initialFdeConfig },
+      repo: { froggConfig: initialFroggConfig },
     });
 
     await provide({
@@ -115,7 +115,7 @@ const test = base.extend<ProjectsSettingsFixtures>({
     const workspace = await seedWorkspace({
       repoPrefix: "projects-settings-gitlab-",
       repo: {
-        fdeConfig: initialFdeConfig,
+        froggConfig: initialFroggConfig,
         originUrl: "https://gitlab.com/acme/app.git",
       },
     });
@@ -143,18 +143,18 @@ async function expectProjectConfigSaved(project: ProjectsSettingsProject): Promi
     .toMatchObject({
       worktree: {
         setup: updatedSetup,
-        teardown: initialFdeConfig.worktree.teardown,
-        customWorktreeField: initialFdeConfig.worktree.customWorktreeField,
+        teardown: initialFroggConfig.worktree.teardown,
+        customWorktreeField: initialFroggConfig.worktree.customWorktreeField,
       },
       scripts: {
         dev: {
-          command: initialFdeConfig.scripts.dev.command,
-          type: initialFdeConfig.scripts.dev.type,
-          port: initialFdeConfig.scripts.dev.port,
-          customScriptField: initialFdeConfig.scripts.dev.customScriptField,
+          command: initialFroggConfig.scripts.dev.command,
+          type: initialFroggConfig.scripts.dev.type,
+          port: initialFroggConfig.scripts.dev.port,
+          customScriptField: initialFroggConfig.scripts.dev.customScriptField,
         },
       },
-      customTopLevelField: initialFdeConfig.customTopLevelField,
+      customTopLevelField: initialFroggConfig.customTopLevelField,
     });
 
   const savedConfig = await readProjectConfigFile(project);
@@ -162,7 +162,7 @@ async function expectProjectConfigSaved(project: ProjectsSettingsProject): Promi
 }
 
 async function readProjectConfigFile(project: ProjectsSettingsProject): Promise<string> {
-  return readFile(path.join(project.path, "fde.json"), "utf8");
+  return readFile(path.join(project.path, "frogg.json"), "utf8");
 }
 
 async function addProjectFromSidebar(page: Page, projectPath: string): Promise<string> {
@@ -232,7 +232,7 @@ test.describe("Projects settings", () => {
     await expectProjectConfigSaved(editableProject);
     await expectUncommittedSetupWarning(page);
 
-    commitFdeConfig(editableProject.path);
+    commitFroggConfig(editableProject.path);
     await returnToProjectsList(page);
     await openProjectSettings(page, editableProject.name);
     await expectNoUncommittedSetupWarning(page);
@@ -364,7 +364,7 @@ test.describe("Projects settings — error UX", () => {
     await openProjectSettings(page, editableProject.name);
 
     // Bump the file on disk so the daemon detects a revision mismatch on save.
-    await bumpFdeConfigOnDisk(editableProject.path);
+    await bumpFroggConfigOnDisk(editableProject.path);
 
     await clickSaveProjectSettings(page);
 
@@ -377,11 +377,11 @@ test.describe("Projects settings — error UX", () => {
     await expectProjectSettingsFormVisible(page);
   });
 
-  test("invalid fde.json shows read-error callout, reload after fix shows form", async ({
+  test("invalid frogg.json shows read-error callout, reload after fix shows form", async ({
     page,
     editableProject,
   }) => {
-    await corruptFdeConfig(editableProject.path);
+    await corruptFroggConfig(editableProject.path);
 
     await openProjects(page);
     await navigateToProjectSettings(page, editableProject.name);
@@ -390,7 +390,7 @@ test.describe("Projects settings — error UX", () => {
     await expectProjectSettingsFormHidden(page);
 
     // Restore a valid config so the reload succeeds.
-    await restoreFdeConfig(editableProject.path, initialFdeConfig);
+    await restoreFroggConfig(editableProject.path, initialFroggConfig);
 
     await clickReloadProjectSettings(page);
 
@@ -405,7 +405,7 @@ test.describe("Projects settings — error UX", () => {
     await openProjects(page);
     await openProjectSettings(page, editableProject.name);
 
-    await blockFdeConfigWrites(editableProject.path);
+    await blockFroggConfigWrites(editableProject.path);
 
     await clickSaveProjectSettings(page);
 
@@ -415,7 +415,7 @@ test.describe("Projects settings — error UX", () => {
     await clickRetryProjectSettingsSave(page);
     await expectProjectSettingsError(page, "write_failed");
 
-    await unblockFdeConfigWrites(editableProject.path);
+    await unblockFroggConfigWrites(editableProject.path);
     await clickReloadProjectSettings(page);
     await expectNoProjectSettingsError(page, "write_failed");
     await expectProjectSettingsFormVisible(page);

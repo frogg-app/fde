@@ -8,7 +8,7 @@ afterEach(async () => {
   await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
 });
 const makeUpload = async () => {
-  const root = await mkdtemp(path.join(tmpdir(), "fde-import-test-"));
+  const root = await mkdtemp(path.join(tmpdir(), "frogg-import-test-"));
   roots.push(root);
   return new ImportUpload(root);
 };

@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 // Settings > Updates for the desktop shell: current version and update
 // strategy, release channel, automatic checks, "Check for updates" with the
 // last-checked time, and the available release with its notes and a

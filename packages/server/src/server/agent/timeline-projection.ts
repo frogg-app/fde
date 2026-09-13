@@ -1,6 +1,6 @@
 import type { AgentTimelineItem, ToolCallDetail } from "./agent-sdk-types.js";
 import type { AgentTimelineRow } from "./agent-manager.js";
-import { timelineItemIdentity } from "@fde/protocol/timeline-identity";
+import { timelineItemIdentity } from "@frogg/protocol/timeline-identity";
 
 export type TimelineProjectionMode = "canonical" | "projected";
 

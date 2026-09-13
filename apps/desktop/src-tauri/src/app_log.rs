@@ -1,5 +1,5 @@
 //! Shell log file. A minimal `log` backend that appends one line per record
-//! to `<app log dir>/fde.log`, so `desktop_app_logs` and diagnostic reports
+//! to `<app log dir>/frogg.log`, so `desktop_app_logs` and diagnostic reports
 //! have something real to show, as Electron's `electron-log` file did.
 
 use std::fs::{self, File, OpenOptions};
@@ -11,7 +11,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use serde_json::{json, Value};
 use tauri::{AppHandle, Manager, Runtime};
 
-pub const FILENAME: &str = "fde.log";
+pub const FILENAME: &str = "frogg.log";
 const MAX_LOG_BYTES: u64 = 2 * 1024 * 1024;
 pub const APP_LOG_TAIL_LINES: usize = 200;
 pub const DAEMON_LOG_TAIL_LINES: usize = 100;

@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 #
-# FDE daemon image. Stage 1 builds the self-contained daemon bundle for the
+# Frogg daemon image. Stage 1 builds the self-contained daemon bundle for the
 # target platform (scripts/release/build-daemon-bundle.mjs); stage 2 unpacks
 # it into a slim Debian image. The bundle carries its own Node runtime, so the
 # runtime image needs no Node installation.
@@ -11,10 +11,10 @@
 ARG BUILD_NODE_IMAGE=node:22-bookworm-slim
 FROM --platform=$BUILDPLATFORM ${BUILD_NODE_IMAGE} AS bundle
 
-ARG FDE_BRAND_DIR=brands/fde
-ARG FDE_SOURCE_REVISION=unknown
-ENV FDE_BRAND_DIR=${FDE_BRAND_DIR} FDE_SOURCE_REVISION=${FDE_SOURCE_REVISION}
-ARG FDE_VERSION
+ARG FROGG_BRAND_DIR=brands/frogg
+ARG FROGG_SOURCE_REVISION=unknown
+ENV FROGG_BRAND_DIR=${FROGG_BRAND_DIR} FROGG_SOURCE_REVISION=${FROGG_SOURCE_REVISION}
+ARG FROGG_VERSION
 ARG TARGETOS
 ARG TARGETARCH
 
@@ -24,8 +24,8 @@ WORKDIR /src
 COPY . .
 
 RUN set -eux; \
-    if [ -n "${FDE_VERSION:-}" ]; then \
-      test "$(node -p "require('./package.json').version")" = "${FDE_VERSION}"; \
+    if [ -n "${FROGG_VERSION:-}" ]; then \
+      test "$(node -p "require('./package.json').version")" = "${FROGG_VERSION}"; \
     fi; \
     node -e 'const fs=require("node:fs"); const pkg=JSON.parse(fs.readFileSync("package.json","utf8")); delete pkg.scripts.prepare; fs.writeFileSync("package.json", `${JSON.stringify(pkg)}\n`);'; \
     npm ci
@@ -39,25 +39,25 @@ RUN set -eux; \
       *) echo "unsupported TARGETARCH ${TARGETARCH}" >&2; exit 1 ;; \
     esac; \
     node scripts/release/build-daemon-bundle.mjs --target "${TARGETOS}-${arch}" --out-dir /bundles; \
-    mkdir -p /opt/fde; \
+    mkdir -p /opt/frogg; \
     archive=$(find /bundles -maxdepth 1 -type f -name '*.tar.gz' -print -quit); \
     test -n "$archive"; \
-    tar -xzf "$archive" --strip-components=1 -C /opt/fde; \
+    tar -xzf "$archive" --strip-components=1 -C /opt/frogg; \
     rm -rf /bundles
 
 FROM debian:bookworm-slim
 
-ENV HOME=/home/fde \
-    FDE_WEB_UI_ENABLED=true \
-    FDE_LOG_FORMAT=json \
-    FDE_LOG_LEVEL=info \
-    CLAUDE_CONFIG_DIR=/home/fde/.claude \
-    CODEX_HOME=/home/fde/.codex \
-    XDG_CONFIG_HOME=/home/fde/.config \
-    XDG_DATA_HOME=/home/fde/.local/share \
-    XDG_STATE_HOME=/home/fde/.local/state \
-    XDG_CACHE_HOME=/home/fde/.cache \
-    PATH=/opt/fde/bin:/opt/fde/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENV HOME=/home/frogg \
+    FROGG_WEB_UI_ENABLED=true \
+    FROGG_LOG_FORMAT=json \
+    FROGG_LOG_LEVEL=info \
+    CLAUDE_CONFIG_DIR=/home/frogg/.claude \
+    CODEX_HOME=/home/frogg/.codex \
+    XDG_CONFIG_HOME=/home/frogg/.config \
+    XDG_DATA_HOME=/home/frogg/.local/share \
+    XDG_STATE_HOME=/home/frogg/.local/state \
+    XDG_CACHE_HOME=/home/frogg/.cache \
+    PATH=/opt/frogg/bin:/opt/frogg/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 RUN set -eux; \
     apt-get update; \
@@ -73,15 +73,15 @@ RUN set -eux; \
       tini; \
     rm -rf /var/lib/apt/lists/*
 
-COPY --from=bundle /opt/fde /opt/fde
-COPY --from=bundle /src/.generated/branding/deploy/runtime.sh /opt/fde/brand.sh
+COPY --from=bundle /opt/frogg /opt/frogg
+COPY --from=bundle /src/.generated/branding/deploy/runtime.sh /opt/frogg/brand.sh
 RUN set -eux; \
-    test -f /opt/fde/daemon/packages/server/dist/scripts/supervisor-entrypoint.js; \
-    /opt/fde/node/bin/node --version
+    test -f /opt/frogg/daemon/packages/server/dist/scripts/supervisor-entrypoint.js; \
+    /opt/frogg/node/bin/node --version
 
 RUN set -eux; \
-    groupadd --gid 1000 fde; \
-    useradd --uid 1000 --gid fde --create-home --home-dir /home/fde --shell /bin/bash fde; \
+    groupadd --gid 1000 frogg; \
+    useradd --uid 1000 --gid frogg --create-home --home-dir /home/frogg --shell /bin/bash frogg; \
     mkdir -p \
       /workspace \
       "$CLAUDE_CONFIG_DIR" \
@@ -90,16 +90,16 @@ RUN set -eux; \
       "$XDG_DATA_HOME" \
       "$XDG_STATE_HOME" \
       "$XDG_CACHE_HOME"; \
-    chown -R fde:fde /home/fde /workspace
+    chown -R frogg:frogg /home/frogg /workspace
 
 COPY deploy/docker/base/rootfs/ /
-RUN chmod +x /usr/local/bin/fde-docker-entrypoint
+RUN chmod +x /usr/local/bin/frogg-docker-entrypoint
 
 WORKDIR /workspace
 
 
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-  CMD bash -c 'source /opt/fde/brand.sh; port="${FDE_LISTEN:-$BRAND_PORT}"; curl -fsS "http://127.0.0.1:${port##*:}/api/health" >/dev/null' || exit 1
+  CMD bash -c 'source /opt/frogg/brand.sh; port="${FROGG_LISTEN:-$BRAND_PORT}"; curl -fsS "http://127.0.0.1:${port##*:}/api/health" >/dev/null' || exit 1
 
-ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/fde-docker-entrypoint"]
+ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/frogg-docker-entrypoint"]

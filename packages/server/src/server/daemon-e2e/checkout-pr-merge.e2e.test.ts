@@ -11,7 +11,7 @@ import {
   type DaemonTestContext,
 } from "../test-utils/index.js";
 import { createWorktree as createWorktreePrimitive } from "../../utils/worktree.js";
-import type { PullRequestMergeable } from "@fde/protocol/messages";
+import type { PullRequestMergeable } from "@frogg/protocol/messages";
 
 const GhPrViewSchema = z.object({
   state: z.string(),
@@ -60,11 +60,11 @@ const testWithGitHubCliAuth = hasRequiredGitHubCliAuth ? test : test.skip;
 
 function initGitRepo(repoDir: string): void {
   execSync("git init -b main", { cwd: repoDir, stdio: "pipe" });
-  execSync("git config user.email 'fde-test@example.com'", {
+  execSync("git config user.email 'frogg-test@example.com'", {
     cwd: repoDir,
     stdio: "pipe",
   });
-  execSync("git config user.name 'Fde Test'", {
+  execSync("git config user.name 'Frogg Test'", {
     cwd: repoDir,
     stdio: "pipe",
   });
@@ -216,7 +216,7 @@ describe("daemon checkout PR merge loop", () => {
             branchName: "merge-pr-squash",
           },
           runSetup: true,
-          fdeHome: ctx.daemon.fdeHome,
+          froggHome: ctx.daemon.froggHome,
         });
         worktreePath = worktree.worktreePath;
 
@@ -284,7 +284,7 @@ describe("daemon checkout PR merge loop", () => {
         });
         expect(readFetchedFile(repoDir, "feature.txt")).toBe("squash merge\n");
 
-        const archiveResult = await ctx.client.archiveFdeWorktree({
+        const archiveResult = await ctx.client.archiveFroggWorktree({
           worktreePath: worktree.worktreePath,
         });
         expect(archiveResult.error).toBeNull();
@@ -297,7 +297,7 @@ describe("daemon checkout PR merge loop", () => {
         agentId = null;
       } finally {
         if (worktreePath) {
-          await ctx.client.archiveFdeWorktree({ worktreePath }).catch(() => undefined);
+          await ctx.client.archiveFroggWorktree({ worktreePath }).catch(() => undefined);
         }
         if (agentId) {
           await ctx.client.deleteAgent(agentId).catch(() => undefined);

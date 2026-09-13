@@ -1,6 +1,6 @@
 ---
 title: Nix
-description: Run the FDE daemon as a NixOS service from the flake in deploy/nix.
+description: Run the Frogg daemon as a NixOS service from the flake in deploy/nix.
 sidebar:
   order: 3
 ---
@@ -13,19 +13,19 @@ aarch64 Linux and macOS, and a NixOS module.
 ```nix title="flake.nix"
 {
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-  inputs.fde.url = "github:frogg-app/fde?dir=deploy/nix";
+  inputs.frogg.url = "github:frogg-app/frogg?dir=deploy/nix";
 
-  outputs = { nixpkgs, fde, ... }: {
+  outputs = { nixpkgs, frogg, ... }: {
     nixosConfigurations.build-box = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       modules = [
-        fde.nixosModules.default
+        frogg.nixosModules.default
         {
-          services.fde = {
+          services.frogg = {
             enable = true;
             openFirewall = true;
             hostnames = [ "build-box.lan" ];
-            environment.FDE_LOG_LEVEL = "debug";
+            environment.FROGG_LOG_LEVEL = "debug";
             settings.daemon.mcp.injectIntoAgents = true;
           };
         }
@@ -39,18 +39,18 @@ aarch64 Linux and macOS, and a NixOS module.
 
 | Option                            | Default | Meaning |
 | --------------------------------- | ------- | ------- |
-| `services.fde.enable`             | `false` | Run the daemon as a systemd service |
-| `services.fde.package`            | the flake's package | Package to run |
-| `services.fde.user`, `group`      | `fde`   | Service account |
-| `services.fde.dataDir`            | `/var/lib/fde` (or `/home/<user>/.fde` for another user) | `FDE_HOME` |
-| `services.fde.port`               | `9999`  | Listen port |
-| `services.fde.listenAddress`      | `0.0.0.0` | Listen address |
-| `services.fde.openFirewall`       | `false` | Open the port in the firewall |
-| `services.fde.hostnames`          | `[]`    | Allowed hostnames, or `true` |
-| `services.fde.relay.enable`       | `false` | Connect to a relay (`relay.host` (required), `relay.port` (443), `relay.useTls` (`true`), `relay.publicUseTls`). Sets `FDE_RELAY_ENDPOINT`, so the app shows the endpoint read-only |
-| `services.fde.inheritUserEnvironment` | `true` when `user` is not `fde` | Give the service the user's environment, so agent CLIs and logins are found |
-| `services.fde.environment`        | `{}`    | Extra environment variables |
-| `services.fde.settings`           | `{}`    | Written to `config.json` on every start |
+| `services.frogg.enable`             | `false` | Run the daemon as a systemd service |
+| `services.frogg.package`            | the flake's package | Package to run |
+| `services.frogg.user`, `group`      | `frogg`   | Service account |
+| `services.frogg.dataDir`            | `/var/lib/frogg` (or `/home/<user>/.frogg` for another user) | `FROGG_HOME` |
+| `services.frogg.port`               | `9999`  | Listen port |
+| `services.frogg.listenAddress`      | `0.0.0.0` | Listen address |
+| `services.frogg.openFirewall`       | `false` | Open the port in the firewall |
+| `services.frogg.hostnames`          | `[]`    | Allowed hostnames, or `true` |
+| `services.frogg.relay.enable`       | `false` | Connect to a relay (`relay.host` (required), `relay.port` (443), `relay.useTls` (`true`), `relay.publicUseTls`). Sets `FROGG_RELAY_ENDPOINT`, so the app shows the endpoint read-only |
+| `services.frogg.inheritUserEnvironment` | `true` when `user` is not `frogg` | Give the service the user's environment, so agent CLIs and logins are found |
+| `services.frogg.environment`        | `{}`    | Extra environment variables |
+| `services.frogg.settings`           | `{}`    | Written to `config.json` on every start |
 
 :::caution
 `settings` replaces `config.json` each time the service starts. Changes made with the CLI
@@ -64,24 +64,24 @@ Agents need their CLIs and logins. The simplest setup runs the service as the us
 them:
 
 ```nix
-services.fde = {
+services.frogg = {
   enable = true;
   user = "alice";
   group = "users";
 };
 ```
 
-With `user` set, `dataDir` defaults to `/home/alice/.fde` and the service inherits that
+With `user` set, `dataDir` defaults to `/home/alice/.frogg` and the service inherits that
 user's environment.
 
 ## Package only
 
 ```sh
-nix build "github:frogg-app/fde?dir=deploy/nix"
-./result/bin/fde --version
+nix build "github:frogg-app/frogg?dir=deploy/nix"
+./result/bin/frogg --version
 ```
 
-The package installs `fde` and `fde-server`.
+The package installs `frogg` and `frogg-server`.
 
 ## Dependency hash
 
@@ -89,7 +89,7 @@ The package installs `fde` and `fde-server`.
 hash for the same lockfile, override it:
 
 ```nix
-fde.packages.x86_64-linux.default.override { npmDepsHash = "sha256-..."; }
+frogg.packages.x86_64-linux.default.override { npmDepsHash = "sha256-..."; }
 ```
 
 For branded daemons, see [Nix for custom brands](/docs/fork-and-rebrand/other-distributions/#nix).

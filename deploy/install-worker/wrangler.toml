@@ -9,7 +9,7 @@
 #
 # No build step: wrangler bundles the TypeScript entry point itself.
 
-name = "fde-install-scripts"
+name = "frogg-install-scripts"
 main = "../../packages/server/src/server/install-script-worker.ts"
 compatibility_date = "2025-09-01"
 
@@ -17,11 +17,11 @@ compatibility_date = "2025-09-01"
 enabled = true
 
 [vars]
-FDE_INSTALL_REPO = "frogg-app/fde"
+FROGG_INSTALL_REPO = "frogg-app/frogg"
 # Tip of main. Set to a tag (e.g. "v0.1.19") to serve only a version you have
 # deliberately shipped.
-FDE_INSTALL_REF = "main"
-FDE_INSTALL_CACHE_SECONDS = "300"
+FROGG_INSTALL_REF = "main"
+FROGG_INSTALL_CACHE_SECONDS = "300"
 
 # Only the three script paths are routed, so the apex and everything else on
 # frogg.app still reach whatever origin the zone points at.

@@ -89,7 +89,7 @@ export async function ensurePathInShellRc(): Promise<{
     }
 
     await fs.mkdir(path.dirname(info.rcFile), { recursive: true });
-    await fs.appendFile(info.rcFile, `\n# Added by FDE\n${info.exportLine}\n`);
+    await fs.appendFile(info.rcFile, `\n# Added by Frogg\n${info.exportLine}\n`);
 
     return { shellUpdated: true };
   } catch (err) {

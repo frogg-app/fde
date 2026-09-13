@@ -3,11 +3,11 @@
 //!
 //! | kind              | asset                          |
 //! | ----------------- | ------------------------------ |
-//! | Windows installer | `FDE-<v>-win-x64-setup.zip`         |
-//! | Windows portable  | `FDE-<v>-win-x64-portable.zip`      |
-//! | Linux AppImage    | `FDE-<v>-linux-x86_64.AppImage`     |
-//! | Linux deb         | `FDE-<v>-linux-x86_64.deb`          |
-//! | macOS             | `FDE-<v>-mac-<aarch64|x86_64>.dmg` |
+//! | Windows installer | `Frogg-<v>-win-x64-setup.zip`         |
+//! | Windows portable  | `Frogg-<v>-win-x64-portable.zip`      |
+//! | Linux AppImage    | `Frogg-<v>-linux-x86_64.AppImage`     |
+//! | Linux deb         | `Frogg-<v>-linux-x86_64.deb`          |
+//! | macOS             | `Frogg-<v>-mac-<aarch64|x86_64>.dmg` |
 
 use std::path::Path;
 
@@ -152,7 +152,7 @@ mod tests {
         assert_eq!(context("linux").asset_kind(), Some(AssetKind::LinuxDeb));
         assert_eq!(
             InstallContext {
-                appimage: Some("/opt/FDE.AppImage".into()),
+                appimage: Some("/opt/Frogg.AppImage".into()),
                 ..context("linux")
             }
             .asset_kind(),
@@ -166,27 +166,27 @@ mod tests {
     fn names_assets_like_the_release_workflow() {
         assert_eq!(
             AssetKind::WindowsInstaller.asset_name("0.2.16", "x86_64"),
-            "FDE-0.2.16-win-x64-setup.zip"
+            "Frogg-0.2.16-win-x64-setup.zip"
         );
         assert_eq!(
             AssetKind::WindowsPortable.asset_name("0.2.16", "x86_64"),
-            "FDE-0.2.16-win-x64-portable.zip"
+            "Frogg-0.2.16-win-x64-portable.zip"
         );
         assert_eq!(
             AssetKind::LinuxAppImage.asset_name("0.2.16", "x86_64"),
-            "FDE-0.2.16-linux-x86_64.AppImage"
+            "Frogg-0.2.16-linux-x86_64.AppImage"
         );
         assert_eq!(
             AssetKind::LinuxDeb.asset_name("0.2.16", "x86_64"),
-            "FDE-0.2.16-linux-x86_64.deb"
+            "Frogg-0.2.16-linux-x86_64.deb"
         );
         assert_eq!(
             AssetKind::MacDmg.asset_name("0.2.16", "aarch64"),
-            "FDE-0.2.16-mac-aarch64.dmg"
+            "Frogg-0.2.16-mac-aarch64.dmg"
         );
         assert_eq!(
             AssetKind::MacDmg.asset_name("0.2.16-beta.1", "x86_64"),
-            "FDE-0.2.16-beta.1-mac-x86_64.dmg"
+            "Frogg-0.2.16-beta.1-mac-x86_64.dmg"
         );
     }
 

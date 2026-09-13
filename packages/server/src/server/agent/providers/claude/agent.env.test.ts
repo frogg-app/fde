@@ -33,8 +33,8 @@ describe("Claude SDK env", () => {
     let capturedEnv: Record<string, string | undefined> | undefined;
     const launchContext: AgentLaunchContext = {
       env: {
-        FDE_AGENT_ID: "00000000-0000-4000-8000-000000000201",
-        FDE_TEST_FLAG: "launch-value",
+        FROGG_AGENT_ID: "00000000-0000-4000-8000-000000000201",
+        FROGG_TEST_FLAG: "launch-value",
       },
     };
     const queryFactory = vi.fn(({ options }: ClaudeQueryInput) => {
@@ -86,8 +86,8 @@ describe("Claude SDK env", () => {
     try {
       const result = await session.run("env check");
       expect(result.sessionId).toBe("managed-agent-env-session");
-      expect(capturedEnv?.FDE_AGENT_ID).toBe(launchContext.env?.FDE_AGENT_ID);
-      expect(capturedEnv?.FDE_TEST_FLAG).toBe(launchContext.env?.FDE_TEST_FLAG);
+      expect(capturedEnv?.FROGG_AGENT_ID).toBe(launchContext.env?.FROGG_AGENT_ID);
+      expect(capturedEnv?.FROGG_TEST_FLAG).toBe(launchContext.env?.FROGG_TEST_FLAG);
       expect(capturedEnv?.MCP_TIMEOUT).toBe("claude-startup-timeout");
       expect(capturedEnv?.MCP_TOOL_TIMEOUT).toBe("claude-tool-timeout");
     } finally {
@@ -99,8 +99,8 @@ describe("Claude SDK env", () => {
     let capturedEnv: Record<string, string | undefined> | undefined;
     const launchContext: AgentLaunchContext = {
       env: {
-        FDE_AGENT_ID: "00000000-0000-4000-8000-000000000202",
-        FDE_TEST_FLAG: "resume-launch-value",
+        FROGG_AGENT_ID: "00000000-0000-4000-8000-000000000202",
+        FROGG_TEST_FLAG: "resume-launch-value",
       },
     };
     const queryFactory = vi.fn(({ options }: ClaudeQueryInput) => {
@@ -152,8 +152,8 @@ describe("Claude SDK env", () => {
     try {
       const result = await session.run("resume env check");
       expect(result.sessionId).toBe("persisted-session");
-      expect(capturedEnv?.FDE_AGENT_ID).toBe(launchContext.env?.FDE_AGENT_ID);
-      expect(capturedEnv?.FDE_TEST_FLAG).toBe(launchContext.env?.FDE_TEST_FLAG);
+      expect(capturedEnv?.FROGG_AGENT_ID).toBe(launchContext.env?.FROGG_AGENT_ID);
+      expect(capturedEnv?.FROGG_TEST_FLAG).toBe(launchContext.env?.FROGG_TEST_FLAG);
     } finally {
       await session.close();
     }

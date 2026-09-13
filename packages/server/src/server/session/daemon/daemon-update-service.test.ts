@@ -35,7 +35,7 @@ function makeVersionedInstall(version: string): { installDir: string; moduleUrl:
   const root = path.join(installDir, "versions", version);
   mkdirSync(path.join(root, "bin"), { recursive: true });
   mkdirSync(path.join(root, "daemon", "packages", "server", "dist"), { recursive: true });
-  writeFileSync(path.join(root, "bin", "fde"), "#!/bin/sh\n", { mode: 0o755 });
+  writeFileSync(path.join(root, "bin", "frogg"), "#!/bin/sh\n", { mode: 0o755 });
   const modulePath = path.join(root, "daemon", "packages", "server", "dist", "x.js");
   writeFileSync(modulePath, "");
   symlinkSync(path.join("versions", version), path.join(installDir, "current"));
@@ -69,7 +69,7 @@ function updatableInstall(installDir: string): DaemonInstallInfo {
     updatable: true,
     reason: null,
     runningRoot: path.join(installDir, "versions", "0.1.13"),
-    cliLauncher: path.join(installDir, "versions", "0.1.13", "bin", "fde"),
+    cliLauncher: path.join(installDir, "versions", "0.1.13", "bin", "frogg"),
   };
 }
 
@@ -83,7 +83,7 @@ function makeService(
   const service = new DaemonUpdateService({
     install: updatableInstall(installDir),
     daemonVersion: "0.1.13",
-    fdeHome: path.join(installDir, "home"),
+    froggHome: path.join(installDir, "home"),
     listen,
     logger: pino({ level: "silent" }),
     env: { PATH: "/usr/bin" },
@@ -104,14 +104,14 @@ describe("describeDaemonInstall", () => {
   test("recognizes a versioned install and points at its launcher", () => {
     const { installDir, moduleUrl } = makeVersionedInstall("0.1.13");
     const info = describeDaemonInstall({
-      env: { FDE_INSTALL_DIR: installDir },
+      env: { FROGG_INSTALL_DIR: installDir },
       desktopManaged: false,
       moduleUrl,
       platform: "linux",
     });
     expect(info.updatable).toBe(true);
     expect(info.runningRoot).toBe(path.join(installDir, "versions", "0.1.13"));
-    expect(info.cliLauncher).toBe(path.join(installDir, "versions", "0.1.13", "bin", "fde"));
+    expect(info.cliLauncher).toBe(path.join(installDir, "versions", "0.1.13", "bin", "frogg"));
     expect(findVersionRoot("/nowhere/x.js", path.join(installDir, "versions"))).toBeNull();
   });
 
@@ -119,20 +119,20 @@ describe("describeDaemonInstall", () => {
     const installDir = makeDir();
     expect(
       describeDaemonInstall({
-        env: { FDE_INSTALL_DIR: installDir, FDE_DOCKER: "1" },
+        env: { FROGG_INSTALL_DIR: installDir, FROGG_DOCKER: "1" },
         desktopManaged: false,
         platform: "linux",
       }),
     ).toMatchObject({ updatable: false, reason: expect.stringContaining("Pull the new image") });
     expect(
       describeDaemonInstall({
-        env: { FDE_INSTALL_DIR: installDir },
+        env: { FROGG_INSTALL_DIR: installDir },
         desktopManaged: true,
         platform: "linux",
       }).reason,
-    ).toMatch(/FDE Desktop/);
+    ).toMatch(/Frogg Desktop/);
     const dev = describeDaemonInstall({
-      env: { FDE_INSTALL_DIR: installDir },
+      env: { FROGG_INSTALL_DIR: installDir },
       desktopManaged: false,
       platform: "linux",
     });
@@ -187,7 +187,7 @@ describe("DaemonUpdateService", () => {
       releaseUrl: "https://r",
       error: null,
     });
-    expect(calls[0]?.command).toBe(path.join(installDir, "versions", "0.1.13", "bin", "fde"));
+    expect(calls[0]?.command).toBe(path.join(installDir, "versions", "0.1.13", "bin", "frogg"));
     expect(calls[0]?.args).toEqual([
       "daemon",
       "self-update",
@@ -201,9 +201,9 @@ describe("DaemonUpdateService", () => {
       "beta",
     ]);
     expect(calls[0]?.env).toMatchObject({
-      FDE_HOME: path.join(installDir, "home"),
-      FDE_INSTALL_DIR: installDir,
-      FDE_LISTEN: "0.0.0.0:9993",
+      FROGG_HOME: path.join(installDir, "home"),
+      FROGG_INSTALL_DIR: installDir,
+      FROGG_LISTEN: "0.0.0.0:9993",
     });
   });
 
@@ -278,7 +278,7 @@ describe("DaemonUpdateService", () => {
         cliLauncher: null,
       },
       daemonVersion: "0.1.13",
-      fdeHome: installDir,
+      froggHome: installDir,
       listen: null,
       logger: pino({ level: "silent" }),
     });
@@ -384,7 +384,11 @@ describe("retained execution updates", () => {
       fake.finish(0);
       await pending;
     }
-    expect(calls.map((env) => env.FDE_LISTEN)).toEqual(["0.0.0.0:9993", "0.0.0.0:9994", undefined]);
+    expect(calls.map((env) => env.FROGG_LISTEN)).toEqual([
+      "0.0.0.0:9993",
+      "0.0.0.0:9994",
+      undefined,
+    ]);
   });
 });
 

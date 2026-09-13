@@ -11,9 +11,9 @@
  * still maps to GitHub so old daemons (which never send a forge) render exactly
  * as before.
  */
-import { FORGE_DEFINITIONS, getForgeDefinitionOrNeutral } from "@fde/protocol/forge-manifest";
-import { normalizeHost, parseGitRemoteLocation } from "@fde/protocol/git-remote";
-import type { ForgeAuthState } from "@fde/protocol/messages";
+import { FORGE_DEFINITIONS, getForgeDefinitionOrNeutral } from "@frogg/protocol/forge-manifest";
+import { normalizeHost, parseGitRemoteLocation } from "@frogg/protocol/git-remote";
+import type { ForgeAuthState } from "@frogg/protocol/messages";
 import {
   buildForgeBlobUrl,
   buildForgeBranchTreeUrl,
@@ -77,7 +77,7 @@ export interface ForgePresentation {
   numberPrefix: string;
   /** Prefix the forge puts before an issue number ("#" on every forge so far). */
   issueNumberPrefix: string;
-  /** Auth CLI binary for the install hint, or null for a forge with no Fde-driven sign-in. */
+  /** Auth CLI binary for the install hint, or null for a forge with no Frogg-driven sign-in. */
   signInCli: string | null;
   /**
    * i18next context selecting the change-request vocabulary family for any key

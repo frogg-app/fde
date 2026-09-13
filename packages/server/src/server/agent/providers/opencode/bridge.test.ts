@@ -7,7 +7,7 @@ import { z } from "zod";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { createTestLogger } from "../../../../test-utils/test-logger.js";
-import type { FdeToolCatalog } from "../../tools/types.js";
+import type { FroggToolCatalog } from "../../tools/types.js";
 import { OpenCodeBridge, loadOpenCodeBridgePluginArtifact } from "./bridge.js";
 
 const temporaryDirectories: string[] = [];
@@ -20,7 +20,7 @@ afterEach(async () => {
   );
 });
 
-function createCatalog(): FdeToolCatalog {
+function createCatalog(): FroggToolCatalog {
   const tool = {
     name: "echo_context",
     title: "Echo context",
@@ -59,7 +59,7 @@ function readPluginOptions(env: Record<string, string>): {
 
 describe("OpenCodeBridge", () => {
   test("loads packaged bundle bytes without invoking source compilation", async () => {
-    const root = await mkdtemp(path.join(tmpdir(), "fde-opencode-artifact-"));
+    const root = await mkdtemp(path.join(tmpdir(), "frogg-opencode-artifact-"));
     temporaryDirectories.push(root);
     const moduleUrl = pathToFileURL(path.join(root, "bridge.js")).href;
     const bundle = Buffer.from("export default async () => ({})");
@@ -94,17 +94,17 @@ describe("OpenCodeBridge", () => {
   });
 
   test("serves authenticated session context and caller-scoped tools", async () => {
-    const fdeHome = await mkdtemp(path.join(tmpdir(), "fde-opencode-bridge-"));
-    temporaryDirectories.push(fdeHome);
+    const froggHome = await mkdtemp(path.join(tmpdir(), "frogg-opencode-bridge-"));
+    temporaryDirectories.push(froggHome);
     const catalog = createCatalog();
-    const bridge = new OpenCodeBridge({ fdeHome, logger: createTestLogger() });
+    const bridge = new OpenCodeBridge({ froggHome, logger: createTestLogger() });
     await bridge.start();
     bridge.setManifestCatalog(catalog);
     const release = bridge.bindSession({
       sessionId: "ses_one",
       env: {
-        FDE_AGENT_ID: "agent-one",
-        FDE_AGENT_CWD: "/workspace/one",
+        FROGG_AGENT_ID: "agent-one",
+        FROGG_AGENT_CWD: "/workspace/one",
         CUSTOM_VALUE: "one",
       },
       tools: catalog,
@@ -125,8 +125,8 @@ describe("OpenCodeBridge", () => {
       });
       expect(await context.json()).toEqual({
         env: {
-          FDE_AGENT_ID: "agent-one",
-          FDE_AGENT_CWD: "/workspace/one",
+          FROGG_AGENT_ID: "agent-one",
+          FROGG_AGENT_CWD: "/workspace/one",
           CUSTOM_VALUE: "one",
         },
       });
@@ -169,7 +169,7 @@ describe("OpenCodeBridge", () => {
         },
       );
       await expect(
-        hooks.tool.fde_echo_context.execute(
+        hooks.tool.frogg_echo_context.execute(
           { value: "through bundled plugin" },
           { sessionID: "ses_one" },
         ),
@@ -181,7 +181,7 @@ describe("OpenCodeBridge", () => {
         hooks["shell.env"]({ cwd: "/workspace/one", sessionID: "ses_one" }, { env: {} }),
       ).rejects.toThrow("not bound");
       expect(pluginError).toHaveBeenCalledWith(
-        "[fde-opencode-plugin] shell.env failed",
+        "[frogg-opencode-plugin] shell.env failed",
         expect.objectContaining({ sessionID: "ses_one", error: expect.stringContaining("bound") }),
       );
       pluginError.mockRestore();
@@ -197,9 +197,9 @@ describe("OpenCodeBridge", () => {
   });
 
   test("preserves user OpenCode config while installing one content-addressed plugin", async () => {
-    const fdeHome = await mkdtemp(path.join(tmpdir(), "fde-opencode-bridge-config-"));
-    temporaryDirectories.push(fdeHome);
-    const bridge = new OpenCodeBridge({ fdeHome, logger: createTestLogger() });
+    const froggHome = await mkdtemp(path.join(tmpdir(), "frogg-opencode-bridge-config-"));
+    temporaryDirectories.push(froggHome);
+    const bridge = new OpenCodeBridge({ froggHome, logger: createTestLogger() });
     await bridge.start();
 
     try {
@@ -218,7 +218,7 @@ describe("OpenCodeBridge", () => {
       expect(config.model).toBe("provider/model");
       expect(config.plugin[0]).toBe("user-plugin");
       expect(config.plugin).toHaveLength(2);
-      expect(config.plugin[1]?.[0]).toMatch(/fde-[a-f0-9]{64}\.mjs$/);
+      expect(config.plugin[1]?.[0]).toMatch(/frogg-[a-f0-9]{64}\.mjs$/);
     } finally {
       await bridge.close();
     }

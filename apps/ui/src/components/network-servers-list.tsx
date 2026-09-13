@@ -214,7 +214,7 @@ function NetworkServerRow({
   );
 }
 
-/** "Servers on your network": FDE daemons found by sweeping the local subnets. */
+/** "Servers on your network": Frogg daemons found by sweeping the local subnets. */
 export function NetworkServersList({ onConnected, testID }: NetworkServersListProps) {
   const { t } = useTranslation();
   const scan = useNetworkScan();

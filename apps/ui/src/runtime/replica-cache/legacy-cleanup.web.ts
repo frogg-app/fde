@@ -1,6 +1,6 @@
-import { brand } from "@fde/branding";
-import { storageKey } from "@fde/branding/identity";
-const LEGACY_DATABASE_NAME = storageKey(brand, "fde-replica-cache");
+import { brand } from "@frogg/branding";
+import { storageKey } from "@frogg/branding/identity";
+const LEGACY_DATABASE_NAME = storageKey(brand, "frogg-replica-cache");
 
 export function clearLegacyReplicaCache(): Promise<void> {
   return new Promise((resolve, reject) => {

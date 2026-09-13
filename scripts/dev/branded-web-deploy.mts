@@ -4,10 +4,11 @@ import path from "node:path";
 import { prepareBrand } from "./branding/prepare.mjs";
 import { root } from "./branding/resolve.mjs";
 const { brand } = await prepareBrand();
-const project = process.env.FDE_WEB_DEPLOY_PROJECT ?? (brand.legacyFde ? "fde-app" : undefined);
+const project =
+  process.env.FROGG_WEB_DEPLOY_PROJECT ?? (brand.legacyFrogg ? "frogg-app" : undefined);
 if (!project || !/^[a-z0-9][a-z0-9-]*$/.test(project)) {
   throw new Error(
-    "Set FDE_WEB_DEPLOY_PROJECT to this product's Cloudflare Pages project before deployment.",
+    "Set FROGG_WEB_DEPLOY_PROJECT to this product's Cloudflare Pages project before deployment.",
   );
 }
 function npm(args: string[]) {

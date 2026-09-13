@@ -16,7 +16,7 @@ function reviewAttachment(body: string): WorkspaceComposerAttachment {
     commentCount: 1,
     attachment: {
       type: "review",
-      mimeType: "application/fde-review",
+      mimeType: "application/frogg-review",
       cwd: "/repo",
       mode: "uncommitted",
       baseRef: null,
@@ -55,7 +55,7 @@ function contextAttachment(id: string): WorkspaceComposerAttachment {
     id,
     title: "Comment · octocat",
     text: "GitHub pull request comment\n\nLooks good.",
-    url: `https://github.com/frogg-app/fde/pull/42#${id}`,
+    url: `https://github.com/frogg-app/frogg/pull/42#${id}`,
   };
 }
 

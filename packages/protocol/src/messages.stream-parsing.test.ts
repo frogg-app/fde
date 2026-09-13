@@ -98,18 +98,18 @@ describe("shared messages stream parsing", () => {
             item: {
               type: "tool_call",
               callId: "setup-1",
-              name: "fde_worktree_setup",
+              name: "frogg_worktree_setup",
               status: "completed",
               detail: {
                 type: "worktree_setup",
-                worktreePath: "/repo/.fde/worktrees/feature",
+                worktreePath: "/repo/.frogg/worktrees/feature",
                 branchName: "feature",
                 log: "setup complete",
                 commands: [
                   {
                     index: 1,
                     command: "npm install",
-                    cwd: "/repo/.fde/worktrees/feature",
+                    cwd: "/repo/.frogg/worktrees/feature",
                     status: "completed",
                     exitCode: 0,
                     durationMs: 100,
@@ -367,8 +367,8 @@ describe("shared messages stream parsing", () => {
     const responseParsed = SessionOutboundMessageSchema.safeParse({
       type: "directory_suggestions_response",
       payload: {
-        directories: ["/Users/test/projects/fde"],
-        entries: [{ path: "/Users/test/projects/fde", kind: "directory" }],
+        directories: ["/Users/test/projects/frogg"],
+        entries: [{ path: "/Users/test/projects/frogg", kind: "directory" }],
         error: null,
         requestId: "req-dir-1",
       },

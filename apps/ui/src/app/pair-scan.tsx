@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StyleSheet, useUnistyles } from "react-native-unistyles";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import type { BarcodeScanningResult, BarcodeSettings } from "expo-camera";
-import { hasPairingCode } from "@fde/protocol/connection-offer";
+import { hasPairingCode } from "@frogg/protocol/connection-offer";
 import { usePairWithOffer } from "@/pairing/use-pair-with-offer";
 import { buildHostRootRoute, buildSettingsHostSectionRoute } from "@/utils/host-routes";
 import { isWeb } from "@/constants/platform";

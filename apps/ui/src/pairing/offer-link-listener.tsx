@@ -11,7 +11,7 @@ export const PAIR_OFFER_ROUTE = "/pair-offer" as Href;
 /**
  * Pairing links that reach the app from outside: the page URL on web
  * (`#offer=` or `?offer=`), `Linking` on native, and the desktop shell's
- * `open-pairing-offer` event for `fde://pair#offer=…` (`launch.rs`). Each is
+ * `open-pairing-offer` event for `frogg://pair#offer=…` (`launch.rs`). Each is
  * parked in the pending-offer slot and the `/pair-offer` screen runs the flow,
  * so a claim's progress and errors are shown instead of logged.
  */

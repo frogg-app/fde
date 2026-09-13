@@ -1,16 +1,16 @@
-const FDE_NODE_ENV = "FDE_NODE_ENV";
+const FROGG_NODE_ENV = "FROGG_NODE_ENV";
 const ELECTRON_RUN_AS_NODE = "ELECTRON_RUN_AS_NODE";
 
 const RUNTIME_CONTROL_ENV_KEYS = [
-  FDE_NODE_ENV,
-  "FDE_DESKTOP_MANAGED",
-  "FDE_SUPERVISED",
+  FROGG_NODE_ENV,
+  "FROGG_DESKTOP_MANAGED",
+  "FROGG_SUPERVISED",
   ELECTRON_RUN_AS_NODE,
   "ELECTRON_NO_ATTACH_CONSOLE",
   "ESBUILD_BINARY_PATH",
 ] as const;
 
-export type FdeNodeEnv = "development" | "production" | "test";
+export type FroggNodeEnv = "development" | "production" | "test";
 export type ProcessEnvRecord = Record<string, string | undefined>;
 export type ExternalProcessEnv = NodeJS.ProcessEnv & Record<string, string>;
 
@@ -34,7 +34,7 @@ function buildExternalProcessEnv(
   return sanitized as ExternalProcessEnv;
 }
 
-export function createFdeInternalEnv(baseEnv: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+export function createFroggInternalEnv(baseEnv: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   return buildInternalProcessEnv(baseEnv);
 }
 
@@ -76,7 +76,7 @@ export function buildSelfNodeCommand(
   };
 }
 
-export function resolveFdeNodeEnv(env: NodeJS.ProcessEnv): FdeNodeEnv | undefined {
-  const value = env[FDE_NODE_ENV];
+export function resolveFroggNodeEnv(env: NodeJS.ProcessEnv): FroggNodeEnv | undefined {
+  const value = env[FROGG_NODE_ENV];
   return value === "development" || value === "production" || value === "test" ? value : undefined;
 }

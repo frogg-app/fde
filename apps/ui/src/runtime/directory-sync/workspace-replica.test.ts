@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
-import type { DaemonClient } from "@fde/client/internal/daemon-client";
-import type { WorkspaceDescriptorPayload } from "@fde/protocol/messages";
+import type { DaemonClient } from "@frogg/client/internal/daemon-client";
+import type { WorkspaceDescriptorPayload } from "@frogg/protocol/messages";
 import {
   normalizeProjectDescriptor,
   normalizeWorkspaceDescriptor,

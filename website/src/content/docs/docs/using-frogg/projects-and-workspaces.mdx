@@ -1,6 +1,6 @@
 ---
 title: Projects and workspaces
-description: How FDE organizes code into projects and workspaces, creating isolated git worktrees, and running setup scripts and services.
+description: How Frogg organizes code into projects and workspaces, creating isolated git worktrees, and running setup scripts and services.
 sidebar:
   order: 1
 ---
@@ -13,17 +13,17 @@ sidebar:
   worktree, or a plain directory. Agents, terminals and scripts run in a workspace. IDs
   look like `wks_b5b04560aaa0b892`.
 - Projects and workspaces belong to one daemon and are stored in
-  `~/.fde/projects/`.
+  `~/.frogg/projects/`.
 
 ## Add a project
 
 - App: **Add project** in the sidebar, then choose a folder on the daemon host.
-- CLI: `fde project create /path/to/repo`.
+- CLI: `frogg project create /path/to/repo`.
 
 Import existing Claude Code or Codex sessions with **Import session** on the home screen.
 To bring in a whole project with its conversations, from the daemon host or from your
 computer, use **Add project → Import project and conversations**; see
-[Import projects and conversations](/docs/using-fde/import-projects-and-conversations/).
+[Import projects and conversations](/docs/using-frogg/import-projects-and-conversations/).
 
 ## Workspaces and worktrees
 
@@ -32,7 +32,7 @@ When you start work you choose **isolation**:
 | Isolation  | What you get |
 | ---------- | ------------ |
 | `local`    | The agent works directly in the checkout |
-| `worktree` | FDE creates a git worktree on a new or existing branch; your checkout stays untouched |
+| `worktree` | Frogg creates a git worktree on a new or existing branch; your checkout stays untouched |
 
 Worktree modes:
 
@@ -43,13 +43,13 @@ Worktree modes:
 | `checkout-pr`     | A worktree for a pull request or merge request (`--pr-number`, `--forge`) |
 
 ```sh
-fde workspace create --isolation worktree --mode branch-off --new-branch feature/export
-fde agent run --new-workspace worktree --new-branch fix/flaky-test "Fix the flaky upload test"
+frogg workspace create --isolation worktree --mode branch-off --new-branch feature/export
+frogg agent run --new-workspace worktree --new-branch fix/flaky-test "Fix the flaky upload test"
 ```
 
-Worktrees live under `~/.fde/worktrees/<project hash>/<slug>`. Change the root with
+Worktrees live under `~/.frogg/worktrees/<project hash>/<slug>`. Change the root with
 `worktrees.root` in [config](/docs/reference/configuration/#worktrees). If you do not
-name a branch, FDE can generate one from the first prompt.
+name a branch, Frogg can generate one from the first prompt.
 
 ### Unfinished new-workspace forms
 
@@ -64,21 +64,21 @@ isolation and starting ref.
 - A successful launch removes the draft.
 - The draft rows are kept in memory only. Reloading or restarting the app clears them.
 
-Archiving a workspace removes its FDE-owned worktree once nothing else uses it:
+Archiving a workspace removes its Frogg-owned worktree once nothing else uses it:
 
 ```sh
-fde workspace archive wks_b5b04560aaa0b892
+frogg workspace archive wks_b5b04560aaa0b892
 ```
 
 ## Prepare new worktrees
 
 A fresh worktree has no `node_modules`, `.env` or build output. Describe setup in
-`fde.json` at the repository root:
+`frogg.json` at the repository root:
 
-```json title="fde.json"
+```json title="frogg.json"
 {
   "worktree": {
-    "setup": ["npm ci", "cp \"$FDE_SOURCE_CHECKOUT_PATH/.env\" .env"],
+    "setup": ["npm ci", "cp \"$FROGG_SOURCE_CHECKOUT_PATH/.env\" .env"],
     "teardown": "docker compose down"
   }
 }
@@ -88,21 +88,21 @@ The app nudges you with **Set up worktree scripts** until a project has setup co
 
 ## Scripts and services
 
-`fde.json` scripts run in a workspace. A **service** gets its own port, env vars and a
+`frogg.json` scripts run in a workspace. A **service** gets its own port, env vars and a
 proxy URL, so the same dev server can run in several worktrees at once.
 
-```json title="fde.json"
+```json title="frogg.json"
 {
   "scripts": {
-    "api": { "type": "service", "command": "npm run dev -- --port $FDE_PORT" },
+    "api": { "type": "service", "command": "npm run dev -- --port $FROGG_PORT" },
     "test": { "command": "npm test" }
   }
 }
 ```
 
 ```sh
-fde script start api
-fde script ls
+frogg script start api
+frogg script ls
 ```
 
 Full reference: [project config](/docs/reference/project-config/).
@@ -112,13 +112,13 @@ Full reference: [project config](/docs/reference/project-config/).
 Each workspace can have terminals in the app. The CLI and agents can drive them too:
 
 ```sh
-fde terminal create --name build
-fde terminal send-keys <terminal-id> "npm run build" Enter
-fde terminal capture <terminal-id> --scrollback
+frogg terminal create --name build
+frogg terminal send-keys <terminal-id> "npm run build" Enter
+frogg terminal capture <terminal-id> --scrollback
 ```
 
 ## Labels and archiving
 
-- Workspaces can be renamed (`fde workspace rename`) and labelled in the app.
+- Workspaces can be renamed (`frogg workspace rename`) and labelled in the app.
 - Archived agents and workspaces disappear from the sidebar but keep their history.
-  `fde agent ls -a` includes archived agents.
+  `frogg agent ls -a` includes archived agents.

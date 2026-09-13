@@ -15,8 +15,8 @@ import type { WorkspaceDescriptor } from "@/stores/session-store";
 function createWorkspaceDescriptor(input: Partial<WorkspaceDescriptor> = {}): WorkspaceDescriptor {
   return {
     id: "/repo/main",
-    projectId: "remote:github.com/frogg-app/fde",
-    projectDisplayName: "frogg-app/fde",
+    projectId: "remote:github.com/frogg-app/frogg",
+    projectDisplayName: "frogg-app/frogg",
     projectRootPath: "/repo/main",
     workspaceDirectory: "/repo/main",
     projectKind: "git",
@@ -42,7 +42,7 @@ describe("workspace source of truth consumption", () => {
     });
 
     expect(header.title).toBe("feat/workspace-sot");
-    expect(header.subtitle).toBe("frogg-app/fde");
+    expect(header.subtitle).toBe("frogg-app/frogg");
     expect(sidebarWorkspace.name).toBe(header.title);
     expect(sidebarWorkspace.statusBucket).toBe("running");
   });
@@ -104,7 +104,7 @@ describe("workspace source of truth consumption", () => {
     ).toEqual({
       kind: "ready",
       title: "feat/workspace-sot",
-      subtitle: "frogg-app/fde",
+      subtitle: "frogg-app/frogg",
       isSubtitleDistinct: true,
       isGitCheckout: false,
       currentBranchName: null,
@@ -144,7 +144,7 @@ describe("workspace source of truth consumption", () => {
     ).toEqual({
       kind: "ready",
       title: "feat/workspace-sot",
-      subtitle: "frogg-app/fde",
+      subtitle: "frogg-app/frogg",
       isSubtitleDistinct: true,
       isGitCheckout: true,
       currentBranchName: "feat/workspace-sot",
@@ -184,7 +184,7 @@ describe("workspace source of truth consumption", () => {
     ).toEqual({
       kind: "ready",
       title: "feat/workspace-sot",
-      subtitle: "frogg-app/fde",
+      subtitle: "frogg-app/frogg",
       isSubtitleDistinct: true,
       isGitCheckout: false,
       currentBranchName: null,

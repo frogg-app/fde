@@ -17,33 +17,33 @@ console.log("=== CLI IPC Target Helpers ===\n");
 
 {
   console.log("Test 1: unix hosts resolve to ws+unix URLs");
-  const target = resolveDaemonTarget("unix:///tmp/fde.sock");
+  const target = resolveDaemonTarget("unix:///tmp/frogg.sock");
   assert.deepStrictEqual(target, {
     type: "ipc",
-    url: "ws+unix:///tmp/fde.sock:/ws",
-    socketPath: "/tmp/fde.sock",
+    url: "ws+unix:///tmp/frogg.sock:/ws",
+    socketPath: "/tmp/frogg.sock",
   });
   console.log("✓ unix hosts resolve to ws+unix URLs\n");
 }
 
 {
   console.log("Test 1b: bare unix socket paths resolve at the connection boundary");
-  const target = resolveDaemonTarget("/tmp/fde.sock");
+  const target = resolveDaemonTarget("/tmp/frogg.sock");
   assert.deepStrictEqual(target, {
     type: "ipc",
-    url: "ws+unix:///tmp/fde.sock:/ws",
-    socketPath: "/tmp/fde.sock",
+    url: "ws+unix:///tmp/frogg.sock:/ws",
+    socketPath: "/tmp/frogg.sock",
   });
   console.log("✓ bare unix socket paths resolve at the connection boundary\n");
 }
 
 {
   console.log("Test 2: pipe hosts preserve the Node socketPath transport form");
-  const target = resolveDaemonTarget("pipe://\\\\.\\pipe\\fde-managed-test");
+  const target = resolveDaemonTarget("pipe://\\\\.\\pipe\\frogg-managed-test");
   assert.deepStrictEqual(target, {
     type: "ipc",
     url: "ws://localhost/ws",
-    socketPath: "\\\\.\\pipe\\fde-managed-test",
+    socketPath: "\\\\.\\pipe\\frogg-managed-test",
   });
   console.log("✓ pipe hosts preserve Node socketPath transport form\n");
 }
@@ -69,58 +69,58 @@ console.log("=== CLI IPC Target Helpers ===\n");
 
 {
   console.log("Test 5: local unix socket paths normalize into IPC daemon targets");
-  assert.strictEqual(normalizeDaemonHost("/tmp/fde.sock"), "unix:///tmp/fde.sock");
+  assert.strictEqual(normalizeDaemonHost("/tmp/frogg.sock"), "unix:///tmp/frogg.sock");
   console.log("✓ local unix socket paths normalize into IPC daemon targets\n");
 }
 
 {
   console.log("Test 5b: Windows absolute paths are NOT treated as unix sockets");
-  assert.strictEqual(normalizeDaemonHost("C:\\Users\\foo\\.fde\\fde.sock"), null);
+  assert.strictEqual(normalizeDaemonHost("C:\\Users\\foo\\.frogg\\frogg.sock"), null);
   assert.strictEqual(normalizeDaemonHost("D:\\project\\socket"), null);
   console.log("✓ Windows absolute paths are not treated as unix sockets\n");
 }
 
 {
   console.log("Test 6: default host resolution tries local IPC first, then localhost fallback");
-  const fdeHome = mkdtempSync(path.join(os.tmpdir(), "fde-client-targets-"));
+  const froggHome = mkdtempSync(path.join(os.tmpdir(), "frogg-client-targets-"));
   try {
-    mkdirSync(fdeHome, { recursive: true });
+    mkdirSync(froggHome, { recursive: true });
     writeFileSync(
-      path.join(fdeHome, "fde.pid"),
-      JSON.stringify({ pid: process.pid, listen: "/tmp/fde-from-pid.sock" }),
+      path.join(froggHome, "frogg.pid"),
+      JSON.stringify({ pid: process.pid, listen: "/tmp/frogg-from-pid.sock" }),
     );
-    assert.deepStrictEqual(resolveDefaultDaemonHosts({ FDE_HOME: fdeHome }), [
-      "unix:///tmp/fde-from-pid.sock",
+    assert.deepStrictEqual(resolveDefaultDaemonHosts({ FROGG_HOME: froggHome }), [
+      "unix:///tmp/frogg-from-pid.sock",
       "localhost:9999",
     ]);
-    const previousHome = process.env.FDE_HOME;
-    const previousHost = process.env.FDE_HOST;
-    process.env.FDE_HOME = fdeHome;
-    delete process.env.FDE_HOST;
-    assert.strictEqual(getDaemonHost(), "unix:///tmp/fde-from-pid.sock");
-    if (previousHome === undefined) delete process.env.FDE_HOME;
-    else process.env.FDE_HOME = previousHome;
-    if (previousHost === undefined) delete process.env.FDE_HOST;
-    else process.env.FDE_HOST = previousHost;
+    const previousHome = process.env.FROGG_HOME;
+    const previousHost = process.env.FROGG_HOST;
+    process.env.FROGG_HOME = froggHome;
+    delete process.env.FROGG_HOST;
+    assert.strictEqual(getDaemonHost(), "unix:///tmp/frogg-from-pid.sock");
+    if (previousHome === undefined) delete process.env.FROGG_HOME;
+    else process.env.FROGG_HOME = previousHome;
+    if (previousHost === undefined) delete process.env.FROGG_HOST;
+    else process.env.FROGG_HOST = previousHost;
   } finally {
-    rmSync(fdeHome, { recursive: true, force: true });
+    rmSync(froggHome, { recursive: true, force: true });
   }
   console.log("✓ default host resolution tries local IPC first, then localhost fallback\n");
 }
 
 {
   console.log("Test 7: configured TCP host is preserved before the localhost fallback");
-  const fdeHome = mkdtempSync(path.join(os.tmpdir(), "fde-client-targets-tcp-"));
+  const froggHome = mkdtempSync(path.join(os.tmpdir(), "frogg-client-targets-tcp-"));
   try {
     assert.deepStrictEqual(
       resolveDefaultDaemonHosts({
-        FDE_HOME: fdeHome,
-        FDE_LISTEN: "127.0.0.1:7777",
+        FROGG_HOME: froggHome,
+        FROGG_LISTEN: "127.0.0.1:7777",
       }),
       ["127.0.0.1:7777", "localhost:9999"],
     );
   } finally {
-    rmSync(fdeHome, { recursive: true, force: true });
+    rmSync(froggHome, { recursive: true, force: true });
   }
   console.log("✓ configured TCP host is preserved before the localhost fallback\n");
 }
@@ -133,31 +133,31 @@ console.log("=== CLI IPC Target Helpers ===\n");
 
 {
   console.log("Test 9: local IPC still takes priority over configured TCP hosts");
-  const fdeHome = mkdtempSync(path.join(os.tmpdir(), "fde-client-targets-order-"));
+  const froggHome = mkdtempSync(path.join(os.tmpdir(), "frogg-client-targets-order-"));
   try {
-    mkdirSync(fdeHome, { recursive: true });
+    mkdirSync(froggHome, { recursive: true });
     writeFileSync(
-      path.join(fdeHome, "fde.pid"),
-      JSON.stringify({ pid: process.pid, listen: "/tmp/fde-priority.sock" }),
+      path.join(froggHome, "frogg.pid"),
+      JSON.stringify({ pid: process.pid, listen: "/tmp/frogg-priority.sock" }),
     );
     assert.deepStrictEqual(
       resolveDefaultDaemonHosts({
-        FDE_HOME: fdeHome,
-        FDE_LISTEN: "127.0.0.1:7777",
+        FROGG_HOME: froggHome,
+        FROGG_LISTEN: "127.0.0.1:7777",
       }),
-      ["unix:///tmp/fde-priority.sock", "127.0.0.1:7777", "localhost:9999"],
+      ["unix:///tmp/frogg-priority.sock", "127.0.0.1:7777", "localhost:9999"],
     );
   } finally {
-    rmSync(fdeHome, { recursive: true, force: true });
+    rmSync(froggHome, { recursive: true, force: true });
   }
   console.log("✓ local IPC still takes priority over configured TCP hosts\n");
 }
 
 {
   console.log("Test 10: daemon password resolution prefers TCP URI query, falls back to env");
-  const previousEnv = process.env.FDE_PASSWORD;
+  const previousEnv = process.env.FROGG_PASSWORD;
   try {
-    delete process.env.FDE_PASSWORD;
+    delete process.env.FROGG_PASSWORD;
     assert.strictEqual(
       resolveDaemonPassword("tcp://example.com:9999?ssl=true&password=query-secret"),
       "query-secret",
@@ -165,7 +165,7 @@ console.log("=== CLI IPC Target Helpers ===\n");
     assert.strictEqual(resolveDaemonPassword("tcp://missing.example:9999"), undefined);
     assert.strictEqual(resolveDaemonPassword("example.com:9999"), undefined);
 
-    process.env.FDE_PASSWORD = "env-secret";
+    process.env.FROGG_PASSWORD = "env-secret";
     assert.strictEqual(
       resolveDaemonPassword("tcp://example.com:9999?ssl=true&password=query-secret"),
       "query-secret",
@@ -183,7 +183,7 @@ console.log("=== CLI IPC Target Helpers ===\n");
     );
     assert.strictEqual(resolveDaemonPassword("localhost:9999"), "env-secret");
 
-    process.env.FDE_PASSWORD = "";
+    process.env.FROGG_PASSWORD = "";
     assert.strictEqual(
       resolveDaemonPassword("localhost:9999"),
       undefined,
@@ -191,9 +191,9 @@ console.log("=== CLI IPC Target Helpers ===\n");
     );
   } finally {
     if (previousEnv === undefined) {
-      delete process.env.FDE_PASSWORD;
+      delete process.env.FROGG_PASSWORD;
     } else {
-      process.env.FDE_PASSWORD = previousEnv;
+      process.env.FROGG_PASSWORD = previousEnv;
     }
   }
   console.log("✓ daemon password resolution prefers TCP URI query, falls back to env\n");

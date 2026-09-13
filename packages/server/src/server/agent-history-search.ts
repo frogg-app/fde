@@ -2,7 +2,7 @@ import type {
   AgentSearchMatch,
   AgentSnapshotPayload,
   ProjectPlacementPayload,
-} from "@fde/protocol/messages";
+} from "@frogg/protocol/messages";
 import {
   compareMatchScores,
   fuzzyPolicyForToken,
@@ -11,7 +11,7 @@ import {
   matchRanges,
   scoreMatch,
   tokenizeQuery,
-} from "@fde/protocol/search/text-match";
+} from "@frogg/protocol/search/text-match";
 
 /**
  * History search ranks what the daemon already knows about a session: the four

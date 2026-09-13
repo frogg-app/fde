@@ -14,18 +14,18 @@ The filename suffix sets the category. Pick the suffix that matches what the tes
 
 | Suffix                | What it is                                                     | How to run the category                          |
 | --------------------- | -------------------------------------------------------------- | ------------------------------------------------ |
-| `*.test.ts(x)`        | Unit test. No daemon, no network                               | `npm run test:unit --workspace=@fde/server`      |
+| `*.test.ts(x)`        | Unit test. No daemon, no network                               | `npm run test:unit --workspace=@frogg/server`      |
 | `*.posix.test.ts`     | Unit test that needs POSIX behavior                            | With the unit tests                              |
-| `*.browser.test.ts(x)`| UI test in a real headless Chromium (Vitest browser mode)      | `npm run test:browser --workspace=@fde/app`      |
-| `*.e2e.test.ts`       | End-to-end against a real daemon                               | `npm run test:e2e --workspace=@fde/server`       |
-| `*.real.e2e.test.ts`  | End-to-end against a real provider                             | `npm run test:e2e:real --workspace=@fde/server`  |
-| `*.local.e2e.test.ts` | End-to-end that needs a local-only resource                    | `npm run test:e2e:local --workspace=@fde/server` |
+| `*.browser.test.ts(x)`| UI test in a real headless Chromium (Vitest browser mode)      | `npm run test:browser --workspace=@frogg/app`      |
+| `*.e2e.test.ts`       | End-to-end against a real daemon                               | `npm run test:e2e --workspace=@frogg/server`       |
+| `*.real.e2e.test.ts`  | End-to-end against a real provider                             | `npm run test:e2e:real --workspace=@frogg/server`  |
+| `*.local.e2e.test.ts` | End-to-end that needs a local-only resource                    | `npm run test:e2e:local --workspace=@frogg/server` |
 
 - Server `test:unit` excludes every `*.e2e.test.ts`. Server `test:e2e` runs e2e files with one
   worker and excludes the `real` and `local` variants.
 - Real-provider tests read credentials from `packages/server/.env.test`. The server Vitest setup
   (`packages/server/src/test-utils/vitest-setup.ts`) loads that file, sets
-  `FDE_SUPERVISED=0` and disables Git and SSH prompts. `.env.*` files are gitignored;
+  `FROGG_SUPERVISED=0` and disables Git and SSH prompts. `.env.*` files are gitignored;
   `packages/server/.env.example` lists the variable names.
 - Live provider smoke tests belong in `*.real.e2e.test.ts`, even when an environment variable
   guards them. Unit suites must stay deterministic.
@@ -59,11 +59,11 @@ small machine. Push and let CI run them.
 ```bash
 npx vitest run --root apps/ui --project unit
 npx vitest run --root apps/ui --project browser   # needs: npx playwright install chromium
-npm run test --workspace=@fde/app                  # both projects
+npm run test --workspace=@frogg/app                  # both projects
 ```
 
 Both projects run tests in forked processes with at most two workers. Build `build:server-deps`
-and `@fde/expo-two-way-audio` first, as CI does.
+and `@frogg/expo-two-way-audio` first, as CI does.
 
 ## Playwright e2e (apps/ui)
 
@@ -72,14 +72,14 @@ App end-to-end specs live in `apps/ui/e2e/browser/`. Shared harness code lives i
 
 | Project            | Matches                                         | Script                                             |
 | ------------------ | ----------------------------------------------- | -------------------------------------------------- |
-| `browser`          | every spec except `*.real.spec.ts`              | `npm run test:e2e --workspace=@fde/app`            |
-| `real-provider`    | `*.real.spec.ts` except the relay deployment spec | `npm run test:e2e:real --workspace=@fde/app`     |
-| `relay-deployment` | `relay-deployment-reconnect.real.spec.ts`       | `npm run test:e2e:relay-deployment --workspace=@fde/app` |
+| `browser`          | every spec except `*.real.spec.ts`              | `npm run test:e2e --workspace=@frogg/app`            |
+| `real-provider`    | `*.real.spec.ts` except the relay deployment spec | `npm run test:e2e:real --workspace=@frogg/app`     |
+| `relay-deployment` | `relay-deployment-reconnect.real.spec.ts`       | `npm run test:e2e:relay-deployment --workspace=@frogg/app` |
 
 - Global setup (`e2e/support/global-setup.ts`) starts Metro on a free port. Workers default to
   1 locally and 2 when `CI` is set. CI gets one retry.
-- `test:e2e:real` and `test:e2e:relay-deployment` fork provider state from `.dev/fde-home`
-  (`E2E_FORK_FDE_HOME_FROM`). `test:e2e:relay-deployment` also builds the server and daemon web UI.
+- `test:e2e:real` and `test:e2e:relay-deployment` fork provider state from `.dev/frogg-home`
+  (`E2E_FORK_FROGG_HOME_FROM`). `test:e2e:relay-deployment` also builds the server and daemon web UI.
 - `test:e2e:ui` opens the Playwright UI. `E2E_RECORD_VIDEO=1` records every test.
 - Run a single spec when you need to prove one flow:
 
@@ -103,16 +103,16 @@ them, and some flows target specific past bugs.
 ## Desktop tests
 
 ```bash
-npm run test --workspace=@fde/desktop-electron        # vitest on src, then node --test test/*.test.mjs
-npm run test:smoke --workspace=@fde/desktop-electron  # Playwright Electron smoke
+npm run test --workspace=@frogg/desktop-electron        # vitest on src, then node --test test/*.test.mjs
+npm run test:smoke --workspace=@frogg/desktop-electron  # Playwright Electron smoke
 ```
 
 The smoke test (`apps/desktop-electron/e2e/smoke.mjs`) launches the app twice with a temporary
 profile. It checks sandbox and context isolation, settings persistence across launches, that
 daemon commands are rejected, and that no daemon state is created. Without
-`FDE_ELECTRON_SMOKE_EXECUTABLE` it runs the unpacked app against `apps/ui/dist`, so run
-`npm run build:ui` first. Set `FDE_ELECTRON_SMOKE_EXECUTABLE` to test a packaged binary, and
-`FDE_ELECTRON_SMOKE_NO_SANDBOX=1` where the Chromium sandbox is unavailable. The release workflow
+`FROGG_ELECTRON_SMOKE_EXECUTABLE` it runs the unpacked app against `apps/ui/dist`, so run
+`npm run build:ui` first. Set `FROGG_ELECTRON_SMOKE_EXECUTABLE` to test a packaged binary, and
+`FROGG_ELECTRON_SMOKE_NO_SANDBOX=1` where the Chromium sandbox is unavailable. The release workflow
 runs it on the packaged Linux build under `xvfb-run`.
 
 ## Script tests
@@ -127,10 +127,10 @@ Runs `node --test` over `scripts/ci/*.test.mjs`, `scripts/dev/*.test.mjs` and
 ## Branding tests
 
 - `npm run brand:check` validates the selected brand.
-- `npm run test --workspace=@fde/branding` runs the brand schema tests.
+- `npm run test --workspace=@frogg/branding` runs the brand schema tests.
 - `.github/workflows/branding.yml` runs on pull requests that touch `brands/`,
   `packages/branding/`, branding scripts, `scripts/release/`, `apps/desktop-electron/`,
-  `deploy/` or `.github/`. It builds `brands/fde` and `brands/example` and runs
+  `deploy/` or `.github/`. It builds `brands/frogg` and `brands/example` and runs
   `branding-acceptance.mjs`, `branding-contribution.mjs` (see
   [Coding standards](/docs/contributing/coding-standards/#no-hard-coded-product-names)),
   `branding-browser.mjs`, the install test, desktop packaging on Linux, Windows and macOS with
@@ -143,7 +143,7 @@ Runs `node --test` over `scripts/ci/*.test.mjs`, `scripts/dev/*.test.mjs` and
 
 | Job                   | Steps                                                                              |
 | --------------------- | ---------------------------------------------------------------------------------- |
-| `checks`              | `oxfmt --check .`, `oxlint .`, `npm run test:scripts`, `build:server`, `@fde/expo-two-way-audio` build, `npm run typecheck` |
+| `checks`              | `oxfmt --check .`, `oxlint .`, `npm run test:scripts`, `build:server`, `@frogg/expo-two-way-audio` build, `npm run typecheck` |
 | `tests`               | `build:server`, then `npm run test` for protocol, client, highlight and relay, and `test:unit` for cli |
 | `ui-tests` (3 shards) | UI `unit` project                                                                  |
 | `ui-browser-tests`    | Installs Chromium, runs the UI `browser` project                                   |

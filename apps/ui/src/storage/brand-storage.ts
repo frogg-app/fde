@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { brand } from "@fde/branding";
-import { storageKey } from "@fde/branding/identity";
+import { brand } from "@frogg/branding";
+import { storageKey } from "@frogg/branding/identity";
 
 function logicalKey(key: string): string | null {
   if (brand.storagePrefix)

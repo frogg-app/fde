@@ -1,4 +1,4 @@
-//! FDE (Frogg Development Environment) desktop shell: a Tauri v2 window around the exported web UI.
+//! Frogg desktop shell: a Tauri v2 window around the exported web UI.
 //!
 //! See `docs/desktop-shell.md` for the design. The JS bridge injected into the
 //! page lives in `../bridge.js` (built from `../../src/bridge.ts`).

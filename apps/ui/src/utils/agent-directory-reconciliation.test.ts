@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { FetchAgentsEntry } from "@fde/client/internal/daemon-client";
-import type { AgentSnapshotPayload } from "@fde/protocol/messages";
+import type { FetchAgentsEntry } from "@frogg/client/internal/daemon-client";
+import type { AgentSnapshotPayload } from "@frogg/protocol/messages";
 import type { Agent } from "@/stores/session-store";
 import { reconcileAgentDirectory } from "./agent-directory-reconciliation";
 
@@ -43,7 +43,7 @@ function entry(id: string, status: AgentSnapshotPayload["status"]): FetchAgentsE
         currentBranch: null,
         remoteUrl: null,
         worktreeRoot: null,
-        isFdeOwnedWorktree: false,
+        isFroggOwnedWorktree: false,
         mainRepoRoot: null,
       },
     },

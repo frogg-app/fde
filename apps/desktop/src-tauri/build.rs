@@ -24,7 +24,7 @@ fn main() {
         let brand: serde_json::Value =
             serde_json::from_str(&std::fs::read_to_string(generated.join("brand.json")).unwrap())
                 .unwrap();
-        assert!(brand["legacyFde"] == true || extra["identifier"] == overlay["identifier"],
+        assert!(brand["legacyFrogg"] == true || extra["identifier"] == overlay["identifier"],
             "Custom Tauri builds require the prepared overlay. Use npm run build:desktop or npm run dev:desktop.");
     }
     if std::env::var("PROFILE").as_deref() == Ok("release") {

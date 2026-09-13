@@ -4,8 +4,8 @@ import {
   encodeTerminalStreamFrame,
   TerminalStreamOpcode,
   type TerminalStreamFrame,
-} from "@fde/protocol/binary-frames/index";
-import type { TerminalInput, TerminalState } from "@fde/protocol/messages";
+} from "@frogg/protocol/binary-frames/index";
+import type { TerminalInput, TerminalState } from "@frogg/protocol/messages";
 
 export type TerminalStreamEvent =
   | { terminalId: string; type: "output"; data: Uint8Array }

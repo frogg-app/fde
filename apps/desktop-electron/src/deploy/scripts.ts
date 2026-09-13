@@ -1,4 +1,4 @@
-import { installers } from "@fde/branding/installers";
+import { installers } from "@frogg/branding/installers";
 import type { DeployMethod } from "./args.js";
 export function deployScript(method: DeployMethod, uninstall = false): string {
   const name = `/${uninstall ? "uninstall" : "install"}${method === "docker" ? "-docker" : ""}.sh`;

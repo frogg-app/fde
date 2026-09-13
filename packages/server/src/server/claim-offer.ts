@@ -1,11 +1,11 @@
-import { ConnectionOfferV3Schema, type ConnectionOfferV3 } from "@fde/protocol/connection-offer";
+import { ConnectionOfferV3Schema, type ConnectionOfferV3 } from "@frogg/protocol/connection-offer";
 import { buildOfferEndpoints, encodeOfferToPairingUrl } from "./connection-offer.js";
 import type { ClaimOfferStore } from "./claim-offer-store.js";
 import type { ListenTarget } from "./bootstrap.js";
 
 /**
  * Builds the direct (v3) claim offer the pairing page, `/api/setup/offer`, and
- * `fde daemon pair` hand to a client. The endpoints list starts with the
+ * `frogg daemon pair` hand to a client. The endpoints list starts with the
  * address the caller used to reach the daemon (the best guess for what the
  * client can reach too), then the daemon's own LAN/loopback endpoints.
  */
@@ -44,7 +44,7 @@ export function buildDirectClaimOffer(
   const relay = source.relay();
   const offer = ConnectionOfferV3Schema.parse({
     v: 3,
-    product: "fde",
+    product: "frogg",
     serverId: source.serverId,
     hostname: source.hostname,
     daemonPublicKeyB64: source.daemonPublicKeyB64,

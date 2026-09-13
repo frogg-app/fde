@@ -99,7 +99,7 @@ describe("daemon web UI route module", () => {
   let publicDir: string;
 
   beforeEach(async () => {
-    tempRoot = await mkdtemp(path.join(os.tmpdir(), "fde-web-ui-"));
+    tempRoot = await mkdtemp(path.join(os.tmpdir(), "frogg-web-ui-"));
     distDir = path.join(tempRoot, "dist");
     publicDir = path.join(tempRoot, "public");
     await mkdir(path.join(distDir, "_expo", "static", "js", "web"), { recursive: true });
@@ -153,7 +153,7 @@ describe("daemon web UI route module", () => {
 
     expect(res.status).toBe(200);
     expect(res.headers["content-type"]).toBe("text/html; charset=utf-8");
-    expect(res.body).toContain("window.__FDE_INITIAL_DAEMON_CONNECTION__");
+    expect(res.body).toContain("window.__FROGG_INITIAL_DAEMON_CONNECTION__");
     expect(res.body).toContain('"listen":"localhost:');
     expect(res.body).toContain('"useTls":false');
     expect(res.body).toContain('"label":"test-label"');
@@ -164,7 +164,7 @@ describe("daemon web UI route module", () => {
 
     const res = await request(app, "GET", "/index.html");
 
-    expect(res.body).toMatch(/window\.__FDE_INITIAL_DAEMON_CONNECTION__.*<\/head>/);
+    expect(res.body).toMatch(/window\.__FROGG_INITIAL_DAEMON_CONNECTION__.*<\/head>/);
   });
 
   test("escapes the injected host hint for inline script safety", async () => {
@@ -185,7 +185,7 @@ describe("daemon web UI route module", () => {
     const res = await request(app, "GET", "/h/some-server-id/agent/123");
 
     expect(res.status).toBe(200);
-    expect(res.body).toContain("window.__FDE_INITIAL_DAEMON_CONNECTION__");
+    expect(res.body).toContain("window.__FROGG_INITIAL_DAEMON_CONNECTION__");
     expect(res.body).toContain("app");
   });
 
@@ -310,13 +310,13 @@ describe("daemon web UI route module", () => {
     let claimed = false;
     const gate: WebUiGate = {
       shouldGate: (req) => !claimed && req.headers["x-test-remote"] === "1",
-      render: async () => "<!doctype html><title>Claim this FDE daemon</title>",
+      render: async () => "<!doctype html><title>Claim this Frogg daemon</title>",
     };
     const app = createApp({ enabled: true, distDir, publicDir, gate });
 
     const gated = await request(app, "GET", "/workspace/abc", { "x-test-remote": "1" });
     expect(gated.status).toBe(200);
-    expect(gated.body).toContain("Claim this FDE daemon");
+    expect(gated.body).toContain("Claim this Frogg daemon");
     expect(gated.headers["cache-control"]).toContain("no-store");
 
     const local = await request(app, "GET", "/workspace/abc");

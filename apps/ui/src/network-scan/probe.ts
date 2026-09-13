@@ -30,7 +30,7 @@ function readString(record: Record<string, unknown>, key: string): string | null
 
 /**
  * `/api/identity` as the daemon returns it:
- * `{serverId, hostname, version, product:"fde", pairingRequired}`.
+ * `{serverId, hostname, version, product:"frogg", pairingRequired}`.
  */
 export function parseDaemonIdentity(payload: unknown): DaemonIdentity | null {
   if (!payload || typeof payload !== "object") return null;
@@ -46,7 +46,7 @@ export function parseDaemonIdentity(payload: unknown): DaemonIdentity | null {
   return identity;
 }
 
-/** `/api/health` answers `{status:"ok"}`; anything else is not an FDE daemon. */
+/** `/api/health` answers `{status:"ok"}`; anything else is not a Frogg daemon. */
 export function parseDaemonHealth(payload: unknown): boolean {
   return Boolean(
     payload && typeof payload === "object" && (payload as Record<string, unknown>).status === "ok",
@@ -103,7 +103,7 @@ async function fetchJson(url: string, transport: Transport): Promise<ProbeAnswer
 }
 
 /**
- * Ask one address whether an FDE daemon lives there. `/api/identity` is
+ * Ask one address whether a Frogg daemon lives there. `/api/identity` is
  * preferred (it carries hostname and version); older daemons answer only
  * `/api/health`, which still proves a daemon is present.
  */
@@ -129,7 +129,7 @@ export async function probeDaemon(
   }
   if (identityResponse.status === 200) {
     const identity = parseDaemonIdentity(identityResponse.body);
-    if (identity && (identity.product === null || identity.product === "fde")) {
+    if (identity && (identity.product === null || identity.product === "frogg")) {
       return {
         ip: target.ip,
         port: target.port,

@@ -16,8 +16,8 @@ import type { DOMProps } from "expo/dom";
 import { useDOMImperativeHandle, type DOMImperativeFactory } from "expo/dom";
 import "@xterm/xterm/css/xterm.css";
 import type { ITheme } from "@xterm/xterm";
-import type { TerminalState } from "@fde/protocol/messages";
-import type { TerminalInputModeState } from "@fde/protocol/terminal-input-mode";
+import type { TerminalState } from "@frogg/protocol/messages";
+import type { TerminalInputModeState } from "@frogg/protocol/terminal-input-mode";
 import type { PendingTerminalModifiers } from "../utils/terminal-keys";
 import {
   TerminalEmulatorRuntime,
@@ -534,7 +534,7 @@ export default function TerminalEmulator({
   }, [resizeRequestToken]);
 
   const showTerminalContextMenu = useCallback(() => {
-    const showContextMenu = window.fdeDesktop?.menu?.showContextMenu;
+    const showContextMenu = window.froggDesktop?.menu?.showContextMenu;
     if (typeof showContextMenu !== "function") {
       return;
     }

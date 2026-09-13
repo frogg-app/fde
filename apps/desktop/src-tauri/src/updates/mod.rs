@@ -35,8 +35,8 @@ use cache::LastCheck;
 use check::CheckResult;
 use release::Channel;
 
-pub const AVAILABLE_EVENT: &str = "fde:event:app-update-available";
-pub const PROGRESS_EVENT: &str = "fde:event:app-update-progress";
+pub const AVAILABLE_EVENT: &str = "frogg:event:app-update-available";
+pub const PROGRESS_EVENT: &str = "frogg:event:app-update-progress";
 const DOWNLOAD_DIRNAME: &str = "updates";
 /// Automatic checks reuse a cached answer younger than this.
 const AUTOMATIC_CACHE_TTL_MS: u64 = 30 * 60 * 1000;
@@ -174,7 +174,7 @@ pub fn strategy<R: Runtime>(app: &AppHandle<R>) -> Strategy {
         return Strategy::Disabled;
     }
     if crate::branding::UPDATE_MODE == "tauri-signed"
-        || (crate::branding::LEGACY_FDE && signed::is_configured(app))
+        || (crate::branding::LEGACY_FROGG && signed::is_configured(app))
     {
         Strategy::TauriSigned
     } else {
@@ -263,7 +263,7 @@ async fn run_check<R: Runtime>(
         match signed::check(app, updates, channel).await {
             Ok(result) => return result,
             Err(error) => {
-                if !crate::branding::LEGACY_FDE {
+                if !crate::branding::LEGACY_FROGG {
                     return CheckResult::failed(updates, channel, Strategy::TauriSigned, error);
                 }
                 log::warn!("updates: signed check failed ({error}); using GitHub releases")
@@ -317,7 +317,7 @@ async fn run_install<R: Runtime>(
             Ok(Some(result)) => return Ok(result),
             Ok(None) => return Ok(already_latest()),
             Err(error) => {
-                if !crate::branding::LEGACY_FDE {
+                if !crate::branding::LEGACY_FROGG {
                     return Err(error);
                 }
                 log::warn!("updates: signed install failed ({error}); using GitHub releases")

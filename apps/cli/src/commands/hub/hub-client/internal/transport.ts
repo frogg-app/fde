@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import type { z } from "zod";
 import { HubCommandError } from "../../error.js";
 import { hubRequestFailure } from "./problem.js";

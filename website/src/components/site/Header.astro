@@ -1,6 +1,6 @@
 ---
 import { Image } from "astro:assets";
-import logo from "../../assets/brand/fde-logo.png";
+import logo from "../../assets/brand/frogg-logo.png";
 import ThemeToggle from "../theme/ThemeToggle.astro";
 
 const links = [
@@ -14,9 +14,9 @@ const links = [
 
 <header class="site-header">
   <div class="inner">
-    <a class="brand" href="/" aria-label="FDE home">
+    <a class="brand" href="/" aria-label="Frogg home">
       <Image src={logo} alt="" width={36} height={28} densities={[1, 2]} loading="eager" fetchpriority="high" />
-      <span>FDE</span>
+      <span>Frogg</span>
     </a>
 
     <nav class="desktop-nav" aria-label="Main">
@@ -24,7 +24,7 @@ const links = [
     </nav>
 
     <div class="actions">
-      <a class="icon-btn" href="https://github.com/frogg-app/fde" aria-label="FDE on GitHub">
+      <a class="icon-btn" href="https://github.com/frogg-app/frogg" aria-label="Frogg on GitHub">
         <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"
           ><path
             fill="currentColor"
@@ -112,16 +112,16 @@ const links = [
     z-index: 50;
     border-bottom: 1px solid transparent;
     transition:
-      background-color var(--fde-med) var(--fde-ease),
-      border-color var(--fde-med) var(--fde-ease),
-      backdrop-filter var(--fde-med) var(--fde-ease);
+      background-color var(--frogg-med) var(--frogg-ease),
+      border-color var(--frogg-med) var(--frogg-ease),
+      backdrop-filter var(--frogg-med) var(--frogg-ease);
   }
   .site-header.scrolled,
   .site-header.menu-open {
-    background: color-mix(in srgb, var(--fde-bg) 82%, transparent);
+    background: color-mix(in srgb, var(--frogg-bg) 82%, transparent);
     backdrop-filter: saturate(1.4) blur(14px);
     -webkit-backdrop-filter: saturate(1.4) blur(14px);
-    border-bottom-color: var(--fde-border);
+    border-bottom-color: var(--frogg-border);
   }
   .inner {
     display: flex;
@@ -139,14 +139,14 @@ const links = [
     font-weight: 750;
     font-size: 1.15rem;
     letter-spacing: -0.01em;
-    color: var(--fde-text);
+    color: var(--frogg-text);
     text-decoration: none;
-    border-radius: var(--fde-radius-sm);
+    border-radius: var(--frogg-radius-sm);
   }
   .brand img {
     width: 36px;
     height: auto;
-    transition: transform var(--fde-med) var(--fde-ease-spring);
+    transition: transform var(--frogg-med) var(--frogg-ease-spring);
   }
   .brand:hover img {
     transform: rotate(-8deg) scale(1.08);
@@ -162,18 +162,18 @@ const links = [
     border-radius: 999px;
     font-size: 0.92rem;
     font-weight: 500;
-    color: var(--fde-text-muted);
+    color: var(--frogg-text-muted);
     text-decoration: none;
     transition:
-      color var(--fde-fast) var(--fde-ease),
-      background-color var(--fde-fast) var(--fde-ease);
+      color var(--frogg-fast) var(--frogg-ease),
+      background-color var(--frogg-fast) var(--frogg-ease);
   }
   .desktop-nav a:hover {
-    color: var(--fde-text);
-    background: var(--fde-accent-soft);
+    color: var(--frogg-text);
+    background: var(--frogg-accent-soft);
   }
   .desktop-nav a[aria-current] {
-    color: var(--fde-text);
+    color: var(--frogg-text);
   }
   .desktop-nav a[aria-current]::after {
     content: "";
@@ -184,7 +184,7 @@ const links = [
     height: 0.3rem;
     margin-left: -0.15rem;
     border-radius: 50%;
-    background: var(--fde-accent);
+    background: var(--frogg-accent);
   }
   .actions {
     display: flex;
@@ -198,15 +198,15 @@ const links = [
     width: 2.25rem;
     height: 2.25rem;
     border-radius: 999px;
-    color: var(--fde-text-muted);
+    color: var(--frogg-text-muted);
     transition:
-      color var(--fde-fast) var(--fde-ease),
-      background-color var(--fde-fast) var(--fde-ease),
-      transform var(--fde-fast) var(--fde-ease);
+      color var(--frogg-fast) var(--frogg-ease),
+      background-color var(--frogg-fast) var(--frogg-ease),
+      transform var(--frogg-fast) var(--frogg-ease);
   }
   .icon-btn:hover {
-    color: var(--fde-text);
-    background: var(--fde-accent-soft);
+    color: var(--frogg-text);
+    background: var(--frogg-accent-soft);
   }
   .icon-btn:active {
     transform: scale(0.92);
@@ -220,22 +220,22 @@ const links = [
     gap: 5px;
     width: 2.5rem;
     height: 2.5rem;
-    border: 1px solid var(--fde-border);
+    border: 1px solid var(--frogg-border);
     border-radius: 999px;
     background: transparent;
     cursor: pointer;
-    transition: background-color var(--fde-fast) var(--fde-ease);
+    transition: background-color var(--frogg-fast) var(--frogg-ease);
   }
   .menu-btn:active {
-    background: var(--fde-accent-soft);
+    background: var(--frogg-accent-soft);
   }
   .menu-btn span {
     display: block;
     width: 16px;
     height: 2px;
     border-radius: 2px;
-    background: var(--fde-text);
-    transition: transform var(--fde-med) var(--fde-ease);
+    background: var(--frogg-text);
+    transition: transform var(--frogg-med) var(--frogg-ease);
   }
   .menu-open .menu-btn span:first-child {
     transform: translateY(3.5px) rotate(45deg);
@@ -259,12 +259,12 @@ const links = [
     font-size: 1.35rem;
     font-weight: 650;
     letter-spacing: -0.01em;
-    color: var(--fde-text);
+    color: var(--frogg-text);
     text-decoration: none;
-    border-bottom: 1px solid var(--fde-border);
+    border-bottom: 1px solid var(--frogg-border);
   }
   .mobile-nav a:not(.btn):active {
-    color: var(--fde-accent-bright);
+    color: var(--frogg-accent-bright);
   }
   .mobile-nav .btn {
     margin-top: 1rem;
@@ -273,8 +273,8 @@ const links = [
     opacity: 0;
     transform: translateY(-6px);
     transition:
-      opacity 200ms var(--fde-ease),
-      transform 260ms var(--fde-ease);
+      opacity 200ms var(--frogg-ease),
+      transform 260ms var(--frogg-ease);
     transition-delay: calc(var(--i) * 30ms);
   }
   .mobile-nav.open a {

@@ -13,7 +13,7 @@ import {
   keymap,
   lineNumbers,
 } from "@codemirror/view";
-import { createCodeMirrorHighlightStyle, type HighlightStyle } from "@fde/highlight";
+import { createCodeMirrorHighlightStyle, type HighlightStyle } from "@frogg/highlight";
 
 export interface EditorVisualTheme {
   colorScheme: "light" | "dark";

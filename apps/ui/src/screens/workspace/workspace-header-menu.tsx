@@ -12,7 +12,7 @@ import {
   SquarePen,
 } from "lucide-react-native";
 import { StyleSheet, withUnistyles } from "react-native-unistyles";
-import type { TerminalProfile } from "@fde/protocol/messages";
+import type { TerminalProfile } from "@frogg/protocol/messages";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/icon-button-chrome";
 import { TerminalProfileIcon } from "@/components/terminal-profile-icon";
 import { useDaemonConfig } from "@/hooks/use-daemon-config";
-import { getTerminalProfileIcon, resolveTerminalProfiles } from "@fde/protocol/terminal-profiles";
+import { getTerminalProfileIcon, resolveTerminalProfiles } from "@frogg/protocol/terminal-profiles";
 import { buildNewWorkspaceRoute, buildSettingsHostSectionRoute } from "@/utils/host-routes";
 import { resolveNewAgentPlacement } from "@/utils/new-agent-routing";
 import { useWorkspace } from "@/stores/session-store-hooks";

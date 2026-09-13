@@ -1,4 +1,4 @@
-import type { CheckoutPrStatusResponse } from "@fde/protocol/messages";
+import type { CheckoutPrStatusResponse } from "@frogg/protocol/messages";
 
 type PullRequestStatus = CheckoutPrStatusResponse["payload"]["status"];
 

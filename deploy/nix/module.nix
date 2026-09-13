@@ -6,60 +6,60 @@
 }:
 
 let
-  cfg = config.services.fde;
+  cfg = config.services.frogg;
 in
 {
   imports = [
-    (lib.mkRenamedOptionModule [ "services" "fde" "allowedHosts" ] [ "services" "fde" "hostnames" ])
+    (lib.mkRenamedOptionModule [ "services" "frogg" "allowedHosts" ] [ "services" "frogg" "hostnames" ])
   ];
 
-  options.services.fde = {
-    enable = lib.mkEnableOption "Fde, a self-hosted daemon for AI coding agents";
+  options.services.frogg = {
+    enable = lib.mkEnableOption "Frogg, a self-hosted daemon for AI coding agents";
 
-    package = lib.mkPackageOption pkgs "fde" { };
+    package = lib.mkPackageOption pkgs "frogg" { };
 
     user = lib.mkOption {
       type = lib.types.str;
-      default = "fde";
-      description = "User account under which Fde runs.";
+      default = "frogg";
+      description = "User account under which Frogg runs.";
     };
 
     group = lib.mkOption {
       type = lib.types.str;
-      default = "fde";
-      description = "Group under which Fde runs.";
+      default = "frogg";
+      description = "Group under which Frogg runs.";
     };
 
     dataDir = lib.mkOption {
       type = lib.types.str;
       default =
-        if cfg.user == "fde"
-        then "/var/lib/fde"
-        else "/home/${cfg.user}/.fde";
+        if cfg.user == "frogg"
+        then "/var/lib/frogg"
+        else "/home/${cfg.user}/.frogg";
       defaultText = lib.literalExpression ''
-        if cfg.user == "fde"
-        then "/var/lib/fde"
-        else "/home/''${cfg.user}/.fde"
+        if cfg.user == "frogg"
+        then "/var/lib/frogg"
+        else "/home/''${cfg.user}/.frogg"
       '';
-      description = "Directory for FDE state (FDE_HOME). Stores agent data, config, and logs.";
+      description = "Directory for Frogg state (FROGG_HOME). Stores agent data, config, and logs.";
     };
 
     port = lib.mkOption {
       type = lib.types.port;
       default = 9999;
-      description = "Port for the Fde daemon to listen on.";
+      description = "Port for the Frogg daemon to listen on.";
     };
 
     listenAddress = lib.mkOption {
       type = lib.types.str;
       default = "0.0.0.0";
-      description = "Address for the Fde daemon to bind to.";
+      description = "Address for the Frogg daemon to bind to.";
     };
 
     openFirewall = lib.mkOption {
       type = lib.types.bool;
       default = false;
-      description = "Whether to open the firewall for the Fde daemon port.";
+      description = "Whether to open the firewall for the Frogg daemon port.";
     };
 
     hostnames = lib.mkOption {
@@ -67,7 +67,7 @@ in
       default = [ ];
       example = [ ".example.com" "myhost.local" ];
       description = ''
-        Hostnames the Fde daemon accepts in the Host header (DNS rebinding protection).
+        Hostnames the Frogg daemon accepts in the Host header (DNS rebinding protection).
         Localhost and IP addresses are always allowed by default.
 
         Use a leading dot to match a domain and all its subdomains
@@ -95,8 +95,8 @@ in
           How the daemon reaches the relay when `relay.enable = true`:
 
           - `"remote"`: connect to a self-hosted relay at
-            `relay.host:relay.port`. Sets `FDE_RELAY_ENDPOINT` and
-            `FDE_RELAY_USE_TLS` for the daemon.
+            `relay.host:relay.port`. Sets `FROGG_RELAY_ENDPOINT` and
+            `FROGG_RELAY_USE_TLS` for the daemon.
 
           A `"local"` mode (running a relay on the same host as a systemd
           unit) is not yet implemented — the relay package currently only
@@ -137,12 +137,12 @@ in
 
     inheritUserEnvironment = lib.mkOption {
       type = lib.types.bool;
-      default = cfg.user != "fde";
-      defaultText = lib.literalExpression ''cfg.user != "fde"'';
+      default = cfg.user != "frogg";
+      defaultText = lib.literalExpression ''cfg.user != "frogg"'';
       description = ''
         Whether to include the user's profile PATH in the service environment.
 
-        When Fde runs as a real user (not the default system user), AI agents
+        When Frogg runs as a real user (not the default system user), AI agents
         need access to the user's tools (git, ssh, etc.). This adds the user's
         NixOS profile, home-manager profile (`~/.nix-profile/bin` and
         `~/.local/state/nix/profile/bin`), and system paths so agents can use
@@ -157,10 +157,10 @@ in
       default = { };
       example = lib.literalExpression ''
         {
-          FDE_RELAY_ENDPOINT = "relay.example.com:443";
+          FROGG_RELAY_ENDPOINT = "relay.example.com:443";
         }
       '';
-      description = "Extra environment variables for the Fde daemon.";
+      description = "Extra environment variables for the Frogg daemon.";
     };
 
     settings = lib.mkOption {
@@ -174,14 +174,14 @@ in
             label = "My Agent";
             command = { path = "/run/current-system/sw/bin/my-acp"; };
           };
-          log.file = { level = "info"; path = "/var/lib/fde/daemon.log"; };
+          log.file = { level = "info"; path = "/var/lib/frogg/daemon.log"; };
         }
       '';
       description = ''
-        Declarative content for `$FDE_HOME/config.json`. Rendered to JSON
+        Declarative content for `$FROGG_HOME/config.json`. Rendered to JSON
         and installed on every service start.
 
-        Runtime mutations to `config.json` (e.g. via `fde daemon set-password`
+        Runtime mutations to `config.json` (e.g. via `frogg daemon set-password`
         or the mobile app toggling MCP injection / provider overrides) are
         overwritten on the next restart. Pick one: manage via this option, or
         manage via the CLI — not both.
@@ -194,32 +194,32 @@ in
 
   config = lib.mkIf cfg.enable (
     let
-      settingsFile = (pkgs.formats.json { }).generate "fde-config.json" cfg.settings;
+      settingsFile = (pkgs.formats.json { }).generate "frogg-config.json" cfg.settings;
     in
     {
     assertions = [
       {
         assertion = !(cfg.relay.enable && cfg.relay.mode == "remote" && cfg.relay.host == "");
         message = ''
-          services.fde.relay.host must be set when relay.mode = "remote".
+          services.frogg.relay.host must be set when relay.mode = "remote".
         '';
       }
     ];
 
-    users.users.${cfg.user} = lib.mkIf (cfg.user == "fde") {
+    users.users.${cfg.user} = lib.mkIf (cfg.user == "frogg") {
       isSystemUser = true;
       group = cfg.group;
       home = cfg.dataDir;
     };
 
-    users.groups.${cfg.group} = lib.mkIf (cfg.group == "fde") { };
+    users.groups.${cfg.group} = lib.mkIf (cfg.group == "frogg") { };
 
     systemd.tmpfiles.rules = [
       "d ${cfg.dataDir} 0700 ${cfg.user} ${cfg.group} - -"
     ];
 
-    systemd.services.fde = {
-      description = "Fde - self-hosted daemon for AI coding agents";
+    systemd.services.frogg = {
+      description = "Frogg - self-hosted daemon for AI coding agents";
       after = [ "network.target" ];
       wantedBy = [ "multi-user.target" ];
 
@@ -228,8 +228,8 @@ in
       '';
 
       environment = {
-        FDE_HOME = cfg.dataDir;
-        FDE_LISTEN = "${cfg.listenAddress}:${toString cfg.port}";
+        FROGG_HOME = cfg.dataDir;
+        FROGG_LISTEN = "${cfg.listenAddress}:${toString cfg.port}";
       } // lib.optionalAttrs cfg.inheritUserEnvironment (
         let
           # Match dataDir's convention. We can't read users.users.<name>.home
@@ -242,7 +242,7 @@ in
           # so user-installed CLIs (claude, opencode, codex, ...) are reachable
           # by agent processes the daemon spawns.
           PATH = lib.mkForce (lib.concatStringsSep ":" (
-            lib.optionals (cfg.user != "fde") [
+            lib.optionals (cfg.user != "frogg") [
               "${userHome}/.nix-profile/bin"
               "${userHome}/.local/state/nix/profile/bin"
             ]
@@ -255,14 +255,14 @@ in
           ));
         }
       ) // lib.optionalAttrs (cfg.hostnames == true) {
-        FDE_HOSTNAMES = "true";
+        FROGG_HOSTNAMES = "true";
       } // lib.optionalAttrs (lib.isList cfg.hostnames && cfg.hostnames != [ ]) {
-        FDE_HOSTNAMES = lib.concatStringsSep "," cfg.hostnames;
+        FROGG_HOSTNAMES = lib.concatStringsSep "," cfg.hostnames;
       } // lib.optionalAttrs (cfg.relay.enable && cfg.relay.mode == "remote") {
-        FDE_RELAY_ENDPOINT = "${cfg.relay.host}:${toString cfg.relay.port}";
-        FDE_RELAY_USE_TLS = if cfg.relay.useTls then "true" else "false";
+        FROGG_RELAY_ENDPOINT = "${cfg.relay.host}:${toString cfg.relay.port}";
+        FROGG_RELAY_USE_TLS = if cfg.relay.useTls then "true" else "false";
       } // lib.optionalAttrs (cfg.relay.enable && cfg.relay.mode == "remote" && cfg.relay.publicUseTls != null) {
-        FDE_RELAY_PUBLIC_USE_TLS = if cfg.relay.publicUseTls then "true" else "false";
+        FROGG_RELAY_PUBLIC_USE_TLS = if cfg.relay.publicUseTls then "true" else "false";
       } // cfg.environment;
 
       serviceConfig = {
@@ -271,7 +271,7 @@ in
         Group = cfg.group;
 
         ExecStart =
-          "${cfg.package}/bin/fde-server"
+          "${cfg.package}/bin/frogg-server"
           + lib.optionalString (!cfg.relay.enable) " --no-relay";
 
         Restart = "on-failure";

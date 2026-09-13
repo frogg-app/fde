@@ -8,7 +8,7 @@ import { createBranchChangeRouteHandler } from "./script-route-branch-handler.js
 
 function createWorkspaceRepo(options?: {
   branchName?: string;
-  fdeConfig?: Record<string, unknown>;
+  froggConfig?: Record<string, unknown>;
 }): { tempDir: string; repoDir: string; cleanup: () => void } {
   const tempDir = realpathSync(mkdtempSync(path.join(tmpdir(), "script-branch-handler-")));
   const repoDir = path.join(tempDir, "repo");
@@ -23,8 +23,8 @@ function createWorkspaceRepo(options?: {
   });
   execFileSync("git", ["config", "user.name", "Test"], { cwd: repoDir, stdio: "pipe" });
   writeFileSync(path.join(repoDir, "README.md"), "hello\n");
-  if (options?.fdeConfig) {
-    writeFileSync(path.join(repoDir, "fde.json"), JSON.stringify(options.fdeConfig, null, 2));
+  if (options?.froggConfig) {
+    writeFileSync(path.join(repoDir, "frogg.json"), JSON.stringify(options.froggConfig, null, 2));
   }
   execFileSync("git", ["add", "."], { cwd: repoDir, stdio: "pipe" });
   execFileSync("git", ["-c", "commit.gpgsign=false", "commit", "-m", "initial"], {
@@ -47,7 +47,7 @@ function registerRoute(
     hostname,
     port,
     workspaceId = "workspace-a",
-    projectSlug = "fde",
+    projectSlug = "frogg",
     scriptName,
     publicHostname,
     publicBaseUrl,
@@ -76,7 +76,7 @@ describe("script-route-branch-handler", () => {
   it("updates routes on branch rename by removing old hostnames and registering new ones", () => {
     const routeStore = new ScriptRouteStore();
     registerRoute(routeStore, {
-      hostname: "api--feature-auth--fde.localhost",
+      hostname: "api--feature-auth--frogg.localhost",
       port: 3001,
       scriptName: "api",
     });
@@ -89,9 +89,9 @@ describe("script-route-branch-handler", () => {
 
     handleBranchChange("workspace-a", "feature/auth", "feature/billing");
 
-    expect(routeStore.findRoute("api--feature-auth--fde.localhost")).toBeNull();
-    expect(routeStore.findRoute("api--feature-billing--fde.localhost")).toEqual({
-      hostname: "api--feature-billing--fde.localhost",
+    expect(routeStore.findRoute("api--feature-auth--frogg.localhost")).toBeNull();
+    expect(routeStore.findRoute("api--feature-billing--frogg.localhost")).toEqual({
+      hostname: "api--feature-billing--frogg.localhost",
       port: 3001,
     });
   });
@@ -113,7 +113,7 @@ describe("script-route-branch-handler", () => {
   it("is a no-op when the resolved hostnames do not change", () => {
     const routeStore = new ScriptRouteStore();
     registerRoute(routeStore, {
-      hostname: "api--fde.localhost",
+      hostname: "api--frogg.localhost",
       port: 3001,
       scriptName: "api",
     });
@@ -128,10 +128,10 @@ describe("script-route-branch-handler", () => {
 
     expect(routeStore.listRoutesForWorkspace("workspace-a")).toEqual([
       {
-        hostname: "api--fde.localhost",
+        hostname: "api--frogg.localhost",
         port: 3001,
         workspaceId: "workspace-a",
-        projectSlug: "fde",
+        projectSlug: "frogg",
         scriptName: "api",
       },
     ]);
@@ -141,7 +141,7 @@ describe("script-route-branch-handler", () => {
   it("triggers shared reprojection after a route change", () => {
     const routeStore = new ScriptRouteStore();
     registerRoute(routeStore, {
-      hostname: "api--feature-auth--fde.localhost",
+      hostname: "api--feature-auth--frogg.localhost",
       port: 3001,
       scriptName: "api",
     });
@@ -160,8 +160,8 @@ describe("script-route-branch-handler", () => {
   it("updates public route aliases from the stored public base URL", () => {
     const routeStore = new ScriptRouteStore();
     registerRoute(routeStore, {
-      hostname: "api--feature-auth--fde.localhost",
-      publicHostname: "api--feature-auth--fde.services.example.com",
+      hostname: "api--feature-auth--frogg.localhost",
+      publicHostname: "api--feature-auth--frogg.services.example.com",
       publicBaseUrl: "https://services.example.com:8443",
       port: 3001,
       scriptName: "api",
@@ -175,19 +175,19 @@ describe("script-route-branch-handler", () => {
 
     handleBranchChange("workspace-a", "feature/auth", "feature/billing");
 
-    expect(routeStore.findRoute("api--feature-auth--fde.services.example.com")).toBeNull();
-    expect(routeStore.findRoute("api--feature-billing--fde.services.example.com")).toEqual({
-      hostname: "api--feature-billing--fde.localhost",
+    expect(routeStore.findRoute("api--feature-auth--frogg.services.example.com")).toBeNull();
+    expect(routeStore.findRoute("api--feature-billing--frogg.services.example.com")).toEqual({
+      hostname: "api--feature-billing--frogg.localhost",
       port: 3001,
     });
     expect(routeStore.listRoutesForWorkspace("workspace-a")).toEqual([
       {
-        hostname: "api--feature-billing--fde.localhost",
-        publicHostname: "api--feature-billing--fde.services.example.com",
+        hostname: "api--feature-billing--frogg.localhost",
+        publicHostname: "api--feature-billing--frogg.services.example.com",
         publicBaseUrl: "https://services.example.com:8443",
         port: 3001,
         workspaceId: "workspace-a",
-        projectSlug: "fde",
+        projectSlug: "frogg",
         scriptName: "api",
       },
     ]);
@@ -196,12 +196,12 @@ describe("script-route-branch-handler", () => {
   it("updates all services for a workspace when multiple routes are registered", () => {
     const routeStore = new ScriptRouteStore();
     registerRoute(routeStore, {
-      hostname: "api--feature-auth--fde.localhost",
+      hostname: "api--feature-auth--frogg.localhost",
       port: 3001,
       scriptName: "api",
     });
     registerRoute(routeStore, {
-      hostname: "web--feature-auth--fde.localhost",
+      hostname: "web--feature-auth--frogg.localhost",
       port: 3002,
       scriptName: "web",
     });
@@ -223,17 +223,17 @@ describe("script-route-branch-handler", () => {
 
     expect(routeStore.listRoutesForWorkspace("workspace-a")).toEqual([
       {
-        hostname: "api--feature-billing--fde.localhost",
+        hostname: "api--feature-billing--frogg.localhost",
         port: 3001,
         workspaceId: "workspace-a",
-        projectSlug: "fde",
+        projectSlug: "frogg",
         scriptName: "api",
       },
       {
-        hostname: "web--feature-billing--fde.localhost",
+        hostname: "web--feature-billing--frogg.localhost",
         port: 3002,
         workspaceId: "workspace-a",
-        projectSlug: "fde",
+        projectSlug: "frogg",
         scriptName: "web",
       },
     ]);
@@ -251,7 +251,7 @@ describe("script-route-branch-handler", () => {
   it("does not emit a status update when no changes are needed", () => {
     const routeStore = new ScriptRouteStore();
     registerRoute(routeStore, {
-      hostname: "web--fde.localhost",
+      hostname: "web--frogg.localhost",
       port: 3002,
       scriptName: "web",
     });
@@ -270,7 +270,7 @@ describe("script-route-branch-handler", () => {
   it("renames only service routes and leaves plain scripts unaffected", () => {
     const workspace = createWorkspaceRepo({
       branchName: "feature/auth",
-      fdeConfig: {
+      froggConfig: {
         scripts: {
           api: { type: "service", command: "npm run api" },
           typecheck: { command: "npm run typecheck" },

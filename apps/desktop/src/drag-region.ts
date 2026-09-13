@@ -109,7 +109,7 @@ export function installDragRegionHandler(
     // press of a double-click (`detail === 2`) is what toggles maximize.
     const win = resolveWindow();
     const action = event.detail === 2 ? win.toggleMaximize() : win.startDragging();
-    action.catch((error) => console.warn("[FDE] window drag failed", error));
+    action.catch((error) => console.warn("[Frogg] window drag failed", error));
   };
 
   view.addEventListener("mousedown", onMouseDown, true);

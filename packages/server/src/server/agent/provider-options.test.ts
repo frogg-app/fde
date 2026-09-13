@@ -97,7 +97,7 @@ describe("provider-owned option schemas", () => {
     ["codex", CodexProviderOptionsSchema, { cwd: "/tmp" }],
     ["claude", ClaudeProviderOptionsSchema, { hooks: {} }],
     ["opencode", OpenCodeProviderOptionsSchema, { mcp: {} }],
-  ])("rejects Fde-owned or executable %s keys", (provider, schema, options) => {
+  ])("rejects Frogg-owned or executable %s keys", (provider, schema, options) => {
     expect(() => validateProviderOptions(provider, schema, options)).toThrow(
       `Invalid providerOptions for '${provider}'`,
     );

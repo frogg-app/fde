@@ -1,11 +1,11 @@
 #!/usr/bin/env npx zx
 
 /**
- * Test runner for Fde CLI E2E tests
+ * Test runner for Frogg CLI E2E tests
  *
  * Runs all test phases as separate subprocesses with a bounded worker pool
  * so independent tests run concurrently. Each test file already isolates
- * its own daemon (ephemeral port + tmp FDE_HOME), so parallelism is safe.
+ * its own daemon (ephemeral port + tmp FROGG_HOME), so parallelism is safe.
  */
 
 import { spawn } from "child_process";
@@ -19,17 +19,17 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(__dirname, "..", "..", "..");
 
 // npm workspace scripts only add the local node_modules/.bin to PATH; hoisted
-// packages live in the root. Prepend it so `npx fde` resolves locally.
+// packages live in the root. Prepend it so `npx frogg` resolves locally.
 const rootNodeModulesBin = join(repoRoot, "node_modules", ".bin");
 const args = process.argv.slice(2);
 const testEnvDefaults = {
-  FDE_LOCAL_SPEECH_AUTO_DOWNLOAD: process.env.FDE_LOCAL_SPEECH_AUTO_DOWNLOAD ?? "0",
-  FDE_DICTATION_ENABLED: process.env.FDE_DICTATION_ENABLED ?? "0",
-  FDE_VOICE_MODE_ENABLED: process.env.FDE_VOICE_MODE_ENABLED ?? "0",
+  FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD: process.env.FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD ?? "0",
+  FROGG_DICTATION_ENABLED: process.env.FROGG_DICTATION_ENABLED ?? "0",
+  FROGG_VOICE_MODE_ENABLED: process.env.FROGG_VOICE_MODE_ENABLED ?? "0",
 };
 
 const DEFAULT_CONCURRENCY = 4;
-const concurrencyEnv = process.env.FDE_CLI_TEST_CONCURRENCY;
+const concurrencyEnv = process.env.FROGG_CLI_TEST_CONCURRENCY;
 const parsedConcurrency = concurrencyEnv ? Number.parseInt(concurrencyEnv, 10) : NaN;
 const concurrency =
   Number.isFinite(parsedConcurrency) && parsedConcurrency > 0
@@ -42,10 +42,12 @@ function parsePositiveInt(value: string | undefined, fallback: number): number {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-const shardTotal = parsePositiveInt(process.env.FDE_CLI_TEST_SHARD_TOTAL, 1);
-const shardIndexRaw = parsePositiveInt(process.env.FDE_CLI_TEST_SHARD, 1);
+const shardTotal = parsePositiveInt(process.env.FROGG_CLI_TEST_SHARD_TOTAL, 1);
+const shardIndexRaw = parsePositiveInt(process.env.FROGG_CLI_TEST_SHARD, 1);
 if (shardIndexRaw < 1 || shardIndexRaw > shardTotal) {
-  throw new Error(`FDE_CLI_TEST_SHARD=${shardIndexRaw} out of range for SHARD_TOTAL=${shardTotal}`);
+  throw new Error(
+    `FROGG_CLI_TEST_SHARD=${shardIndexRaw} out of range for SHARD_TOTAL=${shardTotal}`,
+  );
 }
 const shardIndex = shardIndexRaw - 1;
 
@@ -102,7 +104,7 @@ async function writeJsonSummary({
     JSON.stringify(
       {
         suite: "cli-local",
-        command: "npm run test:local --workspace=@fde/cli",
+        command: "npm run test:local --workspace=@frogg/cli",
         counts: {
           passed,
           failed,
@@ -120,7 +122,7 @@ async function writeJsonSummary({
   );
 }
 
-console.log("🧪 Fde CLI E2E Test Runner\n");
+console.log("🧪 Frogg CLI E2E Test Runner\n");
 console.log("=".repeat(50));
 
 // Discover all test files
@@ -193,7 +195,7 @@ async function runSingleTest(testFile: string): Promise<TestOutcome> {
   const testPath = join(__dirname, testFile);
   const testName = testFile.replace(/\.test\.ts$/, "");
   const startedAt = Date.now();
-  const npmCache = await mkdtemp(join(tmpdir(), "fde-cli-test-npm-cache-"));
+  const npmCache = await mkdtemp(join(tmpdir(), "frogg-cli-test-npm-cache-"));
 
   try {
     return await new Promise<TestOutcome>((resolve) => {
@@ -202,9 +204,9 @@ async function runSingleTest(testFile: string): Promise<TestOutcome> {
           ...process.env,
           PATH: [rootNodeModulesBin, process.env.PATH].filter(Boolean).join(delimiter),
           npm_config_cache: npmCache,
-          FDE_LOCAL_SPEECH_AUTO_DOWNLOAD: testEnvDefaults.FDE_LOCAL_SPEECH_AUTO_DOWNLOAD,
-          FDE_DICTATION_ENABLED: testEnvDefaults.FDE_DICTATION_ENABLED,
-          FDE_VOICE_MODE_ENABLED: testEnvDefaults.FDE_VOICE_MODE_ENABLED,
+          FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD: testEnvDefaults.FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD,
+          FROGG_DICTATION_ENABLED: testEnvDefaults.FROGG_DICTATION_ENABLED,
+          FROGG_VOICE_MODE_ENABLED: testEnvDefaults.FROGG_VOICE_MODE_ENABLED,
         },
         stdio: ["ignore", "pipe", "pipe"],
       });

@@ -1,4 +1,4 @@
-import type { CheckoutPrMergeMethod } from "@fde/protocol/messages";
+import type { CheckoutPrMergeMethod } from "@frogg/protocol/messages";
 import { create } from "zustand";
 import { queryClient as appQueryClient } from "@/data/query-client";
 import { useSessionStore } from "@/stores/session-store";

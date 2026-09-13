@@ -10,8 +10,8 @@
  * both ride the manifest's `cloudHosts` only to canonicalize a cloud SSH alias
  * (e.g. ssh.github.com -> github.com); a self-hosted host is used as-is.
  */
-import { getForgeDefinition } from "@fde/protocol/forge-manifest";
-import { normalizeHost, parseGitRemoteLocation } from "@fde/protocol/git-remote";
+import { getForgeDefinition } from "@frogg/protocol/forge-manifest";
+import { normalizeHost, parseGitRemoteLocation } from "@frogg/protocol/git-remote";
 import { getClientForgeLogicModule } from "@/git/forges";
 
 export interface ForgeBlobUrlInput {

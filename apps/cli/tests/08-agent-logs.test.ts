@@ -29,13 +29,13 @@ console.log("=== Logs Command Tests ===\n");
 
 // Get random port that's definitely not in use (never 9999)
 const port = 10000 + Math.floor(Math.random() * 50000);
-const fdeHome = await mkdtemp(join(tmpdir(), "fde-test-home-"));
+const froggHome = await mkdtemp(join(tmpdir(), "frogg-test-home-"));
 
 try {
   // Test 1: logs --help shows options
   {
     console.log("Test 1: logs --help shows options");
-    const result = await $`npx fde logs --help`.nothrow();
+    const result = await $`npx frogg logs --help`.nothrow();
     assert.strictEqual(result.exitCode, 0, "logs --help should exit 0");
     assert(
       result.stdout.includes("-f") || result.stdout.includes("--follow"),
@@ -50,7 +50,8 @@ try {
   // Test 2: logs requires ID argument
   {
     console.log("Test 2: logs requires ID argument");
-    const result = await $`FDE_HOST=localhost:${port} FDE_HOME=${fdeHome} npx fde logs`.nothrow();
+    const result =
+      await $`FROGG_HOST=localhost:${port} FROGG_HOME=${froggHome} npx frogg logs`.nothrow();
     assert.notStrictEqual(result.exitCode, 0, "should fail without id");
     const output = result.stdout + result.stderr;
     const hasError =
@@ -66,7 +67,7 @@ try {
   {
     console.log("Test 3: logs handles daemon not running");
     const result =
-      await $`FDE_HOST=localhost:${port} FDE_HOME=${fdeHome} npx fde logs abc123`.nothrow();
+      await $`FROGG_HOST=localhost:${port} FROGG_HOME=${froggHome} npx frogg logs abc123`.nothrow();
     // Should fail because daemon not running
     assert.notStrictEqual(result.exitCode, 0, "should fail when daemon not running");
     const output = result.stdout + result.stderr;
@@ -83,7 +84,7 @@ try {
     console.log("Test 4: logs -f (follow) flag is accepted");
     // Use timeout to avoid hanging on follow mode
     const result =
-      await $`timeout 1 bash -c 'FDE_HOST=localhost:${port} FDE_HOME=${fdeHome} npx fde logs -f abc123' || true`.nothrow();
+      await $`timeout 1 bash -c 'FROGG_HOST=localhost:${port} FROGG_HOME=${froggHome} npx frogg logs -f abc123' || true`.nothrow();
     const output = result.stdout + result.stderr;
     assert(!output.includes("unknown option"), "should accept -f flag");
     assert(!output.includes("error: option"), "should not have option parsing error");
@@ -94,7 +95,7 @@ try {
   {
     console.log("Test 5: logs --follow flag is accepted");
     const result =
-      await $`timeout 1 bash -c 'FDE_HOST=localhost:${port} FDE_HOME=${fdeHome} npx fde logs --follow abc123' || true`.nothrow();
+      await $`timeout 1 bash -c 'FROGG_HOST=localhost:${port} FROGG_HOME=${froggHome} npx frogg logs --follow abc123' || true`.nothrow();
     const output = result.stdout + result.stderr;
     assert(!output.includes("unknown option"), "should accept --follow flag");
     assert(!output.includes("error: option"), "should not have option parsing error");
@@ -105,7 +106,7 @@ try {
   {
     console.log("Test 6: logs --tail flag is accepted");
     const result =
-      await $`FDE_HOST=localhost:${port} FDE_HOME=${fdeHome} npx fde logs --tail 50 abc123`.nothrow();
+      await $`FROGG_HOST=localhost:${port} FROGG_HOME=${froggHome} npx frogg logs --tail 50 abc123`.nothrow();
     const output = result.stdout + result.stderr;
     assert(!output.includes("unknown option"), "should accept --tail flag");
     assert(!output.includes("error: option"), "should not have option parsing error");
@@ -116,27 +117,27 @@ try {
   {
     console.log("Test 7: logs with ID and --host flag is accepted");
     const result =
-      await $`FDE_HOST=localhost:${port} FDE_HOME=${fdeHome} npx fde logs abc123 --host localhost:${port}`.nothrow();
+      await $`FROGG_HOST=localhost:${port} FROGG_HOME=${froggHome} npx frogg logs abc123 --host localhost:${port}`.nothrow();
     const output = result.stdout + result.stderr;
     assert(!output.includes("unknown option"), "should accept --host flag");
     assert(!output.includes("error: option"), "should not have option parsing error");
     console.log("✓ logs with ID and --host flag is accepted\n");
   }
 
-  // Test 8: fde --help shows logs command
+  // Test 8: frogg --help shows logs command
   {
-    console.log("Test 8: fde --help shows logs command");
-    const result = await $`npx fde --help`.nothrow();
-    assert.strictEqual(result.exitCode, 0, "fde --help should exit 0");
+    console.log("Test 8: frogg --help shows logs command");
+    const result = await $`npx frogg --help`.nothrow();
+    assert.strictEqual(result.exitCode, 0, "frogg --help should exit 0");
     assert(result.stdout.includes("logs"), "help should mention logs command");
-    console.log("✓ fde --help shows logs command\n");
+    console.log("✓ frogg --help shows logs command\n");
   }
 
   // Test 9: -q (quiet) flag is accepted with logs
   {
     console.log("Test 9: -q (quiet) flag is accepted with logs");
     const result =
-      await $`FDE_HOST=localhost:${port} FDE_HOME=${fdeHome} npx fde -q logs abc123`.nothrow();
+      await $`FROGG_HOST=localhost:${port} FROGG_HOME=${froggHome} npx frogg -q logs abc123`.nothrow();
     const output = result.stdout + result.stderr;
     assert(!output.includes("unknown option"), "should accept -q flag");
     assert(!output.includes("error: option"), "should not have option parsing error");
@@ -144,7 +145,7 @@ try {
   }
 } finally {
   // Clean up temp directory
-  await rm(fdeHome, { recursive: true, force: true });
+  await rm(froggHome, { recursive: true, force: true });
 }
 
 console.log("=== All logs tests passed ===");

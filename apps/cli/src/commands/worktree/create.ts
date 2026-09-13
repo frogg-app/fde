@@ -1,7 +1,7 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import path from "node:path";
 import type { Command } from "commander";
-import type { DaemonClient } from "@fde/client/internal/daemon-client";
+import type { DaemonClient } from "@frogg/client/internal/daemon-client";
 import { connectToDaemon, getDaemonHost } from "../../utils/client.js";
 import type { CommandError, OutputSchema, SingleResult } from "../../output/index.js";
 import { buildCreateWorktreeRequest, type WorktreeCreateOptions } from "./create-input.js";
@@ -46,7 +46,7 @@ export async function runCreateCommand(
   }
 
   try {
-    const response = await client.createFdeWorktree(request);
+    const response = await client.createFroggWorktree(request);
 
     const workspace = response.workspace;
     if (!workspace || response.error) {

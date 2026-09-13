@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import path from "node:path";
 import type { Command } from "commander";
 import type { CommandError, CommandOptions, SingleResult } from "../../output/index.js";
@@ -32,7 +32,7 @@ export async function runCreateCommand(
   const projectPath = resolveProjectPath({
     pathArg,
     cwd: process.cwd(),
-    daemonTarget: options.host ?? process.env.FDE_HOST,
+    daemonTarget: options.host ?? process.env.FROGG_HOST,
   });
   const client = await connectToDaemon({ host: options.host }).catch((error: unknown) => {
     throw buildDaemonConnectionCommandError({ host: options.host, error });

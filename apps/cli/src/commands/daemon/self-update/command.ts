@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { Command, Option } from "commander";
 import chalk from "chalk";
 import { resolveCliVersion } from "../../../version.js";
@@ -90,7 +90,7 @@ async function runApply(options: SelfUpdateCommandOptions): Promise<number> {
   const service = detectServiceManager({
     installDir,
     home: options.home,
-    listen: process.env.FDE_LISTEN?.trim() || null,
+    listen: process.env.FROGG_LISTEN?.trim() || null,
     platform: process.platform,
   });
   const outcome = await applyUpdate(
@@ -163,7 +163,7 @@ export function selfUpdateCommand(): Command {
         "--no-wait",
         "Return after handing off to the supervisor instead of waiting for the outcome",
       )
-      .option("--home <path>", "Fde home directory (default: ~/.fde)")
+      .option("--home <path>", "Frogg home directory (default: ~/.frogg)")
       .option(
         "--install-dir <dir>",
         `Install root (default: ${brand.envPrefix}_INSTALL_DIR or ~/.local/share/${brand.id})`,

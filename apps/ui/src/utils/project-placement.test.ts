@@ -11,12 +11,12 @@ describe("project-placement", () => {
     expect(placement.checkout.isGit).toBe(false);
   });
 
-  it("normalizes fde worktree paths into the parent repo key", () => {
-    const placement = deriveProjectPlacementFromCwd("/Users/test/repo/.fde/worktrees/feature-x");
+  it("normalizes frogg worktree paths into the parent repo key", () => {
+    const placement = deriveProjectPlacementFromCwd("/Users/test/repo/.frogg/worktrees/feature-x");
 
     expect(placement.projectKey).toBe("/Users/test/repo");
     expect(placement.projectName).toBe("repo");
-    expect(placement.checkout.cwd).toBe("/Users/test/repo/.fde/worktrees/feature-x");
+    expect(placement.checkout.cwd).toBe("/Users/test/repo/.frogg/worktrees/feature-x");
   });
 
   it("prefers an existing placement when present", () => {
@@ -29,7 +29,7 @@ describe("project-placement", () => {
         currentBranch: "main",
         remoteUrl: "https://github.com/acme/repo.git",
         worktreeRoot: "/Users/test/repo",
-        isFdeOwnedWorktree: false as const,
+        isFroggOwnedWorktree: false as const,
         mainRepoRoot: null,
       },
     };

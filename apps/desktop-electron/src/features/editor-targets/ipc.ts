@@ -27,8 +27,10 @@ export function registerEditorTargetHandlers(
   const ipc = options.ipc ?? ipcMain;
   const runtime = options.runtime ?? createEditorTargetRuntime();
 
-  ipc.handle("fde:editor:listTargets", () => listAvailableEditorTargets(runtime, options.targets));
-  ipc.handle("fde:editor:openTarget", async (_event, payload: unknown) => {
+  ipc.handle("frogg:editor:listTargets", () =>
+    listAvailableEditorTargets(runtime, options.targets),
+  );
+  ipc.handle("frogg:editor:openTarget", async (_event, payload: unknown) => {
     const input = EditorTargetLaunchInputSchema.parse(payload);
     await openEditorTarget(input, runtime, options.targets);
   });

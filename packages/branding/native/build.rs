@@ -2,8 +2,8 @@
 use std::{env, fs, path::PathBuf, process::Command};
 
 pub fn prepare(root: PathBuf) -> PathBuf {
-    println!("cargo:rerun-if-env-changed=FDE_BRAND_DIR");
-    println!("cargo:rerun-if-env-changed=FDE_EMBED_DAEMON_ARCHIVE");
+    println!("cargo:rerun-if-env-changed=FROGG_BRAND_DIR");
+    println!("cargo:rerun-if-env-changed=FROGG_EMBED_DAEMON_ARCHIVE");
     for input in [
         "package.json",
         "deploy",
@@ -16,7 +16,7 @@ pub fn prepare(root: PathBuf) -> PathBuf {
     ] {
         println!("cargo:rerun-if-changed={}", root.join(input).display());
     }
-    if let Ok(selected) = env::var("FDE_BRAND_DIR") {
+    if let Ok(selected) = env::var("FROGG_BRAND_DIR") {
         let selected = PathBuf::from(selected);
         println!(
             "cargo:rerun-if-changed={}",

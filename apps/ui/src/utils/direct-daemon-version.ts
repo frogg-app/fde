@@ -28,7 +28,7 @@ export async function readDirectDaemonVersion(websocketUrl: string): Promise<str
     ]);
     if (!response || response.status !== 200) return null;
     const identity = parseDaemonIdentity(response.body);
-    return identity && (identity.product === null || identity.product === "fde")
+    return identity && (identity.product === null || identity.product === "frogg")
       ? identity.version
       : null;
   } catch {

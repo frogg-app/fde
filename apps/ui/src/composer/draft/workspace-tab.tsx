@@ -32,9 +32,9 @@ import {
   shouldAllowEmptyDraftText,
   validateDraftSubmission,
 } from "@/composer/draft/workspace-tab-core";
-import type { AgentCapabilityFlags } from "@fde/protocol/agent-types";
-import type { AgentSnapshotPayload } from "@fde/protocol/messages";
-import type { DaemonClient } from "@fde/client/internal/daemon-client";
+import type { AgentCapabilityFlags } from "@frogg/protocol/agent-types";
+import type { AgentSnapshotPayload } from "@frogg/protocol/messages";
+import type { DaemonClient } from "@frogg/client/internal/daemon-client";
 import type { WorkspaceComposerAttachment } from "@/attachments/types";
 import {
   useDraftWorkspaceAttachmentScopeKey,

@@ -1,4 +1,4 @@
-import type { CompanionNotebookEntry } from "@fde/protocol/messages";
+import type { CompanionNotebookEntry } from "@frogg/protocol/messages";
 import { create } from "zustand";
 
 /**

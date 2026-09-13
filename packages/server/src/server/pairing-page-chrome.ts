@@ -1,10 +1,10 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 /**
  * Shared chrome for the daemon's two self-contained HTML pages: the "Claim
- * this FDE daemon" gate and the `/code/<code>` pairing landing page. Inline
+ * this Frogg daemon" gate and the `/code/<code>` pairing landing page. Inline
  * CSS only — these pages load no external assets.
  */
-export const FDE_ACCENT = brand.colors.dark.accent;
+export const FROGG_ACCENT = brand.colors.dark.accent;
 
 /** Where `GET /` sends a visitor who arrives without a pairing code. */
 export const DEFAULT_PAIR_PAGE_ROOT_REDIRECT = brand.links.website ?? "";

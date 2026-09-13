@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { decideBrowserWindowOpenRequest, PendingBrowserWindowOpenRequests } from ".";
 
 describe("browser webview window-open requests", () => {
-  it("routes foreground tabs to a Fde workspace tab", () => {
+  it("routes foreground tabs to a Frogg workspace tab", () => {
     const result = decideBrowserWindowOpenRequest({
       url: "https://example.com/target",
       disposition: "foreground-tab",
@@ -43,7 +43,7 @@ describe("browser webview window-open requests", () => {
   });
 
   it.each(["noopener", "noreferrer"])(
-    "routes a named target with %s to a Fde workspace tab",
+    "routes a named target with %s to a Frogg workspace tab",
     (features) => {
       const result = decideBrowserWindowOpenRequest({
         url: "https://example.com/target",
@@ -60,7 +60,7 @@ describe("browser webview window-open requests", () => {
     },
   );
 
-  it("routes Shift-clicked links to a Fde workspace tab", () => {
+  it("routes Shift-clicked links to a Frogg workspace tab", () => {
     const result = decideBrowserWindowOpenRequest({
       url: "https://example.com/target",
       disposition: "new-window",
@@ -76,7 +76,7 @@ describe("browser webview window-open requests", () => {
   });
 
   it.each(["noopener", "noreferrer", "attributionsrc=https://example.com/register", "popup=false"])(
-    "routes non-popup feature %s to a Fde workspace tab",
+    "routes non-popup feature %s to a Frogg workspace tab",
     (features) => {
       const result = decideBrowserWindowOpenRequest({
         url: "https://example.com/target",
@@ -129,7 +129,7 @@ describe("browser webview window-open requests", () => {
     expect(result).toEqual({ kind: "popup" });
   });
 
-  it("routes an all-enabled browser-chrome request to a Fde workspace tab", () => {
+  it("routes an all-enabled browser-chrome request to a Frogg workspace tab", () => {
     const result = decideBrowserWindowOpenRequest({
       url: "https://example.com/target",
       disposition: "new-window",

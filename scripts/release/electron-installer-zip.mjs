@@ -3,7 +3,7 @@ import path from "node:path";
 import { createZip } from "./package-windows-zips.mjs";
 
 // Browsers and SmartScreen flag directly downloaded .exe files, so people get the
-// NSIS installer inside `FDE-<v>-win-<arch>-installer.zip`. The bare installer stays
+// NSIS installer inside `Frogg-<v>-win-<arch>-installer.zip`. The bare installer stays
 // beside it because electron-latest.yml points electron-updater at that exact file.
 // Do not name this `-setup.zip`: Tauri 0.5.x clients update from that exact asset
 // name and would run this installer as a same-path replacement.

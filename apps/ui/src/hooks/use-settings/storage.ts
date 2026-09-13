@@ -1,5 +1,5 @@
-import { isSyntaxThemeId, type SyntaxThemeId } from "@fde/highlight";
-import type { ActiveTurnBehavior } from "@fde/protocol/messages";
+import { isSyntaxThemeId, type SyntaxThemeId } from "@frogg/highlight";
+import type { ActiveTurnBehavior } from "@frogg/protocol/messages";
 import type { QueryClient } from "@tanstack/react-query";
 import type { DesktopSettings } from "@/desktop/settings/desktop-settings";
 import type { AppLanguage } from "@/i18n/locales";

@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const TCP_PORT_RANGE_PATTERN = /^(\d{1,5})-(\d{1,5})$/;
 
-export const FdeServicePortAllocationSchema = z
+export const FroggServicePortAllocationSchema = z
   .object({
     range: z.string().trim().regex(TCP_PORT_RANGE_PATTERN).optional(),
     portScript: z.string().trim().min(1).optional(),
@@ -33,9 +33,9 @@ export function normalizeLifecycleCommands(commands: unknown): string[] {
   });
 }
 
-export const FdeLifecycleCommandRawSchema = z.union([z.string(), z.array(z.string())]);
+export const FroggLifecycleCommandRawSchema = z.union([z.string(), z.array(z.string())]);
 
-export const FdeScriptEntryRawSchema = z
+export const FroggScriptEntryRawSchema = z
   .object({
     type: z.unknown().optional(),
     command: z.unknown().optional(),
@@ -43,55 +43,55 @@ export const FdeScriptEntryRawSchema = z
   })
   .passthrough();
 
-export const FdeWorktreeConfigRawSchema = z
+export const FroggWorktreeConfigRawSchema = z
   .object({
-    setup: FdeLifecycleCommandRawSchema.optional(),
-    teardown: FdeLifecycleCommandRawSchema.optional(),
+    setup: FroggLifecycleCommandRawSchema.optional(),
+    teardown: FroggLifecycleCommandRawSchema.optional(),
     terminals: z.unknown().optional(),
-    servicePorts: FdeServicePortAllocationSchema.optional(),
+    servicePorts: FroggServicePortAllocationSchema.optional(),
   })
   .passthrough();
 
-export const FdeMetadataGenerationEntrySchema = z
+export const FroggMetadataGenerationEntrySchema = z
   .object({
     instructions: z.string().optional(),
   })
   .passthrough()
   .catch({});
 
-export const FdeMetadataGenerationSchema = z
+export const FroggMetadataGenerationSchema = z
   .object({
-    title: FdeMetadataGenerationEntrySchema.optional(),
-    branchName: FdeMetadataGenerationEntrySchema.optional(),
-    commitMessage: FdeMetadataGenerationEntrySchema.optional(),
-    pullRequest: FdeMetadataGenerationEntrySchema.optional(),
+    title: FroggMetadataGenerationEntrySchema.optional(),
+    branchName: FroggMetadataGenerationEntrySchema.optional(),
+    commitMessage: FroggMetadataGenerationEntrySchema.optional(),
+    pullRequest: FroggMetadataGenerationEntrySchema.optional(),
   })
   // COMPAT(projectMetadataAgentTitle): `agentTitle` project metadata prompts were removed
-  // in v0.1.96; keep legacy fde.json parseable until 2026-12-16.
+  // in v0.1.96; keep legacy frogg.json parseable until 2026-12-16.
   .passthrough()
   .catch({});
 
-export const FdeConfigRawSchema = z
+export const FroggConfigRawSchema = z
   .object({
-    worktree: FdeWorktreeConfigRawSchema.optional(),
-    scripts: z.record(z.string(), FdeScriptEntryRawSchema).optional(),
-    metadataGeneration: FdeMetadataGenerationSchema.optional(),
+    worktree: FroggWorktreeConfigRawSchema.optional(),
+    scripts: z.record(z.string(), FroggScriptEntryRawSchema).optional(),
+    metadataGeneration: FroggMetadataGenerationSchema.optional(),
   })
   .passthrough();
 
-export const WorktreeConfigSchema = FdeWorktreeConfigRawSchema.extend({
+export const WorktreeConfigSchema = FroggWorktreeConfigRawSchema.extend({
   setup: z.unknown().optional().transform(normalizeLifecycleCommands),
   teardown: z.unknown().optional().transform(normalizeLifecycleCommands),
 })
   .passthrough()
   .catch({ setup: [], teardown: [] });
 
-export const ScriptEntrySchema = FdeScriptEntryRawSchema.catch({});
+export const ScriptEntrySchema = FroggScriptEntryRawSchema.catch({});
 
-export const FdeConfigSchema = FdeConfigRawSchema.extend({
+export const FroggConfigSchema = FroggConfigRawSchema.extend({
   worktree: WorktreeConfigSchema.optional(),
   scripts: z.record(z.string(), ScriptEntrySchema).optional().catch({}),
-  metadataGeneration: FdeMetadataGenerationSchema.optional(),
+  metadataGeneration: FroggMetadataGenerationSchema.optional(),
 })
   .passthrough()
   .catch({});
@@ -101,7 +101,7 @@ export const FdeConfigSchema = FdeConfigRawSchema.extend({
 // mtime, so a same-size edit would slip past the stale-write guard. The
 // content hash is the authoritative part of the token; mtime and size remain
 // for display and for tokens minted by older clients.
-export const FdeConfigRevisionSchema = z.object({
+export const FroggConfigRevisionSchema = z.object({
   mtimeMs: z.number(),
   size: z.number(),
   contentHash: z.string().optional(),
@@ -112,16 +112,16 @@ export const ProjectConfigRpcErrorSchema = z.discriminatedUnion("code", [
   z.object({ code: z.literal("invalid_project_config") }),
   z.object({
     code: z.literal("stale_project_config"),
-    currentRevision: FdeConfigRevisionSchema.nullable(),
+    currentRevision: FroggConfigRevisionSchema.nullable(),
   }),
   z.object({ code: z.literal("write_failed") }),
 ]);
 
-export type FdeScriptEntryRaw = z.infer<typeof FdeScriptEntryRawSchema>;
-export type FdeMetadataGenerationEntry = z.infer<typeof FdeMetadataGenerationEntrySchema>;
-export type FdeMetadataGeneration = z.infer<typeof FdeMetadataGenerationSchema>;
-export type FdeServicePortAllocation = z.infer<typeof FdeServicePortAllocationSchema>;
-export type FdeConfigRaw = z.infer<typeof FdeConfigRawSchema>;
-export type FdeConfig = z.infer<typeof FdeConfigSchema>;
-export type FdeConfigRevision = z.infer<typeof FdeConfigRevisionSchema>;
+export type FroggScriptEntryRaw = z.infer<typeof FroggScriptEntryRawSchema>;
+export type FroggMetadataGenerationEntry = z.infer<typeof FroggMetadataGenerationEntrySchema>;
+export type FroggMetadataGeneration = z.infer<typeof FroggMetadataGenerationSchema>;
+export type FroggServicePortAllocation = z.infer<typeof FroggServicePortAllocationSchema>;
+export type FroggConfigRaw = z.infer<typeof FroggConfigRawSchema>;
+export type FroggConfig = z.infer<typeof FroggConfigSchema>;
+export type FroggConfigRevision = z.infer<typeof FroggConfigRevisionSchema>;
 export type ProjectConfigRpcError = z.infer<typeof ProjectConfigRpcErrorSchema>;

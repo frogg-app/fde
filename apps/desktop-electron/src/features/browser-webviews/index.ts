@@ -1,6 +1,6 @@
 import { webContents as allWebContents, type WebContents } from "electron";
-import { FDE_BROWSER_PROFILE_PARTITION } from "../browser-profile.js";
-import { FdeBrowserWebviewRegistry } from "./registry.js";
+import { FROGG_BROWSER_PROFILE_PARTITION } from "../browser-profile.js";
+import { FroggBrowserWebviewRegistry } from "./registry.js";
 import {
   BROWSER_NEW_TAB_REQUEST_EVENT,
   decideBrowserWindowOpenRequest,
@@ -14,7 +14,7 @@ export {
   PendingBrowserWindowOpenRequests,
 };
 
-const browserRegistry = new FdeBrowserWebviewRegistry();
+const browserRegistry = new FroggBrowserWebviewRegistry();
 
 interface BrowserWebContentsIdentity {
   readonly id: number;
@@ -40,19 +40,21 @@ interface RegisterAttachedBrowserInput extends AttachedBrowserRegistration {
   findWebContents(webContentsId: number): RegisteredBrowserWebContents | null;
 }
 
-export function isFdeBrowserWebviewAttach(input: { src?: string; partition?: string }): boolean {
-  return isAllowedBrowserWebviewUrl(input.src) && input.partition === FDE_BROWSER_PROFILE_PARTITION;
+export function isFroggBrowserWebviewAttach(input: { src?: string; partition?: string }): boolean {
+  return (
+    isAllowedBrowserWebviewUrl(input.src) && input.partition === FROGG_BROWSER_PROFILE_PARTITION
+  );
 }
 
-export function listRegisteredFdeBrowserIds(): string[] {
+export function listRegisteredFroggBrowserIds(): string[] {
   return browserRegistry.listBrowserIds();
 }
 
-export function getFdeBrowserWebviewRegistry(): FdeBrowserWebviewRegistry {
+export function getFroggBrowserWebviewRegistry(): FroggBrowserWebviewRegistry {
   return browserRegistry;
 }
 
-export function prepareFdeBrowserWebContents(contents: RegisteredBrowserWebContents): void {
+export function prepareFroggBrowserWebContents(contents: RegisteredBrowserWebContents): void {
   const webContentsId = contents.id;
   contents.setBackgroundThrottling(false);
   contents.once("destroyed", () => {
@@ -60,7 +62,7 @@ export function prepareFdeBrowserWebContents(contents: RegisteredBrowserWebConte
   });
 }
 
-export function registerAttachedFdeBrowser(input: RegisterAttachedBrowserInput): boolean {
+export function registerAttachedFroggBrowser(input: RegisterAttachedBrowserInput): boolean {
   const guest = input.findWebContents(input.webContentsId);
   if (
     !guest ||
@@ -83,7 +85,7 @@ export function registerAttachedFdeBrowser(input: RegisterAttachedBrowserInput):
   return true;
 }
 
-export function getFdeBrowserIdForWebContents(
+export function getFroggBrowserIdForWebContents(
   contents: BrowserWebContentsIdentity | null,
 ): string | null {
   if (!contents || contents.isDestroyed()) {
@@ -92,27 +94,27 @@ export function getFdeBrowserIdForWebContents(
   return browserRegistry.getBrowserIdForWebContents(contents.id);
 }
 
-export function unregisterFdeBrowser(browserId: string): void {
+export function unregisterFroggBrowser(browserId: string): void {
   browserRegistry.unregisterBrowser(browserId);
 }
 
-export function unregisterFdeBrowserFromHost(hostWebContentsId: number, browserId: string): void {
+export function unregisterFroggBrowserFromHost(hostWebContentsId: number, browserId: string): void {
   browserRegistry.unregisterBrowserFromHost(hostWebContentsId, browserId);
 }
 
-export function unregisterFdeBrowserHost(hostWebContentsId: number): void {
+export function unregisterFroggBrowserHost(hostWebContentsId: number): void {
   browserRegistry.unregisterHostWebContents(hostWebContentsId);
 }
 
-export function getFdeBrowserWorkspaceId(browserId: string): string | null {
+export function getFroggBrowserWorkspaceId(browserId: string): string | null {
   return browserRegistry.getWorkspaceId(browserId);
 }
 
-export function listRegisteredFdeBrowserIdsForWorkspace(workspaceId: string): string[] {
+export function listRegisteredFroggBrowserIdsForWorkspace(workspaceId: string): string[] {
   return browserRegistry.listBrowserIdsForWorkspace(workspaceId);
 }
 
-export function setWorkspaceActiveFdeBrowserId(input: {
+export function setWorkspaceActiveFroggBrowserId(input: {
   hostWebContentsId: number;
   workspaceId: string;
   browserId: string | null;
@@ -120,18 +122,18 @@ export function setWorkspaceActiveFdeBrowserId(input: {
   browserRegistry.setWorkspaceActiveBrowser(input);
 }
 
-export function getWorkspaceActiveFdeBrowserId(workspaceId: string): string | null {
+export function getWorkspaceActiveFroggBrowserId(workspaceId: string): string | null {
   return browserRegistry.getMostRecentActiveBrowserIdForWorkspace(workspaceId);
 }
 
-export function getWorkspaceActiveFdeBrowserIdForHostWindow(
+export function getWorkspaceActiveFroggBrowserIdForHostWindow(
   workspaceId: string,
   hostWebContentsId: number,
 ): string | null {
   return browserRegistry.getActiveBrowserIdForWorkspaceInHostWindow(hostWebContentsId, workspaceId);
 }
 
-export function getFdeBrowserWebContentsForHostWindow(
+export function getFroggBrowserWebContentsForHostWindow(
   browserId: string,
   hostWebContentsId: number,
 ): WebContents | null {
@@ -150,7 +152,7 @@ export function getFdeBrowserWebContentsForHostWindow(
   return null;
 }
 
-export function getActiveFdeBrowserWebContentsForHostWindow(
+export function getActiveFroggBrowserWebContentsForHostWindow(
   hostWebContentsId: number,
 ): WebContents | null {
   const browserId = browserRegistry.getActiveBrowserIdForHostWindow(hostWebContentsId);

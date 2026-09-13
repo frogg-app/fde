@@ -73,10 +73,10 @@ jobs:
 
       - uses: ./.github/actions/select-brand
         with:
-          directory: ${{ vars.FDE_BRAND_DIR }}
-          repository: ${{ vars.FDE_BRAND_REPOSITORY }}
-          revision: ${{ vars.FDE_BRAND_REVISION }}
-          subdirectory: ${{ vars.FDE_BRAND_SUBDIR }}
+          directory: ${{ vars.FROGG_BRAND_DIR }}
+          repository: ${{ vars.FROGG_BRAND_REPOSITORY }}
+          revision: ${{ vars.FROGG_BRAND_REVISION }}
+          subdirectory: ${{ vars.FROGG_BRAND_SUBDIR }}
           token: ${{ secrets.BRANDING_READ_TOKEN }}
 
       - uses: ./.github/actions/setup-node-deps
@@ -92,7 +92,7 @@ jobs:
           fi
           # Only a semver prerelease suffix (0.2.0-beta.1) is a prerelease. A
           # 0.x version is not: marking it one flagged every release the project
-          # has ever made, and `fde daemon self-update` on the stable channel
+          # has ever made, and `frogg daemon self-update` on the stable channel
           # requires prerelease !== true, so it could never find an update at
           # all. The CLI checks the suffix itself, so this flag need not.
           prerelease=false
@@ -111,12 +111,12 @@ jobs:
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-          FDE_ANDROID_KEYSTORE_BASE64: ${{ secrets.FDE_ANDROID_KEYSTORE_BASE64 }}
-          FDE_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.FDE_ANDROID_KEYSTORE_PASSWORD }}
+          FROGG_ANDROID_KEYSTORE_BASE64: ${{ secrets.FROGG_ANDROID_KEYSTORE_BASE64 }}
+          FROGG_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.FROGG_ANDROID_KEYSTORE_PASSWORD }}
         run: |
           docker=false; android_signing=false
           [ -n "$DOCKERHUB_USERNAME" ] && [ -n "$DOCKERHUB_TOKEN" ] && docker=true
-          [ -n "$FDE_ANDROID_KEYSTORE_BASE64" ] && [ -n "$FDE_ANDROID_KEYSTORE_PASSWORD" ] && android_signing=true
+          [ -n "$FROGG_ANDROID_KEYSTORE_BASE64" ] && [ -n "$FROGG_ANDROID_KEYSTORE_PASSWORD" ] && android_signing=true
           echo "docker=$docker" >> "$GITHUB_OUTPUT"
           echo "android_signing=$android_signing" >> "$GITHUB_OUTPUT"
           echo "docker push: $docker, android release keystore: $android_signing"
@@ -181,7 +181,7 @@ jobs:
           fi
           # The run id marker lets a re-run of this workflow run overwrite its own
           # assets (--clobber) while a fresh run against an existing release cannot.
-          printf '\n\n<!-- fde-release-run-id: %s -->\n' "$GITHUB_RUN_ID" >> notes.md
+          printf '\n\n<!-- frogg-release-run-id: %s -->\n' "$GITHUB_RUN_ID" >> notes.md
           cat notes.md
 
       - name: Create GitHub release if missing
@@ -192,7 +192,7 @@ jobs:
           PRERELEASE: ${{ steps.version.outputs.prerelease }}
         run: |
           if gh release view "$RELEASE_TAG" --json body --jq .body > existing-body.txt 2>/dev/null; then
-            if grep -q "fde-release-run-id: $GITHUB_RUN_ID" existing-body.txt; then
+            if grep -q "frogg-release-run-id: $GITHUB_RUN_ID" existing-body.txt; then
               echo "Release $RELEASE_TAG was created by this run; re-uploads may overwrite."
               echo "clobber=true" >> "$GITHUB_OUTPUT"
             else
@@ -249,10 +249,10 @@ jobs:
 
       - uses: ./.github/actions/select-brand
         with:
-          directory: ${{ vars.FDE_BRAND_DIR }}
-          repository: ${{ vars.FDE_BRAND_REPOSITORY }}
-          revision: ${{ vars.FDE_BRAND_REVISION }}
-          subdirectory: ${{ vars.FDE_BRAND_SUBDIR }}
+          directory: ${{ vars.FROGG_BRAND_DIR }}
+          repository: ${{ vars.FROGG_BRAND_REPOSITORY }}
+          revision: ${{ vars.FROGG_BRAND_REVISION }}
+          subdirectory: ${{ vars.FROGG_BRAND_SUBDIR }}
           token: ${{ secrets.BRANDING_READ_TOKEN }}
 
       - uses: actions/setup-node@v7
@@ -293,13 +293,13 @@ jobs:
           ref: ${{ env.RELEASE_TAG }}
       - uses: ./.github/actions/select-brand
         with:
-          directory: ${{ vars.FDE_BRAND_DIR }}
-          repository: ${{ vars.FDE_BRAND_REPOSITORY }}
-          revision: ${{ vars.FDE_BRAND_REVISION }}
-          subdirectory: ${{ vars.FDE_BRAND_SUBDIR }}
+          directory: ${{ vars.FROGG_BRAND_DIR }}
+          repository: ${{ vars.FROGG_BRAND_REPOSITORY }}
+          revision: ${{ vars.FROGG_BRAND_REVISION }}
+          subdirectory: ${{ vars.FROGG_BRAND_SUBDIR }}
           token: ${{ secrets.BRANDING_READ_TOKEN }}
       - uses: ./.github/actions/setup-node-deps
-      - run: npm run install:electron --workspace=@fde/desktop-electron
+      - run: npm run install:electron --workspace=@frogg/desktop-electron
       - name: Build app-only Electron bundles
         run: npm run build:desktop -- --target ${{ matrix.target }}
       - name: Collect release assets
@@ -309,11 +309,11 @@ jobs:
       - name: Smoke packaged Linux startup and relaunch
         if: matrix.platform == 'linux'
         env:
-          FDE_ELECTRON_SMOKE_NO_SANDBOX: "1"
+          FROGG_ELECTRON_SMOKE_NO_SANDBOX: "1"
         run: |
           binary=$(node -p 'require("./.generated/branding/brand.json").id')
-          FDE_ELECTRON_SMOKE_EXECUTABLE="$PWD/apps/desktop-electron/release/linux-unpacked/$binary" \
-            xvfb-run -a npm run test:smoke --workspace=@fde/desktop-electron
+          FROGG_ELECTRON_SMOKE_EXECUTABLE="$PWD/apps/desktop-electron/release/linux-unpacked/$binary" \
+            xvfb-run -a npm run test:smoke --workspace=@frogg/desktop-electron
       - name: Upload to GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -349,10 +349,10 @@ jobs:
 
       - uses: ./.github/actions/select-brand
         with:
-          directory: ${{ vars.FDE_BRAND_DIR }}
-          repository: ${{ vars.FDE_BRAND_REPOSITORY }}
-          revision: ${{ vars.FDE_BRAND_REVISION }}
-          subdirectory: ${{ vars.FDE_BRAND_SUBDIR }}
+          directory: ${{ vars.FROGG_BRAND_DIR }}
+          repository: ${{ vars.FROGG_BRAND_REPOSITORY }}
+          revision: ${{ vars.FROGG_BRAND_REVISION }}
+          subdirectory: ${{ vars.FROGG_BRAND_SUBDIR }}
           token: ${{ secrets.BRANDING_READ_TOKEN }}
 
       - uses: ./.github/actions/setup-node-deps
@@ -404,10 +404,10 @@ jobs:
 
       - uses: ./.github/actions/select-brand
         with:
-          directory: ${{ vars.FDE_BRAND_DIR }}
-          repository: ${{ vars.FDE_BRAND_REPOSITORY }}
-          revision: ${{ vars.FDE_BRAND_REVISION }}
-          subdirectory: ${{ vars.FDE_BRAND_SUBDIR }}
+          directory: ${{ vars.FROGG_BRAND_DIR }}
+          repository: ${{ vars.FROGG_BRAND_REPOSITORY }}
+          revision: ${{ vars.FROGG_BRAND_REVISION }}
+          subdirectory: ${{ vars.FROGG_BRAND_SUBDIR }}
           token: ${{ secrets.BRANDING_READ_TOKEN }}
 
       # The bundle script lands with the install-script work; until it is on the
@@ -483,7 +483,7 @@ jobs:
       - name: Warn when the release keystore is missing
         if: needs.meta.outputs.android_signing != 'true'
         run: |
-          echo "::warning::No Android release keystore for $RELEASE_TAG; the APK is signed with the publicly known Expo/React Native debug key and is published as -unsigned. Set FDE_ANDROID_KEYSTORE_BASE64, FDE_ANDROID_KEYSTORE_PASSWORD, FDE_ANDROID_KEY_ALIAS and FDE_ANDROID_KEY_PASSWORD to sign it, and see https://frogg.app/docs/contributing/release-process/ before doing so: existing debug-signed installs cannot update to a release-signed APK."
+          echo "::warning::No Android release keystore for $RELEASE_TAG; the APK is signed with the publicly known Expo/React Native debug key and is published as -unsigned. Set FROGG_ANDROID_KEYSTORE_BASE64, FROGG_ANDROID_KEYSTORE_PASSWORD, FROGG_ANDROID_KEY_ALIAS and FROGG_ANDROID_KEY_PASSWORD to sign it, and see https://frogg.app/docs/contributing/release-process/ before doing so: existing debug-signed installs cannot update to a release-signed APK."
 
       - uses: actions/checkout@v7
         with:
@@ -491,10 +491,10 @@ jobs:
 
       - uses: ./.github/actions/select-brand
         with:
-          directory: ${{ vars.FDE_BRAND_DIR }}
-          repository: ${{ vars.FDE_BRAND_REPOSITORY }}
-          revision: ${{ vars.FDE_BRAND_REVISION }}
-          subdirectory: ${{ vars.FDE_BRAND_SUBDIR }}
+          directory: ${{ vars.FROGG_BRAND_DIR }}
+          repository: ${{ vars.FROGG_BRAND_REPOSITORY }}
+          revision: ${{ vars.FROGG_BRAND_REVISION }}
+          subdirectory: ${{ vars.FROGG_BRAND_SUBDIR }}
           token: ${{ secrets.BRANDING_READ_TOKEN }}
       - name: Free disk space (Android SDK + NDK + node_modules need it)
         uses: jlumbroso/free-disk-space@v1.3.1
@@ -537,10 +537,10 @@ jobs:
       - name: Prepare release keystore
         if: needs.meta.outputs.android_signing == 'true'
         env:
-          FDE_ANDROID_KEYSTORE_BASE64: ${{ secrets.FDE_ANDROID_KEYSTORE_BASE64 }}
+          FROGG_ANDROID_KEYSTORE_BASE64: ${{ secrets.FROGG_ANDROID_KEYSTORE_BASE64 }}
         run: |
-          echo "$FDE_ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/fde-release.keystore"
-          echo "FDE_ANDROID_KEYSTORE=$RUNNER_TEMP/fde-release.keystore" >> "$GITHUB_ENV"
+          echo "$FROGG_ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/frogg-release.keystore"
+          echo "FROGG_ANDROID_KEYSTORE=$RUNNER_TEMP/frogg-release.keystore" >> "$GITHUB_ENV"
 
       # `--serial` (one worker, Gradle heap capped well under the 4 GB
       # expo-gradle-jvmargs writes into gradle.properties). With `--workers 2`
@@ -548,9 +548,9 @@ jobs:
       # exit": the runner OOM-killed the native aapt2 process mid-build.
       - name: Build release APK
         env:
-          FDE_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.FDE_ANDROID_KEYSTORE_PASSWORD }}
-          FDE_ANDROID_KEY_ALIAS: ${{ secrets.FDE_ANDROID_KEY_ALIAS || 'fde' }}
-          FDE_ANDROID_KEY_PASSWORD: ${{ secrets.FDE_ANDROID_KEY_PASSWORD }}
+          FROGG_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.FROGG_ANDROID_KEYSTORE_PASSWORD }}
+          FROGG_ANDROID_KEY_ALIAS: ${{ secrets.FROGG_ANDROID_KEY_ALIAS || 'frogg' }}
+          FROGG_ANDROID_KEY_PASSWORD: ${{ secrets.FROGG_ANDROID_KEY_PASSWORD }}
         run: >-
           node scripts/release/build-android-apk.mjs
           --abi ${{ matrix.abi }}
@@ -626,10 +626,10 @@ jobs:
 
       - uses: ./.github/actions/select-brand
         with:
-          directory: ${{ vars.FDE_BRAND_DIR }}
-          repository: ${{ vars.FDE_BRAND_REPOSITORY }}
-          revision: ${{ vars.FDE_BRAND_REVISION }}
-          subdirectory: ${{ vars.FDE_BRAND_SUBDIR }}
+          directory: ${{ vars.FROGG_BRAND_DIR }}
+          repository: ${{ vars.FROGG_BRAND_REPOSITORY }}
+          revision: ${{ vars.FROGG_BRAND_REVISION }}
+          subdirectory: ${{ vars.FROGG_BRAND_SUBDIR }}
           token: ${{ secrets.BRANDING_READ_TOKEN }}
 
       - uses: ./.github/actions/setup-node-deps
@@ -677,9 +677,9 @@ jobs:
           context: .
           file: deploy/docker/base/Dockerfile
           build-args: |
-            FDE_BRAND_DIR=${{ env.BRAND_BUILD_INPUT }}
-            FDE_SOURCE_REVISION=${{ github.sha }}
-            FDE_VERSION=${{ env.VERSION }}
+            FROGG_BRAND_DIR=${{ env.BRAND_BUILD_INPUT }}
+            FROGG_SOURCE_REVISION=${{ github.sha }}
+            FROGG_VERSION=${{ env.VERSION }}
           platforms: linux/amd64
           push: true
           tags: ${{ steps.tags.outputs.tags }}

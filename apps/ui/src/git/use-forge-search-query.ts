@@ -7,7 +7,7 @@ import {
   ForgeSearchKind,
   type ForgeSearchResponse,
   type GitHubSearchResponse,
-} from "@fde/protocol/messages";
+} from "@frogg/protocol/messages";
 import { i18n } from "@/i18n/i18next";
 import { useFetchQuery } from "@/data/query";
 import { parseForgeAuthState } from "@/git/forge";

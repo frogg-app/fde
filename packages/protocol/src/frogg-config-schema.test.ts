@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { FdeConfigRawSchema, FdeConfigSchema } from "@fde/protocol/fde-config-schema";
+import { FroggConfigRawSchema, FroggConfigSchema } from "@frogg/protocol/frogg-config-schema";
 
-describe("fde config schema", () => {
+describe("frogg config schema", () => {
   it("parses an empty config without metadata generation", () => {
-    const parsed = FdeConfigSchema.parse({});
+    const parsed = FroggConfigSchema.parse({});
 
     expect(parsed).toEqual({});
     expect(parsed.metadataGeneration).toBeUndefined();
@@ -24,7 +24,7 @@ describe("fde config schema", () => {
       },
     };
 
-    expect(FdeConfigSchema.parse(config)).toEqual({
+    expect(FroggConfigSchema.parse(config)).toEqual({
       worktree: {
         setup: ["npm install"],
         teardown: ["npm run clean"],
@@ -35,7 +35,7 @@ describe("fde config schema", () => {
 
   it("parses service port allocation", () => {
     expect(
-      FdeConfigSchema.parse({
+      FroggConfigSchema.parse({
         worktree: {
           servicePorts: { range: "3000-4000", portScript: "/usr/bin/portmake" },
         },
@@ -51,13 +51,13 @@ describe("fde config schema", () => {
 
   it("rejects invalid service port ranges", () => {
     expect(() =>
-      FdeConfigRawSchema.parse({ worktree: { servicePorts: { range: "4000-3000" } } }),
+      FroggConfigRawSchema.parse({ worktree: { servicePorts: { range: "4000-3000" } } }),
     ).toThrow("Expected an inclusive TCP port range");
   });
 
   it("normalizes partial worktree lifecycle config without dropping present commands", () => {
     expect(
-      FdeConfigSchema.parse({
+      FroggConfigSchema.parse({
         worktree: {
           setup: 'echo "setup ran" > setup.log',
         },
@@ -70,7 +70,7 @@ describe("fde config schema", () => {
     });
 
     expect(
-      FdeConfigSchema.parse({
+      FroggConfigSchema.parse({
         worktree: {
           teardown: ["npm run clean"],
         },
@@ -85,7 +85,7 @@ describe("fde config schema", () => {
 
   it("parses all metadata generation instruction entries", () => {
     expect(
-      FdeConfigSchema.parse({
+      FroggConfigSchema.parse({
         metadataGeneration: {
           title: { instructions: "Keep titles to a few words." },
           branchName: { instructions: "Prefix branches with feat/." },
@@ -104,7 +104,7 @@ describe("fde config schema", () => {
   });
 
   it("parses partial metadata generation instructions with missing entries undefined", () => {
-    const parsed = FdeConfigSchema.parse({
+    const parsed = FroggConfigSchema.parse({
       metadataGeneration: {
         branchName: { instructions: "Keep it short." },
       },
@@ -119,7 +119,7 @@ describe("fde config schema", () => {
 
   it("preserves legacy agentTitle metadata instructions as passthrough", () => {
     expect(
-      FdeConfigSchema.parse({
+      FroggConfigSchema.parse({
         metadataGeneration: {
           agentTitle: { instructions: "Use concise titles." },
         },
@@ -133,7 +133,7 @@ describe("fde config schema", () => {
 
   it("passes through unknown metadata generation fields", () => {
     expect(
-      FdeConfigSchema.parse({
+      FroggConfigSchema.parse({
         metadataGeneration: {
           futureField: 42,
         },
@@ -147,7 +147,7 @@ describe("fde config schema", () => {
 
   it("passes through unknown metadata generator entry fields", () => {
     expect(
-      FdeConfigSchema.parse({
+      FroggConfigSchema.parse({
         metadataGeneration: {
           branchName: {
             instructions: "Use concise titles.",
@@ -167,7 +167,7 @@ describe("fde config schema", () => {
 
   it("falls back to an empty metadata generator entry when instructions has an invalid type", () => {
     expect(
-      FdeConfigSchema.parse({
+      FroggConfigSchema.parse({
         metadataGeneration: {
           branchName: { instructions: 42 },
         },
@@ -197,12 +197,12 @@ describe("fde config schema", () => {
       },
     };
 
-    expect(FdeConfigRawSchema.parse(config)).toEqual(config);
+    expect(FroggConfigRawSchema.parse(config)).toEqual(config);
   });
 
   it("raw schema falls back to an empty metadata generator entry when instructions has an invalid type", () => {
     expect(
-      FdeConfigRawSchema.parse({
+      FroggConfigRawSchema.parse({
         metadataGeneration: {
           branchName: { instructions: 42 },
         },

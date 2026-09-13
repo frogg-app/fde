@@ -1,5 +1,9 @@
 import { useRef } from "react";
-import type { AgentCapabilityFlags, AgentFeature, AgentProvider } from "@fde/protocol/agent-types";
+import type {
+  AgentCapabilityFlags,
+  AgentFeature,
+  AgentProvider,
+} from "@frogg/protocol/agent-types";
 import type { ViewedTimelineStatus } from "@/timeline/viewed-timeline-sync";
 
 export interface AgentScreenAgent {

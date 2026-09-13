@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { createTestFdeDaemon } from "./fde-daemon.js";
+import { createTestFroggDaemon } from "./frogg-daemon.js";
 
 async function main(): Promise<void> {
   const metroPort = process.env.E2E_METRO_PORT;
@@ -8,14 +8,14 @@ async function main(): Promise<void> {
     throw new Error("E2E_METRO_PORT is not set");
   }
 
-  const daemon = await createTestFdeDaemon({
+  const daemon = await createTestFroggDaemon({
     corsAllowedOrigins: [`http://localhost:${metroPort}`],
     daemonVersion: "0.0.0",
     desktopManaged: process.env.E2E_DESKTOP_MANAGED === "1",
     daemonStatusRpcCapability: process.env.E2E_DAEMON_STATUS_RPC_CAPABILITY !== "0",
     relayConfigCapability: process.env.E2E_RELAY_CONFIG_CAPABILITY !== "0",
   });
-  const serverId = (await readFile(path.join(daemon.fdeHome, "server-id"), "utf8")).trim();
+  const serverId = (await readFile(path.join(daemon.froggHome, "server-id"), "utf8")).trim();
 
   process.send?.({
     type: "ready",

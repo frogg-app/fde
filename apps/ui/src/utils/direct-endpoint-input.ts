@@ -16,7 +16,7 @@ import {
  *   https://host[:port]        → TLS WebSocket (port defaults to 443)
  *   ws://host[:port][/ws]      → plain WebSocket
  *   wss://host[:port][/ws]     → TLS WebSocket
- *   tcp://host:port[?ssl=true] → legacy Fde form, `?password=` honoured
+ *   tcp://host:port[?ssl=true] → legacy Frogg form, `?password=` honoured
  */
 export interface DirectEndpointInput extends HostPortParts {
   useTls: boolean;

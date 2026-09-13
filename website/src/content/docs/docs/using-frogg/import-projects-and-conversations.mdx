@@ -1,6 +1,6 @@
 ---
 title: Import projects and conversations
-description: Bring a project and its Claude or Codex conversations into FDE, from the daemon host or from the computer running the app.
+description: Bring a project and its Claude or Codex conversations into Frogg, from the daemon host or from the computer running the app.
 sidebar:
   order: 2
 ---
@@ -34,7 +34,7 @@ the desktop app). On Android the dialog offers the daemon source only.
 1. Open **Add project** and choose **Import project and conversations**.
 2. Keep **On `<host>`** selected and enter the project directory on the daemon. It must
    already exist.
-3. Optionally enter an **Exported conversation directory**. FDE reads `*.jsonl` files from
+3. Optionally enter an **Exported conversation directory**. Frogg reads `*.jsonl` files from
    it, up to 12 levels deep, skipping symlinks.
 4. Choose **Preview import**. Nothing is created yet.
 5. Tick the conversations to keep and choose **Import selected**.
@@ -58,7 +58,7 @@ The destination decides what happens to project files:
 
 | Destination           | Project files selected | Result |
 | --------------------- | ---------------------- | ------ |
-| Does not exist        | Yes or no              | FDE creates it, copies the files, registers the project |
+| Does not exist        | Yes or no              | Frogg creates it, copies the files, registers the project |
 | Exists                | No                     | Conversations merge into the project at that path; code is untouched |
 | Exists                | Yes                    | Rejected: "The destination already exists. Merge conversation files only, or select a new destination for project files" |
 
@@ -81,7 +81,7 @@ Each preview row shows the provider and one of two labels:
 
 - **Provider session**: a native session found on the daemon. It becomes an agent and can
   be resumed like any other.
-- **Text history**: a parsed JSONL transcript. FDE keeps the user and assistant text only.
+- **Text history**: a parsed JSONL transcript. Frogg keeps the user and assistant text only.
   Tool calls, tool output, images and attachments are dropped. It cannot resume the
   original provider session and does not appear as an agent.
 
@@ -97,7 +97,7 @@ one to read it, 128 KiB of messages at a time with **Load more**.
 - The existing project is found by canonical daemon path, not by name.
 - Provider sessions are matched by provider and native session ID.
 - Text history is keyed by project plus the transcript's session ID, or its message content
-  when there is none. Records are stored under `FDE_HOME/project-conversations/` and survive
+  when there is none. Records are stored under `FROGG_HOME/project-conversations/` and survive
   restarts.
 - Re-importing the same or a shorter copy is skipped. A longer copy with the same start
   updates the saved history. A copy that diverges fails with "This conversation differs
@@ -119,7 +119,7 @@ one to read it, 128 KiB of messages at a time with **Load more**.
 | Open imports per daemon        | 3 |
 | Staged import lifetime         | 1 hour after last use |
 
-Uploads are staged in `FDE_HOME/project-import-staging/` and removed on cancel, success or
+Uploads are staged in `FROGG_HOME/project-import-staging/` and removed on cancel, success or
 expiry, including stale ones left by a daemon restart. A daemon restart before commit means
 you start again from **Preview import**.
 

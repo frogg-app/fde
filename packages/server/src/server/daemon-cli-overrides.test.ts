@@ -6,14 +6,14 @@ describe("daemon startup flag overrides", () => {
   test("disables a saved relay before validation and retains the override on reload", () => {
     const persisted = { version: 1 as const, daemon: { relay: { enabled: true } } };
     const cli = parseDaemonCliOverrides(["--no-relay"]);
-    const config = resolveConfigFromPersisted("/tmp/fde-cli-overrides", persisted, {
+    const config = resolveConfigFromPersisted("/tmp/frogg-cli-overrides", persisted, {
       env: {},
       cli,
     });
     expect(config.relayEnabled).toBe(false);
     expect(config.relayEnabledMutable).toBe(false);
     expect(config.configReload?.overrideControlledPaths).toContain("daemon.relay.enabled");
-    const reloaded = resolveConfigFromPersisted("/tmp/fde-cli-overrides", persisted, {
+    const reloaded = resolveConfigFromPersisted("/tmp/frogg-cli-overrides", persisted, {
       env: {},
       cli: config.configReload?.cli,
     });
@@ -22,7 +22,7 @@ describe("daemon startup flag overrides", () => {
 
   test("explicit relay enable without an endpoint resolves with relay inactive", () => {
     const config = resolveConfigFromPersisted(
-      "/tmp/fde-cli-overrides",
+      "/tmp/frogg-cli-overrides",
       { version: 1 },
       {
         env: {},

@@ -39,7 +39,7 @@ export function isLikelyNamespacedToolName(name: string): boolean {
   return false;
 }
 
-export function isFdeToolName(name: string): boolean {
+export function isFroggToolName(name: string): boolean {
   const normalized = normalizeToolName(name);
   if (isSpeakToolName(normalized)) {
     return false;
@@ -49,24 +49,24 @@ export function isFdeToolName(name: string): boolean {
     return (
       segments.length >= 3 &&
       segments[0] === "mcp" &&
-      (segments[1] === "fde" || segments[1].startsWith("fde_"))
+      (segments[1] === "frogg" || segments[1].startsWith("frogg_"))
     );
   }
   if (normalized.includes(".")) {
     const firstSegment = normalized.split(".")[0];
-    return firstSegment === "fde" || firstSegment.startsWith("fde_");
+    return firstSegment === "frogg" || firstSegment.startsWith("frogg_");
   }
   return false;
 }
 
-export function getFdeToolLeafName(name: string): string | null {
+export function getFroggToolLeafName(name: string): string | null {
   const normalized = normalizeToolName(name);
   if (normalized.includes("__")) {
     const segments = normalized.split("__").filter((s) => s.length > 0);
     if (
       segments.length >= 3 &&
       segments[0] === "mcp" &&
-      (segments[1] === "fde" || segments[1].startsWith("fde_"))
+      (segments[1] === "frogg" || segments[1].startsWith("frogg_"))
     ) {
       return segments.slice(2).join("__");
     }
@@ -74,7 +74,7 @@ export function getFdeToolLeafName(name: string): string | null {
   }
   if (normalized.includes(".")) {
     const firstSegment = normalized.split(".")[0];
-    if (firstSegment === "fde" || firstSegment.startsWith("fde_")) {
+    if (firstSegment === "frogg" || firstSegment.startsWith("frogg_")) {
       return normalized.split(".").slice(1).join(".");
     }
     return null;

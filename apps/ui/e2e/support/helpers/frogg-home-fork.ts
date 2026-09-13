@@ -3,7 +3,7 @@ import { copyFile, mkdir, readdir, rm, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import path from "node:path";
 
-export interface FdeHomeMetadataForkResult {
+export interface FroggHomeMetadataForkResult {
   sourceHome: string;
   targetHome: string;
   agentFiles: number;
@@ -21,7 +21,7 @@ interface CopyStats {
   skippedMissing: string[];
 }
 
-export function resolveFdeHomePath(value: string): string {
+export function resolveFroggHomePath(value: string): string {
   if (value === "~") {
     return homedir();
   }
@@ -91,15 +91,15 @@ async function copyProjectRegistryFiles(
   return stats;
 }
 
-export async function forkFdeHomeMetadata(input: {
+export async function forkFroggHomeMetadata(input: {
   sourceHome: string;
   targetHome: string;
-}): Promise<FdeHomeMetadataForkResult> {
-  const sourceHome = resolveFdeHomePath(input.sourceHome);
-  const targetHome = resolveFdeHomePath(input.targetHome);
+}): Promise<FroggHomeMetadataForkResult> {
+  const sourceHome = resolveFroggHomePath(input.sourceHome);
+  const targetHome = resolveFroggHomePath(input.targetHome);
 
   if (sourceHome === targetHome) {
-    throw new Error("Refusing to fork Fde metadata onto the same FDE_HOME.");
+    throw new Error("Refusing to fork Frogg metadata onto the same FROGG_HOME.");
   }
 
   await mkdir(targetHome, { recursive: true });

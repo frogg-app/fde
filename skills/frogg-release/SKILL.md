@@ -1,9 +1,9 @@
 ---
-name: fde-release
-description: Build, benchmark, update, and publish FDE desktop, Android, and daemon distributions. Use for release preparation, update-feed failures, packaging migrations, local versus CI build decisions, or release cleanup. Preserve a valid upgrade path from the currently published app.
+name: frogg-release
+description: Build, benchmark, update, and publish Frogg desktop, Android, and daemon distributions. Use for release preparation, update-feed failures, packaging migrations, local versus CI build decisions, or release cleanup. Preserve a valid upgrade path from the currently published app.
 ---
 
-# FDE builds and releases
+# Frogg builds and releases
 
 Read `website/src/content/docs/docs/contributing/release-process.mdx` and, for forks,
 `website/src/content/docs/docs/fork-and-rebrand/build-and-release.mdx` in the working

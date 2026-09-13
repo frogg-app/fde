@@ -1,5 +1,5 @@
 import { withAudioOwnership } from "./audio-ownership";
-import * as native from "@fde/expo-two-way-audio";
+import * as native from "@frogg/expo-two-way-audio";
 import type {
   AudioEngine,
   AudioEngineCallbacks,

@@ -37278,7 +37278,7 @@
                           "type": "boolean",
                           "const": false
                         },
-                        "isFdeOwnedWorktree": {
+                        "isFroggOwnedWorktree": {
                           "type": "boolean",
                           "const": false
                         },
@@ -37315,7 +37315,7 @@
                         "error",
                         "requestId",
                         "isGit",
-                        "isFdeOwnedWorktree",
+                        "isFroggOwnedWorktree",
                         "repoRoot",
                         "currentBranch",
                         "isDirty",
@@ -37376,7 +37376,7 @@
                           "type": "boolean",
                           "const": true
                         },
-                        "isFdeOwnedWorktree": {
+                        "isFroggOwnedWorktree": {
                           "type": "boolean",
                           "const": false
                         },
@@ -37455,7 +37455,7 @@
                         "error",
                         "requestId",
                         "isGit",
-                        "isFdeOwnedWorktree",
+                        "isFroggOwnedWorktree",
                         "repoRoot",
                         "mainRepoRoot",
                         "currentBranch",
@@ -37517,7 +37517,7 @@
                           "type": "boolean",
                           "const": true
                         },
-                        "isFdeOwnedWorktree": {
+                        "isFroggOwnedWorktree": {
                           "type": "boolean",
                           "const": true
                         },
@@ -37589,7 +37589,7 @@
                         "error",
                         "requestId",
                         "isGit",
-                        "isFdeOwnedWorktree",
+                        "isFroggOwnedWorktree",
                         "repoRoot",
                         "mainRepoRoot",
                         "currentBranch",
@@ -37984,7 +37984,7 @@
                           "type": "boolean",
                           "const": false
                         },
-                        "isFdeOwnedWorktree": {
+                        "isFroggOwnedWorktree": {
                           "type": "boolean",
                           "const": false
                         },
@@ -38021,7 +38021,7 @@
                         "error",
                         "requestId",
                         "isGit",
-                        "isFdeOwnedWorktree",
+                        "isFroggOwnedWorktree",
                         "repoRoot",
                         "currentBranch",
                         "isDirty",
@@ -38397,7 +38397,7 @@
                           "type": "boolean",
                           "const": true
                         },
-                        "isFdeOwnedWorktree": {
+                        "isFroggOwnedWorktree": {
                           "type": "boolean",
                           "const": false
                         },
@@ -38476,7 +38476,7 @@
                         "error",
                         "requestId",
                         "isGit",
-                        "isFdeOwnedWorktree",
+                        "isFroggOwnedWorktree",
                         "repoRoot",
                         "mainRepoRoot",
                         "currentBranch",
@@ -38853,7 +38853,7 @@
                           "type": "boolean",
                           "const": true
                         },
-                        "isFdeOwnedWorktree": {
+                        "isFroggOwnedWorktree": {
                           "type": "boolean",
                           "const": true
                         },
@@ -38925,7 +38925,7 @@
                         "error",
                         "requestId",
                         "isGit",
-                        "isFdeOwnedWorktree",
+                        "isFroggOwnedWorktree",
                         "repoRoot",
                         "mainRepoRoot",
                         "currentBranch",
@@ -41988,7 +41988,7 @@
                               "null"
                             ]
                           },
-                          "isFde": {
+                          "isFrogg": {
                             "type": "boolean"
                           }
                         },
@@ -41996,7 +41996,7 @@
                           "index",
                           "message",
                           "branch",
-                          "isFde"
+                          "isFrogg"
                         ],
                         "additionalProperties": false
                       }
@@ -42326,7 +42326,7 @@
               "properties": {
                 "type": {
                   "type": "string",
-                  "const": "fde_worktree_list_response"
+                  "const": "frogg_worktree_list_response"
                 },
                 "payload": {
                   "type": "object",
@@ -42414,7 +42414,7 @@
               "properties": {
                 "type": {
                   "type": "string",
-                  "const": "fde_worktree_archive_response"
+                  "const": "frogg_worktree_archive_response"
                 },
                 "payload": {
                   "type": "object",
@@ -42480,7 +42480,7 @@
               "properties": {
                 "type": {
                   "type": "string",
-                  "const": "create_fde_worktree_response"
+                  "const": "create_frogg_worktree_response"
                 },
                 "payload": {
                   "type": "object",

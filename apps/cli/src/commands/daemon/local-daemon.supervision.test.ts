@@ -46,7 +46,7 @@ class FakeDaemonRuntime implements DaemonLaunchRuntime {
   }
 
   resolveHome(env: NodeJS.ProcessEnv): string {
-    return env.FDE_HOME ?? "/tmp/fde";
+    return env.FROGG_HOME ?? "/tmp/frogg";
   }
 
   spawnDetached(
@@ -70,13 +70,13 @@ class FakeDaemonRuntime implements DaemonLaunchRuntime {
 
 const tempRoots: string[] = [];
 
-async function createFdeHome(config: unknown): Promise<string> {
-  const root = await mkdtemp(path.join(os.tmpdir(), "fde-local-daemon-"));
+async function createFroggHome(config: unknown): Promise<string> {
+  const root = await mkdtemp(path.join(os.tmpdir(), "frogg-local-daemon-"));
   tempRoots.push(root);
-  const fdeHome = path.join(root, ".fde");
-  await mkdir(fdeHome, { recursive: true });
-  await writeFile(path.join(fdeHome, "config.json"), JSON.stringify(config, null, 2));
-  return fdeHome;
+  const froggHome = path.join(root, ".frogg");
+  await mkdir(froggHome, { recursive: true });
+  await writeFile(path.join(froggHome, "config.json"), JSON.stringify(config, null, 2));
+  return froggHome;
 }
 
 function expectSupervisorLaunch(argv: string[]): void {
@@ -103,7 +103,7 @@ describe("local daemon launch supervision", () => {
   test("foreground start spawns supervisor-entrypoint instead of server/index", async () => {
     const runtime = new FakeDaemonRuntime();
 
-    const status = startLocalDaemonForeground({ home: "/tmp/fde-test", relay: false }, runtime);
+    const status = startLocalDaemonForeground({ home: "/tmp/frogg-test", relay: false }, runtime);
 
     expect(status).toBe(0);
     expect(runtime.recordedLaunches.map((launch) => launch.mode)).toEqual(["foreground"]);
@@ -118,11 +118,14 @@ describe("local daemon launch supervision", () => {
     vi.useFakeTimers();
     const runtime = new FakeDaemonRuntime();
 
-    const resultPromise = startLocalDaemonDetached({ home: "/tmp/fde-test", mcp: false }, runtime);
+    const resultPromise = startLocalDaemonDetached(
+      { home: "/tmp/frogg-test", mcp: false },
+      runtime,
+    );
     await vi.advanceTimersByTimeAsync(1200);
     const result = await resultPromise;
 
-    expect(result).toEqual({ pid: 4242, logPath: "/tmp/fde-test/daemon.log" });
+    expect(result).toEqual({ pid: 4242, logPath: "/tmp/frogg-test/daemon.log" });
     expect(runtime.daemonProcess.wasUnreferenced).toBe(true);
     expect(runtime.recordedLaunches.map((launch) => launch.mode)).toEqual(["detached"]);
     const launch = runtime.recordedLaunches[0];
@@ -137,7 +140,7 @@ describe("local daemon launch supervision", () => {
 
     const status = startLocalDaemonForeground(
       {
-        home: "/tmp/fde-test",
+        home: "/tmp/frogg-test",
         relayUseTls: true,
       },
       runtime,
@@ -148,7 +151,7 @@ describe("local daemon launch supervision", () => {
     const launch = runtime.recordedLaunches[0];
     expect(launch?.mode).toBe("foreground");
     expect(launch?.args).toContain("--relay-use-tls");
-    expect(launch?.options?.env?.FDE_RELAY_USE_TLS).toBe("true");
+    expect(launch?.options?.env?.FROGG_RELAY_USE_TLS).toBe("true");
   });
 
   test("web UI flag is passed to the supervised daemon", async () => {
@@ -156,7 +159,7 @@ describe("local daemon launch supervision", () => {
 
     const status = startLocalDaemonForeground(
       {
-        home: "/tmp/fde-test",
+        home: "/tmp/frogg-test",
         webUi: true,
       },
       runtime,
@@ -167,7 +170,7 @@ describe("local daemon launch supervision", () => {
     const launch = runtime.recordedLaunches[0];
     expect(launch?.mode).toBe("foreground");
     expect(launch?.args).toContain("--web-ui");
-    expect(launch?.options?.env?.FDE_WEB_UI_ENABLED).toBe("true");
+    expect(launch?.options?.env?.FROGG_WEB_UI_ENABLED).toBe("true");
   });
 
   test("no-web UI flag is passed to the supervised daemon", async () => {
@@ -175,7 +178,7 @@ describe("local daemon launch supervision", () => {
 
     const status = startLocalDaemonForeground(
       {
-        home: "/tmp/fde-test",
+        home: "/tmp/frogg-test",
         webUi: false,
       },
       runtime,
@@ -186,16 +189,16 @@ describe("local daemon launch supervision", () => {
     const launch = runtime.recordedLaunches[0];
     expect(launch?.mode).toBe("foreground");
     expect(launch?.args).toContain("--no-web-ui");
-    expect(launch?.options?.env?.FDE_WEB_UI_ENABLED).toBe("false");
+    expect(launch?.options?.env?.FROGG_WEB_UI_ENABLED).toBe("false");
   });
 
   test("local daemon state keeps public relay TLS separate from daemon relay TLS", async () => {
-    const home = await createFdeHome({
+    const home = await createFroggHome({
       version: 1,
       daemon: {
         relay: {
           endpoint: "10.0.0.5:51185",
-          publicEndpoint: "fde.example.com",
+          publicEndpoint: "frogg.example.com",
           useTls: false,
           publicUseTls: true,
         },
@@ -204,7 +207,7 @@ describe("local daemon launch supervision", () => {
 
     const state = resolveLocalDaemonState({ home });
 
-    expect(state.relayEndpoint).toBe("fde.example.com");
+    expect(state.relayEndpoint).toBe("frogg.example.com");
     expect(state.relayUseTls).toBe(false);
     expect(state.relayPublicUseTls).toBe(true);
   });

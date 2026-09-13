@@ -1,12 +1,12 @@
 ---
-/** Animated illustration of the FDE app: agents running across workspaces on one host. Decorative. */
+/** Animated illustration of the Frogg app: agents running across workspaces on one host. Decorative. */
 import ProviderIcon from "./ProviderIcon.astro";
 ---
 
-<fde-app-window class="app-window" aria-hidden="true" data-step="0">
+<frogg-app-window class="app-window" aria-hidden="true" data-step="0">
   <div class="titlebar">
     <span class="dots"><i></i><i></i><i></i></span>
-    <span class="tb-title">FDE</span>
+    <span class="tb-title">Frogg</span>
     <span class="tb-host"><i class="live"></i>build-box</span>
   </div>
   <div class="body">
@@ -70,10 +70,10 @@ import ProviderIcon from "./ProviderIcon.astro";
       </div>
     </section>
   </div>
-</fde-app-window>
+</frogg-app-window>
 
 <script>
-  class FdeAppWindow extends HTMLElement {
+  class FroggAppWindow extends HTMLElement {
     private timer = 0;
     private step = 0;
     connectedCallback() {
@@ -97,7 +97,7 @@ import ProviderIcon from "./ProviderIcon.astro";
       document.addEventListener("visibilitychange", () => (document.hidden ? stop() : start()));
     }
   }
-  if (!customElements.get("fde-app-window")) customElements.define("fde-app-window", FdeAppWindow);
+  if (!customElements.get("frogg-app-window")) customElements.define("frogg-app-window", FroggAppWindow);
 </script>
 
 <style>
@@ -332,7 +332,7 @@ import ProviderIcon from "./ProviderIcon.astro";
     padding-left: 0.1rem;
   }
   code {
-    font-family: var(--fde-font-mono);
+    font-family: var(--frogg-font-mono);
     font-size: 11.5px;
     padding: 0.05rem 0.3rem;
     border-radius: 4px;
@@ -413,7 +413,7 @@ import ProviderIcon from "./ProviderIcon.astro";
     background: #25b5c8;
     color: #07222b;
     border-color: transparent !important;
-    transition: transform 200ms var(--fde-ease-spring);
+    transition: transform 200ms var(--frogg-ease-spring);
   }
   .app-window[data-step="8"] .allow {
     transform: scale(0.92);

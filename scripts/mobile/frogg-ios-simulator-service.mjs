@@ -6,17 +6,18 @@ import { spawn, spawnSync } from "node:child_process";
 
 const rootDir = resolvePath(import.meta.dirname, "../..");
 const appDir = join(rootDir, "apps/ui");
-const appProductName = "FdeDebug";
-const appScheme = "fde";
-const preferredSimulatorType = process.env.FDE_IOS_DEVICE_TYPE || "iPhone 16 Pro";
-const fdePort = requiredEnv("FDE_PORT");
-const worktreePath = process.env.FDE_WORKTREE_PATH || rootDir;
-const worktreeName = process.env.FDE_BRANCH_NAME || basename(worktreePath);
+const appProductName = "FroggDebug";
+const appScheme = "frogg";
+const preferredSimulatorType = process.env.FROGG_IOS_DEVICE_TYPE || "iPhone 16 Pro";
+const froggPort = requiredEnv("FROGG_PORT");
+const worktreePath = process.env.FROGG_WORKTREE_PATH || rootDir;
+const worktreeName = process.env.FROGG_BRANCH_NAME || basename(worktreePath);
 const worktreeHash = createHash("sha1").update(worktreePath).digest("hex").slice(0, 8);
-const simulatorName = process.env.FDE_IOS_SIMULATOR_NAME || `Fde ${worktreeName} ${worktreeHash}`;
+const simulatorName =
+  process.env.FROGG_IOS_SIMULATOR_NAME || `Frogg ${worktreeName} ${worktreeHash}`;
 const daemonEndpoint =
-  process.env.FDE_DEV_DAEMON_ENDPOINT ||
-  `localhost:${process.env.FDE_SERVICE_DAEMON_PORT || "6768"}`;
+  process.env.FROGG_DEV_DAEMON_ENDPOINT ||
+  `localhost:${process.env.FROGG_SERVICE_DAEMON_PORT || "6768"}`;
 
 const env = {
   ...process.env,
@@ -51,8 +52,8 @@ async function main() {
   hideNativeSimulatorApp();
 
   metro = startMetro();
-  await waitForUrl(`http://127.0.0.1:${fdePort}/.sim`);
-  console.log(`iOS preview: ${process.env.FDE_URL || `http://127.0.0.1:${fdePort}`}/.sim`);
+  await waitForUrl(`http://127.0.0.1:${froggPort}/.sim`);
+  console.log(`iOS preview: ${process.env.FROGG_URL || `http://127.0.0.1:${froggPort}`}/.sim`);
 
   console.log("Building app dependencies...");
   try {
@@ -105,7 +106,7 @@ function installApp(nativeProject) {
 }
 
 function launchApp() {
-  const metroUrl = encodeURIComponent(`http://127.0.0.1:${fdePort}`);
+  const metroUrl = encodeURIComponent(`http://127.0.0.1:${froggPort}`);
   run(
     "xcrun",
     ["simctl", "openurl", simulatorUdid, `${appScheme}://expo-development-client/?url=${metroUrl}`],
@@ -114,12 +115,12 @@ function launchApp() {
 }
 
 function startMetro() {
-  const child = spawn("npx", ["expo", "start", "--port", fdePort, "--localhost"], {
+  const child = spawn("npx", ["expo", "start", "--port", froggPort, "--localhost"], {
     cwd: appDir,
     env: {
       ...env,
-      FDE_SERVE_SIM_PREVIEW: "1",
-      FDE_SERVE_SIM_DEVICE_UDID: simulatorUdid,
+      FROGG_SERVE_SIM_PREVIEW: "1",
+      FROGG_SERVE_SIM_DEVICE_UDID: simulatorUdid,
       BROWSER: "none",
     },
     stdio: "inherit",
@@ -334,7 +335,7 @@ function simulatorSlug() {
 
 function requiredEnv(name) {
   const value = process.env[name];
-  if (!value) throw new Error(`${name} is required; run this as a Fde service.`);
+  if (!value) throw new Error(`${name} is required; run this as a Frogg service.`);
   return value;
 }
 

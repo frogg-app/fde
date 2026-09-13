@@ -69,7 +69,7 @@ const parent: SidebarAgentNode = {
   key: "host\0agent\0parent",
   target: { kind: "agent", agentId: "parent" },
   row: {
-    kind: "fde",
+    kind: "frogg",
     id: "parent",
     provider: "codex",
     title: "Build the sidebar",
@@ -219,7 +219,7 @@ describe("workspace agent disclosure", () => {
 
   it("puts live children directly below a singleton workspace and removes its disclosure when they finish", () => {
     const view = render(workspaceTree([parent]));
-    expect(screen.queryByTestId("sidebar-agent-fde-parent")).toBeNull();
+    expect(screen.queryByTestId("sidebar-agent-frogg-parent")).toBeNull();
     expect(screen.getAllByRole("button", { name: "Worker" })).toHaveLength(1);
     expect(
       screen

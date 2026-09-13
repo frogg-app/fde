@@ -1,6 +1,6 @@
 ---
-name: fde-rpc
-description: Add or change a WebSocket session RPC between the FDE daemon and its clients. Use when adding a new request/response message, wiring a daemon handler, exposing a new daemon capability to the app, gating a feature on `server_info.features`, or when a protocol change fails typecheck, the authorization exhaustiveness test. Covers the exact ordered file list and the traps.
+name: frogg-rpc
+description: Add or change a WebSocket session RPC between the Frogg daemon and its clients. Use when adding a new request/response message, wiring a daemon handler, exposing a new daemon capability to the app, gating a feature on `server_info.features`, or when a protocol change fails typecheck, the authorization exhaustiveness test. Covers the exact ordered file list and the traps.
 ---
 
 # Adding a session RPC
@@ -85,8 +85,8 @@ call site.
 zod is the source of truth; generated schemas and validators must agree with it.
 
 ```bash
-npm run build --workspace=@fde/protocol
-npm run generate:validators --workspace=@fde/protocol
+npm run build --workspace=@frogg/protocol
+npm run generate:validators --workspace=@frogg/protocol
 ```
 
 Commit tracked protocol schema/fixture changes produced by the current build.
@@ -94,8 +94,8 @@ The retired Rust backend is not a production generation or release target.
 
 The ahead-of-time outbound validator
 (`packages/protocol/src/generated/validation/ws-outbound.aot.ts`) is gitignored and regenerated
-by `pretypecheck`/`pretest`/`prebuild` in `@fde/protocol`. `@fde/client` has no such hook, so
-run `npm run generate:validators --workspace=@fde/protocol` before testing the client — a stale
+by `pretypecheck`/`pretest`/`prebuild` in `@frogg/protocol`. `@frogg/client` has no such hook, so
+run `npm run generate:validators --workspace=@frogg/protocol` before testing the client — a stale
 validator makes the client silently reject your new response frame.
 
 ## Verify
@@ -105,7 +105,7 @@ npm run typecheck:server    # relay → protocol → client → server → cli; 
                             # catches missing permission keys and client type drift
 npx vitest run packages/server/src/server/authorization/index.test.ts --bail=1
 npx vitest run packages/server/src/server/session/checkout/checkout-session.test.ts --bail=1
-npm run test --workspace=@fde/protocol
+npm run test --workspace=@frogg/protocol
 bash scripts/ci/check-generated-rust.sh
 ```
 
@@ -123,7 +123,7 @@ by deleting and by adding a key against a current build:
   genuinely forgot the row. Add it (step 8).
 - **`TS2353: Object literal may only specify known properties`** naming your new key — the row is
   there but the union does not contain the type. Almost
-  always a **stale `@fde/protocol` build**, not a bug in your entry. `@fde/server` typechecks
+  always a **stale `@frogg/protocol` build**, not a bug in your entry. `@frogg/server` typechecks
   against `packages/protocol/dist`, so a message type you added minutes ago is invisible until
   protocol is rebuilt. Run this **before** concluding anything about the entry:
 
@@ -132,7 +132,7 @@ by deleting and by adding a key against a current build:
   ```
 
   If TS2353 survives a fresh build, then and only then is it a real typo in the key. See the
-  stale-build trap in [skills/fde-dev](../fde-dev/SKILL.md) for the general shape of this failure.
+  stale-build trap in [skills/frogg-dev](../frogg-dev/SKILL.md) for the general shape of this failure.
 
 The same discriminator applies to `INBOUND_PERMISSION`. Any other downstream package reporting
 that a field you just added does not exist is the same stale-`dist` story: run `npm run

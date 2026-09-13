@@ -24,13 +24,13 @@ export function createCliParseArgv(input: {
     return invocation;
   }
 
-  const nodeArgv = input.nodeArgv ?? ["fde", "fde"];
+  const nodeArgv = input.nodeArgv ?? ["frogg", "frogg"];
   const isOnboardRootFlag = invocation.argv[0] === "--relay" || invocation.argv[0] === "--no-relay";
   let cliArgv = invocation.argv;
   if (invocation.argv.length === 0) {
-    // A bare `fde` shows help. It used to start onboarding, which meant typing
+    // A bare `frogg` shows help. It used to start onboarding, which meant typing
     // the binary's name had side effects - unusual for a CLI and easy to do by
-    // accident. `fde onboard` is still there for the real thing.
+    // accident. `frogg onboard` is still there for the real thing.
     cliArgv = ["--help"];
   } else if (isOnboardRootFlag) {
     cliArgv = ["onboard", ...invocation.argv];

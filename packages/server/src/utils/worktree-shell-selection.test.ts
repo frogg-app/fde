@@ -78,7 +78,7 @@ describe("worktree shell selection", () => {
     try {
       mkdirSync(join(worktreePath, ".git"), { recursive: true });
       writeFileSync(
-        join(worktreePath, "fde.json"),
+        join(worktreePath, "frogg.json"),
         JSON.stringify({
           worktree: {
             teardown: ["Write-Output 'teardown'"],
@@ -131,7 +131,7 @@ describe("worktree shell selection", () => {
     process.env.BASH_ENV = "should-not-leak";
     try {
       writeFileSync(
-        join(worktreePath, "fde.json"),
+        join(worktreePath, "frogg.json"),
         JSON.stringify({
           worktree: {
             setup: ["Write-Output 'setup'"],
@@ -146,11 +146,11 @@ describe("worktree shell selection", () => {
         branchName: "main",
         cleanupOnFailure: false,
         runtimeEnv: {
-          FDE_SOURCE_CHECKOUT_PATH: worktreePath,
-          FDE_ROOT_PATH: worktreePath,
-          FDE_WORKTREE_PATH: worktreePath,
-          FDE_BRANCH_NAME: "main",
-          FDE_WORKTREE_PORT: "12345",
+          FROGG_SOURCE_CHECKOUT_PATH: worktreePath,
+          FROGG_ROOT_PATH: worktreePath,
+          FROGG_WORKTREE_PATH: worktreePath,
+          FROGG_BRANCH_NAME: "main",
+          FROGG_WORKTREE_PORT: "12345",
         },
         onEvent: () => {},
       });

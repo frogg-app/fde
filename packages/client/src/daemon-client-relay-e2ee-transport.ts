@@ -2,7 +2,7 @@ import {
   createClientChannel,
   type EncryptedChannel,
   type Transport as RelayTransport,
-} from "@fde/relay/e2ee";
+} from "@frogg/relay/e2ee";
 import type {
   DaemonTransport,
   DaemonTransportFactory,

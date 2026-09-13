@@ -1,4 +1,4 @@
-export { createTestFdeDaemon, type TestFdeDaemon } from "./fde-daemon.js";
+export { createTestFroggDaemon, type TestFroggDaemon } from "./frogg-daemon.js";
 export {
   DaemonClient,
   type DaemonClientConfig,

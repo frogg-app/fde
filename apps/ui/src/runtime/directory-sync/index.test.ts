@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
-import type { DaemonClient } from "@fde/client/internal/daemon-client";
-import type { SessionOutboundMessage } from "@fde/protocol/messages";
+import type { DaemonClient } from "@frogg/client/internal/daemon-client";
+import type { SessionOutboundMessage } from "@frogg/protocol/messages";
 import {
   normalizeProjectDescriptor,
   normalizeWorkspaceDescriptor,
@@ -250,7 +250,7 @@ describe("DirectorySync session readiness", () => {
     const cachedWorkspace = normalizeWorkspaceDescriptor({
       id: "workspace-1",
       projectId: "project-1",
-      projectDisplayName: "Fde",
+      projectDisplayName: "Frogg",
       projectRootPath: "/repo",
       workspaceDirectory: "/repo",
       projectKind: "git",
@@ -329,7 +329,7 @@ describe("DirectorySync session readiness", () => {
     const workspace = normalizeWorkspaceDescriptor({
       id: "workspace-1",
       projectId: "project-1",
-      projectDisplayName: "Fde",
+      projectDisplayName: "Frogg",
       projectRootPath: "/repo",
       workspaceDirectory: "/repo",
       projectKind: "git",
@@ -354,9 +354,9 @@ describe("DirectorySync session readiness", () => {
           {
             scriptName: "web",
             type: "service",
-            hostname: "web.fde.localhost",
+            hostname: "web.frogg.localhost",
             port: 3000,
-            proxyUrl: "http://web.fde.localhost:9999",
+            proxyUrl: "http://web.frogg.localhost:9999",
             lifecycle: "running",
             health: "healthy",
             exitCode: null,

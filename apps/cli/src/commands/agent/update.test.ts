@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { AgentProviderNotice } from "@fde/protocol/agent-types";
+import type { AgentProviderNotice } from "@frogg/protocol/agent-types";
 import {
   applyAgentChanges,
   toAgentUpdateResult,

@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 /**
  * `GET /code/:code` and `GET /pair?code=…`: the pairing landing page the
  * daemon serves for its own pairing links, so `pair.frogg.app` can be
@@ -12,7 +12,7 @@ import { brand } from "@fde/branding";
 import type express from "express";
 import type { RequestHandler } from "express";
 
-import { parseAnyConnectionOfferFromUrl } from "@fde/protocol/connection-offer";
+import { parseAnyConnectionOfferFromUrl } from "@frogg/protocol/connection-offer";
 import { renderPairingQrSvg } from "./pairing-qr.js";
 import type { ClaimOfferStore } from "./claim-offer-store.js";
 import { renderExpiredPairingPage, renderPairingCodePage } from "./pairing-code-page.js";

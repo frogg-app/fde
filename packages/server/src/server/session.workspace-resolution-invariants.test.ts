@@ -10,7 +10,7 @@ import { expect, test, vi } from "vitest";
 
 import { Session, type SessionOptions } from "./session.js";
 import { OWNER_PERMISSIONS } from "./authorization/index.js";
-import type { SessionOutboundMessage } from "@fde/protocol/messages";
+import type { SessionOutboundMessage } from "@frogg/protocol/messages";
 import { createNoopWorkspaceGitService } from "./test-utils/workspace-git-service-stub.js";
 import { asInternals, createStub } from "./test-utils/class-mocks.js";
 import { createProviderSnapshotManagerStub } from "./test-utils/session-stubs.js";
@@ -60,7 +60,7 @@ function createHarness(input: {
           currentBranch: null,
           remoteUrl: null,
           worktreeRoot: null,
-          isFdeOwnedWorktree: false,
+          isFroggOwnedWorktree: false,
           mainRepoRoot: null,
         };
       }
@@ -70,7 +70,7 @@ function createHarness(input: {
         currentBranch: "main",
         remoteUrl: null,
         worktreeRoot: root,
-        isFdeOwnedWorktree: false,
+        isFroggOwnedWorktree: false,
         mainRepoRoot: null,
       };
     },
@@ -95,7 +95,7 @@ function createHarness(input: {
     logger: createStub<SessionOptions["logger"]>(logger),
     downloadTokenStore: createStub<SessionOptions["downloadTokenStore"]>({}),
     pushNotifications: createStub<SessionOptions["pushNotifications"]>({}),
-    fdeHome: mkdtempSync(path.join(tmpdir(), "fde-invariant-test-")),
+    froggHome: mkdtempSync(path.join(tmpdir(), "frogg-invariant-test-")),
     agentManager: createStub<SessionOptions["agentManager"]>({
       subscribe: () => () => {},
       listAgents: () => [],

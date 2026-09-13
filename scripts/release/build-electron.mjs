@@ -37,7 +37,7 @@ function run(script, args = []) {
   if (result.status !== 0) throw new Error(`${script} failed (${result.status})`);
 }
 run("build:ui");
-run("build:main", ["--workspace=@fde/desktop-electron"]);
+run("build:main", ["--workspace=@frogg/desktop-electron"]);
 const builder = path.join(root, "node_modules/electron-builder/cli.js");
 const platformFlag = platform === "darwin" ? "--mac" : `--${platform}`;
 rmSync(path.join(desktop, "release"), { recursive: true, force: true });

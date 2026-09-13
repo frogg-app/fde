@@ -20,7 +20,7 @@ import type {
   CreateAgentWorktreeTarget,
   SessionOutboundMessage,
 } from "../../messages.js";
-import { createFdeDaemon, type FdeDaemon, type FdeDaemonConfig } from "../../bootstrap.js";
+import { createFroggDaemon, type FroggDaemon, type FroggDaemonConfig } from "../../bootstrap.js";
 import type { WebSocketLike } from "../../websocket-server.js";
 import type {
   AgentClient,
@@ -447,10 +447,10 @@ const providerCatalog = {
 export class HubRelationshipHarness {
   private readonly clock = new TestRelationshipClock();
   private readonly remote = new InMemoryHubRelationships(() => this.captureRelationship());
-  private daemon: FdeDaemon | null = null;
-  private config!: FdeDaemonConfig;
+  private daemon: FroggDaemon | null = null;
+  private config!: FroggDaemonConfig;
   private root = "";
-  private fdeHome = "";
+  private froggHome = "";
   private host = "";
   private readonly logs: string[] = [];
   private readonly providerPrompts: AgentPromptInput[] = [];
@@ -549,7 +549,7 @@ export class HubRelationshipHarness {
 
   async relationshipStateBecomes(expected: string | null): Promise<void> {
     const observed = deferred<void>();
-    const watcher = watch(this.fdeHome, () => {
+    const watcher = watch(this.froggHome, () => {
       if ((this.relationshipFile()?.state ?? null) === expected) observed.resolve();
     });
     if ((this.relationshipFile()?.state ?? null) === expected) observed.resolve();
@@ -580,7 +580,7 @@ export class HubRelationshipHarness {
     // Beyond loopback the daemon requires a paired-device credential (access-policy.ts).
     const paired = this.daemon.claimStore.mintPrincipal({ label: "external test client" });
     const socket = await this.openClaimedCliSocket(`ws://${address}:${target.port}/ws`, {
-      protocols: [`fde.bearer.${paired.credential}`],
+      protocols: [`frogg.bearer.${paired.credential}`],
     });
     const messages = [
       {
@@ -834,7 +834,10 @@ export class HubRelationshipHarness {
   }
 
   async durableOwnedAgentIdsOnDisk(): Promise<string[]> {
-    const storage = new AgentStorage(path.join(this.fdeHome, "agents"), pino({ level: "silent" }));
+    const storage = new AgentStorage(
+      path.join(this.froggHome, "agents"),
+      pino({ level: "silent" }),
+    );
     return (await storage.list())
       .filter((record) => record.owner?.kind === "daemon")
       .map((record) => record.id);
@@ -901,7 +904,7 @@ export class HubRelationshipHarness {
   }
 
   async hubExecutionIntentFiles(): Promise<string[]> {
-    const directory = path.join(this.fdeHome, "hub-executions");
+    const directory = path.join(this.froggHome, "hub-executions");
     return existsSync(directory) ? readdir(directory) : [];
   }
 
@@ -956,7 +959,7 @@ export class HubRelationshipHarness {
 
   private workspaceArchivedAt(workspaceId: string): string | null {
     const records = JSON.parse(
-      readFileSync(path.join(this.fdeHome, "projects", "workspaces.json"), "utf8"),
+      readFileSync(path.join(this.froggHome, "projects", "workspaces.json"), "utf8"),
     ) as Array<{ workspaceId: string; archivedAt?: string | null }>;
     return records.find((workspace) => workspace.workspaceId === workspaceId)?.archivedAt ?? null;
   }
@@ -1246,7 +1249,10 @@ export class HubRelationshipHarness {
   }
 
   async reconstructAndReplay(executionId = "execution-1") {
-    const storage = new AgentStorage(path.join(this.fdeHome, "agents"), pino({ level: "silent" }));
+    const storage = new AgentStorage(
+      path.join(this.froggHome, "agents"),
+      pino({ level: "silent" }),
+    );
     const manager = new AgentManager({
       clients: createTestAgentClients(),
       registry: storage,
@@ -1262,7 +1268,10 @@ export class HubRelationshipHarness {
 
   async removeOwnedAgent(agentId: string) {
     await this.daemon!.agentStorage.remove(agentId);
-    const storage = new AgentStorage(path.join(this.fdeHome, "agents"), pino({ level: "silent" }));
+    const storage = new AgentStorage(
+      path.join(this.froggHome, "agents"),
+      pino({ level: "silent" }),
+    );
     return {
       durableAgentCount: (await storage.list()).filter((record) => record.owner?.kind === "daemon")
         .length,
@@ -1309,22 +1318,22 @@ export class HubRelationshipHarness {
   }
 
   relationshipFile(): PersistedRelationship | null {
-    const file = path.join(this.fdeHome, "hub-relationship.json");
+    const file = path.join(this.froggHome, "hub-relationship.json");
     if (!existsSync(file)) return null;
     return JSON.parse(readFileSync(file, "utf8")) as PersistedRelationship;
   }
 
   relationshipFileMode(): number {
-    return statSync(path.join(this.fdeHome, "hub-relationship.json")).mode & 0o777;
+    return statSync(path.join(this.froggHome, "hub-relationship.json")).mode & 0o777;
   }
 
   async corruptRelationshipFile(contents = "{not-json"): Promise<void> {
     await this.stopDaemon();
-    await writeFile(path.join(this.fdeHome, "hub-relationship.json"), contents, "utf8");
+    await writeFile(path.join(this.froggHome, "hub-relationship.json"), contents, "utf8");
   }
 
   async quarantinedRelationshipFiles(): Promise<string[]> {
-    return (await readdir(this.fdeHome)).filter((file) =>
+    return (await readdir(this.froggHome)).filter((file) =>
       file.startsWith("hub-relationship.invalid-"),
     );
   }
@@ -1366,10 +1375,10 @@ export class HubRelationshipHarness {
   }
 
   private async createHome(): Promise<void> {
-    this.root = await mkdtemp(path.join(tmpdir(), "fde-hub-relationship-"));
-    this.fdeHome = path.join(this.root, ".fde");
+    this.root = await mkdtemp(path.join(tmpdir(), "frogg-hub-relationship-"));
+    this.froggHome = path.join(this.root, ".frogg");
     const staticDir = path.join(this.root, "static");
-    await Promise.all([mkdir(this.fdeHome, { recursive: true }), mkdir(staticDir)]);
+    await Promise.all([mkdir(this.froggHome, { recursive: true }), mkdir(staticDir)]);
     execFileSync("git", ["init", "-b", "main", this.root], { stdio: "ignore" });
     execFileSync("git", ["-C", this.root, "config", "user.email", "hub@test.invalid"]);
     execFileSync("git", ["-C", this.root, "config", "user.name", "Hub Test"]);
@@ -1378,7 +1387,7 @@ export class HubRelationshipHarness {
     });
     this.config = {
       listen: "0.0.0.0:0",
-      fdeHome: this.fdeHome,
+      froggHome: this.froggHome,
       corsAllowedOrigins: [],
       hostnames: true,
       mcpEnabled: this.mcpEnabled,
@@ -1388,7 +1397,7 @@ export class HubRelationshipHarness {
         ...createTestAgentClients(),
         codex: this.codex,
       },
-      agentStoragePath: path.join(this.fdeHome, "agents"),
+      agentStoragePath: path.join(this.froggHome, "agents"),
       relayEnabled: false,
       relayEndpoint: "relay.example.test:443",
       appBaseUrl: "https://app.example.test",
@@ -1402,7 +1411,7 @@ export class HubRelationshipHarness {
         done();
       },
     });
-    this.daemon = await createFdeDaemon(this.config, pino({ level: "trace" }, destination), {
+    this.daemon = await createFroggDaemon(this.config, pino({ level: "trace" }, destination), {
       hubRelationshipRemote: this.remote,
       hubRelationshipClock: this.clock,
       hubRelationshipRetryPolicy: this.clock,

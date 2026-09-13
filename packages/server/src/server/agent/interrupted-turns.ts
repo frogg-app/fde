@@ -6,7 +6,7 @@ import { sendPromptToAgent } from "./agent-prompt.js";
 export const DAEMON_RESTART_INTERRUPT_REASON = "daemon_restart";
 export const INTERRUPTED_TURN_MAX_AGE_MS = 60 * 60 * 1000;
 export const INTERRUPTED_TURN_CONTINUATION_PROMPT =
-  "The FDE daemon restarted while you were mid-turn, so your last tool call was killed. " +
+  "The Frogg daemon restarted while you were mid-turn, so your last tool call was killed. " +
   "Re-check the current state and continue the task where you left off.";
 
 type LiveAgentShape = Pick<

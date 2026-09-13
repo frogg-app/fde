@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import path from "node:path";
 import YAML from "yaml";
 import type { HubDeployBundle } from "./deploy-bundle.js";
@@ -47,10 +47,10 @@ export function hubLoginResumeCommand(step: "connect" | "init", origin: string):
 
 export function planHubInitOpening(input: {
   loggedIn: boolean;
-  fdeDirectoryExists: boolean;
+  froggDirectoryExists: boolean;
 }): HubInitOpeningPlan {
   return {
-    replaceExisting: input.fdeDirectoryExists,
+    replaceExisting: input.froggDirectoryExists,
     steps: [...(input.loggedIn ? [] : (["login"] as const)), "connect", "project", "scaffold"],
   };
 }
@@ -63,7 +63,7 @@ export function createHubInitBundle(
     projectSlug,
     workflowCount: 1,
     files: [
-      { path: ".fde/hub.yml", content: scaffold.hub },
+      { path: ".frogg/hub.yml", content: scaffold.hub },
       { path: scaffold.workflowPath, content: scaffold.workflow },
     ],
   };
@@ -118,7 +118,7 @@ export function createHubInitScaffold(input: HubInitScaffoldInput): HubInitScaff
   const provider = providerScaffold(input.provider, input.providerFilters, environmentName);
   return {
     hub,
-    workflowPath: `.fde/workflows/${input.provider}-help.yml`,
+    workflowPath: `.frogg/workflows/${input.provider}-help.yml`,
     workflow: YAML.stringify(provider.workflow, { lineWidth: 0 }),
     testAction: provider.testAction,
   };
@@ -136,10 +136,10 @@ function providerScaffold(
       workflow: workflow({
         name: "github-help",
         on: "github.issue_comment",
-        filters: { repo, contains: "@fde", from_users: [user] },
+        filters: { repo, contains: "@frogg", from_users: [user] },
         environment,
       }),
-      testAction: `Comment \`@fde have a look\` on ${repo}.`,
+      testAction: `Comment \`@frogg have a look\` on ${repo}.`,
     };
   }
 
@@ -154,7 +154,7 @@ function providerScaffold(
         environment,
         reply: "slack.reply",
       }),
-      testAction: "Mention `@fde have a look` in Slack.",
+      testAction: "Mention `@frogg have a look` in Slack.",
     };
   }
 
@@ -167,7 +167,7 @@ function providerScaffold(
       environment,
       reply: "discord.reply",
     }),
-    testAction: "Mention `@fde have a look` in Discord.",
+    testAction: "Mention `@frogg have a look` in Discord.",
   };
 }
 
@@ -193,7 +193,7 @@ function workflow(input: {
         agent: "starter",
         prompt: [
           {
-            text: `${replyInstruction}complete this request and call hub.finish_execution when done.\n\n<user-prompt>\n\${{ fde.prompt }}\n</user-prompt>\n`,
+            text: `${replyInstruction}complete this request and call hub.finish_execution when done.\n\n<user-prompt>\n\${{ frogg.prompt }}\n</user-prompt>\n`,
           },
         ],
         ...(input.reply === undefined

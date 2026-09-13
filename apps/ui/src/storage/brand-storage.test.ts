@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const state = vi.hoisted(() => ({ rows: new Map<string, string>() }));
-vi.mock("@fde/branding", () => ({ brand: { storagePrefix: "com.acme.studio:" } }));
+vi.mock("@frogg/branding", () => ({ brand: { storagePrefix: "com.acme.studio:" } }));
 vi.mock("@react-native-async-storage/async-storage", () => ({
   default: {
     getItem: async (key: string) => state.rows.get(key) ?? null,
@@ -22,19 +22,19 @@ import storage from "./brand-storage";
 describe("brand storage", () => {
   beforeEach(() => {
     state.rows.clear();
-    state.rows.set("@fde:settings", "official");
-    state.rows.set("com.other.studio:@fde:settings", "other");
+    state.rows.set("@frogg:settings", "official");
+    state.rows.set("com.other.studio:@frogg:settings", "other");
   });
   it("reads and writes only this product's key namespace", async () => {
-    expect(await storage.getItem("@fde:settings")).toBeNull();
-    await storage.setItem("@fde:settings", "custom");
-    expect(state.rows.get("@fde:settings")).toBe("official");
-    expect(await storage.getItem("@fde:settings")).toBe("custom");
-    expect(await storage.getAllKeys()).toEqual(["@fde:settings"]);
-    expect(await storage.multiGet(["@fde:settings"])).toEqual([["@fde:settings", "custom"]]);
+    expect(await storage.getItem("@frogg:settings")).toBeNull();
+    await storage.setItem("@frogg:settings", "custom");
+    expect(state.rows.get("@frogg:settings")).toBe("official");
+    expect(await storage.getItem("@frogg:settings")).toBe("custom");
+    expect(await storage.getAllKeys()).toEqual(["@frogg:settings"]);
+    expect(await storage.multiGet(["@frogg:settings"])).toEqual([["@frogg:settings", "custom"]]);
   });
-  it("cache cleanup cannot delete FDE or another brand", async () => {
-    await storage.setItem("@fde:settings", "custom");
+  it("cache cleanup cannot delete Frogg or another brand", async () => {
+    await storage.setItem("@frogg:settings", "custom");
     await storage.multiRemove(await storage.getAllKeys());
     expect([...state.rows.values()]).toEqual(["official", "other"]);
   });

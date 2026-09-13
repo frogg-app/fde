@@ -22,12 +22,12 @@ import {
 
 const openServers: ReturnType<typeof createServer>[] = [];
 const openUpgradeHubs: UpgradeRejectingHub[] = [];
-const openFdeHomes: string[] = [];
+const openFroggHomes: string[] = [];
 
 afterEach(async () => {
   for (const hub of openUpgradeHubs.splice(0)) hub.destroyConnections();
   await Promise.all(openServers.splice(0).map((server) => closeServer(server)));
-  await Promise.all(openFdeHomes.splice(0).map((home) => rm(home, { recursive: true })));
+  await Promise.all(openFroggHomes.splice(0).map((home) => rm(home, { recursive: true })));
 });
 
 test.each([401, 403, 404])(
@@ -97,11 +97,11 @@ test.each([
     const server = createServer();
     const webSockets = new WebSocketServer({ noServer: true });
     if (acknowledge) {
-      webSockets.on("headers", (headers) => headers.push("x-fde-session-protocol: 1"));
+      webSockets.on("headers", (headers) => headers.push("x-frogg-session-protocol: 1"));
     }
     let offeredProtocol: string | string[] | undefined;
     server.on("upgrade", (request, socket, head) => {
-      offeredProtocol = request.headers["x-fde-session-protocol"];
+      offeredProtocol = request.headers["x-frogg-session-protocol"];
       webSockets.handleUpgrade(request, socket, head, () => undefined);
     });
     openServers.push(server);
@@ -613,10 +613,10 @@ async function connectController(
   hub: UpgradeRejectingHub,
   clock: ManualRelationshipClock,
 ): Promise<HubRelationshipController> {
-  const fdeHome = await mkdtemp(path.join(tmpdir(), "fde-hub-socket-"));
-  openFdeHomes.push(fdeHome);
+  const froggHome = await mkdtemp(path.join(tmpdir(), "frogg-hub-socket-"));
+  openFroggHomes.push(froggHome);
   const controller = new HubRelationshipController({
-    fdeHome,
+    froggHome,
     hostname: "test-daemon.local",
     serverId: "server-1",
     daemonPublicKey: "daemon-public-key",

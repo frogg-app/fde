@@ -1,4 +1,4 @@
-import type { AgentProviderNotice } from "@fde/protocol/agent-types";
+import type { AgentProviderNotice } from "@frogg/protocol/agent-types";
 import type { ToastApi } from "@/components/toast-host";
 
 export function showProviderNoticeToast(

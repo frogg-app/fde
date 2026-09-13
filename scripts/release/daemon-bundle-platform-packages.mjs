@@ -74,7 +74,7 @@ function matchesTarget(name, platform, arch) {
 }
 
 async function packAndExtract(spec, name, nodeModulesDir) {
-  const tempDir = await mkdtemp(path.join(os.tmpdir(), "fde-bundle-pack-"));
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "frogg-bundle-pack-"));
   try {
     const packed = (
       await runCapture("npm", ["pack", spec, "--pack-destination", tempDir, "--silent"])

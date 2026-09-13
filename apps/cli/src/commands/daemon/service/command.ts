@@ -1,13 +1,13 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import type { Command } from "commander";
 
 import type { CommandOptions, OutputSchema, SingleResult } from "../../../output/index.js";
 import { installLoginService, uninstallLoginService, type ServiceActionResult } from "./install.js";
 
 /**
- * `fde daemon install-service` / `uninstall-service`: register the daemon with
+ * `frogg daemon install-service` / `uninstall-service`: register the daemon with
  * the platform's login service manager so it comes back after a reboot. The
- * same code runs from onboarding's "start FDE when you log in?" question.
+ * same code runs from onboarding's "start Frogg when you log in?" question.
  */
 function renderHuman(result: ServiceActionResult): string {
   const lines = [result.message];

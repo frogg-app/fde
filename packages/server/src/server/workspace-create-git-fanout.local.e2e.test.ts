@@ -4,10 +4,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { afterEach, expect, test } from "vitest";
-import type { WorkspaceDescriptorPayload } from "@fde/protocol/messages";
+import type { WorkspaceDescriptorPayload } from "@frogg/protocol/messages";
 
 import { DaemonClient } from "./test-utils/daemon-client.js";
-import { createTestFdeDaemon, type TestFdeDaemon } from "./test-utils/fde-daemon.js";
+import { createTestFroggDaemon, type TestFroggDaemon } from "./test-utils/frogg-daemon.js";
 import { getWorkspaceGitSelfHealPhaseMs } from "./workspace-git-service.js";
 import {
   configureGitProcessPolicy,
@@ -21,9 +21,9 @@ import { resolveGitProcessPolicy } from "../utils/git-process-scheduler.js";
 
 const SIBLING_COUNT = 100;
 const CREATED_AT = "2026-08-07T00:00:00.000Z";
-const originalMaxProcessesPerSecond = process.env.FDE_GIT_MAX_PROCESSES_PER_SECOND;
+const originalMaxProcessesPerSecond = process.env.FROGG_GIT_MAX_PROCESSES_PER_SECOND;
 
-let daemon: TestFdeDaemon | null = null;
+let daemon: TestFroggDaemon | null = null;
 let client: DaemonClient | null = null;
 const cleanupPaths: string[] = [];
 
@@ -36,9 +36,9 @@ afterEach(async () => {
     rmSync(path, { recursive: true, force: true });
   }
   if (originalMaxProcessesPerSecond === undefined) {
-    delete process.env.FDE_GIT_MAX_PROCESSES_PER_SECOND;
+    delete process.env.FROGG_GIT_MAX_PROCESSES_PER_SECOND;
   } else {
-    process.env.FDE_GIT_MAX_PROCESSES_PER_SECOND = originalMaxProcessesPerSecond;
+    process.env.FROGG_GIT_MAX_PROCESSES_PER_SECOND = originalMaxProcessesPerSecond;
   }
   configureGitProcessPolicy(resolveGitProcessPolicy({ env: process.env }));
 });
@@ -57,16 +57,16 @@ function git(cwd: string, ...args: string[]): string {
 
 function seedFixture(siblingCount = SIBLING_COUNT): {
   repoRoot: string;
-  fdeHomeRoot: string;
+  froggHomeRoot: string;
   projectId: string;
   siblingWorktrees: string[];
 } {
-  const fixtureRoot = mkdtempSync(join(tmpdir(), "fde-workspace-create-fanout-"));
+  const fixtureRoot = mkdtempSync(join(tmpdir(), "frogg-workspace-create-fanout-"));
   cleanupPaths.push(fixtureRoot);
   const repoRoot = join(fixtureRoot, "repo");
   const worktreesRoot = join(fixtureRoot, "siblings");
-  const fdeHomeRoot = join(fixtureRoot, "home");
-  const projectsDir = join(fdeHomeRoot, ".fde", "projects");
+  const froggHomeRoot = join(fixtureRoot, "home");
+  const projectsDir = join(froggHomeRoot, ".frogg", "projects");
   mkdirSync(repoRoot, { recursive: true });
   mkdirSync(worktreesRoot, { recursive: true });
   mkdirSync(projectsDir, { recursive: true });
@@ -102,7 +102,7 @@ function seedFixture(siblingCount = SIBLING_COUNT): {
       branch,
       worktreeRoot: cwd,
       baseBranch: "main",
-      isFdeOwnedWorktree: false,
+      isFroggOwnedWorktree: false,
       mainRepoRoot: repoRoot,
       createdAt: CREATED_AT,
       updatedAt: CREATED_AT,
@@ -130,13 +130,13 @@ function seedFixture(siblingCount = SIBLING_COUNT): {
     ]),
   );
   writeFileSync(join(projectsDir, "workspaces.json"), JSON.stringify(workspaces));
-  return { repoRoot, fdeHomeRoot, projectId, siblingWorktrees };
+  return { repoRoot, froggHomeRoot, projectId, siblingWorktrees };
 }
 
 async function startObservedFixture(siblingCount: number): Promise<ReturnType<typeof seedFixture>> {
   const fixture = seedFixture(siblingCount);
-  daemon = await createTestFdeDaemon({
-    fdeHomeRoot: fixture.fdeHomeRoot,
+  daemon = await createTestFroggDaemon({
+    froggHomeRoot: fixture.froggHomeRoot,
     cleanup: false,
     mcpEnabled: false,
   });
@@ -617,8 +617,8 @@ test("records the Git command ledger for repository metadata business rules", as
 test("workspace archive is admitted while 52 sibling observations hydrate", async () => {
   configureGitProcessPolicy({ maxProcessConcurrency: 8, maxProcessesPerSecond: 64 });
   const fixture = seedFixture(52);
-  daemon = await createTestFdeDaemon({
-    fdeHomeRoot: fixture.fdeHomeRoot,
+  daemon = await createTestFroggDaemon({
+    froggHomeRoot: fixture.froggHomeRoot,
     cleanup: false,
     mcpEnabled: false,
   });
@@ -656,11 +656,11 @@ test("workspace archive is admitted while 52 sibling observations hydrate", asyn
 }, 180_000);
 
 test("workspace create is admitted while 100 sibling observations hydrate", async () => {
-  process.env.FDE_GIT_MAX_PROCESSES_PER_SECOND = "64";
+  process.env.FROGG_GIT_MAX_PROCESSES_PER_SECOND = "64";
   configureGitProcessPolicy({ maxProcessConcurrency: 8, maxProcessesPerSecond: 64 });
   const fixture = seedFixture();
-  daemon = await createTestFdeDaemon({
-    fdeHomeRoot: fixture.fdeHomeRoot,
+  daemon = await createTestFroggDaemon({
+    froggHomeRoot: fixture.froggHomeRoot,
     cleanup: false,
     mcpEnabled: false,
   });

@@ -8,9 +8,11 @@ import os from "node:os";
 import path from "node:path";
 import { parseArgs } from "node:util";
 
-const { values } = parseArgs({ options: { fde: { type: "string" }, custom: { type: "string" } } });
-if (!values.fde || !values.custom)
-  throw new Error("Supply --fde and --custom Linux daemon archives");
+const { values } = parseArgs({
+  options: { frogg: { type: "string" }, custom: { type: "string" } },
+});
+if (!values.frogg || !values.custom)
+  throw new Error("Supply --frogg and --custom Linux daemon archives");
 const scratch = await mkdtemp(path.join(os.tmpdir(), "brand runtime "));
 const products = [];
 const output = path.resolve(".generated/runtime-isolation");
@@ -40,7 +42,7 @@ async function identity(product) {
 }
 try {
   for (const [id, archive] of [
-    ["fde", values.fde],
+    ["frogg", values.frogg],
     ["acme", values.custom],
   ]) {
     const directory = path.join(scratch, id);
@@ -65,9 +67,9 @@ try {
         CLAUDE_CONFIG_DIR: path.join(home, ".claude"),
         XDG_CONFIG_HOME: path.join(home, ".config"),
         XDG_DATA_HOME: path.join(home, ".local/share"),
-        FDE_DICTATION_ENABLED: "false",
-        FDE_VOICE_MODE_ENABLED: "false",
-        FDE_COMPANION_ENABLED: "false",
+        FROGG_DICTATION_ENABLED: "false",
+        FROGG_VOICE_MODE_ENABLED: "false",
+        FROGG_COMPANION_ENABLED: "false",
       },
     };
     product.log = createWriteStream(path.join(output, `${id}.log`));
@@ -100,7 +102,7 @@ try {
         await pause(500);
       }
     }
-    assert.equal(ready?.product, "fde", "compatibility family remains stable");
+    assert.equal(ready?.product, "frogg", "compatibility family remains stable");
     assert.equal(ready?.brand?.id, id);
     assert.equal(ready?.brand?.applicationId, manifest.brand.applicationId);
     const status = JSON.parse(cli(product, ["daemon", "status", "--json"]));
@@ -125,7 +127,7 @@ try {
   );
   assert.equal(
     (await identity(official)).brand.id,
-    "fde",
+    "frogg",
     "foreign management leaves the owner running",
   );
   cli(custom, ["daemon", "stop"]);
@@ -133,7 +135,7 @@ try {
   assert.notEqual(custom.child.exitCode, null, "custom foreground launcher exits after stop");
   assert.equal(
     (await identity(official)).brand.id,
-    "fde",
+    "frogg",
     "stopping one product leaves the other running",
   );
   const report = {

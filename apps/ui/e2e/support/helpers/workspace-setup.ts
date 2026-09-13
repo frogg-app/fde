@@ -1,20 +1,20 @@
 import { realpathSync } from "node:fs";
 import { expect, type Page } from "@playwright/test";
-import type { DaemonClient as InternalDaemonClient } from "@fde/client/internal/daemon-client";
+import type { DaemonClient as InternalDaemonClient } from "@frogg/client/internal/daemon-client";
 import { parseHostWorkspaceRouteFromPathname } from "../../../src/utils/host-routes";
 import { gotoAppShell } from "./app";
 import { connectDaemonClient } from "./daemon-client-loader";
 import { getServerId } from "./server-id";
 import { withProjectOwnership } from "./project-ownership";
 import { switchWorkspaceViaSidebar } from "./workspace-ui";
-import type { SessionOutboundMessage } from "@fde/protocol/messages";
+import type { SessionOutboundMessage } from "@frogg/protocol/messages";
 
 type WorkspaceSetupDaemonClient = Pick<
   InternalDaemonClient,
   | "close"
   | "addProject"
   | "connect"
-  | "createFdeWorktree"
+  | "createFroggWorktree"
   | "createWorkspace"
   | "fetchAgent"
   | "fetchAgents"
@@ -210,7 +210,7 @@ export async function createWorkspaceThroughDaemon(
   client: WorkspaceSetupDaemonClient,
   input: { cwd: string; worktreeSlug: string },
 ): Promise<{ id: string; name: string }> {
-  const result = await client.createFdeWorktree(input);
+  const result = await client.createFroggWorktree(input);
   if (!result.workspace || result.error) {
     throw new Error(result.error ?? `Failed to create workspace for ${input.cwd}`);
   }

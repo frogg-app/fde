@@ -2,8 +2,8 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, expect, test, vi } from "vitest";
-vi.mock("@fde/branding", async () => {
-  const { resolveBrandManifest } = await import("@fde/branding/schema");
+vi.mock("@frogg/branding", async () => {
+  const { resolveBrandManifest } = await import("@frogg/branding/schema");
   const brand = resolveBrandManifest({
     schemaVersion: 1,
     id: "acme",
@@ -17,8 +17,8 @@ vi.mock("@fde/branding", async () => {
     brandIdentity: { id: brand.id, name: brand.name, applicationId: brand.applicationId },
   };
 });
-import { brandIdentity } from "@fde/branding";
-import { resolveConfiguredHome } from "./fde-home.js";
+import { brandIdentity } from "@frogg/branding";
+import { resolveConfiguredHome } from "./frogg-home.js";
 import { loadConfig } from "./config.js";
 import { acquirePidLock, releasePidLock } from "./pid-lock.js";
 import { renderExpiredPairingPage } from "./pairing-code-page.js";
@@ -33,14 +33,14 @@ async function scratch() {
   return dir;
 }
 
-test("custom daemon defaults use the branded port without inherited FDE infrastructure", async () => {
+test("custom daemon defaults use the branded port without inherited Frogg infrastructure", async () => {
   const home = await scratch();
   const config = loadConfig(home, { env: {} });
   expect(config.listen).toBe("0.0.0.0:10099");
   expect(config.relayEnabled).toBe(false);
   expect(config.relayEndpoint).toBe("");
   expect(config.appBaseUrl).toBe("");
-  expect(resolveConfiguredHome({ FDE_HOME: "/foreign" })).toBeUndefined();
+  expect(resolveConfiguredHome({ FROGG_HOME: "/foreign" })).toBeUndefined();
   expect(resolveConfiguredHome({ ACME_HOME: "/own" })).toBe("/own");
 });
 test("a foreign PID record cannot be reclaimed or removed", async () => {
@@ -51,15 +51,15 @@ test("a foreign PID record cannot be reclaimed or removed", async () => {
     hostname: os.hostname(),
     uid: 0,
     listen: null,
-    brand: { id: "fde", applicationId: "app.frogg.fde" },
+    brand: { id: "frogg", applicationId: "app.frogg.frogg" },
   };
-  await writeFile(path.join(home, "fde.pid"), JSON.stringify(foreign));
+  await writeFile(path.join(home, "frogg.pid"), JSON.stringify(foreign));
   await expect(acquirePidLock(home, null)).rejects.toThrow(/another product/);
   await releasePidLock(home);
-  expect(JSON.parse(await readFile(path.join(home, "fde.pid"), "utf8"))).toEqual(foreign);
-  await rm(path.join(home, "fde.pid"));
+  expect(JSON.parse(await readFile(path.join(home, "frogg.pid"), "utf8"))).toEqual(foreign);
+  await rm(path.join(home, "frogg.pid"));
   await acquirePidLock(home, "127.0.0.1:10099");
-  expect(JSON.parse(await readFile(path.join(home, "fde.pid"), "utf8")).brand).toEqual(
+  expect(JSON.parse(await readFile(path.join(home, "frogg.pid"), "utf8")).brand).toEqual(
     brandIdentity,
   );
   await releasePidLock(home);

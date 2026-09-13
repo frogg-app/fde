@@ -176,7 +176,7 @@ pub fn env_assignments(pairs: &[(&str, &str)]) -> String {
         .map(|(key, value)| {
             format!(
                 "{}={}",
-                key.strip_prefix("FDE_")
+                key.strip_prefix("FROGG_")
                     .map(crate::branding::env_key)
                     .unwrap_or_else(|| key.to_string()),
                 shell_quote(value)
@@ -188,21 +188,21 @@ pub fn env_assignments(pairs: &[(&str, &str)]) -> String {
 
 /// The remote command that reads the install script from stdin.
 pub fn build_install_command(request: &DeployRequest) -> String {
-    let mut pairs: Vec<(&str, &str)> = vec![("FDE_VERSION", request.version.as_str())];
+    let mut pairs: Vec<(&str, &str)> = vec![("FROGG_VERSION", request.version.as_str())];
     let (bind, port) =
         split_listen(&request.listen).unwrap_or(("127.0.0.1", crate::branding::DEFAULT_PORT));
     let port = port.to_string();
     match request.method {
         DeployMethod::Native => {
-            pairs.push(("FDE_LISTEN", request.listen.as_str()));
-            pairs.push(("FDE_RELEASE_BASE", DEFAULT_RELEASE_BASE));
+            pairs.push(("FROGG_LISTEN", request.listen.as_str()));
+            pairs.push(("FROGG_RELEASE_BASE", DEFAULT_RELEASE_BASE));
             if let Some(url) = &request.bundle_url {
-                pairs.push(("FDE_BUNDLE_URL", url.as_str()));
+                pairs.push(("FROGG_BUNDLE_URL", url.as_str()));
             }
         }
         DeployMethod::Docker => {
-            pairs.push(("FDE_BIND", bind));
-            pairs.push(("FDE_PORT", port.as_str()));
+            pairs.push(("FROGG_BIND", bind));
+            pairs.push(("FROGG_PORT", port.as_str()));
         }
     }
     format!("{} bash -s", env_assignments(&pairs))
@@ -250,18 +250,18 @@ mod tests {
     fn builds_native_and_docker_commands() {
         assert_eq!(
             build_install_command(&request(DeployMethod::Native)),
-            "FDE_VERSION='0.2.0' FDE_LISTEN='127.0.0.1:9999' \
-             FDE_RELEASE_BASE='https://github.com/frogg-app/fde/releases' bash -s"
+            "FROGG_VERSION='0.2.0' FROGG_LISTEN='127.0.0.1:9999' \
+             FROGG_RELEASE_BASE='https://github.com/frogg-app/frogg/releases' bash -s"
         );
         let mut with_url = request(DeployMethod::Native);
         with_url.bundle_url = Some("https://example.com/b.tar.gz".into());
         assert!(build_install_command(&with_url)
-            .contains("FDE_BUNDLE_URL='https://example.com/b.tar.gz' bash -s"));
+            .contains("FROGG_BUNDLE_URL='https://example.com/b.tar.gz' bash -s"));
         let mut docker = request(DeployMethod::Docker);
         docker.listen = "0.0.0.0:7000".into();
         assert_eq!(
             build_install_command(&docker),
-            "FDE_VERSION='0.2.0' FDE_BIND='0.0.0.0' FDE_PORT='7000' bash -s"
+            "FROGG_VERSION='0.2.0' FROGG_BIND='0.0.0.0' FROGG_PORT='7000' bash -s"
         );
     }
 

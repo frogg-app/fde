@@ -6,25 +6,25 @@ export PATH="$SCRIPT_DIR/../../node_modules/.bin:$PATH"
 
 source "$SCRIPT_DIR/dev-home.sh"
 
-configure_dev_fde_home
+configure_dev_frogg_home
 
-if [ -z "${FDE_LOCAL_MODELS_DIR}" ]; then
-  export FDE_LOCAL_MODELS_DIR="$FDE_HOME/models/local-speech"
-  mkdir -p "$FDE_LOCAL_MODELS_DIR"
+if [ -z "${FROGG_LOCAL_MODELS_DIR}" ]; then
+  export FROGG_LOCAL_MODELS_DIR="$FROGG_HOME/models/local-speech"
+  mkdir -p "$FROGG_LOCAL_MODELS_DIR"
 fi
 
 echo "══════════════════════════════════════════════════════"
-echo "  ${FDE_DEV_PRODUCT_NAME} Dev Daemon"
+echo "  ${FROGG_DEV_PRODUCT_NAME} Dev Daemon"
 echo "══════════════════════════════════════════════════════"
-echo "  Home:    ${FDE_HOME}"
-echo "  Models:  ${FDE_LOCAL_MODELS_DIR}"
-echo "  Listen:  ${FDE_LISTEN}"
+echo "  Home:    ${FROGG_HOME}"
+echo "  Models:  ${FROGG_LOCAL_MODELS_DIR}"
+echo "  Listen:  ${FROGG_LISTEN}"
 echo "══════════════════════════════════════════════════════"
 
-export FDE_CORS_ORIGINS="${FDE_CORS_ORIGINS:-*}"
-export FDE_NODE_INSPECT="${FDE_NODE_INSPECT:---inspect=0}"
+export FROGG_CORS_ORIGINS="${FROGG_CORS_ORIGINS:-*}"
+export FROGG_NODE_INSPECT="${FROGG_NODE_INSPECT:---inspect=0}"
 
-if [ "${FDE_SKIP_DEV_SERVER_BUILD:-0}" = "1" ]; then
+if [ "${FROGG_SKIP_DEV_SERVER_BUILD:-0}" = "1" ]; then
   exec npm run dev:server:watch
 fi
 

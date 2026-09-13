@@ -1,4 +1,4 @@
-import { parseHostPort } from "@fde/protocol/daemon-endpoints";
+import { parseHostPort } from "@frogg/protocol/daemon-endpoints";
 import type { HostConnection } from "@/types/host-connection";
 import type { HostProfile } from "@/types/host-connection";
 

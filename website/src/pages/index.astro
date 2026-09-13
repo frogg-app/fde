@@ -4,9 +4,9 @@ import SiteLayout from "../layouts/SiteLayout.astro";
 import AppWindow from "../components/site/AppWindow.astro";
 import InstallCommand from "../components/site/InstallCommand.astro";
 import ProviderIcon from "../components/site/ProviderIcon.astro";
-import logo from "../assets/brand/fde-logo.png";
+import logo from "../assets/brand/frogg-logo.png";
 
-const repo = "https://github.com/frogg-app/fde";
+const repo = "https://github.com/frogg-app/frogg";
 const releases = `${repo}/releases/latest`;
 
 const providers = [
@@ -47,7 +47,7 @@ const features = [
   },
   {
     title: "A scriptable CLI",
-    body: "Script agents, workspaces and schedules with the fde CLI.",
+    body: "Script agents, workspaces and schedules with the frogg CLI.",
     icon: "M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7",
   },
 ];
@@ -126,8 +126,8 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
 ---
 
 <SiteLayout
-  title="FDE: run and monitor coding agents from anywhere"
-  description="FDE (Frogg Development Environment) runs Claude Code, Codex, OpenCode and more on a daemon you host, and lets you watch, steer and approve them from desktop, phone, browser or CLI."
+  title="Frogg: run and monitor coding agents from anywhere"
+  description="Frogg runs Claude Code, Codex, OpenCode and more on a daemon you host, and lets you watch, steer and approve them from desktop, phone, browser or CLI."
 >
   <!-- ================= HERO ================= -->
   <section class="hero">
@@ -139,7 +139,7 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
         <span class="logo-glow" aria-hidden="true"></span>
         <Image
           src={logo}
-          alt="FDE origami frog logo"
+          alt="Frogg origami frog logo"
           width={132}
           height={103}
           densities={[1, 2]}
@@ -157,7 +157,7 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
         Your coding agents,<br /><span class="gradient-text">wherever you are.</span>
       </h1>
       <p class="lead">
-        FDE runs Claude Code, Codex, OpenCode and more on a daemon you host. Watch them work, answer
+        Frogg runs Claude Code, Codex, OpenCode and more on a daemon you host. Watch them work, answer
         their questions and approve their commands from your desktop, phone, browser or terminal.
       </p>
 
@@ -171,7 +171,7 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
       <div class="hero-install">
         <InstallCommand />
         <p class="install-note">
-          Installs the daemon and <code>fde</code> CLI on Linux or macOS. <a href="/docs/self-hosting/"
+          Installs the daemon and <code>frogg</code> CLI on Linux or macOS. <a href="/docs/self-hosting/"
             >Other options</a
           >
         </p>
@@ -209,7 +209,7 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
         <p class="eyebrow">What it is</p>
         <h2 class="section-title">One daemon runs the agents.<br />Every screen can drive them.</h2>
         <p class="section-lead">
-          The FDE daemon lives on your laptop, a build box or a container. It launches the agent CLIs
+          The Frogg daemon lives on your laptop, a build box or a container. It launches the agent CLIs
           next to your code and keeps them going. The apps are windows onto it, so you can close the
           laptop, pick up your phone and carry on.
         </p>
@@ -218,7 +218,7 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
       <figure class="topology" data-reveal>
         <div class="node daemon-node">
           <span class="node-kicker">Your machine, server or container</span>
-          <strong>FDE daemon</strong>
+          <strong>Frogg daemon</strong>
           <span class="chips">
             <span>agents</span><span>worktrees</span><span>terminals</span><span>schedules</span>
           </span>
@@ -238,7 +238,7 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
           <li>CLI</li>
         </ul>
         <figcaption class="sr-only">
-          The FDE daemon runs on your hardware; desktop, phone, browser and CLI clients connect to it.
+          The Frogg daemon runs on your hardware; desktop, phone, browser and CLI clients connect to it.
         </figcaption>
       </figure>
 
@@ -286,7 +286,7 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
             <h3>Run the daemon</h3>
             <p>
               One command on Linux or macOS installs the daemon as a user service and adds the <code
-                >fde</code
+                >frogg</code
               > CLI.
             </p>
           </div>
@@ -361,7 +361,7 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
           <li>Local speech recognition and synthesis by default</li>
           <li>Orchestrates with your Claude or Codex subscription; off until you enable it</li>
         </ul>
-        <a class="btn" href="/docs/using-fde/"
+        <a class="btn" href="/docs/using-frogg/"
           >Read about Companion <span class="arrow" aria-hidden="true">→</span></a
         >
       </div>
@@ -374,11 +374,11 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
         </div>
         <div class="bubbles">
           <p class="bubble you">How's the upload rate limiting going?</p>
-          <p class="bubble fde">
+          <p class="bubble frogg">
             Claude finished it a few minutes ago. Tests pass, and it's asking to push the branch.
           </p>
           <p class="bubble you">Let it push, then have Codex look at the flaky CI job.</p>
-          <p class="bubble fde status">
+          <p class="bubble frogg status">
             <span class="eq"><i></i><i></i><i></i><i></i></span> On it. I'll tell you when it's done.
           </p>
         </div>
@@ -420,7 +420,7 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
         <p class="eyebrow">Pair your phone</p>
         <h2 class="section-title">Scan once.<br />Keep your agents in your pocket.</h2>
         <p class="section-lead">
-          Run <code>fde daemon pair</code> on the host and scan the code with the FDE app. From then on
+          Run <code>frogg daemon pair</code> on the host and scan the code with the Frogg app. From then on
           the phone sees the same agents, timelines and prompts as your desktop.
         </p>
         <ul class="pair-steps">
@@ -452,12 +452,12 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
           <p class="section-lead">
             Branding is data, not a patch series. Describe your product in one <code>brand.json</code>
             and the build carries your name, icon, colours, app IDs, installers and update feed, while
-            you keep pulling upstream FDE.
+            you keep pulling upstream Frogg.
           </p>
           <ol class="yours-steps">
             <li>
               <span aria-hidden="true">1</span>
-              <div><strong>Fork</strong> <code>frogg-app/fde</code> on GitHub</div>
+              <div><strong>Fork</strong> <code>frogg-app/frogg</code> on GitHub</div>
             </li>
             <li>
               <span aria-hidden="true">2</span>
@@ -550,7 +550,7 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
     { name: "Acme Studio", accent: "#c4b5fd" },
     { name: "Ember Code", accent: "#fb923c" },
     { name: "Moss Dev", accent: "#4ade80" },
-    { name: "FDE", accent: "#25b5c8" },
+    { name: "Frogg", accent: "#25b5c8" },
   ];
   if (demo && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
     let i = 0;
@@ -657,8 +657,8 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
     inset: 0;
     z-index: -1;
     background-image:
-      linear-gradient(var(--fde-border) 1px, transparent 1px),
-      linear-gradient(90deg, var(--fde-border) 1px, transparent 1px);
+      linear-gradient(var(--frogg-border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--frogg-border) 1px, transparent 1px);
     background-size: 56px 56px;
     mask-image: radial-gradient(ellipse 70% 55% at 50% 30%, #000 20%, transparent 75%);
     opacity: 0.6;
@@ -672,7 +672,7 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
   .logo-wrap {
     position: relative;
     margin-bottom: 1.25rem;
-    animation: float-in 900ms var(--fde-ease) both;
+    animation: float-in 900ms var(--frogg-ease) both;
   }
   .hero-logo {
     position: relative;
@@ -716,19 +716,19 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
     margin: 0 0 1.25rem;
     padding: 0.35rem 0.85rem;
     border-radius: 999px;
-    border: 1px solid var(--fde-border-strong);
-    background: color-mix(in srgb, var(--fde-bg-elevated) 70%, transparent);
+    border: 1px solid var(--frogg-border-strong);
+    background: color-mix(in srgb, var(--frogg-bg-elevated) 70%, transparent);
     font-size: 0.82rem;
     font-weight: 500;
-    color: var(--fde-text-muted);
-    animation: float-in 700ms var(--fde-ease) 80ms both;
+    color: var(--frogg-text-muted);
+    animation: float-in 700ms var(--frogg-ease) 80ms both;
   }
   .badge-dot {
     width: 0.45rem;
     height: 0.45rem;
     border-radius: 50%;
-    background: var(--fde-success);
-    box-shadow: 0 0 10px var(--fde-success);
+    background: var(--frogg-success);
+    box-shadow: 0 0 10px var(--frogg-success);
   }
   h1 {
     margin: 0;
@@ -737,15 +737,15 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
     letter-spacing: -0.045em;
     font-weight: 820;
     text-wrap: balance;
-    animation: float-in 800ms var(--fde-ease) 140ms both;
+    animation: float-in 800ms var(--frogg-ease) 140ms both;
   }
   .lead {
     max-width: 42rem;
     margin: 1.4rem auto 0;
     font-size: clamp(1.08rem, 2vw, 1.3rem);
-    color: var(--fde-text-muted);
+    color: var(--frogg-text-muted);
     text-wrap: pretty;
-    animation: float-in 800ms var(--fde-ease) 220ms both;
+    animation: float-in 800ms var(--frogg-ease) 220ms both;
   }
   .hero-cta {
     display: flex;
@@ -753,17 +753,17 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
     justify-content: center;
     gap: 0.75rem;
     margin-top: 2rem;
-    animation: float-in 800ms var(--fde-ease) 300ms both;
+    animation: float-in 800ms var(--frogg-ease) 300ms both;
   }
   .hero-install {
     width: min(100%, 34rem);
     margin-top: 1.5rem;
-    animation: float-in 800ms var(--fde-ease) 380ms both;
+    animation: float-in 800ms var(--frogg-ease) 380ms both;
   }
   .install-note {
     margin: 0.6rem 0 0;
     font-size: 0.85rem;
-    color: var(--fde-text-faint);
+    color: var(--frogg-text-faint);
   }
   .install-note code {
     font-size: 0.8rem;
@@ -771,7 +771,7 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
   .stage {
     margin-top: clamp(3rem, 7vw, 4.5rem);
     perspective: 1600px;
-    animation: float-in 1000ms var(--fde-ease) 450ms both;
+    animation: float-in 1000ms var(--frogg-ease) 450ms both;
   }
   .window-tilt {
     max-width: 62rem;
@@ -812,7 +812,7 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
     margin: 0 0 1.25rem;
     font-size: 0.9rem;
     font-weight: 600;
-    color: var(--fde-text-faint);
+    color: var(--frogg-text-faint);
   }
   .provider-list {
     list-style: none;
@@ -829,14 +829,14 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
     gap: 0.5rem;
     padding: 0.5rem 0.95rem;
     border-radius: 999px;
-    border: 1px solid var(--fde-border);
-    background: var(--fde-bg-elevated);
+    border: 1px solid var(--frogg-border);
+    background: var(--frogg-bg-elevated);
     font-size: 0.92rem;
     font-weight: 550;
-    color: var(--fde-text);
+    color: var(--frogg-text);
   }
   .provider-list svg {
-    color: var(--fde-text-muted);
+    color: var(--frogg-text-muted);
   }
 
   /* ---------- Features ---------- */
@@ -855,17 +855,17 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
     gap: 0.35rem;
     width: 100%;
     padding: 1.1rem 1.25rem;
-    border-radius: var(--fde-radius-lg);
-    border: 1px solid color-mix(in srgb, var(--fde-accent) 55%, transparent);
+    border-radius: var(--frogg-radius-lg);
+    border: 1px solid color-mix(in srgb, var(--frogg-accent) 55%, transparent);
     background:
-      radial-gradient(120% 140% at 50% 0%, var(--fde-accent-soft), transparent 60%),
-      var(--fde-bg-elevated);
-    box-shadow: 0 0 60px -20px var(--fde-accent-glow);
+      radial-gradient(120% 140% at 50% 0%, var(--frogg-accent-soft), transparent 60%),
+      var(--frogg-bg-elevated);
+    box-shadow: 0 0 60px -20px var(--frogg-accent-glow);
     text-align: center;
   }
   .node-kicker {
     font-size: 0.78rem;
-    color: var(--fde-text-faint);
+    color: var(--frogg-text-faint);
   }
   .daemon-node strong {
     font-size: 1.25rem;
@@ -881,8 +881,8 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
     padding: 0.15rem 0.6rem;
     border-radius: 999px;
     font-size: 0.78rem;
-    background: var(--fde-surface-2);
-    color: var(--fde-text-muted);
+    background: var(--frogg-surface-2);
+    color: var(--frogg-text-muted);
   }
   .links {
     width: 100%;
@@ -895,7 +895,7 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
   }
   .links path {
     fill: none;
-    stroke: var(--fde-accent);
+    stroke: var(--frogg-accent);
     stroke-width: 1.5;
     vector-effect: non-scaling-stroke;
     stroke-dasharray: 5 6;
@@ -918,9 +918,9 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
   }
   .clients li {
     padding: 0.6rem 0.25rem;
-    border-radius: var(--fde-radius);
-    border: 1px solid var(--fde-border);
-    background: var(--fde-bg-elevated);
+    border-radius: var(--frogg-radius);
+    border: 1px solid var(--frogg-border);
+    background: var(--frogg-bg-elevated);
     text-align: center;
     font-size: 0.88rem;
     font-weight: 600;
@@ -935,14 +935,14 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
   }
   .js .feature.is-visible {
     transition:
-      transform var(--fde-med) var(--fde-ease),
-      border-color var(--fde-med) var(--fde-ease),
-      box-shadow var(--fde-med) var(--fde-ease);
+      transform var(--frogg-med) var(--frogg-ease),
+      border-color var(--frogg-med) var(--frogg-ease),
+      box-shadow var(--frogg-med) var(--frogg-ease);
   }
   .feature:hover {
     transform: translateY(-3px);
-    border-color: color-mix(in srgb, var(--fde-accent) 45%, transparent);
-    box-shadow: var(--fde-shadow-lg);
+    border-color: color-mix(in srgb, var(--frogg-accent) 45%, transparent);
+    box-shadow: var(--frogg-shadow-lg);
   }
   .feature-icon {
     display: inline-grid;
@@ -950,12 +950,12 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
     width: 2.6rem;
     height: 2.6rem;
     border-radius: 0.75rem;
-    color: var(--fde-accent-bright);
-    background: var(--fde-accent-soft);
-    border: 1px solid color-mix(in srgb, var(--fde-accent) 30%, transparent);
+    color: var(--frogg-accent-bright);
+    background: var(--frogg-accent-soft);
+    border: 1px solid color-mix(in srgb, var(--frogg-accent) 30%, transparent);
   }
   :global([data-theme="light"]) .feature-icon {
-    color: var(--fde-accent);
+    color: var(--frogg-accent);
   }
   .feature h3 {
     margin: 1rem 0 0.4rem;
@@ -964,13 +964,13 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
   }
   .feature p {
     margin: 0;
-    color: var(--fde-text-muted);
+    color: var(--frogg-text-muted);
     font-size: 0.96rem;
   }
 
   /* ---------- Download ---------- */
   .download {
-    background: radial-gradient(60rem 32rem at 50% 38%, var(--fde-accent-soft), transparent 70%);
+    background: radial-gradient(60rem 32rem at 50% 38%, var(--frogg-accent-soft), transparent 70%);
   }
   .center-head {
     text-align: center;
@@ -1001,7 +1001,7 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
   }
   .install-panel p {
     margin: 0.25rem 0 0;
-    color: var(--fde-text-muted);
+    color: var(--frogg-text-muted);
     font-size: 0.93rem;
   }
   .step-num {
@@ -1011,8 +1011,8 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
     width: 1.9rem;
     height: 1.9rem;
     border-radius: 50%;
-    background: var(--fde-accent);
-    color: var(--fde-accent-fg);
+    background: var(--frogg-accent);
+    color: var(--frogg-accent-fg);
     font-weight: 750;
     font-size: 0.9rem;
   }
@@ -1040,27 +1040,27 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
     gap: 0.35rem 0.9rem;
     height: 100%;
     padding: 1rem 1.1rem;
-    color: var(--fde-text) !important;
+    color: var(--frogg-text) !important;
     text-decoration: none;
     box-shadow: none;
     transition:
-      transform var(--fde-med) var(--fde-ease),
-      border-color var(--fde-fast) var(--fde-ease),
-      box-shadow var(--fde-med) var(--fde-ease);
+      transform var(--frogg-med) var(--frogg-ease),
+      border-color var(--frogg-fast) var(--frogg-ease),
+      box-shadow var(--frogg-med) var(--frogg-ease);
   }
   .platform:hover {
     transform: translateY(-2px);
-    border-color: var(--fde-accent);
-    box-shadow: var(--fde-shadow);
+    border-color: var(--frogg-accent);
+    box-shadow: var(--frogg-shadow);
   }
   .platform:active {
     transform: scale(0.98);
   }
   .platform.is-yours {
-    border-color: var(--fde-accent);
+    border-color: var(--frogg-accent);
     background:
-      radial-gradient(120% 120% at 0% 0%, var(--fde-accent-soft), transparent 60%),
-      var(--fde-bg-elevated);
+      radial-gradient(120% 120% at 0% 0%, var(--frogg-accent-soft), transparent 60%),
+      var(--frogg-bg-elevated);
   }
   .platform-icon {
     grid-row: span 2;
@@ -1069,8 +1069,8 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
     width: 2.9rem;
     height: 2.9rem;
     border-radius: 0.8rem;
-    background: var(--fde-surface-2);
-    color: var(--fde-text);
+    background: var(--frogg-surface-2);
+    color: var(--frogg-text);
   }
   .platform-text {
     display: grid;
@@ -1080,19 +1080,19 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
   }
   .platform-text span {
     font-size: 0.84rem;
-    color: var(--fde-text-muted);
+    color: var(--frogg-text-muted);
   }
   .platform-cta {
     font-size: 0.85rem;
     font-weight: 600;
-    color: var(--fde-accent-bright);
+    color: var(--frogg-accent-bright);
   }
   :global([data-theme="light"]) .platform-cta {
-    color: var(--fde-accent);
+    color: var(--frogg-accent);
   }
   .platform .arrow {
     display: inline-block;
-    transition: transform var(--fde-med) var(--fde-ease);
+    transition: transform var(--frogg-med) var(--frogg-ease);
   }
   .platform:hover .arrow {
     transform: translateX(3px);
@@ -1105,8 +1105,8 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
     border-radius: 999px;
     font-size: 0.7rem;
     font-weight: 650;
-    color: var(--fde-accent-fg);
-    background: var(--fde-accent);
+    color: var(--frogg-accent-fg);
+    background: var(--frogg-accent);
   }
   .your-os[hidden] {
     display: none;
@@ -1116,7 +1116,7 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
     margin: 1.25rem auto 0;
     text-align: center;
     font-size: 0.88rem;
-    color: var(--fde-text-faint);
+    color: var(--frogg-text-faint);
   }
 
   /* ---------- Companion ---------- */
@@ -1147,7 +1147,7 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
   .ticks li {
     position: relative;
     padding-left: 1.9rem;
-    color: var(--fde-text-muted);
+    color: var(--frogg-text-muted);
   }
   .ticks li::before {
     content: "";
@@ -1160,7 +1160,7 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
     background:
       url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m6 12.5 4 4 8-9' fill='none' stroke='%2325b5c8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
         center / 70% no-repeat,
-      var(--fde-accent-soft);
+      var(--frogg-accent-soft);
   }
   .companion-visual {
     position: relative;
@@ -1263,8 +1263,8 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
     opacity: 0;
     transform: translateY(8px);
     transition:
-      opacity 500ms var(--fde-ease),
-      transform 500ms var(--fde-ease);
+      opacity 500ms var(--frogg-ease),
+      transform 500ms var(--frogg-ease);
   }
   .js .is-visible .bubble {
     opacity: 1;
@@ -1281,13 +1281,13 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
   }
   .bubble.you {
     justify-self: end;
-    background: var(--fde-surface-2);
+    background: var(--frogg-surface-2);
     border-bottom-right-radius: 0.3rem;
   }
-  .bubble.fde {
+  .bubble.frogg {
     justify-self: start;
-    background: var(--fde-accent-soft);
-    border: 1px solid color-mix(in srgb, var(--fde-accent) 30%, transparent);
+    background: var(--frogg-accent-soft);
+    border: 1px solid color-mix(in srgb, var(--frogg-accent) 30%, transparent);
     border-bottom-left-radius: 0.3rem;
   }
   .bubble.status {
@@ -1305,7 +1305,7 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
     width: 3px;
     height: 100%;
     border-radius: 2px;
-    background: var(--fde-accent);
+    background: var(--frogg-accent);
     animation: eq 900ms ease-in-out infinite;
   }
   .eq i:nth-child(2) {
@@ -1340,12 +1340,12 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
   .note code,
   .install-panel code,
   .yours-copy code {
-    font-family: var(--fde-font-mono);
+    font-family: var(--frogg-font-mono);
     font-size: 0.88em;
     padding: 0.1rem 0.35rem;
     border-radius: 0.35rem;
-    background: var(--fde-surface-2);
-    color: var(--fde-text);
+    background: var(--frogg-surface-2);
+    color: var(--frogg-text);
   }
   .pair-steps {
     list-style: none;
@@ -1356,19 +1356,19 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
   }
   .pair-steps li {
     padding: 0.75rem 1rem;
-    border-radius: var(--fde-radius);
-    border: 1px solid var(--fde-border);
-    background: var(--fde-bg-elevated);
-    color: var(--fde-text-muted);
+    border-radius: var(--frogg-radius);
+    border: 1px solid var(--frogg-border);
+    background: var(--frogg-bg-elevated);
+    color: var(--frogg-text-muted);
   }
   .pair-steps strong {
-    color: var(--fde-text);
+    color: var(--frogg-text);
     margin-right: 0.25rem;
   }
   .note {
     margin: 0 0 1.75rem;
     font-size: 0.9rem;
-    color: var(--fde-text-faint);
+    color: var(--frogg-text-faint);
   }
   .phone-wrap {
     position: relative;
@@ -1386,7 +1386,7 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
     box-shadow:
       0 0 0 1px rgb(255 255 255 / 0.12) inset,
       0 50px 100px -30px rgb(0 0 0 / 0.7),
-      0 0 90px -30px var(--fde-accent-glow);
+      0 0 90px -30px var(--frogg-accent-glow);
     transform: rotate(-4deg);
   }
   @supports (animation-timeline: view()) {
@@ -1475,7 +1475,7 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
   }
   .ph-line code,
   .ph-card code {
-    font-family: var(--fde-font-mono);
+    font-family: var(--frogg-font-mono);
     font-size: 0.7rem;
     color: #e9efee;
   }
@@ -1538,7 +1538,7 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
     color: #111;
     font-size: 0.72rem;
     font-weight: 650;
-    box-shadow: var(--fde-shadow-lg);
+    box-shadow: var(--frogg-shadow-lg);
     transform: rotate(4deg);
   }
   .qr {
@@ -1562,8 +1562,8 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
     padding: clamp(1.5rem, 5vw, 3.5rem);
     border-radius: 1.75rem;
     background:
-      linear-gradient(var(--fde-bg-elevated), var(--fde-bg-elevated)) padding-box,
-      linear-gradient(120deg, var(--fde-accent-bright), var(--fde-accent) 40%, var(--fde-violet))
+      linear-gradient(var(--frogg-bg-elevated), var(--frogg-bg-elevated)) padding-box,
+      linear-gradient(120deg, var(--frogg-accent-bright), var(--frogg-accent) 40%, var(--frogg-violet))
         border-box;
     border: 1.5px solid transparent;
     overflow: hidden;
@@ -1582,7 +1582,7 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
     height: 36rem;
     z-index: -1;
     border-radius: 50%;
-    background: radial-gradient(closest-side, var(--fde-accent-glow), transparent);
+    background: radial-gradient(closest-side, var(--frogg-accent-glow), transparent);
     opacity: 0.5;
     animation: glow 6s ease-in-out infinite alternate;
   }
@@ -1597,7 +1597,7 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
     display: flex;
     align-items: baseline;
     gap: 0.8rem;
-    color: var(--fde-text-muted);
+    color: var(--frogg-text-muted);
   }
   .yours-steps li > span {
     flex: none;
@@ -1608,12 +1608,12 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
     border-radius: 50%;
     font-size: 0.8rem;
     font-weight: 750;
-    color: var(--fde-accent-fg);
-    background: var(--fde-accent);
+    color: var(--frogg-accent-fg);
+    background: var(--frogg-accent);
     transform: translateY(0.3rem);
   }
   .yours-steps strong {
-    color: var(--fde-text);
+    color: var(--frogg-text);
   }
   .yours-cta {
     display: flex;
@@ -1628,16 +1628,16 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
     min-width: 0;
   }
   .brand-json {
-    border-radius: var(--fde-radius);
+    border-radius: var(--frogg-radius);
     background: #0b0f0f;
     border: 1px solid rgb(255 255 255 / 0.1);
     color: #d7e1df;
     overflow: hidden;
-    box-shadow: var(--fde-shadow);
+    box-shadow: var(--frogg-shadow);
   }
   .bj-bar {
     padding: 0.5rem 0.9rem;
-    font: 0.75rem var(--fde-font-mono);
+    font: 0.75rem var(--frogg-font-mono);
     color: #8d9997;
     border-bottom: 1px solid rgb(255 255 255 / 0.07);
   }
@@ -1645,7 +1645,7 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
     margin: 0;
     padding: 0.9rem 1rem;
     overflow-x: auto;
-    font: 0.8rem/1.65 var(--fde-font-mono);
+    font: 0.8rem/1.65 var(--frogg-font-mono);
   }
   .k {
     color: #7fd9e6;
@@ -1664,14 +1664,14 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
     border-radius: 3px;
     vertical-align: -0.1rem;
     background: var(--demo-accent);
-    transition: background-color 500ms var(--fde-ease);
+    transition: background-color 500ms var(--frogg-ease);
   }
   .mini-app {
-    border-radius: var(--fde-radius);
+    border-radius: var(--frogg-radius);
     background: #1b1621;
     border: 1px solid rgb(255 255 255 / 0.1);
     overflow: hidden;
-    box-shadow: var(--fde-shadow-lg);
+    box-shadow: var(--frogg-shadow-lg);
     color: #f5f0fa;
     margin-left: clamp(0rem, 6vw, 3rem);
   }
@@ -1710,7 +1710,7 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
     height: 1.3rem;
     border-radius: 0.35rem;
     background: var(--demo-accent);
-    transition: background-color 500ms var(--fde-ease);
+    transition: background-color 500ms var(--frogg-ease);
   }
   .mini-side span {
     height: 0.55rem;
@@ -1719,7 +1719,7 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
   }
   .mini-side span.on {
     background: color-mix(in srgb, var(--demo-accent) 55%, transparent);
-    transition: background-color 500ms var(--fde-ease);
+    transition: background-color 500ms var(--frogg-ease);
   }
   .mini-main {
     display: grid;
@@ -1744,7 +1744,7 @@ const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
     font-weight: 700;
     color: #111;
     background: var(--demo-accent);
-    transition: background-color 500ms var(--fde-ease);
+    transition: background-color 500ms var(--frogg-ease);
   }
 
   /* ---------- Final ---------- */

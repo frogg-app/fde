@@ -2,11 +2,11 @@
 # Removes only a container owned by this product; mounted state is retained.
 set -euo pipefail
 # BEGIN BRAND DEFAULTS — replaced only in generated distribution scripts.
-BRAND_ID='fde'
-BRAND_NAME='FDE'
-BRAND_APPLICATION_ID='app.frogg.fde'
-BRAND_ENV_PREFIX='FDE'
-BRAND_SERVICE='fde-daemon'
+BRAND_ID='frogg'
+BRAND_NAME='Frogg'
+BRAND_APPLICATION_ID='app.frogg.frogg'
+BRAND_ENV_PREFIX='Frogg'
+BRAND_SERVICE='frogg-daemon'
 BRAND_LEGACY='true'
 # END BRAND DEFAULTS
 key="${BRAND_ENV_PREFIX}_CONTAINER"

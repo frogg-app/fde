@@ -1,23 +1,23 @@
 ---
-name: fde
-description: FDE reference for managing projects, workspaces, workspace scripts, agents, schedules, and heartbeats.
+name: frogg
+description: Frogg reference for managing projects, workspaces, workspace scripts, agents, schedules, and heartbeats.
 ---
 
-FDE is a remote daemon that manages coding agents, terminals. Control it through MCP tools or the CLI.
+Frogg is a remote daemon that manages coding agents, terminals. Control it through MCP tools or the CLI.
 
 ## Projects
 
 Manage the daemon's project registry through the CLI:
 
 ```bash
-fde project create [path]
-fde project ls
-fde project rename <project-id> <name>
-fde project rename <project-id> --reset
-fde project delete <project-id>
+frogg project create [path]
+frogg project ls
+frogg project rename <project-id> <name>
+frogg project rename <project-id> --reset
+frogg project delete <project-id>
 ```
 
-For a local daemon, `project create` defaults to the current directory and resolves relative paths on the CLI machine. With `--host` or `FDE_HOST`, always provide a path; the target daemon interprets it on its own machine. Deleting a project archives its active workspaces and removes the project from FDE without deleting the project directory.
+For a local daemon, `project create` defaults to the current directory and resolves relative paths on the CLI machine. With `--host` or `FROGG_HOST`, always provide a path; the target daemon interprets it on its own machine. Deleting a project archives its active workspaces and removes the project from Frogg without deleting the project directory.
 
 ## Workspaces
 
@@ -25,26 +25,26 @@ For a local daemon, `project create` defaults to the current directory and resol
 
 **`list_workspaces`** — list active workspaces.
 
-**`archive_workspace`** — `{ workspaceId }`. Archives the workspace, its agents, and its terminals. Local directories remain; FDE removes an owned worktree only after its final active workspace reference is archived.
+**`archive_workspace`** — `{ workspaceId }`. Archives the workspace, its agents, and its terminals. Local directories remain; Frogg removes an owned worktree only after its final active workspace reference is archived.
 
 **`rename_workspace`** — `{ workspaceId, name }`. Rename workspace.
 
 ## Workspace scripts
 
-Configured `fde.json` scripts use the same supervised lifecycle from tools and the CLI.
+Configured `frogg.json` scripts use the same supervised lifecycle from tools and the CLI.
 
 **`list_workspace_scripts`** — `{ workspaceId }`. Lists configured scripts with lifecycle, service port, proxy URLs, health, exit code, and terminal ID.
 
-**`start_workspace_script`** — `{ workspaceId, scriptName }`. Starts one configured script through FDE's managed workspace-script launcher and returns its status metadata.
+**`start_workspace_script`** — `{ workspaceId, scriptName }`. Starts one configured script through Frogg's managed workspace-script launcher and returns its status metadata.
 
 **`stop_workspace_script`** — `{ workspaceId, scriptName }`. Stops a running script through its supervised terminal and returns the stopped status metadata.
 
 The matching CLI surface accepts either an explicit workspace ID or resolves the current directory:
 
 ```bash
-fde script ls [--cwd <path> | --workspace <workspace-id>]
-fde script start <name> [--cwd <path> | --workspace <workspace-id>]
-fde script stop <name> [--cwd <path> | --workspace <workspace-id>]
+frogg script ls [--cwd <path> | --workspace <workspace-id>]
+frogg script start <name> [--cwd <path> | --workspace <workspace-id>]
+frogg script stop <name> [--cwd <path> | --workspace <workspace-id>]
 ```
 
 ## Agents
@@ -113,17 +113,17 @@ Don't poll `list_agents` or `get_agent_status` to "check on" a running agent. Th
 The CLI and tools use the same ownership semantics even where their syntax differs:
 
 ```bash
-fde workspace create --isolation worktree --mode branch-off --new-branch fix-x --base main
-fde workspace create --isolation worktree --mode checkout-branch --branch existing-work
-fde workspace create --isolation worktree --mode checkout-pr --pr-number 42
-fde run --provider codex/gpt-5.4 --mode full-access --workspace <workspace-id> "<prompt>"
-fde run --provider codex/gpt-5.4 --mode full-access --new-workspace worktree --worktree-mode branch-off --new-branch fix-x --base main "<prompt>"
-fde send <agent-id> "<follow-up>"
-fde ls
-fde schedule create --cron "*/15 * * * *" "ping main build"
-fde heartbeat create --cron "*/15 * * * *" "check the build"
+frogg workspace create --isolation worktree --mode branch-off --new-branch fix-x --base main
+frogg workspace create --isolation worktree --mode checkout-branch --branch existing-work
+frogg workspace create --isolation worktree --mode checkout-pr --pr-number 42
+frogg run --provider codex/gpt-5.4 --mode full-access --workspace <workspace-id> "<prompt>"
+frogg run --provider codex/gpt-5.4 --mode full-access --new-workspace worktree --worktree-mode branch-off --new-branch fix-x --base main "<prompt>"
+frogg send <agent-id> "<follow-up>"
+frogg ls
+frogg schedule create --cron "*/15 * * * *" "ping main build"
+frogg heartbeat create --cron "*/15 * * * *" "check the build"
 ```
 
-Discover with `fde --help` and `fde <cmd> --help`.
+Discover with `frogg --help` and `frogg <cmd> --help`.
 
-For product questions, setup, logs, version problems, or troubleshooting, use the **fde-help** skill.
+For product questions, setup, logs, version problems, or troubleshooting, use the **frogg-help** skill.

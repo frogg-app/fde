@@ -40,13 +40,13 @@ export function createExecutionGateway({
   }
   const server = createServer((req, res) => {
     const upstream = forward(req);
-    res.setHeader("x-fde-execution-version", runtime.version);
-    if (gatewayVersion) res.setHeader("x-fde-gateway-version", gatewayVersion);
+    res.setHeader("x-frogg-execution-version", runtime.version);
+    if (gatewayVersion) res.setHeader("x-frogg-gateway-version", gatewayVersion);
     upstream.on("response", (response) => {
       res.writeHead(response.statusCode ?? 502, {
         ...response.headers,
-        "x-fde-execution-version": runtime.version,
-        ...(gatewayVersion ? { "x-fde-gateway-version": gatewayVersion } : {}),
+        "x-frogg-execution-version": runtime.version,
+        ...(gatewayVersion ? { "x-frogg-gateway-version": gatewayVersion } : {}),
       });
       response.once("error", () => res.destroy());
       response.pipe(res);

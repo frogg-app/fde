@@ -499,7 +499,7 @@ describe("OpenCodeAgentClient adapter smoke tests", () => {
       }),
     ]);
     // No modeId configured → no agent field: OpenCode must fall back to its
-    // own default agent instead of Fde assuming any particular agent exists.
+    // own default agent instead of Frogg assuming any particular agent exists.
     expect(openCodeClient.calls.sessionPromptAsync[0]).not.toHaveProperty("agent");
 
     await session.close();
@@ -646,8 +646,8 @@ describe("OpenCodeAgentClient adapter smoke tests", () => {
       ],
     };
     runtime.enqueueClient(openCodeClient);
-    const fdeHome = tmpCwd();
-    const opencodeHome = path.join(fdeHome, "opencode-home");
+    const froggHome = tmpCwd();
+    const opencodeHome = path.join(froggHome, "opencode-home");
     const client = new OpenCodeAgentClient(logger, undefined, {
       serverManager: runtime,
       createClient: runtime.createClient,
@@ -688,13 +688,13 @@ describe("OpenCodeAgentClient adapter smoke tests", () => {
       },
     });
     expect(openCodeClient.calls.providerList).toEqual([{ directory: opencodeHome }]);
-    rmSync(fdeHome, { recursive: true, force: true });
+    rmSync(froggHome, { recursive: true, force: true });
   }, 60_000);
 
   test("fetchCatalog releases the acquired server when opencode-home cannot be created", async () => {
     const runtime = new TestOpenCodeHarness();
-    const fdeHome = tmpCwd();
-    const opencodeHome = path.join(fdeHome, "opencode-home");
+    const froggHome = tmpCwd();
+    const opencodeHome = path.join(froggHome, "opencode-home");
     writeFileSync(opencodeHome, "not a directory");
     const client = new OpenCodeAgentClient(logger, undefined, {
       serverManager: runtime,
@@ -706,7 +706,7 @@ describe("OpenCodeAgentClient adapter smoke tests", () => {
 
     expect(runtime.acquisitions).toEqual([{ kind: "current", releaseCount: 1 }]);
     expect(runtime.clientCreations).toEqual([]);
-    rmSync(fdeHome, { recursive: true, force: true });
+    rmSync(froggHome, { recursive: true, force: true });
   });
 
   test("fetchCatalog releases the acquired server when opencode-home cannot be resolved", async () => {
@@ -832,8 +832,8 @@ describe("OpenCodeAgentClient adapter smoke tests", () => {
     openCodeClient.appAgentsResponse = {
       data: [
         {
-          name: "fde-test-custom",
-          description: "Custom agent defined for Fde integration test",
+          name: "frogg-test-custom",
+          description: "Custom agent defined for Frogg integration test",
           mode: "primary",
         },
         { name: "compaction", mode: "subagent" },
@@ -851,12 +851,12 @@ describe("OpenCodeAgentClient adapter smoke tests", () => {
 
     const modes = await session.getAvailableModes();
 
-    expect(modes.map((mode) => mode.id)).toEqual(["fde-test-custom"]);
+    expect(modes.map((mode) => mode.id)).toEqual(["frogg-test-custom"]);
 
-    const custom = modes.find((mode) => mode.id === "fde-test-custom");
+    const custom = modes.find((mode) => mode.id === "frogg-test-custom");
     expect(custom).toBeDefined();
-    expect(custom!.label).toBe("Fde-test-custom");
-    expect(custom!.description).toBe("Custom agent defined for Fde integration test");
+    expect(custom!.label).toBe("Frogg-test-custom");
+    expect(custom!.description).toBe("Custom agent defined for Frogg integration test");
 
     // System agents should not appear as selectable modes
     expect(modes.some((mode) => mode.id === "compaction")).toBe(false);
@@ -1222,7 +1222,7 @@ describe("OpenCode adapter normalization", () => {
         mimeType: "application/github-issue",
         number: 55,
         title: "Improve startup error details",
-        url: "https://github.com/frogg-app/fde/issues/55",
+        url: "https://github.com/frogg-app/frogg/issues/55",
         body: "Issue body",
       },
     ]);
@@ -1290,7 +1290,7 @@ describe("OpenCode adapter startTurn error handling", () => {
         provider: "opencode",
         cwd,
         mcpServers: {
-          fde: {
+          frogg: {
             type: "http",
             url: "http://127.0.0.1:9999/mcp/agents?callerAgentId=test-agent",
           },
@@ -1302,7 +1302,7 @@ describe("OpenCode adapter startTurn error handling", () => {
       expect(openCodeClient.calls.mcpAdd).toEqual([
         {
           directory: cwd,
-          name: "fde",
+          name: "frogg",
           config: {
             type: "remote",
             url: "http://127.0.0.1:9999/mcp/agents?callerAgentId=test-agent",
@@ -1323,7 +1323,7 @@ describe("OpenCode adapter startTurn error handling", () => {
     const openCodeClient = new TestOpenCodeClient();
     openCodeClient.mcpAddResponse = {
       data: {
-        fde: {
+        frogg: {
           status: "failed",
           error: "SSE error: Non-200 status code (400)",
         },
@@ -1341,7 +1341,7 @@ describe("OpenCode adapter startTurn error handling", () => {
         provider: "opencode",
         cwd,
         mcpServers: {
-          fde: {
+          frogg: {
             type: "http",
             url: "http://127.0.0.1:9999/mcp/agents?callerAgentId=test-agent",
           },
@@ -1349,7 +1349,7 @@ describe("OpenCode adapter startTurn error handling", () => {
       });
 
       await expect(collectTurnEvents(streamSession(session, "hello"))).rejects.toThrow(
-        /Failed to add OpenCode MCP server 'fde': SSE error/,
+        /Failed to add OpenCode MCP server 'frogg': SSE error/,
       );
 
       await session.close();
@@ -4308,7 +4308,7 @@ describe("OpenCode provider subagent contract", () => {
     });
     const parent = await client.createSession(
       { provider: "opencode", cwd: "/workspace/repo" },
-      { env: { FDE_AGENT_ID: "parent-agent" } },
+      { env: { FROGG_AGENT_ID: "parent-agent" } },
     );
 
     parentClient.emitEvent({
@@ -4332,7 +4332,7 @@ describe("OpenCode provider subagent contract", () => {
         metadata: { cwd: "/workspace/repo" },
       },
       undefined,
-      { env: { FDE_AGENT_ID: "child-agent" } },
+      { env: { FROGG_AGENT_ID: "child-agent" } },
     );
     return { runtime, provider: client, parent, child, childClient };
   }
@@ -4377,7 +4377,7 @@ describe("OpenCode provider subagent contract", () => {
     });
     const parent = await client.createSession(
       { provider: "opencode", cwd: "/workspace/repo" },
-      { env: { FDE_AGENT_ID: "parent-agent" } },
+      { env: { FROGG_AGENT_ID: "parent-agent" } },
     );
     const events: AgentStreamEvent[] = [];
     parent.subscribe((event) => events.push(event));
@@ -4403,7 +4403,7 @@ describe("OpenCode provider subagent contract", () => {
         metadata: { cwd: "/workspace/repo" },
       },
       undefined,
-      { env: { FDE_AGENT_ID: "child-agent" } },
+      { env: { FROGG_AGENT_ID: "child-agent" } },
     );
     await child.close();
     await parent.close();
@@ -4419,7 +4419,7 @@ describe("OpenCode provider subagent contract", () => {
       },
     });
     expect(runtime.acquisitions).toEqual([
-      { kind: "dedicated", env: { FDE_AGENT_ID: "parent-agent" }, releaseCount: 1 },
+      { kind: "dedicated", env: { FROGG_AGENT_ID: "parent-agent" }, releaseCount: 1 },
       { kind: "existing", url: runtime.server.url, releaseCount: 1 },
     ]);
     expect(runtime.clientCreations).toEqual([
@@ -4748,7 +4748,7 @@ describe("OpenCode provider subagent contract", () => {
         ]);
       });
 
-      await expect(parent.startTurn("Continue from Fde")).rejects.toThrow(
+      await expect(parent.startTurn("Continue from Frogg")).rejects.toThrow(
         "A foreground turn is already active",
       );
       expect(openCode.calls.sessionAbort).toEqual([]);
@@ -4816,7 +4816,7 @@ describe("OpenCode provider subagent contract", () => {
       await parent.close();
     }
   });
-  test("does not adopt late output from an interrupted Fde turn", async () => {
+  test("does not adopt late output from an interrupted Frogg turn", async () => {
     const { parent, openCode } = await createParentSession("ses_parent_interrupted");
     openCode.sessionPromptAsyncEvents = [];
     const events: AgentStreamEvent[] = [];
@@ -4829,7 +4829,7 @@ describe("OpenCode provider subagent contract", () => {
     });
 
     try {
-      await parent.startTurn("Start from Fde");
+      await parent.startTurn("Start from Frogg");
       await parent.interrupt();
 
       for (const event of userMessageEvents({
@@ -6563,7 +6563,7 @@ describe("OpenCode snapshot summary false-idle regression", () => {
     });
     const session = await client.createSession(
       { provider: "opencode", cwd: "/workspace/repo" },
-      { env: { FDE_AGENT_ID: "snapshot-agent" } },
+      { env: { FROGG_AGENT_ID: "snapshot-agent" } },
     );
     const events: AgentStreamEvent[] = [];
     session.subscribe((event) => events.push(event));

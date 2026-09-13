@@ -3,12 +3,12 @@ import { existsSync, readFileSync, rmSync, statSync } from "node:fs";
 import path from "node:path";
 import { z } from "zod";
 
-import { DAEMON_PERMISSIONS, type DaemonPermission } from "@fde/protocol/messages";
+import { DAEMON_PERMISSIONS, type DaemonPermission } from "@frogg/protocol/messages";
 import { ensurePrivateFile, writePrivateFileAtomicSync } from "./private-files.js";
 
 /**
  * Paired principals and their device credentials, persisted under
- * `$FDE_HOME/principals.json` (mode 0600). The daemon is "claimed" once at
+ * `$FROGG_HOME/principals.json` (mode 0600). The daemon is "claimed" once at
  * least one principal holds a credential; pairing the first device claims it.
  *
  * Credentials are high-entropy random secrets, so they are stored as SHA-256
@@ -79,8 +79,8 @@ function generateId(prefix: string): string {
   return `${prefix}_${randomBytes(9).toString("base64url")}`;
 }
 
-export function createClaimStore(fdeHome: string): ClaimStore {
-  const filePath = path.join(fdeHome, PRINCIPALS_FILENAME);
+export function createClaimStore(froggHome: string): ClaimStore {
+  const filePath = path.join(froggHome, PRINCIPALS_FILENAME);
   let cache: { mtimeMs: number; size: number; value: PrincipalsFile } | null = null;
 
   function read(): PrincipalsFile {

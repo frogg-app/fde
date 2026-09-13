@@ -1,4 +1,4 @@
-import type { ProjectPlacementPayload } from "@fde/protocol/messages";
+import type { ProjectPlacementPayload } from "@frogg/protocol/messages";
 import { deriveProjectKey, deriveProjectName } from "@/utils/agent-grouping";
 
 function normalizeWorkingDirectory(cwd: string): string {
@@ -20,7 +20,7 @@ export function deriveProjectPlacementFromCwd(cwd: string): ProjectPlacementPayl
       currentBranch: null,
       remoteUrl: null,
       worktreeRoot: null,
-      isFdeOwnedWorktree: false,
+      isFroggOwnedWorktree: false,
       mainRepoRoot: null,
     },
   };

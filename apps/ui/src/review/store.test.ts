@@ -117,16 +117,16 @@ describe("normalizePersistedState", () => {
       activeModesByScope: { "review:scope": "base" },
     };
     backing.values.set(
-      "@fde:review-draft-store",
+      "@frogg:review-draft-store",
       JSON.stringify({ state: legacyState, version: 1 }),
     );
     const storage = createValidatedPersistStorage(backing, SerializedReviewDraftStateSchema);
 
-    const stored = await storage.getItem("@fde:review-draft-store");
+    const stored = await storage.getItem("@frogg:review-draft-store");
     const normalized = normalizePersistedState(stored?.state);
 
     expect(normalized.drafts["review:key"]).toEqual([makeComment()]);
-    expect(backing.values.has("@fde:review-draft-store")).toBe(true);
+    expect(backing.values.has("@frogg:review-draft-store")).toBe(true);
   });
 
   it("rejects the complete payload when any draft comment or field is invalid", () => {
@@ -253,7 +253,7 @@ describe("buildReviewAttachmentSnapshot", () => {
       commentCount: 1,
       attachment: {
         type: "review",
-        mimeType: "application/fde-review",
+        mimeType: "application/frogg-review",
         cwd: "/repo",
         mode: "base",
         baseRef: "main",

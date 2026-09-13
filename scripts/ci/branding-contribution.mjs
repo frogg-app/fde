@@ -16,14 +16,14 @@ const generated = tracked.filter(
 if (generated.length)
   throw new Error(`Generated branding must not be committed:\n${generated.join("\n")}`);
 if (
-  changed.some((file) => file.startsWith("brands/fde/")) &&
+  changed.some((file) => file.startsWith("brands/frogg/")) &&
   process.env.ALLOW_OFFICIAL_BRAND_CHANGE !== "1"
 ) {
   // The initial introduction creates the preset; later edits require explicit review labeling.
-  const existed = git(["ls-tree", "--name-only", base, "brands/fde"]).trim();
+  const existed = git(["ls-tree", "--name-only", base, "brands/frogg"]).trim();
   if (existed)
     throw new Error(
-      "Official preset changed. Apply the branding:official review label for an intentional FDE identity/artwork change.",
+      "Official preset changed. Apply the branding:official review label for an intentional Frogg identity/artwork change.",
     );
 }
 const allowed = new Set(
@@ -46,7 +46,7 @@ function literals(file, source) {
         ts.isTemplateHead(node) ||
         ts.isTemplateMiddle(node) ||
         ts.isTemplateTail(node)) &&
-      /\b(?:FDE|Fde)\b|frogg\.app/.test(node.text)
+      /\b(?:Frogg|Frogg)\b|frogg\.app/.test(node.text)
     )
       values.add(node.text);
     ts.forEachChild(node, visit);

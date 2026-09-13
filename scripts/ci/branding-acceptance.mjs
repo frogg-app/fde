@@ -15,7 +15,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const selected = process.env.FDE_BRAND_DIR ?? "brands/fde";
+const selected = process.env.FROGG_BRAND_DIR ?? "brands/frogg";
 const scratch = await mkdtemp(path.join(os.tmpdir(), "brand acceptance "));
 function prepare(directory) {
   execFileSync(
@@ -75,7 +75,7 @@ try {
       "--out-dir",
       releaseOut,
     ],
-    { cwd: root, env: { ...process.env, FDE_BRAND_DIR: scratch }, stdio: "pipe" },
+    { cwd: root, env: { ...process.env, FROGG_BRAND_DIR: scratch }, stdio: "pipe" },
   );
   const artifact = "atlas-1.2.3-linux-x86_64.deb";
   assert.deepEqual(
@@ -87,7 +87,10 @@ try {
   );
   assert.equal(metadata.brand.applicationId, manifest.applicationId);
   assert.equal(metadata.asset, artifact);
-  const skill = await readFile(path.join(root, ".generated/branding/skills/fde/SKILL.md"), "utf8");
+  const skill = await readFile(
+    path.join(root, ".generated/branding/skills/frogg/SKILL.md"),
+    "utf8",
+  );
   const description = skill.match(/^description: (.+)$/m)?.[1];
   assert.equal(
     JSON.parse(description),

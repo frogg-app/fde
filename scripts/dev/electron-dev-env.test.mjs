@@ -13,9 +13,9 @@ test("custom-brand daemon overrides inherited live state and ports", () => {
   });
   assert.equal(env.ACME_HOME, path.join(state, "daemon"));
   assert.equal(env.ACME_LISTEN, "0.0.0.0:0");
-  assert.equal(env.FDE_HOME, env.ACME_HOME);
-  assert.equal(env.FDE_HOME, env.ACME_HOME);
-  assert.equal(env.FDE_ELECTRON_USER_DATA_DIR, path.join(state, "profile"));
+  assert.equal(env.FROGG_HOME, env.ACME_HOME);
+  assert.equal(env.FROGG_HOME, env.ACME_HOME);
+  assert.equal(env.FROGG_ELECTRON_USER_DATA_DIR, path.join(state, "profile"));
   assert.equal(env.PATH, "/test/bin");
 });
 
@@ -23,9 +23,9 @@ test("official-brand daemon also overrides inherited primary listen variable", (
   const env = electronDevEnvironment({
     state: "/isolated",
     port: 18235,
-    brand: { envPrefix: "FDE" },
-    env: { FDE_LISTEN: "0.0.0.0:9999" },
+    brand: { envPrefix: "Frogg" },
+    env: { FROGG_LISTEN: "0.0.0.0:9999" },
   });
-  assert.equal(env.FDE_LISTEN, "0.0.0.0:0");
-  assert.equal(env.FDE_LISTEN, "0.0.0.0:0");
+  assert.equal(env.FROGG_LISTEN, "0.0.0.0:0");
+  assert.equal(env.FROGG_LISTEN, "0.0.0.0:0");
 });

@@ -35,8 +35,8 @@ import { useForgeSearchQuery } from "@/git/use-forge-search-query";
 import { useCheckoutStatusQuery } from "@/git/use-status-query";
 import { ensureCheckoutStatus } from "@/git/checkout-status-cache";
 import { useDaemonConfig } from "@/hooks/use-daemon-config";
-import { resolveTerminalProfiles } from "@fde/protocol/terminal-profiles";
-import type { TerminalProfile } from "@fde/protocol/messages";
+import { resolveTerminalProfiles } from "@frogg/protocol/terminal-profiles";
+import type { TerminalProfile } from "@frogg/protocol/messages";
 import { LaunchControl } from "@/new-workspace-launch/launch-control";
 import { resolveLaunchTarget, type LaunchTarget } from "@/new-workspace-launch/target";
 import { useTerminalComposerState } from "@/new-workspace-launch/composer-state";
@@ -88,9 +88,9 @@ import type { ComposerAttachment } from "@/attachments/types";
 import { useDraftWorkspaceAttachmentScopeKey } from "@/attachments/workspace-attachments-store";
 import type { MessagePayload } from "@/composer/types";
 import type { UserComposerAttachment } from "@/attachments/types";
-import type { AgentAttachment, ForgeSearchItem } from "@fde/protocol/messages";
-import type { CreateFdeWorktreeInput } from "@fde/client/internal/daemon-client";
-import type { AgentProvider } from "@fde/protocol/agent-types";
+import type { AgentAttachment, ForgeSearchItem } from "@frogg/protocol/messages";
+import type { CreateFroggWorktreeInput } from "@frogg/client/internal/daemon-client";
+import type { AgentProvider } from "@frogg/protocol/agent-types";
 import type { WorkspaceDraftTabSetup, WorkspaceTabTarget } from "@/workspace-tabs/model";
 import { isEmptyWorkspaceSubmission, runCreateEmptyWorkspace } from "./new-workspace-empty";
 import {
@@ -781,7 +781,7 @@ interface WorkspaceDraftSubmissionConfig {
 async function createAndMergeWorkspace(input: {
   client: NonNullable<ReturnType<typeof useHostRuntimeClient>>;
   createInput: Parameters<
-    NonNullable<ReturnType<typeof useHostRuntimeClient>>["createFdeWorktree"]
+    NonNullable<ReturnType<typeof useHostRuntimeClient>>["createFroggWorktree"]
   >[0];
   mergeWorkspaces: (
     serverId: string,
@@ -790,7 +790,7 @@ async function createAndMergeWorkspace(input: {
   serverId: string;
   createFailedMessage: string;
 }): Promise<ReturnType<typeof normalizeWorkspaceDescriptor>> {
-  const payload = await input.client.createFdeWorktree(input.createInput);
+  const payload = await input.client.createFroggWorktree(input.createInput);
   if (payload.error || !payload.workspace) {
     throw new Error(payload.error ?? input.createFailedMessage);
   }
@@ -2001,7 +2001,7 @@ function NewWorkspaceForm({
       prompt: string;
       attachments: AgentAttachment[];
       checkoutRequest: PickerCheckoutRequest | undefined;
-    }): CreateFdeWorktreeInput => {
+    }): CreateFroggWorktreeInput => {
       if (!selectedProject) {
         throw new Error("Choose a project");
       }

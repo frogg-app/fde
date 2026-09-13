@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
-import { buildSelfNodeCommand } from "../server/fde-env.js";
+import { buildSelfNodeCommand } from "../server/frogg-env.js";
 import { execCommand, spawnProcess } from "./spawn.js";
 
 const printEnvScript = `
@@ -12,9 +12,9 @@ const keys = [
   "CUSTOM",
   "ELECTRON_NO_ATTACH_CONSOLE",
   "ELECTRON_RUN_AS_NODE",
-  "FDE_DESKTOP_MANAGED",
-  "FDE_NODE_ENV",
-  "FDE_SUPERVISED",
+  "FROGG_DESKTOP_MANAGED",
+  "FROGG_NODE_ENV",
+  "FROGG_SUPERVISED",
 ];
 const values = Object.fromEntries(keys.map((key) => [key, process.env[key] ?? null]));
 console.log(JSON.stringify(values));
@@ -77,14 +77,14 @@ describe("execCommand", () => {
         ELECTRON_RUN_AS_NODE: "0",
         CUSTOM: "from-base",
         PATH: process.env.PATH,
-        FDE_NODE_ENV: "production",
-        FDE_SUPERVISED: "1",
+        FROGG_NODE_ENV: "production",
+        FROGG_SUPERVISED: "1",
       },
       env: {
         CUSTOM: "from-env",
         ELECTRON_NO_ATTACH_CONSOLE: "1",
-        FDE_DESKTOP_MANAGED: "1",
-        FDE_NODE_ENV: "test",
+        FROGG_DESKTOP_MANAGED: "1",
+        FROGG_NODE_ENV: "test",
       },
       envOverlay: {
         CUSTOM: "from-overlay",
@@ -96,20 +96,20 @@ describe("execCommand", () => {
       CUSTOM: "from-overlay",
       ELECTRON_NO_ATTACH_CONSOLE: null,
       ELECTRON_RUN_AS_NODE: null,
-      FDE_DESKTOP_MANAGED: null,
-      FDE_NODE_ENV: null,
-      FDE_SUPERVISED: null,
+      FROGG_DESKTOP_MANAGED: null,
+      FROGG_NODE_ENV: null,
+      FROGG_SUPERVISED: null,
     });
   });
 
   test("does not inherit process.env when env replacement is supplied", async () => {
-    process.env.FDE_TEST_SHOULD_NOT_LEAK = "leaked";
+    process.env.FROGG_TEST_SHOULD_NOT_LEAK = "leaked";
     try {
       const result = await execCommand(
         process.execPath,
         [
           "-e",
-          "console.log(JSON.stringify({ leaked: process.env.FDE_TEST_SHOULD_NOT_LEAK ?? null }))",
+          "console.log(JSON.stringify({ leaked: process.env.FROGG_TEST_SHOULD_NOT_LEAK ?? null }))",
         ],
         {
           env: {
@@ -120,7 +120,7 @@ describe("execCommand", () => {
 
       expect(JSON.parse(result.stdout.trim())).toEqual({ leaked: null });
     } finally {
-      delete process.env.FDE_TEST_SHOULD_NOT_LEAK;
+      delete process.env.FROGG_TEST_SHOULD_NOT_LEAK;
     }
   });
 
@@ -129,11 +129,11 @@ describe("execCommand", () => {
       baseEnv: {
         ELECTRON_RUN_AS_NODE: "0",
         PATH: process.env.PATH,
-        FDE_NODE_ENV: "production",
+        FROGG_NODE_ENV: "production",
       },
       envOverlay: {
         CUSTOM: "spawn-overlay",
-        FDE_SUPERVISED: "1",
+        FROGG_SUPERVISED: "1",
       },
     });
 
@@ -153,23 +153,23 @@ describe("execCommand", () => {
       CUSTOM: "spawn-overlay",
       ELECTRON_NO_ATTACH_CONSOLE: null,
       ELECTRON_RUN_AS_NODE: null,
-      FDE_DESKTOP_MANAGED: null,
-      FDE_NODE_ENV: null,
-      FDE_SUPERVISED: null,
+      FROGG_DESKTOP_MANAGED: null,
+      FROGG_NODE_ENV: null,
+      FROGG_SUPERVISED: null,
     });
   });
 
-  test("internal env mode preserves Fde-owned launcher env", async () => {
+  test("internal env mode preserves Frogg-owned launcher env", async () => {
     const result = await execCommand(process.execPath, ["-e", printEnvScript], {
       envMode: "internal",
       baseEnv: {
         ELECTRON_RUN_AS_NODE: "1",
         PATH: process.env.PATH,
-        FDE_NODE_ENV: "production",
+        FROGG_NODE_ENV: "production",
       },
       envOverlay: {
         CUSTOM: "internal",
-        FDE_SUPERVISED: "1",
+        FROGG_SUPERVISED: "1",
       },
     });
 
@@ -177,9 +177,9 @@ describe("execCommand", () => {
       CUSTOM: "internal",
       ELECTRON_NO_ATTACH_CONSOLE: null,
       ELECTRON_RUN_AS_NODE: "1",
-      FDE_DESKTOP_MANAGED: null,
-      FDE_NODE_ENV: "production",
-      FDE_SUPERVISED: "1",
+      FROGG_DESKTOP_MANAGED: null,
+      FROGG_NODE_ENV: "production",
+      FROGG_SUPERVISED: "1",
     });
   });
 
@@ -210,9 +210,9 @@ describe("execCommand", () => {
       CUSTOM: "from-helper",
       ELECTRON_NO_ATTACH_CONSOLE: null,
       ELECTRON_RUN_AS_NODE: "1",
-      FDE_DESKTOP_MANAGED: null,
-      FDE_NODE_ENV: null,
-      FDE_SUPERVISED: null,
+      FROGG_DESKTOP_MANAGED: null,
+      FROGG_NODE_ENV: null,
+      FROGG_SUPERVISED: null,
     });
   });
 });

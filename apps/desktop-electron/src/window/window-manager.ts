@@ -146,15 +146,15 @@ export function applyMacWindowControlsUpdate(input: {
 }
 
 export function registerWindowManager(input: { mode: DesktopWindowChromeMode }): void {
-  handleDesktopIpc("fde:window:minimize", (event) => {
+  handleDesktopIpc("frogg:window:minimize", (event) => {
     BrowserWindow.fromWebContents(event.sender)?.minimize();
   });
 
-  handleDesktopIpc("fde:window:close", (event) => {
+  handleDesktopIpc("frogg:window:close", (event) => {
     BrowserWindow.fromWebContents(event.sender)?.close();
   });
 
-  handleDesktopIpc("fde:window:toggleMaximize", (event) => {
+  handleDesktopIpc("frogg:window:toggleMaximize", (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (!win) return;
     if (win.isMaximized()) {
@@ -164,21 +164,21 @@ export function registerWindowManager(input: { mode: DesktopWindowChromeMode }):
     }
   });
 
-  handleDesktopIpc("fde:window:isFullscreen", (event) => {
+  handleDesktopIpc("frogg:window:isFullscreen", (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     return win?.isFullScreen() ?? false;
   });
 
-  handleDesktopIpc("fde:window:isMaximized", (event) => {
+  handleDesktopIpc("frogg:window:isMaximized", (event) => {
     return BrowserWindow.fromWebContents(event.sender)?.isMaximized() ?? false;
   });
 
-  handleDesktopIpc("fde:window:setFullscreen", (event, fullscreen: unknown) => {
+  handleDesktopIpc("frogg:window:setFullscreen", (event, fullscreen: unknown) => {
     if (typeof fullscreen !== "boolean") return;
     BrowserWindow.fromWebContents(event.sender)?.setFullScreen(fullscreen);
   });
 
-  handleDesktopIpc("fde:window:setBadgeCount", (_event, count?: unknown) => {
+  handleDesktopIpc("frogg:window:setBadgeCount", (_event, count?: unknown) => {
     if (process.platform === "darwin" || process.platform === "linux") {
       const badgeCount = readBadgeCount(count);
       try {
@@ -193,7 +193,7 @@ export function registerWindowManager(input: { mode: DesktopWindowChromeMode }):
     }
   });
 
-  handleDesktopIpc("fde:window:updateChrome", (event, update?: unknown) => {
+  handleDesktopIpc("frogg:window:updateChrome", (event, update?: unknown) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (!win) {
       return;
@@ -222,7 +222,7 @@ export function setupWindowResizeEvents(win: BrowserWindow): void {
     if (win.isDestroyed() || win.webContents.isDestroyed()) {
       return;
     }
-    win.webContents.send("fde:window:resized", {});
+    win.webContents.send("frogg:window:resized", {});
   };
 
   win.on("resize", notifyResized);

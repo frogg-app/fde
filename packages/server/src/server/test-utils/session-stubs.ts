@@ -1,6 +1,6 @@
 import { vi } from "vitest";
 
-import { getAgentProviderDefinition } from "@fde/protocol/provider-manifest";
+import { getAgentProviderDefinition } from "@frogg/protocol/provider-manifest";
 
 import type {
   AgentMode,
@@ -18,7 +18,7 @@ import type { SessionOptions } from "../session.js";
 import type {
   HubExecutionAgentValidationIssue,
   SessionOutboundMessage,
-} from "@fde/protocol/messages";
+} from "@frogg/protocol/messages";
 import { asInternals, createStub } from "./class-mocks.js";
 
 // ---------------------------------------------------------------------------

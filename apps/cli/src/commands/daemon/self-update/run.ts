@@ -1,5 +1,5 @@
-import { brand } from "@fde/branding";
-import { brandEnv } from "@fde/branding/identity";
+import { brand } from "@frogg/branding";
+import { brandEnv } from "@frogg/branding/identity";
 import { existsSync, renameSync, rmSync } from "node:fs";
 import path from "node:path";
 import { resolveLoopbackHttpBase } from "../daemon-http.js";
@@ -38,7 +38,7 @@ import { spawnDetachedSupervisor } from "./service.js";
 import { DEFAULT_VERIFY_TIMEOUT_MS } from "./verify.js";
 
 /**
- * `fde daemon self-update`: resolve, download, verify, install next to the
+ * `frogg daemon self-update`: resolve, download, verify, install next to the
  * running version, then hand off to the detached `--apply` supervisor. Every
  * step is idempotent: a version already under `versions/` is not downloaded
  * again, and the current version is never re-applied.
@@ -248,7 +248,7 @@ async function installCandidate(
 }
 
 function resolveHttpBase(options: SelfUpdateOptions, env: NodeJS.ProcessEnv): string | null {
-  const listen = env.FDE_LISTEN?.trim() || resolveLocalDaemonState({ home: options.home }).listen;
+  const listen = env.FROGG_LISTEN?.trim() || resolveLocalDaemonState({ home: options.home }).listen;
   return resolveLoopbackHttpBase(listen);
 }
 

@@ -1,4 +1,7 @@
-import type { CheckoutPrStatusResponse, PullRequestTimelineResponse } from "@fde/protocol/messages";
+import type {
+  CheckoutPrStatusResponse,
+  PullRequestTimelineResponse,
+} from "@frogg/protocol/messages";
 import { type Forge, getForgePresentation } from "@/git/forge";
 import type { PresentableCheck } from "@/git/check-presentation";
 import { parseClientForgeFacts } from "@/git/forges";

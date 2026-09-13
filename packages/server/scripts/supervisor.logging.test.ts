@@ -31,7 +31,7 @@ async function runSupervisorFixture(options: {
   stdout: string;
   stderr: string;
 }> {
-  const tempDir = await mkdtemp(path.join(tmpdir(), "fde-supervisor-log-"));
+  const tempDir = await mkdtemp(path.join(tmpdir(), "frogg-supervisor-log-"));
   const logPath = path.join(tempDir, "daemon.log");
   const workerPath = path.join(tempDir, "worker.mjs");
   const runnerPath = path.join(tempDir, "runner.mjs");
@@ -101,19 +101,19 @@ async function runSupervisorFixture(options: {
 
 describe("supervisor durable logging", () => {
   test("resolves rotation defaults", () => {
-    const fdeHome = path.join(path.sep, "tmp", "fde-home");
-    const logFile = resolveSupervisorLogFile(fdeHome, {}, {});
+    const froggHome = path.join(path.sep, "tmp", "frogg-home");
+    const logFile = resolveSupervisorLogFile(froggHome, {}, {});
 
     expect(logFile).toEqual({
-      path: path.join(fdeHome, "daemon.log"),
+      path: path.join(froggHome, "daemon.log"),
       rotate: { maxSize: "10m", maxFiles: 3 },
     });
   });
 
   test("lets persisted rotation override env rotation defaults", () => {
-    const fdeHome = path.join(path.sep, "tmp", "fde-home");
+    const froggHome = path.join(path.sep, "tmp", "frogg-home");
     const logFile = resolveSupervisorLogFile(
-      fdeHome,
+      froggHome,
       {
         log: {
           file: {
@@ -123,30 +123,30 @@ describe("supervisor durable logging", () => {
         },
       },
       {
-        FDE_LOG_ROTATE_SIZE: "200m",
-        FDE_LOG_ROTATE_COUNT: "12",
+        FROGG_LOG_ROTATE_SIZE: "200m",
+        FROGG_LOG_ROTATE_COUNT: "12",
       },
     );
 
     expect(logFile).toEqual({
-      path: path.resolve(fdeHome, "logs", "daemon.log"),
+      path: path.resolve(froggHome, "logs", "daemon.log"),
       rotate: { maxSize: "25m", maxFiles: 4 },
     });
   });
 
   test("uses env rotation when persisted rotation is absent", () => {
-    const fdeHome = path.join(path.sep, "tmp", "fde-home");
+    const froggHome = path.join(path.sep, "tmp", "frogg-home");
     const logFile = resolveSupervisorLogFile(
-      fdeHome,
+      froggHome,
       {},
       {
-        FDE_LOG_ROTATE_SIZE: "50m",
-        FDE_LOG_ROTATE_COUNT: "8",
+        FROGG_LOG_ROTATE_SIZE: "50m",
+        FROGG_LOG_ROTATE_COUNT: "8",
       },
     );
 
     expect(logFile).toEqual({
-      path: path.join(fdeHome, "daemon.log"),
+      path: path.join(froggHome, "daemon.log"),
       rotate: { maxSize: "50m", maxFiles: 8 },
     });
   });
@@ -185,9 +185,9 @@ describe("supervisor durable logging", () => {
     const result = await runSupervisorFixture({
       workerSource: `
         process.on("message", (message) => {
-          if (message?.type === "fde:graceful-shutdown") process.exit(0);
+          if (message?.type === "frogg:graceful-shutdown") process.exit(0);
         });
-        process.send?.({ type: "fde:shutdown", reason: "client_shutdown_rpc" });
+        process.send?.({ type: "frogg:shutdown", reason: "client_shutdown_rpc" });
         setInterval(() => {}, 1000);
       `,
     });
@@ -214,7 +214,7 @@ describe("supervisor durable logging", () => {
         process.stdout.write(\`DESCENDANT_PID=\${descendant.pid}\\n\`);
 
         process.on("message", (message) => {
-          if (message?.type !== "fde:graceful-shutdown") return;
+          if (message?.type !== "frogg:graceful-shutdown") return;
           descendant.once("exit", () => {
             process.stdout.write("GRACEFUL_CLEANUP_RAN\\n");
             process.exit(0);
@@ -222,7 +222,7 @@ describe("supervisor durable logging", () => {
           descendant.kill("SIGTERM");
         });
 
-        process.send?.({ type: "fde:shutdown", reason: "descendant_cleanup_probe" });
+        process.send?.({ type: "frogg:shutdown", reason: "descendant_cleanup_probe" });
         setInterval(() => {}, 1000);
       `,
     });
@@ -249,17 +249,17 @@ describe("supervisor durable logging", () => {
         import { existsSync, writeFileSync } from "node:fs";
 
         process.on("message", (message) => {
-          if (message?.type === "fde:graceful-shutdown") process.exit(0);
+          if (message?.type === "frogg:graceful-shutdown") process.exit(0);
         });
         const marker = process.argv[1] + ".started";
         if (!existsSync(marker)) {
           writeFileSync(marker, "started");
           setTimeout(() => {
-            process.send?.({ type: "fde:shutdown", reason: "silent_worker_test_complete" });
+            process.send?.({ type: "frogg:shutdown", reason: "silent_worker_test_complete" });
           }, 16_000);
           setInterval(() => {}, 1_000);
         } else {
-          process.send?.({ type: "fde:shutdown", reason: "unexpected_silent_worker_restart" });
+          process.send?.({ type: "frogg:shutdown", reason: "unexpected_silent_worker_restart" });
           setInterval(() => {}, 1_000);
         }
       `,
@@ -276,7 +276,7 @@ describe("supervisor durable logging", () => {
     const result = await runSupervisorFixture({
       timeoutMs: 15_000,
       workerSource: `
-          process.send?.({ type: "fde:shutdown", reason: "stalled_worker_shutdown" });
+          process.send?.({ type: "frogg:shutdown", reason: "stalled_worker_shutdown" });
           setInterval(() => {}, 1_000);
         `,
     });
@@ -299,7 +299,7 @@ describe("supervisor durable logging", () => {
           import { existsSync, writeFileSync } from "node:fs";
 
           process.on("message", (message) => {
-            if (message?.type === "fde:graceful-shutdown") process.exit(0);
+            if (message?.type === "frogg:graceful-shutdown") process.exit(0);
           });
           const marker = process.argv[1] + ".started";
           if (!existsSync(marker)) {
@@ -310,10 +310,10 @@ describe("supervisor durable logging", () => {
               { detached: true, stdio: ["ignore", "inherit", "inherit"] },
             );
             descendant.unref();
-            process.send?.({ type: "fde:restart", reason: "stdio_descendant" });
+            process.send?.({ type: "frogg:restart", reason: "stdio_descendant" });
             setInterval(() => {}, 1000);
           } else {
-            process.send?.({ type: "fde:shutdown", reason: "stdio_restart_complete" });
+            process.send?.({ type: "frogg:shutdown", reason: "stdio_restart_complete" });
             setInterval(() => {}, 1000);
           }
         `,

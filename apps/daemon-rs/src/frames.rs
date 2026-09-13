@@ -1,4 +1,4 @@
-//! Binary frame codec, ported from `@fde/protocol/binary-frames`.
+//! Binary frame codec, ported from `@frogg/protocol/binary-frames`.
 //!
 //! Wire format is `[opcode:u8][slot:u8][payload...]` for terminal streams and
 //! file transfers alike. We decode far enough to route and log; payloads stay

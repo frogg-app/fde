@@ -7,10 +7,10 @@ describe("cli-install-path", () => {
       resolveCliInstallSourcePath({
         platform: "darwin",
         isPackaged: true,
-        executablePath: "/Applications/Fde.app/Contents/MacOS/Fde",
-        shimPath: "/Applications/Fde.app/Contents/Resources/bin/fde",
+        executablePath: "/Applications/Frogg.app/Contents/MacOS/Frogg",
+        shimPath: "/Applications/Frogg.app/Contents/Resources/bin/frogg",
       }),
-    ).toBe("/Applications/Fde.app/Contents/Resources/bin/fde");
+    ).toBe("/Applications/Frogg.app/Contents/Resources/bin/frogg");
   });
 
   it("uses the persistent bundled shim for an AppImage", () => {
@@ -18,11 +18,11 @@ describe("cli-install-path", () => {
       resolveCliInstallSourcePath({
         platform: "linux",
         isPackaged: true,
-        executablePath: "/tmp/.mount_fde123/fde",
-        shimPath: "/home/user/.config/FDE Electron/daemon-bundles/0.4.2/bin/fde",
-        appImagePath: "/home/user/Applications/Fde.AppImage",
+        executablePath: "/tmp/.mount_fde123/frogg",
+        shimPath: "/home/user/.config/Frogg Electron/daemon-bundles/0.4.2/bin/frogg",
+        appImagePath: "/home/user/Applications/Frogg.AppImage",
       }),
-    ).toBe("/home/user/.config/FDE Electron/daemon-bundles/0.4.2/bin/fde");
+    ).toBe("/home/user/.config/Frogg Electron/daemon-bundles/0.4.2/bin/frogg");
   });
 
   it("uses the bundled shim for packaged linux installs outside an AppImage", () => {
@@ -30,10 +30,10 @@ describe("cli-install-path", () => {
       resolveCliInstallSourcePath({
         platform: "linux",
         isPackaged: true,
-        executablePath: "/opt/Fde/Fde",
-        shimPath: "/opt/Fde/resources/bin/fde",
+        executablePath: "/opt/Frogg/Frogg",
+        shimPath: "/opt/Frogg/resources/bin/frogg",
       }),
-    ).toBe("/opt/Fde/resources/bin/fde");
+    ).toBe("/opt/Frogg/resources/bin/frogg");
   });
 
   it("falls back to the shim on windows and in development", () => {
@@ -41,18 +41,18 @@ describe("cli-install-path", () => {
       resolveCliInstallSourcePath({
         platform: "win32",
         isPackaged: true,
-        executablePath: "C:\\Users\\user\\AppData\\Local\\Programs\\Fde\\Fde.exe",
-        shimPath: "C:\\Users\\user\\AppData\\Local\\Programs\\Fde\\resources\\bin\\fde.cmd",
+        executablePath: "C:\\Users\\user\\AppData\\Local\\Programs\\Frogg\\Frogg.exe",
+        shimPath: "C:\\Users\\user\\AppData\\Local\\Programs\\Frogg\\resources\\bin\\frogg.cmd",
       }),
-    ).toBe("C:\\Users\\user\\AppData\\Local\\Programs\\Fde\\resources\\bin\\fde.cmd");
+    ).toBe("C:\\Users\\user\\AppData\\Local\\Programs\\Frogg\\resources\\bin\\frogg.cmd");
 
     expect(
       resolveCliInstallSourcePath({
         platform: "linux",
         isPackaged: false,
-        executablePath: "/opt/Fde/fde",
-        shimPath: "/opt/Fde/resources/bin/fde",
+        executablePath: "/opt/Frogg/frogg",
+        shimPath: "/opt/Frogg/resources/bin/frogg",
       }),
-    ).toBe("/opt/Fde/resources/bin/fde");
+    ).toBe("/opt/Frogg/resources/bin/frogg");
   });
 });

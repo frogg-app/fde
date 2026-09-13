@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { Command } from "commander";
 import type { CommandOptions, OutputSchema, SingleResult } from "../../output/index.js";
 import { withOutput } from "../../output/index.js";
@@ -34,7 +34,7 @@ const heartbeatDeleteSchema: OutputSchema<HeartbeatDeleteRow> = {
 };
 
 function requireCallerAgentId(): string {
-  const agentId = process.env.FDE_AGENT_ID?.trim();
+  const agentId = process.env.FROGG_AGENT_ID?.trim();
   if (!agentId) {
     throw new Error(`Heartbeat commands must run inside an ${brand.name} agent`);
   }

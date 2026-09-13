@@ -2,14 +2,14 @@ import { join } from "node:path";
 import type { FileBackedWorkspaceRegistry } from "../workspace-registry.js";
 import { WorkspaceLabelCatalogStore } from "./internal/catalog-store.js";
 import { WorkspaceLabelService } from "./internal/service.js";
-import type { WorkspaceLabelDefinition } from "@fde/protocol/workspace-labels";
+import type { WorkspaceLabelDefinition } from "@frogg/protocol/workspace-labels";
 import { WorkspaceLabelSequence } from "./internal/sequence.js";
 
 export { WorkspaceLabelError, WorkspaceLabelService } from "./internal/service.js";
 export { WorkspaceLabelStorageUncertainError } from "./internal/catalog-store.js";
 
 export function createWorkspaceLabelService(input: {
-  fdeHome: string;
+  froggHome: string;
   workspaceRegistry: FileBackedWorkspaceRegistry;
   writeCatalog?: (filePath: string, labels: readonly WorkspaceLabelDefinition[]) => Promise<void>;
   writeTransaction?: (filePath: string, transaction: unknown) => Promise<void>;
@@ -18,8 +18,8 @@ export function createWorkspaceLabelService(input: {
 }): WorkspaceLabelService {
   return new WorkspaceLabelService(
     new WorkspaceLabelCatalogStore(
-      join(input.fdeHome, "projects", "workspace-labels.json"),
-      join(input.fdeHome, "projects", "workspace-labels.transaction.json"),
+      join(input.froggHome, "projects", "workspace-labels.json"),
+      join(input.froggHome, "projects", "workspace-labels.transaction.json"),
       input.workspaceRegistry,
       input.writeCatalog,
       input.writeTransaction,

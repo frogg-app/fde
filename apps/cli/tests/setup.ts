@@ -1,10 +1,10 @@
 /**
- * Test setup utilities for Fde CLI E2E tests
+ * Test setup utilities for Frogg CLI E2E tests
  *
  * Critical rules from design doc:
  * 1. Port: Random port via 10000 + Math.floor(Math.random() * 50000) - NEVER 9999
  * 2. Protocol: WebSocket ONLY - daemon has no HTTP endpoints
- * 3. Temp dirs: Create temp directories for FDE_HOME and agent --cwd
+ * 3. Temp dirs: Create temp directories for FROGG_HOME and agent --cwd
  * 4. Model: Always --provider claude with haiku model for agent tests
  * 5. Cleanup: Kill daemon and remove temp dirs after each test
  */
@@ -15,9 +15,9 @@ import { tmpdir } from "os";
 import { join } from "path";
 
 const TEST_ENV_DEFAULTS = {
-  FDE_LOCAL_SPEECH_AUTO_DOWNLOAD: process.env.FDE_LOCAL_SPEECH_AUTO_DOWNLOAD ?? "0",
-  FDE_DICTATION_ENABLED: process.env.FDE_DICTATION_ENABLED ?? "0",
-  FDE_VOICE_MODE_ENABLED: process.env.FDE_VOICE_MODE_ENABLED ?? "0",
+  FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD: process.env.FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD ?? "0",
+  FROGG_DICTATION_ENABLED: process.env.FROGG_DICTATION_ENABLED ?? "0",
+  FROGG_VOICE_MODE_ENABLED: process.env.FROGG_VOICE_MODE_ENABLED ?? "0",
 };
 
 function killPidTree(pid: number, signal: NodeJS.Signals): void {
@@ -50,14 +50,14 @@ function killPidTree(pid: number, signal: NodeJS.Signals): void {
 export interface TestContext {
   /** Random port for test daemon (never 9999) */
   port: number;
-  /** Temp directory for FDE_HOME */
-  fdeHome: string;
+  /** Temp directory for FROGG_HOME */
+  froggHome: string;
   /** Temp directory for agent working directory */
   workDir: string;
   /** Running daemon process */
   daemon: ProcessPromise | null;
-  /** Run a fde CLI command against the test daemon */
-  fde: (args: string[]) => ProcessPromise;
+  /** Run a frogg CLI command against the test daemon */
+  frogg: (args: string[]) => ProcessPromise;
   /** Clean up all resources */
   cleanup: () => Promise<void>;
 }
@@ -73,19 +73,19 @@ export function getRandomPort(): number {
 /**
  * Create isolated temp directories for testing
  */
-export async function createTempDirs(): Promise<{ fdeHome: string; workDir: string }> {
-  const fdeHome = await mkdtemp(join(tmpdir(), "fde-test-home-"));
-  const workDir = await mkdtemp(join(tmpdir(), "fde-test-work-"));
-  return { fdeHome, workDir };
+export async function createTempDirs(): Promise<{ froggHome: string; workDir: string }> {
+  const froggHome = await mkdtemp(join(tmpdir(), "frogg-test-home-"));
+  const workDir = await mkdtemp(join(tmpdir(), "frogg-test-work-"));
+  return { froggHome, workDir };
 }
 
 /**
  * Wait for daemon to be ready by testing WebSocket connection
- * Uses `fde agent ls` which connects via WebSocket
+ * Uses `frogg agent ls` which connects via WebSocket
  */
 async function probeDaemon(port: number): Promise<boolean> {
   try {
-    const result = await $`FDE_HOST=localhost:${port} fde agent ls`.nothrow();
+    const result = await $`FROGG_HOST=localhost:${port} frogg agent ls`.nothrow();
     return result.exitCode === 0;
   } catch {
     return false;
@@ -108,10 +108,10 @@ export async function waitForDaemon(port: number, timeout = 30000): Promise<void
 /**
  * Start an isolated test daemon
  */
-export async function startDaemon(port: number, fdeHome: string): Promise<ProcessPromise> {
+export async function startDaemon(port: number, froggHome: string): Promise<ProcessPromise> {
   $.verbose = false;
   const daemon =
-    $`FDE_HOME=${fdeHome} FDE_LISTEN=127.0.0.1:${port} FDE_RELAY_ENABLED=false FDE_LOCAL_SPEECH_AUTO_DOWNLOAD=${TEST_ENV_DEFAULTS.FDE_LOCAL_SPEECH_AUTO_DOWNLOAD} FDE_DICTATION_ENABLED=${TEST_ENV_DEFAULTS.FDE_DICTATION_ENABLED} FDE_VOICE_MODE_ENABLED=${TEST_ENV_DEFAULTS.FDE_VOICE_MODE_ENABLED} CI=true fde daemon start --foreground`.nothrow();
+    $`FROGG_HOME=${froggHome} FROGG_LISTEN=127.0.0.1:${port} FROGG_RELAY_ENABLED=false FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD=${TEST_ENV_DEFAULTS.FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD} FROGG_DICTATION_ENABLED=${TEST_ENV_DEFAULTS.FROGG_DICTATION_ENABLED} FROGG_VOICE_MODE_ENABLED=${TEST_ENV_DEFAULTS.FROGG_VOICE_MODE_ENABLED} CI=true frogg daemon start --foreground`.nothrow();
   return daemon;
 }
 
@@ -120,12 +120,12 @@ export async function startDaemon(port: number, fdeHome: string): Promise<Proces
  */
 export async function createTestContext(): Promise<TestContext> {
   const port = getRandomPort();
-  const { fdeHome, workDir } = await createTempDirs();
+  const { froggHome, workDir } = await createTempDirs();
 
   // Helper to run CLI commands against test daemon
-  const fde = (args: string[]): ProcessPromise => {
+  const frogg = (args: string[]): ProcessPromise => {
     $.verbose = false;
-    return $`FDE_HOST=localhost:${port} FDE_LOCAL_SPEECH_AUTO_DOWNLOAD=${TEST_ENV_DEFAULTS.FDE_LOCAL_SPEECH_AUTO_DOWNLOAD} FDE_DICTATION_ENABLED=${TEST_ENV_DEFAULTS.FDE_DICTATION_ENABLED} FDE_VOICE_MODE_ENABLED=${TEST_ENV_DEFAULTS.FDE_VOICE_MODE_ENABLED} fde ${args}`.nothrow();
+    return $`FROGG_HOST=localhost:${port} FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD=${TEST_ENV_DEFAULTS.FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD} FROGG_DICTATION_ENABLED=${TEST_ENV_DEFAULTS.FROGG_DICTATION_ENABLED} FROGG_VOICE_MODE_ENABLED=${TEST_ENV_DEFAULTS.FROGG_VOICE_MODE_ENABLED} frogg ${args}`.nothrow();
   };
 
   // Cleanup function
@@ -139,16 +139,16 @@ export async function createTestContext(): Promise<TestContext> {
         ctx.daemon.kill();
       }
     }
-    await rm(fdeHome, { recursive: true, force: true });
+    await rm(froggHome, { recursive: true, force: true });
     await rm(workDir, { recursive: true, force: true });
   };
 
   const ctx: TestContext = {
     port,
-    fdeHome,
+    froggHome,
     workDir,
     daemon: null,
-    fde,
+    frogg,
     cleanup,
   };
 
@@ -161,7 +161,7 @@ export async function createTestContext(): Promise<TestContext> {
  */
 export async function createTestContextWithDaemon(): Promise<TestContext> {
   const ctx = await createTestContext();
-  ctx.daemon = await startDaemon(ctx.port, ctx.fdeHome);
+  ctx.daemon = await startDaemon(ctx.port, ctx.froggHome);
   await waitForDaemon(ctx.port);
   return ctx;
 }

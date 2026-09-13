@@ -4,10 +4,10 @@ import type pino from "pino";
 import type { SessionInboundMessage, SessionOutboundMessage } from "../../messages.js";
 import type { ProjectRegistry } from "../../workspace-registry.js";
 import {
-  readFdeConfigForEdit,
-  writeFdeConfigForEdit,
+  readFroggConfigForEdit,
+  writeFroggConfigForEdit,
   type ProjectConfigRpcError,
-} from "../../../utils/fde-config-file.js";
+} from "../../../utils/frogg-config-file.js";
 import { hasUncommittedWorktreeSetupChanges } from "./worktree-setup-commit-status.js";
 
 export interface ProjectConfigSessionHost {
@@ -21,7 +21,7 @@ export interface ProjectConfigSessionOptions {
 }
 
 /**
- * A client's read/write surface for a project's on-disk fde.json. Resolves the
+ * A client's read/write surface for a project's on-disk frogg.json. Resolves the
  * request's repoRoot against the known (non-archived) project roots — accepting a
  * trailing slash or a symlink via realpath — then reads or writes the config
  * substrate and emits the matching response. Reaches no state beyond the injected
@@ -47,7 +47,7 @@ export class ProjectConfigSession {
       return;
     }
 
-    const result = readFdeConfigForEdit(repoRoot);
+    const result = readFroggConfigForEdit(repoRoot);
     if (!result.ok) {
       this.logger.warn(
         { repoRoot, requestId: msg.requestId, outcome: result.error.code },
@@ -94,7 +94,7 @@ export class ProjectConfigSession {
       { repoRoot, requestId: msg.requestId, outcome: "write_attempt" },
       "Writing project config",
     );
-    const result = writeFdeConfigForEdit({
+    const result = writeFroggConfigForEdit({
       repoRoot,
       config: msg.config,
       expectedRevision: msg.expectedRevision,

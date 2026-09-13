@@ -5,7 +5,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, test } from "vitest"
 
 import type { AgentTimelineItem } from "../agent/agent-sdk-types.js";
 import { DaemonClient } from "../test-utils/daemon-client.js";
-import { createTestFdeDaemon, type TestFdeDaemon } from "../test-utils/fde-daemon.js";
+import { createTestFroggDaemon, type TestFroggDaemon } from "../test-utils/frogg-daemon.js";
 import {
   canRunRealProvider,
   createRealProviderClients,
@@ -21,7 +21,7 @@ import {
 
 interface ClaudeRewindHarness {
   client: DaemonClient;
-  daemon: TestFdeDaemon;
+  daemon: TestFroggDaemon;
 }
 
 interface ClaudeRewindSession {
@@ -133,8 +133,8 @@ function buildTurns(scenario: RewindCase): ClaudeTurnSpec[] {
     const index = (offset + 1) as 1 | 2 | 3;
     return {
       index,
-      promptToken: `FDE_RW_${prefix}_T${index}`,
-      doneToken: `FDE_RW_${prefix}_T${index}_DONE`,
+      promptToken: `FROGG_RW_${prefix}_T${index}`,
+      doneToken: `FROGG_RW_${prefix}_T${index}_DONE`,
       fileName: `turn-${index}.txt`,
       content: `turn ${index} preserved content\n`,
     };
@@ -224,7 +224,7 @@ describe("daemon E2E (real claude) - rewind", () => {
       return;
     }
     const logger = pino({ level: "silent" });
-    const daemon = await createTestFdeDaemon({
+    const daemon = await createTestFroggDaemon({
       agentClients: createRealProviderClients(["claude"], logger),
       logger,
     });
@@ -319,16 +319,16 @@ describe("daemon E2E (real claude) - rewind", () => {
       await sendClaudeReplyTurn(
         harness,
         session,
-        "FDE_RW_NO_ROUNDTRIP_T1. Reply exactly: FDE_RW_NO_ROUNDTRIP_T1_DONE",
+        "FROGG_RW_NO_ROUNDTRIP_T1. Reply exactly: FROGG_RW_NO_ROUNDTRIP_T1_DONE",
       );
       await sendClaudeReplyTurn(
         harness,
         session,
-        "FDE_RW_NO_ROUNDTRIP_T2. Reply exactly: FDE_RW_NO_ROUNDTRIP_T2_DONE",
+        "FROGG_RW_NO_ROUNDTRIP_T2. Reply exactly: FROGG_RW_NO_ROUNDTRIP_T2_DONE",
       );
 
       const beforeTimeline = await fetchTimelineItems(harness.client, session.agentId);
-      const targetMessageId = userMessageIdForToken(beforeTimeline, "FDE_RW_NO_ROUNDTRIP_T2");
+      const targetMessageId = userMessageIdForToken(beforeTimeline, "FROGG_RW_NO_ROUNDTRIP_T2");
       const sessionIdBeforeRewind = await runtimeSessionId(harness, session);
       expectSessionId(sessionIdBeforeRewind);
 
@@ -340,7 +340,7 @@ describe("daemon E2E (real claude) - rewind", () => {
       await sendClaudeReplyTurn(
         harness,
         session,
-        "FDE_RW_NO_ROUNDTRIP_T3. Reply exactly: FDE_RW_NO_ROUNDTRIP_T3_DONE",
+        "FROGG_RW_NO_ROUNDTRIP_T3. Reply exactly: FROGG_RW_NO_ROUNDTRIP_T3_DONE",
       );
 
       const finalSessionId = await runtimeSessionId(harness, session);

@@ -1,12 +1,12 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { appendFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
-import { createFdeDaemon } from "./bootstrap.js";
+import { createFroggDaemon } from "./bootstrap.js";
 import { loadConfig } from "./config.js";
 import { parseDaemonCliOverrides } from "./daemon-cli-overrides.js";
 import { getExecutionServiceStatus } from "./execution-service/client.js";
 import { createGatewayDaemon } from "./execution-service/gateway-daemon.js";
-import { resolveFdeHome } from "./fde-home.js";
+import { resolveFroggHome } from "./frogg-home.js";
 import { createRootLogger } from "./logger.js";
 import type { DaemonLifecycleIntent } from "./bootstrap.js";
 import { getProcessDiagnostics } from "./process-diagnostics.js";
@@ -15,20 +15,20 @@ process.title = `${brand.name} Daemon`;
 
 type SupervisorLifecycleMessage =
   | {
-      type: "fde:shutdown";
+      type: "frogg:shutdown";
       reason: string;
     }
   | {
-      type: "fde:ready";
+      type: "frogg:ready";
       listen: string;
     }
   | {
-      type: "fde:restart";
+      type: "frogg:restart";
       reason?: string;
     };
 
 interface BootstrapResult {
-  fdeHome: string;
+  froggHome: string;
   logger: ReturnType<typeof createRootLogger>;
   config: ReturnType<typeof loadConfig>;
 }
@@ -46,12 +46,12 @@ function isPidAlive(pid: number): boolean {
 }
 
 function writeWorkerLifecycleLog(
-  fdeHome: string,
+  froggHome: string,
   message: string,
   fields: Record<string, unknown> = {},
 ): void {
   try {
-    const logPath = path.join(fdeHome, "daemon.log");
+    const logPath = path.join(froggHome, "daemon.log");
     mkdirSync(path.dirname(logPath), { recursive: true });
     appendFileSync(
       logPath,
@@ -72,10 +72,10 @@ function writeWorkerLifecycleLog(
 
 function bootstrapFromEnvironment(): BootstrapResult {
   try {
-    const fdeHome = resolveFdeHome();
-    const config = loadConfig(fdeHome, { cli: parseDaemonCliOverrides(process.argv.slice(2)) });
-    const logger = createRootLogger({ log: config.log }, { fdeHome, file: false });
-    return { fdeHome, logger, config };
+    const froggHome = resolveFroggHome();
+    const config = loadConfig(froggHome, { cli: parseDaemonCliOverrides(process.argv.slice(2)) });
+    const logger = createRootLogger({ log: config.log }, { froggHome, file: false });
+    return { froggHome, logger, config };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     process.stderr.write(`${message}\n`);
@@ -84,9 +84,9 @@ function bootstrapFromEnvironment(): BootstrapResult {
 }
 
 async function main() {
-  const { fdeHome, logger, config } = bootstrapFromEnvironment();
+  const { froggHome, logger, config } = bootstrapFromEnvironment();
   let daemon: Pick<
-    Awaited<ReturnType<typeof createFdeDaemon>>,
+    Awaited<ReturnType<typeof createFroggDaemon>>,
     "start" | "stop" | "getListenTarget"
   > | null = null;
   let shutdownPromise: Promise<number> | null = null;
@@ -170,7 +170,7 @@ async function main() {
         { clientId: intent.clientId, requestId: intent.requestId, reason: intent.reason },
         "Shutdown requested via websocket",
       );
-      if (sendSupervisorLifecycleMessage({ type: "fde:shutdown", reason: intent.reason })) {
+      if (sendSupervisorLifecycleMessage({ type: "frogg:shutdown", reason: intent.reason })) {
         return;
       }
       beginShutdown("shutdown lifecycle intent", { reason: intent.reason });
@@ -183,7 +183,7 @@ async function main() {
     );
     if (
       sendSupervisorLifecycleMessage({
-        type: "fde:restart",
+        type: "frogg:restart",
         ...(intent.reason ? { reason: intent.reason } : {}),
       })
     ) {
@@ -209,7 +209,7 @@ async function main() {
       }
       supervisorExitRequested = true;
 
-      writeWorkerLifecycleLog(fdeHome, "Supervisor liveness lost; worker exiting", {
+      writeWorkerLifecycleLog(froggHome, "Supervisor liveness lost; worker exiting", {
         reason,
         ...getProcessDiagnostics(),
         supervisorPid,
@@ -229,11 +229,11 @@ async function main() {
         return;
       }
       const type = (message as { type?: unknown }).type;
-      if (type === "fde:supervisor-heartbeat") {
+      if (type === "frogg:supervisor-heartbeat") {
         lastSupervisorHeartbeatAt = Date.now();
         return;
       }
-      if (type === "fde:graceful-shutdown") {
+      if (type === "frogg:graceful-shutdown") {
         const reason = (message as { reason?: unknown }).reason;
         beginShutdown("Supervisor shutdown request", {
           reason: typeof reason === "string" ? reason : "supervisor_requested_shutdown",
@@ -267,11 +267,11 @@ async function main() {
   try {
     // Retained execution remains authoritative even if a subsequent launcher omits the opt-in.
     const independent =
-      process.env.FDE_EXECUTION_SERVICE === "1" ||
-      (await getExecutionServiceStatus(fdeHome)) !== null;
+      process.env.FROGG_EXECUTION_SERVICE === "1" ||
+      (await getExecutionServiceStatus(froggHome)) !== null;
     daemon = independent
       ? await createGatewayDaemon(config, logger, handleLifecycleIntent)
-      : await createFdeDaemon(
+      : await createFroggDaemon(
           {
             ...config,
             onLifecycleIntent: handleLifecycleIntent,
@@ -293,7 +293,7 @@ async function main() {
     if (!listen) {
       throw new Error("Daemon did not expose a listen target after startup");
     }
-    sendSupervisorLifecycleMessage({ type: "fde:ready", listen });
+    sendSupervisorLifecycleMessage({ type: "frogg:ready", listen });
   } catch (err) {
     logger.fatal({ err }, "Daemon failed to start listening");
     throw err;

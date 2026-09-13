@@ -8,7 +8,7 @@ pub const UNINSTALL_SH: &str = include_str!(concat!(env!("OUT_DIR"), "/uninstall
 
 /// The Docker path has no uninstall script in `deploy/`: removing the
 /// container is the whole job, and the state directory is kept like
-/// `uninstall.sh` keeps `~/.fde`.
+/// `uninstall.sh` keeps `~/.frogg`.
 pub const UNINSTALL_DOCKER_SH: &str =
     include_str!(concat!(env!("OUT_DIR"), "/uninstall-docker.sh"));
 
@@ -26,10 +26,10 @@ mod tests {
         ] {
             assert!(script.starts_with("#!/usr/bin/env bash\n"));
         }
-        assert!(INSTALL_SH.contains("FDE_BUNDLE_URL"));
-        assert!(INSTALL_SH.contains("FDE_RELEASE_BASE"));
-        assert!(INSTALL_SH.contains("FDE_LISTEN"));
-        assert!(INSTALL_DOCKER_SH.contains("FDE_BIND"));
-        assert!(INSTALL_DOCKER_SH.contains("FDE_PORT"));
+        assert!(INSTALL_SH.contains("FROGG_BUNDLE_URL"));
+        assert!(INSTALL_SH.contains("FROGG_RELEASE_BASE"));
+        assert!(INSTALL_SH.contains("FROGG_LISTEN"));
+        assert!(INSTALL_DOCKER_SH.contains("FROGG_BIND"));
+        assert!(INSTALL_DOCKER_SH.contains("FROGG_PORT"));
     }
 }

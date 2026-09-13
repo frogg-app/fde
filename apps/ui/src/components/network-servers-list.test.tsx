@@ -108,7 +108,7 @@ describe("NetworkServersList", () => {
 
   it("shows a concise scan failure with a working retry", async () => {
     mocks.hints.mockRejectedValueOnce(
-      new Error("Error invoking remote method fde:networkProbeIdentity: internal detail"),
+      new Error("Error invoking remote method frogg:networkProbeIdentity: internal detail"),
     );
     mocks.probe.mockResolvedValue(null);
     const { container } = renderList();

@@ -55,24 +55,24 @@ export async function startPackagedWebDaemon(input: {
   relayEndpoint: string;
 }): Promise<PackagedWebDaemon> {
   const port = await availablePort();
-  const home = await mkdtemp(path.join(tmpdir(), "fde-relay-deployment-e2e-"));
+  const home = await mkdtemp(path.join(tmpdir(), "frogg-relay-deployment-e2e-"));
   const serverId = `relay-deployment-${Date.now().toString(36)}`;
-  const fde = path.resolve(__dirname, "../../../../../node_modules/.bin/fde");
+  const frogg = path.resolve(__dirname, "../../../../../node_modules/.bin/frogg");
   const env: NodeJS.ProcessEnv = {
     ...process.env,
     CI: "true",
     NODE_ENV: "development",
-    FDE_NODE_ENV: "development",
-    FDE_SERVER_ID: serverId,
-    FDE_RELAY_ENDPOINT: input.relayEndpoint,
-    FDE_RELAY_PUBLIC_ENDPOINT: input.relayEndpoint,
-    FDE_RELAY_USE_TLS: "false",
-    FDE_RELAY_PUBLIC_USE_TLS: "false",
+    FROGG_NODE_ENV: "development",
+    FROGG_SERVER_ID: serverId,
+    FROGG_RELAY_ENDPOINT: input.relayEndpoint,
+    FROGG_RELAY_PUBLIC_ENDPOINT: input.relayEndpoint,
+    FROGG_RELAY_USE_TLS: "false",
+    FROGG_RELAY_PUBLIC_USE_TLS: "false",
   };
 
   try {
     await execFileAsync(
-      fde,
+      frogg,
       ["daemon", "start", "--home", home, "--port", String(port), "--relay", "--web-ui"],
       { env },
     );
@@ -86,7 +86,7 @@ export async function startPackagedWebDaemon(input: {
       serverId,
       pairingOfferUrl: async () => {
         const { stdout } = await execFileAsync(
-          fde,
+          frogg,
           ["daemon", "pair", "--home", home, "--relay", "--json"],
           { env },
         );
@@ -97,14 +97,14 @@ export async function startPackagedWebDaemon(input: {
         return result.url;
       },
       close: async () => {
-        await execFileAsync(fde, ["daemon", "stop", "--home", home], { env }).catch(
+        await execFileAsync(frogg, ["daemon", "stop", "--home", home], { env }).catch(
           () => undefined,
         );
         await rm(home, { recursive: true, force: true });
       },
     };
   } catch (error) {
-    await execFileAsync(fde, ["daemon", "stop", "--home", home], { env }).catch(() => undefined);
+    await execFileAsync(frogg, ["daemon", "stop", "--home", home], { env }).catch(() => undefined);
     await rm(home, { recursive: true, force: true });
     throw error;
   }

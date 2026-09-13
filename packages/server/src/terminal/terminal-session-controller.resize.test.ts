@@ -4,8 +4,8 @@ import {
   TerminalStreamOpcode,
   encodeTerminalResizePayload,
   type TerminalStreamFrame,
-} from "@fde/protocol/binary-frames/index";
-import type { SessionOutboundMessage, TerminalState } from "@fde/protocol/messages";
+} from "@frogg/protocol/binary-frames/index";
+import type { SessionOutboundMessage, TerminalState } from "@frogg/protocol/messages";
 import type pino from "pino";
 
 import { TerminalSessionController } from "./terminal-session-controller.js";

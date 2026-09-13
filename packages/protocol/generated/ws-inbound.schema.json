@@ -5902,7 +5902,7 @@
                 "cwd": {
                   "type": "string"
                 },
-                "fdeOnly": {
+                "froggOnly": {
                   "type": "boolean"
                 },
                 "requestId": {
@@ -6097,7 +6097,7 @@
               "properties": {
                 "type": {
                   "type": "string",
-                  "const": "fde_worktree_list_request"
+                  "const": "frogg_worktree_list_request"
                 },
                 "cwd": {
                   "type": "string"
@@ -6119,7 +6119,7 @@
               "properties": {
                 "type": {
                   "type": "string",
-                  "const": "fde_worktree_archive_request"
+                  "const": "frogg_worktree_archive_request"
                 },
                 "worktreePath": {
                   "type": "string"
@@ -6159,7 +6159,7 @@
               "properties": {
                 "type": {
                   "type": "string",
-                  "const": "create_fde_worktree_request"
+                  "const": "create_frogg_worktree_request"
                 },
                 "cwd": {
                   "type": "string"

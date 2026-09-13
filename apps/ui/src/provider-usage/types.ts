@@ -6,7 +6,7 @@ import type {
   ProviderUsageStatus,
   ProviderUsageTone,
   ProviderUsageWindow,
-} from "@fde/protocol/messages";
+} from "@frogg/protocol/messages";
 
 export type {
   ProviderUsage,

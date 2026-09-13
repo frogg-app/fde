@@ -2,7 +2,7 @@ import type {
   CheckoutPrStatusResponse,
   CheckoutStatusResponse,
   SessionOutboundMessage,
-} from "@fde/protocol/messages";
+} from "@frogg/protocol/messages";
 import { isGitHubPullRequestStatusFacts } from "../../services/github-facts.js";
 import type { WorkspaceGitRuntimeSnapshot } from "../workspace-git-service.js";
 
@@ -38,7 +38,7 @@ export function buildCheckoutStatusPayloadFromSnapshot({
       behindOfOrigin: null,
       hasRemote: false,
       remoteUrl: null,
-      isFdeOwnedWorktree: false,
+      isFroggOwnedWorktree: false,
       error: null,
       requestId,
     };
@@ -48,7 +48,7 @@ export function buildCheckoutStatusPayloadFromSnapshot({
     throw new Error("Workspace git snapshot is missing required checkout status fields");
   }
 
-  if (snapshot.git.isFdeOwnedWorktree) {
+  if (snapshot.git.isFroggOwnedWorktree) {
     if (snapshot.git.mainRepoRoot === null || snapshot.git.baseRef === null) {
       throw new Error("Workspace git snapshot is missing required worktree status fields");
     }
@@ -67,7 +67,7 @@ export function buildCheckoutStatusPayloadFromSnapshot({
       behindOfOrigin: snapshot.git.behindOfOrigin ?? null,
       hasRemote: snapshot.git.hasRemote,
       remoteUrl: snapshot.git.remoteUrl,
-      isFdeOwnedWorktree: true,
+      isFroggOwnedWorktree: true,
       error: null,
       requestId,
     };
@@ -87,7 +87,7 @@ export function buildCheckoutStatusPayloadFromSnapshot({
     behindOfOrigin: snapshot.git.behindOfOrigin ?? null,
     hasRemote: snapshot.git.hasRemote,
     remoteUrl: snapshot.git.remoteUrl,
-    isFdeOwnedWorktree: false,
+    isFroggOwnedWorktree: false,
     error: null,
     requestId,
   };

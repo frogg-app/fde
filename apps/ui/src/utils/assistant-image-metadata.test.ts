@@ -15,16 +15,16 @@ describe("assistant image metadata", () => {
   it("extracts markdown image sources", () => {
     expect(
       extractAssistantImageSources(
-        'Before\n\n![local](/tmp/fde.png)\n\n![remote](https://example.com/test.png "Remote")',
+        'Before\n\n![local](/tmp/frogg.png)\n\n![remote](https://example.com/test.png "Remote")',
       ),
-    ).toEqual(["/tmp/fde.png", "https://example.com/test.png"]);
+    ).toEqual(["/tmp/frogg.png", "https://example.com/test.png"]);
   });
 
   it("reuses cached metadata across canonical and raw source keys", () => {
     setAssistantImageMetadata(
       {
-        source: "/tmp/fde-codex-screenshot.png",
-        workspaceRoot: "/workspaces/fde",
+        source: "/tmp/frogg-codex-screenshot.png",
+        workspaceRoot: "/workspaces/frogg",
         serverId: "server-1",
       },
       { width: 1200, height: 800 },
@@ -32,7 +32,7 @@ describe("assistant image metadata", () => {
 
     expect(
       getAssistantImageMetadata({
-        source: "/tmp/fde-codex-screenshot.png",
+        source: "/tmp/frogg-codex-screenshot.png",
       }),
     ).toEqual({
       width: 1200,

@@ -1,6 +1,6 @@
 ---
 title: Run the daemon
-description: Start, stop and supervise the FDE daemon; listen addresses, services, logs, state and running several daemons.
+description: Start, stop and supervise the Frogg daemon; listen addresses, services, logs, state and running several daemons.
 sidebar:
   order: 1
 ---
@@ -14,58 +14,58 @@ This page covers operating a daemon once it is there.
 
 | Platform | Service | Logs |
 | -------- | ------- | ---- |
-| Linux    | systemd user unit `fde-daemon.service` | `journalctl --user -u fde-daemon -f`, and `~/.fde/daemon.log` |
-| macOS    | launchd agent `app.frogg.fde-daemon` | `~/Library/Logs/app.frogg.fde-daemon.log`, and `~/.fde/daemon.log` |
-| Windows  | Scheduled task created by `fde install-service` | `%USERPROFILE%\.fde\daemon.log` |
+| Linux    | systemd user unit `frogg-daemon.service` | `journalctl --user -u frogg-daemon -f`, and `~/.frogg/daemon.log` |
+| macOS    | launchd agent `app.frogg.frogg-daemon` | `~/Library/Logs/app.frogg.frogg-daemon.log`, and `~/.frogg/daemon.log` |
+| Windows  | Scheduled task created by `frogg install-service` | `%USERPROFILE%\.frogg\daemon.log` |
 
 ```sh
-fde status
-fde restart
-fde stop
-fde install-service --listen 0.0.0.0:9999   # (re)create the login service
-fde uninstall-service
+frogg status
+frogg restart
+frogg stop
+frogg install-service --listen 0.0.0.0:9999   # (re)create the login service
+frogg uninstall-service
 ```
 
 Without a service, run it yourself:
 
 ```sh
-fde start                      # background; prints PID and log path
-fde start --foreground         # stay attached, for containers and supervisors
+frogg start                      # background; prints PID and log path
+frogg start --foreground         # stay attached, for containers and supervisors
 ```
 
 Only one daemon can use a home directory. A second start fails with
-`Another FDE daemon is already running (PID ...)`.
+`Another Frogg daemon is already running (PID ...)`.
 
 ## Listen address
 
 The default is `0.0.0.0:9999`: every interface, port 9999.
 
 ```sh
-fde restart --listen 127.0.0.1:9999        # this machine only (use with SSH or a proxy)
-fde restart --port 9443
-fde restart --listen /run/user/1000/fde.sock
+frogg restart --listen 127.0.0.1:9999        # this machine only (use with SSH or a proxy)
+frogg restart --port 9443
+frogg restart --listen /run/user/1000/frogg.sock
 ```
 
-Persist it in `config.json` as `daemon.listen`, or with `FDE_LISTEN`. The CLI on the same
+Persist it in `config.json` as `daemon.listen`, or with `FROGG_LISTEN`. The CLI on the same
 machine finds the daemon through its socket or pipe automatically.
 
 ## State
 
-Everything lives in `FDE_HOME` (`~/.fde`): `config.json`, agents, projects, schedules,
+Everything lives in `FROGG_HOME` (`~/.frogg`): `config.json`, agents, projects, schedules,
 worktrees, paired devices, logs and speech models. Back it up to keep history and
-pairings. See [configuration](/docs/reference/configuration/#other-files-in-fde_home).
+pairings. See [configuration](/docs/reference/configuration/#other-files-in-frogg_home).
 
 ## Logs
 
 ```sh
-fde status | grep Logs
-tail -f ~/.fde/daemon.log
+frogg status | grep Logs
+tail -f ~/.frogg/daemon.log
 ```
 
 The log is JSON by default and rotates at 10 MB, keeping three files. Readable output:
 
 ```sh
-FDE_LOG_FORMAT=pretty FDE_LOG_LEVEL=debug fde start --foreground
+FROGG_LOG_FORMAT=pretty FROGG_LOG_LEVEL=debug frogg start --foreground
 ```
 
 Authorization headers are redacted. When a background start fails, the CLI prints the
@@ -75,7 +75,7 @@ last log lines.
 
 Agents inherit the daemon's environment. A service keeps the `PATH` it was installed
 with. After installing a new agent CLI into a new location, re-run the installer or
-`fde install-service`, then `fde restart`. Put provider API keys in the service's
+`frogg install-service`, then `frogg restart`. Put provider API keys in the service's
 environment rather than your shell profile.
 
 ## Keep agents alive across restarts
@@ -87,29 +87,29 @@ Opt-in **independent execution** keeps agent runtimes in a separate process so t
 daemon restarts and updates:
 
 ```sh
-FDE_EXECUTION_SERVICE=1 fde restart
-fde execution-status
-fde stop --all      # stop the daemon and the execution service with its agents
+FROGG_EXECUTION_SERVICE=1 frogg restart
+frogg execution-status
+frogg stop --all      # stop the daemon and the execution service with its agents
 ```
 
-Set `FDE_EXECUTION_SERVICE=1` in the service environment to make it permanent.
+Set `FROGG_EXECUTION_SERVICE=1` in the service environment to make it permanent.
 
 ## Several daemons on one machine
 
 Give each its own home and port:
 
 ```sh
-FDE_HOME=~/.fde-work fde start --listen 0.0.0.0:9998
-FDE_HOME=~/.fde-work fde status
+FROGG_HOME=~/.frogg-work frogg start --listen 0.0.0.0:9998
+FROGG_HOME=~/.frogg-work frogg status
 ```
 
-Use `--host` or `FDE_HOST` to point CLI commands at the right one.
+Use `--host` or `FROGG_HOST` to point CLI commands at the right one.
 
 ## Reload configuration
 
 ```sh
-fde reload
+frogg reload
 ```
 
-It reports settings applied live, settings that need `fde restart`, and settings pinned by
+It reports settings applied live, settings that need `frogg restart`, and settings pinned by
 env vars or flags.

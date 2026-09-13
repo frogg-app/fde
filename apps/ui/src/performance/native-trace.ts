@@ -1,13 +1,13 @@
-import type { DaemonClientTrace } from "@fde/client/internal/daemon-client";
+import type { DaemonClientTrace } from "@frogg/client/internal/daemon-client";
 import { requireOptionalNativeModule } from "expo-modules-core";
 import { isProfileBuild } from "@/constants/build-profile";
 
-interface FdeNativeTraceModule {
+interface FroggNativeTraceModule {
   beginSection(name: string): void;
   endSection(): void;
 }
 
-const traceModule = requireOptionalNativeModule<FdeNativeTraceModule>("FdeNativeTrace");
+const traceModule = requireOptionalNativeModule<FroggNativeTraceModule>("FroggNativeTrace");
 
 export const nativePerformanceTrace: DaemonClientTrace = {
   isEnabled() {

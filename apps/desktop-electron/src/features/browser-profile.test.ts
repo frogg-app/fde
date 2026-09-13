@@ -1,10 +1,10 @@
 import { describe, expect, test } from "vitest";
 import {
-  clearFdeBrowserProfile,
-  getLegacyFdeBrowserProfileSession,
-  getFdeBrowserProfileSessions,
-  listFdeBrowserProfileGuests,
-  readLegacyFdeBrowserIds,
+  clearFroggBrowserProfile,
+  getLegacyFroggBrowserProfileSession,
+  getFroggBrowserProfileSessions,
+  listFroggBrowserProfileGuests,
+  readLegacyFroggBrowserIds,
 } from "./browser-profile.js";
 
 class FakeProfileSession {
@@ -65,7 +65,7 @@ class FakeWebContents extends FakeLiveGuest {
   }
 }
 
-describe("listFdeBrowserProfileGuests", () => {
+describe("listFroggBrowserProfileGuests", () => {
   test("returns every live webview and popup in the shared profile", () => {
     const profileSession = {};
     const firstWindowGuest = new FakeWebContents(1, profileSession, "webview");
@@ -74,7 +74,7 @@ describe("listFdeBrowserProfileGuests", () => {
     const popupWindow = new FakeWebContents(4, profileSession, "window");
     const destroyedGuest = new FakeWebContents(5, profileSession, "webview", true);
 
-    const guests = listFdeBrowserProfileGuests({
+    const guests = listFroggBrowserProfileGuests({
       profileSession,
       webContents: [
         firstWindowGuest,
@@ -93,9 +93,9 @@ describe("legacy browser profiles", () => {
   test("accepts only unique saved browser ids and resolves their old partitions", () => {
     const uuid = "123e4567-e89b-42d3-a456-426614174000";
     const fallbackId = "1700000000000-abcd";
-    const browserIds = readLegacyFdeBrowserIds([uuid, fallbackId, uuid, "not-a-browser-id", 123]);
+    const browserIds = readLegacyFroggBrowserIds([uuid, fallbackId, uuid, "not-a-browser-id", 123]);
     const partitions: string[] = [];
-    const sessions = getFdeBrowserProfileSessions(
+    const sessions = getFroggBrowserProfileSessions(
       {
         fromPartition: (partition) => {
           partitions.push(partition);
@@ -106,9 +106,9 @@ describe("legacy browser profiles", () => {
     );
 
     expect(partitions).toEqual([
-      "persist:fde-browser",
-      `persist:fde-browser-${uuid}`,
-      `persist:fde-browser-${fallbackId}`,
+      "persist:frogg-browser",
+      `persist:frogg-browser-${uuid}`,
+      `persist:frogg-browser-${fallbackId}`,
     ]);
     expect(sessions).toHaveLength(3);
   });
@@ -122,13 +122,13 @@ describe("legacy browser profiles", () => {
       },
     };
 
-    expect(getLegacyFdeBrowserProfileSession(sessions, "1700000000000-abcd")).not.toBeNull();
-    expect(getLegacyFdeBrowserProfileSession(sessions, "invalid")).toBeNull();
-    expect(partitions).toEqual(["persist:fde-browser-1700000000000-abcd"]);
+    expect(getLegacyFroggBrowserProfileSession(sessions, "1700000000000-abcd")).not.toBeNull();
+    expect(getLegacyFroggBrowserProfileSession(sessions, "invalid")).toBeNull();
+    expect(partitions).toEqual(["persist:frogg-browser-1700000000000-abcd"]);
   });
 });
 
-describe("clearFdeBrowserProfile", () => {
+describe("clearFroggBrowserProfile", () => {
   test("clears site data, HTTP cache, and auth before reloading live guests", async () => {
     const profile = new FakeProfileSession();
     const legacyProfile = new FakeProfileSession();
@@ -139,7 +139,7 @@ describe("clearFdeBrowserProfile", () => {
     const firstGuest = new FakeLiveGuest(1);
     const secondGuest = new FakeLiveGuest(2);
 
-    const clearing = clearFdeBrowserProfile({
+    const clearing = clearFroggBrowserProfile({
       profileSessions: [profile, legacyProfile],
       listGuests: () => [firstGuest, secondGuest],
       logReloadError: () => {},
@@ -178,7 +178,7 @@ describe("clearFdeBrowserProfile", () => {
     const failedGuest = new FakeLiveGuest(2, false, reloadError);
     const reloadErrors: Array<{ guestId: number; error: unknown }> = [];
 
-    await clearFdeBrowserProfile({
+    await clearFroggBrowserProfile({
       profileSessions: [profile],
       listGuests: () => [destroyedGuest, failedGuest],
       logReloadError: (guestId, error) => reloadErrors.push({ guestId, error }),
@@ -196,7 +196,7 @@ describe("clearFdeBrowserProfile", () => {
     const guest = new FakeLiveGuest(1);
 
     await expect(
-      clearFdeBrowserProfile({
+      clearFroggBrowserProfile({
         profileSessions: [profile],
         listGuests: () => [guest],
         logReloadError: () => {},

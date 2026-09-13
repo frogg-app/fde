@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, test } from "vitest";
 
-import { createTestFdeDaemon, type TestFdeDaemon } from "./test-utils/fde-daemon.js";
+import { createTestFroggDaemon, type TestFroggDaemon } from "./test-utils/frogg-daemon.js";
 
 interface InitialDaemonConnectionHint {
   listen: string;
@@ -44,7 +44,9 @@ function fetchDaemonWebUi(options: {
 }
 
 function readInjectedConnectionHint(html: string): InitialDaemonConnectionHint {
-  const match = html.match(/window\.__FDE_INITIAL_DAEMON_CONNECTION__=(?<json>\{[^<]+})<\/script>/);
+  const match = html.match(
+    /window\.__FROGG_INITIAL_DAEMON_CONNECTION__=(?<json>\{[^<]+})<\/script>/,
+  );
   if (!match?.groups?.json) {
     throw new Error("Missing initial daemon connection hint");
   }
@@ -53,10 +55,10 @@ function readInjectedConnectionHint(html: string): InitialDaemonConnectionHint {
 
 describe("daemon web UI bootstrap", () => {
   let tempRoot: string | null = null;
-  let daemonHandle: TestFdeDaemon | null = null;
+  let daemonHandle: TestFroggDaemon | null = null;
 
   async function createWebUiDist(): Promise<string> {
-    tempRoot = await mkdtemp(path.join(os.tmpdir(), "fde-bootstrap-web-ui-"));
+    tempRoot = await mkdtemp(path.join(os.tmpdir(), "frogg-bootstrap-web-ui-"));
     const distDir = path.join(tempRoot, "dist");
     await mkdir(distDir, { recursive: true });
     await writeFile(
@@ -78,7 +80,7 @@ describe("daemon web UI bootstrap", () => {
   test("injects a TLS initial connection hint only for HTTPS forwarded by a trusted proxy", async () => {
     const distDir = await createWebUiDist();
 
-    daemonHandle = await createTestFdeDaemon({
+    daemonHandle = await createTestFroggDaemon({
       mcpEnabled: false,
       webUi: {
         enabled: true,
@@ -111,7 +113,7 @@ describe("daemon web UI bootstrap", () => {
   test("ignores forwarded HTTPS when proxy trust is disabled", async () => {
     const distDir = await createWebUiDist();
 
-    daemonHandle = await createTestFdeDaemon({
+    daemonHandle = await createTestFroggDaemon({
       mcpEnabled: false,
       trustedProxies: [],
       webUi: {

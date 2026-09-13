@@ -62,10 +62,10 @@ describe("createMarkdownParser", () => {
 
   it("linkifies bare URLs only when asked", () => {
     expect(
-      createMarkdownParser({ linkify: true }).render("see https://github.com/frogg-app/fde now"),
-    ).toContain('href="https://github.com/frogg-app/fde"');
+      createMarkdownParser({ linkify: true }).render("see https://github.com/frogg-app/frogg now"),
+    ).toContain('href="https://github.com/frogg-app/frogg"');
     expect(
-      createMarkdownParser({ linkify: false }).render("see https://github.com/frogg-app/fde now"),
+      createMarkdownParser({ linkify: false }).render("see https://github.com/frogg-app/frogg now"),
     ).not.toContain("href");
   });
 });

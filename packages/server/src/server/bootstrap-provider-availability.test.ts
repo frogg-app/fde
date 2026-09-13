@@ -5,7 +5,7 @@ import path from "node:path";
 import pino from "pino";
 import { afterEach, describe, expect, test } from "vitest";
 import { ensureAgentLoaded } from "./agent/agent-loading.js";
-import type { FdeDaemonConfig } from "./bootstrap.js";
+import type { FroggDaemonConfig } from "./bootstrap.js";
 
 const originalEnv = {
   PATH: process.env.PATH,
@@ -26,8 +26,8 @@ describe("bootstrap provider availability", () => {
   });
 
   test("loads a persisted Codex record without spawning a missing Codex binary", async () => {
-    const { createFdeDaemon } = await import("./bootstrap.js");
-    const root = await mkdtemp(path.join(os.tmpdir(), "fde-bootstrap-provider-"));
+    const { createFroggDaemon } = await import("./bootstrap.js");
+    const root = await mkdtemp(path.join(os.tmpdir(), "frogg-bootstrap-provider-"));
     tempRoots.push(root);
     const gitPath = execFileSync(process.platform === "win32" ? "where" : "which", ["git"], {
       encoding: "utf8",
@@ -36,9 +36,9 @@ describe("bootstrap provider availability", () => {
       .trim();
     process.env.PATH = path.dirname(gitPath);
     expect(execFileSync("git", ["--version"], { encoding: "utf8" })).toMatch(/git version/i);
-    const fdeHome = path.join(root, ".fde");
+    const froggHome = path.join(root, ".frogg");
     const staticDir = path.join(root, "static");
-    const agentStoragePath = path.join(fdeHome, "agents");
+    const agentStoragePath = path.join(froggHome, "agents");
     const now = new Date("2026-04-16T00:00:00.000Z").toISOString();
     const agentId = "11111111-1111-4111-8111-111111111111";
     await mkdir(agentStoragePath, { recursive: true });
@@ -68,9 +68,9 @@ describe("bootstrap provider availability", () => {
       }),
     );
 
-    const config: FdeDaemonConfig = {
+    const config: FroggDaemonConfig = {
       listen: "127.0.0.1:0",
-      fdeHome,
+      froggHome,
       corsAllowedOrigins: [],
       hostnames: true,
       mcpEnabled: false,
@@ -93,7 +93,7 @@ describe("bootstrap provider availability", () => {
     process.on("unhandledRejection", onUnhandledRejection);
     process.on("uncaughtException", onUncaughtException);
 
-    const daemon = await createFdeDaemon(config, pino({ level: "silent" }));
+    const daemon = await createFroggDaemon(config, pino({ level: "silent" }));
     try {
       await expect(daemon.agentStorage.list()).resolves.toHaveLength(1);
       await expect(daemon.agentManager.listProviderAvailability()).resolves.toContainEqual({

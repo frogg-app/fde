@@ -64,7 +64,7 @@ interface RestartDaemonClientConfig {
 }
 
 interface SeededRestartHome {
-  fdeHome: string;
+  froggHome: string;
   cwd: string;
   projectId: string;
   projectDisplayName: string;
@@ -83,10 +83,10 @@ function nowIso(): string {
 }
 
 async function seedRestartHome(): Promise<SeededRestartHome> {
-  const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-playwright-restart-home-"));
-  const cwd = mkdtempSync(path.join(tmpdir(), "fde-playwright-restart-cwd-"));
-  const projectsDir = path.join(fdeHome, "projects");
-  const agentDir = path.join(fdeHome, "agents", projectDirNameFromCwd(cwd));
+  const froggHome = mkdtempSync(path.join(tmpdir(), "frogg-playwright-restart-home-"));
+  const cwd = mkdtempSync(path.join(tmpdir(), "frogg-playwright-restart-cwd-"));
+  const projectsDir = path.join(froggHome, "projects");
+  const agentDir = path.join(froggHome, "agents", projectDirNameFromCwd(cwd));
   mkdirSync(projectsDir, { recursive: true });
   mkdirSync(agentDir, { recursive: true });
 
@@ -153,14 +153,14 @@ async function seedRestartHome(): Promise<SeededRestartHome> {
   );
 
   return {
-    fdeHome,
+    froggHome,
     cwd,
     projectId: project.projectId,
     projectDisplayName,
     workspaceA: workspaceA.workspaceId,
     workspaceB: workspaceB.workspaceId,
     cleanup: () => {
-      rmSync(fdeHome, { recursive: true, force: true });
+      rmSync(froggHome, { recursive: true, force: true });
       rmSync(cwd, { recursive: true, force: true });
     },
   };
@@ -229,7 +229,7 @@ async function waitForServer(port: number, child: ChildProcess): Promise<void> {
 }
 
 async function startRestartDaemon(input: {
-  fdeHome: string;
+  froggHome: string;
   origin: string;
 }): Promise<StartedDaemon> {
   const port = await getAvailablePort();
@@ -242,12 +242,12 @@ async function startRestartDaemon(input: {
     cwd: serverDir,
     env: withDisabledE2ESpeechEnv({
       ...process.env,
-      FDE_HOME: input.fdeHome,
-      FDE_SERVER_ID: SERVER_ID,
-      FDE_LISTEN: `127.0.0.1:${port}`,
-      FDE_CORS_ORIGINS: input.origin,
-      FDE_RELAY_ENABLED: "0",
-      FDE_NODE_ENV: "development",
+      FROGG_HOME: input.froggHome,
+      FROGG_SERVER_ID: SERVER_ID,
+      FROGG_LISTEN: `127.0.0.1:${port}`,
+      FROGG_CORS_ORIGINS: input.origin,
+      FROGG_RELAY_ENABLED: "0",
+      FROGG_NODE_ENV: "development",
       NODE_ENV: "development",
     }),
     stdio: ["ignore", "ignore", "pipe"],
@@ -327,10 +327,10 @@ async function seedBrowserForDaemon(page: Page, input: { serverId: string; port:
   });
   await page.evaluate(
     ({ daemon, preferences }) => {
-      localStorage.setItem("@fde:e2e", "1");
-      localStorage.setItem("@fde:daemon-registry", JSON.stringify([daemon]));
-      localStorage.removeItem("@fde:settings");
-      localStorage.setItem("@fde:create-agent-preferences", JSON.stringify(preferences));
+      localStorage.setItem("@frogg:e2e", "1");
+      localStorage.setItem("@frogg:daemon-registry", JSON.stringify([daemon]));
+      localStorage.removeItem("@frogg:settings");
+      localStorage.setItem("@frogg:create-agent-preferences", JSON.stringify(preferences));
     },
     {
       daemon: host,
@@ -411,7 +411,7 @@ test.describe("Workspace model restart regressions", () => {
     test.setTimeout(90_000);
     const seeded = await seedRestartHome();
     const origin = new URL(baseURL ?? "http://localhost").origin;
-    const daemon = await startRestartDaemon({ fdeHome: seeded.fdeHome, origin });
+    const daemon = await startRestartDaemon({ froggHome: seeded.froggHome, origin });
     const serverId = SERVER_ID;
     const client = await connectRestartDaemonClient(daemon.port);
 

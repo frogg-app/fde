@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { Command, Option } from "commander";
 import chalk from "chalk";
 import {

@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Rename the product from FDE to Frogg everywhere: the `frogg` binary and daemon commands,
+  `@frogg/*` packages, `FROGG_*` environment variables, `~/.frogg` home, `frogg.json`,
+  the `frogg://` scheme, the `app.frogg.frogg` application id and all artifact names.
+  Existing `~/.fde` data and `FDE_*` variables are not read; move or rename them.
+
 ## 0.7.0 — 2026-09-13
 
 - Fold host Connections, Metadata and Workspaces settings into Overview. The Agents tab

@@ -4,10 +4,10 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { AgentNavigationInbox } from "./agent-navigation.js";
 import {
-  isFdeBrowserWebviewAttach,
-  prepareFdeBrowserWebContents,
+  isFroggBrowserWebviewAttach,
+  prepareFroggBrowserWebContents,
   registerBrowserWebviewNavigationGuards,
-  unregisterFdeBrowserHost,
+  unregisterFroggBrowserHost,
 } from "./features/browser-webviews/index.js";
 import { resolveAppIconPath } from "./features/stamped-icon.js";
 import { registerTrustedRenderer } from "./ipc-security.js";
@@ -58,7 +58,7 @@ export function createWindowRuntime({
   }
 
   function getAppDistDir(): string {
-    if (process.env.FDE_ELECTRON_UI_DIR) return path.resolve(process.env.FDE_ELECTRON_UI_DIR);
+    if (process.env.FROGG_ELECTRON_UI_DIR) return path.resolve(process.env.FROGG_ELECTRON_UI_DIR);
     if (app.isPackaged) {
       return path.join(process.resourcesPath, "app-dist");
     }
@@ -98,7 +98,7 @@ export function createWindowRuntime({
     if (app.isPackaged) {
       return null;
     }
-    return process.env.EXPO_PUBLIC_FDE_DEV_BUILD_LABEL?.trim() || null;
+    return process.env.EXPO_PUBLIC_FROGG_DEV_BUILD_LABEL?.trim() || null;
   }
 
   let cachedEffectiveIconPath: string | null = null;
@@ -157,11 +157,11 @@ export function createWindowRuntime({
   ): void {
     registerTrustedRenderer(
       mainWindow.webContents,
-      app.isPackaged || process.env.FDE_ELECTRON_UI_DIR ? `${APP_SCHEME}://app` : DEV_SERVER_URL,
+      app.isPackaged || process.env.FROGG_ELECTRON_UI_DIR ? `${APP_SCHEME}://app` : DEV_SERVER_URL,
     );
     installWindowSecurity(
       mainWindow,
-      app.isPackaged || process.env.FDE_ELECTRON_UI_DIR ? `${APP_SCHEME}://app` : DEV_SERVER_URL,
+      app.isPackaged || process.env.FROGG_ELECTRON_UI_DIR ? `${APP_SCHEME}://app` : DEV_SERVER_URL,
     );
     const webContentsId = mainWindow.webContents.id;
     options.onCreated?.(webContentsId);
@@ -177,7 +177,7 @@ export function createWindowRuntime({
     mainWindow.on("closed", () => {
       options.onClosed?.(webContentsId);
       agentNavigationInbox.removeWindow(webContentsId);
-      unregisterFdeBrowserHost(webContentsId);
+      unregisterFroggBrowserHost(webContentsId);
       browserKeyboard.detachHost(webContentsId);
     });
   }
@@ -248,7 +248,7 @@ export function createWindowRuntime({
     setupDefaultContextMenu(mainWindow);
     setupDragDropPrevention(mainWindow);
     mainWindow.webContents.on("will-attach-webview", (event, webPreferences, params) => {
-      if (!isFdeBrowserWebviewAttach(params)) {
+      if (!isFroggBrowserWebviewAttach(params)) {
         event.preventDefault();
         return;
       }
@@ -269,7 +269,7 @@ export function createWindowRuntime({
       webPreferences.preload = getBrowserKeyboardPreloadPath();
     });
     mainWindow.webContents.on("did-attach-webview", (_event, contents) => {
-      prepareFdeBrowserWebContents(contents);
+      prepareFroggBrowserWebContents(contents);
       contents.once("destroyed", () => {
         pendingBrowserWindowOpenRequests.delete(contents.id);
       });
@@ -288,9 +288,9 @@ export function createWindowRuntime({
       mainWindow.show();
     });
 
-    if (!app.isPackaged && !process.env.FDE_ELECTRON_UI_DIR) {
+    if (!app.isPackaged && !process.env.FROGG_ELECTRON_UI_DIR) {
       const { loadReactDevTools } = await import("./features/react-devtools.js");
-      if (process.env.FDE_ELECTRON_REACT_DEVTOOLS === "1") {
+      if (process.env.FROGG_ELECTRON_REACT_DEVTOOLS === "1") {
         void loadReactDevTools().catch((error) =>
           log.warn("[DevTools] Failed to initialize", error),
         );

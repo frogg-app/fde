@@ -1,7 +1,7 @@
 import { WebSocket } from "ws";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-import { createTestFdeDaemon } from "./test-utils/fde-daemon.js";
+import { createTestFroggDaemon } from "./test-utils/frogg-daemon.js";
 
 const originalEnv = { ...process.env };
 const CORRECT_PASSWORD_HASH = "$2b$12$OLxyuuP9uLK30Uzc4wQX0O6liuU/Q1t5P2b0Ebf36mULvpVK3DRZW";
@@ -43,11 +43,11 @@ describe("daemon bearer auth", () => {
   beforeEach(() => {
     vi.useRealTimers();
     vi.restoreAllMocks();
-    process.env = { ...originalEnv, FDE_SUPERVISED: "0" };
+    process.env = { ...originalEnv, FROGG_SUPERVISED: "0" };
   });
 
   test("leaves HTTP and WebSocket open when no password is configured", async () => {
-    const daemonHandle = await createTestFdeDaemon();
+    const daemonHandle = await createTestFroggDaemon();
     try {
       const response = await fetch(`http://127.0.0.1:${daemonHandle.port}/api/status`);
       expect(response.status).toBe(200);
@@ -61,7 +61,7 @@ describe("daemon bearer auth", () => {
   });
 
   test("requires Authorization bearer on protected HTTP routes when password is configured", async () => {
-    const daemonHandle = await createTestFdeDaemon({
+    const daemonHandle = await createTestFroggDaemon({
       auth: { password: CORRECT_PASSWORD_HASH },
     });
     try {
@@ -83,7 +83,7 @@ describe("daemon bearer auth", () => {
   });
 
   test("allows file downloads with only a capability token when password is configured", async () => {
-    const daemonHandle = await createTestFdeDaemon({
+    const daemonHandle = await createTestFroggDaemon({
       auth: { password: CORRECT_PASSWORD_HASH },
     });
     try {
@@ -104,7 +104,7 @@ describe("daemon bearer auth", () => {
   });
 
   test("bypasses bearer auth for preflight and liveness endpoints", async () => {
-    const daemonHandle = await createTestFdeDaemon({
+    const daemonHandle = await createTestFroggDaemon({
       auth: { password: CORRECT_PASSWORD_HASH },
     });
     try {
@@ -125,7 +125,7 @@ describe("daemon bearer auth", () => {
   });
 
   test("closes WebSocket connections with readable auth failures when password is configured", async () => {
-    const daemonHandle = await createTestFdeDaemon({
+    const daemonHandle = await createTestFroggDaemon({
       auth: { password: CORRECT_PASSWORD_HASH },
     });
     try {
@@ -136,16 +136,16 @@ describe("daemon bearer auth", () => {
       });
       await expectWebSocketCloses({
         port: daemonHandle.port,
-        protocol: "fde.bearer.wrong-password",
+        protocol: "frogg.bearer.wrong-password",
         code: 4401,
         reason: "Incorrect password",
       });
 
       const { ws, protocol } = await connectWebSocket({
         port: daemonHandle.port,
-        protocol: "fde.bearer.correct-password",
+        protocol: "frogg.bearer.correct-password",
       });
-      expect(protocol).toBe("fde.bearer.correct-password");
+      expect(protocol).toBe("frogg.bearer.correct-password");
       ws.close();
     } finally {
       await daemonHandle.close();

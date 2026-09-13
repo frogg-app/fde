@@ -1,5 +1,5 @@
-import { brand } from "@fde/branding";
-import type { ServerInfoStatusPayload } from "@fde/protocol/messages";
+import { brand } from "@frogg/branding";
+import type { ServerInfoStatusPayload } from "@frogg/protocol/messages";
 import type { HostRuntimeSnapshot } from "@/runtime/host-runtime";
 import type { HostConnection, HostProfile } from "@/types/host-connection";
 
@@ -112,7 +112,7 @@ export function redactAppDiagnosticReport(report: string, hosts: HostProfile[]):
     redacted = redacted.split(value).join("[redacted]");
   }
   return redacted
-    .replace(/fde:\/\/\S+/gi, "fde://[redacted]")
+    .replace(/frogg:\/\/\S+/gi, "frogg://[redacted]")
     .replace(
       /([?&](?:password|token|secret|key|publicKey|daemonPublicKeyB64)=)[^&\s"']+/gi,
       "$1[redacted]",

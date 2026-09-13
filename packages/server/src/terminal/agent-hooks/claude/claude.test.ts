@@ -28,8 +28,8 @@ function createTempDir(prefix: string): string {
 }
 
 function createFakeCliBinDir(): string {
-  const dir = createTempDir("fde-cli-bin-");
-  writeFileSync(join(dir, "fde"), "");
+  const dir = createTempDir("frogg-cli-bin-");
+  writeFileSync(join(dir, "frogg"), "");
   return dir;
 }
 
@@ -66,7 +66,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 describe("Claude terminal agent hooks", () => {
   it("installs registered provider hooks idempotently", () => {
-    const configDir = createTempDir("fde-claude-config-");
+    const configDir = createTempDir("frogg-claude-config-");
     const provider = AGENT_HOOK_PROVIDERS.claude;
     const install = provider.install;
 
@@ -75,19 +75,19 @@ describe("Claude terminal agent hooks", () => {
 
     const settings = readSettings(configDir);
     for (const event of provider.events) {
-      const fdeCommands = hookCommands(settings, event.event).filter((command) =>
+      const froggCommands = hookCommands(settings, event.event).filter((command) =>
         command.includes(install.hookMarker),
       );
-      expect(fdeCommands).toHaveLength(1);
-      expect(fdeCommands[0]).toBe(
-        `if [ -n "$FDE_TERMINAL_ID" ]; then "\${FDE_HOOK_CLI:-fde}" hooks ${provider.id} ${event.event}; fi`,
+      expect(froggCommands).toHaveLength(1);
+      expect(froggCommands[0]).toBe(
+        `if [ -n "$FROGG_TERMINAL_ID" ]; then "\${FROGG_HOOK_CLI:-frogg}" hooks ${provider.id} ${event.event}; fi`,
       );
     }
     expect(registeredAgentHooksAreInstalled({ configDir })).toBe(true);
   });
 
   it("preserves unrelated user hooks", () => {
-    const configDir = createTempDir("fde-claude-config-preserve-");
+    const configDir = createTempDir("frogg-claude-config-preserve-");
     writeFileSync(
       join(configDir, "settings.json"),
       `${JSON.stringify(
@@ -118,7 +118,7 @@ describe("Claude terminal agent hooks", () => {
   });
 
   it("uninstalls only marker-matched hooks", () => {
-    const configDir = createTempDir("fde-claude-config-uninstall-");
+    const configDir = createTempDir("frogg-claude-config-uninstall-");
     installRegisteredAgentHooks({ configDir });
     const settings = readSettings(configDir);
     settings.hooks = {
@@ -145,18 +145,18 @@ describe("Claude terminal agent hooks", () => {
     const command = buildAgentHookShellCommand(provider, provider.events[0]);
 
     expect(command).toBe(
-      'if [ -n "$FDE_TERMINAL_ID" ]; then "${FDE_HOOK_CLI:-fde}" hooks claude UserPromptSubmit; fi',
+      'if [ -n "$FROGG_TERMINAL_ID" ]; then "${FROGG_HOOK_CLI:-frogg}" hooks claude UserPromptSubmit; fi',
     );
   });
 
   it.skipIf(isPlatform("win32")).each(AGENT_HOOK_PROVIDERS.claude.events)(
-    "$event hook command exits 0 when FDE_TERMINAL_ID is unset",
+    "$event hook command exits 0 when FROGG_TERMINAL_ID is unset",
     (event) => {
       const provider = AGENT_HOOK_PROVIDERS.claude;
       const command = buildAgentHookShellCommand(provider, event);
 
       const result = spawnSync("/bin/sh", ["-c", command], {
-        env: { PATH: process.env.PATH ?? "", FDE_HOOK_CLI: "fde" },
+        env: { PATH: process.env.PATH ?? "", FROGG_HOOK_CLI: "frogg" },
         stdio: "ignore",
       });
 
@@ -175,26 +175,26 @@ describe("Claude terminal agent hooks", () => {
     }
   });
 
-  it("prepends the fde CLI directory and injects the hook CLI path", () => {
+  it("prepends the frogg CLI directory and injects the hook CLI path", () => {
     const cliBinDir = createFakeCliBinDir();
-    const hookCliPath = join(cliBinDir, "fde");
+    const hookCliPath = join(cliBinDir, "frogg");
 
     const env = buildTerminalEnvironment({
       shell: "/bin/sh",
       env: { PATH: ["/usr/bin", "/bin"].join(delimiter) },
-      fdeCliBinDir: cliBinDir,
-      fdeHookCliPath: hookCliPath,
+      froggCliBinDir: cliBinDir,
+      froggHookCliPath: hookCliPath,
     });
 
     expect(env.PATH?.split(delimiter)).toEqual([cliBinDir, "/usr/bin", "/bin"]);
-    expect(env.FDE_HOOK_CLI).toBe(hookCliPath);
+    expect(env.FROGG_HOOK_CLI).toBe(hookCliPath);
   });
 
   it("leaves terminal PATH unchanged when the CLI directory cannot be resolved", () => {
     const env = buildTerminalEnvironment({
       shell: "/bin/sh",
       env: { PATH: ["/usr/bin", "/bin"].join(delimiter) },
-      fdeCliBinDir: null,
+      froggCliBinDir: null,
     });
 
     expect(env.PATH?.split(delimiter)).toEqual(["/usr/bin", "/bin"]);

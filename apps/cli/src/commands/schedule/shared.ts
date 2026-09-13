@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { connectToDaemon, getDaemonHost } from "../../utils/client.js";
 import type { CommandError, CommandOptions } from "../../output/index.js";
 import type {
@@ -13,7 +13,7 @@ import type {
 } from "./types.js";
 import { parseDuration } from "../../utils/duration.js";
 import { resolveProviderAndModel } from "../../utils/provider-model.js";
-import { everyMsToFiveFieldCron } from "@fde/protocol/schedule/cadence";
+import { everyMsToFiveFieldCron } from "@frogg/protocol/schedule/cadence";
 
 export interface ScheduleCommandOptions extends CommandOptions {
   host?: string;
@@ -121,9 +121,9 @@ function resolveScheduleTarget(args: {
   }
 
   if (targetValue === "self") {
-    // COMPAT(scheduleSelfTarget): heartbeat creation moved to `fde heartbeat create`.
+    // COMPAT(scheduleSelfTarget): heartbeat creation moved to `frogg heartbeat create`.
     // Added in v0.2.0; remove after 2027-01-17.
-    const currentAgentId = process.env.FDE_AGENT_ID?.trim();
+    const currentAgentId = process.env.FROGG_AGENT_ID?.trim();
     if (!currentAgentId) {
       throw {
         code: "INVALID_TARGET",

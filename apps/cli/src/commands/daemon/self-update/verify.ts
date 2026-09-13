@@ -1,5 +1,5 @@
-import { brand } from "@fde/branding";
-import { matchesBrand, type BrandIdentity } from "@fde/branding/identity";
+import { brand } from "@frogg/branding";
+import { matchesBrand, type BrandIdentity } from "@frogg/branding/identity";
 import { daemonHttpJson } from "../daemon-http.js";
 
 /**
@@ -45,7 +45,7 @@ export async function probeDaemon(
     base: httpBase,
     path: "/api/identity",
     onResponse(response) {
-      gatewayVersion = response.headers.get("x-fde-gateway-version");
+      gatewayVersion = response.headers.get("x-frogg-gateway-version");
     },
   });
   const health = await daemonHttpJson<HealthShape>({

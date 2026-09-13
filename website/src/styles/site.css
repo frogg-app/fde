@@ -15,7 +15,7 @@ html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
   scroll-padding-top: 4.5rem;
-  background: var(--fde-bg);
+  background: var(--frogg-bg);
 }
 
 html.no-scroll {
@@ -25,11 +25,11 @@ html.no-scroll {
 body {
   margin: 0;
   min-height: 100dvh;
-  font-family: var(--fde-font);
+  font-family: var(--frogg-font);
   font-size: 1rem;
   line-height: 1.6;
-  color: var(--fde-text);
-  background: var(--fde-bg);
+  color: var(--frogg-text);
+  background: var(--frogg-bg);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overflow-x: clip;
@@ -42,15 +42,15 @@ svg {
 }
 
 a {
-  color: var(--fde-link);
+  color: var(--frogg-link);
 }
 
 ::selection {
-  background: var(--fde-accent-glow);
+  background: var(--frogg-accent-glow);
 }
 
 :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
-  outline: 2px solid var(--fde-accent-bright);
+  outline: 2px solid var(--frogg-accent-bright);
   outline-offset: 3px;
   border-radius: 6px;
 }
@@ -61,12 +61,12 @@ a {
   top: -4rem;
   z-index: 100;
   padding: 0.6rem 1rem;
-  border-radius: var(--fde-radius-sm);
-  background: var(--fde-accent);
-  color: var(--fde-accent-fg) !important;
+  border-radius: var(--frogg-radius-sm);
+  background: var(--frogg-accent);
+  color: var(--frogg-accent-fg) !important;
   font-weight: 600;
   text-decoration: none;
-  transition: top var(--fde-fast) var(--fde-ease);
+  transition: top var(--frogg-fast) var(--frogg-ease);
 }
 
 .skip-link:focus {
@@ -93,11 +93,11 @@ a {
   font-weight: 650;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--fde-accent-bright);
+  color: var(--frogg-accent-bright);
 }
 
 :root[data-theme="light"] .eyebrow {
-  color: var(--fde-accent);
+  color: var(--frogg-accent);
 }
 
 .section-title {
@@ -113,25 +113,25 @@ a {
   margin: 1rem 0 0;
   max-width: 40rem;
   font-size: clamp(1.05rem, 1.6vw, 1.2rem);
-  color: var(--fde-text-muted);
+  color: var(--frogg-text-muted);
   text-wrap: pretty;
 }
 
 .gradient-text {
-  background: linear-gradient(100deg, var(--fde-accent-bright) 0%, var(--fde-accent) 45%, var(--fde-violet) 100%);
+  background: linear-gradient(100deg, var(--frogg-accent-bright) 0%, var(--frogg-accent) 45%, var(--frogg-violet) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
 :root[data-theme="light"] .gradient-text {
-  background-image: linear-gradient(100deg, var(--fde-accent-bright) 0%, var(--fde-accent) 50%, var(--fde-violet) 100%);
+  background-image: linear-gradient(100deg, var(--frogg-accent-bright) 0%, var(--frogg-accent) 50%, var(--frogg-violet) 100%);
 }
 
 /* ---- Buttons ---- */
 .btn {
-  --btn-bg: var(--fde-surface-2);
-  --btn-fg: var(--fde-text);
+  --btn-bg: var(--frogg-surface-2);
+  --btn-fg: var(--frogg-text);
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -140,22 +140,22 @@ a {
   min-height: 2.9rem;
   padding: 0.7rem 1.25rem;
   border-radius: 999px;
-  border: 1px solid var(--fde-border-strong);
+  border: 1px solid var(--frogg-border-strong);
   background: var(--btn-bg);
   color: var(--btn-fg) !important;
-  font: 600 0.98rem/1 var(--fde-font);
+  font: 600 0.98rem/1 var(--frogg-font);
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
   transition:
-    transform var(--fde-fast) var(--fde-ease),
-    box-shadow var(--fde-med) var(--fde-ease),
-    background-color var(--fde-fast) var(--fde-ease),
-    border-color var(--fde-fast) var(--fde-ease);
+    transform var(--frogg-fast) var(--frogg-ease),
+    box-shadow var(--frogg-med) var(--frogg-ease),
+    background-color var(--frogg-fast) var(--frogg-ease),
+    border-color var(--frogg-fast) var(--frogg-ease);
 }
 
 .btn:hover {
-  border-color: var(--fde-accent);
+  border-color: var(--frogg-accent);
   transform: translateY(-1px);
 }
 
@@ -164,24 +164,24 @@ a {
 }
 
 .btn-primary {
-  --btn-bg: var(--fde-accent);
-  --btn-fg: var(--fde-accent-fg);
+  --btn-bg: var(--frogg-accent);
+  --btn-fg: var(--frogg-accent-fg);
   border-color: transparent;
   box-shadow:
     0 0 0 1px rgb(255 255 255 / 0.08) inset,
-    0 8px 24px -8px var(--fde-accent-glow);
+    0 8px 24px -8px var(--frogg-accent-glow);
 }
 
 .btn-primary:hover {
-  --btn-bg: var(--fde-accent-bright);
+  --btn-bg: var(--frogg-accent-bright);
   border-color: transparent;
   box-shadow:
     0 0 0 1px rgb(255 255 255 / 0.12) inset,
-    0 12px 32px -8px var(--fde-accent-glow);
+    0 12px 32px -8px var(--frogg-accent-glow);
 }
 
 :root[data-theme="light"] .btn-primary:hover {
-  --btn-bg: var(--fde-accent-bright);
+  --btn-bg: var(--frogg-accent-bright);
 }
 
 .btn-sm {
@@ -191,7 +191,7 @@ a {
 }
 
 .btn .arrow {
-  transition: transform var(--fde-med) var(--fde-ease);
+  transition: transform var(--frogg-med) var(--frogg-ease);
 }
 
 .btn:hover .arrow {
@@ -201,10 +201,10 @@ a {
 /* ---- Cards ---- */
 .card {
   position: relative;
-  border-radius: var(--fde-radius-lg);
-  background: var(--fde-bg-elevated);
-  border: 1px solid var(--fde-border);
-  box-shadow: var(--fde-shadow);
+  border-radius: var(--frogg-radius-lg);
+  background: var(--frogg-bg-elevated);
+  border: 1px solid var(--frogg-border);
+  box-shadow: var(--frogg-shadow);
 }
 
 /* ---- Scroll reveal (only when JS is present) ---- */
@@ -212,8 +212,8 @@ a {
   opacity: 0;
   transform: translateY(18px);
   transition:
-    opacity 600ms var(--fde-ease),
-    transform 700ms var(--fde-ease);
+    opacity 600ms var(--frogg-ease),
+    transform 700ms var(--frogg-ease);
   transition-delay: calc(var(--reveal-delay, 0) * 1ms);
 }
 

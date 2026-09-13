@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import { resolveExternalCliEntrypoint } from "./entrypoints.js";
 import { createNodeEntrypointInvocation, prepareDaemonBundle } from "../runtime-paths.js";
 
-const DESKTOP_CLI_ENV = "FDE_DESKTOP_CLI";
+const DESKTOP_CLI_ENV = "FROGG_DESKTOP_CLI";
 const IGNORED_ARG_PREFIXES = [
   "-psn_",
   "--class=",

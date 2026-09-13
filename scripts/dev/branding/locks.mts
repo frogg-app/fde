@@ -63,7 +63,7 @@ export async function acquireLock(
           { cause: error },
         );
       // Nested build entrypoints inherit the owner PID; independent builds still serialize.
-      if (kind === "build" && active && String(active.pid) === process.env.FDE_BRAND_BUILD_OWNER)
+      if (kind === "build" && active && String(active.pid) === process.env.FROGG_BRAND_BUILD_OWNER)
         return async () => {};
       await delay(100);
     }

@@ -1,4 +1,4 @@
-import type { WorkspaceProjectDescriptorPayload } from "@fde/protocol/messages";
+import type { WorkspaceProjectDescriptorPayload } from "@frogg/protocol/messages";
 import type { OutputSchema } from "../../output/index.js";
 
 export interface ProjectRow {

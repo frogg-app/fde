@@ -7,7 +7,7 @@ import pino from "pino";
 import { ensureSherpaOnnxModel, getSherpaOnnxModelDir } from "./model-downloader.js";
 
 function makeTmpDir(): string {
-  return mkdtempSync(path.join(tmpdir(), "fde-speech-models-"));
+  return mkdtempSync(path.join(tmpdir(), "frogg-speech-models-"));
 }
 
 const logger = pino({ level: "silent" });

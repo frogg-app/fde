@@ -19,7 +19,7 @@ describe("buildWorkspaceServiceEnv", () => {
     expect(
       buildWorkspaceServiceEnv({
         scriptName: "daemon",
-        projectSlug: "fde",
+        projectSlug: "frogg",
         branchName: "main",
         daemonPort: 9999,
         daemonListenHost: null,
@@ -30,7 +30,7 @@ describe("buildWorkspaceServiceEnv", () => {
     expect(
       buildWorkspaceServiceEnv({
         scriptName: "daemon",
-        projectSlug: "fde",
+        projectSlug: "frogg",
         branchName: "main",
         daemonPort: 9999,
         daemonListenHost: "localhost",
@@ -43,7 +43,7 @@ describe("buildWorkspaceServiceEnv", () => {
     expect(
       buildWorkspaceServiceEnv({
         scriptName: "daemon",
-        projectSlug: "fde",
+        projectSlug: "frogg",
         branchName: "main",
         daemonPort: 9999,
         daemonListenHost: "100.64.0.20",
@@ -56,7 +56,7 @@ describe("buildWorkspaceServiceEnv", () => {
     expect(
       buildWorkspaceServiceEnv({
         scriptName: "daemon",
-        projectSlug: "fde",
+        projectSlug: "frogg",
         branchName: "main",
         daemonPort: 9999,
         daemonListenHost: null,
@@ -64,10 +64,10 @@ describe("buildWorkspaceServiceEnv", () => {
       }),
     ).toEqual({
       HOST: "127.0.0.1",
-      FDE_PORT: "5173",
-      FDE_URL: "http://daemon--fde.localhost:9999",
-      FDE_SERVICE_DAEMON_PORT: "5173",
-      FDE_SERVICE_DAEMON_URL: "http://daemon--fde.localhost:9999",
+      FROGG_PORT: "5173",
+      FROGG_URL: "http://daemon--frogg.localhost:9999",
+      FROGG_SERVICE_DAEMON_PORT: "5173",
+      FROGG_SERVICE_DAEMON_URL: "http://daemon--frogg.localhost:9999",
     });
   });
 
@@ -75,7 +75,7 @@ describe("buildWorkspaceServiceEnv", () => {
     expect(
       buildWorkspaceServiceEnv({
         scriptName: "daemon",
-        projectSlug: "fde",
+        projectSlug: "frogg",
         branchName: "feature-x",
         daemonPort: 9999,
         daemonListenHost: null,
@@ -83,24 +83,24 @@ describe("buildWorkspaceServiceEnv", () => {
       }),
     ).toEqual({
       HOST: "127.0.0.1",
-      FDE_PORT: "5173",
-      FDE_URL: "http://daemon--feature-x--fde.localhost:9999",
-      FDE_SERVICE_DAEMON_PORT: "5173",
-      FDE_SERVICE_DAEMON_URL: "http://daemon--feature-x--fde.localhost:9999",
+      FROGG_PORT: "5173",
+      FROGG_URL: "http://daemon--feature-x--frogg.localhost:9999",
+      FROGG_SERVICE_DAEMON_PORT: "5173",
+      FROGG_SERVICE_DAEMON_URL: "http://daemon--feature-x--frogg.localhost:9999",
     });
   });
 
-  it("omits PORT while keeping FDE_PORT", () => {
+  it("omits PORT while keeping FROGG_PORT", () => {
     const env = buildWorkspaceServiceEnv({
       scriptName: "daemon",
-      projectSlug: "fde",
+      projectSlug: "frogg",
       branchName: "main",
       daemonPort: 9999,
       daemonListenHost: null,
       peers: [{ scriptName: "daemon", port: 5173 }],
     });
 
-    expect(env.FDE_PORT).toBe("5173");
+    expect(env.FROGG_PORT).toBe("5173");
     expect(env).not.toHaveProperty("PORT");
   });
 
@@ -108,7 +108,7 @@ describe("buildWorkspaceServiceEnv", () => {
     expect(
       buildWorkspaceServiceEnv({
         scriptName: "daemon",
-        projectSlug: "fde",
+        projectSlug: "frogg",
         branchName: "main",
         daemonPort: null,
         daemonListenHost: null,
@@ -116,8 +116,8 @@ describe("buildWorkspaceServiceEnv", () => {
       }),
     ).toEqual({
       HOST: "127.0.0.1",
-      FDE_PORT: "5173",
-      FDE_SERVICE_DAEMON_PORT: "5173",
+      FROGG_PORT: "5173",
+      FROGG_SERVICE_DAEMON_PORT: "5173",
     });
   });
 
@@ -125,7 +125,7 @@ describe("buildWorkspaceServiceEnv", () => {
     expect(
       buildWorkspaceServiceEnv({
         scriptName: "web",
-        projectSlug: "fde",
+        projectSlug: "frogg",
         branchName: "feature-x",
         daemonPort: 9999,
         daemonListenHost: null,
@@ -136,12 +136,12 @@ describe("buildWorkspaceServiceEnv", () => {
       }),
     ).toEqual({
       HOST: "127.0.0.1",
-      FDE_PORT: "5173",
-      FDE_URL: "http://web--feature-x--fde.localhost:9999",
-      FDE_SERVICE_API_PORT: "4000",
-      FDE_SERVICE_API_URL: "http://api--feature-x--fde.localhost:9999",
-      FDE_SERVICE_WEB_PORT: "5173",
-      FDE_SERVICE_WEB_URL: "http://web--feature-x--fde.localhost:9999",
+      FROGG_PORT: "5173",
+      FROGG_URL: "http://web--feature-x--frogg.localhost:9999",
+      FROGG_SERVICE_API_PORT: "4000",
+      FROGG_SERVICE_API_URL: "http://api--feature-x--frogg.localhost:9999",
+      FROGG_SERVICE_WEB_PORT: "5173",
+      FROGG_SERVICE_WEB_URL: "http://web--feature-x--frogg.localhost:9999",
     });
   });
 
@@ -149,7 +149,7 @@ describe("buildWorkspaceServiceEnv", () => {
     expect(
       buildWorkspaceServiceEnv({
         scriptName: "web",
-        projectSlug: "fde",
+        projectSlug: "frogg",
         branchName: "feature-x",
         daemonPort: 9999,
         daemonListenHost: null,
@@ -160,9 +160,9 @@ describe("buildWorkspaceServiceEnv", () => {
         ],
       }),
     ).toMatchObject({
-      FDE_URL: "https://web--feature-x--fde.services.example.com",
-      FDE_SERVICE_API_URL: "https://api--feature-x--fde.services.example.com",
-      FDE_SERVICE_WEB_URL: "https://web--feature-x--fde.services.example.com",
+      FROGG_URL: "https://web--feature-x--frogg.services.example.com",
+      FROGG_SERVICE_API_URL: "https://api--feature-x--frogg.services.example.com",
+      FROGG_SERVICE_WEB_URL: "https://web--feature-x--frogg.services.example.com",
     });
   });
 
@@ -170,7 +170,7 @@ describe("buildWorkspaceServiceEnv", () => {
     expect(() =>
       buildWorkspaceServiceEnv({
         scriptName: "app-server",
-        projectSlug: "fde",
+        projectSlug: "frogg",
         branchName: "main",
         daemonPort: 9999,
         daemonListenHost: null,

@@ -1,5 +1,5 @@
 // Pure helpers for the local daemon bundle install flow: the progress state
-// machine fed by `fde:event:local-daemon-install-event` and the byte
+// machine fed by `frogg:event:local-daemon-install-event` and the byte
 // formatting the install button and progress bar show.
 
 export type LocalDaemonInstallPhase = "checksum" | "download" | "extract";

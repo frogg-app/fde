@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import pino from "pino";
 
-import type { FdeSpeechConfig } from "../bootstrap.js";
+import type { FroggSpeechConfig } from "../bootstrap.js";
 import type { InitializedLocalSpeech } from "./providers/local/runtime.js";
 import type { SpeechToTextProvider, TextToSpeechProvider } from "./speech-provider.js";
 import type { TurnDetectionProvider } from "./turn-detection-provider.js";
@@ -73,7 +73,7 @@ function rejectWhenAborted(signal?: AbortSignal): Promise<never> {
   });
 }
 
-function createSpeechConfig(providers: FdeSpeechConfig["providers"]): FdeSpeechConfig {
+function createSpeechConfig(providers: FroggSpeechConfig["providers"]): FroggSpeechConfig {
   return {
     providers,
     sttLanguages: {

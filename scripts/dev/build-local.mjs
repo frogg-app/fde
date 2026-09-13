@@ -168,7 +168,7 @@ function main() {
       "This local cross-build command requires a Linux x64 host; use the native desktop build on other hosts.",
     );
   }
-  if (!process.env.FDE_BRAND_BUILD_OWNER) {
+  if (!process.env.FROGG_BRAND_BUILD_OWNER) {
     throw new Error("Use npm run build:local so one selected brand is held for the entire build.");
   }
   runLocalBuild({ target: values.target, jobs: Number(values.jobs) });

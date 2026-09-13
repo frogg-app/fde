@@ -16,8 +16,8 @@ function getLogger(logger: LoggerLike | undefined): LoggerLike | undefined {
   return logger?.child({ module: "server-id" });
 }
 
-function getServerIdPath(fdeHome: string): string {
-  return path.join(fdeHome, SERVER_ID_FILENAME);
+function getServerIdPath(froggHome: string): string {
+  return path.join(froggHome, SERVER_ID_FILENAME);
 }
 
 function generateServerId(): string {
@@ -27,22 +27,22 @@ function generateServerId(): string {
 }
 
 /**
- * Stable daemon identifier scoped to a given $FDE_HOME.
+ * Stable daemon identifier scoped to a given $FROGG_HOME.
  *
- * - Persisted to `$FDE_HOME/server-id`
- * - Can be overridden via `FDE_SERVER_ID` (useful for tests)
+ * - Persisted to `$FROGG_HOME/server-id`
+ * - Can be overridden via `FROGG_SERVER_ID` (useful for tests)
  */
 export function getOrCreateServerId(
-  fdeHome: string,
+  froggHome: string,
   options?: { env?: NodeJS.ProcessEnv; logger?: LoggerLike },
 ): string {
   const env = options?.env ?? process.env;
   const log = getLogger(options?.logger);
-  const serverIdPath = getServerIdPath(fdeHome);
+  const serverIdPath = getServerIdPath(froggHome);
 
   const envOverride =
-    typeof env.FDE_SERVER_ID === "string" && env.FDE_SERVER_ID.trim().length > 0
-      ? env.FDE_SERVER_ID.trim()
+    typeof env.FROGG_SERVER_ID === "string" && env.FROGG_SERVER_ID.trim().length > 0
+      ? env.FROGG_SERVER_ID.trim()
       : null;
 
   if (envOverride) {
@@ -50,9 +50,9 @@ export function getOrCreateServerId(
     if (!existsSync(serverIdPath)) {
       try {
         writePrivateFileAtomicSync(serverIdPath, `${envOverride}\n`);
-        log?.info({ serverId: envOverride }, "Persisted FDE_SERVER_ID override");
+        log?.info({ serverId: envOverride }, "Persisted FROGG_SERVER_ID override");
       } catch (error) {
-        log?.warn({ error }, "Failed to persist FDE_SERVER_ID override");
+        log?.warn({ error }, "Failed to persist FROGG_SERVER_ID override");
       }
     } else {
       ensurePrivateFile(serverIdPath);

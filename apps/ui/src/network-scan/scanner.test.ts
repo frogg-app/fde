@@ -108,7 +108,7 @@ describe("probeDaemon", () => {
             serverId: "srv_1",
             hostname: "frogbox",
             version: "0.4.1",
-            product: "fde",
+            product: "frogg",
           });
         },
       },
@@ -133,7 +133,7 @@ describe("probeDaemon", () => {
             serverId: "srv_unclaimed",
             hostname: "newbox",
             version: "0.1.12",
-            product: "fde",
+            product: "frogg",
             pairingRequired: true,
           }),
       },
@@ -168,7 +168,7 @@ describe("probeDaemon", () => {
           shellCalls.push(url);
           return {
             status: 200,
-            body: { product: "fde", serverId: "srv_9", hostname: "frogg-dev" },
+            body: { product: "frogg", serverId: "srv_9", hostname: "frogg-dev" },
           };
         },
       },
@@ -249,7 +249,7 @@ describe("probeDaemon", () => {
       pairingRequired: null,
     });
     expect(
-      parseDaemonIdentity({ serverId: "srv", product: "fde", pairingRequired: true }),
+      parseDaemonIdentity({ serverId: "srv", product: "frogg", pairingRequired: true }),
     ).toMatchObject({ serverId: "srv", pairingRequired: true });
     expect(parseDaemonIdentity({})).toBeNull();
     expect(parseDaemonIdentity("nope")).toBeNull();

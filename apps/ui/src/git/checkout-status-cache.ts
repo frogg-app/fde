@@ -1,5 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
-import type { CheckoutStatusResponse, CheckoutStatusUpdate } from "@fde/protocol/messages";
+import type { CheckoutStatusResponse, CheckoutStatusUpdate } from "@frogg/protocol/messages";
 import equal from "fast-deep-equal/es6";
 import {
   checkoutCommitsQueryKey,

@@ -1,4 +1,4 @@
-import type { FetchAgentsEntry } from "@fde/client/internal/daemon-client";
+import type { FetchAgentsEntry } from "@frogg/client/internal/daemon-client";
 import type { Agent } from "@/stores/session-store";
 import type { AgentDirectoryDelta } from "./agent-directory-sync";
 import { acceptAgentDirectoryUpdate } from "./agent-directory-update-policy";
@@ -48,7 +48,7 @@ export function reconcileAgentDirectory(input: {
           currentBranch: null,
           remoteUrl: null,
           worktreeRoot: null,
-          isFdeOwnedWorktree: false,
+          isFroggOwnedWorktree: false,
           mainRepoRoot: null,
         },
       },

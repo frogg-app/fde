@@ -9,10 +9,10 @@ const identity = {
   version: "0.4.2",
   platform: "linux",
   arch: "x64",
-  brand: { id: "fde", applicationId: "app.frogg.fde" },
+  brand: { id: "frogg", applicationId: "app.frogg.frogg" },
 };
 async function fixture() {
-  const root = await mkdtemp(path.join(os.tmpdir(), "fde-bundle-stage-"));
+  const root = await mkdtemp(path.join(os.tmpdir(), "frogg-bundle-stage-"));
   roots.push(root);
   const source = path.join(root, "mount");
   const destination = path.join(root, "profile/daemon-bundles/0.4.2");

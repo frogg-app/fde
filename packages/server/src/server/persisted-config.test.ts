@@ -15,7 +15,7 @@ const MODE_MASK = 0o777;
 const PERMISSIVE_FILE_MODE = 0o644;
 
 function createTempHome(): string {
-  return mkdtempSync(path.join(tmpdir(), "fde-config-"));
+  return mkdtempSync(path.join(tmpdir(), "frogg-config-"));
 }
 
 function modeOf(filePath: string): number {
@@ -145,11 +145,11 @@ describe("PersistedConfigSchema worktrees config", () => {
   test("accepts optional worktree root", () => {
     const parsed = PersistedConfigSchema.parse({
       worktrees: {
-        root: "/mnt/fast/fde-worktrees",
+        root: "/mnt/fast/frogg-worktrees",
       },
     });
 
-    expect(parsed.worktrees?.root).toBe("/mnt/fast/fde-worktrees");
+    expect(parsed.worktrees?.root).toBe("/mnt/fast/frogg-worktrees");
   });
 
   test("accepts service port allocation", () => {
@@ -743,7 +743,7 @@ describe("loadPersistedConfig", () => {
     }
   });
 
-  test("materializes relay disabled for a new Fde home", () => {
+  test("materializes relay disabled for a new Frogg home", () => {
     const home = createTempHome();
     try {
       const config = loadPersistedConfig(home);
@@ -761,7 +761,7 @@ describe("loadPersistedConfig", () => {
         configPath,
         `${JSON.stringify(
           {
-            $schema: "https://fde.sh/schemas/fde.config.v1.json",
+            $schema: "https://frogg.sh/schemas/frogg.config.v1.json",
             version: 1,
             daemon: {
               listen: "127.0.0.1:9999",

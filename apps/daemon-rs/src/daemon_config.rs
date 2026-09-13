@@ -1,5 +1,5 @@
-//! Reads the same on-disk state as the Node daemon: `$FDE_HOME/config.json` for
-//! listen/CORS/password, and `$FDE_HOME/principals.json` for issued credentials.
+//! Reads the same on-disk state as the Node daemon: `$FROGG_HOME/config.json` for
+//! listen/CORS/password, and `$FROGG_HOME/principals.json` for issued credentials.
 //!
 //! Both are read best-effort — a missing or malformed file yields defaults, which
 //! is what the Node daemon does, rather than refusing to boot.
@@ -58,13 +58,13 @@ struct Credential {
 
 pub struct Loaded {
     pub listen: Option<String>,
-    /// Stable id shared with the Node daemon via $FDE_HOME/server-id.
+    /// Stable id shared with the Node daemon via $FROGG_HOME/server-id.
     pub server_id: String,
     pub allowed_origins: Vec<String>,
     pub auth: AuthConfig,
 }
 
-/// `$FDE_HOME`, else `$FDE_HOME`, else `~/.fde`.
+/// `$FROGG_HOME`, else `$FROGG_HOME`, else `~/.frogg`.
 pub fn resolve_home() -> Option<PathBuf> {
     let base = std::env::var("HOME")
         .or_else(|_| std::env::var("USERPROFILE"))
@@ -90,9 +90,9 @@ pub fn load(home: Option<&Path>) -> Loaded {
         .map(|c| c.sha256)
         .collect();
 
-    // FDE_PASSWORD is plaintext in the env; the Node daemon bcrypts it at load.
+    // FROGG_PASSWORD is plaintext in the env; the Node daemon bcrypts it at load.
     // We hash it here for the same reason, so the compare path is uniform.
-    let password_hash = match std::env::var("FDE_PASSWORD")
+    let password_hash = match std::env::var("FROGG_PASSWORD")
         .ok()
         .filter(|p| !p.trim().is_empty())
     {
@@ -153,7 +153,7 @@ mod tests {
     use super::*;
 
     fn tempdir() -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("fde-rs-{}", uuid::Uuid::new_v4()));
+        let dir = std::env::temp_dir().join(format!("frogg-rs-{}", uuid::Uuid::new_v4()));
         std::fs::create_dir_all(&dir).unwrap();
         dir
     }
@@ -203,7 +203,7 @@ mod tests {
 
     #[test]
     fn a_missing_or_malformed_home_yields_defaults_rather_than_failing() {
-        let loaded = load(Some(Path::new("/nonexistent-fde-home")));
+        let loaded = load(Some(Path::new("/nonexistent-frogg-home")));
         assert!(loaded.listen.is_none());
         assert!(loaded.auth.password_hash.is_none());
         assert!(

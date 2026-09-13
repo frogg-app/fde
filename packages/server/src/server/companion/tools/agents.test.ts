@@ -11,7 +11,7 @@ import { createCompanionAgentTools } from "./agents.js";
 import { invokeCompanionTool } from "./index.js";
 
 it("tracks an ordinary worker through a permission without accepting an unrelated request", async () => {
-  const home = await mkdtemp(path.join(tmpdir(), "fde-companion-worker-"));
+  const home = await mkdtemp(path.join(tmpdir(), "frogg-companion-worker-"));
   const logger = pino({ level: "silent" });
   const storage = new AgentStorage(home, logger);
   const manager = new AgentManager({

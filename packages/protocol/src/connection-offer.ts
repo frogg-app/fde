@@ -3,7 +3,7 @@ import { z } from "zod";
 /**
  * Relay-only pairing offer.
  *
- * `serverId` is a stable daemon identifier scoped to `FDE_HOME`, and is also
+ * `serverId` is a stable daemon identifier scoped to `FROGG_HOME`, and is also
  * used as the relay session identifier.
  */
 export const ConnectionOfferV2Schema = z.object({
@@ -23,7 +23,7 @@ export type ConnectionOffer = ConnectionOfferV2;
 
 /**
  * Direct (LAN) claim offer, served by an unclaimed daemon's pairing page and by
- * `fde daemon pair` when relay is off. The client connects to one of
+ * `frogg daemon pair` when relay is off. The client connects to one of
  * `direct.endpoints` over plain WebSocket, then redeems `claim.token` with
  * `POST /api/setup/claim` to mint its principal and device credential. The
  * token is single-use and expires at `claim.expiresAt`; `relay` is present only
@@ -31,7 +31,7 @@ export type ConnectionOffer = ConnectionOfferV2;
  */
 export const ConnectionOfferV3Schema = z.object({
   v: z.literal(3),
-  product: z.literal("fde").optional(),
+  product: z.literal("frogg").optional(),
   serverId: z.string().min(1),
   hostname: z.string().optional(),
   daemonPublicKeyB64: z.string().min(1),
@@ -76,7 +76,7 @@ const OFFER_FRAGMENT_PREFIX = "#offer=";
 const PAIRING_CODE_PATH = "/code/";
 
 /**
- * Where FDE pairing links point: `https://pair.frogg.app/code/<code>`, where
+ * Where Frogg pairing links point: `https://pair.frogg.app/code/<code>`, where
  * the code is the offer payload as URL-safe base64. The owner can point that
  * hostname at their own daemon, which serves the same landing page from
  * `GET /code/:code`. This is the daemon's default `app.pairingBaseUrl`.
@@ -84,10 +84,10 @@ const PAIRING_CODE_PATH = "/code/";
 export const DEFAULT_PAIRING_BASE_URL = "https://pair.frogg.app";
 
 /**
- * The same payload as an app deep link, `fde://pair#offer=<payload>`. The
- * scheme stays `fde` because the desktop shell already registers it.
+ * The same payload as an app deep link, `frogg://pair#offer=<payload>`. The
+ * scheme stays `frogg` because the desktop shell already registers it.
  */
-export const PAIRING_DEEP_LINK_SCHEME = "fde";
+export const PAIRING_DEEP_LINK_SCHEME = "frogg";
 export const PAIRING_DEEP_LINK_BASE = `${PAIRING_DEEP_LINK_SCHEME}://pair`;
 
 function encodeUtf8ToBase64Url(input: string): string {
@@ -111,7 +111,7 @@ export function buildPairingUrl(baseUrl: string, encoded: string): string {
   return `${base}${PAIRING_CODE_PATH}${encoded}`;
 }
 
-/** `fde://pair#offer=<payload>` for any link or code carrying an offer; null without one. */
+/** `frogg://pair#offer=<payload>` for any link or code carrying an offer; null without one. */
 export function buildPairingDeepLink(
   offerUrlOrFragment: string,
   scheme = PAIRING_DEEP_LINK_SCHEME,
@@ -120,7 +120,7 @@ export function buildPairingDeepLink(
   return encoded ? `${scheme}://pair${OFFER_FRAGMENT_PREFIX}${encoded}` : null;
 }
 
-/** True for `fde://pair#offer=…` (a trailing slash before the fragment is tolerated). */
+/** True for `frogg://pair#offer=…` (a trailing slash before the fragment is tolerated). */
 export function isPairingDeepLink(input: string, scheme = PAIRING_DEEP_LINK_SCHEME): boolean {
   const trimmed = input.trim();
   return (
@@ -172,9 +172,9 @@ function extractCodePathSegment(input: string): string | null {
 }
 
 /**
- * The encoded offer from any link FDE hands out: the canonical
+ * The encoded offer from any link Frogg hands out: the canonical
  * `https://pair.frogg.app/code/<code>`, the older `…#offer=<code>` fragment
- * (still emitted as the `fde://pair` deep link), and `…?code=<code>`.
+ * (still emitted as the `frogg://pair` deep link), and `…?code=<code>`.
  * Returns null when the input carries no payload.
  */
 export function extractPairingCode(input: string): string | null {
@@ -190,7 +190,7 @@ export function extractPairingCode(input: string): string | null {
 /**
  * Parse a pairing link in any accepted form: `https://pair.frogg.app/code/<code>`,
  * `…?code=<code>`, or the older `…#offer=<base64url>` fragment (including
- * `fde://pair#offer=…` and Fde's `https://app.example.test/#offer=…`).
+ * `frogg://pair#offer=…` and Frogg's `https://app.example.test/#offer=…`).
  *
  * Returns `null` if the input carries no pairing code. Throws if a code exists
  * but the payload is malformed or fails schema validation.

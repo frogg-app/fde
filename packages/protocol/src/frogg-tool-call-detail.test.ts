@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { buildFdeToolDetailSections } from "./fde-tool-call-detail.js";
+import { buildFroggToolDetailSections } from "./frogg-tool-call-detail.js";
 
-describe("Fde tool-call detail presentation", () => {
-  it.each(["mcp__fde__create_agent", "fde.create_agent", "fde_remote.create_agent"])(
+describe("Frogg tool-call detail presentation", () => {
+  it.each(["mcp__frogg__create_agent", "frogg.create_agent", "frogg_remote.create_agent"])(
     "shares one create-agent mapping for %s",
     (toolName) => {
       expect(
-        buildFdeToolDetailSections(
+        buildFroggToolDetailSections(
           toolName,
           {
             workspaceId: "wks_123",
@@ -47,8 +47,8 @@ describe("Fde tool-call detail presentation", () => {
   );
 
   it("formats schedule cadence and nested settings without JSON syntax", () => {
-    const sections = buildFdeToolDetailSections(
-      "mcp__fde__create_schedule",
+    const sections = buildFroggToolDetailSections(
+      "mcp__frogg__create_schedule",
       {
         prompt: "Say hello back.",
         cron: "0 9 * * 1",
@@ -91,8 +91,8 @@ describe("Fde tool-call detail presentation", () => {
 
   it("unwraps MCP result envelopes instead of exposing JSON-encoded text", () => {
     expect(
-      buildFdeToolDetailSections(
-        "mcp__fde__send_agent_prompt",
+      buildFroggToolDetailSections(
+        "mcp__frogg__send_agent_prompt",
         { prompt: "Say hello back." },
         {
           meta: null,
@@ -119,10 +119,10 @@ describe("Fde tool-call detail presentation", () => {
     });
   });
 
-  it("uses readable fallback fields for newly added Fde tools", () => {
+  it("uses readable fallback fields for newly added Frogg tools", () => {
     expect(
-      buildFdeToolDetailSections(
-        "mcp__fde__future_tool",
+      buildFroggToolDetailSections(
+        "mcp__frogg__future_tool",
         { opaqueThing: ["one", "two"], enabled: false },
         { success: true },
       ),
@@ -143,7 +143,7 @@ describe("Fde tool-call detail presentation", () => {
     ]);
   });
 
-  it("leaves non-Fde tools alone", () => {
-    expect(buildFdeToolDetailSections("mcp__github__create_issue", {}, {})).toBeNull();
+  it("leaves non-Frogg tools alone", () => {
+    expect(buildFroggToolDetailSections("mcp__github__create_issue", {}, {})).toBeNull();
   });
 });

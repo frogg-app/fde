@@ -1,6 +1,6 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { Command } from "commander";
-import type { DaemonClient } from "@fde/client/internal/daemon-client";
+import type { DaemonClient } from "@frogg/client/internal/daemon-client";
 import { connectToDaemon, getDaemonHost } from "../../utils/client.js";
 import { isSameOrDescendantPath } from "../../utils/paths.js";
 import type {

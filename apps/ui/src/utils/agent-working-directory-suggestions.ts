@@ -4,7 +4,7 @@ export interface AgentWorkingDirectorySource {
   lastActivityAt?: Date | null;
 }
 
-const FDE_WORKTREE_PATH_PATTERN = /(^|\/)\.fde\/worktrees(\/|$)/;
+const FROGG_WORKTREE_PATH_PATTERN = /(^|\/)\.frogg\/worktrees(\/|$)/;
 
 export function collectAgentWorkingDirectorySuggestions(
   sources: Iterable<AgentWorkingDirectorySource>,
@@ -16,7 +16,7 @@ export function collectAgentWorkingDirectorySuggestions(
     if (!cwd) {
       continue;
     }
-    if (isFdeOwnedWorktreePath(cwd)) {
+    if (isFroggOwnedWorktreePath(cwd)) {
       continue;
     }
 
@@ -38,8 +38,8 @@ export function collectAgentWorkingDirectorySuggestions(
     .map(([cwd]) => cwd);
 }
 
-function isFdeOwnedWorktreePath(cwd: string): boolean {
-  return FDE_WORKTREE_PATH_PATTERN.test(cwd.replace(/\\/g, "/"));
+function isFroggOwnedWorktreePath(cwd: string): boolean {
+  return FROGG_WORKTREE_PATH_PATTERN.test(cwd.replace(/\\/g, "/"));
 }
 
 function toEpochMs(date: Date | null | undefined): number {

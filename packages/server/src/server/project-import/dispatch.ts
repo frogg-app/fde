@@ -1,4 +1,4 @@
-import type { SessionInboundMessage, SessionOutboundMessage } from "@fde/protocol/messages";
+import type { SessionInboundMessage, SessionOutboundMessage } from "@frogg/protocol/messages";
 import type { ProjectImportService } from "./service.js";
 export type ProjectImportRequest = Extract<
   SessionInboundMessage,

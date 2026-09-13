@@ -10,42 +10,42 @@
  * - JSON output format
  *
  * Tests:
- * - fde --help shows ls command
- * - fde ls --help shows options
- * - fde ls returns empty list or error when no daemon
- * - fde ls --json returns valid JSON (or error)
- * - fde ls -a flag is accepted
- * - fde ls -g flag is accepted
- * - fde ls does not support --ui
+ * - frogg --help shows ls command
+ * - frogg ls --help shows options
+ * - frogg ls returns empty list or error when no daemon
+ * - frogg ls --json returns valid JSON (or error)
+ * - frogg ls -a flag is accepted
+ * - frogg ls -g flag is accepted
+ * - frogg ls does not support --ui
  */
 
 import assert from "node:assert";
 import { mkdtemp, rm } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
-import { runLocalFde } from "./helpers/local-cli.ts";
+import { runLocalFrogg } from "./helpers/local-cli.ts";
 
 console.log("=== LS Command Tests ===\n");
 
 // Get random port that's definitely not in use (never 9999)
 const port = 10000 + Math.floor(Math.random() * 50000);
-const fdeHome = await mkdtemp(join(tmpdir(), "fde-test-home-"));
+const froggHome = await mkdtemp(join(tmpdir(), "frogg-test-home-"));
 
 try {
-  // Test 1: fde --help shows ls command
+  // Test 1: frogg --help shows ls command
   {
-    console.log("Test 1: fde --help shows ls command");
-    const result = await runLocalFde(["--help"]);
-    assert.strictEqual(result.exitCode, 0, "fde --help should exit 0");
+    console.log("Test 1: frogg --help shows ls command");
+    const result = await runLocalFrogg(["--help"]);
+    assert.strictEqual(result.exitCode, 0, "frogg --help should exit 0");
     assert(result.stdout.includes("ls"), "help should mention ls command");
-    console.log("✓ fde --help shows ls command\n");
+    console.log("✓ frogg --help shows ls command\n");
   }
 
-  // Test 2: fde ls --help shows options
+  // Test 2: frogg ls --help shows options
   {
-    console.log("Test 2: fde ls --help shows options");
-    const result = await runLocalFde(["ls", "--help"]);
-    assert.strictEqual(result.exitCode, 0, "fde ls --help should exit 0");
+    console.log("Test 2: frogg ls --help shows options");
+    const result = await runLocalFrogg(["ls", "--help"]);
+    assert.strictEqual(result.exitCode, 0, "frogg ls --help should exit 0");
     assert(result.stdout.includes("-a"), "help should mention -a flag");
     assert(result.stdout.includes("--all"), "help should mention --all flag");
     assert(result.stdout.includes("-g"), "help should mention -g flag");
@@ -54,15 +54,15 @@ try {
     assert(!result.stdout.includes("Legacy no-op"), "help should not describe -g as a no-op");
     assert(result.stdout.includes("--host"), "help should mention --host option");
     assert(!result.stdout.includes("--ui"), "help should not mention --ui");
-    console.log("✓ fde ls --help shows options\n");
+    console.log("✓ frogg ls --help shows options\n");
   }
 
-  // Test 3: fde ls returns error when no daemon running
+  // Test 3: frogg ls returns error when no daemon running
   {
-    console.log("Test 3: fde ls handles daemon not running");
-    const result = await runLocalFde(["ls"], {
-      FDE_HOST: `localhost:${port}`,
-      FDE_HOME: fdeHome,
+    console.log("Test 3: frogg ls handles daemon not running");
+    const result = await runLocalFrogg(["ls"], {
+      FROGG_HOST: `localhost:${port}`,
+      FROGG_HOME: froggHome,
     });
     // Should fail because daemon not running
     assert.notStrictEqual(result.exitCode, 0, "should fail when daemon not running");
@@ -74,18 +74,18 @@ try {
     assert(hasError, "error message should mention connection issue");
     assert.match(
       output,
-      /--host <host:port>.*FDE_HOST/s,
+      /--host <host:port>.*FROGG_HOST/s,
       "the recovery message should explain both remote connection inputs",
     );
-    console.log("✓ fde ls handles daemon not running\n");
+    console.log("✓ frogg ls handles daemon not running\n");
   }
 
-  // Test 4: fde ls --json returns valid JSON error
+  // Test 4: frogg ls --json returns valid JSON error
   {
-    console.log("Test 4: fde ls --json handles errors");
-    const result = await runLocalFde(["ls", "--json"], {
-      FDE_HOST: `localhost:${port}`,
-      FDE_HOME: fdeHome,
+    console.log("Test 4: frogg ls --json handles errors");
+    const result = await runLocalFrogg(["ls", "--json"], {
+      FROGG_HOST: `localhost:${port}`,
+      FROGG_HOME: froggHome,
     });
     // Should still fail (daemon not running)
     assert.notStrictEqual(result.exitCode, 0, "should fail when daemon not running");
@@ -94,63 +94,63 @@ try {
     if (output.length > 0) {
       try {
         JSON.parse(output);
-        console.log("✓ fde ls --json outputs valid JSON error\n");
+        console.log("✓ frogg ls --json outputs valid JSON error\n");
       } catch {
         // Empty or stderr-only output is acceptable
-        console.log("✓ fde ls --json handled error (output may be in stderr)\n");
+        console.log("✓ frogg ls --json handled error (output may be in stderr)\n");
       }
     } else {
-      console.log("✓ fde ls --json handled error gracefully\n");
+      console.log("✓ frogg ls --json handled error gracefully\n");
     }
   }
 
-  // Test 5: fde ls -a flag is accepted
+  // Test 5: frogg ls -a flag is accepted
   {
-    console.log("Test 5: fde ls -a flag is accepted");
-    const result = await runLocalFde(["ls", "-a"], {
-      FDE_HOST: `localhost:${port}`,
-      FDE_HOME: fdeHome,
+    console.log("Test 5: frogg ls -a flag is accepted");
+    const result = await runLocalFrogg(["ls", "-a"], {
+      FROGG_HOST: `localhost:${port}`,
+      FROGG_HOME: froggHome,
     });
     // Will fail due to no daemon, but flag should be parsed without error
     // (no "unknown option" error)
     const output = result.stdout + result.stderr;
     assert(!output.includes("unknown option"), "should accept -a flag");
     assert(!output.includes("error: option"), "should not have option parsing error");
-    console.log("✓ fde ls -a flag is accepted\n");
+    console.log("✓ frogg ls -a flag is accepted\n");
   }
 
-  // Test 6: fde ls -g flag is accepted
+  // Test 6: frogg ls -g flag is accepted
   {
-    console.log("Test 6: fde ls -g flag is accepted");
-    const result = await runLocalFde(["ls", "-g"], {
-      FDE_HOST: `localhost:${port}`,
-      FDE_HOME: fdeHome,
+    console.log("Test 6: frogg ls -g flag is accepted");
+    const result = await runLocalFrogg(["ls", "-g"], {
+      FROGG_HOST: `localhost:${port}`,
+      FROGG_HOME: froggHome,
     });
     const output = result.stdout + result.stderr;
     assert(!output.includes("unknown option"), "should accept -g flag");
     assert(!output.includes("error: option"), "should not have option parsing error");
-    console.log("✓ fde ls -g flag is accepted\n");
+    console.log("✓ frogg ls -g flag is accepted\n");
   }
 
-  // Test 7: fde ls -ag combined flags are accepted
+  // Test 7: frogg ls -ag combined flags are accepted
   {
-    console.log("Test 7: fde ls -ag combined flags are accepted");
-    const result = await runLocalFde(["ls", "-ag"], {
-      FDE_HOST: `localhost:${port}`,
-      FDE_HOME: fdeHome,
+    console.log("Test 7: frogg ls -ag combined flags are accepted");
+    const result = await runLocalFrogg(["ls", "-ag"], {
+      FROGG_HOST: `localhost:${port}`,
+      FROGG_HOME: froggHome,
     });
     const output = result.stdout + result.stderr;
     assert(!output.includes("unknown option"), "should accept -ag flags");
     assert(!output.includes("error: option"), "should not have option parsing error");
-    console.log("✓ fde ls -ag combined flags are accepted\n");
+    console.log("✓ frogg ls -ag combined flags are accepted\n");
   }
 
   // Test 8: -q (quiet) flag is accepted globally
   {
     console.log("Test 8: -q (quiet) flag is accepted");
-    const result = await runLocalFde(["-q", "ls"], {
-      FDE_HOST: `localhost:${port}`,
-      FDE_HOME: fdeHome,
+    const result = await runLocalFrogg(["-q", "ls"], {
+      FROGG_HOST: `localhost:${port}`,
+      FROGG_HOME: froggHome,
     });
     const output = result.stdout + result.stderr;
     assert(!output.includes("unknown option"), "should accept -q flag");
@@ -158,21 +158,21 @@ try {
     console.log("✓ -q (quiet) flag is accepted\n");
   }
 
-  // Test 9: fde ls --ui is rejected (flag removed)
+  // Test 9: frogg ls --ui is rejected (flag removed)
   {
-    console.log("Test 9: fde ls --ui is rejected");
-    const result = await runLocalFde(["ls", "--ui"], {
-      FDE_HOST: `localhost:${port}`,
-      FDE_HOME: fdeHome,
+    console.log("Test 9: frogg ls --ui is rejected");
+    const result = await runLocalFrogg(["ls", "--ui"], {
+      FROGG_HOST: `localhost:${port}`,
+      FROGG_HOME: froggHome,
     });
     assert.notStrictEqual(result.exitCode, 0, "should fail for removed --ui flag");
     const output = result.stdout + result.stderr;
     assert(output.includes("unknown option"), "should report unknown option for --ui");
-    console.log("✓ fde ls --ui is rejected\n");
+    console.log("✓ frogg ls --ui is rejected\n");
   }
 } finally {
   // Clean up temp directory
-  await rm(fdeHome, { recursive: true, force: true });
+  await rm(froggHome, { recursive: true, force: true });
 }
 
 console.log("=== All ls tests passed ===");

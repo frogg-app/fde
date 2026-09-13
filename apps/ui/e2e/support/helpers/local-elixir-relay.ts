@@ -64,10 +64,10 @@ export async function startLocalElixirRelay(): Promise<LocalElixirRelay> {
   }
 
   const relayRoot =
-    process.env.FDE_RELAY_CHECKOUT ?? path.resolve(__dirname, "../../../../../..", "fde-relay");
+    process.env.FROGG_RELAY_CHECKOUT ?? path.resolve(__dirname, "../../../../../..", "frogg-relay");
   if (!existsSync(path.join(relayRoot, "mix.exs"))) {
     throw new Error(
-      `Expected the Elixir relay checkout at ${relayRoot}. Set FDE_RELAY_CHECKOUT to override it.`,
+      `Expected the Elixir relay checkout at ${relayRoot}. Set FROGG_RELAY_CHECKOUT to override it.`,
     );
   }
 
@@ -85,9 +85,9 @@ export async function startLocalElixirRelay(): Promise<LocalElixirRelay> {
       env: {
         ...process.env,
         MIX_ENV: "prod",
-        FDE_RELAY_HOST: "127.0.0.1",
-        FDE_RELAY_PORT: String(port),
-        FDE_RELAY_MIN_CLUSTER_SIZE: "1",
+        FROGG_RELAY_HOST: "127.0.0.1",
+        FROGG_RELAY_PORT: String(port),
+        FROGG_RELAY_MIN_CLUSTER_SIZE: "1",
       },
       stdio: ["ignore", "pipe", "pipe"],
     });

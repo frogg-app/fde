@@ -27,7 +27,7 @@ test("sequential replay after reconstruction keeps one durable owned agent", asy
   expect(reconstructed.durableAgentCount).toBe(1);
 });
 
-test("Hub MCP configuration reaches the provider alongside Fde MCP without entering snapshots", async () => {
+test("Hub MCP configuration reaches the provider alongside Frogg MCP without entering snapshots", async () => {
   const hub = await HubRelationshipHarness.startWithAgentMcp();
   await hub.beginConnect().result;
   hub.connectLatestSocket();
@@ -57,7 +57,7 @@ test("Hub MCP configuration reaches the provider alongside Fde MCP without enter
     payload: { success: true, agent: { provider: "codex" }, error: null },
   });
   expect(hub.latestProviderCreateConfig()?.mcpServers).toMatchObject({
-    fde: { type: "http" },
+    frogg: { type: "http" },
     hub: {
       type: "http",
       url: "https://hub.test/mcp/executions/mcp-execution",
@@ -155,11 +155,11 @@ test("Hub returns path-specific structured provider option feedback", async () =
   });
 });
 
-test("new Hub executions cannot override the daemon-owned Fde MCP server", async () => {
+test("new Hub executions cannot override the daemon-owned Frogg MCP server", async () => {
   const hub = await launchRelationship();
   hub.beginOwnedCreate("reserved-mcp-create", "reserved-mcp-execution", {
     mcpServers: {
-      fde: { type: "http", url: "https://hub.test/replace-fde" },
+      frogg: { type: "http", url: "https://hub.test/replace-frogg" },
     },
   });
 
@@ -179,7 +179,7 @@ test("new Hub executions cannot override the daemon-owned Fde MCP server", async
   expect(await hub.durableOwnedAgentIds()).toEqual([]);
 });
 
-test("reserved Fde MCP input does not invalidate replay of an owned execution", async () => {
+test("reserved Frogg MCP input does not invalidate replay of an owned execution", async () => {
   const hub = await launchRelationship();
   hub.beginOwnedCreate("original-create", "replayed-execution");
   const original = await hub.ownedCreateResult("original-create");
@@ -191,7 +191,7 @@ test("reserved Fde MCP input does not invalidate replay of an owned execution", 
 
   hub.beginOwnedCreate("replay-create", "replayed-execution", {
     mcpServers: {
-      fde: { type: "http", url: "https://hub.test/replace-fde" },
+      frogg: { type: "http", url: "https://hub.test/replace-frogg" },
     },
   });
   const replay = await hub.ownedCreateResult("replay-create");

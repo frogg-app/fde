@@ -18,23 +18,23 @@ const FDROID_ABI_VERSION_CODE_ENTRIES = Object.entries(FDROID_ABI_VERSION_CODE_S
   .map(([abi, suffix]) => `    "${abi}": ${suffix},`)
   .join("\n");
 
-const FDROID_ABI_VERSION_CODE_BLOCK = `// Fde F-Droid single-ABI version codes
-def fdeAbiVersionCodes = [
+const FDROID_ABI_VERSION_CODE_BLOCK = `// Frogg F-Droid single-ABI version codes
+def froggAbiVersionCodes = [
 ${FDROID_ABI_VERSION_CODE_ENTRIES}
 ]
-def fdeArchitectures = (findProperty("reactNativeArchitectures") ?: "")
+def froggArchitectures = (findProperty("reactNativeArchitectures") ?: "")
     .toString()
     .split(",")
     .collect { it.trim() }
     .findAll { !it.isEmpty() }
 
-if (fdeArchitectures.size() == 1) {
-    def fdeAbi = fdeArchitectures[0]
-    def fdeAbiVersionCode = fdeAbiVersionCodes[fdeAbi]
-    if (fdeAbiVersionCode == null) {
-        throw new GradleException("Unsupported Fde Android ABI: " + fdeAbi)
+if (froggArchitectures.size() == 1) {
+    def froggAbi = froggArchitectures[0]
+    def froggAbiVersionCode = froggAbiVersionCodes[froggAbi]
+    if (froggAbiVersionCode == null) {
+        throw new GradleException("Unsupported Frogg Android ABI: " + froggAbi)
     }
-    android.defaultConfig.versionCode = android.defaultConfig.versionCode * 10 + fdeAbiVersionCode
+    android.defaultConfig.versionCode = android.defaultConfig.versionCode * 10 + froggAbiVersionCode
 }
 `;
 
@@ -53,7 +53,7 @@ function configureFdroidAppBuildGradle(contents) {
     );
   }
 
-  if (!configuredContents.includes("// Fde F-Droid single-ABI version codes")) {
+  if (!configuredContents.includes("// Frogg F-Droid single-ABI version codes")) {
     configuredContents = `${configuredContents.trimEnd()}\n\n${FDROID_ABI_VERSION_CODE_BLOCK}`;
   }
 

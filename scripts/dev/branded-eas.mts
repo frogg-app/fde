@@ -11,7 +11,7 @@ import { resolveBrand } from "./branding/resolve.mjs";
 const build = resolveBrand();
 const release = await acquireLock("build", build);
 try {
-  process.env.FDE_BRAND_BUILD_OWNER ||= String(process.pid);
+  process.env.FROGG_BRAND_BUILD_OWNER ||= String(process.pid);
   await prepareBrand(build.selected);
   const destination = await mkdtemp(path.join(os.tmpdir(), `${build.brand.id}-mobile-`));
   await exportMobileProject(build, destination);
@@ -26,8 +26,10 @@ try {
       stdio: "inherit",
       env: {
         ...process.env,
-        FDE_BRAND_DIR: build.brand.legacyFde ? "brands/fde" : `.branding-input/${build.brand.id}`,
-        FDE_BRAND_BUILD_OWNER: "",
+        FROGG_BRAND_DIR: build.brand.legacyFrogg
+          ? "brands/frogg"
+          : `.branding-input/${build.brand.id}`,
+        FROGG_BRAND_BUILD_OWNER: "",
         EAS_NO_VCS: "1",
         EAS_PROJECT_ROOT: destination,
       },

@@ -7,7 +7,7 @@ import type {
   DaemonUpdateChannel,
   DaemonUpdateGetStatusResponse,
   DaemonUpdateRun,
-} from "@fde/protocol/messages";
+} from "@frogg/protocol/messages";
 import { Alert as InlineAlert, type AlertVariant } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";

@@ -1,16 +1,16 @@
 # NOTE: Render through the workspace-create shell scripts before running when
-# using ${FDE_MAESTRO_*}. Maestro does not substitute environment vars.
-appId: ${FDE_MAESTRO_APP_ID}
+# using ${FROGG_MAESTRO_*}. Maestro does not substitute environment vars.
+appId: ${FROGG_MAESTRO_APP_ID}
 ---
-# Start from an open Android sidebar with ${FDE_MAESTRO_PROJECT_NAME}
+# Start from an open Android sidebar with ${FROGG_MAESTRO_PROJECT_NAME}
 # visible. Ends on the New Workspace screen.
 
 - assertVisible:
     id: "sidebar-project-list"
 
-- assertVisible: ${FDE_MAESTRO_PROJECT_NAME}
+- assertVisible: ${FROGG_MAESTRO_PROJECT_NAME}
 
-- tapOn: "Create a new workspace for ${FDE_MAESTRO_PROJECT_NAME}"
+- tapOn: "Create a new workspace for ${FROGG_MAESTRO_PROJECT_NAME}"
 
 - extendedWaitUntil:
     visible: "New workspace"

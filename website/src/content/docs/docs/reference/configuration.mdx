@@ -5,7 +5,7 @@ sidebar:
   order: 1
 ---
 
-The daemon reads `$FDE_HOME/config.json`. `FDE_HOME` defaults to `~/.fde`. A custom brand
+The daemon reads `$FROGG_HOME/config.json`. `FROGG_HOME` defaults to `~/.frogg`. A custom brand
 uses its own home and variable, for example `~/.acme` and `ACME_HOME`.
 
 ## Basics
@@ -16,16 +16,16 @@ uses its own home and variable, for example `~/.acme` and `ACME_HOME`.
   extra keys.
 - Environment variables and CLI flags override the file. See
   [environment variables](/docs/reference/environment-variables/).
-- Apply changes with `fde reload`. It reports which paths applied live, which need
-  `fde restart`, and which are pinned by an env var or flag.
-- `fde config-format` rewrites the file with consistent formatting and keeps your values.
+- Apply changes with `frogg reload`. It reports which paths applied live, which need
+  `frogg restart`, and which are pinned by an env var or flag.
+- `frogg config-format` rewrites the file with consistent formatting and keeps your values.
 - The app's host settings edit the same file.
 
 ## Default file
 
 This is exactly what a new daemon writes (0.6.19):
 
-```json title="~/.fde/config.json"
+```json title="~/.frogg/config.json"
 {
   "version": 1,
   "daemon": {
@@ -51,12 +51,12 @@ This is exactly what a new daemon writes (0.6.19):
 
 | Key                     | Type                    | Default          | Meaning |
 | ----------------------- | ----------------------- | ---------------- | ------- |
-| `daemon.listen`         | string                  | `0.0.0.0:9999`   | Listen target. Forms: `host:port`, `9999`, `:9999`, `[::1]:9999`, a Unix socket path (`/run/fde.sock`, `~/fde.sock`, `unix://...`) or a Windows pipe (`\\.\pipe\fde`, `pipe://fde`). Precedence: `--listen` > `FDE_LISTEN` > this key > `0.0.0.0:$PORT` > `0.0.0.0:9999` |
+| `daemon.listen`         | string                  | `0.0.0.0:9999`   | Listen target. Forms: `host:port`, `9999`, `:9999`, `[::1]:9999`, a Unix socket path (`/run/frogg.sock`, `~/frogg.sock`, `unix://...`) or a Windows pipe (`\\.\pipe\frogg`, `pipe://frogg`). Precedence: `--listen` > `FROGG_LISTEN` > this key > `0.0.0.0:$PORT` > `0.0.0.0:9999` |
 | `daemon.hostnames`      | `true` or string[]      | unset            | Allowed `Host` headers (DNS-rebinding protection). `localhost`, `*.localhost`, IP addresses and the pairing host are always allowed. A leading `.` matches subdomains. `true` allows any host |
 | `daemon.allowedHosts`   | same                    | unset            | Legacy alias of `hostnames` |
 | `daemon.trustedProxies` | `true` or string[]      | `["loopback"]`   | Proxies whose `X-Forwarded-For` is trusted. Entries are IPs or `"loopback"` |
 | `daemon.cors.allowedOrigins` | string[]           | `[]`             | Extra browser origins. `"*"` allows any. The daemon's own origins and the desktop app origin are always allowed |
-| `daemon.auth.password`  | bcrypt hash             | unset            | Require a password from every client. Set it with `fde auth set-password`; do not write it by hand |
+| `daemon.auth.password`  | bcrypt hash             | unset            | Require a password from every client. Set it with `frogg auth set-password`; do not write it by hand |
 | `daemon.auth.trustLan`  | boolean                 | `true`           | Treat private-network clients like loopback (no credential needed) when no password is set |
 
 See [security and access](/docs/self-hosting/security/) for how these combine.
@@ -66,7 +66,7 @@ See [security and access](/docs/self-hosting/security/) for how these combine.
 | Key                               | Type    | Default | Meaning |
 | --------------------------------- | ------- | ------- | ------- |
 | `daemon.mcp.enabled`              | boolean | `true`  | Serve the agent MCP endpoint at `/mcp/agents` |
-| `daemon.mcp.injectIntoAgents`     | boolean | `false` | Give agents the daemon's `fde` MCP server automatically |
+| `daemon.mcp.injectIntoAgents`     | boolean | `false` | Give agents the daemon's `frogg` MCP server automatically |
 | `daemon.browserTools.enabled`     | boolean | `false` | Expose browser automation tools over MCP |
 | `daemon.appendSystemPrompt`       | string  | `""`    | Text appended to every agent's system prompt |
 | `daemon.autoArchiveAfterMerge`    | boolean | `false` | Archive agents after their branch merges |
@@ -98,12 +98,12 @@ It only works for installs made with `install.sh`. See [updates](/docs/self-host
 | `daemon.relay.useTls`        | boolean | `true`           | TLS to the relay. Set `false` only for a plaintext test relay |
 | `daemon.relay.publicUseTls`  | boolean | `useTls`         | TLS advertised to clients |
 
-FDE does not operate a public relay, and no brand ships a relay endpoint. Deploy
+Frogg does not operate a public relay, and no brand ships a relay endpoint. Deploy
 `packages/relay` yourself to use one.
 
-The endpoint comes from `FDE_RELAY_ENDPOINT`, then `daemon.relay.endpoint`. Setting it
+The endpoint comes from `FROGG_RELAY_ENDPOINT`, then `daemon.relay.endpoint`. Setting it
 in the app writes `daemon.relay.endpoint` and `daemon.relay.useTls` and applies them
-without a restart. While `FDE_RELAY_ENDPOINT`, `FDE_RELAY_USE_TLS` or a relay TLS CLI flag
+without a restart. While `FROGG_RELAY_ENDPOINT`, `FROGG_RELAY_USE_TLS` or a relay TLS CLI flag
 is set, the app shows the endpoint read-only.
 
 ### Service proxy
@@ -128,16 +128,16 @@ is set, the app shows the endpoint read-only.
 | `agents.providers`                   | object  | unset    | Built-in provider overrides and custom providers. See [custom providers](/docs/agents-and-providers/custom-providers/) |
 | `agents.catalogRefreshTimeoutMs`     | integer | `120000` | Deadline for refreshing a provider's models and modes |
 | `agents.metadataGeneration.providers` | array  | unset    | Ordered `[{ provider, model?, thinkingOptionId? }]` used to generate titles, branch names, commit messages and PR text |
-| `agents.skills.selection`            | object  | all      | `{ "mode": "all" }` or `{ "mode": "custom", "skills": ["fde", "fde-help"] }`. See [skills](/docs/agents-and-providers/skills/) |
+| `agents.skills.selection`            | object  | all      | `{ "mode": "all" }` or `{ "mode": "custom", "skills": ["frogg", "frogg-help"] }`. See [skills](/docs/agents-and-providers/skills/) |
 
 ## `worktrees`
 
 | Key                       | Type   | Default              | Meaning |
 | ------------------------- | ------ | -------------------- | ------- |
-| `worktrees.root`          | string | `$FDE_HOME/worktrees` | Where managed worktrees are created. Relative paths resolve against `FDE_HOME` |
+| `worktrees.root`          | string | `$FROGG_HOME/worktrees` | Where managed worktrees are created. Relative paths resolve against `FROGG_HOME` |
 | `worktrees.servicePorts`  | object | unset                | Fallback port allocation for workspace services: `{ "range": "3000-3999" }` or `{ "portScript": "./ports.sh" }` |
 
-A project's own `fde.json` takes precedence. See [project config](/docs/reference/project-config/).
+A project's own `frogg.json` takes precedence. See [project config](/docs/reference/project-config/).
 
 ## `features`
 
@@ -154,7 +154,7 @@ A project's own `fde.json` takes precedence. See [project config](/docs/referenc
 | `features.voiceMode.turnDetection.provider` | `local` or `openai` | `local` | |
 | `features.voiceMode.tts.{provider,model,voice,speakerId,speed}` | | `local` | OpenAI voices: alloy, echo, fable, onyx, nova, shimmer |
 | `features.companion.enabled`            | boolean | on unless voice is off | Allow Companion on this daemon |
-| `features.companion.backend`            | `subscription`, `claude`, `codex`, `api` | `subscription` | See [Companion](/docs/using-fde/voice-and-companion/) |
+| `features.companion.backend`            | `subscription`, `claude`, `codex`, `api` | `subscription` | See [Companion](/docs/using-frogg/voice-and-companion/) |
 | `features.companion.model`              | string  | `claude-haiku-4-5` (Claude), `gpt-5.6-luna` (Codex) | |
 | `features.companion.nativeVoicePreview` | boolean | `false` | Experimental Codex native voice transport |
 | `features.webUi.enabled`                | boolean | `false` | Serve the web app from the daemon |
@@ -170,7 +170,7 @@ These are credentials for voice features, not agent providers.
 | `providers.openai.stt.{apiKey,baseUrl}`      | Override for speech-to-text |
 | `providers.openai.tts.{apiKey,baseUrl}`      | Override for text-to-speech |
 | `providers.anthropic.{apiKey,baseUrl}`       | Used only by the Companion `api` backend |
-| `providers.local.modelsDir`                  | Local speech models. Default `$FDE_HOME/models/local-speech` |
+| `providers.local.modelsDir`                  | Local speech models. Default `$FROGG_HOME/models/local-speech` |
 
 ## `log`
 
@@ -179,13 +179,13 @@ These are credentials for voice features, not agent providers.
 | `log.level`, `log.format`  | `info`, `json`          | Legacy global settings (`trace` ... `fatal`; `pretty` or `json`) |
 | `log.console.{level,format}` |                       | Console output |
 | `log.file.level`           | `info`                  | |
-| `log.file.path`            | `$FDE_HOME/daemon.log`  | Relative paths resolve against `FDE_HOME` |
+| `log.file.path`            | `$FROGG_HOME/daemon.log`  | Relative paths resolve against `FROGG_HOME` |
 | `log.file.rotate.maxSize`  | `10m`                   | |
 | `log.file.rotate.maxFiles` | `3`                     | |
 
 ## Reload behaviour
 
-`fde reload` applies these without a restart: `daemon.relay.enabled`,
+`frogg reload` applies these without a restart: `daemon.relay.enabled`,
 `daemon.relay.endpoint`, `daemon.relay.useTls`, `daemon.mcp.*`,
 `daemon.browserTools.enabled`, `daemon.hostnames`, `daemon.cors.allowedOrigins`,
 `daemon.trustedProxies`, `daemon.auth.trustLan`, `daemon.git.*`,
@@ -194,14 +194,14 @@ These are credentials for voice features, not agent providers.
 `app.pairingBaseUrl` and `agents.*`.
 
 Everything else, including `daemon.listen`, `daemon.auth.password`, `features`
-and `log`, needs `fde restart`.
+and `log`, needs `frogg restart`.
 
-## Other files in `FDE_HOME`
+## Other files in `FROGG_HOME`
 
 | Path                    | Contents |
 | ----------------------- | -------- |
 | `daemon.log`            | Daemon log (rotated) |
-| `fde.pid`               | Running daemon lock |
+| `frogg.pid`               | Running daemon lock |
 | `agents/`               | Agent records |
 | `projects/`             | `projects.json`, `workspaces.json` |
 | `schedules/`            | Schedules and heartbeats |

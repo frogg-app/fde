@@ -1,4 +1,4 @@
-import type { CompanionConversationOptions } from "@fde/protocol/messages";
+import type { CompanionConversationOptions } from "@frogg/protocol/messages";
 
 export function companionConversationInstructions(options: CompanionConversationOptions): string {
   return [
