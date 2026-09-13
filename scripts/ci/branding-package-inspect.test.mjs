@@ -41,7 +41,12 @@ test("macOS inspection accepts stable bundle names and rejects missing executabl
       `Object.defineProperty(process, "platform", {value:"darwin"}); Object.defineProperty(process, "arch", {value:"arm64"}); await import(${JSON.stringify(script)});`,
     ];
     function run(extra = {}) {
-      return execFileSync(process.execPath, args, { cwd, env: { ...env, ...extra }, stdio: "pipe" });
+      return execFileSync(process.execPath, args, {
+        cwd,
+        env: { ...env, ...extra },
+        stdio: "pipe",
+      });
+    }
     assert.match(run().toString(), /verified/);
     assert.throws(() => run({ TEST_APP_ID: "wrong.identity" }));
     rmSync(path.join(contents, "MacOS/acme"));
