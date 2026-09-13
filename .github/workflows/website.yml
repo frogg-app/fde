@@ -75,6 +75,7 @@ jobs:
     steps:
       - name: Check for Cloudflare credentials
         id: creds
+        working-directory: ${{ github.workspace }}
         run: |
           if [ -z "${CLOUDFLARE_API_TOKEN}" ]; then
             echo "::warning title=Website not deployed::CLOUDFLARE_API_TOKEN secret is not set; skipping deploy."
