@@ -240,6 +240,12 @@ export const fr: TranslationResources = {
       reconnectingTo: "Reconnexion à{{serverLabel}}...",
       showAgainWhenReachable: "Nous afficherons à nouveau cet agent dès que l'hôte sera joignable.",
     },
+    connectionNotice: {
+      lost: "Connexion perdue avec {{serverLabel}}",
+      reconnecting: "Reconnexion · hors ligne depuis {{duration}}",
+      reconnected: "Reconnecté à {{serverLabel}}",
+      composerOffline: "Daemon hors ligne. Vous pourrez envoyer dès la reconnexion.",
+    },
     archived: {
       callout: "Cet agent est archivé",
       unarchive: "Désarchiver",

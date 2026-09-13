@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { ConnectionNoticeHost } from "@/components/connection-notice";
 import { ToastViewport, useToastHost } from "@/components/toast-host";
 import { ToastApiProvider } from "./toast-api-context";
 
@@ -11,6 +12,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastApiProvider api={api}>
       {children}
       <ToastViewport toast={toast} onDismiss={dismiss} />
+      <ConnectionNoticeHost />
     </ToastApiProvider>
   );
 }

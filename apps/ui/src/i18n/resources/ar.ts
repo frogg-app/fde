@@ -236,6 +236,12 @@ export const ar: TranslationResources = {
       reconnectingTo: "جارٍ إعادة الاتصال بـ{{serverLabel}}...",
       showAgainWhenReachable: "سنعرض هذا الوكيل مرة أخرى بمجرد الوصول إلى المضيف.",
     },
+    connectionNotice: {
+      lost: "انقطع الاتصال بـ{{serverLabel}}",
+      reconnecting: "جارٍ إعادة الاتصال · غير متصل منذ {{duration}}",
+      reconnected: "تمت إعادة الاتصال بـ{{serverLabel}}",
+      composerOffline: "الخادم غير متصل. يمكنك الإرسال بعد إعادة الاتصال.",
+    },
     archived: {
       callout: "تمت أرشفة هذا الوكيل",
       unarchive: "إلغاء الأرشفة",

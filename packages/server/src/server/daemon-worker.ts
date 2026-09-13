@@ -176,7 +176,7 @@ async function main() {
             "Forcing shutdown - HTTP server didn't close in time",
           );
           process.exit(1);
-        }, 10000);
+        }, 25000); // Under systemd TimeoutStopSec=30; leaves room to persist interrupted-turn markers.
 
         try {
           if (!daemon) {

@@ -237,6 +237,12 @@ export const ko: TranslationResources = {
       reconnectingTo: "{{serverLabel}}에 다시 연결하는 중...",
       showAgainWhenReachable: "호스트에 연결되는 즉시 이 에이전트를 다시 표시합니다.",
     },
+    connectionNotice: {
+      lost: "{{serverLabel}} 연결이 끊어졌습니다",
+      reconnecting: "다시 연결 중 · {{duration}} 동안 오프라인",
+      reconnected: "{{serverLabel}}에 다시 연결되었습니다",
+      composerOffline: "데몬이 오프라인입니다. 다시 연결되면 보낼 수 있습니다.",
+    },
     archived: {
       callout: "이 에이전트는 보관되었습니다",
       unarchive: "보관 해제",

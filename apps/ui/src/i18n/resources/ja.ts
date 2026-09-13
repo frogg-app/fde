@@ -239,6 +239,12 @@ export const ja: TranslationResources = {
       showAgainWhenReachable:
         "ホストに到達できるようになり次第、このエージェントを再び表示します。",
     },
+    connectionNotice: {
+      lost: "{{serverLabel}}との接続が切れました",
+      reconnecting: "再接続中 · {{duration}}オフライン",
+      reconnected: "{{serverLabel}}に再接続しました",
+      composerOffline: "デーモンがオフラインです。再接続後に送信できます。",
+    },
     archived: {
       callout: "このエージェントはアーカイブされています",
       unarchive: "アーカイブ解除",

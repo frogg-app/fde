@@ -1,4 +1,6 @@
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { CONNECTION_NOTICE_SHOW_DELAY_MS } from "@/components/connection-notice-model";
+import { useDelayedTrue } from "@/hooks/use-delayed-true";
 import {
   View,
   Pressable,
@@ -1217,7 +1219,13 @@ function ComposerContentImpl({
   const isCompactLayout = resolveCompactLayout(isCompactLayoutOverride, isCompactFormFactor);
   const isDesktopWebBreakpoint = resolveIsDesktopWebBreakpoint(isCompactFormFactor);
   const isDesktopLayout = resolveIsDesktopWebBreakpoint(isCompactLayout);
-  const messagePlaceholder = resolveMessagePlaceholder(inputMode, isDesktopLayout, t, placeholder);
+  const showOfflineComposer = useDelayedTrue(
+    !isConnected && isDesktopLayout && !readOnly,
+    CONNECTION_NOTICE_SHOW_DELAY_MS,
+  );
+  const messagePlaceholder = showOfflineComposer
+    ? t("agentPanel.connectionNotice.composerOffline")
+    : resolveMessagePlaceholder(inputMode, isDesktopLayout, t, placeholder);
   const userInput = value;
   const setUserInput = onChangeText;
   const workspaceAttachments = useWorkspaceAttachmentsForScopes(attachmentScopeKeys);
@@ -2382,6 +2390,7 @@ function ComposerContentImpl({
                   onFocusChange={handleFocusChange}
                   onHeightChange={onComposerHeightChange}
                   inputWrapperStyle={inputWrapperStyle}
+                  offline={showOfflineComposer}
                   attachmentSlot={attachmentTray}
                   inputMode={inputMode}
                   readOnly={readOnly}

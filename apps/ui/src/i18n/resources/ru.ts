@@ -238,6 +238,12 @@ export const ru: TranslationResources = {
       reconnectingTo: "Повторное подключение к {{serverLabel}}...",
       showAgainWhenReachable: "Агент снова появится, как только хост станет доступен.",
     },
+    connectionNotice: {
+      lost: "Соединение с {{serverLabel}} потеряно",
+      reconnecting: "Переподключение · нет связи {{duration}}",
+      reconnected: "Снова подключено к {{serverLabel}}",
+      composerOffline: "Демон недоступен. Отправка станет доступна после переподключения.",
+    },
     archived: {
       callout: "Этот агент находится в архиве",
       unarchive: "Разархивировать",

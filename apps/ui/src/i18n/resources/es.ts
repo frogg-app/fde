@@ -239,6 +239,12 @@ export const es: TranslationResources = {
       showAgainWhenReachable:
         "Le mostraremos a este agente nuevamente tan pronto como podamos comunicarnos con el anfitrión.",
     },
+    connectionNotice: {
+      lost: "Se perdió la conexión con {{serverLabel}}",
+      reconnecting: "Reconectando · sin conexión desde hace {{duration}}",
+      reconnected: "Reconectado a {{serverLabel}}",
+      composerOffline: "Daemon sin conexión. Podrás enviar cuando se reconecte.",
+    },
     archived: {
       callout: "Este agente está archivado.",
       unarchive: "Desarchivar",

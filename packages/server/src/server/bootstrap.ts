@@ -136,6 +136,11 @@ import {
 import { createTtsCache } from "./notifications/tts-cache.js";
 import { AgentManager } from "./agent/agent-manager.js";
 import { AgentStorage } from "./agent/agent-storage.js";
+import {
+  collectMidTurnAgentIds,
+  DAEMON_RESTART_INTERRUPT_REASON,
+  resumeInterruptedAgents,
+} from "./agent/interrupted-turns.js";
 import { attachAgentStoragePersistence } from "./persistence-hooks.js";
 import { createAgentMcpServer } from "./agent/mcp-server.js";
 import {
@@ -1890,6 +1895,10 @@ export async function createPaseoDaemon(
               updateService.setBroadcaster((msg) => server.broadcast(wrapSessionMessage(msg)));
             }
             autoUpdater.start();
+            // Fire-and-forget: continue agents a previous daemon stop cut off mid-turn.
+            void resumeInterruptedAgents({ agentManager, agentStorage, logger }).catch((err) =>
+              logger.error({ err }, "Interrupted-turn resume failed"),
+            );
             relayRuntime = createRelayRuntime({
               config: {
                 enabled: relayEnabled,
@@ -1952,9 +1961,21 @@ export async function createPaseoDaemon(
     // Freeze both ingress and registration before taking the agent closure snapshot.
     wsServer?.prepareForShutdown();
     agentManager.prepareForShutdown();
+    const midTurnAgentIds = collectMidTurnAgentIds(agentManager.listAgents());
     await closeAllAgents(logger, agentManager);
     await agentManager.flushForShutdown().catch(() => undefined);
     detachAgentStoragePersistence();
+    // Close snapshots rebuild records without the flag, so mark after they land.
+    if (midTurnAgentIds.length > 0) {
+      await agentStorage.flush().catch(() => undefined);
+      await agentStorage
+        .markInterruptedTurn(midTurnAgentIds, {
+          at: new Date().toISOString(),
+          reason: DAEMON_RESTART_INTERRUPT_REASON,
+        })
+        .catch((err) => logger.warn({ err }, "Failed to mark interrupted agent turns"));
+      logger.info({ agentIds: midTurnAgentIds }, "Marked mid-turn agents for resume on restart");
+    }
     await agentStorage.flush().catch(() => undefined);
     await agentProviderRuntime.shutdown();
     terminalManager.killAll();

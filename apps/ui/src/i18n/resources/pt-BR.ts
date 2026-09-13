@@ -239,6 +239,12 @@ export const ptBR: TranslationResources = {
       showAgainWhenReachable:
         "Mostraremos este agente novamente assim que o host estiver acessível.",
     },
+    connectionNotice: {
+      lost: "Conexão perdida com {{serverLabel}}",
+      reconnecting: "Reconectando · offline há {{duration}}",
+      reconnected: "Reconectado a {{serverLabel}}",
+      composerOffline: "Daemon offline. Você poderá enviar quando reconectar.",
+    },
     archived: {
       callout: "Este agente está arquivado",
       unarchive: "Desarquivar",
