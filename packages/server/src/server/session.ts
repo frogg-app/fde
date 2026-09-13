@@ -1,3 +1,6 @@
+import { createRealpathAwarePathMatcher } from "../utils/path.js";
+import { ProjectImportService } from "./project-import/service.js";
+import { dispatchProjectImport } from "./project-import/dispatch.js";
 import equal from "fast-deep-equal";
 import { v4 as uuidv4 } from "uuid";
 import { lstat, mkdir, mkdtemp, rename, rm, stat } from "node:fs/promises";
@@ -686,6 +689,7 @@ export class Session {
   private readonly workspaceAutoName: WorkspaceAutoName;
   private readonly gitMutation: GitMutationService;
   private readonly workspaceProvisioning: WorkspaceProvisioningService;
+  private readonly projectImport: ProjectImportService;
   private readonly workspaceRecovery: WorkspaceRecoveryService;
   private readonly daemonConfigStore: DaemonConfigStore;
   private readonly pushNotifications: PushNotifications;
@@ -866,6 +870,52 @@ export class Session {
       projectRegistry: this.projectRegistry,
       workspaceGitService: this.workspaceGitService,
       logger: this.sessionLogger,
+    });
+    this.projectImport = new ProjectImportService(this.fdeHome, {
+      listNative: async (cwd) => {
+        const sessions = await this.agentManager.listImportableSessions({ cwd, limit: 500 });
+        const result = [];
+        for (const session of sessions) {
+          const existing = (
+            await this.agentStorage.listByProviderSession(
+              session.provider,
+              session.providerHandleId,
+            )
+          ).find((record) => !record.archivedAt);
+          result.push({ ...session, alreadyImportedAgentId: existing?.id ?? null });
+        }
+        return result;
+      },
+      ensureProject: async (cwd) => this.workspaceProvisioning.findOrCreateProjectForDirectory(cwd),
+      findProject: async (cwd) =>
+        (await this.projectRegistry.list()).find((project) => project.rootPath === cwd) ?? null,
+      importNative: async (native) => {
+        if (!this.allowsPermission("workspace.write"))
+          throw new Error("Importing native sessions requires workspace.write permission");
+        const existing = (
+          await this.agentStorage.listByProviderSession(native.provider, native.providerHandleId)
+        ).find((record) => !record.archivedAt);
+        if (existing) {
+          if (!createRealpathAwarePathMatcher(native.cwd)(existing.cwd))
+            throw new Error("This provider session is already imported in a different project");
+          return { agentId: existing.id, skipped: true };
+        }
+        const result = await importProviderSession({
+          request: {
+            provider: native.provider,
+            providerHandleId: native.providerHandleId,
+            cwd: native.cwd,
+            requestId: uuidv4(),
+          },
+          workspaceProvisioning: this.workspaceProvisioning,
+          agentManager: this.agentManager,
+          agentStorage: this.agentStorage,
+          logger: this.sessionLogger,
+        });
+        if (result.createdWorkspace)
+          await this.registerWorkspaceForImportedAgent(result.createdWorkspace);
+        return { agentId: result.snapshot.id, skipped: false };
+      },
     });
     this.workspaceRecovery = createWorkspaceRecoveryService({
       fdeHome: this.fdeHome,
@@ -2569,6 +2619,21 @@ export class Session {
     }
   }
 
+  private dispatchProjectImportMessage(msg: SessionInboundMessage): Promise<void> | undefined {
+    switch (msg.type) {
+      case "project.import.prepare.request":
+      case "project.import.upload.request":
+      case "project.import.preview.request":
+      case "project.import.commit.request":
+      case "project.import.cancel.request":
+      case "project.import.list.request":
+      case "project.import.read.request":
+        return dispatchProjectImport(this.projectImport, msg, (response) => this.emit(response));
+      default:
+        return undefined;
+    }
+  }
+
   private dispatchWorkspaceAndProjectMessage(
     msg: SessionInboundMessage,
   ): Promise<void> | undefined {
@@ -2613,7 +2678,7 @@ export class Session {
       case "workspace.pin.set.request":
         return this.handleWorkspacePinSetRequest(msg.workspaceId, msg.pinned, msg.requestId);
       default:
-        return undefined;
+        return this.dispatchProjectImportMessage(msg);
     }
   }
 

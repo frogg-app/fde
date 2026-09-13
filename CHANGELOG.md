@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add project and conversation import from client files or the selected daemon,
+  with preview, canonical project merging, persistent session/history deduplication,
+  bounded transfer and explicit native-session versus text-history presentation.
+
 - Preserve exact prior Linux/macOS desktop update payloads in selected development
   releases, with independent platform versions and strict continuity verification.
 - Record development release target defaults and rename-safe update requirements.

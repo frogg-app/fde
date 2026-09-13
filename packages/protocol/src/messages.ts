@@ -1,3 +1,19 @@
+import {
+  ProjectImportPrepareRequestSchema,
+  ProjectImportPrepareResponseSchema,
+  ProjectImportUploadRequestSchema,
+  ProjectImportUploadResponseSchema,
+  ProjectImportPreviewRequestSchema,
+  ProjectImportPreviewResponseSchema,
+  ProjectImportCommitRequestSchema,
+  ProjectImportCommitResponseSchema,
+  ProjectImportCancelRequestSchema,
+  ProjectImportCancelResponseSchema,
+  ProjectImportListRequestSchema,
+  ProjectImportListResponseSchema,
+  ProjectImportReadRequestSchema,
+  ProjectImportReadResponseSchema,
+} from "./project-import/messages.js";
 import { z } from "zod";
 import { TerminalActivitySchema } from "./terminal-activity.js";
 import { CLIENT_CAPS } from "./client-capabilities.js";
@@ -3147,6 +3163,13 @@ export const HubExecutionControlRequestSchema = z.object({
 export type HubExecutionControlRequest = z.infer<typeof HubExecutionControlRequestSchema>;
 
 export const SessionInboundMessageSchema = z.discriminatedUnion("type", [
+  ProjectImportPrepareRequestSchema,
+  ProjectImportUploadRequestSchema,
+  ProjectImportPreviewRequestSchema,
+  ProjectImportCommitRequestSchema,
+  ProjectImportCancelRequestSchema,
+  ProjectImportListRequestSchema,
+  ProjectImportReadRequestSchema,
   CompanionSessionStartRequestSchema,
   CompanionSessionStopRequestSchema,
   CompanionAudioChunkMessageSchema,
@@ -3728,6 +3751,8 @@ export const ServerInfoStatusPayloadSchema = z
         projectRemove: z.boolean().optional(),
         // COMPAT(projectAdd): added in v0.1.97, drop the gate when floor >= v0.1.97.
         projectAdd: z.boolean().optional(),
+        // COMPAT(projectImport): added in v0.7.0, remove after 2027-03-13 once daemon floor >= v0.7.0.
+        projectImport: z.boolean().optional(),
         // COMPAT(worktreeRestore): added in v0.1.97, drop the gate when floor >= v0.1.97
         worktreeRestore: z.boolean().optional(),
         // COMPAT(workspaceRecovery): added in v0.1.105, remove after 2027-01-11 once daemon floor >= v0.1.105.
@@ -6685,6 +6710,13 @@ export const AgentSkillsImportLegacySelectionResponseSchema = z.object({
 });
 
 export const SessionOutboundMessageSchema = z.discriminatedUnion("type", [
+  ProjectImportPrepareResponseSchema,
+  ProjectImportUploadResponseSchema,
+  ProjectImportPreviewResponseSchema,
+  ProjectImportCommitResponseSchema,
+  ProjectImportCancelResponseSchema,
+  ProjectImportListResponseSchema,
+  ProjectImportReadResponseSchema,
   HubExecutionAgentCreateResponseSchema,
   HubExecutionAgentValidateResponseSchema,
   HubExecutionControlResponseSchema,

@@ -1,7 +1,9 @@
+import { projectImportCopies } from "./project-import";
 import { en, type TranslationResources } from "./en";
 import { pluginSettings } from "./plugin-settings";
 
 export const ptBR: TranslationResources = {
+  projectImport: projectImportCopies["pt-BR"],
   directoryBrowser: {
     choose: "Usar este diretório",
     parent: "Ir para o diretório pai",

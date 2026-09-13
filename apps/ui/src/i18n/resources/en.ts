@@ -1,4 +1,6 @@
+import { projectImportCopies } from "./project-import";
 export const en = {
+  projectImport: projectImportCopies["en"],
   directoryBrowser: {
     choose: "Use this directory",
     parent: "Go to parent",
