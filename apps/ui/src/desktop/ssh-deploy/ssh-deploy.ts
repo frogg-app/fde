@@ -5,7 +5,7 @@ import { getSessionSshPassword } from "@/desktop/daemon/ssh-session-passwords";
 
 /** Desktop bridge event name (`fde:event:` is added by the shell). */
 export const SSH_DEPLOY_EVENT = "ssh-deploy-event";
-export const DEFAULT_SSH_DEPLOY_LISTEN_HOST = "127.0.0.1";
+export const DEFAULT_SSH_DEPLOY_LISTEN_HOST = "0.0.0.0";
 /** The service manager returns before the daemon binds its port; wait this long before reconnecting. */
 export const SSH_DEPLOY_RECONNECT_GRACE_MS = 2000;
 
@@ -96,7 +96,7 @@ export function parseSshDeployEvent(raw: unknown): SshDeployEvent | null {
   }
 }
 
-/** Loopback on the daemon port the host was saved with: the SSH tunnel ends there. */
+/** Bind all interfaces on the daemon port saved with the host. */
 export function defaultSshDeployListen(daemonPort?: number): string {
   return `${DEFAULT_SSH_DEPLOY_LISTEN_HOST}:${daemonPort ?? DEFAULT_SSH_DAEMON_PORT}`;
 }

@@ -81,6 +81,10 @@ To make an existing daemon reachable on the LAN, edit `daemon.listen` to
 service supplies an explicit listen address, update that service setting too.
 Connect clients using the server's LAN IP, not `0.0.0.0`.
 
+Run `fde config-format` to prettify an existing config without changing its
+settings. See [daemon configuration](daemon-config.md) for the editable template
+and service override behavior.
+
 ## Start the daemon at login
 
 The installers register a service for you. To do it (or undo it) yourself, on any platform:

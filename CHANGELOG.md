@@ -95,9 +95,10 @@
 - Add network-scan cancellation, retain discovered servers when cancelled, and
   simplify scan status and spacing. Remove per-address probe diagnostics from
   the main connection flow.
-- Windows and Android client builds plus daemon bundles are requested for this
-  source revision. Build success, device validation and publication are separate
-  checks; this partial build does not replace the published update feed.
+- Validate the server build, full workspace typecheck, focused regression suites,
+  and real-browser directory navigation/selection/retry. Add an artifact-only
+  workflow for Windows x64, Android arm64 and Linux x64 daemon builds. Installed
+  client validation and release publication remain separate checks.
 
 ## 0.6.10 - 2026-09-13
 

@@ -88,9 +88,9 @@ describe("parseSshDeployEvent", () => {
 });
 
 describe("deploy card helpers", () => {
-  it("defaults the listen address to loopback on the saved daemon port", () => {
-    expect(defaultSshDeployListen()).toBe("127.0.0.1:9999");
-    expect(defaultSshDeployListen(7000)).toBe("127.0.0.1:7000");
+  it("defaults the listen address to all interfaces on the saved daemon port", () => {
+    expect(defaultSshDeployListen()).toBe("0.0.0.0:9999");
+    expect(defaultSshDeployListen(7000)).toBe("0.0.0.0:7000");
   });
 
   it("describes the platform and the service manager", () => {
