@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.6.18 — 2026-09-13
+
+- Add an asynchronous build-monitor skill covering targeted CI repairs, persistent
+  monitoring, and isolated local/hosted build scheduling.
+
 ## 0.6.17 — 2026-09-13
 
 - Preserve LF shell templates on Windows checkouts and allow individual Windows,

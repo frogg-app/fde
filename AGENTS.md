@@ -87,3 +87,12 @@ update contract across local and CI artifact production.
   work in the changelog and distinguish implementation from platform validation.
 - Preserve inherited Apache-2.0 headers and `NOTICE`. Use the FDE wire/env/deep-link
   namespace; coordinate breaking upgrades across clients and daemons.
+
+## Background build monitoring
+
+After pushing changes that need build supervision, use
+[the build monitor skill](skills/fde-build-monitor/SKILL.md). Resume the existing
+monitor in its isolated workspace instead of waiting for CI in the development
+conversation or starting another monitor. Hand it the pushed SHA, run IDs and
+requested targets. It owns targeted retries, bounded fixes and capacity-aware
+local/hosted build placement; preserve the user's integration authorization.
