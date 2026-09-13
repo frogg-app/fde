@@ -7,13 +7,13 @@ import { loadConfig } from "./config.js";
 
 const roots: string[] = [];
 
-async function createFdeHome(config: unknown): Promise<string> {
-  const root = await mkdtemp(path.join(os.tmpdir(), "fde-config-browser-tools-"));
+async function createFroggHome(config: unknown): Promise<string> {
+  const root = await mkdtemp(path.join(os.tmpdir(), "frogg-config-browser-tools-"));
   roots.push(root);
-  const fdeHome = path.join(root, ".fde");
-  await mkdir(fdeHome, { recursive: true });
-  await writeFile(path.join(fdeHome, "config.json"), JSON.stringify(config, null, 2));
-  return fdeHome;
+  const froggHome = path.join(root, ".frogg");
+  await mkdir(froggHome, { recursive: true });
+  await writeFile(path.join(froggHome, "config.json"), JSON.stringify(config, null, 2));
+  return froggHome;
 }
 
 describe("daemon browser tools config", () => {
@@ -22,13 +22,13 @@ describe("daemon browser tools config", () => {
   });
 
   test("defaults browser tools off when config is absent", async () => {
-    const home = await createFdeHome({ version: 1 });
+    const home = await createFroggHome({ version: 1 });
 
     expect(loadConfig(home, { env: {} }).browserToolsEnabled).toBe(false);
   });
 
   test("loads browser tools opt-in from persisted daemon config", async () => {
-    const home = await createFdeHome({
+    const home = await createFroggHome({
       version: 1,
       daemon: { browserTools: { enabled: true } },
     });

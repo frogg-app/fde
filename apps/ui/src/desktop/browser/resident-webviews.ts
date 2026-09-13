@@ -6,9 +6,9 @@ import {
 import type { BrowserViewport } from "@/desktop/browser/store";
 import { WEB_SURFACE_PLANE } from "@/lib/overlay-root";
 
-const RESIDENT_BROWSER_HOST_ID = "fde-browser-resident-webviews";
-const BROWSER_ID_ATTRIBUTE = "data-fde-browser-id";
-const BROWSER_SURFACE_ATTRIBUTE = "data-fde-browser-surface";
+const RESIDENT_BROWSER_HOST_ID = "frogg-browser-resident-webviews";
+const BROWSER_ID_ATTRIBUTE = "data-frogg-browser-id";
+const BROWSER_SURFACE_ATTRIBUTE = "data-frogg-browser-surface";
 const RESIDENT_VIEWPORT_WIDTH = 1280;
 const RESIDENT_VIEWPORT_HEIGHT = 800;
 

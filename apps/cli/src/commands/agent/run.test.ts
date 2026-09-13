@@ -7,12 +7,12 @@ import {
 } from "./run";
 
 describe("managed agent caller context", () => {
-  it("propagates a trimmed FDE_AGENT_ID", () => {
-    expect(resolveRunCallerAgentId({ FDE_AGENT_ID: "  parent-agent  " })).toBe("parent-agent");
+  it("propagates a trimmed FROGG_AGENT_ID", () => {
+    expect(resolveRunCallerAgentId({ FROGG_AGENT_ID: "  parent-agent  " })).toBe("parent-agent");
   });
 
   it("omits blank caller ids", () => {
-    expect(resolveRunCallerAgentId({ FDE_AGENT_ID: "   " })).toBeUndefined();
+    expect(resolveRunCallerAgentId({ FROGG_AGENT_ID: "   " })).toBeUndefined();
   });
 });
 
@@ -51,17 +51,17 @@ describe("existing run workspace resolution", () => {
 // validateRunOptions runs before the CLI ever connects to a daemon, so these
 // invalid combinations reject without one running.
 describe("runRunCommand option validation", () => {
-  const originalWorkspaceId = process.env.FDE_WORKSPACE_ID;
+  const originalWorkspaceId = process.env.FROGG_WORKSPACE_ID;
 
   beforeEach(() => {
-    delete process.env.FDE_WORKSPACE_ID;
+    delete process.env.FROGG_WORKSPACE_ID;
   });
 
   afterEach(() => {
     if (originalWorkspaceId === undefined) {
-      delete process.env.FDE_WORKSPACE_ID;
+      delete process.env.FROGG_WORKSPACE_ID;
     } else {
-      process.env.FDE_WORKSPACE_ID = originalWorkspaceId;
+      process.env.FROGG_WORKSPACE_ID = originalWorkspaceId;
     }
   });
 

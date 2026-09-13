@@ -54,7 +54,7 @@ function fakeGitService() {
     isGit: true,
     repoRoot: "/tmp/repo",
     currentBranch: "feature/scripts",
-    remoteUrl: "https://github.com/frogg-app/fde.git",
+    remoteUrl: "https://github.com/frogg-app/frogg.git",
     hasRemote: true,
   };
 
@@ -157,7 +157,7 @@ describe("buildSnapshot", () => {
     ).toEqual([]);
   });
 
-  test("returns no scripts for a workspace without a fde.json", async () => {
+  test("returns no scripts for a workspace without a frogg.json", async () => {
     const dir = mkdtempSync(join(tmpdir(), "workspace-scripts-"));
     tempDirs.push(dir);
     const { service } = buildService();
@@ -170,7 +170,7 @@ describe("buildSnapshot", () => {
     const directory = mkdtempSync(join(tmpdir(), "workspace-scripts-"));
     tempDirs.push(directory);
     writeFileSync(
-      join(directory, "fde.json"),
+      join(directory, "frogg.json"),
       JSON.stringify({ scripts: { app: { type: "service", command: "npm run app", port: 3000 } } }),
     );
     const project = {
@@ -225,7 +225,7 @@ describe("stop", () => {
     const dir = mkdtempSync(join(tmpdir(), "workspace-scripts-"));
     tempDirs.push(dir);
     writeFileSync(
-      join(dir, "fde.json"),
+      join(dir, "frogg.json"),
       JSON.stringify({ scripts: { web: { type: "service", command: "npm run web", port: 3000 } } }),
     );
     const runtimeStore = new WorkspaceScriptRuntimeStore();
@@ -313,7 +313,7 @@ describe("start", () => {
     expect(spawnCalls[0]).toMatchObject({
       repoRoot: "/tmp/repo",
       workspaceId: "ws-1",
-      projectSlug: "fde",
+      projectSlug: "frogg",
       branchName: "feature/scripts",
       scriptName: "app",
       daemonPort: 9999,
@@ -395,7 +395,7 @@ describe("start", () => {
     const directory = mkdtempSync(join(tmpdir(), "workspace-scripts-"));
     tempDirs.push(directory);
     writeFileSync(
-      join(directory, "fde.json"),
+      join(directory, "frogg.json"),
       JSON.stringify({ scripts: { app: { type: "service", command: "npm run app", port: 3000 } } }),
     );
     const project = {

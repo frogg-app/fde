@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { DaemonClient, FetchAgentsEntry } from "@fde/client/internal/daemon-client";
-import type { AgentSnapshotPayload } from "@fde/protocol/messages";
+import type { DaemonClient, FetchAgentsEntry } from "@frogg/client/internal/daemon-client";
+import type { AgentSnapshotPayload } from "@frogg/protocol/messages";
 import { useSessionStore } from "@/stores/session-store";
 import { AgentDirectoryReplica } from "./agent-replica";
 
@@ -43,7 +43,7 @@ function entry(agent: AgentSnapshotPayload): FetchAgentsEntry {
         currentBranch: null,
         remoteUrl: null,
         worktreeRoot: null,
-        isFdeOwnedWorktree: false,
+        isFroggOwnedWorktree: false,
         mainRepoRoot: null,
       },
     },

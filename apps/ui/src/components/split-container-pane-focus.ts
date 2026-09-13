@@ -4,7 +4,7 @@ const INTERACTIVE_TARGET_SELECTOR = [
   "select",
   "[role='button']",
   "[role='link']",
-  "[data-fde-pane-focus-exempt='true']",
+  "[data-frogg-pane-focus-exempt='true']",
 ].join(", ");
 
 export function shouldFocusPaneFromEventTarget(target: EventTarget | null): boolean {

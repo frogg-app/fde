@@ -1,4 +1,4 @@
-import { brandIdentity } from "@fde/branding";
+import { brandIdentity } from "@frogg/branding";
 import express from "express";
 import http from "node:http";
 import { once } from "node:events";
@@ -50,7 +50,7 @@ describe("GET /api/identity", () => {
       isTrustedClient: () => trusted,
     };
     expect(describeDaemonIdentity(deps, PUBLIC_REQUEST)).toEqual({
-      product: "fde",
+      product: "frogg",
       brand: brandIdentity,
       serverId: "srv_test",
       hostname: "devbox",
@@ -88,7 +88,7 @@ describe("GET /api/identity", () => {
     expect(response.headers.get("access-control-allow-origin")).toBe("*");
     expect(response.headers.get("access-control-allow-private-network")).toBe("true");
     expect(await response.json()).toEqual({
-      product: "fde",
+      product: "frogg",
       brand: brandIdentity,
       serverId: "srv_test",
       hostname: "devbox",

@@ -1,52 +1,52 @@
 #!/usr/bin/env bash
-# FDE daemon installer for Linux and macOS hosts.
+# Frogg daemon installer for Linux and macOS hosts.
 #
 #   installer="$(mktemp)" && curl -fsSL https://frogg.app/install.sh -o "${installer}" && bash "${installer}"; rm -f "${installer}"
 #
 # Installs a self-contained daemon bundle (Node runtime + daemon + CLI) into a
-# versioned directory, links `fde` and `fde` into a bin directory, and
+# versioned directory, links `frogg` and `frogg` into a bin directory, and
 # registers a systemd user service (Linux) or launchd agent (macOS) that keeps
 # the daemon running. The service inherits the PATH of the shell that ran the
 # installer, so agent CLIs visible here are visible to the daemon.
 # Non-interactive and idempotent: re-running upgrades in place and restarts
 # the service. Later upgrades can also run on the host itself with
-# `fde daemon self-update` (or from a connected client), which uses the same
+# `frogg daemon self-update` (or from a connected client), which uses the same
 # layout: versions/<v>, the `current` link, and the `previous` marker it
 # rolls back to when a new version fails to come up.
 #
 # Environment overrides:
-#   FDE_VERSION       release to install (default: latest GitHub release)
-#   FDE_INSTALL_DIR   install root (default: ~/.local/share/fde)
-#   FDE_BIN_DIR       where fde/fde are linked (default: ~/.local/bin)
-#   FDE_RELEASE_BASE  release download base (default: GitHub releases)
-#   FDE_BUNDLE_URL    download this exact bundle URL (plus its .sha256 sidecar)
-#                     instead of resolving one from FDE_RELEASE_BASE
-#   FDE_BUNDLE_FILE   install from a local bundle tarball instead of downloading
-#   FDE_NO_SERVICE=1  skip service installation
-#   FDE_NO_MODIFY_PATH=1  leave shell startup files unchanged
-#   FDE_LISTEN        daemon listen address for the service (default: 0.0.0.0:9999)
-#   FDE_HOME          daemon state directory for the service (default: ~/.fde)
-#   FDE_HEALTH_TIMEOUT seconds to verify the running version (default: 30)
+#   FROGG_VERSION       release to install (default: latest GitHub release)
+#   FROGG_INSTALL_DIR   install root (default: ~/.local/share/frogg)
+#   FROGG_BIN_DIR       where frogg/frogg are linked (default: ~/.local/bin)
+#   FROGG_RELEASE_BASE  release download base (default: GitHub releases)
+#   FROGG_BUNDLE_URL    download this exact bundle URL (plus its .sha256 sidecar)
+#                     instead of resolving one from FROGG_RELEASE_BASE
+#   FROGG_BUNDLE_FILE   install from a local bundle tarball instead of downloading
+#   FROGG_NO_SERVICE=1  skip service installation
+#   FROGG_NO_MODIFY_PATH=1  leave shell startup files unchanged
+#   FROGG_LISTEN        daemon listen address for the service (default: 0.0.0.0:9999)
+#   FROGG_HOME          daemon state directory for the service (default: ~/.frogg)
+#   FROGG_HEALTH_TIMEOUT seconds to verify the running version (default: 30)
 set -euo pipefail
 
 # BEGIN BRAND DEFAULTS — replaced only in generated distribution scripts.
-BRAND_ID='fde'
-BRAND_NAME='FDE'
-BRAND_FULL_NAME='Frogg Development Environment'
-BRAND_APPLICATION_ID='app.frogg.fde'
-BRAND_ENV_PREFIX='FDE'
-BRAND_CLI='fde'
-BRAND_HOME='.fde'
-BRAND_SERVICE='fde-daemon'
-BRAND_LAUNCHD='app.frogg.fde-daemon'
-BRAND_DAEMON_PREFIX='fde-daemon'
-BRAND_ARTIFACT_PREFIX='FDE'
+BRAND_ID='frogg'
+BRAND_NAME='Frogg'
+BRAND_FULL_NAME='Frogg'
+BRAND_APPLICATION_ID='app.frogg.frogg'
+BRAND_ENV_PREFIX='FROGG'
+BRAND_CLI='frogg'
+BRAND_HOME='.frogg'
+BRAND_SERVICE='frogg-daemon'
+BRAND_LAUNCHD='app.frogg.frogg-daemon'
+BRAND_DAEMON_PREFIX='frogg-daemon'
+BRAND_ARTIFACT_PREFIX='Frogg'
 BRAND_LEGACY_ARTIFACT_CUTOFF='0.2.16'
 BRAND_PORT='9999'
-BRAND_RELEASE_BASE='https://github.com/frogg-app/fde/releases'
-BRAND_DOCKER_IMAGE='froggapp/fde'
+BRAND_RELEASE_BASE='https://github.com/frogg-app/frogg/releases'
+BRAND_DOCKER_IMAGE='froggapp/frogg'
 BRAND_LEGACY='true'
-BRAND_COMMANDS=(fde fde)
+BRAND_COMMANDS=(frogg frogg)
 # END BRAND DEFAULTS
 
 # Environment names inside this script remain implementation details. Only the
@@ -54,20 +54,20 @@ BRAND_COMMANDS=(fde fde)
 if [ "${BRAND_LEGACY}" != "true" ]; then
   for suffix in INSTALL_DIR BIN_DIR RELEASE_BASE LISTEN VERSION BUNDLE_FILE BUNDLE_URL NO_SERVICE NO_MODIFY_PATH HOME PURGE IMAGE PORT BIND WORKSPACE PASSWORD CONTAINER NO_PULL UPDATE HEALTH_TIMEOUT; do
     key="${BRAND_ENV_PREFIX}_${suffix}"
-    printf -v "FDE_${suffix}" '%s' "${!key-}"
+    printf -v "FROGG_${suffix}" '%s' "${!key-}"
   done
 fi
 
-FDE_INSTALL_DIR="${FDE_INSTALL_DIR:-${HOME}/.local/share/${BRAND_ID}}"
-FDE_BIN_DIR="${FDE_BIN_DIR:-${HOME}/.local/bin}"
-FDE_RELEASE_BASE="${FDE_RELEASE_BASE:-${BRAND_RELEASE_BASE}}"
-FDE_LISTEN="${FDE_LISTEN:-0.0.0.0:${BRAND_PORT}}"
-FDE_VERSION="${FDE_VERSION:-}"
-FDE_BUNDLE_FILE="${FDE_BUNDLE_FILE:-}"
-FDE_BUNDLE_URL="${FDE_BUNDLE_URL:-}"
-FDE_NO_SERVICE="${FDE_NO_SERVICE:-0}"
-FDE_NO_MODIFY_PATH="${FDE_NO_MODIFY_PATH:-0}"
-FDE_HOME="${FDE_HOME:-}"
+FROGG_INSTALL_DIR="${FROGG_INSTALL_DIR:-${HOME}/.local/share/${BRAND_ID}}"
+FROGG_BIN_DIR="${FROGG_BIN_DIR:-${HOME}/.local/bin}"
+FROGG_RELEASE_BASE="${FROGG_RELEASE_BASE:-${BRAND_RELEASE_BASE}}"
+FROGG_LISTEN="${FROGG_LISTEN:-0.0.0.0:${BRAND_PORT}}"
+FROGG_VERSION="${FROGG_VERSION:-}"
+FROGG_BUNDLE_FILE="${FROGG_BUNDLE_FILE:-}"
+FROGG_BUNDLE_URL="${FROGG_BUNDLE_URL:-}"
+FROGG_NO_SERVICE="${FROGG_NO_SERVICE:-0}"
+FROGG_NO_MODIFY_PATH="${FROGG_NO_MODIFY_PATH:-0}"
+FROGG_HOME="${FROGG_HOME:-}"
 
 SERVICE_NAME="${BRAND_SERVICE}"
 LAUNCHD_LABEL="${BRAND_LAUNCHD}"
@@ -76,11 +76,11 @@ log() { printf '[%s] %s\n' "${BRAND_CLI}" "$*"; }
 die() { printf '[%s] error: %s\n' "${BRAND_CLI}" "$*" >&2; exit 1; }
 
 validate_install_owner() {
-  if [ -f "${FDE_INSTALL_DIR}/.brand-identity" ]; then
-    [ "$(cat "${FDE_INSTALL_DIR}/.brand-identity")" = "${BRAND_ID}:${BRAND_APPLICATION_ID}" ] || die "install directory belongs to another product"
-  elif [ -e "${FDE_INSTALL_DIR}/current/manifest.json" ]; then
-    validate_bundle_identity "${FDE_INSTALL_DIR}/current"
-  elif [ "${BRAND_LEGACY}" != "true" ] && [ -d "${FDE_INSTALL_DIR}" ] && [ -n "$(ls -A "${FDE_INSTALL_DIR}")" ]; then
+  if [ -f "${FROGG_INSTALL_DIR}/.brand-identity" ]; then
+    [ "$(cat "${FROGG_INSTALL_DIR}/.brand-identity")" = "${BRAND_ID}:${BRAND_APPLICATION_ID}" ] || die "install directory belongs to another product"
+  elif [ -e "${FROGG_INSTALL_DIR}/current/manifest.json" ]; then
+    validate_bundle_identity "${FROGG_INSTALL_DIR}/current"
+  elif [ "${BRAND_LEGACY}" != "true" ] && [ -d "${FROGG_INSTALL_DIR}" ] && [ -n "$(ls -A "${FROGG_INSTALL_DIR}")" ]; then
     die "install directory has no product ownership metadata"
   fi
 }
@@ -127,28 +127,28 @@ sha256_of() {
 # skips those, redirecting to the releases index instead of a tag.
 resolve_latest_prerelease_version() {
   local api tag
-  api="$(printf '%s' "${FDE_RELEASE_BASE}" |
+  api="$(printf '%s' "${FROGG_RELEASE_BASE}" |
     sed -n 's#^https://github.com/\([^/]*\)/\([^/]*\)/releases/*$#https://api.github.com/repos/\1/\2/releases?per_page=1#p')"
-  [ -n "${api}" ] || die "could not resolve the latest release from ${FDE_RELEASE_BASE}/latest"
+  [ -n "${api}" ] || die "could not resolve the latest release from ${FROGG_RELEASE_BASE}/latest"
   local body
   body="$(curl -fsSL "${api}")" || die "could not resolve the latest release from ${api}"
   tag="$(printf '%s\n' "${body}" | tr ',{' '\n\n' |
     sed -n 's/^ *"tag_name" *: *"\([^"]*\)" *$/\1/p' | sed -n '1p')"
-  FDE_VERSION="${tag#v}"
-  [ -n "${FDE_VERSION}" ] || die "could not parse a version from ${api}"
+  FROGG_VERSION="${tag#v}"
+  [ -n "${FROGG_VERSION}" ] || die "could not parse a version from ${api}"
 }
 
 resolve_latest_version() {
-  [ -n "${FDE_RELEASE_BASE}" ] || die "No release source configured; supply ${BRAND_ENV_PREFIX}_BUNDLE_FILE or ${BRAND_ENV_PREFIX}_BUNDLE_URL"
+  [ -n "${FROGG_RELEASE_BASE}" ] || die "No release source configured; supply ${BRAND_ENV_PREFIX}_BUNDLE_FILE or ${BRAND_ENV_PREFIX}_BUNDLE_URL"
   need curl
   local effective candidate
-  effective="$(curl -fsSL -o /dev/null -w '%{url_effective}' "${FDE_RELEASE_BASE}/latest")" ||
-    die "could not resolve the latest release from ${FDE_RELEASE_BASE}/latest"
+  effective="$(curl -fsSL -o /dev/null -w '%{url_effective}' "${FROGG_RELEASE_BASE}/latest")" ||
+    die "could not resolve the latest release from ${FROGG_RELEASE_BASE}/latest"
   candidate="${effective##*/}"
   candidate="${candidate#v}"
   case "${candidate}" in
     [0-9]*)
-      FDE_VERSION="${candidate}"
+      FROGG_VERSION="${candidate}"
       return
       ;;
   esac
@@ -156,7 +156,7 @@ resolve_latest_version() {
 }
 
 # Sets BUNDLE_PATH to a verified tarball, downloading it when needed.
-# Historical FDE releases use the old filenames; new releases also publish aliases
+# Historical Frogg releases use the old filenames; new releases also publish aliases
 # so existing installations can update without changing their download contract.
 brand_legacy_artifact_version() {
   [[ "$1" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)([-+]|$) ]] || return 1
@@ -169,31 +169,31 @@ brand_legacy_artifact_version() {
 
 acquire_bundle() {
   local name public_platform public_arch
-  if [ -n "${FDE_BUNDLE_FILE}" ]; then
-    [ -f "${FDE_BUNDLE_FILE}" ] || die "FDE_BUNDLE_FILE does not exist: ${FDE_BUNDLE_FILE}"
-    BUNDLE_PATH="${FDE_BUNDLE_FILE}"
-    if [ -f "${FDE_BUNDLE_FILE}.sha256" ]; then
-      verify_bundle "${BUNDLE_PATH}" "${FDE_BUNDLE_FILE}.sha256"
+  if [ -n "${FROGG_BUNDLE_FILE}" ]; then
+    [ -f "${FROGG_BUNDLE_FILE}" ] || die "FROGG_BUNDLE_FILE does not exist: ${FROGG_BUNDLE_FILE}"
+    BUNDLE_PATH="${FROGG_BUNDLE_FILE}"
+    if [ -f "${FROGG_BUNDLE_FILE}.sha256" ]; then
+      verify_bundle "${BUNDLE_PATH}" "${FROGG_BUNDLE_FILE}.sha256"
     fi
     return
   fi
 
   need curl
   local url
-  if [ -n "${FDE_BUNDLE_URL}" ]; then
-    url="${FDE_BUNDLE_URL}"
+  if [ -n "${FROGG_BUNDLE_URL}" ]; then
+    url="${FROGG_BUNDLE_URL}"
     name="${url##*/}"
   else
-    [ -n "${FDE_VERSION}" ] || resolve_latest_version
-    name="${BRAND_DAEMON_PREFIX}-${FDE_VERSION}-${PLATFORM}-${ARCH}.tar.gz"
-    if [ "$BRAND_LEGACY" = true ] && ! brand_legacy_artifact_version "$FDE_VERSION"; then
+    [ -n "${FROGG_VERSION}" ] || resolve_latest_version
+    name="${BRAND_DAEMON_PREFIX}-${FROGG_VERSION}-${PLATFORM}-${ARCH}.tar.gz"
+    if [ "$BRAND_LEGACY" = true ] && ! brand_legacy_artifact_version "$FROGG_VERSION"; then
       public_platform="$PLATFORM"
       public_arch="$ARCH"
       [ "$public_platform" = "darwin" ] && public_platform="mac"
       [ "$public_arch" = "x64" ] && public_arch="x86_64"
-      name="${BRAND_ARTIFACT_PREFIX}-${FDE_VERSION}-${public_platform}-${public_arch}-daemon.tar.gz"
+      name="${BRAND_ARTIFACT_PREFIX}-${FROGG_VERSION}-${public_platform}-${public_arch}-daemon.tar.gz"
     fi
-    url="${FDE_RELEASE_BASE}/download/v${FDE_VERSION}/${name}"
+    url="${FROGG_RELEASE_BASE}/download/v${FROGG_VERSION}/${name}"
   fi
   BUNDLE_PATH="${WORK_DIR}/${name}"
   log "downloading ${name}"
@@ -211,7 +211,7 @@ verify_bundle() {
   log "checksum verified"
 }
 
-# Reads the bundle version from its manifest so FDE_BUNDLE_FILE installs land
+# Reads the bundle version from its manifest so FROGG_BUNDLE_FILE installs land
 # in the right versioned directory.
 read_bundle_version() {
   local manifest
@@ -230,9 +230,9 @@ read_bundle_version() {
 
 install_bundle() {
   local versions_dir target staging
-  versions_dir="${FDE_INSTALL_DIR}/versions"
+  versions_dir="${FROGG_INSTALL_DIR}/versions"
   target="${versions_dir}/${BUNDLE_VERSION}"
-  mkdir -p "${versions_dir}" "${FDE_BIN_DIR}"
+  mkdir -p "${versions_dir}" "${FROGG_BIN_DIR}"
 
   if [ -x "${target}/bin/${BRAND_CLI}" ] && [ -f "${target}/manifest.json" ]; then
     validate_bundle_identity "${target}"
@@ -240,7 +240,7 @@ install_bundle() {
   else
     staging="$(mktemp -d "${versions_dir}/.staging.${BUNDLE_VERSION}.XXXXXX")"
     tar -xzf "${BUNDLE_PATH}" --strip-components=1 -C "${staging}"
-    [ -x "${staging}/bin/${BRAND_CLI}" ] || die "bundle is missing bin/fde"
+    [ -x "${staging}/bin/${BRAND_CLI}" ] || die "bundle is missing bin/frogg"
     validate_bundle_identity "${staging}"
     rm -rf "${target}"
     mv "${staging}" "${target}"
@@ -248,34 +248,34 @@ install_bundle() {
   fi
 
   # Atomic `current` swap: rename a fresh symlink over the old one.
-  ln -sfn "versions/${BUNDLE_VERSION}" "${FDE_INSTALL_DIR}/current.new"
-  if mv -T "${FDE_INSTALL_DIR}/current.new" "${FDE_INSTALL_DIR}/current" 2>/dev/null; then
+  ln -sfn "versions/${BUNDLE_VERSION}" "${FROGG_INSTALL_DIR}/current.new"
+  if mv -T "${FROGG_INSTALL_DIR}/current.new" "${FROGG_INSTALL_DIR}/current" 2>/dev/null; then
     :
   else
-    rm -f "${FDE_INSTALL_DIR}/current.new"
-    ln -sfn "versions/${BUNDLE_VERSION}" "${FDE_INSTALL_DIR}/current"
+    rm -f "${FROGG_INSTALL_DIR}/current.new"
+    ln -sfn "versions/${BUNDLE_VERSION}" "${FROGG_INSTALL_DIR}/current"
   fi
 
   # The rollback target for `${BRAND_CLI} daemon self-update`; only changes on a real
   # version switch so a re-run never points previous at the current version.
   if [ -n "${PREVIOUS_VERSION}" ] && [ "${PREVIOUS_VERSION}" != "${BUNDLE_VERSION}" ]; then
-    printf '%s\n' "${PREVIOUS_VERSION}" > "${FDE_INSTALL_DIR}/previous"
+    printf '%s\n' "${PREVIOUS_VERSION}" > "${FROGG_INSTALL_DIR}/previous"
   fi
 
   for name in "${BRAND_COMMANDS[@]}"; do
-    if [ -e "${FDE_BIN_DIR}/${name}" ] || [ -L "${FDE_BIN_DIR}/${name}" ]; then
-      [ "$(readlink "${FDE_BIN_DIR}/${name}" 2>/dev/null || true)" = "${FDE_INSTALL_DIR}/current/bin/${name}" ] || die "command ${name} already belongs to another installation"
+    if [ -e "${FROGG_BIN_DIR}/${name}" ] || [ -L "${FROGG_BIN_DIR}/${name}" ]; then
+      [ "$(readlink "${FROGG_BIN_DIR}/${name}" 2>/dev/null || true)" = "${FROGG_INSTALL_DIR}/current/bin/${name}" ] || die "command ${name} already belongs to another installation"
     fi
-    ln -sfn "${FDE_INSTALL_DIR}/current/bin/${name}" "${FDE_BIN_DIR}/${name}"
-    log "linked ${FDE_BIN_DIR}/${name}"
+    ln -sfn "${FROGG_INSTALL_DIR}/current/bin/${name}" "${FROGG_BIN_DIR}/${name}"
+    log "linked ${FROGG_BIN_DIR}/${name}"
   done
-  printf '%s:%s\n' "${BRAND_ID}" "${BRAND_APPLICATION_ID}" > "${FDE_INSTALL_DIR}/.brand-identity"
+  printf '%s:%s\n' "${BRAND_ID}" "${BRAND_APPLICATION_ID}" > "${FROGG_INSTALL_DIR}/.brand-identity"
 
 }
 
 prune_old_versions() {
   # A daemon using this install may retain any older runtime, even when this
-  # installer has no FDE_EXECUTION_SERVICE environment setting or shares no home.
+  # installer has no FROGG_EXECUTION_SERVICE environment setting or shares no home.
   log "retaining installed versions; remove old versions only after stopping all execution"
 }
 
@@ -286,14 +286,14 @@ write_systemd_unit() {
   kill_mode=mixed
   execution_env=
   stop_command=
-  if [ "${FDE_EXECUTION_SERVICE:-}" = 1 ]; then
+  if [ "${FROGG_EXECUTION_SERVICE:-}" = 1 ]; then
     kill_mode=process
-    execution_env=Environment=FDE_EXECUTION_SERVICE=1
-    stop_command="ExecStop=$(systemd_quote "${FDE_INSTALL_DIR}/current/bin/${BRAND_CLI}") daemon stop --force"
+    execution_env=Environment=FROGG_EXECUTION_SERVICE=1
+    stop_command="ExecStop=$(systemd_quote "${FROGG_INSTALL_DIR}/current/bin/${BRAND_CLI}") daemon stop --force"
   fi
   unit_dir="${XDG_CONFIG_HOME:-${HOME}/.config}/systemd/user"
   unit="${unit_dir}/${SERVICE_NAME}.service"
-  if [ -f "${unit}" ] && ! grep -Fq "${FDE_INSTALL_DIR}/current" "${unit}"; then die "service belongs to another installation"; fi
+  if [ -f "${unit}" ] && ! grep -Fq "${FROGG_INSTALL_DIR}/current" "${unit}"; then die "service belongs to another installation"; fi
   mkdir -p "${unit_dir}"
   cat > "${unit}" <<EOF
 [Unit]
@@ -303,12 +303,12 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=$(systemd_quote "${FDE_INSTALL_DIR}/current/bin/${BRAND_CLI}") daemon start --foreground
-Environment=FDE_LISTEN=${FDE_LISTEN}
-Environment=FDE_WEB_UI_ENABLED=true
-Environment=$(systemd_quote "PATH=${FDE_BIN_DIR}:${PATH}")
-Environment=$(systemd_quote "${BRAND_ENV_PREFIX}_INSTALL_DIR=${FDE_INSTALL_DIR}")
-${FDE_HOME:+Environment=$(systemd_quote "${BRAND_ENV_PREFIX}_HOME=${FDE_HOME}")}
+ExecStart=$(systemd_quote "${FROGG_INSTALL_DIR}/current/bin/${BRAND_CLI}") daemon start --foreground
+Environment=FROGG_LISTEN=${FROGG_LISTEN}
+Environment=FROGG_WEB_UI_ENABLED=true
+Environment=$(systemd_quote "PATH=${FROGG_BIN_DIR}:${PATH}")
+Environment=$(systemd_quote "${BRAND_ENV_PREFIX}_INSTALL_DIR=${FROGG_INSTALL_DIR}")
+${FROGG_HOME:+Environment=$(systemd_quote "${BRAND_ENV_PREFIX}_HOME=${FROGG_HOME}")}
 Restart=on-failure
 RestartSec=5
 ${execution_env}
@@ -345,14 +345,14 @@ install_systemd_service() {
 start_detached_daemon() {
   stop_existing_daemon
   local log_dir
-  log_dir="${FDE_INSTALL_DIR}/logs"
+  log_dir="${FROGG_INSTALL_DIR}/logs"
   mkdir -p "${log_dir}"
-  if [ -n "${FDE_HOME}" ]; then
-    nohup env FDE_LISTEN="${FDE_LISTEN}" FDE_WEB_UI_ENABLED=true FDE_INSTALL_DIR="${FDE_INSTALL_DIR}" "${BRAND_ENV_PREFIX}_HOME=${FDE_HOME}" \
-      "${FDE_INSTALL_DIR}/current/bin/${BRAND_CLI}" daemon start --foreground >> "${log_dir}/fallback-daemon.log" 2>&1 < /dev/null &
+  if [ -n "${FROGG_HOME}" ]; then
+    nohup env FROGG_LISTEN="${FROGG_LISTEN}" FROGG_WEB_UI_ENABLED=true FROGG_INSTALL_DIR="${FROGG_INSTALL_DIR}" "${BRAND_ENV_PREFIX}_HOME=${FROGG_HOME}" \
+      "${FROGG_INSTALL_DIR}/current/bin/${BRAND_CLI}" daemon start --foreground >> "${log_dir}/fallback-daemon.log" 2>&1 < /dev/null &
   else
-    nohup env FDE_LISTEN="${FDE_LISTEN}" FDE_WEB_UI_ENABLED=true FDE_INSTALL_DIR="${FDE_INSTALL_DIR}" \
-      "${FDE_INSTALL_DIR}/current/bin/${BRAND_CLI}" daemon start --foreground >> "${log_dir}/fallback-daemon.log" 2>&1 < /dev/null &
+    nohup env FROGG_LISTEN="${FROGG_LISTEN}" FROGG_WEB_UI_ENABLED=true FROGG_INSTALL_DIR="${FROGG_INSTALL_DIR}" \
+      "${FROGG_INSTALL_DIR}/current/bin/${BRAND_CLI}" daemon start --foreground >> "${log_dir}/fallback-daemon.log" 2>&1 < /dev/null &
   fi
   log "started the daemon for this login; its fallback log is ${log_dir}/fallback-daemon.log"
 }
@@ -360,7 +360,7 @@ start_detached_daemon() {
 write_launchd_plist() {
   local plist log_dir
   plist="${HOME}/Library/LaunchAgents/${LAUNCHD_LABEL}.plist"
-  log_dir="${FDE_INSTALL_DIR}/logs"
+  log_dir="${FROGG_INSTALL_DIR}/logs"
   mkdir -p "${HOME}/Library/LaunchAgents" "${log_dir}"
   cat > "${plist}" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -370,18 +370,18 @@ write_launchd_plist() {
   <key>Label</key><string>${LAUNCHD_LABEL}</string>
   <key>ProgramArguments</key>
   <array>
-    <string>$(xml "${FDE_INSTALL_DIR}/current/bin/${BRAND_CLI}")</string>
+    <string>$(xml "${FROGG_INSTALL_DIR}/current/bin/${BRAND_CLI}")</string>
     <string>daemon</string>
     <string>start</string>
     <string>--foreground</string>
   </array>
   <key>EnvironmentVariables</key>
   <dict>
-    <key>FDE_LISTEN</key><string>${FDE_LISTEN}</string>
-    <key>FDE_WEB_UI_ENABLED</key><string>true</string>
-    <key>PATH</key><string>$(xml "${FDE_BIN_DIR}:${PATH}")</string>
-    <key>FDE_INSTALL_DIR</key><string>$(xml "${FDE_INSTALL_DIR}")</string>
-${FDE_HOME:+    <key>${BRAND_ENV_PREFIX}_HOME</key><string>$(xml "${FDE_HOME}")</string>}
+    <key>FROGG_LISTEN</key><string>${FROGG_LISTEN}</string>
+    <key>FROGG_WEB_UI_ENABLED</key><string>true</string>
+    <key>PATH</key><string>$(xml "${FROGG_BIN_DIR}:${PATH}")</string>
+    <key>FROGG_INSTALL_DIR</key><string>$(xml "${FROGG_INSTALL_DIR}")</string>
+${FROGG_HOME:+    <key>${BRAND_ENV_PREFIX}_HOME</key><string>$(xml "${FROGG_HOME}")</string>}
   </dict>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><dict><key>SuccessfulExit</key><false/></dict>
@@ -405,13 +405,13 @@ install_launchd_agent() {
 }
 
 stop_existing_daemon() {
-  "${FDE_INSTALL_DIR}/current/bin/${BRAND_CLI}" daemon stop --home "${FDE_HOME:-${HOME}/${BRAND_HOME}}" ||
+  "${FROGG_INSTALL_DIR}/current/bin/${BRAND_CLI}" daemon stop --home "${FROGG_HOME:-${HOME}/${BRAND_HOME}}" ||
     die "could not stop the existing daemon; the new version has not been started"
 }
 
 # Inline because the downloaded installer must work without repository files.
 verify_running_daemon() {
-  "${FDE_INSTALL_DIR}/current/node/bin/node" - "${FDE_LISTEN}" "${BUNDLE_VERSION}" "${BRAND_ID}" "${BRAND_APPLICATION_ID}" "${BRAND_LEGACY}" "${FDE_HEALTH_TIMEOUT:-30}" <<'JS' || die "the new daemon could not be verified; inspect ${FDE_HOME:-${HOME}/${BRAND_HOME}}/daemon.log and the service logs"
+  "${FROGG_INSTALL_DIR}/current/node/bin/node" - "${FROGG_LISTEN}" "${BUNDLE_VERSION}" "${BRAND_ID}" "${BRAND_APPLICATION_ID}" "${BRAND_LEGACY}" "${FROGG_HEALTH_TIMEOUT:-30}" <<'JS' || die "the new daemon could not be verified; inspect ${FROGG_HOME:-${HOME}/${BRAND_HOME}}/daemon.log and the service logs"
 const http = require('node:http');
 const [listen, expected, brandId, applicationId, legacy, seconds] = process.argv.slice(2);
 const timeout = Number(seconds) * 1000;
@@ -450,9 +450,9 @@ function get(route) {
   while (Date.now() < deadline) {
     try {
       const identity = await get('/api/identity');
-      const version = identity.headers['x-fde-gateway-version'] ?? identity.body.version;
+      const version = identity.headers['x-frogg-gateway-version'] ?? identity.body.version;
       const owner = identity.body.brand;
-      const owned = owner ? owner.id === brandId && owner.applicationId === applicationId : legacy === 'true' && identity.body.product === 'fde';
+      const owned = owner ? owner.id === brandId && owner.applicationId === applicationId : legacy === 'true' && identity.body.product === 'frogg';
       if (!owned) throw new Error('another product is listening on the daemon address');
       if (version !== expected) throw new Error(`daemon reports version ${version ?? 'unknown'}, expected ${expected}`);
       const health = await get('/api/health');
@@ -473,7 +473,7 @@ configure_shell_path() {
   local shell_name quoted_bin path_line file login_file
   local files=()
   # Single quotes protect custom paths from expansion when the shell starts.
-  quoted_bin="'$(printf '%s' "${FDE_BIN_DIR}" | sed "s/'/'\\\\''/g")'"
+  quoted_bin="'$(printf '%s' "${FROGG_BIN_DIR}" | sed "s/'/'\\\\''/g")'"
   path_line="case \":\${PATH}:\" in *:${quoted_bin}:*) ;; *) export PATH=${quoted_bin}:\"\${PATH}\" ;; esac"
   shell_name="${SHELL:-}"
   shell_name="${shell_name##*/}"
@@ -491,7 +491,7 @@ configure_shell_path() {
     zsh) files=("${ZDOTDIR:-${HOME}}/.zshrc" "${ZDOTDIR:-${HOME}}/.zprofile") ;;
     fish)
       # Fish single quotes also interpret backslashes, unlike POSIX shells.
-      quoted_bin="'$(printf '%s' "${FDE_BIN_DIR}" | sed "s/\\\\/\\\\\\\\/g; s/'/\\\\'/g")'"
+      quoted_bin="'$(printf '%s' "${FROGG_BIN_DIR}" | sed "s/\\\\/\\\\\\\\/g; s/'/\\\\'/g")'"
       path_line="contains -- ${quoted_bin} \$PATH; or set -gx PATH ${quoted_bin} \$PATH"
       PATH_COMMAND="${path_line}"
       files=("${XDG_CONFIG_HOME:-${HOME}/.config}/fish/config.fish")
@@ -499,10 +499,10 @@ configure_shell_path() {
     sh|dash|ksh) files=("${HOME}/.profile") ;;
     *) log "shell ${SHELL:-unknown} is not supported for automatic PATH setup"; return ;;
   esac
-  [ "${FDE_NO_MODIFY_PATH}" != "1" ] || return 0
+  [ "${FROGG_NO_MODIFY_PATH}" != "1" ] || return 0
   for file in "${files[@]}"; do
     if [ -f "${file}" ] && grep -Fqx -- "${path_line}" "${file}"; then continue; fi
-    if mkdir -p "$(dirname "${file}")" && printf '\n# FDE CLI\n%s\n' "${path_line}" >> "${file}"; then
+    if mkdir -p "$(dirname "${file}")" && printf '\n# Frogg CLI\n%s\n' "${path_line}" >> "${file}"; then
       log "configured PATH in ${file}"
     else
       log "could not update ${file}; configure PATH manually"
@@ -512,7 +512,7 @@ configure_shell_path() {
 
 # Use the bundled runtime so this also works on macOS without hostname -I.
 web_ui_urls() {
-  "${FDE_INSTALL_DIR}/current/node/bin/node" - "${FDE_LISTEN}" <<'JS'
+  "${FROGG_INSTALL_DIR}/current/node/bin/node" - "${FROGG_LISTEN}" <<'JS'
 const { networkInterfaces } = require('node:os');
 const listen = process.argv[2].replace(/^tcp:\/\//, '');
 if (listen.startsWith('/')) process.exit(0);
@@ -535,13 +535,13 @@ JS
 
 print_next_steps() {
   local host port urls url listen
-  listen="${FDE_LISTEN#tcp://}"
+  listen="${FROGG_LISTEN#tcp://}"
   host="${listen%:*}"
-  port="${FDE_LISTEN##*:}"
+  port="${FROGG_LISTEN##*:}"
   echo
   log "${BRAND_NAME} daemon ${BUNDLE_VERSION} installed."
-  if [ "${FDE_NO_SERVICE}" = "1" ]; then
-    log "no service installed; start the daemon with: ${BRAND_CLI} daemon start --listen ${FDE_LISTEN} --web-ui"
+  if [ "${FROGG_NO_SERVICE}" = "1" ]; then
+    log "no service installed; start the daemon with: ${BRAND_CLI} daemon start --listen ${FROGG_LISTEN} --web-ui"
   else
     urls="$(web_ui_urls)"
     if [ -n "${urls}" ]; then
@@ -554,7 +554,7 @@ print_next_steps() {
       log "web UI: no network address detected; check the host's network configuration"
     fi
     if [ "${host}" = "127.0.0.1" ] || [ "${host}" = "localhost" ] || [ "${host}" = "[::1]" ] || [ "${host}" = "::1" ]; then
-      log "the daemon listens on loopback; reach it through an SSH tunnel or re-run with FDE_LISTEN=0.0.0.0:${port}"
+      log "the daemon listens on loopback; reach it through an SSH tunnel or re-run with FROGG_LISTEN=0.0.0.0:${port}"
     elif [[ "${listen}" != /* ]]; then
       log "the daemon is network-reachable; set a password with: ${BRAND_CLI} daemon set-password"
     fi
@@ -563,7 +563,7 @@ print_next_steps() {
   log "check status:      ${BRAND_CLI} daemon status"
   log "update later:      ${BRAND_CLI} daemon self-update   (rolls back by itself if the new version fails)"
   case ":${PATH}:" in
-    *":${FDE_BIN_DIR}:"*) ;;
+    *":${FROGG_BIN_DIR}:"*) ;;
     *)
       log "to use ${BRAND_CLI} in this terminal, run:"
       log "  ${PATH_COMMAND}"
@@ -576,12 +576,12 @@ main() {
   need uname
   detect_platform
   validate_install_owner
-  WORK_DIR="$(mktemp -d "${TMPDIR:-/tmp}/fde-install.XXXXXX")"
+  WORK_DIR="$(mktemp -d "${TMPDIR:-/tmp}/frogg-install.XXXXXX")"
   trap 'rm -rf "${WORK_DIR}"' EXIT
 
   PREVIOUS_VERSION=""
-  if [ -L "${FDE_INSTALL_DIR}/current" ]; then
-    PREVIOUS_VERSION="$(basename "$(readlink "${FDE_INSTALL_DIR}/current")")"
+  if [ -L "${FROGG_INSTALL_DIR}/current" ]; then
+    PREVIOUS_VERSION="$(basename "$(readlink "${FROGG_INSTALL_DIR}/current")")"
   fi
 
   acquire_bundle
@@ -590,7 +590,7 @@ main() {
   prune_old_versions
   configure_shell_path
 
-  if [ "${FDE_NO_SERVICE}" != "1" ]; then
+  if [ "${FROGG_NO_SERVICE}" != "1" ]; then
     case "${PLATFORM}" in
       linux) install_systemd_service ;;
       darwin) install_launchd_agent ;;

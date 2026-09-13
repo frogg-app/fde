@@ -210,7 +210,7 @@ function SubagentsTrackRow({
             {presentation.subtitle}
           </Text>
         ) : null}
-        {row.kind === "fde" ? (
+        {row.kind === "frogg" ? (
           <SubagentRowActions
             rowId={row.id}
             displayLabel={displayLabel}

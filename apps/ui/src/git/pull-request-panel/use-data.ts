@@ -2,8 +2,11 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useHostRuntimeClient, useHostRuntimeIsConnected } from "@/runtime/host-runtime";
-import type { CheckoutPrStatusResponse, PullRequestTimelineResponse } from "@fde/protocol/messages";
-import type { DaemonClient } from "@fde/client/internal/daemon-client";
+import type {
+  CheckoutPrStatusResponse,
+  PullRequestTimelineResponse,
+} from "@frogg/protocol/messages";
+import type { DaemonClient } from "@frogg/client/internal/daemon-client";
 import { useCheckoutPrStatusQuery } from "@/git/use-pr-status-query";
 import type { Forge } from "@/git/forge";
 import { i18n } from "@/i18n/i18next";

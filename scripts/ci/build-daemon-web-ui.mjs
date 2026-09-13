@@ -42,7 +42,7 @@ async function exportBrowserWebApp() {
   console.log("Exporting browser web app...");
   await run(
     process.platform === "win32" ? "npm.cmd" : "npm",
-    ["run", "build:web", "--workspace=@fde/app"],
+    ["run", "build:web", "--workspace=@frogg/app"],
     {
       cwd: REPO_ROOT,
     },

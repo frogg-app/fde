@@ -84,7 +84,7 @@ function createWorkspaceRuntimeSnapshot(
       mainRepoRoot: null,
       currentBranch: "main",
       remoteUrl: "https://github.com/acme/repo.git",
-      isFdeOwnedWorktree: false,
+      isFroggOwnedWorktree: false,
       isDirty: false,
       baseRef: "main",
       aheadBehind: { ahead: 0, behind: 0 },
@@ -197,7 +197,7 @@ function createSessionForWorkspaceGitWatchTests(options?: {
     logger: createStub<pino.Logger>(logger),
     downloadTokenStore: createStub<SessionOptions["downloadTokenStore"]>({}),
     pushNotifications: createStub<SessionOptions["pushNotifications"]>({}),
-    fdeHome: "/tmp/fde-test",
+    froggHome: "/tmp/frogg-test",
     agentManager: createStub<SessionOptions["agentManager"]>({
       subscribe: () => () => {},
       listAgents: () => [],
@@ -440,7 +440,7 @@ describe("workspace git watch targets", () => {
       behindOfOrigin: 1,
       hasRemote: true,
       remoteUrl: "https://github.com/acme/repo.git",
-      isFdeOwnedWorktree: false,
+      isFroggOwnedWorktree: false,
       error: null,
       requestId: REPO_SUBSCRIPTION_REQUEST_ID,
     });
@@ -457,7 +457,7 @@ describe("workspace git watch targets", () => {
     serviceProxy.registerWorkspaceService({
       port: 4321,
       workspaceId: "ws-10",
-      projectSlug: "fde",
+      projectSlug: "frogg",
       branchName: "old-branch",
       scriptName: "app",
     });
@@ -503,7 +503,7 @@ describe("workspace git watch targets", () => {
 
     expect(serviceProxy.getWorkspaceHealthTargets("ws-10")).toEqual([
       expect.objectContaining({
-        hostname: "app--new-branch--fde.localhost",
+        hostname: "app--new-branch--frogg.localhost",
         scriptName: "app",
       }),
     ]);

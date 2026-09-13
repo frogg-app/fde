@@ -1,10 +1,10 @@
-export const MARKDOWN_COPY_TAG_ATTRIBUTE = "data-fde-markdown-tag";
-export const MARKDOWN_COPY_IGNORE_ATTRIBUTE = "data-fde-markdown-ignore";
-export const MARKDOWN_COPY_LIST_MARKER_ATTRIBUTE = "data-fde-markdown-list-marker";
-export const MARKDOWN_COPY_UNWRAP_ATTRIBUTE = "data-fde-markdown-unwrap";
-export const MARKDOWN_COPY_LIST_START_ATTRIBUTE = "data-fde-markdown-list-start";
-export const MARKDOWN_COPY_LANGUAGE_ATTRIBUTE = "data-fde-markdown-language";
-export const MARKDOWN_COPY_ALIGN_ATTRIBUTE = "data-fde-markdown-align";
+export const MARKDOWN_COPY_TAG_ATTRIBUTE = "data-frogg-markdown-tag";
+export const MARKDOWN_COPY_IGNORE_ATTRIBUTE = "data-frogg-markdown-ignore";
+export const MARKDOWN_COPY_LIST_MARKER_ATTRIBUTE = "data-frogg-markdown-list-marker";
+export const MARKDOWN_COPY_UNWRAP_ATTRIBUTE = "data-frogg-markdown-unwrap";
+export const MARKDOWN_COPY_LIST_START_ATTRIBUTE = "data-frogg-markdown-list-start";
+export const MARKDOWN_COPY_LANGUAGE_ATTRIBUTE = "data-frogg-markdown-language";
+export const MARKDOWN_COPY_ALIGN_ATTRIBUTE = "data-frogg-markdown-align";
 
 /**
  * Trailing line breaks, with any indentation that followed the last one.
@@ -17,33 +17,33 @@ export const MARKDOWN_COPY_ALIGN_ATTRIBUTE = "data-fde-markdown-align";
 export const TRAILING_CODE_LINE_BREAKS = /(\r?\n[ \t]*)+$/;
 
 export const markdownCopyDataSet = {
-  blockquote: { fdeMarkdownTag: "blockquote" },
-  br: { fdeMarkdownTag: "br" },
-  code: { fdeMarkdownTag: "code" },
-  h1: { fdeMarkdownTag: "h1" },
-  h2: { fdeMarkdownTag: "h2" },
-  h3: { fdeMarkdownTag: "h3" },
-  h4: { fdeMarkdownTag: "h4" },
-  h5: { fdeMarkdownTag: "h5" },
-  h6: { fdeMarkdownTag: "h6" },
-  hr: { fdeMarkdownTag: "hr" },
-  ignore: { fdeMarkdownIgnore: "true" },
-  li: { fdeMarkdownTag: "li" },
-  listMarker: { fdeMarkdownIgnore: "true", fdeMarkdownListMarker: "true" },
-  ol: { fdeMarkdownTag: "ol" },
-  p: { fdeMarkdownTag: "p" },
-  pre: { fdeMarkdownTag: "pre" },
-  s: { fdeMarkdownTag: "s" },
-  strong: { fdeMarkdownTag: "strong" },
-  em: { fdeMarkdownTag: "em" },
-  table: { fdeMarkdownTag: "table" },
-  tbody: { fdeMarkdownTag: "tbody" },
-  td: { fdeMarkdownTag: "td" },
-  th: { fdeMarkdownTag: "th" },
-  thead: { fdeMarkdownTag: "thead" },
-  tr: { fdeMarkdownTag: "tr" },
-  ul: { fdeMarkdownTag: "ul" },
-  unwrap: { fdeMarkdownUnwrap: "true" },
+  blockquote: { froggMarkdownTag: "blockquote" },
+  br: { froggMarkdownTag: "br" },
+  code: { froggMarkdownTag: "code" },
+  h1: { froggMarkdownTag: "h1" },
+  h2: { froggMarkdownTag: "h2" },
+  h3: { froggMarkdownTag: "h3" },
+  h4: { froggMarkdownTag: "h4" },
+  h5: { froggMarkdownTag: "h5" },
+  h6: { froggMarkdownTag: "h6" },
+  hr: { froggMarkdownTag: "hr" },
+  ignore: { froggMarkdownIgnore: "true" },
+  li: { froggMarkdownTag: "li" },
+  listMarker: { froggMarkdownIgnore: "true", froggMarkdownListMarker: "true" },
+  ol: { froggMarkdownTag: "ol" },
+  p: { froggMarkdownTag: "p" },
+  pre: { froggMarkdownTag: "pre" },
+  s: { froggMarkdownTag: "s" },
+  strong: { froggMarkdownTag: "strong" },
+  em: { froggMarkdownTag: "em" },
+  table: { froggMarkdownTag: "table" },
+  tbody: { froggMarkdownTag: "tbody" },
+  td: { froggMarkdownTag: "td" },
+  th: { froggMarkdownTag: "th" },
+  thead: { froggMarkdownTag: "thead" },
+  tr: { froggMarkdownTag: "tr" },
+  ul: { froggMarkdownTag: "ul" },
+  unwrap: { froggMarkdownUnwrap: "true" },
 } as const;
 
 export type MarkdownCopyInlineTag = "br" | "code" | "em" | "s" | "strong";
@@ -51,7 +51,7 @@ export type MarkdownCopyInlineTag = "br" | "code" | "em" | "s" | "strong";
 export function markdownCopyOrderedListDataSet(start: unknown) {
   return {
     ...markdownCopyDataSet.ol,
-    fdeMarkdownListStart: String(start ?? 1),
+    froggMarkdownListStart: String(start ?? 1),
   } as const;
 }
 
@@ -59,7 +59,7 @@ export function markdownCopyCodeBlockDataSet(language: string | null | undefined
   const fenceLanguage = language?.trim().split(/\s+/)[0];
   return {
     ...markdownCopyDataSet.pre,
-    ...(fenceLanguage ? { fdeMarkdownLanguage: fenceLanguage } : {}),
+    ...(fenceLanguage ? { froggMarkdownLanguage: fenceLanguage } : {}),
   } as const;
 }
 
@@ -70,6 +70,6 @@ export function markdownCopyTableCellDataSet(tag: "td" | "th", style: unknown) {
       : null;
   return {
     ...markdownCopyDataSet[tag],
-    ...(alignment ? { fdeMarkdownAlign: alignment.toLowerCase() } : {}),
+    ...(alignment ? { froggMarkdownAlign: alignment.toLowerCase() } : {}),
   } as const;
 }

@@ -76,19 +76,19 @@ describe("tool-call-display", () => {
 
   it("builds display model from worktree setup detail", () => {
     const display = buildToolCallDisplayModel({
-      name: "fde_worktree_setup",
+      name: "frogg_worktree_setup",
       status: "running",
       error: null,
       detail: {
         type: "worktree_setup",
-        worktreePath: "/tmp/repo/.fde/worktrees/repo/branch",
+        worktreePath: "/tmp/repo/.frogg/worktrees/repo/branch",
         branchName: "feature-branch",
         log: "==> [1/1] Running: npm install\n",
         commands: [
           {
             index: 1,
             command: "npm install",
-            cwd: "/tmp/repo/.fde/worktrees/repo/branch",
+            cwd: "/tmp/repo/.frogg/worktrees/repo/branch",
             log: "",
             status: "running",
             exitCode: null,

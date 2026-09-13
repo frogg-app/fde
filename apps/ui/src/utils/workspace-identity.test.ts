@@ -41,7 +41,7 @@ describe("resolveWorkspaceMapKeyByIdentity", () => {
         "workspace-1",
         createWorkspace({
           id: "workspace-1",
-          workspaceDirectory: "/repo/.fde/worktrees/feature",
+          workspaceDirectory: "/repo/.frogg/worktrees/feature",
         }),
       ],
     ]);

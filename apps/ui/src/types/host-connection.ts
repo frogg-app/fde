@@ -1,13 +1,13 @@
-import { normalizeHostPort, normalizeLoopbackToLocalhost } from "@fde/protocol/daemon-endpoints";
+import { normalizeHostPort, normalizeLoopbackToLocalhost } from "@frogg/protocol/daemon-endpoints";
 import {
   DirectTcpHostConnectionSchema,
   type DirectTcpHostConnection,
-} from "@fde/protocol/host-connection-schema";
+} from "@frogg/protocol/host-connection-schema";
 import {
   DEFAULT_SSH_DAEMON_PORT,
   validatePort,
   validateSshHost,
-} from "@fde/protocol/ssh-transport";
+} from "@frogg/protocol/ssh-transport";
 import {
   type HostAppearance,
   defaultHostAppearance,
@@ -35,7 +35,7 @@ export interface RemoteSshHostConnection {
   host: string;
   sshPort?: number;
   daemonPort?: number;
-  /** The FDE daemon's password (not ssh's), sent through the tunnel like `directTcp` does. */
+  /** The Frogg daemon's password (not ssh's), sent through the tunnel like `directTcp` does. */
   password?: string;
 }
 

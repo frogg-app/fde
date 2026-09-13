@@ -15,7 +15,7 @@ The release workflow builds an arm64 APK with `scripts/release/build-android-apk
 locally you need JDK 21 and the Android SDK:
 
 ```sh
-export FDE_BRAND_DIR=brands/acme
+export FROGG_BRAND_DIR=brands/acme
 node scripts/release/build-android-apk.mjs --abi arm64-v8a --out-dir release-assets
 ```
 
@@ -23,7 +23,7 @@ The package ID is your `applicationId`. Development builds use `<applicationId>.
 and the name `<name> Debug`, so both install side by side:
 
 ```sh
-FDE_BRAND_DIR=brands/acme npm run android:development --workspace=@fde/app
+FROGG_BRAND_DIR=brands/acme npm run android:development --workspace=@frogg/app
 ```
 
 ## EAS (Android and iOS)
@@ -36,7 +36,7 @@ tracked source, writes the branded `eas.json` and staged brand into it, and runs
 
    ```json title="brands/acme/brand.json"
    "distribution": {
-     "repository": "acme-corp/fde",
+     "repository": "acme-corp/frogg",
      "expoProjectId": "1b2c3d4e-5f60-4a1b-8c2d-3e4f5a6b7c8d",
      "iosStoreId": "1234567890"
    }
@@ -45,7 +45,7 @@ tracked source, writes the branded `eas.json` and staged brand into it, and runs
 2. Inspect the export without building:
 
    ```sh
-   FDE_BRAND_DIR=brands/acme npm run brand:eas -- --prepare-only
+   FROGG_BRAND_DIR=brands/acme npm run brand:eas -- --prepare-only
    ```
 
    ```text
@@ -56,8 +56,8 @@ tracked source, writes the branded `eas.json` and staged brand into it, and runs
 
    ```sh
    export EXPO_TOKEN=...   # or run `npx eas-cli login` first
-   FDE_BRAND_DIR=brands/acme npm run brand:eas -- build --platform android --profile production-apk
-   FDE_BRAND_DIR=brands/acme npm run brand:eas -- build --platform ios --profile production
+   FROGG_BRAND_DIR=brands/acme npm run brand:eas -- build --platform android --profile production-apk
+   FROGG_BRAND_DIR=brands/acme npm run brand:eas -- build --platform ios --profile production
    ```
 
 Profiles come from `apps/ui/eas.json`: `development`, `production` and `production-apk`.
@@ -65,7 +65,7 @@ Profiles come from `apps/ui/eas.json`: `development`, `production` and `producti
 `eas.json`. Without it, the iOS submit profile is removed.
 
 :::caution[iOS is unvalidated]
-Upstream FDE has no iOS release pipeline. Branding CI builds only an unsigned iOS
+Upstream Frogg has no iOS release pipeline. Branding CI builds only an unsigned iOS
 simulator app for `brands/example`. Treat App Store builds as your own integration work.
 :::
 
@@ -74,19 +74,19 @@ simulator app for `brands/example`. Treat App Store builds as your own integrati
 Set `distribution.dockerImage`, then:
 
 ```sh
-export FDE_BRAND_DIR=brands/acme
+export FROGG_BRAND_DIR=brands/acme
 scripts/release/build-docker.sh                    # host platform, loads locally
 scripts/release/build-docker.sh --push             # linux/amd64 + linux/arm64, pushes all tags
 ```
 
 The script stages the brand into `.branding-input/acme` and passes it as the
-`FDE_BRAND_DIR` build argument to `deploy/docker/base/Dockerfile`. Override the target
-with `FDE_IMAGE_REPO` or `FDE_PLATFORMS`.
+`FROGG_BRAND_DIR` build argument to `deploy/docker/base/Dockerfile`. Override the target
+with `FROGG_IMAGE_REPO` or `FROGG_PLATFORMS`.
 
 `brand:prepare` also writes a Compose file for your product:
 
 ```sh
-FDE_BRAND_DIR=brands/acme npm run brand:prepare
+FROGG_BRAND_DIR=brands/acme npm run brand:prepare
 docker compose -f .generated/branding/deploy/compose.json config
 ```
 
@@ -102,17 +102,17 @@ first, then point your flake at it:
 
 ```nix
 {
-  inputs.fde.url = "github:acme-corp/fde?dir=deploy/nix";
+  inputs.frogg.url = "github:acme-corp/frogg?dir=deploy/nix";
 
-  outputs = { self, nixpkgs, fde, ... }: {
+  outputs = { self, nixpkgs, frogg, ... }: {
     nixosConfigurations.build-box = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       modules = [
-        fde.nixosModules.default # includes branded-module.nix
+        frogg.nixosModules.default # includes branded-module.nix
         ({ pkgs, ... }: {
-          services.fde.instances.acme = {
+          services.frogg.instances.acme = {
             enable = true;
-            package = pkgs.callPackage "${fde}/deploy/nix/package.nix" {
+            package = pkgs.callPackage "${frogg}/deploy/nix/package.nix" {
               brandSource = ./acme-brand; # brand.json + artwork
             };
             openFirewall = true;
@@ -125,7 +125,7 @@ first, then point your flake at it:
 }
 ```
 
-`services.fde.instances.<name>` options: `enable`, `package`, `user` and `dataDir`
+`services.frogg.instances.<name>` options: `enable`, `package`, `user` and `dataDir`
 (default from the brand id), `port` (default `daemonPort`), `listenAddress`
 (`0.0.0.0`), `openFirewall`, `environment`, `environmentFile`. Two instances must have
 different brand identities.
@@ -148,13 +148,13 @@ app installed.
 Two ways to host it:
 
 - **Container**: set `distribution.pairingImage`, then
-  `FDE_BRAND_DIR=brands/acme scripts/release/build-pair-page-docker.sh --push`. It
-  listens on port 8787 (`FDE_PAIR_PORT`) and serves `/healthz`.
+  `FROGG_BRAND_DIR=brands/acme scripts/release/build-pair-page-docker.sh --push`. It
+  listens on port 8787 (`FROGG_PAIR_PORT`) and serves `/healthz`.
 - **Cloudflare Worker**: `brand:prepare` writes
   `.generated/branding/deploy/pair-worker.json` with your hostname as a custom domain.
 
   ```sh
-  export FDE_BRAND_DIR=brands/acme
+  export FROGG_BRAND_DIR=brands/acme
   node packages/server/scripts/build-pair-worker.mjs
   npx wrangler deploy --config .generated/branding/deploy/pair-worker.json
   ```
@@ -172,7 +172,7 @@ To serve them from `https://studio.acme.example/install.sh`, set `links.installe
 deploy the generated install worker:
 
 ```sh
-export FDE_BRAND_DIR=brands/acme
+export FROGG_BRAND_DIR=brands/acme
 npm run brand:prepare
 npx wrangler deploy --config .generated/branding/deploy/install-worker.json
 ```
@@ -187,18 +187,18 @@ The daemon serves the web UI itself when started with `--web-ui` (installed serv
 enable it). To host the web client separately on Cloudflare Pages:
 
 ```sh
-export FDE_BRAND_DIR=brands/acme
-export FDE_WEB_DEPLOY_PROJECT=acme-studio
-npm run deploy:web --workspace=@fde/app
+export FROGG_BRAND_DIR=brands/acme
+export FROGG_WEB_DEPLOY_PROJECT=acme-studio
+npm run deploy:web --workspace=@frogg/app
 ```
 
-A custom brand must set `FDE_WEB_DEPLOY_PROJECT`; only stock FDE defaults to a project
-(`fde-app`). Add the hosted origin to `services.allowedOrigins` so new daemons accept it.
+A custom brand must set `FROGG_WEB_DEPLOY_PROJECT`; only stock Frogg defaults to a project
+(`frogg-app`). Add the hosted origin to `services.allowedOrigins` so new daemons accept it.
 
 ## Relay
 
-A brand cannot ship a relay endpoint, and stock FDE has none. To offer connections from
+A brand cannot ship a relay endpoint, and stock Frogg has none. To offer connections from
 outside the LAN without a VPN, deploy `packages/relay` yourself and have each daemon owner
 set the endpoint: in the app under host settings, **Pair devices**, or with
-`daemon.relay.endpoint` or `FDE_RELAY_ENDPOINT`. Operating a relay is outside the scope of
+`daemon.relay.endpoint` or `FROGG_RELAY_ENDPOINT`. Operating a relay is outside the scope of
 these pages.

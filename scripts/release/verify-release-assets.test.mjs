@@ -9,13 +9,13 @@ test("release discovery preserves draft and published entries across paginated o
     assert.ok(args.includes("--paginate"));
     assert.ok(!args.includes("--slurp"));
     return `${JSON.stringify(draft)}\n${JSON.stringify(published)}\n`;
-  }, "frogg-app/fde");
+  }, "frogg-app/frogg");
   assert.deepEqual(result, [draft, published]);
 });
 
 test("empty release discovery does not manufacture a release", () => {
   assert.deepEqual(
-    listReleases(() => "", "frogg-app/fde"),
+    listReleases(() => "", "frogg-app/frogg"),
     [],
   );
 });

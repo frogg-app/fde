@@ -1,6 +1,6 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { resolve } from "node:path";
-import type { DaemonClient } from "@fde/client/internal/daemon-client";
+import type { DaemonClient } from "@frogg/client/internal/daemon-client";
 import { connectToDaemon, getDaemonHost } from "../../utils/client.js";
 import type { CommandError, CommandOptions } from "../../output/index.js";
 

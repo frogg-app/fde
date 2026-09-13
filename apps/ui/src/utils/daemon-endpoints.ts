@@ -10,9 +10,9 @@ import {
   serializeConnectionUriForStorage,
   shouldUseTlsForDefaultHostedRelay,
   type HostPortParts,
-} from "@fde/protocol/daemon-endpoints";
+} from "@frogg/protocol/daemon-endpoints";
 
-export { decodeOfferFragmentPayload } from "@fde/protocol/connection-offer";
+export { decodeOfferFragmentPayload } from "@frogg/protocol/connection-offer";
 
 export type { HostPortParts };
 

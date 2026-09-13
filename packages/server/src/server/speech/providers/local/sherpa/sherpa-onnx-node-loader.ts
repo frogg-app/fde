@@ -7,7 +7,7 @@ import {
   resolveSherpaLoaderEnv,
   sherpaPlatformPackageName,
 } from "./sherpa-runtime-env.js";
-import { createExternalCommandProcessEnv } from "../../../../fde-env.js";
+import { createExternalCommandProcessEnv } from "../../../../frogg-env.js";
 
 export interface SherpaOnnxNodeModule {
   OfflineRecognizer: new (config: unknown) => unknown;

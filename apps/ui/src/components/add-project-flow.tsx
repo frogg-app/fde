@@ -2,7 +2,7 @@ import { ProjectImportDialog } from "@/project-import/dialog";
 import { buildDirectoryBrowserRows } from "@/add-project-flow/directory-browser";
 import { i18n } from "@/i18n/i18next";
 import { router } from "expo-router";
-import type { WorkspaceProjectDescriptorPayload } from "@fde/protocol/messages";
+import type { WorkspaceProjectDescriptorPayload } from "@frogg/protocol/messages";
 import {
   ArrowLeft,
   Folder,

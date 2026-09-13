@@ -6,7 +6,7 @@ import {
 } from "./passthrough";
 
 const originalDefaultApp = process.defaultApp;
-const originalDesktopCli = process.env.FDE_DESKTOP_CLI;
+const originalDesktopCli = process.env.FROGG_DESKTOP_CLI;
 
 function setDefaultApp(value: boolean): void {
   Object.defineProperty(process, "defaultApp", {
@@ -19,16 +19,16 @@ describe("passthrough CLI", () => {
   afterEach(() => {
     setDefaultApp(originalDefaultApp);
     if (originalDesktopCli === undefined) {
-      delete process.env.FDE_DESKTOP_CLI;
+      delete process.env.FROGG_DESKTOP_CLI;
     } else {
-      process.env.FDE_DESKTOP_CLI = originalDesktopCli;
+      process.env.FROGG_DESKTOP_CLI = originalDesktopCli;
     }
   });
 
   it("returns null when no CLI args are provided", () => {
     expect(
       parsePassthroughCliArgs({
-        argv: ["/Applications/Fde.app/Contents/MacOS/Fde"],
+        argv: ["/Applications/Frogg.app/Contents/MacOS/Frogg"],
         isDefaultApp: false,
         forceCli: false,
       }),
@@ -38,7 +38,7 @@ describe("passthrough CLI", () => {
   it("keeps packaged Playwright and Chromium diagnostics in the GUI", () => {
     expect(
       parsePassthroughCliArgs({
-        argv: ["/opt/fde-electron", "--inspect=0", "--remote-debugging-port=0", "--no-sandbox"],
+        argv: ["/opt/frogg-electron", "--inspect=0", "--remote-debugging-port=0", "--no-sandbox"],
         isDefaultApp: false,
         forceCli: false,
       }),
@@ -48,7 +48,7 @@ describe("passthrough CLI", () => {
   it("ignores macOS GUI launch arguments", () => {
     expect(
       parsePassthroughCliArgs({
-        argv: ["/Applications/Fde.app/Contents/MacOS/Fde", "-psn_0_12345"],
+        argv: ["/Applications/Frogg.app/Contents/MacOS/Frogg", "-psn_0_12345"],
         isDefaultApp: false,
         forceCli: false,
       }),
@@ -58,7 +58,7 @@ describe("passthrough CLI", () => {
   it("ignores --no-sandbox injected by Linux wrapper", () => {
     expect(
       parsePassthroughCliArgs({
-        argv: ["/usr/bin/Fde", "--no-sandbox", "status"],
+        argv: ["/usr/bin/Frogg", "--no-sandbox", "status"],
         isDefaultApp: false,
         forceCli: false,
       }),
@@ -68,7 +68,7 @@ describe("passthrough CLI", () => {
   it("returns null when only --no-sandbox is present", () => {
     expect(
       parsePassthroughCliArgs({
-        argv: ["/usr/bin/Fde", "--no-sandbox"],
+        argv: ["/usr/bin/Frogg", "--no-sandbox"],
         isDefaultApp: false,
         forceCli: false,
       }),
@@ -80,9 +80,9 @@ describe("passthrough CLI", () => {
       parsePassthroughCliArgs({
         argv: [
           "/nix/store/electron/bin/electron",
-          "/nix/store/fde-desktop/share/fde-desktop/electron-app",
+          "/nix/store/frogg-desktop/share/frogg-desktop/electron-app",
           "--no-sandbox",
-          "--class=fde-desktop",
+          "--class=frogg-desktop",
           "daemon",
           "status",
         ],
@@ -95,7 +95,7 @@ describe("passthrough CLI", () => {
   it("ignores Electron remote debugging switches", () => {
     expect(
       parsePassthroughCliArgs({
-        argv: ["/usr/bin/Fde", "--remote-debugging-port=9233"],
+        argv: ["/usr/bin/Frogg", "--remote-debugging-port=9233"],
         isDefaultApp: false,
         forceCli: false,
       }),
@@ -105,7 +105,7 @@ describe("passthrough CLI", () => {
   it("preserves CLI flags for direct app invocations", () => {
     expect(
       parsePassthroughCliArgs({
-        argv: ["/Applications/Fde.app/Contents/MacOS/Fde", "--version"],
+        argv: ["/Applications/Frogg.app/Contents/MacOS/Frogg", "--version"],
         isDefaultApp: false,
         forceCli: false,
       }),
@@ -115,7 +115,7 @@ describe("passthrough CLI", () => {
   it("passes --open-project through as a normal CLI arg", () => {
     expect(
       parsePassthroughCliArgs({
-        argv: ["/Applications/Fde.app/Contents/MacOS/Fde", "--open-project", "/tmp/project"],
+        argv: ["/Applications/Frogg.app/Contents/MacOS/Frogg", "--open-project", "/tmp/project"],
         isDefaultApp: false,
         forceCli: false,
       }),
@@ -125,7 +125,7 @@ describe("passthrough CLI", () => {
   it("forces CLI mode for shim launches even without args", () => {
     expect(
       parsePassthroughCliArgs({
-        argv: ["/Applications/Fde.app/Contents/MacOS/Fde"],
+        argv: ["/Applications/Frogg.app/Contents/MacOS/Frogg"],
         isDefaultApp: false,
         forceCli: true,
       }),
@@ -134,11 +134,11 @@ describe("passthrough CLI", () => {
 
   it("parses terminal args for direct app CLI passthrough", () => {
     setDefaultApp(false);
-    delete process.env.FDE_DESKTOP_CLI;
+    delete process.env.FROGG_DESKTOP_CLI;
 
     expect(
       parsePassthroughCliArgsFromArgv([
-        "/Applications/Fde.app/Contents/MacOS/Fde",
+        "/Applications/Frogg.app/Contents/MacOS/Frogg",
         "daemon",
         "set-password",
       ]),

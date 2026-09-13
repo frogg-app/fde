@@ -1,4 +1,4 @@
-import { stopExecutionService } from "@fde/server";
+import { stopExecutionService } from "@frogg/server";
 import type { Command } from "commander";
 import {
   stopLocalDaemon,

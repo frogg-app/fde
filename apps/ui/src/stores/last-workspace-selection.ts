@@ -5,7 +5,7 @@ export interface ActiveWorkspaceSelection {
   workspaceId: string;
 }
 
-export const LAST_WORKSPACE_SELECTION_STORAGE_KEY = "fde:last-workspace-route-selection";
+export const LAST_WORKSPACE_SELECTION_STORAGE_KEY = "frogg:last-workspace-route-selection";
 
 export interface LastWorkspaceSelectionStorage {
   read(): Promise<string | null>;

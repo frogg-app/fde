@@ -10,7 +10,7 @@ import type {
   ManagedProcessRegistry,
   ManagedProcessReapResult,
 } from "./managed-processes/managed-processes.js";
-import { createFdeDaemon, type FdeDaemonConfig } from "./bootstrap.js";
+import { createFroggDaemon, type FroggDaemonConfig } from "./bootstrap.js";
 import { createTestAgentClients } from "./test-utils/fake-agent-client.js";
 
 let tempRoot: string | null = null;
@@ -27,25 +27,25 @@ afterEach(async () => {
 
 describe("daemon managed process bootstrap", () => {
   test("reaps stale helper process records during daemon bootstrap", async () => {
-    tempRoot = await mkdtemp(path.join(os.tmpdir(), "fde-managed-bootstrap-"));
-    staticDir = await mkdtemp(path.join(os.tmpdir(), "fde-static-"));
-    const fdeHome = path.join(tempRoot, ".fde");
+    tempRoot = await mkdtemp(path.join(os.tmpdir(), "frogg-managed-bootstrap-"));
+    staticDir = await mkdtemp(path.join(os.tmpdir(), "frogg-static-"));
+    const froggHome = path.join(tempRoot, ".frogg");
     const managedProcesses = new FakeManagedProcesses();
-    const daemon = await createFdeDaemon(
+    const daemon = await createFroggDaemon(
       {
         listen: "127.0.0.1:0",
-        fdeHome,
+        froggHome,
         corsAllowedOrigins: [],
         hostnames: true,
         mcpEnabled: false,
         staticDir,
         mcpDebug: false,
         agentClients: createTestAgentClients(),
-        agentStoragePath: path.join(fdeHome, "agents"),
+        agentStoragePath: path.join(froggHome, "agents"),
         relayEnabled: false,
         appBaseUrl: "https://app.example.test",
         managedProcesses,
-      } as FdeDaemonConfig,
+      } as FroggDaemonConfig,
       pino({ level: "silent" }),
     );
 

@@ -1,5 +1,5 @@
 import { app, BrowserWindow } from "electron";
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { createSshPasswordEnvironment } from "../daemon/ssh-password.js";
 import type { DesktopCommandHandler } from "../settings/desktop-settings-commands.js";
 import { createScriptExecutor } from "./executor.js";
@@ -7,7 +7,7 @@ import { DeployManager } from "./manager.js";
 import { buildProbeScript } from "./probe.js";
 import { deployScript } from "./scripts.js";
 
-export const DEPLOY_EVENT = "fde:event:ssh-deploy-event";
+export const DEPLOY_EVENT = "frogg:event:ssh-deploy-event";
 let manager: DeployManager | undefined;
 export function createSshDeployCommandHandlers(): Record<string, DesktopCommandHandler> {
   if (!manager) {

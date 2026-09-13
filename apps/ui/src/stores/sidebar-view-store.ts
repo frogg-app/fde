@@ -2,7 +2,7 @@ import AsyncStorage from "@/storage/brand-storage";
 import { create } from "zustand";
 import { persist, type StateStorage } from "zustand/middleware";
 import { z } from "zod";
-import { workspaceLabelKey } from "@fde/protocol/workspace-labels";
+import { workspaceLabelKey } from "@frogg/protocol/workspace-labels";
 import { createValidatedPersistStorage } from "@/storage/validated-persist-storage";
 
 export type SidebarGroupMode = "project" | "status";

@@ -142,7 +142,7 @@ export function tauriStubSource({ platform = "win32", chromeMode = "custom-windo
 }
 
 /**
- * A stand-in for `fde daemon`'s discovery endpoints with the exact headers the
+ * A stand-in for `frogg daemon`'s discovery endpoints with the exact headers the
  * real daemon (packages/server, 0.1.14) sends: `/api/identity` carries
  * `Access-Control-Allow-Origin: *`, and OPTIONS is answered 204 by the CORS
  * middleware with no `Access-Control-Allow-Private-Network` header. Bound on
@@ -150,7 +150,7 @@ export function tauriStubSource({ platform = "win32", chromeMode = "custom-windo
  */
 export async function serveFakeDaemon(startPort = 9980) {
   const identity = {
-    product: "fde",
+    product: "frogg",
     serverId: "srv_harness",
     hostname: "harness-box",
     version: "0.1.14",

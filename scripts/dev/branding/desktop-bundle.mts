@@ -7,8 +7,8 @@ import { root, outputRoot, type BrandBuild } from "./resolve.mjs";
 
 /** Products without a download service remain usable from their first launch. */
 export function prepareEmbeddedDaemon(build: BrandBuild, args: string[]): void {
-  if (process.env.FDE_EMBED_DAEMON_ARCHIVE) return;
-  if (build.brand.distribution.releaseBase && process.env.FDE_EMBED_DAEMON !== "1") return;
+  if (process.env.FROGG_EMBED_DAEMON_ARCHIVE) return;
+  if (build.brand.distribution.releaseBase && process.env.FROGG_EMBED_DAEMON !== "1") return;
   const tripleIndex = args.indexOf("--target");
   const triple = tripleIndex < 0 ? "" : (args[tripleIndex + 1] ?? "");
   let platform: string = process.platform === "win32" ? "win" : process.platform;
@@ -36,5 +36,5 @@ export function prepareEmbeddedDaemon(build: BrandBuild, args: string[]): void {
     run("build:daemon-web-ui");
     run("build:daemon-bundle", ["--", "--target", `${platform}-${arch}`, "--out-dir", directory]);
   }
-  process.env.FDE_EMBED_DAEMON_ARCHIVE = archive;
+  process.env.FROGG_EMBED_DAEMON_ARCHIVE = archive;
 }

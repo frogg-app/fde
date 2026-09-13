@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
-import type { MutableDaemonConfig } from "@fde/protocol/messages";
+import type { MutableDaemonConfig } from "@frogg/protocol/messages";
 import { createTestLogger } from "../../test-utils/test-logger.js";
 import { DaemonConfigStore } from "../daemon-config-store.js";
 import type { PersistedConfig } from "../persisted-config.js";
@@ -98,9 +98,9 @@ afterEach(() => {
 
 describe("mutable provider config owner", () => {
   test("publishes provider changes after commit and emits nothing on rollback", () => {
-    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-provider-config-owner-"));
-    tempDirs.push(fdeHome);
-    const store = new DaemonConfigStore(fdeHome, mutableConfig({ version: 1 }));
+    const froggHome = mkdtempSync(path.join(tmpdir(), "frogg-provider-config-owner-"));
+    tempDirs.push(froggHome);
+    const store = new DaemonConfigStore(froggHome, mutableConfig({ version: 1 }));
     const manager = new ProviderSnapshotManager({
       logger: createTestLogger(),
       providerOverrides: { codex: { enabled: true } },
@@ -149,8 +149,8 @@ describe("mutable provider config owner", () => {
   });
 
   test("does no provider work for unrelated CORS, Git, and app URL reloads", () => {
-    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-provider-config-owner-"));
-    tempDirs.push(fdeHome);
+    const froggHome = mkdtempSync(path.join(tmpdir(), "frogg-provider-config-owner-"));
+    tempDirs.push(froggHome);
     const initial: PersistedConfig = {
       version: 1,
       daemon: {
@@ -160,9 +160,9 @@ describe("mutable provider config owner", () => {
       app: { baseUrl: "https://before.example.test" },
       agents: { providers: { codex: { enabled: true } } },
     };
-    const configPath = path.join(fdeHome, "config.json");
+    const configPath = path.join(froggHome, "config.json");
     writeFileSync(configPath, `${JSON.stringify(initial, null, 2)}\n`, "utf-8");
-    const store = new DaemonConfigStore(fdeHome, mutableConfig(initial), undefined, {
+    const store = new DaemonConfigStore(froggHome, mutableConfig(initial), undefined, {
       startupPersisted: initial,
       reloadSource: {
         resolve: (persisted) => ({
@@ -217,9 +217,9 @@ describe("mutable provider config owner", () => {
   });
 
   test("replaces an in-flight catalog after provider config commits", async () => {
-    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-provider-config-owner-"));
-    tempDirs.push(fdeHome);
-    const store = new DaemonConfigStore(fdeHome, mutableConfig({ version: 1 }));
+    const froggHome = mkdtempSync(path.join(tmpdir(), "frogg-provider-config-owner-"));
+    tempDirs.push(froggHome);
+    const store = new DaemonConfigStore(froggHome, mutableConfig({ version: 1 }));
     const catalogResolvers: Array<(value: Catalog) => void> = [];
     const manager = new ProviderSnapshotManager({
       logger: createTestLogger(),
@@ -266,9 +266,9 @@ describe("mutable provider config owner", () => {
   });
 
   test("lets the original in-flight catalog publish after provider config rolls back", async () => {
-    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-provider-config-owner-"));
-    tempDirs.push(fdeHome);
-    const store = new DaemonConfigStore(fdeHome, mutableConfig({ version: 1 }));
+    const froggHome = mkdtempSync(path.join(tmpdir(), "frogg-provider-config-owner-"));
+    tempDirs.push(froggHome);
+    const store = new DaemonConfigStore(froggHome, mutableConfig({ version: 1 }));
     const catalogResolvers: Array<(value: Catalog) => void> = [];
     const manager = new ProviderSnapshotManager({
       logger: createTestLogger(),

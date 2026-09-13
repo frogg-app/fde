@@ -36,13 +36,13 @@ function hookPaths(root: string) {
   return {
     claude: join(root, "claude", "settings.json"),
     codex: join(root, "codex", "hooks.json"),
-    opencode: join(root, "opencode", "plugins", "fde-terminal-activity.js"),
+    opencode: join(root, "opencode", "plugins", "frogg-terminal-activity.js"),
   };
 }
 
-function createStore(fdeHome: string, enableTerminalAgentHooks: boolean): DaemonConfigStore {
+function createStore(froggHome: string, enableTerminalAgentHooks: boolean): DaemonConfigStore {
   return new DaemonConfigStore(
-    fdeHome,
+    froggHome,
     {
       mcp: { injectIntoAgents: false },
       providers: {},
@@ -57,8 +57,8 @@ function createStore(fdeHome: string, enableTerminalAgentHooks: boolean): Daemon
 
 describe("applyTerminalAgentHookSetting", () => {
   it("leaves agent configs untouched when the setting is disabled", () => {
-    const root = createTempDir("fde-hook-setting-");
-    const store = createStore(createTempDir("fde-hook-setting-home-"), false);
+    const root = createTempDir("frogg-hook-setting-");
+    const store = createStore(createTempDir("frogg-hook-setting-home-"), false);
 
     applyTerminalAgentHookSetting({ store, install: createInstallEnv(root) });
 
@@ -69,8 +69,8 @@ describe("applyTerminalAgentHookSetting", () => {
   });
 
   it("installs agent hooks when the setting is enabled", () => {
-    const root = createTempDir("fde-hook-setting-");
-    const store = createStore(createTempDir("fde-hook-setting-home-"), true);
+    const root = createTempDir("frogg-hook-setting-");
+    const store = createStore(createTempDir("frogg-hook-setting-home-"), true);
 
     applyTerminalAgentHookSetting({ store, install: createInstallEnv(root) });
 
@@ -81,8 +81,8 @@ describe("applyTerminalAgentHookSetting", () => {
   });
 
   it("installs on enable and removes hooks on disable when toggled live", () => {
-    const root = createTempDir("fde-hook-setting-");
-    const store = createStore(createTempDir("fde-hook-setting-home-"), false);
+    const root = createTempDir("frogg-hook-setting-");
+    const store = createStore(createTempDir("frogg-hook-setting-home-"), false);
     const paths = hookPaths(root);
 
     applyTerminalAgentHookSetting({ store, install: createInstallEnv(root) });

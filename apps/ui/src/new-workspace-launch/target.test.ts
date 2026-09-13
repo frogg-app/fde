@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { TerminalProfile } from "@fde/protocol/messages";
+import type { TerminalProfile } from "@frogg/protocol/messages";
 import {
   BLANK_TERMINAL_PROFILE_ID,
   CHAT_LAUNCH_TARGET,

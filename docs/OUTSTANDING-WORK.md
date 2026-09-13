@@ -31,11 +31,11 @@ The existing monitor owns post-merge follow-through:
 
 - [x] **S1 — Reject oversized attachments before reading/copying.** Approved.
       Agent `/root/stop`, branch `fix/attachment-preread-size`, worktree
-      `/tmp/fde-attachment-size-current`. Adapt shared browser/Expo and Electron paths;
+      `/tmp/frogg-attachment-size-current`. Adapt shared browser/Expo and Electron paths;
       meaningful regression checks, full typecheck, PR and merge on success.
 - [x] **S2 — Resume unfinished workspace drafts through the sidebar.** Approved.
       Agent `/root/install`, branch `feat/sidebar-draft-resume`, worktree
-      `/tmp/fde-sidebar-draft-resume`. Preserve current submission lifecycle and host
+      `/tmp/frogg-sidebar-draft-resume`. Preserve current submission lifecycle and host
       navigation; regression checks, full typecheck, PR and merge on success.
       Coordinate version/integration after S1 to avoid conflicting release bumps.
 
@@ -53,9 +53,9 @@ The existing monitor owns post-merge follow-through:
 
 ### Settings: agents
 
-- **Remove FDE agent profiles.** The Agents tab still has FDE-specific agent profiles with daemon state behind them, and the composer model picker's "edit" link opens them. Providers handle agents themselves, so this duplicates them. Remove the UI, the daemon persistence and the RPCs, and keep old configs loading.
-- **Remove FDE-managed skills.** The daemon installs and reconciles skills into `~/.claude/skills` and `~/.codex/skills`. Decide whether to drop this or turn it into a read-only list like agent definitions.
-- **Keep the agent host settings** (FDE tools toggle, browser tools opt-in, appended system prompt). They could move to Overview if the Agents tab ends up with little else on it.
+- **Remove Frogg agent profiles.** The Agents tab still has Frogg-specific agent profiles with daemon state behind them, and the composer model picker's "edit" link opens them. Providers handle agents themselves, so this duplicates them. Remove the UI, the daemon persistence and the RPCs, and keep old configs loading.
+- **Remove Frogg-managed skills.** The daemon installs and reconciles skills into `~/.claude/skills` and `~/.codex/skills`. Decide whether to drop this or turn it into a read-only list like agent definitions.
+- **Keep the agent host settings** (Frogg tools toggle, browser tools opt-in, appended system prompt). They could move to Overview if the Agents tab ends up with little else on it.
 - **Verify the provider agent folders against real installs.**
   - Codex: `~/.codex/agents/*.toml`. Confirm the folder and the TOML fields.
   - Copilot: `~/.copilot/agents/*.agent.md` and `<project>/.github/agents/`.

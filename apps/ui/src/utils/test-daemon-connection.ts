@@ -1,5 +1,5 @@
-import { DaemonClient } from "@fde/client/internal/daemon-client";
-import type { DaemonClientConfig } from "@fde/client/internal/daemon-client";
+import { DaemonClient } from "@frogg/client/internal/daemon-client";
+import type { DaemonClientConfig } from "@frogg/client/internal/daemon-client";
 import type { HostConnection } from "@/types/host-connection";
 import { getOrCreateClientId } from "./client-id";
 import { resolveAppVersion } from "./app-version";

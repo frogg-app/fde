@@ -73,7 +73,7 @@ function MermaidWebView({
       };
       const payload = serializeMermaidRuntimeRenderMessage(message);
       webViewRef.current.injectJavaScript(
-        `window.__FDE_MERMAID_RUNTIME_RECEIVE__ && window.__FDE_MERMAID_RUNTIME_RECEIVE__(${payload}); true;`,
+        `window.__FROGG_MERMAID_RUNTIME_RECEIVE__ && window.__FROGG_MERMAID_RUNTIME_RECEIVE__(${payload}); true;`,
       );
     },
     [interactive],

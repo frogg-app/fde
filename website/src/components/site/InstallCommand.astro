@@ -46,15 +46,15 @@ const { command = "curl -fsSL https://frogg.app/install.sh | bash", label = "Cop
     max-width: 100%;
     padding: 0.35rem 0.35rem 0.35rem 1rem;
     border-radius: 999px;
-    background: color-mix(in srgb, var(--fde-bg-elevated) 85%, transparent);
-    border: 1px solid var(--fde-border-strong);
-    box-shadow: var(--fde-shadow);
+    background: color-mix(in srgb, var(--frogg-bg-elevated) 85%, transparent);
+    border: 1px solid var(--frogg-border-strong);
+    box-shadow: var(--frogg-shadow);
     backdrop-filter: blur(8px);
-    font-family: var(--fde-font-mono);
+    font-family: var(--frogg-font-mono);
     font-size: 0.9rem;
   }
   .prompt {
-    color: var(--fde-accent);
+    color: var(--frogg-accent);
     user-select: none;
   }
   code {
@@ -63,7 +63,7 @@ const { command = "curl -fsSL https://frogg.app/install.sh | bash", label = "Cop
     overflow-x: auto;
     white-space: nowrap;
     scrollbar-width: none;
-    color: var(--fde-text);
+    color: var(--frogg-text);
     font-family: inherit;
   }
   code::-webkit-scrollbar {
@@ -78,18 +78,18 @@ const { command = "curl -fsSL https://frogg.app/install.sh | bash", label = "Cop
     padding: 0 0.95rem;
     border-radius: 999px;
     border: 0;
-    background: var(--fde-accent-soft);
-    color: var(--fde-text);
-    font: 600 0.85rem var(--fde-font);
+    background: var(--frogg-accent-soft);
+    color: var(--frogg-text);
+    font: 600 0.85rem var(--frogg-font);
     cursor: pointer;
     transition:
-      background-color var(--fde-fast) var(--fde-ease),
-      color var(--fde-fast) var(--fde-ease),
-      transform var(--fde-fast) var(--fde-ease);
+      background-color var(--frogg-fast) var(--frogg-ease),
+      color var(--frogg-fast) var(--frogg-ease),
+      transform var(--frogg-fast) var(--frogg-ease);
   }
   .copy:hover {
-    background: var(--fde-accent);
-    color: var(--fde-accent-fg);
+    background: var(--frogg-accent);
+    color: var(--frogg-accent-fg);
   }
   .copy:active {
     transform: scale(0.94);
@@ -98,7 +98,7 @@ const { command = "curl -fsSL https://frogg.app/install.sh | bash", label = "Cop
     display: none;
   }
   .copy[data-state="copied"] {
-    background: var(--fde-success);
+    background: var(--frogg-success);
     color: #fff;
   }
   .copy[data-state="copied"] .i-copy {
@@ -106,10 +106,10 @@ const { command = "curl -fsSL https://frogg.app/install.sh | bash", label = "Cop
   }
   .copy[data-state="copied"] .i-check {
     display: block;
-    animation: pop 320ms var(--fde-ease-spring);
+    animation: pop 320ms var(--frogg-ease-spring);
   }
   .copy[data-state="failed"] {
-    background: var(--fde-danger);
+    background: var(--frogg-danger);
     color: #fff;
   }
   @keyframes pop {

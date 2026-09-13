@@ -20,7 +20,10 @@ import {
   getCheckoutStatus,
   pushCurrentBranch,
 } from "../utils/checkout-git.js";
-import { getFdeWorktreeMetadataPath, readFdeWorktreeMetadata } from "../utils/worktree-metadata.js";
+import {
+  getFroggWorktreeMetadataPath,
+  readFroggWorktreeMetadata,
+} from "../utils/worktree-metadata.js";
 import { UnknownBranchError } from "../utils/worktree.js";
 import { createWorktreeCore as createCoreWorktree } from "./worktree-core.js";
 import { isPlatform } from "../test-utils/platform.js";
@@ -96,10 +99,10 @@ function createCoreDeps(options?: {
   };
 }
 
-function createGitRepo(): { tempDir: string; repoDir: string; fdeHome: string } {
+function createGitRepo(): { tempDir: string; repoDir: string; froggHome: string } {
   const tempDir = realpathSync(mkdtempSync(path.join(tmpdir(), "worktree-core-test-")));
   const repoDir = path.join(tempDir, "repo");
-  const fdeHome = path.join(tempDir, ".fde");
+  const froggHome = path.join(tempDir, ".frogg");
   mkdirSync(repoDir, { recursive: true });
   execFileSync("git", ["init", "-b", "main"], { cwd: repoDir, stdio: "pipe" });
   execFileSync("git", ["config", "user.email", "test@test.com"], { cwd: repoDir, stdio: "pipe" });
@@ -110,11 +113,11 @@ function createGitRepo(): { tempDir: string; repoDir: string; fdeHome: string } 
     cwd: repoDir,
     stdio: "pipe",
   });
-  return { tempDir, repoDir, fdeHome };
+  return { tempDir, repoDir, froggHome };
 }
 
-function createGitRepoWithDevBranch(): { tempDir: string; repoDir: string; fdeHome: string } {
-  const { tempDir, repoDir, fdeHome } = createGitRepo();
+function createGitRepoWithDevBranch(): { tempDir: string; repoDir: string; froggHome: string } {
+  const { tempDir, repoDir, froggHome } = createGitRepo();
   execFileSync("git", ["checkout", "-b", "dev"], { cwd: repoDir, stdio: "pipe" });
   writeFileSync(path.join(repoDir, "README.md"), "dev branch\n");
   execFileSync("git", ["add", "README.md"], { cwd: repoDir, stdio: "pipe" });
@@ -123,20 +126,20 @@ function createGitRepoWithDevBranch(): { tempDir: string; repoDir: string; fdeHo
     stdio: "pipe",
   });
   execFileSync("git", ["checkout", "main"], { cwd: repoDir, stdio: "pipe" });
-  return { tempDir, repoDir, fdeHome };
+  return { tempDir, repoDir, froggHome };
 }
 
-function createGitRepoWithOriginMain(): { tempDir: string; repoDir: string; fdeHome: string } {
-  const { tempDir, repoDir, fdeHome } = createGitRepo();
+function createGitRepoWithOriginMain(): { tempDir: string; repoDir: string; froggHome: string } {
+  const { tempDir, repoDir, froggHome } = createGitRepo();
   const remoteDir = path.join(tempDir, "origin.git");
   execFileSync("git", ["clone", "--bare", repoDir, remoteDir], { stdio: "pipe" });
   execFileSync("git", ["remote", "add", "origin", remoteDir], { cwd: repoDir, stdio: "pipe" });
   execFileSync("git", ["fetch", "origin"], { cwd: repoDir, stdio: "pipe" });
-  return { tempDir, repoDir, fdeHome };
+  return { tempDir, repoDir, froggHome };
 }
 
-function createGitHubPrRemoteRepo(): { tempDir: string; repoDir: string; fdeHome: string } {
-  const { tempDir, repoDir, fdeHome } = createGitRepo();
+function createGitHubPrRemoteRepo(): { tempDir: string; repoDir: string; froggHome: string } {
+  const { tempDir, repoDir, froggHome } = createGitRepo();
   const featureBranch = "feature/review-pr";
   execFileSync("git", ["checkout", "-b", featureBranch], { cwd: repoDir, stdio: "pipe" });
   writeFileSync(path.join(repoDir, "README.md"), "review branch\n");
@@ -161,16 +164,16 @@ function createGitHubPrRemoteRepo(): { tempDir: string; repoDir: string; fdeHome
   execFileSync("git", ["remote", "add", "origin", remoteDir], { cwd: repoDir, stdio: "pipe" });
   execFileSync("git", ["fetch", "origin"], { cwd: repoDir, stdio: "pipe" });
 
-  return { tempDir, repoDir, fdeHome };
+  return { tempDir, repoDir, froggHome };
 }
 
 function createSameRepoGitHubPrRemoteRepo(): {
   tempDir: string;
   repoDir: string;
   remoteDir: string;
-  fdeHome: string;
+  froggHome: string;
 } {
-  const { tempDir, repoDir, fdeHome } = createGitRepo();
+  const { tempDir, repoDir, froggHome } = createGitRepo();
   const remoteDir = path.join(tempDir, "origin.git");
   const featureBranch = "daemon-shutdown-diagnostics";
 
@@ -199,15 +202,15 @@ function createSameRepoGitHubPrRemoteRepo(): {
   execFileSync("git", ["branch", "-D", featureBranch], { cwd: repoDir, stdio: "pipe" });
   execFileSync("git", ["fetch", "origin"], { cwd: repoDir, stdio: "pipe" });
 
-  return { tempDir, repoDir, remoteDir, fdeHome };
+  return { tempDir, repoDir, remoteDir, froggHome };
 }
 
 function createGitRepoWithOriginFeatureBranch(): {
   tempDir: string;
   repoDir: string;
-  fdeHome: string;
+  froggHome: string;
 } {
-  const { tempDir, repoDir, fdeHome } = createGitRepo();
+  const { tempDir, repoDir, froggHome } = createGitRepo();
   const featureBranch = "feature/gitlab-mr";
   execFileSync("git", ["checkout", "-b", featureBranch], { cwd: repoDir, stdio: "pipe" });
   writeFileSync(path.join(repoDir, "README.md"), "gitlab mr branch\n");
@@ -224,15 +227,15 @@ function createGitRepoWithOriginFeatureBranch(): {
   execFileSync("git", ["remote", "add", "origin", remoteDir], { cwd: repoDir, stdio: "pipe" });
   execFileSync("git", ["fetch", "origin"], { cwd: repoDir, stdio: "pipe" });
 
-  return { tempDir, repoDir, fdeHome };
+  return { tempDir, repoDir, froggHome };
 }
 
 function createGitLabMrRefOnlyRemoteRepo(): {
   tempDir: string;
   repoDir: string;
-  fdeHome: string;
+  froggHome: string;
 } {
-  const { tempDir, repoDir, fdeHome } = createGitRepo();
+  const { tempDir, repoDir, froggHome } = createGitRepo();
   const featureBranch = "feature/gitlab-mr";
   execFileSync("git", ["checkout", "-b", featureBranch], { cwd: repoDir, stdio: "pipe" });
   writeFileSync(path.join(repoDir, "README.md"), "gitlab mr branch\n");
@@ -264,15 +267,15 @@ function createGitLabMrRefOnlyRemoteRepo(): {
   execFileSync("git", ["remote", "add", "origin", remoteDir], { cwd: repoDir, stdio: "pipe" });
   execFileSync("git", ["fetch", "origin"], { cwd: repoDir, stdio: "pipe" });
 
-  return { tempDir, repoDir, fdeHome };
+  return { tempDir, repoDir, froggHome };
 }
 
 function createGitLabMrWithConflictingOriginBranchRepo(): {
   tempDir: string;
   repoDir: string;
-  fdeHome: string;
+  froggHome: string;
 } {
-  const { tempDir, repoDir, fdeHome } = createGitRepo();
+  const { tempDir, repoDir, froggHome } = createGitRepo();
   const featureBranch = "feature/gitlab-mr";
   execFileSync("git", ["checkout", "-b", featureBranch], { cwd: repoDir, stdio: "pipe" });
   writeFileSync(path.join(repoDir, "README.md"), "target repo branch with same name\n");
@@ -313,16 +316,16 @@ function createGitLabMrWithConflictingOriginBranchRepo(): {
   execFileSync("git", ["remote", "add", "origin", remoteDir], { cwd: repoDir, stdio: "pipe" });
   execFileSync("git", ["fetch", "origin"], { cwd: repoDir, stdio: "pipe" });
 
-  return { tempDir, repoDir, fdeHome };
+  return { tempDir, repoDir, froggHome };
 }
 
 function createForkGitHubPrRemoteRepo(): {
   tempDir: string;
   repoDir: string;
   headRemoteDir: string;
-  fdeHome: string;
+  froggHome: string;
 } {
-  const { tempDir, repoDir, fdeHome } = createGitRepo();
+  const { tempDir, repoDir, froggHome } = createGitRepo();
   const baseRemoteDir = path.join(tempDir, "base.git");
   const headRemoteDir = path.join(tempDir, "therainisme.git");
   const headCloneDir = path.join(tempDir, "therainisme-clone");
@@ -364,7 +367,7 @@ function createForkGitHubPrRemoteRepo(): {
   });
   execFileSync("git", ["fetch", "origin"], { cwd: repoDir, stdio: "pipe" });
 
-  return { tempDir, repoDir, headRemoteDir, fdeHome };
+  return { tempDir, repoDir, headRemoteDir, froggHome };
 }
 
 function getBranchUpstream(cwd: string): string | null {
@@ -394,14 +397,14 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
     });
 
     test("creates the legacy RPC branch-off worktree from the repo default branch", async () => {
-      const { tempDir, repoDir, fdeHome } = createGitRepo();
+      const { tempDir, repoDir, froggHome } = createGitRepo();
       cleanupPaths.push(tempDir);
 
       const result = await createCoreWorktree(
         {
           cwd: repoDir,
           worktreeSlug: "legacy-rpc",
-          fdeHome,
+          froggHome,
           runSetup: false,
         },
         createCoreDeps(),
@@ -418,7 +421,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
     });
 
     test("creates branch-off worktrees from origin main without tracking origin main", async () => {
-      const { tempDir, repoDir, fdeHome } = createGitRepoWithOriginMain();
+      const { tempDir, repoDir, froggHome } = createGitRepoWithOriginMain();
       cleanupPaths.push(tempDir);
 
       const result = await createCoreWorktree(
@@ -427,7 +430,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
           worktreeSlug: "no-upstream-feature",
           action: "branch-off",
           refName: "main",
-          fdeHome,
+          froggHome,
           runSetup: false,
         },
         createCoreDeps(),
@@ -442,13 +445,13 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
     });
 
     test("creates a branch-off worktree with a mnemonic slug when no slug is supplied", async () => {
-      const { tempDir, repoDir, fdeHome } = createGitRepo();
+      const { tempDir, repoDir, froggHome } = createGitRepo();
       cleanupPaths.push(tempDir);
 
       const result = await createCoreWorktree(
         {
           cwd: repoDir,
-          fdeHome,
+          froggHome,
           runSetup: false,
         },
         createCoreDeps(),
@@ -462,7 +465,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
     });
 
     test("checks out an explicit GitHub PR branch with legacy RPC fields", async () => {
-      const { tempDir, repoDir, fdeHome } = createGitHubPrRemoteRepo();
+      const { tempDir, repoDir, froggHome } = createGitHubPrRemoteRepo();
       cleanupPaths.push(tempDir);
 
       const result = await createCoreWorktree(
@@ -471,7 +474,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
           worktreeSlug: "review-pr-123",
           githubPrNumber: 123,
           refName: "feature/review-pr",
-          fdeHome,
+          froggHome,
           runSetup: false,
         },
         createCoreDeps(),
@@ -490,7 +493,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
     });
 
     test("uses the PR head ref as the default slug when no slug is supplied", async () => {
-      const { tempDir, repoDir, fdeHome } = createGitHubPrRemoteRepo();
+      const { tempDir, repoDir, froggHome } = createGitHubPrRemoteRepo();
       cleanupPaths.push(tempDir);
 
       const result = await createCoreWorktree(
@@ -498,7 +501,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
           cwd: repoDir,
           githubPrNumber: 123,
           refName: "feature/review-pr",
-          fdeHome,
+          froggHome,
           runSetup: false,
         },
         createCoreDeps(),
@@ -509,14 +512,14 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
     });
 
     test("creates the MCP standalone worktree input shape", async () => {
-      const { tempDir, repoDir, fdeHome } = createGitRepo();
+      const { tempDir, repoDir, froggHome } = createGitRepo();
       cleanupPaths.push(tempDir);
 
       const result = await createCoreWorktree(
         {
           cwd: repoDir,
           worktreeSlug: "mcp-standalone",
-          fdeHome,
+          froggHome,
           runSetup: false,
         },
         createCoreDeps(),
@@ -531,7 +534,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
     });
 
     test("branches off an explicit refName base", async () => {
-      const { tempDir, repoDir, fdeHome } = createGitRepoWithDevBranch();
+      const { tempDir, repoDir, froggHome } = createGitRepoWithDevBranch();
       cleanupPaths.push(tempDir);
       const devTip = execFileSync("git", ["rev-parse", "dev"], { cwd: repoDir, stdio: "pipe" })
         .toString()
@@ -543,7 +546,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
           worktreeSlug: "from-dev",
           action: "branch-off",
           refName: "dev",
-          fdeHome,
+          froggHome,
           runSetup: false,
         },
         createCoreDeps(),
@@ -564,7 +567,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
     });
 
     test("checks out an explicit existing branch", async () => {
-      const { tempDir, repoDir, fdeHome } = createGitRepoWithDevBranch();
+      const { tempDir, repoDir, froggHome } = createGitRepoWithDevBranch();
       cleanupPaths.push(tempDir);
 
       const result = await createCoreWorktree(
@@ -572,7 +575,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
           cwd: repoDir,
           action: "checkout",
           refName: "dev",
-          fdeHome,
+          froggHome,
           runSetup: false,
         },
         createCoreDeps(),
@@ -592,7 +595,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
     });
 
     test("checks out an explicit GitHub PR target", async () => {
-      const { tempDir, repoDir, fdeHome } = createGitHubPrRemoteRepo();
+      const { tempDir, repoDir, froggHome } = createGitHubPrRemoteRepo();
       cleanupPaths.push(tempDir);
 
       const result = await createCoreWorktree(
@@ -600,7 +603,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
           cwd: repoDir,
           action: "checkout",
           githubPrNumber: 123,
-          fdeHome,
+          froggHome,
           runSetup: false,
         },
         createCoreDeps(),
@@ -619,7 +622,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
     });
 
     test("tracks a same-repo PR branch from a single-branch clone", async () => {
-      const { tempDir, repoDir, remoteDir, fdeHome } = createSameRepoGitHubPrRemoteRepo();
+      const { tempDir, repoDir, remoteDir, froggHome } = createSameRepoGitHubPrRemoteRepo();
       cleanupPaths.push(tempDir);
       execFileSync("git", ["config", "--unset-all", "remote.origin.fetch"], {
         cwd: repoDir,
@@ -652,7 +655,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
           cwd: repoDir,
           action: "checkout",
           githubPrNumber: 1790,
-          fdeHome,
+          froggHome,
           runSetup: false,
         },
         createCoreDeps({ github }),
@@ -665,7 +668,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
     });
 
     test("checks out a GitLab MR source branch through the resolved forge service", async () => {
-      const { tempDir, repoDir, fdeHome } = createGitRepoWithOriginFeatureBranch();
+      const { tempDir, repoDir, froggHome } = createGitRepoWithOriginFeatureBranch();
       cleanupPaths.push(tempDir);
       const gitlab: ForgeService = {
         ...createGitHubServiceStub(),
@@ -690,7 +693,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
           cwd: repoDir,
           action: "checkout",
           githubPrNumber: 14,
-          fdeHome,
+          froggHome,
           runSetup: false,
         },
         createCoreDeps({ forge: { forge: "gitlab", service: gitlab } }),
@@ -718,7 +721,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
     });
 
     test("checks out a GitLab MR ref when the source branch is gone", async () => {
-      const { tempDir, repoDir, fdeHome } = createGitLabMrRefOnlyRemoteRepo();
+      const { tempDir, repoDir, froggHome } = createGitLabMrRefOnlyRemoteRepo();
       cleanupPaths.push(tempDir);
       const gitlab: ForgeService = {
         ...createGitHubServiceStub(),
@@ -742,7 +745,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
           cwd: repoDir,
           action: "checkout",
           githubPrNumber: 14,
-          fdeHome,
+          froggHome,
           runSetup: false,
         },
         createCoreDeps({ forge: { forge: "gitlab", service: gitlab } }),
@@ -761,7 +764,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
     });
 
     test("checks out the authoritative GitLab MR ref before a same-named origin branch", async () => {
-      const { tempDir, repoDir, fdeHome } = createGitLabMrWithConflictingOriginBranchRepo();
+      const { tempDir, repoDir, froggHome } = createGitLabMrWithConflictingOriginBranchRepo();
       cleanupPaths.push(tempDir);
       const gitlab = createGitLabService({
         resolveGlabPath: async () => "/usr/bin/glab",
@@ -792,7 +795,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
           cwd: repoDir,
           action: "checkout",
           githubPrNumber: 14,
-          fdeHome,
+          froggHome,
           runSetup: false,
         },
         createCoreDeps({ forge: { forge: "gitlab", service: gitlab } }),
@@ -812,7 +815,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
     });
 
     test("does not add a fallback push remote for a cross-repo MR without a push URL", async () => {
-      const { tempDir, repoDir, fdeHome } = createGitLabMrRefOnlyRemoteRepo();
+      const { tempDir, repoDir, froggHome } = createGitLabMrRefOnlyRemoteRepo();
       cleanupPaths.push(tempDir);
       const gitlab: ForgeService = {
         ...createGitHubServiceStub(),
@@ -837,7 +840,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
           worktreeSlug: "first-gitlab-mr",
           action: "checkout",
           githubPrNumber: 14,
-          fdeHome,
+          froggHome,
           runSetup: false,
         },
         createCoreDeps({ forge: { forge: "gitlab", service: gitlab } }),
@@ -848,7 +851,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
           worktreeSlug: "second-gitlab-mr",
           action: "checkout",
           githubPrNumber: 14,
-          fdeHome,
+          froggHome,
           runSetup: false,
         },
         createCoreDeps({ forge: { forge: "gitlab", service: gitlab } }),
@@ -858,10 +861,16 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
         second.worktree.worktreePath,
         `branch.${second.worktree.branchName}.pushRemote`,
       );
-      const pushRefspec = getGitConfigValue(second.worktree.worktreePath, "remote.fde-pr-14.push");
-      const pushRemoteUrl = getGitConfigValue(second.worktree.worktreePath, "remote.fde-pr-14.url");
-      const metadata = readFdeWorktreeMetadata(second.worktree.worktreePath);
-      const facts = await getCheckoutSnapshotFacts(second.worktree.worktreePath, { fdeHome });
+      const pushRefspec = getGitConfigValue(
+        second.worktree.worktreePath,
+        "remote.frogg-pr-14.push",
+      );
+      const pushRemoteUrl = getGitConfigValue(
+        second.worktree.worktreePath,
+        "remote.frogg-pr-14.url",
+      );
+      const metadata = readFroggWorktreeMetadata(second.worktree.worktreePath);
+      const facts = await getCheckoutSnapshotFacts(second.worktree.worktreePath, { froggHome });
 
       expect(second.worktree.branchName).toBe("feature/gitlab-mr-1");
       expect(pushRemote).toBeNull();
@@ -880,7 +889,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
     });
 
     test("checks out a same-repo GitHub PR with valid origin tracking", async () => {
-      const { tempDir, repoDir, remoteDir, fdeHome } = createSameRepoGitHubPrRemoteRepo();
+      const { tempDir, repoDir, remoteDir, froggHome } = createSameRepoGitHubPrRemoteRepo();
       cleanupPaths.push(tempDir);
       const github = {
         ...createGitHubServiceStub(),
@@ -900,12 +909,12 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
           cwd: repoDir,
           action: "checkout",
           githubPrNumber: 1790,
-          fdeHome,
+          froggHome,
           runSetup: false,
         },
         createCoreDeps({ github }),
       );
-      const status = await getCheckoutStatus(result.worktree.worktreePath, { fdeHome });
+      const status = await getCheckoutStatus(result.worktree.worktreePath, { froggHome });
 
       expect(result.worktree.branchName).toBe("daemon-shutdown-diagnostics");
       expect(getBranchUpstream(result.worktree.worktreePath)).toBe(
@@ -920,7 +929,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
     });
 
     test("checks out a same-repo GitHub PR whose head branch was deleted", async () => {
-      const { tempDir, repoDir, remoteDir, fdeHome } = createSameRepoGitHubPrRemoteRepo();
+      const { tempDir, repoDir, remoteDir, froggHome } = createSameRepoGitHubPrRemoteRepo();
       cleanupPaths.push(tempDir);
       execFileSync(
         "git",
@@ -945,7 +954,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
           cwd: repoDir,
           action: "checkout",
           githubPrNumber: 1790,
-          fdeHome,
+          froggHome,
           runSetup: false,
         },
         createCoreDeps({ github }),
@@ -958,7 +967,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
     });
 
     test("pushes a deduplicated same-repo GitHub PR branch to the PR head", async () => {
-      const { tempDir, repoDir, remoteDir, fdeHome } = createSameRepoGitHubPrRemoteRepo();
+      const { tempDir, repoDir, remoteDir, froggHome } = createSameRepoGitHubPrRemoteRepo();
       cleanupPaths.push(tempDir);
       execFileSync("git", ["remote", "set-url", "origin", `file://${remoteDir}`], {
         cwd: repoDir,
@@ -987,7 +996,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
           worktreeSlug: "first-pr-worktree",
           action: "checkout",
           githubPrNumber: 1790,
-          fdeHome,
+          froggHome,
           runSetup: false,
         },
         createCoreDeps({ github }),
@@ -998,7 +1007,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
           worktreeSlug: "second-pr-worktree",
           action: "checkout",
           githubPrNumber: 1790,
-          fdeHome,
+          froggHome,
           runSetup: false,
         },
         createCoreDeps({ github }),
@@ -1028,13 +1037,13 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
       )
         .toString()
         .trim();
-      const pushRefspec = execFileSync("git", ["config", "remote.fde-pr-1790.push"], {
+      const pushRefspec = execFileSync("git", ["config", "remote.frogg-pr-1790.push"], {
         cwd: second.worktree.worktreePath,
         stdio: "pipe",
       })
         .toString()
         .trim();
-      const pushRemoteUrl = execFileSync("git", ["config", "remote.fde-pr-1790.url"], {
+      const pushRemoteUrl = execFileSync("git", ["config", "remote.frogg-pr-1790.url"], {
         cwd: second.worktree.worktreePath,
         stdio: "pipe",
       })
@@ -1071,7 +1080,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
       expect(getBranchUpstream(second.worktree.worktreePath)).toBe(
         "origin/daemon-shutdown-diagnostics",
       );
-      expect(pushRemote).toBe("fde-pr-1790");
+      expect(pushRemote).toBe("frogg-pr-1790");
       expect(pushRefspec).toBe("HEAD:refs/heads/daemon-shutdown-diagnostics");
       expect(pushRemoteUrl).toBe(remoteDir);
       expect(remotePrHead).toBe(localHead);
@@ -1079,7 +1088,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
     });
 
     test("derives the tracked PR lookup target when managed metadata has no target", async () => {
-      const { tempDir, repoDir, remoteDir, fdeHome } = createSameRepoGitHubPrRemoteRepo();
+      const { tempDir, repoDir, remoteDir, froggHome } = createSameRepoGitHubPrRemoteRepo();
       cleanupPaths.push(tempDir);
       execFileSync("git", ["remote", "set-url", "origin", `file://${remoteDir}`], {
         cwd: repoDir,
@@ -1108,7 +1117,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
           worktreeSlug: "first-pr-worktree",
           action: "checkout",
           githubPrNumber: 1790,
-          fdeHome,
+          froggHome,
           runSetup: false,
         },
         createCoreDeps({ github }),
@@ -1119,13 +1128,13 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
           worktreeSlug: "second-pr-worktree",
           action: "checkout",
           githubPrNumber: 1790,
-          fdeHome,
+          froggHome,
           runSetup: false,
         },
         createCoreDeps({ github }),
       );
       writeFileSync(
-        getFdeWorktreeMetadataPath(second.worktree.worktreePath),
+        getFroggWorktreeMetadataPath(second.worktree.worktreePath),
         `${JSON.stringify({ version: 1, baseRefName: "main" }, null, 2)}\n`,
         "utf8",
       );
@@ -1134,7 +1143,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
         cwd: second.worktree.worktreePath,
         encoding: "utf8",
       }).trim();
-      const facts = await getCheckoutSnapshotFacts(second.worktree.worktreePath, { fdeHome });
+      const facts = await getCheckoutSnapshotFacts(second.worktree.worktreePath, { froggHome });
 
       expect(second.worktree.branchName).toBe("daemon-shutdown-diagnostics-1");
       expect(facts).toMatchObject({
@@ -1148,7 +1157,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
     });
 
     test("checks out a fork PR whose head branch collides with local main", async () => {
-      const { tempDir, repoDir, headRemoteDir, fdeHome } = createForkGitHubPrRemoteRepo();
+      const { tempDir, repoDir, headRemoteDir, froggHome } = createForkGitHubPrRemoteRepo();
       cleanupPaths.push(tempDir);
       const github = {
         ...createGitHubServiceStub(),
@@ -1169,7 +1178,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
           action: "checkout",
           githubPrNumber: 526,
           refName: "main",
-          fdeHome,
+          froggHome,
           runSetup: false,
         },
         createCoreDeps({ github }),
@@ -1188,8 +1197,8 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
         .toString()
         .trim();
       const readme = readFileSync(path.join(result.worktree.worktreePath, "README.md"), "utf8");
-      const cleanStatus = await getCheckoutStatus(result.worktree.worktreePath, { fdeHome });
-      const pushRefspec = execFileSync("git", ["config", "remote.fde-pr-526.push"], {
+      const cleanStatus = await getCheckoutStatus(result.worktree.worktreePath, { froggHome });
+      const pushRefspec = execFileSync("git", ["config", "remote.frogg-pr-526.push"], {
         cwd: result.worktree.worktreePath,
         stdio: "pipe",
       })
@@ -1238,7 +1247,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
       expect(path.basename(result.worktree.worktreePath)).toBe("therainisme-main");
       expect(worktreeBranch).toBe("therainisme/main");
       expect(readme.replace(/\r\n/g, "\n")).toBe("fork pr main branch\n");
-      expect(getBranchUpstream(result.worktree.worktreePath)).toBe("fde-pr-526/main");
+      expect(getBranchUpstream(result.worktree.worktreePath)).toBe("frogg-pr-526/main");
       expect(pushRefspec).toBe("HEAD:refs/heads/main");
       expect(cleanStatus).toMatchObject({
         isGit: true,
@@ -1250,7 +1259,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
     });
 
     test("pushes a fork PR when the contributor branch cannot be fetched at checkout", async () => {
-      const { tempDir, repoDir, headRemoteDir, fdeHome } = createForkGitHubPrRemoteRepo();
+      const { tempDir, repoDir, headRemoteDir, froggHome } = createForkGitHubPrRemoteRepo();
       cleanupPaths.push(tempDir);
       execFileSync("git", ["--git-dir", headRemoteDir, "update-ref", "-d", "refs/heads/main"], {
         stdio: "pipe",
@@ -1274,7 +1283,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
           action: "checkout",
           githubPrNumber: 526,
           refName: "main",
-          fdeHome,
+          froggHome,
           runSetup: false,
         },
         createCoreDeps({ github }),
@@ -1289,7 +1298,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
       )
         .toString()
         .trim();
-      const pushRefspec = execFileSync("git", ["config", "remote.fde-pr-526.push"], {
+      const pushRefspec = execFileSync("git", ["config", "remote.frogg-pr-526.push"], {
         cwd: result.worktree.worktreePath,
         stdio: "pipe",
       })
@@ -1324,7 +1333,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
         .trim();
       const trackedPrRemoteHead = execFileSync(
         "git",
-        ["rev-parse", "refs/remotes/fde-pr-526/main"],
+        ["rev-parse", "refs/remotes/frogg-pr-526/main"],
         {
           cwd: result.worktree.worktreePath,
           stdio: "pipe",
@@ -1336,8 +1345,8 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
 
       expect(result.worktree.branchName).toBe("therainisme/main");
       expect(upstreamBeforePush).toBeNull();
-      expect(getBranchUpstream(result.worktree.worktreePath)).toBe("fde-pr-526/main");
-      expect(pushRemote).toBe("fde-pr-526");
+      expect(getBranchUpstream(result.worktree.worktreePath)).toBe("frogg-pr-526/main");
+      expect(pushRemote).toBe("frogg-pr-526");
       expect(pushRefspec).toBe("HEAD:refs/heads/main");
       expect(remotePrHead).toBe(localHead);
       expect(trackedPrRemoteHead).toBe(localHead);
@@ -1350,7 +1359,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
     });
 
     test("uses a unique local branch when the same fork PR branch already exists", async () => {
-      const { tempDir, repoDir, headRemoteDir, fdeHome } = createForkGitHubPrRemoteRepo();
+      const { tempDir, repoDir, headRemoteDir, froggHome } = createForkGitHubPrRemoteRepo();
       cleanupPaths.push(tempDir);
       const github = {
         ...createGitHubServiceStub(),
@@ -1372,7 +1381,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
           action: "checkout",
           githubPrNumber: 526,
           refName: "main",
-          fdeHome,
+          froggHome,
           runSetup: false,
         },
         createCoreDeps({ github }),
@@ -1384,7 +1393,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
           action: "checkout",
           githubPrNumber: 526,
           refName: "main",
-          fdeHome,
+          froggHome,
           runSetup: false,
         },
         createCoreDeps({ github }),
@@ -1392,12 +1401,12 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
 
       expect(first.worktree.branchName).toBe("therainisme/main");
       expect(second.worktree.branchName).toBe("therainisme/main-1");
-      expect(getBranchUpstream(first.worktree.worktreePath)).toBe("fde-pr-526/main");
-      expect(getBranchUpstream(second.worktree.worktreePath)).toBe("fde-pr-526/main");
+      expect(getBranchUpstream(first.worktree.worktreePath)).toBe("frogg-pr-526/main");
+      expect(getBranchUpstream(second.worktree.worktreePath)).toBe("frogg-pr-526/main");
     });
 
     test("throws a typed error for an unknown checkout branch", async () => {
-      const { tempDir, repoDir, fdeHome } = createGitRepo();
+      const { tempDir, repoDir, froggHome } = createGitRepo();
       cleanupPaths.push(tempDir);
 
       await expect(
@@ -1406,7 +1415,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
             cwd: repoDir,
             action: "checkout",
             refName: "missing-branch",
-            fdeHome,
+            froggHome,
             runSetup: false,
           },
           createCoreDeps(),
@@ -1415,14 +1424,14 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
     });
 
     test("creates the agent-create worktree input shape", async () => {
-      const { tempDir, repoDir, fdeHome } = createGitRepo();
+      const { tempDir, repoDir, froggHome } = createGitRepo();
       cleanupPaths.push(tempDir);
 
       const result = await createCoreWorktree(
         {
           cwd: repoDir,
           worktreeSlug: "agent-worktree",
-          fdeHome,
+          froggHome,
           runSetup: false,
         },
         createCoreDeps(),
@@ -1437,16 +1446,16 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
     });
 
     test("creates a suffixed branch-off worktree for the same slug", async () => {
-      const { tempDir, repoDir, fdeHome } = createGitRepo();
+      const { tempDir, repoDir, froggHome } = createGitRepo();
       cleanupPaths.push(tempDir);
       const deps = createCoreDeps();
 
       const first = await createCoreWorktree(
-        { cwd: repoDir, worktreeSlug: "reused-worktree", fdeHome, runSetup: false },
+        { cwd: repoDir, worktreeSlug: "reused-worktree", froggHome, runSetup: false },
         deps,
       );
       const second = await createCoreWorktree(
-        { cwd: repoDir, worktreeSlug: "reused-worktree", fdeHome, runSetup: false },
+        { cwd: repoDir, worktreeSlug: "reused-worktree", froggHome, runSetup: false },
         deps,
       );
 
@@ -1457,14 +1466,14 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
     });
 
     test("creates a suffixed GitHub PR worktree for the resolved slug", async () => {
-      const { tempDir, repoDir, fdeHome } = createGitHubPrRemoteRepo();
+      const { tempDir, repoDir, froggHome } = createGitHubPrRemoteRepo();
       cleanupPaths.push(tempDir);
       const deps = createCoreDeps();
       const input = {
         cwd: repoDir,
         githubPrNumber: 123,
         refName: "feature/review-pr",
-        fdeHome,
+        froggHome,
         runSetup: false,
       };
 
@@ -1478,7 +1487,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
     });
 
     test("uses an injectable ForgeService dependency for missing PR head refs", async () => {
-      const { tempDir, repoDir, fdeHome } = createGitHubPrRemoteRepo();
+      const { tempDir, repoDir, froggHome } = createGitHubPrRemoteRepo();
       cleanupPaths.push(tempDir);
       const headRefLookups: Array<{ cwd: string; number: number }> = [];
       const github: ForgeService = {
@@ -1504,7 +1513,7 @@ describe.skipIf(isPlatform("win32"))("worktree-core POSIX-only", () => {
           cwd: repoDir,
           worktreeSlug: "stubbed-github",
           githubPrNumber: 123,
-          fdeHome,
+          froggHome,
           runSetup: false,
         },
         createCoreDeps({ github }),

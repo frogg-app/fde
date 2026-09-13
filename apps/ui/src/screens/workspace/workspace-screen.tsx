@@ -1,6 +1,6 @@
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import type { JsonValue } from "@fde/protocol/agent-types";
-import { getOpenAgentTabLabel } from "@fde/protocol/agent-labels";
+import type { JsonValue } from "@frogg/protocol/agent-types";
+import { getOpenAgentTabLabel } from "@frogg/protocol/agent-labels";
 import {
   memo,
   useCallback,
@@ -191,7 +191,7 @@ import { getIsElectron, isNative, isWeb } from "@/constants/platform";
 import type { SurfaceBackdrop } from "@/styles/surface-backdrop";
 import { buildHostRootRoute, buildSettingsHostSectionRoute } from "@/utils/host-routes";
 import { useWorkspaceTerminals } from "@/screens/workspace/terminals/use-workspace-terminals";
-import type { TerminalProfile } from "@fde/protocol/messages";
+import type { TerminalProfile } from "@frogg/protocol/messages";
 import {
   WorkspaceHeaderMenuDesktop,
   WorkspaceHeaderMenuMobile,
@@ -850,9 +850,9 @@ export const WorkspaceScreen = memo(function WorkspaceScreen({
 }: WorkspaceScreenProps) {
   const navigationFocused = useIsFocused();
   useEffect(() => {
-    traceInstant("fde.workspace.mount", { serverId, workspaceId });
+    traceInstant("frogg.workspace.mount", { serverId, workspaceId });
     return () => {
-      traceInstant("fde.workspace.unmount", { serverId, workspaceId });
+      traceInstant("frogg.workspace.unmount", { serverId, workspaceId });
     };
   }, [serverId, workspaceId]);
   return (

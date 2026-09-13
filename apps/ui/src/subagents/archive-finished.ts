@@ -12,9 +12,9 @@ export interface ArchiveFinishedState {
 }
 
 export interface ArchiveFinishedOutcome {
-  archivedFdeIds: string[];
+  archivedFroggIds: string[];
   dismissedProviderIds: string[];
-  skippedFdeIds: string[];
+  skippedFroggIds: string[];
   failures: Array<{ id: string; error: unknown }>;
 }
 
@@ -35,7 +35,7 @@ export interface ArchiveFinishedSubagents {
 }
 
 export function isFinishedSubagent(row: SubagentRow): boolean {
-  if (row.kind === "fde") return row.status === "idle" || row.status === "error";
+  if (row.kind === "frogg") return row.status === "idle" || row.status === "error";
   return row.status === "completed" || row.status === "failed" || row.status === "canceled";
 }
 
@@ -56,11 +56,11 @@ function eligibleSignature(rows: readonly SubagentRow[]): string {
 }
 
 function managedRowIdentity(id: string): string {
-  return `fde:${id}`;
+  return `frogg:${id}`;
 }
 
 function rowIdentity(row: SubagentRow): string {
-  return row.kind === "fde" ? managedRowIdentity(row.id) : `provider:${row.id}`;
+  return row.kind === "frogg" ? managedRowIdentity(row.id) : `provider:${row.id}`;
 }
 
 function rowIdentities(rows: readonly SubagentRow[]): Set<string> {
@@ -73,9 +73,9 @@ function identitySignature(ids: ReadonlySet<string>): string {
 
 function emptyOutcome(): ArchiveFinishedOutcome {
   return {
-    archivedFdeIds: [],
+    archivedFroggIds: [],
     dismissedProviderIds: [],
-    skippedFdeIds: [],
+    skippedFroggIds: [],
     failures: [],
   };
 }
@@ -169,7 +169,7 @@ async function runArchiveFinished(
   reportProgress: (completedCount: number) => void,
 ): Promise<{ outcome: ArchiveFinishedOutcome; retryableFailureIds: Set<string> }> {
   const providerIds = rows.filter((row) => row.kind === "provider").map((row) => row.id);
-  const fdeIds = rows.filter((row) => row.kind === "fde").map((row) => row.id);
+  const froggIds = rows.filter((row) => row.kind === "frogg").map((row) => row.id);
   let completedCount = 0;
   const outcome = emptyOutcome();
   const retryableFailureIds = new Set<string>();
@@ -181,11 +181,11 @@ async function runArchiveFinished(
     reportProgress(completedCount);
   }
 
-  for (const id of fdeIds) {
+  for (const id of froggIds) {
     if (canArchiveManagedSubagent(deps.getManagedSubagent(id), deps.parentAgentId)) {
       try {
         await deps.archiveManagedSubagent(id);
-        outcome.archivedFdeIds.push(id);
+        outcome.archivedFroggIds.push(id);
       } catch (error) {
         outcome.failures.push({ id, error });
         if (canArchiveManagedSubagent(deps.getManagedSubagent(id), deps.parentAgentId)) {
@@ -193,7 +193,7 @@ async function runArchiveFinished(
         }
       }
     } else {
-      outcome.skippedFdeIds.push(id);
+      outcome.skippedFroggIds.push(id);
     }
     completedCount += 1;
     reportProgress(completedCount);

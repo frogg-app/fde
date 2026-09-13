@@ -17,7 +17,7 @@ import { AgentStorage } from "./agent-storage.js";
 import { InMemoryAgentTimelineStore } from "./agent-timeline-store.js";
 import { toAgentPayload } from "./agent-projections.js";
 import { projectTimelineRows } from "./timeline-projection.js";
-import { getOpenAgentTabLabel, PARENT_AGENT_ID_LABEL } from "@fde/protocol/agent-labels";
+import { getOpenAgentTabLabel, PARENT_AGENT_ID_LABEL } from "@frogg/protocol/agent-labels";
 import { formatSystemNotificationPrompt, startAgentRun } from "./agent-prompt.js";
 import { ensureAgentLoaded, ensureUnarchivedAgentLoaded } from "./agent-loading.js";
 import type { StoredAgentRecord } from "./agent-storage.js";
@@ -46,7 +46,7 @@ import type {
   ImportProviderSessionContext,
   ResolveAgentDefaultModeInput,
 } from "./agent-sdk-types.js";
-import type { FdeToolCatalog } from "./tools/types.js";
+import type { FroggToolCatalog } from "./tools/types.js";
 import type { ProviderDefinition } from "./provider-registry.js";
 
 const DESKTOP_OPEN_AGENT_TAB_LABEL = getOpenAgentTabLabel("desktop-client");
@@ -400,7 +400,7 @@ class EnvProbeAgentClient extends TestAgentClient {
     const script = `
       process.stdout.write(JSON.stringify({
         probe: process.env.CHUNK14_PROBE ?? null,
-        agentId: process.env.FDE_AGENT_ID ?? null
+        agentId: process.env.FROGG_AGENT_ID ?? null
       }));
     `;
     const child = spawn(process.execPath, ["-e", script], {
@@ -2510,8 +2510,8 @@ test("createAgent passes daemon launch env through the provider launch context",
   expect(client.lastLaunchContext).toEqual({
     agentId: snapshot.id,
     env: {
-      FDE_AGENT_ID: snapshot.id,
-      FDE_AGENT_CWD: workdir,
+      FROGG_AGENT_ID: snapshot.id,
+      FROGG_AGENT_CWD: workdir,
     },
   });
 });
@@ -2591,7 +2591,7 @@ test("createAgent persists workspaceId on the stored record and emits it in the 
   }
 });
 
-test("createAgent injects fde MCP server only into provider launch config", async () => {
+test("createAgent injects frogg MCP server only into provider launch config", async () => {
   const workdir = mkdtempSync(join(tmpdir(), "agent-manager-test-"));
   const storagePath = join(workdir, "agents");
   const storage = new AgentStorage(storagePath, logger);
@@ -2638,7 +2638,7 @@ test("createAgent injects fde MCP server only into provider launch config", asyn
     },
   });
   expect(client.lastConfig?.mcpServers).toEqual({
-    fde: {
+    frogg: {
       type: "http",
       url: `http://127.0.0.1:9999/mcp/agents?callerAgentId=${snapshot.id}`,
     },
@@ -2815,12 +2815,12 @@ test("reloadAgentSession preserves the live session when its replacement cannot 
   }
 });
 
-test("createAgent passes native Fde tools through launch context without internal MCP", async () => {
+test("createAgent passes native Frogg tools through launch context without internal MCP", async () => {
   const workdir = mkdtempSync(join(tmpdir(), "agent-manager-test-"));
   const storagePath = join(workdir, "agents");
   const storage = new AgentStorage(storagePath, logger);
 
-  const fdeTools: FdeToolCatalog = {
+  const froggTools: FroggToolCatalog = {
     tools: new Map(),
     getTool: () => undefined,
     executeTool: async () => {
@@ -2832,7 +2832,7 @@ test("createAgent passes native Fde tools through launch context without interna
     override readonly capabilities = {
       ...TEST_CAPABILITIES,
       supportsMcpServers: true,
-      supportsNativeFdeTools: true,
+      supportsNativeFroggTools: true,
     };
     lastConfig: AgentSessionConfig | null = null;
     lastLaunchContext: AgentLaunchContext | undefined;
@@ -2855,7 +2855,7 @@ test("createAgent passes native Fde tools through launch context without interna
     registry: storage,
     logger,
     mcpBaseUrl: "http://127.0.0.1:9999/mcp/agents",
-    fdeToolCatalogFactory: () => fdeTools,
+    froggToolCatalogFactory: () => froggTools,
     idFactory: () => "00000000-0000-4000-8000-000000000106",
   });
 
@@ -2874,7 +2874,7 @@ test("createAgent passes native Fde tools through launch context without interna
     { workspaceId: undefined },
   );
 
-  expect(client.lastLaunchContext?.fdeTools).toBe(fdeTools);
+  expect(client.lastLaunchContext?.froggTools).toBe(froggTools);
   expect(client.lastConfig?.mcpServers).toEqual({
     custom: {
       type: "stdio",
@@ -2933,7 +2933,7 @@ test("createAgent allows best-effort internal MCP when the provider session repo
   );
 
   expect(manager.getMcpAuthToken()).toBe("cap-token");
-  expect(client.lastConfig?.mcpServers?.fde).toEqual({
+  expect(client.lastConfig?.mcpServers?.frogg).toEqual({
     type: "http",
     url: `http://127.0.0.1:9999/mcp/agents?callerAgentId=${snapshot.id}`,
     headers: { Authorization: "Bearer cap-token" },
@@ -2942,7 +2942,7 @@ test("createAgent allows best-effort internal MCP when the provider session repo
   rmSync(workdir, { recursive: true, force: true });
 });
 
-test("resumeAgentFromPersistence replaces stored internal fde MCP with current runtime URL", async () => {
+test("resumeAgentFromPersistence replaces stored internal frogg MCP with current runtime URL", async () => {
   const workdir = mkdtempSync(join(tmpdir(), "agent-manager-test-"));
   const storagePath = join(workdir, "agents");
   const storage = new AgentStorage(storagePath, logger);
@@ -2967,7 +2967,7 @@ test("resumeAgentFromPersistence replaces stored internal fde MCP with current r
   const snapshot = await manager.resumeAgentFromPersistence(handle, {
     cwd: workdir,
     mcpServers: {
-      fde: {
+      frogg: {
         type: "http",
         url: "http://127.0.0.1:9999/mcp/agents?callerAgentId=stale-agent",
       },
@@ -2979,7 +2979,7 @@ test("resumeAgentFromPersistence replaces stored internal fde MCP with current r
   });
 
   expect(client.resumeOverrides[0]?.mcpServers).toEqual({
-    fde: {
+    frogg: {
       type: "http",
       url: `http://127.0.0.1:6768/mcp/agents?callerAgentId=${snapshot.id}`,
     },
@@ -2996,7 +2996,7 @@ test("resumeAgentFromPersistence replaces stored internal fde MCP with current r
   });
 });
 
-test("resumeAgentFromPersistence drops stored internal fde MCP when runtime injection is disabled", async () => {
+test("resumeAgentFromPersistence drops stored internal frogg MCP when runtime injection is disabled", async () => {
   const workdir = mkdtempSync(join(tmpdir(), "agent-manager-test-"));
   const storagePath = join(workdir, "agents");
   const storage = new AgentStorage(storagePath, logger);
@@ -3019,7 +3019,7 @@ test("resumeAgentFromPersistence drops stored internal fde MCP when runtime inje
   const snapshot = await manager.resumeAgentFromPersistence(handle, {
     cwd: workdir,
     mcpServers: {
-      fde: {
+      frogg: {
         type: "http",
         url: "http://127.0.0.1:9999/mcp/agents?callerAgentId=stale-agent",
       },
@@ -3030,7 +3030,7 @@ test("resumeAgentFromPersistence drops stored internal fde MCP when runtime inje
   expect(snapshot.config.mcpServers).toBeUndefined();
 });
 
-test("createAgent preserves a user-provided fde MCP config", async () => {
+test("createAgent preserves a user-provided frogg MCP config", async () => {
   const workdir = mkdtempSync(join(tmpdir(), "agent-manager-test-"));
   const storagePath = join(workdir, "agents");
   const storage = new AgentStorage(storagePath, logger);
@@ -3060,9 +3060,9 @@ test("createAgent preserves a user-provided fde MCP config", async () => {
       provider: "codex",
       cwd: workdir,
       mcpServers: {
-        fde: {
+        frogg: {
           type: "http",
-          url: "https://example.com/custom-fde",
+          url: "https://example.com/custom-frogg",
         },
       },
     },
@@ -3071,9 +3071,9 @@ test("createAgent preserves a user-provided fde MCP config", async () => {
   );
 
   expect(snapshot.config.mcpServers).toEqual({
-    fde: {
+    frogg: {
       type: "http",
-      url: "https://example.com/custom-fde",
+      url: "https://example.com/custom-frogg",
     },
   });
   expect(client.lastConfig?.mcpServers).toEqual(snapshot.config.mcpServers);
@@ -3446,30 +3446,30 @@ test("resumeAgentFromPersistence keeps metadata config, applies overrides, and p
     cwd: workdir,
     systemPrompt: "new prompt",
     mcpServers: {
-      fde: {
+      frogg: {
         type: "stdio",
         command: "node",
-        args: ["/tmp/mcp-bridge.mjs", "--socket", "/tmp/fde.sock"],
+        args: ["/tmp/mcp-bridge.mjs", "--socket", "/tmp/frogg.sock"],
       },
     },
   });
 
   expect(resumed.config.systemPrompt).toBe("new prompt");
   expect(resumed.config.mcpServers).toEqual({
-    fde: {
+    frogg: {
       type: "stdio",
       command: "node",
-      args: ["/tmp/mcp-bridge.mjs", "--socket", "/tmp/fde.sock"],
+      args: ["/tmp/mcp-bridge.mjs", "--socket", "/tmp/frogg.sock"],
     },
   });
   expect(client.lastResumeOverrides).toMatchObject({
     model: "gpt-5.4",
     systemPrompt: "new prompt",
     mcpServers: {
-      fde: {
+      frogg: {
         type: "stdio",
         command: "node",
-        args: ["/tmp/mcp-bridge.mjs", "--socket", "/tmp/fde.sock"],
+        args: ["/tmp/mcp-bridge.mjs", "--socket", "/tmp/frogg.sock"],
       },
     },
   });
@@ -3477,8 +3477,8 @@ test("resumeAgentFromPersistence keeps metadata config, applies overrides, and p
   expect(client.lastResumeLaunchContext).toEqual({
     agentId: resumed.id,
     env: {
-      FDE_AGENT_ID: resumed.id,
-      FDE_AGENT_CWD: workdir,
+      FROGG_AGENT_ID: resumed.id,
+      FROGG_AGENT_CWD: workdir,
     },
   });
 });
@@ -3585,8 +3585,8 @@ test("importProviderSession imports the selected session without listing and pub
   expect(client.importLaunchContext).toEqual({
     agentId: imported.id,
     env: {
-      FDE_AGENT_ID: imported.id,
-      FDE_AGENT_CWD: workdir,
+      FROGG_AGENT_ID: imported.id,
+      FROGG_AGENT_CWD: workdir,
     },
   });
   expect(imported.lifecycle).toBe("idle");
@@ -3688,8 +3688,8 @@ test("reloadAgentSession passes daemon launch env through the provider launch co
   expect(client.lastCreateLaunchContext).toEqual({
     agentId: snapshot.id,
     env: {
-      FDE_AGENT_ID: snapshot.id,
-      FDE_AGENT_CWD: workdir,
+      FROGG_AGENT_ID: snapshot.id,
+      FROGG_AGENT_CWD: workdir,
     },
   });
 
@@ -3700,8 +3700,8 @@ test("reloadAgentSession passes daemon launch env through the provider launch co
   expect(client.lastResumeLaunchContext).toEqual({
     agentId: snapshot.id,
     env: {
-      FDE_AGENT_ID: snapshot.id,
-      FDE_AGENT_CWD: workdir,
+      FROGG_AGENT_ID: snapshot.id,
+      FROGG_AGENT_CWD: workdir,
     },
   });
 });
@@ -9968,7 +9968,7 @@ test("listImportableSessions skips providers that lack supportsSessionListing ev
   expect(result.map((d) => d.provider)).toEqual(["claude"]);
 });
 
-test("user_message events wrapping a fde-system envelope are not added to the timeline", async () => {
+test("user_message events wrapping a frogg-system envelope are not added to the timeline", async () => {
   const workdir = mkdtempSync(join(tmpdir(), "agent-manager-envelope-live-"));
   const storagePath = join(workdir, "agents");
   const storage = new AgentStorage(storagePath, logger);
@@ -10003,7 +10003,7 @@ test("user_message events wrapping a fde-system envelope are not added to the ti
   expect(userMessages[0].text).toBe("plain user message");
 });
 
-test("user_message events wrapping a fde-system envelope are not restored during history replay", async () => {
+test("user_message events wrapping a frogg-system envelope are not restored during history replay", async () => {
   const workdir = mkdtempSync(join(tmpdir(), "agent-manager-envelope-history-"));
   const storagePath = join(workdir, "agents");
   const storage = new AgentStorage(storagePath, logger);

@@ -3,7 +3,7 @@
  * A styled terminal block with a copy button.
  *
  *   <Terminal code="curl -fsSL https://frogg.app/install.sh | bash" />
- *   <Terminal title="On the host" code={["fde daemon status", "fde daemon pair"]} output="Daemon running on 0.0.0.0:9999" />
+ *   <Terminal title="On the host" code={["frogg daemon status", "frogg daemon pair"]} output="Daemon running on 0.0.0.0:9999" />
  *
  * Only `code` is copied (one command per line, prompts never included). Lines starting with `#`
  * render as comments and are left out of the copied text. `output` is shown dimmed and not copied.
@@ -23,7 +23,7 @@ const outputLines = output ? (Array.isArray(output) ? output : output.split("\n"
 const copyText = lines.filter((l) => l.trim() && !l.trimStart().startsWith("#")).join("\n");
 ---
 
-<div class:list={["fde-terminal not-content", className]}>
+<div class:list={["frogg-terminal not-content", className]}>
   <div class="bar">
     <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
     <span class="title">{title}</span>
@@ -56,28 +56,28 @@ const copyText = lines.filter((l) => l.trim() && !l.trimStart().startsWith("#"))
   import { copyWithFeedback } from "./copy";
 
   document.addEventListener("click", (event) => {
-    const button = (event.target as Element | null)?.closest<HTMLButtonElement>(".fde-terminal .copy");
+    const button = (event.target as Element | null)?.closest<HTMLButtonElement>(".frogg-terminal .copy");
     if (!button) return;
-    const status = button.closest(".fde-terminal")?.querySelector<HTMLElement>(".sr-status") ?? null;
+    const status = button.closest(".frogg-terminal")?.querySelector<HTMLElement>(".sr-status") ?? null;
     void copyWithFeedback(button, button.dataset.copy ?? "", status);
   });
 </script>
 
 <style>
-  .fde-terminal {
+  .frogg-terminal {
     position: relative;
     --term-bg: #0b0f0f;
     --term-bar: #131918;
     --term-text: #e6eeec;
     --term-dim: #8b9795;
     margin: 1.25rem 0;
-    border-radius: var(--fde-radius);
+    border-radius: var(--frogg-radius);
     background: var(--term-bg);
     border: 1px solid rgb(255 255 255 / 0.1);
-    box-shadow: var(--fde-shadow);
+    box-shadow: var(--frogg-shadow);
     overflow: hidden;
     color: var(--term-text);
-    font-family: var(--fde-font-mono);
+    font-family: var(--frogg-font-mono);
   }
   .bar {
     display: flex;
@@ -104,7 +104,7 @@ const copyText = lines.filter((l) => l.trim() && !l.trimStart().startsWith("#"))
     flex: 1;
     font-size: 0.75rem;
     color: var(--term-dim);
-    font-family: var(--fde-font);
+    font-family: var(--frogg-font);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -119,13 +119,13 @@ const copyText = lines.filter((l) => l.trim() && !l.trimStart().startsWith("#"))
     border: 1px solid rgb(255 255 255 / 0.12);
     background: rgb(255 255 255 / 0.04);
     color: var(--term-text);
-    font: 500 0.75rem var(--fde-font);
+    font: 500 0.75rem var(--frogg-font);
     cursor: pointer;
     transition:
-      background-color var(--fde-fast) var(--fde-ease),
-      border-color var(--fde-fast) var(--fde-ease),
-      color var(--fde-fast) var(--fde-ease),
-      transform var(--fde-fast) var(--fde-ease);
+      background-color var(--frogg-fast) var(--frogg-ease),
+      border-color var(--frogg-fast) var(--frogg-ease),
+      color var(--frogg-fast) var(--frogg-ease),
+      transform var(--frogg-fast) var(--frogg-ease);
   }
   .copy:hover {
     background: rgb(37 181 200 / 0.18);
@@ -151,7 +151,7 @@ const copyText = lines.filter((l) => l.trim() && !l.trimStart().startsWith("#"))
   }
   .copy[data-state="copied"] .icon-check {
     display: block;
-    animation: pop 320ms var(--fde-ease-spring);
+    animation: pop 320ms var(--frogg-ease-spring);
   }
   .copy[data-state="failed"] {
     color: #f87171;

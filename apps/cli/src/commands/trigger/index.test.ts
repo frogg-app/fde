@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createTriggerCommand, TRIGGERS_DISABLED_MESSAGE } from "./index.js";
 import { createCli } from "../../cli.js";
 
-describe("fde trigger", () => {
+describe("frogg trigger", () => {
   it("replaces hub on the root surface but still answers to it", () => {
     const cli = createCli();
     const names = cli.commands.map((command) => command.name());
@@ -46,11 +46,11 @@ describe("fde trigger", () => {
   it("names the upstream service it no longer connects to", () => {
     // The point of the message: say what stopped, and what it used to reach.
     expect(TRIGGERS_DISABLED_MESSAGE).toContain("upstream");
-    expect(TRIGGERS_DISABLED_MESSAGE).toContain("github.com/frogg-app/fde/issues");
+    expect(TRIGGERS_DISABLED_MESSAGE).toContain("github.com/frogg-app/frogg/issues");
   });
 });
 
-describe("fde permissions", () => {
+describe("frogg permissions", () => {
   it("replaces permit while keeping it as an alias", () => {
     const cli = createCli();
     const names = cli.commands.map((command) => command.name());

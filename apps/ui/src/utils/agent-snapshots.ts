@@ -1,6 +1,6 @@
-import type { AgentSnapshotPayload } from "@fde/protocol/messages";
-import type { AgentPermissionRequest } from "@fde/protocol/agent-types";
-import { getParentAgentIdFromLabels } from "@fde/protocol/agent-labels";
+import type { AgentSnapshotPayload } from "@frogg/protocol/messages";
+import type { AgentPermissionRequest } from "@frogg/protocol/agent-types";
+import { getParentAgentIdFromLabels } from "@frogg/protocol/agent-labels";
 import type { ActiveTurnIdentity } from "@/timeline/turn-liveness";
 import type { Agent } from "@/stores/session-store";
 

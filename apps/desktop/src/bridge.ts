@@ -1,4 +1,4 @@
-// Builds `window.fdeDesktop` for the Tauri shell. Injected as an
+// Builds `window.froggDesktop` for the Tauri shell. Injected as an
 // initialization script before any page script runs, so the UI in `apps/ui`
 // finds it exactly as it found Electron's preload. The contract is
 // `DesktopHostBridge` in `apps/ui/src/desktop/host.ts`; `menu`, `editor` and
@@ -28,7 +28,7 @@ interface InjectedHostInfo {
 declare global {
   interface Window {
     __FROGG_DESKTOP_HOST__?: InjectedHostInfo;
-    fdeDesktop?: DesktopHostBridge;
+    froggDesktop?: DesktopHostBridge;
   }
 }
 
@@ -224,7 +224,7 @@ function createBridge(): DesktopHostBridge {
       // fields straight off the payload (the local-daemon transport shim keys
       // every event on `sessionId`) see the same shape on both shells.
       on: (event, handler) =>
-        listen(`fde:event:${event}`, (tauriEvent) => handler(tauriEvent.payload)),
+        listen(`frogg:event:${event}`, (tauriEvent) => handler(tauriEvent.payload)),
     },
     window: createWindowBridge(),
     dialog: createDialogBridge(),
@@ -256,9 +256,9 @@ function createBridge(): DesktopHostBridge {
   };
 }
 
-window.fdeDesktop = createBridge();
+window.froggDesktop = createBridge();
 
 // Custom chrome only: macOS keeps native decorations and its own drag.
-if (window.fdeDesktop.windowChromeMode !== "native-mac") {
+if (window.froggDesktop.windowChromeMode !== "native-mac") {
   installDragRegionHandler(window);
 }

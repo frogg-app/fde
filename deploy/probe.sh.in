@@ -23,5 +23,5 @@ if [ "$docker" = true ] && docker container inspect "${@ENV_PREFIX@_CONTAINER:-@
   owner=$(docker inspect --format '{{ index .Config.Labels "app.brand.application-id" }}' "${@ENV_PREFIX@_CONTAINER:-@SERVICE@}" 2>/dev/null)
   if [ "$owner" = '@APPLICATION_ID@' ] || { [ "@LEGACY@" = true ] && [ -z "$owner" ]; }; then container=true; fi
 fi
-printf 'FDE_PROBE {"os":"%s","arch":"%s","hasDocker":%s,"hasSystemdUser":%s,"hasCurl":%s,"hasFde":{"installed":%s,"version":"%s"},"hasDockerContainer":%s,"homeDir":"%s"}\n' \
+printf 'FROGG_PROBE {"os":"%s","arch":"%s","hasDocker":%s,"hasSystemdUser":%s,"hasCurl":%s,"hasFrogg":{"installed":%s,"version":"%s"},"hasDockerContainer":%s,"homeDir":"%s"}\n' \
   "$(esc "$os")" "$(esc "$arch")" "$docker" "$systemd" "$curl" "$installed" "$(esc "$version")" "$container" "$(esc "$HOME")"

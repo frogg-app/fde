@@ -1,7 +1,10 @@
 import { describe, expect, test } from "vitest";
 
-import { TerminalStreamOpcode, decodeTerminalStreamFrame } from "@fde/protocol/binary-frames/index";
-import type { TerminalCell, TerminalState } from "@fde/protocol/messages";
+import {
+  TerminalStreamOpcode,
+  decodeTerminalStreamFrame,
+} from "@frogg/protocol/binary-frames/index";
+import type { TerminalCell, TerminalState } from "@frogg/protocol/messages";
 import {
   encodeTerminalRestoreFrame,
   resolveRestoreAfterOutputOverflow,

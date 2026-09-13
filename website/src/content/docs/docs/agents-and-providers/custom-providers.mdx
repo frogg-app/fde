@@ -5,14 +5,14 @@ sidebar:
   order: 2
 ---
 
-Custom providers live in `agents.providers` in `~/.fde/config.json`. Use them to:
+Custom providers live in `agents.providers` in `~/.frogg/config.json`. Use them to:
 
 - run a built-in provider against another endpoint (a proxy, a gateway, a compatible model),
 - add an [ACP](https://agentclientprotocol.com) agent such as Gemini CLI,
 - change a built-in's binary, environment or model list,
 - turn providers on or off.
 
-Apply changes with `fde reload`.
+Apply changes with `frogg reload`.
 
 ## Add from the app
 
@@ -103,7 +103,7 @@ A derived provider keeps the base provider's modes and permission behaviour.
 }
 ```
 
-When `OPENAI_BASE_URL` is set, FDE configures Codex with a custom model provider using the
+When `OPENAI_BASE_URL` is set, Frogg configures Codex with a custom model provider using the
 Responses wire API. With `OPENAI_API_KEY` in `env`, Codex uses that key instead of a
 ChatGPT login.
 
@@ -142,7 +142,7 @@ ChatGPT login.
 
 | Provider base | Param | Meaning |
 | ------------- | ----- | ------- |
-| `acp`         | `supportsMcpServers` | `false` stops FDE from passing MCP servers to the agent |
+| `acp`         | `supportsMcpServers` | `false` stops Frogg from passing MCP servers to the agent |
 | `acp`         | `clientCapabilities` | `{ fs: { readTextFile, writeTextFile }, terminal }` advertised to the agent |
 | `pi`          | `sessionDir`, `rpcTimeoutMs` | Session storage; RPC timeout (default 60 s) |
 | `omp`         | `sessionDir`, `rpcTimeoutMs`, `smolModel`, `slowModel`, `planModel` | |
@@ -156,9 +156,9 @@ systemd drop-in, launchd plist, Docker `-e`, or Nix `environmentFile`.
 ## Check it
 
 ```sh
-fde reload
-fde provider ls
-fde provider diagnostic zai
-fde provider models zai
-fde agent run --provider zai "Say hello"
+frogg reload
+frogg provider ls
+frogg provider diagnostic zai
+frogg provider models zai
+frogg agent run --provider zai "Say hello"
 ```

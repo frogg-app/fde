@@ -1,6 +1,6 @@
 ---
 title: Contribute features back
-description: Build shared features on branches based on upstream/main, keep brand changes out, and open pull requests against frogg-app/fde.
+description: Build shared features on branches based on upstream/main, keep brand changes out, and open pull requests against frogg-app/frogg.
 sidebar:
   order: 8
 ---
@@ -8,7 +8,7 @@ sidebar:
 import { Steps } from "@/components/docs";
 
 Every feature you upstream is one you no longer carry through merges. Keep product
-identity out of those pull requests and they apply cleanly to FDE and to every other
+identity out of those pull requests and they apply cleanly to Frogg and to every other
 fork.
 
 ## The rule
@@ -18,11 +18,11 @@ your brand directory, your version numbers, maybe workflow tweaks. A branch cut 
 drags all of that into the pull request.
 
 ```text
-upstream/main ──●──●──●──────────●───────────────▶ frogg-app/fde
+upstream/main ──●──●──●──────────●───────────────▶ frogg-app/frogg
                  \                \
                   \                feature/timeline-filter ──●──●  (PR to upstream)
                    \
-your main ─────────●──●(brand)──●(merge upstream)──●(merge feature)──▶ acme-corp/fde
+your main ─────────●──●(brand)──●(merge upstream)──●(merge feature)──▶ acme-corp/frogg
 ```
 
 ## Workflow
@@ -34,16 +34,16 @@ your main ─────────●──●(brand)──●(merge upstream
 
    ```sh
    git fetch upstream
-   git worktree add ../fde-timeline-filter -b feature/timeline-filter upstream/main
-   cd ../fde-timeline-filter
+   git worktree add ../frogg-timeline-filter -b feature/timeline-filter upstream/main
+   cd ../frogg-timeline-filter
    npm ci
    ```
 
-2. **Build and test with stock FDE.** Leave `FDE_BRAND_DIR` unset so you see what
+2. **Build and test with stock Frogg.** Leave `FROGG_BRAND_DIR` unset so you see what
    upstream reviewers will see:
 
    ```sh
-   unset FDE_BRAND_DIR
+   unset FROGG_BRAND_DIR
    npm run dev:server   # terminal 1
    npm run dev:app      # terminal 2
    ```
@@ -52,8 +52,8 @@ your main ─────────●──●(brand)──●(merge upstream
    icons or anything else that comes from the brand:
 
    ```sh
-   FDE_BRAND_DIR=brands/example npm run build:ui
-   FDE_BRAND_DIR=brands/example node scripts/ci/branding-acceptance.mjs
+   FROGG_BRAND_DIR=brands/example npm run build:ui
+   FROGG_BRAND_DIR=brands/example node scripts/ci/branding-acceptance.mjs
    ```
 
 4. **Run the checks upstream CI runs** on your changes:
@@ -67,7 +67,7 @@ your main ─────────●──●(brand)──●(merge upstream
 
    ```sh
    git push -u origin feature/timeline-filter
-   gh pr create --repo frogg-app/fde --base main \
+   gh pr create --repo frogg-app/frogg --base main \
      --head acme-corp:feature/timeline-filter \
      --title "Add a timeline filter for tool calls"
    ```
@@ -88,7 +88,7 @@ your main ─────────●──●(brand)──●(merge upstream
 
 A pull request to upstream must not contain:
 
-- anything under `brands/<your-id>/`, or changes to `brands/fde/`,
+- anything under `brands/<your-id>/`, or changes to `brands/frogg/`,
 - your product's version numbers or `CHANGELOG.md` release sections (follow upstream's
   PR template for its own version and changelog entry),
 - repository-variable or secret references specific to your fork,
@@ -97,7 +97,7 @@ A pull request to upstream must not contain:
 - new hard-coded product strings.
 
 The last point is enforced. `scripts/ci/branding-contribution.mjs` scans string literals
-added in `apps/` and `packages/` source and fails on any new `FDE`, `Fde` or
+added in `apps/` and `packages/` source and fails on any new `Frogg` or
 `frogg.app`:
 
 ```text
@@ -107,7 +107,7 @@ New product literals need brand values/interpolation, or an exact compatibility/
 Read product identity from the brand instead:
 
 ```ts
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 
 const title = `${brand.name} settings`;
 const home = `~/${brand.homeDir}`;
@@ -133,7 +133,7 @@ Then check `git diff upstream/main --stat` shows only the feature's files.
 
 - [ ] Branch is based on `upstream/main`.
 - [ ] `git diff upstream/main --stat` lists no brand, version or workflow-selection files.
-- [ ] The feature works with stock FDE and `brands/example`.
+- [ ] The feature works with stock Frogg and `brands/example`.
 - [ ] Docs updated in `website/src/content/docs/docs/` for user-visible changes.
 - [ ] The upstream PR template checklist is complete (version, changelog, checks).
 

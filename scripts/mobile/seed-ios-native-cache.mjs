@@ -3,10 +3,10 @@ import { createHash } from "node:crypto";
 import { cpSync, existsSync, mkdirSync, readdirSync, statSync } from "node:fs";
 import { basename, join } from "node:path";
 
-const sourceRoot = process.env.FDE_SOURCE_CHECKOUT_PATH;
-const targetRoot = process.env.FDE_WORKTREE_PATH || process.cwd();
+const sourceRoot = process.env.FROGG_SOURCE_CHECKOUT_PATH;
+const targetRoot = process.env.FROGG_WORKTREE_PATH || process.cwd();
 
-if (process.env.FDE_SKIP_IOS_NATIVE_CACHE === "1") {
+if (process.env.FROGG_SKIP_IOS_NATIVE_CACHE === "1") {
   process.exit(0);
 }
 
@@ -57,8 +57,8 @@ function newestDirectory(parent) {
 }
 
 function simulatorSlug() {
-  const worktreeName = process.env.FDE_BRANCH_NAME || basename(targetRoot);
+  const worktreeName = process.env.FROGG_BRANCH_NAME || basename(targetRoot);
   const worktreeHash = createHash("sha1").update(targetRoot).digest("hex").slice(0, 8);
-  const simulatorName = `Fde ${worktreeName} ${worktreeHash}`;
+  const simulatorName = `Frogg ${worktreeName} ${worktreeHash}`;
   return `${simulatorName.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "")}-${worktreeHash}`;
 }

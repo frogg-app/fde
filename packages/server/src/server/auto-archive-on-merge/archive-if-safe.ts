@@ -14,12 +14,12 @@ import type {
 } from "../workspace-git-service.js";
 import type { ForgeService } from "../../services/forge-service.js";
 import type { TerminalManager } from "../../terminal/terminal-manager.js";
-import { isFdeOwnedWorktreeCwd } from "../../utils/worktree.js";
+import { isFroggOwnedWorktreeCwd } from "../../utils/worktree.js";
 import type { WorkspaceArchiveContext } from "../workspace-registry.js";
 
 export interface AutoArchiveArchiveOptions {
-  fdeHome: string;
-  fdeWorktreesBaseRoot?: string;
+  froggHome: string;
+  froggWorktreesBaseRoot?: string;
   daemonConfigStore: DaemonConfigStore;
   workspaceGitService: WorkspaceGitServiceImpl;
   github: ForgeService;
@@ -37,13 +37,13 @@ export interface AutoArchiveArchiveOptions {
 
 export interface ArchiveIfSafeDependencies {
   archiveByScope: typeof archiveByScope;
-  isFdeOwnedWorktreeCwd: typeof isFdeOwnedWorktreeCwd;
+  isFroggOwnedWorktreeCwd: typeof isFroggOwnedWorktreeCwd;
   killTerminalsForWorkspace: typeof killTerminalsForWorkspace;
 }
 
 const defaultDependencies: ArchiveIfSafeDependencies = {
   archiveByScope,
-  isFdeOwnedWorktreeCwd,
+  isFroggOwnedWorktreeCwd,
   killTerminalsForWorkspace,
 };
 
@@ -69,9 +69,9 @@ export async function archiveIfSafe(input: {
     return;
   }
 
-  const ownership = await deps.isFdeOwnedWorktreeCwd(cwd, {
-    fdeHome: options.fdeHome,
-    worktreesRoot: options.fdeWorktreesBaseRoot,
+  const ownership = await deps.isFroggOwnedWorktreeCwd(cwd, {
+    froggHome: options.froggHome,
+    worktreesRoot: options.froggWorktreesBaseRoot,
   });
   if (!ownership.allowed) {
     return;
@@ -85,8 +85,8 @@ export async function archiveIfSafe(input: {
 
     await deps.archiveByScope(
       {
-        fdeHome: options.fdeHome,
-        fdeWorktreesBaseRoot: options.fdeWorktreesBaseRoot,
+        froggHome: options.froggHome,
+        froggWorktreesBaseRoot: options.froggWorktreesBaseRoot,
         github: options.github,
         workspaceGitService: options.workspaceGitService,
         agentManager: options.agentManager,

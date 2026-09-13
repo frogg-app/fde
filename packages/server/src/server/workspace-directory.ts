@@ -10,15 +10,15 @@ import {
   deriveAgentStateBucket,
   getWorkspaceStateBucketPriority,
   type WorkspaceStateBucket,
-} from "@fde/protocol/agent-state-bucket";
-import { getParentAgentIdFromLabels } from "@fde/protocol/agent-labels";
+} from "@frogg/protocol/agent-state-bucket";
+import { getParentAgentIdFromLabels } from "@frogg/protocol/agent-labels";
 import { SortablePager } from "./pagination/sortable-pager.js";
 import type { PersistedProjectRecord, PersistedWorkspaceRecord } from "./workspace-registry.js";
 import { resolveProjectDisplayName } from "./workspace-registry.js";
 import {
   deriveTerminalActivityStatusBucket,
   type TerminalActivity,
-} from "@fde/protocol/terminal-activity";
+} from "@frogg/protocol/terminal-activity";
 import type { ProviderSubagentDescriptor } from "./agent/provider-subagents/store.js";
 
 const FETCH_WORKSPACES_SORT_KEYS = [

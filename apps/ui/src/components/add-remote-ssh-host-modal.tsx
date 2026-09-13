@@ -4,7 +4,7 @@ import type { TFunction } from "i18next";
 import { Text, View } from "react-native";
 import { StyleSheet, withUnistyles } from "react-native-unistyles";
 import { Terminal } from "lucide-react-native";
-import { DEFAULT_SSH_DAEMON_PORT, type SshTransportTarget } from "@fde/protocol/ssh-transport";
+import { DEFAULT_SSH_DAEMON_PORT, type SshTransportTarget } from "@frogg/protocol/ssh-transport";
 import type { HostProfile } from "@/types/host-connection";
 import { isElectronRuntime } from "@/desktop/host";
 import {

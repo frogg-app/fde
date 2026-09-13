@@ -6,7 +6,7 @@ import { afterEach, describe, expect, test } from "vitest";
 import { DaemonConfigStore, applyMutableProviderConfigToOverrides } from "./daemon-config-store.js";
 import { loadPersistedConfig } from "./persisted-config.js";
 import type { PersistedConfig } from "./persisted-config.js";
-import type { MutableDaemonConfig } from "@fde/protocol/messages";
+import type { MutableDaemonConfig } from "@frogg/protocol/messages";
 
 function reloadableGit(git: NonNullable<PersistedConfig["daemon"]>["git"]) {
   return {
@@ -109,9 +109,9 @@ describe("DaemonConfigStore", () => {
   });
 
   test("patch persists relay state and emits its field change", () => {
-    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-daemon-config-store-"));
-    tempDirs.push(fdeHome);
-    const store = new DaemonConfigStore(fdeHome, {
+    const froggHome = mkdtempSync(path.join(tmpdir(), "frogg-daemon-config-store-"));
+    tempDirs.push(froggHome);
+    const store = new DaemonConfigStore(froggHome, {
       relay: { enabled: false },
       mcp: { injectIntoAgents: false },
       browserTools: { enabled: false },
@@ -127,13 +127,13 @@ describe("DaemonConfigStore", () => {
     store.patch({ relay: { enabled: true } });
 
     expect(changes).toEqual([true]);
-    expect(loadPersistedConfig(fdeHome).daemon?.relay?.enabled).toBe(true);
+    expect(loadPersistedConfig(froggHome).daemon?.relay?.enabled).toBe(true);
   });
 
   test("patch persists the relay endpoint and TLS and emits their field changes", () => {
-    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-daemon-config-store-"));
-    tempDirs.push(fdeHome);
-    const store = new DaemonConfigStore(fdeHome, {
+    const froggHome = mkdtempSync(path.join(tmpdir(), "frogg-daemon-config-store-"));
+    tempDirs.push(froggHome);
+    const store = new DaemonConfigStore(froggHome, {
       relay: { enabled: true, endpoint: "", useTls: true, endpointMutable: true },
       mcp: { injectIntoAgents: false },
       browserTools: { enabled: false },
@@ -157,20 +157,20 @@ describe("DaemonConfigStore", () => {
       endpoint: "relay.example.test:8443",
       useTls: false,
     });
-    const relay = loadPersistedConfig(fdeHome).daemon?.relay;
+    const relay = loadPersistedConfig(froggHome).daemon?.relay;
     expect(relay?.endpoint).toBe("relay.example.test:8443");
     expect(relay?.useTls).toBe(false);
 
     store.patch({ relay: { endpoint: "" } });
     expect(endpoints).toEqual(["relay.example.test:8443", ""]);
-    expect(loadPersistedConfig(fdeHome).daemon?.relay?.endpoint).toBe("");
+    expect(loadPersistedConfig(froggHome).daemon?.relay?.endpoint).toBe("");
   });
 
   test("rejects relay endpoint patches when a launch override owns the endpoint", () => {
-    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-daemon-config-store-"));
-    tempDirs.push(fdeHome);
+    const froggHome = mkdtempSync(path.join(tmpdir(), "frogg-daemon-config-store-"));
+    tempDirs.push(froggHome);
     const store = new DaemonConfigStore(
-      fdeHome,
+      froggHome,
       {
         relay: { enabled: false, endpoint: "env.example.test:443", endpointMutable: false },
         mcp: { injectIntoAgents: false },
@@ -188,16 +188,16 @@ describe("DaemonConfigStore", () => {
     expect(() => store.patch({ relay: { endpoint: "other.example.test:443" } })).toThrow(
       "Relay endpoint is controlled by a daemon launch override",
     );
-    expect(loadPersistedConfig(fdeHome).daemon?.relay?.endpoint).toBeUndefined();
+    expect(loadPersistedConfig(froggHome).daemon?.relay?.endpoint).toBeUndefined();
     // Enabling is still a separate, mutable setting.
     store.patch({ relay: { enabled: true } });
     expect(store.get().relay?.enabled).toBe(true);
   });
 
   test("patch round-trips agent profiles through the strictly-parsed persisted config", () => {
-    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-daemon-config-store-"));
-    tempDirs.push(fdeHome);
-    const store = new DaemonConfigStore(fdeHome, {
+    const froggHome = mkdtempSync(path.join(tmpdir(), "frogg-daemon-config-store-"));
+    tempDirs.push(froggHome);
+    const store = new DaemonConfigStore(froggHome, {
       relay: { enabled: false },
       mcp: { injectIntoAgents: false },
       browserTools: { enabled: false },
@@ -224,7 +224,7 @@ describe("DaemonConfigStore", () => {
       ],
     });
 
-    expect(loadPersistedConfig(fdeHome).daemon?.agentProfiles).toEqual([
+    expect(loadPersistedConfig(froggHome).daemon?.agentProfiles).toEqual([
       {
         id: "profile_ui",
         name: "UI work",
@@ -241,9 +241,9 @@ describe("DaemonConfigStore", () => {
   });
 
   test("patch replaces the whole agent profile list rather than merging entries", () => {
-    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-daemon-config-store-"));
-    tempDirs.push(fdeHome);
-    const store = new DaemonConfigStore(fdeHome, {
+    const froggHome = mkdtempSync(path.join(tmpdir(), "frogg-daemon-config-store-"));
+    tempDirs.push(froggHome);
+    const store = new DaemonConfigStore(froggHome, {
       relay: { enabled: false },
       mcp: { injectIntoAgents: false },
       browserTools: { enabled: false },
@@ -261,13 +261,13 @@ describe("DaemonConfigStore", () => {
     store.patch({ agentProfiles: [{ id: "a", name: "Keep", provider: "claude" }] });
 
     expect(store.get().agentProfiles).toEqual([{ id: "a", name: "Keep", provider: "claude" }]);
-    expect(loadPersistedConfig(fdeHome).daemon?.agentProfiles).toHaveLength(1);
+    expect(loadPersistedConfig(froggHome).daemon?.agentProfiles).toHaveLength(1);
   });
 
   test("rolls back config when a field transition fails", () => {
-    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-daemon-config-store-"));
-    tempDirs.push(fdeHome);
-    const store = new DaemonConfigStore(fdeHome, {
+    const froggHome = mkdtempSync(path.join(tmpdir(), "frogg-daemon-config-store-"));
+    tempDirs.push(froggHome);
+    const store = new DaemonConfigStore(froggHome, {
       relay: { enabled: false },
       mcp: { injectIntoAgents: false },
       browserTools: { enabled: false },
@@ -287,13 +287,13 @@ describe("DaemonConfigStore", () => {
       "Relay transport failed to start",
     );
     expect(store.get().relay?.enabled).toBe(false);
-    expect(loadPersistedConfig(fdeHome).daemon?.relay?.enabled).toBe(false);
+    expect(loadPersistedConfig(froggHome).daemon?.relay?.enabled).toBe(false);
   });
 
   test("rolls back live owners when a later transactional owner fails", () => {
-    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-daemon-config-store-"));
-    tempDirs.push(fdeHome);
-    const store = new DaemonConfigStore(fdeHome, {
+    const froggHome = mkdtempSync(path.join(tmpdir(), "frogg-daemon-config-store-"));
+    tempDirs.push(froggHome);
+    const store = new DaemonConfigStore(froggHome, {
       relay: { enabled: false },
       mcp: { injectIntoAgents: false },
       browserTools: { enabled: false },
@@ -303,7 +303,7 @@ describe("DaemonConfigStore", () => {
       enableTerminalAgentHooks: false,
       appendSystemPrompt: "",
     });
-    const persistedBeforePatch = loadPersistedConfig(fdeHome);
+    const persistedBeforePatch = loadPersistedConfig(froggHome);
     let browserToolsEnabled = false;
     store.onApply((next, previous) => {
       browserToolsEnabled = next.browserTools.enabled;
@@ -320,14 +320,14 @@ describe("DaemonConfigStore", () => {
     );
     expect(browserToolsEnabled).toBe(false);
     expect(store.get().browserTools.enabled).toBe(false);
-    expect(loadPersistedConfig(fdeHome)).toEqual(persistedBeforePatch);
+    expect(loadPersistedConfig(froggHome)).toEqual(persistedBeforePatch);
   });
 
   test("rejects relay patches when a launch override owns the setting", () => {
-    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-daemon-config-store-"));
-    tempDirs.push(fdeHome);
+    const froggHome = mkdtempSync(path.join(tmpdir(), "frogg-daemon-config-store-"));
+    tempDirs.push(froggHome);
     const store = new DaemonConfigStore(
-      fdeHome,
+      froggHome,
       {
         relay: { enabled: false },
         mcp: { injectIntoAgents: false },
@@ -348,18 +348,18 @@ describe("DaemonConfigStore", () => {
   });
 
   test("unrelated patches do not persist a one-launch relay override", () => {
-    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-daemon-config-store-"));
-    tempDirs.push(fdeHome);
-    const persisted = loadPersistedConfig(fdeHome);
+    const froggHome = mkdtempSync(path.join(tmpdir(), "frogg-daemon-config-store-"));
+    tempDirs.push(froggHome);
+    const persisted = loadPersistedConfig(froggHome);
     writeFileSync(
-      path.join(fdeHome, "config.json"),
+      path.join(froggHome, "config.json"),
       `${JSON.stringify({
         ...persisted,
         daemon: { ...persisted.daemon, relay: { enabled: false } },
       })}\n`,
     );
     const store = new DaemonConfigStore(
-      fdeHome,
+      froggHome,
       {
         relay: { enabled: true },
         mcp: { injectIntoAgents: false },
@@ -376,15 +376,15 @@ describe("DaemonConfigStore", () => {
 
     store.patch({ browserTools: { enabled: true } });
 
-    expect(loadPersistedConfig(fdeHome).daemon?.relay?.enabled).toBe(false);
+    expect(loadPersistedConfig(froggHome).daemon?.relay?.enabled).toBe(false);
   });
 
   test("unrelated patches persist only requested file intent", () => {
-    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-daemon-config-store-"));
-    tempDirs.push(fdeHome);
-    const before = loadPersistedConfig(fdeHome);
+    const froggHome = mkdtempSync(path.join(tmpdir(), "frogg-daemon-config-store-"));
+    tempDirs.push(froggHome);
+    const before = loadPersistedConfig(froggHome);
     const store = new DaemonConfigStore(
-      fdeHome,
+      froggHome,
       {
         relay: { enabled: true },
         mcp: { enabled: false, injectIntoAgents: false },
@@ -413,18 +413,18 @@ describe("DaemonConfigStore", () => {
     } as Parameters<typeof store.patch>[0]);
 
     expect(store.get().hostnames).toEqual(["launch.example.test"]);
-    expect(loadPersistedConfig(fdeHome)).toEqual({
+    expect(loadPersistedConfig(froggHome)).toEqual({
       ...before,
       daemon: { ...before.daemon, appendSystemPrompt: "Only this field" },
     });
   });
 
   test("patch persists provider enabled flags into config.json", () => {
-    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-daemon-config-store-"));
-    tempDirs.push(fdeHome);
+    const froggHome = mkdtempSync(path.join(tmpdir(), "frogg-daemon-config-store-"));
+    tempDirs.push(froggHome);
 
-    const initial = loadPersistedConfig(fdeHome);
-    const configPath = path.join(fdeHome, "config.json");
+    const initial = loadPersistedConfig(froggHome);
+    const configPath = path.join(froggHome, "config.json");
     // Reuse the validated serializer through the store path by seeding the file directly.
     // This keeps the test focused on the merge behavior.
     const seeded =
@@ -447,7 +447,7 @@ describe("DaemonConfigStore", () => {
     writeFileSync(configPath, seeded);
 
     const store = new DaemonConfigStore(
-      fdeHome,
+      froggHome,
       {
         mcp: { injectIntoAgents: false },
         browserTools: { enabled: false },
@@ -466,7 +466,7 @@ describe("DaemonConfigStore", () => {
       },
     });
 
-    const persisted = loadPersistedConfig(fdeHome);
+    const persisted = loadPersistedConfig(froggHome);
     expect(persisted.agents?.providers?.gemini).toEqual({
       extends: "acp",
       label: "Gemini",
@@ -476,10 +476,10 @@ describe("DaemonConfigStore", () => {
   });
 
   test("patch removes provider entries from config.json", () => {
-    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-daemon-config-store-"));
-    tempDirs.push(fdeHome);
+    const froggHome = mkdtempSync(path.join(tmpdir(), "frogg-daemon-config-store-"));
+    tempDirs.push(froggHome);
 
-    const configPath = path.join(fdeHome, "config.json");
+    const configPath = path.join(froggHome, "config.json");
     writeFileSync(
       configPath,
       `${JSON.stringify(
@@ -504,7 +504,7 @@ describe("DaemonConfigStore", () => {
     );
 
     const store = new DaemonConfigStore(
-      fdeHome,
+      froggHome,
       {
         mcp: { injectIntoAgents: false },
         browserTools: { enabled: false },
@@ -524,16 +524,16 @@ describe("DaemonConfigStore", () => {
 
     expect(next.providers.gemini).toBeUndefined();
     expect(next.providers.claude).toEqual({ enabled: false });
-    const persisted = loadPersistedConfig(fdeHome);
+    const persisted = loadPersistedConfig(froggHome);
     expect(persisted.agents?.providers?.gemini).toBeUndefined();
     expect(persisted.agents?.providers?.claude).toEqual({ enabled: false });
   });
 
   test("patch removes the providers object when the last provider is deleted", () => {
-    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-daemon-config-store-"));
-    tempDirs.push(fdeHome);
+    const froggHome = mkdtempSync(path.join(tmpdir(), "frogg-daemon-config-store-"));
+    tempDirs.push(froggHome);
 
-    const configPath = path.join(fdeHome, "config.json");
+    const configPath = path.join(froggHome, "config.json");
     writeFileSync(
       configPath,
       `${JSON.stringify(
@@ -555,7 +555,7 @@ describe("DaemonConfigStore", () => {
     );
 
     const store = new DaemonConfigStore(
-      fdeHome,
+      froggHome,
       {
         mcp: { injectIntoAgents: false },
         browserTools: { enabled: false },
@@ -570,15 +570,15 @@ describe("DaemonConfigStore", () => {
 
     store.patch({ removeProviders: ["gemini"] });
 
-    const persisted = loadPersistedConfig(fdeHome);
+    const persisted = loadPersistedConfig(froggHome);
     expect(persisted.agents?.providers).toBeUndefined();
   });
 
   test("patch removes deleted providers from metadata generation", () => {
-    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-daemon-config-store-"));
-    tempDirs.push(fdeHome);
+    const froggHome = mkdtempSync(path.join(tmpdir(), "frogg-daemon-config-store-"));
+    tempDirs.push(froggHome);
 
-    const configPath = path.join(fdeHome, "config.json");
+    const configPath = path.join(froggHome, "config.json");
     writeFileSync(
       configPath,
       `${JSON.stringify(
@@ -609,7 +609,7 @@ describe("DaemonConfigStore", () => {
     );
 
     const store = new DaemonConfigStore(
-      fdeHome,
+      froggHome,
       {
         mcp: { injectIntoAgents: false },
         browserTools: { enabled: false },
@@ -633,17 +633,17 @@ describe("DaemonConfigStore", () => {
     const next = store.patch({ removeProviders: ["gemini"] });
 
     expect(next.metadataGeneration.providers).toEqual([{ provider: "claude", model: "haiku" }]);
-    const persisted = loadPersistedConfig(fdeHome);
+    const persisted = loadPersistedConfig(froggHome);
     expect(persisted.agents?.metadataGeneration).toEqual({
       providers: [{ provider: "claude", model: "haiku" }],
     });
   });
 
   test("patch persists provider removal when in-memory config is already clean", () => {
-    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-daemon-config-store-"));
-    tempDirs.push(fdeHome);
+    const froggHome = mkdtempSync(path.join(tmpdir(), "frogg-daemon-config-store-"));
+    tempDirs.push(froggHome);
 
-    const configPath = path.join(fdeHome, "config.json");
+    const configPath = path.join(froggHome, "config.json");
     writeFileSync(
       configPath,
       `${JSON.stringify(
@@ -668,7 +668,7 @@ describe("DaemonConfigStore", () => {
     );
 
     const store = new DaemonConfigStore(
-      fdeHome,
+      froggHome,
       {
         mcp: { injectIntoAgents: false },
         browserTools: { enabled: false },
@@ -684,17 +684,17 @@ describe("DaemonConfigStore", () => {
     const next = store.patch({ removeProviders: ["gemini"] });
 
     expect(next.providers.gemini).toBeUndefined();
-    const persisted = loadPersistedConfig(fdeHome);
+    const persisted = loadPersistedConfig(froggHome);
     expect(persisted.agents?.providers).toBeUndefined();
     expect(persisted.agents?.metadataGeneration).toEqual({ providers: [] });
   });
 
   test("patch persists append system prompt into config.json", () => {
-    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-daemon-config-store-"));
-    tempDirs.push(fdeHome);
+    const froggHome = mkdtempSync(path.join(tmpdir(), "frogg-daemon-config-store-"));
+    tempDirs.push(froggHome);
 
     const store = new DaemonConfigStore(
-      fdeHome,
+      froggHome,
       {
         mcp: { injectIntoAgents: false },
         browserTools: { enabled: false },
@@ -711,16 +711,16 @@ describe("DaemonConfigStore", () => {
       appendSystemPrompt: "Prefer terse replies.",
     });
 
-    const persisted = loadPersistedConfig(fdeHome);
+    const persisted = loadPersistedConfig(froggHome);
     expect(persisted.daemon?.appendSystemPrompt).toBe("Prefer terse replies.");
   });
 
   test("patch persists browser tools opt-in into config.json", () => {
-    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-daemon-config-store-"));
-    tempDirs.push(fdeHome);
+    const froggHome = mkdtempSync(path.join(tmpdir(), "frogg-daemon-config-store-"));
+    tempDirs.push(froggHome);
 
     const store = new DaemonConfigStore(
-      fdeHome,
+      froggHome,
       {
         mcp: { injectIntoAgents: false },
         browserTools: { enabled: false },
@@ -734,16 +734,16 @@ describe("DaemonConfigStore", () => {
 
     store.patch({ browserTools: { enabled: true } });
 
-    const persisted = loadPersistedConfig(fdeHome);
+    const persisted = loadPersistedConfig(froggHome);
     expect(persisted.daemon?.browserTools).toEqual({ enabled: true });
   });
 
   test("patch persists provider additional models into config.json", () => {
-    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-daemon-config-store-"));
-    tempDirs.push(fdeHome);
+    const froggHome = mkdtempSync(path.join(tmpdir(), "frogg-daemon-config-store-"));
+    tempDirs.push(froggHome);
 
     const store = new DaemonConfigStore(
-      fdeHome,
+      froggHome,
       {
         mcp: { injectIntoAgents: false },
         browserTools: { enabled: false },
@@ -769,7 +769,7 @@ describe("DaemonConfigStore", () => {
       },
     });
 
-    const persisted = loadPersistedConfig(fdeHome);
+    const persisted = loadPersistedConfig(froggHome);
     expect(persisted.agents?.providers?.claude).toEqual({
       additionalModels: [
         {
@@ -781,11 +781,11 @@ describe("DaemonConfigStore", () => {
   });
 
   test("patch persists daemon append system prompt into config.json", () => {
-    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-daemon-config-store-"));
-    tempDirs.push(fdeHome);
+    const froggHome = mkdtempSync(path.join(tmpdir(), "frogg-daemon-config-store-"));
+    tempDirs.push(froggHome);
 
     const store = new DaemonConfigStore(
-      fdeHome,
+      froggHome,
       {
         mcp: { injectIntoAgents: false },
         browserTools: { enabled: false },
@@ -802,16 +802,16 @@ describe("DaemonConfigStore", () => {
       appendSystemPrompt: "Prefer terse replies.",
     });
 
-    const persisted = loadPersistedConfig(fdeHome);
+    const persisted = loadPersistedConfig(froggHome);
     expect(persisted.daemon?.appendSystemPrompt).toBe("Prefer terse replies.");
   });
 
   test("patch persists enable terminal agent hooks into config.json", () => {
-    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-daemon-config-store-"));
-    tempDirs.push(fdeHome);
+    const froggHome = mkdtempSync(path.join(tmpdir(), "frogg-daemon-config-store-"));
+    tempDirs.push(froggHome);
 
     const store = new DaemonConfigStore(
-      fdeHome,
+      froggHome,
       {
         mcp: { injectIntoAgents: false },
         providers: {},
@@ -825,16 +825,16 @@ describe("DaemonConfigStore", () => {
 
     store.patch({ enableTerminalAgentHooks: true });
 
-    const persisted = loadPersistedConfig(fdeHome);
+    const persisted = loadPersistedConfig(froggHome);
     expect(persisted.daemon?.enableTerminalAgentHooks).toBe(true);
   });
 
   test("patch persists metadata generation providers into config.json", () => {
-    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-daemon-config-store-"));
-    tempDirs.push(fdeHome);
+    const froggHome = mkdtempSync(path.join(tmpdir(), "frogg-daemon-config-store-"));
+    tempDirs.push(froggHome);
 
     const store = new DaemonConfigStore(
-      fdeHome,
+      froggHome,
       {
         mcp: { injectIntoAgents: false },
         browserTools: { enabled: false },
@@ -856,7 +856,7 @@ describe("DaemonConfigStore", () => {
       },
     });
 
-    const persisted = loadPersistedConfig(fdeHome);
+    const persisted = loadPersistedConfig(froggHome);
     expect(persisted.agents?.metadataGeneration).toEqual({
       providers: [
         { provider: "claude", model: "haiku" },
@@ -866,10 +866,10 @@ describe("DaemonConfigStore", () => {
   });
 
   test("patch persists clearing metadata generation providers into config.json", () => {
-    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-daemon-config-store-"));
-    tempDirs.push(fdeHome);
+    const froggHome = mkdtempSync(path.join(tmpdir(), "frogg-daemon-config-store-"));
+    tempDirs.push(froggHome);
 
-    const configPath = path.join(fdeHome, "config.json");
+    const configPath = path.join(froggHome, "config.json");
     writeFileSync(
       configPath,
       `${JSON.stringify(
@@ -887,7 +887,7 @@ describe("DaemonConfigStore", () => {
     );
 
     const store = new DaemonConfigStore(
-      fdeHome,
+      froggHome,
       {
         mcp: { injectIntoAgents: false },
         browserTools: { enabled: false },
@@ -902,16 +902,16 @@ describe("DaemonConfigStore", () => {
 
     store.patch({ metadataGeneration: { providers: [] } });
 
-    const persisted = loadPersistedConfig(fdeHome);
+    const persisted = loadPersistedConfig(froggHome);
     expect(persisted.agents?.metadataGeneration).toEqual({ providers: [] });
   });
 
   test("patch persists custom ACP provider overrides into config.json", () => {
-    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-daemon-config-store-"));
-    tempDirs.push(fdeHome);
+    const froggHome = mkdtempSync(path.join(tmpdir(), "frogg-daemon-config-store-"));
+    tempDirs.push(froggHome);
 
     const store = new DaemonConfigStore(
-      fdeHome,
+      froggHome,
       {
         mcp: { injectIntoAgents: false },
         browserTools: { enabled: false },
@@ -926,9 +926,9 @@ describe("DaemonConfigStore", () => {
 
     store.patch({
       providers: {
-        "fde-e2e-acp": {
+        "frogg-e2e-acp": {
           extends: "acp",
-          label: "Fde E2E ACP",
+          label: "Frogg E2E ACP",
           description: "E2E ACP provider fixture",
           command: ["npx", "-y", "--version"],
           env: {},
@@ -936,10 +936,10 @@ describe("DaemonConfigStore", () => {
       },
     });
 
-    const persisted = loadPersistedConfig(fdeHome);
-    expect(persisted.agents?.providers?.["fde-e2e-acp"]).toEqual({
+    const persisted = loadPersistedConfig(froggHome);
+    expect(persisted.agents?.providers?.["frogg-e2e-acp"]).toEqual({
       extends: "acp",
-      label: "Fde E2E ACP",
+      label: "Frogg E2E ACP",
       description: "E2E ACP provider fixture",
       command: ["npx", "-y", "--version"],
       env: {},
@@ -960,18 +960,18 @@ describe("DaemonConfigStore reload", () => {
       initialPersisted?: PersistedConfig;
     } = {},
   ) {
-    const fdeHome = mkdtempSync(path.join(tmpdir(), "fde-daemon-config-reload-"));
-    tempDirs.push(fdeHome);
+    const froggHome = mkdtempSync(path.join(tmpdir(), "frogg-daemon-config-reload-"));
+    tempDirs.push(froggHome);
     if (options.initialPersisted) {
       writeFileSync(
-        path.join(fdeHome, "config.json"),
+        path.join(froggHome, "config.json"),
         `${JSON.stringify(options.initialPersisted, null, 2)}\n`,
       );
     }
-    const persisted = loadPersistedConfig(fdeHome);
+    const persisted = loadPersistedConfig(froggHome);
     const relayEnabledFallback = persisted.daemon?.relay?.enabled === undefined;
     const initialMutable = reloadableConfig(persisted, { relayEnabledFallback });
-    const store = new DaemonConfigStore(fdeHome, initialMutable, undefined, {
+    const store = new DaemonConfigStore(froggHome, initialMutable, undefined, {
       reloadSource: {
         resolve: (nextPersisted) => {
           const mutable = reloadableConfig(nextPersisted, { relayEnabledFallback });
@@ -985,16 +985,16 @@ describe("DaemonConfigStore reload", () => {
         },
       },
     });
-    return { fdeHome, store, persisted };
+    return { froggHome, store, persisted };
   }
 
-  function writeConfig(fdeHome: string, config: unknown): void {
-    writeFileSync(path.join(fdeHome, "config.json"), `${JSON.stringify(config, null, 2)}\n`);
+  function writeConfig(froggHome: string, config: unknown): void {
+    writeFileSync(path.join(froggHome, "config.json"), `${JSON.stringify(config, null, 2)}\n`);
   }
 
   test("applies mutable edits and reports startup-only edits", () => {
-    const { fdeHome, store, persisted } = createReloadableStore();
-    writeConfig(fdeHome, {
+    const { froggHome, store, persisted } = createReloadableStore();
+    writeConfig(froggHome, {
       ...persisted,
       daemon: {
         ...persisted.daemon,
@@ -1018,12 +1018,12 @@ describe("DaemonConfigStore reload", () => {
   });
 
   test("applies daemon.auth.trustLan live, in both directions", () => {
-    const { fdeHome, store, persisted } = createReloadableStore();
+    const { froggHome, store, persisted } = createReloadableStore();
     const changes: unknown[] = [];
     store.onFieldChange("trustLan", (value) => changes.push(value));
     expect(store.get().trustLan).toBe(true);
 
-    writeConfig(fdeHome, {
+    writeConfig(froggHome, {
       ...persisted,
       daemon: { ...persisted.daemon, auth: { trustLan: false } },
     });
@@ -1034,7 +1034,7 @@ describe("DaemonConfigStore reload", () => {
     });
     expect(store.get().trustLan).toBe(false);
 
-    writeConfig(fdeHome, {
+    writeConfig(froggHome, {
       ...persisted,
       daemon: { ...persisted.daemon, auth: { trustLan: true } },
     });
@@ -1044,10 +1044,10 @@ describe("DaemonConfigStore reload", () => {
   });
 
   test("classifies every leaf when a parent subtree is added", () => {
-    const { fdeHome, store } = createReloadableStore({
+    const { froggHome, store } = createReloadableStore({
       initialPersisted: { version: 1 },
     });
-    writeConfig(fdeHome, {
+    writeConfig(froggHome, {
       version: 1,
       daemon: {
         relay: {
@@ -1066,7 +1066,7 @@ describe("DaemonConfigStore reload", () => {
   });
 
   test("classifies every leaf when the daemon subtree is removed", () => {
-    const { fdeHome, store } = createReloadableStore({
+    const { froggHome, store } = createReloadableStore({
       initialPersisted: {
         version: 1,
         daemon: {
@@ -1084,7 +1084,7 @@ describe("DaemonConfigStore reload", () => {
         },
       },
     });
-    writeConfig(fdeHome, { version: 1 });
+    writeConfig(froggHome, { version: 1 });
 
     expect(store.reload()).toEqual({
       appliedPaths: ["daemon.browserTools.enabled", "daemon.relay.endpoint"],
@@ -1099,11 +1099,11 @@ describe("DaemonConfigStore reload", () => {
   });
 
   test("keeps overridden leaves separate from restart-required siblings", () => {
-    const { fdeHome, store } = createReloadableStore({
+    const { froggHome, store } = createReloadableStore({
       initialPersisted: { version: 1 },
       overrideControlledPaths: ["daemon.relay.enabled"],
     });
-    writeConfig(fdeHome, {
+    writeConfig(froggHome, {
       version: 1,
       daemon: {
         relay: { enabled: false, publicEndpoint: "relay.example.test:443" },
@@ -1118,19 +1118,19 @@ describe("DaemonConfigStore reload", () => {
   });
 
   test("invalid JSON and invalid schema apply nothing", () => {
-    const { fdeHome, store } = createReloadableStore();
-    writeFileSync(path.join(fdeHome, "config.json"), "{ nope\n");
+    const { froggHome, store } = createReloadableStore();
+    writeFileSync(path.join(froggHome, "config.json"), "{ nope\n");
     expect(() => store.reload()).toThrow("Invalid JSON");
     expect(store.get().browserTools.enabled).toBe(false);
 
-    writeConfig(fdeHome, { daemon: { browserTools: { enabled: "yes" } } });
+    writeConfig(froggHome, { daemon: { browserTools: { enabled: "yes" } } });
     expect(() => store.reload()).toThrow("Invalid config");
     expect(store.get().browserTools.enabled).toBe(false);
   });
 
   test("removing providers and optional profiles clears live state", () => {
-    const { fdeHome, store, persisted } = createReloadableStore();
-    writeConfig(fdeHome, {
+    const { froggHome, store, persisted } = createReloadableStore();
+    writeConfig(froggHome, {
       ...persisted,
       daemon: {
         ...persisted.daemon,
@@ -1145,7 +1145,7 @@ describe("DaemonConfigStore reload", () => {
     });
     store.reload();
 
-    writeConfig(fdeHome, persisted);
+    writeConfig(froggHome, persisted);
     const result = store.reload();
 
     expect(result.appliedPaths).toEqual([
@@ -1159,11 +1159,11 @@ describe("DaemonConfigStore reload", () => {
   });
 
   test("reports a launch-controlled edit without changing live state", () => {
-    const { fdeHome, store, persisted } = createReloadableStore({
+    const { froggHome, store, persisted } = createReloadableStore({
       overrideControlledPaths: ["daemon.relay.enabled"],
     });
     const initialRelay = store.get().relay?.enabled;
-    writeConfig(fdeHome, {
+    writeConfig(froggHome, {
       ...persisted,
       daemon: { ...persisted.daemon, relay: { enabled: !initialRelay } },
     });
@@ -1177,10 +1177,10 @@ describe("DaemonConfigStore reload", () => {
   });
 
   test("an unrelated patch does not mark a manual override-owned edit as applied", () => {
-    const { fdeHome, store, persisted } = createReloadableStore({
+    const { froggHome, store, persisted } = createReloadableStore({
       overrideControlledPaths: ["daemon.relay.enabled"],
     });
-    writeConfig(fdeHome, {
+    writeConfig(froggHome, {
       ...persisted,
       daemon: { ...persisted.daemon, relay: { enabled: true } },
     });
@@ -1194,10 +1194,10 @@ describe("DaemonConfigStore reload", () => {
   });
 
   test("reports startup-only launch overrides instead of restart warnings", () => {
-    const { fdeHome, store, persisted } = createReloadableStore({
+    const { froggHome, store, persisted } = createReloadableStore({
       overrideControlledPaths: ["daemon.listen", "daemon.relay.endpoint"],
     });
-    writeConfig(fdeHome, {
+    writeConfig(froggHome, {
       ...persisted,
       daemon: {
         ...persisted.daemon,

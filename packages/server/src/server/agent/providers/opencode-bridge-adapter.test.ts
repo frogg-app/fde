@@ -20,12 +20,12 @@ describe("OpenCode bridge adapter", () => {
   });
 
   test("shares the server and binds exact managed env per OpenCode session", async () => {
-    const fdeHome = await mkdtemp(path.join(os.tmpdir(), "fde-opencode-adapter-"));
-    const bridge = new OpenCodeBridge({ fdeHome, logger: createTestLogger() });
+    const froggHome = await mkdtemp(path.join(os.tmpdir(), "frogg-opencode-adapter-"));
+    const bridge = new OpenCodeBridge({ froggHome, logger: createTestLogger() });
     await bridge.start();
     cleanups.push(async () => {
       await bridge.close();
-      await rm(fdeHome, { recursive: true, force: true });
+      await rm(froggHome, { recursive: true, force: true });
     });
 
     const runtime = new TestOpenCodeHarness();
@@ -45,24 +45,24 @@ describe("OpenCode bridge adapter", () => {
       { provider: "opencode", cwd: "/workspace/one" },
       {
         agentId: "agent-one",
-        env: { FDE_AGENT_ID: "agent-one", FDE_AGENT_CWD: "/workspace/one" },
+        env: { FROGG_AGENT_ID: "agent-one", FROGG_AGENT_CWD: "/workspace/one" },
       },
     );
     const second = await client.createSession(
       { provider: "opencode", cwd: "/workspace/two" },
       {
         agentId: "agent-two",
-        env: { FDE_AGENT_ID: "agent-two", FDE_AGENT_CWD: "/workspace/two" },
+        env: { FROGG_AGENT_ID: "agent-two", FROGG_AGENT_CWD: "/workspace/two" },
       },
     );
 
-    expect(client.capabilities.supportsNativeFdeTools).toBe(true);
+    expect(client.capabilities.supportsNativeFroggTools).toBe(true);
     expect(runtime.acquisitions.map(({ kind }) => kind)).toEqual(["current", "current"]);
     await expect(readBridgeContext(bridge, "ses_first")).resolves.toEqual({
-      env: { FDE_AGENT_ID: "agent-one", FDE_AGENT_CWD: "/workspace/one" },
+      env: { FROGG_AGENT_ID: "agent-one", FROGG_AGENT_CWD: "/workspace/one" },
     });
     await expect(readBridgeContext(bridge, "ses_second")).resolves.toEqual({
-      env: { FDE_AGENT_ID: "agent-two", FDE_AGENT_CWD: "/workspace/two" },
+      env: { FROGG_AGENT_ID: "agent-two", FROGG_AGENT_CWD: "/workspace/two" },
     });
 
     await first.close();
@@ -72,12 +72,12 @@ describe("OpenCode bridge adapter", () => {
   });
 
   test("keeps process-scoped env and directory-scoped MCP on dedicated servers", async () => {
-    const fdeHome = await mkdtemp(path.join(os.tmpdir(), "fde-opencode-adapter-"));
-    const bridge = new OpenCodeBridge({ fdeHome, logger: createTestLogger() });
+    const froggHome = await mkdtemp(path.join(os.tmpdir(), "frogg-opencode-adapter-"));
+    const bridge = new OpenCodeBridge({ froggHome, logger: createTestLogger() });
     await bridge.start();
     cleanups.push(async () => {
       await bridge.close();
-      await rm(fdeHome, { recursive: true, force: true });
+      await rm(froggHome, { recursive: true, force: true });
     });
     const runtime = new TestOpenCodeHarness();
     runtime.enqueueClient(new TestOpenCodeClient());
@@ -90,7 +90,7 @@ describe("OpenCode bridge adapter", () => {
 
     const customEnv = await client.createSession(
       { provider: "opencode", cwd: "/workspace/one" },
-      { env: { FDE_AGENT_ID: "one", CUSTOM_TOKEN: "secret" } },
+      { env: { FROGG_AGENT_ID: "one", CUSTOM_TOKEN: "secret" } },
     );
     const customMcp = await client.createSession(
       {
@@ -98,7 +98,7 @@ describe("OpenCode bridge adapter", () => {
         cwd: "/workspace/two",
         mcpServers: { custom: { transport: "http", url: "http://127.0.0.1:9999/mcp" } },
       },
-      { env: { FDE_AGENT_ID: "two" } },
+      { env: { FROGG_AGENT_ID: "two" } },
     );
 
     expect(runtime.acquisitions.map(({ kind }) => kind)).toEqual(["dedicated", "dedicated"]);

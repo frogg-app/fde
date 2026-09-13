@@ -102,7 +102,7 @@ describe("OMP diagnostics", () => {
 });
 
 async function makeTempDir(): Promise<string> {
-  const dir = await mkdtemp(path.join(tmpdir(), "fde-omp-diagnostic-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "frogg-omp-diagnostic-"));
   tempDirs.push(dir);
   return dir;
 }

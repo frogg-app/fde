@@ -27,10 +27,10 @@ console.log("=== Local Daemon Utility Helpers ===\n");
 
 {
   console.log("Test 3: rejects unix socket listen values");
-  assert.strictEqual(resolveTcpHostFromListen("/tmp/fde.sock"), null);
-  assert.strictEqual(resolveTcpHostFromListen("unix:///tmp/fde.sock"), null);
-  assert.strictEqual(resolveTcpHostFromListen("pipe://\\\\.\\pipe\\fde-managed-test"), null);
-  assert.strictEqual(resolveTcpHostFromListen("\\\\.\\pipe\\fde-managed-test"), null);
+  assert.strictEqual(resolveTcpHostFromListen("/tmp/frogg.sock"), null);
+  assert.strictEqual(resolveTcpHostFromListen("unix:///tmp/frogg.sock"), null);
+  assert.strictEqual(resolveTcpHostFromListen("pipe://\\\\.\\pipe\\frogg-managed-test"), null);
+  assert.strictEqual(resolveTcpHostFromListen("\\\\.\\pipe\\frogg-managed-test"), null);
   console.log("✓ rejects unix socket listen values\n");
 }
 
@@ -44,9 +44,9 @@ console.log("=== Local Daemon Utility Helpers ===\n");
 
 {
   console.log("Test 5: rejects Windows absolute paths (not TCP endpoints)");
-  assert.strictEqual(resolveTcpHostFromListen("C:\\Users\\foo\\.fde\\fde.sock"), null);
+  assert.strictEqual(resolveTcpHostFromListen("C:\\Users\\foo\\.frogg\\frogg.sock"), null);
   assert.strictEqual(resolveTcpHostFromListen("D:\\project\\socket"), null);
-  assert.strictEqual(resolveTcpHostFromListen("C:\\fde.sock"), null);
+  assert.strictEqual(resolveTcpHostFromListen("C:\\frogg.sock"), null);
   console.log("✓ rejects Windows absolute paths\n");
 }
 

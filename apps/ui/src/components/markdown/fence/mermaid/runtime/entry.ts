@@ -10,7 +10,7 @@ declare global {
     ReactNativeWebView?: {
       postMessage?: (data: string) => void;
     };
-    __FDE_MERMAID_RUNTIME_RECEIVE__?: (message: unknown) => void;
+    __FROGG_MERMAID_RUNTIME_RECEIVE__?: (message: unknown) => void;
   }
 }
 
@@ -62,7 +62,7 @@ let isDrainScheduled = false;
 async function render(message: MermaidRuntimeRenderMessage): Promise<void> {
   try {
     initializeMermaid(message.colorScheme);
-    const { svg } = await mermaid.render(`fde-mermaid-${message.revision}`, message.source);
+    const { svg } = await mermaid.render(`frogg-mermaid-${message.revision}`, message.source);
     if (message.revision !== latestRevision) {
       return;
     }
@@ -121,7 +121,7 @@ function receiveRender(value: unknown): void {
   }, 0);
 }
 
-window.__FDE_MERMAID_RUNTIME_RECEIVE__ = receiveRender;
+window.__FROGG_MERMAID_RUNTIME_RECEIVE__ = receiveRender;
 window.addEventListener("message", (event) => {
   if (event.source === window.parent) {
     receiveRender(event.data);

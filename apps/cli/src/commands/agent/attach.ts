@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import type { Command } from "commander";
 
 export function addAttachOptions(cmd: Command): Command {
@@ -11,9 +11,9 @@ import {
   fetchProjectedTimelineItems,
   LIVE_HISTORY_FETCH_TIMEOUT_MS,
 } from "../../utils/timeline.js";
-import type { DaemonClient } from "@fde/client/internal/daemon-client";
-import type { AgentTimelineItem } from "@fde/protocol/agent-types";
-import type { AgentStreamEventPayload, AgentStreamMessage } from "@fde/protocol/messages";
+import type { DaemonClient } from "@frogg/client/internal/daemon-client";
+import type { AgentTimelineItem } from "@frogg/protocol/agent-types";
+import type { AgentStreamEventPayload, AgentStreamMessage } from "@frogg/protocol/messages";
 
 export interface AgentAttachOptions {
   host?: string;

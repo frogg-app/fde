@@ -6,15 +6,15 @@ import type {
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 
-import { addModelVisibleStructuredContent } from "./tools/fde-tool-serialization.js";
-import { createFdeToolCatalog, type FdeToolHostDependencies } from "./tools/fde-tools.js";
-import type { FdeToolResult } from "./tools/types.js";
+import { addModelVisibleStructuredContent } from "./tools/frogg-tool-serialization.js";
+import { createFroggToolCatalog, type FroggToolHostDependencies } from "./tools/frogg-tools.js";
+import type { FroggToolResult } from "./tools/types.js";
 
-export type AgentMcpServerOptions = FdeToolHostDependencies;
+export type AgentMcpServerOptions = FroggToolHostDependencies;
 
 type McpToolContext = RequestHandlerExtra<ServerRequest, ServerNotification>;
 
-function toMcpToolResult(result: FdeToolResult): CallToolResult {
+function toMcpToolResult(result: FroggToolResult): CallToolResult {
   const modelVisibleResult = addModelVisibleStructuredContent(result);
   return {
     content: modelVisibleResult.content as CallToolResult["content"],
@@ -29,7 +29,7 @@ function toMcpToolResult(result: FdeToolResult): CallToolResult {
 }
 
 export async function createAgentMcpServer(options: AgentMcpServerOptions): Promise<McpServer> {
-  const catalog = await createFdeToolCatalog(options);
+  const catalog = await createFroggToolCatalog(options);
   const server = new McpServer({
     name: "agent-mcp",
     version: "2.0.0",

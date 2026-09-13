@@ -4,7 +4,7 @@
 import React from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
-import type { DaemonClient } from "@fde/client/internal/daemon-client";
+import type { DaemonClient } from "@frogg/client/internal/daemon-client";
 import { ProjectImportDialog } from "./dialog";
 interface MockProps {
   children?: React.ReactNode;

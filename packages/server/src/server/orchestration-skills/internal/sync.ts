@@ -1,6 +1,6 @@
-import { brand, brandIdentity } from "@fde/branding";
-import { matchesBrand } from "@fde/branding/identity";
-import { installedSkillName } from "@fde/branding/skills";
+import { brand, brandIdentity } from "@frogg/branding";
+import { matchesBrand } from "@frogg/branding/identity";
+import { installedSkillName } from "@frogg/branding/skills";
 import { createHash } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
@@ -19,7 +19,7 @@ export interface SkillSyncResult {
   processedSkills: number;
 }
 
-const MANAGED_FILES_MANIFEST = ".fde-managed-files.json";
+const MANAGED_FILES_MANIFEST = ".frogg-managed-files.json";
 
 interface ManagedFilesManifest {
   version: 1;
@@ -234,13 +234,13 @@ export async function assertSkillOwnership(directory: string): Promise<void> {
     throw error;
   });
   if (!stat) return;
-  if ((!stat.isDirectory() || stat.isSymbolicLink()) && !brand.legacyFde) {
+  if ((!stat.isDirectory() || stat.isSymbolicLink()) && !brand.legacyFrogg) {
     throw new Error(`Cannot manage skill through a non-directory or symbolic link: ${directory}`);
   }
-  if (!stat.isDirectory() && !stat.isSymbolicLink() && brand.legacyFde) return;
+  if (!stat.isDirectory() && !stat.isSymbolicLink() && brand.legacyFrogg) return;
   const manifest = await readManagedFilesManifest(directory);
   if (manifest && matchesBrand(brand, manifest.brand)) return;
-  if (!manifest && brand.legacyFde) return;
+  if (!manifest && brand.legacyFrogg) return;
   if (!manifest && (await fs.readdir(directory)).length === 0) return;
   throw new Error(`Skill belongs to another product or has no ownership metadata: ${directory}`);
 }

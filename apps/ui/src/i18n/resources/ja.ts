@@ -727,7 +727,7 @@ export const ja: TranslationResources = {
       },
       routes: {
         public: "リバースプロキシ",
-        fde: "Memorable",
+        frogg: "Memorable",
         direct: "直接接続",
       },
       states: {
@@ -2066,7 +2066,7 @@ export const ja: TranslationResources = {
   serviceUrl: {
     title: "サービスURLを開く",
     message: "{{url}}を開きますか？",
-    inFde: "{{brandName}}で",
+    inFrogg: "{{brandName}}で",
     externalBrowser: "外部ブラウザ",
     dontAskAgain: "次回から確認しない",
   },
@@ -2193,7 +2193,7 @@ export const ja: TranslationResources = {
       one: "その他のツールを{{count}}回使用",
       other: "その他のツールを{{count}}回使用",
     },
-    fdeCalls: {
+    froggCalls: {
       one: "{{brandName}}を{{count}}回呼び出し",
       other: "{{brandName}}を{{count}}回呼び出し",
     },
@@ -2694,14 +2694,14 @@ export const ja: TranslationResources = {
           docker: {
             label: "Docker",
             available: "利用可能",
-            container: "利用可能、fde-daemon コンテナあり",
+            container: "利用可能、frogg-daemon コンテナあり",
             missing: "利用不可",
           },
           curlMissing:
             "ホストに curl がありません。ネイティブインストールはバンドルのダウンロードに curl が必要です。",
           noService:
             "ユーザーサービスマネージャーがないため、再起動後にデーモンは自動で起動しません。",
-          installDir: "ネイティブインストール先: {{home}}/.local/share/fde",
+          installDir: "ネイティブインストール先: {{home}}/.local/share/frogg",
           failed: "ホストを確認できませんでした。{{detail}}",
         },
         method: {
@@ -2729,7 +2729,7 @@ export const ja: TranslationResources = {
         uninstall: {
           title: "デーモンをアンインストールしますか？",
           message:
-            "サービスを停止し、{{host}} から {{brandName}} のインストールを削除します。デーモンの状態 (~/.fde) は保持されます。",
+            "サービスを停止し、{{host}} から {{brandName}} のインストールを削除します。デーモンの状態 (~/.frogg) は保持されます。",
         },
         log: {
           running: "{{host}} で実行中...",
@@ -2759,7 +2759,7 @@ export const ja: TranslationResources = {
         saving: "保存中...",
         saveFailed: "リレーエンドポイントを保存できませんでした。",
         overridden:
-          "デーモンの起動時オーバーライド（FDE_RELAY_ENDPOINT または FDE_RELAY_USE_TLS）で設定されています。デーモンを起動している場所で変更してください。",
+          "デーモンの起動時オーバーライド（FROGG_RELAY_ENDPOINT または FROGG_RELAY_USE_TLS）で設定されています。デーモンを起動している場所で変更してください。",
       },
       skills: {
         ...en.settings.host.skills,
@@ -2830,7 +2830,7 @@ export const ja: TranslationResources = {
       agentDefinitions: {
         title: "エージェント定義",
         description:
-          "プロバイダーがこのホストから読み込むエージェントです。FDE は一覧表示のみ行います。変更するにはファイルを編集してください。",
+          "プロバイダーがこのホストから読み込むエージェントです。Frogg は一覧表示のみ行います。変更するにはファイルを編集してください。",
         projectTitle: "プロジェクトのエージェント定義",
         projectDescription:
           "プロバイダーがこのプロジェクトのディレクトリから読み込むエージェントです。",
@@ -3101,13 +3101,13 @@ export const ja: TranslationResources = {
         savedToast: "プロジェクトを更新しました",
       },
       readFailures: {
-        invalidTitle: "fde.jsonを解析できませんでした",
+        invalidTitle: "frogg.jsonを解析できませんでした",
         invalidDescription: "ディスク上のファイルを修正してから再読み込みしてください。",
         missingTitle: "このホストにはこのプロジェクトがありません",
         missingSingleHost: "選択したホストにはこのプロジェクトの記録がありません。",
-        transportTitle: "fde.jsonを読み込めませんでした",
+        transportTitle: "frogg.jsonを読み込めませんでした",
         transportFallback: "ホストが応答しませんでした。",
-        failedTitle: "fde.jsonを読み込めませんでした",
+        failedTitle: "frogg.jsonを読み込めませんでした",
         failedDescription: "再読み込みして再試行してください。",
       },
       worktree: {
@@ -3118,7 +3118,7 @@ export const ja: TranslationResources = {
           "これらのコマンドで使用可能な詳細と環境変数についてはドキュメントを参照してください",
         setup: "セットアップ",
         setupAccessibility: "ワークツリーセットアップコマンド",
-        uncommittedTitle: "fde.json の変更をコミットしてください",
+        uncommittedTitle: "frogg.json の変更をコミットしてください",
         uncommittedDescription:
           "新しいワークツリーでは、選択したベースブランチのセットアップスクリプトが使われます。",
         teardown: "削除時",
@@ -3143,7 +3143,7 @@ export const ja: TranslationResources = {
         newScript: "新しいスクリプト",
         editScript: "{{name}}を編集",
         runAsService: "サービスとして実行",
-        serviceHint: "{{brandName}}がプロセスを監督し、$FDE_PORTを通じてポートを割り当てます",
+        serviceHint: "{{brandName}}がプロセスを監督し、$FROGG_PORTを通じてポートを割り当てます",
         actions: {
           add: "スクリプトを追加",
           edit: "編集",
@@ -3162,8 +3162,8 @@ export const ja: TranslationResources = {
       },
       writeFailures: {
         staleTitle: "設定がディスク上で変更されました",
-        staleDescription: "保存する前に最新のfde.jsonを取得するために再読み込みしてください。",
-        failedTitle: "fde.jsonを保存できませんでした",
+        staleDescription: "保存する前に最新のfrogg.jsonを取得するために再読み込みしてください。",
+        failedTitle: "frogg.jsonを保存できませんでした",
         failedDescription: "再試行するか、ディスクから最新バージョンを再読み込みしてください。",
       },
       actions: {

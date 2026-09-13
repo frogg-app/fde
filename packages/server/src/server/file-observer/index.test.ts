@@ -356,7 +356,7 @@ function createObserver(): FileObserver {
 }
 
 async function createRoot(): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), "fde-file-observer-"));
+  const root = await mkdtemp(join(tmpdir(), "frogg-file-observer-"));
   roots.add(root);
   return root;
 }

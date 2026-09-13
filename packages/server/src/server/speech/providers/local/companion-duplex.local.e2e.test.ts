@@ -12,7 +12,7 @@ import {
   WorkerBackedTurnDetectionProvider,
 } from "./worker-client.js";
 
-const modelsDir = process.env.FDE_LOCAL_MODELS_DIR;
+const modelsDir = process.env.FROGG_LOCAL_MODELS_DIR;
 const available = Boolean(
   modelsDir &&
   existsSync(
@@ -23,7 +23,7 @@ const available = Boolean(
 test.skipIf(!available)(
   "real microphone-paced recognition keeps listening while a reply callback is held",
   async () => {
-    if (!modelsDir) throw new Error("FDE_LOCAL_MODELS_DIR is required");
+    if (!modelsDir) throw new Error("FROGG_LOCAL_MODELS_DIR is required");
     const logger = pino({ level: "silent" });
     const config = {
       modelsDir,

@@ -5,7 +5,7 @@ import {
   type DaemonSelfUpdateRuntime,
   type DaemonSelfUpdatePhase,
 } from "./daemon-self-updater.js";
-import type { CommandResult, NpmGlobalFdeInstall } from "./npm-global-cli.js";
+import type { CommandResult, NpmGlobalFroggInstall } from "./npm-global-cli.js";
 
 interface TestLogger {
   errors: Array<{ obj: object; msg?: string }>;
@@ -14,16 +14,19 @@ interface TestLogger {
   warn(obj: object, msg?: string): void;
 }
 
-type Inspection = NpmGlobalFdeInstall | Error;
+type Inspection = NpmGlobalFroggInstall | Error;
 type RuntimeCall = "inspect" | "installLatest";
 
 const globalRoot = "/global/lib";
 const globalNodeModules = `${globalRoot}/node_modules`;
-const cliPackagePath = `${globalNodeModules}/@fde/cli`;
-const npmServerPackageRoot = `${cliPackagePath}/node_modules/@fde/server`;
+const cliPackagePath = `${globalNodeModules}/@frogg/cli`;
+const npmServerPackageRoot = `${cliPackagePath}/node_modules/@frogg/server`;
 const sourceServerPackageRoot = "/repo/packages/server";
 
-function npmGlobalFdeInstall(version: string, options?: { linked?: boolean }): NpmGlobalFdeInstall {
+function npmGlobalFroggInstall(
+  version: string,
+  options?: { linked?: boolean },
+): NpmGlobalFroggInstall {
   return {
     version,
     packagePath: cliPackagePath,
@@ -105,7 +108,7 @@ describe("DaemonSelfUpdater", () => {
 
     expect(result).toEqual({
       success: false,
-      error: "This daemon is managed by FDE Desktop. Update FDE Desktop on the host.",
+      error: "This daemon is managed by Frogg Desktop. Update Frogg Desktop on the host.",
       newVersion: null,
     });
     expect(phases).toEqual([]);
@@ -116,7 +119,7 @@ describe("DaemonSelfUpdater", () => {
     const calls: RuntimeCall[] = [];
     const runtime = createRuntime({
       calls,
-      inspections: [npmGlobalFdeInstall("0.1.15"), npmGlobalFdeInstall("0.1.96")],
+      inspections: [npmGlobalFroggInstall("0.1.15"), npmGlobalFroggInstall("0.1.96")],
     });
 
     const { result, phases } = await runUpdate({ runtime });
@@ -134,13 +137,13 @@ describe("DaemonSelfUpdater", () => {
     const calls: RuntimeCall[] = [];
     const runtime = createRuntime({
       calls,
-      inspections: [new Error("@fde/cli is not installed with npm -g on this host")],
+      inspections: [new Error("@frogg/cli is not installed with npm -g on this host")],
     });
 
     const { result, phases } = await runUpdate({ runtime });
 
     expect(result.success).toBe(false);
-    expect(result.error).toBe("@fde/cli is not installed with npm -g on this host");
+    expect(result.error).toBe("@frogg/cli is not installed with npm -g on this host");
     expect(phases).toEqual(["starting"]);
     expect(calls).toEqual(["inspect"]);
   });
@@ -149,7 +152,7 @@ describe("DaemonSelfUpdater", () => {
     const calls: RuntimeCall[] = [];
     const runtime = createRuntime({
       calls,
-      inspections: [npmGlobalFdeInstall("0.1.15")],
+      inspections: [npmGlobalFroggInstall("0.1.15")],
     });
 
     const { result } = await runUpdate({ runtime, daemonVersion: "0.1.96" });
@@ -157,7 +160,7 @@ describe("DaemonSelfUpdater", () => {
     expect(result).toEqual({
       success: false,
       error:
-        "This daemon is not running from the npm global @fde/cli install (global npm has 0.1.15, daemon is 0.1.96).",
+        "This daemon is not running from the npm global @frogg/cli install (global npm has 0.1.15, daemon is 0.1.96).",
       newVersion: null,
     });
     expect(calls).toEqual(["inspect"]);
@@ -168,14 +171,14 @@ describe("DaemonSelfUpdater", () => {
     const runtime = createRuntime({
       calls,
       currentServerPackageRoot: sourceServerPackageRoot,
-      inspections: [npmGlobalFdeInstall("0.1.15")],
+      inspections: [npmGlobalFroggInstall("0.1.15")],
     });
 
     const { result } = await runUpdate({ runtime });
 
     expect(result).toEqual({
       success: false,
-      error: "This daemon is not running from the npm global @fde/cli install.",
+      error: "This daemon is not running from the npm global @frogg/cli install.",
       newVersion: null,
     });
     expect(calls).toEqual(["inspect"]);
@@ -183,7 +186,7 @@ describe("DaemonSelfUpdater", () => {
 
   test("does not update linked global installs", async () => {
     const runtime = createRuntime({
-      inspections: [npmGlobalFdeInstall("0.1.15", { linked: true })],
+      inspections: [npmGlobalFroggInstall("0.1.15", { linked: true })],
     });
 
     const { result } = await runUpdate({ runtime });
@@ -191,7 +194,7 @@ describe("DaemonSelfUpdater", () => {
     expect(result).toEqual({
       success: false,
       error:
-        "The global @fde/cli install is linked; self-update only supports normal npm global installs.",
+        "The global @frogg/cli install is linked; self-update only supports normal npm global installs.",
       newVersion: null,
     });
   });
@@ -207,7 +210,7 @@ describe("DaemonSelfUpdater", () => {
       npm: {
         async inspect() {
           calls.push("inspect");
-          return npmGlobalFdeInstall("0.1.15");
+          return npmGlobalFroggInstall("0.1.15");
         },
         async installLatest() {
           calls.push("installLatest");

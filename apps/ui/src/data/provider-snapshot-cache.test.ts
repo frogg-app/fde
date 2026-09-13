@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { Buffer } from "buffer";
-import type { ProviderSnapshotEntry } from "@fde/protocol/agent-types";
-import { compactProviderSnapshot } from "@fde/protocol/provider-snapshot-codec";
+import type { ProviderSnapshotEntry } from "@frogg/protocol/agent-types";
+import { compactProviderSnapshot } from "@frogg/protocol/provider-snapshot-codec";
 import { z } from "zod";
 import { createProviderSnapshotCache, type ProviderSnapshotCache } from "./provider-snapshot-cache";
 
-const SNAPSHOT_KEY_PREFIX = "@fde/provider-snapshot/v1:";
-const SNAPSHOT_INDEX_KEY = "@fde/provider-snapshot-index/v1";
+const SNAPSHOT_KEY_PREFIX = "@frogg/provider-snapshot/v1:";
+const SNAPSHOT_INDEX_KEY = "@frogg/provider-snapshot-index/v1";
 const SnapshotIndexSchema = z.object({
   version: z.literal(1),
   entries: z.array(z.object({ key: z.string(), bytes: z.number(), writtenAt: z.string() })),
@@ -177,7 +177,7 @@ describe("provider snapshot cache", () => {
   it("discards an invalid cache record", async () => {
     const storage = createStorage();
     const cache = createProviderSnapshotCache(storage);
-    storage.values.set('@fde/provider-snapshot/v1:["server-1","/repo"]', "not json");
+    storage.values.set('@frogg/provider-snapshot/v1:["server-1","/repo"]', "not json");
 
     await expect(cache.read("server-1", "/repo")).resolves.toBeNull();
     expect([...storage.values.keys()].some((key) => key.startsWith(SNAPSHOT_KEY_PREFIX))).toBe(
@@ -223,7 +223,7 @@ describe("provider snapshot cache", () => {
 
   it("clears unindexed snapshots once when creating the cache index", async () => {
     const storage = createStorage();
-    storage.values.set('@fde/provider-snapshot/v1:["server-1","/legacy"]', "legacy");
+    storage.values.set('@frogg/provider-snapshot/v1:["server-1","/legacy"]', "legacy");
     const cache = createProviderSnapshotCache(storage);
 
     await cache.write({
@@ -234,26 +234,26 @@ describe("provider snapshot cache", () => {
       compactSnapshot: compactProviderSnapshot(snapshotEntries("current")),
     });
 
-    expect(storage.values.has('@fde/provider-snapshot/v1:["server-1","/legacy"]')).toBe(false);
+    expect(storage.values.has('@frogg/provider-snapshot/v1:["server-1","/legacy"]')).toBe(false);
     await expect(cache.read("server-1", "/current")).resolves.not.toBeNull();
     expectIndexMatchesSnapshots(storage.values);
   });
 
   it("clears unindexed snapshots on the first read", async () => {
     const storage = createStorage();
-    storage.values.set('@fde/provider-snapshot/v1:["server-1","/legacy"]', "legacy");
+    storage.values.set('@frogg/provider-snapshot/v1:["server-1","/legacy"]', "legacy");
     const cache = createProviderSnapshotCache(storage);
 
     await expect(cache.read("server-1", "/legacy")).resolves.toBeNull();
 
-    expect(storage.values.has('@fde/provider-snapshot/v1:["server-1","/legacy"]')).toBe(false);
+    expect(storage.values.has('@frogg/provider-snapshot/v1:["server-1","/legacy"]')).toBe(false);
     expectIndexMatchesSnapshots(storage.values);
     expect(storage.stats.getAllKeysCalls).toBe(1);
   });
 
   it("initializes the cache index once when the first read and write race", async () => {
     const storage = createStorage();
-    storage.values.set('@fde/provider-snapshot/v1:["server-1","/legacy"]', "legacy");
+    storage.values.set('@frogg/provider-snapshot/v1:["server-1","/legacy"]', "legacy");
     const cache = createProviderSnapshotCache(storage);
 
     await Promise.all([
@@ -447,7 +447,7 @@ describe("provider snapshot cache", () => {
     const storage = createStorage();
     const maxBytes = 1_000;
     const cache = createProviderSnapshotCache(storage, { maxBytes });
-    storage.values.set("@fde/unrelated", "keep-me");
+    storage.values.set("@frogg/unrelated", "keep-me");
     await writeSnapshot(cache, {
       cwd: "/oldest",
       label: "oldest",
@@ -479,7 +479,7 @@ describe("provider snapshot cache", () => {
       generatedAt: "2026-08-04T00:00:00.000Z",
     });
 
-    expect(storage.values.get("@fde/unrelated")).toBe("keep-me");
+    expect(storage.values.get("@frogg/unrelated")).toBe("keep-me");
     expect(snapshotBytes(storage.values)).toBeLessThanOrEqual(maxBytes);
     expectIndexMatchesSnapshots(storage.values);
     await expect(restarted.read("server-1", "/final")).resolves.not.toBeNull();

@@ -18,12 +18,12 @@ import type {
 } from "./worker-protocol.js";
 import { bufferToWorkerBytes, workerBytesToBuffer } from "./worker-bytes.js";
 
-process.title = "FDE Voice";
+process.title = "Frogg Voice";
 
 type LocalSttEngine = SherpaOfflineRecognizerEngine;
 
 const logger = pino({
-  level: process.env.FDE_LOG_LEVEL ?? "info",
+  level: process.env.FROGG_LOG_LEVEL ?? "info",
 }).child({ module: "speech", component: "local-worker" });
 
 const sttEngines = new Map<string, LocalSttEngine>();

@@ -193,7 +193,7 @@ async function settle(): Promise<void> {
 let home: string;
 
 beforeEach(async () => {
-  home = await mkdtemp(path.join(tmpdir(), "fde-companion-session-"));
+  home = await mkdtemp(path.join(tmpdir(), "frogg-companion-session-"));
 });
 
 afterEach(async () => {

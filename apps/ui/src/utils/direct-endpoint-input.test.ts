@@ -43,12 +43,12 @@ describe("parseDirectEndpointInput", () => {
       useTls: false,
     });
     expect(parseDirectEndpointInput("http://frogbox/")).toMatchObject({ port: 80, useTls: false });
-    expect(parseDirectEndpointInput("https://fde.example.com")).toMatchObject({
-      host: "fde.example.com",
+    expect(parseDirectEndpointInput("https://frogg.example.com")).toMatchObject({
+      host: "frogg.example.com",
       port: 443,
       useTls: true,
     });
-    expect(parseDirectEndpointInput("HTTPS://fde.example.com:8443/")).toMatchObject({
+    expect(parseDirectEndpointInput("HTTPS://frogg.example.com:8443/")).toMatchObject({
       port: 8443,
       useTls: true,
     });

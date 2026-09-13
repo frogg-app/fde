@@ -1,7 +1,7 @@
-typeset -g FDE_SHELL_INTEGRATION_DIR="${${(%):-%N}:A:h}"
+typeset -g FROGG_SHELL_INTEGRATION_DIR="${${(%):-%N}:A:h}"
 
-if [[ -n "${FDE_ZSH_ZDOTDIR-}" ]]; then
-  export ZDOTDIR="${FDE_ZSH_ZDOTDIR}"
+if [[ -n "${FROGG_ZSH_ZDOTDIR-}" ]]; then
+  export ZDOTDIR="${FROGG_ZSH_ZDOTDIR}"
 else
   unset ZDOTDIR
 fi
@@ -14,4 +14,4 @@ elif [[ -f "${HOME}/.zshenv" ]]; then
   source "${HOME}/.zshenv"
 fi
 
-source "${FDE_SHELL_INTEGRATION_DIR}/fde-integration.zsh"
+source "${FROGG_SHELL_INTEGRATION_DIR}/frogg-integration.zsh"

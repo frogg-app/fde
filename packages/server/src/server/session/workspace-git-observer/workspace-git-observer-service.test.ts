@@ -297,7 +297,7 @@ describe("recordDescriptorState", () => {
     const titledMain = makeDescriptor({
       id: "ws1",
       workspaceDirectory: WS1,
-      name: "Fde main",
+      name: "Frogg main",
       currentBranch: "main",
     });
     h.service.syncObservers([titledMain]);

@@ -6,7 +6,7 @@ import type {
   HubExecutionAgentValidationIssue,
   HubExecutionControlRequest,
   SessionOutboundMessage,
-} from "@fde/protocol/messages";
+} from "@frogg/protocol/messages";
 import {
   ProviderOptionsValidationError,
   ToolPolicyUnsupportedError,

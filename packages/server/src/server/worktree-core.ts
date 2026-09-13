@@ -13,7 +13,7 @@ import {
   UnsupportedForgeCheckoutTargetError,
   type WorktreeCreationIntent,
 } from "./resolve-worktree-creation-intent.js";
-import type { ChangeRequestCheckoutSource, FirstAgentContext } from "@fde/protocol/messages";
+import type { ChangeRequestCheckoutSource, FirstAgentContext } from "@frogg/protocol/messages";
 import type { WorkspaceGitService } from "./workspace-git-service.js";
 import { runWithGitCommandPriority } from "../utils/run-git-command.js";
 
@@ -26,7 +26,7 @@ export interface CreateWorktreeCoreInput {
   checkoutSource?: ChangeRequestCheckoutSource;
   githubPrNumber?: number;
   firstAgentContext?: FirstAgentContext;
-  fdeHome?: string;
+  froggHome?: string;
   worktreesRoot?: string;
   runSetup?: boolean;
 }
@@ -121,7 +121,7 @@ async function createWorktreeCoreWithPriority(
       worktreeSlug: normalizedSlug,
       source: intent,
       runSetup: input.runSetup ?? true,
-      fdeHome: input.fdeHome,
+      froggHome: input.froggHome,
       worktreesRoot: input.worktreesRoot,
     }),
     intent,
@@ -160,7 +160,7 @@ async function resolveDefaultBranch(
 }
 
 export async function resolveWorktreeRepoRoot(
-  input: Pick<CreateWorktreeCoreInput, "cwd" | "fdeHome">,
+  input: Pick<CreateWorktreeCoreInput, "cwd" | "froggHome">,
   workspaceGitService?: Pick<WorkspaceGitService, "resolveRepoRoot">,
 ): Promise<string> {
   if (!workspaceGitService) {

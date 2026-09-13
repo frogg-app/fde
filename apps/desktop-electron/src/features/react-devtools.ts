@@ -61,9 +61,11 @@ async function patchReactDevToolsForElectron(extensionPath: string): Promise<voi
 }
 
 export async function loadReactDevTools(): Promise<void> {
-  const configuredPath = process.env.FDE_ELECTRON_REACT_DEVTOOLS_DIR?.trim();
+  const configuredPath = process.env.FROGG_ELECTRON_REACT_DEVTOOLS_DIR?.trim();
   if (!configuredPath) {
-    throw new Error("Set FDE_ELECTRON_REACT_DEVTOOLS_DIR to an unpacked React DevTools extension.");
+    throw new Error(
+      "Set FROGG_ELECTRON_REACT_DEVTOOLS_DIR to an unpacked React DevTools extension.",
+    );
   }
   const extensionPath = path.resolve(configuredPath);
   try {

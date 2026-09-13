@@ -1,5 +1,5 @@
 import { expect, type BrowserContext, type Page } from "@playwright/test";
-import type { DaemonClient as InternalDaemonClient } from "@fde/client/internal/daemon-client";
+import type { DaemonClient as InternalDaemonClient } from "@frogg/client/internal/daemon-client";
 import { decodeWorkspaceIdFromPathSegment } from "@/utils/host-routes";
 import { connectDaemonClient } from "./daemon-client-loader";
 import { daemonWsRoutePattern } from "./daemon-port";
@@ -9,15 +9,15 @@ import { withProjectOwnership } from "./project-ownership";
 
 type NewWorkspaceDaemonClient = Pick<
   InternalDaemonClient,
-  | "archiveFdeWorktree"
+  | "archiveFroggWorktree"
   | "archiveWorkspace"
   | "checkoutRefresh"
   | "close"
   | "connect"
-  | "createFdeWorktree"
+  | "createFroggWorktree"
   | "createWorkspace"
   | "fetchWorkspaces"
-  | "getFdeWorktreeList"
+  | "getFroggWorktreeList"
   | "getDaemonConfig"
   | "inspectWorkspaceRecovery"
   | "listProjects"
@@ -133,7 +133,7 @@ export async function archiveWorkspaceFromDaemon(
   workspaceDirectory: string,
   options?: { scope?: "workspace" | "worktree" },
 ): Promise<void> {
-  const payload = await client.archiveFdeWorktree({
+  const payload = await client.archiveFroggWorktree({
     worktreePath: workspaceDirectory,
     ...(options?.scope !== undefined ? { scope: options.scope } : {}),
   });
@@ -162,7 +162,7 @@ export async function createWorktreeViaDaemon(
   client: NewWorkspaceDaemonClient,
   input: { cwd: string; slug: string },
 ): Promise<OpenedProject> {
-  const payload = await client.createFdeWorktree({
+  const payload = await client.createFroggWorktree({
     cwd: input.cwd,
     worktreeSlug: input.slug,
   });

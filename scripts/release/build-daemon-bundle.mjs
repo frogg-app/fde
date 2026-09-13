@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 // Builds a self-contained daemon bundle for one platform/arch:
 //
-//   dist/bundles/FDE-<version>-<platform>-<arch>-daemon.tar.gz  (Linux, macOS)
-//   dist/bundles/FDE-<version>-win-<arch>-daemon.zip            (Windows)
+//   dist/bundles/Frogg-<version>-<platform>-<arch>-daemon.tar.gz  (Linux, macOS)
+//   dist/bundles/Frogg-<version>-win-<arch>-daemon.zip            (Windows)
 //
 // Layout inside the archive (one stable internal top-level directory):
 //   node/      official Node.js runtime from nodejs.org (verified, trimmed);
 //              node/bin/node on unix, node/node.exe on Windows
 //   daemon/    packages/server, apps/cli and the workspace libraries they need,
 //              plus a production node_modules resolved for the target platform
-//   bin/fde    launcher: exec node/bin/node daemon/apps/cli/dist/index.js "$@"
-//   bin/fde  same launcher under the upstream name
-//              (bin/fde.cmd and bin/fde.cmd on Windows; the zip holds no symlinks)
+//   bin/frogg    launcher: exec node/bin/node daemon/apps/cli/dist/index.js "$@"
+//   bin/frogg  same launcher under the upstream name
+//              (bin/frogg.cmd and bin/frogg.cmd on Windows; the zip holds no symlinks)
 //   manifest.json
 //
 // The launcher runs the CLI, and the CLI starts the daemon through
@@ -99,8 +99,8 @@ const WORKSPACE_KEEP = [
 ];
 
 const LAUNCHER = `#!/bin/sh
-# FDE daemon bundle launcher. Resolves its own location through symlinks so
-# ~/.local/bin/fde -> .../current/bin/fde keeps working after upgrades.
+# Frogg daemon bundle launcher. Resolves its own location through symlinks so
+# ~/.local/bin/frogg -> .../current/bin/frogg keeps working after upgrades.
 self="$0"
 while [ -L "$self" ]; do
   link="$(readlink "$self")"
@@ -110,20 +110,20 @@ while [ -L "$self" ]; do
   esac
 done
 root="$(cd "$(dirname "$self")/.." && pwd)"
-FDE_NODE_ENV="\${FDE_NODE_ENV:-production}"
-export FDE_NODE_ENV
+FROGG_NODE_ENV="\${FROGG_NODE_ENV:-production}"
+export FROGG_NODE_ENV
 exec "$root/node/bin/node" --disable-warning=DEP0040 "$root/daemon/apps/cli/dist/index.js" "$@"
 `;
 
 // Windows launcher. %~dp0 is the directory of the script with a trailing
 // backslash. The desktop app does not go through this file (it runs node.exe
-// directly); it exists for humans and for FDE_CLI.
+// directly); it exists for humans and for FROGG_CLI.
 export const WINDOWS_LAUNCHER = [
   "@echo off",
   "setlocal",
-  'set "FDE_ROOT=%~dp0.."',
-  'if not defined FDE_NODE_ENV set "FDE_NODE_ENV=production"',
-  '"%FDE_ROOT%\\node\\node.exe" --disable-warning=DEP0040 "%FDE_ROOT%\\daemon\\apps\\cli\\dist\\index.js" %*',
+  'set "FROGG_ROOT=%~dp0.."',
+  'if not defined FROGG_NODE_ENV set "FROGG_NODE_ENV=production"',
+  '"%FROGG_ROOT%\\node\\node.exe" --disable-warning=DEP0040 "%FROGG_ROOT%\\daemon\\apps\\cli\\dist\\index.js" %*',
   "",
 ].join("\r\n");
 
@@ -240,8 +240,8 @@ async function installProductionDependencies(daemonDir, platform, arch) {
       platform,
       "--cpu",
       arch,
-      "--workspace=@fde/server",
-      "--workspace=@fde/cli",
+      "--workspace=@frogg/server",
+      "--workspace=@frogg/cli",
     ],
     { cwd: daemonDir, env: { ...process.env, ONNXRUNTIME_NODE_INSTALL: "skip" } },
   );
@@ -272,7 +272,7 @@ async function applyDependencyPatches(daemonDir) {
 async function writeLaunchers(stagingDir, isWindows) {
   const binDir = path.join(stagingDir, "bin");
   await mkdir(binDir, { recursive: true });
-  for (const name of brand.legacyFde ? [brand.cliName, "fde"] : [brand.cliName]) {
+  for (const name of brand.legacyFrogg ? [brand.cliName, "frogg"] : [brand.cliName]) {
     if (isWindows) {
       await writeFile(path.join(binDir, `${name}.cmd`), WINDOWS_LAUNCHER);
       continue;
@@ -292,12 +292,12 @@ async function removeBinLinkDirs(daemonDir) {
   }
 }
 
-// npm links workspaces as daemon/node_modules/@fde/<name> -> ../../packages/<name>.
+// npm links workspaces as daemon/node_modules/@frogg/<name> -> ../../packages/<name>.
 // The Windows zip cannot carry symlinks, so the library workspaces move into
 // node_modules for real (nothing references daemon/packages by path) and the
 // CLI, whose dist/index.js is the launch entry, is copied so both paths exist.
 async function materializeWorkspaceLinks(daemonDir) {
-  const scopeDir = path.join(daemonDir, "node_modules", "@fde");
+  const scopeDir = path.join(daemonDir, "node_modules", "@frogg");
   if (!existsSync(scopeDir)) return;
   for (const entry of await readdir(scopeDir)) {
     const linkPath = path.join(scopeDir, entry);
@@ -325,7 +325,7 @@ export async function packBundle({ stagingDir, bundleName, archiveName, outDir, 
   const digest = await sha256File(archivePath);
   await writeFile(`${archivePath}.sha256`, `${digest}  ${path.basename(archivePath)}\n`);
   const legacyPath = path.join(outDir, `${bundleName}.${isWindows ? "zip" : "tar.gz"}`);
-  if (brand.legacyFde && legacyPath !== archivePath) {
+  if (brand.legacyFrogg && legacyPath !== archivePath) {
     await copyFile(archivePath, legacyPath);
     await writeFile(`${legacyPath}.sha256`, `${digest}  ${path.basename(legacyPath)}\n`);
   }

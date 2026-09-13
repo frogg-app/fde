@@ -364,7 +364,7 @@ describe("Command Center query tokenization", () => {
   });
 
   it("requires each token to be adjacent characters, not a subsequence", () => {
-    // Unlike the composer's slash-command list, where "/pasbab" finds "/fde-babysit". Dropping
+    // Unlike the composer's slash-command list, where "/pasbab" finds "/frogg-babysit". Dropping
     // the subsequence tier is what keeps "No matches" meaning no matches: this list preselects
     // its first row, so a query that should find nothing must not put an action under Enter.
     for (const query of ["labdes", "lbl", "lasdsgn"]) {
@@ -524,7 +524,7 @@ describe("joinSubtitleParts", () => {
   });
 
   it("drops empty strings (Boolean parity — agents subtitle refactor guard)", () => {
-    expect(joinSubtitleParts(["", "fde", "master"])).toBe("fde · master");
+    expect(joinSubtitleParts(["", "frogg", "master"])).toBe("frogg · master");
   });
 
   it("returns an empty string when every part is null or empty", () => {
@@ -532,15 +532,15 @@ describe("joinSubtitleParts", () => {
   });
 
   it("returns a single part unchanged, with no separator", () => {
-    expect(joinSubtitleParts([null, "fde", null])).toBe("fde");
+    expect(joinSubtitleParts([null, "frogg", null])).toBe("frogg");
   });
 
   it("builds the workspace subtitle in host · project · branch order", () => {
     // Single-host: host gated away, project leads.
-    expect(joinSubtitleParts([null, "fde", "master"])).toBe("fde · master");
+    expect(joinSubtitleParts([null, "frogg", "master"])).toBe("frogg · master");
     // Multi-host: host first, then project, then branch.
-    expect(joinSubtitleParts(["host", "fde", "master"])).toBe("host · fde · master");
+    expect(joinSubtitleParts(["host", "frogg", "master"])).toBe("host · frogg · master");
     // No branch: degrades to project (or host · project).
-    expect(joinSubtitleParts([null, "fde", null])).toBe("fde");
+    expect(joinSubtitleParts([null, "frogg", null])).toBe("frogg");
   });
 });

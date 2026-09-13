@@ -2,9 +2,9 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-STATE_DIR="${FDE_MOBILE_E2E_STATE_DIR:-${REPO_ROOT}/.dev/agent-device-e2e}"
-ARTIFACTS_DIR="${FDE_MOBILE_E2E_ARTIFACTS_DIR:-${REPO_ROOT}/.dev/agent-device-artifacts}"
-METRO_PORT="${FDE_MOBILE_E2E_METRO_PORT:-8081}"
+STATE_DIR="${FROGG_MOBILE_E2E_STATE_DIR:-${REPO_ROOT}/.dev/agent-device-e2e}"
+ARTIFACTS_DIR="${FROGG_MOBILE_E2E_ARTIFACTS_DIR:-${REPO_ROOT}/.dev/agent-device-artifacts}"
+METRO_PORT="${FROGG_MOBILE_E2E_METRO_PORT:-8081}"
 METRO_PID=0
 
 cleanup() {

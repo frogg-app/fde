@@ -1,4 +1,4 @@
-import type { CheckoutPrStatusResponse, ForgeAuthState } from "@fde/protocol/messages";
+import type { CheckoutPrStatusResponse, ForgeAuthState } from "@frogg/protocol/messages";
 import { parseForgeAuthState } from "@/git/forge";
 
 type WireCheckoutPrStatusPayload = CheckoutPrStatusResponse["payload"];

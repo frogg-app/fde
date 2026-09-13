@@ -1,4 +1,4 @@
-// LAN-scan harness. Three ways of probing an FDE daemon on this LAN:
+// LAN-scan harness. Three ways of probing a Frogg daemon on this LAN:
 //
 //  1. from a page served at a private-network origin, with `fetch`: this is
 //     what a browser tab on the LAN does and it must succeed (CORS is fine);
@@ -11,7 +11,7 @@
 //     `fetch`: the daemon must appear in "Servers on your network".
 //
 // The daemon is a stand-in with the real daemon's discovery headers
-// (`serveFakeDaemon`); set `FDE_HARNESS_DAEMON=host:port` to point tests 1 and
+// (`serveFakeDaemon`); set `FROGG_HARNESS_DAEMON=host:port` to point tests 1 and
 // 2 at a real one instead. Only GET/OPTIONS requests are made.
 //
 // Run with `npm run test:harness` (needs `build:ui`, `build:bridge`, Chromium).
@@ -37,7 +37,7 @@ let identityUrl;
 before(async () => {
   server = await serveDist();
   fakeDaemon = await serveFakeDaemon();
-  daemon = process.env.FDE_HARNESS_DAEMON ?? fakeDaemon.endpoint;
+  daemon = process.env.FROGG_HARNESS_DAEMON ?? fakeDaemon.endpoint;
   identityUrl = `http://${daemon}/api/identity`;
 });
 
@@ -63,7 +63,7 @@ test("1. fetch from a private-network origin reaches the daemon (CORS is not the
     await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
     const result = await probeInPage(page);
     assert.equal(result.ok, true, JSON.stringify(result));
-    assert.equal(result.body.product, "fde");
+    assert.equal(result.body.product, "frogg");
   } finally {
     await browser.close();
   }

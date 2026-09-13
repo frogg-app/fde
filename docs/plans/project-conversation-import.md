@@ -21,7 +21,7 @@ The new `projectImport` daemon capability gates the Add Project entry once. The
 flow explicitly asks whether conversations live on this computer or the selected
 daemon. Client filesystem paths are never interpreted as remote filesystem paths.
 A user specifies the destination directory on the daemon; its canonical identity
-selects the existing FDE project or creates one during commit. Preview and file
+selects the existing Frogg project or creates one during commit. Preview and file
 staging do not create projects or sessions.
 
 Daemon-source import can also read exported JSONL from an explicitly selected
@@ -44,7 +44,7 @@ incomplete uploads are rejected. Limits: 2,000 files, 16 MiB per file, 64 MiB to
 500 conversations and 128 KiB per displayed message. Transfer is cancellable;
 commit completes on the daemon if the client disconnects.
 
-Committed text history persists under `FDE_HOME/project-conversations`, keyed by
+Committed text history persists under `FROGG_HOME/project-conversations`, keyed by
 project identity and provider session identity when available, or normalized content
 otherwise. Reimporting equivalent or older text skips it, including after daemon
 restart. A longer matching history updates the same conversation; divergent

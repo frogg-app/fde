@@ -8,7 +8,7 @@ import { createTtsCache } from "./tts-cache.js";
 let dir: string;
 
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), "fde-tts-cache-"));
+  dir = await mkdtemp(join(tmpdir(), "frogg-tts-cache-"));
 });
 
 afterEach(async () => {

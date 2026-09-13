@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { confirm, isCancel, log } from "@clack/prompts";
 import { Command } from "commander";
 import chalk from "chalk";
@@ -6,14 +6,14 @@ import {
   generateLocalPairingOffer,
   getOrCreateServerId,
   loadConfig,
-  resolveFdeHome,
-} from "@fde/server";
+  resolveFroggHome,
+} from "@frogg/server";
 import { resolveDaemonPassword, tryConnectToDaemon } from "../../utils/client.js";
 import { daemonHttpJson, resolveLoopbackHttpBase } from "./daemon-http.js";
 import { resolveLocalDaemonState } from "./local-daemon.js";
 import { addJsonOption } from "../../utils/command-options.js";
 import { formatPairingInstructions } from "../../output/pairing.js";
-import { buildPairingDeepLink } from "@fde/protocol/connection-offer";
+import { buildPairingDeepLink } from "@frogg/protocol/connection-offer";
 import { describeClaimStatus } from "./claim.js";
 import { describeAccessMode, resolveAccessMode, type DaemonAccessMode } from "./readiness.js";
 
@@ -82,9 +82,9 @@ function createProcessOutput(): PairCommandOutput {
   };
 }
 
-/** `FDE_PAIRING_QR=0` suppresses the terminal QR (CI, logs, narrow terminals). */
+/** `FROGG_PAIRING_QR=0` suppresses the terminal QR (CI, logs, narrow terminals). */
 export function pairingQrEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
-  const raw = env.FDE_PAIRING_QR?.trim().toLowerCase();
+  const raw = env.FROGG_PAIRING_QR?.trim().toLowerCase();
   if (raw === undefined || raw === "") return true;
   return !["0", "false", "no", "off"].includes(raw);
 }
@@ -109,10 +109,10 @@ export function pairCommand(): Command {
 }
 
 export async function resolveLocalPairingOffer(options: {
-  fdeHome: string;
+  froggHome: string;
   enableRelay?: boolean;
 }): Promise<PairingOffer> {
-  const state = resolveLocalDaemonState({ home: options.fdeHome });
+  const state = resolveLocalDaemonState({ home: options.froggHome });
   const serverId = getOrCreateServerId(state.home);
   const daemonOffer = await resolveDaemonPairingOffer(state.listen, serverId, options.enableRelay);
   if (daemonOffer) return daemonOffer;
@@ -123,13 +123,13 @@ export async function resolveLocalPairingOffer(options: {
     );
   }
 
-  const config = loadConfig(options.fdeHome);
+  const config = loadConfig(options.froggHome);
   if (options.enableRelay && !config.relayEnabled) {
     throw new Error("Start the daemon before enabling relay for pairing.");
   }
 
   return generateLocalPairingOffer({
-    fdeHome: options.fdeHome,
+    froggHome: options.froggHome,
     relayEnabled: config.relayEnabled,
     relayEndpoint: config.relayEndpoint,
     relayPublicEndpoint: config.relayPublicEndpoint,
@@ -248,9 +248,9 @@ export async function runPairCommand(
     ...dependencyOverrides,
   };
 
-  const fdeHome = resolveFdeHome();
+  const froggHome = resolveFroggHome();
   let pairing = await dependencies.resolveOffer({
-    fdeHome,
+    froggHome,
     enableRelay: options.relay === true,
   });
 
@@ -264,7 +264,7 @@ export async function runPairCommand(
       dependencies.output.setExitCode(1);
       return;
     }
-    pairing = await dependencies.resolveOffer({ fdeHome, enableRelay: true });
+    pairing = await dependencies.resolveOffer({ froggHome, enableRelay: true });
     dependencies.output.success("Relay enabled");
   }
 

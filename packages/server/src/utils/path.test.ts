@@ -13,7 +13,7 @@ import {
 describe("path equivalence", () => {
   test.each([
     ["C:/Users/Administrator/GhostFactory", "C:\\Users\\Administrator\\GhostFactory"],
-    ["d:\\Projects\\fde", "D:\\Projects\\fde"],
+    ["d:\\Projects\\frogg", "D:\\Projects\\frogg"],
     ["C:\\Users\\Administrator\\GhostFactory\\", "C:\\Users\\Administrator\\GhostFactory"],
     [String.raw`\\?\C:\Users\Administrator\GhostFactory`, "C:\\Users\\Administrator\\GhostFactory"],
     [String.raw`\\?\UNC\server\share\GhostFactory`, String.raw`\\server\share\GhostFactory`],
@@ -29,13 +29,17 @@ describe("path equivalence", () => {
   });
 
   test("checks POSIX root containment without prefix false positives", () => {
-    expect(isPathInsideRoot("/opt/fde", "/opt/fde/node_modules/@fde/server")).toBe(true);
-    expect(isPathInsideRoot("/opt/fde", "/opt/fde-other")).toBe(false);
+    expect(isPathInsideRoot("/opt/frogg", "/opt/frogg/node_modules/@frogg/server")).toBe(true);
+    expect(isPathInsideRoot("/opt/frogg", "/opt/frogg-other")).toBe(false);
   });
 
   test("checks Windows root containment case-insensitively", () => {
-    expect(isPathInsideRoot("C:\\Fde\\node_modules", "c:/fde/node_modules/@fde/server")).toBe(true);
-    expect(isPathInsideRoot("C:\\Fde\\node_modules", "C:\\Fde\\node_modules-other")).toBe(false);
+    expect(isPathInsideRoot("C:\\Frogg\\node_modules", "c:/frogg/node_modules/@frogg/server")).toBe(
+      true,
+    );
+    expect(isPathInsideRoot("C:\\Frogg\\node_modules", "C:\\Frogg\\node_modules-other")).toBe(
+      false,
+    );
   });
 
   test("preserves the casing of Windows relative suffixes", () => {
@@ -48,7 +52,7 @@ describe("path equivalence", () => {
   test.skipIf(process.platform === "win32")(
     "derives the contained suffix from a realpath-equivalent root",
     () => {
-      const tempDir = mkdtempSync(join(tmpdir(), "fde-path-"));
+      const tempDir = mkdtempSync(join(tmpdir(), "frogg-path-"));
       try {
         const realRoot = join(tempDir, "real-root");
         const nestedPath = join(realRoot, "packages", "app");

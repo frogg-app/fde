@@ -4,8 +4,8 @@
  * Phase 1: Foundation Tests
  *
  * Tests basic CLI functionality that doesn't require a daemon:
- * - fde --version outputs version
- * - fde --help shows commands
+ * - frogg --version outputs version
+ * - frogg --help shows commands
  */
 
 import { $ } from "zx";
@@ -15,26 +15,26 @@ $.verbose = false;
 console.log("📋 Phase 1: Foundation Tests\n");
 
 // Test 1.1: --version outputs version
-console.log("  Testing fde --version...");
-const versionResult = await $`fde --version`.nothrow();
+console.log("  Testing frogg --version...");
+const versionResult = await $`frogg --version`.nothrow();
 if (versionResult.exitCode !== 0) {
-  console.error("  ❌ fde --version failed with exit code", versionResult.exitCode);
+  console.error("  ❌ frogg --version failed with exit code", versionResult.exitCode);
   console.error("     stderr:", versionResult.stderr);
   process.exit(1);
 }
 const versionOutput = versionResult.stdout.trim();
 if (!versionOutput.match(/\d+\.\d+\.\d+/)) {
-  console.error("  ❌ fde --version output does not contain version number");
+  console.error("  ❌ frogg --version output does not contain version number");
   console.error("     output:", versionOutput);
   process.exit(1);
 }
-console.log("  ✅ fde --version outputs:", versionOutput);
+console.log("  ✅ frogg --version outputs:", versionOutput);
 
 // Test 1.2: --help shows commands
-console.log("  Testing fde --help...");
-const helpResult = await $`fde --help`.nothrow();
+console.log("  Testing frogg --help...");
+const helpResult = await $`frogg --help`.nothrow();
 if (helpResult.exitCode !== 0) {
-  console.error("  ❌ fde --help failed with exit code", helpResult.exitCode);
+  console.error("  ❌ frogg --help failed with exit code", helpResult.exitCode);
   console.error("     stderr:", helpResult.stderr);
   process.exit(1);
 }
@@ -44,10 +44,10 @@ const helpOutput = helpResult.stdout;
 const expectedTerms = ["agent", "daemon", "Usage", "Options", "Commands"];
 const missingTerms = expectedTerms.filter((term) => !helpOutput.includes(term));
 if (missingTerms.length > 0) {
-  console.error("  ❌ fde --help missing expected terms:", missingTerms.join(", "));
+  console.error("  ❌ frogg --help missing expected terms:", missingTerms.join(", "));
   console.error("     output:", helpOutput);
   process.exit(1);
 }
-console.log("  ✅ fde --help shows commands");
+console.log("  ✅ frogg --help shows commands");
 
 console.log("\n✅ Phase 1: Foundation Tests PASSED");

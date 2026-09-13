@@ -1,15 +1,15 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 /**
- * The "Claim this FDE daemon" page: what the web server serves instead of the
+ * The "Claim this Frogg daemon" page: what the web server serves instead of the
  * app while the daemon is unclaimed and reached from an untrusted address (public,
  * or the LAN with `daemon.auth.trustLan` off). It is
  * self-contained (inline CSS, inline SVG QR, no external assets) and polls
  * `/api/setup/status` until a device has paired, then reloads into the app.
  */
-import { buildPairingDeepLink } from "@fde/protocol/connection-offer";
-import { escapeHtml, FDE_ACCENT, PAIRING_PAGE_STYLES } from "./pairing-page-chrome.js";
+import { buildPairingDeepLink } from "@frogg/protocol/connection-offer";
+import { escapeHtml, FROGG_ACCENT, PAIRING_PAGE_STYLES } from "./pairing-page-chrome.js";
 
-export { FDE_ACCENT };
+export { FROGG_ACCENT };
 
 export interface ClaimGatePageInput {
   hostname: string;

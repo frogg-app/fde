@@ -16,7 +16,7 @@ export async function getTerminalBufferText(page: Page): Promise<string> {
   return page.evaluate(() => {
     const term = (
       window as Window & {
-        __fdeTerminal?: {
+        __froggTerminal?: {
           buffer: {
             active: {
               length: number;
@@ -26,7 +26,7 @@ export async function getTerminalBufferText(page: Page): Promise<string> {
           onWriteParsed: (cb: () => void) => { dispose: () => void };
         };
       }
-    ).__fdeTerminal;
+    ).__froggTerminal;
     if (!term) {
       return "";
     }
@@ -127,13 +127,13 @@ export interface LatencySample {
 export async function measureKeystrokeLatency(page: Page, char: string): Promise<number> {
   await page.evaluate(() => {
     const win = window as Window & {
-      __fdeTerminal?: { onWriteParsed: (cb: () => void) => { dispose: () => void } };
+      __froggTerminal?: { onWriteParsed: (cb: () => void) => { dispose: () => void } };
       __perfKeystroke?: { promise: Promise<number> | null };
     };
-    if (!win.__fdeTerminal) {
-      throw new Error("__fdeTerminal not available");
+    if (!win.__froggTerminal) {
+      throw new Error("__froggTerminal not available");
     }
-    const term = win.__fdeTerminal;
+    const term = win.__froggTerminal;
 
     const state = (win.__perfKeystroke = {
       promise: null as Promise<number> | null,

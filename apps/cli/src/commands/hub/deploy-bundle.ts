@@ -3,9 +3,9 @@ import path from "node:path";
 import YAML from "yaml";
 import { HubCommandError } from "./error.js";
 
-const HUB_RESOURCE_PATH = ".fde/hub.yml";
-const LEGACY_TOML_PATH = ".fde/hub.toml";
-const WORKFLOW_DIRECTORY = ".fde/workflows";
+const HUB_RESOURCE_PATH = ".frogg/hub.yml";
+const LEGACY_TOML_PATH = ".frogg/hub.toml";
+const WORKFLOW_DIRECTORY = ".frogg/workflows";
 const PARTIAL_DIRECTORY = `${WORKFLOW_DIRECTORY}/partials`;
 const PROJECT_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
 

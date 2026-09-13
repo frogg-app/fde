@@ -29,7 +29,7 @@ export async function exportMobileProject(build: BrandBuild, destination: string
     await cp(source, target, { verbatimSymlinks: true });
   }
   const brandInput = await stageBrand(build.selected);
-  if (!build.brand.legacyFde)
+  if (!build.brand.legacyFrogg)
     await cp(path.join(root, brandInput), path.join(destination, brandInput), { recursive: true });
   const eas = JSON.parse(await readFile(path.join(outputRoot, "eas.json"), "utf8"));
   const revision = execFileSync("git", ["rev-parse", "HEAD"], {
@@ -37,7 +37,7 @@ export async function exportMobileProject(build: BrandBuild, destination: string
     encoding: "utf8",
   }).trim();
   for (const profile of Object.values(eas.build) as Array<{ env?: Record<string, string> }>) {
-    profile.env = { ...profile.env, FDE_BRAND_DIR: brandInput, FDE_SOURCE_REVISION: revision };
+    profile.env = { ...profile.env, FROGG_BRAND_DIR: brandInput, FROGG_SOURCE_REVISION: revision };
   }
   await writeFile(path.join(destination, "apps/ui/eas.json"), JSON.stringify(eas, null, 2) + "\n");
   await writeFile(

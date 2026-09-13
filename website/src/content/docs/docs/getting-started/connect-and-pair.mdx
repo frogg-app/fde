@@ -25,7 +25,7 @@ a device must pair first.
 
 :::caution
 LAN trust means anyone on your private network can control agents on the daemon. Turn
-it off on shared networks: `fde auth trust-lan off`, or set a password.
+it off on shared networks: `frogg auth trust-lan off`, or set a password.
 :::
 
 ## Add a host in the app
@@ -38,8 +38,8 @@ Open **Hosts** in the sidebar.
 | ------------------- | --------------- | -------- |
 | **Direct connection** | All clients   | The daemon is reachable by IP or name: LAN, VPN, Tailscale |
 | **Remote SSH**      | Desktop app     | You can SSH to the host. The app tunnels to the daemon over SSH and can install it for you |
-| **Paste pairing link** | All clients  | You have a link from `fde auth pair` |
-| **Scan QR code**    | Android app     | The QR code printed by `fde auth pair` |
+| **Paste pairing link** | All clients  | You have a link from `frogg auth pair` |
+| **Scan QR code**    | Android app     | The QR code printed by `frogg auth pair` |
 
 ### Direct connection
 
@@ -66,42 +66,42 @@ private network, and it is required when LAN trust is off.
 1. On the daemon host, print a pairing link:
 
    ```sh
-   fde auth pair
+   frogg auth pair
    ```
 
    ```text
    Pairing link (phone, QR, or paste into the app):
-   https://pair.frogg.app/code/eyJ2IjozLCJwcm9kdWN0IjoiZmRlIi...
+   https://pair.frogg.app/code/eyJ2IjozLCJwcm9kdWN0IjoiZnJvZ2ci...
 
    Treat this pairing link like a password. Anyone with it can access this daemon.
    Access: LAN trusted — devices on your private network connect without pairing; anyone else must pair.
    Direct LAN pairing: this daemon has not been claimed yet; the first device to pair becomes its owner. Single-use, expires ...
    ```
 
-   A QR code follows unless `FDE_PAIRING_QR=0`.
+   A QR code follows unless `FROGG_PAIRING_QR=0`.
 
 2. Open the link on the device, scan the QR code in the Android app, or use **Paste
    pairing link** in any client.
 
 3. The client connects to an address in the offer and redeems its one-time token. The
-   daemon stores the device's credential as a hash in `~/.fde/principals.json`.
+   daemon stores the device's credential as a hash in `~/.frogg/principals.json`.
 
 </Steps>
 
 Details that matter:
 
-- Claim tokens are **single-use** and expire after **10 minutes**. Run `fde auth pair`
+- Claim tokens are **single-use** and expire after **10 minutes**. Run `frogg auth pair`
   again for another device.
 - The **first device to pair claims** an unclaimed daemon. Until then, a browser opening
   the daemon from a public address sees a pairing page instead of the app.
 - The link contains everything needed to connect. `pair.frogg.app` is a stateless page
   that hands the offer to the app; it never contacts your daemon. Change its base with
-  `app.pairingBaseUrl` or `FDE_PAIRING_BASE_URL`.
+  `app.pairingBaseUrl` or `FROGG_PAIRING_BASE_URL`.
 - A direct pairing offer lists the daemon's LAN addresses. The device must be able to
   reach one of them (same network or a VPN). Override the advertised address with
-  `FDE_PRIMARY_LAN_IP`.
+  `FROGG_PRIMARY_LAN_IP`.
 
-In the app, host settings **Pair a device** first asks whether to enable relay. FDE does
+In the app, host settings **Pair a device** first asks whether to enable relay. Frogg does
 not run a public relay; choose **Not now** unless you
 [operate one](/docs/self-hosting/security/#relay). If the host has no relay endpoint, the
 dialog says so and offers only **Not now**. Set the endpoint, and whether to use TLS, in
@@ -112,22 +112,22 @@ the **Relay endpoint** card on the same **Pair devices** page, then pair again.
 ### Check and reset
 
 ```sh
-fde auth claim-status
+frogg auth claim-status
 ```
 
 ```text
 Claimed:        yes
 Password:       not configured
-LAN trusted:    yes (fde daemon trust-lan off to require pairing on the LAN)
+LAN trusted:    yes (frogg daemon trust-lan off to require pairing on the LAN)
 Pairing needed: yes, for clients beyond the private network
-Principals:     /home/you/.fde/principals.json
+Principals:     /home/you/.frogg/principals.json
 ```
 
 There is no per-device revoke. To remove access, forget **all** devices and pair the ones
 you keep again:
 
 ```sh
-fde auth reset-claim
+frogg auth reset-claim
 ```
 
 ## Use a password instead
@@ -135,20 +135,20 @@ fde auth reset-claim
 A password applies to every client, including loopback and the LAN:
 
 ```sh
-fde auth set-password     # prompts, stores a bcrypt hash in config.json
-fde restart
+frogg auth set-password     # prompts, stores a bcrypt hash in config.json
+frogg restart
 ```
 
-Clients enter it in **Direct connection**; the CLI reads `FDE_PASSWORD`. Docker and other
-automated installs can pass `FDE_PASSWORD` as an environment variable instead.
+Clients enter it in **Direct connection**; the CLI reads `FROGG_PASSWORD`. Docker and other
+automated installs can pass `FROGG_PASSWORD` as an environment variable instead.
 
 ## Troubleshooting connections
 
 | Symptom | Fix |
 | ------- | --- |
-| `This app requires daemon 0.6.0 or later` | Update the daemon (`fde update` or re-run `install.sh`), then restart its service |
-| `Invalid Host header` (HTTP 403) | You reached the daemon by a hostname it does not allow. Add it: `fde start --hostnames build-box.lan` or `daemon.hostnames` in config |
-| `requires a password` from the CLI | Set `FDE_PASSWORD` |
+| `This app requires daemon 0.6.0 or later` | Update the daemon (`frogg update` or re-run `install.sh`), then restart its service |
+| `Invalid Host header` (HTTP 403) | You reached the daemon by a hostname it does not allow. Add it: `frogg start --hostnames build-box.lan` or `daemon.hostnames` in config |
+| `requires a password` from the CLI | Set `FROGG_PASSWORD` |
 | Browser shows a pairing page | You are connecting from a non-private address. Pair, or connect over the LAN/VPN |
 | TLS error on Direct connection | Untick **Use SSL** unless a TLS proxy fronts the daemon |
 

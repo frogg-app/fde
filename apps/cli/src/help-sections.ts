@@ -1,10 +1,10 @@
 import type { Command } from "commander";
 
 /**
- * Splits `fde --help` into "Commands" and "Command groups".
+ * Splits `frogg --help` into "Commands" and "Command groups".
  *
- * A flat list mixes verbs you type directly (`fde start`) with namespaces you
- * have to drill into (`fde agent ...`), which reads as one long menu of
+ * A flat list mixes verbs you type directly (`frogg start`) with namespaces you
+ * have to drill into (`frogg agent ...`), which reads as one long menu of
  * unrelated things. Commander 12 has no help grouping - `.helpGroup()` arrived
  * in v14 - so groups are registered hidden and rendered in their own section.
  */

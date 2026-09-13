@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { note } from "@clack/prompts";
 import path from "node:path";
 
@@ -53,8 +53,12 @@ export function describeReachability(input: {
   return lines;
 }
 
-export function printNextSteps(pairingUrl: string | null, fdeHome: string, richUi: boolean): void {
-  const daemonLogPath = path.join(fdeHome, "daemon.log");
+export function printNextSteps(
+  pairingUrl: string | null,
+  froggHome: string,
+  richUi: boolean,
+): void {
+  const daemonLogPath = path.join(froggHome, "daemon.log");
   printLines(
     [
       pairingUrl

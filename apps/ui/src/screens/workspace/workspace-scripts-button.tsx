@@ -170,13 +170,13 @@ function routeLabelKey(
   kind: WorkspaceScriptLinkKind,
 ):
   | "workspace.scripts.routes.public"
-  | "workspace.scripts.routes.fde"
+  | "workspace.scripts.routes.frogg"
   | "workspace.scripts.routes.direct" {
   switch (kind) {
     case "public":
       return "workspace.scripts.routes.public";
-    case "fde":
-      return "workspace.scripts.routes.fde";
+    case "frogg":
+      return "workspace.scripts.routes.frogg";
     case "direct":
       return "workspace.scripts.routes.direct";
   }

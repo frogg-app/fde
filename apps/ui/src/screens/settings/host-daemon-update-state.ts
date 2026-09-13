@@ -3,7 +3,7 @@ import type {
   DaemonUpdateChannel,
   DaemonUpdateCheckResponse,
   DaemonUpdateRun,
-} from "@fde/protocol/messages";
+} from "@frogg/protocol/messages";
 import type { useHostRuntimeClient } from "@/runtime/host-runtime";
 
 /** State shapes and the check hook behind the host settings "Daemon updates" section. */

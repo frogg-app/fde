@@ -27,7 +27,7 @@ test(
       mkdirSync(path.join(bundle, "node/bin"), { recursive: true });
       mkdirSync(path.join(bundle, "bin"));
       symlinkSync(process.execPath, path.join(bundle, "node/bin/node"));
-      const commands = brand.legacyFde ? [brand.cliName, "fde"] : [brand.cliName];
+      const commands = brand.legacyFrogg ? [brand.cliName, "frogg"] : [brand.cliName];
       for (const name of commands)
         writeFileSync(path.join(bundle, "bin", name), "#!/bin/sh\nexit 0\n", { mode: 0o755 });
       writeFileSync(
@@ -68,9 +68,9 @@ test(
         readFileSync(path.join(install, ".brand-identity"), "utf8").trim(),
         `${brand.id}:${brand.applicationId}`,
       );
-      if (!brand.legacyFde) {
-        assert.equal(existsSync(path.join(bin, "fde")), false);
-        assert.equal(existsSync(path.join(bin, "fde")), false);
+      if (!brand.legacyFrogg) {
+        assert.equal(existsSync(path.join(bin, "frogg")), false);
+        assert.equal(existsSync(path.join(bin, "frogg")), false);
       }
       const manifestPath = path.join(bundle, "manifest.json");
       const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));

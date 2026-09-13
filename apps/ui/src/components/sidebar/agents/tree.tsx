@@ -124,7 +124,7 @@ export const SidebarAgentBranch = memo(function SidebarAgentBranch({
   const data = buildSubagentRowPresentationData(node.row);
   const label = data.titleState === "loading" ? t("common.states.loading") : data.label;
   const statusBucket =
-    node.row.kind === "fde" ? deriveSidebarStateBucket(node.row) : data.statusBucket;
+    node.row.kind === "frogg" ? deriveSidebarStateBucket(node.row) : data.statusBucket;
   const presentation = useMemo(
     () => ({
       ...data,

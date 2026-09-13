@@ -1,5 +1,5 @@
 import type { Agent } from "@/stores/session-store";
-import type { ProviderSubagentDescriptorPayload } from "@fde/protocol/messages";
+import type { ProviderSubagentDescriptorPayload } from "@frogg/protocol/messages";
 import type { SubagentRow } from "@/subagents/select";
 import { providerSubagentKey } from "@/subagents/provider-store";
 import { buildWorkspaceTabPersistenceKey, type WorkspaceTabTarget } from "@/workspace-tabs/model";
@@ -35,7 +35,7 @@ export function buildSidebarAgentTrees(input: {
         serverId: host.serverId,
         workspaceId: agent.workspaceId,
         row: {
-          kind: "fde",
+          kind: "frogg",
           id: agent.id,
           provider: agent.provider,
           title: agent.title,
@@ -94,7 +94,7 @@ function activeChildren(
 ): SidebarAgentNode[] {
   return children.flatMap((node) => {
     const descendants = activeChildren(node.children, agents);
-    const agent = node.row.kind === "fde" ? agents.get(node.row.id) : undefined;
+    const agent = node.row.kind === "frogg" ? agents.get(node.row.id) : undefined;
     const active =
       node.row.status === "running" ||
       node.row.status === "initializing" ||

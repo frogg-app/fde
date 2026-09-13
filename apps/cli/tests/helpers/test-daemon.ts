@@ -1,13 +1,13 @@
 /**
  * Test Daemon Helper
  *
- * Provides utilities for launching real Fde daemons in E2E tests.
- * Each test gets an isolated daemon on an available local port with its own FDE_HOME.
+ * Provides utilities for launching real Frogg daemons in E2E tests.
+ * Each test gets an isolated daemon on an available local port with its own FROGG_HOME.
  *
  * CRITICAL RULES (from design doc):
  * 1. Port: Use an available ephemeral local port - NEVER use 9999 (production)
  * 2. Protocol: WebSocket ONLY - daemon has no HTTP endpoints
- * 3. Temp dirs: Create temp directories for FDE_HOME and agent --cwd
+ * 3. Temp dirs: Create temp directories for FROGG_HOME and agent --cwd
  * 4. Model: Always use claude provider with haiku model for fast, cheap tests
  * 5. Cleanup: Kill daemon and remove temp dirs after each test
  */
@@ -25,8 +25,8 @@ export interface TestDaemonContext {
   port: number;
   /** WebSocket URL for connecting to daemon */
   wsUrl: string;
-  /** Temp directory for FDE_HOME */
-  fdeHome: string;
+  /** Temp directory for FROGG_HOME */
+  froggHome: string;
   /** Temp directory for agent working directory */
   workDir: string;
   /** Running daemon process */
@@ -38,17 +38,17 @@ export interface TestDaemonContext {
 }
 
 const TEST_DAEMON_ENV_DEFAULTS: Record<string, string> = {
-  FDE_RELAY_ENABLED: "false",
-  FDE_LOCAL_SPEECH_AUTO_DOWNLOAD: process.env.FDE_LOCAL_SPEECH_AUTO_DOWNLOAD ?? "0",
-  FDE_DICTATION_ENABLED: process.env.FDE_DICTATION_ENABLED ?? "0",
-  FDE_VOICE_MODE_ENABLED: process.env.FDE_VOICE_MODE_ENABLED ?? "0",
+  FROGG_RELAY_ENABLED: "false",
+  FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD: process.env.FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD ?? "0",
+  FROGG_DICTATION_ENABLED: process.env.FROGG_DICTATION_ENABLED ?? "0",
+  FROGG_VOICE_MODE_ENABLED: process.env.FROGG_VOICE_MODE_ENABLED ?? "0",
 };
 const TEST_DAEMON_HOST = "127.0.0.1";
 const TSX_ENTRY = fileURLToPath(import.meta.resolve("tsx/cli"));
 
 const DEFAULT_OUTPUT_CAPTURE_LIMIT = 256 * 1024;
 const TEST_OUTPUT_CAPTURE_LIMIT = Number.parseInt(
-  process.env.FDE_TEST_OUTPUT_CAPTURE_BYTES ?? `${DEFAULT_OUTPUT_CAPTURE_LIMIT}`,
+  process.env.FROGG_TEST_OUTPUT_CAPTURE_BYTES ?? `${DEFAULT_OUTPUT_CAPTURE_LIMIT}`,
   10,
 );
 
@@ -154,28 +154,28 @@ export function getRandomPort(): number {
 /**
  * Create isolated temp directories for testing
  */
-export async function createTempDirs(): Promise<{ fdeHome: string; workDir: string }> {
-  const fdeHome = await mkdtemp(join(tmpdir(), "fde-e2e-home-"));
-  const workDir = await mkdtemp(join(tmpdir(), "fde-e2e-work-"));
+export async function createTempDirs(): Promise<{ froggHome: string; workDir: string }> {
+  const froggHome = await mkdtemp(join(tmpdir(), "frogg-e2e-home-"));
+  const workDir = await mkdtemp(join(tmpdir(), "frogg-e2e-work-"));
 
   // Create the agents directory that the daemon expects
-  const agentsDir = join(fdeHome, "agents");
+  const agentsDir = join(froggHome, "agents");
   await mkdir(agentsDir, { recursive: true });
 
-  return { fdeHome, workDir };
+  return { froggHome, workDir };
 }
 
 /**
- * Wait for daemon to be ready by running `fde agent ls`
+ * Wait for daemon to be ready by running `frogg agent ls`
  * This connects via WebSocket and ensures the daemon is responsive
  */
 async function probeDaemonReady(port: number, env?: NodeJS.ProcessEnv): Promise<boolean> {
   try {
-    const { exitCode } = await runFdeCli(
+    const { exitCode } = await runFroggCli(
       {
         port,
         wsUrl: `ws://${TEST_DAEMON_HOST}:${port}`,
-        fdeHome: "",
+        froggHome: "",
         workDir: "",
         process: null,
         isReady: false,
@@ -217,19 +217,19 @@ function sleep(ms: number): Promise<void> {
  * Start a test daemon programmatically using the server's bootstrap API
  *
  * This starts the daemon in a separate process using the CLI's daemon start command
- * with isolated FDE_HOME and FDE_LISTEN environment variables.
+ * with isolated FROGG_HOME and FROGG_LISTEN environment variables.
  */
 export async function startTestDaemon(options?: {
   port?: number;
-  fdeHome?: string;
+  froggHome?: string;
   workDir?: string;
   timeout?: number;
   env?: NodeJS.ProcessEnv;
 }): Promise<TestDaemonContext> {
   const port = options?.port ?? (await getAvailablePort());
-  const { fdeHome, workDir } =
-    options?.fdeHome && options?.workDir
-      ? { fdeHome: options.fdeHome, workDir: options.workDir }
+  const { froggHome, workDir } =
+    options?.froggHome && options?.workDir
+      ? { froggHome: options.froggHome, workDir: options.workDir }
       : await createTempDirs();
   const timeout = options?.timeout ?? 30000;
 
@@ -247,8 +247,8 @@ export async function startTestDaemon(options?: {
       env: {
         ...process.env,
         ...TEST_DAEMON_ENV_DEFAULTS,
-        FDE_HOME: fdeHome,
-        FDE_LISTEN: `${TEST_DAEMON_HOST}:${port}`,
+        FROGG_HOME: froggHome,
+        FROGG_LISTEN: `${TEST_DAEMON_HOST}:${port}`,
         // Force no TTY to prevent QR code output
         CI: "true",
         ...options?.env,
@@ -276,8 +276,8 @@ export async function startTestDaemon(options?: {
 
     // Clean up temp directories
     try {
-      if (existsSync(fdeHome)) {
-        await rm(fdeHome, { recursive: true, force: true });
+      if (existsSync(froggHome)) {
+        await rm(froggHome, { recursive: true, force: true });
       }
     } catch {
       // Ignore cleanup errors
@@ -310,7 +310,7 @@ export async function startTestDaemon(options?: {
   const ctx: TestDaemonContext = {
     port,
     wsUrl,
-    fdeHome,
+    froggHome,
     workDir,
     process: daemonProcess,
     isReady: false,
@@ -335,12 +335,12 @@ export async function startTestDaemon(options?: {
 }
 
 /**
- * Run a fde CLI command against a test daemon
+ * Run a frogg CLI command against a test daemon
  *
  * This is a helper that sets the correct environment variables
  * to point at the test daemon.
  */
-export async function runFdeCli(
+export async function runFroggCli(
   ctx: TestDaemonContext,
   args: string[],
   options?: {
@@ -360,8 +360,8 @@ export async function runFdeCli(
       env: {
         ...process.env,
         ...TEST_DAEMON_ENV_DEFAULTS,
-        FDE_HOST: `${TEST_DAEMON_HOST}:${ctx.port}`,
-        FDE_HOME: ctx.fdeHome,
+        FROGG_HOST: `${TEST_DAEMON_HOST}:${ctx.port}`,
+        FROGG_HOME: ctx.froggHome,
         ...options?.env,
       },
       cwd,
@@ -384,7 +384,7 @@ export async function runFdeCli(
       if (proc.pid) {
         signalProcessTree(proc.pid, "SIGKILL");
       }
-      reject(new Error(`CLI command timed out after ${timeout}ms: fde ${args.join(" ")}`));
+      reject(new Error(`CLI command timed out after ${timeout}ms: frogg ${args.join(" ")}`));
     }, timeout);
 
     proc.on("exit", (code) => {
@@ -414,8 +414,8 @@ export async function createE2ETestContext(options?: {
   env?: NodeJS.ProcessEnv;
 }): Promise<
   TestDaemonContext & {
-    /** Run a fde CLI command against this daemon */
-    fde: (
+    /** Run a frogg CLI command against this daemon */
+    frogg: (
       args: string[],
       opts?: { timeout?: number; cwd?: string; env?: NodeJS.ProcessEnv },
     ) => Promise<{
@@ -427,13 +427,13 @@ export async function createE2ETestContext(options?: {
 > {
   const ctx = await startTestDaemon({ timeout: options?.timeout, env: options?.env });
 
-  const fde = (
+  const frogg = (
     args: string[],
     opts?: { timeout?: number; cwd?: string; env?: NodeJS.ProcessEnv },
-  ) => runFdeCli(ctx, args, opts);
+  ) => runFroggCli(ctx, args, opts);
 
   return {
     ...ctx,
-    fde,
+    frogg,
   };
 }

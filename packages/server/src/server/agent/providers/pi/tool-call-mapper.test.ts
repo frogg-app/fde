@@ -169,27 +169,27 @@ describe("Pi tool call mapper", () => {
 
   test("normalizes Pi MCP proxy calls from requested tool args while running", () => {
     const toolCall = parseToolArgs("mcp", {
-      tool: "fde_list_models",
+      tool: "frogg_list_models",
       args: '{"provider":"pi"}',
     });
 
-    expect(resolveToolCallName(toolCall, null)).toBe("fde.list_models");
+    expect(resolveToolCallName(toolCall, null)).toBe("frogg.list_models");
   });
 
   test("normalizes Pi MCP proxy calls from result details when completed", () => {
     const toolCall = parseToolArgs("mcp", {
-      tool: "fde_list_models",
+      tool: "frogg_list_models",
       args: '{"provider":"pi"}',
     });
     const result = parseToolResult({
       content: [{ type: "text", text: "(empty result)" }],
       details: {
         mode: "call",
-        server: "fde",
+        server: "frogg",
         tool: "list_models",
       },
     });
 
-    expect(resolveToolCallName(toolCall, result)).toBe("fde.list_models");
+    expect(resolveToolCallName(toolCall, result)).toBe("frogg.list_models");
   });
 });

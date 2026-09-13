@@ -2,7 +2,7 @@ import type {
   AgentAttachment,
   ForgeSearchItem,
   UploadedFileAttachment,
-} from "@fde/protocol/messages";
+} from "@frogg/protocol/messages";
 
 export type AttachmentStorageType = "web-indexeddb" | "desktop-file" | "native-file";
 

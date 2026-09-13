@@ -5,7 +5,7 @@ import {
   mapClaudeFailedToolCall,
   mapClaudeRunningToolCall,
 } from "./tool-call-mapper.js";
-import { buildToolCallDisplayModel } from "@fde/protocol/tool-call-display";
+import { buildToolCallDisplayModel } from "@frogg/protocol/tool-call-display";
 
 import type { AgentMetadata, AgentStreamEvent, AgentTimelineItem } from "../../agent-sdk-types.js";
 

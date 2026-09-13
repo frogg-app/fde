@@ -8,13 +8,13 @@ import {
   startPidLockHeartbeat,
   updatePidLock,
 } from "../src/server/pid-lock.js";
-import { resolveFdeHome } from "../src/server/fde-home.js";
+import { prepareFroggHome, resolveFroggHome } from "../src/server/frogg-home.js";
 import { loadPersistedConfig } from "../src/server/persisted-config.js";
 import { runSupervisor } from "./supervisor.js";
 import { resolveSupervisorLogFile } from "./supervisor-log-config.js";
 import { applySherpaLoaderEnv } from "../src/server/speech/providers/local/sherpa/sherpa-runtime-env.js";
 
-process.title = "Fde Supervisor";
+process.title = "Frogg Supervisor";
 
 interface DaemonRunnerConfig {
   devMode: boolean;
@@ -76,9 +76,9 @@ function resolveWorkerExecArgv(workerEntry: string, devMode: boolean): string[] 
     "--heapsnapshot-near-heap-limit=3",
     "--max-old-space-size=3072",
     "--report-on-fatalerror",
-    "--report-directory=/tmp/fde-reports",
+    "--report-directory=/tmp/frogg-reports",
   ];
-  const inspectArg = process.env.FDE_NODE_INSPECT ?? "--inspect";
+  const inspectArg = process.env.FROGG_NODE_INSPECT ?? "--inspect";
   if (inspectArg !== "0" && inspectArg !== "false" && inspectArg !== "off") {
     devArgs.push(inspectArg);
   }
@@ -86,7 +86,7 @@ function resolveWorkerExecArgv(workerEntry: string, devMode: boolean): string[] 
 }
 
 function resolvePackagedNodeEntrypointRunnerPath(currentScriptPath: string): string | null {
-  const packageMarker = `${path.sep}node_modules${path.sep}@fde${path.sep}server${path.sep}`;
+  const packageMarker = `${path.sep}node_modules${path.sep}@frogg${path.sep}server${path.sep}`;
   const markerIndex = currentScriptPath.lastIndexOf(packageMarker);
   if (markerIndex === -1) {
     return null;
@@ -108,13 +108,14 @@ async function main(): Promise<void> {
       : null;
 
   applySherpaLoaderEnv(workerEnv);
+  prepareFroggHome(workerEnv);
 
-  const fdeHome = resolveFdeHome(workerEnv);
-  const persistedConfig = loadPersistedConfig(fdeHome);
-  const supervisorLogFile = resolveSupervisorLogFile(fdeHome, persistedConfig, workerEnv);
+  const froggHome = resolveFroggHome(workerEnv);
+  const persistedConfig = loadPersistedConfig(froggHome);
+  const supervisorLogFile = resolveSupervisorLogFile(froggHome, persistedConfig, workerEnv);
 
   try {
-    await acquirePidLock(fdeHome, null, {
+    await acquirePidLock(froggHome, null, {
       ownerPid: process.pid,
       reclaimStaleDesktopLock: config.reclaimStalePidLock,
     });
@@ -129,7 +130,7 @@ async function main(): Promise<void> {
 
   let lockReleased = false;
   let requestSupervisorShutdown: ((reason: string) => void) | null = null;
-  const stopLockHeartbeat = startPidLockHeartbeat(fdeHome, {
+  const stopLockHeartbeat = startPidLockHeartbeat(froggHome, {
     ownerPid: process.pid,
     onError: (error) => {
       const message = error instanceof Error ? error.message : String(error);
@@ -145,7 +146,7 @@ async function main(): Promise<void> {
     }
     lockReleased = true;
     stopLockHeartbeat();
-    await releasePidLock(fdeHome, {
+    await releasePidLock(froggHome, {
       ownerPid: process.pid,
     });
   };
@@ -175,7 +176,7 @@ async function main(): Promise<void> {
     restartOnCrash: true,
     logFile: supervisorLogFile,
     onWorkerReady: async ({ listen }) => {
-      await updatePidLock(fdeHome, { listen }, { ownerPid: process.pid });
+      await updatePidLock(froggHome, { listen }, { ownerPid: process.pid });
     },
     onSupervisorExit: releaseLock,
   });

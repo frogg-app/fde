@@ -5,19 +5,19 @@ import { apkAssetName, gradleArgsFor } from "./build-android-apk.mjs";
 test("asset name marks debug-signed release APKs", () => {
   assert.equal(
     apkAssetName({ version: "0.2.14", abi: "arm64-v8a", signed: false, appVariant: "development" }),
-    "FDE-0.2.14-android-arm64-v8a-development-unsigned.apk",
+    "Frogg-0.2.14-android-arm64-v8a-development-unsigned.apk",
   );
   assert.equal(
     apkAssetName({ version: "0.1.9", abi: "arm64-v8a", signed: true }),
-    "FDE-0.1.9-android-arm64-v8a.apk",
+    "Frogg-0.1.9-android-arm64-v8a.apk",
   );
   assert.equal(
     apkAssetName({ version: "0.1.9", abi: "universal", signed: false }),
-    "FDE-0.1.9-android-universal-unsigned.apk",
+    "Frogg-0.1.9-android-universal-unsigned.apk",
   );
   assert.equal(
     apkAssetName({ version: "0.1.9", abi: "arm64-v8a", signed: false, variant: "debug" }),
-    "FDE-0.1.9-android-arm64-v8a-debug.apk",
+    "Frogg-0.1.9-android-arm64-v8a-debug.apk",
   );
 });
 

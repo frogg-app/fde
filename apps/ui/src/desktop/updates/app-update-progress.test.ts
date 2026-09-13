@@ -103,7 +103,7 @@ describe("app update progress", () => {
     await i18n.changeLanguage("fr");
     try {
       expect(describeInstallKind("macos-dmg")).not.toBe(
-        "Opens the disk image; drag FDE to Applications to finish.",
+        "Opens the disk image; drag Frogg to Applications to finish.",
       );
     } finally {
       await i18n.changeLanguage("en");

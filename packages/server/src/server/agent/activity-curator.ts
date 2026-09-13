@@ -1,9 +1,9 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import type { AgentTimelineItem } from "./agent-sdk-types.js";
-import type { AgentAttachment } from "@fde/protocol/messages";
+import type { AgentAttachment } from "@frogg/protocol/messages";
 import type { AgentTimelineRow } from "./agent-timeline-store-types.js";
-import { isLikelyExternalToolName } from "@fde/protocol/tool-name-normalization";
-import { buildToolCallDisplayModel } from "@fde/protocol/tool-call-display";
+import { isLikelyExternalToolName } from "@frogg/protocol/tool-name-normalization";
+import { buildToolCallDisplayModel } from "@frogg/protocol/tool-call-display";
 import { projectTimelineRows } from "./timeline-projection.js";
 
 const DEFAULT_MAX_ITEMS = 0;

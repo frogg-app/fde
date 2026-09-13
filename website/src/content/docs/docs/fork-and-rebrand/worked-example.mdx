@@ -1,6 +1,6 @@
 ---
 title: "Worked example: Acme Studio"
-description: End-to-end walkthrough that forks FDE, applies the brands/example brand, runs it, and prepares a release.
+description: End-to-end walkthrough that forks Frogg, applies the brands/example brand, runs it, and prepares a release.
 sidebar:
   order: 9
 ---
@@ -10,11 +10,11 @@ import forkStockVsAcmeImg from "@/assets/docs/fork/stock-vs-acme.png";
 import forkBrandCheckImg from "@/assets/docs/fork/brand-check.png";
 import forkAcmeHostOverviewImg from "@/assets/docs/fork/acme-host-overview.png";
 
-This walkthrough ships **Acme Studio** from a fork at `acme-corp/fde`. It uses
+This walkthrough ships **Acme Studio** from a fork at `acme-corp/frogg`. It uses
 `brands/example`, which is already in the repository, so every command here works on a
 fresh clone. Output shown is real output from this repository at 0.6.19.
 
-<Screenshot src={forkStockVsAcmeImg} alt="Stock FDE next to Acme Studio, built from the same commit" />
+<Screenshot src={forkStockVsAcmeImg} alt="Stock Frogg next to Acme Studio, built from the same commit" />
 
 ## The brand
 
@@ -41,13 +41,13 @@ relay.
 
 <Steps>
 
-1. Fork `frogg-app/fde` to `acme-corp` on GitHub and enable Actions in the fork.
+1. Fork `frogg-app/frogg` to `acme-corp` on GitHub and enable Actions in the fork.
 
 2. Clone and add upstream:
 
    ```sh
-   git clone https://github.com/acme-corp/fde.git acme-studio && cd acme-studio
-   git remote add upstream https://github.com/frogg-app/fde.git
+   git clone https://github.com/acme-corp/frogg.git acme-studio && cd acme-studio
+   git remote add upstream https://github.com/frogg-app/frogg.git
    npm ci
    ```
 
@@ -74,16 +74,16 @@ relay.
 
 ## 2. Point updates at the fork
 
-Add distribution details so releases, updates and installers use `acme-corp/fde`:
+Add distribution details so releases, updates and installers use `acme-corp/frogg`:
 
 ```json title="brands/acme/brand.json (added)"
   "publisher": "Acme Corp",
   "links": {
     "website": "https://studio.acme.example",
-    "support": "https://github.com/acme-corp/fde/issues"
+    "support": "https://github.com/acme-corp/frogg/issues"
   },
   "distribution": {
-    "repository": "acme-corp/fde",
+    "repository": "acme-corp/frogg",
     "updates": "github-release"
   }
 ```
@@ -107,7 +107,7 @@ git push origin main
 ## 3. Run it locally
 
 ```sh
-export FDE_BRAND_DIR=brands/acme
+export FROGG_BRAND_DIR=brands/acme
 npm run dev:server    # terminal 1: listens on 0.0.0.0:10099, state in .dev/acme-home
 npm run dev:app       # terminal 2: Expo on 10100
 ```
@@ -118,23 +118,23 @@ Electron shell. The window, icon, favicon, accent colour and product name are Ac
 To try the production shape instead (daemon serving its own web UI):
 
 ```sh
-export FDE_BRAND_DIR=brands/acme
+export FROGG_BRAND_DIR=brands/acme
 npm run build:server && npm run build:daemon-web-ui
-ACME_HOME=/tmp/acme-home node apps/cli/bin/fde start --listen 0.0.0.0:10099 --web-ui
+ACME_HOME=/tmp/acme-home node apps/cli/bin/frogg start --listen 0.0.0.0:10099 --web-ui
 ```
 
 The CLI built from this checkout is branded, even though the in-repo launcher file is
-still called `fde`:
+still called `frogg`:
 
 ```text
-$ node apps/cli/bin/fde --help
+$ node apps/cli/bin/frogg --help
 Usage: acme [options] [command]
 
 Acme Studio CLI - control your AI coding agents from the command line
 ```
 
 ```text
-$ node apps/cli/bin/fde status
+$ node apps/cli/bin/frogg status
 KEY               VALUE
 Local Daemon      running
 Acme Studio Home  /tmp/acme-home
@@ -145,22 +145,22 @@ Relay             disabled
 
 <Screenshot src={forkAcmeHostOverviewImg} alt="Acme Studio host settings: the product badge reads Acme Studio" />
 
-## 4. Coexist with stock FDE
+## 4. Coexist with stock Frogg
 
-Acme and FDE can run on the same machine. Their identities do not overlap:
+Acme and Frogg can run on the same machine. Their identities do not overlap:
 
-| Resource        | FDE                     | Acme Studio               |
+| Resource        | Frogg                     | Acme Studio               |
 | --------------- | ----------------------- | ------------------------- |
-| CLI             | `fde`                   | `acme`                    |
-| State           | `~/.fde`                | `~/.acme`                 |
-| Env override    | `FDE_HOME`              | `ACME_HOME`               |
+| CLI             | `frogg`                   | `acme`                    |
+| State           | `~/.frogg`                | `~/.acme`                 |
+| Env override    | `FROGG_HOME`              | `ACME_HOME`               |
 | Port            | 9999                    | 10099                     |
-| systemd unit    | `fde-daemon`            | `acme-daemon`             |
-| launchd label   | `app.frogg.fde-daemon`  | `com.acme.studio-daemon`  |
-| URL scheme      | `fde://`                | `acme://`                 |
-| App ID          | `app.frogg.fde`         | `com.acme.studio`         |
-| Desktop binary  | `fde`                   | `acme` (Electron executable uses the brand id) |
-| Skills installed for agents | `fde`, `fde-dev`, ... | `acme-fde`, `acme-fde-dev`, ... |
+| systemd unit    | `frogg-daemon`            | `acme-daemon`             |
+| launchd label   | `app.frogg.frogg-daemon`  | `com.acme.studio-daemon`  |
+| URL scheme      | `frogg://`                | `acme://`                 |
+| App ID          | `app.frogg.frogg`         | `com.acme.studio`         |
+| Desktop binary  | `frogg`                   | `acme` (Electron executable uses the brand id) |
+| Skills installed for agents | `frogg`, `frogg-dev`, ... | `acme-frogg`, `acme-frogg-dev`, ... |
 
 Branding CI runs both daemons side by side to check this
 (`scripts/ci/branding-runtime-isolation.mjs`).
@@ -168,24 +168,24 @@ Branding CI runs both daemons side by side to check this
 ## 5. Configure CI
 
 ```sh
-gh variable set FDE_BRAND_DIR --body brands/acme --repo acme-corp/fde
+gh variable set FROGG_BRAND_DIR --body brands/acme --repo acme-corp/frogg
 
 # Android release signing (do this before the first release)
 keytool -genkeypair -v -keystore acme-release.keystore -alias acme -keyalg RSA -keysize 4096 -validity 10000
-gh secret set FDE_ANDROID_KEYSTORE_BASE64 --body "$(base64 -w0 acme-release.keystore)" --repo acme-corp/fde
-gh secret set FDE_ANDROID_KEYSTORE_PASSWORD --repo acme-corp/fde
-gh secret set FDE_ANDROID_KEY_ALIAS --body acme --repo acme-corp/fde
+gh secret set FROGG_ANDROID_KEYSTORE_BASE64 --body "$(base64 -w0 acme-release.keystore)" --repo acme-corp/frogg
+gh secret set FROGG_ANDROID_KEYSTORE_PASSWORD --repo acme-corp/frogg
+gh secret set FROGG_ANDROID_KEY_ALIAS --body acme --repo acme-corp/frogg
 
 # Optional: Windows signing, Docker Hub
-gh secret set AZURE_TENANT_ID --repo acme-corp/fde
+gh secret set AZURE_TENANT_ID --repo acme-corp/frogg
 # ... AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, TRUSTED_SIGNING_ENDPOINT, TRUSTED_SIGNING_ACCOUNT, TRUSTED_SIGNING_PROFILE
 ```
 
 Try a test build before tagging anything:
 
 ```sh
-gh workflow run build-selected.yml --repo acme-corp/fde -f target=all
-gh run list --repo acme-corp/fde --workflow build-selected.yml --limit 1
+gh workflow run build-selected.yml --repo acme-corp/frogg -f target=all
+gh run list --repo acme-corp/frogg --workflow build-selected.yml --limit 1
 ```
 
 The run uploads `windows-x64-client-<sha>`, `linux-x64-daemon-<sha>` and
@@ -202,7 +202,7 @@ Add a changelog section, amend it into the release commit, then tag and push:
 ```markdown title="CHANGELOG.md"
 ## 0.6.20-beta.1 — 2026-09-20
 
-- First Acme Studio beta, based on FDE 0.6.19.
+- First Acme Studio beta, based on Frogg 0.6.19.
 ```
 
 ```sh
@@ -217,7 +217,7 @@ every platform, uploads `acme-...` assets and the generated installers, then pub
 Install the daemon from it on a test host, and the desktop app from the release page:
 
 ```sh
-curl -fsSL https://github.com/acme-corp/fde/releases/download/v0.6.20-beta.1/install.sh | bash
+curl -fsSL https://github.com/acme-corp/frogg/releases/download/v0.6.20-beta.1/install.sh | bash
 acme status
 ```
 

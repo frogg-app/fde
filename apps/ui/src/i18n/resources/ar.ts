@@ -725,7 +725,7 @@ export const ar: TranslationResources = {
       },
       routes: {
         public: "الوكيل العكسي",
-        fde: "Memorable",
+        frogg: "Memorable",
         direct: "مباشر",
       },
       states: {
@@ -2036,7 +2036,7 @@ export const ar: TranslationResources = {
   serviceUrl: {
     title: "افتح الخدمة URL",
     message: "افتح{{url}}؟",
-    inFde: "في {{brandName}}",
+    inFrogg: "في {{brandName}}",
     externalBrowser: "متصفح خارجي",
     dontAskAgain: "لا تسأل مرة أخرى",
   },
@@ -2162,7 +2162,7 @@ export const ar: TranslationResources = {
       one: "استخدم {{count}} أداة أخرى",
       other: "استخدم {{count}} أدوات أخرى",
     },
-    fdeCalls: {
+    froggCalls: {
       one: "استدعى {{brandName}} {{count}} مرة",
       other: "استدعى {{brandName}} {{count}} مرات",
     },
@@ -2662,12 +2662,12 @@ export const ar: TranslationResources = {
           docker: {
             label: "Docker",
             available: "متاح",
-            container: "متاح، حاوية fde-daemon موجودة",
+            container: "متاح، حاوية frogg-daemon موجودة",
             missing: "غير متاح",
           },
           curlMissing: "curl غير موجود على المضيف؛ يحتاجه التثبيت الأصلي لتنزيل الحزمة.",
           noService: "بدون مدير خدمات للمستخدم لن تعاد الخدمة إلى العمل بعد إعادة التشغيل.",
-          installDir: "التثبيت الأصلي يوضع في {{home}}/.local/share/fde",
+          installDir: "التثبيت الأصلي يوضع في {{home}}/.local/share/frogg",
           failed: "تعذّر فحص المضيف. {{detail}}",
         },
         method: {
@@ -2694,7 +2694,8 @@ export const ar: TranslationResources = {
         },
         uninstall: {
           title: "إزالة الخدمة؟",
-          message: "يوقف الخدمة ويزيل تثبيت {{brandName}} من {{host}}. تُحفظ حالة الخدمة (~/.fde).",
+          message:
+            "يوقف الخدمة ويزيل تثبيت {{brandName}} من {{host}}. تُحفظ حالة الخدمة (~/.frogg).",
         },
         log: {
           running: "قيد التشغيل على {{host}}...",
@@ -2724,7 +2725,7 @@ export const ar: TranslationResources = {
         saving: "جارٍ الحفظ...",
         saveFailed: "تعذّر حفظ نقطة نهاية المرحّل.",
         overridden:
-          "مضبوط عبر خيار تشغيل للخدمة (FDE_RELAY_ENDPOINT أو FDE_RELAY_USE_TLS). غيّره حيث تُشغَّل الخدمة.",
+          "مضبوط عبر خيار تشغيل للخدمة (FROGG_RELAY_ENDPOINT أو FROGG_RELAY_USE_TLS). غيّره حيث تُشغَّل الخدمة.",
       },
       skills: {
         ...en.settings.host.skills,
@@ -2794,7 +2795,7 @@ export const ar: TranslationResources = {
       agentDefinitions: {
         title: "تعريفات الوكلاء",
         description:
-          "الوكلاء الذين يحمّلهم مزوّدوك من هذا المضيف. يكتفي FDE بعرضهم؛ عدّل الملفات لتغييرهم.",
+          "الوكلاء الذين يحمّلهم مزوّدوك من هذا المضيف. يكتفي Frogg بعرضهم؛ عدّل الملفات لتغييرهم.",
         projectTitle: "تعريفات وكلاء المشروع",
         projectDescription: "الوكلاء الذين يحمّلهم مزوّدوك من مجلد هذا المشروع.",
         empty: "لم يتم العثور على تعريفات وكلاء",
@@ -3059,13 +3060,13 @@ export const ar: TranslationResources = {
         savedToast: "تم تحديث المشروع",
       },
       readFailures: {
-        invalidTitle: "تعذر تحليل fde.json",
+        invalidTitle: "تعذر تحليل frogg.json",
         invalidDescription: "قم بإصلاح الملف على القرص، ثم أعد تحميله.",
         missingTitle: "هذا المضيف ليس لديه هذا المشروع",
         missingSingleHost: "المضيف المحدد ليس لديه سجل لهذا المشروع.",
-        transportTitle: "تعذر تحميل fde.json",
+        transportTitle: "تعذر تحميل frogg.json",
         transportFallback: "المضيف لم يستجب.",
-        failedTitle: "تعذر تحميل fde.json",
+        failedTitle: "تعذر تحميل frogg.json",
         failedDescription: "أعد التحميل للمحاولة مرة أخرى.",
       },
       worktree: {
@@ -3075,7 +3076,7 @@ export const ar: TranslationResources = {
         docsTooltip: "راجع المستندات لمزيد من التفاصيل ومتغيرات البيئة المتاحة لهذه الأوامر",
         setup: "يثبت",
         setupAccessibility: "أوامر إعداد شجرة العمل",
-        uncommittedTitle: "ثبّت تغييرات fde.json",
+        uncommittedTitle: "ثبّت تغييرات frogg.json",
         uncommittedDescription:
           "تستخدم أشجار العمل الجديدة نص الإعداد البرمجي من الفرع الأساسي الذي تحدده.",
         teardown: "هدم",
@@ -3100,7 +3101,7 @@ export const ar: TranslationResources = {
         newScript: "نص جديد",
         editScript: "تحرير{{name}}",
         runAsService: "تشغيل كخدمة",
-        serviceHint: "يشرف {{brandName}} على العملية ويعين منفذًا عبر $FDE_PORT",
+        serviceHint: "يشرف {{brandName}} على العملية ويعين منفذًا عبر $FROGG_PORT",
         actions: {
           add: "إضافة البرنامج النصي",
           edit: "يحرر",
@@ -3119,8 +3120,8 @@ export const ar: TranslationResources = {
       },
       writeFailures: {
         staleTitle: "تم تغيير التكوين على القرص",
-        staleDescription: "أعد التحميل لجلب أحدث ملف fde.json قبل الحفظ.",
-        failedTitle: "تعذر حفظ fde.json",
+        staleDescription: "أعد التحميل لجلب أحدث ملف frogg.json قبل الحفظ.",
+        failedTitle: "تعذر حفظ frogg.json",
         failedDescription: "حاول مرة أخرى، أو أعد تحميل الإصدار الأحدث من القرص.",
       },
       actions: {

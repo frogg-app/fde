@@ -10,7 +10,7 @@ export const IMPORT_LIMITS = {
   chunkBytes: 192 * 1024,
 };
 const FORBIDDEN =
-  /^(?:\.git|\.fde-import-owner|node_modules|\.env(?:\..*)?|credentials(?:\.json)?|auth\.json)$/i;
+  /^(?:\.git|\.frogg-import-owner|node_modules|\.env(?:\..*)?|credentials(?:\.json)?|auth\.json)$/i;
 
 export function validateImportPath(value: string): string {
   const pieces = value.split("/");
@@ -161,11 +161,11 @@ export async function disposeMaterialization(root: string): Promise<void> {
   if (
     typeof entry.path !== "string" ||
     typeof entry.owner !== "string" ||
-    !path.basename(entry.path).startsWith(".fde-project-import-")
+    !path.basename(entry.path).startsWith(".frogg-project-import-")
   )
     return;
   if ((await realpath(entry.path).catch(() => null)) !== entry.path) return;
-  const owner = await readFile(path.join(entry.path, ".fde-import-owner"), "utf8").catch(
+  const owner = await readFile(path.join(entry.path, ".frogg-import-owner"), "utf8").catch(
     () => null,
   );
   if (owner === entry.owner) await rm(entry.path, { recursive: true, force: true });

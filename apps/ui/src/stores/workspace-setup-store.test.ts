@@ -215,7 +215,7 @@ describe("workspace-setup-store", () => {
           log: "",
           commands: [],
         },
-        error: "Failed to parse fde.json",
+        error: "Failed to parse frogg.json",
         updatedAt: Date.now(),
       }),
     ).toBe(true);

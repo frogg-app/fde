@@ -1,7 +1,7 @@
 export const meta = {
-  name: "fde-project-inspection",
-  description: "Inspect Fde and explain what the project does",
-  whenToUse: "Fde real-provider workflow detail QA",
+  name: "frogg-project-inspection",
+  description: "Inspect Frogg and explain what the project does",
+  whenToUse: "Frogg real-provider workflow detail QA",
   phases: [{ title: "Inspect", detail: "Read the product and architecture sources" }],
 };
 
@@ -13,11 +13,11 @@ if (typeof repoPath !== "string" || repoPath.length === 0) {
   throw new Error("repoPath is required");
 }
 const report = await agent(
-  `Inspect the Fde repository at ${JSON.stringify(repoPath)}.
+  `Inspect the Frogg repository at ${JSON.stringify(repoPath)}.
 
 Read README.md, docs/product.md, docs/architecture.md, and package.json. Do not edit anything. Return a concise plain-text report with exactly these headings:
 
-What Fde is
+What Frogg is
 Who it is for
 How it works
 Repository structure

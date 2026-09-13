@@ -34,16 +34,16 @@ it("provides updater download cache metadata for an explicitly configured feed",
 });
 
 it("uses the production release feed unless an explicit override is configured", () => {
-  expect(resolveElectronUpdateUrl(undefined, "https://github.com/frogg-app/fde/releases")).toBe(
-    "https://github.com/frogg-app/fde/releases/latest/download",
+  expect(resolveElectronUpdateUrl(undefined, "https://github.com/frogg-app/frogg/releases")).toBe(
+    "https://github.com/frogg-app/frogg/releases/latest/download",
   );
-  expect(resolveElectronUpdateUrl(" https://updates.example.com/fde ", null)).toBe(
-    "https://updates.example.com/fde",
+  expect(resolveElectronUpdateUrl(" https://updates.example.com/frogg ", null)).toBe(
+    "https://updates.example.com/frogg",
   );
   expect(resolveElectronUpdateUrl(undefined, null)).toBeNull();
 });
 
-const releaseBase = "https://github.com/frogg-app/fde/releases";
+const releaseBase = "https://github.com/frogg-app/frogg/releases";
 
 it("discovers beta tags independently of GitHub's stable latest download alias", async () => {
   const fetchReleases = vi.fn(async () => [
@@ -60,7 +60,7 @@ it("discovers beta tags independently of GitHub's stable latest download alias",
     channel: "electron-beta",
   });
   expect(fetchReleases).toHaveBeenCalledWith(
-    "https://api.github.com/repos/frogg-app/fde/releases?per_page=100",
+    "https://api.github.com/repos/frogg-app/frogg/releases?per_page=100",
   );
 });
 

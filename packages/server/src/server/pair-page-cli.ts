@@ -7,8 +7,8 @@
  */
 import { createPairPageApp, DEFAULT_PAIR_PAGE_ROOT_REDIRECT } from "./pair-page-server.js";
 
-import { brand } from "@fde/branding";
-import { brandEnv } from "@fde/branding/identity";
+import { brand } from "@frogg/branding";
+import { brandEnv } from "@frogg/branding/identity";
 
 const host = brandEnv(brand, process.env, "PAIR_HOST") ?? "0.0.0.0";
 const port = Number(brandEnv(brand, process.env, "PAIR_PORT") ?? 8787);

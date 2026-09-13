@@ -47,7 +47,9 @@ describe("workspace route parsing", () => {
   });
 
   it("decodes non-canonical base64url workspace IDs used by older links", () => {
-    expect(decodeWorkspaceIdFromPathSegment("L2hvbWUvdXNlci9kZXYvZmRl")).toBe("/home/user/dev/fde");
+    expect(decodeWorkspaceIdFromPathSegment("L2hvbWUvdXNlci9kZXYvZnJvZ2c")).toBe(
+      "/home/user/dev/frogg",
+    );
   });
 
   it("encodes file paths as base64url (no padding)", () => {

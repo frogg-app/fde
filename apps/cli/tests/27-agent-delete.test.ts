@@ -24,14 +24,14 @@ console.log("=== Delete Command Tests ===\n");
 const cliRoot = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(cliRoot, "..", "..", "..");
 const port = 10000 + Math.floor(Math.random() * 50000);
-const fdeHome = await mkdtemp(join(tmpdir(), "fde-delete-test-home-"));
+const froggHome = await mkdtemp(join(tmpdir(), "frogg-delete-test-home-"));
 
 async function runCli(args: string[]) {
   return $`npm --prefix ${repoRoot} run cli -- ${args}`.nothrow();
 }
 
 async function runDelete(args: string[]) {
-  return $`FDE_HOST=localhost:${port} FDE_HOME=${fdeHome} npm --prefix ${repoRoot} run cli -- delete ${args}`.nothrow();
+  return $`FROGG_HOST=localhost:${port} FROGG_HOME=${froggHome} npm --prefix ${repoRoot} run cli -- delete ${args}`.nothrow();
 }
 
 try {
@@ -101,24 +101,24 @@ try {
   }
 
   {
-    console.log("Test 7: fde --help shows delete command");
+    console.log("Test 7: frogg --help shows delete command");
     const result = await runCli(["--help"]);
-    assert.strictEqual(result.exitCode, 0, "fde --help should exit 0");
+    assert.strictEqual(result.exitCode, 0, "frogg --help should exit 0");
     assert(result.stdout.includes("delete"), "help should mention delete command");
-    console.log("✓ fde --help shows delete command\n");
+    console.log("✓ frogg --help shows delete command\n");
   }
 
   {
     console.log("Test 8: -q (quiet) flag is accepted with delete");
     const result =
-      await $`FDE_HOST=localhost:${port} FDE_HOME=${fdeHome} npm --prefix ${repoRoot} run cli -- -q delete abc123`.nothrow();
+      await $`FROGG_HOST=localhost:${port} FROGG_HOME=${froggHome} npm --prefix ${repoRoot} run cli -- -q delete abc123`.nothrow();
     const output = result.stdout + result.stderr;
     assert(!output.includes("unknown option"), "should accept -q flag");
     assert(!output.includes("error: option"), "should not have option parsing error");
     console.log("✓ -q (quiet) flag is accepted with delete\n");
   }
 } finally {
-  await rm(fdeHome, { recursive: true, force: true });
+  await rm(froggHome, { recursive: true, force: true });
 }
 
 console.log("=== All delete tests passed ===");

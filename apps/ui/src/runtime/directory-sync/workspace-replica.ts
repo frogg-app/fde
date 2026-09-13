@@ -1,5 +1,5 @@
 import equal from "fast-deep-equal";
-import type { ScriptStatusUpdateMessage, SessionOutboundMessage } from "@fde/protocol/messages";
+import type { ScriptStatusUpdateMessage, SessionOutboundMessage } from "@frogg/protocol/messages";
 import {
   normalizeProjectDescriptor,
   normalizeWorkspaceDescriptor,

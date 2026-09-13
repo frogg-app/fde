@@ -1,10 +1,10 @@
 ---
 import { Image } from "astro:assets";
 import SiteLayout from "../layouts/SiteLayout.astro";
-import logo from "../assets/brand/fde-logo.png";
+import logo from "../assets/brand/frogg-logo.png";
 ---
 
-<SiteLayout title="Page not found · FDE" description="This page does not exist." noindex>
+<SiteLayout title="Page not found · Frogg" description="This page does not exist." noindex>
   <section class="nf">
     <div class="glow" aria-hidden="true"></div>
     <Image src={logo} alt="" width={120} height={94} densities={[1, 2]} loading="eager" class="frog" />
@@ -17,7 +17,7 @@ import logo from "../assets/brand/fde-logo.png";
       <a class="btn" href="/">Back home</a>
     </div>
     <p class="help">
-      Following a link from FDE itself? <a href="https://github.com/frogg-app/fde/issues/new">Tell us</a> so we can fix it.
+      Following a link from Frogg itself? <a href="https://github.com/frogg-app/frogg/issues/new">Tell us</a> so we can fix it.
     </p>
   </section>
 </SiteLayout>
@@ -45,13 +45,13 @@ import logo from "../assets/brand/fde-logo.png";
     margin-left: -17rem;
     z-index: -1;
     border-radius: 50%;
-    background: radial-gradient(closest-side, var(--fde-accent-glow), transparent);
+    background: radial-gradient(closest-side, var(--frogg-accent-glow), transparent);
     opacity: 0.5;
   }
   .frog {
     width: 120px;
     height: auto;
-    animation: hop 2.6s var(--fde-ease) infinite;
+    animation: hop 2.6s var(--frogg-ease) infinite;
   }
   @keyframes hop {
     0%,
@@ -68,10 +68,10 @@ import logo from "../assets/brand/fde-logo.png";
     font-size: 0.9rem;
     font-weight: 700;
     letter-spacing: 0.3em;
-    color: var(--fde-accent-bright);
+    color: var(--frogg-accent-bright);
   }
   :global([data-theme="light"]) .code {
-    color: var(--fde-accent);
+    color: var(--frogg-accent);
   }
   h1 {
     margin: 0.5rem 0 0;
@@ -82,7 +82,7 @@ import logo from "../assets/brand/fde-logo.png";
   .lead {
     margin: 1rem 0 0;
     max-width: 32rem;
-    color: var(--fde-text-muted);
+    color: var(--frogg-text-muted);
     font-size: 1.1rem;
   }
   .path {
@@ -92,12 +92,12 @@ import logo from "../assets/brand/fde-logo.png";
     display: none;
   }
   .path code {
-    font-family: var(--fde-font-mono);
+    font-family: var(--frogg-font-mono);
     font-size: 0.85rem;
     padding: 0.2rem 0.5rem;
     border-radius: 0.4rem;
-    background: var(--fde-surface-2);
-    color: var(--fde-text-muted);
+    background: var(--frogg-surface-2);
+    color: var(--frogg-text-muted);
     word-break: break-all;
   }
   .actions {
@@ -110,7 +110,7 @@ import logo from "../assets/brand/fde-logo.png";
   .help {
     margin: 2rem 0 0;
     font-size: 0.9rem;
-    color: var(--fde-text-faint);
+    color: var(--frogg-text-faint);
   }
   @media (prefers-reduced-motion: reduce) {
     .frog {

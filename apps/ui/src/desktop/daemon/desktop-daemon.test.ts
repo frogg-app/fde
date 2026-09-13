@@ -30,7 +30,7 @@ describe("listenToLocalTransportEvents", () => {
     // Electron's preload passes the payload; Tauri's `listen` wraps it.
     listener({ sessionId: "s1", kind: "open" });
     listener({
-      event: "fde:event:x",
+      event: "frogg:event:x",
       id: 7,
       payload: { sessionId: "s1", kind: "error", error: "ssh: boom" },
     });

@@ -1,4 +1,4 @@
-# FDE roadmap
+# Frogg roadmap
 
 Source baseline: **0.6.13** (daemon recovery fixes; publication not yet verified). Electron is the production app-only desktop;
 Node daemons remain separately installed. [Changelog](CHANGELOG.md) records
@@ -47,14 +47,14 @@ namespace migration. Unchecked items are validation/backlog work, not active tas
 - Expandable sidebar agent/subagent trees with direct live transcript access,
   runtime identity preservation, and reconnect/retry states. Single-agent workspaces
   avoid duplicate rows; disclosure contains only active subagents. See
-  [agent lifecycle](website/src/content/docs/docs/using-fde/agents.mdx); desktop/mobile
+  [agent lifecycle](website/src/content/docs/docs/using-frogg/agents.mdx); desktop/mobile
   visual and live-provider acceptance remains outstanding.
 
 - Electron app-only desktop for Windows, macOS and Linux; direct and configured relay connections,
   SSH/socket/pipe transport, SSH config host picker, and remote daemon deployment.
 - Separately installed Node daemon packages, run-at-login services, daemon
   self-update with rollback, and Electron desktop updates.
-- Native daemon installers and Docker packaging; `~/.fde` migration, port 9999,
+- Native daemon installers and Docker packaging; `~/.frogg` migration, port 9999,
   trusted-LAN policy, first-device claim gate and client v3 claim handling.
 - Windows installer and portable ZIP, macOS DMGs for both architectures, Linux
   deb/AppImage, six daemon bundle targets, and an Android APK build pipeline.
@@ -69,7 +69,7 @@ visible until device or deployment evidence closes them.
 
 ## Active feature work
 
-- [x] **Fork-friendly branding.** Implemented on [PR #49](https://github.com/frogg-app/fde/pull/49). See the [rebranding guide](website/src/content/docs/docs/fork-and-rebrand/index.mdx), [manifest reference](website/src/content/docs/docs/fork-and-rebrand/brand-manifest.mdx), and validation record (`git show 70767eda:docs/branding-plan.md`). The PR carries current platform build results; interactive device acceptance remains separate.
+- [x] **Fork-friendly branding.** Implemented on [PR #49](https://github.com/frogg-app/frogg/pull/49). See the [rebranding guide](website/src/content/docs/docs/fork-and-rebrand/index.mdx), [manifest reference](website/src/content/docs/docs/fork-and-rebrand/brand-manifest.mdx), and validation record (`git show 70767eda:docs/branding-plan.md`). The PR carries current platform build results; interactive device acceptance remains separate.
 
 ## Next: establish reliable everyday use
 
@@ -151,7 +151,7 @@ visible until device or deployment evidence closes them.
       relevant host/workspace/agent across platforms.
 - [ ] **Tighten webview CSP.** Enumerate the UI's required connection origins and
       verify direct, relay, SSH and separately installed local connections against the policy.
-- [ ] **iOS delivery.** Upstream Expo/iOS tooling exists; establish FDE signing,
+- [ ] **iOS delivery.** Upstream Expo/iOS tooling exists; establish Frogg signing,
       distribution and device acceptance. Android already has a release pipeline.
 
 ## Engineering backlog
@@ -165,12 +165,12 @@ visible until device or deployment evidence closes them.
       browser component tests. Retain the idle memory probe as a diagnostic,
       not a claimed performance acceptance test.
 - [ ] **Hermetic UI tests.** `remote-ssh-target.test.ts` fails when the
-      environment injects a daemon port (FDE worktree services set 9999 and the test
+      environment injects a daemon port (Frogg worktree services set 9999 and the test
       expects 6767).
 - [ ] **Dependency updates.** Review the seven open Dependabot PRs separately with
       compatibility checks. Major library updates are not baseline cleanup.
 - [ ] **Provider toggles re-enable after updates.** Disabled providers
-      (`agents.providers.<id>.enabled: false`) vanished from `~/.fde/config.json`
+      (`agents.providers.<id>.enabled: false`) vanished from `~/.frogg/config.json`
       between 2026-09-12 12:30 and 2026-09-13 06:34 on the dev VM. Ruled out:
       daemon start (0.6.7, 0.6.13), self-update 0.6.7→0.6.13, the server unit
       suite, CLI config writers, Claude session edits. No daemon save logged in
@@ -225,7 +225,7 @@ when `docs/` was replaced by the docs site). Design context:
 The docs rewrite (2026-09-13) replaced `docs/` with the Astro/Starlight site in
 `website/`. Findings below were documented as-is, not fixed.
 
-- [ ] **Take frogg.app live.** Preview runs at `fde-website.steve-d58.workers.dev`.
+- [ ] **Take frogg.app live.** Preview runs at `frogg-website.steve-d58.workers.dev`.
       Uncomment the routes in `website/wrangler.toml` `[env.production]`, run
       `npx wrangler deploy --env production`, and add a proxied apex DNS record if
       needed. Confirm `frogg.app/install.sh` and `pair.frogg.app` still resolve.
@@ -241,24 +241,24 @@ The docs rewrite (2026-09-13) replaced `docs/` with the Astro/Starlight site in
       `scripts/docs/capture-screenshots.mjs`.
 - [ ] **Unlocalized import copy.** Add Project method labels and import error
       strings are hardcoded English.
-- [ ] **Custom-brand release run.** No full `release.yml` run for a non-FDE brand
+- [ ] **Custom-brand release run.** No full `release.yml` run for a non-Frogg brand
       has happened; the fork-and-rebrand docs say so. Run one and update the docs.
-- [ ] **Docker Hub image is stale.** `froggapp/fde` only has 0.1.x tags (`latest`
+- [ ] **Docker Hub image is stale.** `froggapp/frogg` only has 0.1.x tags (`latest`
       = 0.1.14), which 0.6 clients reject. Docs tell users to build the image.
 - [ ] **Latest release is partial.** v0.6.19 has only Windows, the Linux daemon
       and Android assets.
 - [ ] **Custom brand daemon update path.** `daemon-update-install.ts` hardcodes
-      `~/.local/share/fde` in the update message.
-- [ ] **Stale CLI hints.** `fde daemon self-update` in the `install.sh` header;
+      `~/.local/share/frogg` in the update message.
+- [ ] **Stale CLI hints.** `frogg daemon self-update` in the `install.sh` header;
       `daemon trust-lan` / `daemon pair` hints in CLI output and i18n.
-- [ ] **Settings copy** reads "while an FDE is in the foreground".
+- [ ] **Settings copy** reads "while a Frogg is in the foreground".
 - [ ] **`NOTICE` says the desktop shell was rewritten in Tauri**; it is Electron.
-- [ ] **`fde.json` desktop service** runs `packages/desktop/scripts/dev.sh`, which
+- [ ] **`frogg.json` desktop service** runs `packages/desktop/scripts/dev.sh`, which
       does not exist.
 - [ ] **Per-device revoke** for paired devices does not exist.
 - [ ] **Schedules have no UI**; CLI/daemon only.
 - [ ] **Push notifications in the published APK** are unverified.
-- [ ] **`FDE_DEV_RESET_HOME`** does nothing on its own.
+- [ ] **`FROGG_DEV_RESET_HOME`** does nothing on its own.
 - [ ] **Dangling design-doc references.** Comments in `apps/ui` and
       `.oxlintrc.json` messages still cite deleted docs (unistyles, hover, menus,
       design). Replace with contributor docs pages or inline the rule.
@@ -267,13 +267,13 @@ The docs rewrite (2026-09-13) replaced `docs/` with the Astro/Starlight site in
 
 - **Triggers:** CLI commands are disabled. A service we control or a self-hostable
   replacement must exist before enabling external events. See hub.md (`git show 70767eda:docs/hub.md`).
-- **Remaining FDE wire/env/deep-link renames:** keep compatibility until an
-  explicit migration policy exists. `FDE_HOME` and `~/.fde` are already implemented.
+- **Remaining Frogg wire/env/deep-link renames:** keep compatibility until an
+  explicit migration policy exists. `FROGG_HOME` and `~/.frogg` are already implemented.
 
 ## Keeping this current
 
 Update the relevant item in the same PR as implementation, and update the docs
-site pages in `website/src/content/docs/docs/` (see `skills/fde-docs`). Move completed work to
+site pages in `website/src/content/docs/docs/` (see `skills/frogg-docs`). Move completed work to
 the changelog; leave only a concrete verification gap when testing is incomplete.
 Do not promote historical incidents (quota exhaustion, missing secrets, local
 swap files) into permanent project blockers. Record current evidence and date.

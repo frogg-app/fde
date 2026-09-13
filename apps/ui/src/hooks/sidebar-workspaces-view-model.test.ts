@@ -69,7 +69,7 @@ describe("createSidebarWorkspaceEntry forge threading", () => {
 });
 
 describe("createSidebarWorkspaceEntry workspace directory label", () => {
-  it("uses the daemon-provided slug for a Fde-owned worktree", () => {
+  it("uses the daemon-provided slug for a Frogg-owned worktree", () => {
     const descriptor = workspaceWithForge(undefined, "https://github.com/acme/repo/pull/42");
     descriptor.workspaceDirectory = "/worktrees/feature/packages/app";
     descriptor.worktreeSlug = "feature";
@@ -274,19 +274,19 @@ describe("buildSidebarProjectsFromStructure", () => {
           projectKey: "project-1",
           hosts: [
             {
-              serverId: "relay:fde-host",
+              serverId: "relay:frogg-host",
               iconWorkingDir: "/repo/project-1",
               worktreeSupport: "supported" as const,
             },
           ],
-          workspaceKeys: ["relay:fde-host:ws-main"],
+          workspaceKeys: ["relay:frogg-host:ws-main"],
         }),
       ],
     });
 
     expect(projects[0]?.workspaces[0]).toMatchObject({
-      workspaceKey: "relay:fde-host:ws-main",
-      serverId: "relay:fde-host",
+      workspaceKey: "relay:frogg-host:ws-main",
+      serverId: "relay:frogg-host",
       workspaceId: "ws-main",
     });
   });
@@ -297,18 +297,18 @@ describe("shared sidebar workspace model", () => {
     const model = buildSidebarWorkspacePlacementModel({
       projects: [
         project({
-          projectKey: "frogg-app/fde",
-          projectName: "frogg-app/fde",
-          iconWorkingDir: "/repo/frogg-app/fde",
+          projectKey: "frogg-app/frogg",
+          projectName: "frogg-app/frogg",
+          iconWorkingDir: "/repo/frogg-app/frogg",
           hosts: [
             {
               serverId: "host-a",
-              iconWorkingDir: "/repo/frogg-app/fde",
+              iconWorkingDir: "/repo/frogg-app/frogg",
               worktreeSupport: "supported" as const,
             },
             {
               serverId: "host-b",
-              iconWorkingDir: "/repo/frogg-app/fde",
+              iconWorkingDir: "/repo/frogg-app/frogg",
               worktreeSupport: "supported" as const,
             },
           ],
@@ -328,8 +328,8 @@ describe("shared sidebar workspace model", () => {
               workspace({
                 id: "main",
                 name: "main",
-                projectId: "frogg-app/fde",
-                projectDisplayName: "frogg-app/fde",
+                projectId: "frogg-app/frogg",
+                projectDisplayName: "frogg-app/frogg",
                 status: "done",
               }),
             ],
@@ -344,8 +344,8 @@ describe("shared sidebar workspace model", () => {
               workspace({
                 id: "feature",
                 name: "feature/status-flow",
-                projectId: "frogg-app/fde",
-                projectDisplayName: "frogg-app/fde",
+                projectId: "frogg-app/frogg",
+                projectDisplayName: "frogg-app/frogg",
                 status: "running",
                 statusEnteredAt: new Date("2026-06-10T00:00:00.000Z"),
               }),
@@ -361,18 +361,18 @@ describe("shared sidebar workspace model", () => {
     ]);
     expect(model.projects).toEqual([
       expect.objectContaining({
-        viewKey: "frogg-app/fde",
+        viewKey: "frogg-app/frogg",
         hosts: [
           {
             serverId: "host-a",
-            projectId: "frogg-app/fde",
-            iconWorkingDir: "/repo/frogg-app/fde",
+            projectId: "frogg-app/frogg",
+            iconWorkingDir: "/repo/frogg-app/frogg",
             worktreeSupport: "supported" as const,
           },
           {
             serverId: "host-b",
-            projectId: "frogg-app/fde",
-            iconWorkingDir: "/repo/frogg-app/fde",
+            projectId: "frogg-app/frogg",
+            iconWorkingDir: "/repo/frogg-app/frogg",
             worktreeSupport: "supported" as const,
           },
         ],
@@ -400,7 +400,7 @@ describe("shared sidebar workspace model", () => {
       ["host-a:main", "done", "main"],
       ["host-b:feature", "running", "feature/status-flow"],
     ]);
-    expect(model.projectNamesByViewKey).toEqual(new Map([["frogg-app/fde", "frogg-app/fde"]]));
+    expect(model.projectNamesByViewKey).toEqual(new Map([["frogg-app/frogg", "frogg-app/frogg"]]));
   });
 
   it("preserves unchanged row identities when another workspace updates", () => {
@@ -532,16 +532,16 @@ describe("shouldShowSidebarHostLabels", () => {
     const projects = buildSidebarProjectsFromStructure({
       projects: [
         project({
-          projectKey: "frogg-app/fde",
+          projectKey: "frogg-app/frogg",
           hosts: [
             {
               serverId: "host-a",
-              iconWorkingDir: "/repo/fde",
+              iconWorkingDir: "/repo/frogg",
               worktreeSupport: "supported" as const,
             },
             {
               serverId: "host-b",
-              iconWorkingDir: "/repo/fde",
+              iconWorkingDir: "/repo/frogg",
               worktreeSupport: "supported" as const,
             },
           ],

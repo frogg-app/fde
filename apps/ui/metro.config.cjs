@@ -10,12 +10,12 @@ const projectRoot = __dirname;
 const appNodeModulesRoot = path.resolve(projectRoot, "node_modules");
 const appSrcRoot = path.resolve(projectRoot, "src");
 const relaySrcRoot = path.resolve(projectRoot, "../../packages/relay/src");
-const isFdroidBuild = process.env.FDE_FDROID_BUILD === "1";
+const isFdroidBuild = process.env.FROGG_FDROID_BUILD === "1";
 const fdroidModuleOverrides = {
   "expo-camera": path.resolve(appSrcRoot, "fdroid/expo-camera.tsx"),
   "expo-notifications": path.resolve(appSrcRoot, "fdroid/expo-notifications.ts"),
 };
-const customWebPlatform = (process.env.FDE_WEB_PLATFORM ?? "")
+const customWebPlatform = (process.env.FROGG_WEB_PLATFORM ?? "")
   .trim()
   .replace(/^\./, "")
   .toLowerCase();
@@ -96,7 +96,7 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   return resolveWithCustomWebOverlay(context, moduleName, platform);
 };
 
-if (process.env.FDE_SERVE_SIM_PREVIEW === "1") {
+if (process.env.FROGG_SERVE_SIM_PREVIEW === "1") {
   const { simMiddleware } = require("serve-sim/middleware");
   const originalEnhanceMiddleware = config.server?.enhanceMiddleware;
   config.server = config.server ?? {};
@@ -106,7 +106,7 @@ if (process.env.FDE_SERVE_SIM_PREVIEW === "1") {
       : metroMiddleware;
     const serveSimulator = simMiddleware({
       basePath: "/.sim",
-      device: process.env.FDE_SERVE_SIM_DEVICE_UDID,
+      device: process.env.FROGG_SERVE_SIM_DEVICE_UDID,
     });
     return (req, res, next) => {
       serveSimulator(req, res, (error) => {

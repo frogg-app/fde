@@ -1,5 +1,5 @@
 import { connectToDaemon } from "../../utils/client.js";
-import type { ProviderSnapshotEntry } from "@fde/protocol/agent-types";
+import type { ProviderSnapshotEntry } from "@frogg/protocol/agent-types";
 
 export interface HubStatus {
   state: string;

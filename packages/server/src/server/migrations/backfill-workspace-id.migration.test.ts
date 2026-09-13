@@ -35,7 +35,7 @@ describe("backfillWorkspaceIdForLegacyAgents", () => {
   let workspaceRegistry: FileBackedWorkspaceRegistry;
 
   beforeEach(async () => {
-    home = mkdtempSync(path.join(tmpdir(), "fde-backfill-"));
+    home = mkdtempSync(path.join(tmpdir(), "frogg-backfill-"));
     agentStorage = new AgentStorage(path.join(home, "agents"), createTestLogger());
     await agentStorage.initialize();
     workspaceRegistry = new FileBackedWorkspaceRegistry(

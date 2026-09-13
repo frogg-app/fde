@@ -4,8 +4,8 @@ import { desktopArtifactName } from "../../packages/branding/src/artifact-contra
 // raw .exe is pushed as a release asset, and Windows itself is hostile to bare
 // downloaded exes, so nothing Windows leaves the build as an .exe:
 //
-//   FDE-<version>-win-x64-portable.zip  FDE-<version>-portable/{FDE.exe,README.txt}
-//   FDE-<version>-win-x64-setup.zip     FDE-<version>-win-x64-setup.exe
+//   Frogg-<version>-win-x64-portable.zip  Frogg-<version>-portable/{Frogg.exe,README.txt}
+//   Frogg-<version>-win-x64-setup.zip     Frogg-<version>-win-x64-setup.exe
 //
 // The installer zip is what both updaters consume: tauri-plugin-updater unpacks a
 // zipped NSIS installer itself, and the GitHub-release path in
@@ -20,14 +20,14 @@ import { fileURLToPath } from "node:url";
 import { crc32, deflateRawSync } from "node:zlib";
 
 const brand = loadBrand();
-const portableBinaryName = brand.legacyFde ? "FDE" : brand.desktopBinaryName;
+const portableBinaryName = brand.legacyFrogg ? "Frogg" : brand.desktopBinaryName;
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = path.resolve(here, "../..");
 // Default is the cargo-xwin cross-compile layout. A native Windows build (CI on
 // windows-latest) writes to target/release instead; point at it with
-// FDE_WINDOWS_RELEASE_DIR or `--release-dir <dir>`.
-const WINDOWS_RELEASE_DIR = resolveReleaseDir(process.env.FDE_WINDOWS_RELEASE_DIR);
+// FROGG_WINDOWS_RELEASE_DIR or `--release-dir <dir>`.
+const WINDOWS_RELEASE_DIR = resolveReleaseDir(process.env.FROGG_WINDOWS_RELEASE_DIR);
 
 function resolveReleaseDir(override) {
   if (override) {
@@ -46,7 +46,7 @@ export function buildReadme(version) {
     "Requirements",
     "  - Windows 10 or 11 (64-bit).",
     "  - Microsoft Edge WebView2 Runtime. It ships with Windows 11 and most",
-    "    Windows 10 installs; if FDE reports it is missing, install it from",
+    "    Windows 10 installs; if Frogg reports it is missing, install it from",
     "    https://developer.microsoft.com/microsoft-edge/webview2/",
     "",
     "Settings and data",
@@ -192,8 +192,8 @@ export function packagePortableWindows({
 
 /**
  * Zips the NSIS installer Tauri wrote under `bundle/nsis/` into
- * `bundle/nsis-zip/FDE-<version>-win-x64-setup.zip`, holding a single entry named
- * `FDE-<version>-win-x64-setup.exe`. The installer's own `.sig` does not carry over:
+ * `bundle/nsis-zip/Frogg-<version>-win-x64-setup.zip`, holding a single entry named
+ * `Frogg-<version>-win-x64-setup.exe`. The installer's own `.sig` does not carry over:
  * the updater verifies whatever it downloads, so the zip is signed after this
  * step (see the release workflow).
  */
@@ -209,7 +209,7 @@ export function packageWindowsInstallerZip({
     throw new Error(`No NSIS installer found in ${nsisDir}. Run the Tauri Windows build first.`);
   }
   // A dev checkout's target dir keeps every version ever built, so prefer the one
-  // Tauri just wrote for this version (`FDE_<version>_x64-setup.exe`) and only
+  // Tauri just wrote for this version (`FROGG_<version>_x64-setup.exe`) and only
   // fall back to "there must be exactly one" when the name does not match.
   const forThisVersion = installers.filter((entry) => entry.includes(`_${resolvedVersion}_`));
   const candidates = forThisVersion.length > 0 ? forThisVersion : installers;

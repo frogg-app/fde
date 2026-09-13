@@ -1,5 +1,5 @@
 import type pino from "pino";
-import { getErrorMessage } from "@fde/protocol/error-utils";
+import { getErrorMessage } from "@frogg/protocol/error-utils";
 import {
   checkoutResolvedBranch,
   type CheckoutExistingBranchResult,

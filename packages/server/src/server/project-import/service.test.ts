@@ -8,7 +8,7 @@ afterEach(async () => {
   await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
 });
 async function setup() {
-  const home = await mkdtemp(path.join(tmpdir(), "fde-import-service-"));
+  const home = await mkdtemp(path.join(tmpdir(), "frogg-import-service-"));
   roots.push(home);
   const service = new ProjectImportService(home, {
     listNative: async () => [],

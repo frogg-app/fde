@@ -12,14 +12,14 @@ const ChangeRequestLookupTargetSchema = z.object({
 // baseRefName is the display name; baseRef is the exact ref the worktree was cut from
 // ("refs/remotes/upstream/main"). baseRef is optional because worktrees written before it
 // existed only have the name — there are no migrations, so readers fall back.
-const FdeWorktreeMetadataV1Schema = z.object({
+const FroggWorktreeMetadataV1Schema = z.object({
   version: z.literal(1),
   baseRefName: z.string().min(1),
   baseRef: z.string().min(1).optional(),
   changeRequestLookupTarget: ChangeRequestLookupTargetSchema.optional(),
 });
 
-const FdeWorktreeMetadataV2Schema = z.object({
+const FroggWorktreeMetadataV2Schema = z.object({
   version: z.literal(2),
   baseRefName: z.string().min(1),
   baseRef: z.string().min(1).optional(),
@@ -44,24 +44,24 @@ const FdeWorktreeMetadataV2Schema = z.object({
     .optional(),
 });
 
-const FdeWorktreeMetadataSchema = z.union([
-  FdeWorktreeMetadataV1Schema,
-  FdeWorktreeMetadataV2Schema,
+const FroggWorktreeMetadataSchema = z.union([
+  FroggWorktreeMetadataV1Schema,
+  FroggWorktreeMetadataV2Schema,
 ]);
 
-export type FdeWorktreeMetadata = z.infer<typeof FdeWorktreeMetadataSchema>;
-export type FdeWorktreeChangeRequestHint = z.infer<typeof ChangeRequestLookupTargetSchema>;
+export type FroggWorktreeMetadata = z.infer<typeof FroggWorktreeMetadataSchema>;
+export type FroggWorktreeChangeRequestHint = z.infer<typeof ChangeRequestLookupTargetSchema>;
 
-export function createFdeWorktreeChangeRequestHint(
-  input: FdeWorktreeChangeRequestHint,
-): FdeWorktreeChangeRequestHint {
+export function createFroggWorktreeChangeRequestHint(
+  input: FroggWorktreeChangeRequestHint,
+): FroggWorktreeChangeRequestHint {
   return ChangeRequestLookupTargetSchema.parse(input);
 }
 
-export function getFdeWorktreeChangeRequestHintForBranch(
-  metadata: FdeWorktreeMetadata | null,
+export function getFroggWorktreeChangeRequestHintForBranch(
+  metadata: FroggWorktreeMetadata | null,
   currentBranch: string,
-): FdeWorktreeChangeRequestHint | null {
+): FroggWorktreeChangeRequestHint | null {
   const target = metadata?.changeRequestLookupTarget;
   if (!target) {
     return null;
@@ -90,18 +90,18 @@ function normalizeLegacyGitHubOwnerForBranch(owner: string): string | null {
   return /^[a-z0-9-]+$/.test(normalized) ? normalized : null;
 }
 
-export function rebindFdeWorktreeChangeRequestHint(
+export function rebindFroggWorktreeChangeRequestHint(
   worktreeRoot: string,
   previousBranch: string,
   currentBranch: string,
 ): boolean {
-  const metadata = readFdeWorktreeMetadata(worktreeRoot);
-  const target = getFdeWorktreeChangeRequestHintForBranch(metadata, previousBranch);
+  const metadata = readFroggWorktreeMetadata(worktreeRoot);
+  const target = getFroggWorktreeChangeRequestHintForBranch(metadata, previousBranch);
   if (!metadata || !target) {
     return false;
   }
 
-  writeFdeWorktreeMetadataFile(worktreeRoot, {
+  writeFroggWorktreeMetadataFile(worktreeRoot, {
     ...metadata,
     changeRequestLookupTarget: {
       ...target,
@@ -116,19 +116,19 @@ export function rebindFdeWorktreeChangeRequestHint(
   return true;
 }
 
-export function pinFdeWorktreeBranchIdentityIfMissing(
+export function pinFroggWorktreeBranchIdentityIfMissing(
   worktreeRoot: string,
   branch: string,
 ): boolean {
-  const metadata = readFdeWorktreeMetadata(worktreeRoot);
+  const metadata = readFroggWorktreeMetadata(worktreeRoot);
   if (!metadata || metadata.changeRequestLookupTarget) {
     return false;
   }
-  const target = createFdeWorktreeChangeRequestHint({
+  const target = createFroggWorktreeChangeRequestHint({
     headRef: branch,
     localBranchName: branch,
   });
-  writeFdeWorktreeMetadataFile(worktreeRoot, {
+  writeFroggWorktreeMetadataFile(worktreeRoot, {
     ...metadata,
     changeRequestLookupTarget: target,
   });
@@ -157,9 +157,9 @@ function getGitDirForWorktreeRoot(worktreeRoot: string): string {
   return gitPath;
 }
 
-export function getFdeWorktreeMetadataPath(worktreeRoot: string): string {
+export function getFroggWorktreeMetadataPath(worktreeRoot: string): string {
   const gitDir = getGitDirForWorktreeRoot(worktreeRoot);
-  return join(gitDir, "fde", "worktree.json");
+  return join(gitDir, "frogg", "worktree.json");
 }
 
 const REMOTE_TRACKING_PREFIX = "refs/remotes/";
@@ -209,12 +209,12 @@ function assertValidBaseRef(value: string): void {
   }
 }
 
-export function writeFdeWorktreeMetadata(
+export function writeFroggWorktreeMetadata(
   worktreeRoot: string,
   options: {
     baseRefName: string;
     baseRef?: string;
-    changeRequestLookupTarget?: FdeWorktreeChangeRequestHint;
+    changeRequestLookupTarget?: FroggWorktreeChangeRequestHint;
   },
 ): void {
   const baseRefName = normalizeBaseRefName(options.baseRefName);
@@ -224,7 +224,7 @@ export function writeFdeWorktreeMetadata(
     assertValidBaseRef(baseRef);
   }
 
-  const metadata: FdeWorktreeMetadata = {
+  const metadata: FroggWorktreeMetadata = {
     version: 1,
     baseRefName,
     ...(baseRef ? { baseRef } : {}),
@@ -232,10 +232,10 @@ export function writeFdeWorktreeMetadata(
       ? { changeRequestLookupTarget: options.changeRequestLookupTarget }
       : {}),
   };
-  writeFdeWorktreeMetadataFile(worktreeRoot, metadata);
+  writeFroggWorktreeMetadataFile(worktreeRoot, metadata);
 }
 
-export function writeFdeWorktreeRuntimeMetadata(
+export function writeFroggWorktreeRuntimeMetadata(
   worktreeRoot: string,
   options: { worktreePort: number },
 ): void {
@@ -243,22 +243,22 @@ export function writeFdeWorktreeRuntimeMetadata(
     throw new Error(`Invalid worktree runtime port: ${options.worktreePort}`);
   }
 
-  const current = readFdeWorktreeMetadata(worktreeRoot);
+  const current = readFroggWorktreeMetadata(worktreeRoot);
   if (!current) {
     throw new Error("Cannot persist worktree runtime metadata: missing base metadata");
   }
 
-  const next: FdeWorktreeMetadata = {
+  const next: FroggWorktreeMetadata = {
     ...current,
     version: 2,
     runtime: {
       worktreePort: options.worktreePort,
     },
   };
-  writeFdeWorktreeMetadataFile(worktreeRoot, next);
+  writeFroggWorktreeMetadataFile(worktreeRoot, next);
 }
 
-export function writeFdeWorktreeFirstAgentBranchAutoNameMetadata(
+export function writeFroggWorktreeFirstAgentBranchAutoNameMetadata(
   worktreeRoot: string,
   options: { placeholderBranchName: string },
 ): void {
@@ -267,12 +267,12 @@ export function writeFdeWorktreeFirstAgentBranchAutoNameMetadata(
     throw new Error("Placeholder branch name is required");
   }
 
-  const current = readFdeWorktreeMetadata(worktreeRoot);
+  const current = readFroggWorktreeMetadata(worktreeRoot);
   if (!current) {
     throw new Error("Cannot persist first-agent branch auto-name metadata: missing base metadata");
   }
 
-  writeFdeWorktreeMetadataFile(worktreeRoot, {
+  writeFroggWorktreeMetadataFile(worktreeRoot, {
     ...current,
     version: 2,
     firstAgentBranchAutoName: {
@@ -282,16 +282,16 @@ export function writeFdeWorktreeFirstAgentBranchAutoNameMetadata(
   });
 }
 
-export function markFdeWorktreeFirstAgentBranchAutoNameAttempted(
+export function markFroggWorktreeFirstAgentBranchAutoNameAttempted(
   worktreeRoot: string,
   options: { attemptedAt?: string } = {},
-): FdeWorktreeMetadata | null {
-  const current = readFdeWorktreeMetadata(worktreeRoot);
+): FroggWorktreeMetadata | null {
+  const current = readFroggWorktreeMetadata(worktreeRoot);
   if (!current || current.version !== 2 || current.firstAgentBranchAutoName?.status !== "pending") {
     return current;
   }
 
-  const next: FdeWorktreeMetadata = {
+  const next: FroggWorktreeMetadata = {
     ...current,
     firstAgentBranchAutoName: {
       status: "attempted",
@@ -299,30 +299,30 @@ export function markFdeWorktreeFirstAgentBranchAutoNameAttempted(
       attemptedAt: options.attemptedAt ?? new Date().toISOString(),
     },
   };
-  writeFdeWorktreeMetadataFile(worktreeRoot, next);
+  writeFroggWorktreeMetadataFile(worktreeRoot, next);
   return next;
 }
 
-export function readFdeWorktreeMetadata(worktreeRoot: string): FdeWorktreeMetadata | null {
-  const metadataPath = getFdeWorktreeMetadataPath(worktreeRoot);
+export function readFroggWorktreeMetadata(worktreeRoot: string): FroggWorktreeMetadata | null {
+  const metadataPath = getFroggWorktreeMetadataPath(worktreeRoot);
   if (!existsSync(metadataPath)) {
     return null;
   }
   const parsed = JSON.parse(readFileSync(metadataPath, "utf8"));
-  return FdeWorktreeMetadataSchema.parse(parsed);
+  return FroggWorktreeMetadataSchema.parse(parsed);
 }
 
-export function requireFdeWorktreeBaseRefName(worktreeRoot: string): string {
-  const metadataPath = getFdeWorktreeMetadataPath(worktreeRoot);
-  const metadata = readFdeWorktreeMetadata(worktreeRoot);
+export function requireFroggWorktreeBaseRefName(worktreeRoot: string): string {
+  const metadataPath = getFroggWorktreeMetadataPath(worktreeRoot);
+  const metadata = readFroggWorktreeMetadata(worktreeRoot);
   if (!metadata) {
-    throw new Error(`Missing FDE worktree base metadata: ${metadataPath}`);
+    throw new Error(`Missing Frogg worktree base metadata: ${metadataPath}`);
   }
   return metadata.baseRefName;
 }
 
-export function readFdeWorktreeRuntimePort(worktreeRoot: string): number | null {
-  const metadata = readFdeWorktreeMetadata(worktreeRoot);
+export function readFroggWorktreeRuntimePort(worktreeRoot: string): number | null {
+  const metadata = readFroggWorktreeMetadata(worktreeRoot);
   if (!metadata) {
     return null;
   }
@@ -332,9 +332,12 @@ export function readFdeWorktreeRuntimePort(worktreeRoot: string): number | null 
   return null;
 }
 
-function writeFdeWorktreeMetadataFile(worktreeRoot: string, metadata: FdeWorktreeMetadata): void {
-  const metadataPath = getFdeWorktreeMetadataPath(worktreeRoot);
-  mkdirSync(join(getGitDirForWorktreeRoot(worktreeRoot), "fde"), { recursive: true });
+function writeFroggWorktreeMetadataFile(
+  worktreeRoot: string,
+  metadata: FroggWorktreeMetadata,
+): void {
+  const metadataPath = getFroggWorktreeMetadataPath(worktreeRoot);
+  mkdirSync(join(getGitDirForWorktreeRoot(worktreeRoot), "frogg"), { recursive: true });
   const tempPath = `${metadataPath}.${process.pid}.${Date.now()}.tmp`;
   writeFileSync(tempPath, `${JSON.stringify(metadata, null, 2)}\n`, "utf8");
   renameSync(tempPath, metadataPath);

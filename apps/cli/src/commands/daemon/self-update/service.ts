@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { spawn, spawnSync } from "node:child_process";
 import { openSync, readFileSync } from "node:fs";
 import os from "node:os";
@@ -10,7 +10,7 @@ import { currentLinkPath } from "./layout.js";
 /**
  * How the daemon gets restarted after `current` is flipped. The installer
  * registers a systemd user unit on Linux or a launchd agent on macOS; a
- * `FDE_NO_SERVICE=1` install, Windows, or a hand-started daemon falls back to
+ * `FROGG_NO_SERVICE=1` install, Windows, or a hand-started daemon falls back to
  * the CLI's own stop/start through the pid-lock contract.
  */
 export const SYSTEMD_UNIT = brand.serviceName;
@@ -91,7 +91,7 @@ export function createLaunchdServiceManager(): ServiceManager {
 
 /**
  * No service manager: stop through the pid lock (graceful RPC, then signal),
- * then start `<installDir>/current/bin/fde daemon start` detached so the
+ * then start `<installDir>/current/bin/frogg daemon start` detached so the
  * freshly linked version comes up with the same home and listen address.
  */
 export function createUnmanagedServiceManager(options: UnmanagedServiceOptions): ServiceManager {
@@ -174,7 +174,7 @@ export function detectServiceManager(options: UnmanagedServiceOptions): ServiceM
 }
 
 const SUPERVISOR_ENV_KEYS = [
-  "FDE_EXECUTION_SERVICE",
+  "FROGG_EXECUTION_SERVICE",
   ...["HOME", "INSTALL_DIR", "RELEASE_BASE", "RELEASES_API", "GITHUB_TOKEN"].map(
     (key) => `${brand.envPrefix}_${key}`,
   ),
@@ -185,14 +185,14 @@ const SUPERVISOR_ENV_KEYS = [
   "XDG_CONFIG_HOME",
   "XDG_RUNTIME_DIR",
   "DBUS_SESSION_BUS_ADDRESS",
-  "FDE_HOME",
-  "FDE_LISTEN",
-  "FDE_WEB_UI_ENABLED",
-  "FDE_INSTALL_DIR",
-  "FDE_HOME",
-  "FDE_RELEASE_BASE",
-  "FDE_RELEASES_API",
-  "FDE_GITHUB_TOKEN",
+  "FROGG_HOME",
+  "FROGG_LISTEN",
+  "FROGG_WEB_UI_ENABLED",
+  "FROGG_INSTALL_DIR",
+  "FROGG_HOME",
+  "FROGG_RELEASE_BASE",
+  "FROGG_RELEASES_API",
+  "FROGG_GITHUB_TOKEN",
 ];
 
 /**

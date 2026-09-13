@@ -9,7 +9,7 @@ import pino from "pino";
 import { OpenCodeAgentClient } from "../agent/providers/opencode-agent.js";
 import { OpenCodeServerManager } from "../agent/providers/opencode/server-manager.js";
 import { terminateWithTreeKill } from "../../utils/tree-kill.js";
-import { createTestFdeDaemon, type TestFdeDaemon } from "../test-utils/fde-daemon.js";
+import { createTestFroggDaemon, type TestFroggDaemon } from "../test-utils/frogg-daemon.js";
 import { DaemonClient } from "../test-utils/daemon-client.js";
 
 const PINNED_OPENCODE_VERSION = "1.18.9";
@@ -21,7 +21,7 @@ const COMMAND_TIMEOUT_MS = 180_000;
 interface RuntimePaths {
   root: string;
   home: string;
-  fdeHomeRoot: string;
+  froggHomeRoot: string;
   xdgConfig: string;
   xdgData: string;
   xdgCache: string;
@@ -45,7 +45,7 @@ interface CommandInput {
 
 export interface OpenCodeOmoRealRuntime {
   client: DaemonClient;
-  daemon: TestFdeDaemon;
+  daemon: TestFroggDaemon;
   model: string;
   workspace: string;
   artifacts: string;
@@ -54,8 +54,9 @@ export interface OpenCodeOmoRealRuntime {
 
 export async function createOpenCodeOmoRealRuntime(): Promise<OpenCodeOmoRealRuntime> {
   const paths = createRuntimePaths();
-  const openCodeVersion = process.env.FDE_REAL_OPENCODE_VERSION?.trim() || PINNED_OPENCODE_VERSION;
-  const omoVersion = process.env.FDE_REAL_OMO_VERSION?.trim() || PINNED_OMO_VERSION;
+  const openCodeVersion =
+    process.env.FROGG_REAL_OPENCODE_VERSION?.trim() || PINNED_OPENCODE_VERSION;
+  const omoVersion = process.env.FROGG_REAL_OMO_VERSION?.trim() || PINNED_OMO_VERSION;
   const openRouterApiKey = process.env.OPENROUTER_API_KEY?.trim() || null;
   const model = resolveModel(openRouterApiKey);
   const secrets = collectEnvironmentSecrets(openRouterApiKey);
@@ -136,24 +137,24 @@ export async function createOpenCodeOmoRealRuntime(): Promise<OpenCodeOmoRealRun
   if (model === NO_AUTH_MODEL) {
     await runCommand({
       command: openCodeCommand,
-      args: ["run", "--model", model, "Reply with exactly: FDE_BIG_PICKLE_PROBE_OK"],
+      args: ["run", "--model", model, "Reply with exactly: FROGG_BIG_PICKLE_PROBE_OK"],
       cwd: paths.workspace,
       env: runtimeEnv,
       artifactName: "big-pickle-probe.log",
       artifacts: paths.artifacts,
       secrets,
-      requiredOutput: "FDE_BIG_PICKLE_PROBE_OK",
+      requiredOutput: "FROGG_BIG_PICKLE_PROBE_OK",
     });
   }
 
-  const previousFdeHome = process.env.FDE_HOME;
+  const previousFroggHome = process.env.FROGG_HOME;
   let traceDestination: ReturnType<typeof pino.destination> | null = null;
   let closeTrace: (() => void) | null = null;
   let serverManager: OpenCodeServerManager | null = null;
-  let daemon: TestFdeDaemon | null = null;
+  let daemon: TestFroggDaemon | null = null;
   let client: DaemonClient | null = null;
   try {
-    process.env.FDE_HOME = path.join(paths.fdeHomeRoot, ".fde");
+    process.env.FROGG_HOME = path.join(paths.froggHomeRoot, ".frogg");
     traceDestination = pino.destination({
       dest: path.join(paths.artifacts, "daemon.log"),
       sync: true,
@@ -177,10 +178,10 @@ export async function createOpenCodeOmoRealRuntime(): Promise<OpenCodeOmoRealRun
       resolveHomeDir: () => paths.home,
     });
     const openCodeClient = new OpenCodeAgentClient(logger, runtimeSettings, { serverManager });
-    daemon = await createTestFdeDaemon({
+    daemon = await createTestFroggDaemon({
       agentClients: { opencode: openCodeClient },
       logger,
-      fdeHomeRoot: paths.fdeHomeRoot,
+      froggHomeRoot: paths.froggHomeRoot,
       staticDir: path.join(paths.root, "static"),
       cleanup: false,
     });
@@ -204,7 +205,7 @@ export async function createOpenCodeOmoRealRuntime(): Promise<OpenCodeOmoRealRun
             rmSync(paths.root, { recursive: true, force: true });
           }
         } finally {
-          restoreEnvironment("FDE_HOME", previousFdeHome);
+          restoreEnvironment("FROGG_HOME", previousFroggHome);
         }
       },
     };
@@ -219,18 +220,18 @@ export async function createOpenCodeOmoRealRuntime(): Promise<OpenCodeOmoRealRun
         traceDestination?.end();
       }
     } finally {
-      restoreEnvironment("FDE_HOME", previousFdeHome);
+      restoreEnvironment("FROGG_HOME", previousFroggHome);
     }
     throw withArtifactLocation(error, paths.artifacts);
   }
 }
 
 function createRuntimePaths(): RuntimePaths {
-  const root = mkdtempSync(path.join(tmpdir(), "fde-real-opencode-omo-"));
+  const root = mkdtempSync(path.join(tmpdir(), "frogg-real-opencode-omo-"));
   const paths: RuntimePaths = {
     root,
     home: path.join(root, "home"),
-    fdeHomeRoot: path.join(root, "fde-home"),
+    froggHomeRoot: path.join(root, "frogg-home"),
     xdgConfig: path.join(root, "xdg", "config"),
     xdgData: path.join(root, "xdg", "data"),
     xdgCache: path.join(root, "xdg", "cache"),
@@ -252,7 +253,7 @@ function createRuntimePaths(): RuntimePaths {
 }
 
 function resolveModel(openRouterApiKey: string | null): string {
-  const explicitModel = process.env.FDE_REAL_OPENCODE_MODEL?.trim();
+  const explicitModel = process.env.FROGG_REAL_OPENCODE_MODEL?.trim();
   if (explicitModel) {
     return explicitModel;
   }
@@ -272,7 +273,7 @@ function buildRuntimeEnv(paths: RuntimePaths, openRouterApiKey: string | null): 
     SSL_CERT_DIR: process.env.SSL_CERT_DIR,
     HOME: paths.home,
     ...(process.platform === "win32" ? resolveWindowsHomeEnv(paths.home, paths.temporary) : {}),
-    FDE_HOME: path.join(paths.fdeHomeRoot, ".fde"),
+    FROGG_HOME: path.join(paths.froggHomeRoot, ".frogg"),
     XDG_CONFIG_HOME: paths.xdgConfig,
     XDG_DATA_HOME: paths.xdgData,
     XDG_CACHE_HOME: paths.xdgCache,

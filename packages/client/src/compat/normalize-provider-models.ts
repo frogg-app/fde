@@ -1,11 +1,11 @@
-import type { AgentModelDefinition, ProviderSnapshotEntry } from "@fde/protocol/agent-types";
-import { normalizeAgentModelDefinition } from "@fde/protocol/agent-types";
-import { expandProviderSnapshot } from "@fde/protocol/provider-snapshot-codec";
+import type { AgentModelDefinition, ProviderSnapshotEntry } from "@frogg/protocol/agent-types";
+import { normalizeAgentModelDefinition } from "@frogg/protocol/agent-types";
+import { expandProviderSnapshot } from "@frogg/protocol/provider-snapshot-codec";
 import type {
   GetProvidersSnapshotResponseMessage,
   ListProviderModelsResponseMessage,
   SessionOutboundMessage,
-} from "@fde/protocol/messages";
+} from "@frogg/protocol/messages";
 
 type ListProviderModelsPayload = ListProviderModelsResponseMessage["payload"];
 type GetProvidersSnapshotPayload = GetProvidersSnapshotResponseMessage["payload"];

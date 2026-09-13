@@ -37,10 +37,10 @@ describe("deriveProjectDisplayName", () => {
   it("shows owner/repo for GitHub remote keys", () => {
     expect(
       deriveProjectDisplayName({
-        projectKey: "remote:github.com/frogg-app/fde",
-        projectName: "fde",
+        projectKey: "remote:github.com/frogg-app/frogg",
+        projectName: "frogg",
       }),
-    ).toBe("frogg-app/fde");
+    ).toBe("frogg-app/frogg");
   });
 
   it("shows remote path for non-GitHub remote keys", () => {
@@ -55,22 +55,22 @@ describe("deriveProjectDisplayName", () => {
   it("falls back to projectName for local keys", () => {
     expect(
       deriveProjectDisplayName({
-        projectKey: "/Users/me/dev/fde",
-        projectName: "fde",
+        projectKey: "/Users/me/dev/frogg",
+        projectName: "frogg",
       }),
-    ).toBe("fde");
+    ).toBe("frogg");
   });
 });
 
 describe("groupAgents", () => {
   it("groups active agents by remote URL when available", () => {
     const agents = [
-      makeAgent({ id: "a1", cwd: "/Users/me/dev/fde" }),
-      makeAgent({ id: "a2", cwd: "/Users/me/dev/fde-fix/worktree" }),
+      makeAgent({ id: "a1", cwd: "/Users/me/dev/frogg" }),
+      makeAgent({ id: "a2", cwd: "/Users/me/dev/frogg-fix/worktree" }),
     ];
 
     const { activeGroups } = groupAgents(agents, {
-      getRemoteUrl: () => "git@github.com:frogg-app/fde.git",
+      getRemoteUrl: () => "git@github.com:frogg-app/frogg.git",
     });
 
     expect(activeGroups).toHaveLength(1);
@@ -79,8 +79,8 @@ describe("groupAgents", () => {
 
   it("falls back to cwd grouping when remote URL is unavailable", () => {
     const agents = [
-      makeAgent({ id: "a1", cwd: "/Users/me/dev/fde" }),
-      makeAgent({ id: "a2", cwd: "/Users/me/dev/fde-fix/worktree" }),
+      makeAgent({ id: "a1", cwd: "/Users/me/dev/frogg" }),
+      makeAgent({ id: "a2", cwd: "/Users/me/dev/frogg-fix/worktree" }),
     ];
 
     const { activeGroups } = groupAgents(agents, {

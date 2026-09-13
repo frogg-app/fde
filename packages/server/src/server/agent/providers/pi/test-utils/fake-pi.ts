@@ -408,12 +408,12 @@ export class FakePiSession implements PiRuntimeSession {
       type: "extension_ui_request",
       id: `submitted-user-${entry.id}`,
       method: "notify",
-      message: `FDE_SUBMITTED_USER_ENTRY ${JSON.stringify({ entry })}`,
+      message: `FROGG_SUBMITTED_USER_ENTRY ${JSON.stringify({ entry })}`,
     });
   }
 
   private handleTreeNavigationCommand(message: string): void {
-    const prefix = "/fde_tree ";
+    const prefix = "/frogg_tree ";
     if (!message.startsWith(prefix)) {
       return;
     }
@@ -429,7 +429,7 @@ export class FakePiSession implements PiRuntimeSession {
   }
 
   private handleEntryCaptureCommand(message: string): void {
-    const prefix = "/fde_capture_entries ";
+    const prefix = "/frogg_capture_entries ";
     if (!message.startsWith(prefix)) {
       return;
     }
@@ -450,7 +450,7 @@ export class FakePiSession implements PiRuntimeSession {
       type: "extension_ui_request",
       id: `capture-${requestId ?? reason}`,
       method: "notify",
-      message: `FDE_ENTRY_CAPTURE ${JSON.stringify({
+      message: `FROGG_ENTRY_CAPTURE ${JSON.stringify({
         reason,
         requestId,
         entries: this.capturedUserEntries,
@@ -466,7 +466,7 @@ export class FakePiSession implements PiRuntimeSession {
       type: "extension_ui_request",
       id: `command-${requestId}`,
       method: "notify",
-      message: `FDE_COMMAND_RESULT ${JSON.stringify({ requestId, ...result })}`,
+      message: `FROGG_COMMAND_RESULT ${JSON.stringify({ requestId, ...result })}`,
     });
   }
 }

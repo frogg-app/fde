@@ -4,13 +4,16 @@ import {
   type PersistedConfig,
 } from "./persisted-config.js";
 import { ProviderOverrideSchema } from "./agent/provider-launch-config.js";
-import { MutableDaemonConfigSchema, MutableDaemonConfigPatchSchema } from "@fde/protocol/messages";
-import type { AgentSkillSelection } from "@fde/protocol/messages";
+import {
+  MutableDaemonConfigSchema,
+  MutableDaemonConfigPatchSchema,
+} from "@frogg/protocol/messages";
+import type { AgentSkillSelection } from "@frogg/protocol/messages";
 
-export type { MutableDaemonConfig, MutableDaemonConfigPatch } from "@fde/protocol/messages";
+export type { MutableDaemonConfig, MutableDaemonConfigPatch } from "@frogg/protocol/messages";
 
-type MutableDaemonConfig = import("@fde/protocol/messages").MutableDaemonConfig;
-type MutableDaemonConfigPatch = import("@fde/protocol/messages").MutableDaemonConfigPatch;
+type MutableDaemonConfig = import("@frogg/protocol/messages").MutableDaemonConfig;
+type MutableDaemonConfigPatch = import("@frogg/protocol/messages").MutableDaemonConfigPatch;
 type ProviderOverride = import("./agent/provider-launch-config.js").ProviderOverride;
 
 interface SupportedMutableConfigPatch {
@@ -313,7 +316,7 @@ export function applyMutableProviderConfigToOverrides(
 
 export class DaemonConfigStore {
   private current: MutableDaemonConfig;
-  private readonly fdeHome: string;
+  private readonly froggHome: string;
   private readonly logger: LoggerLike | undefined;
   private readonly changeListeners = new Set<ConfigListener>();
   private readonly applyListeners = new Set<ConfigApplyListener>();
@@ -325,7 +328,7 @@ export class DaemonConfigStore {
   private lastKnownPersisted: PersistedConfig;
 
   constructor(
-    fdeHome: string,
+    froggHome: string,
     initial: MutableDaemonConfig,
     logger?: LoggerLike,
     options: {
@@ -335,7 +338,7 @@ export class DaemonConfigStore {
       startupPersisted?: PersistedConfig;
     } = {},
   ) {
-    this.fdeHome = fdeHome;
+    this.froggHome = froggHome;
     this.logger = getLogger(logger);
     this.current = MutableDaemonConfigSchema.parse({
       ...initial,
@@ -344,7 +347,7 @@ export class DaemonConfigStore {
     this.relayEnabledMutable = options.relayEnabledMutable ?? true;
     this.relayEndpointMutable = options.relayEndpointMutable ?? true;
     this.reloadSource = options.reloadSource;
-    this.startupPersisted = options.startupPersisted ?? loadPersistedConfig(fdeHome, this.logger);
+    this.startupPersisted = options.startupPersisted ?? loadPersistedConfig(froggHome, this.logger);
     this.lastKnownPersisted = this.startupPersisted;
   }
 
@@ -364,7 +367,7 @@ export class DaemonConfigStore {
   private applySupportedPatch(parsedPatch: SupportedMutableConfigPatch): MutableDaemonConfig {
     if (parsedPatch.relay?.enabled !== undefined && !this.relayEnabledMutable) {
       throw new Error(
-        "Relay is controlled by a daemon launch override. Remove FDE_RELAY_ENABLED or the relay CLI flag before changing it here.",
+        "Relay is controlled by a daemon launch override. Remove FROGG_RELAY_ENABLED or the relay CLI flag before changing it here.",
       );
     }
     if (
@@ -372,7 +375,7 @@ export class DaemonConfigStore {
       !this.relayEndpointMutable
     ) {
       throw new Error(
-        "Relay endpoint is controlled by a daemon launch override. Remove FDE_RELAY_ENDPOINT, FDE_RELAY_USE_TLS, or the relay TLS CLI flag before changing it here.",
+        "Relay endpoint is controlled by a daemon launch override. Remove FROGG_RELAY_ENDPOINT, FROGG_RELAY_USE_TLS, or the relay TLS CLI flag before changing it here.",
       );
     }
     const { removeProviders = [], ...configPatch } = parsedPatch;
@@ -407,7 +410,7 @@ export class DaemonConfigStore {
       this.applyReplacement(next, { removedProviders });
       this.lastKnownPersisted = knownNext;
     } catch (error) {
-      savePersistedConfig(this.fdeHome, persistedBeforePatch, this.logger);
+      savePersistedConfig(this.froggHome, persistedBeforePatch, this.logger);
       throw error;
     }
 
@@ -419,7 +422,7 @@ export class DaemonConfigStore {
       throw new Error("Daemon config reload is unavailable for this daemon instance");
     }
 
-    const persisted = loadPersistedConfig(this.fdeHome, this.logger);
+    const persisted = loadPersistedConfig(this.froggHome, this.logger);
     const resolved = this.reloadSource.resolve(persisted);
     const desired = MutableDaemonConfigSchema.parse(resolved.mutable);
     const changedSinceLastApply = diffPaths(this.lastKnownPersisted, persisted);
@@ -568,7 +571,7 @@ export class DaemonConfigStore {
     patch: Omit<SupportedMutableConfigPatch, "removeProviders">,
     removeProviders: readonly string[],
   ): { previous: PersistedConfig; knownNext: PersistedConfig } {
-    const persisted = loadPersistedConfig(this.fdeHome, this.logger);
+    const persisted = loadPersistedConfig(this.froggHome, this.logger);
     const merge = (source: PersistedConfig) =>
       mergeMutablePatchIntoPersistedConfig({
         persisted: source,
@@ -579,7 +582,7 @@ export class DaemonConfigStore {
       });
     const nextPersisted = merge(persisted);
     const knownNext = merge(this.lastKnownPersisted);
-    savePersistedConfig(this.fdeHome, nextPersisted, this.logger);
+    savePersistedConfig(this.froggHome, nextPersisted, this.logger);
     return { previous: persisted, knownNext };
   }
 }

@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import express from "express";
 import { createServer as createHTTPServer, type IncomingMessage, type ServerResponse } from "http";
 import { constants, existsSync, unlinkSync } from "fs";
@@ -76,9 +76,9 @@ import { VoiceAssistantWebSocketServer } from "./websocket-server.js";
 import { WorkspaceSetupRuntime } from "./workspace-setup-runtime.js";
 import { createWorkspaceLabelService } from "./workspace-labels/index.js";
 import { createGitHubService } from "../services/github-service.js";
-import { createFdeWorktree as createRegisteredFdeWorktree } from "./fde-worktree-service.js";
+import { createFroggWorktree as createRegisteredFroggWorktree } from "./frogg-worktree-service.js";
 import { createWorkspaceProvisioningService } from "./session/workspace-provisioning/workspace-provisioning-service.js";
-import { createFdeWorktreeWorkflow } from "./worktree-session.js";
+import { createFroggWorktreeWorkflow } from "./worktree-session.js";
 import { DownloadTokenStore } from "./file-download/token-store.js";
 import type { OpenAiSpeechProviderConfig } from "./speech/providers/openai/config.js";
 import type { LocalSpeechProviderConfig } from "./speech/providers/local/config.js";
@@ -114,8 +114,11 @@ import {
 } from "./agent/interrupted-turns.js";
 import { attachAgentStoragePersistence } from "./persistence-hooks.js";
 import { createAgentMcpServer } from "./agent/mcp-server.js";
-import { createFdeToolCatalog, type FdeToolHostDependencies } from "./agent/tools/fde-tools.js";
-import type { FdeToolRuntimeContext } from "./agent/tools/types.js";
+import {
+  createFroggToolCatalog,
+  type FroggToolHostDependencies,
+} from "./agent/tools/frogg-tools.js";
+import type { FroggToolRuntimeContext } from "./agent/tools/types.js";
 import { createAgentProviderRuntime } from "./agent/provider-runtime.js";
 import { bootstrapWorkspaceRegistries } from "./workspace-registry-bootstrap.js";
 import { WorkspaceReconciliationService } from "./workspace-reconciliation-service.js";
@@ -159,7 +162,7 @@ import type {
   AgentSkillSelection,
   FirstAgentContext,
   TerminalProfile,
-} from "@fde/protocol/messages";
+} from "@frogg/protocol/messages";
 import type {
   AgentProviderRuntimeSettingsMap,
   ProviderOverride,
@@ -223,7 +226,7 @@ import {
 } from "./session/daemon/daemon-auto-updater.js";
 import { describeDaemonInstall } from "./session/daemon/daemon-update-install.js";
 import { DaemonUpdateService } from "./session/daemon/daemon-update-service.js";
-import type { DaemonAutoUpdateConfig } from "@fde/protocol/messages";
+import type { DaemonAutoUpdateConfig } from "@frogg/protocol/messages";
 
 const MCP_DEBUG_BATCH_LIMIT = 10;
 const MCP_DEBUG_SECRET = "[redacted]";
@@ -349,20 +352,20 @@ function describeMcpDebugPayload(value: unknown): Record<string, unknown> {
   };
 }
 
-export type FdeOpenAIConfig = OpenAiSpeechProviderConfig;
-export type FdeLocalSpeechConfig = LocalSpeechProviderConfig;
+export type FroggOpenAIConfig = OpenAiSpeechProviderConfig;
+export type FroggLocalSpeechConfig = LocalSpeechProviderConfig;
 
-export interface FdeSpeechSttLanguages {
+export interface FroggSpeechSttLanguages {
   dictation: string;
   voice: string;
 }
 
-export interface FdeSpeechConfig {
+export interface FroggSpeechConfig {
   providers: RequestedSpeechProviders;
   /** Spoken agent alerts (TTS of attention notifications). Absent means off. */
   notifications?: { enabled: boolean };
-  sttLanguages?: FdeSpeechSttLanguages;
-  local?: FdeLocalSpeechConfig;
+  sttLanguages?: FroggSpeechSttLanguages;
+  local?: FroggLocalSpeechConfig;
 }
 
 export type DaemonLifecycleIntent =
@@ -379,11 +382,11 @@ export type DaemonLifecycleIntent =
       reason: string;
     };
 
-export interface FdeDaemonConfig {
+export interface FroggDaemonConfig {
   /** Internal transport boundary; never persisted or accepted from remote clients. */
   executionService?: { token: string; getPublicListen(): string };
   listen: string;
-  fdeHome: string;
+  froggHome: string;
   daemonVersion?: string;
   desktopManaged?: boolean;
   worktreesRoot?: string;
@@ -429,8 +432,8 @@ export interface FdeDaemonConfig {
   };
   appBaseUrl?: string;
   auth?: DaemonAuthConfig;
-  openai?: FdeOpenAIConfig;
-  speech?: FdeSpeechConfig;
+  openai?: FroggOpenAIConfig;
+  speech?: FroggSpeechConfig;
   voiceLlmProvider?: AgentProvider | null;
   voiceLlmProviderExplicit?: boolean;
   voiceLlmModel?: string | null;
@@ -459,8 +462,8 @@ export interface FdeDaemonConfig {
   };
 }
 
-export interface FdeDaemon {
-  config: FdeDaemonConfig;
+export interface FroggDaemon {
+  config: FroggDaemonConfig;
   agentManager: AgentManager;
   agentStorage: AgentStorage;
   terminalManager: TerminalManager;
@@ -473,7 +476,7 @@ export interface FdeDaemon {
   getListenTarget(): ListenTarget | null;
 }
 
-export interface FdeDaemonDependencies {
+export interface FroggDaemonDependencies {
   hubRelationshipRemote?: HubRelationshipRemote;
   hubRelationshipClock?: HubRelationshipClock;
   hubRelationshipRetryPolicy?: HubRelationshipRetryPolicy;
@@ -485,7 +488,7 @@ export interface FdeDaemonDependencies {
 }
 
 function createBootstrapManagedProcessRegistry(
-  config: Pick<FdeDaemonConfig, "fdeHome" | "managedProcesses">,
+  config: Pick<FroggDaemonConfig, "froggHome" | "managedProcesses">,
   logger: Logger,
 ): ManagedProcessRegistry {
   if (config.managedProcesses) {
@@ -493,7 +496,7 @@ function createBootstrapManagedProcessRegistry(
   }
 
   return createManagedProcessRegistry({
-    fdeHome: config.fdeHome,
+    froggHome: config.froggHome,
     processTable: createSystemManagedProcessTable(),
     terminateProcess: terminateWithTreeKill,
     logger,
@@ -512,7 +515,7 @@ async function reconcileManagedProcessLedger(
 
 function mountWebUi(
   app: express.Application,
-  config: FdeDaemonConfig,
+  config: FroggDaemonConfig,
   logger: Logger,
   gate: WebUiGate,
 ): void {
@@ -563,29 +566,29 @@ function createClaimGate(input: {
 
 /**
  * `trustLan` rides along in the mutable config (the schema passes unknown keys
- * through) so `fde daemon trust-lan` and `fde daemon reload` apply it live.
+ * through) so `frogg daemon trust-lan` and `frogg daemon reload` apply it live.
  */
 function readMutableTrustLan(config: MutableDaemonConfig): boolean {
   const value = (config as Record<string, unknown>).trustLan;
   return typeof value === "boolean" ? value : DEFAULT_TRUST_LAN;
 }
 
-function configuredTrustLan(config: Pick<FdeDaemonConfig, "trustLan">): boolean {
+function configuredTrustLan(config: Pick<FroggDaemonConfig, "trustLan">): boolean {
   return config.trustLan ?? DEFAULT_TRUST_LAN;
 }
 
-function resolveExpressTrustProxySetting(config: FdeDaemonConfig): true | string[] {
+function resolveExpressTrustProxySetting(config: FroggDaemonConfig): true | string[] {
   return config.trustedProxies ?? ["loopback"];
 }
 
-function resolveAutoUpdate(config: FdeDaemonConfig): DaemonAutoUpdateConfig {
+function resolveAutoUpdate(config: FroggDaemonConfig): DaemonAutoUpdateConfig {
   return config.autoUpdate ?? DEFAULT_AUTO_UPDATE_CONFIG;
 }
 
 const BRAND_PAIRING_URL = brand.services.pairingUrl ?? "";
 
 function createInitialMutableRelayConfig(
-  config: FdeDaemonConfig,
+  config: FroggDaemonConfig,
 ): NonNullable<MutableDaemonConfig["relay"]> {
   return {
     enabled: config.relayEnabled ?? true,
@@ -595,7 +598,7 @@ function createInitialMutableRelayConfig(
   };
 }
 
-function createInitialMutableDaemonConfig(config: FdeDaemonConfig): MutableDaemonConfig {
+function createInitialMutableDaemonConfig(config: FroggDaemonConfig): MutableDaemonConfig {
   const providers = config.providerOverrides ?? {};
 
   const initialConfig: MutableDaemonConfig = {
@@ -636,14 +639,14 @@ function createInitialMutableDaemonConfig(config: FdeDaemonConfig): MutableDaemo
   return initialConfig;
 }
 
-export async function createFdeDaemon(
-  config: FdeDaemonConfig,
+export async function createFroggDaemon(
+  config: FroggDaemonConfig,
   rootLogger: Logger,
-  dependencies: FdeDaemonDependencies = {},
-): Promise<FdeDaemon> {
+  dependencies: FroggDaemonDependencies = {},
+): Promise<FroggDaemon> {
   configureGitProcessPolicy(config.git ?? resolveGitProcessPolicy({ env: process.env }));
   const logger = rootLogger.child({ module: "bootstrap" });
-  const obsoleteTimelineDirectory = path.join(config.fdeHome, "agent-timelines");
+  const obsoleteTimelineDirectory = path.join(config.froggHome, "agent-timelines");
   await rm(obsoleteTimelineDirectory, { recursive: true, force: true }).catch((error) => {
     logger.warn(
       { err: error, path: obsoleteTimelineDirectory },
@@ -654,13 +657,13 @@ export async function createFdeDaemon(
   const elapsed = () => `${(performance.now() - bootstrapStart).toFixed(0)}ms`;
   const daemonVersion = config.daemonVersion ?? resolveDaemonVersion(import.meta.url);
   const initialMutableConfig = createInitialMutableDaemonConfig(config);
-  const daemonConfigStore = new DaemonConfigStore(config.fdeHome, initialMutableConfig, logger, {
+  const daemonConfigStore = new DaemonConfigStore(config.froggHome, initialMutableConfig, logger, {
     relayEnabledMutable: config.relayEnabledMutable ?? true,
     relayEndpointMutable: config.relayEndpointMutable ?? true,
     startupPersisted: config.configReload?.startupPersisted,
     reloadSource: {
       resolve: (persisted) => {
-        const reloaded = resolveConfigFromPersisted(config.fdeHome, persisted, {
+        const reloaded = resolveConfigFromPersisted(config.froggHome, persisted, {
           env: config.configReload?.env ?? process.env,
           cli: config.configReload?.cli,
           relayEnabledFallback: config.configReload?.relayEnabledFallback,
@@ -679,10 +682,10 @@ export async function createFdeDaemon(
   const browserToolsPolicy = new DaemonConfigBrowserToolsPolicy(daemonConfigStore);
   const browserToolsBroker = new BrowserToolsBroker({});
 
-  const serverId = getOrCreateServerId(config.fdeHome, { logger });
-  const daemonKeyPair = await loadOrCreateDaemonKeyPair(config.fdeHome, logger);
+  const serverId = getOrCreateServerId(config.froggHome, { logger });
+  const daemonKeyPair = await loadOrCreateDaemonKeyPair(config.froggHome, logger);
   // Paired principals/credentials and the first-run claim gate (getting-started/connect-and-pair.mdx).
-  const claimStore = createClaimStore(config.fdeHome);
+  const claimStore = createClaimStore(config.froggHome);
   const claimOffers = createClaimOfferStore();
   const authConfig: DaemonAuthConfig = {
     ...config.auth,
@@ -831,9 +834,9 @@ export async function createFdeDaemon(
 
   // CORS - allow same-origin + configured origins
   const fixedAllowedOrigins = [
-    // Fde's Electron renderer used the custom fde:// scheme.
-    "fde://app",
-    // The FDE Tauri shell: WebKit reports `tauri://localhost`, WebView2 (Windows)
+    // Frogg's Electron renderer used the custom frogg:// scheme.
+    "frogg://app",
+    // The Frogg Tauri shell: WebKit reports `tauri://localhost`, WebView2 (Windows)
     // `http://tauri.localhost` (or https on newer builds).
     "tauri://localhost",
     "http://tauri.localhost",
@@ -1040,21 +1043,21 @@ export async function createFdeDaemon(
 
   const agentStorage = new AgentStorage(config.agentStoragePath, logger);
   const projectRegistry = new FileBackedProjectRegistry(
-    path.join(config.fdeHome, "projects", "projects.json"),
+    path.join(config.froggHome, "projects", "projects.json"),
     logger,
   );
   workspaceRegistry = new FileBackedWorkspaceRegistry(
-    path.join(config.fdeHome, "projects", "workspaces.json"),
+    path.join(config.froggHome, "projects", "workspaces.json"),
     logger,
   );
   const workspaceLabelService = createWorkspaceLabelService({
-    fdeHome: config.fdeHome,
+    froggHome: config.froggHome,
     workspaceRegistry,
   });
   const github = createGitHubService();
   const workspaceGitService = new WorkspaceGitServiceImpl({
     logger,
-    fdeHome: config.fdeHome,
+    froggHome: config.froggHome,
     worktreesRoot: config.worktreesRoot,
     deps: {
       forgeOverrides: { github },
@@ -1068,7 +1071,7 @@ export async function createFdeDaemon(
     logger,
   });
   const agentProviderRuntime = await createAgentProviderRuntime({
-    fdeHome: config.fdeHome,
+    froggHome: config.froggHome,
     logger,
     snapshotManager: {
       refreshTimeoutMs: config.providerCatalogRefreshTimeoutMs,
@@ -1117,7 +1120,7 @@ export async function createFdeDaemon(
   logger.info({ elapsed: elapsed() }, "Agent storage initialized");
   await bootstrapWorkspaceRegistries({
     serverId,
-    fdeHome: config.fdeHome,
+    froggHome: config.froggHome,
     agentStorage,
     projectRegistry,
     workspaceRegistry,
@@ -1152,7 +1155,7 @@ export async function createFdeDaemon(
   });
   const checkoutDiffManager = new CheckoutDiffManager({
     logger,
-    fdeHome: config.fdeHome,
+    froggHome: config.froggHome,
     workspaceGitService,
   });
   const archiveWorkspaceRecordExternal = async (
@@ -1198,7 +1201,7 @@ export async function createFdeDaemon(
         cwd: workspace.cwd,
         kind: workspace.kind,
         worktreeRoot: workspace.worktreeRoot,
-        isFdeOwnedWorktree: workspace.isFdeOwnedWorktree,
+        isFroggOwnedWorktree: workspace.isFroggOwnedWorktree,
         mainRepoRoot: workspace.mainRepoRoot,
       }));
   };
@@ -1255,8 +1258,8 @@ export async function createFdeDaemon(
   });
 
   setupAutoArchiveOnMerge({
-    fdeHome: config.fdeHome,
-    fdeWorktreesBaseRoot: config.worktreesRoot,
+    froggHome: config.froggHome,
+    froggWorktreesBaseRoot: config.worktreesRoot,
     daemonConfigStore,
     workspaceGitService,
     github,
@@ -1274,16 +1277,16 @@ export async function createFdeDaemon(
     emitWorkspaceUpdatesForWorkspaceIds: emitWorkspaceUpdatesExternal,
   });
 
-  const createFdeWorktreeForTools = async (
-    input: Parameters<typeof createFdeWorktreeWorkflow>[1],
-    serviceOptions?: Parameters<typeof createFdeWorktreeWorkflow>[2],
+  const createFroggWorktreeForTools = async (
+    input: Parameters<typeof createFroggWorktreeWorkflow>[1],
+    serviceOptions?: Parameters<typeof createFroggWorktreeWorkflow>[2],
   ) => {
-    return createFdeWorktreeWorkflow(
+    return createFroggWorktreeWorkflow(
       {
-        fdeHome: config.fdeHome,
+        froggHome: config.froggHome,
         worktreesRoot: config.worktreesRoot,
-        createFdeWorktree: async (workflowInput, workflowOptions) => {
-          return createRegisteredFdeWorktree(workflowInput, {
+        createFroggWorktree: async (workflowInput, workflowOptions) => {
+          return createRegisteredFroggWorktree(workflowInput, {
             github,
             ...(workflowOptions?.resolveDefaultBranch
               ? {
@@ -1329,11 +1332,11 @@ export async function createFdeDaemon(
     agentManager,
     agentStorage,
     logger,
-    fdeHome: config.fdeHome,
+    froggHome: config.froggHome,
     worktreesRoot: config.worktreesRoot,
     terminalManager,
     providerSnapshotManager,
-    createFdeWorktree: createFdeWorktreeForTools,
+    createFroggWorktree: createFroggWorktreeForTools,
     ensureWorkspaceForCreate: ensureWorkspaceForCreateAndBroadcastExternal,
   };
   const createAgent = (input: Parameters<typeof createAgentCommand>[1]) =>
@@ -1341,8 +1344,8 @@ export async function createFdeDaemon(
   const archiveWorkspaceByIdExternal = (workspaceId: string, requestId: string) =>
     archiveByScope(
       {
-        fdeHome: config.fdeHome,
-        fdeWorktreesBaseRoot: config.worktreesRoot,
+        froggHome: config.froggHome,
+        froggWorktreesBaseRoot: config.worktreesRoot,
         github,
         workspaceGitService,
         agentManager,
@@ -1362,13 +1365,13 @@ export async function createFdeDaemon(
       { scope: { kind: "workspace", workspaceId }, requestId },
     );
   const hubAgentLifecycle = new CreateAgentLifecycleDispatch({
-    fdeHome: config.fdeHome,
+    froggHome: config.froggHome,
     worktreesRoot: config.worktreesRoot,
     agentManager,
     agentStorage,
     github,
     workspaceGitService,
-    createFdeWorktreeWorkflow: createFdeWorktreeForTools,
+    createFroggWorktreeWorkflow: createFroggWorktreeForTools,
     archiveAgentForClose: (agentId) =>
       archiveAgentCommand({ agentManager, agentStorage, logger }, agentId),
     findWorkspaceIdForCwd: findWorkspaceIdForCwdExternal,
@@ -1384,7 +1387,7 @@ export async function createFdeDaemon(
     logger,
   });
   const hubRelationships = new HubRelationshipController({
-    fdeHome: config.fdeHome,
+    froggHome: config.froggHome,
     hostname: getHostname(),
     serverId,
     daemonPublicKey: daemonKeyPair.publicKeyB64,
@@ -1446,11 +1449,11 @@ export async function createFdeDaemon(
     await emitWorkspaceUpdatesExternal([workspace.workspaceId]);
     return workspace;
   };
-  const createScheduleFdeWorktreeExternal = async (input: {
+  const createScheduleFroggWorktreeExternal = async (input: {
     cwd: string;
     firstAgentContext: FirstAgentContext;
   }) => {
-    const result = await createFdeWorktreeForTools({
+    const result = await createFroggWorktreeForTools({
       cwd: input.cwd,
       firstAgentContext: input.firstAgentContext,
     });
@@ -1460,8 +1463,8 @@ export async function createFdeDaemon(
   const archiveScheduleWorkspaceExternal = async (workspaceId: string) => {
     await archiveByScope(
       {
-        fdeHome: config.fdeHome,
-        fdeWorktreesBaseRoot: config.worktreesRoot,
+        froggHome: config.froggHome,
+        froggWorktreesBaseRoot: config.worktreesRoot,
         github,
         workspaceGitService,
         agentManager,
@@ -1491,13 +1494,13 @@ export async function createFdeDaemon(
     );
   };
   const scheduleService = new ScheduleService({
-    fdeHome: config.fdeHome,
+    froggHome: config.froggHome,
     logger,
     agentManager,
     agentStorage,
     createAgent,
     createDirectoryWorkspace: createScheduleLocalWorkspaceExternal,
-    createFdeWorktreeWorkspace: createScheduleFdeWorktreeExternal,
+    createFroggWorktreeWorkspace: createScheduleFroggWorktreeExternal,
     archiveWorkspace: archiveScheduleWorkspaceExternal,
   });
   await scheduleService.start();
@@ -1521,8 +1524,8 @@ export async function createFdeDaemon(
   logger.info({ elapsed: elapsed() }, "Preparing voice and MCP runtime");
 
   const createAgentToolHostDependencies = (
-    runtime: FdeToolRuntimeContext,
-  ): FdeToolHostDependencies => ({
+    runtime: FroggToolRuntimeContext,
+  ): FroggToolHostDependencies => ({
     agentManager,
     agentStorage,
     terminalManager,
@@ -1563,15 +1566,15 @@ export async function createFdeDaemon(
       // status updates fan out to every connected client.
       emit: (message) => wsServer?.broadcast(wrapSessionMessage(message)),
       spawnWorkspaceScript,
-      globalServicePorts: loadPersistedConfig(config.fdeHome).worktrees?.servicePorts,
+      globalServicePorts: loadPersistedConfig(config.froggHome).worktrees?.servicePorts,
     }),
     markWorkspaceArchiving: markWorkspaceArchivingExternal,
     clearWorkspaceArchiving: clearWorkspaceArchivingExternal,
     ensureWorkspaceForCreate: createAgentCommandDependencies.ensureWorkspaceForCreate,
-    createFdeWorktree: createAgentCommandDependencies.createFdeWorktree,
+    createFroggWorktree: createAgentCommandDependencies.createFroggWorktree,
     browserToolsEnabled: browserToolsPolicy.isEnabled(),
     browserToolsBroker,
-    fdeHome: config.fdeHome,
+    froggHome: config.froggHome,
     worktreesRoot: config.worktreesRoot,
     callerAgentId: runtime.callerAgentId,
     enableVoiceTools: runtime.enableVoiceTools,
@@ -1580,13 +1583,13 @@ export async function createFdeDaemon(
     resolveCallerContext: (agentId) => wsServer?.resolveVoiceCallerContext(agentId) ?? null,
     logger,
   });
-  const createAgentToolCatalog = (runtime: FdeToolRuntimeContext) =>
-    createFdeToolCatalog(createAgentToolHostDependencies(runtime));
+  const createAgentToolCatalog = (runtime: FroggToolRuntimeContext) =>
+    createFroggToolCatalog(createAgentToolHostDependencies(runtime));
   const setAgentProviderToolsEnabled = (enabled: boolean) => {
-    agentProviderRuntime.setFdeToolCatalog(enabled ? createAgentToolCatalog({}) : null);
+    agentProviderRuntime.setFroggToolCatalog(enabled ? createAgentToolCatalog({}) : null);
   };
-  agentManager.setFdeToolCatalogFactory(createAgentToolCatalog);
-  agentManager.setFdeToolsEnabled(config.mcpInjectIntoAgents !== false);
+  agentManager.setFroggToolCatalogFactory(createAgentToolCatalog);
+  agentManager.setFroggToolsEnabled(config.mcpInjectIntoAgents !== false);
   setAgentProviderToolsEnabled(config.mcpEnabled !== false && config.mcpInjectIntoAgents !== false);
 
   let mcpEnabled = config.mcpEnabled ?? true;
@@ -1722,17 +1725,17 @@ export async function createFdeDaemon(
   const spokenAlerts = createSpokenAlertService({
     enabled: isSpokenNotificationsEnabled(config.speech),
     resolveTts: () => speechService.resolveTts(),
-    cache: createTtsCache({ dir: path.join(config.fdeHome, "tts-cache") }),
+    cache: createTtsCache({ dir: path.join(config.froggHome, "tts-cache") }),
     logger,
   });
   mountNotificationAudioRoute({ app, spokenAlerts, logger });
 
   const companionFillers = createCompanionFillerBank({
-    cache: createTtsCache({ dir: path.join(config.fdeHome, "tts-cache") }),
+    cache: createTtsCache({ dir: path.join(config.froggHome, "tts-cache") }),
     resolveTts: () => speechService.resolveTts(),
     logger,
   });
-  const companionPersisted = loadPersistedConfig(config.fdeHome, logger);
+  const companionPersisted = loadPersistedConfig(config.froggHome, logger);
   const companionModelInputs = await resolveCompanionModelInputs({
     env: process.env,
     persisted: companionPersisted,
@@ -1740,15 +1743,15 @@ export async function createFdeDaemon(
   const companion: CompanionRuntime = {
     speechReadiness: () => speechService.getReadiness().realtimeVoice,
     acceptedMessages: new CompanionMessageReceipts(
-      path.join(config.fdeHome, "companion", "messages.json"),
+      path.join(config.froggHome, "companion", "messages.json"),
     ),
-    cwd: config.fdeHome,
+    cwd: config.froggHome,
     nativeVoicePreview: isCompanionNativeVoiceAvailable(companionModelInputs),
     capability: resolveCompanionCapability(companionModelInputs),
     modelConfig: resolveCompanionModelConfig(companionModelInputs),
-    notebook: new CompanionNotebookStore({ filePath: companionNotebookPath(config.fdeHome) }),
+    notebook: new CompanionNotebookStore({ filePath: companionNotebookPath(config.froggHome) }),
     fillers: companionFillers,
-    createBackend: createCompanionBackendFactory(config.fdeHome),
+    createBackend: createCompanionBackendFactory(config.froggHome),
     createTools: ({ deferredJobs, logger: sessionLogger, endConversation, conversationId }) =>
       createCompanionTools({
         readTimeline: (agentId) => {
@@ -1774,7 +1777,7 @@ export async function createFdeDaemon(
       agentManager,
       providerSnapshotManager,
       daemonConfig: { metadataGeneration: daemonConfigStore.get().metadataGeneration },
-      cwd: config.fdeHome,
+      cwd: config.froggHome,
       logger,
     }),
   };
@@ -1787,7 +1790,7 @@ export async function createFdeDaemon(
     companionRefresh = (async () => {
       const inputs = await resolveCompanionModelInputs({
         env: process.env,
-        persisted: loadPersistedConfig(config.fdeHome, logger),
+        persisted: loadPersistedConfig(config.froggHome, logger),
       });
       companion.nativeVoicePreview = isCompanionNativeVoiceAvailable(inputs);
       companion.modelConfig = resolveCompanionModelConfig(inputs);
@@ -1803,7 +1806,7 @@ export async function createFdeDaemon(
   companion.jobs = new CompanionDeferredJobs({
     run: companion.runDeferredJob,
     logger,
-    filePath: path.join(config.fdeHome, "companion", "jobs.json"),
+    filePath: path.join(config.froggHome, "companion", "jobs.json"),
   });
   companion.watchAgent = (agentId, conversationId, workspaceId) => {
     if (!companion.jobs) return () => {};
@@ -1857,17 +1860,17 @@ export async function createFdeDaemon(
             agentMcpBaseUrl =
               !mcpEnabled || config.mcpInjectIntoAgents === false ? null : mcpBaseUrl;
             agentManager.setMcpBaseUrl(agentMcpBaseUrl);
-            agentManager.setFdeToolsEnabled(mcpEnabled && config.mcpInjectIntoAgents !== false);
+            agentManager.setFroggToolsEnabled(mcpEnabled && config.mcpInjectIntoAgents !== false);
             daemonConfigStore.onFieldChange("mcp.enabled", (value) => {
               mcpEnabled = value !== false;
               const inject = daemonConfigStore.get().mcp.injectIntoAgents !== false;
               agentManager.setMcpBaseUrl(mcpEnabled && inject ? mcpBaseUrl : null);
-              agentManager.setFdeToolsEnabled(mcpEnabled && inject);
+              agentManager.setFroggToolsEnabled(mcpEnabled && inject);
               setAgentProviderToolsEnabled(mcpEnabled && inject);
             });
             daemonConfigStore.onFieldChange("mcp.injectIntoAgents", (value) => {
               agentManager.setMcpBaseUrl(mcpEnabled && value ? mcpBaseUrl : null);
-              agentManager.setFdeToolsEnabled(mcpEnabled && value !== false);
+              agentManager.setFroggToolsEnabled(mcpEnabled && value !== false);
               setAgentProviderToolsEnabled(mcpEnabled && value !== false);
             });
             daemonConfigStore.onFieldChange("appendSystemPrompt", (value) => {
@@ -1907,7 +1910,7 @@ export async function createFdeDaemon(
             const updateService = new DaemonUpdateService({
               install: describeDaemonInstall({ desktopManaged: config.desktopManaged === true }),
               daemonVersion,
-              fdeHome: config.fdeHome,
+              froggHome: config.froggHome,
               listen: formatListenTarget(publicListenTarget()),
               getListen: () => formatListenTarget(publicListenTarget()),
               retainAcrossGatewayRestart: Boolean(config.executionService),
@@ -1929,7 +1932,7 @@ export async function createFdeDaemon(
               agentManager,
               agentStorage,
               downloadTokenStore,
-              config.fdeHome,
+              config.froggHome,
               daemonConfigStore,
               mcpBaseUrl,
               {

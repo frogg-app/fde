@@ -159,7 +159,7 @@ mod tests {
     use super::*;
 
     fn fixture() -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("fde-webui-{}", uuid::Uuid::new_v4()));
+        let dir = std::env::temp_dir().join(format!("frogg-webui-{}", uuid::Uuid::new_v4()));
         std::fs::create_dir_all(dir.join("assets")).unwrap();
         std::fs::write(dir.join("index.html"), "<html>").unwrap();
         std::fs::write(dir.join("assets/app-0123456789abcdef0.js"), "code").unwrap();

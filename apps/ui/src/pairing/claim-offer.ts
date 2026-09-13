@@ -1,5 +1,5 @@
-import type { ConnectionOfferV3 } from "@fde/protocol/connection-offer";
-import { normalizeHostPort } from "@fde/protocol/daemon-endpoints";
+import type { ConnectionOfferV3 } from "@frogg/protocol/connection-offer";
+import { normalizeHostPort } from "@frogg/protocol/daemon-endpoints";
 
 /**
  * Client side of the daemon's first-run claim gate (docs/permissions.md,

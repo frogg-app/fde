@@ -4,10 +4,10 @@ import { createRequire } from "node:module";
 import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { buildRelayWebSocketUrl } from "@fde/protocol/daemon-endpoints";
-import { parseConnectionOfferFromUrl } from "@fde/protocol/connection-offer";
-import { generateLocalPairingOffer } from "@fde/server";
-import { DaemonClient } from "@fde/client/internal/daemon-client";
+import { buildRelayWebSocketUrl } from "@frogg/protocol/daemon-endpoints";
+import { parseConnectionOfferFromUrl } from "@frogg/protocol/connection-offer";
+import { generateLocalPairingOffer } from "@frogg/server";
+import { DaemonClient } from "@frogg/client/internal/daemon-client";
 import { WebSocket } from "ws";
 import { getAvailablePort } from "../helpers/network.ts";
 import { createE2ETestContext } from "../helpers/test-daemon.ts";
@@ -180,14 +180,14 @@ async function waitForDaemonRelayRegistered(offerUrl: string, timeoutMs = 30_000
     ctx = await createE2ETestContext({
       timeout: 60_000,
       env: {
-        FDE_RELAY_ENABLED: "true",
-        FDE_RELAY_ENDPOINT: relayEndpoint,
-        FDE_RELAY_PUBLIC_ENDPOINT: relayEndpoint,
+        FROGG_RELAY_ENABLED: "true",
+        FROGG_RELAY_ENDPOINT: relayEndpoint,
+        FROGG_RELAY_PUBLIC_ENDPOINT: relayEndpoint,
       },
     });
 
     const offer = await generateLocalPairingOffer({
-      fdeHome: ctx.fdeHome,
+      froggHome: ctx.froggHome,
       relayEnabled: true,
       relayEndpoint,
       relayPublicEndpoint: relayEndpoint,
@@ -210,17 +210,17 @@ async function waitForDaemonRelayRegistered(offerUrl: string, timeoutMs = 30_000
     }
   }, SHUTDOWN_TIMEOUT_MS);
 
-  it("runs `fde --host <offer-url> ls` over the relay and matches direct ls output", async () => {
+  it("runs `frogg --host <offer-url> ls` over the relay and matches direct ls output", async () => {
     if (!ctx) throw new Error("test context not initialized");
 
-    const direct = await ctx.fde(["ls", "--json"]);
+    const direct = await ctx.frogg(["ls", "--json"]);
     expect(direct.exitCode, `direct ls failed: ${direct.stderr}`).toBe(0);
     const directAgents = JSON.parse(direct.stdout.trim() || "[]");
     expect(Array.isArray(directAgents)).toBe(true);
 
-    const relay = await ctx.fde(["ls", "--json", "--host", offerUrl], {
+    const relay = await ctx.frogg(["ls", "--json", "--host", offerUrl], {
       timeout: 30_000,
-      env: { FDE_HOST: offerUrl },
+      env: { FROGG_HOST: offerUrl },
     });
     expect(relay.exitCode, `relay ls failed: ${relay.stderr}\nstdout: ${relay.stdout}`).toBe(0);
     const relayAgents = JSON.parse(relay.stdout.trim() || "[]");

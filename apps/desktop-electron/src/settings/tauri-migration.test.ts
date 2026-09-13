@@ -6,7 +6,7 @@ import { migrateTauriSettings } from "./tauri-migration.js";
 import { createDesktopSettingsStore } from "./desktop-settings.js";
 
 it("imports Tauri preferences once without altering either existing profile", async () => {
-  const root = await mkdtemp(path.join(tmpdir(), "fde-settings-migration-"));
+  const root = await mkdtemp(path.join(tmpdir(), "frogg-settings-migration-"));
   try {
     const source = path.join(root, "tauri");
     const target = path.join(root, "electron");

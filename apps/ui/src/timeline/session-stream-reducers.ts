@@ -1,5 +1,5 @@
-import type { AgentTimelineItem } from "@fde/protocol/agent-types";
-import type { AgentStreamEventPayload } from "@fde/protocol/messages";
+import type { AgentTimelineItem } from "@frogg/protocol/agent-types";
+import type { AgentStreamEventPayload } from "@frogg/protocol/messages";
 import { selectAgentTimelineState, useSessionStore } from "@/stores/session-store";
 import type { AssistantMessageItem, StreamItem, TodoEntry } from "@/types/stream";
 import type { TurnLivenessTransition } from "@/timeline/turn-liveness";

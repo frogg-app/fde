@@ -5,7 +5,7 @@ export interface BrandIdentity {
   applicationId: string;
 }
 export function matchesBrand(expected: BrandIdentity, actual: unknown): boolean {
-  if (actual === null || actual === undefined) return expected.id === "fde";
+  if (actual === null || actual === undefined) return expected.id === "frogg";
   return (
     typeof actual === "object" &&
     "id" in actual &&

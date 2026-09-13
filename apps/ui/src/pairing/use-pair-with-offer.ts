@@ -1,9 +1,9 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { useCallback, useRef, useState } from "react";
 import {
   parseAnyConnectionOfferFromUrl,
   type AnyConnectionOffer,
-} from "@fde/protocol/connection-offer";
+} from "@frogg/protocol/connection-offer";
 import type { HostProfile } from "@/types/host-connection";
 import { useHosts, useHostMutations } from "@/runtime/host-runtime";
 import { normalizeHostPort } from "@/utils/daemon-endpoints";
@@ -14,7 +14,7 @@ import { ClaimOfferError, type ClaimOfferErrorCode } from "./claim-offer";
  * One state machine for every place the app accepts a pairing link: the paste
  * modal, the QR scanner, and links opened from outside (web fragment, native
  * URL, desktop `open-pairing-offer`). A v2 offer is the relay flow that already
- * existed; a v3 offer runs the claim flow against an unclaimed FDE daemon.
+ * existed; a v3 offer runs the claim flow against an unclaimed Frogg daemon.
  */
 export type PairFlowErrorCode = ClaimOfferErrorCode | "invalid_link" | "connect_failed";
 

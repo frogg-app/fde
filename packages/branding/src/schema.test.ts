@@ -73,7 +73,7 @@ test("installer presentation defaults to the dark palette and accepts overrides"
 
 test("invalid identity, unsupported version, unknown fields and bad contrast are rejected", () => {
   for (const patch of [
-    { id: "../fde" },
+    { id: "../frogg" },
     { applicationId: "not-valid" },
     { daemonPort: 99999 },
     { schemaVersion: 2 },
@@ -120,23 +120,23 @@ test("updates require a source and signed mode requires a public key", () => {
   });
   assert.equal(brand.distribution.releasesApi, "https://api.github.com/repos/acme/studio/releases");
 });
-test("custom home selection ignores inherited FDE homes", () => {
+test("custom home selection ignores inherited Frogg homes", () => {
   const brand = resolveBrandManifest(minimal);
-  assert.equal(brandEnv(brand, { FDE_HOME: "/fde" }, "HOME"), undefined);
+  assert.equal(brandEnv(brand, { FROGG_HOME: "/frogg" }, "HOME"), undefined);
   assert.equal(brandEnv(brand, { ACME_HOME: " /acme " }, "HOME"), "/acme");
   const official = resolveBrandManifest({
     ...minimal,
-    id: "fde",
-    envPrefix: "FDE",
+    id: "frogg",
+    envPrefix: "FROGG",
   });
-  assert.equal(brandEnv(official, { FDE_HOME: "/official" }, "HOME"), "/official");
+  assert.equal(brandEnv(official, { FROGG_HOME: "/official" }, "HOME"), "/official");
 });
-test("management accepts legacy metadata only for FDE and rejects other products", () => {
+test("management accepts legacy metadata only for Frogg and rejects other products", () => {
   const brand = resolveBrandManifest(minimal);
   assert.equal(matchesBrand(brand, null), false);
   assert.equal(matchesBrand(brand, { id: "other", applicationId: brand.applicationId }), false);
   assert.equal(matchesBrand(brand, { id: brand.id, applicationId: brand.applicationId }), true);
-  assert.equal(matchesBrand({ id: "fde", applicationId: "app.frogg.fde" }, null), true);
+  assert.equal(matchesBrand({ id: "frogg", applicationId: "app.frogg.frogg" }, null), true);
 });
 test("artifact names carry the selected brand across daemon targets", () => {
   const brand = resolveBrandManifest(minimal);

@@ -7,7 +7,7 @@ import { isFinishedSubagent } from "./archive-finished";
 import { providerSubagentLifecycleStatus } from "./provider-store";
 
 function presentationStatus(row: SubagentRow) {
-  if (row.kind === "fde") return row.status;
+  if (row.kind === "frogg") return row.status;
   return providerSubagentLifecycleStatus(row.status);
 }
 

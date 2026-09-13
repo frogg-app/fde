@@ -76,10 +76,10 @@ pub fn create_main_window(app: &App) -> tauri::Result<()> {
     Ok(())
 }
 
-/// `FDE_DEVTOOLS=1` opens the web inspector on the main window at startup.
+/// `FROGG_DEVTOOLS=1` opens the web inspector on the main window at startup.
 fn devtools_requested() -> bool {
     matches!(
-        std::env::var("FDE_DEVTOOLS").as_deref(),
+        std::env::var("FROGG_DEVTOOLS").as_deref(),
         Ok("1") | Ok("true")
     )
 }

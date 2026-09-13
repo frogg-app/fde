@@ -3,7 +3,7 @@ import {
   compareMatchScores,
   type MatchScore,
   scoreTextFields,
-} from "@fde/protocol/search/text-match";
+} from "@frogg/protocol/search/text-match";
 import type { CommandCenterContribution } from "./contributions";
 
 /** Sections that reorder by how well they match the query. */

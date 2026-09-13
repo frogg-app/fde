@@ -20,7 +20,7 @@ export function getGitHubRelease(repo, tag, execFileSync = nodeExecFileSync) {
     if (!isNotFoundError(error)) {
       throw error;
     }
-    const expectedName = `Fde ${tag}`;
+    const expectedName = `Frogg ${tag}`;
     const output = execFileSync(
       "gh",
       [
@@ -82,7 +82,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     process.exitCode = 1;
   } else {
     if (cleanupDuplicates && release.draft === true) {
-      const expectedName = `Fde ${tag}`;
+      const expectedName = `Frogg ${tag}`;
       const duplicateIds = nodeExecFileSync(
         "gh",
         [

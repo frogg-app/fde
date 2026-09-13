@@ -20,7 +20,7 @@ pub fn matches_identity(value: Option<&serde_json::Value>) -> bool {
             identity["id"].as_str() == Some(ID)
                 && identity["applicationId"].as_str() == Some(APPLICATION_ID)
         }
-        None => LEGACY_FDE,
+        None => LEGACY_FROGG,
     }
 }
 pub fn identity() -> serde_json::Value {
@@ -47,7 +47,7 @@ fn artifact_name(contract: &str, key: &str, version: &str) -> String {
             .ok()?;
         (parts.len() == 3).then_some(parts)
     };
-    let legacy = LEGACY_FDE
+    let legacy = LEGACY_FROGG
         && parse(version)
             .zip(parse(LEGACY_ARTIFACT_CUTOFF))
             .is_some_and(|(version, cutoff)| version < cutoff);
@@ -73,23 +73,23 @@ pub fn desktop_artifact(version: &str, suffix: &str) -> String {
 mod tests {
     use super::*;
     #[test]
-    fn historical_fde_names_remain_addressable() {
-        if LEGACY_FDE {
+    fn historical_frogg_names_remain_addressable() {
+        if LEGACY_FROGG {
             assert_eq!(
                 daemon_artifact("0.2.15", "darwin", "x64"),
-                "fde-daemon-0.2.15-darwin-x64.tar.gz"
+                "frogg-daemon-0.2.15-darwin-x64.tar.gz"
             );
             assert_eq!(
                 daemon_artifact("0.2.16", "darwin", "x64"),
-                "FDE-0.2.16-mac-x86_64-daemon.tar.gz"
+                "Frogg-0.2.16-mac-x86_64-daemon.tar.gz"
             );
             assert_eq!(
                 desktop_artifact("0.2.15", "linux-x86_64.deb"),
-                "FDE-0.2.15-amd64.deb"
+                "Frogg-0.2.15-amd64.deb"
             );
             assert_eq!(
                 desktop_artifact("0.2.16", "linux-x86_64.deb"),
-                "FDE-0.2.16-linux-x86_64.deb"
+                "Frogg-0.2.16-linux-x86_64.deb"
             );
         }
     }
@@ -99,10 +99,10 @@ mod tests {
         assert!(!matches_identity(Some(
             &serde_json::json!({"id":"other","applicationId":APPLICATION_ID})
         )));
-        assert_eq!(matches_identity(None), LEGACY_FDE);
+        assert_eq!(matches_identity(None), LEGACY_FROGG);
         assert_eq!(
             daemon_artifact("1.2.3", "win", "x64"),
-            if LEGACY_FDE {
+            if LEGACY_FROGG {
                 format!("{ARTIFACT_PREFIX}-1.2.3-win-x64-daemon.zip")
             } else {
                 format!("{DAEMON_ARTIFACT_PREFIX}-1.2.3-win-x64.zip")

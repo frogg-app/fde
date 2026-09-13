@@ -1,4 +1,4 @@
-import type { ProviderOptions } from "@fde/protocol/agent-types";
+import type { ProviderOptions } from "@frogg/protocol/agent-types";
 import type { z } from "zod";
 
 export interface ProviderOptionIssue {

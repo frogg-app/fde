@@ -1,17 +1,17 @@
 ---
 title: Architecture
-description: How the FDE daemon, clients, transports and packages fit together, and where each part lives in the repository.
+description: How the Frogg daemon, clients, transports and packages fit together, and where each part lives in the repository.
 sidebar:
   order: 3
 ---
 
-FDE is a client-server system. A Node daemon runs agents and owns all state. Clients connect to
+Frogg is a client-server system. A Node daemon runs agents and owns all state. Clients connect to
 one or more daemons to watch and control those agents. Closing a client does not stop agents.
 
 ## System overview
 
 ```
- Electron desktop        Expo app                 CLI (fde)
+ Electron desktop        Expo app                 CLI (frogg)
  (app-only shell)        web / iOS / Android
         |                       |                      |
         | local socket/pipe,    | WebSocket, direct    | WebSocket, direct
@@ -20,7 +20,7 @@ one or more daemons to watch and control those agents. Closing a client does not
                     |                      |
                     v                      v
           +------------------------------------------+
-          |  Daemon (@fde/server, Node)              |
+          |  Daemon (@frogg/server, Node)              |
           |  HTTP: /ws  /api/*  /mcp/agents  web UI  |
           |  agents, projects, workspaces, worktrees |
           |  terminals, schedules                    |
@@ -28,7 +28,7 @@ one or more daemons to watch and control those agents. Closing a client does not
                                 |
              provider processes (Claude, Codex, ACP agents, ...)
                                 |
-                          $FDE_HOME on disk
+                          $FROGG_HOME on disk
 ```
 
 ## Components
@@ -36,20 +36,20 @@ one or more daemons to watch and control those agents. Closing a client does not
 **Daemon** (`packages/server`). Spawns and supervises agent processes, streams their timelines,
 manages projects, workspaces, worktrees, terminals and schedules, and enforces authorization.
 Agent state stays authoritative on the daemon across client disconnects. The daemon is installed
-separately (install script, daemon bundle, Docker or `fde` CLI) and listens on `0.0.0.0:9999` by
-default. `FDE_LISTEN`, `daemon.listen` in `config.json`, or `--listen` override it. The listen
+separately (install script, daemon bundle, Docker or `frogg` CLI) and listens on `0.0.0.0:9999` by
+default. `FROGG_LISTEN`, `daemon.listen` in `config.json`, or `--listen` override it. The listen
 target can also be a Unix socket or a Windows named pipe.
 
-**Expo app** (`apps/ui`, package `@fde/app`). One React Native codebase for web, iOS and Android.
+**Expo app** (`apps/ui`, package `@frogg/app`). One React Native codebase for web, iOS and Android.
 Its web export is also the desktop renderer and the optional web UI the daemon can serve.
 
 **Desktop** (`apps/desktop-electron`). An Electron shell around the Expo web export (shipped as
 `app-dist`). The renderer runs sandboxed with context isolation; the preload exposes
-`window.fdeDesktop`. The main process owns native features: windows, notifications, updates, SSH
+`window.froggDesktop`. The main process owns native features: windows, notifications, updates, SSH
 transports and remote daemon deployment. The desktop is app-only. It never bundles, starts or
 stops a daemon, and the packaged smoke test asserts that.
 
-**CLI** (`apps/cli`, package `@fde/cli`, binary `fde`). A command-line client over the same
+**CLI** (`apps/cli`, package `@frogg/cli`, binary `frogg`). A command-line client over the same
 WebSocket protocol, plus daemon lifecycle and service commands.
 
 ## Connections
@@ -75,10 +75,10 @@ Protocol rules for adding or changing messages are in
 
 | Path                    | Package                 | Role                                                          |
 | ----------------------- | ----------------------- | ------------------------------------------------------------- |
-| `apps/ui`               | `@fde/app`              | Expo client for web, iOS, Android and the desktop renderer    |
-| `apps/desktop-electron` | `@fde/desktop-electron` | Production Electron app-only shell                            |
-| `apps/cli`              | `@fde/cli`              | `fde` command-line client and daemon launcher                 |
-| `apps/desktop`          | `@fde/desktop`          | Inactive Tauri shell. Reference source only                   |
+| `apps/ui`               | `@frogg/app`              | Expo client for web, iOS, Android and the desktop renderer    |
+| `apps/desktop-electron` | `@frogg/desktop-electron` | Production Electron app-only shell                            |
+| `apps/cli`              | `@frogg/cli`              | `frogg` command-line client and daemon launcher                 |
+| `apps/desktop`          | `@frogg/desktop`          | Inactive Tauri shell. Reference source only                   |
 | `apps/daemon-rs`        | none (Cargo crate)      | Inactive Rust daemon. Reference source only                   |
 
 `apps/desktop` and `apps/daemon-rs` are excluded from releases. Do not build features on them.
@@ -88,39 +88,39 @@ Protocol rules for adding or changing messages are in
 
 | Path                         | Package                   | Role                                                           |
 | ---------------------------- | ------------------------- | -------------------------------------------------------------- |
-| `packages/protocol`          | `@fde/protocol`           | Zod wire schemas, message types, generated validators, SSH tunnel args |
-| `packages/client`            | `@fde/client`             | Daemon WebSocket client (`DaemonClient`) and the `FdeClient` SDK facade |
-| `packages/server`            | `@fde/server`             | The daemon                                                     |
-| `packages/relay`             | `@fde/relay`              | Relay transport and E2E encryption                             |
-| `packages/highlight`         | `@fde/highlight`          | Syntax highlighting                                            |
-| `packages/branding`          | `@fde/branding`           | Build-time product identity                                    |
-| `packages/expo-two-way-audio`| `@fde/expo-two-way-audio` | Native module for two-way audio streaming                      |
+| `packages/protocol`          | `@frogg/protocol`           | Zod wire schemas, message types, generated validators, SSH tunnel args |
+| `packages/client`            | `@frogg/client`             | Daemon WebSocket client (`DaemonClient`) and the `FroggClient` SDK facade |
+| `packages/server`            | `@frogg/server`             | The daemon                                                     |
+| `packages/relay`             | `@frogg/relay`              | Relay transport and E2E encryption                             |
+| `packages/highlight`         | `@frogg/highlight`          | Syntax highlighting                                            |
+| `packages/branding`          | `@frogg/branding`           | Build-time product identity                                    |
+| `packages/expo-two-way-audio`| `@frogg/expo-two-way-audio` | Native module for two-way audio streaming                      |
 
-Other top-level directories: `brands/` (brand manifests, `brands/fde` is official),
+Other top-level directories: `brands/` (brand manifests, `brands/frogg` is official),
 `deploy/` (Docker, Nix, install scripts), `skills/` (agent skills), and
 `scripts/dev|ci|release|mobile`.
 
 ### Protocol and client
 
-`@fde/protocol` is the source of truth for everything on the wire. It depends on nothing in
-the server. Server, app, CLI and `@fde/client` all import it from its built `dist/`, which is
+`@frogg/protocol` is the source of truth for everything on the wire. It depends on nothing in
+the server. Server, app, CLI and `@frogg/client` all import it from its built `dist/`, which is
 why protocol changes need `npm run build:client` before downstream typechecks see them.
 
-`@fde/client` exports `DaemonClient` through `@fde/client/internal/daemon-client` and the
-higher-level `FdeClient` from the package root.
+`@frogg/client` exports `DaemonClient` through `@frogg/client/internal/daemon-client` and the
+higher-level `FroggClient` from the package root.
 
 ### Branding
 
 Product identity is data, not code. `brands/<id>/brand.json` defines the name, CLI name, daemon
 port, env prefix, URL scheme, home directory, artifact prefixes and service URLs.
-`npm run brand:prepare` resolves the brand selected by `FDE_BRAND_DIR` (default `brands/fde`)
+`npm run brand:prepare` resolves the brand selected by `FROGG_BRAND_DIR` (default `brands/frogg`)
 into `.generated/branding/`. That output is never committed. Runtime code reads it through
-`brand` from `@fde/branding`. See [Fork and rebrand](/docs/fork-and-rebrand/) for the full model.
+`brand` from `@frogg/branding`. See [Fork and rebrand](/docs/fork-and-rebrand/) for the full model.
 
 ## Persistence
 
-The daemon stores state as files under `$FDE_HOME`. It resolves `FDE_HOME` (the brand's
-`<ENVPREFIX>_HOME`), then falls back to `~/.fde`. Dev scripts use `.dev/fde-home` in the checkout.
+The daemon stores state as files under `$FROGG_HOME`. It resolves `FROGG_HOME` (the brand's
+`<ENVPREFIX>_HOME`), then falls back to `~/.frogg`. Dev scripts use `.dev/frogg-home` in the checkout.
 
 | Path              | Contents                                                |
 | ----------------- | ------------------------------------------------------- |
@@ -139,7 +139,7 @@ This table lists the main entries only. See [Configuration](/docs/reference/conf
 ## MCP endpoint
 
 The daemon serves an MCP endpoint at `/mcp/agents` on its HTTP server. Agents it launches get
-this endpoint injected so they can use FDE tools: workspaces, agents, permissions, schedules and
+this endpoint injected so they can use Frogg tools: workspaces, agents, permissions, schedules and
 heartbeats. The tools come from a transport-neutral catalog in
 `packages/server/src/server/agent/tools/`; MCP is one adapter over it. The route authenticates
 its own requests rather than using the daemon bearer check.

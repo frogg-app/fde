@@ -1,1 +1,1 @@
-export { renderTerminalSnapshotToAnsi } from "@fde/protocol/terminal-snapshot";
+export { renderTerminalSnapshotToAnsi } from "@frogg/protocol/terminal-snapshot";

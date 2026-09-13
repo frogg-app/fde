@@ -14,7 +14,7 @@ describe("getDaemonManagementErrorPresentation", () => {
 
     expect(presentation).toEqual({
       message:
-        "Built-in daemon started, but FDE could not save the localhost connection. Toggle daemon management off and on again, or add localhost manually.",
+        "Built-in daemon started, but Frogg could not save the localhost connection. Toggle daemon management off and on again, or add localhost manually.",
       refreshStatus: true,
     });
   });
@@ -23,7 +23,7 @@ describe("getDaemonManagementErrorPresentation", () => {
     const presentation = getDaemonManagementErrorPresentation(new Error("stop failed"), true);
 
     expect(presentation).toEqual({
-      message: "Built-in daemon management was paused, but FDE could not stop the daemon.",
+      message: "Built-in daemon management was paused, but Frogg could not stop the daemon.",
       refreshStatus: false,
     });
   });
@@ -35,7 +35,7 @@ describe("getDaemonManagementErrorPresentation", () => {
     );
 
     expect(presentation).toEqual({
-      message: "Built-in daemon management was paused, but FDE could not stop the daemon.",
+      message: "Built-in daemon management was paused, but Frogg could not stop the daemon.",
       refreshStatus: false,
     });
   });

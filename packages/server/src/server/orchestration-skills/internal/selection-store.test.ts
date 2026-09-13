@@ -13,7 +13,7 @@ afterEach(async () => {
 });
 
 async function createStore() {
-  const root = await mkdtemp(path.join(os.tmpdir(), "fde-agent-skills-config-"));
+  const root = await mkdtemp(path.join(os.tmpdir(), "frogg-agent-skills-config-"));
   roots.push(root);
   const config = new DaemonConfigStore(root, {
     mcp: { injectIntoAgents: false },
@@ -37,16 +37,16 @@ describe("daemon agent skill selection", () => {
 
   it("persists a normalized custom selection under agents.skills.selection", async () => {
     const { root, store } = await createStore();
-    await store.set({ mode: "custom", skills: ["fde-loop", "fde", "fde"] });
+    await store.set({ mode: "custom", skills: ["frogg-loop", "frogg", "frogg"] });
     expect(loadPersistedConfig(root).agents?.skills?.selection).toEqual({
       mode: "custom",
-      skills: ["fde", "fde-loop"],
+      skills: ["frogg", "frogg-loop"],
     });
   });
 
   it("replaces a custom selection with all without retaining custom skill names", async () => {
     const { config, root, store } = await createStore();
-    await store.set({ mode: "custom", skills: ["fde"] });
+    await store.set({ mode: "custom", skills: ["frogg"] });
 
     await store.set({ mode: "all" });
 
@@ -58,7 +58,7 @@ describe("daemon agent skill selection", () => {
     const { config, root, store } = await createStore();
 
     config.patch({
-      skills: { selection: { mode: "custom", skills: ["fde"] } },
+      skills: { selection: { mode: "custom", skills: ["frogg"] } },
     } as MutableDaemonConfigPatch);
 
     expect(await store.isSet()).toBe(false);

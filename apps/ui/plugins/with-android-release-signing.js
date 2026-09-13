@@ -3,16 +3,16 @@ const { withAppBuildGradle } = require("expo/config-plugins");
 // Expo's template signs `release` with the checked-in debug keystore. This plugin
 // makes Gradle read a dedicated release keystore from the environment instead:
 //
-//   FDE_ANDROID_KEYSTORE           absolute path to a .keystore / .jks file
-//   FDE_ANDROID_KEYSTORE_PASSWORD  store password
-//   FDE_ANDROID_KEY_ALIAS          key alias
-//   FDE_ANDROID_KEY_PASSWORD       key password (defaults to the store password)
+//   FROGG_ANDROID_KEYSTORE           absolute path to a .keystore / .jks file
+//   FROGG_ANDROID_KEYSTORE_PASSWORD  store password
+//   FROGG_ANDROID_KEY_ALIAS          key alias
+//   FROGG_ANDROID_KEY_PASSWORD       key password (defaults to the store password)
 //
-// When FDE_ANDROID_KEYSTORE is unset the release build stays debug-signed and Gradle
+// When FROGG_ANDROID_KEYSTORE is unset the release build stays debug-signed and Gradle
 // prints a warning, so a local build still succeeds but the APK is only good for
 // sideloading tests. The keystore itself is never part of the repo.
 
-const MARKER = "// FDE release signing (plugins/with-android-release-signing.js)";
+const MARKER = "// Frogg release signing (plugins/with-android-release-signing.js)";
 
 const SIGNING_CONFIGS_BLOCK = `    signingConfigs {
         debug {
@@ -23,19 +23,19 @@ const SIGNING_CONFIGS_BLOCK = `    signingConfigs {
         }
         ${MARKER}
         release {
-            def fdeKeystore = System.getenv("FDE_ANDROID_KEYSTORE")
-            if (fdeKeystore) {
-                storeFile file(fdeKeystore)
-                storePassword System.getenv("FDE_ANDROID_KEYSTORE_PASSWORD")
-                keyAlias System.getenv("FDE_ANDROID_KEY_ALIAS")
-                keyPassword System.getenv("FDE_ANDROID_KEY_PASSWORD") ?: System.getenv("FDE_ANDROID_KEYSTORE_PASSWORD")
+            def froggKeystore = System.getenv("FROGG_ANDROID_KEYSTORE")
+            if (froggKeystore) {
+                storeFile file(froggKeystore)
+                storePassword System.getenv("FROGG_ANDROID_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("FROGG_ANDROID_KEY_ALIAS")
+                keyPassword System.getenv("FROGG_ANDROID_KEY_PASSWORD") ?: System.getenv("FROGG_ANDROID_KEYSTORE_PASSWORD")
             }
         }
     }`;
 
-const RELEASE_SIGNING_LINE = `            signingConfig System.getenv("FDE_ANDROID_KEYSTORE") ? signingConfigs.release : signingConfigs.debug
-            if (!System.getenv("FDE_ANDROID_KEYSTORE")) {
-                println "WARNING: FDE_ANDROID_KEYSTORE is not set; the release APK is signed with the debug keystore."
+const RELEASE_SIGNING_LINE = `            signingConfig System.getenv("FROGG_ANDROID_KEYSTORE") ? signingConfigs.release : signingConfigs.debug
+            if (!System.getenv("FROGG_ANDROID_KEYSTORE")) {
+                println "WARNING: FROGG_ANDROID_KEYSTORE is not set; the release APK is signed with the debug keystore."
             }`;
 
 function configureReleaseSigning(contents) {

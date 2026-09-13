@@ -1,9 +1,9 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { dirname, join } from "node:path";
-import { resolveFdeHomePath } from "./fde-home.js";
+import { resolveFroggHomePath } from "./frogg-home.js";
 
-const CLIENT_SESSION_KEY_FILE = join(resolveFdeHomePath(), "cli-client-id");
+const CLIENT_SESSION_KEY_FILE = join(resolveFroggHomePath(), "cli-client-id");
 
 let cachedClientId: string | null = null;
 

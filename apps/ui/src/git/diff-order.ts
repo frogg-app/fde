@@ -1,4 +1,4 @@
-import type { ParsedDiffFile } from "@fde/protocol/messages";
+import type { ParsedDiffFile } from "@frogg/protocol/messages";
 import { buildDiffTree, flattenDiffTree } from "@/git/diff-tree";
 
 // The Changes tree is the single ordering authority: `sortTree` (diff-tree.ts)

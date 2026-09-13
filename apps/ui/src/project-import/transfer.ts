@@ -1,4 +1,4 @@
-import type { DaemonClient } from "@fde/client/internal/daemon-client";
+import type { DaemonClient } from "@frogg/client/internal/daemon-client";
 import { readImportChunk, type ImportFile } from "./files";
 
 export function validateSelection(files: ImportFile[]): void {

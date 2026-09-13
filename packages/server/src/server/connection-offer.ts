@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import os from "node:os";
 
 import {
@@ -6,7 +6,7 @@ import {
   ConnectionOfferV2Schema,
   type ConnectionOffer,
   type ConnectionOfferV3,
-} from "@fde/protocol/connection-offer";
+} from "@frogg/protocol/connection-offer";
 
 interface BuildOfferEndpointsArgs {
   listenHost: string;
@@ -58,7 +58,7 @@ export function encodeOfferToPairingUrl(args: {
 }
 
 function getPrimaryLanIp(): string | null {
-  const override = process.env.FDE_PRIMARY_LAN_IP?.trim();
+  const override = process.env.FROGG_PRIMARY_LAN_IP?.trim();
   if (override) return override;
 
   const nets = os.networkInterfaces();

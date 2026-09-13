@@ -1,14 +1,14 @@
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import type { Logger } from "pino";
-import type { DaemonLifecycleIntent, FdeDaemonConfig } from "../bootstrap.js";
+import type { DaemonLifecycleIntent, FroggDaemonConfig } from "../bootstrap.js";
 import { resolveDaemonVersion } from "../daemon-version.js";
 import { ensureExecutionService } from "./client.js";
 import { executionControlRequest, readExecutionStatus } from "./control-client.js";
 import { createExecutionGateway } from "./gateway.js";
 
 export async function createGatewayDaemon(
-  config: FdeDaemonConfig,
+  config: FroggDaemonConfig,
   logger: Logger,
   onLifecycleIntent: (intent: DaemonLifecycleIntent) => void,
 ) {
@@ -18,7 +18,7 @@ export async function createGatewayDaemon(
     : fileURLToPath(new URL("./worker.js", import.meta.url));
   const version = config.daemonVersion ?? resolveDaemonVersion(import.meta.url);
   const runtime = await ensureExecutionService({
-    home: config.fdeHome,
+    home: config.froggHome,
     version,
     workerEntry,
     execArgv: workerEntry.endsWith(".ts") ? ["--import", "tsx"] : [],

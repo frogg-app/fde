@@ -1,16 +1,16 @@
 #!/usr/bin/env node
-// Builds the FDE Android APK from apps/ui and copies it to <out-dir> under the
+// Builds the Frogg Android APK from apps/ui and copies it to <out-dir> under the
 // release asset name documented in
 // website/src/content/docs/docs/contributing/release-process.mdx:
 //
-//   FDE-<version>-android-<abi>.apk            signed with the release keystore
-//   FDE-<version>-android-<abi>-unsigned.apk   debug-signed (no keystore configured)
+//   Frogg-<version>-android-<abi>.apk            signed with the release keystore
+//   Frogg-<version>-android-<abi>-unsigned.apk   debug-signed (no keystore configured)
 //
 // <abi> is `arm64-v8a` (default), one of the other React Native ABIs, or
 // `universal` (all four in one APK). The release keystore comes from the
-// FDE_ANDROID_KEYSTORE* environment variables (see the Android signing section of
+// FROGG_ANDROID_KEYSTORE* environment variables (see the Android signing section of
 // release-process.mdx); when
-// FDE_ANDROID_KEYSTORE is unset the APK is debug-signed and named accordingly.
+// FROGG_ANDROID_KEYSTORE is unset the APK is debug-signed and named accordingly.
 //
 // Usage: node scripts/release/build-android-apk.mjs [--abi arm64-v8a|universal|...]
 //        [--variant release|debug] [--out-dir release-assets] [--skip-prebuild]
@@ -85,19 +85,19 @@ function reportSigning({ signed, variant }) {
   if (!signed) {
     if (variant === "release") {
       console.log(
-        "FDE_ANDROID_KEYSTORE is not set: the release APK will be debug-signed (-unsigned suffix).",
+        "FROGG_ANDROID_KEYSTORE is not set: the release APK will be debug-signed (-unsigned suffix).",
       );
     }
     return;
   }
-  if (!existsSync(process.env.FDE_ANDROID_KEYSTORE)) {
-    throw new Error(`FDE_ANDROID_KEYSTORE does not exist: ${process.env.FDE_ANDROID_KEYSTORE}`);
+  if (!existsSync(process.env.FROGG_ANDROID_KEYSTORE)) {
+    throw new Error(`FROGG_ANDROID_KEYSTORE does not exist: ${process.env.FROGG_ANDROID_KEYSTORE}`);
   }
-  for (const key of ["FDE_ANDROID_KEYSTORE_PASSWORD", "FDE_ANDROID_KEY_ALIAS"]) {
-    if (!process.env[key]) throw new Error(`${key} is required when FDE_ANDROID_KEYSTORE is set`);
+  for (const key of ["FROGG_ANDROID_KEYSTORE_PASSWORD", "FROGG_ANDROID_KEY_ALIAS"]) {
+    if (!process.env[key]) throw new Error(`${key} is required when FROGG_ANDROID_KEYSTORE is set`);
   }
   console.log(
-    `Signing with ${process.env.FDE_ANDROID_KEYSTORE} (alias ${process.env.FDE_ANDROID_KEY_ALIAS}).`,
+    `Signing with ${process.env.FROGG_ANDROID_KEYSTORE} (alias ${process.env.FROGG_ANDROID_KEY_ALIAS}).`,
   );
 }
 
@@ -135,7 +135,7 @@ function main() {
   if (values["low-memory"])
     console.log("Low-memory test build: Hermes expensive optimizations are disabled (-O0).");
   const version = JSON.parse(readFileSync(path.join(REPO_ROOT, "package.json"), "utf8")).version;
-  const signed = variant === "release" && Boolean(process.env.FDE_ANDROID_KEYSTORE);
+  const signed = variant === "release" && Boolean(process.env.FROGG_ANDROID_KEYSTORE);
 
   if (!process.env.ANDROID_HOME && !process.env.ANDROID_SDK_ROOT) {
     throw new Error("ANDROID_HOME (or ANDROID_SDK_ROOT) must point at an Android SDK");

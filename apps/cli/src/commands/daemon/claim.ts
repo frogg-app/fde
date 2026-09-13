@@ -1,11 +1,11 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import type { Command } from "commander";
 import {
   createClaimStore,
   DEFAULT_TRUST_LAN,
   loadPersistedConfig,
   type DaemonIdentity,
-} from "@fde/server";
+} from "@frogg/server";
 
 import type {
   CommandOptions,
@@ -14,11 +14,11 @@ import type {
   SingleResult,
 } from "../../output/index.js";
 import { daemonHttpJson, resolveLoopbackHttpBase } from "./daemon-http.js";
-import { resolveLocalDaemonState, resolveLocalFdeHome } from "./local-daemon.js";
+import { resolveLocalDaemonState, resolveLocalFroggHome } from "./local-daemon.js";
 
 /**
- * `fde daemon claim-status` and `fde daemon reset-claim`: inspect or clear the
- * paired principals under $FDE_HOME (see getting-started/connect-and-pair.mdx).
+ * `frogg daemon claim-status` and `frogg daemon reset-claim`: inspect or clear the
+ * paired principals under $FROGG_HOME (see getting-started/connect-and-pair.mdx).
  * Both work on the files directly, so they do not need a running daemon; the
  * daemon re-reads the principals file on every check, so a reset takes effect
  * live and the pairing page comes back for LAN visitors.
@@ -118,16 +118,16 @@ async function probeDaemonIdentity(listen: string): Promise<ClaimStatusResult["d
 }
 
 export async function describeClaimStatus(home?: string): Promise<ClaimStatusResult> {
-  const fdeHome = resolveLocalFdeHome(home);
-  const store = createClaimStore(fdeHome);
+  const froggHome = resolveLocalFroggHome(home);
+  const store = createClaimStore(froggHome);
   const file = store.read();
-  const persistedAuth = loadPersistedConfig(fdeHome).daemon?.auth;
+  const persistedAuth = loadPersistedConfig(froggHome).daemon?.auth;
   const passwordConfigured = Boolean(persistedAuth?.password);
   const lanTrusted = persistedAuth?.trustLan ?? DEFAULT_TRUST_LAN;
   const claimed = store.isClaimed();
   const state = resolveLocalDaemonState({ home });
   return {
-    home: fdeHome,
+    home: froggHome,
     principalsPath: store.filePath,
     claimed,
     claimedAt: file.claimedAt ?? null,
@@ -145,13 +145,13 @@ export async function describeClaimStatus(home?: string): Promise<ClaimStatusRes
 }
 
 export function resetClaim(home?: string): ResetClaimResult {
-  const fdeHome = resolveLocalFdeHome(home);
-  const store = createClaimStore(fdeHome);
+  const froggHome = resolveLocalFroggHome(home);
+  const store = createClaimStore(froggHome);
   const removedPrincipals = store.read().principals.length;
   const existed = store.reset();
   return {
     action: existed ? "claim_reset" : "not_claimed",
-    home: fdeHome,
+    home: froggHome,
     principalsPath: store.filePath,
     removedPrincipals,
     message: existed

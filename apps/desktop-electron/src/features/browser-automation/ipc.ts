@@ -1,16 +1,16 @@
 import type {
   BrowserAutomationConsoleLogEntry,
   BrowserAutomationDialogEvent,
-} from "@fde/protocol/browser-automation/rpc-schemas";
-import { BrowserAutomationExecuteRequestSchema } from "@fde/protocol/browser-automation/rpc-schemas";
+} from "@frogg/protocol/browser-automation/rpc-schemas";
+import { BrowserAutomationExecuteRequestSchema } from "@frogg/protocol/browser-automation/rpc-schemas";
 import type { Rectangle } from "electron";
 import { ipcMain } from "electron";
 import {
-  getFdeBrowserWebContentsForHostWindow,
-  getFdeBrowserWorkspaceId,
-  getWorkspaceActiveFdeBrowserIdForHostWindow,
-  listRegisteredFdeBrowserIds,
-  listRegisteredFdeBrowserIdsForWorkspace,
+  getFroggBrowserWebContentsForHostWindow,
+  getFroggBrowserWorkspaceId,
+  getWorkspaceActiveFroggBrowserIdForHostWindow,
+  listRegisteredFroggBrowserIds,
+  listRegisteredFroggBrowserIdsForWorkspace,
 } from "../browser-webviews/index.js";
 import { CdpSessionQueue } from "./cdp-session-queue.js";
 import {
@@ -386,15 +386,15 @@ function normalizeConsoleMessage(input: {
 
 function createRegistry(hostWebContentsId: number): BrowserRegistry {
   return {
-    listRegisteredBrowserIds: listRegisteredFdeBrowserIds,
-    listRegisteredBrowserIdsForWorkspace: listRegisteredFdeBrowserIdsForWorkspace,
+    listRegisteredBrowserIds: listRegisteredFroggBrowserIds,
+    listRegisteredBrowserIdsForWorkspace: listRegisteredFroggBrowserIdsForWorkspace,
     getTabContents(browserId: string): TabContents | null {
-      const contents = getFdeBrowserWebContentsForHostWindow(browserId, hostWebContentsId);
+      const contents = getFroggBrowserWebContentsForHostWindow(browserId, hostWebContentsId);
       return contents ? adaptWebContents(contents) : null;
     },
-    getBrowserWorkspaceId: getFdeBrowserWorkspaceId,
+    getBrowserWorkspaceId: getFroggBrowserWorkspaceId,
     getWorkspaceActiveBrowserId(workspaceId: string): string | null {
-      return getWorkspaceActiveFdeBrowserIdForHostWindow(workspaceId, hostWebContentsId);
+      return getWorkspaceActiveFroggBrowserIdForHostWindow(workspaceId, hostWebContentsId);
     },
   };
 }
@@ -402,7 +402,7 @@ function createRegistry(hostWebContentsId: number): BrowserRegistry {
 export function registerBrowserAutomationIpc(options?: { ipc?: IpcHandlerRegistry }): void {
   const ipc = options?.ipc ?? ipcMain;
 
-  ipc.handle("fde:browser:execute-automation-command", async (event, rawRequest: unknown) => {
+  ipc.handle("frogg:browser:execute-automation-command", async (event, rawRequest: unknown) => {
     const hostContents = (event as { sender?: HostWebContents }).sender;
     const hostWebContentsId = hostContents?.id;
     if (!hostContents || typeof hostWebContentsId !== "number") {

@@ -1,5 +1,5 @@
 import { statSync, watch as watchPath } from "node:fs";
-import type { ProjectCheckoutLitePayload } from "@fde/protocol/messages";
+import type { ProjectCheckoutLitePayload } from "@frogg/protocol/messages";
 import type pino from "pino";
 import type {
   ProjectRegistry,
@@ -515,7 +515,7 @@ export class WorkspaceReconciliationService {
         currentBranch: null,
         remoteUrl: null,
         worktreeRoot: null,
-        isFdeOwnedWorktree: false as const,
+        isFroggOwnedWorktree: false as const,
         mainRepoRoot: null,
       };
     }

@@ -1,7 +1,7 @@
 //! Applying a downloaded asset. Every path returns an `InstallOutcome` the
-//! webview shows and logs what it did to `fde.log`.
+//! webview shows and logs what it did to `frogg.log`.
 //!
-//! - Windows installer: the download is `FDE-<v>-win-x64-setup.zip` (releases carry
+//! - Windows installer: the download is `Frogg-<v>-win-x64-setup.zip` (releases carry
 //!   no bare exes); the installer is unpacked next to it, then a detached `cmd`
 //!   helper waits for this process to exit, runs it with `/S` (per-user NSIS, no
 //!   elevation) and starts the app again; the shell exits right after answering
@@ -12,7 +12,7 @@
 //!   executable and renamed over it (the running image keeps its old inode
 //!   mounted), then relaunched.
 //! - Linux deb: opened with `xdg-open`, which hands it to the package installer.
-//! - macOS: the DMG is opened; the user drags FDE to Applications. Ad-hoc
+//! - macOS: the DMG is opened; the user drags Frogg to Applications. Ad-hoc
 //!   signed builds cannot be replaced in place reliably (Gatekeeper
 //!   re-quarantines the copy), so this stays manual until code signing lands.
 
@@ -49,7 +49,7 @@ pub fn install(
                 &current_exe.to_string_lossy(),
                 pid,
             );
-            run_helper_script(helper_dir, "fde-update-install.cmd", &script)?;
+            run_helper_script(helper_dir, "frogg-update-install.cmd", &script)?;
             Ok(InstallOutcome {
                 installed: true,
                 restart_required: true,
@@ -67,7 +67,7 @@ pub fn install(
                 &current_exe.to_string_lossy(),
                 pid,
             );
-            run_helper_script(helper_dir, "fde-update-portable.cmd", &script)?;
+            run_helper_script(helper_dir, "frogg-update-portable.cmd", &script)?;
             Ok(InstallOutcome {
                 installed: true,
                 restart_required: true,
@@ -145,7 +145,7 @@ pub fn installer_script(installer: &str, exe: &str, pid: u32) -> String {
 }
 
 /// Extracts a Windows zip asset beside itself and returns the path of the
-/// executable inside it (the portable `FDE.exe` or the NSIS setup exe).
+/// executable inside it (the portable `Frogg.exe` or the NSIS setup exe).
 pub fn extract_exe_from_zip(archive: &std::path::Path) -> Result<std::path::PathBuf, String> {
     let destination = archive.with_extension("extracted");
     let _ = std::fs::remove_dir_all(&destination);
@@ -265,17 +265,17 @@ mod tests {
     #[test]
     fn installer_script_waits_then_runs_silent_setup_and_restarts() {
         let script = installer_script(
-            r"C:\cache\FDE-1.0.0-win-x64-setup.extracted\FDE-1.0.0-win-x64-setup.exe",
-            r"C:\Apps\FDE\fde.exe",
+            r"C:\cache\Frogg-1.0.0-win-x64-setup.extracted\Frogg-1.0.0-win-x64-setup.exe",
+            r"C:\Apps\Frogg\frogg.exe",
             4242,
         );
         assert!(script.starts_with("@echo off\r\n:wait\r\n"));
         assert!(script.contains("tasklist /FI \"PID eq 4242\" 2>nul | find \" 4242 \" >nul"));
         assert!(script.contains("goto wait"));
         assert!(script.contains(
-            "start \"\" /wait \"C:\\cache\\FDE-1.0.0-win-x64-setup.extracted\\FDE-1.0.0-win-x64-setup.exe\" /S\r\n"
+            "start \"\" /wait \"C:\\cache\\Frogg-1.0.0-win-x64-setup.extracted\\Frogg-1.0.0-win-x64-setup.exe\" /S\r\n"
         ));
-        assert!(script.ends_with("start \"\" \"C:\\Apps\\FDE\\fde.exe\"\r\n"));
+        assert!(script.ends_with("start \"\" \"C:\\Apps\\Frogg\\frogg.exe\"\r\n"));
         let wait_index = script.find(":wait").unwrap();
         let setup_index = script.find("/S").unwrap();
         assert!(
@@ -287,15 +287,15 @@ mod tests {
     #[test]
     fn portable_script_moves_over_the_exe_and_relaunches() {
         let script = portable_script(
-            r"C:\cache\FDE-1.0.0-win-x64-portable.extracted\FDE.exe",
-            r"D:\Tools\fde.exe",
+            r"C:\cache\Frogg-1.0.0-win-x64-portable.extracted\Frogg.exe",
+            r"D:\Tools\frogg.exe",
             7,
         );
         assert!(script.contains("find \" 7 \""));
         assert!(script.contains(
-            "move /Y \"C:\\cache\\FDE-1.0.0-win-x64-portable.extracted\\FDE.exe\" \"D:\\Tools\\fde.exe\" || exit /b 1\r\n"
+            "move /Y \"C:\\cache\\Frogg-1.0.0-win-x64-portable.extracted\\Frogg.exe\" \"D:\\Tools\\frogg.exe\" || exit /b 1\r\n"
         ));
-        assert!(script.ends_with("start \"\" \"D:\\Tools\\fde.exe\"\r\n"));
+        assert!(script.ends_with("start \"\" \"D:\\Tools\\frogg.exe\"\r\n"));
     }
 
     #[test]
@@ -305,25 +305,25 @@ mod tests {
         // The installer zip keeps the setup exe at the root (what
         // tauri-plugin-updater looks for); the portable zip nests it in a folder.
         let dir = tempfile::tempdir().unwrap();
-        let setup = dir.path().join("FDE-1.0.0-win-x64-setup.zip");
-        make_zip(&setup, &[("FDE-1.0.0-win-x64-setup.exe", b"MZ setup")]);
+        let setup = dir.path().join("Frogg-1.0.0-win-x64-setup.zip");
+        make_zip(&setup, &[("Frogg-1.0.0-win-x64-setup.exe", b"MZ setup")]);
         let found = extract_exe_from_zip(&setup).unwrap();
-        assert_eq!(found.file_name().unwrap(), "FDE-1.0.0-win-x64-setup.exe");
+        assert_eq!(found.file_name().unwrap(), "Frogg-1.0.0-win-x64-setup.exe");
         assert_eq!(std::fs::read(&found).unwrap(), b"MZ setup");
 
-        let portable = dir.path().join("FDE-1.0.0-win-x64-portable.zip");
+        let portable = dir.path().join("Frogg-1.0.0-win-x64-portable.zip");
         make_zip(
             &portable,
             &[
-                ("FDE-1.0.0-portable/README.txt", b"read me"),
-                ("FDE-1.0.0-portable/FDE.exe", b"MZ portable"),
+                ("Frogg-1.0.0-portable/README.txt", b"read me"),
+                ("Frogg-1.0.0-portable/Frogg.exe", b"MZ portable"),
             ],
         );
         let found = extract_exe_from_zip(&portable).unwrap();
-        assert_eq!(found.file_name().unwrap(), "FDE.exe");
+        assert_eq!(found.file_name().unwrap(), "Frogg.exe");
         assert_eq!(std::fs::read(&found).unwrap(), b"MZ portable");
 
-        let empty = dir.path().join("FDE-1.0.0-win-x64-setup-empty.zip");
+        let empty = dir.path().join("Frogg-1.0.0-win-x64-setup-empty.zip");
         make_zip(&empty, &[("notes.txt", b"no exe here")]);
         let error = extract_exe_from_zip(&empty).unwrap_err();
         assert!(error.contains("no .exe found"), "{error}");
@@ -332,8 +332,8 @@ mod tests {
     #[test]
     fn replaces_file_atomically_and_marks_executable() {
         let dir = tempfile::tempdir().unwrap();
-        let target = dir.path().join("FDE.AppImage");
-        let source = dir.path().join("downloads").join("FDE-2.AppImage");
+        let target = dir.path().join("Frogg.AppImage");
+        let source = dir.path().join("downloads").join("Frogg-2.AppImage");
         std::fs::create_dir_all(source.parent().unwrap()).unwrap();
         std::fs::write(&target, b"old").unwrap();
         std::fs::write(&source, b"new").unwrap();

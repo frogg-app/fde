@@ -13,12 +13,12 @@ import {
   type ViewStyle,
 } from "react-native";
 import type { ITheme } from "@xterm/xterm";
-import type { TerminalState } from "@fde/protocol/messages";
+import type { TerminalState } from "@frogg/protocol/messages";
 import {
   TerminalInputModeTracker,
   terminalInputModeStatesEqual,
   type TerminalInputModeState,
-} from "@fde/protocol/terminal-input-mode";
+} from "@frogg/protocol/terminal-input-mode";
 import type { TerminalEmulatorHandle, TerminalEmulatorProps } from "./terminal-emulator-contract";
 import {
   createNativeHeadlessTerminal,

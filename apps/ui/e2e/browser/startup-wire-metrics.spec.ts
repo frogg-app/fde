@@ -175,8 +175,8 @@ class WireMonitor {
         })),
       providerSnapshotTotals: summarizeProviderSnapshots(this.records),
       fork: {
-        sourceHome: process.env.E2E_FORK_SOURCE_FDE_HOME ?? null,
-        targetHome: process.env.E2E_FORK_TARGET_FDE_HOME ?? null,
+        sourceHome: process.env.E2E_FORK_SOURCE_FROGG_HOME ?? null,
+        targetHome: process.env.E2E_FORK_TARGET_FROGG_HOME ?? null,
         copiedFiles: parseOptionalNumber(process.env.E2E_FORK_COPIED_FILES),
         copiedBytes: parseOptionalNumber(process.env.E2E_FORK_COPIED_BYTES),
       },
@@ -533,9 +533,9 @@ test.describe("ad hoc startup wire metrics", () => {
 
     const summary = monitor.summarize(clickedWorkspaces);
     await attachSummary(testInfo, summary);
-    console.log("FDE_STARTUP_WIRE_METRICS_BEGIN");
+    console.log("FROGG_STARTUP_WIRE_METRICS_BEGIN");
     console.log(JSON.stringify(summary, null, 2));
-    console.log("FDE_STARTUP_WIRE_METRICS_END");
+    console.log("FROGG_STARTUP_WIRE_METRICS_END");
 
     expect(summary.byPhase.startup.byType.length).toBeGreaterThan(0);
     expect(clickedWorkspaces.length).toBeGreaterThan(0);

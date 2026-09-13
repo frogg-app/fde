@@ -22,10 +22,10 @@ import { OpenCodeAgentClient } from "./opencode-agent.js";
 import { OpenCodeServerManager } from "./opencode/server-manager.js";
 
 const MODEL = "openai/gpt-5.4";
-const NORMAL_SENTINEL = "FDE_NORMAL_RECOVERY_SENTINEL_7F31";
-const ROOT_SENTINEL = "FDE_ROOT_RECOVERY_SENTINEL_8C42";
-const CHILD_SENTINEL = "FDE_CHILD_RECOVERY_SENTINEL_5A19";
-const PARENT_SENTINEL = "FDE_PARENT_RECOVERY_SENTINEL_6B20";
+const NORMAL_SENTINEL = "FROGG_NORMAL_RECOVERY_SENTINEL_7F31";
+const ROOT_SENTINEL = "FROGG_ROOT_RECOVERY_SENTINEL_8C42";
+const CHILD_SENTINEL = "FROGG_CHILD_RECOVERY_SENTINEL_5A19";
+const PARENT_SENTINEL = "FROGG_PARENT_RECOVERY_SENTINEL_6B20";
 const TIMEOUT_MS = 240_000;
 
 describe.sequential("OpenCode real event recovery", () => {
@@ -141,9 +141,10 @@ describe.sequential("OpenCode real event recovery", () => {
 });
 
 async function createRealHarness() {
-  const artifactDir = mkdtempSync(path.join(os.tmpdir(), "fde-opencode-recovery-"));
+  const artifactDir = mkdtempSync(path.join(os.tmpdir(), "frogg-opencode-recovery-"));
   const runtime = createDisposableRuntime();
-  const { runtimeDir, home, fdeHome, xdgConfig, xdgData, xdgCache, xdgState, workspace } = runtime;
+  const { runtimeDir, home, froggHome, xdgConfig, xdgData, xdgCache, xdgState, workspace } =
+    runtime;
 
   let setupManager: OpenCodeServerManager | null = null;
   let setupProxy: Awaited<ReturnType<typeof createCutProxy>> | null = null;
@@ -154,7 +155,7 @@ async function createRealHarness() {
     const isolatedEnv = {
       ...process.env,
       HOME: home,
-      FDE_HOME: fdeHome,
+      FROGG_HOME: froggHome,
       XDG_CONFIG_HOME: xdgConfig,
       XDG_DATA_HOME: xdgData,
       XDG_CACHE_HOME: xdgCache,
@@ -296,16 +297,16 @@ function createDisposableRuntime(
 ) {
   let runtimeDir: string | null = null;
   try {
-    runtimeDir = mkdtempSync(path.join(os.tmpdir(), "fde-opencode-runtime-"));
+    runtimeDir = mkdtempSync(path.join(os.tmpdir(), "frogg-opencode-runtime-"));
     onCreate?.(runtimeDir);
     const home = path.join(runtimeDir, "home");
-    const fdeHome = path.join(runtimeDir, "fde-home");
+    const froggHome = path.join(runtimeDir, "frogg-home");
     const xdgConfig = path.join(runtimeDir, "xdg-config");
     const xdgData = path.join(runtimeDir, "xdg-data");
     const xdgCache = path.join(runtimeDir, "xdg-cache");
     const xdgState = path.join(runtimeDir, "xdg-state");
     const workspace = path.join(runtimeDir, "workspace");
-    for (const directory of [home, fdeHome, xdgConfig, xdgData, xdgCache, xdgState, workspace]) {
+    for (const directory of [home, froggHome, xdgConfig, xdgData, xdgCache, xdgState, workspace]) {
       mkdirSync(directory, { recursive: true });
     }
     const isolatedAuthDirectory = path.join(xdgData, "opencode");
@@ -314,7 +315,7 @@ function createDisposableRuntime(
       path.join(os.homedir(), ".local", "share", "opencode", "auth.json"),
       path.join(isolatedAuthDirectory, "auth.json"),
     );
-    return { runtimeDir, home, fdeHome, xdgConfig, xdgData, xdgCache, xdgState, workspace };
+    return { runtimeDir, home, froggHome, xdgConfig, xdgData, xdgCache, xdgState, workspace };
   } catch (error) {
     if (runtimeDir) {
       rmSync(runtimeDir, { recursive: true, force: true });

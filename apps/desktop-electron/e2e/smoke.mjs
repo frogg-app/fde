@@ -7,7 +7,7 @@ import { _electron as electron } from "playwright";
 
 const desktop = path.resolve(import.meta.dirname, "..");
 const root = path.resolve(desktop, "../..");
-const state = await mkdtemp(path.join(os.tmpdir(), "fde-electron-smoke-"));
+const state = await mkdtemp(path.join(os.tmpdir(), "frogg-electron-smoke-"));
 const profile = path.join(state, "profile");
 await mkdir(profile);
 await writeFile(
@@ -28,23 +28,23 @@ await writeFile(
 );
 const env = {
   ...process.env,
-  FDE_ELECTRON_USER_DATA_DIR: profile,
-  FDE_ELECTRON_UI_DIR: path.join(root, "apps/ui/dist"),
-  FDE_HOME: path.join(state, "daemon"),
-  FDE_LISTEN: "0.0.0.0:0",
-  FDE_RELAY_ENABLED: "false",
-  FDE_DISABLE_SINGLE_INSTANCE_LOCK: "1",
-  FDE_ENABLE_REACT_DEVTOOLS: "0",
+  FROGG_ELECTRON_USER_DATA_DIR: profile,
+  FROGG_ELECTRON_UI_DIR: path.join(root, "apps/ui/dist"),
+  FROGG_HOME: path.join(state, "daemon"),
+  FROGG_LISTEN: "0.0.0.0:0",
+  FROGG_RELAY_ENABLED: "false",
+  FROGG_DISABLE_SINGLE_INSTANCE_LOCK: "1",
+  FROGG_ENABLE_REACT_DEVTOOLS: "0",
 };
 delete env.ELECTRON_RUN_AS_NODE;
-const args = process.env.FDE_ELECTRON_SMOKE_NO_SANDBOX === "1" ? ["--no-sandbox"] : [];
-const executablePath = process.env.FDE_ELECTRON_SMOKE_EXECUTABLE;
-if (executablePath) delete env.FDE_ELECTRON_UI_DIR;
-const output = process.env.FDE_ELECTRON_SMOKE_OUTPUT;
+const args = process.env.FROGG_ELECTRON_SMOKE_NO_SANDBOX === "1" ? ["--no-sandbox"] : [];
+const executablePath = process.env.FROGG_ELECTRON_SMOKE_EXECUTABLE;
+if (executablePath) delete env.FROGG_ELECTRON_UI_DIR;
+const output = process.env.FROGG_ELECTRON_SMOKE_OUTPUT;
 const report = { launches: [], screenshot: null };
 let application;
 async function assertNoServerState() {
-  const entries = await readdir(env.FDE_HOME).catch((error) => {
+  const entries = await readdir(env.FROGG_HOME).catch((error) => {
     if (error.code === "ENOENT") return [];
     throw error;
   });
@@ -66,12 +66,12 @@ try {
     await page.waitForFunction(() => document.body.innerText.trim().length > 20);
     await page.evaluate(() => {
       localStorage.clear();
-      localStorage.setItem("@fde:e2e", "1");
+      localStorage.setItem("@frogg:e2e", "1");
     });
-    await page.goto("fde://app/welcome");
+    await page.goto("frogg://app/welcome");
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
-    await page.waitForFunction(() => Boolean(window.fdeDesktop?.invoke));
+    await page.waitForFunction(() => Boolean(window.froggDesktop?.invoke));
     await page.waitForFunction(() => document.body.innerText.trim().length > 20);
     const security = await application.evaluate(({ BrowserWindow }) => {
       const preferences = BrowserWindow.getAllWindows()[0].webContents.getLastWebPreferences();
@@ -83,33 +83,35 @@ try {
     });
     assert.deepEqual(security, { sandbox: true, contextIsolation: true, nodeIntegration: false });
     assert.equal(await page.evaluate(() => typeof window.require), "undefined");
-    const runtime = await page.evaluate(() => window.fdeDesktop.invoke("desktop_get_runtime_info"));
+    const runtime = await page.evaluate(() =>
+      window.froggDesktop.invoke("desktop_get_runtime_info"),
+    );
     assert.equal(typeof runtime.appVersion, "string");
-    const settings = await page.evaluate(() => window.fdeDesktop.invoke("get_desktop_settings"));
+    const settings = await page.evaluate(() => window.froggDesktop.invoke("get_desktop_settings"));
     assert.equal(settings.daemon.manageBuiltInDaemon, false);
     assert.equal(settings.daemon.keepRunningAfterQuit, false);
-    assert.equal(await page.evaluate(() => window.fdeDesktop.supportsLocalDaemon), false);
+    assert.equal(await page.evaluate(() => window.froggDesktop.supportsLocalDaemon), false);
     assert.equal(settings.notifications.playSound, launch === 0);
     if (launch === 0) {
       const patched = await page.evaluate(() =>
-        window.fdeDesktop.invoke("patch_desktop_settings", {
+        window.froggDesktop.invoke("patch_desktop_settings", {
           notifications: { playSound: false },
         }),
       );
       assert.equal(patched.notifications.playSound, false);
     }
     await assert.rejects(
-      page.evaluate(() => window.fdeDesktop.invoke("smoke_unknown_command")),
+      page.evaluate(() => window.froggDesktop.invoke("smoke_unknown_command")),
       /Unknown desktop command/,
     );
-    const addresses = await page.evaluate(() => window.fdeDesktop.network.localAddresses());
+    const addresses = await page.evaluate(() => window.froggDesktop.network.localAddresses());
     assert.equal(Array.isArray(addresses), true);
     assert.equal(
-      await page.evaluate(() => window.fdeDesktop.window.getCurrentWindow().isFullscreen()),
+      await page.evaluate(() => window.froggDesktop.window.getCurrentWindow().isFullscreen()),
       false,
     );
     for (const command of ["start_desktop_daemon", "install_local_daemon_bundle", "install_cli"]) {
-      await assert.rejects(page.evaluate((name) => window.fdeDesktop.invoke(name), command));
+      await assert.rejects(page.evaluate((name) => window.froggDesktop.invoke(name), command));
     }
     assert.equal(await page.getByText("Run agents on this machine", { exact: true }).count(), 0);
     await page.getByTestId("welcome-remote-ssh").waitFor();

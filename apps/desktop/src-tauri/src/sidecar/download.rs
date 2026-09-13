@@ -21,7 +21,7 @@ fn file_url_path(url: &str) -> Option<PathBuf> {
 
 fn client() -> Result<reqwest::Client, String> {
     reqwest::Client::builder()
-        .user_agent(format!("fde-desktop/{}", env!("CARGO_PKG_VERSION")))
+        .user_agent(format!("frogg-desktop/{}", env!("CARGO_PKG_VERSION")))
         .build()
         .map_err(|e| e.to_string())
 }

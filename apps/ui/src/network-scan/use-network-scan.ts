@@ -40,7 +40,7 @@ export function firstScanError(diagnostics: ScanDiagnostics): string | null {
 const LOG_PREFIX = "[network-scan]";
 
 /**
- * Sweeps the local /24 subnets for FDE daemons on the default port. Starts on
+ * Sweeps the local /24 subnets for Frogg daemons on the default port. Starts on
  * mount, aborts on unmount, and never throws: an unreachable network is just
  * an empty list. `rescan` restarts from scratch.
  */

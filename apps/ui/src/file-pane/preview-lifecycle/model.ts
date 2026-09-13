@@ -1,4 +1,4 @@
-import type { FileReadResult } from "@fde/client/internal/daemon-client";
+import type { FileReadResult } from "@frogg/client/internal/daemon-client";
 import type { AttachmentMetadata } from "@/attachments/types";
 import { persistAttachmentFromBytes } from "@/attachments/service";
 import { createPreviewAttachmentId, getFileNameFromPath } from "@/attachments/utils";

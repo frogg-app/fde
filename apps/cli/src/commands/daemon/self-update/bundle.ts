@@ -1,6 +1,6 @@
-import { brand } from "@fde/branding";
-import { matchesBrand, type BrandIdentity } from "@fde/branding/identity";
-import { daemonArtifactName } from "@fde/branding/artifacts";
+import { brand } from "@frogg/branding";
+import { matchesBrand, type BrandIdentity } from "@frogg/branding/identity";
+import { daemonArtifactName } from "@frogg/branding/artifacts";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
@@ -18,7 +18,7 @@ import { pipeline } from "node:stream/promises";
 /**
  * Daemon bundle acquisition: the asset naming, checksum sidecar, and archive
  * layout are the ones scripts/release/build-daemon-bundle.mjs produces and
- * deploy/install.sh consumes (`FDE-<v>-<platform>-<arch>-daemon.tar.gz`, a
+ * deploy/install.sh consumes (`Frogg-<v>-<platform>-<arch>-daemon.tar.gz`, a
  * `.sha256` sidecar whose first token is the digest, one top-level directory).
  */
 export type BundlePlatform = "linux" | "darwin" | "win";

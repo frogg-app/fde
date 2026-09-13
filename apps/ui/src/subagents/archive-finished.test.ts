@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { createArchiveFinishedSubagents, type ManagedSubagentSnapshot } from "./archive-finished";
-import type { FdeSubagentRow, ProviderSubagentRow } from "./select";
+import type { FroggSubagentRow, ProviderSubagentRow } from "./select";
 
-function fde(id: string, status: FdeSubagentRow["status"] = "idle"): FdeSubagentRow {
+function frogg(id: string, status: FroggSubagentRow["status"] = "idle"): FroggSubagentRow {
   return {
-    kind: "fde",
+    kind: "frogg",
     id,
     provider: "codex",
     title: id,
@@ -69,7 +69,7 @@ describe("createArchiveFinishedSubagents", () => {
     ]);
     const events: string[] = [];
     const archive = createArchiveFinishedSubagents(
-      [provider("native"), fde("first"), fde("second", "error"), fde("resumed")],
+      [provider("native"), frogg("first"), frogg("second", "error"), frogg("resumed")],
       {
         parentAgentId: "parent",
         getManagedSubagent: (id) => current.get(id),
@@ -105,9 +105,9 @@ describe("createArchiveFinishedSubagents", () => {
 
     second.resolve();
     await expect(operation).resolves.toEqual({
-      archivedFdeIds: ["first", "second"],
+      archivedFroggIds: ["first", "second"],
       dismissedProviderIds: ["native"],
-      skippedFdeIds: ["resumed"],
+      skippedFroggIds: ["resumed"],
       failures: [],
     });
     expect(progress).toEqual(["0/4", "1/4", "2/4", "3/4", "4/4"]);
@@ -124,7 +124,7 @@ describe("createArchiveFinishedSubagents", () => {
     ]);
     const responses = [first.promise, second.promise, retry.promise];
     const calls: string[] = [];
-    const archive = createArchiveFinishedSubagents([fde("first"), fde("second")], {
+    const archive = createArchiveFinishedSubagents([frogg("first"), frogg("second")], {
       parentAgentId: "parent",
       getManagedSubagent: (id) => current.get(id),
       archiveManagedSubagent: (id) => {
@@ -137,16 +137,16 @@ describe("createArchiveFinishedSubagents", () => {
     });
 
     const firstAttempt = archive.archiveFinished();
-    archive.setRows([fde("second")]);
+    archive.setRows([frogg("second")]);
     const firstError = new Error("first failed");
     first.reject(firstError);
     await Promise.resolve();
     second.resolve();
     archive.setRows([]);
     await expect(firstAttempt).resolves.toEqual({
-      archivedFdeIds: ["second"],
+      archivedFroggIds: ["second"],
       dismissedProviderIds: [],
-      skippedFdeIds: [],
+      skippedFroggIds: [],
       failures: [{ id: "first", error: firstError }],
     });
 
@@ -154,7 +154,7 @@ describe("createArchiveFinishedSubagents", () => {
       eligibleCount: 0,
       status: { kind: "failed", failedCount: 1, totalCount: 1 },
     });
-    archive.setRows([fde("first")]);
+    archive.setRows([frogg("first")]);
 
     expect(archive.getState()).toEqual({
       eligibleCount: 1,
@@ -162,7 +162,7 @@ describe("createArchiveFinishedSubagents", () => {
     });
     expect(calls).toEqual(["first", "second"]);
 
-    archive.setRows([fde("first", "error")]);
+    archive.setRows([frogg("first", "error")]);
     expect(archive.getState()).toEqual({
       eligibleCount: 1,
       status: { kind: "failed", failedCount: 1, totalCount: 1 },
@@ -177,9 +177,9 @@ describe("createArchiveFinishedSubagents", () => {
     const retryError = new Error("retry failed");
     retry.reject(retryError);
     await expect(retryAttempt).resolves.toEqual({
-      archivedFdeIds: [],
+      archivedFroggIds: [],
       dismissedProviderIds: [],
-      skippedFdeIds: [],
+      skippedFroggIds: [],
       failures: [{ id: "first", error: retryError }],
     });
 
@@ -187,7 +187,7 @@ describe("createArchiveFinishedSubagents", () => {
       eligibleCount: 1,
       status: { kind: "failed", failedCount: 1, totalCount: 1 },
     });
-    archive.setRows([fde("first"), fde("later")]);
+    archive.setRows([frogg("first"), frogg("later")]);
     expect(archive.getState()).toEqual({ eligibleCount: 2, status: { kind: "idle" } });
   });
 
@@ -198,7 +198,7 @@ describe("createArchiveFinishedSubagents", () => {
       ["first", managed("first")],
       ["second", managed("second")],
     ]);
-    const archive = createArchiveFinishedSubagents([fde("first"), fde("second")], {
+    const archive = createArchiveFinishedSubagents([frogg("first"), frogg("second")], {
       parentAgentId: "parent",
       getManagedSubagent: (id) => current.get(id),
       archiveManagedSubagent: async (id) => {
@@ -210,21 +210,21 @@ describe("createArchiveFinishedSubagents", () => {
     const operation = archive.archiveFinished();
     archive.setRows([]);
     await operation;
-    archive.setRows([fde("first"), fde("second")]);
+    archive.setRows([frogg("first"), frogg("second")]);
 
-    archive.setRows([fde("second", "error"), fde("first", "error")]);
+    archive.setRows([frogg("second", "error"), frogg("first", "error")]);
     expect(archive.getState()).toEqual({
       eligibleCount: 2,
       status: { kind: "failed", failedCount: 2, totalCount: 2 },
     });
 
-    archive.setRows([fde("second", "error")]);
+    archive.setRows([frogg("second", "error")]);
     expect(archive.getState()).toEqual({ eligibleCount: 1, status: { kind: "idle" } });
   });
 
   it("clears retry state when the authoritative failed child is running", async () => {
     const current = new Map([["failed", managed("failed")]]);
-    const archive = createArchiveFinishedSubagents([fde("failed")], {
+    const archive = createArchiveFinishedSubagents([frogg("failed")], {
       parentAgentId: "parent",
       getManagedSubagent: (id) => current.get(id),
       archiveManagedSubagent: async () => {
@@ -237,20 +237,20 @@ describe("createArchiveFinishedSubagents", () => {
     const operation = archive.archiveFinished();
     archive.setRows([]);
     await operation;
-    archive.setRows([fde("failed", "running")]);
+    archive.setRows([frogg("failed", "running")]);
 
     expect(archive.getState()).toEqual({ eligibleCount: 0, status: { kind: "idle" } });
     await expect(archive.archiveFinished()).resolves.toEqual({
-      archivedFdeIds: [],
+      archivedFroggIds: [],
       dismissedProviderIds: [],
-      skippedFdeIds: [],
+      skippedFroggIds: [],
       failures: [],
     });
   });
 
   it("clears retry state when the authoritative failed child is initializing", async () => {
     const current = new Map([["failed", managed("failed")]]);
-    const archive = createArchiveFinishedSubagents([fde("failed")], {
+    const archive = createArchiveFinishedSubagents([frogg("failed")], {
       parentAgentId: "parent",
       getManagedSubagent: (id) => current.get(id),
       archiveManagedSubagent: async () => {
@@ -263,13 +263,13 @@ describe("createArchiveFinishedSubagents", () => {
     const operation = archive.archiveFinished();
     archive.setRows([]);
     await operation;
-    archive.setRows([fde("failed", "initializing")]);
+    archive.setRows([frogg("failed", "initializing")]);
 
     expect(archive.getState()).toEqual({ eligibleCount: 0, status: { kind: "idle" } });
     await expect(archive.archiveFinished()).resolves.toEqual({
-      archivedFdeIds: [],
+      archivedFroggIds: [],
       dismissedProviderIds: [],
-      skippedFdeIds: [],
+      skippedFroggIds: [],
       failures: [],
     });
   });
@@ -291,7 +291,7 @@ describe("createArchiveFinishedSubagents", () => {
     async (_label, updateSnapshot) => {
       const error = new Error("archive failed");
       const current = new Map([["failed", managed("failed")]]);
-      const archive = createArchiveFinishedSubagents([fde("failed")], {
+      const archive = createArchiveFinishedSubagents([frogg("failed")], {
         parentAgentId: "parent",
         getManagedSubagent: (id) => current.get(id),
         archiveManagedSubagent: async () => {
@@ -302,9 +302,9 @@ describe("createArchiveFinishedSubagents", () => {
       });
 
       await expect(archive.archiveFinished()).resolves.toEqual({
-        archivedFdeIds: [],
+        archivedFroggIds: [],
         dismissedProviderIds: [],
-        skippedFdeIds: [],
+        skippedFroggIds: [],
         failures: [{ id: "failed", error }],
       });
       expect(archive.getState()).toEqual({ eligibleCount: 1, status: { kind: "idle" } });
@@ -319,7 +319,7 @@ describe("createArchiveFinishedSubagents", () => {
       ["second", managed("second")],
     ]);
     const calls: string[] = [];
-    const archive = createArchiveFinishedSubagents([fde("first"), fde("second")], {
+    const archive = createArchiveFinishedSubagents([frogg("first"), frogg("second")], {
       parentAgentId: "parent",
       getManagedSubagent: (id) => current.get(id),
       archiveManagedSubagent: async (id) => {
@@ -336,24 +336,24 @@ describe("createArchiveFinishedSubagents", () => {
     const operation = archive.archiveFinished();
     archive.setRows([]);
     await expect(operation).resolves.toEqual({
-      archivedFdeIds: [],
+      archivedFroggIds: [],
       dismissedProviderIds: [],
-      skippedFdeIds: [],
+      skippedFroggIds: [],
       failures: [
         { id: "first", error: firstError },
         { id: "second", error: secondError },
       ],
     });
-    archive.setRows([fde("first"), fde("second", "running")]);
+    archive.setRows([frogg("first"), frogg("second", "running")]);
 
     expect(archive.getState()).toEqual({
       eligibleCount: 1,
       status: { kind: "failed", failedCount: 1, totalCount: 1 },
     });
     await expect(archive.archiveFinished()).resolves.toEqual({
-      archivedFdeIds: ["first"],
+      archivedFroggIds: ["first"],
       dismissedProviderIds: [],
-      skippedFdeIds: [],
+      skippedFroggIds: [],
       failures: [],
     });
     expect(calls).toEqual(["first", "second", "first"]);
@@ -361,13 +361,13 @@ describe("createArchiveFinishedSubagents", () => {
 
   it("rechecks each managed child and skips resumed, missing, archived, reparented, running, and initializing rows", async () => {
     const rows = [
-      fde("first"),
-      fde("resumed"),
-      fde("missing"),
-      fde("archived"),
-      fde("reparented"),
-      fde("running"),
-      fde("initializing"),
+      frogg("first"),
+      frogg("resumed"),
+      frogg("missing"),
+      frogg("archived"),
+      frogg("reparented"),
+      frogg("running"),
+      frogg("initializing"),
     ];
     const current = new Map<string, ManagedSubagentSnapshot>([
       ["first", managed("first")],
@@ -389,9 +389,9 @@ describe("createArchiveFinishedSubagents", () => {
     });
 
     await expect(archive.archiveFinished()).resolves.toEqual({
-      archivedFdeIds: ["first"],
+      archivedFroggIds: ["first"],
       dismissedProviderIds: [],
-      skippedFdeIds: ["resumed", "missing", "archived", "reparented", "running", "initializing"],
+      skippedFroggIds: ["resumed", "missing", "archived", "reparented", "running", "initializing"],
       failures: [],
     });
 
@@ -415,9 +415,9 @@ describe("createArchiveFinishedSubagents", () => {
     });
 
     await expect(archive.archiveFinished()).resolves.toEqual({
-      archivedFdeIds: [],
+      archivedFroggIds: [],
       dismissedProviderIds: ["finished"],
-      skippedFdeIds: [],
+      skippedFroggIds: [],
       failures: [],
     });
 

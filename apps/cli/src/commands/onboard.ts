@@ -1,12 +1,12 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { cancel, confirm, intro, isCancel, log, outro, spinner } from "@clack/prompts";
 import { Command, Option } from "commander";
 import { writeFileSync } from "node:fs";
 import path from "node:path";
-import { loadPersistedConfig, type PersistedConfig } from "@fde/server";
-import { buildPairingDeepLink } from "@fde/protocol/connection-offer";
+import { loadPersistedConfig, type PersistedConfig } from "@frogg/server";
+import { buildPairingDeepLink } from "@frogg/protocol/connection-offer";
 import {
-  resolveLocalFdeHome,
+  resolveLocalFroggHome,
   resolveLocalDaemonState,
   resolveTcpHostFromListen,
   startLocalDaemonDetached,
@@ -48,14 +48,14 @@ const DEFAULT_READY_TIMEOUT_MS = 10 * 60 * 1000;
 const READY_PROBE_TIMEOUT_MS = 1200;
 /**
  * Voice is on by default: the daemon bundle ships the local speech runtime and
- * models download on first use. `--voice disable`, `FDE_VOICE=0`, or
+ * models download on first use. `--voice disable`, `FROGG_VOICE=0`, or
  * `features.voice.enabled=false` opt out.
  */
 export const DEFAULT_VOICE_ENABLED = true;
 
-/** Non-interactive runs honor the `FDE_VOICE` umbrella switch, then the default. */
+/** Non-interactive runs honor the `FROGG_VOICE` umbrella switch, then the default. */
 export function resolveNonInteractiveVoiceDefault(env: NodeJS.ProcessEnv): boolean {
-  const raw = env.FDE_VOICE?.trim().toLowerCase();
+  const raw = env.FROGG_VOICE?.trim().toLowerCase();
   if (raw !== undefined && ["0", "false", "no", "off"].includes(raw)) return false;
   if (raw !== undefined && ["1", "true", "yes", "on"].includes(raw)) return true;
   return DEFAULT_VOICE_ENABLED;
@@ -82,8 +82,8 @@ function parseTimeoutMs(raw: string | undefined): number {
   return Math.ceil(seconds * 1000);
 }
 
-function savePersistedConfig(fdeHome: string, config: OnboardPersistedConfig): void {
-  const configPath = path.join(fdeHome, "config.json");
+function savePersistedConfig(froggHome: string, config: OnboardPersistedConfig): void {
+  const configPath = path.join(froggHome, "config.json");
   writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
 }
 
@@ -191,7 +191,7 @@ type ProbeResult =
   | { kind: "pending" };
 
 /**
- * Readiness is the public `GET /api/identity` answering with `product: "fde"`.
+ * Readiness is the public `GET /api/identity` answering with `product: "frogg"`.
  * A daemon that requires a password or pairing answers it too, so onboarding
  * never waits out the full timeout against a daemon that is up and locked.
  */
@@ -308,8 +308,11 @@ export function onboardCommand(): Command {
     });
 }
 
-async function resolveAndPersistVoice(fdeHome: string, options: OnboardOptions): Promise<boolean> {
-  let persisted = loadPersistedConfig(fdeHome) as OnboardPersistedConfig;
+async function resolveAndPersistVoice(
+  froggHome: string,
+  options: OnboardOptions,
+): Promise<boolean> {
+  let persisted = loadPersistedConfig(froggHome) as OnboardPersistedConfig;
   const persistedVoiceSelection = resolvePersistedVoiceSelection(persisted);
   const shouldPrompt = options.voice === "ask" || options.voice === undefined;
   let voiceEnabled: boolean;
@@ -331,7 +334,7 @@ async function resolveAndPersistVoice(fdeHome: string, options: OnboardOptions):
   }
 
   persisted = applyVoiceSelection(persisted, voiceEnabled);
-  savePersistedConfig(fdeHome, persisted);
+  savePersistedConfig(froggHome, persisted);
   return voiceEnabled;
 }
 
@@ -428,18 +431,18 @@ async function reportReachability(
  */
 async function printPairingOffer(
   options: OnboardOptions,
-  fdeHome: string,
+  froggHome: string,
   richUi: boolean,
 ): Promise<void> {
   if (options.relay === false) {
     log.message("Relay pairing skipped because --no-relay was provided.");
-    printNextSteps(null, fdeHome, richUi);
+    printNextSteps(null, froggHome, richUi);
     if (richUi) outro(`${brand.name} daemon is running.`);
     return;
   }
 
   let pairing = await resolveLocalPairingOffer({
-    fdeHome,
+    froggHome,
     enableRelay: options.relay === true,
   });
 
@@ -449,11 +452,11 @@ async function printPairingOffer(
     const shouldEnable = richUi ? await confirmRelayPairing() : false;
     if (!shouldEnable) {
       printDirectConnectionGuidance();
-      printNextSteps(null, fdeHome, richUi);
+      printNextSteps(null, froggHome, richUi);
       if (richUi) outro(`${brand.name} daemon is running.`);
       return;
     }
-    pairing = await resolveLocalPairingOffer({ fdeHome, enableRelay: true });
+    pairing = await resolveLocalPairingOffer({ froggHome, enableRelay: true });
     log.success("Relay enabled");
   }
   if (pairing.mode === "direct") {
@@ -462,7 +465,7 @@ async function printPairingOffer(
 
   if (!pairing.url) {
     log.warn("Relay pairing URL is unavailable for this daemon configuration.");
-    printNextSteps(null, fdeHome, richUi);
+    printNextSteps(null, froggHome, richUi);
     if (richUi) {
       outro(`${brand.name} daemon is running.`);
     }
@@ -477,7 +480,7 @@ async function printPairingOffer(
       deepLink: buildPairingDeepLink(pairing.url, brand.scheme),
     }),
   );
-  printNextSteps(pairing.url, fdeHome, richUi);
+  printNextSteps(pairing.url, froggHome, richUi);
   if (richUi) {
     outro(`${brand.name} is ready!`);
   }
@@ -503,14 +506,14 @@ export async function runOnboard(options: OnboardOptions): Promise<void> {
     process.exit(1);
   }
 
-  const fdeHome = resolveLocalFdeHome(options.home);
+  const froggHome = resolveLocalFroggHome(options.home);
   if (richUi) {
-    renderNote(fdeHome, `${brand.name} home`);
+    renderNote(froggHome, `${brand.name} home`);
   } else {
-    console.log(`${brand.name} home: ${fdeHome}`);
+    console.log(`${brand.name} home: ${froggHome}`);
   }
 
-  const voiceEnabled = await resolveAndPersistVoice(fdeHome, options);
+  const voiceEnabled = await resolveAndPersistVoice(froggHome, options);
   log.message(
     voiceEnabled
       ? "Voice features enabled. Local speech models will be downloaded automatically if missing."
@@ -519,7 +522,7 @@ export async function runOnboard(options: OnboardOptions): Promise<void> {
 
   await ensureDaemonStarted(options, richUi);
   const ready = await waitForDaemonReadyWithUi({
-    home: options.home ?? fdeHome,
+    home: options.home ?? froggHome,
     timeoutMs,
     richUi,
   });
@@ -527,5 +530,5 @@ export async function runOnboard(options: OnboardOptions): Promise<void> {
   await configureAutostart({ listen: ready.listen, home: options.home, richUi });
   await reportReachability(ready, options.home, richUi);
 
-  await printPairingOffer(options, fdeHome, richUi);
+  await printPairingOffer(options, froggHome, richUi);
 }

@@ -132,15 +132,15 @@ describe("classifyForResolution", () => {
   });
 
   it("keeps tilde paths as direct file targets", () => {
-    const result = classifyForResolution({ href: "~/.fde/plans/file-preview.md" }, CONTEXT);
+    const result = classifyForResolution({ href: "~/.frogg/plans/file-preview.md" }, CONTEXT);
 
     expect(result).toEqual({
       kind: "resolved",
       value: {
         kind: "file",
         target: {
-          raw: "~/.fde/plans/file-preview.md",
-          path: "~/.fde/plans/file-preview.md",
+          raw: "~/.frogg/plans/file-preview.md",
+          path: "~/.frogg/plans/file-preview.md",
           lineStart: undefined,
           lineEnd: undefined,
         },

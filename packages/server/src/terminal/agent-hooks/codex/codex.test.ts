@@ -59,7 +59,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 describe("Codex terminal agent hooks", () => {
   it("installs POSIX and Windows hook commands idempotently", () => {
-    const configDir = createTempDir("fde-codex-config-");
+    const configDir = createTempDir("frogg-codex-config-");
 
     installAgentHooks(codexAgentHookProvider, { configDir });
     const secondInstall = installAgentHooks(codexAgentHookProvider, { configDir });
@@ -68,8 +68,8 @@ describe("Codex terminal agent hooks", () => {
     for (const event of codexAgentHookProvider.events) {
       expect(commandHooks(config, event.event)).toEqual([
         {
-          command: `if [ -n "$FDE_TERMINAL_ID" ]; then "\${FDE_HOOK_CLI:-fde}" hooks codex ${event.event}; fi`,
-          commandWindows: `if defined FDE_TERMINAL_ID (if defined FDE_HOOK_CLI ("%FDE_HOOK_CLI%" hooks codex ${event.event}) else (fde hooks codex ${event.event})) else (exit /b 0)`,
+          command: `if [ -n "$FROGG_TERMINAL_ID" ]; then "\${FROGG_HOOK_CLI:-frogg}" hooks codex ${event.event}; fi`,
+          commandWindows: `if defined FROGG_TERMINAL_ID (if defined FROGG_HOOK_CLI ("%FROGG_HOOK_CLI%" hooks codex ${event.event}) else (frogg hooks codex ${event.event})) else (exit /b 0)`,
         },
       ]);
     }
@@ -78,7 +78,7 @@ describe("Codex terminal agent hooks", () => {
   });
 
   it("preserves unrelated user hooks", () => {
-    const configDir = createTempDir("fde-codex-config-preserve-");
+    const configDir = createTempDir("frogg-codex-config-preserve-");
     writeFileSync(
       join(configDir, "hooks.json"),
       `${JSON.stringify(
@@ -102,12 +102,12 @@ describe("Codex terminal agent hooks", () => {
     const stopCommands = commandHooks(readHooksFile(configDir), "Stop").map((hook) => hook.command);
     expect(stopCommands).toEqual([
       "say codex done",
-      'if [ -n "$FDE_TERMINAL_ID" ]; then "${FDE_HOOK_CLI:-fde}" hooks codex Stop; fi',
+      'if [ -n "$FROGG_TERMINAL_ID" ]; then "${FROGG_HOOK_CLI:-frogg}" hooks codex Stop; fi',
     ]);
   });
 
   it("uninstalls only marker-matched hooks", () => {
-    const configDir = createTempDir("fde-codex-config-uninstall-");
+    const configDir = createTempDir("frogg-codex-config-uninstall-");
     installAgentHooks(codexAgentHookProvider, { configDir });
     const config = readHooksFile(configDir);
     config.hooks = {

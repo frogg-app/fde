@@ -1,4 +1,4 @@
-import { isLanguageSupported, type HighlightToken } from "@fde/highlight";
+import { isLanguageSupported, type HighlightToken } from "@frogg/highlight";
 import { extensionFromPath, tokenizeToLines } from "@/utils/highlight-cache";
 import type { DiffLine } from "@/utils/tool-call-parsers";
 

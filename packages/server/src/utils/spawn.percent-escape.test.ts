@@ -14,7 +14,7 @@ afterEach(() => {
 });
 
 function writeEchoArgScript(): string {
-  const dir = mkdtempSync(path.join(tmpdir(), "fde-percent-escape-"));
+  const dir = mkdtempSync(path.join(tmpdir(), "frogg-percent-escape-"));
   tempDirs.push(dir);
   const scriptPath = path.join(dir, "echo-arg.js");
   writeFileSync(scriptPath, "process.stdout.write(process.argv[2] ?? '');\n");

@@ -20,22 +20,22 @@ function parseArgs(argv) {
 
 const args = parseArgs(process.argv);
 
-const serverId = args["server-id"] ?? process.env.FDE_SERVER_ID;
-const daemonPublicKeyB64 = args["daemon-public-key-b64"] ?? process.env.FDE_DAEMON_PUBLIC_KEY_B64;
-const relayEndpoint = args["relay-endpoint"] ?? process.env.FDE_RELAY_ENDPOINT;
-const baseUrl = args["base-url"] ?? process.env.FDE_APP_URL;
+const serverId = args["server-id"] ?? process.env.FROGG_SERVER_ID;
+const daemonPublicKeyB64 = args["daemon-public-key-b64"] ?? process.env.FROGG_DAEMON_PUBLIC_KEY_B64;
+const relayEndpoint = args["relay-endpoint"] ?? process.env.FROGG_RELAY_ENDPOINT;
+const baseUrl = args["base-url"] ?? process.env.FROGG_APP_URL;
 if (!relayEndpoint || !baseUrl)
   throw new Error("Provide --relay-endpoint and --base-url for your deployment.");
-const timeoutMs = Number(args["timeout-ms"] ?? process.env.FDE_PROVE_TIMEOUT_MS ?? 60_000);
-const stabilityMs = Number(args["stability-ms"] ?? process.env.FDE_PROVE_STABILITY_MS ?? 30_000);
+const timeoutMs = Number(args["timeout-ms"] ?? process.env.FROGG_PROVE_TIMEOUT_MS ?? 60_000);
+const stabilityMs = Number(args["stability-ms"] ?? process.env.FROGG_PROVE_STABILITY_MS ?? 30_000);
 
 if (!serverId || typeof serverId !== "string") {
-  console.error("Missing server ID. Provide --server-id or FDE_SERVER_ID.");
+  console.error("Missing server ID. Provide --server-id or FROGG_SERVER_ID.");
   process.exit(2);
 }
 if (!daemonPublicKeyB64 || typeof daemonPublicKeyB64 !== "string") {
   console.error(
-    "Missing daemon public key. Provide --daemon-public-key-b64 or FDE_DAEMON_PUBLIC_KEY_B64.",
+    "Missing daemon public key. Provide --daemon-public-key-b64 or FROGG_DAEMON_PUBLIC_KEY_B64.",
   );
   process.exit(2);
 }
@@ -59,8 +59,8 @@ page.on("pageerror", (e) => console.error(`[browser:pageerror] ${e.message}`));
 
 await page.addInitScript(
   (seed) => {
-    localStorage.setItem("@fde:daemon-registry", JSON.stringify([seed.daemon]));
-    localStorage.removeItem("@fde:settings");
+    localStorage.setItem("@frogg:daemon-registry", JSON.stringify([seed.daemon]));
+    localStorage.removeItem("@frogg:settings");
   },
   { daemon },
 );

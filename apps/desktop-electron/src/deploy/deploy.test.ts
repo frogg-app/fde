@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { spawn } from "node:child_process";
 import { describe, expect, it } from "vitest";
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import {
   buildInstallCommand,
   buildSshArgs,
@@ -80,11 +80,11 @@ describe("SSH deployment validation and scripts", () => {
   it("normalizes marker output despite banners and rejects missing reports", () => {
     expect(
       parseProbeOutput(
-        'Welcome\nFDE_PROBE {"os":"Darwin","hasFde":{"installed":true,"version":"v1.2.3"}}',
-      ).hasFde,
+        'Welcome\nFROGG_PROBE {"os":"Darwin","hasFrogg":{"installed":true,"version":"v1.2.3"}}',
+      ).hasFrogg,
     ).toEqual({ installed: true, version: "1.2.3" });
     expect(() => parseProbeOutput("sh failed")).toThrow("no result");
-    expect(() => parseProbeOutput("FDE_PROBE null")).toThrow();
+    expect(() => parseProbeOutput("FROGG_PROBE null")).toThrow();
   });
 });
 

@@ -16,12 +16,12 @@ const here = (path) => fileURLToPath(new URL(path, import.meta.url));
 loadBrand();
 const protocolSrc = here("../../protocol/src/");
 
-/** `@fde/protocol/x` resolves to the workspace source, with no install step. */
+/** `@frogg/protocol/x` resolves to the workspace source, with no install step. */
 const protocolSourcePlugin = {
-  name: "fde-protocol-source",
+  name: "frogg-protocol-source",
   setup(pluginBuild) {
-    pluginBuild.onResolve({ filter: /^@fde\/protocol\// }, (args) => ({
-      path: `${protocolSrc}${args.path.slice("@fde/protocol/".length)}.ts`,
+    pluginBuild.onResolve({ filter: /^@frogg\/protocol\// }, (args) => ({
+      path: `${protocolSrc}${args.path.slice("@frogg/protocol/".length)}.ts`,
     }));
   },
 };

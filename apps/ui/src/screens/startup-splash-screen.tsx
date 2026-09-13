@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { brandDocsUrl } from "@/branding/links";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
@@ -45,7 +45,7 @@ function openDocs(): void {
   void openExternalUrl(DOCS_URL);
 }
 
-/** The FDE mark, breathing while the app boots. Full-colour raster, so it pulses rather than shimmers. */
+/** The Frogg mark, breathing while the app boots. Full-colour raster, so it pulses rather than shimmers. */
 function LogoPulse() {
   const opacity = useSharedValue(1);
 

@@ -2,14 +2,14 @@ import type { APIRoute } from "astro";
 import { getCollection } from "astro:content";
 import { markdownPath, sortDocs } from "../lib/docs-markdown";
 
-/** https://llmstxt.org index of the docs. The in-app fde-help skill reads this first. */
+/** https://llmstxt.org index of the docs. The in-app frogg-help skill reads this first. */
 export const GET: APIRoute = async ({ site }) => {
   const docs = sortDocs(await getCollection("docs"));
   const base = site?.origin ?? "https://frogg.app";
   const lines = [
-    "# FDE",
+    "# Frogg",
     "",
-    "> FDE (Frogg Development Environment) runs and monitors coding agents (Claude Code, Codex, OpenCode and others) on a self-hosted daemon, from desktop, mobile, web and CLI clients.",
+    "> Frogg runs and monitors coding agents (Claude Code, Codex, OpenCode and others) on a self-hosted daemon, from desktop, mobile, web and CLI clients.",
     "",
     "Each page below is available as Markdown at the linked URL.",
     "",

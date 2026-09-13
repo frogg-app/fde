@@ -46,8 +46,8 @@ function executeEntry(source = readFileSync(entryPath, "utf8")) {
           `JSON.stringify({
         userAgent: navigator.userAgent,
         platform: navigator.platform,
-        encoded: Array.from(new TextEncoder().encode("FDE ✓")),
-        decoded: new TextDecoder().decode(new TextEncoder().encode("FDE ✓")),
+        encoded: Array.from(new TextEncoder().encode("Frogg ✓")),
+        decoded: new TextDecoder().decode(new TextEncoder().encode("Frogg ✓")),
         uuid: crypto.randomUUID(),
         random: Array.from(crypto.getRandomValues(new Uint8Array(2)))
       })`,
@@ -93,8 +93,8 @@ describe("native entry runtime initialization", () => {
     expect(result.consumerState).toEqual({
       userAgent: "ReactNative",
       platform: "",
-      encoded: [70, 68, 69, 32, 226, 156, 147],
-      decoded: "FDE ✓",
+      encoded: [70, 114, 111, 103, 103, 32, 226, 156, 147],
+      decoded: "Frogg ✓",
       uuid: "01010101-0101-4101-8101-010101010101",
       random: [1, 1],
     });

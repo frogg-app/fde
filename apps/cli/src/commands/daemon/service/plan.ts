@@ -1,8 +1,8 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import path from "node:path";
 
 /**
- * What "start FDE when I log in" means on each platform, as data: a file to
+ * What "start Frogg when I log in" means on each platform, as data: a file to
  * write and commands to run. Pure — the caller supplies the home directory,
  * environment, and the command that starts the daemon — so the generated unit,
  * plist, and Windows command line are all testable against a scratch home.
@@ -32,8 +32,8 @@ export interface ServicePlanInput {
   listen: string;
   /** Only explicit launch overrides should mask future config.json edits. */
   persistListen?: boolean;
-  /** Written into the unit as `FDE_HOME` when the caller pinned one. */
-  fdeHome?: string;
+  /** Written into the unit as `FROGG_HOME` when the caller pinned one. */
+  froggHome?: string;
   /** Prepended to the service's PATH so agent CLIs stay visible to the daemon. */
   pathPrepend?: string;
 }
@@ -95,11 +95,11 @@ function xml(value: string): string {
 }
 function systemdUnit(input: ServicePlanInput): string {
   const exec = [input.command.program, ...input.command.args].map(unitQuote).join(" ");
-  const home = input.fdeHome
-    ? `Environment=${unitQuote(`${brand.envPrefix}_HOME=${input.fdeHome}`)}\n`
+  const home = input.froggHome
+    ? `Environment=${unitQuote(`${brand.envPrefix}_HOME=${input.froggHome}`)}\n`
     : "";
-  const execution = input.env.FDE_EXECUTION_SERVICE === "1";
-  const executionEnv = execution ? "Environment=FDE_EXECUTION_SERVICE=1\n" : "";
+  const execution = input.env.FROGG_EXECUTION_SERVICE === "1";
+  const executionEnv = execution ? "Environment=FROGG_EXECUTION_SERVICE=1\n" : "";
   const killMode = execution ? "process" : "mixed";
   let stop = "";
   if (execution) {
@@ -118,7 +118,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 ExecStart=${exec}
-${stop}${input.persistListen === false ? "" : `Environment=FDE_LISTEN=${input.listen}\n`}Environment=FDE_WEB_UI_ENABLED=true
+${stop}${input.persistListen === false ? "" : `Environment=FROGG_LISTEN=${input.listen}\n`}Environment=FROGG_WEB_UI_ENABLED=true
 Environment=${unitQuote(`PATH=${servicePath(input)}`)}
 ${home}${executionEnv}Restart=on-failure
 RestartSec=5
@@ -150,11 +150,11 @@ ${programArguments}
   </array>
   <key>EnvironmentVariables</key>
   <dict>
-${input.persistListen === false ? "" : plistEntry("FDE_LISTEN", input.listen)}${plistEntry(
-    "FDE_WEB_UI_ENABLED",
+${input.persistListen === false ? "" : plistEntry("FROGG_LISTEN", input.listen)}${plistEntry(
+    "FROGG_WEB_UI_ENABLED",
     "true",
   )}${plistEntry("PATH", servicePath(input))}${
-    input.fdeHome ? plistEntry(`${brand.envPrefix}_HOME`, input.fdeHome) : ""
+    input.froggHome ? plistEntry(`${brand.envPrefix}_HOME`, input.froggHome) : ""
   }  </dict>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><dict><key>SuccessfulExit</key><false/></dict>

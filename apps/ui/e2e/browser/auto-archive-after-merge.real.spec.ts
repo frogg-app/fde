@@ -82,7 +82,7 @@ async function createMergedPullRequestScenario(): Promise<MergedPullRequestScena
     if (!pullRequest) {
       throw new Error("Expected the merged pull request fixture");
     }
-    const created = await workspaceClient.createFdeWorktree({
+    const created = await workspaceClient.createFroggWorktree({
       cwd: checkout.path,
       action: "checkout",
       checkoutSource: {

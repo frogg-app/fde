@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { CheckoutPrStatusResponse } from "@fde/protocol/messages";
+import type { CheckoutPrStatusResponse } from "@frogg/protocol/messages";
 import { normalizeCheckoutPrStatusPayload } from "./pr-status";
 
 function payload(

@@ -36,7 +36,7 @@ pub async fn status<R: Runtime>(app: &AppHandle<R>) -> Value {
     let sidecar = app.state::<Sidecar>();
     lifecycle::resolve_status(
         sidecar.store.installed().as_ref(),
-        &sidecar::fde_home(app),
+        &sidecar::frogg_home(app),
     )
     .await
     .to_json()
@@ -64,25 +64,25 @@ pub async fn restart<R: Runtime>(app: &AppHandle<R>) -> Result<Value, String> {
 pub async fn stop<R: Runtime>(app: &AppHandle<R>, args: &Value) -> Result<Value, String> {
     let sidecar = app.state::<Sidecar>();
     let _guard = sidecar.lifecycle.lock().await;
-    lifecycle::stop(&sidecar, &sidecar::fde_home(app), stop_reason(args))
+    lifecycle::stop(&sidecar, &sidecar::frogg_home(app), stop_reason(args))
         .await
         .map(|s| s.to_json())
 }
 
-/// `desktop_daemon_logs`: `$FDE_HOME/daemon.log` when a daemon has written one.
+/// `desktop_daemon_logs`: `$FROGG_HOME/daemon.log` when a daemon has written one.
 pub fn logs<R: Runtime>(app: &AppHandle<R>) -> Result<Value, String> {
-    let path = sidecar::fde_home(app).join(lifecycle::DAEMON_LOG_FILENAME);
+    let path = sidecar::frogg_home(app).join(lifecycle::DAEMON_LOG_FILENAME);
     Ok(json!({
         "logPath": path.to_string_lossy(),
         "contents": tail_file(&path, DAEMON_LOG_TAIL_LINES).unwrap_or_default(),
     }))
 }
 
-/// `cli_daemon_status`: the text of `fde daemon status`.
+/// `cli_daemon_status`: the text of `frogg daemon status`.
 pub async fn cli_status<R: Runtime>(app: &AppHandle<R>) -> Result<Value, String> {
     let sidecar = app.state::<Sidecar>();
     let bundle = sidecar.store.installed().ok_or(sidecar::NOT_INSTALLED)?;
-    let home = sidecar::fde_home(app);
+    let home = sidecar::frogg_home(app);
     let invocation = sidecar::cli::CliInvocation::new(
         &bundle,
         &["daemon", "status"],
@@ -96,7 +96,7 @@ pub async fn local_version<R: Runtime>(app: &AppHandle<R>) -> Value {
     let sidecar = app.state::<Sidecar>();
     let status = lifecycle::resolve_status(
         sidecar.store.installed().as_ref(),
-        &sidecar::fde_home(app),
+        &sidecar::frogg_home(app),
     )
     .await;
     if !status.is_running() {

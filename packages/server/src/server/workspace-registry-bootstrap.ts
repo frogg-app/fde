@@ -15,7 +15,7 @@ import {
   type ProjectRegistry,
   type WorkspaceRegistry,
 } from "./workspace-registry.js";
-import { pinFdeWorktreeBranchIdentityIfMissing } from "../utils/worktree-metadata.js";
+import { pinFroggWorktreeBranchIdentityIfMissing } from "../utils/worktree-metadata.js";
 
 function minIsoDate(left: string | null, right: string | null): string | null {
   if (!left) {
@@ -47,7 +47,7 @@ function resolveAgentUpdatedAt(record: StoredAgentRecord): string {
 
 export async function bootstrapWorkspaceRegistries(options: {
   serverId?: string;
-  fdeHome: string;
+  froggHome: string;
   agentStorage: AgentStorage;
   projectRegistry: ProjectRegistry;
   workspaceRegistry: WorkspaceRegistry;
@@ -67,14 +67,14 @@ export async function bootstrapWorkspaceRegistries(options: {
   for (const workspace of await options.workspaceRegistry.list()) {
     if (
       workspace.archivedAt ||
-      !workspace.isFdeOwnedWorktree ||
+      !workspace.isFroggOwnedWorktree ||
       !workspace.worktreeRoot ||
       !workspace.branch
     ) {
       continue;
     }
     try {
-      pinFdeWorktreeBranchIdentityIfMissing(workspace.worktreeRoot, workspace.branch);
+      pinFroggWorktreeBranchIdentityIfMissing(workspace.worktreeRoot, workspace.branch);
     } catch (error) {
       options.logger.warn(
         { err: error, workspaceId: workspace.workspaceId },
@@ -209,8 +209,8 @@ export async function bootstrapWorkspaceRegistries(options: {
 
   options.logger.info(
     {
-      projectsFile: path.join(options.fdeHome, "projects", "projects.json"),
-      workspacesFile: path.join(options.fdeHome, "projects", "workspaces.json"),
+      projectsFile: path.join(options.froggHome, "projects", "projects.json"),
+      workspacesFile: path.join(options.froggHome, "projects", "workspaces.json"),
       materializedProjects: projectRanges.size,
       materializedWorkspaces: recordsByDirectoryKey.size,
     },

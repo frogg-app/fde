@@ -13,7 +13,7 @@ import { watchCompanionAgent } from "./watch-agent.js";
 it.each(["claude", "codex"] as const)(
   "observes a running %s worker without reloading its thread and preserves its receipt after End",
   async (provider) => {
-    const home = await mkdtemp(path.join(tmpdir(), "fde-companion-observe-"));
+    const home = await mkdtemp(path.join(tmpdir(), "frogg-companion-observe-"));
     const logger = pino({ level: "silent" });
     const storage = new AgentStorage(home, logger);
     const manager = new AgentManager({

@@ -139,7 +139,7 @@ export async function primeAdditionalPage(page: Page): Promise<void> {
   });
   await page.addInitScript(
     ({ daemon: seededDaemon, preferences: seededPreferences, seedNonce: nonce }) => {
-      const disableOnceKey = "@fde:e2e-disable-default-seed-once";
+      const disableOnceKey = "@frogg:e2e-disable-default-seed-once";
       const disableValue = localStorage.getItem(disableOnceKey);
       if (disableValue) {
         localStorage.removeItem(disableOnceKey);
@@ -148,11 +148,11 @@ export async function primeAdditionalPage(page: Page): Promise<void> {
         }
       }
 
-      localStorage.setItem("@fde:e2e", "1");
-      localStorage.setItem("@fde:e2e-seed-nonce", nonce);
-      localStorage.setItem("@fde:daemon-registry", JSON.stringify([seededDaemon]));
-      localStorage.removeItem("@fde:settings");
-      localStorage.setItem("@fde:create-agent-preferences", JSON.stringify(seededPreferences));
+      localStorage.setItem("@frogg:e2e", "1");
+      localStorage.setItem("@frogg:e2e-seed-nonce", nonce);
+      localStorage.setItem("@frogg:daemon-registry", JSON.stringify([seededDaemon]));
+      localStorage.removeItem("@frogg:settings");
+      localStorage.setItem("@frogg:create-agent-preferences", JSON.stringify(seededPreferences));
     },
     { daemon, preferences, seedNonce },
   );
@@ -165,10 +165,10 @@ export async function resetSeededPageState(page: Page): Promise<void> {
   await page.evaluate(
     ({ daemon: seededDaemon, preferences: seededPreferences }) => {
       localStorage.clear();
-      localStorage.setItem("@fde:e2e", "1");
-      localStorage.setItem("@fde:daemon-registry", JSON.stringify([seededDaemon]));
-      localStorage.setItem("@fde:create-agent-preferences", JSON.stringify(seededPreferences));
-      localStorage.removeItem("@fde:settings");
+      localStorage.setItem("@frogg:e2e", "1");
+      localStorage.setItem("@frogg:daemon-registry", JSON.stringify([seededDaemon]));
+      localStorage.setItem("@frogg:create-agent-preferences", JSON.stringify(seededPreferences));
+      localStorage.removeItem("@frogg:settings");
     },
     { daemon, preferences },
   );

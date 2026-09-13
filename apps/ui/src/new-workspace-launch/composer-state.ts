@@ -4,8 +4,8 @@ import {
   formatResolvedCommand,
   profileTakesPrompt,
   substitutePrompt,
-} from "@fde/protocol/terminal-profiles";
-import type { TerminalProfile } from "@fde/protocol/messages";
+} from "@frogg/protocol/terminal-profiles";
+import type { TerminalProfile } from "@frogg/protocol/messages";
 import { resolveLaunchProfile, type LaunchTarget } from "./target";
 
 export interface TerminalComposerState {

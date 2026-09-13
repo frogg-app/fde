@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { AgentCapabilityFlags } from "@fde/protocol/agent-types";
+import type { AgentCapabilityFlags } from "@frogg/protocol/agent-types";
 
 export type RewindMode = "conversation" | "files" | "both";
 

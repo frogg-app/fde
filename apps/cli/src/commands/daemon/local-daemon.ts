@@ -1,10 +1,10 @@
-import { matchesBrand } from "@fde/branding/identity";
-import { brand } from "@fde/branding";
+import { matchesBrand } from "@frogg/branding/identity";
+import { brand } from "@frogg/branding";
 import { spawnSync, type ChildProcess } from "node:child_process";
 import { existsSync, readFileSync, unlinkSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
-import { loadConfig, resolveFdeHome, spawnProcess } from "@fde/server";
+import { loadConfig, resolveFroggHome, spawnProcess } from "@frogg/server";
 import treeKill from "tree-kill";
 import { stopOwnedDaemonService } from "./service/stop.js";
 import { tryConnectToDaemon } from "../../utils/client.js";
@@ -111,7 +111,7 @@ export interface DaemonLaunchRuntime {
 const DETACHED_STARTUP_GRACE_MS = 1200;
 const PID_POLL_INTERVAL_MS = 100;
 const DAEMON_LOG_FILENAME = "daemon.log";
-const DAEMON_PID_FILENAME = "fde.pid";
+const DAEMON_PID_FILENAME = "frogg.pid";
 
 export const DEFAULT_STOP_TIMEOUT_MS = 15_000;
 export const DEFAULT_KILL_TIMEOUT_MS = 3_000;
@@ -120,7 +120,7 @@ const require = createRequire(import.meta.url);
 
 const defaultDaemonLaunchRuntime: DaemonLaunchRuntime = {
   resolveRunnerEntry: resolveDaemonRunnerEntry,
-  resolveHome: resolveFdeHome,
+  resolveHome: resolveFroggHome,
   spawnDetached: spawnProcess,
   spawnForeground: spawnSync,
 };
@@ -175,21 +175,21 @@ function buildChildEnv(options: DaemonStartOptions): NodeJS.ProcessEnv {
     childEnv[`${brand.envPrefix}_HOME`] = options.home;
   }
   if (options.listen) {
-    childEnv.FDE_LISTEN = options.listen;
+    childEnv.FROGG_LISTEN = options.listen;
   } else if (options.port) {
-    childEnv.FDE_LISTEN = `0.0.0.0:${options.port}`;
+    childEnv.FROGG_LISTEN = `0.0.0.0:${options.port}`;
   }
   if (options.hostnames) {
-    childEnv.FDE_HOSTNAMES = options.hostnames;
+    childEnv.FROGG_HOSTNAMES = options.hostnames;
   }
   if (options.relayUseTls === true) {
-    childEnv.FDE_RELAY_USE_TLS = "true";
+    childEnv.FROGG_RELAY_USE_TLS = "true";
   }
   if (options.webUi === true) {
-    childEnv.FDE_WEB_UI_ENABLED = "true";
+    childEnv.FROGG_WEB_UI_ENABLED = "true";
   }
   if (options.webUi === false) {
-    childEnv.FDE_WEB_UI_ENABLED = "false";
+    childEnv.FROGG_WEB_UI_ENABLED = "false";
   }
   return childEnv;
 }
@@ -201,7 +201,7 @@ function resolveServerRunnerFromDir(currentDir: string): string | null {
     const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8")) as {
       name?: string;
     };
-    if (packageJson.name !== "@fde/server") return null;
+    if (packageJson.name !== "@frogg/server") return null;
     const distRunner = path.join(currentDir, "dist", "scripts", "supervisor-entrypoint.js");
     if (existsSync(distRunner)) {
       return distRunner;
@@ -213,7 +213,7 @@ function resolveServerRunnerFromDir(currentDir: string): string | null {
 }
 
 function resolveDaemonRunnerEntry(): string {
-  const serverExportPath = require.resolve("@fde/server");
+  const serverExportPath = require.resolve("@frogg/server");
   let currentDir = path.dirname(serverExportPath);
 
   while (true) {
@@ -229,11 +229,11 @@ function resolveDaemonRunnerEntry(): string {
     currentDir = parentDir;
   }
 
-  throw new Error("Unable to resolve @fde/server package root for daemon runner");
+  throw new Error("Unable to resolve @frogg/server package root for daemon runner");
 }
 
-function pidFilePath(fdeHome: string): string {
-  return path.join(fdeHome, DAEMON_PID_FILENAME);
+function pidFilePath(froggHome: string): string {
+  return path.join(froggHome, DAEMON_PID_FILENAME);
 }
 
 function resolveListenField(listen: unknown, sockPath: unknown): string | undefined {
@@ -391,7 +391,7 @@ async function signalProcessTreeOrOwnerSafely(
   // Tree-kill follows detached descendants on Windows (taskkill /T). A retained
   // or ambiguous execution descriptor must never authorize killing that tree.
   if (
-    process.env.FDE_EXECUTION_SERVICE === "1" ||
+    process.env.FROGG_EXECUTION_SERVICE === "1" ||
     existsSync(path.join(home, "execution-service"))
   ) {
     return signalProcessSafely(pid, signal);
@@ -542,8 +542,8 @@ function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-export function resolveLocalFdeHome(home?: string): string {
-  return resolveFdeHome(envWithHome(home));
+export function resolveLocalFroggHome(home?: string): string {
+  return resolveFroggHome(envWithHome(home));
 }
 
 export function resolveTcpHostFromListen(listen: string): string | null {
@@ -578,16 +578,16 @@ export function resolveLocalDaemonState(options: { home?: string } = {}): LocalD
     ...envWithHome(options.home),
     // Status should reflect local persisted config + pid file, not inherited daemon env overrides.
     // This is CLI-side defensive scrubbing; the daemon RPC is authoritative when available.
-    FDE_LISTEN: undefined,
-    FDE_HOSTNAMES: undefined,
-    FDE_ALLOWED_HOSTS: undefined,
-    FDE_RELAY_ENABLED: undefined,
-    FDE_RELAY_ENDPOINT: undefined,
-    FDE_RELAY_PUBLIC_ENDPOINT: undefined,
-    FDE_RELAY_USE_TLS: undefined,
-    FDE_RELAY_PUBLIC_USE_TLS: undefined,
+    FROGG_LISTEN: undefined,
+    FROGG_HOSTNAMES: undefined,
+    FROGG_ALLOWED_HOSTS: undefined,
+    FROGG_RELAY_ENABLED: undefined,
+    FROGG_RELAY_ENDPOINT: undefined,
+    FROGG_RELAY_PUBLIC_ENDPOINT: undefined,
+    FROGG_RELAY_USE_TLS: undefined,
+    FROGG_RELAY_PUBLIC_USE_TLS: undefined,
   };
-  const home = resolveFdeHome(env);
+  const home = resolveFroggHome(env);
   const config = loadConfig(home, { env });
   const state = resolveLocalDaemonProcessState(home);
 
@@ -608,7 +608,7 @@ type LocalDaemonDiagnosticState =
 export function resolveLocalDaemonDiagnosticState(
   options: { home?: string } = {},
 ): LocalDaemonDiagnosticState {
-  const state = resolveLocalDaemonProcessState(resolveLocalFdeHome(options.home));
+  const state = resolveLocalDaemonProcessState(resolveLocalFroggHome(options.home));
   try {
     return { ...resolveLocalDaemonState(options), configError: null };
   } catch (error) {
@@ -635,7 +635,7 @@ function resolveLocalDaemonProcessState(home: string): LocalDaemonProcessState {
 }
 
 export function tailDaemonLog(home?: string, lines = 30): string | null {
-  const logPath = path.join(resolveLocalFdeHome(home), DAEMON_LOG_FILENAME);
+  const logPath = path.join(resolveLocalFroggHome(home), DAEMON_LOG_FILENAME);
   return tailFile(logPath, lines);
 }
 
@@ -650,8 +650,8 @@ export async function startLocalDaemonDetached(
   const daemonRunnerEntry = runtime.resolveRunnerEntry();
   const childEnv = buildChildEnv(options);
 
-  const fdeHome = runtime.resolveHome(childEnv);
-  const logPath = path.join(fdeHome, DAEMON_LOG_FILENAME);
+  const froggHome = runtime.resolveHome(childEnv);
+  const logPath = path.join(froggHome, DAEMON_LOG_FILENAME);
   const child = runtime.spawnDetached(
     process.execPath,
     [...process.execArgv, daemonRunnerEntry, ...buildRunnerArgs(options)],
@@ -785,7 +785,7 @@ export async function stopLocalDaemon(
 ): Promise<StopLocalDaemonResult> {
   const timeoutMs = options.timeoutMs ?? DEFAULT_STOP_TIMEOUT_MS;
   const killTimeoutMs = options.killTimeoutMs ?? DEFAULT_KILL_TIMEOUT_MS;
-  const state = resolveLocalDaemonProcessState(resolveLocalFdeHome(options.home));
+  const state = resolveLocalDaemonProcessState(resolveLocalFroggHome(options.home));
   const deadline = Date.now() + timeoutMs;
   const remainingTimeoutMs = () => Math.max(1, deadline - Date.now());
 
@@ -798,7 +798,7 @@ export async function stopLocalDaemon(
       ? stopOwnedDaemonService({
           pid: state.pidInfo.pid,
           preserveExecution:
-            process.env.FDE_EXECUTION_SERVICE === "1" ||
+            process.env.FROGG_EXECUTION_SERVICE === "1" ||
             existsSync(path.join(state.home, "execution-service")),
         })
       : false;
@@ -844,7 +844,7 @@ export async function stopLocalDaemon(
   if (!stopped) {
     if (serviceStop === "preserve_execution" && options.force) {
       throw new Error(
-        "Daemon did not stop gracefully. Refusing to force a service configured to kill retained execution. Reinstall the daemon service with FDE_EXECUTION_SERVICE=1 (KillMode=process), then retry.",
+        "Daemon did not stop gracefully. Refusing to force a service configured to kill retained execution. Reinstall the daemon service with FROGG_EXECUTION_SERVICE=1 (KillMode=process), then retry.",
       );
     }
     throw createStopTimeoutError(state, pid, timeoutMs);

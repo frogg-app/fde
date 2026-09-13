@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 

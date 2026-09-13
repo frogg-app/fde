@@ -1,14 +1,14 @@
 import type { Logger } from "pino";
 
 import type { TerminalManager } from "../../../terminal/terminal-manager.js";
-import type { CreateFdeWorktreeInput } from "../../fde-worktree-service.js";
+import type { CreateFroggWorktreeInput } from "../../frogg-worktree-service.js";
 import { expandUserPath, resolvePathFromBase } from "../../path-utils.js";
 import { toWorktreeRequestError } from "../../worktree-errors.js";
 import type {
   AgentWorktreeSetupContinuation,
-  CreateFdeWorktreeSetupContinuationInput,
-  CreateFdeWorktreeWorkflowFn,
-  CreateFdeWorktreeWorkflowResult,
+  CreateFroggWorktreeSetupContinuationInput,
+  CreateFroggWorktreeWorkflowFn,
+  CreateFroggWorktreeWorkflowResult,
 } from "../../worktree-session.js";
 import type { AgentAttachment, FirstAgentContext, GitSetupOptions } from "../../messages.js";
 import type { AgentManager, CreateAgentOptions, ManagedAgent } from "../agent-manager.js";
@@ -39,11 +39,11 @@ export interface CreateAgentCommandDependencies {
   agentManager: AgentManager;
   agentStorage: AgentStorage;
   logger: Logger;
-  fdeHome?: string;
+  froggHome?: string;
   worktreesRoot?: string;
   terminalManager?: TerminalManager | null;
   providerSnapshotManager: Pick<ProviderSnapshotManager, "resolveCreateConfig">;
-  createFdeWorktree?: CreateFdeWorktreeWorkflowFn;
+  createFroggWorktree?: CreateFroggWorktreeWorkflowFn;
   // Mints a fresh directory workspace for a cwd and returns its id.
   ensureWorkspaceForCreate?: EnsureWorkspaceForCreate;
 }
@@ -98,9 +98,9 @@ export interface CreateAgentFromMcpInput {
   env?: Record<string, string>;
   onCreated?: (created: {
     agentId: string;
-    createdWorktree: CreateFdeWorktreeWorkflowResult | null;
+    createdWorktree: CreateFroggWorktreeWorkflowResult | null;
   }) => void;
-  onWorktreeCreated?: (createdWorktree: CreateFdeWorktreeWorkflowResult) => void;
+  onWorktreeCreated?: (createdWorktree: CreateFroggWorktreeWorkflowResult) => void;
   callerAgentId?: string;
   callerContext?: {
     lockedCwd?: string;
@@ -126,7 +126,7 @@ export interface CreateAgentCommandResult {
   background: boolean;
   initialPromptStarted: boolean;
   initialPromptError: unknown | null;
-  createdWorktree?: CreateFdeWorktreeWorkflowResult;
+  createdWorktree?: CreateFroggWorktreeWorkflowResult;
 }
 
 export type BoundCreateAgentCommand = (
@@ -167,7 +167,7 @@ interface ResolvedCreateAgent {
   background: boolean;
   promptFailure: CreateAgentPromptFailureMode;
   promptLogger?: Logger;
-  createdWorktree?: CreateFdeWorktreeWorkflowResult;
+  createdWorktree?: CreateFroggWorktreeWorkflowResult;
 }
 
 export async function createAgentCommand(
@@ -511,7 +511,7 @@ async function resolveMcpCwd(params: {
   resolvedCwd: string;
   setupContinuation?: AgentWorktreeSetupContinuation;
   createdWorkspaceId?: string;
-  createdWorktree?: CreateFdeWorktreeWorkflowResult;
+  createdWorktree?: CreateFroggWorktreeWorkflowResult;
 }> {
   const { dependencies, worktree } = params;
   if (!worktree) {
@@ -543,10 +543,10 @@ async function resolveMcpCwd(params: {
       githubPrNumber: worktree.githubPrNumber,
       firstAgentContext: { prompt: params.initialPrompt },
       runSetup: false,
-      fdeHome: dependencies.fdeHome,
+      froggHome: dependencies.froggHome,
       worktreesRoot: dependencies.worktreesRoot,
     },
-    createFdeWorktree: dependencies.createFdeWorktree,
+    createFroggWorktree: dependencies.createFroggWorktree,
     resolveDefaultBranch: baseBranch ? async () => baseBranch : undefined,
     setupContinuation: {
       kind: "agent",
@@ -575,20 +575,20 @@ async function resolveMcpCwd(params: {
 }
 
 interface CreateMcpWorktreeOptions {
-  input: CreateFdeWorktreeInput;
-  createFdeWorktree: CreateFdeWorktreeWorkflowFn | undefined;
+  input: CreateFroggWorktreeInput;
+  createFroggWorktree: CreateFroggWorktreeWorkflowFn | undefined;
   resolveDefaultBranch?: (repoRoot: string) => Promise<string>;
-  setupContinuation?: CreateFdeWorktreeSetupContinuationInput;
+  setupContinuation?: CreateFroggWorktreeSetupContinuationInput;
 }
 
 async function createMcpWorktree(
   options: CreateMcpWorktreeOptions,
-): Promise<CreateFdeWorktreeWorkflowResult> {
+): Promise<CreateFroggWorktreeWorkflowResult> {
   try {
-    if (!options.createFdeWorktree) {
-      throw new Error("FDE worktree service is not configured");
+    if (!options.createFroggWorktree) {
+      throw new Error("Frogg worktree service is not configured");
     }
-    return await options.createFdeWorktree(options.input, {
+    return await options.createFroggWorktree(options.input, {
       ...(options.resolveDefaultBranch
         ? { resolveDefaultBranch: options.resolveDefaultBranch }
         : {}),

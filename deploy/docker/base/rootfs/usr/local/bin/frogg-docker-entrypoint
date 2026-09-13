@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# Container entrypoint for the Frogg daemon image. Prepares the state
+# directories (chowning bind mounts on first run), then drops to the `frogg`
+# user and starts the daemon in the foreground through the CLI.
+set -euo pipefail
+source /opt/frogg/brand.sh
+home_key="${BRAND_ENV_PREFIX}_HOME"
+state_home="${!home_key:-}"
+if [[ -z "$state_home" && "$BRAND_LEGACY_FROGG" == "1" ]]; then
+  state_home="${FROGG_HOME:-}"
+fi
+state_home="${state_home:-${HOME:-/home/frogg}/${BRAND_HOME}}"
+export "$home_key=$state_home" "${BRAND_ENV_PREFIX}_DOCKER=1"
+
+: "${HOME:=/home/frogg}"
+: "${FROGG_LISTEN:=0.0.0.0:${BRAND_PORT}}"
+: "${FROGG_WEB_UI_ENABLED:=true}"
+: "${FROGG_LOG_LEVEL:=info}"
+: "${FROGG_LOG_FORMAT:=json}"
+: "${CLAUDE_CONFIG_DIR:=${HOME}/.claude}"
+: "${CODEX_HOME:=${HOME}/.codex}"
+: "${XDG_CONFIG_HOME:=${HOME}/.config}"
+: "${XDG_DATA_HOME:=${HOME}/.local/share}"
+: "${XDG_STATE_HOME:=${HOME}/.local/state}"
+: "${XDG_CACHE_HOME:=${HOME}/.cache}"
+
+export HOME FROGG_LISTEN FROGG_WEB_UI_ENABLED FROGG_LOG_LEVEL FROGG_LOG_FORMAT
+export CLAUDE_CONFIG_DIR CODEX_HOME XDG_CONFIG_HOME XDG_DATA_HOME XDG_STATE_HOME XDG_CACHE_HOME
+
+ensure_dir() {
+  local dir="$1"
+  mkdir -p "$dir"
+  if [[ "$(id -u)" == "0" ]] && [[ "$(stat -c "%u" "$dir")" == "0" ]]; then
+    chown frogg:frogg "$dir"
+  fi
+}
+
+for dir in "$HOME" "$state_home" "$CLAUDE_CONFIG_DIR" "$CODEX_HOME" \
+  "$XDG_CONFIG_HOME" "$XDG_DATA_HOME" "$XDG_STATE_HOME" "$XDG_CACHE_HOME" /workspace; do
+  ensure_dir "$dir"
+done
+
+if [[ "$#" -gt 0 ]]; then
+  if [[ "$(id -u)" == "0" ]]; then
+    exec gosu frogg "$@"
+  fi
+  exec "$@"
+fi
+
+if [[ -z "${FROGG_PASSWORD:-}" ]] && [[ ! -s "${state_home}/principals.json" ]]; then
+  {
+    echo "[${BRAND_ID}] No password and no paired device yet: the daemon is unclaimed."
+    echo "[${BRAND_ID}] Open http://<host>:${FROGG_LISTEN##*:}/ from another machine (or run '${BRAND_CLI} daemon pair' here)"
+    echo "[${BRAND_ID}] and pair from the ${BRAND_NAME} app; the first device to pair owns this daemon."
+    echo "[${BRAND_ID}] Set FROGG_PASSWORD instead if you prefer a shared password."
+  } >&2
+fi
+
+echo "[${BRAND_ID}] starting daemon on ${FROGG_LISTEN} with web UI ${FROGG_WEB_UI_ENABLED}"
+if [[ "$(id -u)" == "0" ]]; then
+  exec gosu frogg "$BRAND_CLI" daemon start --foreground
+fi
+exec "$BRAND_CLI" daemon start --foreground

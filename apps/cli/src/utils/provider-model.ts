@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import type { CommandError } from "../output/index.js";
 
 export interface ResolveProviderAndModelOptions {

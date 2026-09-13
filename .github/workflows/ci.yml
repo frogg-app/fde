@@ -45,7 +45,7 @@ jobs:
         run: npm run build:server
 
       - name: Build native audio declarations
-        run: npm run build --workspace=@fde/expo-two-way-audio
+        run: npm run build --workspace=@frogg/expo-two-way-audio
 
       - name: Typecheck
         run: npm run typecheck
@@ -59,20 +59,20 @@ jobs:
       - uses: ./.github/actions/setup-node-deps
 
       - name: Build library dependencies
-        # The CLI unit tests import @fde/server (the claim and self-update commands), so the
+        # The CLI unit tests import @frogg/server (the claim and self-update commands), so the
         # server and CLI dists have to exist too, not just the shared libraries.
         run: npm run build:server
 
       - name: Test protocol, client, highlight, relay
         run: >-
           npm run test
-          --workspace=@fde/protocol
-          --workspace=@fde/client
-          --workspace=@fde/highlight
-          --workspace=@fde/relay
+          --workspace=@frogg/protocol
+          --workspace=@frogg/client
+          --workspace=@frogg/highlight
+          --workspace=@frogg/relay
 
       - name: Test cli (unit)
-        run: npm run test:unit --workspace=@fde/cli
+        run: npm run test:unit --workspace=@frogg/cli
 
   ui-tests:
     # The ui suite is the longest job in the pipeline, and its two vitest
@@ -92,9 +92,9 @@ jobs:
       - uses: ./.github/actions/setup-node-deps
 
       - name: Build library dependencies
-        # Deps only: the ui imports @fde/client and @fde/protocol but never
-        # @fde/server, and the CLI tests that did moved to their own job.
-        run: npm run build:server-deps && npm run build --workspace=@fde/expo-two-way-audio
+        # Deps only: the ui imports @frogg/client and @frogg/protocol but never
+        # @frogg/server, and the CLI tests that did moved to their own job.
+        run: npm run build:server-deps && npm run build --workspace=@frogg/expo-two-way-audio
 
       - name: Test ui (unit)
         run: >-
@@ -114,7 +114,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Build library dependencies
-        run: npm run build:server-deps && npm run build --workspace=@fde/expo-two-way-audio
+        run: npm run build:server-deps && npm run build --workspace=@frogg/expo-two-way-audio
 
       - name: Test ui (browser)
         run: npx vitest run --root apps/ui --project browser

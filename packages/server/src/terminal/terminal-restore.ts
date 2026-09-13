@@ -1,10 +1,10 @@
-import type { SubscribeTerminalRequest } from "@fde/protocol/messages";
+import type { SubscribeTerminalRequest } from "@frogg/protocol/messages";
 import {
   TerminalStreamOpcode,
   encodeTerminalSnapshotPayload,
   encodeTerminalStreamFrame,
-} from "@fde/protocol/binary-frames/index";
-import { renderTerminalSnapshotToAnsi } from "@fde/protocol/terminal-snapshot";
+} from "@frogg/protocol/binary-frames/index";
+import { renderTerminalSnapshotToAnsi } from "@frogg/protocol/terminal-snapshot";
 import type { TerminalStateSnapshot, TerminalStateSnapshotOptions } from "./terminal.js";
 
 export const MAX_TERMINAL_OUTPUT_FRAME_BYTES = 256 * 1024;

@@ -1,5 +1,5 @@
 import AsyncStorage from "@/storage/brand-storage";
-import { BrowserAutomationBrowserIdSchema } from "@fde/protocol/browser-automation/rpc-schemas";
+import { BrowserAutomationBrowserIdSchema } from "@frogg/protocol/browser-automation/rpc-schemas";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { createValidatedPersistStorage } from "@/storage/validated-persist-storage";

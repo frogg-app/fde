@@ -15,13 +15,13 @@ agents running.
 
 ## Download
 
-From [GitHub releases](https://github.com/frogg-app/fde/releases/latest):
+From [GitHub releases](https://github.com/frogg-app/frogg/releases/latest):
 
 | Platform | Files |
 | -------- | ----- |
-| Windows x64 | `FDE-<version>-win-x64.exe` (one-click installer, per-user), `FDE-<version>-win-x64.zip` (portable), `FDE-<version>-win-x64-installer.zip` (the installer, zipped for browsers that block `.exe`) |
-| macOS    | `FDE-<version>-mac-arm64.dmg` (Apple silicon), `FDE-<version>-mac-x64.dmg` (Intel), plus `.zip` |
-| Linux x64 | `FDE-<version>-linux-x86_64.AppImage`, `FDE-<version>-linux-amd64.deb`, `FDE-<version>-linux-x64.tar.gz` |
+| Windows x64 | `Frogg-<version>-win-x64.exe` (one-click installer, per-user), `Frogg-<version>-win-x64.zip` (portable), `Frogg-<version>-win-x64-installer.zip` (the installer, zipped for browsers that block `.exe`) |
+| macOS    | `Frogg-<version>-mac-arm64.dmg` (Apple silicon), `Frogg-<version>-mac-x64.dmg` (Intel), plus `.zip` |
+| Linux x64 | `Frogg-<version>-linux-x86_64.AppImage`, `Frogg-<version>-linux-amd64.deb`, `Frogg-<version>-linux-x64.tar.gz` |
 
 macOS builds are not notarized, and Windows builds may be unsigned. See
 [install](/docs/getting-started/install/#2-install-a-client) for the first-launch steps.
@@ -87,7 +87,7 @@ from the host's settings.
    Choose `127.0.0.1` to keep the daemon reachable only through SSH.
 4. The log streams into the dialog, and the connection retries when the install finishes.
 
-The same screen can **uninstall** the daemon. Daemon state in `~/.fde` is kept.
+The same screen can **uninstall** the daemon. Daemon state in `~/.frogg` is kept.
 
 Remote hosts need Linux or macOS with `bash` and `curl`, and outbound access to GitHub.
 
@@ -104,14 +104,14 @@ from an older release asks for administrator approval once while it moves to you
 - Unpackaged development builds never update.
 
 Updating the app does not update your daemons. Update each daemon from its host settings
-or with `fde update`; see [updates](/docs/self-hosting/updates/).
+or with `frogg update`; see [updates](/docs/self-hosting/updates/).
 
 ## Open projects and links
 
-- `fde .` (or any directory) on the command line opens that directory as a project in the
+- `frogg .` (or any directory) on the command line opens that directory as a project in the
   desktop app.
-- `fde://` links open the app: agent links (`fde://h/<serverId>/agent/<agentId>`) and
-  pairing links (`fde://pair#offer=...`).
+- `frogg://` links open the app: agent links (`frogg://h/<serverId>/agent/<agentId>`) and
+  pairing links (`frogg://pair#offer=...`).
 - Launching the app again focuses the running instance.
 
 ## Notifications

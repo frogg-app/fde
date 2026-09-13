@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PARENT_AGENT_ID_LABEL } from "@fde/protocol/agent-labels";
+import { PARENT_AGENT_ID_LABEL } from "@frogg/protocol/agent-labels";
 import { resolveCreateAgentIntent } from "./intent.js";
 
 describe("resolveCreateAgentIntent", () => {

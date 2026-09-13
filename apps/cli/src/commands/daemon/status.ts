@@ -1,8 +1,8 @@
-import { matchesBrand } from "@fde/branding/identity";
-import { brand } from "@fde/branding";
+import { matchesBrand } from "@frogg/branding/identity";
+import { brand } from "@frogg/branding";
 import type { Command } from "commander";
 import { createRequire } from "node:module";
-import { getOrCreateServerId, findExecutable, execCommand } from "@fde/server";
+import { getOrCreateServerId, findExecutable, execCommand } from "@frogg/server";
 import { connectToDaemon } from "../../utils/client.js";
 import type { CommandOptions, ListResult, OutputSchema } from "../../output/index.js";
 import { resolveLocalDaemonDiagnosticState } from "./local-daemon.js";
@@ -228,9 +228,9 @@ function classifyDaemonAuthProbeFailure(error: unknown): DaemonAuthProbeFailure 
 
 function describeDaemonAuthProbeFailure(host: string, failure: DaemonAuthProbeFailure): string {
   if (failure === "auth_required") {
-    return `Daemon is reachable at ${host} but requires a password. Set FDE_PASSWORD and retry.`;
+    return `Daemon is reachable at ${host} but requires a password. Set FROGG_PASSWORD and retry.`;
   }
-  return `Daemon is reachable at ${host} but the supplied password was rejected. Check FDE_PASSWORD and retry.`;
+  return `Daemon is reachable at ${host} but the supplied password was rejected. Check FROGG_PASSWORD and retry.`;
 }
 
 async function probeDaemonOverWebsocket(args: {

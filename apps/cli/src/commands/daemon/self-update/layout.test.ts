@@ -18,7 +18,7 @@ import {
 
 const dirs: string[] = [];
 function makeInstallDir(): string {
-  const dir = mkdtempSync(path.join(os.tmpdir(), "fde-self-update-layout-"));
+  const dir = mkdtempSync(path.join(os.tmpdir(), "frogg-self-update-layout-"));
   dirs.push(dir);
   return dir;
 }
@@ -26,11 +26,11 @@ afterEach(() => {
   for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
-/** A fake versioned install: manifest.json plus bin/fde, the markers the layout checks. */
+/** A fake versioned install: manifest.json plus bin/frogg, the markers the layout checks. */
 export function installFakeVersion(installDir: string, version: string): string {
   const root = versionRoot(installDir, version);
   mkdirSync(path.join(root, "bin"), { recursive: true });
-  writeFileSync(path.join(root, "bin", "fde"), "#!/bin/sh\nexit 0\n", { mode: 0o755 });
+  writeFileSync(path.join(root, "bin", "frogg"), "#!/bin/sh\nexit 0\n", { mode: 0o755 });
   writeFileSync(
     path.join(root, "manifest.json"),
     JSON.stringify({ version, platform: "linux", arch: "x64" }),
@@ -39,10 +39,10 @@ export function installFakeVersion(installDir: string, version: string): string 
 }
 
 describe("install dir layout", () => {
-  test("resolves the install dir from FDE_INSTALL_DIR with the installer's default", () => {
-    expect(resolveInstallDir({ FDE_INSTALL_DIR: "/opt/fde " })).toBe("/opt/fde");
+  test("resolves the install dir from FROGG_INSTALL_DIR with the installer's default", () => {
+    expect(resolveInstallDir({ FROGG_INSTALL_DIR: "/opt/frogg " })).toBe("/opt/frogg");
     if (process.platform !== "win32") {
-      expect(resolveInstallDir({})).toBe(path.join(os.homedir(), ".local", "share", "fde"));
+      expect(resolveInstallDir({})).toBe(path.join(os.homedir(), ".local", "share", "frogg"));
     }
   });
 

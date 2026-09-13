@@ -1,4 +1,4 @@
-import type { AgentPermissionRequest } from "@fde/protocol/agent-types";
+import type { AgentPermissionRequest } from "@frogg/protocol/agent-types";
 
 /**
  * Pending permission structure

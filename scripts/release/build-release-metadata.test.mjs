@@ -8,12 +8,12 @@ import { verifyReleaseAssets, verifyReleasePayloads } from "./verify-release-ass
 import { buildReleaseMetadata } from "./build-release-metadata.mjs";
 
 test("Electron manifests require every platform and carry real hashes for both Mac architectures", async () => {
-  const dir = await mkdtemp(path.join(os.tmpdir(), "fde-update-manifest-"));
+  const dir = await mkdtemp(path.join(os.tmpdir(), "frogg-update-manifest-"));
   const out = path.join(dir, "metadata");
   try {
     await assert.rejects(buildReleaseMetadata({ version: "0.6.0", assets: dir, out }), /Expected/);
     for (const suffix of ["win-x64.exe", "linux-x86_64.AppImage", "mac-x64.zip", "mac-arm64.zip"]) {
-      await writeFile(path.join(dir, `FDE-0.6.0-${suffix}`), suffix);
+      await writeFile(path.join(dir, `Frogg-0.6.0-${suffix}`), suffix);
     }
     await buildReleaseMetadata({ version: "0.6.0", assets: dir, out });
     const descriptor = JSON.parse(await readFile(path.join(out, "release.json"), "utf8"));
@@ -105,7 +105,7 @@ test("Electron manifests require every platform and carry real hashes for both M
     const manifest = JSON.parse(await readFile(path.join(out, "electron-latest-mac.yml"), "utf8"));
     assert.equal(manifest.version, "0.6.0");
     const linux = JSON.parse(await readFile(path.join(out, "electron-latest-linux.yml"), "utf8"));
-    assert.equal(linux.path, "FDE-0.6.0-linux-x86_64.AppImage");
+    assert.equal(linux.path, "Frogg-0.6.0-linux-x86_64.AppImage");
     assert.equal(linux.files[0].url, linux.path);
     assert.equal(manifest.files.length, 2);
     for (const file of manifest.files) {
@@ -115,7 +115,7 @@ test("Electron manifests require every platform and carry real hashes for both M
     }
     assert.match(
       await readFile(path.join(out, "SHA256SUMS-desktop"), "utf8"),
-      /FDE-0.6.0-win-x64.exe/,
+      /Frogg-0.6.0-win-x64.exe/,
     );
   } finally {
     await rm(dir, { recursive: true, force: true });
@@ -123,12 +123,12 @@ test("Electron manifests require every platform and carry real hashes for both M
 });
 
 test("rejects two Mac payloads for the same architecture", async () => {
-  const dir = await mkdtemp(path.join(os.tmpdir(), "fde-mac-coverage-"));
+  const dir = await mkdtemp(path.join(os.tmpdir(), "frogg-mac-coverage-"));
   try {
     for (const name of [
-      "FDE-0.6.0-win-x64.exe",
-      "FDE-0.6.0-linux-x86_64.AppImage",
-      "FDE-0.6.0-mac-x64.zip",
+      "Frogg-0.6.0-win-x64.exe",
+      "Frogg-0.6.0-linux-x86_64.AppImage",
+      "Frogg-0.6.0-mac-x64.zip",
       "Other-0.6.0-mac-x64.zip",
     ]) {
       await writeFile(path.join(dir, name), name);
@@ -147,13 +147,13 @@ test("rejects two Mac payloads for the same architecture", async () => {
 });
 
 test("selected releases retain exact preceding platform payloads and versions", async () => {
-  const dir = await mkdtemp(path.join(os.tmpdir(), "fde-retained-platforms-"));
+  const dir = await mkdtemp(path.join(os.tmpdir(), "frogg-retained-platforms-"));
   const out = path.join(dir, "metadata");
   try {
     for (const suffix of ["win-x64.exe", "linux-x86_64.AppImage", "mac-x64.zip", "mac-arm64.zip"])
-      await writeFile(path.join(dir, `FDE-0.6.13-${suffix}`), suffix);
+      await writeFile(path.join(dir, `Frogg-0.6.13-${suffix}`), suffix);
     const previousDescriptor = await buildReleaseMetadata({ version: "0.6.13", assets: dir, out });
-    await writeFile(path.join(dir, "FDE-0.6.19-win-x64.exe"), "new installer");
+    await writeFile(path.join(dir, "Frogg-0.6.19-win-x64.exe"), "new installer");
     const descriptor = await buildReleaseMetadata({
       version: "0.6.19",
       assets: dir,

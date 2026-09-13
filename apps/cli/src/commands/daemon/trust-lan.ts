@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import path from "node:path";
 import type { Command } from "commander";
 import {
@@ -7,7 +7,7 @@ import {
   savePersistedConfig,
   type DaemonIdentity,
   type PersistedConfig,
-} from "@fde/server";
+} from "@frogg/server";
 
 import type {
   CommandError,
@@ -17,14 +17,14 @@ import type {
 } from "../../output/index.js";
 import { connectToDaemon } from "../../utils/client.js";
 import { daemonHttpJson, resolveLoopbackHttpBase } from "./daemon-http.js";
-import { resolveLocalDaemonState, resolveLocalFdeHome } from "./local-daemon.js";
+import { resolveLocalDaemonState, resolveLocalFroggHome } from "./local-daemon.js";
 
 /**
- * `fde daemon trust-lan on|off`: whether private-network clients (RFC 1918,
+ * `frogg daemon trust-lan on|off`: whether private-network clients (RFC 1918,
  * link-local, ULA) are treated like loopback, i.e. connect without pairing or
  * a password (self-hosting/security.mdx). Writes
  * `daemon.auth.trustLan` to config.json and asks a running daemon to reload
- * it, so the change applies live; `FDE_TRUST_LAN` on the daemon wins.
+ * it, so the change applies live; `FROGG_TRUST_LAN` on the daemon wins.
  */
 const CONFIG_FILENAME = "config.json";
 const TRUST_LAN_PATH = "daemon.auth.trustLan";
@@ -96,7 +96,7 @@ function describeApplied(trustLan: boolean, applied: TrustLanApplied): string {
     case "live":
       return `${mode}\nApplied to the running daemon.`;
     case "env_override":
-      return `${mode}\nThe running daemon is controlled by FDE_TRUST_LAN; unset it and restart for config.json to take effect.`;
+      return `${mode}\nThe running daemon is controlled by FROGG_TRUST_LAN; unset it and restart for config.json to take effect.`;
     case "restart_required":
       return `${mode}\nRestart the daemon for the change to take effect (${applied.reason}).\nRun: ${brand.cliName} daemon restart`;
   }
@@ -106,10 +106,10 @@ export async function setTrustLanInConfig(
   mode: TrustLanMode,
   options: TrustLanOptions = {},
 ): Promise<TrustLanResult> {
-  const fdeHome = resolveLocalFdeHome(options.home);
-  const configPath = path.join(fdeHome, CONFIG_FILENAME);
+  const froggHome = resolveLocalFroggHome(options.home);
+  const configPath = path.join(froggHome, CONFIG_FILENAME);
   const trustLan = mode === "on";
-  const persisted = loadPersistedConfig(fdeHome);
+  const persisted = loadPersistedConfig(froggHome);
   const nextConfig: PersistedConfig = {
     ...persisted,
     daemon: {
@@ -117,7 +117,7 @@ export async function setTrustLanInConfig(
       auth: { ...persisted.daemon?.auth, trustLan },
     },
   };
-  savePersistedConfig(fdeHome, nextConfig);
+  savePersistedConfig(froggHome, nextConfig);
 
   const state = resolveLocalDaemonState({ home: options.home });
   const applied: TrustLanApplied = state.running
@@ -154,8 +154,8 @@ export async function runTrustLanCommand(
 }
 
 /**
- * The mode `fde daemon status` reports: the running daemon's answer when it
- * is reachable, otherwise what config.json (and this shell's FDE_TRUST_LAN)
+ * The mode `frogg daemon status` reports: the running daemon's answer when it
+ * is reachable, otherwise what config.json (and this shell's FROGG_TRUST_LAN)
  * would give the next start.
  */
 export async function resolveLanTrusted(input: {
@@ -174,9 +174,9 @@ export async function resolveLanTrusted(input: {
       }
     }
   }
-  const env = process.env.FDE_TRUST_LAN?.trim().toLowerCase();
+  const env = process.env.FROGG_TRUST_LAN?.trim().toLowerCase();
   if (env && ["1", "true", "yes", "on"].includes(env)) return true;
   if (env && ["0", "false", "no", "off"].includes(env)) return false;
-  const fdeHome = resolveLocalFdeHome(input.home);
-  return loadPersistedConfig(fdeHome).daemon?.auth?.trustLan ?? DEFAULT_TRUST_LAN;
+  const froggHome = resolveLocalFroggHome(input.home);
+  return loadPersistedConfig(froggHome).daemon?.auth?.trustLan ?? DEFAULT_TRUST_LAN;
 }

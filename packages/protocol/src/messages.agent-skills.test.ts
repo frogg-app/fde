@@ -12,8 +12,8 @@ describe("agent skills protocol", () => {
       AgentSkillsSaveSelectionRequestSchema.parse({
         type: "agent.skills.save_selection.request",
         requestId: "request-1",
-        selection: { mode: "custom", skills: ["fde"] },
-        confirmedRemovals: ["fde-loop"],
+        selection: { mode: "custom", skills: ["frogg"] },
+        confirmedRemovals: ["frogg-loop"],
       }),
     ).toMatchObject({ requestId: "request-1" });
     expect(
@@ -31,8 +31,8 @@ describe("agent skills protocol", () => {
         payload: {
           requestId: "request-3",
           state: "not-installed",
-          ops: [{ kind: "add", name: "fde" }],
-          available: ["fde"],
+          ops: [{ kind: "add", name: "frogg" }],
+          available: ["frogg"],
           installed: [],
           selection: { mode: "all" },
         },

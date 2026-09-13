@@ -10,7 +10,7 @@ import pino from "pino";
 
 import { withTimeout } from "../../utils/promise-timeout.js";
 import { hashDaemonPassword } from "../auth.js";
-import { createFdeDaemon, type FdeDaemonConfig } from "../bootstrap.js";
+import { createFroggDaemon, type FroggDaemonConfig } from "../bootstrap.js";
 import { createTestAgentClients } from "../test-utils/fake-agent-client.js";
 import type {
   AgentClient,
@@ -105,7 +105,7 @@ class RecordingAgentClient implements AgentClient {
     this.capabilities = {
       ...inner.capabilities,
       supportsMcpServers: true,
-      supportsNativeFdeTools: false,
+      supportsNativeFroggTools: false,
     };
   }
 
@@ -166,24 +166,24 @@ async function assertAgentNotRunning(options: {
 
 describe("agent MCP end-to-end (offline)", () => {
   test("create_agent runs initial prompt and affects filesystem", async () => {
-    const fdeHome = await mkdtemp(path.join(os.tmpdir(), "fde-home-"));
-    const staticDir = await mkdtemp(path.join(os.tmpdir(), "fde-static-"));
-    const agentCwd = await mkdtemp(path.join(os.tmpdir(), "fde-agent-cwd-"));
+    const froggHome = await mkdtemp(path.join(os.tmpdir(), "frogg-home-"));
+    const staticDir = await mkdtemp(path.join(os.tmpdir(), "frogg-static-"));
+    const agentCwd = await mkdtemp(path.join(os.tmpdir(), "frogg-agent-cwd-"));
     const port = await getAvailablePort();
 
-    const daemonConfig: FdeDaemonConfig = {
+    const daemonConfig: FroggDaemonConfig = {
       listen: `127.0.0.1:${port}`,
-      fdeHome,
+      froggHome,
       corsAllowedOrigins: [],
       hostnames: true,
       mcpEnabled: true,
       staticDir,
       mcpDebug: false,
       agentClients: createTestAgentClients(),
-      agentStoragePath: path.join(fdeHome, "agents"),
+      agentStoragePath: path.join(froggHome, "agents"),
     };
 
-    const daemon = await createFdeDaemon(daemonConfig, pino({ level: "silent" }));
+    const daemon = await createFroggDaemon(daemonConfig, pino({ level: "silent" }));
     await daemon.start();
 
     const client = await createMcpClient(`http://127.0.0.1:${port}/mcp/agents`);
@@ -229,32 +229,32 @@ describe("agent MCP end-to-end (offline)", () => {
       }
       await client.close();
       await daemon.stop();
-      await rm(fdeHome, { recursive: true, force: true });
+      await rm(froggHome, { recursive: true, force: true });
       await rm(staticDir, { recursive: true, force: true });
       await rm(agentCwd, { recursive: true, force: true });
     }
   }, 30_000);
 
   test("password-protected daemon authorizes the agent MCP via the capability token", async () => {
-    const fdeHome = await mkdtemp(path.join(os.tmpdir(), "fde-home-"));
-    const staticDir = await mkdtemp(path.join(os.tmpdir(), "fde-static-"));
-    const agentCwd = await mkdtemp(path.join(os.tmpdir(), "fde-agent-cwd-"));
+    const froggHome = await mkdtemp(path.join(os.tmpdir(), "frogg-home-"));
+    const staticDir = await mkdtemp(path.join(os.tmpdir(), "frogg-static-"));
+    const agentCwd = await mkdtemp(path.join(os.tmpdir(), "frogg-agent-cwd-"));
     const port = await getAvailablePort();
 
-    const daemonConfig: FdeDaemonConfig = {
+    const daemonConfig: FroggDaemonConfig = {
       listen: `127.0.0.1:${port}`,
-      fdeHome,
+      froggHome,
       corsAllowedOrigins: [],
       hostnames: true,
       mcpEnabled: true,
       staticDir,
       mcpDebug: false,
       agentClients: createTestAgentClients(),
-      agentStoragePath: path.join(fdeHome, "agents"),
+      agentStoragePath: path.join(froggHome, "agents"),
       auth: { password: hashDaemonPassword("daemon-secret") },
     };
 
-    const daemon = await createFdeDaemon(daemonConfig, pino({ level: "silent" }));
+    const daemon = await createFroggDaemon(daemonConfig, pino({ level: "silent" }));
     await daemon.start();
 
     const mcpUrl = `http://127.0.0.1:${port}/mcp/agents`;
@@ -299,44 +299,44 @@ describe("agent MCP end-to-end (offline)", () => {
       }
       await client?.close();
       await daemon.stop();
-      await rm(fdeHome, { recursive: true, force: true });
+      await rm(froggHome, { recursive: true, force: true });
       await rm(staticDir, { recursive: true, force: true });
       await rm(agentCwd, { recursive: true, force: true });
     }
   }, 30_000);
 
-  test("create_agent auto-injects fde MCP by default and can be disabled", async () => {
-    const fdeHome = await mkdtemp(path.join(os.tmpdir(), "fde-home-"));
-    const staticDir = await mkdtemp(path.join(os.tmpdir(), "fde-static-"));
-    const agentCwd = await mkdtemp(path.join(os.tmpdir(), "fde-agent-cwd-"));
+  test("create_agent auto-injects frogg MCP by default and can be disabled", async () => {
+    const froggHome = await mkdtemp(path.join(os.tmpdir(), "frogg-home-"));
+    const staticDir = await mkdtemp(path.join(os.tmpdir(), "frogg-static-"));
+    const agentCwd = await mkdtemp(path.join(os.tmpdir(), "frogg-agent-cwd-"));
     const port = await getAvailablePort();
     const recorder: LaunchRecorder = { recordedLaunches: [] };
 
-    const daemonConfig: FdeDaemonConfig = {
+    const daemonConfig: FroggDaemonConfig = {
       listen: `127.0.0.1:${port}`,
-      fdeHome,
+      froggHome,
       corsAllowedOrigins: [],
       hostnames: true,
       mcpEnabled: true,
       staticDir,
       mcpDebug: false,
       agentClients: createMcpRecordingAgentClients(recorder),
-      agentStoragePath: path.join(fdeHome, "agents"),
+      agentStoragePath: path.join(froggHome, "agents"),
     };
 
-    const daemon = await createFdeDaemon(daemonConfig, pino({ level: "silent" }));
+    const daemon = await createFroggDaemon(daemonConfig, pino({ level: "silent" }));
     await daemon.start();
 
     const client = await createMcpClient(`http://127.0.0.1:${port}/mcp/agents`);
 
-    const disabledFdeHome = await mkdtemp(path.join(os.tmpdir(), "fde-home-disabled-"));
-    const disabledStaticDir = await mkdtemp(path.join(os.tmpdir(), "fde-static-disabled-"));
-    const disabledAgentCwd = await mkdtemp(path.join(os.tmpdir(), "fde-agent-cwd-disabled-"));
+    const disabledFroggHome = await mkdtemp(path.join(os.tmpdir(), "frogg-home-disabled-"));
+    const disabledStaticDir = await mkdtemp(path.join(os.tmpdir(), "frogg-static-disabled-"));
+    const disabledAgentCwd = await mkdtemp(path.join(os.tmpdir(), "frogg-agent-cwd-disabled-"));
     const disabledPort = await getAvailablePort();
     const disabledRecorder: LaunchRecorder = { recordedLaunches: [] };
-    const disabledDaemonConfig: FdeDaemonConfig = {
+    const disabledDaemonConfig: FroggDaemonConfig = {
       listen: `127.0.0.1:${disabledPort}`,
-      fdeHome: disabledFdeHome,
+      froggHome: disabledFroggHome,
       corsAllowedOrigins: [],
       hostnames: true,
       mcpEnabled: true,
@@ -344,9 +344,9 @@ describe("agent MCP end-to-end (offline)", () => {
       staticDir: disabledStaticDir,
       mcpDebug: false,
       agentClients: createMcpRecordingAgentClients(disabledRecorder),
-      agentStoragePath: path.join(disabledFdeHome, "agents"),
+      agentStoragePath: path.join(disabledFroggHome, "agents"),
     };
-    const disabledDaemon = await createFdeDaemon(disabledDaemonConfig, pino({ level: "silent" }));
+    const disabledDaemon = await createFroggDaemon(disabledDaemonConfig, pino({ level: "silent" }));
     await disabledDaemon.start();
 
     const disabledClient = await createMcpClient(`http://127.0.0.1:${disabledPort}/mcp/agents`);
@@ -370,13 +370,13 @@ describe("agent MCP end-to-end (offline)", () => {
       expect(agentId).toBeTruthy();
 
       expect(recorder.recordedLaunches.at(-1)?.mcpServers).toMatchObject({
-        fde: {
+        frogg: {
           type: "http",
           url: `http://127.0.0.1:${port}/mcp/agents?callerAgentId=${agentId!}`,
         },
       });
       const injectedAgent = daemon.agentManager.getAgent(agentId!);
-      expect(injectedAgent?.config.mcpServers?.fde).toBeUndefined();
+      expect(injectedAgent?.config.mcpServers?.frogg).toBeUndefined();
 
       const disabledResult = await disabledClient.callTool({
         name: "create_agent",
@@ -394,9 +394,9 @@ describe("agent MCP end-to-end (offline)", () => {
         typeof disabledPayload?.agentId === "string" ? disabledPayload.agentId : null;
       expect(disabledAgentId).toBeTruthy();
 
-      expect(disabledRecorder.recordedLaunches.at(-1)?.mcpServers?.fde).toBeUndefined();
+      expect(disabledRecorder.recordedLaunches.at(-1)?.mcpServers?.frogg).toBeUndefined();
       const disabledAgent = disabledDaemon.agentManager.getAgent(disabledAgentId!);
-      expect(disabledAgent?.config.mcpServers?.fde).toBeUndefined();
+      expect(disabledAgent?.config.mcpServers?.frogg).toBeUndefined();
     } finally {
       if (agentId) {
         await client.callTool({ name: "kill_agent", args: { agentId } });
@@ -406,37 +406,37 @@ describe("agent MCP end-to-end (offline)", () => {
       }
       await disabledClient.close();
       await disabledDaemon.stop();
-      await rm(disabledFdeHome, { recursive: true, force: true });
+      await rm(disabledFroggHome, { recursive: true, force: true });
       await rm(disabledStaticDir, { recursive: true, force: true });
       await rm(disabledAgentCwd, { recursive: true, force: true });
       await client.close();
       await daemon.stop();
-      await rm(fdeHome, { recursive: true, force: true });
+      await rm(froggHome, { recursive: true, force: true });
       await rm(staticDir, { recursive: true, force: true });
       await rm(agentCwd, { recursive: true, force: true });
     }
   }, 30_000);
 
   test("create_agent injects a loopback MCP URL when the daemon listens on all interfaces", async () => {
-    const fdeHome = await mkdtemp(path.join(os.tmpdir(), "fde-home-"));
-    const staticDir = await mkdtemp(path.join(os.tmpdir(), "fde-static-"));
-    const agentCwd = await mkdtemp(path.join(os.tmpdir(), "fde-agent-cwd-"));
+    const froggHome = await mkdtemp(path.join(os.tmpdir(), "frogg-home-"));
+    const staticDir = await mkdtemp(path.join(os.tmpdir(), "frogg-static-"));
+    const agentCwd = await mkdtemp(path.join(os.tmpdir(), "frogg-agent-cwd-"));
     const port = await getAvailablePort();
     const recorder: LaunchRecorder = { recordedLaunches: [] };
 
-    const daemonConfig: FdeDaemonConfig = {
+    const daemonConfig: FroggDaemonConfig = {
       listen: `0.0.0.0:${port}`,
-      fdeHome,
+      froggHome,
       corsAllowedOrigins: [],
       hostnames: true,
       mcpEnabled: true,
       staticDir,
       mcpDebug: false,
       agentClients: createMcpRecordingAgentClients(recorder),
-      agentStoragePath: path.join(fdeHome, "agents"),
+      agentStoragePath: path.join(froggHome, "agents"),
     };
 
-    const daemon = await createFdeDaemon(daemonConfig, pino({ level: "silent" }));
+    const daemon = await createFroggDaemon(daemonConfig, pino({ level: "silent" }));
     await daemon.start();
 
     const client = await createMcpClient(`http://127.0.0.1:${port}/mcp/agents`);
@@ -459,44 +459,44 @@ describe("agent MCP end-to-end (offline)", () => {
       expect(agentId).toBeTruthy();
 
       expect(recorder.recordedLaunches.at(-1)?.mcpServers).toMatchObject({
-        fde: {
+        frogg: {
           type: "http",
           url: `http://127.0.0.1:${port}/mcp/agents?callerAgentId=${agentId!}`,
         },
       });
       const injectedAgent = daemon.agentManager.getAgent(agentId!);
-      expect(injectedAgent?.config.mcpServers?.fde).toBeUndefined();
+      expect(injectedAgent?.config.mcpServers?.frogg).toBeUndefined();
     } finally {
       if (agentId) {
         await client.callTool({ name: "kill_agent", args: { agentId } });
       }
       await client.close();
       await daemon.stop();
-      await rm(fdeHome, { recursive: true, force: true });
+      await rm(froggHome, { recursive: true, force: true });
       await rm(staticDir, { recursive: true, force: true });
       await rm(agentCwd, { recursive: true, force: true });
     }
   }, 30_000);
 
   test("create_agent with background initialPrompt reflects running state once the first turn starts", async () => {
-    const fdeHome = await mkdtemp(path.join(os.tmpdir(), "fde-home-"));
-    const staticDir = await mkdtemp(path.join(os.tmpdir(), "fde-static-"));
-    const agentCwd = await mkdtemp(path.join(os.tmpdir(), "fde-agent-cwd-"));
+    const froggHome = await mkdtemp(path.join(os.tmpdir(), "frogg-home-"));
+    const staticDir = await mkdtemp(path.join(os.tmpdir(), "frogg-static-"));
+    const agentCwd = await mkdtemp(path.join(os.tmpdir(), "frogg-agent-cwd-"));
     const port = await getAvailablePort();
 
-    const daemonConfig: FdeDaemonConfig = {
+    const daemonConfig: FroggDaemonConfig = {
       listen: `127.0.0.1:${port}`,
-      fdeHome,
+      froggHome,
       corsAllowedOrigins: [],
       hostnames: true,
       mcpEnabled: true,
       staticDir,
       mcpDebug: false,
       agentClients: createTestAgentClients(),
-      agentStoragePath: path.join(fdeHome, "agents"),
+      agentStoragePath: path.join(froggHome, "agents"),
     };
 
-    const daemon = await createFdeDaemon(daemonConfig, pino({ level: "silent" }));
+    const daemon = await createFroggDaemon(daemonConfig, pino({ level: "silent" }));
     await daemon.start();
 
     const client = await createMcpClient(`http://127.0.0.1:${port}/mcp/agents`);
@@ -532,7 +532,7 @@ describe("agent MCP end-to-end (offline)", () => {
       }
       await client.close();
       await daemon.stop();
-      await rm(fdeHome, { recursive: true, force: true });
+      await rm(froggHome, { recursive: true, force: true });
       await rm(staticDir, { recursive: true, force: true });
       await rm(agentCwd, { recursive: true, force: true });
     }
@@ -657,14 +657,14 @@ describe("agent MCP end-to-end (offline)", () => {
       }
     }
 
-    const fdeHome = await mkdtemp(path.join(os.tmpdir(), "fde-home-"));
-    const staticDir = await mkdtemp(path.join(os.tmpdir(), "fde-static-"));
-    const agentCwd = await mkdtemp(path.join(os.tmpdir(), "fde-agent-cwd-"));
+    const froggHome = await mkdtemp(path.join(os.tmpdir(), "frogg-home-"));
+    const staticDir = await mkdtemp(path.join(os.tmpdir(), "frogg-static-"));
+    const agentCwd = await mkdtemp(path.join(os.tmpdir(), "frogg-agent-cwd-"));
     const port = await getAvailablePort();
 
-    const daemonConfig: FdeDaemonConfig = {
+    const daemonConfig: FroggDaemonConfig = {
       listen: `127.0.0.1:${port}`,
-      fdeHome,
+      froggHome,
       corsAllowedOrigins: [],
       hostnames: true,
       mcpEnabled: true,
@@ -674,10 +674,10 @@ describe("agent MCP end-to-end (offline)", () => {
         ...createTestAgentClients(),
         codex: new StartTurnFailureClient(),
       },
-      agentStoragePath: path.join(fdeHome, "agents"),
+      agentStoragePath: path.join(froggHome, "agents"),
     };
 
-    const daemon = await createFdeDaemon(daemonConfig, pino({ level: "silent" }));
+    const daemon = await createFroggDaemon(daemonConfig, pino({ level: "silent" }));
     await daemon.start();
 
     const client = await createMcpClient(`http://127.0.0.1:${port}/mcp/agents`);
@@ -717,31 +717,31 @@ describe("agent MCP end-to-end (offline)", () => {
       }
       await client.close();
       await daemon.stop();
-      await rm(fdeHome, { recursive: true, force: true });
+      await rm(froggHome, { recursive: true, force: true });
       await rm(staticDir, { recursive: true, force: true });
       await rm(agentCwd, { recursive: true, force: true });
     }
   }, 30_000);
 
   test("create_agent with worktree is async and boots terminals only after setup success", async () => {
-    const fdeHome = await mkdtemp(path.join(os.tmpdir(), "fde-home-"));
-    const staticDir = await mkdtemp(path.join(os.tmpdir(), "fde-static-"));
-    const repoRoot = await mkdtemp(path.join(os.tmpdir(), "fde-worktree-repo-"));
+    const froggHome = await mkdtemp(path.join(os.tmpdir(), "frogg-home-"));
+    const staticDir = await mkdtemp(path.join(os.tmpdir(), "frogg-static-"));
+    const repoRoot = await mkdtemp(path.join(os.tmpdir(), "frogg-worktree-repo-"));
     const port = await getAvailablePort();
 
-    const daemonConfig: FdeDaemonConfig = {
+    const daemonConfig: FroggDaemonConfig = {
       listen: `127.0.0.1:${port}`,
-      fdeHome,
+      froggHome,
       corsAllowedOrigins: [],
       hostnames: true,
       mcpEnabled: true,
       staticDir,
       mcpDebug: false,
       agentClients: createTestAgentClients(),
-      agentStoragePath: path.join(fdeHome, "agents"),
+      agentStoragePath: path.join(froggHome, "agents"),
     };
 
-    const daemon = await createFdeDaemon(daemonConfig, pino({ level: "silent" }));
+    const daemon = await createFroggDaemon(daemonConfig, pino({ level: "silent" }));
     await daemon.start();
 
     const client = await createMcpClient(`http://127.0.0.1:${port}/mcp/agents`);
@@ -757,9 +757,9 @@ describe("agent MCP end-to-end (offline)", () => {
       execSync("git -c commit.gpgsign=false commit -m 'initial'", { cwd: repoRoot, stdio: "pipe" });
 
       const setupCommand =
-        'while [ ! -f "$FDE_WORKTREE_PATH/allow-setup" ]; do sleep 0.05; done; echo "done" > "$FDE_WORKTREE_PATH/setup-done.txt"';
+        'while [ ! -f "$FROGG_WORKTREE_PATH/allow-setup" ]; do sleep 0.05; done; echo "done" > "$FROGG_WORKTREE_PATH/setup-done.txt"';
       await writeFile(
-        path.join(repoRoot, "fde.json"),
+        path.join(repoRoot, "frogg.json"),
         JSON.stringify({
           worktree: {
             setup: [setupCommand],
@@ -773,7 +773,7 @@ describe("agent MCP end-to-end (offline)", () => {
         }),
         "utf8",
       );
-      execSync("git add fde.json", { cwd: repoRoot, stdio: "pipe" });
+      execSync("git add frogg.json", { cwd: repoRoot, stdio: "pipe" });
       execSync("git -c commit.gpgsign=false commit -m 'add worktree config'", {
         cwd: repoRoot,
         stdio: "pipe",
@@ -821,7 +821,7 @@ describe("agent MCP end-to-end (offline)", () => {
       }
       await client.close();
       await daemon.stop();
-      await rm(fdeHome, { recursive: true, force: true });
+      await rm(froggHome, { recursive: true, force: true });
       await rm(staticDir, { recursive: true, force: true });
       await rm(repoRoot, { recursive: true, force: true });
     }

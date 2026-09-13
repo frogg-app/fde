@@ -4,8 +4,8 @@ import type {
   AgentModelDefinition,
   AgentSelectOption,
   ProviderSnapshotEntry,
-} from "@fde/protocol/agent-types";
-import type { AgentProfile } from "@fde/protocol/messages";
+} from "@frogg/protocol/agent-types";
+import type { AgentProfile } from "@frogg/protocol/messages";
 import { formatAgentModeLabel, formatThinkingOptionLabel } from "@/agent-controls/labels";
 import { applyFeatureValues, pruneFeatureValues } from "@/hooks/feature-preferences";
 import { filterSelectableModels } from "@/provider-selection/model-catalog";

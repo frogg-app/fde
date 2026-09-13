@@ -36,7 +36,7 @@ import {
   type ProviderRefreshContext,
   type ToolCallDetail,
 } from "../../agent-sdk-types.js";
-import type { FdeToolCatalog } from "../../tools/types.js";
+import type { FroggToolCatalog } from "../../tools/types.js";
 import { importSessionFromPersistence } from "../../provider-session-import.js";
 import { runProviderRefreshActivity } from "../../provider-refresh-deadline.js";
 import { runProviderTurn } from "../provider-runner.js";
@@ -185,7 +185,7 @@ interface OmpAgentSessionOptions {
   providerIdleScheduler?: OmpProviderIdleScheduler;
   noTurnScheduler?: OmpNoTurnScheduler;
   usagePollScheduler?: OmpUsagePollScheduler;
-  fdeTools?: FdeToolCatalog;
+  froggTools?: FroggToolCatalog;
   /**
    * When false (resumed sessions), replayed session events are dropped until
    * the first prompt or agent_start so history is not re-emitted as live
@@ -463,7 +463,7 @@ function withOmpCapabilities(): AgentCapabilityFlags {
   return {
     ...OMP_CORE_CAPABILITIES,
     supportsMcpServers: false,
-    supportsNativeFdeTools: true,
+    supportsNativeFroggTools: true,
   };
 }
 
@@ -884,7 +884,7 @@ export class OmpAgentSession implements AgentSession {
     this.state = options.initialState;
     this.currentModeId = options.currentModeId ?? null;
     this.logger = options.logger;
-    this.fdeTools = options.fdeTools;
+    this.froggTools = options.froggTools;
     this.live = options.live ?? true;
     this.providerIdleScheduler = options.providerIdleScheduler ?? createOmpProviderIdleScheduler();
     this.noTurnScheduler = options.noTurnScheduler ?? createOmpNoTurnScheduler();
@@ -932,7 +932,7 @@ export class OmpAgentSession implements AgentSession {
   private readonly runtimeSession: OmpRuntimeSession;
   private readonly config: AgentSessionConfig;
   private readonly logger: Logger;
-  private readonly fdeTools?: FdeToolCatalog;
+  private readonly froggTools?: FroggToolCatalog;
 
   get id(): string | null {
     return this.state.sessionId;
@@ -1628,7 +1628,7 @@ export class OmpAgentSession implements AgentSession {
     if (
       handleOmpHostToolRuntimeEvent(event, {
         runtimeSession: this.runtimeSession,
-        fdeTools: this.fdeTools,
+        froggTools: this.froggTools,
         logger: this.logger,
       })
     ) {
@@ -1889,7 +1889,7 @@ export class OmpAgentSession implements AgentSession {
           return;
         }
         // A state request is processed after OMP's RPC loop becomes promptable,
-        // so do not advertise Fde idle until it reports that transition.
+        // so do not advertise Frogg idle until it reports that transition.
         void this.completeTurnAfterProviderIdle(turnId, terminalMessages);
         return;
       }
@@ -2220,9 +2220,9 @@ export class OmpAgentClient implements AgentClient {
       options.runtime ?? createRuntime(options.logger, runtimeSettings, this.providerParams);
   }
 
-  private async configureNativeFdeTools(
+  private async configureNativeFroggTools(
     runtimeSession: OmpRuntimeSession,
-    catalog: FdeToolCatalog | undefined,
+    catalog: FroggToolCatalog | undefined,
   ): Promise<void> {
     if (!catalog) {
       return;
@@ -2247,7 +2247,7 @@ export class OmpAgentClient implements AgentClient {
       env: launchContext?.env,
     });
     try {
-      await this.configureNativeFdeTools(runtimeSession, launchContext?.fdeTools);
+      await this.configureNativeFroggTools(runtimeSession, launchContext?.froggTools);
       return new OmpAgentSession({
         runtimeSession,
         config,
@@ -2258,7 +2258,7 @@ export class OmpAgentClient implements AgentClient {
         providerIdleScheduler: this.providerIdleScheduler,
         noTurnScheduler: this.noTurnScheduler,
         usagePollScheduler: this.usagePollScheduler,
-        fdeTools: launchContext?.fdeTools,
+        froggTools: launchContext?.froggTools,
       });
     } catch (error) {
       await runtimeSession.close().catch(() => undefined);
@@ -2289,7 +2289,7 @@ export class OmpAgentClient implements AgentClient {
       }),
     );
     try {
-      await this.configureNativeFdeTools(runtimeSession, launchContext?.fdeTools);
+      await this.configureNativeFroggTools(runtimeSession, launchContext?.froggTools);
       return new OmpAgentSession({
         runtimeSession,
         config: resumeConfig.config,
@@ -2300,7 +2300,7 @@ export class OmpAgentClient implements AgentClient {
         providerIdleScheduler: this.providerIdleScheduler,
         noTurnScheduler: this.noTurnScheduler,
         usagePollScheduler: this.usagePollScheduler,
-        fdeTools: launchContext?.fdeTools,
+        froggTools: launchContext?.froggTools,
         live: false,
       });
     } catch (error) {

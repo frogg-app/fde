@@ -2,7 +2,7 @@
  * Relay connection types and interfaces.
  *
  * The relay bridges two WebSocket connections:
- * - Server (daemon): The Fde server connecting to the relay
+ * - Server (daemon): The Frogg server connecting to the relay
  * - Client (app): The mobile/web app connecting to the relay
  *
  * Messages are forwarded bidirectionally without modification.

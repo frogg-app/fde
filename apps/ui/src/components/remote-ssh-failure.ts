@@ -4,7 +4,7 @@ import { DaemonConnectionTestError } from "@/utils/test-daemon-connection";
  * What a failed Remote SSH connect needs from the user, read off the error
  * text the shell and the daemon produce:
  *
- * - `daemon-password-required` / `daemon-password-incorrect`: the FDE
+ * - `daemon-password-required` / `daemon-password-incorrect`: the Frogg
  *   daemon behind the tunnel closed the socket with 4401 ("Password
  *   required" / "Incorrect password"). This is the daemon's password, not
  *   ssh's.

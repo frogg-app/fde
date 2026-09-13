@@ -1,6 +1,6 @@
 ---
 title: Writing docs
-description: Where FDE's documentation lives, when to update it, the style rules, components, screenshots and how to preview.
+description: Where Frogg's documentation lives, when to update it, the style rules, components, screenshots and how to preview.
 sidebar:
   order: 7
 ---
@@ -18,7 +18,7 @@ pull request.
 | `website/src/components/docs/` | Docs components (`Screenshot`, `Terminal`, `BrandPreview`) |
 | `website/COMPONENTS.md` | Component API |
 | `scripts/docs/capture-screenshots.mjs` | Regenerates screenshots from a running daemon |
-| `skills/fde-docs/SKILL.md` | Page map and checklist for agents updating docs |
+| `skills/frogg-docs/SKILL.md` | Page map and checklist for agents updating docs |
 
 Sections are directories; the sidebar is generated from each page's `sidebar.order`.
 
@@ -27,7 +27,7 @@ Sections are directories; the sidebar is generated from each page's `sidebar.ord
 Update docs in the same pull request when you change:
 
 - user-visible behaviour or UI (update screenshots too),
-- `config.json` keys, environment variables, `fde.json` or `brand.json`,
+- `config.json` keys, environment variables, `frogg.json` or `brand.json`,
 - CLI commands or flags,
 - protocol-visible features or capabilities clients depend on,
 - install, update, branding, build or release pipelines.
@@ -39,7 +39,6 @@ Tick **Docs updated (or not needed)** in the pull request template.
 - Task first: say what the reader wants to do, then the command.
 - Short sentences. Expert audience; skip marketing and filler.
 - Real commands, real config, real output. Run them.
-- FDE is pronounced F.D.E.: write **an FDE**, never "a FDE".
 - Document what the code does today. If a feature is partial, experimental, preview or
   unvalidated on a platform, say so plainly. Never document planned features as present.
 - Link with root-relative paths and a trailing slash: `/docs/self-hosting/updates/`.
@@ -64,7 +63,7 @@ theme. Never mock UI.
 ```sh
 npm ci
 npm run build:server && npm run build:daemon-web-ui
-FDE_HOME=/tmp/fde-docs-home node apps/cli/bin/fde start --listen 0.0.0.0:17900 --web-ui --no-relay
+FROGG_HOME=/tmp/frogg-docs-home node apps/cli/bin/frogg start --listen 0.0.0.0:17900 --web-ui --no-relay
 node scripts/docs/capture-screenshots.mjs --url http://127.0.0.1:17900 --seed
 node scripts/docs/capture-screenshots.mjs --list
 node scripts/docs/capture-screenshots.mjs --url http://127.0.0.1:17900 --only app/home,app/host-providers
@@ -74,7 +73,7 @@ node scripts/docs/capture-screenshots.mjs --url http://127.0.0.1:17900 --only ap
 need an agent run in that project, which uses provider credits; run one yourself before
 capturing those. Keep each image under 300 KB; the script optimises PNGs.
 
-For branded screenshots, build with `FDE_BRAND_DIR=brands/example` in a separate worktree
+For branded screenshots, build with `FROGG_BRAND_DIR=brands/example` in a separate worktree
 and pass `--brand-tag acme`.
 
 ## Preview and check

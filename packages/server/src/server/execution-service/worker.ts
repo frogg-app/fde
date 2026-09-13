@@ -1,10 +1,10 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { randomUUID } from "node:crypto";
-import { createFdeDaemon, type DaemonLifecycleIntent } from "../bootstrap.js";
+import { createFroggDaemon, type DaemonLifecycleIntent } from "../bootstrap.js";
 import { loadConfig } from "../config.js";
 import { parseDaemonCliOverrides } from "../daemon-cli-overrides.js";
 import { createRootLogger } from "../logger.js";
-import { resolveFdeHome } from "../fde-home.js";
+import { resolveFroggHome } from "../frogg-home.js";
 import { acquirePidLock, releasePidLock, startPidLockHeartbeat } from "../pid-lock.js";
 import { createExecutionControlServer, publicExecutionStatus } from "./control-server.js";
 import {
@@ -21,7 +21,7 @@ import {
 process.title = `${brand.name} Execution Service`;
 
 async function main(): Promise<void> {
-  const home = resolveFdeHome();
+  const home = resolveFroggHome();
   const directory = await prepareExecutionDirectory(home);
   await acquirePidLock(directory, null);
   const stopHeartbeat = startPidLockHeartbeat(directory, {
@@ -31,13 +31,13 @@ async function main(): Promise<void> {
     },
   });
   const config = loadConfig(home, { cli: parseDaemonCliOverrides(process.argv.slice(2)) });
-  const logger = createRootLogger({ log: config.log }, { fdeHome: directory, file: false });
+  const logger = createRootLogger({ log: config.log }, { froggHome: directory, file: false });
   const instanceId = randomUUID();
   const token = randomUUID() + randomUUID();
   const startedAt = new Date().toISOString();
   let publicListen = config.listen;
   let descriptor: ExecutionServiceDescriptor | null = null;
-  let daemon: Awaited<ReturnType<typeof createFdeDaemon>> | null = null;
+  let daemon: Awaited<ReturnType<typeof createFroggDaemon>> | null = null;
   let control: Awaited<ReturnType<typeof createExecutionControlServer>> | null = null;
   let stopping = false;
   let sequence = 0;
@@ -66,11 +66,11 @@ async function main(): Promise<void> {
   process.on("SIGTERM", () => void shutdown());
   process.on("SIGINT", () => void shutdown());
   try {
-    daemon = await createFdeDaemon(
+    daemon = await createFroggDaemon(
       {
         ...config,
         listen: "127.0.0.1:0",
-        daemonVersion: process.env.FDE_EXECUTION_VERSION,
+        daemonVersion: process.env.FROGG_EXECUTION_VERSION,
         executionService: { token, getPublicListen: () => publicListen },
         onLifecycleIntent,
       },
@@ -115,7 +115,7 @@ async function main(): Promise<void> {
       protocolVersion: EXECUTION_PROTOCOL_VERSION,
       instanceId,
       pid: process.pid,
-      version: process.env.FDE_EXECUTION_VERSION ?? "unknown",
+      version: process.env.FROGG_EXECUTION_VERSION ?? "unknown",
       startedAt,
       port: bound.port,
       controlPort: control.port,

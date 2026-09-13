@@ -15,7 +15,7 @@ import {
 
 describe("pid-lock ownership", () => {
   test("writes and releases lock for explicit owner pid", async () => {
-    const fdeHome = await mkdtemp(join(tmpdir(), "fde-pid-lock-owner-"));
+    const froggHome = await mkdtemp(join(tmpdir(), "frogg-pid-lock-owner-"));
     const ownerPid = process.pid + 10_000;
 
     try {
@@ -25,9 +25,9 @@ describe("pid-lock ownership", () => {
           sockPath: string | null,
           options: { ownerPid: number },
         ) => Promise<void>
-      )(fdeHome, null, { ownerPid });
+      )(froggHome, null, { ownerPid });
 
-      const lock = await getPidLockInfo(fdeHome);
+      const lock = await getPidLockInfo(froggHome);
       expect(lock?.pid).toBe(ownerPid);
       expect(lock?.listen).toBeNull();
       expect(lock?.heartbeat).toBe(true);
@@ -38,33 +38,33 @@ describe("pid-lock ownership", () => {
           patch: { listen: string },
           options: { ownerPid: number },
         ) => Promise<void>
-      )(fdeHome, { listen: "127.0.0.1:9999" }, { ownerPid });
+      )(froggHome, { listen: "127.0.0.1:9999" }, { ownerPid });
 
-      const updatedLock = await getPidLockInfo(fdeHome);
+      const updatedLock = await getPidLockInfo(froggHome);
       expect(updatedLock?.listen).toBe("127.0.0.1:9999");
 
       await (
         releasePidLock as unknown as (home: string, options: { ownerPid: number }) => Promise<void>
-      )(fdeHome, { ownerPid: ownerPid + 1 });
-      const lockAfterWrongOwnerRelease = await getPidLockInfo(fdeHome);
+      )(froggHome, { ownerPid: ownerPid + 1 });
+      const lockAfterWrongOwnerRelease = await getPidLockInfo(froggHome);
       expect(lockAfterWrongOwnerRelease?.pid).toBe(ownerPid);
 
       await (
         releasePidLock as unknown as (home: string, options: { ownerPid: number }) => Promise<void>
-      )(fdeHome, { ownerPid });
-      const lockAfterOwnerRelease = await getPidLockInfo(fdeHome);
+      )(froggHome, { ownerPid });
+      const lockAfterOwnerRelease = await getPidLockInfo(froggHome);
       expect(lockAfterOwnerRelease).toBeNull();
     } finally {
-      await rm(fdeHome, { recursive: true, force: true });
+      await rm(froggHome, { recursive: true, force: true });
     }
   });
 
   test("keeps a stale heartbeat lock when the recorded pid is alive without a reachability check", async () => {
-    const fdeHome = await mkdtemp(join(tmpdir(), "fde-pid-lock-stale-heartbeat-"));
+    const froggHome = await mkdtemp(join(tmpdir(), "frogg-pid-lock-stale-heartbeat-"));
     const replacementOwnerPid = process.pid + 10_000;
 
     try {
-      const pidPath = join(fdeHome, "fde.pid");
+      const pidPath = join(froggHome, "frogg.pid");
       await writeFile(
         pidPath,
         JSON.stringify({
@@ -80,24 +80,24 @@ describe("pid-lock ownership", () => {
       const staleTime = new Date(Date.now() - 10 * 60_000);
       await utimes(pidPath, staleTime, staleTime);
 
-      await expect(isLocked(fdeHome)).resolves.toMatchObject({ locked: true });
+      await expect(isLocked(froggHome)).resolves.toMatchObject({ locked: true });
       await expect(
-        acquirePidLock(fdeHome, null, { ownerPid: replacementOwnerPid }),
-      ).rejects.toThrow("Another FDE daemon is already running");
+        acquirePidLock(froggHome, null, { ownerPid: replacementOwnerPid }),
+      ).rejects.toThrow("Another Frogg daemon is already running");
 
-      const lock = await getPidLockInfo(fdeHome);
+      const lock = await getPidLockInfo(froggHome);
       expect(lock?.pid).toBe(process.pid);
     } finally {
-      await rm(fdeHome, { recursive: true, force: true });
+      await rm(froggHome, { recursive: true, force: true });
     }
   });
 
   test("reclaims a stale desktop heartbeat lock after desktop confirms the daemon is unreachable", async () => {
-    const fdeHome = await mkdtemp(join(tmpdir(), "fde-pid-lock-stale-desktop-heartbeat-"));
+    const froggHome = await mkdtemp(join(tmpdir(), "frogg-pid-lock-stale-desktop-heartbeat-"));
     const replacementOwnerPid = process.pid + 10_000;
 
     try {
-      const pidPath = join(fdeHome, "fde.pid");
+      const pidPath = join(froggHome, "frogg.pid");
       await writeFile(
         pidPath,
         JSON.stringify({
@@ -113,22 +113,22 @@ describe("pid-lock ownership", () => {
       const staleTime = new Date(Date.now() - 10 * 60_000);
       await utimes(pidPath, staleTime, staleTime);
 
-      await acquirePidLock(fdeHome, null, {
+      await acquirePidLock(froggHome, null, {
         ownerPid: replacementOwnerPid,
         reclaimStaleDesktopLock: true,
       });
 
-      const lock = await getPidLockInfo(fdeHome);
+      const lock = await getPidLockInfo(froggHome);
       expect(lock?.pid).toBe(replacementOwnerPid);
       expect(lock?.listen).toBeNull();
     } finally {
-      await rm(fdeHome, { recursive: true, force: true });
+      await rm(froggHome, { recursive: true, force: true });
     }
   });
 
   test("keeps a stale live lock written by a pre-heartbeat daemon", async () => {
-    const fdeHome = await mkdtemp(join(tmpdir(), "fde-pid-lock-legacy-live-"));
-    const pidPath = join(fdeHome, "fde.pid");
+    const froggHome = await mkdtemp(join(tmpdir(), "frogg-pid-lock-legacy-live-"));
+    const pidPath = join(froggHome, "frogg.pid");
 
     try {
       await writeFile(
@@ -146,20 +146,20 @@ describe("pid-lock ownership", () => {
       await utimes(pidPath, staleTime, staleTime);
 
       await expect(
-        acquirePidLock(fdeHome, null, { ownerPid: process.pid + 10_000 }),
-      ).rejects.toThrow("Another FDE daemon is already running");
+        acquirePidLock(froggHome, null, { ownerPid: process.pid + 10_000 }),
+      ).rejects.toThrow("Another Frogg daemon is already running");
 
-      const lock = await getPidLockInfo(fdeHome);
+      const lock = await getPidLockInfo(froggHome);
       expect(lock?.pid).toBe(process.pid);
     } finally {
-      await rm(fdeHome, { recursive: true, force: true });
+      await rm(froggHome, { recursive: true, force: true });
     }
   });
 
   test("reclaims a stale legacy desktop lock after desktop confirms the daemon is unreachable", async () => {
-    const fdeHome = await mkdtemp(join(tmpdir(), "fde-pid-lock-legacy-desktop-"));
+    const froggHome = await mkdtemp(join(tmpdir(), "frogg-pid-lock-legacy-desktop-"));
     const replacementOwnerPid = process.pid + 10_000;
-    const pidPath = join(fdeHome, "fde.pid");
+    const pidPath = join(froggHome, "frogg.pid");
 
     try {
       await writeFile(
@@ -176,62 +176,62 @@ describe("pid-lock ownership", () => {
       const staleTime = new Date(Date.now() - 10 * 60_000);
       await utimes(pidPath, staleTime, staleTime);
 
-      await acquirePidLock(fdeHome, null, {
+      await acquirePidLock(froggHome, null, {
         ownerPid: replacementOwnerPid,
         reclaimStaleDesktopLock: true,
       });
 
-      const lock = await getPidLockInfo(fdeHome);
+      const lock = await getPidLockInfo(froggHome);
       expect(lock?.pid).toBe(replacementOwnerPid);
       expect(lock?.heartbeat).toBe(true);
     } finally {
-      await rm(fdeHome, { recursive: true, force: true });
+      await rm(froggHome, { recursive: true, force: true });
     }
   });
 
   test("rejects a heartbeat refresh after another supervisor takes ownership", async () => {
-    const fdeHome = await mkdtemp(join(tmpdir(), "fde-pid-lock-refresh-owner-"));
+    const froggHome = await mkdtemp(join(tmpdir(), "frogg-pid-lock-refresh-owner-"));
 
     try {
-      await acquirePidLock(fdeHome, null, { ownerPid: process.pid + 10_000 });
+      await acquirePidLock(froggHome, null, { ownerPid: process.pid + 10_000 });
 
-      await expect(refreshPidLock(fdeHome, { ownerPid: process.pid })).rejects.toBeInstanceOf(
+      await expect(refreshPidLock(froggHome, { ownerPid: process.pid })).rejects.toBeInstanceOf(
         PidLockError,
       );
     } finally {
-      await rm(fdeHome, { recursive: true, force: true });
+      await rm(froggHome, { recursive: true, force: true });
     }
   });
 
   test("retries a heartbeat refresh while its owner is rewriting the lock", async () => {
-    const fdeHome = await mkdtemp(join(tmpdir(), "fde-pid-lock-refresh-rewrite-"));
-    const pidPath = join(fdeHome, "fde.pid");
+    const froggHome = await mkdtemp(join(tmpdir(), "frogg-pid-lock-refresh-rewrite-"));
+    const pidPath = join(froggHome, "frogg.pid");
 
     try {
-      await acquirePidLock(fdeHome, null, { ownerPid: process.pid });
-      const lock = await getPidLockInfo(fdeHome);
+      await acquirePidLock(froggHome, null, { ownerPid: process.pid });
+      const lock = await getPidLockInfo(froggHome);
       expect(lock).not.toBeNull();
 
       const rewriteHandle = await open(pidPath, "r+");
       await rewriteHandle.truncate(0);
 
-      const refresh = refreshPidLock(fdeHome, { ownerPid: process.pid });
+      const refresh = refreshPidLock(froggHome, { ownerPid: process.pid });
       await new Promise((resolve) => setTimeout(resolve, 250));
       await rewriteHandle.writeFile(JSON.stringify(lock));
       await rewriteHandle.close();
 
       await expect(refresh).resolves.toBeUndefined();
     } finally {
-      await rm(fdeHome, { recursive: true, force: true });
+      await rm(froggHome, { recursive: true, force: true });
     }
   });
 
   test("keeps a fresh lock when the recorded pid is alive", async () => {
-    const fdeHome = await mkdtemp(join(tmpdir(), "fde-pid-lock-fresh-heartbeat-"));
+    const froggHome = await mkdtemp(join(tmpdir(), "frogg-pid-lock-fresh-heartbeat-"));
 
     try {
       await writeFile(
-        join(fdeHome, "fde.pid"),
+        join(froggHome, "frogg.pid"),
         JSON.stringify({
           pid: process.pid,
           startedAt: new Date().toISOString(),
@@ -244,14 +244,14 @@ describe("pid-lock ownership", () => {
       );
 
       await expect(
-        acquirePidLock(fdeHome, null, { ownerPid: process.pid + 10_000 }),
-      ).rejects.toThrow("Another FDE daemon is already running");
+        acquirePidLock(froggHome, null, { ownerPid: process.pid + 10_000 }),
+      ).rejects.toThrow("Another Frogg daemon is already running");
 
-      const lock = await getPidLockInfo(fdeHome);
+      const lock = await getPidLockInfo(froggHome);
       expect(lock?.pid).toBe(process.pid);
       expect(lock?.listen).toBe("127.0.0.1:9999");
     } finally {
-      await rm(fdeHome, { recursive: true, force: true });
+      await rm(froggHome, { recursive: true, force: true });
     }
   });
 });

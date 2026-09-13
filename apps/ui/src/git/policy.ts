@@ -2,7 +2,7 @@ import type { ReactElement } from "react";
 
 import type { ActionStatus } from "@/components/ui/dropdown-menu";
 import { i18n } from "@/i18n/i18next";
-import type { CheckoutPrMergeMethod, PullRequestMergeable } from "@fde/protocol/messages";
+import type { CheckoutPrMergeMethod, PullRequestMergeable } from "@frogg/protocol/messages";
 
 import type { MergeCapability } from "./merge-capability";
 
@@ -66,7 +66,7 @@ export interface BuildGitActionsInput {
   pullRequestMergeable: PullRequestMergeable;
   mergeCapability: MergeCapability | null;
   hasRemote: boolean;
-  isFdeOwnedWorktree: boolean;
+  isFroggOwnedWorktree: boolean;
   isOnBaseBranch: boolean;
   hasUncommittedChanges: boolean;
   baseRefAvailable: boolean;
@@ -496,9 +496,9 @@ function hasPushableCommits(input: BuildGitActionsInput): boolean {
   if ((input.aheadOfOrigin ?? 0) > 0) {
     return true;
   }
-  // No-upstream Fde worktrees are first-pushable: the daemon push sets upstream with `git push -u`.
+  // No-upstream Frogg worktrees are first-pushable: the daemon push sets upstream with `git push -u`.
   // Do not fold this into aheadOfOrigin; null also covers deleted/pruned upstream branches.
-  return input.isFdeOwnedWorktree && input.aheadOfOrigin === null && input.aheadCount > 0;
+  return input.isFroggOwnedWorktree && input.aheadOfOrigin === null && input.aheadCount > 0;
 }
 
 function canMergeFromBase(input: BuildGitActionsInput): boolean {

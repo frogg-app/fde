@@ -1,5 +1,5 @@
 import { app } from "electron";
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { resolveRepositoryRoot, resolveDaemonBundleRoot } from "../../daemon/runtime-paths.js";
 import path from "node:path";
 import os from "node:os";
@@ -20,7 +20,7 @@ export function getBundledCliShimPath(): string {
       resolveRepositoryRoot(),
       "node_modules",
       ".bin",
-      process.platform === "win32" ? "fde.cmd" : "fde",
+      process.platform === "win32" ? "frogg.cmd" : "frogg",
     );
   }
   const filename = process.platform === "win32" ? `${brand.cliName}.cmd` : brand.cliName;

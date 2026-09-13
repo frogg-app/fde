@@ -2,7 +2,7 @@ import { createContext, useContext, useMemo, useState, type ReactNode } from "re
 import { useFetchQueries } from "@/data/query";
 import { useStoreWithEqualityFn } from "zustand/traditional";
 import { useShallow } from "zustand/react/shallow";
-import type { DaemonClient } from "@fde/client/internal/daemon-client";
+import type { DaemonClient } from "@frogg/client/internal/daemon-client";
 import { useActiveWorkspaceSelection } from "@/stores/navigation-active-workspace-store";
 import { useSessionStore } from "@/stores/session-store";
 import {

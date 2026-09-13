@@ -7,7 +7,7 @@ sidebar:
 
 import { Steps } from "@/components/docs";
 
-This page covers working on the FDE monorepo itself. Commands run from the repository root
+This page covers working on the Frogg monorepo itself. Commands run from the repository root
 unless stated otherwise.
 
 ## Prerequisites
@@ -51,11 +51,11 @@ Use the root scripts. They encode the order.
 
 | Script                    | Builds                                                         |
 | ------------------------- | -------------------------------------------------------------- |
-| `npm run build:protocol`  | `@fde/protocol`                                                |
-| `npm run build:client`    | `@fde/protocol`, then `@fde/client`                            |
+| `npm run build:protocol`  | `@frogg/protocol`                                                |
+| `npm run build:client`    | `@frogg/protocol`, then `@frogg/client`                            |
 | `npm run build:server-deps` | client chain, then highlight and relay in parallel          |
-| `npm run build:server`    | server deps, then `@fde/server` and `@fde/cli`                 |
-| `npm run build:app-deps`  | highlight, client and `@fde/expo-two-way-audio`                |
+| `npm run build:server`    | server deps, then `@frogg/server` and `@frogg/cli`                 |
+| `npm run build:app-deps`  | highlight, client and `@frogg/expo-two-way-audio`                |
 | `npm run build:ui`        | Expo web export of `apps/ui` (runs `build:app-deps` first)     |
 | `npm run build:desktop`   | web UI, then the Electron app-only shell                       |
 | `npm run build:daemon-web-ui` | copies the web export into `packages/server/dist/server/web-ui` |
@@ -80,13 +80,13 @@ npm run dev:app      # Expo (Metro) on port 8081, pointed at the dev daemon
 
 - `dev:server` runs `build:server-deps` once, then watches protocol, client and server with
   `concurrently`. If the deps are already built, skip that step with
-  `FDE_SKIP_DEV_SERVER_BUILD=1 npm run dev:server`.
+  `FROGG_SKIP_DEV_SERVER_BUILD=1 npm run dev:server`.
 - `dev:app` sets `EXPO_PUBLIC_LOCAL_DAEMON` to the dev daemon endpoint and passes the current
-  git branch as `EXPO_PUBLIC_FDE_DEV_BUILD_LABEL`. `EXPO_PUBLIC_*` values are inlined at bundle
+  git branch as `EXPO_PUBLIC_FROGG_DEV_BUILD_LABEL`. `EXPO_PUBLIC_*` values are inlined at bundle
   time. Restart Metro after changing them.
 - `npm run dev` is an alias for `dev:server`.
 - `npm run dev:desktop` runs the Electron shell against a web dev server on port
-  `18000 + <offset derived from the checkout path>` (override with `FDE_ELECTRON_UI_PORT`).
+  `18000 + <offset derived from the checkout path>` (override with `FROGG_ELECTRON_UI_PORT`).
   State lives in `.dev/electron/`. The shell is app-only: it never starts a daemon. Run a
   daemon yourself, for example `dev:server`, and add it as a host in the app.
 - `npm run dev:win` runs `scripts/dev/dev.ps1`. It builds server and app deps, then runs the
@@ -95,26 +95,26 @@ npm run dev:app      # Expo (Metro) on port 8081, pointed at the dev daemon
 The dev daemon and Expo bind `0.0.0.0` so they are reachable from other machines on the LAN.
 
 Ports 6768 and 8081 are the defaults for the official brand. A custom brand selected with
-`FDE_BRAND_DIR` uses its `daemonPort` and `daemonPort + 1` instead. Port 9999 is the default
+`FROGG_BRAND_DIR` uses its `daemonPort` and `daemonPort + 1` instead. Port 9999 is the default
 port of a separately installed daemon; keep it free of dev work.
 
 ## Dev state
 
-`FDE_HOME` holds agents, projects, worktrees, `config.json` and `daemon.log`. The dev scripts
-default it to `.dev/fde-home` inside the current checkout, so dev work never touches `~/.fde`.
+`FROGG_HOME` holds agents, projects, worktrees, `config.json` and `daemon.log`. The dev scripts
+default it to `.dev/frogg-home` inside the current checkout, so dev work never touches `~/.frogg`.
 
 ```bash
-FDE_HOME=~/.fde-blue npm run dev:server                 # explicit home
-FDE_DEV_SEED_HOME=~/.fde npm run dev:server             # copy JSON metadata from another home
-FDE_DEV_SEED_HOME=~/.fde FDE_DEV_RESET_HOME=1 npm run dev:server   # clear, then reseed
+FROGG_HOME=~/.frogg-blue npm run dev:server                 # explicit home
+FROGG_DEV_SEED_HOME=~/.frogg npm run dev:server             # copy JSON metadata from another home
+FROGG_DEV_SEED_HOME=~/.frogg FROGG_DEV_RESET_HOME=1 npm run dev:server   # clear, then reseed
 ```
 
 Seeding copies `agents/**/*.json`, `projects/**/*.json` and `config.json`. It skips a home that
-already has data unless `FDE_DEV_RESET_HOME=1` is set.
+already has data unless `FROGG_DEV_RESET_HOME=1` is set.
 
 :::caution
-In `scripts/dev/dev-home.sh`, `FDE_DEV_RESET_HOME` only takes effect together with
-`FDE_DEV_SEED_HOME`. On its own it does nothing.
+In `scripts/dev/dev-home.sh`, `FROGG_DEV_RESET_HOME` only takes effect together with
+`FROGG_DEV_SEED_HOME`. On its own it does nothing.
 :::
 
 ## Run the CLI from source
@@ -125,38 +125,38 @@ npm run cli -- daemon status
 ```
 
 `npm run cli` runs `apps/cli/src/index.ts` with `tsx` through `scripts/dev/dev-home.sh`. It uses
-the checkout's `.dev/fde-home` and the dev daemon endpoint. An installed `fde` binary is a
+the checkout's `.dev/frogg-home` and the dev daemon endpoint. An installed `frogg` binary is a
 different build; use `npm run cli` to test CLI changes.
 
 ## Several checkouts at once
 
-Each checkout or worktree gets its own `.dev/fde-home` automatically. Give each one its own
+Each checkout or worktree gets its own `.dev/frogg-home` automatically. Give each one its own
 ports:
 
 ```bash
-FDE_LISTEN=0.0.0.0:6868 npm run dev:server
-FDE_LISTEN=0.0.0.0:6868 EXPO_PORT=8181 npm run dev:app
+FROGG_LISTEN=0.0.0.0:6868 npm run dev:server
+FROGG_LISTEN=0.0.0.0:6868 EXPO_PORT=8181 npm run dev:app
 ```
 
-`dev:app` derives the daemon endpoint from `FDE_LISTEN`. Set `FDE_DEV_DAEMON_ENDPOINT` to point
+`dev:app` derives the daemon endpoint from `FROGG_LISTEN`. Set `FROGG_DEV_DAEMON_ENDPOINT` to point
 it somewhere else. `npm run worktree:status` lists what every worktree has committed and left
 uncommitted.
 
-## Working on FDE inside FDE
+## Working on Frogg inside Frogg
 
-The repo's own `fde.json` configures worktrees created by an FDE daemon. See
+The repo's own `frogg.json` configures worktrees created by a Frogg daemon. See
 [Project config](/docs/reference/project-config/) for the format.
 
 `worktree.setup` runs, in order: `npm ci`, `scripts/mobile/seed-ios-native-cache.mjs`,
-`scripts/dev/seed-worktree-dev-state.mjs` (copies the source checkout's `.dev/fde-home` and
-`packages/server/.env`), `npm run build:server`, and the `@fde/expo-two-way-audio` build.
+`scripts/dev/seed-worktree-dev-state.mjs` (copies the source checkout's `.dev/frogg-home` and
+`packages/server/.env`), `npm run build:server`, and the `@frogg/expo-two-way-audio` build.
 
 | Script          | Type    | What it runs                                                              |
 | --------------- | ------- | ------------------------------------------------------------------------- |
-| `daemon`        | service | `scripts/dev/dev-daemon.sh` on `FDE_PORT`, skipping the deps build        |
-| `app`           | service | `scripts/dev/dev-app.sh` with Metro on `FDE_PORT`, pointed at the `daemon` service |
+| `daemon`        | service | `scripts/dev/dev-daemon.sh` on `FROGG_PORT`, skipping the deps build        |
+| `app`           | service | `scripts/dev/dev-app.sh` with Metro on `FROGG_PORT`, pointed at the `daemon` service |
 | `desktop`       | service | `./packages/desktop/scripts/dev.sh`                                       |
-| `ios-simulator` | service | `scripts/mobile/fde-ios-simulator-service.sh` (macOS only)                |
+| `ios-simulator` | service | `scripts/mobile/frogg-ios-simulator-service.sh` (macOS only)                |
 | `typecheck`     | script  | `npm run typecheck`                                                       |
 
 :::caution
@@ -206,12 +206,12 @@ sources. Fix formatting with `npm run format`.
 
 ### Typecheck gotchas
 
-- On a fresh checkout `npm run typecheck` fails: `@fde/app` cannot resolve `@fde/client` and
-  `@fde/cli` cannot resolve `@fde/server`. Run `npm run build:server` and
+- On a fresh checkout `npm run typecheck` fails: `@frogg/app` cannot resolve `@frogg/client` and
+  `@frogg/cli` cannot resolve `@frogg/server`. Run `npm run build:server` and
   `npm run build:app-deps` once, then typecheck. CI does the same.
 - A downstream error that says a field you just added to `packages/protocol` does not exist
   means `dist/` is stale. Run `npm run build:client` before you debug the error.
-- `pretypecheck` runs `brand:prepare` and builds `@fde/expo-two-way-audio`.
+- `pretypecheck` runs `brand:prepare` and builds `@frogg/expo-two-way-audio`.
 - `npm run typecheck:server` checks relay, protocol, client, server and cli only. It is the
   fastest gate for daemon and protocol work.
 
@@ -223,7 +223,7 @@ as unvalidated.
 **Desktop (Electron).** Install the Electron binary, then build for one target:
 
 ```bash
-npm run install:electron --workspace=@fde/desktop-electron
+npm run install:electron --workspace=@frogg/desktop-electron
 npm run build:desktop -- --target linux-x64   # linux|darwin|win - x64|arm64
 ```
 
@@ -237,15 +237,15 @@ macOS builds are not notarized.
 
 ```bash
 node scripts/release/build-android-apk.mjs --abi arm64-v8a --serial --out-dir release-assets
-npm run android --workspace=@fde/app   # dev client via expo run:android
+npm run android --workspace=@frogg/app   # dev client via expo run:android
 ```
 
 `--serial` limits Gradle to one worker for machines with about 8 GB of RAM. Without the
-`FDE_ANDROID_KEYSTORE*` variables the APK is debug-signed; see
+`FROGG_ANDROID_KEYSTORE*` variables the APK is debug-signed; see
 [Release process](/docs/contributing/release-process/#android-signing).
 
-**iOS.** macOS only. Needs Xcode with an iOS Simulator runtime. `npm run ios --workspace=@fde/app`
+**iOS.** macOS only. Needs Xcode with an iOS Simulator runtime. `npm run ios --workspace=@frogg/app`
 builds and launches the dev client with `expo run:ios`. CI builds an unsigned simulator app in
-`branding.yml`. FDE does not publish iOS builds.
+`branding.yml`. Frogg does not publish iOS builds.
 
 Next: [Architecture](/docs/contributing/architecture/) and [Testing](/docs/contributing/testing/).

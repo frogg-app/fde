@@ -71,7 +71,7 @@ describe("cutover proxy", () => {
       new Request("https://relay.example.test/ws?serverId=srv_prod&role=server&v=2", {
         headers: { "x-relay-probe": "production" },
       }),
-      { FDE_RELAY_UPSTREAM: originUrl } as RelayEnv,
+      { FROGG_RELAY_UPSTREAM: originUrl } as RelayEnv,
     );
 
     expect(origin.received()).toEqual([

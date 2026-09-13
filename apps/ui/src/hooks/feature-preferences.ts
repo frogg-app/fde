@@ -1,4 +1,4 @@
-import type { AgentFeature } from "@fde/protocol/agent-types";
+import type { AgentFeature } from "@frogg/protocol/agent-types";
 
 export function pruneFeatureValues(
   featureValues: Record<string, unknown>,

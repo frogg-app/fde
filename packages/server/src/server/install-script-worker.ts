@@ -1,10 +1,10 @@
 /** Public installer endpoints serve the exact scripts embedded in this distribution. */
-import { brand } from "@fde/branding";
-import { installers } from "@fde/branding/installers";
+import { brand } from "@frogg/branding";
+import { installers } from "@frogg/branding/installers";
 
 export interface InstallScriptWorkerEnv {
   /** Edge/browser cache duration. Scripts never fetch an upstream source template. */
-  FDE_INSTALL_CACHE_SECONDS?: string;
+  FROGG_INSTALL_CACHE_SECONDS?: string;
 }
 export async function handleInstallScriptRequest(
   request: Request,
@@ -19,7 +19,7 @@ export async function handleInstallScriptRequest(
   }
   const body = installers[new URL(request.url).pathname];
   if (!body) return new Response("Not found\n", { status: 404, headers });
-  const configured = Number(env.FDE_INSTALL_CACHE_SECONDS ?? 300);
+  const configured = Number(env.FROGG_INSTALL_CACHE_SECONDS ?? 300);
   const seconds =
     Number.isFinite(configured) && configured >= 0 ? Math.min(configured, 86400) : 300;
   return new Response(request.method === "HEAD" ? null : body, {

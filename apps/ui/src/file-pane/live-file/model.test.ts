@@ -1,5 +1,5 @@
-import type { FileReadResult } from "@fde/client/internal/daemon-client";
-import type { FileVersion } from "@fde/protocol/messages";
+import type { FileReadResult } from "@frogg/client/internal/daemon-client";
+import type { FileVersion } from "@frogg/protocol/messages";
 import { describe, expect, it, vi } from "vitest";
 import { LiveFileModel, type LiveFileSession, type LiveFileSubscription } from "./model";
 

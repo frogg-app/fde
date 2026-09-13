@@ -60,11 +60,11 @@ async function configureRemote(input: {
 }
 
 export const createTempGitRepo = async (
-  prefix = "fde-e2e-",
+  prefix = "frogg-e2e-",
   options?: {
     withRemote?: boolean;
     originUrl?: string;
-    fdeConfig?: Record<string, unknown>;
+    froggConfig?: Record<string, unknown>;
     files?: Array<{ path: string; content: string }>;
     branches?: string[];
   },
@@ -74,12 +74,15 @@ export const createTempGitRepo = async (
   const withRemote = options?.withRemote ?? false;
 
   execSync("git init -b main", { cwd: repoPath, stdio: "ignore" });
-  execSync('git config user.email "e2e@fde.test"', { cwd: repoPath, stdio: "ignore" });
-  execSync('git config user.name "Fde E2E"', { cwd: repoPath, stdio: "ignore" });
+  execSync('git config user.email "e2e@frogg.test"', { cwd: repoPath, stdio: "ignore" });
+  execSync('git config user.name "Frogg E2E"', { cwd: repoPath, stdio: "ignore" });
   execSync("git config commit.gpgsign false", { cwd: repoPath, stdio: "ignore" });
   await writeFile(path.join(repoPath, "README.md"), "# Temp Repo\n");
-  if (options?.fdeConfig) {
-    await writeFile(path.join(repoPath, "fde.json"), JSON.stringify(options.fdeConfig, null, 2));
+  if (options?.froggConfig) {
+    await writeFile(
+      path.join(repoPath, "frogg.json"),
+      JSON.stringify(options.froggConfig, null, 2),
+    );
   }
   for (const file of options?.files ?? []) {
     const filePath = path.join(repoPath, file.path);
@@ -87,8 +90,8 @@ export const createTempGitRepo = async (
     await writeFile(filePath, file.content);
   }
   execSync("git add README.md", { cwd: repoPath, stdio: "ignore" });
-  if (options?.fdeConfig) {
-    execSync("git add fde.json", { cwd: repoPath, stdio: "ignore" });
+  if (options?.froggConfig) {
+    execSync("git add frogg.json", { cwd: repoPath, stdio: "ignore" });
   }
   for (const file of options?.files ?? []) {
     execSync(`git add ${JSON.stringify(file.path)}`, { cwd: repoPath, stdio: "ignore" });
@@ -104,7 +107,7 @@ export const createTempGitRepo = async (
         stdio: "ignore",
       });
     }
-    const markerPath = `.fde-e2e-${branch.replace(/[^a-zA-Z0-9._-]/g, "-")}.txt`;
+    const markerPath = `.frogg-e2e-${branch.replace(/[^a-zA-Z0-9._-]/g, "-")}.txt`;
     await writeFile(path.join(repoPath, markerPath), `branch ${branch}\n`);
     execSync(`git add ${JSON.stringify(markerPath)}`, { cwd: repoPath, stdio: "ignore" });
     execSync(`git commit -m ${JSON.stringify(`Add ${branch} marker`)}`, {
@@ -140,7 +143,7 @@ export const createTempGitRepo = async (
  * A plain (non-git) directory opened as a project. The daemon shows its
  * basename as the project name, since there's no remote to group under.
  */
-export async function createTempDirectory(prefix = "fde-e2e-dir-"): Promise<TempDirectory> {
+export async function createTempDirectory(prefix = "frogg-e2e-dir-"): Promise<TempDirectory> {
   const dirPath = await mkdtemp(path.join(await resolveTempRoot(), prefix));
   await writeFile(path.join(dirPath, "README.md"), "# Temp Directory\n");
   return {
@@ -175,15 +178,15 @@ export function commitLocalOnly(repoPath: string, marker: string): string {
  */
 export async function trackForkUpstream(repoPath: string): Promise<string> {
   const upstreamDir = path.join(repoPath, "upstream.git");
-  const upstreamClone = await mkdtemp(path.join(await resolveTempRoot(), "fde-e2e-upstream-"));
+  const upstreamClone = await mkdtemp(path.join(await resolveTempRoot(), "frogg-e2e-upstream-"));
   await mkdir(upstreamDir, { recursive: true });
   execSync(`git init --bare -b main ${upstreamDir}`, { cwd: repoPath, stdio: "ignore" });
   execSync(`git remote add upstream ${upstreamDir}`, { cwd: repoPath, stdio: "ignore" });
   execSync("git push upstream main", { cwd: repoPath, stdio: "ignore" });
 
   execSync(`git clone ${upstreamDir} ${upstreamClone}`, { stdio: "ignore" });
-  execSync('git config user.email "e2e@fde.test"', { cwd: upstreamClone, stdio: "ignore" });
-  execSync('git config user.name "Fde E2E"', { cwd: upstreamClone, stdio: "ignore" });
+  execSync('git config user.email "e2e@frogg.test"', { cwd: upstreamClone, stdio: "ignore" });
+  execSync('git config user.name "Frogg E2E"', { cwd: upstreamClone, stdio: "ignore" });
   execSync("git config commit.gpgsign false", { cwd: upstreamClone, stdio: "ignore" });
   execSync('git commit --allow-empty -m "upstream only"', {
     cwd: upstreamClone,
@@ -219,7 +222,7 @@ export async function readWorktreeBaseMetadata(
     .toString()
     .trim();
   const metadata = JSON.parse(
-    await readFile(path.join(gitDir, "fde", "worktree.json"), "utf8"),
+    await readFile(path.join(gitDir, "frogg", "worktree.json"), "utf8"),
   ) as { baseRefName?: string; baseRef?: string };
   if (!metadata.baseRefName) {
     throw new Error(`worktree.json has no baseRefName: ${worktreePath}`);

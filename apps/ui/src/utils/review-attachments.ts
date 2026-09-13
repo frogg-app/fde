@@ -1,4 +1,4 @@
-import type { AgentAttachment, ForgeSearchItem } from "@fde/protocol/messages";
+import type { AgentAttachment, ForgeSearchItem } from "@frogg/protocol/messages";
 
 export function buildForgeAttachmentFromSearchItem(
   item: ForgeSearchItem | null,
@@ -10,7 +10,7 @@ export function buildForgeAttachmentFromSearchItem(
   if (item.kind === "change_request") {
     return {
       type: "forge_change_request",
-      mimeType: "application/fde-forge-change-request",
+      mimeType: "application/frogg-forge-change-request",
       forge: item.forge ?? "github",
       number: item.number,
       title: item.title,
@@ -24,7 +24,7 @@ export function buildForgeAttachmentFromSearchItem(
 
   return {
     type: "forge_issue",
-    mimeType: "application/fde-forge-issue",
+    mimeType: "application/frogg-forge-issue",
     forge: item.forge ?? "github",
     number: item.number,
     title: item.title,

@@ -19,7 +19,7 @@ export function legacyDaemonArtifactName(brand, version, platform, arch) {
 
 /** @param {import('./schema.js').Brand} brand @param {string} version @param {string} platform @param {string} arch */
 export function daemonArtifactName(brand, version, platform, arch) {
-  if (!brand.legacyFde || isLegacyArtifactVersion(version))
+  if (!brand.legacyFrogg || isLegacyArtifactVersion(version))
     return legacyDaemonArtifactName(brand, version, platform, arch);
   const publicPlatform = platform === "darwin" ? "mac" : platform;
   const publicArch = arch === "x64" && platform !== "win" ? "x86_64" : arch;
@@ -34,7 +34,7 @@ export function legacyDesktopSuffix(suffix) {
 /** @param {import('./schema.js').Brand} brand @param {string} version @param {string} suffix */
 export function desktopArtifactName(brand, version, suffix) {
   const resolved =
-    brand.legacyFde && isLegacyArtifactVersion(version) ? legacyDesktopSuffix(suffix) : suffix;
+    brand.legacyFrogg && isLegacyArtifactVersion(version) ? legacyDesktopSuffix(suffix) : suffix;
   return `${brand.artifactPrefix}-${version}-${resolved}`;
 }
 

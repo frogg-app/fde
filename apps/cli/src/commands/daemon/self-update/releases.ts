@@ -1,12 +1,12 @@
-import { brand } from "@fde/branding";
-import { brandEnv } from "@fde/branding/identity";
+import { brand } from "@frogg/branding";
+import { brandEnv } from "@frogg/branding/identity";
 import { z } from "zod";
 import { readGitHubCliToken } from "./github-auth.js";
 import { compareVersions, isNewerVersion, parseVersion } from "./semver.js";
 
 /**
  * Release lookup against the GitHub Releases API, mirroring
- * apps/desktop/src-tauri/src/updates/github.rs: `FDE_GITHUB_TOKEN` raises the
+ * apps/desktop/src-tauri/src/updates/github.rs: `FROGG_GITHUB_TOKEN` raises the
  * rate limit and lets a private repository answer, and is never logged.
  */
 export const DEFAULT_RELEASES_API = brand.distribution.releasesApi ?? "";
@@ -34,11 +34,11 @@ export type GitHubRelease = z.infer<typeof ReleaseSchema>;
 export type GitHubReleaseAsset = z.infer<typeof ReleaseAssetSchema>;
 
 export interface ReleaseSource {
-  /** GitHub Releases API listing URL (`FDE_RELEASES_API`). */
+  /** GitHub Releases API listing URL (`FROGG_RELEASES_API`). */
   apiUrl: string;
-  /** Download base for `<base>/download/v<version>/<asset>` (`FDE_RELEASE_BASE`). */
+  /** Download base for `<base>/download/v<version>/<asset>` (`FROGG_RELEASE_BASE`). */
   releaseBase: string;
-  /** True when `FDE_RELEASE_BASE` was set explicitly, so the mirror wins over asset URLs. */
+  /** True when `FROGG_RELEASE_BASE` was set explicitly, so the mirror wins over asset URLs. */
   releaseBaseOverridden: boolean;
   token: string | null;
 }
@@ -71,10 +71,10 @@ function statusHint(status: number, headers: Headers): string {
       reset > 0 && Number.isFinite(resetDate.getTime())
         ? `; retry after ${resetDate.toISOString()}`
         : "; retry later";
-    return ` (GitHub rate limit or access restriction${retry}, or authenticate with gh auth login / FDE_GITHUB_TOKEN)`;
+    return ` (GitHub rate limit or access restriction${retry}, or authenticate with gh auth login / FROGG_GITHUB_TOKEN)`;
   }
   if (status === 404) {
-    return " (repository or releases not found; FDE_GITHUB_TOKEN is needed for a private repository)";
+    return " (repository or releases not found; FROGG_GITHUB_TOKEN is needed for a private repository)";
   }
   return "";
 }

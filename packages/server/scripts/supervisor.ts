@@ -3,7 +3,7 @@ import { existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { createStream as createRotatingFileStream } from "rotating-file-stream";
 import { signalProcessTree } from "../src/utils/tree-kill.js";
-import { resolveFdeHome } from "../src/server/fde-home.js";
+import { resolveFroggHome } from "../src/server/frogg-home.js";
 
 const WORKER_HEARTBEAT_INTERVAL_MS = 1_000;
 const WORKER_TERMINATION_GRACE_MS = 10_000;
@@ -18,24 +18,24 @@ interface SupervisorLogFileOptions {
 
 type WorkerLifecycleMessage =
   | {
-      type: "fde:shutdown";
+      type: "frogg:shutdown";
       reason?: string;
     }
   | {
-      type: "fde:ready";
+      type: "frogg:ready";
       listen: string;
     }
   | {
-      type: "fde:restart";
+      type: "frogg:restart";
       reason?: string;
     };
 
 interface SupervisorHeartbeatMessage {
-  type: "fde:supervisor-heartbeat";
+  type: "frogg:supervisor-heartbeat";
 }
 
 interface SupervisorGracefulShutdownMessage {
-  type: "fde:graceful-shutdown";
+  type: "frogg:graceful-shutdown";
   reason: string;
 }
 
@@ -70,24 +70,24 @@ function parseLifecycleMessage(msg: unknown): WorkerLifecycleMessage | null {
     return null;
   }
   const type = (msg as { type?: unknown }).type;
-  if (type === "fde:shutdown") {
+  if (type === "frogg:shutdown") {
     const reason = (msg as { reason?: unknown }).reason;
     return {
-      type: "fde:shutdown",
+      type: "frogg:shutdown",
       ...(typeof reason === "string" && reason.trim().length > 0 ? { reason } : {}),
     };
   }
-  if (type === "fde:ready") {
+  if (type === "frogg:ready") {
     const listen = (msg as { listen?: unknown }).listen;
     if (typeof listen !== "string" || listen.trim().length === 0) {
       return null;
     }
-    return { type: "fde:ready", listen };
+    return { type: "frogg:ready", listen };
   }
-  if (type === "fde:restart") {
+  if (type === "frogg:restart") {
     const reason = (msg as { reason?: unknown }).reason;
     return {
-      type: "fde:restart",
+      type: "frogg:restart",
       ...(typeof reason === "string" && reason.trim().length > 0 ? { reason } : {}),
     };
   }
@@ -198,8 +198,9 @@ export function runSupervisor(options: SupervisorOptions): SupervisorController 
       if (child !== currentChild) {
         return;
       }
-      const executionHome = path.join(resolveFdeHome(workerEnv), "execution-service");
-      const retainExecution = workerEnv.FDE_EXECUTION_SERVICE === "1" || existsSync(executionHome);
+      const executionHome = path.join(resolveFroggHome(workerEnv), "execution-service");
+      const retainExecution =
+        workerEnv.FROGG_EXECUTION_SERVICE === "1" || existsSync(executionHome);
       const forceKillMessage = retainExecution
         ? "Worker did not exit after graceful shutdown request; forcing gateway termination"
         : "Worker did not exit after graceful shutdown request; forcing process tree kill";
@@ -254,7 +255,7 @@ export function runSupervisor(options: SupervisorOptions): SupervisorController 
 
     const currentChild = child;
     const heartbeat = setInterval(() => {
-      const message: SupervisorHeartbeatMessage = { type: "fde:supervisor-heartbeat" };
+      const message: SupervisorHeartbeatMessage = { type: "frogg:supervisor-heartbeat" };
       if (currentChild.connected) {
         currentChild.send?.(message, (error) => {
           if (error) {
@@ -289,7 +290,7 @@ export function runSupervisor(options: SupervisorOptions): SupervisorController 
         return;
       }
 
-      if (lifecycleMessage.type === "fde:ready") {
+      if (lifecycleMessage.type === "frogg:ready") {
         writeLifecycleLog("Worker ready", { listen: lifecycleMessage.listen });
         Promise.resolve(options.onWorkerReady?.({ listen: lifecycleMessage.listen })).catch(
           (error) => {
@@ -300,7 +301,7 @@ export function runSupervisor(options: SupervisorOptions): SupervisorController 
         return;
       }
 
-      if (lifecycleMessage.type === "fde:shutdown") {
+      if (lifecycleMessage.type === "frogg:shutdown") {
         const reason = lifecycleMessage.reason ?? "worker_requested_shutdown";
         writeLifecycleLog("Worker requested shutdown", { reason });
         requestShutdown(reason);
@@ -350,7 +351,7 @@ export function runSupervisor(options: SupervisorOptions): SupervisorController 
     }
     const currentChild = child;
     const message: SupervisorGracefulShutdownMessage = {
-      type: "fde:graceful-shutdown",
+      type: "frogg:graceful-shutdown",
       reason,
     };
     writeLifecycleLog("Supervisor requesting graceful worker shutdown", {

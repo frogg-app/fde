@@ -1,5 +1,5 @@
 import type { SessionInboundMessage, SessionOutboundMessage } from "../messages.js";
-import { DAEMON_PERMISSIONS, type DaemonPermission } from "@fde/protocol/messages";
+import { DAEMON_PERMISSIONS, type DaemonPermission } from "@frogg/protocol/messages";
 import {
   requiredPermissionForInbound,
   requiredPermissionForOutbound,

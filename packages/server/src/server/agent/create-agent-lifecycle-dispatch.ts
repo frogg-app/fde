@@ -1,13 +1,13 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { randomUUID } from "node:crypto";
 import type pino from "pino";
 
 import type { ForgeService } from "../../services/forge-service.js";
-import { isFdeOwnedWorktreeCwd } from "../../utils/worktree.js";
+import { isFroggOwnedWorktreeCwd } from "../../utils/worktree.js";
 import { archiveByScope, type ActiveWorkspaceRef } from "../workspace-archive-service.js";
 import type {
-  CreateFdeWorktreeWorkflowFn,
-  CreateFdeWorktreeWorkflowResult,
+  CreateFroggWorktreeWorkflowFn,
+  CreateFroggWorktreeWorkflowResult,
 } from "../worktree-session.js";
 import type { WorkspaceGitService } from "../workspace-git-service.js";
 import type {
@@ -19,13 +19,13 @@ import type { AgentManager, AgentSubscriber, SubscribeOptions } from "./agent-ma
 import type { AgentStorage } from "./agent-storage.js";
 
 interface CreateAgentLifecycleDispatchDependencies {
-  fdeHome: string;
+  froggHome: string;
   worktreesRoot?: string;
   agentManager: AgentManager;
   agentStorage: AgentStorage;
   github: ForgeService;
   workspaceGitService: WorkspaceGitService;
-  createFdeWorktreeWorkflow: CreateFdeWorktreeWorkflowFn;
+  createFroggWorktreeWorkflow: CreateFroggWorktreeWorkflowFn;
   archiveAgentForClose: (agentId: string) => Promise<unknown>;
   findWorkspaceIdForCwd: (cwd: string) => Promise<string | null>;
   listActiveWorkspaces: () => Promise<ActiveWorkspaceRef[]>;
@@ -51,7 +51,7 @@ const inactiveRegistration: LifecycleRegistration = { cancel: async () => undefi
 
 type AutoArchiveTarget =
   | { kind: "agent-only" }
-  | { kind: "created-worktree"; result: CreateFdeWorktreeWorkflowResult };
+  | { kind: "created-worktree"; result: CreateFroggWorktreeWorkflowResult };
 
 export class CreateAgentLifecycleDispatch {
   private readonly autoArchiveAgentIds = new Set<string>();
@@ -63,7 +63,7 @@ export class CreateAgentLifecycleDispatch {
     target: CreateAgentWorktreeTarget | undefined;
     firstAgentContext: FirstAgentContext;
     hasLegacyGitOptions: boolean;
-  }): Promise<CreateFdeWorktreeWorkflowResult | null> {
+  }): Promise<CreateFroggWorktreeWorkflowResult | null> {
     if (input.target && input.hasLegacyGitOptions) {
       throw new Error("create_agent_request worktree cannot be combined with git options");
     }
@@ -77,7 +77,7 @@ export class CreateAgentLifecycleDispatch {
   registerAutoArchiveIfRequested(input: {
     autoArchive: boolean | undefined;
     agentId: string;
-    createdWorktree: CreateFdeWorktreeWorkflowResult | null;
+    createdWorktree: CreateFroggWorktreeWorkflowResult | null;
   }): LifecycleRegistration {
     if (input.autoArchive !== true) {
       return inactiveRegistration;
@@ -90,7 +90,7 @@ export class CreateAgentLifecycleDispatch {
   }
 
   async cleanupCreatedWorktreeAfterFailedAgentCreate(input: {
-    createdWorktree: CreateFdeWorktreeWorkflowResult | null;
+    createdWorktree: CreateFroggWorktreeWorkflowResult | null;
     createdAgentId: string | null;
   }): Promise<void> {
     const { createdWorktree, createdAgentId } = input;
@@ -116,18 +116,18 @@ export class CreateAgentLifecycleDispatch {
     cwd: string,
     target: CreateAgentWorktreeTarget,
     firstAgentContext: FirstAgentContext,
-  ): Promise<CreateFdeWorktreeWorkflowResult> {
+  ): Promise<CreateFroggWorktreeWorkflowResult> {
     const baseInput = {
       cwd,
       firstAgentContext,
       runSetup: false,
-      fdeHome: this.dependencies.fdeHome,
+      froggHome: this.dependencies.froggHome,
       worktreesRoot: this.dependencies.worktreesRoot,
     } as const;
 
     switch (target.mode) {
       case "branch-off":
-        return this.dependencies.createFdeWorktreeWorkflow(
+        return this.dependencies.createFroggWorktreeWorkflow(
           {
             ...baseInput,
             worktreeSlug: target.newBranch,
@@ -137,13 +137,13 @@ export class CreateAgentLifecycleDispatch {
           target.base ? { resolveDefaultBranch: async () => target.base! } : undefined,
         );
       case "checkout-branch":
-        return this.dependencies.createFdeWorktreeWorkflow({
+        return this.dependencies.createFroggWorktreeWorkflow({
           ...baseInput,
           action: "checkout",
           refName: target.branch,
         });
       case "checkout-pr":
-        return this.dependencies.createFdeWorktreeWorkflow({
+        return this.dependencies.createFroggWorktreeWorkflow({
           ...baseInput,
           action: "checkout",
           githubPrNumber: target.prNumber,
@@ -187,12 +187,12 @@ export class CreateAgentLifecycleDispatch {
 
   private async archiveAutoCreatedWorktree(options: {
     agentId: string | null;
-    createdWorktree: CreateFdeWorktreeWorkflowResult;
+    createdWorktree: CreateFroggWorktreeWorkflowResult;
   }): Promise<void> {
     const { createdWorktree } = options;
     const worktreePath = createdWorktree.worktree.worktreePath;
-    const ownership = await isFdeOwnedWorktreeCwd(worktreePath, {
-      fdeHome: this.dependencies.fdeHome,
+    const ownership = await isFroggOwnedWorktreeCwd(worktreePath, {
+      froggHome: this.dependencies.froggHome,
       worktreesRoot: this.dependencies.worktreesRoot,
     });
     if (!ownership.allowed) {
@@ -201,8 +201,8 @@ export class CreateAgentLifecycleDispatch {
 
     await archiveByScope(
       {
-        fdeHome: this.dependencies.fdeHome,
-        fdeWorktreesBaseRoot: this.dependencies.worktreesRoot,
+        froggHome: this.dependencies.froggHome,
+        froggWorktreesBaseRoot: this.dependencies.worktreesRoot,
         github: this.dependencies.github,
         workspaceGitService: this.dependencies.workspaceGitService,
         agentManager: this.dependencies.agentManager,
@@ -266,7 +266,7 @@ export function registerAgentAutoArchive(input: {
 }
 
 function toAutoArchiveTarget(
-  createdWorktree: CreateFdeWorktreeWorkflowResult | null,
+  createdWorktree: CreateFroggWorktreeWorkflowResult | null,
 ): AutoArchiveTarget {
   return createdWorktree
     ? { kind: "created-worktree", result: createdWorktree }

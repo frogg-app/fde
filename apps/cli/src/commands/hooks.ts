@@ -1,10 +1,10 @@
 import { Command } from "commander";
-import { resolveHookActivity, type AgentHookActivityState } from "@fde/server/agent-hooks";
+import { resolveHookActivity, type AgentHookActivityState } from "@frogg/server/agent-hooks";
 
 interface HookEnvironment {
-  FDE_TERMINAL_ID?: string;
-  FDE_ACTIVITY_TOKEN?: string;
-  FDE_TERMINAL_ACTIVITY_URL?: string;
+  FROGG_TERMINAL_ID?: string;
+  FROGG_ACTIVITY_TOKEN?: string;
+  FROGG_TERMINAL_ACTIVITY_URL?: string;
 }
 
 interface HookInput {
@@ -52,9 +52,9 @@ export async function runHooksCommand(
 }
 
 function resolveTarget(env: HookEnvironment) {
-  const terminalId = env.FDE_TERMINAL_ID;
-  const token = env.FDE_ACTIVITY_TOKEN;
-  const url = env.FDE_TERMINAL_ACTIVITY_URL;
+  const terminalId = env.FROGG_TERMINAL_ID;
+  const token = env.FROGG_ACTIVITY_TOKEN;
+  const url = env.FROGG_TERMINAL_ACTIVITY_URL;
 
   if (!terminalId || !token || !url) return null;
   return { terminalId, token, url };

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { AgentStreamEventPayload } from "@fde/protocol/messages";
-import type { AgentTimelineItem, ToolCallDetail } from "@fde/protocol/agent-types";
+import type { AgentStreamEventPayload } from "@frogg/protocol/messages";
+import type { AgentTimelineItem, ToolCallDetail } from "@frogg/protocol/agent-types";
 import {
   createUserMessage,
   hydrateStreamState,
@@ -4024,7 +4024,7 @@ describe("processAgentStreamEvents", () => {
 
   it("keeps Claude image tool-result output before following assistant blocks while text streams", () => {
     const imageMarkdown =
-      "![Image](/tmp/fde-attachments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.png)";
+      "![Image](/tmp/frogg-attachments/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.png)";
     const result = processAgentStreamEvents({
       events: [
         makeStreamReducerEvent(

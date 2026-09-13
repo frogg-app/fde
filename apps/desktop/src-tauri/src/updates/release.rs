@@ -185,13 +185,13 @@ mod tests {
     fn deserializes_github_release_json() {
         let json = r#"[{"tag_name":"v1.0.0","draft":false,"prerelease":false,
             "body":"notes","published_at":"2026-01-01T00:00:00Z",
-            "assets":[{"name":"FDE-1.0.0-linux-x86_64.deb","size":12,"browser_download_url":"https://x/y"}]}]"#;
+            "assets":[{"name":"Frogg-1.0.0-linux-x86_64.deb","size":12,"browser_download_url":"https://x/y"}]}]"#;
         let releases: Vec<Release> = serde_json::from_str(json).unwrap();
         assert_eq!(releases[0].assets[0].url, "https://x/y");
         assert_eq!(releases[0].assets[0].size, 12);
         assert_eq!(
             releases[0]
-                .asset("FDE-1.0.0-linux-x86_64.deb")
+                .asset("Frogg-1.0.0-linux-x86_64.deb")
                 .map(|a| a.size),
             Some(12)
         );

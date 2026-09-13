@@ -124,9 +124,9 @@ export function SshDeployCard({
   } else if (probe.status === "failed") {
     badgeLabel = t("settings.host.sshDeploy.status.unreachable");
     badgeVariant = "error";
-  } else if (probe.probe.hasFde.installed) {
-    badgeLabel = probe.probe.hasFde.version
-      ? t("settings.host.sshDeploy.status.installed", { version: probe.probe.hasFde.version })
+  } else if (probe.probe.hasFrogg.installed) {
+    badgeLabel = probe.probe.hasFrogg.version
+      ? t("settings.host.sshDeploy.status.installed", { version: probe.probe.hasFrogg.version })
       : t("settings.host.sshDeploy.status.installedUnknown");
     badgeVariant = "success";
   } else if (probe.probe.hasDockerContainer) {
@@ -142,7 +142,7 @@ export function SshDeployCard({
     ? sshDeployPrimaryAction(ready, method, versionRef.current.trim() || defaultVersion || null)
     : "deploy";
   const canUninstall =
-    ready !== null && (method === "docker" ? ready.hasDockerContainer : ready.hasFde.installed);
+    ready !== null && (method === "docker" ? ready.hasDockerContainer : ready.hasFrogg.installed);
   const handlePrimary = useCallback(
     () => handleDeploy(primaryAction),
     [handleDeploy, primaryAction],

@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "id": "frogg",
+  "name": "Frogg",
+  "fullName": "Frogg",
+  "publisher": "Frogg App",
+  "description": "Frogg: desktop client for local and remote AI coding agents.",
+  "applicationId": "app.frogg.frogg",
+  "daemonPort": 9999,
+  "scheme": "frogg",
+  "artifactPrefix": "Frogg",
+  "assets": {
+    "icon": "../../apps/ui/assets/images/icon.png",
+    "ios": "../../apps/ui/assets/images/icon-ios.png",
+    "foreground": "../../apps/ui/assets/images/android-icon-foreground.png",
+    "notification": "../../apps/ui/assets/images/notification-icon.png",
+    "splash": "../../apps/ui/assets/images/splash-icon.png"
+  },
+  "colors": {
+    "light": {
+      "accent": "#045B9D",
+      "accentBright": "#0A78C9",
+      "accentForeground": "#ffffff",
+      "background": "#ffffff",
+      "foreground": "#18181b"
+    },
+    "dark": {
+      "accent": "#25B5C8",
+      "accentBright": "#7FD9E6",
+      "accentForeground": "#07222b",
+      "background": "#181b1a",
+      "foreground": "#fafafa"
+    }
+  },
+  "installer": {
+    "tagline": "Run and monitor coding agents from anywhere",
+    "colors": {
+      "background": "#0e1211",
+      "surface": "#1a201f",
+      "foreground": "#f4f7f6",
+      "mutedForeground": "#a3adab",
+      "success": "#3fcf8e",
+      "danger": "#f87171"
+    }
+  },
+  "links": {
+    "website": "https://frogg.app",
+    "source": "https://github.com/frogg-app/frogg",
+    "docs": "https://frogg.app/docs",
+    "support": "https://github.com/frogg-app/frogg/issues",
+    "installer": "https://frogg.app/install.sh"
+  },
+  "services": {
+    "pairingUrl": "https://pair.frogg.app",
+    "allowedOrigins": []
+  },
+  "distribution": {
+    "repository": "frogg-app/frogg",
+    "updates": "github-release",
+    "dockerImage": "froggapp/frogg",
+    "pairingImage": "froggapp/frogg-pair-page"
+  }
+}

@@ -88,7 +88,7 @@ it("subnetOf accepts CIDR notation from the desktop shell", () => {
 
 // Regression: the shell reports "192.168.1.23/24", and the private-range check
 // used to reject the CIDR form outright, so every desktop scan silently fell
-// back to the default subnets ("No FDE servers found on 192.168.0.0/24, …").
+// back to the default subnets ("No Frogg servers found on 192.168.0.0/24, …").
 it("uses the shell's CIDR addresses for the subnet list", () => {
   expect(isPrivateIpv4("192.168.1.23/24")).toBe(true);
   expect(isPrivateIpv4("203.0.113.4/24")).toBe(false);

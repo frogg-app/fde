@@ -3,7 +3,7 @@ export interface ProbeTarget {
   port: number;
 }
 
-/** An FDE daemon that answered a probe. `endpoint` is what a directTcp connection stores. */
+/** A Frogg daemon that answered a probe. `endpoint` is what a directTcp connection stores. */
 export interface DiscoveredServer {
   ip: string;
   port: number;
@@ -16,7 +16,7 @@ export interface DiscoveredServer {
   source: "identity" | "health";
   /**
    * True when the daemon is unclaimed: a LAN client must redeem a pairing link
-   * (`fde daemon pair` on the host) before it can connect. Null when unknown.
+   * (`frogg daemon pair` on the host) before it can connect. Null when unknown.
    */
   pairingRequired: boolean | null;
 }

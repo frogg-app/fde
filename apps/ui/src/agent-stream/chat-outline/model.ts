@@ -1,4 +1,4 @@
-import type { AgentTimelinePromptIndexPayload } from "@fde/client/internal/daemon-client";
+import type { AgentTimelinePromptIndexPayload } from "@frogg/client/internal/daemon-client";
 
 export type ChatOutlinePrompt = AgentTimelinePromptIndexPayload["prompts"][number];
 

@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename);
 
 function main() {
   const repoRoot = path.resolve(__dirname, "../../..");
-  const outPath = path.join(repoRoot, "docs/schemas/fde.config.v1.json");
+  const outPath = path.join(repoRoot, "docs/schemas/frogg.config.v1.json");
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
 
   const schema = z.toJSONSchema(PersistedConfigSchema, {
@@ -18,7 +18,7 @@ function main() {
     unrepresentable: "any",
     io: "input",
   });
-  schema.title = "FdeConfigV1";
+  schema.title = "FroggConfigV1";
 
   fs.writeFileSync(outPath, JSON.stringify(schema, null, 2) + "\n", "utf8");
   process.stdout.write(`Wrote ${outPath}\n`);

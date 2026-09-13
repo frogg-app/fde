@@ -1,6 +1,6 @@
 import { PackageVersionResolutionError, resolvePackageVersion } from "./package-version.js";
 
-const SERVER_PACKAGE_NAME = "@fde/server";
+const SERVER_PACKAGE_NAME = "@frogg/server";
 
 export class DaemonVersionResolutionError extends PackageVersionResolutionError {}
 

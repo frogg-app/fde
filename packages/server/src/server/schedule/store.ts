@@ -5,7 +5,7 @@ import {
   StoredScheduleSchema,
   type ScheduleTarget,
   type StoredSchedule,
-} from "@fde/protocol/schedule/types";
+} from "@frogg/protocol/schedule/types";
 import { writeJsonFileAtomic } from "../atomic-file.js";
 
 function generateScheduleId(): string {

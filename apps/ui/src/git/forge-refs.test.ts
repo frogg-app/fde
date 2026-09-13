@@ -5,14 +5,14 @@ describe("parseForgeRef", () => {
   it.each([
     [
       "GitHub pull request",
-      "git@github.com:frogg-app/fde.git",
-      "https://github.com/frogg-app/fde/pull/994/files?diff=split#discussion_r123",
+      "git@github.com:frogg-app/frogg.git",
+      "https://github.com/frogg-app/frogg/pull/994/files?diff=split#discussion_r123",
       { kind: "change_request", number: 994 },
     ],
     [
       "GitHub issue",
-      "https://github.com/frogg-app/fde.git",
-      "https://github.com/frogg-app/fde/issues/456",
+      "https://github.com/frogg-app/frogg.git",
+      "https://github.com/frogg-app/frogg/issues/456",
       { kind: "issue", number: 456 },
     ],
     [
@@ -52,8 +52,8 @@ describe("parseForgeRef", () => {
   it("canonicalizes a cloud SSH alias to its web host", () => {
     expect(
       parseForgeRef(
-        "https://github.com/frogg-app/fde/pull/994",
-        "ssh://git@ssh.github.com/frogg-app/fde.git",
+        "https://github.com/frogg-app/frogg/pull/994",
+        "ssh://git@ssh.github.com/frogg-app/frogg.git",
       ),
     ).toEqual({ kind: "change_request", number: 994 });
   });
@@ -72,8 +72,8 @@ describe("parseForgeRef", () => {
   it("does not apply another forge's route grammar to a known cloud host", () => {
     expect(
       parseForgeRef(
-        "https://github.com/frogg-app/fde/pulls/31",
-        "git@github.com:frogg-app/fde.git",
+        "https://github.com/frogg-app/frogg/pulls/31",
+        "git@github.com:frogg-app/frogg.git",
       ),
     ).toBeNull();
     expect(
@@ -98,7 +98,7 @@ describe("extractForgeRefs", () => {
   });
 
   it("returns no references without text or a valid remote", () => {
-    expect(extractForgeRefs("", "git@github.com:frogg-app/fde.git")).toEqual([]);
-    expect(extractForgeRefs("https://github.com/frogg-app/fde/pull/1", null)).toEqual([]);
+    expect(extractForgeRefs("", "git@github.com:frogg-app/frogg.git")).toEqual([]);
+    expect(extractForgeRefs("https://github.com/frogg-app/frogg/pull/1", null)).toEqual([]);
   });
 });

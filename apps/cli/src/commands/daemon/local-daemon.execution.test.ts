@@ -7,8 +7,8 @@ import { expect, test, vi } from "vitest";
 import { stopLocalDaemon } from "./local-daemon.js";
 
 test("forced gateway stop preserves detached execution descendants with no opt-in environment", async () => {
-  vi.stubEnv("FDE_EXECUTION_SERVICE", "");
-  const home = await mkdtemp(path.join(os.tmpdir(), "fde-cli-execution-"));
+  vi.stubEnv("FROGG_EXECUTION_SERVICE", "");
+  const home = await mkdtemp(path.join(os.tmpdir(), "frogg-cli-execution-"));
   const owner = spawn(
     process.execPath,
     [
@@ -32,7 +32,7 @@ test("forced gateway stop preserves detached execution descendants with no opt-i
     expect(Number.isInteger(descendant)).toBe(true);
     await mkdir(path.join(home, "execution-service"));
     await writeFile(
-      path.join(home, "fde.pid"),
+      path.join(home, "frogg.pid"),
       JSON.stringify({ pid: owner.pid, listen: "127.0.0.1:1" }),
     );
     const result = await stopLocalDaemon({

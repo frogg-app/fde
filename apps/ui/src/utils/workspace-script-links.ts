@@ -1,8 +1,8 @@
-import { parseHostPort } from "@fde/protocol/daemon-endpoints";
-import type { WorkspaceScriptPayload } from "@fde/protocol/messages";
+import { parseHostPort } from "@frogg/protocol/daemon-endpoints";
+import type { WorkspaceScriptPayload } from "@frogg/protocol/messages";
 import type { ActiveConnection } from "@/runtime/host-runtime";
 
-export type WorkspaceScriptLinkKind = "public" | "fde" | "direct";
+export type WorkspaceScriptLinkKind = "public" | "frogg" | "direct";
 
 export interface WorkspaceScriptLinkTarget {
   kind: WorkspaceScriptLinkKind;
@@ -85,7 +85,7 @@ export function resolveWorkspaceScriptLink(input: {
 
   const targets: WorkspaceScriptLinkTarget[] = [];
   addTarget(targets, "public", publicProxyUrl);
-  addTarget(targets, "fde", localProxyUrl);
+  addTarget(targets, "frogg", localProxyUrl);
   addTarget(targets, "direct", buildDirectServiceUrl(activeConnection, script.port));
 
   return { primary: targets[0] ?? null, targets };

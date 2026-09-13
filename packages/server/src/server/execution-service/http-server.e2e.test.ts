@@ -37,7 +37,7 @@ test("invalid forwarding cannot reach any HTTP or upgrade authorization listener
       {
         host: "127.0.0.1",
         port: address.port,
-        headers: { "x-fde-execution-token": "forged", "x-fde-execution-peer": "127.0.0.1" },
+        headers: { "x-frogg-execution-token": "forged", "x-frogg-execution-peer": "127.0.0.1" },
       },
       (res) => {
         res.resume();
@@ -55,7 +55,7 @@ test("invalid forwarding cannot reach any HTTP or upgrade authorization listener
     text += chunk.toString();
   });
   socket.write(
-    "GET /ws HTTP/1.1\r\nHost: localhost\r\nConnection: Upgrade\r\nUpgrade: websocket\r\nx-fde-execution-token: forged\r\nx-fde-execution-peer: 127.0.0.1\r\n\r\n",
+    "GET /ws HTTP/1.1\r\nHost: localhost\r\nConnection: Upgrade\r\nUpgrade: websocket\r\nx-frogg-execution-token: forged\r\nx-frogg-execution-peer: 127.0.0.1\r\n\r\n",
   );
   await once(socket, "close");
   expect(text).toContain("403 Forbidden");

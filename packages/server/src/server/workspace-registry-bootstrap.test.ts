@@ -19,7 +19,7 @@ let GIT_WORKTREE: string;
 
 describe("bootstrapWorkspaceRegistries", () => {
   let tmpDir: string;
-  let fdeHome: string;
+  let froggHome: string;
   let agentStorage: AgentStorage;
   let projectRegistry: FileBackedProjectRegistry;
   let workspaceRegistry: FileBackedWorkspaceRegistry;
@@ -32,14 +32,14 @@ describe("bootstrapWorkspaceRegistries", () => {
     ARCHIVED_PROJECT = path.join(tmpDir, "archived-project");
     GIT_PROJECT = path.join(tmpDir, "legacy-git-project");
     GIT_WORKTREE = path.join(tmpDir, "legacy-git-project-feature");
-    fdeHome = path.join(tmpDir, ".fde");
-    agentStorage = new AgentStorage(path.join(fdeHome, "agents"), logger);
+    froggHome = path.join(tmpDir, ".frogg");
+    agentStorage = new AgentStorage(path.join(froggHome, "agents"), logger);
     projectRegistry = new FileBackedProjectRegistry(
-      path.join(fdeHome, "projects", "projects.json"),
+      path.join(froggHome, "projects", "projects.json"),
       logger,
     );
     workspaceRegistry = new FileBackedWorkspaceRegistry(
-      path.join(fdeHome, "projects", "workspaces.json"),
+      path.join(froggHome, "projects", "workspaces.json"),
       logger,
     );
     workspaceGitService = createNoopWorkspaceGitService();
@@ -78,7 +78,7 @@ describe("bootstrapWorkspaceRegistries", () => {
     });
 
     await bootstrapWorkspaceRegistries({
-      fdeHome,
+      froggHome,
       agentStorage,
       projectRegistry,
       workspaceRegistry,
@@ -119,7 +119,7 @@ describe("bootstrapWorkspaceRegistries", () => {
     });
 
     await bootstrapWorkspaceRegistries({
-      fdeHome,
+      froggHome,
       agentStorage,
       projectRegistry,
       workspaceRegistry,
@@ -160,7 +160,7 @@ describe("bootstrapWorkspaceRegistries", () => {
 
     await expect(
       bootstrapWorkspaceRegistries({
-        fdeHome,
+        froggHome,
         agentStorage,
         projectRegistry,
         workspaceRegistry,
@@ -225,7 +225,7 @@ describe("bootstrapWorkspaceRegistries", () => {
     });
 
     await bootstrapWorkspaceRegistries({
-      fdeHome,
+      froggHome,
       agentStorage,
       projectRegistry,
       workspaceRegistry,
@@ -298,7 +298,7 @@ describe("bootstrapWorkspaceRegistries", () => {
     });
 
     await bootstrapWorkspaceRegistries({
-      fdeHome,
+      froggHome,
       agentStorage,
       projectRegistry,
       workspaceRegistry,
@@ -319,7 +319,7 @@ describe("bootstrapWorkspaceRegistries", () => {
         currentBranch: cwd === GIT_PROJECT ? "main" : "feature/plain",
         remoteUrl: "git@github.com:acme/legacy-project.git",
         worktreeRoot: cwd,
-        isFdeOwnedWorktree: false,
+        isFroggOwnedWorktree: false,
         mainRepoRoot: cwd === GIT_PROJECT ? null : GIT_PROJECT,
       }),
     });
@@ -348,7 +348,7 @@ describe("bootstrapWorkspaceRegistries", () => {
     }
 
     await bootstrapWorkspaceRegistries({
-      fdeHome,
+      froggHome,
       agentStorage,
       projectRegistry,
       workspaceRegistry,
@@ -440,7 +440,7 @@ describe("bootstrapWorkspaceRegistries", () => {
     });
 
     await bootstrapWorkspaceRegistries({
-      fdeHome,
+      froggHome,
       agentStorage,
       projectRegistry,
       workspaceRegistry,
@@ -495,7 +495,7 @@ describe("bootstrapWorkspaceRegistries", () => {
     });
 
     await bootstrapWorkspaceRegistries({
-      fdeHome,
+      froggHome,
       agentStorage,
       projectRegistry,
       workspaceRegistry,
@@ -513,7 +513,7 @@ describe("bootstrapWorkspaceRegistries", () => {
       archivedAt: null,
     });
     await bootstrapWorkspaceRegistries({
-      fdeHome,
+      froggHome,
       agentStorage,
       projectRegistry,
       workspaceRegistry,
@@ -560,7 +560,7 @@ describe("bootstrapWorkspaceRegistries", () => {
     });
 
     await bootstrapWorkspaceRegistries({
-      fdeHome,
+      froggHome,
       agentStorage,
       projectRegistry,
       workspaceRegistry,

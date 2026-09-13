@@ -25,7 +25,7 @@ interface ProviderLaunchCase {
   launchMode?: "spawnProcess" | "piRuntime";
 }
 
-const JSON_ARG = '{"mcpServers":{"fde":{"type":"http","url":"http://127.0.0.1:9999/mcp"}}}';
+const JSON_ARG = '{"mcpServers":{"frogg":{"type":"http","url":"http://127.0.0.1:9999/mcp"}}}';
 const tempDirs: string[] = [];
 
 function makeFixture(
@@ -33,10 +33,10 @@ function makeFixture(
   expectedArgs: string[],
   launchMode: "spawnProcess" | "piRuntime" = "spawnProcess",
 ) {
-  const root = mkdtempSync(path.join(tmpdir(), `fde ${binaryName} launch `));
+  const root = mkdtempSync(path.join(tmpdir(), `frogg ${binaryName} launch `));
   tempDirs.push(root);
 
-  const fakeDaemonNode = path.join(root, "Fake Fde.exe");
+  const fakeDaemonNode = path.join(root, "Fake Frogg.exe");
   copyFileSync(process.execPath, fakeDaemonNode);
 
   const assertScript = path.join(root, "assert-argv.js");

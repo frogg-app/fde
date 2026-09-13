@@ -3,7 +3,7 @@ import path from "node:path";
 
 import { STTManager } from "../src/server/agent/stt-manager.js";
 import { createRootLogger } from "../src/server/logger.js";
-import { resolveFdeHome } from "../src/server/fde-home.js";
+import { resolveFroggHome } from "../src/server/frogg-home.js";
 import {
   DEFAULT_LOCAL_STT_MODEL,
   DEFAULT_LOCAL_TTS_MODEL,
@@ -29,7 +29,7 @@ function usage(): string {
     "  npm run speech:transcribe:local -- ./sample.wav --out ./tmp/sample.transcript.txt",
     "",
     "Env fallbacks:",
-    "  FDE_LOCAL_MODELS_DIR",
+    "  FROGG_LOCAL_MODELS_DIR",
   ].join("\n");
 }
 
@@ -43,9 +43,9 @@ function parseArgs(argv: string[]): CliOptions {
     throw new Error(`Missing <wavPath>\n\n${usage()}`);
   }
 
-  const fdeHome = resolveFdeHome();
+  const froggHome = resolveFroggHome();
   const defaultModelsDir =
-    process.env.FDE_LOCAL_MODELS_DIR ?? path.join(fdeHome, "models", "local-speech");
+    process.env.FROGG_LOCAL_MODELS_DIR ?? path.join(froggHome, "models", "local-speech");
 
   const positional: string[] = [];
   let outPath: string | undefined;

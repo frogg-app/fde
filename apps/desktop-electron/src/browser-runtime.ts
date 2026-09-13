@@ -12,26 +12,26 @@ import log from "electron-log/main";
 import { createBrowserCaptureService } from "./features/browser-capture.js";
 import { BrowserKeyboard } from "./features/browser-keyboard/index.js";
 import {
-  clearFdeBrowserProfile,
-  getLegacyFdeBrowserProfileSession,
-  getFdeBrowserProfileSession,
-  getFdeBrowserProfileSessions,
-  listFdeBrowserProfileGuests,
-  FDE_BROWSER_PROFILE_PARTITION,
-  readLegacyFdeBrowserIds,
+  clearFroggBrowserProfile,
+  getLegacyFroggBrowserProfileSession,
+  getFroggBrowserProfileSession,
+  getFroggBrowserProfileSessions,
+  listFroggBrowserProfileGuests,
+  FROGG_BROWSER_PROFILE_PARTITION,
+  readLegacyFroggBrowserIds,
 } from "./features/browser-profile.js";
 import {
   BROWSER_NEW_TAB_REQUEST_EVENT,
   decideBrowserWindowOpenRequest,
-  getFdeBrowserIdForWebContents,
-  getFdeBrowserWebContentsForHostWindow,
-  getFdeBrowserWebviewRegistry,
-  listRegisteredFdeBrowserIds,
+  getFroggBrowserIdForWebContents,
+  getFroggBrowserWebContentsForHostWindow,
+  getFroggBrowserWebviewRegistry,
+  listRegisteredFroggBrowserIds,
   PendingBrowserWindowOpenRequests,
-  registerAttachedFdeBrowser,
+  registerAttachedFroggBrowser,
   registerBrowserWebviewNavigationGuards,
-  setWorkspaceActiveFdeBrowserId,
-  unregisterFdeBrowserFromHost,
+  setWorkspaceActiveFroggBrowserId,
+  unregisterFroggBrowserFromHost,
 } from "./features/browser-webviews/index.js";
 import { handleDesktopIpc } from "./ipc-security.js";
 import { buildStandardContextMenuItems } from "./window/window-manager.js";
@@ -85,7 +85,7 @@ function readActiveBrowserInput(
   };
 }
 
-export const browserKeyboard = new BrowserKeyboard(getFdeBrowserWebviewRegistry());
+export const browserKeyboard = new BrowserKeyboard(getFroggBrowserWebviewRegistry());
 browserKeyboard.registerIpc();
 
 export function showBrowserWebviewContextMenu(
@@ -104,7 +104,7 @@ export function showBrowserWebviewContextMenu(
             click: () => {
               log.info("[browser-devtools] inspect-element.request", {
                 webContentsId: contents.id,
-                browserId: getFdeBrowserIdForWebContents(contents),
+                browserId: getFroggBrowserIdForWebContents(contents),
                 x: params.x,
                 y: params.y,
                 isDevToolsOpened: contents.isDevToolsOpened(),
@@ -130,7 +130,7 @@ function getBrowserPopupWindowOptions(
     show: true,
     autoHideMenuBar: true,
     webPreferences: {
-      partition: FDE_BROWSER_PROFILE_PARTITION,
+      partition: FROGG_BROWSER_PROFILE_PARTITION,
       nodeIntegration: false,
       nodeIntegrationInSubFrames: false,
       nodeIntegrationInWorker: false,
@@ -169,7 +169,7 @@ export function installBrowserWindowOpenHandler(input: {
       };
     }
 
-    const sourceBrowserId = getFdeBrowserIdForWebContents(sourceContents);
+    const sourceBrowserId = getFroggBrowserIdForWebContents(sourceContents);
     if (sourceBrowserId) {
       mainWindow.webContents.send(BROWSER_NEW_TAB_REQUEST_EVENT, {
         sourceBrowserId,
@@ -195,15 +195,15 @@ export function installBrowserWindowOpenHandler(input: {
   });
 }
 
-handleDesktopIpc("fde:browser:register-attached", (event, rawInput: unknown) => {
+handleDesktopIpc("frogg:browser:register-attached", (event, rawInput: unknown) => {
   const input = readAttachedBrowserInput(rawInput);
   if (!input) {
     throw new Error("Invalid attached browser registration");
   }
-  const registered = registerAttachedFdeBrowser({
+  const registered = registerAttachedFroggBrowser({
     ...input,
     sender: event.sender,
-    profileSession: getFdeBrowserProfileSession(session),
+    profileSession: getFroggBrowserProfileSession(session),
     findWebContents: (webContentsId) => webContents.fromId(webContentsId) ?? null,
   });
   if (!registered) {
@@ -217,7 +217,7 @@ handleDesktopIpc("fde:browser:register-attached", (event, rawInput: unknown) => 
   log.info("[browser-webview] registered", {
     browserId: input.browserId,
     webContentsId: input.webContentsId,
-    registeredBrowserIds: listRegisteredFdeBrowserIds(),
+    registeredBrowserIds: listRegisteredFroggBrowserIds(),
   });
   for (const url of pendingBrowserWindowOpenRequests.take(input.webContentsId)) {
     event.sender.send(BROWSER_NEW_TAB_REQUEST_EVENT, {
@@ -227,50 +227,53 @@ handleDesktopIpc("fde:browser:register-attached", (event, rawInput: unknown) => 
   }
 });
 
-handleDesktopIpc("fde:browser:unregister-workspace-browser", async (event, browserId: unknown) => {
-  if (typeof browserId === "string" && browserId.trim().length > 0) {
-    const normalizedBrowserId = browserId.trim();
-    const hasOtherHost = getFdeBrowserWebviewRegistry().hasBrowserInOtherHostWindow(
-      event.sender.id,
-      normalizedBrowserId,
-    );
-    unregisterFdeBrowserFromHost(event.sender.id, normalizedBrowserId);
-    // COMPAT(browserProfile): added in v0.1.108; remove after 2027-01-15.
-    const legacyProfile = hasOtherHost
-      ? null
-      : getLegacyFdeBrowserProfileSession(session, normalizedBrowserId);
-    if (legacyProfile) {
-      try {
-        await clearFdeBrowserProfile({
-          profileSessions: [legacyProfile],
-          listGuests: () => [],
-          logReloadError: () => {},
-        });
-      } catch (error) {
-        log.warn("[browser-profile] failed to clear legacy tab profile", {
-          browserId: normalizedBrowserId,
-          error,
-        });
+handleDesktopIpc(
+  "frogg:browser:unregister-workspace-browser",
+  async (event, browserId: unknown) => {
+    if (typeof browserId === "string" && browserId.trim().length > 0) {
+      const normalizedBrowserId = browserId.trim();
+      const hasOtherHost = getFroggBrowserWebviewRegistry().hasBrowserInOtherHostWindow(
+        event.sender.id,
+        normalizedBrowserId,
+      );
+      unregisterFroggBrowserFromHost(event.sender.id, normalizedBrowserId);
+      // COMPAT(browserProfile): added in v0.1.108; remove after 2027-01-15.
+      const legacyProfile = hasOtherHost
+        ? null
+        : getLegacyFroggBrowserProfileSession(session, normalizedBrowserId);
+      if (legacyProfile) {
+        try {
+          await clearFroggBrowserProfile({
+            profileSessions: [legacyProfile],
+            listGuests: () => [],
+            logReloadError: () => {},
+          });
+        } catch (error) {
+          log.warn("[browser-profile] failed to clear legacy tab profile", {
+            browserId: normalizedBrowserId,
+            error,
+          });
+        }
       }
     }
-  }
-});
+  },
+);
 
-handleDesktopIpc("fde:browser:set-workspace-active-browser", (event, rawInput: unknown) => {
+handleDesktopIpc("frogg:browser:set-workspace-active-browser", (event, rawInput: unknown) => {
   const input = readActiveBrowserInput(rawInput);
   if (input) {
-    setWorkspaceActiveFdeBrowserId({
+    setWorkspaceActiveFroggBrowserId({
       ...input,
       hostWebContentsId: event.sender.id,
     });
   }
 });
 
-handleDesktopIpc("fde:browser:focus", (event, browserId: unknown): boolean => {
+handleDesktopIpc("frogg:browser:focus", (event, browserId: unknown): boolean => {
   if (typeof browserId !== "string" || browserId.trim().length === 0) {
     return false;
   }
-  const contents = getFdeBrowserWebContentsForHostWindow(browserId, event.sender.id);
+  const contents = getFroggBrowserWebContentsForHostWindow(browserId, event.sender.id);
   if (!contents) {
     return false;
   }
@@ -278,24 +281,24 @@ handleDesktopIpc("fde:browser:focus", (event, browserId: unknown): boolean => {
   return true;
 });
 
-handleDesktopIpc("fde:browser:open-devtools", (event, browserId: unknown) => {
+handleDesktopIpc("frogg:browser:open-devtools", (event, browserId: unknown) => {
   if (typeof browserId !== "string" || browserId.trim().length === 0) {
     const result = {
       ok: false,
       reason: "invalid-browser-id",
       browserId,
-      registeredBrowserIds: listRegisteredFdeBrowserIds(),
+      registeredBrowserIds: listRegisteredFroggBrowserIds(),
     };
     log.warn("[browser-devtools] open-devtools.invalid", result);
     return result;
   }
-  const contents = getFdeBrowserWebContentsForHostWindow(browserId, event.sender.id);
+  const contents = getFroggBrowserWebContentsForHostWindow(browserId, event.sender.id);
   if (!contents) {
     const result = {
       ok: false,
       reason: "browser-webcontents-not-found",
       browserId,
-      registeredBrowserIds: listRegisteredFdeBrowserIds(),
+      registeredBrowserIds: listRegisteredFroggBrowserIds(),
     };
     log.warn("[browser-devtools] open-devtools.not-found", result);
     return result;
@@ -305,7 +308,7 @@ handleDesktopIpc("fde:browser:open-devtools", (event, browserId: unknown) => {
     webContentsId: contents.id,
     isDestroyed: contents.isDestroyed(),
     isDevToolsOpened: contents.isDevToolsOpened(),
-    registeredBrowserIds: listRegisteredFdeBrowserIds(),
+    registeredBrowserIds: listRegisteredFroggBrowserIds(),
   });
   contents.openDevTools({ mode: "detach" });
   const result = {
@@ -319,16 +322,16 @@ handleDesktopIpc("fde:browser:open-devtools", (event, browserId: unknown) => {
   return result;
 });
 
-handleDesktopIpc("fde:browser:clear-profile", async (_event, rawLegacyBrowserIds: unknown) => {
-  const profileSessions = getFdeBrowserProfileSessions(
+handleDesktopIpc("frogg:browser:clear-profile", async (_event, rawLegacyBrowserIds: unknown) => {
+  const profileSessions = getFroggBrowserProfileSessions(
     session,
-    readLegacyFdeBrowserIds(rawLegacyBrowserIds),
+    readLegacyFroggBrowserIds(rawLegacyBrowserIds),
   );
   const profileSession = profileSessions[0];
-  await clearFdeBrowserProfile({
+  await clearFroggBrowserProfile({
     profileSessions,
     listGuests: () =>
-      listFdeBrowserProfileGuests({
+      listFroggBrowserProfileGuests({
         profileSession,
         webContents: webContents.getAllWebContents(),
       }),
@@ -342,7 +345,7 @@ handleDesktopIpc("fde:browser:clear-profile", async (_event, rawLegacyBrowserIds
 });
 
 const browserCapture = createBrowserCaptureService<Electron.NativeImage>({
-  findGuest: getFdeBrowserWebContentsForHostWindow,
+  findGuest: getFroggBrowserWebContentsForHostWindow,
   decodeImage: (dataUrl) => nativeImage.createFromDataURL(dataUrl),
   clipboard: {
     write: ({ text, image }) =>
@@ -367,7 +370,7 @@ const browserCapture = createBrowserCaptureService<Electron.NativeImage>({
   warn: (event, details) => log.warn(`[browser-capture] ${event}`, details),
 });
 
-handleDesktopIpc("fde:browser:capture-element", (event, browserId: unknown, rect: unknown) =>
+handleDesktopIpc("frogg:browser:capture-element", (event, browserId: unknown, rect: unknown) =>
   browserCapture.capture({
     browserId,
     hostWebContentsId: event.sender.id,
@@ -375,6 +378,6 @@ handleDesktopIpc("fde:browser:capture-element", (event, browserId: unknown, rect
   }),
 );
 
-handleDesktopIpc("fde:browser:copy-element", (_event, payload: unknown) =>
+handleDesktopIpc("frogg:browser:copy-element", (_event, payload: unknown) =>
   browserCapture.copy(payload),
 );

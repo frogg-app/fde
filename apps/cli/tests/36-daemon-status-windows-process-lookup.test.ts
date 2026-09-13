@@ -15,7 +15,7 @@ interface CommandResult {
   stderr: string;
 }
 
-function runLocalFde(args: string[], env: NodeJS.ProcessEnv): Promise<CommandResult> {
+function runLocalFrogg(args: string[], env: NodeJS.ProcessEnv): Promise<CommandResult> {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, [CLI_ENTRY, ...args], {
       env: { ...process.env, ...env },
@@ -45,24 +45,27 @@ if (process.platform !== "win32") {
 
 console.log("=== Windows Daemon Status Process Lookup ===\n");
 
-const fdeHome = await mkdtemp(join(tmpdir(), "fde-windows-status-home-"));
+const froggHome = await mkdtemp(join(tmpdir(), "frogg-windows-status-home-"));
 const port = await getAvailablePort();
 const env = {
-  FDE_HOME: fdeHome,
-  FDE_LOCAL_SPEECH_AUTO_DOWNLOAD: "0",
-  FDE_DICTATION_ENABLED: "0",
-  FDE_VOICE_MODE_ENABLED: "0",
+  FROGG_HOME: froggHome,
+  FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD: "0",
+  FROGG_DICTATION_ENABLED: "0",
+  FROGG_VOICE_MODE_ENABLED: "0",
 };
 
 try {
-  const start = await runLocalFde(["daemon", "restart", "--port", String(port)], env);
+  const start = await runLocalFrogg(["daemon", "restart", "--port", String(port)], env);
   assert.strictEqual(
     start.exitCode,
     0,
     `daemon restart should succeed:\nstdout:\n${start.stdout}\nstderr:\n${start.stderr}`,
   );
 
-  const statusResult = await runLocalFde(["daemon", "status", "--home", fdeHome, "--json"], env);
+  const statusResult = await runLocalFrogg(
+    ["daemon", "status", "--home", froggHome, "--json"],
+    env,
+  );
   assert.strictEqual(
     statusResult.exitCode,
     0,
@@ -87,8 +90,8 @@ try {
   );
   console.log("✓ daemon status resolves daemonNode on Windows\n");
 } finally {
-  await runLocalFde(["daemon", "stop", "--home", fdeHome, "--force"], env);
-  await rm(fdeHome, { recursive: true, force: true });
+  await runLocalFrogg(["daemon", "stop", "--home", froggHome, "--force"], env);
+  await rm(froggHome, { recursive: true, force: true });
 }
 
 console.log("=== Windows daemon status process lookup passed ===");

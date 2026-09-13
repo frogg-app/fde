@@ -166,13 +166,13 @@ export class DirectHubRelationshipRemote implements HubRelationshipRemote {
       handshakeTimeout: this.requestTimeoutMs,
       headers: {
         authorization: `Bearer ${input.credential}`,
-        "x-fde-daemon-id": input.daemonId,
-        "x-fde-session-protocol": "1",
+        "x-frogg-daemon-id": input.daemonId,
+        "x-frogg-session-protocol": "1",
       },
     });
     let settled = false;
     socket.once("upgrade", (response) => {
-      if (response.headers["x-fde-session-protocol"] === "1") {
+      if (response.headers["x-frogg-session-protocol"] === "1") {
         sessionProtocol = "session-v1";
       }
     });

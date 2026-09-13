@@ -73,7 +73,7 @@ function destroyWebviewSelector(webview: ElementSelectorWebview, sessionToken: s
   const token = JSON.stringify(sessionToken);
   void executeWebviewJavaScript(
     webview,
-    `if (window.__fdeSelector?.sessionToken === ${token}) window.__fdeSelector.destroy();`,
+    `if (window.__froggSelector?.sessionToken === ${token}) window.__froggSelector.destroy();`,
   ).catch(ignoreWebviewJavaScriptError);
 }
 
@@ -81,7 +81,7 @@ function clearWebviewSelector(webview: ElementSelectorWebview, sessionToken: str
   const token = JSON.stringify(sessionToken);
   void executeWebviewJavaScript(
     webview,
-    `if (window.__fdeSelector?.sessionToken === ${token}) window.__fdeSelector.destroy(); if (window.__fdeSelectorResult?.__fdeSessionToken === ${token}) window.__fdeSelectorResult = null;`,
+    `if (window.__froggSelector?.sessionToken === ${token}) window.__froggSelector.destroy(); if (window.__froggSelectorResult?.__froggSessionToken === ${token}) window.__froggSelectorResult = null;`,
   ).catch(ignoreWebviewJavaScriptError);
 }
 
@@ -121,7 +121,7 @@ function startSelectorResultPolling(input: {
       try {
         const raw = await executeWebviewJavaScript(
           webview,
-          `JSON.stringify(window.__fdeSelectorResult?.__fdeSessionToken === ${token} ? window.__fdeSelectorResult : null)`,
+          `JSON.stringify(window.__froggSelectorResult?.__froggSessionToken === ${token} ? window.__froggSelectorResult : null)`,
         );
         const result = typeof raw === "string" ? JSON.parse(raw) : null;
         if (!result) {
@@ -131,11 +131,11 @@ function startSelectorResultPolling(input: {
         stopped = true;
         await executeWebviewJavaScript(
           webview,
-          `if (window.__fdeSelectorResult?.__fdeSessionToken === ${token}) window.__fdeSelectorResult = null;`,
+          `if (window.__froggSelectorResult?.__froggSessionToken === ${token}) window.__froggSelectorResult = null;`,
         ).catch(ignoreWebviewJavaScriptError);
         const cancelled = result.__cancelled === true;
         delete result.__cancelled;
-        delete result.__fdeSessionToken;
+        delete result.__froggSessionToken;
         onResult(cancelled ? null : (result as BrowserElementSelection));
       } catch {
         schedule();
@@ -160,26 +160,26 @@ function buildElementSelectorScript(sessionToken: string): string {
       if (document.readyState === 'loading' || !document.head || !document.documentElement) {
         return { installed: false, reason: 'document-loading', sessionToken: sessionToken };
       }
-      if (window.__fdeSelector) { window.__fdeSelector.destroy(); }
-      window.__fdeSelectorResult = null;
+      if (window.__froggSelector) { window.__froggSelector.destroy(); }
+      window.__froggSelectorResult = null;
       var style = document.createElement('style');
       style.textContent = [
-        '.__fde-hover { outline: 2px solid #3b82f6 !important; outline-offset: 2px !important; cursor: crosshair !important; }',
-        '.__fde-select-mode, .__fde-select-mode * { cursor: crosshair !important; pointer-events: auto !important; user-select: none !important; }',
-        '.__fde-select-mode *, .__fde-select-mode *::before, .__fde-select-mode *::after { animation: none !important; transition: none !important; }',
-        '.__fde-select-mode a, .__fde-select-mode button, .__fde-select-mode input, .__fde-select-mode select, .__fde-select-mode textarea, .__fde-select-mode [role="button"], .__fde-select-mode [onclick] { pointer-events: none !important; }',
-        '.__fde-select-mode iframe, .__fde-select-mode video, .__fde-select-mode audio { pointer-events: none !important; }',
-        '.__fde-hover-label { position: fixed; z-index: 2147483647; pointer-events: none; max-width: 360px; padding: 4px 8px; border-radius: 6px; background: rgba(24,24,27,0.96); color: #fff; font: 500 11px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace; box-shadow: 0 2px 10px rgba(0,0,0,0.35); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }',
-        '.__fde-hover-label .__fde-tag { color: #93c5fd; }',
-        '.__fde-hover-label .__fde-id { color: #fca5a5; }',
-        '.__fde-hover-label .__fde-cls { color: #fcd34d; }',
-        '.__fde-hover-label .__fde-dim { color: #a1a1aa; margin-left: 6px; }',
-        '.__fde-hover-label .__fde-comp { color: #86efac; margin-left: 6px; }',
+        '.__frogg-hover { outline: 2px solid #3b82f6 !important; outline-offset: 2px !important; cursor: crosshair !important; }',
+        '.__frogg-select-mode, .__frogg-select-mode * { cursor: crosshair !important; pointer-events: auto !important; user-select: none !important; }',
+        '.__frogg-select-mode *, .__frogg-select-mode *::before, .__frogg-select-mode *::after { animation: none !important; transition: none !important; }',
+        '.__frogg-select-mode a, .__frogg-select-mode button, .__frogg-select-mode input, .__frogg-select-mode select, .__frogg-select-mode textarea, .__frogg-select-mode [role="button"], .__frogg-select-mode [onclick] { pointer-events: none !important; }',
+        '.__frogg-select-mode iframe, .__frogg-select-mode video, .__frogg-select-mode audio { pointer-events: none !important; }',
+        '.__frogg-hover-label { position: fixed; z-index: 2147483647; pointer-events: none; max-width: 360px; padding: 4px 8px; border-radius: 6px; background: rgba(24,24,27,0.96); color: #fff; font: 500 11px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace; box-shadow: 0 2px 10px rgba(0,0,0,0.35); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }',
+        '.__frogg-hover-label .__frogg-tag { color: #93c5fd; }',
+        '.__frogg-hover-label .__frogg-id { color: #fca5a5; }',
+        '.__frogg-hover-label .__frogg-cls { color: #fcd34d; }',
+        '.__frogg-hover-label .__frogg-dim { color: #a1a1aa; margin-left: 6px; }',
+        '.__frogg-hover-label .__frogg-comp { color: #86efac; margin-left: 6px; }',
       ].join('\\n');
       document.head.appendChild(style);
-      document.documentElement.classList.add('__fde-select-mode');
+      document.documentElement.classList.add('__frogg-select-mode');
       var hoverLabel = document.createElement('div');
-      hoverLabel.className = '__fde-hover-label';
+      hoverLabel.className = '__frogg-hover-label';
       hoverLabel.style.display = 'none';
       document.documentElement.appendChild(hoverLabel);
       var last = null;
@@ -190,23 +190,23 @@ function buildElementSelectorScript(sessionToken: string): string {
       }
       function describeElement(el) {
         var tag = el.tagName ? el.tagName.toLowerCase() : 'node';
-        var parts = ['<span class="__fde-tag">' + escapeHtml(tag) + '</span>'];
+        var parts = ['<span class="__frogg-tag">' + escapeHtml(tag) + '</span>'];
         if (el.id) {
-          parts.push('<span class="__fde-id">#' + escapeHtml(el.id) + '</span>');
+          parts.push('<span class="__frogg-id">#' + escapeHtml(el.id) + '</span>');
         }
         if (el.classList && el.classList.length) {
           var cls = Array.prototype.slice.call(el.classList, 0, 2)
-            .filter(function(c) { return c.indexOf('__fde') !== 0; })
+            .filter(function(c) { return c.indexOf('__frogg') !== 0; })
             .map(function(c) { return '.' + escapeHtml(c); })
             .join('');
-          if (cls) parts.push('<span class="__fde-cls">' + cls + '</span>');
+          if (cls) parts.push('<span class="__frogg-cls">' + cls + '</span>');
         }
         var comp = getReactSource(el);
         if (comp && comp.componentName) {
-          parts.push('<span class="__fde-comp">&lt;' + escapeHtml(comp.componentName) + '&gt;</span>');
+          parts.push('<span class="__frogg-comp">&lt;' + escapeHtml(comp.componentName) + '&gt;</span>');
         }
         var rect = el.getBoundingClientRect();
-        parts.push('<span class="__fde-dim">' + Math.round(rect.width) + '×' + Math.round(rect.height) + '</span>');
+        parts.push('<span class="__frogg-dim">' + Math.round(rect.width) + '×' + Math.round(rect.height) + '</span>');
         return { html: parts.join(''), rect: rect };
       }
       function positionLabel(rect, e) {
@@ -224,9 +224,9 @@ function buildElementSelectorScript(sessionToken: string): string {
       function onMove(e) {
         e.preventDefault();
         e.stopPropagation();
-        if (last) last.classList.remove('__fde-hover');
+        if (last) last.classList.remove('__frogg-hover');
         var el = e.target;
-        el.classList.add('__fde-hover');
+        el.classList.add('__frogg-hover');
         last = el;
         try {
           var info = describeElement(el);
@@ -311,7 +311,7 @@ function buildElementSelectorScript(sessionToken: string): string {
         e.stopPropagation();
         e.stopImmediatePropagation();
         var el = e.target;
-        if (last) last.classList.remove('__fde-hover');
+        if (last) last.classList.remove('__frogg-hover');
         hoverLabel.style.display = 'none';
         var attrs = {};
         for (var i = 0; i < el.attributes.length; i++) {
@@ -326,19 +326,19 @@ function buildElementSelectorScript(sessionToken: string): string {
           url: location.href,
           outerHTML: el.outerHTML.substring(0, 2000),
           computedStyles: getRelevantStyles(el),
-          __fdeSessionToken: sessionToken,
+          __froggSessionToken: sessionToken,
           boundingRect: { x: Math.round(rect.x), y: Math.round(rect.y), width: Math.round(rect.width), height: Math.round(rect.height) },
           reactSource: getReactSource(el),
           parentChain: getParentChain(el, 5),
           children: getChildSummary(el, 8)
         };
         destroy();
-        window.__fdeSelectorResult = result;
+        window.__froggSelectorResult = result;
       }
       function onKey(e) {
         if (e.key === 'Escape') {
           destroy();
-          window.__fdeSelectorResult = { __cancelled: true, __fdeSessionToken: sessionToken };
+          window.__froggSelectorResult = { __cancelled: true, __froggSessionToken: sessionToken };
         }
       }
       function blockEvent(e) {
@@ -358,11 +358,11 @@ function buildElementSelectorScript(sessionToken: string): string {
         document.removeEventListener('touchend', blockEvent, true);
         document.removeEventListener('focus', blockEvent, true);
         document.removeEventListener('submit', blockEvent, true);
-        document.documentElement.classList.remove('__fde-select-mode');
-        if (last) last.classList.remove('__fde-hover');
+        document.documentElement.classList.remove('__frogg-select-mode');
+        if (last) last.classList.remove('__frogg-hover');
         if (hoverLabel.parentNode) hoverLabel.parentNode.removeChild(hoverLabel);
         style.remove();
-        window.__fdeSelector = null;
+        window.__froggSelector = null;
       }
       document.addEventListener('mousemove', onMove, true);
       document.addEventListener('click', onClick, true);
@@ -375,7 +375,7 @@ function buildElementSelectorScript(sessionToken: string): string {
       document.addEventListener('touchend', blockEvent, true);
       document.addEventListener('focus', blockEvent, true);
       document.addEventListener('submit', blockEvent, true);
-      window.__fdeSelector = { destroy: destroy, sessionToken: sessionToken };
+      window.__froggSelector = { destroy: destroy, sessionToken: sessionToken };
       return { installed: true, sessionToken: sessionToken };
     })()
   `;

@@ -1,4 +1,4 @@
-import type { DaemonClient } from "@fde/client/internal/daemon-client";
+import type { DaemonClient } from "@frogg/client/internal/daemon-client";
 import { afterEach, describe, expect, it } from "vitest";
 import { selectProviderSubagentsForParent, selectSubagentsForParent } from "./select";
 import { useProviderSubagentStore } from "./provider-store";
@@ -261,7 +261,7 @@ describe("selectSubagentsForParent", () => {
 
     expect(rows).toEqual([
       {
-        kind: "fde",
+        kind: "frogg",
         id: "child",
         provider: "claude",
         title: "Review child",

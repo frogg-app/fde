@@ -114,14 +114,14 @@ function createTrackedSubscriber(failWorktreeRoot: string | null) {
 
 function createMeasuredService(input: {
   repoDir: string;
-  fdeHome: string;
+  froggHome: string;
   failWorktreeWatch?: boolean;
 }) {
   const counts: ProducerCounts = { structural: 0, worktree: 0, detailedDiff: 0 };
   const watcher = createTrackedSubscriber(input.failWorktreeWatch ? input.repoDir : null);
   const service = new WorkspaceGitServiceImpl({
     logger: createLogger(),
-    fdeHome: input.fdeHome,
+    froggHome: input.froggHome,
     deps: {
       subscribe: watcher.subscribe,
       getWorkspaceGitSelfHealPhaseMs: () => 60_000,
@@ -189,9 +189,9 @@ async function closeMeasuredService(input: {
 }
 
 async function main(): Promise<void> {
-  const tempDir = mkdtempSync(path.join(tmpdir(), "fde-git-observation-measurement-"));
+  const tempDir = mkdtempSync(path.join(tmpdir(), "frogg-git-observation-measurement-"));
   const repoDir = path.join(tempDir, "repo");
-  const fdeHome = path.join(tempDir, "fde-home");
+  const froggHome = path.join(tempDir, "frogg-home");
   const trackedPath = path.join(repoDir, "tracked.txt");
   const ignoredDir = path.join(repoDir, "build");
   mkdirSync(repoDir, { recursive: true });
@@ -200,8 +200,8 @@ async function main(): Promise<void> {
   writeFileSync(path.join(repoDir, ".gitignore"), "build/\n");
   writeFileSync(trackedPath, "base\n");
   runGit(repoDir, ["init", "-b", "main"]);
-  runGit(repoDir, ["config", "user.email", "measurement@fde.local"]);
-  runGit(repoDir, ["config", "user.name", "Fde Measurement"]);
+  runGit(repoDir, ["config", "user.email", "measurement@frogg.local"]);
+  runGit(repoDir, ["config", "user.name", "Frogg Measurement"]);
   runGit(repoDir, ["add", ".gitignore", "tracked.txt"]);
   runGit(repoDir, ["commit", "-m", "fixture"]);
   runGit(repoDir, ["checkout", "-b", "feature"]);
@@ -214,7 +214,7 @@ async function main(): Promise<void> {
   let diffManager: CheckoutDiffManager | null = null;
 
   try {
-    healthy = createMeasuredService({ repoDir, fdeHome });
+    healthy = createMeasuredService({ repoDir, froggHome });
     let latestSummary: WorkspaceGitRuntimeSnapshot | null = null;
     let latestDiffAdditions = 0;
 
@@ -226,7 +226,7 @@ async function main(): Promise<void> {
     });
     diffManager = new CheckoutDiffManager({
       logger: createLogger(),
-      fdeHome,
+      froggHome,
       workspaceGitService: healthy.service,
     });
     const openedDiff = await diffManager.subscribe(
@@ -346,7 +346,7 @@ async function main(): Promise<void> {
     });
     healthy = null;
 
-    degraded = createMeasuredService({ repoDir, fdeHome, failWorktreeWatch: true });
+    degraded = createMeasuredService({ repoDir, froggHome, failWorktreeWatch: true });
     startGitCommandMetrics();
     const degradedBootstrapStartedAtMs = Date.now();
     const degradedBootstrapCounts = snapshotCounts(degraded.counts);
@@ -390,7 +390,7 @@ async function main(): Promise<void> {
       generatedAt: new Date().toISOString(),
       phases,
     };
-    const outputPath = process.env.FDE_GIT_OBSERVATION_REPORT?.trim();
+    const outputPath = process.env.FROGG_GIT_OBSERVATION_REPORT?.trim();
     if (outputPath) {
       await writeFile(path.resolve(outputPath), `${JSON.stringify(report, null, 2)}\n`, "utf8");
     }

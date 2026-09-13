@@ -13,13 +13,13 @@ describe("generateLocalPairingOffer", () => {
   });
 
   test("treats relay enabled without an endpoint as relay unavailable", async () => {
-    const fdeHome = await mkdtemp(path.join(os.tmpdir(), "fde-pairing-offer-"));
-    roots.push(fdeHome);
+    const froggHome = await mkdtemp(path.join(os.tmpdir(), "frogg-pairing-offer-"));
+    roots.push(froggHome);
 
     await expect(
-      generateLocalPairingOffer({ fdeHome, relayEnabled: true, relayEndpoint: "" }),
+      generateLocalPairingOffer({ froggHome, relayEnabled: true, relayEndpoint: "" }),
     ).resolves.toEqual({ relayEnabled: false, url: null, qr: null });
-    await expect(generateLocalPairingOffer({ fdeHome, relayEnabled: true })).resolves.toEqual({
+    await expect(generateLocalPairingOffer({ froggHome, relayEnabled: true })).resolves.toEqual({
       relayEnabled: false,
       url: null,
       qr: null,
@@ -27,11 +27,11 @@ describe("generateLocalPairingOffer", () => {
   });
 
   test("builds an offer once an endpoint is configured", async () => {
-    const fdeHome = await mkdtemp(path.join(os.tmpdir(), "fde-pairing-offer-"));
-    roots.push(fdeHome);
+    const froggHome = await mkdtemp(path.join(os.tmpdir(), "frogg-pairing-offer-"));
+    roots.push(froggHome);
 
     const offer = await generateLocalPairingOffer({
-      fdeHome,
+      froggHome,
       relayEnabled: true,
       relayEndpoint: "relay.example.test:443",
       appBaseUrl: "https://pair.example.test",

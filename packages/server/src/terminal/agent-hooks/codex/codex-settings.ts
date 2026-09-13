@@ -40,7 +40,7 @@ export const codexHooksFormat: AgentHookConfigFormat<CodexHooksFile> = {
     const install = provider.install;
     const hooks = normalizeHooks(config.hooks);
     for (const event of provider.events) {
-      const userEntries = removeFdeHooks(hooks[event.event], install.hookMarker);
+      const userEntries = removeFroggHooks(hooks[event.event], install.hookMarker);
       hooks[event.event] = [
         ...userEntries,
         {
@@ -62,7 +62,7 @@ export const codexHooksFormat: AgentHookConfigFormat<CodexHooksFile> = {
     const install = provider.install;
     const hooks = normalizeHooks(config.hooks);
     for (const event of provider.events) {
-      const entries = removeFdeHooks(hooks[event.event], install.hookMarker);
+      const entries = removeFroggHooks(hooks[event.event], install.hookMarker);
       if (entries.length > 0) {
         hooks[event.event] = entries;
       } else {
@@ -76,7 +76,9 @@ export const codexHooksFormat: AgentHookConfigFormat<CodexHooksFile> = {
     const hooks = normalizeHooks(config.hooks);
     return provider.events.every((event) =>
       normalizeMatchers(hooks[event.event]).some((entry) =>
-        normalizeCommandHooks(entry.hooks).some((hook) => hasFdeCommands(hook, install.hookMarker)),
+        normalizeCommandHooks(entry.hooks).some((hook) =>
+          hasFroggCommands(hook, install.hookMarker),
+        ),
       ),
     );
   },
@@ -100,7 +102,7 @@ function normalizeCommandHooks(value: unknown): CodexCommandHook[] {
   return value.filter(isRecord);
 }
 
-function removeFdeHooks(value: unknown, marker: string): CodexMatcherGroup[] {
+function removeFroggHooks(value: unknown, marker: string): CodexMatcherGroup[] {
   const entries: CodexMatcherGroup[] = [];
   for (const entry of normalizeMatchers(value)) {
     const hooks = normalizeCommandHooks(entry.hooks).filter(
@@ -113,7 +115,7 @@ function removeFdeHooks(value: unknown, marker: string): CodexMatcherGroup[] {
   return entries;
 }
 
-function hasFdeCommands(hook: CodexCommandHook, marker: string): boolean {
+function hasFroggCommands(hook: CodexCommandHook, marker: string): boolean {
   return (
     commandFieldContainsMarker(hook.command, marker) && windowsCommandContainsMarker(hook, marker)
   );

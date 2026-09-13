@@ -1,4 +1,4 @@
-import type { AgentAttentionNotificationPayload } from "@fde/protocol/agent-attention-notification";
+import type { AgentAttentionNotificationPayload } from "@frogg/protocol/agent-attention-notification";
 import { resolveNotificationTarget } from "@/utils/notification-routing";
 import { alertKey, type SpokenAlert, type SpokenAlertReason } from "./state";
 import { useSpokenAlertsStore } from "./store";

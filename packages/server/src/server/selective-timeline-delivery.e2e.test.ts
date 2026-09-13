@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, expect, test } from "vitest";
-import { CLIENT_CAPS } from "@fde/protocol/client-capabilities";
-import type { SessionOutboundMessage } from "@fde/protocol/messages";
+import { CLIENT_CAPS } from "@frogg/protocol/client-capabilities";
+import type { SessionOutboundMessage } from "@frogg/protocol/messages";
 import { DaemonClient } from "./test-utils/daemon-client.js";
-import { createTestFdeDaemon, type TestFdeDaemon } from "./test-utils/fde-daemon.js";
+import { createTestFroggDaemon, type TestFroggDaemon } from "./test-utils/frogg-daemon.js";
 import { MockLoadTestAgentClient } from "./agent/providers/mock-load-test-agent.js";
 
 interface MessageWaiter {
@@ -109,11 +109,11 @@ function legacyAttentionResult(message: SessionOutboundMessage) {
   };
 }
 
-let daemon: TestFdeDaemon;
+let daemon: TestFroggDaemon;
 const clients: ConnectedClient[] = [];
 
 beforeEach(async () => {
-  daemon = await createTestFdeDaemon();
+  daemon = await createTestFroggDaemon();
 });
 
 afterEach(async () => {
@@ -149,7 +149,7 @@ async function connect(input: {
 
 test("rewind routes replacement completion by source capability and subscription", async () => {
   await daemon.close();
-  daemon = await createTestFdeDaemon({
+  daemon = await createTestFroggDaemon({
     isDev: true,
     agentClients: { mock: new MockLoadTestAgentClient() },
   });

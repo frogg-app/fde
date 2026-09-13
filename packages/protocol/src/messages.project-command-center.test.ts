@@ -10,13 +10,13 @@ describe("project command-center protocol", () => {
     expect(
       SessionInboundMessageSchema.parse({
         type: "workspace.github.search_repositories.request",
-        query: "fde",
+        query: "frogg",
         limit: 12,
         requestId: "req-search",
       }),
     ).toEqual({
       type: "workspace.github.search_repositories.request",
-      query: "fde",
+      query: "frogg",
       limit: 12,
       requestId: "req-search",
     });
@@ -29,13 +29,13 @@ describe("project command-center protocol", () => {
           requestId: "req-search",
           repositories: [
             {
-              id: "R_fde",
-              name: "fde",
-              nameWithOwner: "frogg-app/fde",
+              id: "R_frogg",
+              name: "frogg",
+              nameWithOwner: "frogg-app/frogg",
               description: "Development environment in your pocket",
               visibility: "public",
               updatedAt: "2026-07-15T10:00:00Z",
-              cloneUrl: "git@github.com:frogg-app/fde.git",
+              cloneUrl: "git@github.com:frogg-app/frogg.git",
             },
           ],
           available: true,
@@ -47,13 +47,13 @@ describe("project command-center protocol", () => {
       requestId: "req-search",
       repositories: [
         {
-          id: "R_fde",
-          name: "fde",
-          nameWithOwner: "frogg-app/fde",
+          id: "R_frogg",
+          name: "frogg",
+          nameWithOwner: "frogg-app/frogg",
           description: "Development environment in your pocket",
           visibility: "public",
           updatedAt: "2026-07-15T10:00:00Z",
-          cloneUrl: "git@github.com:frogg-app/fde.git",
+          cloneUrl: "git@github.com:frogg-app/frogg.git",
         },
       ],
       available: true,
@@ -142,19 +142,19 @@ describe("project command-center protocol", () => {
           repositories: [
             {
               id: "repo",
-              name: " fde ",
-              nameWithOwner: " frogg-app/fde ",
+              name: " frogg ",
+              nameWithOwner: " frogg-app/frogg ",
               description: null,
               visibility: "public",
               updatedAt: "2026-07-15T10:00:00Z",
-              cloneUrl: " https://github.com/frogg-app/fde ",
+              cloneUrl: " https://github.com/frogg-app/frogg ",
             },
           ],
           available: true,
           error: null,
         },
       }).payload.repositories[0]?.name,
-    ).toBe(" fde ");
+    ).toBe(" frogg ");
   });
 
   it("keeps project command feature flags optional for older server_info payloads", () => {

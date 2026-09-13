@@ -92,10 +92,10 @@ async function launchExecutionService(
         windowsHide: true,
         env: {
           ...(options.env ?? process.env),
-          FDE_HOME: options.home,
-          FDE_EXECUTION_SERVICE: "0",
-          FDE_EXECUTION_VERSION: options.version,
-          FDE_SUPERVISED: "0",
+          FROGG_HOME: options.home,
+          FROGG_EXECUTION_SERVICE: "0",
+          FROGG_EXECUTION_VERSION: options.version,
+          FROGG_SUPERVISED: "0",
         },
       },
     );

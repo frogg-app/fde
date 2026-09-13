@@ -2,7 +2,7 @@ export function isPairingOfferLink(value: string): boolean {
   try {
     const url = new URL(value);
     return (
-      url.protocol === "fde:" &&
+      url.protocol === "frogg:" &&
       url.hostname === "pair" &&
       new URLSearchParams(url.hash.slice(1)).has("offer")
     );

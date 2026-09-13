@@ -1,7 +1,7 @@
 #!/usr/bin/env npx tsx
 
 /**
- * Regression: `fde daemon stop` must stop a reachable daemon even when the
+ * Regression: `frogg daemon stop` must stop a reachable daemon even when the
  * local pid file points at a dead supervisor owner.
  */
 
@@ -18,9 +18,9 @@ $.verbose = false;
 
 const pollIntervalMs = 100;
 const testEnv = {
-  FDE_LOCAL_SPEECH_AUTO_DOWNLOAD: process.env.FDE_LOCAL_SPEECH_AUTO_DOWNLOAD ?? "0",
-  FDE_DICTATION_ENABLED: process.env.FDE_DICTATION_ENABLED ?? "0",
-  FDE_VOICE_MODE_ENABLED: process.env.FDE_VOICE_MODE_ENABLED ?? "0",
+  FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD: process.env.FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD ?? "0",
+  FROGG_DICTATION_ENABLED: process.env.FROGG_DICTATION_ENABLED ?? "0",
+  FROGG_VOICE_MODE_ENABLED: process.env.FROGG_VOICE_MODE_ENABLED ?? "0",
 };
 
 function sleep(ms: number): Promise<void> {
@@ -63,9 +63,9 @@ interface DaemonStatus {
   pid: number | null;
 }
 
-async function readDaemonStatus(fdeHome: string): Promise<DaemonStatus> {
+async function readDaemonStatus(froggHome: string): Promise<DaemonStatus> {
   const result =
-    await $`FDE_HOME=${fdeHome} FDE_LOCAL_SPEECH_AUTO_DOWNLOAD=${testEnv.FDE_LOCAL_SPEECH_AUTO_DOWNLOAD} FDE_DICTATION_ENABLED=${testEnv.FDE_DICTATION_ENABLED} FDE_VOICE_MODE_ENABLED=${testEnv.FDE_VOICE_MODE_ENABLED} npx fde daemon status --home ${fdeHome} --json`.nothrow();
+    await $`FROGG_HOME=${froggHome} FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD=${testEnv.FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD} FROGG_DICTATION_ENABLED=${testEnv.FROGG_DICTATION_ENABLED} FROGG_VOICE_MODE_ENABLED=${testEnv.FROGG_VOICE_MODE_ENABLED} npx frogg daemon status --home ${froggHome} --json`.nothrow();
   if (result.exitCode !== 0) {
     return { localDaemon: null, connectedDaemon: null, pid: null };
   }
@@ -101,10 +101,10 @@ function findUnusedPid(): number {
 console.log("=== Daemon Stop (stale pid, reachable worker regression) ===\n");
 
 const port = await getAvailablePort();
-const fdeHome = await mkdtemp(join(tmpdir(), "fde-stop-stale-reachable-"));
+const froggHome = await mkdtemp(join(tmpdir(), "frogg-stop-stale-reachable-"));
 const cliRoot = join(import.meta.dirname, "..");
 const host = `127.0.0.1:${port}`;
-const pidPath = join(fdeHome, "fde.pid");
+const pidPath = join(froggHome, "frogg.pid");
 const stalePid = findUnusedPid();
 
 let workerProcess: ChildProcess | null = null;
@@ -135,9 +135,9 @@ try {
       env: {
         ...process.env,
         ...testEnv,
-        FDE_HOME: fdeHome,
-        FDE_LISTEN: host,
-        FDE_RELAY_ENABLED: "false",
+        FROGG_HOME: froggHome,
+        FROGG_LISTEN: host,
+        FROGG_RELAY_ENABLED: "false",
         CI: "true",
       },
       stdio: ["ignore", "pipe", "pipe"],
@@ -146,27 +146,27 @@ try {
 
   await waitFor(
     async () => {
-      const status = await readDaemonStatus(fdeHome);
+      const status = await readDaemonStatus(froggHome);
       return status.localDaemon === "stale_pid" && status.connectedDaemon === "reachable";
     },
     120000,
     "daemon did not enter stale_pid + reachable state in time",
   );
 
-  const statusBeforeStop = await readDaemonStatus(fdeHome);
+  const statusBeforeStop = await readDaemonStatus(froggHome);
   assert.strictEqual(statusBeforeStop.pid, stalePid, "status should report the stale owner pid");
   assert(workerProcess.pid && isProcessRunning(workerProcess.pid), "worker should be running");
   console.log(`✓ fixture has stale pid ${stalePid} and live worker ${workerProcess.pid}\n`);
 
   console.log(
-    "Test 2: `fde daemon stop` should stop reachable worker instead of saying not_running",
+    "Test 2: `frogg daemon stop` should stop reachable worker instead of saying not_running",
   );
   await writeFile(
-    join(fdeHome, "config.json"),
+    join(froggHome, "config.json"),
     JSON.stringify({ version: 1, daemon: { relay: { enabled: true } } }),
   );
   const stopResult =
-    await $`FDE_HOME=${fdeHome} FDE_LOCAL_SPEECH_AUTO_DOWNLOAD=${testEnv.FDE_LOCAL_SPEECH_AUTO_DOWNLOAD} FDE_DICTATION_ENABLED=${testEnv.FDE_DICTATION_ENABLED} FDE_VOICE_MODE_ENABLED=${testEnv.FDE_VOICE_MODE_ENABLED} npx fde daemon stop --home ${fdeHome} --json`.nothrow();
+    await $`FROGG_HOME=${froggHome} FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD=${testEnv.FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD} FROGG_DICTATION_ENABLED=${testEnv.FROGG_DICTATION_ENABLED} FROGG_VOICE_MODE_ENABLED=${testEnv.FROGG_VOICE_MODE_ENABLED} npx frogg daemon stop --home ${froggHome} --json`.nothrow();
   assert.strictEqual(stopResult.exitCode, 0, `stop should succeed: ${stopResult.stderr}`);
   const stopJson = JSON.parse(stopResult.stdout) as {
     action?: unknown;
@@ -204,8 +204,8 @@ try {
     });
   }
 
-  await $`FDE_HOME=${fdeHome} FDE_LOCAL_SPEECH_AUTO_DOWNLOAD=${testEnv.FDE_LOCAL_SPEECH_AUTO_DOWNLOAD} FDE_DICTATION_ENABLED=${testEnv.FDE_DICTATION_ENABLED} FDE_VOICE_MODE_ENABLED=${testEnv.FDE_VOICE_MODE_ENABLED} npx fde daemon stop --home ${fdeHome} --force`.nothrow();
-  await rm(fdeHome, { recursive: true, force: true });
+  await $`FROGG_HOME=${froggHome} FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD=${testEnv.FROGG_LOCAL_SPEECH_AUTO_DOWNLOAD} FROGG_DICTATION_ENABLED=${testEnv.FROGG_DICTATION_ENABLED} FROGG_VOICE_MODE_ENABLED=${testEnv.FROGG_VOICE_MODE_ENABLED} npx frogg daemon stop --home ${froggHome} --force`.nothrow();
+  await rm(froggHome, { recursive: true, force: true });
 }
 
 console.log("=== Stale reachable stop regression test passed ===");

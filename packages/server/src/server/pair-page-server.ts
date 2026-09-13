@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 /**
  * The standalone pairing-page service behind `https://pair.frogg.app`.
  *
@@ -7,7 +7,7 @@ import { brand } from "@fde/branding";
  * carries the whole offer in the URL, so rendering the page needs no state, no
  * database, and no contact with the daemon that issued the code: this service
  * decodes the code, renders the QR, the deep link and the raw code, and hands
- * the pairing itself to the FDE app.
+ * the pairing itself to the Frogg app.
  *
  * Because the service issues no codes of its own, `serverId` never matches an
  * incoming offer and the store is always empty, so every code renders the
@@ -49,7 +49,7 @@ export function createPairPageApp(options: PairPageAppOptions = {}): express.Exp
 
   app.get("/healthz", (_req, res) => {
     res.setHeader("Cache-Control", "no-store");
-    res.json({ ok: true, service: "fde-pair-page" });
+    res.json({ ok: true, service: "frogg-pair-page" });
   });
 
   app.get("/robots.txt", (_req, res) => {

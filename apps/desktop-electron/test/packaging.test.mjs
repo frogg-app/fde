@@ -55,10 +55,10 @@ test("production packages use branded identity and register branded deep links",
 });
 test("root aliases default to Electron and preserve Tauri comparison commands", () => {
   const { scripts } = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8"));
-  assert.match(scripts["dev:desktop"], /@fde\/desktop-electron/);
-  assert.match(scripts["build:desktop"], /@fde\/desktop-electron/);
-  assert.match(scripts["dev:desktop:tauri"], /@fde\/desktop --/);
-  assert.match(scripts["build:desktop:tauri:win"], /@fde\/desktop/);
+  assert.match(scripts["dev:desktop"], /@frogg\/desktop-electron/);
+  assert.match(scripts["build:desktop"], /@frogg\/desktop-electron/);
+  assert.match(scripts["dev:desktop:tauri"], /@frogg\/desktop --/);
+  assert.match(scripts["build:desktop:tauri:win"], /@frogg\/desktop/);
 });
 
 test("configured Windows Trusted Signing carries through to Electron packaging", () => {

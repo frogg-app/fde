@@ -27,9 +27,9 @@ test("Sessions shows an empty placeholder when the host has no history", async (
     });
     await page.addInitScript(
       ({ seededHost, preferences }) => {
-        localStorage.setItem("@fde:e2e", "1");
-        localStorage.setItem("@fde:daemon-registry", JSON.stringify([seededHost]));
-        localStorage.setItem("@fde:create-agent-preferences", JSON.stringify(preferences));
+        localStorage.setItem("@frogg:e2e", "1");
+        localStorage.setItem("@frogg:daemon-registry", JSON.stringify([seededHost]));
+        localStorage.setItem("@frogg:create-agent-preferences", JSON.stringify(preferences));
       },
       { seededHost: host, preferences: buildCreateAgentPreferences() },
     );

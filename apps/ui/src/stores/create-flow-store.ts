@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { UserMessageImageAttachment } from "@/types/stream";
-import type { AgentAttachment } from "@fde/protocol/messages";
+import type { AgentAttachment } from "@frogg/protocol/messages";
 
 export type CreateFlowLifecycleState = "active" | "abandoned" | "sent";
 

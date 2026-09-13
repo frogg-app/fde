@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { AgentProfile } from "@fde/protocol/messages";
+import type { AgentProfile } from "@frogg/protocol/messages";
 import {
   materializeAgentProfile,
   reconcileMaterializedProfileMode,

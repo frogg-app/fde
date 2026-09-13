@@ -5,7 +5,7 @@ import {
   maybePersistDictationDebugAudio,
   type DictationDebugChunkWriter,
 } from "../agent/dictation-debug.js";
-import { isFdeDictationDebugEnabled } from "../agent/recordings-debug.js";
+import { isFroggDictationDebugEnabled } from "../agent/recordings-debug.js";
 import { Pcm16MonoResampler } from "../agent/pcm16-resampler.js";
 import type {
   SpeechToTextProvider,
@@ -23,7 +23,7 @@ const DICTATION_FINAL_TIMEOUT_PER_PENDING_SEGMENT_MS = 15 * 1000;
 const DICTATION_FINAL_TIMEOUT_PER_PENDING_AUDIO_SECOND_MS = 1500;
 const DICTATION_FINAL_TIMEOUT_PER_MISSING_SEQ_MS = 250;
 const DICTATION_SILENCE_PEAK_THRESHOLD = Number.parseInt(
-  process.env.FDE_DICTATION_SILENCE_PEAK_THRESHOLD ?? "300",
+  process.env.FROGG_DICTATION_SILENCE_PEAK_THRESHOLD ?? "300",
   10,
 );
 
@@ -154,7 +154,7 @@ export class DictationStreamManager {
     this.finalTimeoutMs = params.finalTimeoutMs ?? DEFAULT_DICTATION_FINAL_TIMEOUT_MS;
     this.autoCommitSeconds =
       params.autoCommitSeconds ??
-      parseNonNegativeNumber(process.env.FDE_DICTATION_AUTO_COMMIT_SECONDS) ??
+      parseNonNegativeNumber(process.env.FROGG_DICTATION_AUTO_COMMIT_SECONDS) ??
       DEFAULT_DICTATION_AUTO_COMMIT_SECONDS;
   }
 
@@ -174,7 +174,7 @@ export class DictationStreamManager {
     }
 
     const transcriptionPrompt =
-      process.env.FDE_DICTATION_TRANSCRIPTION_PROMPT ??
+      process.env.FROGG_DICTATION_TRANSCRIPTION_PROMPT ??
       "Transcribe only what the speaker says. Do not add words. Preserve punctuation and casing. If the audio is silence or non-speech noise, return an empty transcript.";
 
     let stt: ReturnType<SpeechToTextProvider["createSession"]>;
@@ -380,7 +380,7 @@ export class DictationStreamManager {
       const resampled = state.resampler ? state.resampler.processChunk(pcm16) : pcm16;
       if (resampled.length > 0) {
         state.stt.appendPcm16(resampled);
-        if (isFdeDictationDebugEnabled()) state.debugAudioChunks.push(resampled);
+        if (isFroggDictationDebugEnabled()) state.debugAudioChunks.push(resampled);
         state.bytesSinceCommit += resampled.length;
         state.peakSinceCommit = Math.max(state.peakSinceCommit, pcm16lePeakAbs(resampled));
         try {
@@ -501,7 +501,7 @@ export class DictationStreamManager {
   }
 
   private async maybePersistDictationStreamAudio(dictationId: string): Promise<string | null> {
-    if (!isFdeDictationDebugEnabled()) {
+    if (!isFroggDictationDebugEnabled()) {
       return null;
     }
 

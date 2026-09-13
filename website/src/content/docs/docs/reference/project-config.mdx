@@ -1,30 +1,30 @@
 ---
-title: Project config (fde.json)
-description: Configure worktree setup, teardown, terminals, workspace scripts, services, ports and metadata generation with fde.json.
+title: Project config (frogg.json)
+description: Configure worktree setup, teardown, terminals, workspace scripts, services, ports and metadata generation with frogg.json.
 sidebar:
   order: 3
 ---
 
-Put `fde.json` in the root of a git repository. The daemon reads it when it creates
-worktrees and when you run workspace scripts. The file name is `fde.json` in every
+Put `frogg.json` in the root of a git repository. The daemon reads it when it creates
+worktrees and when you run workspace scripts. The file name is `frogg.json` in every
 brand. You can edit it from the app in **project settings**.
 
 An invalid entry is ignored rather than failing the workspace, so check the app or
-`fde script ls` after editing.
+`frogg script ls` after editing.
 
 ## Example
 
-```json title="fde.json"
+```json title="frogg.json"
 {
   "worktree": {
-    "setup": ["npm ci", "cp \"$FDE_SOURCE_CHECKOUT_PATH/.env\" .env"],
+    "setup": ["npm ci", "cp \"$FROGG_SOURCE_CHECKOUT_PATH/.env\" .env"],
     "teardown": "docker compose down",
     "terminals": [{ "name": "shell", "command": "bash" }],
     "servicePorts": { "range": "4100-4199" }
   },
   "scripts": {
-    "api": { "type": "service", "command": "npm run dev -- --port $FDE_PORT" },
-    "web": { "type": "service", "command": "API_URL=$FDE_SERVICE_API_URL npm run web" },
+    "api": { "type": "service", "command": "npm run dev -- --port $FROGG_PORT" },
+    "web": { "type": "service", "command": "API_URL=$FROGG_SERVICE_API_URL npm run web" },
     "docs": { "type": "service", "command": "npm run docs", "port": 4321 },
     "test": { "command": "npm test" }
   },
@@ -39,8 +39,8 @@ An invalid entry is ignored rather than failing the workspace, so check the app 
 
 | Key            | Type                   | Runs |
 | -------------- | ---------------------- | ---- |
-| `setup`        | string or string[]     | In the background after FDE creates a worktree, in order, in the worktree |
-| `teardown`     | string or string[]     | When FDE removes the worktree |
+| `setup`        | string or string[]     | In the background after Frogg creates a worktree, in order, in the worktree |
+| `teardown`     | string or string[]     | When Frogg removes the worktree |
 | `terminals`    | `[{ name?, command }]` | Terminals opened in a new worktree |
 | `servicePorts` | `{ range }` or `{ portScript }` | How service ports are chosen |
 
@@ -48,17 +48,17 @@ Setup and teardown commands receive:
 
 | Variable                   | Value |
 | -------------------------- | ----- |
-| `FDE_SOURCE_CHECKOUT_PATH` | The checkout the worktree was created from (alias `FDE_ROOT_PATH`) |
-| `FDE_WORKTREE_PATH`        | The worktree |
-| `FDE_BRANCH_NAME`          | The worktree's branch |
-| `FDE_WORKTREE_PORT`        | A port reserved for this worktree |
+| `FROGG_SOURCE_CHECKOUT_PATH` | The checkout the worktree was created from (alias `FROGG_ROOT_PATH`) |
+| `FROGG_WORKTREE_PATH`        | The worktree |
+| `FROGG_BRANCH_NAME`          | The worktree's branch |
+| `FROGG_WORKTREE_PORT`        | A port reserved for this worktree |
 
 ### Service ports
 
 - `{ "range": "4100-4199" }` picks a free port in the inclusive range.
 - `{ "portScript": "./scripts/port.sh" }` runs a script with arguments
-  `<scriptName> <workspaceId> <branch> <cwd>` and env `FDE_SCRIPTNAME`,
-  `FDE_WORKSPACE_ID`, `FDE_BRANCH_NAME`, `FDE_WORKTREE_PATH`. It must print one port
+  `<scriptName> <workspaceId> <branch> <cwd>` and env `FROGG_SCRIPTNAME`,
+  `FROGG_WORKSPACE_ID`, `FROGG_BRANCH_NAME`, `FROGG_WORKTREE_PATH`. It must print one port
   within 10 seconds.
 - Without either, the daemon's `worktrees.servicePorts` applies, then any free port.
 
@@ -72,9 +72,9 @@ Each key is a script name.
 | `type`    | `"service"`          | Optional. A service gets a port, a proxy URL and env vars. Without it, the script runs once in a terminal |
 | `port`    | number               | Fixed port for a service. Two services with the same fixed port are an error |
 
-Services receive `HOST`, `FDE_PORT`, `FDE_URL`, and `FDE_SERVICE_<NAME>_PORT` /
-`FDE_SERVICE_<NAME>_URL` for every service in the workspace. `<NAME>` is uppercased
-with other characters replaced by `_`, so `api` becomes `FDE_SERVICE_API_URL`.
+Services receive `HOST`, `FROGG_PORT`, `FROGG_URL`, and `FROGG_SERVICE_<NAME>_PORT` /
+`FROGG_SERVICE_<NAME>_URL` for every service in the workspace. `<NAME>` is uppercased
+with other characters replaced by `_`, so `api` becomes `FROGG_SERVICE_API_URL`.
 
 Service URLs go through the daemon's service proxy:
 `http://<script>--<branch>--<project>.localhost:<daemon port>`. The branch part is omitted
@@ -84,14 +84,14 @@ own domain.
 Run scripts from the app's workspace **Scripts** menu, or:
 
 ```sh
-fde script ls
-fde script start api
-fde script stop api
+frogg script ls
+frogg script start api
+frogg script stop api
 ```
 
 ## `metadataGeneration`
 
-Instructions appended when FDE generates text for this project.
+Instructions appended when Frogg generates text for this project.
 
 | Key             | Used for |
 | --------------- | -------- |
@@ -105,6 +105,6 @@ Which model generates the text is set per daemon in
 
 ## A real example
 
-FDE's own repository uses `fde.json` to install dependencies in new worktrees and to
-run its dev daemon and app as services on per-worktree ports. See `fde.json` at the root
+Frogg's own repository uses `frogg.json` to install dependencies in new worktrees and to
+run its dev daemon and app as services on per-worktree ports. See `frogg.json` at the root
 of the repository.

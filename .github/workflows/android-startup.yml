@@ -34,7 +34,7 @@ jobs:
       - uses: actions/checkout@v7
       - name: Initialize diagnostic directories
         run: |
-          echo "ANDROID_AVD_HOME=$RUNNER_TEMP/fde-startup-avd" >> "$GITHUB_ENV"
+          echo "ANDROID_AVD_HOME=$RUNNER_TEMP/frogg-startup-avd" >> "$GITHUB_ENV"
           echo "EVIDENCE_DIR=$RUNNER_TEMP/android-startup-evidence" >> "$GITHUB_ENV"
           echo "APK_DIR=$RUNNER_TEMP/android-startup-apk" >> "$GITHUB_ENV"
           mkdir -p "$RUNNER_TEMP/android-startup-evidence" "$RUNNER_TEMP/android-startup-apk"
@@ -106,8 +106,8 @@ jobs:
           "$sdkmanager" --install 'platform-tools' 'emulator' 'system-images;android-35;google_apis;x86_64'
           "$ANDROID_HOME/emulator/emulator" -accel-check
           mkdir -p "$ANDROID_AVD_HOME"
-          printf 'no\n' | "$avdmanager" create avd --force --name fde-startup --package 'system-images;android-35;google_apis;x86_64' --device pixel_6
-          "$ANDROID_HOME/emulator/emulator" -avd fde-startup -port 5554 -accel on -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 4096 -cores 2 > "$EVIDENCE_DIR/emulator.txt" 2>&1 &
+          printf 'no\n' | "$avdmanager" create avd --force --name frogg-startup --package 'system-images;android-35;google_apis;x86_64' --device pixel_6
+          "$ANDROID_HOME/emulator/emulator" -avd frogg-startup -port 5554 -accel on -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 4096 -cores 2 > "$EVIDENCE_DIR/emulator.txt" 2>&1 &
           echo "EMULATOR_PID=$!" >> "$GITHUB_ENV"
           adb="$ANDROID_HOME/platform-tools/adb"
           timeout 180 "$adb" -s emulator-5554 wait-for-device
@@ -157,7 +157,7 @@ jobs:
           set -euo pipefail
           "$REAL_ADB" "$@"
           if [ "${1:-}" = -s ] && [ "${2:-}" = emulator-5554 ] && [ "${3:-}" = install ]; then
-            installed=$("$REAL_ADB" -s emulator-5554 shell pm path app.frogg.fde | tr -d '\r')
+            installed=$("$REAL_ADB" -s emulator-5554 shell pm path app.frogg.frogg | tr -d '\r')
             installed=${installed#package:}
             if [[ "$installed" != /data/app/*/base.apk ]] || [[ "$installed" == *$'\n'* ]]; then
               echo "Unexpected installed APK path: $installed" >&2
@@ -169,7 +169,7 @@ jobs:
             "$REAL_ADB" -s emulator-5554 shell chmod -R 755 "$target"
             "$REAL_ADB" -s emulator-5554 shell restorecon -RF "$target"
             "$REAL_ADB" -s emulator-5554 shell ls -lZ "$target" > "$EVIDENCE_DIR/installed-library-contexts.txt"
-            "$REAL_ADB" -s emulator-5554 shell dumpsys package app.frogg.fde > "$EVIDENCE_DIR/installed-package.txt"
+            "$REAL_ADB" -s emulator-5554 shell dumpsys package app.frogg.frogg > "$EVIDENCE_DIR/installed-package.txt"
           fi
           WRAPPER
           chmod +x "$RUNNER_TEMP/diagnostic-adb"
@@ -179,7 +179,7 @@ jobs:
         shell: bash
         run: |
           node scripts/release/smoke-android-apk.mjs \
-            --serial emulator-5554 --apk "$APK_PATH" --app-id app.frogg.fde \
+            --serial emulator-5554 --apk "$APK_PATH" --app-id app.frogg.frogg \
             --adb "$RUNNER_TEMP/diagnostic-adb" --out-dir "$EVIDENCE_DIR/smoke" --seconds 30
       - name: Preserve emulator diagnostics
         if: always()

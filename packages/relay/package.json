@@ -1,7 +1,7 @@
 {
-  "name": "@fde/relay",
+  "name": "@frogg/relay",
   "version": "0.7.0",
-  "description": "Fde relay for bridging daemon and client connections",
+  "description": "Frogg relay for bridging daemon and client connections",
   "files": [
     "dist",
     "!dist/**/*.map"

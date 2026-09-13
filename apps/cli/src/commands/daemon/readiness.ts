@@ -1,15 +1,15 @@
-import { brand } from "@fde/branding";
-import { matchesBrand } from "@fde/branding/identity";
+import { brand } from "@frogg/branding";
+import { matchesBrand } from "@frogg/branding/identity";
 import os from "node:os";
 
-import type { DaemonIdentity } from "@fde/server";
+import type { DaemonIdentity } from "@frogg/server";
 
 import { daemonHttpJson, resolveLoopbackHttpBase } from "./daemon-http.js";
 import { resolveLocalDaemonState, resolveTcpHostFromListen } from "./local-daemon.js";
 
 /**
  * Readiness for onboarding and status: the daemon is ready as soon as the
- * public `GET /api/identity` answers with `product: "fde"`.
+ * public `GET /api/identity` answers with `product: "frogg"`.
  *
  * That endpoint is deliberately unauthenticated, so a daemon that already has
  * a password or requires pairing answers it too. Polling an authenticated call
@@ -36,7 +36,7 @@ export async function probeDaemonIdentity(
       path: "/api/identity",
       timeoutMs,
     });
-    return identity.product === "fde" && matchesBrand(brand, identity.brand) ? identity : null;
+    return identity.product === "frogg" && matchesBrand(brand, identity.brand) ? identity : null;
   } catch {
     return null;
   }
@@ -105,7 +105,7 @@ export function resolveAccessMode(input: {
   return input.lanTrusted ? "lan_trusted" : "pairing_required";
 }
 
-/** One line for `fde pair` and onboarding: who can connect right now. */
+/** One line for `frogg pair` and onboarding: who can connect right now. */
 export function describeAccessMode(mode: DaemonAccessMode): string {
   switch (mode) {
     case "password":

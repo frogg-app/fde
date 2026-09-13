@@ -1,6 +1,6 @@
 import { app, BrowserWindow, Menu } from "electron";
 import { handleDesktopIpc } from "../ipc-security.js";
-import { getActiveFdeBrowserWebContentsForHostWindow } from "./browser-webviews/index.js";
+import { getActiveFroggBrowserWebContentsForHostWindow } from "./browser-webviews/index.js";
 
 interface ShowContextMenuInput {
   kind?: "terminal";
@@ -149,7 +149,7 @@ function buildApplicationMenuTemplate(
           click: withBrowserWindow((win) => {
             reloadActiveBrowserOrWindow({
               win,
-              getActiveBrowserContentsForHostWindow: getActiveFdeBrowserWebContentsForHostWindow,
+              getActiveBrowserContentsForHostWindow: getActiveFroggBrowserWebContentsForHostWindow,
             });
           }),
         },
@@ -159,7 +159,7 @@ function buildApplicationMenuTemplate(
           click: withBrowserWindow((win) => {
             reloadActiveBrowserOrWindow({
               win,
-              getActiveBrowserContentsForHostWindow: getActiveFdeBrowserWebContentsForHostWindow,
+              getActiveBrowserContentsForHostWindow: getActiveFroggBrowserWebContentsForHostWindow,
               ignoreCache: true,
             });
           }),
@@ -197,7 +197,7 @@ export function setupApplicationMenu(options: ApplicationMenuOptions): void {
   applicationMenuOptions = options;
   rebuildApplicationMenu();
 
-  handleDesktopIpc("fde:menu:showContextMenu", (event, input?: ShowContextMenuInput) => {
+  handleDesktopIpc("frogg:menu:showContextMenu", (event, input?: ShowContextMenuInput) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (!win) {
       return;
@@ -231,7 +231,7 @@ export function setupApplicationMenu(options: ApplicationMenuOptions): void {
 
   // Disable the zoom accelerators while capturing a shortcut so combos like
   // Cmd+- / Cmd+= reach the renderer instead of zooming the window.
-  handleDesktopIpc("fde:menu:set-capturing-shortcut", (_event, capturing?: boolean) => {
+  handleDesktopIpc("frogg:menu:set-capturing-shortcut", (_event, capturing?: boolean) => {
     capturingShortcut = capturing === true;
     rebuildApplicationMenu();
   });

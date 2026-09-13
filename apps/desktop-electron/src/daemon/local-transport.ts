@@ -69,7 +69,7 @@ export const LOCAL_TRANSPORT_SETUP_TIMEOUT_MS = 30_000;
 
 function emitTransportEvent(payload: TransportEventPayload): void {
   for (const win of BrowserWindow.getAllWindows()) {
-    win.webContents.send("fde:event:local-daemon-transport-event", payload);
+    win.webContents.send("frogg:event:local-daemon-transport-event", payload);
   }
 }
 

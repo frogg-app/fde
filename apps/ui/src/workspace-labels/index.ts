@@ -1,5 +1,5 @@
-import type { DaemonClient } from "@fde/client/internal/daemon-client";
-import { workspaceLabelKey, type WorkspaceLabelDefinition } from "@fde/protocol/workspace-labels";
+import type { DaemonClient } from "@frogg/client/internal/daemon-client";
+import { workspaceLabelKey, type WorkspaceLabelDefinition } from "@frogg/protocol/workspace-labels";
 import { useMemo } from "react";
 import { create } from "zustand";
 import { HostWorkspaceLabelReplica } from "./internal/host-replica";

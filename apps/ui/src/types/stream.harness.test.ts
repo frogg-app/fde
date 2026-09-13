@@ -6,8 +6,8 @@ import {
   type AgentToolCallItem,
   isAgentToolCallItem,
 } from "./stream";
-import type { AgentStreamEventPayload } from "@fde/protocol/messages";
-import type { ToolCallDetail } from "@fde/protocol/agent-types";
+import type { AgentStreamEventPayload } from "@frogg/protocol/messages";
+import type { ToolCallDetail } from "@frogg/protocol/agent-types";
 
 interface HarnessUpdate {
   event: AgentStreamEventPayload;

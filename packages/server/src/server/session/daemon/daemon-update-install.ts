@@ -2,10 +2,10 @@ import { existsSync, lstatSync, readFileSync, realpathSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { DaemonUpdateLastResult } from "@fde/protocol/messages";
+import type { DaemonUpdateLastResult } from "@frogg/protocol/messages";
 
 /**
- * Where this daemon is installed and whether `fde daemon self-update` can
+ * Where this daemon is installed and whether `frogg daemon self-update` can
  * replace it. A versioned install (deploy/install.sh, or the CLI's own
  * self-update) lives under `<installDir>/versions/<v>` with a `current` link;
  * anything else (a dev checkout, the Docker image, the desktop sidecar) is
@@ -17,7 +17,7 @@ export interface DaemonInstallInfo {
   reason: string | null;
   /** `<installDir>/versions/<v>` of the running daemon when it is a versioned install. */
   runningRoot: string | null;
-  /** The running version's `bin/fde` launcher, used to run the self-update. */
+  /** The running version's `bin/frogg` launcher, used to run the self-update. */
   cliLauncher: string | null;
 }
 
@@ -36,13 +36,13 @@ export function resolveInstallDir(
   env: NodeJS.ProcessEnv = process.env,
   platform: NodeJS.Platform = process.platform,
 ): string {
-  const explicit = env.FDE_INSTALL_DIR?.trim();
+  const explicit = env.FROGG_INSTALL_DIR?.trim();
   if (explicit) return explicit;
   if (platform === "win32") {
     const base = env.LOCALAPPDATA?.trim() || path.join(os.homedir(), "AppData", "Local");
-    return path.join(base, "fde");
+    return path.join(base, "frogg");
   }
-  return path.join(os.homedir(), ".local", "share", "fde");
+  return path.join(os.homedir(), ".local", "share", "frogg");
 }
 
 function safeRealpath(target: string): string | null {
@@ -69,14 +69,14 @@ export function describeDaemonInstall(input: DescribeDaemonInstallInput): Daemon
   const platform = input.platform ?? process.platform;
   const installDir = resolveInstallDir(env, platform);
   const base = { installDir, runningRoot: null, cliLauncher: null };
-  if (env.FDE_DOCKER === "1" || existsSync("/.dockerenv")) {
+  if (env.FROGG_DOCKER === "1" || existsSync("/.dockerenv")) {
     return { ...base, updatable: false, reason: DOCKER_UPDATE_HINT };
   }
   if (input.desktopManaged) {
     return {
       ...base,
       updatable: false,
-      reason: "This daemon is managed by FDE Desktop; updating the app updates it.",
+      reason: "This daemon is managed by Frogg Desktop; updating the app updates it.",
     };
   }
   const modulePath = fileURLToPath(input.moduleUrl ?? import.meta.url);
@@ -103,7 +103,7 @@ export function describeDaemonInstall(input: DescribeDaemonInstallInput): Daemon
       reason: `${installDir} has no current link; re-run deploy/install.sh once to repair the layout.`,
     };
   }
-  const launcher = path.join(runningRoot, "bin", platform === "win32" ? "fde.cmd" : "fde");
+  const launcher = path.join(runningRoot, "bin", platform === "win32" ? "frogg.cmd" : "frogg");
   return {
     installDir,
     updatable: existsSync(launcher),

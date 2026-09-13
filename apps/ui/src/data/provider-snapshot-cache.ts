@@ -1,16 +1,16 @@
 import AsyncStorage from "@/storage/brand-storage";
 import { Buffer } from "buffer";
-import type { ProviderSnapshotEntry } from "@fde/protocol/agent-types";
+import type { ProviderSnapshotEntry } from "@frogg/protocol/agent-types";
 import {
   expandProviderSnapshot,
   type CompactProviderSnapshot,
-} from "@fde/protocol/provider-snapshot-codec";
-import { CompactProviderSnapshotSchema } from "@fde/protocol/messages";
+} from "@frogg/protocol/provider-snapshot-codec";
+import { CompactProviderSnapshotSchema } from "@frogg/protocol/messages";
 import { z } from "zod";
 
 const CACHE_VERSION = 1;
-const CACHE_KEY_PREFIX = "@fde/provider-snapshot/v1";
-const CACHE_INDEX_KEY = "@fde/provider-snapshot-index/v1";
+const CACHE_KEY_PREFIX = "@frogg/provider-snapshot/v1";
+const CACHE_INDEX_KEY = "@frogg/provider-snapshot-index/v1";
 const CACHE_INDEX_VERSION = 1;
 const DEFAULT_MAX_CACHE_BYTES = 4 * 1024 * 1024;
 

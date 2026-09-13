@@ -98,7 +98,7 @@ class SequencedFakeStt implements SpeechToTextProvider {
 describe("STTManager", () => {
   function resolveVoiceLanguage(params: { env?: NodeJS.ProcessEnv; persisted?: unknown }): string {
     const result = resolveSpeechConfig({
-      fdeHome: "/tmp/fde-home",
+      froggHome: "/tmp/frogg-home",
       env: params.env ?? ({} as NodeJS.ProcessEnv),
       persisted: PersistedConfigSchema.parse(params.persisted ?? {}),
     });
@@ -123,21 +123,21 @@ describe("STTManager", () => {
     expect(fakeStt.lastLanguage).toBe("en");
   });
 
-  it("uses FDE_VOICE_LANGUAGE over FDE_DICTATION_LANGUAGE", async () => {
+  it("uses FROGG_VOICE_LANGUAGE over FROGG_DICTATION_LANGUAGE", async () => {
     const fakeStt = await transcribeWithResolvedVoiceLanguage({
       env: {
-        FDE_VOICE_LANGUAGE: "pt",
-        FDE_DICTATION_LANGUAGE: "es",
+        FROGG_VOICE_LANGUAGE: "pt",
+        FROGG_DICTATION_LANGUAGE: "es",
       } as NodeJS.ProcessEnv,
     });
 
     expect(fakeStt.lastLanguage).toBe("pt");
   });
 
-  it("uses FDE_DICTATION_LANGUAGE when FDE_VOICE_LANGUAGE is unset", async () => {
+  it("uses FROGG_DICTATION_LANGUAGE when FROGG_VOICE_LANGUAGE is unset", async () => {
     const fakeStt = await transcribeWithResolvedVoiceLanguage({
       env: {
-        FDE_DICTATION_LANGUAGE: "pt",
+        FROGG_DICTATION_LANGUAGE: "pt",
       } as NodeJS.ProcessEnv,
     });
 
@@ -147,8 +147,8 @@ describe("STTManager", () => {
   it("treats empty voice language env vars as unset", async () => {
     const fakeStt = await transcribeWithResolvedVoiceLanguage({
       env: {
-        FDE_VOICE_LANGUAGE: "",
-        FDE_DICTATION_LANGUAGE: "  ",
+        FROGG_VOICE_LANGUAGE: "",
+        FROGG_DICTATION_LANGUAGE: "  ",
       } as NodeJS.ProcessEnv,
     });
 
@@ -174,7 +174,7 @@ describe("STTManager", () => {
   it("uses env voice language over settings voice STT language", async () => {
     const fakeStt = await transcribeWithResolvedVoiceLanguage({
       env: {
-        FDE_VOICE_LANGUAGE: "pt",
+        FROGG_VOICE_LANGUAGE: "pt",
       } as NodeJS.ProcessEnv,
       persisted: {
         features: {
@@ -235,8 +235,8 @@ describe("STTManager", () => {
   });
 
   it("uses streaming segmentation for batch transcription and concatenates segment finals", async () => {
-    const original = process.env.FDE_STT_BATCH_COMMIT_EVERY_SECONDS;
-    process.env.FDE_STT_BATCH_COMMIT_EVERY_SECONDS = "1";
+    const original = process.env.FROGG_STT_BATCH_COMMIT_EVERY_SECONDS;
+    process.env.FROGG_STT_BATCH_COMMIT_EVERY_SECONDS = "1";
 
     try {
       const manager = new STTManager(
@@ -253,9 +253,9 @@ describe("STTManager", () => {
       expect(result.byteLength).toBe(threeSecondsPcm.length);
     } finally {
       if (original === undefined) {
-        delete process.env.FDE_STT_BATCH_COMMIT_EVERY_SECONDS;
+        delete process.env.FROGG_STT_BATCH_COMMIT_EVERY_SECONDS;
       } else {
-        process.env.FDE_STT_BATCH_COMMIT_EVERY_SECONDS = original;
+        process.env.FROGG_STT_BATCH_COMMIT_EVERY_SECONDS = original;
       }
     }
   });

@@ -7,12 +7,12 @@
 # silently diverges from every TypeScript client's.
 set -euo pipefail
 
-npm run build --workspace=@fde/protocol >/dev/null
-npm run generate:rust --workspace=@fde/protocol >/dev/null
+npm run build --workspace=@frogg/protocol >/dev/null
+npm run generate:rust --workspace=@frogg/protocol >/dev/null
 
 if ! git diff --quiet -- apps/daemon-rs/src/generated packages/protocol/generated; then
   echo "Generated protocol types are stale. Run:" >&2
-  echo "  npm run build --workspace=@fde/protocol" >&2
+  echo "  npm run build --workspace=@frogg/protocol" >&2
   git --no-pager diff --stat -- apps/daemon-rs/src/generated packages/protocol/generated >&2
   exit 1
 fi

@@ -6,9 +6,9 @@ import {
   type ClientForgeLogicModule,
   type MergeCapability,
 } from "@/git/client-forge-module";
-import type { CheckoutPrMergeMethod } from "@fde/protocol/messages";
-import { CHECK_TRAIT_WARNING } from "@fde/protocol/check-traits";
-import { mapGiteaCommitState } from "@fde/protocol/gitea-status";
+import type { CheckoutPrMergeMethod } from "@frogg/protocol/messages";
+import { CHECK_TRAIT_WARNING } from "@frogg/protocol/check-traits";
+import { mapGiteaCommitState } from "@frogg/protocol/gitea-status";
 
 const GiteaMergeFactsSchema = z
   .object({

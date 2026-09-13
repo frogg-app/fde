@@ -5,8 +5,8 @@ function isTruthyEnv(value: string | undefined): boolean {
   return normalized === "1" || normalized === "true" || normalized === "yes" || normalized === "on";
 }
 
-export function isFdeDictationDebugEnabled(): boolean {
-  return isTruthyEnv(process.env.FDE_DICTATION_DEBUG);
+export function isFroggDictationDebugEnabled(): boolean {
+  return isTruthyEnv(process.env.FROGG_DICTATION_DEBUG);
 }
 
 export function resolveRecordingsDebugDir(explicitEnvVarName: string): string | null {
@@ -15,7 +15,7 @@ export function resolveRecordingsDebugDir(explicitEnvVarName: string): string | 
     return resolve(explicit.trim());
   }
 
-  if (!isFdeDictationDebugEnabled()) {
+  if (!isFroggDictationDebugEnabled()) {
     return null;
   }
 

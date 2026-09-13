@@ -497,9 +497,9 @@ describe("workspace message schemas", () => {
           scripts: [
             {
               scriptName: "web",
-              hostname: "web.fde.localhost",
+              hostname: "web.frogg.localhost",
               port: 3000,
-              proxyUrl: "http://web.fde.localhost:9999",
+              proxyUrl: "http://web.frogg.localhost:9999",
               lifecycle: "running",
               health: "healthy",
             },
@@ -516,9 +516,9 @@ describe("workspace message schemas", () => {
       {
         scriptName: "web",
         type: "service",
-        hostname: "web.fde.localhost",
+        hostname: "web.frogg.localhost",
         port: 3000,
-        proxyUrl: "http://web.fde.localhost:9999",
+        proxyUrl: "http://web.frogg.localhost:9999",
         lifecycle: "running",
         health: "healthy",
         exitCode: null,
@@ -555,13 +555,13 @@ describe("workspace message schemas", () => {
     expect(parsed.payload.workspace.worktreeSlug).toBeUndefined();
   });
 
-  test("preserves a Fde-owned worktree slug", () => {
+  test("preserves a Frogg-owned worktree slug", () => {
     const parsed = WorkspaceDescriptorPayloadSchema.parse({
       id: "owned-worktree",
       projectId: "project",
       projectDisplayName: "repo",
       projectRootPath: "/repo",
-      workspaceDirectory: "/fde/worktrees/project/feature/packages/app",
+      workspaceDirectory: "/frogg/worktrees/project/feature/packages/app",
       worktreeSlug: "feature",
       projectKind: "git",
       workspaceKind: "worktree",
@@ -739,7 +739,7 @@ describe("workspace message schemas", () => {
         scripts: [
           {
             scriptName: "web",
-            hostname: "web.fde.localhost",
+            hostname: "web.frogg.localhost",
             port: null,
             proxyUrl: null,
             lifecycle: "stopped",
@@ -812,14 +812,14 @@ describe("workspace message schemas", () => {
         status: "completed",
         detail: {
           type: "worktree_setup",
-          worktreePath: "/repo/.fde/worktrees/feature-a",
+          worktreePath: "/repo/.frogg/worktrees/feature-a",
           branchName: "feature-a",
           log: "done",
           commands: [
             {
               index: 1,
               command: "npm install",
-              cwd: "/repo/.fde/worktrees/feature-a",
+              cwd: "/repo/.frogg/worktrees/feature-a",
               log: "done",
               status: "completed",
               exitCode: 0,
@@ -854,7 +854,7 @@ describe("workspace message schemas", () => {
           status: "completed",
           detail: {
             type: "worktree_setup",
-            worktreePath: "/repo/.fde/worktrees/feature-a",
+            worktreePath: "/repo/.frogg/worktrees/feature-a",
             branchName: "feature-a",
             log: "done",
             commands: [],
@@ -900,7 +900,7 @@ describe("workspace message schemas", () => {
             gitRuntime: {
               currentBranch: "main",
               remoteUrl: "https://github.com/acme/repo.git",
-              isFdeOwnedWorktree: false,
+              isFroggOwnedWorktree: false,
               isDirty: true,
               aheadBehind: {
                 ahead: 2,
@@ -963,7 +963,7 @@ describe("workspace message schemas", () => {
             gitRuntime: {
               currentBranch: "main",
               remoteUrl: "https://github.com/acme/repo.git",
-              isFdeOwnedWorktree: false,
+              isFroggOwnedWorktree: false,
               isDirty: false,
               aheadBehind: {
                 ahead: 0,
@@ -1079,7 +1079,7 @@ describe("workspace message schemas", () => {
                 isGit: true,
                 currentBranch: "main",
                 remoteUrl: "https://github.com/acme/repo.git",
-                isFdeOwnedWorktree: false,
+                isFroggOwnedWorktree: false,
                 mainRepoRoot: null,
               },
             },

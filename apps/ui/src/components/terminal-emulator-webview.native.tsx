@@ -17,8 +17,8 @@ import {
 } from "react-native";
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
 import type { ITheme } from "@xterm/xterm";
-import type { TerminalState } from "@fde/protocol/messages";
-import type { TerminalInputModeState } from "@fde/protocol/terminal-input-mode";
+import type { TerminalState } from "@frogg/protocol/messages";
+import type { TerminalInputModeState } from "@frogg/protocol/terminal-input-mode";
 import type { TerminalOutputData } from "../terminal/runtime/terminal-emulator-runtime";
 import type {
   TerminalLocalFileLinkSource,
@@ -296,7 +296,7 @@ export default function WebViewTerminalEmulator({
     for (const message of pending) {
       const payload = serializeForInjectedJavaScript(message);
       webViewRef.current.injectJavaScript(
-        `window.__FDE_TERMINAL_WEBVIEW_RECEIVE__ && window.__FDE_TERMINAL_WEBVIEW_RECEIVE__(${payload}); true;`,
+        `window.__FROGG_TERMINAL_WEBVIEW_RECEIVE__ && window.__FROGG_TERMINAL_WEBVIEW_RECEIVE__(${payload}); true;`,
       );
     }
   }, []);
@@ -308,7 +308,7 @@ export default function WebViewTerminalEmulator({
     }
     const payload = serializeForInjectedJavaScript(message);
     webViewRef.current.injectJavaScript(
-      `window.__FDE_TERMINAL_WEBVIEW_RECEIVE__ && window.__FDE_TERMINAL_WEBVIEW_RECEIVE__(${payload}); true;`,
+      `window.__FROGG_TERMINAL_WEBVIEW_RECEIVE__ && window.__FROGG_TERMINAL_WEBVIEW_RECEIVE__(${payload}); true;`,
     );
   }, []);
 
@@ -351,7 +351,7 @@ export default function WebViewTerminalEmulator({
       },
       blur: () => {
         webViewRef.current?.injectJavaScript(
-          "window.__FDE_TERMINAL_WEBVIEW_BLUR__ && window.__FDE_TERMINAL_WEBVIEW_BLUR__(); true;",
+          "window.__FROGG_TERMINAL_WEBVIEW_BLUR__ && window.__FROGG_TERMINAL_WEBVIEW_BLUR__(); true;",
         );
         Keyboard.dismiss();
       },

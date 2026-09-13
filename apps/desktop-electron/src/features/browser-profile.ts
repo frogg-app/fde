@@ -1,9 +1,9 @@
-export const FDE_BROWSER_PROFILE_PARTITION = "persist:fde-browser";
+export const FROGG_BROWSER_PROFILE_PARTITION = "persist:frogg-browser";
 const LEGACY_BROWSER_ID_PATTERN =
   /^(?:[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|\d{13,}-[0-9a-f]+)$/i;
 const MAX_LEGACY_BROWSER_PROFILES = 1000;
 
-const FDE_BROWSER_STORAGE_TYPES = [
+const FROGG_BROWSER_STORAGE_TYPES = [
   "cookies",
   "filesystem",
   "indexdb",
@@ -14,7 +14,7 @@ const FDE_BROWSER_STORAGE_TYPES = [
 
 interface BrowserProfileSession {
   clearStorageData(options: {
-    storages: Array<(typeof FDE_BROWSER_STORAGE_TYPES)[number]>;
+    storages: Array<(typeof FROGG_BROWSER_STORAGE_TYPES)[number]>;
   }): Promise<void>;
   clearCache(): Promise<void>;
   clearAuthCache(): Promise<void>;
@@ -46,11 +46,11 @@ interface ElectronSessions {
   fromPartition(partition: string): BrowserProfileSession;
 }
 
-export function getFdeBrowserProfileSession(sessions: ElectronSessions): BrowserProfileSession {
-  return sessions.fromPartition(FDE_BROWSER_PROFILE_PARTITION);
+export function getFroggBrowserProfileSession(sessions: ElectronSessions): BrowserProfileSession {
+  return sessions.fromPartition(FROGG_BROWSER_PROFILE_PARTITION);
 }
 
-export function readLegacyFdeBrowserIds(input: unknown): string[] {
+export function readLegacyFroggBrowserIds(input: unknown): string[] {
   if (!Array.isArray(input)) {
     return [];
   }
@@ -66,30 +66,30 @@ export function readLegacyFdeBrowserIds(input: unknown): string[] {
   return [...browserIds];
 }
 
-export function getFdeBrowserProfileSessions(
+export function getFroggBrowserProfileSessions(
   sessions: ElectronSessions,
   legacyBrowserIds: string[],
 ): [BrowserProfileSession, ...BrowserProfileSession[]] {
   return [
-    getFdeBrowserProfileSession(sessions),
+    getFroggBrowserProfileSession(sessions),
     // COMPAT(browserProfile): added in v0.1.108; remove after 2027-01-15.
     ...legacyBrowserIds.map((browserId) =>
-      sessions.fromPartition(`${FDE_BROWSER_PROFILE_PARTITION}-${browserId}`),
+      sessions.fromPartition(`${FROGG_BROWSER_PROFILE_PARTITION}-${browserId}`),
     ),
   ];
 }
 
-export function getLegacyFdeBrowserProfileSession(
+export function getLegacyFroggBrowserProfileSession(
   sessions: ElectronSessions,
   browserId: string,
 ): BrowserProfileSession | null {
-  const [legacyBrowserId] = readLegacyFdeBrowserIds([browserId]);
+  const [legacyBrowserId] = readLegacyFroggBrowserIds([browserId]);
   return legacyBrowserId
-    ? sessions.fromPartition(`${FDE_BROWSER_PROFILE_PARTITION}-${legacyBrowserId}`)
+    ? sessions.fromPartition(`${FROGG_BROWSER_PROFILE_PARTITION}-${legacyBrowserId}`)
     : null;
 }
 
-export function listFdeBrowserProfileGuests(
+export function listFroggBrowserProfileGuests(
   input: ListBrowserProfileGuestsInput,
 ): BrowserProfileGuest[] {
   return input.webContents.filter(
@@ -100,11 +100,11 @@ export function listFdeBrowserProfileGuests(
   );
 }
 
-export async function clearFdeBrowserProfile(input: ClearBrowserProfileInput): Promise<void> {
+export async function clearFroggBrowserProfile(input: ClearBrowserProfileInput): Promise<void> {
   await Promise.all(
     input.profileSessions.flatMap((profileSession) => [
       profileSession.clearStorageData({
-        storages: [...FDE_BROWSER_STORAGE_TYPES],
+        storages: [...FROGG_BROWSER_STORAGE_TYPES],
       }),
       profileSession.clearCache(),
       profileSession.clearAuthCache(),

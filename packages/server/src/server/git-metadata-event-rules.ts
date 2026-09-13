@@ -43,10 +43,10 @@ export const GIT_METADATA_EVENT_RULES = [
     refreshBase: true,
   },
   {
-    id: "fde-worktree-metadata",
+    id: "frogg-worktree-metadata",
     scope: "worktree",
     match: "exact",
-    path: "fde/worktree.json",
+    path: "frogg/worktree.json",
     route: "owner",
     refreshBase: true,
   },

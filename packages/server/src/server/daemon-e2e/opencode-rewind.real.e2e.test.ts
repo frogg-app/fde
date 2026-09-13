@@ -5,9 +5,9 @@ import pino from "pino";
 import { afterAll, beforeAll, beforeEach, describe, expect, test } from "vitest";
 
 import type { AgentTimelineItem } from "../agent/agent-sdk-types.js";
-import type { AgentLifecycleStatus } from "@fde/protocol/agent-lifecycle";
+import type { AgentLifecycleStatus } from "@frogg/protocol/agent-lifecycle";
 import { DaemonClient } from "../test-utils/daemon-client.js";
-import { createTestFdeDaemon, type TestFdeDaemon } from "../test-utils/fde-daemon.js";
+import { createTestFroggDaemon, type TestFroggDaemon } from "../test-utils/frogg-daemon.js";
 import {
   canRunRealProvider,
   createRealProviderClients,
@@ -24,7 +24,7 @@ import {
 
 interface OpenCodeRewindHarness {
   client: DaemonClient;
-  daemon: TestFdeDaemon;
+  daemon: TestFroggDaemon;
 }
 
 interface OpenCodeRewindSession {
@@ -47,11 +47,11 @@ async function launchOpenCodeRewindSession(
   const cwd = tmpRewindCwd("daemon-real-opencode-rewind-", { realpath: true });
   const scratchPath = path.join(cwd, "rewind-scratch.txt");
   execFileSync("git", ["init"], { cwd, stdio: "ignore" });
-  execFileSync("git", ["config", "user.email", "fde-test@example.com"], {
+  execFileSync("git", ["config", "user.email", "frogg-test@example.com"], {
     cwd,
     stdio: "ignore",
   });
-  execFileSync("git", ["config", "user.name", "Fde Test"], { cwd, stdio: "ignore" });
+  execFileSync("git", ["config", "user.name", "Frogg Test"], { cwd, stdio: "ignore" });
   await writeFile(scratchPath, "BASE\n", "utf8");
   execFileSync("git", ["add", "rewind-scratch.txt"], { cwd, stdio: "ignore" });
   execFileSync("git", ["commit", "-m", "base"], { cwd, stdio: "ignore" });
@@ -174,7 +174,7 @@ function editPrompt(input: {
   doneToken: string;
 }): string {
   return [
-    `FDE_OPENCODE_REWIND_PROMPT_${input.promptToken}.`,
+    `FROGG_OPENCODE_REWIND_PROMPT_${input.promptToken}.`,
     `Use the edit or write tool, not shell commands, to make ${input.fileName} contain exactly:`,
     "```",
     input.content.trimEnd(),
@@ -224,7 +224,7 @@ describe("daemon E2E (real opencode) - rewind", () => {
       return;
     }
     const logger = pino({ level: "silent" });
-    const daemon = await createTestFdeDaemon({
+    const daemon = await createTestFroggDaemon({
       agentClients: createRealProviderClients(["opencode"], logger),
       logger,
     });
@@ -291,7 +291,7 @@ describe("daemon E2E (real opencode) - rewind", () => {
       harness,
       "opencode-plain-text-user-message-real",
     );
-    const prompt = "FDE_OPENCODE_PLAIN_TEXT_DUP_CHECK. Reply exactly: OPENCODE_PLAIN_TEXT_DONE";
+    const prompt = "FROGG_OPENCODE_PLAIN_TEXT_DUP_CHECK. Reply exactly: OPENCODE_PLAIN_TEXT_DONE";
 
     try {
       await harness.client.sendMessage(session.agentId, prompt);
@@ -315,7 +315,7 @@ describe("daemon E2E (real opencode) - rewind", () => {
       await harness.client.sendMessage(
         session.agentId,
         [
-          "FDE_OPENCODE_REWIND_PROMPT_READ_ONLY.",
+          "FROGG_OPENCODE_REWIND_PROMPT_READ_ONLY.",
           `Inspect ${path.basename(session.scratchPath)} without editing files.`,
           "Reply exactly: OPENCODE_READ_ONLY_DONE",
         ].join(" "),
@@ -360,7 +360,7 @@ describe("daemon E2E (real opencode) - rewind", () => {
       await harness.client.sendMessage(
         session.agentId,
         [
-          "FDE_OPENCODE_REWIND_PROMPT_MULTI_EDIT.",
+          "FROGG_OPENCODE_REWIND_PROMPT_MULTI_EDIT.",
           "Create opencode-multi-a.txt with exactly OPENCODE_MULTI_A.",
           "Create opencode-multi-b.txt with exactly OPENCODE_MULTI_B.",
           "Do not use shell commands.",

@@ -16,7 +16,7 @@ interface DiagnosticEntry {
 }
 
 export interface DaemonDiagnosticsOptions {
-  fdeHome: string;
+  froggHome: string;
   serverId: string | undefined;
   daemonVersion: string | undefined;
   daemonRuntimeConfig: DaemonRuntimeConfig | undefined;
@@ -61,7 +61,7 @@ const LOG_TAIL_MAX_BYTES = 64 * 1024;
 
 export async function collectDaemonDiagnostics(options: DaemonDiagnosticsOptions): Promise<string> {
   const sections: string[] = [
-    formatSection("FDE diagnostics", [
+    formatSection("Frogg diagnostics", [
       { label: "Collected at", value: new Date().toISOString() },
       { label: "Server ID", value: options.serverId ?? "unknown" },
       { label: "Daemon version", value: options.daemonVersion ?? "unknown" },
@@ -122,7 +122,7 @@ function collectProcessEntries(options: DaemonDiagnosticsOptions): DiagnosticEnt
     { label: "PATH", value: getEnvValue("PATH", "Path") ?? "unset" },
     { label: "Shell", value: formatDaemonShell() },
     { label: "Uptime", value: formatDurationMs(process.uptime() * 1000) },
-    { label: "FDE home", value: options.fdeHome },
+    { label: "Frogg home", value: options.froggHome },
     { label: "RSS", value: formatBytes(memory.rss) },
     {
       label: "Heap used",
@@ -156,11 +156,11 @@ function collectSystemEntries(): DiagnosticEntry[] {
 }
 
 async function collectDiskEntries(options: DaemonDiagnosticsOptions): Promise<DiagnosticEntry[]> {
-  const stats = await statfs(options.fdeHome);
+  const stats = await statfs(options.froggHome);
   const freeBytes = stats.bavail * stats.bsize;
   const totalBytes = stats.blocks * stats.bsize;
   return [
-    { label: "Path", value: options.fdeHome },
+    { label: "Path", value: options.froggHome },
     { label: "Free", value: `${formatBytes(freeBytes)} / ${formatBytes(totalBytes)}` },
   ];
 }
@@ -413,7 +413,7 @@ async function checkTool(command: string, args: string[]): Promise<string> {
 }
 
 async function safeLogTailSection(options: DaemonDiagnosticsOptions): Promise<string> {
-  const logPath = path.join(options.fdeHome, "daemon.log");
+  const logPath = path.join(options.froggHome, "daemon.log");
   try {
     const tail = await tailFile(logPath, LOG_TAIL_LINES, LOG_TAIL_MAX_BYTES);
     return ["Daemon log tail", `  Path: ${logPath}`, tail ? tail : "  No log lines found"].join(
@@ -545,7 +545,7 @@ export function redactDiagnostic(
   }
 
   return redacted
-    .replace(/fde:\/\/\S+/gi, "fde://[redacted]")
+    .replace(/frogg:\/\/\S+/gi, "frogg://[redacted]")
     .replace(
       /([?&](?:password|token|secret|key|publicKey|daemonPublicKeyB64)=)[^&\s"']+/gi,
       "$1[redacted]",

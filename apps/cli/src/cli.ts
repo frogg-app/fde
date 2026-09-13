@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { Command } from "commander";
 import { createAgentCommand } from "./commands/agent/index.js";
 import {

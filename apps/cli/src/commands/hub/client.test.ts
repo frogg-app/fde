@@ -33,7 +33,7 @@ describe("Hub HTTP client", () => {
         body: {
           status: "authorized",
           interval: 5,
-          credential: "fde_cli_prefix_durable-secret-value",
+          credential: "frogg_cli_prefix_durable-secret-value",
           organizationId: "organization-1",
         },
       };
@@ -63,8 +63,8 @@ describe("Hub HTTP client", () => {
             projects: [
               {
                 id: "a50e05af-4f20-4c8f-8dcc-58e5ea360663",
-                slug: "fde",
-                name: "Fde",
+                slug: "frogg",
+                name: "Frogg",
               },
             ],
           },
@@ -83,7 +83,7 @@ describe("Hub HTTP client", () => {
     const projects = await hub.listProjects(origin, "human-secret");
     const token = await hub.issueEnrollmentToken(origin, "human-secret");
 
-    assert.equal(projects[0]?.slug, "fde");
+    assert.equal(projects[0]?.slug, "frogg");
     assert.equal(token, "one-time-enrollment-token-with-enough-length");
     assert.deepEqual(
       requests.map((request) => request.url),
@@ -129,11 +129,11 @@ describe("Hub HTTP client", () => {
               slug: "frogg-app",
               accountLogin: "frogg-app",
               accountType: "Organization",
-              repositories: ["frogg-app/fde"],
+              repositories: ["frogg-app/frogg"],
             },
           ],
-          discord: [{ slug: "fde", guildName: "Fde" }],
-          slack: [{ slug: "fde", teamName: "Fde" }],
+          discord: [{ slug: "frogg", guildName: "Frogg" }],
+          slack: [{ slug: "frogg", teamName: "Frogg" }],
         },
       }),
       requests,
@@ -142,7 +142,7 @@ describe("Hub HTTP client", () => {
     const resources = await new HubHttpClient().listConfigurationResources(origin, "secret");
 
     assert.equal(resources.daemons[0]?.slug, "macbook");
-    assert.equal(resources.discord[0]?.slug, "fde");
+    assert.equal(resources.discord[0]?.slug, "frogg");
     assert.equal(requests[0]?.url, "/api/v1/configuration-resources");
   });
 
@@ -157,11 +157,11 @@ describe("Hub HTTP client", () => {
               slug: "frogg-app",
               accountLogin: "frogg-app",
               accountType: "Organization",
-              repositories: ["frogg-app/fde"],
+              repositories: ["frogg-app/frogg"],
             },
           ],
-          discord: [{ guildId: "guild-123", guildName: "Fde" }],
-          slack: [{ teamId: "team-123", teamName: "Fde" }],
+          discord: [{ guildId: "guild-123", guildName: "Frogg" }],
+          slack: [{ teamId: "team-123", teamName: "Frogg" }],
         },
       }),
       requests,
@@ -175,8 +175,8 @@ describe("Hub HTTP client", () => {
   });
 
   it.each([
-    { github: [], discord: [], slack: [{ teamId: "team-123", teamName: "Fde", slug: "wrong" }] },
-    { github: [], discord: [], slack: [{ teamId: 123, teamName: "Fde" }] },
+    { github: [], discord: [], slack: [{ teamId: "team-123", teamName: "Frogg", slug: "wrong" }] },
+    { github: [], discord: [], slack: [{ teamId: 123, teamName: "Frogg" }] },
   ])("rejects malformed or unknown setup resource fields", async (body) => {
     const requests: Array<{ url: string | undefined; body: string }> = [];
     const origin = await startServer(
@@ -207,7 +207,7 @@ describe("Hub HTTP client", () => {
           requestId: "request-1",
           issues: [
             {
-              path: [".fde/workflows/answer.yml", "steps", "work", "agent"],
+              path: [".frogg/workflows/answer.yml", "steps", "work", "agent"],
               message: "unknown named agent operator-secret",
             },
           ],
@@ -222,7 +222,7 @@ describe("Hub HTTP client", () => {
         origin,
         apiKey: "operator-secret",
         projectSlug: "studio",
-        files: [{ path: ".fde/hub.yml", content: "sensitive bundle content" }],
+        files: [{ path: ".frogg/hub.yml", content: "sensitive bundle content" }],
       }),
       (error: unknown) => {
         assert.ok(error instanceof HubCommandError);
@@ -233,7 +233,7 @@ describe("Hub HTTP client", () => {
         assert.equal(error.details?.includes("sensitive bundle content"), false);
         assert.equal(
           error.details,
-          ".fde/workflows/answer.yml: steps.work.agent: unknown named agent [redacted]",
+          ".frogg/workflows/answer.yml: steps.work.agent: unknown named agent [redacted]",
         );
         return true;
       },

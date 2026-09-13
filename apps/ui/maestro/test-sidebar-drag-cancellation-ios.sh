@@ -5,16 +5,16 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 FLOW_TEMPLATE="$REPO_ROOT/apps/ui/maestro/sidebar-drag-cancellation-regression.yaml"
 FLOW_TEMPLATE_DIR="$REPO_ROOT/apps/ui/maestro"
-OUT_DIR="/tmp/fde-sidebar-drag-cancellation-$(date +%s)"
+OUT_DIR="/tmp/frogg-sidebar-drag-cancellation-$(date +%s)"
 CLIENT_EXPORTS="$REPO_ROOT/packages/client/dist/daemon-client.js"
-RELAY_EXPORTS="$REPO_ROOT/node_modules/@fde/relay/dist/e2ee.js"
+RELAY_EXPORTS="$REPO_ROOT/node_modules/@frogg/relay/dist/e2ee.js"
 FIXTURE_ROOT=""
 PROJECT_IDS_FILE="$OUT_DIR/project-ids.json"
 
-export FDE_MAESTRO_APP_ID="${FDE_MAESTRO_APP_ID:-sh.fde.debug}"
-export FDE_MAESTRO_DIRECT_ENDPOINT="${FDE_MAESTRO_DIRECT_ENDPOINT:-127.0.0.1:9999}"
-export FDE_MAESTRO_DAEMON_WS_URL="${FDE_MAESTRO_DAEMON_WS_URL:-ws://127.0.0.1:9999/ws}"
-export FDE_MAESTRO_DAEMON_HEALTH_URL="${FDE_MAESTRO_DAEMON_HEALTH_URL:-http://127.0.0.1:9999/api/health}"
+export FROGG_MAESTRO_APP_ID="${FROGG_MAESTRO_APP_ID:-sh.frogg.debug}"
+export FROGG_MAESTRO_DIRECT_ENDPOINT="${FROGG_MAESTRO_DIRECT_ENDPOINT:-127.0.0.1:9999}"
+export FROGG_MAESTRO_DAEMON_WS_URL="${FROGG_MAESTRO_DAEMON_WS_URL:-ws://127.0.0.1:9999/ws}"
+export FROGG_MAESTRO_DAEMON_HEALTH_URL="${FROGG_MAESTRO_DAEMON_HEALTH_URL:-http://127.0.0.1:9999/api/health}"
 
 require_command() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -36,21 +36,21 @@ if [ ! -f "$CLIENT_EXPORTS" ] || [ ! -f "$RELAY_EXPORTS" ]; then
   exit 1
 fi
 
-if ! curl --fail --silent --show-error --max-time 3 "$FDE_MAESTRO_DAEMON_HEALTH_URL" >/dev/null; then
-  echo "Fde daemon is unavailable at $FDE_MAESTRO_DAEMON_HEALTH_URL" >&2
+if ! curl --fail --silent --show-error --max-time 3 "$FROGG_MAESTRO_DAEMON_HEALTH_URL" >/dev/null; then
+  echo "Frogg daemon is unavailable at $FROGG_MAESTRO_DAEMON_HEALTH_URL" >&2
   exit 1
 fi
 
-FIXTURE_ROOT="$(mktemp -d /tmp/fde-sidebar-drag-fixture-XXXXXX)"
-export FDE_MAESTRO_DRAG_A_NAME="000-fde-drag-a-$(basename "$FIXTURE_ROOT")"
-export FDE_MAESTRO_DRAG_B_NAME="001-fde-drag-b-$(basename "$FIXTURE_ROOT")"
-export FDE_MAESTRO_DRAG_Z_NAME="zzz-fde-drag-z-$(basename "$FIXTURE_ROOT")"
+FIXTURE_ROOT="$(mktemp -d /tmp/frogg-sidebar-drag-fixture-XXXXXX)"
+export FROGG_MAESTRO_DRAG_A_NAME="000-frogg-drag-a-$(basename "$FIXTURE_ROOT")"
+export FROGG_MAESTRO_DRAG_B_NAME="001-frogg-drag-b-$(basename "$FIXTURE_ROOT")"
+export FROGG_MAESTRO_DRAG_Z_NAME="zzz-frogg-drag-z-$(basename "$FIXTURE_ROOT")"
 
 mkdir -p "$OUT_DIR/flows"
 
-if [ -z "${FDE_MAESTRO_IOS_UDID:-}" ]; then
-  export FDE_MAESTRO_IOS_UDID
-  FDE_MAESTRO_IOS_UDID="$({ xcrun simctl list devices booted -j || true; } | node -e '
+if [ -z "${FROGG_MAESTRO_IOS_UDID:-}" ]; then
+  export FROGG_MAESTRO_IOS_UDID
+  FROGG_MAESTRO_IOS_UDID="$({ xcrun simctl list devices booted -j || true; } | node -e '
     let input = "";
     process.stdin.on("data", (chunk) => (input += chunk));
     process.stdin.on("end", () => {
@@ -61,7 +61,7 @@ if [ -z "${FDE_MAESTRO_IOS_UDID:-}" ]; then
   ')"
 fi
 
-if [ -z "$FDE_MAESTRO_IOS_UDID" ]; then
+if [ -z "$FROGG_MAESTRO_IOS_UDID" ]; then
   echo "No booted iOS simulator found." >&2
   exit 1
 fi
@@ -70,25 +70,25 @@ render_flow() {
   local source="$1"
   local target="$2"
   perl -0pe '
-    s/^appId: sh\.fde$/appId: $ENV{FDE_MAESTRO_APP_ID}/m;
-    s/\$\{FDE_MAESTRO_APP_ID\}/$ENV{FDE_MAESTRO_APP_ID}/g;
-    s/\$\{FDE_MAESTRO_DIRECT_ENDPOINT\}/$ENV{FDE_MAESTRO_DIRECT_ENDPOINT}/g;
-    s/\$\{FDE_MAESTRO_DRAG_A_NAME\}/$ENV{FDE_MAESTRO_DRAG_A_NAME}/g;
-    s/\$\{FDE_MAESTRO_DRAG_B_NAME\}/$ENV{FDE_MAESTRO_DRAG_B_NAME}/g;
-    s/\$\{FDE_MAESTRO_DRAG_Z_NAME\}/$ENV{FDE_MAESTRO_DRAG_Z_NAME}/g;
+    s/^appId: sh\.frogg$/appId: $ENV{FROGG_MAESTRO_APP_ID}/m;
+    s/\$\{FROGG_MAESTRO_APP_ID\}/$ENV{FROGG_MAESTRO_APP_ID}/g;
+    s/\$\{FROGG_MAESTRO_DIRECT_ENDPOINT\}/$ENV{FROGG_MAESTRO_DIRECT_ENDPOINT}/g;
+    s/\$\{FROGG_MAESTRO_DRAG_A_NAME\}/$ENV{FROGG_MAESTRO_DRAG_A_NAME}/g;
+    s/\$\{FROGG_MAESTRO_DRAG_B_NAME\}/$ENV{FROGG_MAESTRO_DRAG_B_NAME}/g;
+    s/\$\{FROGG_MAESTRO_DRAG_Z_NAME\}/$ENV{FROGG_MAESTRO_DRAG_Z_NAME}/g;
   ' "$source" > "$target"
 }
 
 for project_name in \
-  "$FDE_MAESTRO_DRAG_A_NAME" \
-  "$FDE_MAESTRO_DRAG_B_NAME" \
-  "$FDE_MAESTRO_DRAG_Z_NAME"; do
+  "$FROGG_MAESTRO_DRAG_A_NAME" \
+  "$FROGG_MAESTRO_DRAG_B_NAME" \
+  "$FROGG_MAESTRO_DRAG_Z_NAME"; do
   project_path="$FIXTURE_ROOT/$project_name"
   mkdir -p "$project_path"
   git -C "$project_path" init >/dev/null
   git -C "$project_path" checkout -b main >/dev/null 2>&1 || true
-  git -C "$project_path" config user.name "Fde Maestro"
-  git -C "$project_path" config user.email "maestro@fde.local"
+  git -C "$project_path" config user.name "Frogg Maestro"
+  git -C "$project_path" config user.email "maestro@frogg.local"
   printf '# Sidebar drag cancellation fixture\n' > "$project_path/README.md"
   git -C "$project_path" add README.md
   git -C "$project_path" commit -m "Initial commit" >/dev/null
@@ -105,7 +105,7 @@ const moduleUrl = pathToFileURL(`${process.env.REPO_ROOT}/packages/client/dist/d
 const { DaemonClient } = await import(moduleUrl);
 const projectIds = JSON.parse(await readFile(process.env.PROJECT_IDS_FILE, "utf8"));
 const client = new DaemonClient({
-  url: process.env.FDE_MAESTRO_DAEMON_WS_URL,
+  url: process.env.FROGG_MAESTRO_DAEMON_WS_URL,
   clientId: `maestro-sidebar-drag-cleanup-${Date.now()}`,
   clientType: "cli",
   webSocketFactory: (url, options) => new WebSocket(url, { headers: options?.headers }),
@@ -133,12 +133,12 @@ import WebSocket from "ws";
 const moduleUrl = pathToFileURL(`${process.env.REPO_ROOT}/packages/client/dist/daemon-client.js`).href;
 const { DaemonClient } = await import(moduleUrl);
 const projectNames = [
-  process.env.FDE_MAESTRO_DRAG_A_NAME,
-  process.env.FDE_MAESTRO_DRAG_B_NAME,
-  process.env.FDE_MAESTRO_DRAG_Z_NAME,
+  process.env.FROGG_MAESTRO_DRAG_A_NAME,
+  process.env.FROGG_MAESTRO_DRAG_B_NAME,
+  process.env.FROGG_MAESTRO_DRAG_Z_NAME,
 ];
 const client = new DaemonClient({
-  url: process.env.FDE_MAESTRO_DAEMON_WS_URL,
+  url: process.env.FROGG_MAESTRO_DAEMON_WS_URL,
   clientId: `maestro-sidebar-drag-setup-${Date.now()}`,
   clientType: "cli",
   webSocketFactory: (url, options) => new WebSocket(url, { headers: options?.headers }),
@@ -165,6 +165,6 @@ render_flow "$FLOW_TEMPLATE" "$FLOW"
 render_flow "$FLOW_TEMPLATE_DIR/flows/dev-client.yaml" "$OUT_DIR/flows/dev-client.yaml"
 render_flow "$FLOW_TEMPLATE_DIR/flows/connect-direct-if-welcome.yaml" "$OUT_DIR/flows/connect-direct-if-welcome.yaml"
 
-echo "Running sidebar drag cancellation regression on $FDE_MAESTRO_IOS_UDID"
+echo "Running sidebar drag cancellation regression on $FROGG_MAESTRO_IOS_UDID"
 echo "Artifacts: $OUT_DIR"
-(cd "$OUT_DIR" && maestro test "$FLOW" --udid "$FDE_MAESTRO_IOS_UDID")
+(cd "$OUT_DIR" && maestro test "$FLOW" --udid "$FROGG_MAESTRO_IOS_UDID")

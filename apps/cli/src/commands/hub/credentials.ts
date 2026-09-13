@@ -1,9 +1,9 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { randomUUID } from "node:crypto";
 import { chmodSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { z } from "zod";
-import { resolveFdeHomePath } from "../../utils/fde-home.js";
+import { resolveFroggHomePath } from "../../utils/frogg-home.js";
 import { HubCommandError } from "./error.js";
 import { normalizeHubOrigin } from "./origin.js";
 
@@ -60,7 +60,7 @@ export class PrivateHubCredentialStore implements HubCredentialStore {
   private readonly filePath: string;
 
   constructor(env: Readonly<Record<string, string | undefined>> = process.env) {
-    this.filePath = path.join(resolveFdeHome(env), "hub-credentials.json");
+    this.filePath = path.join(resolveFroggHome(env), "hub-credentials.json");
   }
 
   active(): StoredHubCredential | null {
@@ -137,8 +137,8 @@ export class PrivateHubCredentialStore implements HubCredentialStore {
   }
 }
 
-function resolveFdeHome(env: Readonly<Record<string, string | undefined>>): string {
-  return resolveFdeHomePath(env as NodeJS.ProcessEnv);
+function resolveFroggHome(env: Readonly<Record<string, string | undefined>>): string {
+  return resolveFroggHomePath(env as NodeJS.ProcessEnv);
 }
 
 function chmodPrivate(target: string, mode: number): void {

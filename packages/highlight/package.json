@@ -1,5 +1,5 @@
 {
-  "name": "@fde/highlight",
+  "name": "@frogg/highlight",
   "version": "0.7.0",
   "files": [
     "dist",

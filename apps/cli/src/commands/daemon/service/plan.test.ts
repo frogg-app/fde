@@ -17,12 +17,12 @@ function planInput(overrides: Partial<ServicePlanInput> = {}): ServicePlanInput 
     homeDir: HOME_DIR,
     env: { PATH: "/usr/bin:/bin" },
     command: {
-      program: "/opt/fde/bin/fde",
+      program: "/opt/frogg/bin/frogg",
       args: ["daemon", "start", "--foreground"],
     },
     listen: "127.0.0.1:9991",
-    fdeHome: path.join(HOME_DIR, ".fde"),
-    pathPrepend: "/opt/fde/bin",
+    froggHome: path.join(HOME_DIR, ".frogg"),
+    pathPrepend: "/opt/frogg/bin",
     ...overrides,
   };
 }
@@ -31,13 +31,13 @@ describe("systemd user unit", () => {
   test("preserves execution descendants only when explicitly opted in", () => {
     const legacy = resolveServicePlan(planInput());
     expect(legacy.file?.contents).toContain("KillMode=mixed");
-    expect(legacy.file?.contents).not.toContain("FDE_EXECUTION_SERVICE");
-    const independent = resolveServicePlan(planInput({ env: { FDE_EXECUTION_SERVICE: "1" } }));
+    expect(legacy.file?.contents).not.toContain("FROGG_EXECUTION_SERVICE");
+    const independent = resolveServicePlan(planInput({ env: { FROGG_EXECUTION_SERVICE: "1" } }));
     expect(independent.file?.contents).toContain("KillMode=process");
     expect(independent.file?.contents).toContain(
-      'ExecStop="/opt/fde/bin/fde" "daemon" "stop" "--force"',
+      'ExecStop="/opt/frogg/bin/frogg" "daemon" "stop" "--force"',
     );
-    expect(independent.file?.contents).toContain("Environment=FDE_EXECUTION_SERVICE=1");
+    expect(independent.file?.contents).toContain("Environment=FROGG_EXECUTION_SERVICE=1");
   });
 
   test("is written under XDG_CONFIG_HOME and starts the daemon in the foreground", () => {
@@ -49,11 +49,11 @@ describe("systemd user unit", () => {
 
     expect(plan.file?.path).toBe(`/scratch/config/systemd/user/${SERVICE_NAME}.service`);
     expect(plan.file?.contents).toContain(
-      'ExecStart="/opt/fde/bin/fde" "daemon" "start" "--foreground"',
+      'ExecStart="/opt/frogg/bin/frogg" "daemon" "start" "--foreground"',
     );
-    expect(plan.file?.contents).toContain("Environment=FDE_LISTEN=127.0.0.1:9991");
-    expect(plan.file?.contents).toContain(`Environment="FDE_HOME=${HOME_DIR}/.fde"`);
-    expect(plan.file?.contents).toContain('Environment="PATH=/opt/fde/bin:/usr/bin:/bin"');
+    expect(plan.file?.contents).toContain("Environment=FROGG_LISTEN=127.0.0.1:9991");
+    expect(plan.file?.contents).toContain(`Environment="FROGG_HOME=${HOME_DIR}/.frogg"`);
+    expect(plan.file?.contents).toContain('Environment="PATH=/opt/frogg/bin:/usr/bin:/bin"');
     expect(plan.file?.contents).toContain("WantedBy=default.target");
     expect(plan.install).toContainEqual({
       program: "systemctl",
@@ -62,10 +62,10 @@ describe("systemd user unit", () => {
     expect(plan.hints.join(" ")).toContain("loginctl enable-linger");
   });
 
-  test("falls back to ~/.config and omits FDE_HOME when the home is not pinned", () => {
-    const plan = resolveServicePlan(planInput({ fdeHome: undefined }));
+  test("falls back to ~/.config and omits FROGG_HOME when the home is not pinned", () => {
+    const plan = resolveServicePlan(planInput({ froggHome: undefined }));
     expect(plan.file?.path).toBe(`${HOME_DIR}/.config/systemd/user/${SERVICE_NAME}.service`);
-    expect(plan.file?.contents).not.toContain("FDE_HOME");
+    expect(plan.file?.contents).not.toContain("FROGG_HOME");
   });
 
   test("uninstall disables the unit", () => {
@@ -86,10 +86,10 @@ describe("launchd agent", () => {
     expect(plan.file?.path).toBe(`${HOME_DIR}/Library/LaunchAgents/${LAUNCHD_LABEL}.plist`);
     const contents = plan.file?.contents ?? "";
     expect(contents).toContain(`<key>Label</key><string>${LAUNCHD_LABEL}</string>`);
-    expect(contents).toContain("<string>/opt/fde/bin/fde</string>");
+    expect(contents).toContain("<string>/opt/frogg/bin/frogg</string>");
     expect(contents).toContain("<string>--foreground</string>");
-    expect(contents).toContain("<key>FDE_LISTEN</key><string>127.0.0.1:9991</string>");
-    expect(contents).toContain(`<key>FDE_HOME</key><string>${HOME_DIR}/.fde</string>`);
+    expect(contents).toContain("<key>FROGG_LISTEN</key><string>127.0.0.1:9991</string>");
+    expect(contents).toContain(`<key>FROGG_HOME</key><string>${HOME_DIR}/.frogg</string>`);
     expect(contents).toContain("<key>RunAtLoad</key><true/>");
     expect(contents).toContain(
       "<key>KeepAlive</key><dict><key>SuccessfulExit</key><false/></dict>",
@@ -108,7 +108,7 @@ describe("Windows logon task", () => {
         platform: "win32",
         env: { PATH: "C:\\Windows" },
         command: {
-          program: "C:\\Program Files\\FDE\\fde.exe",
+          program: "C:\\Program Files\\Frogg\\frogg.exe",
           args: ["daemon", "start", "--foreground", "--listen", "127.0.0.1:9991"],
         },
       }),
@@ -124,7 +124,7 @@ describe("Windows logon task", () => {
         "/TN",
         WINDOWS_TASK_NAME,
         "/TR",
-        '\\"C:\\Program Files\\FDE\\fde.exe\\" daemon start --foreground --listen 127.0.0.1:9991',
+        '\\"C:\\Program Files\\Frogg\\frogg.exe\\" daemon start --foreground --listen 127.0.0.1:9991',
         "/RL",
         "LIMITED",
         "/F",

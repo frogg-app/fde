@@ -1,6 +1,6 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { Platform } from "react-native";
-import { darkHighlightColors, lightHighlightColors } from "@fde/highlight";
+import { darkHighlightColors, lightHighlightColors } from "@frogg/highlight";
 
 export const baseColors = {
   // Base colors
@@ -441,8 +441,8 @@ export function buildDarkSemanticColors(tint: DarkThemeConfig) {
 // Dark tint definitions
 // ---------------------------------------------------------------------------
 
-// Fde — subtle teal-green tint (default)
-const fdeDarkColors = buildDarkSemanticColors({
+// Frogg — subtle teal-green tint (default)
+const froggDarkColors = buildDarkSemanticColors({
   surface0: "#181B1A",
   surface1: "#1E2120",
   surface2: "#272A29",
@@ -691,10 +691,10 @@ export function buildDarkTheme(semanticColors: ReturnType<typeof buildDarkSemant
 }
 
 export const darkTheme = buildDarkTheme(
-  brand.legacyFde
-    ? fdeDarkColors
+  brand.legacyFrogg
+    ? froggDarkColors
     : {
-        ...fdeDarkColors,
+        ...froggDarkColors,
         surface0: brand.colors.dark.background,
         foreground: brand.colors.dark.foreground,
         accent: brand.colors.dark.accent,
@@ -765,7 +765,7 @@ export function buildLightTheme(semanticColors: ReturnType<typeof buildLightSema
 }
 
 export const lightTheme = buildLightTheme(
-  brand.legacyFde
+  brand.legacyFrogg
     ? lightSemanticColors
     : {
         ...lightSemanticColors,

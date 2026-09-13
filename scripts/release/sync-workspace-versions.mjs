@@ -71,7 +71,7 @@ for (const workspacePath of workspacePaths) {
     }
 
     for (const name of Object.keys(deps)) {
-      if (!name.startsWith("@fde/")) {
+      if (!name.startsWith("@frogg/")) {
         continue;
       }
       if (name === pkg.name) {
@@ -103,8 +103,8 @@ if (existsSync(tauriConfigPath)) {
 }
 
 for (const [directory, name] of [
-  ["apps/desktop/src-tauri", "fde"],
-  ["apps/daemon-rs", "fde-daemon"],
+  ["apps/desktop/src-tauri", "frogg"],
+  ["apps/daemon-rs", "frogg-daemon"],
 ]) {
   const cargoManifestPath = path.join(rootDir, directory, "Cargo.toml");
   if (!existsSync(cargoManifestPath)) continue;

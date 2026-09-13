@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import Constants from "expo-constants";
 import { Platform } from "react-native";
 import { isElectronRuntime } from "@/desktop/host";
@@ -13,7 +13,7 @@ const PLATFORM_NAMES: Record<string, string> = {
 
 /**
  * The label the daemon records for this device when it is claimed
- * (`principals.json`, shown by `fde daemon claim-status`). Best effort: the
+ * (`principals.json`, shown by `frogg daemon claim-status`). Best effort: the
  * device name where the platform exposes it, otherwise the app flavour.
  */
 export function resolveDeviceLabel(input?: { deviceName?: string | null }): string {

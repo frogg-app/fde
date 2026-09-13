@@ -1,6 +1,6 @@
 ---
 title: Fork and rebrand
-description: Ship your own branded FDE from a fork, keep it current with upstream, and contribute features back.
+description: Ship your own branded Frogg from a fork, keep it current with upstream, and contribute features back.
 sidebar:
   order: 1
   label: Overview
@@ -9,7 +9,7 @@ sidebar:
 import { Screenshot, CardGrid, LinkCard } from "@/components/docs";
 import forkStockVsAcmeImg from "@/assets/docs/fork/stock-vs-acme.png";
 
-An FDE fork can ship as its own product. Your organization picks the name, icon,
+A Frogg fork can ship as its own product. Your organization picks the name, icon,
 colours, application ID, CLI name, state directory, port, release repository and
 container images. The source code, protocol and package names stay shared
 with upstream, so you can keep merging upstream work.
@@ -17,7 +17,7 @@ with upstream, so you can keep merging upstream work.
 Branding is **build-time**. You select a brand directory when you build. End users
 cannot switch brands at runtime.
 
-<Screenshot src={forkStockVsAcmeImg} alt="Stock FDE and the Acme Studio example brand, side by side" />
+<Screenshot src={forkStockVsAcmeImg} alt="Stock Frogg and the Acme Studio example brand, side by side" />
 
 ## What a brand controls
 
@@ -34,9 +34,9 @@ generator turns it into everything the builds need.
 | Hosted services    | Pairing page URL, allowed web origins                                             |
 | Distribution       | GitHub release repository for updates, Docker images, Expo and App Store IDs      |
 
-What does **not** change: `@fde/*` package names, wire protocol messages, SDK
-symbols, the `fde.json` project file and low-level interfaces such as
-`FDE_LISTEN`. These are compatibility contracts shared by every FDE-based
+What does **not** change: `@frogg/*` package names, wire protocol messages, SDK
+symbols, the `frogg.json` project file and low-level interfaces such as
+`FROGG_LISTEN`. These are compatibility contracts shared by every Frogg-based
 product.
 
 ## The workflow at a glance
@@ -58,9 +58,9 @@ flow with the `brands/example` brand that ships in the repository.
 - For signed releases, your own signing material. See [secrets and variables](/docs/fork-and-rebrand/build-and-release/#secrets-and-variables).
 
 :::caution[Identities are reserved]
-A custom brand cannot reuse FDE's identity. `brand:check` rejects the id `fde`,
-a `fde` CLI or scheme, the `~/.fde` home, the `FDE` env prefix, and application
-IDs or launchd labels starting with `app.frogg.` or `sh.fde.`.
+A custom brand cannot reuse Frogg's identity. `brand:check` rejects the id `frogg`,
+a `frogg` CLI or scheme, the `~/.frogg` home, the `FROGG` env prefix, and application
+IDs or launchd labels starting with `app.frogg.` or `sh.frogg.`.
 :::
 
 <CardGrid>

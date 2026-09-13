@@ -43,52 +43,52 @@ describe("resolveAssistantImageSource", () => {
   it("falls back to filesystem root for absolute paths outside the workspace", () => {
     expect(
       resolveAssistantImageSource({
-        source: "/tmp/fde-codex-screenshot.png",
+        source: "/tmp/frogg-codex-screenshot.png",
         workspaceRoot: "/Users/test/project",
       }),
     ).toEqual({
       kind: "file_rpc",
       cwd: "/",
-      path: "/tmp/fde-codex-screenshot.png",
+      path: "/tmp/frogg-codex-screenshot.png",
     });
   });
 
   it("uses the same home-root target as file previews for tilde paths", () => {
     expect(
       resolveAssistantImageSource({
-        source: "~/.fde/screenshots/output.png",
+        source: "~/.frogg/screenshots/output.png",
         workspaceRoot: "/Users/test/project",
       }),
     ).toEqual({
       kind: "file_rpc",
       cwd: "~",
-      path: "~/.fde/screenshots/output.png",
+      path: "~/.frogg/screenshots/output.png",
     });
   });
 
   it("normalizes file URIs into file RPC requests", () => {
     expect(
       resolveAssistantImageSource({
-        source: "file:///tmp/fde-codex-screenshot.png",
+        source: "file:///tmp/frogg-codex-screenshot.png",
         workspaceRoot: "/Users/test/project",
       }),
     ).toEqual({
       kind: "file_rpc",
       cwd: "/",
-      path: "/tmp/fde-codex-screenshot.png",
+      path: "/tmp/frogg-codex-screenshot.png",
     });
   });
 
   it("normalizes markdown-encoded Windows paths into file RPC requests", () => {
     expect(
       resolveAssistantImageSource({
-        source: "C:%5CUsers%5Chanse%5CAppData%5CLocal%5CTemp%5Cfde-attachments%5Cimage.png",
+        source: "C:%5CUsers%5Chanse%5CAppData%5CLocal%5CTemp%5Cfrogg-attachments%5Cimage.png",
         workspaceRoot: "C:/Users/hanse/eatingkat",
       }),
     ).toEqual({
       kind: "file_rpc",
       cwd: "C:/",
-      path: "C:/Users/hanse/AppData/Local/Temp/fde-attachments/image.png",
+      path: "C:/Users/hanse/AppData/Local/Temp/frogg-attachments/image.png",
     });
   });
 

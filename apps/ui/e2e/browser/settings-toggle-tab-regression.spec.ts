@@ -69,7 +69,7 @@ async function expectSendBehavior(
 ) {
   await expect
     .poll(async () => {
-      const raw = await page.evaluate(() => localStorage.getItem("@fde:app-settings"));
+      const raw = await page.evaluate(() => localStorage.getItem("@frogg:app-settings"));
       if (!raw) {
         return null;
       }

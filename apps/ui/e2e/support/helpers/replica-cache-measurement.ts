@@ -1,6 +1,6 @@
 import type { CDPSession, Page } from "@playwright/test";
 
-const REPLICA_CACHE_DATABASE = "fde-replica-row-store";
+const REPLICA_CACHE_DATABASE = "frogg-replica-row-store";
 const REPLICA_CACHE_ROWS_STORE = "rows";
 const PERSIST_FRAME_NAMES = [
   "captureSessions",

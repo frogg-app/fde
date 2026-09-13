@@ -1,4 +1,4 @@
-//! FDE daemon, Rust front half.
+//! Frogg daemon, Rust front half.
 //!
 //! Terminates HTTP + WebSocket, answers the message types it implements natively,
 //! and forwards the rest to the Node daemon (see `proxy`). The point is to migrate
@@ -218,7 +218,7 @@ async fn identity(
     let claimed = state.auth.is_claimed();
     discovery_headers(
         Json(json!({
-            "product": "fde",
+            "product": "frogg",
             "brand": crate::branding::identity(),
             "serverId": state.server_id,
             "hostname": state.hostname,

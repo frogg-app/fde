@@ -6,7 +6,7 @@ import path from "node:path";
 import { afterEach, expect, test } from "vitest";
 
 import { DaemonClient } from "../test-utils/daemon-client.js";
-import { createTestFdeDaemon, type TestFdeDaemon } from "../test-utils/fde-daemon.js";
+import { createTestFroggDaemon, type TestFroggDaemon } from "../test-utils/frogg-daemon.js";
 import {
   createPersistedProjectRecord,
   createPersistedWorkspaceRecord,
@@ -15,7 +15,7 @@ import {
 } from "../workspace-registry.js";
 
 const cleanupPaths = new Set<string>();
-const cleanupDaemons = new Set<TestFdeDaemon>();
+const cleanupDaemons = new Set<TestFroggDaemon>();
 const cleanupClients = new Set<DaemonClient>();
 
 afterEach(async () => {
@@ -30,21 +30,23 @@ afterEach(async () => {
 });
 
 test("openProject preserves a worktree's exact-root project without rehoming it", async () => {
-  const previousSupervised = process.env.FDE_SUPERVISED;
-  process.env.FDE_SUPERVISED = "0";
+  const previousSupervised = process.env.FROGG_SUPERVISED;
+  process.env.FROGG_SUPERVISED = "0";
   try {
-    const repoRoot = realpathSync(mkdtempSync(path.join(os.tmpdir(), "fde-open-project-repo-")));
+    const repoRoot = realpathSync(mkdtempSync(path.join(os.tmpdir(), "frogg-open-project-repo-")));
     const worktreeRoot = realpathSync(
-      mkdtempSync(path.join(os.tmpdir(), "fde-open-project-worktree-")),
+      mkdtempSync(path.join(os.tmpdir(), "frogg-open-project-worktree-")),
     );
-    const fdeHomeRoot = realpathSync(mkdtempSync(path.join(os.tmpdir(), "fde-open-project-home-")));
+    const froggHomeRoot = realpathSync(
+      mkdtempSync(path.join(os.tmpdir(), "frogg-open-project-home-")),
+    );
     cleanupPaths.add(repoRoot);
     cleanupPaths.add(worktreeRoot);
-    cleanupPaths.add(fdeHomeRoot);
+    cleanupPaths.add(froggHomeRoot);
 
     execSync("git init -b main", { cwd: repoRoot, stdio: "pipe" });
-    execSync("git config user.email 'test@fde.dev'", { cwd: repoRoot, stdio: "pipe" });
-    execSync("git config user.name 'Fde Test'", { cwd: repoRoot, stdio: "pipe" });
+    execSync("git config user.email 'test@frogg.dev'", { cwd: repoRoot, stdio: "pipe" });
+    execSync("git config user.name 'Frogg Test'", { cwd: repoRoot, stdio: "pipe" });
     writeFileSync(path.join(repoRoot, "README.md"), "# repo\n", "utf8");
     execSync("git add README.md", { cwd: repoRoot, stdio: "pipe" });
     execSync("git -c commit.gpgSign=false commit -m 'initial'", { cwd: repoRoot, stdio: "pipe" });
@@ -54,9 +56,9 @@ test("openProject preserves a worktree's exact-root project without rehoming it"
       stdio: "pipe",
     });
 
-    const fdeHome = path.join(fdeHomeRoot, ".fde");
-    const projectsPath = path.join(fdeHome, "projects", "projects.json");
-    const workspacesPath = path.join(fdeHome, "projects", "workspaces.json");
+    const froggHome = path.join(froggHomeRoot, ".frogg");
+    const projectsPath = path.join(froggHome, "projects", "projects.json");
+    const workspacesPath = path.join(froggHome, "projects", "workspaces.json");
     const timestamp = "2026-04-24T09:46:43.146Z";
 
     await mkdir(path.dirname(projectsPath), { recursive: true });
@@ -99,7 +101,7 @@ test("openProject preserves a worktree's exact-root project without rehoming it"
       }),
     ]);
 
-    const daemon = await createTestFdeDaemon({ fdeHomeRoot, cleanup: false });
+    const daemon = await createTestFroggDaemon({ froggHomeRoot, cleanup: false });
     cleanupDaemons.add(daemon);
     const client = new DaemonClient({ url: `ws://127.0.0.1:${daemon.port}/ws` });
     cleanupClients.add(client);
@@ -119,7 +121,7 @@ test("openProject preserves a worktree's exact-root project without rehoming it"
       persistedWorkspaces.find((workspace) => workspace.workspaceId === worktreeRoot)?.projectId,
     ).toBe(worktreeRoot);
   } finally {
-    process.env.FDE_SUPERVISED = previousSupervised;
+    process.env.FROGG_SUPERVISED = previousSupervised;
   }
 }, 30_000);
 

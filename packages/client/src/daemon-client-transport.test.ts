@@ -12,7 +12,7 @@ import {
 
 const createClientChannelMock = vi.hoisted(() => vi.fn());
 
-vi.mock("@fde/relay/e2ee", () => ({
+vi.mock("@frogg/relay/e2ee", () => ({
   createClientChannel: createClientChannelMock,
 }));
 
@@ -87,12 +87,12 @@ describe("daemon-client transport helpers", () => {
     createWebSocketTransportFactory(socketFactory)({
       url: "ws://example.test",
       headers: { Authorization: "Bearer shared-secret" },
-      protocols: ["fde.bearer.shared-secret"],
+      protocols: ["frogg.bearer.shared-secret"],
     });
 
     expect(socketFactory).toHaveBeenCalledWith("ws://example.test", {
       headers: { Authorization: "Bearer shared-secret" },
-      protocols: ["fde.bearer.shared-secret"],
+      protocols: ["frogg.bearer.shared-secret"],
     });
   });
 

@@ -91,7 +91,7 @@ describe("connection offer", () => {
   it("parses direct claim (v3) offers and keeps relay optional", () => {
     const offer = {
       v: 3,
-      product: "fde",
+      product: "frogg",
       serverId: "srv_abc",
       hostname: "devbox",
       daemonPublicKeyB64: "pubkey",
@@ -132,15 +132,15 @@ describe("pairing links", () => {
     );
   });
 
-  it("derives the fde://pair deep link and parses it back", () => {
+  it("derives the frogg://pair deep link and parses it back", () => {
     const encoded = encodeOfferFragmentPayload(offer);
     const url = buildPairingUrl(DEFAULT_PAIRING_BASE_URL, encoded);
     const deepLink = buildPairingDeepLink(url);
-    expect(deepLink).toBe(`fde://pair#offer=${encoded}`);
+    expect(deepLink).toBe(`frogg://pair#offer=${encoded}`);
     expect(isPairingDeepLink(deepLink!)).toBe(true);
-    expect(isPairingDeepLink(`fde://pair/#offer=${encoded}`)).toBe(true);
-    expect(isPairingDeepLink("fde://h/srv/agent/a")).toBe(false);
-    expect(isPairingDeepLink("fde://pair#offer=")).toBe(false);
+    expect(isPairingDeepLink(`frogg://pair/#offer=${encoded}`)).toBe(true);
+    expect(isPairingDeepLink("frogg://h/srv/agent/a")).toBe(false);
+    expect(isPairingDeepLink("frogg://pair#offer=")).toBe(false);
     expect(parseAnyConnectionOfferFromUrl(deepLink!)).toEqual(offer);
     expect(parseAnyConnectionOfferFromUrl(url)).toEqual(offer);
     expect(hasPairingCode(url)).toBe(true);

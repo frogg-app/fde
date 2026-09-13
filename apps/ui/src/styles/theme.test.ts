@@ -48,7 +48,7 @@ describe("Pure black theme", () => {
     expect(darkPureBlackTheme.colors.terminal.background).toBe("#000000");
   });
 
-  it("uses the FDE cyan accent from the logo", () => {
+  it("uses the Frogg cyan accent from the logo", () => {
     expect(darkPureBlackTheme.colors.accent).toBe("#25B5C8");
     expect(darkPureBlackTheme.colors.accentBright).toBe("#7FD9E6");
   });

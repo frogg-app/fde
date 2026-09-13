@@ -14,7 +14,7 @@ let dir: string;
 const logger = pino({ level: "silent" });
 
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), "fde-spoken-alerts-"));
+  dir = await mkdtemp(join(tmpdir(), "frogg-spoken-alerts-"));
 });
 
 afterEach(async () => {

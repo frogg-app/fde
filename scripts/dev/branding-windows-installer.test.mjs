@@ -16,7 +16,7 @@ const { resolveBrandManifest } = await tsImport(
 );
 const stockDirectory = (await import("node:fs")).existsSync(path.join(root, "brands/frogg"))
   ? "brands/frogg"
-  : "brands/fde";
+  : "brands/frogg";
 
 async function render(brandDirectory) {
   const directory = path.join(root, brandDirectory);

@@ -1,9 +1,9 @@
-import { brand } from "@fde/branding";
-import { installedSkillName } from "@fde/branding/skills";
+import { brand } from "@frogg/branding";
+import { installedSkillName } from "@frogg/branding/skills";
 import { createHash } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import type { AgentSkillSelection } from "@fde/protocol/messages";
+import type { AgentSkillSelection } from "@frogg/protocol/messages";
 import { listFilesRecursive, removeSkill, syncSkills } from "./sync.js";
 
 export type SkillsState = "not-installed" | "up-to-date" | "drift";
@@ -39,10 +39,10 @@ export interface SkillTargets {
 // Names the bundle used to ship. They are never selectable, but every scan still
 // covers them so an older install's copies get cleaned up.
 export const LEGACY_SKILL_NAMES = [
-  "fde-chat",
-  "fde-epic",
-  "fde-orchestrate",
-  "fde-orchestrator",
+  "frogg-chat",
+  "frogg-epic",
+  "frogg-orchestrate",
+  "frogg-orchestrator",
 ] as const;
 
 type SkillFiles = Map<string, string>;
@@ -60,9 +60,9 @@ async function listBundledSkills(sourceDir: string): Promise<string[]> {
     .sort(compareStrings);
 }
 
-/** Every name Fde owns on disk: what it ships now plus what it used to ship. */
+/** Every name Frogg owns on disk: what it ships now plus what it used to ship. */
 function managedSkillNames(available: readonly string[]): string[] {
-  return [...new Set([...available, ...(brand.legacyFde ? LEGACY_SKILL_NAMES : [])])].sort(
+  return [...new Set([...available, ...(brand.legacyFrogg ? LEGACY_SKILL_NAMES : [])])].sort(
     compareStrings,
   );
 }
@@ -136,7 +136,7 @@ function diff(
   return ops;
 }
 
-function hasInstalledFdeSkill(disks: readonly TargetSkills[]): boolean {
+function hasInstalledFroggSkill(disks: readonly TargetSkills[]): boolean {
   return disks.some((disk) => disk.size > 0);
 }
 
@@ -177,7 +177,7 @@ export async function getSkillsStatus(
   const ops = diff(bundle, disks, names, resolveDesiredSkills(selection, available));
   const installed = installedSkillNames(disks, names);
 
-  if (!hasInstalledFdeSkill(disks)) return { state: "not-installed", ops, available, installed };
+  if (!hasInstalledFroggSkill(disks)) return { state: "not-installed", ops, available, installed };
   if (ops.length === 0) return { state: "up-to-date", ops, available, installed };
   return { state: "drift", ops, available, installed };
 }

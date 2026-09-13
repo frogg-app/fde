@@ -34,16 +34,16 @@ fn releases_json(base: &str) -> String {
         { "tag_name": "v9.9.9", "draft": false, "prerelease": true, "body": "## Notes\n\n- faster",
           "published_at": "2026-09-01T00:00:00Z", "html_url": format!("{base}/rel/9.9.9"),
           "assets": [
-            asset("FDE-9.9.9-linux-x86_64.deb", PAYLOAD.len()),
-            asset("FDE-9.9.9-linux-x86_64.deb.sha256", 80),
-            asset("FDE-9.9.9-linux-x86_64.AppImage", PAYLOAD.len()),
-            asset("FDE-9.9.9-win-x64-setup.zip", PAYLOAD.len()),
-            asset("FDE-9.9.9-win-x64-portable.zip", PAYLOAD.len()),
-            asset("FDE-9.9.9-mac-aarch64.dmg", PAYLOAD.len()),
-            asset("FDE-9.9.9-mac-x86_64.dmg", PAYLOAD.len()),
+            asset("Frogg-9.9.9-linux-x86_64.deb", PAYLOAD.len()),
+            asset("Frogg-9.9.9-linux-x86_64.deb.sha256", 80),
+            asset("Frogg-9.9.9-linux-x86_64.AppImage", PAYLOAD.len()),
+            asset("Frogg-9.9.9-win-x64-setup.zip", PAYLOAD.len()),
+            asset("Frogg-9.9.9-win-x64-portable.zip", PAYLOAD.len()),
+            asset("Frogg-9.9.9-mac-aarch64.dmg", PAYLOAD.len()),
+            asset("Frogg-9.9.9-mac-x86_64.dmg", PAYLOAD.len()),
           ] },
         { "tag_name": "v10.0.0-beta.1", "draft": false, "prerelease": true, "assets": [
-            asset("FDE-10.0.0-beta.1-linux-x86_64.deb", PAYLOAD.len()) ] },
+            asset("Frogg-10.0.0-beta.1-linux-x86_64.deb", PAYLOAD.len()) ] },
         { "tag_name": "v11.0.0", "draft": true, "prerelease": false, "assets": [] },
         { "tag_name": "v0.0.1", "draft": false, "prerelease": true, "assets": [] }
     ])
@@ -71,9 +71,9 @@ fn serve(releases_status: u16, checksum: String) -> FakeGithub {
                 if path.starts_with("/releases") {
                     let ua_ok = request
                         .lines()
-                        .any(|l| l.to_ascii_lowercase().starts_with("user-agent: fde/"));
+                        .any(|l| l.to_ascii_lowercase().starts_with("user-agent: frogg/"));
                     if !ua_ok {
-                        (400, "text/plain", b"missing FDE user agent".to_vec())
+                        (400, "text/plain", b"missing Frogg user agent".to_vec())
                     } else if releases_status == 200 {
                         (
                             200,
@@ -150,11 +150,11 @@ async fn check_finds_the_newest_release_and_maps_the_platform_asset() {
     assert_eq!(result.channel, "stable");
     assert_eq!(result.strategy, "github-release");
     let asset = result.asset.clone().unwrap();
-    assert_eq!(asset.name, "FDE-9.9.9-linux-x86_64.deb");
+    assert_eq!(asset.name, "Frogg-9.9.9-linux-x86_64.deb");
     assert_eq!(asset.size as usize, PAYLOAD.len());
     assert_eq!(
         result.checksum_asset.as_ref().map(|a| a.name.as_str()),
-        Some("FDE-9.9.9-linux-x86_64.deb.sha256")
+        Some("Frogg-9.9.9-linux-x86_64.deb.sha256")
     );
     assert_eq!(result.assets.len(), 7);
 
@@ -165,7 +165,7 @@ async fn check_finds_the_newest_release_and_maps_the_platform_asset() {
     assert_eq!(beta.latest_version, "10.0.0-beta.1");
     assert_eq!(
         beta.asset.map(|a| a.name),
-        Some("FDE-10.0.0-beta.1-linux-x86_64.deb".into())
+        Some("Frogg-10.0.0-beta.1-linux-x86_64.deb".into())
     );
 
     // A platform whose asset is missing still reports the version, but not ready.
@@ -173,7 +173,7 @@ async fn check_finds_the_newest_release_and_maps_the_platform_asset() {
         .check_github(Channel::Beta, Some(AssetKind::MacDmg))
         .await;
     assert!(mac.has_update && !mac.ready_to_install);
-    assert!(mac.error_message.unwrap().contains("FDE-10.0.0-beta.1-"));
+    assert!(mac.error_message.unwrap().contains("Frogg-10.0.0-beta.1-"));
 
     // Results from a previous binary cannot keep advertising an installed update.
     let mut previous = result.clone();
@@ -249,7 +249,7 @@ async fn download_verifies_checksum_and_emits_progress() {
         .unwrap();
     assert_eq!(
         path,
-        updates.download_dir.join("FDE-9.9.9-linux-x86_64.deb")
+        updates.download_dir.join("Frogg-9.9.9-linux-x86_64.deb")
     );
     assert_eq!(std::fs::read(&path).unwrap(), PAYLOAD);
     let events = events.lock().unwrap();
@@ -282,14 +282,14 @@ async fn download_rejects_a_checksum_mismatch_and_a_missing_sidecar_is_tolerated
     let events = Arc::new(Mutex::new(Vec::new()));
     let updates = updates(&server, dir.path(), events);
     let asset = AssetInfo {
-        name: "FDE-9.9.9-linux-x86_64.deb".into(),
+        name: "Frogg-9.9.9-linux-x86_64.deb".into(),
         size: PAYLOAD.len() as u64,
-        url: format!("{}/dl/FDE-9.9.9-linux-x86_64.deb", server.base),
+        url: format!("{}/dl/Frogg-9.9.9-linux-x86_64.deb", server.base),
     };
     let checksum = AssetInfo {
-        name: "FDE-9.9.9-linux-x86_64.deb.sha256".into(),
+        name: "Frogg-9.9.9-linux-x86_64.deb.sha256".into(),
         size: 80,
-        url: format!("{}/dl/FDE-9.9.9-linux-x86_64.deb.sha256", server.base),
+        url: format!("{}/dl/Frogg-9.9.9-linux-x86_64.deb.sha256", server.base),
     };
     let error = download_asset(&updates, &asset, Some(&checksum))
         .await
@@ -371,7 +371,7 @@ async fn missing_platform_asset_returns_error_without_availability_event() {
         assert!(result["errorMessage"]
             .as_str()
             .unwrap()
-            .contains("has no FDE-10.0.0-beta.1-win-x64-setup.zip"));
+            .contains("has no Frogg-10.0.0-beta.1-win-x64-setup.zip"));
         assert!(updates
             .fresh_cached(Channel::Beta, super::cache::now_ms())
             .is_none());

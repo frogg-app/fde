@@ -131,7 +131,7 @@ export function registerDaemonManager(): void {
   const handlers = createDaemonCommandHandlers();
 
   handleDesktopIpc(
-    "fde:invoke",
+    "frogg:invoke",
     async (
       _event: Electron.IpcMainInvokeEvent,
       command: string,

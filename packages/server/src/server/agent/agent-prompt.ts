@@ -8,8 +8,8 @@ import type {
 import type { AgentManager, ManagedAgent } from "./agent-manager.js";
 import type { AgentStorage } from "./agent-storage.js";
 import { ensureAgentLoaded } from "./agent-loading.js";
-import { getParentAgentIdFromLabels } from "@fde/protocol/agent-labels";
-import type { ActiveTurnBehavior } from "@fde/protocol/messages";
+import { getParentAgentIdFromLabels } from "@frogg/protocol/agent-labels";
+import type { ActiveTurnBehavior } from "@frogg/protocol/messages";
 
 export type AgentUnarchiveController = Pick<AgentManager, "notifyAgentState" | "unarchiveSnapshot">;
 
@@ -167,15 +167,15 @@ export async function unarchiveAgentState(
 }
 
 /**
- * Wrap a body in <fde-system>…</fde-system> so the receiving agent
+ * Wrap a body in <frogg-system>…</frogg-system> so the receiving agent
  * recognizes the prompt as system-injected context — not a user turn.
  * Used by chat mentions, schedule fires, and notify-on-finish.
  */
 export function formatSystemNotificationPrompt(reason: string): string {
-  return `<fde-system>\n${reason}\n</fde-system>`;
+  return `<frogg-system>\n${reason}\n</frogg-system>`;
 }
 
-const SYSTEM_ENVELOPE_PATTERN = /^<fde-system>\n[\s\S]*\n<\/fde-system>$/;
+const SYSTEM_ENVELOPE_PATTERN = /^<frogg-system>\n[\s\S]*\n<\/frogg-system>$/;
 
 export function isSystemInjectedEnvelope(text: string): boolean {
   return SYSTEM_ENVELOPE_PATTERN.test(text);

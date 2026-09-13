@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Rename the product from FDE to Frogg everywhere: the `frogg` binary and daemon commands,
+  `@frogg/*` packages, `FROGG_*` environment variables, `~/.frogg` home, `frogg.json`,
+  the `frogg://` scheme, the `app.frogg.frogg` application id and all artifact names.
+  On first start the daemon moves `~/.fde` to `~/.frogg`, rewriting stored paths, repairing
+  moved git worktrees and moving their Claude Code sessions. `FDE_*` variables are no longer
+  read; the daemon lists any it finds with their `FROGG_*` names. Desktop and mobile apps need
+  a fresh install.
 - Replace the Windows installer wizard with a one-click, per-user installer in a small
   branded window. An older all-users install is removed once, with administrator approval
   and app data kept, so updates never leave two copies. The window's copy, colours and

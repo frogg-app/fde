@@ -1,7 +1,7 @@
 {
-  "name": "@fde/branding",
+  "name": "@frogg/branding",
   "version": "0.7.0",
-  "description": "Build-time product identity for FDE distributions",
+  "description": "Build-time product identity for Frogg distributions",
   "license": "Apache-2.0",
   "files": [
     "dist"

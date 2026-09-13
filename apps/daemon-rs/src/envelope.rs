@@ -1,6 +1,6 @@
 //! The WS envelope, and only the envelope.
 //!
-//! `WSInboundMessageSchema` in @fde/protocol is a 4-arm discriminated union, one
+//! `WSInboundMessageSchema` in @frogg/protocol is a 4-arm discriminated union, one
 //! arm of which (`session`) wraps all 198 session message types. We model the 4
 //! arms and keep the session payload as raw JSON, so unimplemented message types
 //! can be forwarded upstream byte-for-byte rather than round-tripped through a

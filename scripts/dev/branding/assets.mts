@@ -45,7 +45,7 @@ export async function generateAssets(build: BrandBuild): Promise<void> {
   for (const [name, key] of Object.entries(sources)) {
     const size = key === "notification" ? 96 : 1024;
     const source = build.assetFiles[key] ?? build.assetFiles.icon;
-    if (build.brand.legacyFde) {
+    if (build.brand.legacyFrogg) {
       await cp(source, path.join(assets, name));
     } else if (key === "notification" && !build.assetFiles.notification) {
       const mask = await resize(source, size);
@@ -63,7 +63,7 @@ export async function generateAssets(build: BrandBuild): Promise<void> {
     }
   }
   await generateFavicons(build, assets);
-  if (build.brand.legacyFde) {
+  if (build.brand.legacyFrogg) {
     await cp(path.join(root, "apps/desktop/src-tauri/icons"), icons, { recursive: true });
     for (const name of [
       "favicon.ico",
@@ -165,7 +165,7 @@ async function generateFavicons(build: BrandBuild, assets: string): Promise<void
   for (const appearance of ["light", "dark"] as const) {
     for (const status of ["", "-running", "-attention"]) {
       const name = `favicon-${appearance}${status}.png`;
-      if (build.brand.legacyFde) {
+      if (build.brand.legacyFrogg) {
         await cp(path.join(root, "apps/ui/assets/images", name), path.join(assets, name));
       } else {
         const source =

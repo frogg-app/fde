@@ -1,6 +1,6 @@
 import type { Logger } from "pino";
 
-import type { FdeSpeechConfig } from "../../../bootstrap.js";
+import type { FroggSpeechConfig } from "../../../bootstrap.js";
 import type { SpeechToTextProvider, TextToSpeechProvider } from "../../speech-provider.js";
 import type { RequestedSpeechProviders } from "../../speech-types.js";
 import type { TurnDetectionProvider } from "../../turn-detection-provider.js";
@@ -45,7 +45,7 @@ export interface InitializedLocalSpeech {
   cleanup: () => void;
 }
 
-function resolveConfiguredLocalModels(speechConfig: FdeSpeechConfig | null): ResolvedLocalModels {
+function resolveConfiguredLocalModels(speechConfig: FroggSpeechConfig | null): ResolvedLocalModels {
   return {
     dictationLocalSttModel: LocalSttModelIdSchema.parse(
       speechConfig?.local?.models.dictationStt ?? DEFAULT_LOCAL_STT_MODEL,
@@ -60,7 +60,7 @@ function resolveConfiguredLocalModels(speechConfig: FdeSpeechConfig | null): Res
 }
 
 export function getLocalSpeechAvailability(
-  speechConfig: FdeSpeechConfig | null,
+  speechConfig: FroggSpeechConfig | null,
 ): LocalSpeechAvailability {
   const localConfig = speechConfig?.local ?? null;
   return {
@@ -136,7 +136,7 @@ function initializeLocalVoiceTts(params: {
 
 export async function initializeLocalSpeechServices(params: {
   providers: RequestedSpeechProviders;
-  speechConfig: FdeSpeechConfig | null;
+  speechConfig: FroggSpeechConfig | null;
   logger: Logger;
 }): Promise<InitializedLocalSpeech> {
   const { providers, logger, speechConfig } = params;

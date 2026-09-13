@@ -32,9 +32,9 @@ export interface EditorTargetRuntimeOptions {
 }
 
 const RUNTIME_CONTROL_ENV_KEYS = [
-  "FDE_NODE_ENV",
-  "FDE_DESKTOP_MANAGED",
-  "FDE_SUPERVISED",
+  "FROGG_NODE_ENV",
+  "FROGG_DESKTOP_MANAGED",
+  "FROGG_SUPERVISED",
   "ELECTRON_RUN_AS_NODE",
   "ELECTRON_NO_ATTACH_CONSOLE",
 ] as const;

@@ -1,0 +1,32 @@
+{
+  "worktree": {
+    "setup": [
+      "npm ci",
+      "node ./scripts/mobile/seed-ios-native-cache.mjs",
+      "node ./scripts/dev/seed-worktree-dev-state.mjs",
+      "npm run build:server",
+      "npm run build --workspace=@frogg/expo-two-way-audio"
+    ]
+  },
+  "scripts": {
+    "daemon": {
+      "type": "service",
+      "command": "FROGG_DEV_MANAGED_HOME=1 FROGG_DEV_ROOT=\"${FROGG_WORKTREE_PATH:-$PWD}\" FROGG_HOME=\"${FROGG_WORKTREE_PATH:-$PWD}/.dev/frogg-home\" FROGG_SKIP_DEV_SERVER_BUILD=1 FROGG_LISTEN=0.0.0.0:${FROGG_PORT:-6768} ./scripts/dev/dev-daemon.sh"
+    },
+    "app": {
+      "type": "service",
+      "command": "FROGG_DEV_MANAGED_HOME=1 FROGG_DEV_ROOT=\"${FROGG_WORKTREE_PATH:-$PWD}\" FROGG_HOME=\"${FROGG_WORKTREE_PATH:-$PWD}/.dev/frogg-home\" FROGG_LISTEN=0.0.0.0:${FROGG_SERVICE_DAEMON_PORT:-6768} FROGG_DEV_DAEMON_ENDPOINT=localhost:${FROGG_SERVICE_DAEMON_PORT:-6768} EXPO_PORT=${FROGG_PORT:-} ./scripts/dev/dev-app.sh"
+    },
+    "desktop": {
+      "type": "service",
+      "command": "FROGG_DEV_MANAGED_HOME=1 FROGG_DEV_ROOT=\"${FROGG_WORKTREE_PATH:-$PWD}\" FROGG_HOME=\"${FROGG_WORKTREE_PATH:-$PWD}/.dev/frogg-home\" FROGG_LISTEN=0.0.0.0:${FROGG_SERVICE_DAEMON_PORT:-6768} FROGG_DEV_DAEMON_ENDPOINT=localhost:${FROGG_SERVICE_DAEMON_PORT:-6768} EXPO_PORT=${FROGG_PORT:-} exec ./packages/desktop/scripts/dev.sh"
+    },
+    "ios-simulator": {
+      "type": "service",
+      "command": "FROGG_DEV_MANAGED_HOME=1 FROGG_DEV_ROOT=\"$PWD\" FROGG_HOME=\"$PWD/.dev/frogg-home\" FROGG_LISTEN=0.0.0.0:${FROGG_SERVICE_DAEMON_PORT} FROGG_DEV_DAEMON_ENDPOINT=localhost:${FROGG_SERVICE_DAEMON_PORT} ./scripts/mobile/frogg-ios-simulator-service.sh"
+    },
+    "typecheck": {
+      "command": "npm run typecheck"
+    }
+  }
+}

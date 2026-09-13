@@ -10,15 +10,15 @@ describe("deriveProjectKey", () => {
     deriveProjectKey({ rootPath, remoteUrl, worktreeRoot: rootPath, mainRepoRoot: null });
 
   test.each([
-    "https://github.com/frogg-app/fde.git",
-    "ssh://git@github.com/frogg-app/fde.git",
-    "git@github.com:frogg-app/fde.git",
+    "https://github.com/frogg-app/frogg.git",
+    "ssh://git@github.com/frogg-app/frogg.git",
+    "git@github.com:frogg-app/frogg.git",
   ])("normalizes common remote form %s", (remoteUrl) => {
-    expect(derive(remoteUrl)).toBe("remote:github.com/frogg-app/fde");
+    expect(derive(remoteUrl)).toBe("remote:github.com/frogg-app/frogg");
   });
 
   test("normalizes GitHub casing", () => {
-    expect(derive("git@github.com:Frogg-App/Fde.git")).toBe("remote:github.com/frogg-app/fde");
+    expect(derive("git@github.com:Frogg-App/Frogg.git")).toBe("remote:github.com/frogg-app/frogg");
   });
 
   test("preserves self-hosted paths and explicit ports", () => {
@@ -28,8 +28,8 @@ describe("deriveProjectKey", () => {
   });
 
   test("groups an SSH remote whether or not its default port is spelled out", () => {
-    expect(derive("ssh://git@github.com:22/frogg-app/fde.git")).toBe(
-      derive("ssh://git@github.com/frogg-app/fde.git"),
+    expect(derive("ssh://git@github.com:22/frogg-app/frogg.git")).toBe(
+      derive("ssh://git@github.com/frogg-app/frogg.git"),
     );
   });
 
@@ -75,11 +75,11 @@ describe("deriveProjectKey", () => {
 
   test("keeps a repository root distinct from one of its subprojects", () => {
     const worktreeRoot = path.resolve("host-a", "repo");
-    const remoteUrl = "git@github.com:frogg-app/fde.git";
+    const remoteUrl = "git@github.com:frogg-app/frogg.git";
 
     expect(
       deriveProjectKey({ rootPath: worktreeRoot, remoteUrl, worktreeRoot, mainRepoRoot: null }),
-    ).toBe("remote:github.com/frogg-app/fde");
+    ).toBe("remote:github.com/frogg-app/frogg");
     expect(
       deriveProjectKey({
         rootPath: path.join(worktreeRoot, "packages", "app"),
@@ -87,11 +87,11 @@ describe("deriveProjectKey", () => {
         worktreeRoot,
         mainRepoRoot: null,
       }),
-    ).toBe("remote:github.com/frogg-app/fde#subdir:packages/app");
+    ).toBe("remote:github.com/frogg-app/frogg#subdir:packages/app");
   });
 
   test("groups the same subproject across different absolute checkout roots", () => {
-    const remoteUrl = "git@github.com:frogg-app/fde.git";
+    const remoteUrl = "git@github.com:frogg-app/frogg.git";
     const deriveSubproject = (worktreeRoot: string) =>
       deriveProjectKey({
         rootPath: path.join(worktreeRoot, "packages", "app"),
@@ -111,10 +111,10 @@ describe("deriveProjectGroupingDisplayName", () => {
     expect(
       deriveProjectGroupingDisplayName({
         rootPath: path.resolve("repo"),
-        remoteUrl: "git@github.com:frogg-app/fde.git",
+        remoteUrl: "git@github.com:frogg-app/frogg.git",
         worktreeRoot: path.resolve("repo"),
       }),
-    ).toBe("frogg-app/fde");
+    ).toBe("frogg-app/frogg");
   });
 
   test("uses the selected directory name without a remote", () => {

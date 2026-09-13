@@ -8,7 +8,7 @@ import {
 } from "../support/helpers/new-workspace";
 import { seedWorkspace } from "../support/helpers/seed-client";
 
-const CREATE_AGENT_PREFERENCES_KEY = "@fde:create-agent-preferences";
+const CREATE_AGENT_PREFERENCES_KEY = "@frogg:create-agent-preferences";
 
 type WebSocketMessage = string | Buffer;
 

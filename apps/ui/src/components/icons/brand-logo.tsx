@@ -1,17 +1,17 @@
 import { useMemo } from "react";
 import { Image } from "react-native";
 
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { brandAssets } from "../../../.generated/branding/assets";
 const LOGO_SOURCE = brandAssets["icon.png"];
 
-interface FdeLogoProps {
+interface FroggLogoProps {
   size?: number;
-  /** Kept for API compatibility with tinted icon components; the FDE mark is a full-colour raster and ignores it. */
+  /** Kept for API compatibility with tinted icon components; the Frogg mark is a full-colour raster and ignores it. */
   color?: string;
 }
 
-export function BrandLogo({ size = 64 }: FdeLogoProps) {
+export function BrandLogo({ size = 64 }: FroggLogoProps) {
   const style = useMemo(() => ({ width: size, height: size }), [size]);
   return (
     <Image

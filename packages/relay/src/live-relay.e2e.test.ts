@@ -12,7 +12,7 @@ import {
 // This live test uses the hosted relay's real TLS endpoint. Self-hosted relay TLS
 // opt-in is covered at URL-building/integration level so the local E2E does not
 // need to provision trusted certificates.
-const RELAY_BASE_URL = process.env.FDE_LIVE_RELAY_URL ?? "wss://relay.example.test";
+const RELAY_BASE_URL = process.env.FROGG_LIVE_RELAY_URL ?? "wss://relay.example.test";
 
 async function withRetry<T>(
   fn: () => Promise<T>,

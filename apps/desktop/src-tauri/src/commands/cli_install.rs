@@ -88,7 +88,7 @@ if (-not (( $manifest.brand.id -eq {id} -and $manifest.brand.applicationId -eq {
 & (Join-Path $bundle 'node/node.exe') (Join-Path $bundle 'daemon/apps/cli/dist/index.js') @args
 exit $LASTEXITCODE
 "#,
-            legacy = if branding::LEGACY_FDE {
+            legacy = if branding::LEGACY_FROGG {
                 "$true"
             } else {
                 "$false"
@@ -118,7 +118,7 @@ const entry = path.join(bundle, 'daemon/apps/cli/dist/index.js');
 process.argv = [process.execPath, entry, ...process.argv.slice(3)];
 await import(pathToFileURL(entry).href);
 "#,
-            legacy = branding::LEGACY_FDE
+            legacy = branding::LEGACY_FROGG
         );
         if fs::symlink_metadata(&command).is_ok() && !owned(&command) {
             return Err(format!(
@@ -155,7 +155,7 @@ pub fn status<R: Runtime>(app: &AppHandle<R>) -> Result<Value, String> {
 pub fn install<R: Runtime>(app: &AppHandle<R>) -> Result<Value, String> {
     let dir = bin_dir(app)?;
     let sidecar = app.state::<Sidecar>();
-    let command = install_to(&sidecar.store, &dir, &crate::sidecar::fde_home(app))?;
+    let command = install_to(&sidecar.store, &dir, &crate::sidecar::frogg_home(app))?;
     #[cfg(windows)]
     {
         let script = format!("$dir={}; $p=[Environment]::GetEnvironmentVariable('Path','User'); if (($p -split ';') -notcontains $dir) {{ [Environment]::SetEnvironmentVariable('Path',($p.TrimEnd(';')+';'+$dir),'User') }}", ps(&dir.to_string_lossy()));

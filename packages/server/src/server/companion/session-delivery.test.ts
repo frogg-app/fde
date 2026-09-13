@@ -17,7 +17,7 @@ let home: string;
 let sessions: CompanionSession[];
 
 beforeEach(async () => {
-  home = await mkdtemp(path.join(tmpdir(), "fde-companion-delivery-"));
+  home = await mkdtemp(path.join(tmpdir(), "frogg-companion-delivery-"));
   sessions = [];
 });
 

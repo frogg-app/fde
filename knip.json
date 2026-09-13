@@ -60,7 +60,7 @@
       "project": ["src/**/*.ts", "test/**/*.mjs"]
     },
     "apps/cli": {
-      "entry": ["src/index.ts", "bin/fde", "src/**/*.test.{ts,tsx}", "tests/**/*.{ts,tsx}"],
+      "entry": ["src/index.ts", "bin/frogg", "src/**/*.test.{ts,tsx}", "tests/**/*.{ts,tsx}"],
       "project": ["src/**/*.{ts,tsx}", "tests/**/*.{ts,tsx}"]
     }
   },

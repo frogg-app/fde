@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import type { FileVersion, FileWriteResult } from "@fde/protocol/messages";
+import type { FileVersion, FileWriteResult } from "@frogg/protocol/messages";
 import {
   FileEditorModel,
   getFileConflictCallout,

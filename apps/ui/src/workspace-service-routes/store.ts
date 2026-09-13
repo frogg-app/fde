@@ -10,7 +10,7 @@ interface WorkspaceServiceRoutePreferencesState {
   setPreferredRoute: (serverId: string, kind: WorkspaceScriptLinkKind) => void;
 }
 
-const WorkspaceScriptLinkKindSchema = z.enum(["public", "fde", "direct"]);
+const WorkspaceScriptLinkKindSchema = z.enum(["public", "frogg", "direct"]);
 const WorkspaceServiceRoutePreferencesSchema = z.strictObject({
   byServerId: z.record(z.string(), WorkspaceScriptLinkKindSchema),
 });

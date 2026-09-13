@@ -23,7 +23,7 @@ function authenticated(req: IncomingMessage, options: ExecutionControlOptions): 
   return (
     supplied.length === expected.length &&
     timingSafeEqual(supplied, expected) &&
-    req.headers["x-fde-execution-instance"] === options.instanceId
+    req.headers["x-frogg-execution-instance"] === options.instanceId
   );
 }
 

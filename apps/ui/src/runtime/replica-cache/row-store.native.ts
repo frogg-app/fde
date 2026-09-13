@@ -1,5 +1,5 @@
-import { brand } from "@fde/branding";
-import { storageKey } from "@fde/branding/identity";
+import { brand } from "@frogg/branding";
+import { storageKey } from "@frogg/branding/identity";
 import { openDatabaseAsync, type SQLiteDatabase } from "expo-sqlite";
 import type { ReplicaRowStore } from "./row-store";
 import { REPLICA_ROW_STORE_SCHEMA_VERSION } from "./row-store-schema";
@@ -20,7 +20,7 @@ export type {
 } from "./row-store";
 export { REPLICA_ROW_STORE_SCHEMA_VERSION, REPLICA_SINGLETON_ROW_ID } from "./row-store-schema";
 
-const DATABASE_NAME = storageKey(brand, "fde-replica-row-store.db");
+const DATABASE_NAME = storageKey(brand, "frogg-replica-row-store.db");
 
 function bind(params: readonly SqliteValue[]): SqliteValue[] {
   return [...params];

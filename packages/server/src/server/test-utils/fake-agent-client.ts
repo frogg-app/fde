@@ -22,7 +22,7 @@ import type {
   FetchCatalogOptions,
 } from "../agent/agent-sdk-types.js";
 import type { AgentPermissionRequest, AgentPermissionResponse } from "../agent/agent-sdk-types.js";
-import { isLikelyExternalToolName } from "@fde/protocol/tool-name-normalization";
+import { isLikelyExternalToolName } from "@frogg/protocol/tool-name-normalization";
 
 const TEST_CAPABILITIES: AgentCapabilityFlags = {
   supportsStreaming: true,
@@ -351,7 +351,7 @@ class FakeAgentSession implements AgentSession {
     this.onStartTurn = options.onStartTurn;
     this.historyPath = path.join(
       tmpdir(),
-      "fde-fake-provider-history",
+      "frogg-fake-provider-history",
       this.providerName,
       `${this.id}.jsonl`,
     );
@@ -949,15 +949,15 @@ class FakeAgentSession implements AgentSession {
     if (this.providerName === "codex" && fullName.startsWith("prompts:")) {
       const promptId = fullName.slice("prompts:".length);
       return {
-        text: `FDE_OK ${args ?? ""}`.trim(),
-        timeline: [{ type: "assistant_message", text: `FDE_OK ${promptId}` }],
+        text: `FROGG_OK ${args ?? ""}`.trim(),
+        timeline: [{ type: "assistant_message", text: `FROGG_OK ${promptId}` }],
         usage: { inputTokens: 1, outputTokens: 1 },
       };
     }
 
     return {
-      text: "FDE_SKILL_OK",
-      timeline: [{ type: "assistant_message", text: "FDE_SKILL_OK" }],
+      text: "FROGG_SKILL_OK",
+      timeline: [{ type: "assistant_message", text: "FROGG_SKILL_OK" }],
       usage: { inputTokens: 1, outputTokens: 1 },
     };
   }

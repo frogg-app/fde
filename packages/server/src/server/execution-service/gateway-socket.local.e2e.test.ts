@@ -13,7 +13,7 @@ afterEach(async () => {
   for (const close of cleanup.splice(0).toReversed()) await close();
 });
 async function fixture() {
-  const directory = await mkdtemp(path.join(tmpdir(), "fde-gateway-"));
+  const directory = await mkdtemp(path.join(tmpdir(), "frogg-gateway-"));
   cleanup.push(() => rm(directory, { recursive: true, force: true }));
   const socketPath = path.join(directory, "daemon.sock");
   const gateway = createExecutionGateway({

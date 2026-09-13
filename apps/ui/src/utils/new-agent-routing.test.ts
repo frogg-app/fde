@@ -14,23 +14,25 @@ describe("resolveNewAgentWorkingDir", () => {
   });
 
   it("falls back to repo root when checkout metadata is unavailable", () => {
-    expect(resolveNewAgentWorkingDir("/repo/.fde/worktrees/feature", null)).toBe("/repo");
+    expect(resolveNewAgentWorkingDir("/repo/.frogg/worktrees/feature", null)).toBe("/repo");
   });
 
-  it("supports windows-style fde worktree paths without checkout metadata", () => {
-    expect(resolveNewAgentWorkingDir("C:\\Users\\me\\repo\\.fde\\worktrees\\feature", null)).toBe(
+  it("supports windows-style frogg worktree paths without checkout metadata", () => {
+    expect(resolveNewAgentWorkingDir("C:\\Users\\me\\repo\\.frogg\\worktrees\\feature", null)).toBe(
       "C:\\Users\\me\\repo",
     );
   });
 
-  it("returns the main repo root for fde-owned worktrees", () => {
+  it("returns the main repo root for frogg-owned worktrees", () => {
     const checkout = {
-      isFdeOwnedWorktree: true,
-      worktreeRoot: "/repo/.fde/worktrees/feature",
+      isFroggOwnedWorktree: true,
+      worktreeRoot: "/repo/.frogg/worktrees/feature",
       mainRepoRoot: "/repo/main",
     } as unknown as CheckoutStatusPayload;
 
-    expect(resolveNewAgentWorkingDir("/repo/.fde/worktrees/feature", checkout)).toBe("/repo/main");
+    expect(resolveNewAgentWorkingDir("/repo/.frogg/worktrees/feature", checkout)).toBe(
+      "/repo/main",
+    );
   });
 });
 

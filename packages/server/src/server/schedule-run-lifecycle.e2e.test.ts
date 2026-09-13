@@ -12,7 +12,7 @@ import {
   type DaemonTestContext,
 } from "./test-utils/index.js";
 import type { SessionOutboundMessage } from "./messages.js";
-import { getFdeWorktreesRoot } from "../utils/worktree.js";
+import { getFroggWorktreesRoot } from "../utils/worktree.js";
 
 type AgentUpdateMessage = Extract<SessionOutboundMessage, { type: "agent_update" }>;
 type WorkspaceUpdateMessage = Extract<SessionOutboundMessage, { type: "workspace_update" }>;
@@ -46,11 +46,11 @@ function createGitRepo(): string {
   const tempRoot = makeTempDir("schedule-run-worktree-");
   const repoDir = path.join(tempRoot, "repo");
   execFileSync("git", ["init", "-b", "main", repoDir], { stdio: "pipe" });
-  execFileSync("git", ["config", "user.email", "test@fde.local"], {
+  execFileSync("git", ["config", "user.email", "test@frogg.local"], {
     cwd: repoDir,
     stdio: "pipe",
   });
-  execFileSync("git", ["config", "user.name", "Fde Test"], {
+  execFileSync("git", ["config", "user.name", "Frogg Test"], {
     cwd: repoDir,
     stdio: "pipe",
   });
@@ -273,9 +273,9 @@ test("archiveOnFinish=true scheduled run emits a workspace remove", async () => 
 
 test("worktree isolation creates a run worktree and archiveOnFinish removes it", async () => {
   const repoDir = createGitRepo();
-  const expectedRoot = await getFdeWorktreesRoot(
+  const expectedRoot = await getFroggWorktreesRoot(
     repoDir,
-    realpathSync(ctx.daemon.fdeHome),
+    realpathSync(ctx.daemon.froggHome),
     ctx.daemon.config.worktreesRoot,
   );
   const schedule = await createNewAgentSchedule({
@@ -321,9 +321,9 @@ test("worktree isolation creates a run worktree and archiveOnFinish removes it",
 
 test("update_schedule patches thinking, archive behavior, and isolation for the next run", async () => {
   const repoDir = createGitRepo();
-  const expectedRoot = await getFdeWorktreesRoot(
+  const expectedRoot = await getFroggWorktreesRoot(
     repoDir,
-    realpathSync(ctx.daemon.fdeHome),
+    realpathSync(ctx.daemon.froggHome),
     ctx.daemon.config.worktreesRoot,
   );
   const schedule = await createNewAgentSchedule({

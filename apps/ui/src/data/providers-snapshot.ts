@@ -1,4 +1,4 @@
-import type { AgentProvider } from "@fde/protocol/agent-types";
+import type { AgentProvider } from "@frogg/protocol/agent-types";
 import { normalizeWorkspacePath } from "@/utils/workspace-identity";
 
 export const PROVIDERS_SNAPSHOT_QUERY_ROOT = "providersSnapshot";

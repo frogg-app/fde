@@ -12,8 +12,8 @@ A brand is a directory with a `brand.json` manifest and its artwork. Every brand
 command reads the brand from, in order:
 
 1. `--brand <directory>` on `brand:check`, `brand:prepare` and `brand:stage`,
-2. the `FDE_BRAND_DIR` environment variable,
-3. `brands/fde` (stock FDE).
+2. the `FROGG_BRAND_DIR` environment variable,
+3. `brands/frogg` (stock Frogg).
 
 Relative paths resolve against the repository root.
 
@@ -34,7 +34,7 @@ npm run brand:init -- \
 ```
 
 ```text
-Brand created at /home/you/acme-studio/brands/acme. Build with FDE_BRAND_DIR=/home/you/acme-studio/brands/acme
+Brand created at /home/you/acme-studio/brands/acme. Build with FROGG_BRAND_DIR=/home/you/acme-studio/brands/acme
 ```
 
 All six flags are required. `brand:init` copies the icon into the directory as
@@ -64,8 +64,8 @@ That manifest already builds a working product. Everything else has a default.
 - **`applicationId`**: reverse DNS with at least three segments, lowercase letters and
   digits only (`com.acme.studio`). It is the Android package, macOS bundle ID, Windows
   install path and browser storage namespace. Also permanent.
-- **`daemonPort`**: 1024 to 65535. Pick a port no other FDE-based product uses, so both
-  can run on one machine. Stock FDE uses 9999; the example uses 10099.
+- **`daemonPort`**: 1024 to 65535. Pick a port no other Frogg-based product uses, so both
+  can run on one machine. Stock Frogg uses 9999; the example uses 10099.
 
 ## 2. Add colours and details
 
@@ -99,10 +99,10 @@ Add the optional fields you need. A typical product manifest:
   "links": {
     "website": "https://studio.acme.example",
     "docs": "https://studio.acme.example/docs",
-    "support": "https://github.com/acme-corp/fde/issues"
+    "support": "https://github.com/acme-corp/frogg/issues"
   },
   "distribution": {
-    "repository": "acme-corp/fde",
+    "repository": "acme-corp/frogg",
     "updates": "github-release"
   }
 }
@@ -163,12 +163,12 @@ npm run --silent brand:check -- --brand brands/acme --json
 - a missing icon, or one that is not square and at least 1024 pixels,
 - colour pairs under 4.5:1 contrast,
 - `updates` enabled without `distribution.repository`,
-- reserved FDE identities (see [troubleshooting](/docs/fork-and-rebrand/troubleshooting/)).
+- reserved Frogg identities (see [troubleshooting](/docs/fork-and-rebrand/troubleshooting/)).
 
 ## 4. Prepare generated inputs
 
 ```sh
-FDE_BRAND_DIR=brands/acme npm run brand:prepare
+FROGG_BRAND_DIR=brands/acme npm run brand:prepare
 ```
 
 ```text
@@ -201,14 +201,14 @@ source tree. `brand:stage` copies the manifest and artwork into a self-contained
 git-ignored directory and prints its path:
 
 ```sh
-FDE_BRAND_DIR=../acme-brand npm run --silent brand:stage
+FROGG_BRAND_DIR=../acme-brand npm run --silent brand:stage
 ```
 
 ```text
 .branding-input/acme
 ```
 
-The Docker and release scripts call this for you. Stock FDE prints `brands/fde`.
+The Docker and release scripts call this for you. Stock Frogg prints `brands/frogg`.
 
 ## 6. Run it locally
 
@@ -218,7 +218,7 @@ Select the brand for the whole shell session, then use the normal dev commands:
 <TabItem label="bash / zsh">
 
 ```sh
-export FDE_BRAND_DIR=brands/acme
+export FROGG_BRAND_DIR=brands/acme
 npm run dev:server     # terminal 1: branded daemon
 npm run dev:app        # terminal 2: Expo web and mobile dev server
 npm run dev:desktop    # terminal 3 (optional): Electron shell
@@ -228,7 +228,7 @@ npm run dev:desktop    # terminal 3 (optional): Electron shell
 <TabItem label="PowerShell">
 
 ```powershell
-$env:FDE_BRAND_DIR = 'brands/acme'
+$env:FROGG_BRAND_DIR = 'brands/acme'
 npm run dev:win
 ```
 
@@ -238,13 +238,13 @@ npm run dev:win
 The dev scripts go through `scripts/dev/branded-run.mts`, which prepares the brand and
 holds it for the life of the process.
 
-| Setting       | Stock FDE              | Custom brand                              |
+| Setting       | Stock Frogg              | Custom brand                              |
 | ------------- | ---------------------- | ----------------------------------------- |
 | Daemon listen | `0.0.0.0:6768`         | `0.0.0.0:<daemonPort>` (Acme: 10099)      |
 | Metro / Expo  | 8081                   | `daemonPort + 1` (Acme: 10100)            |
-| Dev state     | `.dev/fde-home`        | `.dev/<id>-home` (Acme: `.dev/acme-home`) |
+| Dev state     | `.dev/frogg-home`        | `.dev/<id>-home` (Acme: `.dev/acme-home`) |
 
-Override with `FDE_LISTEN`, `EXPO_PORT` or `<PREFIX>_HOME` (`ACME_HOME`) when you run
+Override with `FROGG_LISTEN`, `EXPO_PORT` or `<PREFIX>_HOME` (`ACME_HOME`) when you run
 several checkouts of the same product.
 
 :::caution[One brand per worktree]
@@ -257,7 +257,7 @@ before switching brands, or use `git worktree add` for the second brand.
 ## 7. Build locally
 
 ```sh
-export FDE_BRAND_DIR=brands/acme
+export FROGG_BRAND_DIR=brands/acme
 npm run build:ui                                   # web export in apps/ui/dist
 npm run build:desktop -- --target linux-x64        # Electron packages in apps/desktop-electron/release
 npm run build:server && npm run build:daemon-web-ui

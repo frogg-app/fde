@@ -1,5 +1,5 @@
 //! Downloading the chosen release asset into `<app cache dir>/updates/` with
-//! `fde:event:app-update-progress` events, then verifying the `.sha256`
+//! `frogg:event:app-update-progress` events, then verifying the `.sha256`
 //! sidecar when the release carries one. Reuses the sidecar bundle fetcher.
 
 use std::path::PathBuf;
@@ -68,7 +68,7 @@ pub async fn download_asset(
         .await
         .map_err(|e| format!("update download failed ({}): {e}", asset.url))?;
 
-    if !crate::branding::LEGACY_FDE {
+    if !crate::branding::LEGACY_FROGG {
         let raw = fetch_text(&format!("{}.metadata.json", asset.url))
             .await
             .map_err(|e| format!("Update identity metadata unavailable: {e}"))?;
@@ -115,7 +115,7 @@ mod tests {
 
     #[test]
     fn rejects_asset_names_with_path_parts() {
-        assert!(safe_file_name("FDE-1.0.0-amd64.deb").is_ok());
+        assert!(safe_file_name("Frogg-1.0.0-amd64.deb").is_ok());
         for bad in ["", ".", "..", "a/b", "a\\b", "../x"] {
             assert!(safe_file_name(bad).is_err(), "{bad:?}");
         }

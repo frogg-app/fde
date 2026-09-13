@@ -1,7 +1,7 @@
-import { isFdeToolName } from "@fde/protocol/tool-name-normalization";
+import { isFroggToolName } from "@frogg/protocol/tool-name-normalization";
 import { describeToolCall, type ToolCallRun } from "../grouping";
 
-const DIRECT_FDE_TOOL_PREFIX = "fde_";
+const DIRECT_FROGG_TOOL_PREFIX = "frogg_";
 const DIRECT_SEARCH_TOOL_SUFFIX_PATTERN = /(?:^|[_.:/])(?:web_search|llm_context)$/;
 
 export interface OverviewSummary {
@@ -10,7 +10,7 @@ export interface OverviewSummary {
   readFileCount: number;
   searchCount: number;
   otherToolCount: number;
-  fdeCallCount: number;
+  froggCallCount: number;
 }
 
 export interface OverviewToolCallGroup {
@@ -20,8 +20,8 @@ export interface OverviewToolCallGroup {
   isLoading: boolean;
 }
 
-function isFdeCall(name: string, normalizedName: string): boolean {
-  return isFdeToolName(name) || normalizedName.startsWith(DIRECT_FDE_TOOL_PREFIX);
+function isFroggCall(name: string, normalizedName: string): boolean {
+  return isFroggToolName(name) || normalizedName.startsWith(DIRECT_FROGG_TOOL_PREFIX);
 }
 
 function isSearchCall(name: string): boolean {
@@ -35,14 +35,14 @@ export function buildOverviewGroup(run: ToolCallRun): OverviewToolCallGroup {
   let commandCount = 0;
   let searchCount = 0;
   let otherToolCount = 0;
-  let fdeCallCount = 0;
+  let froggCallCount = 0;
 
   for (const call of run.calls) {
     const descriptor = describeToolCall(call);
     const normalizedName = descriptor.name.trim().toLowerCase();
     isLoading ||= descriptor.status === "running" || descriptor.status === "executing";
-    if (isFdeCall(descriptor.name, normalizedName)) {
-      fdeCallCount += 1;
+    if (isFroggCall(descriptor.name, normalizedName)) {
+      froggCallCount += 1;
     } else if (descriptor.detail.type === "edit" || descriptor.detail.type === "write") {
       editedFiles.add(descriptor.detail.filePath);
     } else if (descriptor.detail.type === "shell") {
@@ -62,7 +62,7 @@ export function buildOverviewGroup(run: ToolCallRun): OverviewToolCallGroup {
     readFileCount: readFiles.size,
     searchCount,
     otherToolCount,
-    fdeCallCount,
+    froggCallCount,
   };
   return {
     mode: "overview",

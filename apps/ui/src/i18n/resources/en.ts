@@ -722,7 +722,7 @@ export const en = {
       },
       routes: {
         public: "Reverse proxy",
-        fde: "Memorable",
+        frogg: "Memorable",
         direct: "Direct",
       },
       states: {
@@ -2054,7 +2054,7 @@ export const en = {
   serviceUrl: {
     title: "Open service URL",
     message: "Open {{url}}?",
-    inFde: "In {{brandName}}",
+    inFrogg: "In {{brandName}}",
     externalBrowser: "External browser",
     dontAskAgain: "Don't ask again",
   },
@@ -2180,7 +2180,7 @@ export const en = {
       one: "used {{count}} other tool",
       other: "used {{count}} other tools",
     },
-    fdeCalls: {
+    froggCalls: {
       one: "called {{brandName}} {{count}} time",
       other: "called {{brandName}} {{count}} times",
     },
@@ -2714,13 +2714,13 @@ export const en = {
           docker: {
             label: "Docker",
             available: "Available",
-            container: "Available, fde-daemon container present",
+            container: "Available, frogg-daemon container present",
             missing: "Not available",
           },
           curlMissing:
             "curl is missing on the host; the native install needs it to download the bundle.",
           noService: "Without a user service manager the daemon will not restart after a reboot.",
-          installDir: "Native installs go to {{home}}/.local/share/fde",
+          installDir: "Native installs go to {{home}}/.local/share/frogg",
           failed: "Could not inspect the host. {{detail}}",
         },
         method: {
@@ -2748,7 +2748,7 @@ export const en = {
         uninstall: {
           title: "Uninstall the daemon?",
           message:
-            "Stops the service and removes the {{brandName}} install from {{host}}. Daemon state (~/.fde) is kept.",
+            "Stops the service and removes the {{brandName}} install from {{host}}. Daemon state (~/.frogg) is kept.",
         },
         log: {
           running: "Running on {{host}}...",
@@ -2778,7 +2778,7 @@ export const en = {
         saving: "Saving...",
         saveFailed: "Could not save the relay endpoint.",
         overridden:
-          "Set by a daemon launch override (FDE_RELAY_ENDPOINT or FDE_RELAY_USE_TLS). Change it where the daemon is started.",
+          "Set by a daemon launch override (FROGG_RELAY_ENDPOINT or FROGG_RELAY_USE_TLS). Change it where the daemon is started.",
       },
       skills: {
         sectionTitle: "Orchestration skills",
@@ -2851,7 +2851,7 @@ export const en = {
       agentDefinitions: {
         title: "Agent definitions",
         description:
-          "Agents your providers load from this host. FDE only lists them; edit the files to change them.",
+          "Agents your providers load from this host. Frogg only lists them; edit the files to change them.",
         projectTitle: "Project agent definitions",
         projectDescription: "Agents your providers load from this project's directory.",
         empty: "No agent definitions found",
@@ -3118,13 +3118,13 @@ export const en = {
         savedToast: "Project updated",
       },
       readFailures: {
-        invalidTitle: "fde.json couldn't be parsed",
+        invalidTitle: "frogg.json couldn't be parsed",
         invalidDescription: "Fix the file on disk, then reload.",
         missingTitle: "This host doesn't have this project",
         missingSingleHost: "The selected host has no record of this project.",
-        transportTitle: "Couldn't load fde.json",
+        transportTitle: "Couldn't load frogg.json",
         transportFallback: "The host didn't respond.",
-        failedTitle: "Couldn't load fde.json",
+        failedTitle: "Couldn't load frogg.json",
         failedDescription: "Reload to try again.",
       },
       worktree: {
@@ -3135,7 +3135,7 @@ export const en = {
           "See docs for more details and the environment variables available to these commands",
         setup: "Setup",
         setupAccessibility: "Worktree setup commands",
-        uncommittedTitle: "Commit fde.json changes",
+        uncommittedTitle: "Commit frogg.json changes",
         uncommittedDescription:
           "New worktrees use the setup script from the base branch you select.",
         teardown: "Teardown",
@@ -3160,7 +3160,7 @@ export const en = {
         newScript: "New script",
         editScript: "Edit {{name}}",
         runAsService: "Run as a service",
-        serviceHint: "{{brandName}} supervises the process and assigns a port via $FDE_PORT",
+        serviceHint: "{{brandName}} supervises the process and assigns a port via $FROGG_PORT",
         actions: {
           add: "Add script",
           edit: "Edit",
@@ -3179,8 +3179,8 @@ export const en = {
       },
       writeFailures: {
         staleTitle: "Config changed on disk",
-        staleDescription: "Reload to fetch the latest fde.json before saving.",
-        failedTitle: "Couldn't save fde.json",
+        staleDescription: "Reload to fetch the latest frogg.json before saving.",
+        failedTitle: "Couldn't save frogg.json",
         failedDescription: "Try again, or reload the latest version from disk.",
       },
       actions: {

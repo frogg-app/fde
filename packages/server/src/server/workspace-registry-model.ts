@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 
-import type { ProjectCheckoutLitePayload, ProjectPlacementPayload } from "@fde/protocol/messages";
+import type { ProjectCheckoutLitePayload, ProjectPlacementPayload } from "@frogg/protocol/messages";
 import type { PersistedWorkspaceRecord } from "./workspace-registry.js";
 
 export type PersistedProjectKind = "git" | "non_git";
@@ -44,13 +44,13 @@ export type PersistedWorkspacePlacement = Pick<
   | "branch"
   | "worktreeRoot"
   | "baseBranch"
-  | "isFdeOwnedWorktree"
+  | "isFroggOwnedWorktree"
   | "mainRepoRoot"
 >;
 
 export type MutableWorkspacePlacement = Pick<
   PersistedWorkspaceRecord,
-  "kind" | "branch" | "worktreeRoot" | "isFdeOwnedWorktree" | "mainRepoRoot"
+  "kind" | "branch" | "worktreeRoot" | "isFroggOwnedWorktree" | "mainRepoRoot"
 >;
 
 export type InitialWorkspacePlacementInput =
@@ -85,7 +85,7 @@ export function initialWorkspacePlacement(
       branch: input.branch,
       worktreeRoot: input.worktreeRoot,
       baseBranch: input.baseBranch,
-      isFdeOwnedWorktree: true,
+      isFroggOwnedWorktree: true,
       mainRepoRoot: input.mainRepoRoot,
     };
   }
@@ -98,7 +98,7 @@ export function initialWorkspacePlacement(
     branch,
     worktreeRoot: input.checkout.isGit ? (input.checkout.worktreeRoot ?? input.cwd) : null,
     baseBranch: null,
-    isFdeOwnedWorktree: input.checkout.isGit && input.checkout.isFdeOwnedWorktree,
+    isFroggOwnedWorktree: input.checkout.isGit && input.checkout.isFroggOwnedWorktree,
     mainRepoRoot: input.checkout.isGit ? input.checkout.mainRepoRoot : null,
   };
 }
@@ -122,8 +122,8 @@ export function reconcileWorkspacePlacement(input: {
   if (input.workspace.branch !== observed.branch) fields.branch = observed.branch;
   if (input.workspace.worktreeRoot !== observed.worktreeRoot)
     fields.worktreeRoot = observed.worktreeRoot;
-  if (input.workspace.isFdeOwnedWorktree !== observed.isFdeOwnedWorktree)
-    fields.isFdeOwnedWorktree = observed.isFdeOwnedWorktree;
+  if (input.workspace.isFroggOwnedWorktree !== observed.isFroggOwnedWorktree)
+    fields.isFroggOwnedWorktree = observed.isFroggOwnedWorktree;
   if (input.workspace.mainRepoRoot !== observed.mainRepoRoot)
     fields.mainRepoRoot = observed.mainRepoRoot;
 
@@ -148,7 +148,7 @@ export function checkoutFromPersistedWorkspacePlacement(input: {
       currentBranch: null,
       remoteUrl: null,
       worktreeRoot: null,
-      isFdeOwnedWorktree: false,
+      isFroggOwnedWorktree: false,
       mainRepoRoot: null,
     };
   }
@@ -159,18 +159,18 @@ export function checkoutFromPersistedWorkspacePlacement(input: {
     remoteUrl: null,
     worktreeRoot: workspace.worktreeRoot ?? input.fallbackWorktreeRoot ?? workspace.cwd,
   };
-  if (workspace.isFdeOwnedWorktree && workspace.mainRepoRoot) {
+  if (workspace.isFroggOwnedWorktree && workspace.mainRepoRoot) {
     return {
       ...checkout,
       isGit: true,
-      isFdeOwnedWorktree: true,
+      isFroggOwnedWorktree: true,
       mainRepoRoot: workspace.mainRepoRoot,
     };
   }
   return {
     ...checkout,
     isGit: true,
-    isFdeOwnedWorktree: false,
+    isFroggOwnedWorktree: false,
     mainRepoRoot: workspace.mainRepoRoot ?? null,
   };
 }
@@ -187,7 +187,7 @@ export function checkoutLiteFromGitSnapshot(
     currentBranch: string | null;
     remoteUrl: string | null;
     repoRoot: string | null;
-    isFdeOwnedWorktree: boolean;
+    isFroggOwnedWorktree: boolean;
     mainRepoRoot: string | null;
   },
 ): ProjectCheckoutLitePayload {
@@ -198,18 +198,18 @@ export function checkoutLiteFromGitSnapshot(
       currentBranch: null,
       remoteUrl: null,
       worktreeRoot: null,
-      isFdeOwnedWorktree: false,
+      isFroggOwnedWorktree: false,
       mainRepoRoot: null,
     };
   }
-  if (git.isFdeOwnedWorktree && git.mainRepoRoot) {
+  if (git.isFroggOwnedWorktree && git.mainRepoRoot) {
     return {
       cwd,
       isGit: true,
       currentBranch: git.currentBranch,
       remoteUrl: git.remoteUrl,
       worktreeRoot: git.repoRoot ?? cwd,
-      isFdeOwnedWorktree: true,
+      isFroggOwnedWorktree: true,
       mainRepoRoot: git.mainRepoRoot,
     };
   }
@@ -219,7 +219,7 @@ export function checkoutLiteFromGitSnapshot(
     currentBranch: git.currentBranch,
     remoteUrl: git.remoteUrl,
     worktreeRoot: git.repoRoot ?? cwd,
-    isFdeOwnedWorktree: false,
+    isFroggOwnedWorktree: false,
     mainRepoRoot: git.mainRepoRoot,
   };
 }

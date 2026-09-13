@@ -49,7 +49,7 @@ if (command === "init") {
     await rm(staging, { recursive: true, force: true });
   }
   process.stdout.write(
-    `Brand created at ${destination}. Build with FDE_BRAND_DIR=${destination}\n`,
+    `Brand created at ${destination}. Build with FROGG_BRAND_DIR=${destination}\n`,
   );
 } else if (command === "check") {
   const build = resolveBrand(values.brand);

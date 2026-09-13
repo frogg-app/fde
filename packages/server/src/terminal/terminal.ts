@@ -6,18 +6,18 @@ import { tmpdir, userInfo } from "node:os";
 import { basename, delimiter, dirname, extname, join, resolve as resolvePath } from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
-import { createExternalProcessEnv } from "../server/fde-env.js";
+import { createExternalProcessEnv } from "../server/frogg-env.js";
 import { writePrivateFileAtomicSync } from "../server/private-files.js";
 import { findExecutable } from "../executable-resolution/executable-resolution.js";
-import type { TerminalCell, TerminalState } from "@fde/protocol/messages";
-import { TerminalInputModeTracker } from "@fde/protocol/terminal-input-mode";
+import type { TerminalCell, TerminalState } from "@frogg/protocol/messages";
+import { TerminalInputModeTracker } from "@frogg/protocol/terminal-input-mode";
 import { TerminalActivityTracker } from "./activity/terminal-activity-tracker.js";
 import { TerminalOutputFlow } from "./terminal-output-flow.js";
-import type { TerminalActivity, TerminalActivityState } from "@fde/protocol/terminal-activity";
+import type { TerminalActivity, TerminalActivityState } from "@frogg/protocol/terminal-activity";
 
 const { Terminal } = xterm;
 const require = createRequire(import.meta.url);
-const FDE_CLI_BIN_ENTRY = "@fde/cli/bin/fde";
+const FROGG_CLI_BIN_ENTRY = "@frogg/cli/bin/frogg";
 let nodePtySpawnHelperChecked = false;
 const TERMINAL_TITLE_DEBOUNCE_MS = 150;
 const TERMINAL_EXIT_OUTPUT_LINE_LIMIT = 12;
@@ -158,8 +158,8 @@ interface BuildTerminalEnvironmentInput {
   shell: string;
   env: Record<string, string>;
   zshShellIntegrationDir?: string;
-  fdeCliBinDir?: string | null;
-  fdeHookCliPath?: string | null;
+  froggCliBinDir?: string | null;
+  froggHookCliPath?: string | null;
 }
 
 interface EnsureNodePtySpawnHelperExecutableOptions {
@@ -394,18 +394,18 @@ function resolveExternalProcessPath(filePath: string): string {
   return filePath.replace(/\.asar(?=[/\\]|$)/, ".asar.unpacked");
 }
 
-export function resolveFdeCliBinDir(): string | null {
-  const cliExecutable = resolveFdeCliExecutablePath();
+export function resolveFroggCliBinDir(): string | null {
+  const cliExecutable = resolveFroggCliExecutablePath();
   return cliExecutable ? dirname(cliExecutable) : null;
 }
 
-export function resolveFdeCliExecutablePath(): string | null {
-  const configuredCli = process.env.FDE_CLI?.trim();
+export function resolveFroggCliExecutablePath(): string | null {
+  const configuredCli = process.env.FROGG_CLI?.trim();
   if (configuredCli) {
     return resolvePath(configuredCli);
   }
 
-  const cliEntrypoint = resolveFdeCliBinEntrypoint();
+  const cliEntrypoint = resolveFroggCliBinEntrypoint();
   if (!cliEntrypoint) {
     return null;
   }
@@ -413,7 +413,7 @@ export function resolveFdeCliExecutablePath(): string | null {
   const externalCliEntrypoint = resolveExternalProcessPath(cliEntrypoint);
   const npmBinDir = findNpmBinDir(dirname(externalCliEntrypoint));
   if (npmBinDir) {
-    const shim = resolveFdeCliShim(npmBinDir);
+    const shim = resolveFroggCliShim(npmBinDir);
     if (shim) {
       return shim;
     }
@@ -422,9 +422,9 @@ export function resolveFdeCliExecutablePath(): string | null {
   return externalCliEntrypoint;
 }
 
-function resolveFdeCliBinEntrypoint(): string | null {
+function resolveFroggCliBinEntrypoint(): string | null {
   try {
-    return require.resolve(FDE_CLI_BIN_ENTRY);
+    return require.resolve(FROGG_CLI_BIN_ENTRY);
   } catch {
     return null;
   }
@@ -434,7 +434,7 @@ function findNpmBinDir(startPath: string): string | null {
   let current = startPath;
   while (true) {
     const candidate = join(current, "node_modules", ".bin");
-    if (hasFdeCliShim(candidate)) {
+    if (hasFroggCliShim(candidate)) {
       return candidate;
     }
 
@@ -446,12 +446,12 @@ function findNpmBinDir(startPath: string): string | null {
   }
 }
 
-function hasFdeCliShim(binDir: string): boolean {
-  return resolveFdeCliShim(binDir) !== null;
+function hasFroggCliShim(binDir: string): boolean {
+  return resolveFroggCliShim(binDir) !== null;
 }
 
-function resolveFdeCliShim(binDir: string): string | null {
-  for (const name of fdeCliShimNames()) {
+function resolveFroggCliShim(binDir: string): string | null {
+  for (const name of froggCliShimNames()) {
     const candidate = join(binDir, name);
     if (existsSync(candidate)) {
       return candidate;
@@ -460,8 +460,8 @@ function resolveFdeCliShim(binDir: string): string | null {
   return null;
 }
 
-function fdeCliShimNames(): string[] {
-  return process.platform === "win32" ? ["fde.cmd", "fde.exe", "fde"] : ["fde"];
+function froggCliShimNames(): string[] {
+  return process.platform === "win32" ? ["frogg.cmd", "frogg.exe", "frogg"] : ["frogg"];
 }
 
 function resolveZshShellIntegrationRuntimeDir(): string {
@@ -471,7 +471,7 @@ function resolveZshShellIntegrationRuntimeDir(): string {
   } catch {
     // keep fallback
   }
-  return join(tmpdir(), `${username}-fde-zsh-${process.pid}`);
+  return join(tmpdir(), `${username}-frogg-zsh-${process.pid}`);
 }
 
 function prepareZshShellIntegrationRuntimeDir(sourceDir = resolveZshShellIntegrationDir()): string {
@@ -484,8 +484,8 @@ function prepareZshShellIntegrationRuntimeDir(sourceDir = resolveZshShellIntegra
     readFileSync(join(readableSourceDir, ".zshenv")),
   );
   writePrivateFileAtomicSync(
-    join(runtimeDir, "fde-integration.zsh"),
-    readFileSync(join(readableSourceDir, "fde-integration.zsh")),
+    join(runtimeDir, "frogg-integration.zsh"),
+    readFileSync(join(readableSourceDir, "frogg-integration.zsh")),
   );
   return runtimeDir;
 }
@@ -497,13 +497,13 @@ export function buildTerminalEnvironment(
     TERM: "xterm-256color",
     TERM_PROGRAM: "kitty",
   });
-  const envWithAgentHooks = prependFdeCliToPath(
+  const envWithAgentHooks = prependFroggCliToPath(
     baseEnv,
-    input.fdeCliBinDir === undefined ? resolveFdeCliBinDir() : input.fdeCliBinDir,
+    input.froggCliBinDir === undefined ? resolveFroggCliBinDir() : input.froggCliBinDir,
   );
-  const envWithHookCli = injectFdeHookCli(
+  const envWithHookCli = injectFroggHookCli(
     envWithAgentHooks,
-    input.fdeHookCliPath === undefined ? resolveFdeCliExecutablePath() : input.fdeHookCliPath,
+    input.froggHookCliPath === undefined ? resolveFroggCliExecutablePath() : input.froggHookCliPath,
   );
 
   if (basename(input.shell) !== "zsh") {
@@ -513,12 +513,12 @@ export function buildTerminalEnvironment(
   const originalZdotdir = envWithHookCli.ZDOTDIR ?? "";
   return {
     ...envWithHookCli,
-    FDE_ZSH_ZDOTDIR: originalZdotdir,
+    FROGG_ZSH_ZDOTDIR: originalZdotdir,
     ZDOTDIR: prepareZshShellIntegrationRuntimeDir(input.zshShellIntegrationDir),
   };
 }
 
-function injectFdeHookCli(
+function injectFroggHookCli(
   env: Record<string, string>,
   cliPath: string | null,
 ): Record<string, string> {
@@ -528,11 +528,11 @@ function injectFdeHookCli(
 
   return {
     ...env,
-    FDE_HOOK_CLI: resolvePath(resolveExternalProcessPath(cliPath)),
+    FROGG_HOOK_CLI: resolvePath(resolveExternalProcessPath(cliPath)),
   };
 }
 
-function prependFdeCliToPath(
+function prependFroggCliToPath(
   env: Record<string, string>,
   cliBinDir: string | null,
 ): Record<string, string> {
@@ -952,7 +952,7 @@ export async function createTerminal(options: CreateTerminalOptions): Promise<Te
       env: {
         ...env,
         ...activityEnv,
-        FDE_WORKSPACE_ID: workspaceId,
+        FROGG_WORKSPACE_ID: workspaceId,
       },
     }),
   });

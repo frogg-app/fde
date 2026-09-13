@@ -181,8 +181,8 @@ describe("terminal-emulator-runtime", () => {
   const originalWindow = (globalThis as { window?: unknown }).window;
 
   beforeEach(() => {
-    (globalThis as { window?: { __fdeTerminal?: unknown } }).window = {
-      __fdeTerminal: undefined,
+    (globalThis as { window?: { __froggTerminal?: unknown } }).window = {
+      __froggTerminal: undefined,
     };
     terminalConstructorOptions.values = [];
   });

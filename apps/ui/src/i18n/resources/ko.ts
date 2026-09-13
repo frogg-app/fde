@@ -725,7 +725,7 @@ export const ko: TranslationResources = {
       },
       routes: {
         public: "역방향 프록시",
-        fde: "간편 주소",
+        frogg: "간편 주소",
         direct: "직접",
       },
       states: {
@@ -2054,7 +2054,7 @@ export const ko: TranslationResources = {
   serviceUrl: {
     title: "서비스 URL 열기",
     message: "{{url}}을(를) 열까요?",
-    inFde: "{{brandName}}에서",
+    inFrogg: "{{brandName}}에서",
     externalBrowser: "외부 브라우저",
     dontAskAgain: "다시 묻지 않기",
   },
@@ -2180,7 +2180,7 @@ export const ko: TranslationResources = {
       one: "기타 도구 {{count}}개 사용함",
       other: "기타 도구 {{count}}개 사용함",
     },
-    fdeCalls: {
+    froggCalls: {
       one: "{{brandName}}를 {{count}}회 호출함",
       other: "{{brandName}}를 {{count}}회 호출함",
     },
@@ -2680,13 +2680,13 @@ export const ko: TranslationResources = {
           docker: {
             label: "Docker",
             available: "사용 가능",
-            container: "사용 가능, fde-daemon 컨테이너 있음",
+            container: "사용 가능, frogg-daemon 컨테이너 있음",
             missing: "사용 불가",
           },
           curlMissing:
             "호스트에 curl이 없습니다. 네이티브 설치는 번들을 내려받는 데 curl이 필요합니다.",
           noService: "사용자 서비스 관리자가 없으면 재부팅 후 데몬이 다시 시작되지 않습니다.",
-          installDir: "네이티브 설치 위치: {{home}}/.local/share/fde",
+          installDir: "네이티브 설치 위치: {{home}}/.local/share/frogg",
           failed: "호스트를 확인할 수 없습니다. {{detail}}",
         },
         method: {
@@ -2714,7 +2714,7 @@ export const ko: TranslationResources = {
         uninstall: {
           title: "데몬을 제거할까요?",
           message:
-            "서비스를 중지하고 {{host}}에서 {{brandName}} 설치를 제거합니다. 데몬 상태(~/.fde)는 유지됩니다.",
+            "서비스를 중지하고 {{host}}에서 {{brandName}} 설치를 제거합니다. 데몬 상태(~/.frogg)는 유지됩니다.",
         },
         log: {
           running: "{{host}}에서 실행 중...",
@@ -2744,7 +2744,7 @@ export const ko: TranslationResources = {
         saving: "저장 중...",
         saveFailed: "릴레이 엔드포인트를 저장하지 못했습니다.",
         overridden:
-          "데몬 실행 재정의(FDE_RELAY_ENDPOINT 또는 FDE_RELAY_USE_TLS)로 설정되어 있습니다. 데몬을 시작하는 곳에서 변경하세요.",
+          "데몬 실행 재정의(FROGG_RELAY_ENDPOINT 또는 FROGG_RELAY_USE_TLS)로 설정되어 있습니다. 데몬을 시작하는 곳에서 변경하세요.",
       },
       skills: {
         ...en.settings.host.skills,
@@ -2814,7 +2814,7 @@ export const ko: TranslationResources = {
       agentDefinitions: {
         title: "에이전트 정의",
         description:
-          "공급자가 이 호스트에서 불러오는 에이전트입니다. FDE는 목록만 표시하며, 변경하려면 파일을 편집하세요.",
+          "공급자가 이 호스트에서 불러오는 에이전트입니다. Frogg는 목록만 표시하며, 변경하려면 파일을 편집하세요.",
         projectTitle: "프로젝트 에이전트 정의",
         projectDescription: "공급자가 이 프로젝트 디렉터리에서 불러오는 에이전트입니다.",
         empty: "에이전트 정의를 찾을 수 없습니다",
@@ -3084,13 +3084,13 @@ export const ko: TranslationResources = {
         savedToast: "프로젝트가 업데이트되었습니다.",
       },
       readFailures: {
-        invalidTitle: "fde.json을 파싱할 수 없습니다",
+        invalidTitle: "frogg.json을 파싱할 수 없습니다",
         invalidDescription: "디스크의 파일을 수정한 후 다시 로드하세요.",
         missingTitle: "이 호스트에는 이 프로젝트가 없습니다",
         missingSingleHost: "선택한 호스트에 이 프로젝트의 기록이 없습니다.",
-        transportTitle: "fde.json을 불러올 수 없습니다",
+        transportTitle: "frogg.json을 불러올 수 없습니다",
         transportFallback: "호스트가 응답하지 않았습니다.",
-        failedTitle: "fde.json을 불러올 수 없습니다",
+        failedTitle: "frogg.json을 불러올 수 없습니다",
         failedDescription: "다시 로드하여 재시도하세요.",
       },
       worktree: {
@@ -3100,7 +3100,7 @@ export const ko: TranslationResources = {
         docsTooltip: "자세한 내용과 이 명령에 사용할 수 있는 환경 변수는 문서를 참조하세요",
         setup: "설정",
         setupAccessibility: "워크트리 설정 명령",
-        uncommittedTitle: "fde.json 변경 사항을 커밋하세요",
+        uncommittedTitle: "frogg.json 변경 사항을 커밋하세요",
         uncommittedDescription: "새 워크트리는 선택한 기본 브랜치의 설정 스크립트를 사용합니다.",
         teardown: "정리",
         teardownAccessibility: "워크트리 정리 명령",
@@ -3124,7 +3124,7 @@ export const ko: TranslationResources = {
         newScript: "새 스크립트",
         editScript: "{{name}} 편집",
         runAsService: "서비스로 실행",
-        serviceHint: "{{brandName}}가 프로세스를 감독하고 $FDE_PORT를 통해 포트를 할당합니다",
+        serviceHint: "{{brandName}}가 프로세스를 감독하고 $FROGG_PORT를 통해 포트를 할당합니다",
         actions: {
           add: "스크립트 추가",
           edit: "편집",
@@ -3144,8 +3144,8 @@ export const ko: TranslationResources = {
       },
       writeFailures: {
         staleTitle: "디스크에서 구성이 변경되었습니다",
-        staleDescription: "저장하기 전에 다시 로드하여 최신 fde.json을 가져오세요.",
-        failedTitle: "fde.json을 저장할 수 없습니다",
+        staleDescription: "저장하기 전에 다시 로드하여 최신 frogg.json을 가져오세요.",
+        failedTitle: "frogg.json을 저장할 수 없습니다",
         failedDescription: "다시 시도하거나 디스크에서 최신 버전을 다시 로드하세요.",
       },
       actions: {

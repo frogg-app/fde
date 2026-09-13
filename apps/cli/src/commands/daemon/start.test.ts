@@ -2,7 +2,7 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, test } from "vitest";
-import { loadConfig } from "@fde/server";
+import { loadConfig } from "@frogg/server";
 import { resolveLocalDaemonDiagnosticState } from "./local-daemon.js";
 import { runStart, type StartOptions, type StartRuntime } from "./start.js";
 
@@ -21,7 +21,7 @@ class FakeStartRuntime implements StartRuntime {
   async startDetached(options: StartOptions) {
     this.launches.push(options);
     if (this.failure) throw this.failure;
-    return { pid: 5678, logPath: "/test/fde/daemon.log" };
+    return { pid: 5678, logPath: "/test/frogg/daemon.log" };
   }
   startForeground(options: StartOptions) {
     this.launches.push(options);
@@ -44,7 +44,7 @@ describe("daemon start feedback", () => {
     async (foreground) => {
       const runtime = new FakeStartRuntime();
       runtime.states = [{ running: true, pidInfo: { pid: 1234 } }];
-      await runStart({ home: "/test/fde", foreground }, runtime);
+      await runStart({ home: "/test/frogg", foreground }, runtime);
       expect(runtime.launches).toEqual([]);
       expect(runtime.logs).toEqual(["Daemon already running (PID 1234)."]);
       expect(runtime.errors).toEqual([]);
@@ -54,8 +54,8 @@ describe("daemon start feedback", () => {
   test("a stale PID file does not prevent a new start", async () => {
     const runtime = new FakeStartRuntime();
     runtime.states = [{ running: false, pidInfo: { pid: 1234 } }];
-    await runStart({ home: "/test/fde" }, runtime);
-    expect(runtime.launches).toEqual([{ home: "/test/fde" }]);
+    await runStart({ home: "/test/frogg" }, runtime);
+    expect(runtime.launches).toEqual([{ home: "/test/frogg" }]);
     expect(runtime.logs[0]).toContain("PID 5678");
     expect(runtime.errors).toEqual([]);
   });
@@ -89,14 +89,14 @@ describe("daemon start feedback", () => {
   test.each([false, true])(
     "schema-invalid persisted relay does not block precheck (running=%s)",
     async (running) => {
-      const home = await mkdtemp(path.join(os.tmpdir(), "fde-start-config-"));
+      const home = await mkdtemp(path.join(os.tmpdir(), "frogg-start-config-"));
       try {
         await writeFile(
           path.join(home, "config.json"),
           JSON.stringify({ version: 1, daemon: { relay: { enabled: "yes" } } }),
         );
         if (running)
-          await writeFile(path.join(home, "fde.pid"), JSON.stringify({ pid: process.pid }));
+          await writeFile(path.join(home, "frogg.pid"), JSON.stringify({ pid: process.pid }));
         expect(() => loadConfig(home, { env: {} })).toThrow("[Config] Invalid config");
         const runtime = new FakeStartRuntime();
         runtime.resolveState = resolveLocalDaemonDiagnosticState;

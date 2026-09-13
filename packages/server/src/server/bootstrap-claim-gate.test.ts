@@ -4,8 +4,8 @@ import path from "node:path";
 import { WebSocket } from "ws";
 import { afterEach, describe, expect, test } from "vitest";
 
-import { parseAnyConnectionOfferFromUrl } from "@fde/protocol/connection-offer";
-import { createTestFdeDaemon, type TestFdeDaemon } from "./test-utils/fde-daemon.js";
+import { parseAnyConnectionOfferFromUrl } from "@frogg/protocol/connection-offer";
+import { createTestFroggDaemon, type TestFroggDaemon } from "./test-utils/frogg-daemon.js";
 
 /**
  * The test daemon binds 127.0.0.1, so a remote visitor is simulated with
@@ -47,19 +47,19 @@ function wsClose(
 
 describe("first-run claim gate", () => {
   let tempRoot: string | null = null;
-  let daemonHandle: TestFdeDaemon | null = null;
+  let daemonHandle: TestFroggDaemon | null = null;
 
   async function startDaemon(
     options: { password?: string; trustLan?: boolean } = {},
-  ): Promise<TestFdeDaemon> {
-    tempRoot = await mkdtemp(path.join(os.tmpdir(), "fde-claim-gate-"));
+  ): Promise<TestFroggDaemon> {
+    tempRoot = await mkdtemp(path.join(os.tmpdir(), "frogg-claim-gate-"));
     const distDir = path.join(tempRoot, "dist");
     await mkdir(distDir, { recursive: true });
     await writeFile(
       path.join(distDir, "index.html"),
       "<!DOCTYPE html><html><head></head><body>the app</body></html>",
     );
-    daemonHandle = await createTestFdeDaemon({
+    daemonHandle = await createTestFroggDaemon({
       mcpEnabled: false,
       webUi: { enabled: true, distDir },
       trustLan: options.trustLan,
@@ -83,7 +83,7 @@ describe("first-run claim gate", () => {
 
     const identity = await (await fetch(`${base}/api/identity`, { headers: PUBLIC })).json();
     expect(identity).toMatchObject({
-      product: "fde",
+      product: "frogg",
       pairingRequired: true,
       lanTrusted: true,
       listen: `127.0.0.1:${port}`,
@@ -97,7 +97,7 @@ describe("first-run claim gate", () => {
     expect(gated.status).toBe(200);
     expect(gated.headers.get("cache-control")).toContain("no-store");
     const html = await gated.text();
-    expect(html).toContain("Claim this FDE daemon");
+    expect(html).toContain("Claim this Frogg daemon");
     expect(html).toContain("#25B5C8");
     expect(html).toContain("<svg");
 
@@ -147,8 +147,8 @@ describe("first-run claim gate", () => {
     });
     expect(withCredential.status).toBe(200);
     expect((await fetch(`${base}/api/status`, { headers: PUBLIC })).status).toBe(401);
-    expect(await wsClose(port, PUBLIC, `fde.bearer.${minted.credential}`)).toBe("open");
-    expect(await wsClose(port, PUBLIC, "fde.bearer.wrong")).toEqual({
+    expect(await wsClose(port, PUBLIC, `frogg.bearer.${minted.credential}`)).toBe("open");
+    expect(await wsClose(port, PUBLIC, "frogg.bearer.wrong")).toEqual({
       code: 4401,
       reason: "Incorrect password",
     });
@@ -164,10 +164,10 @@ describe("first-run claim gate", () => {
       (await fetch(`${base}/api/setup/offer`, { method: "POST", headers: PUBLIC })).status,
     ).toBe(401);
 
-    // Reset (what `fde daemon reset-claim` does) brings the gate back without a restart.
+    // Reset (what `frogg daemon reset-claim` does) brings the gate back without a restart.
     daemon.claimStore.reset();
     expect(await (await fetch(`${base}/`, { headers: PUBLIC })).text()).toContain(
-      "Claim this FDE daemon",
+      "Claim this Frogg daemon",
     );
   });
 
@@ -187,7 +187,7 @@ describe("first-run claim gate", () => {
       (await (await fetch(`${base}/api/identity`, { headers: PUBLIC })).json()).pairingRequired,
     ).toBe(true);
     expect(await (await fetch(`${base}/`, { headers: PUBLIC })).text()).toContain(
-      "Claim this FDE daemon",
+      "Claim this Frogg daemon",
     );
     expect(await wsClose(port, PUBLIC)).toEqual({ code: 4401, reason: "Pairing required" });
 
@@ -204,7 +204,7 @@ describe("first-run claim gate", () => {
     });
     expect(claimed.status).toBe(201);
     const minted = (await claimed.json()) as { credential: string };
-    expect(await wsClose(port, PUBLIC, `fde.bearer.${minted.credential}`)).toBe("open");
+    expect(await wsClose(port, PUBLIC, `frogg.bearer.${minted.credential}`)).toBe("open");
   });
 
   test("with trustLan off a LAN visitor sees the gate and needs a bearer", async () => {
@@ -214,7 +214,7 @@ describe("first-run claim gate", () => {
     const identity = await (await fetch(`${base}/api/identity`, { headers: LAN })).json();
     expect(identity).toMatchObject({ pairingRequired: true, lanTrusted: false });
     expect(await (await fetch(`${base}/`, { headers: LAN })).text()).toContain(
-      "Claim this FDE daemon",
+      "Claim this Frogg daemon",
     );
     expect((await fetch(`${base}/api/status`, { headers: LAN })).status).toBe(401);
     expect(await wsClose(port, LAN)).toEqual({ code: 4401, reason: "Pairing required" });

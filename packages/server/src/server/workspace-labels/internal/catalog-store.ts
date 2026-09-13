@@ -1,7 +1,7 @@
 import { promises as fs } from "node:fs";
 import { z } from "zod";
-import type { WorkspaceLabelDefinition } from "@fde/protocol/workspace-labels";
-import { WorkspaceLabelDefinitionSchema } from "@fde/protocol/messages";
+import type { WorkspaceLabelDefinition } from "@frogg/protocol/workspace-labels";
+import { WorkspaceLabelDefinitionSchema } from "@frogg/protocol/messages";
 import { writeJsonFileAtomic } from "../../atomic-file.js";
 import type { PersistedWorkspaceRecord } from "../../workspace-registry.js";
 

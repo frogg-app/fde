@@ -1,13 +1,13 @@
 import { describe, expect, test } from "vitest";
-import { FDE_BROWSER_PROFILE_PARTITION } from "../browser-profile.js";
+import { FROGG_BROWSER_PROFILE_PARTITION } from "../browser-profile.js";
 import {
-  getFdeBrowserIdForWebContents,
-  getFdeBrowserWorkspaceId,
-  isFdeBrowserWebviewAttach,
-  prepareFdeBrowserWebContents,
-  registerAttachedFdeBrowser,
-  unregisterFdeBrowser,
-  unregisterFdeBrowserFromHost,
+  getFroggBrowserIdForWebContents,
+  getFroggBrowserWorkspaceId,
+  isFroggBrowserWebviewAttach,
+  prepareFroggBrowserWebContents,
+  registerAttachedFroggBrowser,
+  unregisterFroggBrowser,
+  unregisterFroggBrowserFromHost,
 } from "./index.js";
 
 class FakeRenderer {
@@ -51,19 +51,19 @@ class FakeBrowserGuest {
 describe("browser webview attachment", () => {
   test("accepts only allowed URLs on the shared profile partition", () => {
     expect(
-      isFdeBrowserWebviewAttach({
+      isFroggBrowserWebviewAttach({
         src: "https://example.com",
-        partition: FDE_BROWSER_PROFILE_PARTITION,
+        partition: FROGG_BROWSER_PROFILE_PARTITION,
       }),
     ).toBe(true);
     expect(
-      isFdeBrowserWebviewAttach({
+      isFroggBrowserWebviewAttach({
         src: "https://example.com",
-        partition: "persist:fde-browser-tab-a",
+        partition: "persist:frogg-browser-tab-a",
       }),
     ).toBe(false);
     expect(
-      isFdeBrowserWebviewAttach({
+      isFroggBrowserWebviewAttach({
         src: "https://example.com",
         partition: "persist:foreign",
       }),
@@ -75,7 +75,7 @@ describe("browser webview attachment", () => {
     const renderer = new FakeRenderer(1);
     const guest = new FakeBrowserGuest(101, renderer, profileSession);
 
-    const registered = registerAttachedFdeBrowser({
+    const registered = registerAttachedFroggBrowser({
       browserId: "browser-a",
       workspaceId: "workspace-a",
       webContentsId: guest.id,
@@ -85,9 +85,9 @@ describe("browser webview attachment", () => {
     });
 
     expect(registered).toBe(true);
-    expect(getFdeBrowserIdForWebContents(guest)).toBe("browser-a");
-    expect(getFdeBrowserWorkspaceId("browser-a")).toBe("workspace-a");
-    unregisterFdeBrowser("browser-a");
+    expect(getFroggBrowserIdForWebContents(guest)).toBe("browser-a");
+    expect(getFroggBrowserWorkspaceId("browser-a")).toBe("workspace-a");
+    unregisterFroggBrowser("browser-a");
   });
 
   test("rejects a guest hosted by another renderer", () => {
@@ -96,7 +96,7 @@ describe("browser webview attachment", () => {
     const claimant = new FakeRenderer(2);
     const guest = new FakeBrowserGuest(201, owner, profileSession);
 
-    const registered = registerAttachedFdeBrowser({
+    const registered = registerAttachedFroggBrowser({
       browserId: "browser-rejected-owner",
       workspaceId: "workspace-a",
       webContentsId: guest.id,
@@ -106,7 +106,7 @@ describe("browser webview attachment", () => {
     });
 
     expect(registered).toBe(false);
-    expect(getFdeBrowserIdForWebContents(guest)).toBeNull();
+    expect(getFroggBrowserIdForWebContents(guest)).toBeNull();
   });
 
   test("rejects a guest outside the shared profile", () => {
@@ -114,7 +114,7 @@ describe("browser webview attachment", () => {
     const renderer = new FakeRenderer(1);
     const guest = new FakeBrowserGuest(301, renderer, {});
 
-    const registered = registerAttachedFdeBrowser({
+    const registered = registerAttachedFroggBrowser({
       browserId: "browser-rejected-profile",
       workspaceId: "workspace-a",
       webContentsId: guest.id,
@@ -124,7 +124,7 @@ describe("browser webview attachment", () => {
     });
 
     expect(registered).toBe(false);
-    expect(getFdeBrowserIdForWebContents(guest)).toBeNull();
+    expect(getFroggBrowserIdForWebContents(guest)).toBeNull();
   });
 
   test("concurrent windows cannot swap browser identities", () => {
@@ -138,7 +138,7 @@ describe("browser webview attachment", () => {
       [secondGuest.id, secondGuest],
     ]);
 
-    registerAttachedFdeBrowser({
+    registerAttachedFroggBrowser({
       browserId: "browser-second",
       workspaceId: "workspace-second",
       webContentsId: secondGuest.id,
@@ -146,7 +146,7 @@ describe("browser webview attachment", () => {
       profileSession,
       findWebContents: (id) => guests.get(id) ?? null,
     });
-    registerAttachedFdeBrowser({
+    registerAttachedFroggBrowser({
       browserId: "browser-first",
       workspaceId: "workspace-first",
       webContentsId: firstGuest.id,
@@ -155,10 +155,10 @@ describe("browser webview attachment", () => {
       findWebContents: (id) => guests.get(id) ?? null,
     });
 
-    expect(getFdeBrowserIdForWebContents(firstGuest)).toBe("browser-first");
-    expect(getFdeBrowserIdForWebContents(secondGuest)).toBe("browser-second");
-    unregisterFdeBrowser("browser-first");
-    unregisterFdeBrowser("browser-second");
+    expect(getFroggBrowserIdForWebContents(firstGuest)).toBe("browser-first");
+    expect(getFroggBrowserIdForWebContents(secondGuest)).toBe("browser-second");
+    unregisterFroggBrowser("browser-first");
+    unregisterFroggBrowser("browser-second");
   });
 
   test("unregisters the same browser only from its requesting host", () => {
@@ -172,7 +172,7 @@ describe("browser webview attachment", () => {
       [firstRenderer, firstGuest],
       [secondRenderer, secondGuest],
     ] as const) {
-      registerAttachedFdeBrowser({
+      registerAttachedFroggBrowser({
         browserId: "browser-shared-hosts",
         workspaceId: "workspace-shared",
         webContentsId: guest.id,
@@ -182,20 +182,20 @@ describe("browser webview attachment", () => {
       });
     }
 
-    unregisterFdeBrowserFromHost(firstRenderer.id, "browser-shared-hosts");
+    unregisterFroggBrowserFromHost(firstRenderer.id, "browser-shared-hosts");
 
-    expect(getFdeBrowserIdForWebContents(firstGuest)).toBeNull();
-    expect(getFdeBrowserIdForWebContents(secondGuest)).toBe("browser-shared-hosts");
-    expect(getFdeBrowserWorkspaceId("browser-shared-hosts")).toBe("workspace-shared");
-    unregisterFdeBrowser("browser-shared-hosts");
+    expect(getFroggBrowserIdForWebContents(firstGuest)).toBeNull();
+    expect(getFroggBrowserIdForWebContents(secondGuest)).toBe("browser-shared-hosts");
+    expect(getFroggBrowserWorkspaceId("browser-shared-hosts")).toBe("workspace-shared");
+    unregisterFroggBrowser("browser-shared-hosts");
   });
 
   test("prepares throttling once and removes registration when the guest is destroyed", () => {
     const profileSession = {};
     const renderer = new FakeRenderer(31);
     const guest = new FakeBrowserGuest(601, renderer, profileSession);
-    prepareFdeBrowserWebContents(guest);
-    registerAttachedFdeBrowser({
+    prepareFroggBrowserWebContents(guest);
+    registerAttachedFroggBrowser({
       browserId: "browser-cleanup",
       workspaceId: "workspace-cleanup",
       webContentsId: guest.id,
@@ -205,11 +205,11 @@ describe("browser webview attachment", () => {
     });
 
     expect(guest.backgroundThrottlingCalls).toEqual([false]);
-    expect(getFdeBrowserIdForWebContents(guest)).toBe("browser-cleanup");
+    expect(getFroggBrowserIdForWebContents(guest)).toBe("browser-cleanup");
 
     guest.destroy();
 
-    expect(getFdeBrowserIdForWebContents(guest)).toBeNull();
+    expect(getFroggBrowserIdForWebContents(guest)).toBeNull();
     expect(guest.backgroundThrottlingCalls).toEqual([false]);
   });
 });

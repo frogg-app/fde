@@ -19,11 +19,11 @@ pipeline builds your brand.
 | **Release**             | `.github/workflows/release.yml`          | Push a `v*` tag, or run manually with a tag | A GitHub release: desktop packages, daemon bundles, Android APK, updater metadata, install scripts, optional Docker image |
 | **Build selected**      | `.github/workflows/build-selected.yml`   | Manual (`target`: all, windows, daemon, android); also called by CI on pushes to `main` | Workflow artifacts (not a release): Windows x64 client, Linux x64 daemon, Android arm64 debug-signed APK |
 | **CI**                  | `.github/workflows/ci.yml`               | Pull requests, pushes to `main`            | Format, lint, typecheck, unit tests; calls Build selected on `main`                   |
-| **Branding acceptance** | `.github/workflows/branding.yml`         | PRs touching branding, deploy, desktop or workflows; manual | Builds `brands/fde` and `brands/example` on Linux, Windows, macOS, Android, iOS simulator and Nix; checks your selected brand builds |
+| **Branding acceptance** | `.github/workflows/branding.yml`         | PRs touching branding, deploy, desktop or workflows; manual | Builds `brands/frogg` and `brands/example` on Linux, Windows, macOS, Android, iOS simulator and Nix; checks your selected brand builds |
 | **Electron desktop**    | `.github/workflows/electron-desktop.yml` | PRs touching desktop, UI or packages; manual | Windows x64 Electron build as an artifact                                           |
 
 Release and Build selected honour the brand variables below. Without them they build
-stock FDE. The checks in `ci.yml` are brand-independent.
+stock Frogg. The checks in `ci.yml` are brand-independent.
 
 ## Select the brand
 
@@ -32,15 +32,15 @@ or with the GitHub CLI.
 
 | Variable               | Meaning                                                               |
 | ---------------------- | --------------------------------------------------------------------- |
-| `FDE_BRAND_DIR`        | Brand directory committed in the fork, for example `brands/acme`     |
-| `FDE_BRAND_REPOSITORY` | External branding repository `owner/name` (used when `FDE_BRAND_DIR` is empty) |
-| `FDE_BRAND_REVISION`   | Full 40-character commit SHA of the external repository (required with it) |
-| `FDE_BRAND_SUBDIR`     | Directory inside the external repository (default: its root)         |
+| `FROGG_BRAND_DIR`        | Brand directory committed in the fork, for example `brands/acme`     |
+| `FROGG_BRAND_REPOSITORY` | External branding repository `owner/name` (used when `FROGG_BRAND_DIR` is empty) |
+| `FROGG_BRAND_REVISION`   | Full 40-character commit SHA of the external repository (required with it) |
+| `FROGG_BRAND_SUBDIR`     | Directory inside the external repository (default: its root)         |
 
 ### Brand in the fork
 
 ```sh
-gh variable set FDE_BRAND_DIR --body brands/acme --repo acme-corp/fde
+gh variable set FROGG_BRAND_DIR --body brands/acme --repo acme-corp/frogg
 ```
 
 ### External brand repository
@@ -48,18 +48,18 @@ gh variable set FDE_BRAND_DIR --body brands/acme --repo acme-corp/fde
 Keep artwork and `brand.json` in their own repository and pin a commit:
 
 ```sh
-gh variable set FDE_BRAND_REPOSITORY --body acme-corp/studio-brand --repo acme-corp/fde
-gh variable set FDE_BRAND_REVISION --body 4b1e9c0d2f7a6e5b3c8d9e0f1a2b3c4d5e6f7a8b --repo acme-corp/fde
-gh variable set FDE_BRAND_SUBDIR --body brand --repo acme-corp/fde
+gh variable set FROGG_BRAND_REPOSITORY --body acme-corp/studio-brand --repo acme-corp/frogg
+gh variable set FROGG_BRAND_REVISION --body 4b1e9c0d2f7a6e5b3c8d9e0f1a2b3c4d5e6f7a8b --repo acme-corp/frogg
+gh variable set FROGG_BRAND_SUBDIR --body brand --repo acme-corp/frogg
 ```
 
 For a private branding repository, add a fine-grained token with read access to it as
 the `BRANDING_READ_TOKEN` secret. The action refuses a branch name or short SHA: bump
-`FDE_BRAND_REVISION` deliberately when the brand changes.
+`FROGG_BRAND_REVISION` deliberately when the brand changes.
 
-The selection order inside a job is: an explicit `FDE_BRAND_DIR` in the job
+The selection order inside a job is: an explicit `FROGG_BRAND_DIR` in the job
 environment (used by the branding matrix), then the external repository, then the
-`FDE_BRAND_DIR` variable, then `brands/fde`.
+`FROGG_BRAND_DIR` variable, then `brands/frogg`.
 
 ## Secrets and variables
 
@@ -88,10 +88,10 @@ merges.
 
 | Secret                          | Required for signing | Notes                                              |
 | ------------------------------- | -------------------- | -------------------------------------------------- |
-| `FDE_ANDROID_KEYSTORE_BASE64`   | yes                  | `base64 -w0 release.keystore`                      |
-| `FDE_ANDROID_KEYSTORE_PASSWORD` | yes                  | Keystore password                                  |
-| `FDE_ANDROID_KEY_ALIAS`         | no                   | Defaults to `fde`                                  |
-| `FDE_ANDROID_KEY_PASSWORD`      | no                   | Key password, if different                         |
+| `FROGG_ANDROID_KEYSTORE_BASE64`   | yes                  | `base64 -w0 release.keystore`                      |
+| `FROGG_ANDROID_KEYSTORE_PASSWORD` | yes                  | Keystore password                                  |
+| `FROGG_ANDROID_KEY_ALIAS`         | no                   | Defaults to `frogg`                                  |
+| `FROGG_ANDROID_KEY_PASSWORD`      | no                   | Key password, if different                         |
 
 Without the first two, the APK is signed with the public Expo/React Native debug key
 and published as `<prefix>-<version>-android-arm64-v8a-unsigned.apk`.
@@ -103,10 +103,10 @@ one without uninstalling and losing app data. A new product has no such users ye
 ```sh
 keytool -genkeypair -v -keystore acme-release.keystore -alias acme \
   -keyalg RSA -keysize 4096 -validity 10000
-gh secret set FDE_ANDROID_KEYSTORE_BASE64 --body "$(base64 -w0 acme-release.keystore)" --repo acme-corp/fde
-gh secret set FDE_ANDROID_KEYSTORE_PASSWORD --repo acme-corp/fde
-gh secret set FDE_ANDROID_KEY_ALIAS --body acme --repo acme-corp/fde
-gh secret set FDE_ANDROID_KEY_PASSWORD --repo acme-corp/fde
+gh secret set FROGG_ANDROID_KEYSTORE_BASE64 --body "$(base64 -w0 acme-release.keystore)" --repo acme-corp/frogg
+gh secret set FROGG_ANDROID_KEYSTORE_PASSWORD --repo acme-corp/frogg
+gh secret set FROGG_ANDROID_KEY_ALIAS --body acme --repo acme-corp/frogg
+gh secret set FROGG_ANDROID_KEY_PASSWORD --repo acme-corp/frogg
 ```
 
 Back up the keystore outside GitHub. Losing it means you can never update the app
@@ -133,7 +133,7 @@ These run from a workstation or your own automation, not from the shipped workfl
 | ----------------------- | ---------------------------------------------------------- | ------------------------------------------------------ |
 | EAS mobile builds       | `npm run brand:eas -- build --platform android --profile production-apk` | `EXPO_TOKEN` or `eas login`; `distribution.expoProjectId` |
 | iOS                     | `npm run brand:eas -- build --platform ios`                | Apple developer account via EAS; `distribution.iosStoreId` for submit |
-| Web app on Cloudflare Pages | `FDE_WEB_DEPLOY_PROJECT=acme-studio npm run deploy:web --workspace=@fde/app` | Wrangler login or `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` |
+| Web app on Cloudflare Pages | `FROGG_WEB_DEPLOY_PROJECT=acme-studio npm run deploy:web --workspace=@frogg/app` | Wrangler login or `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` |
 | Pairing page image      | `scripts/release/build-pair-page-docker.sh --push`         | `docker login`; `distribution.pairingImage`            |
 
 See [mobile, Docker, Nix and hosted services](/docs/fork-and-rebrand/other-distributions/).
@@ -150,7 +150,7 @@ See [mobile, Docker, Nix and hosted services](/docs/fork-and-rebrand/other-distr
    ```markdown title="CHANGELOG.md"
    ## 0.6.20 — 2026-09-20
 
-   - First Acme Studio release, based on FDE 0.6.19.
+   - First Acme Studio release, based on Frogg 0.6.19.
    ```
 
 3. **Bump the version and push the tag.** The root `package.json` version is the
@@ -168,7 +168,7 @@ See [mobile, Docker, Nix and hosted services](/docs/fork-and-rebrand/other-distr
 4. **Watch the run.**
 
    ```sh
-   gh run watch --repo acme-corp/fde "$(gh run list --repo acme-corp/fde --workflow release.yml --limit 1 --json databaseId --jq '.[0].databaseId')"
+   gh run watch --repo acme-corp/frogg "$(gh run list --repo acme-corp/frogg --workflow release.yml --limit 1 --json databaseId --jq '.[0].databaseId')"
    ```
 
 5. **Check the draft.** The release is created as a draft. The `publish` job clears the
@@ -194,9 +194,9 @@ Run workflow: Release
 ```
 
 ```sh
-gh workflow run release.yml --repo acme-corp/fde -f tag=v0.6.20 -f platforms=all
-gh workflow run release.yml --repo acme-corp/fde -f tag=v0.6.20 -f only=android
-gh workflow run build-selected.yml --repo acme-corp/fde -f target=windows
+gh workflow run release.yml --repo acme-corp/frogg -f tag=v0.6.20 -f platforms=all
+gh workflow run release.yml --repo acme-corp/frogg -f tag=v0.6.20 -f only=android
+gh workflow run build-selected.yml --repo acme-corp/frogg -f target=windows
 ```
 
 :::note
@@ -220,7 +220,7 @@ For Acme, `artifactPrefix` is `acme` and the brand id is `acme`:
 | `acme/studio:0.6.20` on Docker Hub                      | docker (optional)  |
 
 :::note
-Upstream FDE publishes daemon bundles under an `FDE-<version>-<os>-<arch>-daemon` name
+Upstream Frogg publishes daemon bundles under an `Frogg-<version>-<os>-<arch>-daemon` name
 as well, for compatibility with its older clients. Custom brands use the
 `<id>-daemon-<version>-<platform>-<arch>` form only. Confirm names against your first
 real release; the naming contract lives in `packages/branding/src/artifact-contract.mjs`.
@@ -235,14 +235,14 @@ Everything keys off `distribution.repository` in your brand.
   then pins to the version named in `release.json`. The beta channel picks the newest
   non-draft release. Users choose the channel in the app. Updates download in the
   background and install when the app quits; AppImage builds do not install on quit. Set
-  `FDE_ELECTRON_UPDATE_URL` to test against another HTTPS feed.
+  `FROGG_ELECTRON_UPDATE_URL` to test against another HTTPS feed.
 - **Daemon.** `install.sh` from your release downloads your daemon bundles. On the host,
   `<cliName> update` (Acme: `acme update`) checks
   `https://api.github.com/repos/<repository>/releases`, verifies the `.sha256`, swaps
   versions and rolls back if the new daemon fails its health check.
 - **No repository, no updates.** Without `distribution.repository` the update mode is
   `disabled`: the desktop reports updates as disabled and the daemon refuses to self-update. A custom
-  build never falls back to FDE's releases.
+  build never falls back to Frogg's releases.
 
 Only a semver prerelease suffix (`0.6.20-beta.1`) marks a GitHub prerelease. Stable
 clients ignore prereleases.
@@ -250,7 +250,7 @@ clients ignore prereleases.
 Users install the daemon from your release:
 
 ```sh
-curl -fsSL https://github.com/acme-corp/fde/releases/latest/download/install.sh | bash
+curl -fsSL https://github.com/acme-corp/frogg/releases/latest/download/install.sh | bash
 ```
 
 `install.sh` is attached to every release. To serve it from your own domain, deploy the
@@ -262,8 +262,8 @@ Be clear-eyed about coverage:
 
 - **Validated in upstream CI:** `brands/example` builds on Linux, Windows and macOS
   desktop runners, a debug Android APK, an unsigned iOS simulator build, the daemon
-  bundle, installer tests, runtime isolation between FDE and Acme daemons, and Nix.
+  bundle, installer tests, runtime isolation between Frogg and Acme daemons, and Nix.
 - **Not validated upstream:** a full tagged `release.yml` run and a real installed update
-  under a custom brand. Upstream publishes only the FDE brand. Run your first release as
+  under a custom brand. Upstream publishes only the Frogg brand. Run your first release as
   a beta tag, install it, then ship a second beta and confirm the update path before you
   announce a stable release.

@@ -1,24 +1,24 @@
 ---
 title: Stay current with upstream
-description: Merge upstream FDE into your fork, resolve conflicts, automate a sync check, and version fork releases.
+description: Merge upstream Frogg into your fork, resolve conflicts, automate a sync check, and version fork releases.
 sidebar:
   order: 7
 ---
 
 import { Steps } from "@/components/docs";
 
-Upstream FDE ships often. A fork that merges weekly stays easy; a fork that merges
+Upstream Frogg ships often. A fork that merges weekly stays easy; a fork that merges
 twice a year becomes a project. The branding system is designed so that a normal
 merge touches none of your product files.
 
 ## Why merges stay clean
 
 - Your identity lives in `brands/<id>/` or an external repository. Upstream only changes
-  `brands/fde/` and `brands/example/`.
+  `brands/frogg/` and `brands/example/`.
 - Your brand is selected by **repository variables**, not by editing workflows.
 - Generated output (`.generated/`, `apps/ui/.generated/`, `packages/branding/src/generated/`,
   `.branding-input/`) is git-ignored, so it never conflicts.
-- Upstream CI rejects new hard-coded `FDE` or `frogg.app` strings in `apps/` and
+- Upstream CI rejects new hard-coded `Frogg` or `frogg.app` strings in `apps/` and
   `packages/` source (`scripts/ci/branding-contribution.mjs`). Product names come from
   the brand, so upstream features arrive already branded for you.
 
@@ -50,15 +50,15 @@ macOS signing, a patched component), and the root `package.json` version.
 3. Merge:
 
    ```sh
-   git merge --no-ff upstream/main -m "Merge upstream FDE $(git describe --tags --abbrev=0 upstream/main)"
+   git merge --no-ff upstream/main -m "Merge upstream Frogg $(git describe --tags --abbrev=0 upstream/main)"
    ```
 
 4. Reinstall and check the brand still resolves against the new schema and generator:
 
    ```sh
    npm ci
-   FDE_BRAND_DIR=brands/acme npm run brand:check
-   FDE_BRAND_DIR=brands/acme node scripts/ci/branding-acceptance.mjs
+   FROGG_BRAND_DIR=brands/acme npm run brand:check
+   FROGG_BRAND_DIR=brands/acme node scripts/ci/branding-acceptance.mjs
    npm run verify -- --fast
    ```
 
@@ -88,7 +88,7 @@ Rebase is fine for short-lived feature branches that nobody else has pulled.
 | `package.json` / `package-lock.json` version | Take upstream's lockfile, then set the version you intend to ship (see below) and run `npm install` to refresh the lockfile |
 | `CHANGELOG.md`                     | Keep both. Put your fork's entries in their own version sections          |
 | `.github/workflows/*.yml` you customized | Take upstream's file, then reapply your change. Keep customizations small and commented `# acme:` so they are easy to find |
-| `brands/fde/*`                     | Take upstream's version. You should not be editing it                     |
+| `brands/frogg/*`                     | Take upstream's version. You should not be editing it                     |
 | Shared source you patched          | Prefer upstreaming the patch (see [contributing back](/docs/fork-and-rebrand/contributing-upstream/)) so the conflict disappears next time |
 
 After resolving:
@@ -131,14 +131,14 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git remote add upstream https://github.com/frogg-app/fde.git
+          git remote add upstream https://github.com/frogg-app/frogg.git
           git fetch upstream main --tags
           if [ -z "$(git rev-list HEAD..upstream/main)" ]; then
             echo "Already up to date."; exit 0
           fi
           branch="upstream-sync/$(date +%Y-%m-%d)"
           git switch -c "$branch"
-          if ! git merge --no-ff upstream/main -m "Merge upstream FDE"; then
+          if ! git merge --no-ff upstream/main -m "Merge upstream Frogg"; then
             git merge --abort
             gh issue create --title "Upstream sync needs a manual merge" \
               --body "Merging upstream/main into main conflicts. Merge locally and resolve."
@@ -146,8 +146,8 @@ jobs:
           fi
           git push origin "$branch"
           gh pr create --base main --head "$branch" \
-            --title "Merge upstream FDE" \
-            --body "Automated merge of frogg-app/fde main. Review CHANGELOG.md for upgrade notes."
+            --title "Merge upstream Frogg" \
+            --body "Automated merge of frogg-app/frogg main. Review CHANGELOG.md for upgrade notes."
 ```
 
 A push by `GITHUB_TOKEN` does not trigger other workflows. If you want CI on the sync

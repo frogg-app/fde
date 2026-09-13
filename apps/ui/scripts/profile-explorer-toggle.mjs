@@ -6,21 +6,21 @@ import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
-const appUrl = process.env.FDE_PROFILE_APP_URL ?? "http://127.0.0.1:8081";
-const daemonPort = Number(process.env.FDE_PROFILE_DAEMON_PORT ?? 6768);
-const workspaceCwd = process.env.FDE_PROFILE_WORKSPACE_CWD ?? repoRoot;
-const workspaceId = process.env.FDE_PROFILE_WORKSPACE_ID ?? resolveFdeWorkspaceId();
+const appUrl = process.env.FROGG_PROFILE_APP_URL ?? "http://127.0.0.1:8081";
+const daemonPort = Number(process.env.FROGG_PROFILE_DAEMON_PORT ?? 6768);
+const workspaceCwd = process.env.FROGG_PROFILE_WORKSPACE_CWD ?? repoRoot;
+const workspaceId = process.env.FROGG_PROFILE_WORKSPACE_ID ?? resolveFroggWorkspaceId();
 const serverId =
-  process.env.FDE_PROFILE_SERVER_ID ??
-  (await readFile(resolve(repoRoot, ".dev/fde-home/server-id"), "utf8")).trim();
-const warmPresses = numberFromEnv("FDE_PROFILE_WARM_PRESSES", 8);
-const measuredPresses = numberFromEnv("FDE_PROFILE_MEASURED_PRESSES", 20);
-const burstPresses = numberFromEnv("FDE_PROFILE_BURST_PRESSES", 20);
-const burstCadenceMs = numberFromEnv("FDE_PROFILE_BURST_CADENCE_MS", 50);
-const idleBaselineMs = numberFromEnv("FDE_PROFILE_IDLE_MS", 2_000);
-const tracePath = process.env.FDE_PROFILE_TRACE_PATH?.trim() || null;
-const cpuProfilePath = process.env.FDE_PROFILE_CPU_PATH?.trim() || null;
-const dumpCommits = process.env.FDE_PROFILE_DUMP_COMMITS === "1";
+  process.env.FROGG_PROFILE_SERVER_ID ??
+  (await readFile(resolve(repoRoot, ".dev/frogg-home/server-id"), "utf8")).trim();
+const warmPresses = numberFromEnv("FROGG_PROFILE_WARM_PRESSES", 8);
+const measuredPresses = numberFromEnv("FROGG_PROFILE_MEASURED_PRESSES", 20);
+const burstPresses = numberFromEnv("FROGG_PROFILE_BURST_PRESSES", 20);
+const burstCadenceMs = numberFromEnv("FROGG_PROFILE_BURST_CADENCE_MS", 50);
+const idleBaselineMs = numberFromEnv("FROGG_PROFILE_IDLE_MS", 2_000);
+const tracePath = process.env.FROGG_PROFILE_TRACE_PATH?.trim() || null;
+const cpuProfilePath = process.env.FROGG_PROFILE_CPU_PATH?.trim() || null;
+const dumpCommits = process.env.FROGG_PROFILE_DUMP_COMMITS === "1";
 
 function numberFromEnv(name, fallback) {
   const value = Number(process.env[name] ?? fallback);
@@ -30,17 +30,17 @@ function numberFromEnv(name, fallback) {
   return value;
 }
 
-function resolveFdeWorkspaceId() {
+function resolveFroggWorkspaceId() {
   const output = execFileSync("npm", ["run", "cli", "--", "workspace", "ls", "--json"], {
     cwd: repoRoot,
     encoding: "utf8",
     env: { ...process.env, FORCE_COLOR: "0" },
   });
   const jsonStart = output.indexOf("[\n");
-  if (jsonStart < 0) throw new Error("Could not parse `fde workspace ls --json`");
+  if (jsonStart < 0) throw new Error("Could not parse `frogg workspace ls --json`");
   const workspaces = JSON.parse(output.slice(jsonStart));
   const candidates = workspaces.filter((workspace) => workspace.cwd === workspaceCwd);
-  const workspace = candidates.find((candidate) => candidate.name === "Fde") ?? candidates[0];
+  const workspace = candidates.find((candidate) => candidate.name === "Frogg") ?? candidates[0];
   if (!workspace?.workspaceId) {
     throw new Error(`No active workspace found for ${workspaceCwd}`);
   }
@@ -139,22 +139,22 @@ async function installMeasurementProbe(page) {
     const onKeyDown = (event) => {
       if (!event.metaKey || event.code !== "KeyE") return;
       const sequence = state.events.length;
-      performance.mark(`fde:explorer-toggle:keydown:${sequence}`);
-      console.timeStamp(`fde:explorer-toggle:keydown:${sequence}`);
+      performance.mark(`frogg:explorer-toggle:keydown:${sequence}`);
+      console.timeStamp(`frogg:explorer-toggle:keydown:${sequence}`);
       state.events.push({
         sequence,
         inputTime: event.timeStamp,
-        before: globalThis.__FDE_EXPLORER_TOGGLE_PENDING_BEFORE__ ?? readExplorerState(),
+        before: globalThis.__FROGG_EXPLORER_TOGGLE_PENDING_BEFORE__ ?? readExplorerState(),
         after: null,
         mutationTime: null,
         paintTime: null,
       });
-      globalThis.__FDE_EXPLORER_TOGGLE_PENDING_BEFORE__ = undefined;
+      globalThis.__FROGG_EXPLORER_TOGGLE_PENDING_BEFORE__ = undefined;
     };
     addEventListener("keydown", onKeyDown, true);
-    globalThis.__FDE_EXPLORER_TOGGLE_PROFILE__ = state;
-    globalThis.__FDE_EXPLORER_TOGGLE_STATE__ = readExplorerState;
-    globalThis.__FDE_EXPLORER_TOGGLE_RESET__ = () => {
+    globalThis.__FROGG_EXPLORER_TOGGLE_PROFILE__ = state;
+    globalThis.__FROGG_EXPLORER_TOGGLE_STATE__ = readExplorerState;
+    globalThis.__FROGG_EXPLORER_TOGGLE_RESET__ = () => {
       state.events.length = 0;
       state.domMutations = 0;
       state.addedNodes = 0;
@@ -162,13 +162,13 @@ async function installMeasurementProbe(page) {
       state.explorerMounts = 0;
       state.explorerUnmounts = 0;
       state.explorerMounted = readExplorerState() !== "absent";
-      globalThis.__FDE_RESET_RENDER_PROFILE__?.();
+      globalThis.__FROGG_RESET_RENDER_PROFILE__?.();
     };
   });
 }
 
 async function explorerState(page) {
-  return page.evaluate(() => globalThis.__FDE_EXPLORER_TOGGLE_STATE__?.() ?? "absent");
+  return page.evaluate(() => globalThis.__FROGG_EXPLORER_TOGGLE_STATE__?.() ?? "absent");
 }
 
 async function waitForProfilerIdle(page, quietMs = 500) {
@@ -176,7 +176,7 @@ async function waitForProfilerIdle(page, quietMs = 500) {
   let unchangedSince = Date.now();
   const deadline = Date.now() + 15_000;
   while (Date.now() < deadline) {
-    const count = await page.evaluate(() => globalThis.__FDE_RENDER_PROFILE__?.length ?? 0);
+    const count = await page.evaluate(() => globalThis.__FROGG_RENDER_PROFILE__?.length ?? 0);
     if (count !== previousCount) {
       previousCount = count;
       unchangedSince = Date.now();
@@ -190,17 +190,17 @@ async function waitForProfilerIdle(page, quietMs = 500) {
 
 async function pressAndWaitForPaint(page) {
   const eventIndex = await page.evaluate(
-    () => globalThis.__FDE_EXPLORER_TOGGLE_PROFILE__?.events.length ?? 0,
+    () => globalThis.__FROGG_EXPLORER_TOGGLE_PROFILE__?.events.length ?? 0,
   );
   const before = await explorerState(page);
   await page.evaluate((state) => {
-    globalThis.__FDE_EXPLORER_TOGGLE_PENDING_BEFORE__ = state;
+    globalThis.__FROGG_EXPLORER_TOGGLE_PENDING_BEFORE__ = state;
   }, before);
   await page.keyboard.press("Meta+e");
   try {
     await page.waitForFunction(
       (index) => {
-        const event = globalThis.__FDE_EXPLORER_TOGGLE_PROFILE__?.events[index];
+        const event = globalThis.__FROGG_EXPLORER_TOGGLE_PROFILE__?.events[index];
         return event !== undefined && typeof event.paintTime === "number";
       },
       eventIndex,
@@ -208,8 +208,8 @@ async function pressAndWaitForPaint(page) {
     );
   } catch (error) {
     const diagnostic = await page.evaluate(() => ({
-      state: globalThis.__FDE_EXPLORER_TOGGLE_STATE__?.(),
-      measurements: globalThis.__FDE_EXPLORER_TOGGLE_PROFILE__,
+      state: globalThis.__FROGG_EXPLORER_TOGGLE_STATE__?.(),
+      measurements: globalThis.__FROGG_EXPLORER_TOGGLE_PROFILE__,
     }));
     throw new Error(`Cmd+E did not paint: ${JSON.stringify(diagnostic)}`, { cause: error });
   }
@@ -222,7 +222,7 @@ async function pressBurst(page, count, cadenceMs) {
   try {
     for (let index = 0; index < count; index += 1) {
       await page.evaluate((state) => {
-        globalThis.__FDE_EXPLORER_TOGGLE_PENDING_BEFORE__ = state;
+        globalThis.__FROGG_EXPLORER_TOGGLE_PENDING_BEFORE__ = state;
       }, expectedBefore);
       await page.keyboard.press("e");
       expectedBefore = expectedBefore === "visible" ? "hidden" : "visible";
@@ -233,7 +233,7 @@ async function pressBurst(page, count, cadenceMs) {
   }
   await page.waitForFunction(
     (expectedCount) => {
-      const events = globalThis.__FDE_EXPLORER_TOGGLE_PROFILE__?.events ?? [];
+      const events = globalThis.__FROGG_EXPLORER_TOGGLE_PROFILE__?.events ?? [];
       return (
         events.length === expectedCount &&
         events.every((event) => typeof event.paintTime === "number")
@@ -308,9 +308,9 @@ function summarizeComponents(samples) {
 
 async function readScenario(page, name) {
   const result = await page.evaluate(() => ({
-    measurements: globalThis.__FDE_EXPLORER_TOGGLE_PROFILE__,
-    samples: globalThis.__FDE_RENDER_PROFILE__ ?? [],
-    reasons: globalThis.__FDE_RENDER_PROFILE_REASONS__ ?? {},
+    measurements: globalThis.__FROGG_EXPLORER_TOGGLE_PROFILE__,
+    samples: globalThis.__FROGG_RENDER_PROFILE__ ?? [],
+    reasons: globalThis.__FROGG_RENDER_PROFILE_REASONS__ ?? {},
   }));
   const events = result.measurements.events;
   const inputToMutation = events.map((event) => event.mutationTime - event.inputTime);
@@ -344,7 +344,7 @@ async function readScenario(page, name) {
 }
 
 async function resetMeasurements(page) {
-  await page.evaluate(() => globalThis.__FDE_EXPLORER_TOGGLE_RESET__?.());
+  await page.evaluate(() => globalThis.__FROGG_EXPLORER_TOGGLE_RESET__?.());
 }
 
 async function runSettledScenario(page, name, count) {

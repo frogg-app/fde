@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import type { Command } from "commander";
 import type { CommandError, SingleResult } from "../../output/index.js";
 import {

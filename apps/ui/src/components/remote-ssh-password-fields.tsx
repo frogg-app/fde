@@ -37,7 +37,7 @@ export interface RemoteSshPasswordFieldsProps {
 /**
  * The password the failed connect needs: ssh's own (with the in-memory
  * "remember for this session" switch) after `Permission denied` with
- * password auth on offer, or the FDE daemon's after a 4401 from behind the
+ * password auth on offer, or the Frogg daemon's after a 4401 from behind the
  * tunnel. Nothing for other failures.
  */
 export function RemoteSshPasswordFields({

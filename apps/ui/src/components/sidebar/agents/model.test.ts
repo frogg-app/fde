@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Agent } from "@/stores/session-store";
-import type { ProviderSubagentDescriptorPayload } from "@fde/protocol/messages";
+import type { ProviderSubagentDescriptorPayload } from "@frogg/protocol/messages";
 import { providerSubagentKey } from "@/subagents/provider-store";
 import { buildWorkspaceTabPersistenceKey } from "@/workspace-tabs/model";
 import { buildSidebarAgentTrees } from "./model";

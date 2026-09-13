@@ -17,7 +17,7 @@ import { expectAppRoute } from "../support/helpers/route-assertions";
 import { seedWorkspace } from "../support/helpers/seed-client";
 import { buildSessionsRoute } from "@/utils/host-routes";
 
-const CREATE_AGENT_PREFERENCES_KEY = "@fde:create-agent-preferences";
+const CREATE_AGENT_PREFERENCES_KEY = "@frogg:create-agent-preferences";
 
 async function seedMockDraftPreferences(page: import("@playwright/test").Page): Promise<void> {
   await page.addInitScript(

@@ -1,4 +1,4 @@
-import type { ToolCallDetail } from "@fde/protocol/agent-types";
+import type { ToolCallDetail } from "@frogg/protocol/agent-types";
 
 const SHELL_FILE_COMMANDS = new Set([
   "cat",

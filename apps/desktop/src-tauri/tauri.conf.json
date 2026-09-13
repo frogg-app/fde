@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "FDE",
+  "productName": "Frogg",
   "version": "0.7.0",
-  "identifier": "app.frogg.fde",
+  "identifier": "app.frogg.frogg",
   "build": {
     "frontendDist": "../../ui/dist",
     "devUrl": "http://localhost:8081",
@@ -28,8 +28,8 @@
       "icons/icon.ico"
     ],
     "category": "DeveloperTool",
-    "shortDescription": "FDE",
-    "longDescription": "Frogg Development Environment: desktop client for local and remote AI coding agents.",
+    "shortDescription": "Frogg",
+    "longDescription": "Frogg: desktop client for local and remote AI coding agents.",
     "windows": {
       "nsis": {
         "installMode": "currentUser",
@@ -46,11 +46,11 @@
   "plugins": {
     "updater": {
       "pubkey": "REPLACE_WITH_MINISIGN_PUBLIC_KEY",
-      "endpoints": ["https://github.com/frogg-app/fde/releases/latest/download/latest.json"]
+      "endpoints": ["https://github.com/frogg-app/frogg/releases/latest/download/latest.json"]
     },
     "deep-link": {
       "desktop": {
-        "schemes": ["fde"]
+        "schemes": ["frogg"]
       }
     }
   }

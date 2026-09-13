@@ -43,8 +43,8 @@ function rowWithText(
 describe("native terminal selection", () => {
   it("expands a long-press coordinate to the whole terminal word", async () => {
     const terminal = createNativeHeadlessTerminal({ rows: 4, cols: 32, scrollbackLines: 20 });
-    await terminal.write("before FDE_TARGET after\r\n");
-    const row = rowWithText(terminal, "before FDE_TARGET after");
+    await terminal.write("before FROGG_TARGET after\r\n");
+    const row = rowWithText(terminal, "before FROGG_TARGET after");
 
     const selection = resolveTerminalWordSelection({
       terminal,
@@ -57,10 +57,10 @@ describe("native terminal selection", () => {
     }).toEqual({
       selection: {
         start: { row, col: 7 },
-        end: { row, col: 16 },
+        end: { row, col: 18 },
         coordinateEpoch: terminal.getBufferBounds().coordinateEpoch,
       },
-      text: "FDE_TARGET",
+      text: "FROGG_TARGET",
     });
   });
 

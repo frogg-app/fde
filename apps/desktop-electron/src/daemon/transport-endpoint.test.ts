@@ -14,9 +14,9 @@ it("carries daemon bearer protocols and SSH password separately, preserving IPv6
       daemonPort: 10099,
       sshPassword: "private password",
     },
-    protocols: ["fde", "fde.bearer.token"],
+    protocols: ["frogg", "frogg.bearer.token"],
   });
-  expect(input.protocols).toEqual(["fde", "fde.bearer.token"]);
+  expect(input.protocols).toEqual(["frogg", "frogg.bearer.token"]);
   if (input.target.transportType !== "ssh") throw new Error("Expected SSH");
   const args = buildSshArgs(input.target);
   expect(args).toContain("NumberOfPasswordPrompts=1");

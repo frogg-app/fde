@@ -1,5 +1,5 @@
 import { copySizedAttachmentFile, readSizedAttachmentFile } from "./attachment-file-access.js";
-import { resolveFdeHome } from "../integrations/storage-paths.js";
+import { resolveFroggHome } from "../integrations/storage-paths.js";
 import { mkdir, readdir, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -13,7 +13,7 @@ interface AttachmentFileResult {
 }
 
 function attachmentsDirPath(): string {
-  return path.join(resolveFdeHome(process.env), ATTACHMENTS_DIRNAME);
+  return path.join(resolveFroggHome(process.env), ATTACHMENTS_DIRNAME);
 }
 
 async function ensureAttachmentsDir(): Promise<string> {

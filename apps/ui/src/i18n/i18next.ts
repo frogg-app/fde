@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { createInstance } from "i18next";
 import { initReactI18next } from "react-i18next";
 import { observeI18nInit } from "./init";

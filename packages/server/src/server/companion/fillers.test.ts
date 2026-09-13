@@ -19,7 +19,7 @@ let dir: string;
 const logger = pino({ level: "silent" });
 
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), "fde-companion-fillers-"));
+  dir = await mkdtemp(join(tmpdir(), "frogg-companion-fillers-"));
 });
 
 afterEach(async () => {

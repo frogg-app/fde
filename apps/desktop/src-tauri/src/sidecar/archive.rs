@@ -154,7 +154,7 @@ pub fn extract_bundle(archive: &Path, destination: &Path) -> Result<(), String> 
 
 /// Extracts a zip into `destination` keeping every entry path as the archive
 /// has it. The Windows release zips are not sidecar bundles: the installer zip
-/// holds `FDE-<v>-win-x64-setup.exe` at the root, because that is the only layout
+/// holds `Frogg-<v>-win-x64-setup.exe` at the root, because that is the only layout
 /// `tauri-plugin-updater` finds an installer in, so stripping the first
 /// component the way [`extract_bundle`] does would drop the file. Entry paths
 /// are checked exactly as strictly.
@@ -226,17 +226,17 @@ pub(crate) mod tests {
 
         let dir = tempfile::tempdir().unwrap();
         let archive = dir.path().join("setup.zip");
-        make_zip(&archive, &[("FDE-x64-setup.exe", b"MZ")]);
+        make_zip(&archive, &[("Frogg-x64-setup.exe", b"MZ")]);
         let out = dir.path().join("out");
         extract_zip_preserving_paths(&archive, &out).unwrap();
-        assert_eq!(std::fs::read(out.join("FDE-x64-setup.exe")).unwrap(), b"MZ");
+        assert_eq!(std::fs::read(out.join("Frogg-x64-setup.exe")).unwrap(), b"MZ");
     }
 
     #[test]
     fn strips_top_level_and_rejects_escapes() {
         assert_eq!(
-            stripped_relative_path("bundle/bin/fde").unwrap(),
-            Some(PathBuf::from("bin/fde"))
+            stripped_relative_path("bundle/bin/frogg").unwrap(),
+            Some(PathBuf::from("bin/frogg"))
         );
         assert_eq!(stripped_relative_path("bundle/").unwrap(), None);
         assert_eq!(
@@ -244,8 +244,8 @@ pub(crate) mod tests {
             Some(PathBuf::from("a"))
         );
         assert_eq!(
-            stripped_relative_path("bundle\\bin\\fde.cmd").unwrap(),
-            Some(PathBuf::from("bin/fde.cmd"))
+            stripped_relative_path("bundle\\bin\\frogg.cmd").unwrap(),
+            Some(PathBuf::from("bin/frogg.cmd"))
         );
         assert!(stripped_relative_path("bundle/../etc/passwd").is_err());
         assert!(stripped_relative_path("../bundle/x").is_err());
@@ -259,12 +259,12 @@ pub(crate) mod tests {
         let archive = dir.path().join("b.tar.gz");
         make_tar_gz(
             &archive,
-            &[("b/manifest.json", b"{}"), ("b/bin/fde", b"#!/bin/sh\n")],
+            &[("b/manifest.json", b"{}"), ("b/bin/frogg", b"#!/bin/sh\n")],
         );
         let out = dir.path().join("out");
         extract_bundle(&archive, &out).unwrap();
         assert_eq!(fs::read(out.join("manifest.json")).unwrap(), b"{}");
-        assert!(out.join("bin/fde").is_file());
+        assert!(out.join("bin/frogg").is_file());
     }
 
     #[test]
@@ -275,13 +275,13 @@ pub(crate) mod tests {
             &archive,
             &[
                 ("b/manifest.json", b"{}"),
-                ("b/bin/fde.cmd", b"@echo off\r\n"),
+                ("b/bin/frogg.cmd", b"@echo off\r\n"),
             ],
         );
         let out = dir.path().join("out");
         extract_bundle(&archive, &out).unwrap();
         assert!(out.join("manifest.json").is_file());
-        assert!(out.join("bin/fde.cmd").is_file());
+        assert!(out.join("bin/frogg.cmd").is_file());
     }
 
     #[test]

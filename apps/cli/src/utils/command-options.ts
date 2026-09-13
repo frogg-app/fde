@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import type { Command } from "commander";
 
 const JSON_OPTION_DESCRIPTION = "Output in JSON format";

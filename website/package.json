@@ -1,8 +1,8 @@
 {
-  "name": "fde-website",
+  "name": "frogg-website",
   "private": true,
   "type": "module",
-  "description": "frogg.app: the FDE landing page and documentation site. Standalone project; not a root workspace.",
+  "description": "frogg.app: the Frogg landing page and documentation site. Standalone project; not a root workspace.",
   "scripts": {
     "dev": "astro dev --host 0.0.0.0",
     "build": "astro build",

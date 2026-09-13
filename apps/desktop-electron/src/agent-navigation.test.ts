@@ -5,9 +5,9 @@ describe("desktop agent navigation", () => {
   it("finds an agent deep link among Electron launch arguments", () => {
     expect(
       parseAgentDeepLinkFromArgv([
-        "/Applications/Fde.app/Contents/MacOS/Fde",
+        "/Applications/Frogg.app/Contents/MacOS/Frogg",
         "--no-sandbox",
-        "fde://h/server-1/agent/agent-2",
+        "frogg://h/server-1/agent/agent-2",
       ]),
     ).toEqual({ serverId: "server-1", agentId: "agent-2" });
   });

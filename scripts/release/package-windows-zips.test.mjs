@@ -30,24 +30,24 @@ test("createZip writes entries that inflate back to their contents", () => {
 });
 
 test("packagePortableWindows lays out the portable folder and README", () => {
-  const dir = mkdtempSync(path.join(tmpdir(), "fde-portable-"));
-  const exePath = path.join(dir, "fde.exe");
+  const dir = mkdtempSync(path.join(tmpdir(), "frogg-portable-"));
+  const exePath = path.join(dir, "frogg.exe");
   writeFileSync(exePath, Buffer.alloc(1024, 7));
   const result = packagePortableWindows({
     version: "1.2.3",
     exePath,
     outputDir: path.join(dir, "out"),
   });
-  assert.equal(path.basename(result.zipPath), "FDE-1.2.3-win-x64-portable.zip");
+  assert.equal(path.basename(result.zipPath), "Frogg-1.2.3-win-x64-portable.zip");
   assert.equal(result.exeByteSize, 1024);
   const entries = listZip(readFileSync(result.zipPath));
   assert.deepEqual(
     entries.map((entry) => entry.name),
-    ["FDE-1.2.3-portable/FDE.exe", "FDE-1.2.3-portable/README.txt"],
+    ["Frogg-1.2.3-portable/Frogg.exe", "Frogg-1.2.3-portable/README.txt"],
   );
   assert.equal(entries[1].size, Buffer.byteLength(buildReadme("1.2.3")));
   assert.match(buildReadme("1.2.3"), /WebView2/);
-  assert.match(buildReadme("1.2.3"), /%APPDATA%\\app\.frogg\.fde/);
+  assert.match(buildReadme("1.2.3"), /%APPDATA%\\app\.frogg\.frogg/);
   assert.match(buildReadme("1.2.3"), /SmartScreen/);
 });
 
@@ -56,7 +56,7 @@ test("packagePortableWindows fails clearly without a binary", () => {
     () =>
       packagePortableWindows({
         version: "0.0.0",
-        exePath: "/nonexistent/fde.exe",
+        exePath: "/nonexistent/frogg.exe",
         outputDir: tmpdir(),
       }),
     /Windows binary not found/,
@@ -64,32 +64,32 @@ test("packagePortableWindows fails clearly without a binary", () => {
 });
 
 test("packageWindowsInstallerZip wraps the NSIS installer under its release name", () => {
-  const dir = mkdtempSync(path.join(tmpdir(), "fde-setup-"));
+  const dir = mkdtempSync(path.join(tmpdir(), "frogg-setup-"));
   const nsisDir = path.join(dir, "bundle/nsis");
   mkdirSync(nsisDir, { recursive: true });
-  writeFileSync(path.join(nsisDir, "FDE_1.2.3_x64-setup.exe"), Buffer.alloc(2048, 9));
+  writeFileSync(path.join(nsisDir, "FROGG_1.2.3_x64-setup.exe"), Buffer.alloc(2048, 9));
   const result = packageWindowsInstallerZip({
     version: "1.2.3",
     nsisDir,
     outputDir: path.join(dir, "out"),
   });
-  assert.equal(path.basename(result.zipPath), "FDE-1.2.3-win-x64-setup.zip");
+  assert.equal(path.basename(result.zipPath), "Frogg-1.2.3-win-x64-setup.zip");
   assert.equal(result.installerByteSize, 2048);
   assert.deepEqual(listZip(readFileSync(result.zipPath)), [
-    { name: "FDE-1.2.3-win-x64-setup.exe", size: 2048 },
+    { name: "Frogg-1.2.3-win-x64-setup.exe", size: 2048 },
   ]);
 });
 
 test("packageWindowsInstallerZip picks this version, else demands exactly one", () => {
-  const dir = mkdtempSync(path.join(tmpdir(), "fde-setup-"));
+  const dir = mkdtempSync(path.join(tmpdir(), "frogg-setup-"));
   const nsisDir = path.join(dir, "bundle/nsis");
   assert.throws(
     () => packageWindowsInstallerZip({ version: "1.2.3", nsisDir, outputDir: dir }),
     /No NSIS installer found/,
   );
   mkdirSync(nsisDir, { recursive: true });
-  writeFileSync(path.join(nsisDir, "FDE_1.2.3_x64-setup.exe"), "a");
-  writeFileSync(path.join(nsisDir, "FDE_1.2.4_x64-setup.exe"), "b");
+  writeFileSync(path.join(nsisDir, "FROGG_1.2.3_x64-setup.exe"), "a");
+  writeFileSync(path.join(nsisDir, "FROGG_1.2.4_x64-setup.exe"), "b");
   // A dev target dir keeps older builds around: the version being packaged wins.
   const result = packageWindowsInstallerZip({
     version: "1.2.3",
@@ -98,7 +98,7 @@ test("packageWindowsInstallerZip picks this version, else demands exactly one", 
   });
   assert.equal(result.installerByteSize, 1);
   assert.deepEqual(listZip(readFileSync(result.zipPath)), [
-    { name: "FDE-1.2.3-win-x64-setup.exe", size: 1 },
+    { name: "Frogg-1.2.3-win-x64-setup.exe", size: 1 },
   ]);
   // Nothing matches the version being packaged and there is more than one left.
   assert.throws(

@@ -13,15 +13,15 @@ use serde_json::{json, Value};
 use tokio::process::Command;
 
 /// Environment variable the askpass helper prints.
-pub const PASSWORD_ENV: &str = "FDE_SSH_PW";
+pub const PASSWORD_ENV: &str = "FROGG_SSH_PW";
 #[cfg(unix)]
-const HELPER_NAME: &str = "fde-askpass.sh";
+const HELPER_NAME: &str = "frogg-askpass.sh";
 #[cfg(unix)]
-const HELPER_BODY: &str = "#!/bin/sh\nprintf %s \"$FDE_SSH_PW\"\n";
+const HELPER_BODY: &str = "#!/bin/sh\nprintf %s \"$FROGG_SSH_PW\"\n";
 #[cfg(windows)]
-const HELPER_NAME: &str = "fde-askpass.cmd";
+const HELPER_NAME: &str = "frogg-askpass.cmd";
 #[cfg(windows)]
-const HELPER_BODY: &str = "@echo off\r\npowershell -NoProfile -NonInteractive -Command \"[Console]::Out.Write($env:FDE_SSH_PW)\"\r\n";
+const HELPER_BODY: &str = "@echo off\r\npowershell -NoProfile -NonInteractive -Command \"[Console]::Out.Write($env:FROGG_SSH_PW)\"\r\n";
 
 /// An ssh password. `Debug` is redacted so a target or request that carries
 /// one can be logged without leaking it.
@@ -88,7 +88,7 @@ pub fn askpass_env(
         (PASSWORD_ENV.to_string(), password.expose().to_string()),
     ];
     if !has_display {
-        env.push(("DISPLAY".to_string(), "fde".to_string()));
+        env.push(("DISPLAY".to_string(), "frogg".to_string()));
     }
     env
 }
@@ -118,7 +118,7 @@ fn helper_dir() -> PathBuf {
     HELPER_DIR
         .get()
         .cloned()
-        .unwrap_or_else(|| std::env::temp_dir().join("fde-askpass"))
+        .unwrap_or_else(|| std::env::temp_dir().join("frogg-askpass"))
 }
 
 /// The askpass helper, written on first use and rewritten if its content
@@ -247,14 +247,14 @@ mod tests {
     #[test]
     fn askpass_env_carries_the_password_and_a_display_placeholder() {
         let password = SshPassword::new("s3cret".into());
-        let env = askpass_env(Path::new("/x/fde-askpass.sh"), &password, false);
+        let env = askpass_env(Path::new("/x/frogg-askpass.sh"), &password, false);
         assert_eq!(
             env,
             [
-                ("SSH_ASKPASS".to_string(), "/x/fde-askpass.sh".to_string()),
+                ("SSH_ASKPASS".to_string(), "/x/frogg-askpass.sh".to_string()),
                 ("SSH_ASKPASS_REQUIRE".to_string(), "force".to_string()),
-                ("FDE_SSH_PW".to_string(), "s3cret".to_string()),
-                ("DISPLAY".to_string(), "fde".to_string()),
+                ("FROGG_SSH_PW".to_string(), "s3cret".to_string()),
+                ("DISPLAY".to_string(), "frogg".to_string()),
             ]
         );
         let with_display = askpass_env(Path::new("/x/h"), &password, true);

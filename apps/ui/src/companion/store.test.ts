@@ -1,4 +1,4 @@
-import type { CompanionNotebookEntry } from "@fde/protocol/messages";
+import type { CompanionNotebookEntry } from "@frogg/protocol/messages";
 import { beforeEach, describe, expect, it } from "vitest";
 import { deriveCompanionMicState, useCompanionStore } from "./store";
 

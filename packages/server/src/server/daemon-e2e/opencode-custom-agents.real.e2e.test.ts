@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import pino from "pino";
 
-import { createTestFdeDaemon } from "../test-utils/fde-daemon.js";
+import { createTestFroggDaemon } from "../test-utils/frogg-daemon.js";
 import { DaemonClient } from "../test-utils/daemon-client.js";
 import { canRunRealProvider, createRealProviderClients } from "./real-provider-test-config.js";
 
@@ -14,10 +14,10 @@ function tmpCwd(): string {
 
 async function createHarness(): Promise<{
   client: DaemonClient;
-  daemon: Awaited<ReturnType<typeof createTestFdeDaemon>>;
+  daemon: Awaited<ReturnType<typeof createTestFroggDaemon>>;
 }> {
   const logger = pino({ level: "silent" });
-  const daemon = await createTestFdeDaemon({
+  const daemon = await createTestFroggDaemon({
     agentClients: createRealProviderClients(["opencode"], logger),
     logger,
   });
@@ -46,8 +46,8 @@ describe("daemon E2E (real opencode) - custom agent discovery", () => {
       path.join(cwd, "opencode.json"),
       JSON.stringify({
         agent: {
-          "fde-e2e-custom": {
-            description: "Custom agent for Fde daemon E2E test",
+          "frogg-e2e-custom": {
+            description: "Custom agent for Frogg daemon E2E test",
             mode: "primary",
           },
         },
@@ -73,9 +73,9 @@ describe("daemon E2E (real opencode) - custom agent discovery", () => {
       expect(snapshot.availableModes.some((m) => m.id === "build")).toBe(true);
       expect(snapshot.availableModes.some((m) => m.id === "plan")).toBe(true);
 
-      const custom = snapshot.availableModes.find((m) => m.id === "fde-e2e-custom");
+      const custom = snapshot.availableModes.find((m) => m.id === "frogg-e2e-custom");
       expect(custom).toBeDefined();
-      expect(custom!.description).toBe("Custom agent for Fde daemon E2E test");
+      expect(custom!.description).toBe("Custom agent for Frogg daemon E2E test");
 
       // System agents should not leak through
       expect(snapshot.availableModes.some((m) => m.id === "compaction")).toBe(false);

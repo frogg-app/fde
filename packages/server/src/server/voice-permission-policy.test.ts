@@ -17,18 +17,20 @@ describe("isVoicePermissionAllowed", () => {
   test("allows direct speak tool names across provider conventions", () => {
     const result = isVoicePermissionAllowed(buildRequest({ name: "speak" }));
     expect(result).toBe(true);
-    expect(isVoicePermissionAllowed(buildRequest({ name: "fde_voice.speak" }))).toBe(true);
-    expect(isVoicePermissionAllowed(buildRequest({ name: "mcp__fde_voice__speak" }))).toBe(true);
+    expect(isVoicePermissionAllowed(buildRequest({ name: "frogg_voice.speak" }))).toBe(true);
+    expect(isVoicePermissionAllowed(buildRequest({ name: "mcp__frogg_voice__speak" }))).toBe(true);
   });
 
   test("denies non-speak tool names", () => {
-    expect(isVoicePermissionAllowed(buildRequest({ name: "mcp__fde__create_agent" }))).toBe(false);
-    expect(isVoicePermissionAllowed(buildRequest({ name: "fde_create_agent" }))).toBe(false);
+    expect(isVoicePermissionAllowed(buildRequest({ name: "mcp__frogg__create_agent" }))).toBe(
+      false,
+    );
+    expect(isVoicePermissionAllowed(buildRequest({ name: "frogg_create_agent" }))).toBe(false);
   });
 
   test("denies non-tool permission kinds", () => {
     const result = isVoicePermissionAllowed(
-      buildRequest({ kind: "mode", name: "mcp__fde__create_agent" }),
+      buildRequest({ kind: "mode", name: "mcp__frogg__create_agent" }),
     );
     expect(result).toBe(false);
   });
@@ -38,7 +40,7 @@ describe("isVoicePermissionAllowed", () => {
       buildRequest({
         name: "codextool",
         metadata: {
-          questions: [{ question: "Allow codextool to call fde_voice.speak for user feedback?" }],
+          questions: [{ question: "Allow codextool to call frogg_voice.speak for user feedback?" }],
         },
       }),
     );

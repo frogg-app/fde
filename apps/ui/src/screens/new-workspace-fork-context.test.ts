@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { AgentAttachment } from "@fde/protocol/messages";
+import type { AgentAttachment } from "@frogg/protocol/messages";
 import {
   getWorkspaceNamingAttachments,
   remapDraftCwdToWorkspace,
@@ -41,7 +41,7 @@ describe("getWorkspaceNamingAttachments", () => {
       mimeType: "application/github-pr",
       number: 1788,
       title: "Fork assistant turns into new drafts",
-      url: "https://github.com/frogg-app/fde/pull/1788",
+      url: "https://github.com/frogg-app/frogg/pull/1788",
     } satisfies AgentAttachment;
 
     expect(getWorkspaceNamingAttachments([chatHistory, prContext])).toEqual([prContext]);

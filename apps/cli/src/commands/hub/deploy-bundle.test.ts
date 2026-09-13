@@ -16,7 +16,7 @@ describe("Hub deployment bundle discovery", () => {
   it("discovers the canonical bundle in deterministic path order", async () => {
     const cwd = await canonicalProject();
     await writeFile(
-      path.join(cwd, ".fde", "workflows", "z-last.yml"),
+      path.join(cwd, ".frogg", "workflows", "z-last.yml"),
       workflow("z-last", "codex-safe"),
     );
 
@@ -24,16 +24,16 @@ describe("Hub deployment bundle discovery", () => {
       projectSlug: "studio-api",
       workflowCount: 2,
       files: [
-        { path: ".fde/hub.yml", content: hubResource },
+        { path: ".frogg/hub.yml", content: hubResource },
         {
-          path: ".fde/workflows/answer.yml",
-          content: workflow("answer", "${{ fde.inputs.agent }}", true),
+          path: ".frogg/workflows/answer.yml",
+          content: workflow("answer", "${{ frogg.inputs.agent }}", true),
         },
         {
-          path: ".fde/workflows/partials/safety.md",
-          content: "Keep the request in fde.prompt and evidence in fde.context.\n",
+          path: ".frogg/workflows/partials/safety.md",
+          content: "Keep the request in frogg.prompt and evidence in frogg.context.\n",
         },
-        { path: ".fde/workflows/z-last.yml", content: workflow("z-last", "codex-safe") },
+        { path: ".frogg/workflows/z-last.yml", content: workflow("z-last", "codex-safe") },
       ],
     });
   });
@@ -42,38 +42,38 @@ describe("Hub deployment bundle discovery", () => {
     {
       name: "missing hub.yml",
       arrange: async (cwd: string) => {
-        await mkdir(path.join(cwd, ".fde", "workflows"), { recursive: true });
+        await mkdir(path.join(cwd, ".frogg", "workflows"), { recursive: true });
       },
       code: "HUB_RESOURCE_MISSING",
-      message: ".fde/hub.yml does not exist",
+      message: ".frogg/hub.yml does not exist",
     },
     {
       name: "missing workflow directory",
       arrange: async (cwd: string) => {
-        await mkdir(path.join(cwd, ".fde"), { recursive: true });
-        await writeFile(path.join(cwd, ".fde", "hub.yml"), hubResource);
+        await mkdir(path.join(cwd, ".frogg"), { recursive: true });
+        await writeFile(path.join(cwd, ".frogg", "hub.yml"), hubResource);
       },
       code: "HUB_WORKFLOW_DIRECTORY_MISSING",
-      message: ".fde/workflows does not exist",
+      message: ".frogg/workflows does not exist",
     },
     {
       name: "empty workflow directory",
       arrange: async (cwd: string) => {
-        await mkdir(path.join(cwd, ".fde", "workflows"), { recursive: true });
-        await writeFile(path.join(cwd, ".fde", "hub.yml"), hubResource);
+        await mkdir(path.join(cwd, ".frogg", "workflows"), { recursive: true });
+        await writeFile(path.join(cwd, ".frogg", "hub.yml"), hubResource);
       },
       code: "HUB_WORKFLOW_MISSING",
-      message: ".fde/workflows must contain at least one direct-child .yml workflow",
+      message: ".frogg/workflows must contain at least one direct-child .yml workflow",
     },
     {
       name: "unsupported workflow extension",
       arrange: async (cwd: string) => {
-        await mkdir(path.join(cwd, ".fde", "workflows"), { recursive: true });
-        await writeFile(path.join(cwd, ".fde", "hub.yml"), hubResource);
-        await writeFile(path.join(cwd, ".fde", "workflows", "answer.yaml"), "name: answer\n");
+        await mkdir(path.join(cwd, ".frogg", "workflows"), { recursive: true });
+        await writeFile(path.join(cwd, ".frogg", "hub.yml"), hubResource);
+        await writeFile(path.join(cwd, ".frogg", "workflows", "answer.yaml"), "name: answer\n");
       },
       code: "HUB_WORKFLOW_EXTENSION_UNSUPPORTED",
-      message: ".fde/workflows/answer.yaml must use the .yml extension",
+      message: ".frogg/workflows/answer.yaml must use the .yml extension",
     },
   ])("rejects $name before contacting Hub", async ({ arrange, code, message }) => {
     const cwd = await temporaryDirectory();
@@ -88,46 +88,46 @@ describe("Hub deployment bundle discovery", () => {
   it("rejects prompt partial traversal with a path-specific diagnostic", async () => {
     const cwd = await canonicalProject();
     await writeFile(
-      path.join(cwd, ".fde", "workflows", "answer.yml"),
+      path.join(cwd, ".frogg", "workflows", "answer.yml"),
       workflow("answer", "codex-safe").replace(
-        "      - text: ${{ fde.prompt }}",
+        "      - text: ${{ frogg.prompt }}",
         "      - include: ../secret.md",
       ),
     );
 
     await expect(discoverHubBundle({ cwd, project: "studio-api" })).rejects.toMatchObject({
       code: "HUB_PARTIAL_PATH_INVALID",
-      message: expect.stringContaining(".fde/workflows/answer.yml"),
+      message: expect.stringContaining(".frogg/workflows/answer.yml"),
     });
   });
 
   it("reports a referenced partial that is missing from the bundle", async () => {
     const cwd = await canonicalProject();
     await writeFile(
-      path.join(cwd, ".fde", "workflows", "answer.yml"),
+      path.join(cwd, ".frogg", "workflows", "answer.yml"),
       workflow("answer", "codex-safe").replace(
-        "      - text: ${{ fde.prompt }}",
+        "      - text: ${{ frogg.prompt }}",
         "      - include: partials/missing.md",
       ),
     );
 
     await expect(discoverHubBundle({ cwd, project: "studio-api" })).rejects.toMatchObject({
       code: "HUB_BUNDLE_FILE_MISSING",
-      message: expect.stringContaining(".fde/workflows/partials/missing.md"),
+      message: expect.stringContaining(".frogg/workflows/partials/missing.md"),
     });
   });
 
   it("rejects nested workflow files instead of discovering a second layout", async () => {
     const cwd = await canonicalProject();
-    await mkdir(path.join(cwd, ".fde", "workflows", "nested"));
+    await mkdir(path.join(cwd, ".frogg", "workflows", "nested"));
     await writeFile(
-      path.join(cwd, ".fde", "workflows", "nested", "other.yml"),
+      path.join(cwd, ".frogg", "workflows", "nested", "other.yml"),
       workflow("other", "codex-safe"),
     );
 
     await expect(discoverHubBundle({ cwd, project: "studio-api" })).rejects.toMatchObject({
       code: "HUB_WORKFLOW_PATH_UNSUPPORTED",
-      message: expect.stringContaining(".fde/workflows/nested"),
+      message: expect.stringContaining(".frogg/workflows/nested"),
     });
   });
 
@@ -135,11 +135,11 @@ describe("Hub deployment bundle discovery", () => {
     const cwd = await canonicalProject();
     const outside = path.join(cwd, "outside.yml");
     await writeFile(outside, workflow("linked", "codex-safe"));
-    await symlink(outside, path.join(cwd, ".fde", "workflows", "linked.yml"));
+    await symlink(outside, path.join(cwd, ".frogg", "workflows", "linked.yml"));
 
     await expect(discoverHubBundle({ cwd, project: "studio-api" })).rejects.toMatchObject({
       code: "HUB_BUNDLE_UNSAFE_PATH",
-      message: expect.stringContaining(".fde/workflows/linked.yml"),
+      message: expect.stringContaining(".frogg/workflows/linked.yml"),
     });
   });
 
@@ -181,7 +181,7 @@ function workflow(name: string, agent: string, include = false): string {
     `name: ${name}`,
     "on: manual.run",
     "max_runtime: 1h",
-    ...(agent.includes("fde.inputs")
+    ...(agent.includes("frogg.inputs")
       ? ["inputs:", "  agent:", "    type: string", "    choices: [codex-safe, claude]"]
       : []),
     "steps:",
@@ -192,29 +192,29 @@ function workflow(name: string, agent: string, include = false): string {
     `    agent: ${agent}`,
     "    prompt:",
     ...(include ? ["      - include: partials/safety.md"] : []),
-    "      - text: ${{ fde.prompt }}",
+    "      - text: ${{ frogg.prompt }}",
     "",
   ].join("\n");
 }
 
 async function canonicalProject(): Promise<string> {
   const cwd = await temporaryDirectory();
-  const workflows = path.join(cwd, ".fde", "workflows");
+  const workflows = path.join(cwd, ".frogg", "workflows");
   await mkdir(path.join(workflows, "partials"), { recursive: true });
-  await writeFile(path.join(cwd, ".fde", "hub.yml"), hubResource);
+  await writeFile(path.join(cwd, ".frogg", "hub.yml"), hubResource);
   await writeFile(
     path.join(workflows, "answer.yml"),
-    workflow("answer", "${{ fde.inputs.agent }}", true),
+    workflow("answer", "${{ frogg.inputs.agent }}", true),
   );
   await writeFile(
     path.join(workflows, "partials", "safety.md"),
-    "Keep the request in fde.prompt and evidence in fde.context.\n",
+    "Keep the request in frogg.prompt and evidence in frogg.context.\n",
   );
   return cwd;
 }
 
 async function temporaryDirectory(): Promise<string> {
-  const directory = await mkdtemp(path.join(tmpdir(), "fde-hub-bundle-"));
+  const directory = await mkdtemp(path.join(tmpdir(), "frogg-hub-bundle-"));
   temporaryDirectories.push(directory);
   return directory;
 }

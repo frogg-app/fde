@@ -1,5 +1,5 @@
-import type { DaemonClient } from "@fde/client/internal/daemon-client";
-import type { AgentTimelineItem } from "@fde/protocol/agent-types";
+import type { DaemonClient } from "@frogg/client/internal/daemon-client";
+import type { AgentTimelineItem } from "@frogg/protocol/agent-types";
 
 export const LIVE_HISTORY_FETCH_TIMEOUT_MS = 2_000;
 

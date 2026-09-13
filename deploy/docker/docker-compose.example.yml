@@ -1,22 +1,22 @@
-# Minimal FDE daemon + web UI deployment.
+# Minimal Frogg daemon + web UI deployment.
 #
 # Open http://<host>:9999 after `docker compose up -d`.
-# For any network-reachable deployment, change FDE_PASSWORD first.
+# For any network-reachable deployment, change FROGG_PASSWORD first.
 # Pin the exact image version so a redeploy is reproducible.
 services:
-  fde:
-    image: froggapp/fde:0.1.6
-    container_name: fde-daemon
+  frogg:
+    image: froggapp/frogg:0.1.6
+    container_name: frogg-daemon
     restart: unless-stopped
     ports:
       - "0.0.0.0:9999:9999"
     environment:
-      FDE_PASSWORD: "change-me"
+      FROGG_PASSWORD: "change-me"
       # Add DNS names you use to reach this container. IPs and localhost are
       # already allowed by default.
-      # FDE_HOSTNAMES: "fde.example.com,.lan"
+      # FROGG_HOSTNAMES: "frogg.example.com,.lan"
     volumes:
       # Persistent daemon state (agents, config, pairing).
-      - ./fde-home:/home/fde/.fde
+      - ./frogg-home:/home/frogg/.frogg
       # Code visible to the daemon and the agents it launches.
       - ./workspace:/workspace

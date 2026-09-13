@@ -5,16 +5,16 @@ import {
   type ProviderSnapshotManagerOptions,
 } from "./provider-snapshot-manager.js";
 import { OpenCodeBridge } from "./providers/opencode/bridge.js";
-import type { FdeToolCatalog } from "./tools/types.js";
+import type { FroggToolCatalog } from "./tools/types.js";
 
 export interface AgentProviderRuntime {
   snapshotManager: ProviderSnapshotManager;
-  setFdeToolCatalog(catalog: FdeToolCatalog | null): void;
+  setFroggToolCatalog(catalog: FroggToolCatalog | null): void;
   shutdown(): Promise<void>;
 }
 
 interface CreateAgentProviderRuntimeOptions {
-  fdeHome: string;
+  froggHome: string;
   logger: Logger;
   snapshotManager: Omit<ProviderSnapshotManagerOptions, "logger" | "openCodeBridge">;
 }
@@ -22,7 +22,7 @@ interface CreateAgentProviderRuntimeOptions {
 export async function createAgentProviderRuntime(
   options: CreateAgentProviderRuntimeOptions,
 ): Promise<AgentProviderRuntime> {
-  const bridge = new OpenCodeBridge({ fdeHome: options.fdeHome, logger: options.logger });
+  const bridge = new OpenCodeBridge({ froggHome: options.froggHome, logger: options.logger });
   try {
     await bridge.start();
     const snapshotManager = new ProviderSnapshotManager({
@@ -33,7 +33,7 @@ export async function createAgentProviderRuntime(
     let shutdownPromise: Promise<void> | null = null;
     return {
       snapshotManager,
-      setFdeToolCatalog: (catalog) => bridge.setManifestCatalog(catalog),
+      setFroggToolCatalog: (catalog) => bridge.setManifestCatalog(catalog),
       shutdown: () => {
         shutdownPromise ??= shutdownProviderRuntime(snapshotManager, bridge);
         return shutdownPromise;

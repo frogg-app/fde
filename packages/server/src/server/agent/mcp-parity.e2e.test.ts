@@ -8,10 +8,10 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import { z } from "zod";
 
 import { AGENT_WAIT_TIMEOUT_MS } from "./mcp-shared.js";
-import { createTestFdeDaemon, type TestFdeDaemon } from "../test-utils/fde-daemon.js";
+import { createTestFroggDaemon, type TestFroggDaemon } from "../test-utils/frogg-daemon.js";
 import { createTestAgentClients } from "../test-utils/fake-agent-client.js";
 import type { AgentClient, AgentProvider, AgentSessionConfig } from "./agent-sdk-types.js";
-import { PARENT_AGENT_ID_LABEL } from "@fde/protocol/agent-labels";
+import { PARENT_AGENT_ID_LABEL } from "@frogg/protocol/agent-labels";
 
 interface StructuredContent {
   [key: string]: unknown;
@@ -138,7 +138,7 @@ async function waitFor<T>(options: {
 }
 
 let tempRoot: string;
-let daemonHandle: TestFdeDaemon;
+let daemonHandle: TestFroggDaemon;
 let topLevelClient: McpClient;
 let agentScopedClient: McpClient;
 let parentAgentId: string;
@@ -294,7 +294,7 @@ beforeAll(async () => {
   parentAgentCwd = await makeCwd("parent-agent-cwd");
   worktreeRepoCwd = await makeCwd("worktree-repo");
 
-  daemonHandle = await createTestFdeDaemon({
+  daemonHandle = await createTestFroggDaemon({
     agentClients: createRecordingAgentClients(),
     agentProfiles: [seededAgentProfile],
   });
@@ -363,7 +363,7 @@ describe("Suite A: Core Fixes", () => {
     }
   });
 
-  test("agentManager.createAgent injects fde MCP using the daemon listen target", async () => {
+  test("agentManager.createAgent injects frogg MCP using the daemon listen target", async () => {
     let agentId: string | null = null;
     try {
       const listenTarget = daemonHandle.daemon.getListenTarget();
@@ -392,15 +392,15 @@ describe("Suite A: Core Fixes", () => {
         ?.toReversed()
         .find((config) => config.cwd === cwd);
       expect(launchConfig?.mcpServers).toMatchObject({
-        fde: {
+        frogg: {
           type: "http",
           url: expectedUrl,
         },
       });
-      expect(snapshot.config.mcpServers?.fde).toBeUndefined();
+      expect(snapshot.config.mcpServers?.frogg).toBeUndefined();
 
       const liveAgent = daemonHandle.daemon.agentManager.getAgent(agentId);
-      expect(liveAgent?.config.mcpServers?.fde).toBeUndefined();
+      expect(liveAgent?.config.mcpServers?.frogg).toBeUndefined();
     } finally {
       await archiveAgentIfPresent(agentId);
     }

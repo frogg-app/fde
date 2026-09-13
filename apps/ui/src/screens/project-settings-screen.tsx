@@ -9,11 +9,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, MoreVertical, Pencil, Plus } from "lucide-react-native";
 import { ProjectIconView } from "@/components/project-icon-view";
 import type {
-  FdeConfigRaw,
-  FdeConfigRevision,
+  FroggConfigRaw,
+  FroggConfigRevision,
   ProjectConfigRpcError,
-} from "@fde/protocol/messages";
-import type { DaemonClient } from "@fde/client/internal/daemon-client";
+} from "@frogg/protocol/messages";
+import type { DaemonClient } from "@frogg/client/internal/daemon-client";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -89,7 +89,7 @@ const METADATA_PROMPT_FIELDS: Record<MetadataPromptKey, MetadataPromptField> = {
   },
 };
 
-const WORKTREE_DOCS_URL = brandDocsUrl("using-fde/projects-and-workspaces/");
+const WORKTREE_DOCS_URL = brandDocsUrl("using-frogg/projects-and-workspaces/");
 
 type ReadProjectConfigData = Awaited<ReturnType<DaemonClient["readProjectConfig"]>>;
 
@@ -256,8 +256,8 @@ function ProjectSettingsBody({
       selectedHost.projectName,
     ],
   );
-  const loadedConfig: FdeConfigRaw | null = data?.ok ? (data.config ?? {}) : null;
-  const loadedRevision: FdeConfigRevision | null = data?.ok ? data.revision : null;
+  const loadedConfig: FroggConfigRaw | null = data?.ok ? (data.config ?? {}) : null;
+  const loadedRevision: FroggConfigRevision | null = data?.ok ? data.revision : null;
   const hasUncommittedWorktreeSetupChanges =
     data?.ok === true && data.hasUncommittedWorktreeSetupChanges === true;
   const readError: ProjectConfigRpcError | null = data && !data.ok ? data.error : null;
@@ -333,8 +333,8 @@ function ProjectSettingsBody({
 
 interface RenderContentInput {
   readQuery: ReturnType<typeof useQuery<ReadProjectConfigData>>;
-  loadedConfig: FdeConfigRaw | null;
-  loadedRevision: FdeConfigRevision | null;
+  loadedConfig: FroggConfigRaw | null;
+  loadedRevision: FroggConfigRevision | null;
   hasUncommittedWorktreeSetupChanges: boolean;
   readError: ProjectConfigRpcError | null;
   selectedHost: ProjectHostEntry;
@@ -410,7 +410,7 @@ function renderContent({
   );
 }
 
-function revisionToKey(revision: FdeConfigRevision | null): string {
+function revisionToKey(revision: FroggConfigRevision | null): string {
   if (!revision) return "none";
   return `${revision.mtimeMs}-${revision.size}`;
 }
@@ -480,8 +480,8 @@ function errorToDetail(error: unknown): string | null {
 }
 
 interface ProjectConfigFormProps {
-  baseConfig: FdeConfigRaw;
-  revision: FdeConfigRevision | null;
+  baseConfig: FroggConfigRaw;
+  revision: FroggConfigRevision | null;
   hasUncommittedWorktreeSetupChanges: boolean;
   repoRoot: string;
   queryKey: readonly [string, string, string];
@@ -508,8 +508,8 @@ function ProjectConfigForm({
 
   const saveMutation = useMutation({
     mutationFn: async (input: {
-      config: FdeConfigRaw;
-      expectedRevision: FdeConfigRevision | null;
+      config: FroggConfigRaw;
+      expectedRevision: FroggConfigRevision | null;
     }) => {
       return client.writeProjectConfig({
         repoRoot,

@@ -1,11 +1,11 @@
 import { readdir, readFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import type { AgentProviderDefinition } from "@fde/protocol/messages";
+import type { AgentProviderDefinition } from "@frogg/protocol/messages";
 
 /**
  * Read-only discovery of agent definitions that providers already load from
- * disk. FDE does not own these files; it only lists what each provider CLI
+ * disk. Frogg does not own these files; it only lists what each provider CLI
  * would pick up so users can see and open them.
  */
 

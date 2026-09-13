@@ -1,6 +1,6 @@
 import pino from "pino";
 import { describe, expect, test } from "vitest";
-import type { DaemonAutoUpdateConfig, DaemonUpdateRun } from "@fde/protocol/messages";
+import type { DaemonAutoUpdateConfig, DaemonUpdateRun } from "@frogg/protocol/messages";
 import { DaemonAutoUpdater, isInQuietHours } from "./daemon-auto-updater.js";
 import type { CheckPayload, StartPayload } from "./daemon-update-service.js";
 

@@ -1,13 +1,13 @@
 ---
 title: Release process
-description: Version FDE, tag a release, and understand what the release workflow builds, signs, verifies and publishes.
+description: Version Frogg, tag a release, and understand what the release workflow builds, signs, verifies and publishes.
 sidebar:
   order: 6
 ---
 
 import { Steps } from "@/components/docs";
 
-This page describes how the official FDE repository releases. If you maintain a fork, start with
+This page describes how the official Frogg repository releases. If you maintain a fork, start with
 [Build and release](/docs/fork-and-rebrand/build-and-release/) for brand variables and secrets.
 
 ## Versions
@@ -19,7 +19,7 @@ npm run version:sync-internal
 ```
 
 This runs `scripts/release/sync-workspace-versions.mjs`. It sets every workspace `version` to
-the root version and rewrites internal `@fde/*` dependency ranges: `*` for private workspaces,
+the root version and rewrites internal `@frogg/*` dependency ranges: `*` for private workspaces,
 the exact version for publishable ones. It also updates the version in the inactive Tauri and
 Rust manifests.
 
@@ -121,23 +121,23 @@ bundle, and a debug-signed arm64 APK. Artifacts are kept for 14 days.
 
 ## Release assets
 
-Names come from `brand.artifactPrefix` (`FDE`). Real examples from v0.6.19:
+Names come from `brand.artifactPrefix` (`Frogg`). Real examples from v0.6.19:
 
 | Asset                                          | Source                                     |
 | ---------------------------------------------- | ------------------------------------------ |
-| `FDE-0.6.19-win-x64.exe`, `.exe.blockmap`      | electron-builder NSIS                      |
-| `FDE-0.6.19-win-x64.zip`, `FDE-0.6.19-win-x64-installer.zip` | portable ZIP, zipped installer |
-| `FDE-<v>-linux-x86_64.AppImage`, `FDE-<v>-mac-{arm64,x64}.zip` | Update payloads the manifests require |
-| `FDE-0.6.19-linux-x86_64-daemon.tar.gz` + `.sha256` | daemon bundle (Windows bundles are `.zip`) |
-| `fde-daemon-0.6.19-linux-x64.tar.gz` + `.sha256` | legacy daemon name, still produced for the official brand |
-| `FDE-0.6.19-android-arm64-v8a-unsigned.apk`    | debug-signed APK                           |
+| `Frogg-0.6.19-win-x64.exe`, `.exe.blockmap`      | electron-builder NSIS                      |
+| `Frogg-0.6.19-win-x64.zip`, `Frogg-0.6.19-win-x64-installer.zip` | portable ZIP, zipped installer |
+| `Frogg-<v>-linux-x86_64.AppImage`, `Frogg-<v>-mac-{arm64,x64}.zip` | Update payloads the manifests require |
+| `Frogg-0.6.19-linux-x86_64-daemon.tar.gz` + `.sha256` | daemon bundle (Windows bundles are `.zip`) |
+| `frogg-daemon-0.6.19-linux-x64.tar.gz` + `.sha256` | legacy daemon name, still produced for the official brand |
+| `Frogg-0.6.19-android-arm64-v8a-unsigned.apk`    | debug-signed APK                           |
 | `release.json`                                 | product update descriptor                  |
 | `electron-latest.yml`, `electron-latest-linux.yml`, `electron-latest-mac.yml` | Electron update feeds (`electron-beta*` for betas) |
 | `SHA256SUMS-desktop`                           | checksums of the desktop assets            |
 | `install.sh`, `uninstall.sh`, `install-docker.sh`, `uninstall-docker.sh` | install scripts   |
 
 Other desktop files (`.dmg`, `.deb`, Linux `.tar.gz`) follow the electron-builder pattern
-`FDE-<version>-<os>-<arch>.<ext>`. Check real names with
+`Frogg-<version>-<os>-<arch>.<ext>`. Check real names with
 `gh release view <tag> --json assets` rather than guessing.
 
 ## Secrets
@@ -147,7 +147,7 @@ All secrets are optional. Without them the release still builds, with the limits
 | Purpose                     | Secrets                                                                                 | Without them |
 | --------------------------- | --------------------------------------------------------------------------------------- | ------------ |
 | Windows code signing (Azure Trusted Signing) | `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `TRUSTED_SIGNING_ENDPOINT`, `TRUSTED_SIGNING_ACCOUNT`, `TRUSTED_SIGNING_PROFILE` | Windows binaries are unsigned |
-| Android release keystore    | `FDE_ANDROID_KEYSTORE_BASE64`, `FDE_ANDROID_KEYSTORE_PASSWORD`, `FDE_ANDROID_KEY_ALIAS` (default `fde`), `FDE_ANDROID_KEY_PASSWORD` | APK is debug-signed and named `-unsigned` |
+| Android release keystore    | `FROGG_ANDROID_KEYSTORE_BASE64`, `FROGG_ANDROID_KEYSTORE_PASSWORD`, `FROGG_ANDROID_KEY_ALIAS` (default `frogg`), `FROGG_ANDROID_KEY_PASSWORD` | APK is debug-signed and named `-unsigned` |
 | Docker Hub                  | `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`                                                  | `docker` job is skipped |
 | External brand repository   | `BRANDING_READ_TOKEN`                                                                    | Only needed for a private brand repository |
 
@@ -164,14 +164,14 @@ trusted build.
 
 ### Docker tags
 
-The image name comes from `distribution.dockerImage` in the brand (`froggapp/fde`). The job
+The image name comes from `distribution.dockerImage` in the brand (`froggapp/frogg`). The job
 pushes the exact version, plus `<major>.<minor>`, `<major>` and `latest` for stable versions.
 If the exact version tag already exists, nothing is pushed. Fix a bad image by releasing a new
 patch version.
 
 ## Release rules
 
-These come from `skills/fde-release/SKILL.md`. Follow them for every release, local or CI.
+These come from `skills/frogg-release/SKILL.md`. Follow them for every release, local or CI.
 
 - **Preserve the update path.** Installed clients discover updates through `release.json` and
   the Electron channel manifests. Keep the discovery name stable and keep compatibility

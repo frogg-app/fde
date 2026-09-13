@@ -8,7 +8,7 @@ import { runGitCommand } from "./run-git-command.js";
 const tempDirs: string[] = [];
 
 function makeTempRepo(): string {
-  const repo = mkdtempSync(path.join(tmpdir(), "fde-git-shell-"));
+  const repo = mkdtempSync(path.join(tmpdir(), "frogg-git-shell-"));
   tempDirs.push(repo);
   return repo;
 }
@@ -22,7 +22,7 @@ afterEach(() => {
 describe("runGitCommand shell behavior", () => {
   it("passes git arguments directly instead of through the platform shell", async () => {
     const repo = makeTempRepo();
-    const literalName = "%FDE_GIT_SHELL_SENTINEL%";
+    const literalName = "%FROGG_GIT_SHELL_SENTINEL%";
     const expandedName = "expanded-by-cmd";
 
     await runGitCommand(["init"], { cwd: repo });
@@ -33,7 +33,7 @@ describe("runGitCommand shell behavior", () => {
     const result = await runGitCommand(["ls-files", "--error-unmatch", literalName], {
       cwd: repo,
       envOverlay: {
-        FDE_GIT_SHELL_SENTINEL: expandedName,
+        FROGG_GIT_SHELL_SENTINEL: expandedName,
       },
     });
 

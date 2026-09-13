@@ -1,8 +1,8 @@
-import { brand } from "@fde/branding";
-import { storageKey } from "@fde/branding/identity";
+import { brand } from "@frogg/branding";
+import { storageKey } from "@frogg/branding/identity";
 import type { ProjectIconCacheStorage } from "./icon-cache";
 
-const DATABASE_NAME = storageKey(brand, "fde-project-icon-cache");
+const DATABASE_NAME = storageKey(brand, "frogg-project-icon-cache");
 const STORE_NAME = "key-value";
 
 let databasePromise: Promise<IDBDatabase> | null = null;

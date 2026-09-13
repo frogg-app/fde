@@ -6,10 +6,10 @@ import { CheckoutDiffManager } from "./checkout-diff-manager.js";
 import type { FileObserver } from "./file-observer/index.js";
 import { WorkspaceGitServiceImpl } from "./workspace-git-service.js";
 
-const REPO_CWD = path.resolve("/tmp/fde-observation-repo");
+const REPO_CWD = path.resolve("/tmp/frogg-observation-repo");
 const GIT_DIR = path.join(REPO_CWD, ".git");
-const WORKTREE_A = path.resolve("/tmp/fde-observation-worktree-a");
-const WORKTREE_B = path.resolve("/tmp/fde-observation-worktree-b");
+const WORKTREE_A = path.resolve("/tmp/frogg-observation-worktree-a");
+const WORKTREE_B = path.resolve("/tmp/frogg-observation-worktree-b");
 
 interface WatchEvent {
   path: string;
@@ -62,7 +62,7 @@ function createCheckoutFacts(cwd: string): CheckoutSnapshotFacts {
     remoteUrl: null,
     absoluteGitDir: path.join(cwd, ".git"),
     gitCommonDir: path.join(cwd, ".git"),
-    fdeWorktree: { isFdeOwnedWorktree: false },
+    froggWorktree: { isFroggOwnedWorktree: false },
     storedBaseRef: null,
     resolvedBaseRef: "main",
     mainRepoRoot: null,
@@ -101,7 +101,7 @@ function createCheckoutStatus(
     behindOfOrigin: null,
     hasRemote: false,
     remoteUrl: null,
-    isFdeOwnedWorktree: false,
+    isFroggOwnedWorktree: false,
     ...overrides,
   };
 }
@@ -161,7 +161,7 @@ function createService(
     defaultGetCheckoutShortstat;
   return new WorkspaceGitServiceImpl({
     logger,
-    fdeHome: "/tmp/fde-home",
+    froggHome: "/tmp/frogg-home",
     fileObserver,
     deps: {
       subscribe: watcher.subscribe,
@@ -368,7 +368,7 @@ describe("WorkspaceGitService checkout observation", () => {
     });
     const diffManager = new CheckoutDiffManager({
       logger: createLogger(),
-      fdeHome: "/tmp/fde-home",
+      froggHome: "/tmp/frogg-home",
       workspaceGitService: service,
     });
     const summaryListener = vi.fn();
@@ -1135,7 +1135,7 @@ describe("WorkspaceGitService checkout observation", () => {
     });
     const diffManager = new CheckoutDiffManager({
       logger: createLogger(),
-      fdeHome: "/tmp/fde-home",
+      froggHome: "/tmp/frogg-home",
       workspaceGitService: service,
     });
     const summaryListener = vi.fn();
@@ -1190,7 +1190,7 @@ describe("WorkspaceGitService checkout observation", () => {
     const service = createService(watcher, { getCheckoutDiff, getCheckoutWorktreeState });
     const diffManager = new CheckoutDiffManager({
       logger: createLogger(),
-      fdeHome: "/tmp/fde-home",
+      froggHome: "/tmp/frogg-home",
       workspaceGitService: service,
     });
     const diffSubscription = await diffManager.subscribe(
@@ -1337,9 +1337,9 @@ describe("WorkspaceGitService checkout observation", () => {
       await fetch.promise;
       return { changes: [], error: null };
     });
-    const commonGitDir = path.resolve("/tmp/fde-shared-repository.git");
+    const commonGitDir = path.resolve("/tmp/frogg-shared-repository.git");
     const worktrees = Array.from({ length: 10 }, (_, index) =>
-      path.resolve(`/tmp/fde-shared-worktree-${index}`),
+      path.resolve(`/tmp/frogg-shared-worktree-${index}`),
     );
     const getCheckoutSnapshotFacts = vi.fn(
       async (cwd: string): Promise<CheckoutSnapshotFacts> => ({
@@ -1606,7 +1606,7 @@ describe("WorkspaceGitService checkout observation", () => {
       {
         getCheckoutStatus,
         createWatcherLivenessCanary: vi.fn(() => ({
-          path: path.join(GIT_DIR, "fde", ".watcher-canary-timeout"),
+          path: path.join(GIT_DIR, "frogg", ".watcher-canary-timeout"),
           filterEvents: (events: WatchEvent[]) => events,
           verify: verifyCanary,
         })),
@@ -2152,7 +2152,7 @@ describe("WorkspaceGitService checkout observation", () => {
     });
     const diffManager = new CheckoutDiffManager({
       logger: createLogger(),
-      fdeHome: "/tmp/fde-home",
+      froggHome: "/tmp/frogg-home",
       workspaceGitService: service,
     });
     const listener = vi.fn();

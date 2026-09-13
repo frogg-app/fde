@@ -1,73 +1,73 @@
 /*
  * Design tokens shared by the landing page and the Starlight docs.
  * `data-theme` on <html> is the single source of truth ("dark" by default).
- * Brand accent is the origami-frog cyan from brands/fde/brand.json.
+ * Brand accent is the origami-frog cyan from brands/frogg/brand.json.
  */
 :root,
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --fde-bg: #0e1211;
-  --fde-bg-elevated: #151a19;
-  --fde-surface: #1a201f;
-  --fde-surface-2: #222a28;
-  --fde-border: rgb(255 255 255 / 0.08);
-  --fde-border-strong: rgb(255 255 255 / 0.16);
-  --fde-text: #f4f7f6;
-  --fde-text-muted: #a3adab;
-  --fde-text-faint: #8a9492;
-  --fde-accent: #25b5c8;
-  --fde-accent-bright: #7fd9e6;
-  --fde-accent-fg: #07222b;
-  --fde-link: #7fd9e6;
-  --fde-accent-soft: rgb(37 181 200 / 0.14);
-  --fde-accent-glow: rgb(37 181 200 / 0.45);
-  --fde-violet: #8b7cf6;
-  --fde-success: #3fcf8e;
-  --fde-warning: #f5b84a;
-  --fde-danger: #f87171;
-  --fde-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 40px -12px rgb(0 0 0 / 0.6);
-  --fde-shadow-lg: 0 2px 4px rgb(0 0 0 / 0.35), 0 30px 80px -20px rgb(0 0 0 / 0.75);
+  --frogg-bg: #0e1211;
+  --frogg-bg-elevated: #151a19;
+  --frogg-surface: #1a201f;
+  --frogg-surface-2: #222a28;
+  --frogg-border: rgb(255 255 255 / 0.08);
+  --frogg-border-strong: rgb(255 255 255 / 0.16);
+  --frogg-text: #f4f7f6;
+  --frogg-text-muted: #a3adab;
+  --frogg-text-faint: #8a9492;
+  --frogg-accent: #25b5c8;
+  --frogg-accent-bright: #7fd9e6;
+  --frogg-accent-fg: #07222b;
+  --frogg-link: #7fd9e6;
+  --frogg-accent-soft: rgb(37 181 200 / 0.14);
+  --frogg-accent-glow: rgb(37 181 200 / 0.45);
+  --frogg-violet: #8b7cf6;
+  --frogg-success: #3fcf8e;
+  --frogg-warning: #f5b84a;
+  --frogg-danger: #f87171;
+  --frogg-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 40px -12px rgb(0 0 0 / 0.6);
+  --frogg-shadow-lg: 0 2px 4px rgb(0 0 0 / 0.35), 0 30px 80px -20px rgb(0 0 0 / 0.75);
 }
 
 :root[data-theme="light"] {
   color-scheme: light;
-  --fde-bg: #f7f9fa;
-  --fde-bg-elevated: #ffffff;
-  --fde-surface: #ffffff;
-  --fde-surface-2: #eef2f4;
-  --fde-border: rgb(15 30 40 / 0.1);
-  --fde-border-strong: rgb(15 30 40 / 0.2);
-  --fde-text: #121718;
-  --fde-text-muted: #4d5a5e;
-  --fde-text-faint: #647176;
-  --fde-accent: #045b9d;
-  --fde-accent-bright: #0a78c9;
-  --fde-accent-fg: #ffffff;
-  --fde-link: #045b9d;
-  --fde-accent-soft: rgb(10 120 201 / 0.1);
-  --fde-accent-glow: rgb(10 120 201 / 0.3);
-  --fde-violet: #6d5bd0;
-  --fde-success: #11845b;
-  --fde-warning: #a15c00;
-  --fde-danger: #c0362c;
-  --fde-shadow: 0 1px 2px rgb(15 30 40 / 0.06), 0 12px 32px -12px rgb(15 30 40 / 0.18);
-  --fde-shadow-lg: 0 2px 4px rgb(15 30 40 / 0.06), 0 30px 70px -24px rgb(15 30 40 / 0.28);
+  --frogg-bg: #f7f9fa;
+  --frogg-bg-elevated: #ffffff;
+  --frogg-surface: #ffffff;
+  --frogg-surface-2: #eef2f4;
+  --frogg-border: rgb(15 30 40 / 0.1);
+  --frogg-border-strong: rgb(15 30 40 / 0.2);
+  --frogg-text: #121718;
+  --frogg-text-muted: #4d5a5e;
+  --frogg-text-faint: #647176;
+  --frogg-accent: #045b9d;
+  --frogg-accent-bright: #0a78c9;
+  --frogg-accent-fg: #ffffff;
+  --frogg-link: #045b9d;
+  --frogg-accent-soft: rgb(10 120 201 / 0.1);
+  --frogg-accent-glow: rgb(10 120 201 / 0.3);
+  --frogg-violet: #6d5bd0;
+  --frogg-success: #11845b;
+  --frogg-warning: #a15c00;
+  --frogg-danger: #c0362c;
+  --frogg-shadow: 0 1px 2px rgb(15 30 40 / 0.06), 0 12px 32px -12px rgb(15 30 40 / 0.18);
+  --frogg-shadow-lg: 0 2px 4px rgb(15 30 40 / 0.06), 0 30px 70px -24px rgb(15 30 40 / 0.28);
 }
 
 :root {
-  --fde-radius-sm: 0.5rem;
-  --fde-radius: 0.75rem;
-  --fde-radius-lg: 1.25rem;
-  --fde-font:
+  --frogg-radius-sm: 0.5rem;
+  --frogg-radius: 0.75rem;
+  --frogg-radius-lg: 1.25rem;
+  --frogg-font:
     ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
     "Noto Sans", sans-serif;
-  --fde-font-mono:
+  --frogg-font-mono:
     ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  --fde-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --fde-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --fde-fast: 140ms;
-  --fde-med: 260ms;
-  --fde-focus: 0 0 0 2px var(--fde-bg), 0 0 0 4px var(--fde-accent-bright);
+  --frogg-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --frogg-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --frogg-fast: 140ms;
+  --frogg-med: 260ms;
+  --frogg-focus: 0 0 0 2px var(--frogg-bg), 0 0 0 4px var(--frogg-accent-bright);
 }
 
 /* Cross-document view transitions: zero JS, progressive (browsers without support just navigate). */
@@ -78,7 +78,7 @@
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation-duration: 180ms;
-  animation-timing-function: var(--fde-ease);
+  animation-timing-function: var(--frogg-ease);
 }
 
 @media (prefers-reduced-motion: reduce) {

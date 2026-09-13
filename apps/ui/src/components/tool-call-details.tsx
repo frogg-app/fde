@@ -10,11 +10,11 @@ import { ScrollView as GHScrollView } from "react-native-gesture-handler";
 import { StyleSheet } from "react-native-unistyles";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
-import type { ToolCallDetail } from "@fde/protocol/agent-types";
+import type { ToolCallDetail } from "@frogg/protocol/agent-types";
 import {
-  buildFdeToolDetailSections,
-  type FdeToolDetailSection,
-} from "@fde/protocol/fde-tool-call-detail";
+  buildFroggToolDetailSections,
+  type FroggToolDetailSection,
+} from "@frogg/protocol/frogg-tool-call-detail";
 import { buildLineDiff, parseUnifiedDiff, type DiffLine } from "@/utils/tool-call-parsers";
 import { highlightDiffLines } from "@/utils/diff-highlight";
 import { hasMeaningfulToolCallDetail } from "@/utils/tool-call-detail-state";
@@ -631,20 +631,20 @@ function buildUnknownSections(detail: UnknownDetail, ds: DetailStyles, t: TFunct
   return out;
 }
 
-function FdeDetailSection({ section }: { section: FdeToolDetailSection }) {
+function FroggDetailSection({ section }: { section: FroggToolDetailSection }) {
   return (
-    <View style={styles.fdeSection}>
-      <Text style={styles.fdeSectionTitle}>{section.title}</Text>
+    <View style={styles.froggSection}>
+      <Text style={styles.froggSectionTitle}>{section.title}</Text>
       {section.kind === "prose" ? (
-        <Text selectable style={styles.fdeProse}>
+        <Text selectable style={styles.froggProse}>
           {section.text}
         </Text>
       ) : (
-        <View style={styles.fdeFields}>
+        <View style={styles.froggFields}>
           {section.fields.map((field) => (
-            <View key={field.label} style={styles.fdeFieldRow}>
-              <Text style={styles.fdeFieldLabel}>{field.label}</Text>
-              <Text selectable style={styles.fdeFieldValue}>
+            <View key={field.label} style={styles.froggFieldRow}>
+              <Text style={styles.froggFieldLabel}>{field.label}</Text>
+              <Text selectable style={styles.froggFieldValue}>
                 {field.value}
               </Text>
             </View>
@@ -655,14 +655,14 @@ function FdeDetailSection({ section }: { section: FdeToolDetailSection }) {
   );
 }
 
-function buildFdeUnknownSections(
+function buildFroggUnknownSections(
   toolName: string | undefined,
   detail: UnknownDetail,
 ): ReactNode[] | null {
   if (!toolName) return null;
-  const sections = buildFdeToolDetailSections(toolName, detail.input, detail.output);
+  const sections = buildFroggToolDetailSections(toolName, detail.input, detail.output);
   if (!sections) return null;
-  return sections.map((section) => <FdeDetailSection key={section.title} section={section} />);
+  return sections.map((section) => <FroggDetailSection key={section.title} section={section} />);
 }
 
 function buildDetailSections(
@@ -741,7 +741,7 @@ function buildDetailSections(
     return [<ScrollablePlainTextSection key="plain-text" text={detail.text} ds={ds} />];
   }
   if (detail.type === "unknown") {
-    return buildFdeUnknownSections(toolName, detail) ?? buildUnknownSections(detail, ds, t);
+    return buildFroggUnknownSections(toolName, detail) ?? buildUnknownSections(detail, ds, t);
   }
   return [];
 }
@@ -837,39 +837,39 @@ const styles = StyleSheet.create((theme) => {
       fontSize: theme.fontSize.base,
       fontWeight: theme.fontWeight.normal,
     },
-    fdeSection: {
+    froggSection: {
       gap: theme.spacing[3],
       paddingHorizontal: theme.spacing[4],
       paddingVertical: theme.spacing[4],
       borderBottomWidth: theme.borderWidth[1],
       borderBottomColor: theme.colors.border,
     },
-    fdeSectionTitle: {
+    froggSectionTitle: {
       color: theme.colors.foreground,
       fontSize: theme.fontSize.base,
       fontWeight: theme.fontWeight.medium,
     },
-    fdeProse: {
+    froggProse: {
       color: theme.colors.foreground,
       fontSize: theme.fontSize.content,
       lineHeight: Math.round(theme.fontSize.content * 1.5),
       overflowWrap: "anywhere",
     },
-    fdeFields: {
+    froggFields: {
       gap: theme.spacing[3],
     },
-    fdeFieldRow: {
+    froggFieldRow: {
       flexDirection: "row",
       alignItems: "flex-start",
       gap: theme.spacing[4],
     },
-    fdeFieldLabel: {
+    froggFieldLabel: {
       width: 120,
       color: theme.colors.foregroundMuted,
       fontSize: theme.fontSize.sm,
       lineHeight: Math.round(theme.fontSize.base * 1.5),
     },
-    fdeFieldValue: {
+    froggFieldValue: {
       flex: 1,
       minWidth: 0,
       color: theme.colors.foreground,

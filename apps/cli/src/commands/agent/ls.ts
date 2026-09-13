@@ -1,6 +1,6 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import type { Command } from "commander";
-import type { AgentSnapshotPayload } from "@fde/protocol/messages";
+import type { AgentSnapshotPayload } from "@frogg/protocol/messages";
 import { connectToDaemon, getDaemonHost } from "../../utils/client.js";
 import type { CommandOptions, ListResult, OutputSchema, CommandError } from "../../output/index.js";
 import { collectMultiple } from "../../utils/command-options.js";
@@ -115,7 +115,7 @@ function daemonConnectionFailure(host: string, cause: unknown): CommandError {
       ? `Start the ${brand.name} daemon on the SSH host; SSH transport does not install or start it.`
       : [
           `Start a local daemon with: ${brand.cliName} daemon start`,
-          "To use another daemon, pass --host <host:port> or set FDE_HOST.",
+          "To use another daemon, pass --host <host:port> or set FROGG_HOST.",
         ].join("\n"),
   };
 }
@@ -177,10 +177,10 @@ export function buildAgentLsFetchOptions(
 
 /**
  * Agent ls command semantics:
- * - `fde agent ls`    → active non-archived agents
- * - `fde agent ls -g` → global non-archived agents
- * - `fde agent ls -a` → active agents, including archived
- * - `fde agent ls -ag` → global agents, including archived
+ * - `frogg agent ls`    → active non-archived agents
+ * - `frogg agent ls -g` → global non-archived agents
+ * - `frogg agent ls -a` → active agents, including archived
+ * - `frogg agent ls -ag` → global agents, including archived
  */
 export async function runLsCommand(
   options: AgentLsOptions,

@@ -1,9 +1,9 @@
-/* Starlight re-themed onto the FDE tokens so the docs and the landing page read as one site. */
+/* Starlight re-themed onto the Frogg tokens so the docs and the landing page read as one site. */
 
 :root,
 :root[data-theme="dark"] {
-  --sl-font: var(--fde-font);
-  --sl-font-mono: var(--fde-font-mono);
+  --sl-font: var(--frogg-font);
+  --sl-font-mono: var(--frogg-font-mono);
 
   --sl-color-white: #ffffff;
   --sl-color-gray-1: #e8eeec;
@@ -62,7 +62,7 @@ header.header {
   pointer-events: none;
   background: radial-gradient(
     60rem 18rem at 70% -6rem,
-    var(--fde-accent-soft),
+    var(--frogg-accent-soft),
     transparent 70%
   );
   z-index: 0;
@@ -75,27 +75,27 @@ header.header {
 
 /* Sidebar: pill-shaped current page with an accent rail. */
 .sidebar-content a {
-  border-radius: var(--fde-radius-sm);
+  border-radius: var(--frogg-radius-sm);
   transition:
-    background-color var(--fde-fast) var(--fde-ease),
-    color var(--fde-fast) var(--fde-ease);
+    background-color var(--frogg-fast) var(--frogg-ease),
+    color var(--frogg-fast) var(--frogg-ease);
 }
 
 .sidebar-content a:hover {
-  background-color: var(--fde-accent-soft);
+  background-color: var(--frogg-accent-soft);
 }
 
 .sidebar-content a[aria-current="page"],
 .sidebar-content a[aria-current="page"]:hover {
-  background: var(--fde-accent-soft);
+  background: var(--frogg-accent-soft);
   color: var(--sl-color-text-accent);
-  box-shadow: inset 2px 0 0 var(--fde-accent);
+  box-shadow: inset 2px 0 0 var(--frogg-accent);
   font-weight: 600;
 }
 
 /* Visible, consistent focus rings everywhere. */
 :where(a, button, select, input, textarea, summary, [tabindex]):focus-visible {
-  outline: 2px solid var(--fde-accent-bright);
+  outline: 2px solid var(--frogg-accent-bright);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -103,7 +103,7 @@ header.header {
 .sl-markdown-content a:not(:where(.not-content *)) {
   text-underline-offset: 0.2em;
   text-decoration-thickness: 1px;
-  transition: text-decoration-color var(--fde-fast) var(--fde-ease);
+  transition: text-decoration-color var(--frogg-fast) var(--frogg-ease);
 }
 
 .sl-markdown-content a:not(:where(.not-content *)):hover {
@@ -113,20 +113,20 @@ header.header {
 /* Cards and link cards lift on hover. */
 .card,
 .sl-link-card {
-  border-radius: var(--fde-radius) !important;
+  border-radius: var(--frogg-radius) !important;
   transition:
-    transform var(--fde-med) var(--fde-ease),
-    box-shadow var(--fde-med) var(--fde-ease),
-    border-color var(--fde-med) var(--fde-ease);
+    transform var(--frogg-med) var(--frogg-ease),
+    box-shadow var(--frogg-med) var(--frogg-ease),
+    border-color var(--frogg-med) var(--frogg-ease);
 }
 
 .sl-link-card:hover {
   transform: translateY(-2px);
-  box-shadow: var(--fde-shadow);
+  box-shadow: var(--frogg-shadow);
 }
 
 .expressive-code .frame {
-  border-radius: var(--fde-radius-sm);
+  border-radius: var(--frogg-radius-sm);
 }
 
 @media (prefers-reduced-motion: reduce) {

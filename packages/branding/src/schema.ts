@@ -270,7 +270,7 @@ function resolveIdentity(manifest: BrandManifest) {
     applicationId: manifest.applicationId,
     daemonPort: manifest.daemonPort,
     cliName,
-    desktopBinaryName: manifest.desktopBinaryName ?? (id === "fde" ? cliName : `${id}-desktop`),
+    desktopBinaryName: manifest.desktopBinaryName ?? (id === "frogg" ? cliName : `${id}-desktop`),
     homeDir: manifest.homeDir ?? `.${id}`,
     envPrefix: manifest.envPrefix ?? id.replaceAll("-", "_").toUpperCase(),
     scheme: manifest.scheme ?? id,
@@ -278,8 +278,8 @@ function resolveIdentity(manifest: BrandManifest) {
     launchdLabel: manifest.launchdLabel ?? `${manifest.applicationId}-daemon`,
     artifactPrefix: manifest.artifactPrefix ?? id,
     daemonArtifactPrefix: `${id}-daemon`,
-    storagePrefix: id === "fde" ? "" : `${manifest.applicationId}:`,
-    legacyFde: id === "fde",
+    storagePrefix: id === "frogg" ? "" : `${manifest.applicationId}:`,
+    legacyFrogg: id === "frogg",
   };
 }
 

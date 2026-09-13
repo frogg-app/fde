@@ -1,4 +1,4 @@
-import type { FileExplorerResponse } from "@fde/protocol/messages";
+import type { FileExplorerResponse } from "@frogg/protocol/messages";
 import type { ComponentType } from "react";
 import { ArrowUp, Folder, FolderPlus, RotateCw } from "lucide-react-native";
 import { i18n } from "@/i18n/i18next";

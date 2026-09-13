@@ -1,5 +1,5 @@
-import type { ProviderOptions } from "@fde/protocol/agent-types";
-import type { HubExecutionAgentValidationIssue } from "@fde/protocol/messages";
+import type { ProviderOptions } from "@frogg/protocol/agent-types";
+import type { HubExecutionAgentValidationIssue } from "@frogg/protocol/messages";
 
 import type { ProviderSnapshotEntry } from "./agent-sdk-types.js";
 import { filterSelectableAgentModels } from "./agent-sdk-types.js";

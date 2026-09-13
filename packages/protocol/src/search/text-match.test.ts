@@ -184,7 +184,7 @@ describe("scoreMatch typo tolerance", () => {
 describe("scorePathMatch", () => {
   it("matches a literal fragment anywhere in the complete path", () => {
     expect(
-      scorePathMatch("skills/", "something/something-else/skills/fde-advisor/SKILL.md"),
+      scorePathMatch("skills/", "something/something-else/skills/frogg-advisor/SKILL.md"),
     ).not.toBeNull();
   });
 

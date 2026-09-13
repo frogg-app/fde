@@ -14,21 +14,21 @@
 #   bash apps/ui/maestro/test-workspace-create-android-crash.sh
 #
 # Optional environment:
-#   FDE_MAESTRO_APP_ID=sh.fde.debug
-#   FDE_MAESTRO_DIRECT_ENDPOINT=127.0.0.1:9999
-#   FDE_MAESTRO_DAEMON_WS_URL=ws://127.0.0.1:9999/ws
-#   FDE_MAESTRO_PROJECT_PATH=/path/to/git/repo
+#   FROGG_MAESTRO_APP_ID=sh.frogg.debug
+#   FROGG_MAESTRO_DIRECT_ENDPOINT=127.0.0.1:9999
+#   FROGG_MAESTRO_DAEMON_WS_URL=ws://127.0.0.1:9999/ws
+#   FROGG_MAESTRO_PROJECT_PATH=/path/to/git/repo
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 FLOW_TEMPLATE="$REPO_ROOT/apps/ui/maestro/workspace-create-android-crash.yaml"
 FLOW_TEMPLATE_DIR="$REPO_ROOT/apps/ui/maestro"
-OUT_DIR="/tmp/fde-workspace-create-android-$(date +%s)"
+OUT_DIR="/tmp/frogg-workspace-create-android-$(date +%s)"
 CLIENT_EXPORTS="$REPO_ROOT/packages/client/dist/daemon-client.js"
 
-export FDE_MAESTRO_APP_ID="${FDE_MAESTRO_APP_ID:-sh.fde.debug}"
-export FDE_MAESTRO_DIRECT_ENDPOINT="${FDE_MAESTRO_DIRECT_ENDPOINT:-127.0.0.1:9999}"
-export FDE_MAESTRO_DAEMON_WS_URL="${FDE_MAESTRO_DAEMON_WS_URL:-ws://127.0.0.1:9999/ws}"
+export FROGG_MAESTRO_APP_ID="${FROGG_MAESTRO_APP_ID:-sh.frogg.debug}"
+export FROGG_MAESTRO_DIRECT_ENDPOINT="${FROGG_MAESTRO_DIRECT_ENDPOINT:-127.0.0.1:9999}"
+export FROGG_MAESTRO_DAEMON_WS_URL="${FROGG_MAESTRO_DAEMON_WS_URL:-ws://127.0.0.1:9999/ws}"
 
 require_command() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -48,9 +48,9 @@ render_flow() {
   local target="$2"
   mkdir -p "$(dirname "$target")"
   perl -0pe '
-    s/\$\{FDE_MAESTRO_APP_ID\}/$ENV{FDE_MAESTRO_APP_ID}/g;
-    s/\$\{FDE_MAESTRO_DIRECT_ENDPOINT\}/$ENV{FDE_MAESTRO_DIRECT_ENDPOINT}/g;
-    s/\$\{FDE_MAESTRO_PROJECT_NAME\}/$ENV{FDE_MAESTRO_PROJECT_NAME}/g;
+    s/\$\{FROGG_MAESTRO_APP_ID\}/$ENV{FROGG_MAESTRO_APP_ID}/g;
+    s/\$\{FROGG_MAESTRO_DIRECT_ENDPOINT\}/$ENV{FROGG_MAESTRO_DIRECT_ENDPOINT}/g;
+    s/\$\{FROGG_MAESTRO_PROJECT_NAME\}/$ENV{FROGG_MAESTRO_PROJECT_NAME}/g;
   ' "$source" > "$target"
 }
 
@@ -70,31 +70,31 @@ fi
 
 mkdir -p "$OUT_DIR"
 
-if [ -z "${FDE_MAESTRO_PROJECT_PATH:-}" ]; then
-  PROJECT_PARENT="$(mktemp -d /tmp/fde-maestro-project-XXXXXX)"
+if [ -z "${FROGG_MAESTRO_PROJECT_PATH:-}" ]; then
+  PROJECT_PARENT="$(mktemp -d /tmp/frogg-maestro-project-XXXXXX)"
   PROJECT_BASENAME="aaa-workspace-create-android-$(basename "$PROJECT_PARENT")"
-  export FDE_MAESTRO_PROJECT_PATH="$PROJECT_PARENT/$PROJECT_BASENAME"
-  mkdir -p "$FDE_MAESTRO_PROJECT_PATH"
-  git -C "$FDE_MAESTRO_PROJECT_PATH" init >/dev/null
-  git -C "$FDE_MAESTRO_PROJECT_PATH" checkout -b main >/dev/null 2>&1 || true
-  git -C "$FDE_MAESTRO_PROJECT_PATH" config user.name "Fde Maestro"
-  git -C "$FDE_MAESTRO_PROJECT_PATH" config user.email "maestro@fde.local"
-  printf "# Workspace create Android repro\n" > "$FDE_MAESTRO_PROJECT_PATH/README.md"
-  git -C "$FDE_MAESTRO_PROJECT_PATH" add README.md
-  git -C "$FDE_MAESTRO_PROJECT_PATH" commit -m "Initial commit" >/dev/null
+  export FROGG_MAESTRO_PROJECT_PATH="$PROJECT_PARENT/$PROJECT_BASENAME"
+  mkdir -p "$FROGG_MAESTRO_PROJECT_PATH"
+  git -C "$FROGG_MAESTRO_PROJECT_PATH" init >/dev/null
+  git -C "$FROGG_MAESTRO_PROJECT_PATH" checkout -b main >/dev/null 2>&1 || true
+  git -C "$FROGG_MAESTRO_PROJECT_PATH" config user.name "Frogg Maestro"
+  git -C "$FROGG_MAESTRO_PROJECT_PATH" config user.email "maestro@frogg.local"
+  printf "# Workspace create Android repro\n" > "$FROGG_MAESTRO_PROJECT_PATH/README.md"
+  git -C "$FROGG_MAESTRO_PROJECT_PATH" add README.md
+  git -C "$FROGG_MAESTRO_PROJECT_PATH" commit -m "Initial commit" >/dev/null
 else
   PROJECT_PARENT=""
 fi
 
-export FDE_MAESTRO_PROJECT_NAME="${FDE_MAESTRO_PROJECT_NAME:-$(basename "$FDE_MAESTRO_PROJECT_PATH")}"
+export FROGG_MAESTRO_PROJECT_NAME="${FROGG_MAESTRO_PROJECT_NAME:-$(basename "$FROGG_MAESTRO_PROJECT_PATH")}"
 
 echo "=== Workspace Create Android Crash Harness ==="
 echo "Output dir: $OUT_DIR"
-echo "App id: $FDE_MAESTRO_APP_ID"
-echo "Android direct endpoint: $FDE_MAESTRO_DIRECT_ENDPOINT"
-echo "Daemon websocket: $FDE_MAESTRO_DAEMON_WS_URL"
-echo "Project: $FDE_MAESTRO_PROJECT_PATH"
-echo "Project name: $FDE_MAESTRO_PROJECT_NAME"
+echo "App id: $FROGG_MAESTRO_APP_ID"
+echo "Android direct endpoint: $FROGG_MAESTRO_DIRECT_ENDPOINT"
+echo "Daemon websocket: $FROGG_MAESTRO_DAEMON_WS_URL"
+echo "Project: $FROGG_MAESTRO_PROJECT_PATH"
+echo "Project name: $FROGG_MAESTRO_PROJECT_NAME"
 
 FLOW="$OUT_DIR/workspace-create-android-crash.rendered.yaml"
 render_flow_tree
@@ -111,8 +111,8 @@ import { pathToFileURL } from "node:url";
 import WebSocket from "ws";
 
 const repoRoot = process.env.REPO_ROOT;
-const projectPath = process.env.FDE_MAESTRO_PROJECT_PATH;
-const daemonUrl = process.env.FDE_MAESTRO_DAEMON_WS_URL;
+const projectPath = process.env.FROGG_MAESTRO_PROJECT_PATH;
+const daemonUrl = process.env.FROGG_MAESTRO_DAEMON_WS_URL;
 if (!repoRoot || !projectPath || !daemonUrl) {
   throw new Error("Missing required environment for daemon project setup.");
 }

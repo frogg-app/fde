@@ -1,5 +1,5 @@
 // Evaluates the built bridge bundle against a stubbed Tauri runtime and checks
-// the `window.fdeDesktop` surface. Run `npm run build:bridge` first.
+// the `window.froggDesktop` surface. Run `npm run build:bridge` first.
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -44,12 +44,12 @@ function loadBridge(hostInfo) {
   sandbox.globalThis = sandbox;
   vm.createContext(sandbox);
   vm.runInContext(bundle, sandbox, { filename: "bridge.js" });
-  return { bridge: sandbox.window.fdeDesktop, invocations, listeners, domListeners };
+  return { bridge: sandbox.window.froggDesktop, invocations, listeners, domListeners };
 }
 
 test("bridge exposes the essential members and none of menu/editor/browser", () => {
   const { bridge } = loadBridge({ platform: "linux", windowChromeMode: "custom-linux" });
-  assert.ok(bridge, "window.fdeDesktop is set");
+  assert.ok(bridge, "window.froggDesktop is set");
   assert.equal(bridge.platform, "linux");
   assert.equal(bridge.windowChromeMode, "custom-linux");
   for (const member of ["invoke", "getPendingOpenProject"]) {
@@ -175,7 +175,7 @@ test("events.on returns a promise resolving to an unlisten function", async () =
   assert.equal(typeof unlisten, "function");
   const listenCall = invocations.find((entry) => entry.cmd === "plugin:event|listen");
   assert.ok(listenCall, "registers a Tauri event listener");
-  assert.equal(listenCall.args.event, "fde:event:open-agent");
+  assert.equal(listenCall.args.event, "frogg:event:open-agent");
 });
 
 test("opener rejects non-http(s) urls before reaching the plugin", async () => {
@@ -204,6 +204,6 @@ test("events.on hands listeners the payload, not Tauri's event envelope", async 
   const listener = listeners.at(-1);
   assert.equal(typeof listener, "function", "registers a Tauri callback");
   const payload = { sessionId: "local-session-1", kind: "open" };
-  listener({ event: "fde:event:local-daemon-transport-event", id: 42, payload });
+  listener({ event: "frogg:event:local-daemon-transport-event", id: 42, payload });
   assert.deepEqual(received, [payload]);
 });

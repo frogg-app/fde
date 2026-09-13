@@ -80,11 +80,11 @@ export function ensureNotificationCenterRegistration(): void {
 }
 
 export function registerNotificationHandlers(): void {
-  handleDesktopIpc("fde:notification:isSupported", () => {
+  handleDesktopIpc("frogg:notification:isSupported", () => {
     return Notification.isSupported();
   });
 
-  handleDesktopIpc("fde:notification:send", async (event, rawInput?: NotificationInput) => {
+  handleDesktopIpc("frogg:notification:send", async (event, rawInput?: NotificationInput) => {
     if (!Notification.isSupported()) {
       return false;
     }
@@ -111,7 +111,7 @@ export function registerNotificationHandlers(): void {
       const win = focusSenderWindow(event.sender);
       if (win && data && Object.keys(data).length > 0) {
         const payload: NotificationClickPayload = { data };
-        win.webContents.send("fde:event:notification-click", payload);
+        win.webContents.send("frogg:event:notification-click", payload);
       }
       activeNotifications.delete(notification);
     });

@@ -1,4 +1,4 @@
-import { parseAgentDeepLink, type AgentDeepLinkTarget } from "@fde/protocol/agent-deep-link";
+import { parseAgentDeepLink, type AgentDeepLinkTarget } from "@frogg/protocol/agent-deep-link";
 
 export function parseAgentDeepLinkFromArgv(argv: string[]): AgentDeepLinkTarget | null {
   for (const arg of argv) {

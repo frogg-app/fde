@@ -12,32 +12,32 @@ export const outputRoot = path.join(root, ".generated/branding");
 export const uiOutput = path.join(root, "apps/ui/.generated/branding");
 
 export function resolveBrand(directory?: string) {
-  const selected = path.resolve(root, directory ?? process.env.FDE_BRAND_DIR ?? "brands/fde");
+  const selected = path.resolve(root, directory ?? process.env.FROGG_BRAND_DIR ?? "brands/frogg");
   const manifest = BrandManifestSchema.parse(
     JSON.parse(readFileSync(path.join(selected, "brand.json"), "utf8")),
   );
-  const official = realpathSync(selected) === realpathSync(path.join(root, "brands/fde"));
+  const official = realpathSync(selected) === realpathSync(path.join(root, "brands/frogg"));
   const brand = resolveBrandManifest(manifest);
   if (
     !official &&
-    (brand.id === "fde" ||
+    (brand.id === "frogg" ||
       [brand.cliName, brand.desktopBinaryName, brand.scheme].some((name) =>
-        ["fde"].includes(name),
+        ["frogg"].includes(name),
       ) ||
-      [".fde"].includes(brand.homeDir) ||
-      ["FDE"].includes(brand.envPrefix) ||
+      [".frogg"].includes(brand.homeDir) ||
+      ["FROGG"].includes(brand.envPrefix) ||
       brand.applicationId.startsWith("app.frogg.") ||
-      brand.applicationId.startsWith("sh.fde.") ||
-      ["fde-daemon", "fde"].includes(brand.serviceName) ||
+      brand.applicationId.startsWith("sh.frogg.") ||
+      ["frogg-daemon", "frogg"].includes(brand.serviceName) ||
       brand.launchdLabel.startsWith("app.frogg.") ||
-      brand.launchdLabel.startsWith("sh.fde."))
+      brand.launchdLabel.startsWith("sh.frogg."))
   ) {
     throw new Error(
-      "Custom brands must use independent identities; FDE/Fde identities are reserved",
+      "Custom brands must use independent identities; Frogg/Frogg identities are reserved",
     );
   }
   const hash = createHash("sha256");
-  hash.update("fde-brand-generator-v1\0");
+  hash.update("frogg-brand-generator-v1\0");
   hash.update(JSON.stringify({ ...manifest, assets: Object.keys(manifest.assets).sort() }));
   const assetFiles: Record<string, string> = {};
   for (const [key, value] of Object.entries(manifest.assets)) {

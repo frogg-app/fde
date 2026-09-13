@@ -267,7 +267,7 @@ mod tests {
             let (mut stream, _) = listener.accept().unwrap();
             let mut buffer = [0u8; 2048];
             let _ = stream.read(&mut buffer);
-            let body = r#"{"product":"fde","serverId":"srv_1","hostname":"box"}"#;
+            let body = r#"{"product":"frogg","serverId":"srv_1","hostname":"box"}"#;
             let _ = write!(
                 stream,
                 "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",

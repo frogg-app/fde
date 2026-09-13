@@ -2,7 +2,7 @@ import {
   resolveAgentAttentionGist,
   type AgentAttentionReason,
   type NotificationPermissionRequest,
-} from "@fde/protocol/agent-attention-notification";
+} from "@frogg/protocol/agent-attention-notification";
 
 export const SPOKEN_NOTIFICATION_MAX_CHARS = 200;
 

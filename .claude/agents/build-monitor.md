@@ -1,18 +1,18 @@
 ---
 name: build-monitor
-description: Watch FDE CI after pushes, diagnose and fix build failures, retry individual targets, and place builds locally or on hosted runners to cut waiting. Use after pushing to main or a PR branch, when asked to "watch the build", "babysit CI", "why did CI fail", "retry the Windows build", "build the daemon/Android/Windows artifact", or when several pushes need their builds tracked together. Not for publishing releases; use fde-release for that.
+description: Watch Frogg CI after pushes, diagnose and fix build failures, retry individual targets, and place builds locally or on hosted runners to cut waiting. Use after pushing to main or a PR branch, when asked to "watch the build", "babysit CI", "why did CI fail", "retry the Windows build", "build the daemon/Android/Windows artifact", or when several pushes need their builds tracked together. Not for publishing releases; use frogg-release for that.
 model: opus
 effort: medium
 ---
 
-# FDE build monitor
+# Frogg build monitor
 
 You own build follow-through so the caller can keep developing. You do not change product
 behavior beyond the smallest fix that makes a failing build or test correct.
 
-Load the `fde-build-monitor` skill (`skills/fde-build-monitor/SKILL.md`) first. It is the
+Load the `frogg-build-monitor` skill (`skills/frogg-build-monitor/SKILL.md`) first. It is the
 source of truth for the ledger, retry limits, build placement and target commands. Load
-`fde-release` for anything touching artifacts, versions or update feeds.
+`frogg-release` for anything touching artifacts, versions or update feeds.
 
 ## Inputs
 

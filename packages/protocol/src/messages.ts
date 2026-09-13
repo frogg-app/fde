@@ -76,33 +76,33 @@ import {
 } from "./browser-automation/rpc-schemas.js";
 import { BrowserAutomationHostCapabilitySchema } from "./browser-automation/capabilities.js";
 import {
-  FdeConfigRawSchema,
-  FdeLifecycleCommandRawSchema,
-  FdeMetadataGenerationEntrySchema,
-  FdeMetadataGenerationSchema,
-  FdeScriptEntryRawSchema,
-  FdeWorktreeConfigRawSchema,
-  FdeConfigRevisionSchema,
+  FroggConfigRawSchema,
+  FroggLifecycleCommandRawSchema,
+  FroggMetadataGenerationEntrySchema,
+  FroggMetadataGenerationSchema,
+  FroggScriptEntryRawSchema,
+  FroggWorktreeConfigRawSchema,
+  FroggConfigRevisionSchema,
   ProjectConfigRpcErrorSchema,
-  type FdeConfigRaw,
-  type FdeConfigRevision,
-  type FdeMetadataGeneration,
-  type FdeMetadataGenerationEntry,
-  type FdeScriptEntryRaw,
+  type FroggConfigRaw,
+  type FroggConfigRevision,
+  type FroggMetadataGeneration,
+  type FroggMetadataGenerationEntry,
+  type FroggScriptEntryRaw,
   type ProjectConfigRpcError,
-} from "./fde-config-schema.js";
+} from "./frogg-config-schema.js";
 export {
-  FdeConfigRawSchema,
-  FdeLifecycleCommandRawSchema,
-  FdeMetadataGenerationEntrySchema,
-  FdeMetadataGenerationSchema,
-  FdeScriptEntryRawSchema,
-  FdeWorktreeConfigRawSchema,
-  type FdeConfigRaw,
-  type FdeConfigRevision,
-  type FdeMetadataGeneration,
-  type FdeMetadataGenerationEntry,
-  type FdeScriptEntryRaw,
+  FroggConfigRawSchema,
+  FroggLifecycleCommandRawSchema,
+  FroggMetadataGenerationEntrySchema,
+  FroggMetadataGenerationSchema,
+  FroggScriptEntryRawSchema,
+  FroggWorktreeConfigRawSchema,
+  type FroggConfigRaw,
+  type FroggConfigRevision,
+  type FroggMetadataGeneration,
+  type FroggMetadataGenerationEntry,
+  type FroggScriptEntryRaw,
   type ProjectConfigRpcError,
 };
 // ---------------------------------------------------------------------------
@@ -1184,7 +1184,7 @@ export const GitHubPrAttachmentSchema = z.object({
 
 export const ForgeChangeRequestAttachmentSchema = z.object({
   type: z.literal("forge_change_request"),
-  mimeType: z.literal("application/fde-forge-change-request"),
+  mimeType: z.literal("application/frogg-forge-change-request"),
   forge: z.string().optional().default("github"),
   number: z.number().int().positive(),
   title: z.string(),
@@ -1209,7 +1209,7 @@ export const GitHubIssueAttachmentSchema = z.object({
 
 export const ForgeIssueAttachmentSchema = z.object({
   type: z.literal("forge_issue"),
-  mimeType: z.literal("application/fde-forge-issue"),
+  mimeType: z.literal("application/frogg-forge-issue"),
   forge: z.string().optional().default("github"),
   number: z.number().int().positive(),
   title: z.string(),
@@ -1263,7 +1263,7 @@ export const ReviewAttachmentCommentSchema = z.object({
 
 export const ReviewAttachmentSchema = z.object({
   type: z.literal("review"),
-  mimeType: z.literal("application/fde-review"),
+  mimeType: z.literal("application/frogg-review"),
   cwd: z.string(),
   mode: z.enum(["uncommitted", "base"]),
   baseRef: z.string().nullable().optional(),
@@ -1506,7 +1506,7 @@ export const DaemonConfigReloadRequestSchema = z.object({
   requestId: z.string(),
 });
 
-// Versioned-install self-update (`fde daemon self-update`), distinct from the
+// Versioned-install self-update (`frogg daemon self-update`), distinct from the
 // npm-based `daemon.update.request` which stays for upstream installs.
 export const DaemonUpdateCheckRequestSchema = z.object({
   type: z.literal("daemon.update.check.request"),
@@ -1628,8 +1628,8 @@ export const WriteProjectConfigRequestMessageSchema = z.object({
   type: z.literal("write_project_config_request"),
   requestId: z.string(),
   repoRoot: z.string(),
-  config: FdeConfigRawSchema,
-  expectedRevision: FdeConfigRevisionSchema.nullable(),
+  config: FroggConfigRawSchema,
+  expectedRevision: FroggConfigRevisionSchema.nullable(),
 });
 
 // ============================================================================
@@ -2351,8 +2351,8 @@ export const StashPopRequestSchema = z.object({
 export const StashListRequestSchema = z.object({
   type: z.literal("stash_list_request"),
   cwd: z.string(),
-  /** If true, only return fde-created stashes. Default true. */
-  fdeOnly: z.boolean().optional(),
+  /** If true, only return frogg-created stashes. Default true. */
+  froggOnly: z.boolean().optional(),
   requestId: z.string(),
 });
 
@@ -2428,15 +2428,15 @@ export const DirectorySuggestionsRequestSchema = z.object({
   requestId: z.string(),
 });
 
-export const FdeWorktreeListRequestSchema = z.object({
-  type: z.literal("fde_worktree_list_request"),
+export const FroggWorktreeListRequestSchema = z.object({
+  type: z.literal("frogg_worktree_list_request"),
   cwd: z.string().optional(),
   repoRoot: z.string().optional(),
   requestId: z.string(),
 });
 
-export const FdeWorktreeArchiveRequestSchema = z.object({
-  type: z.literal("fde_worktree_archive_request"),
+export const FroggWorktreeArchiveRequestSchema = z.object({
+  type: z.literal("frogg_worktree_archive_request"),
   worktreePath: z.string().optional(),
   repoRoot: z.string().optional(),
   branchName: z.string().optional(),
@@ -2450,7 +2450,7 @@ export const FdeWorktreeArchiveRequestSchema = z.object({
   // Scope of the archive operation. "workspace" archives a single workspace record
   // (today's default UI behavior). "worktree" archives every active workspace whose
   // cwd resolves to the target directory, then removes the directory if it is
-  // Fde-owned. Omitted/unknown values default to "workspace" for old-client safety.
+  // Frogg-owned. Omitted/unknown values default to "workspace" for old-client safety.
   scope: z.enum(["workspace", "worktree"]).optional().default("workspace"),
   // COMPAT(worktreeDiskDeletion): added in v0.1.97, ignored as of v0.1.97
   // (disk removal derived from scope + last-reference + ownership); field
@@ -2464,8 +2464,8 @@ export const FirstAgentContextSchema = z.object({
   attachments: AgentAttachmentsSchema,
 });
 
-export const CreateFdeWorktreeRequestSchema = z.object({
-  type: z.literal("create_fde_worktree_request"),
+export const CreateFroggWorktreeRequestSchema = z.object({
+  type: z.literal("create_frogg_worktree_request"),
   cwd: z.string(),
   projectId: z.string().optional(),
   worktreeSlug: z.string().optional(),
@@ -2561,7 +2561,7 @@ export const ArchiveWorkspaceRequestSchema = z.object({
 
 // Create a new workspace record. Unlike open_project, this never deduplicates by
 // directory: it always produces a fresh workspace. The source discriminates
-// between an existing local directory and a newly created fde worktree.
+// between an existing local directory and a newly created frogg worktree.
 export const WorkspaceCreateRequestSchema = z.object({
   type: z.literal("workspace.create.request"),
   requestId: z.string(),
@@ -3208,9 +3208,9 @@ export const SessionInboundMessageSchema = z.discriminatedUnion("type", [
   ForgeSearchRequestSchema,
   GitHubSearchRequestSchema,
   DirectorySuggestionsRequestSchema,
-  FdeWorktreeListRequestSchema,
-  FdeWorktreeArchiveRequestSchema,
-  CreateFdeWorktreeRequestSchema,
+  FroggWorktreeListRequestSchema,
+  FroggWorktreeArchiveRequestSchema,
+  CreateFroggWorktreeRequestSchema,
   WorkspaceSetupStatusRequestSchema,
   LegacyListAvailableEditorsRequestSchema,
   LegacyOpenInEditorRequestSchema,
@@ -3661,7 +3661,7 @@ export const ServerInfoStatusPayloadSchema = z
         daemonDiagnostics: z.boolean().optional(),
         // COMPAT(daemonSelfUpdate): added in v0.1.93, remove gate after 2026-12-13.
         daemonSelfUpdate: z.boolean().optional(),
-        // COMPAT(daemonUpdateRuns): added in v0.1.14 (FDE), remove gate after 2027-03-03.
+        // COMPAT(daemonUpdateRuns): added in v0.1.14 (Frogg), remove gate after 2027-03-03.
         daemonUpdateRuns: z.boolean().optional(),
         // COMPAT(agentForkContext): added in v0.1.102, remove gate after 2026-12-28.
         agentForkContext: z.boolean().optional(),
@@ -3844,7 +3844,7 @@ export const ProjectCheckoutLiteNotGitPayloadSchema = z
     currentBranch: z.null(),
     remoteUrl: z.null(),
     worktreeRoot: z.null().optional(),
-    isFdeOwnedWorktree: z.literal(false),
+    isFroggOwnedWorktree: z.literal(false),
     mainRepoRoot: z.null(),
   })
   .transform((value) => ({
@@ -3852,14 +3852,14 @@ export const ProjectCheckoutLiteNotGitPayloadSchema = z
     worktreeRoot: null,
   }));
 
-export const ProjectCheckoutLiteGitNonFdePayloadSchema = z
+export const ProjectCheckoutLiteGitNonFroggPayloadSchema = z
   .object({
     cwd: z.string(),
     isGit: z.literal(true),
     currentBranch: z.string().nullable(),
     remoteUrl: z.string().nullable(),
     worktreeRoot: z.string().optional(),
-    isFdeOwnedWorktree: z.literal(false),
+    isFroggOwnedWorktree: z.literal(false),
     mainRepoRoot: z.string().nullable().optional().default(null),
   })
   .transform((value) => ({
@@ -3867,14 +3867,14 @@ export const ProjectCheckoutLiteGitNonFdePayloadSchema = z
     worktreeRoot: value.worktreeRoot ?? value.cwd,
   }));
 
-export const ProjectCheckoutLiteGitFdePayloadSchema = z
+export const ProjectCheckoutLiteGitFroggPayloadSchema = z
   .object({
     cwd: z.string(),
     isGit: z.literal(true),
     currentBranch: z.string().nullable(),
     remoteUrl: z.string().nullable(),
     worktreeRoot: z.string().optional(),
-    isFdeOwnedWorktree: z.literal(true),
+    isFroggOwnedWorktree: z.literal(true),
     mainRepoRoot: z.string(),
   })
   .transform((value) => ({
@@ -3884,8 +3884,8 @@ export const ProjectCheckoutLiteGitFdePayloadSchema = z
 
 export const ProjectCheckoutLitePayloadSchema = z.union([
   ProjectCheckoutLiteNotGitPayloadSchema,
-  ProjectCheckoutLiteGitNonFdePayloadSchema,
-  ProjectCheckoutLiteGitFdePayloadSchema,
+  ProjectCheckoutLiteGitNonFroggPayloadSchema,
+  ProjectCheckoutLiteGitFroggPayloadSchema,
 ]);
 
 export const ProjectPlacementPayloadSchema = z.object({
@@ -3916,7 +3916,7 @@ const WorkspaceGitRuntimePayloadSchema = z
   .object({
     currentBranch: z.string().nullable().optional(),
     remoteUrl: z.string().nullable().optional(),
-    isFdeOwnedWorktree: z.boolean().optional(),
+    isFroggOwnedWorktree: z.boolean().optional(),
     isDirty: z.boolean().nullable().optional(),
     aheadBehind: z
       .object({
@@ -3993,7 +3993,7 @@ export const WorkspaceDescriptorPayloadSchema = z
     projectRootPath: z.string(),
     workspaceDirectory: z.string().optional(),
     // COMPAT(worktreeSlug): added in v0.2.6, remove optional after 2027-01-31.
-    // Present only for Fde-owned worktrees; this is the basename of their root directory.
+    // Present only for Frogg-owned worktrees; this is the basename of their root directory.
     worktreeSlug: z.string().optional(),
     projectKind: z.enum(["git", "non_git", "directory"]),
     // COMPAT(workspaces): keep legacy directory workspace kind parseable.
@@ -5003,8 +5003,8 @@ export const ReadProjectConfigResponseMessageSchema = z.object({
       requestId: z.string(),
       repoRoot: z.string(),
       ok: z.literal(true),
-      config: FdeConfigRawSchema.nullable(),
-      revision: FdeConfigRevisionSchema.nullable(),
+      config: FroggConfigRawSchema.nullable(),
+      revision: FroggConfigRevisionSchema.nullable(),
       hasUncommittedWorktreeSetupChanges: z.boolean().optional(),
     }),
     z.object({
@@ -5025,8 +5025,8 @@ export const WriteProjectConfigResponseMessageSchema = z.object({
       requestId: z.string(),
       repoRoot: z.string(),
       ok: z.literal(true),
-      config: FdeConfigRawSchema,
-      revision: FdeConfigRevisionSchema,
+      config: FroggConfigRawSchema,
+      revision: FroggConfigRevisionSchema,
       hasUncommittedWorktreeSetupChanges: z.boolean().optional(),
     }),
     z.object({
@@ -5111,7 +5111,7 @@ const CheckoutStatusCommonSchema = z.object({
 
 const CheckoutStatusNotGitSchema = CheckoutStatusCommonSchema.extend({
   isGit: z.literal(false),
-  isFdeOwnedWorktree: z.literal(false),
+  isFroggOwnedWorktree: z.literal(false),
   repoRoot: z.null(),
   currentBranch: z.null(),
   isDirty: z.null(),
@@ -5123,9 +5123,9 @@ const CheckoutStatusNotGitSchema = CheckoutStatusCommonSchema.extend({
   remoteUrl: z.null(),
 });
 
-const CheckoutStatusGitNonFdeSchema = CheckoutStatusCommonSchema.extend({
+const CheckoutStatusGitNonFroggSchema = CheckoutStatusCommonSchema.extend({
   isGit: z.literal(true),
-  isFdeOwnedWorktree: z.literal(false),
+  isFroggOwnedWorktree: z.literal(false),
   repoRoot: z.string(),
   mainRepoRoot: z.string().nullable().optional().default(null),
   currentBranch: z.string().nullable(),
@@ -5138,9 +5138,9 @@ const CheckoutStatusGitNonFdeSchema = CheckoutStatusCommonSchema.extend({
   remoteUrl: z.string().nullable(),
 });
 
-const CheckoutStatusGitFdeSchema = CheckoutStatusCommonSchema.extend({
+const CheckoutStatusGitFroggSchema = CheckoutStatusCommonSchema.extend({
   isGit: z.literal(true),
-  isFdeOwnedWorktree: z.literal(true),
+  isFroggOwnedWorktree: z.literal(true),
   repoRoot: z.string(),
   mainRepoRoot: z.string(),
   currentBranch: z.string().nullable(),
@@ -5157,8 +5157,8 @@ export const CheckoutStatusResponseSchema = z.object({
   type: z.literal("checkout_status_response"),
   payload: z.union([
     CheckoutStatusNotGitSchema,
-    CheckoutStatusGitNonFdeSchema,
-    CheckoutStatusGitFdeSchema,
+    CheckoutStatusGitNonFroggSchema,
+    CheckoutStatusGitFroggSchema,
   ]),
 });
 
@@ -5295,7 +5295,11 @@ const CheckoutStatusUpdateMetadataSchema = z.object({
 export const CheckoutStatusUpdateSchema = z.object({
   type: z.literal("checkout_status_update"),
   payload: z
-    .union([CheckoutStatusNotGitSchema, CheckoutStatusGitNonFdeSchema, CheckoutStatusGitFdeSchema])
+    .union([
+      CheckoutStatusNotGitSchema,
+      CheckoutStatusGitNonFroggSchema,
+      CheckoutStatusGitFroggSchema,
+    ])
     .and(CheckoutStatusUpdateMetadataSchema),
 });
 
@@ -5709,7 +5713,7 @@ const StashEntrySchema = z.object({
   index: z.number().int().min(0),
   message: z.string(),
   branch: z.string().nullable(),
-  isFde: z.boolean(),
+  isFrogg: z.boolean(),
 });
 
 export const StashSaveResponseSchema = z.object({
@@ -5821,24 +5825,24 @@ export const DirectorySuggestionsResponseSchema = z.object({
   }),
 });
 
-const FdeWorktreeSchema = z.object({
+const FroggWorktreeSchema = z.object({
   worktreePath: z.string(),
   createdAt: z.string(),
   branchName: z.string().nullable().optional(),
   head: z.string().nullable().optional(),
 });
 
-export const FdeWorktreeListResponseSchema = z.object({
-  type: z.literal("fde_worktree_list_response"),
+export const FroggWorktreeListResponseSchema = z.object({
+  type: z.literal("frogg_worktree_list_response"),
   payload: z.object({
-    worktrees: z.array(FdeWorktreeSchema),
+    worktrees: z.array(FroggWorktreeSchema),
     error: CheckoutErrorSchema.nullable(),
     requestId: z.string(),
   }),
 });
 
-export const FdeWorktreeArchiveResponseSchema = z.object({
-  type: z.literal("fde_worktree_archive_response"),
+export const FroggWorktreeArchiveResponseSchema = z.object({
+  type: z.literal("frogg_worktree_archive_response"),
   payload: z.object({
     success: z.boolean(),
     removedAgents: z.array(z.string()).optional(),
@@ -5847,8 +5851,8 @@ export const FdeWorktreeArchiveResponseSchema = z.object({
   }),
 });
 
-export const CreateFdeWorktreeResponseSchema = z.object({
-  type: z.literal("create_fde_worktree_response"),
+export const CreateFroggWorktreeResponseSchema = z.object({
+  type: z.literal("create_frogg_worktree_response"),
   payload: z.object({
     workspace: WorkspaceDescriptorPayloadSchema.nullable(),
     error: z.string().nullable(),
@@ -6648,9 +6652,9 @@ export const SessionOutboundMessageSchema = z.discriminatedUnion("type", [
   ForgeSearchResponseSchema,
   GitHubSearchResponseSchema,
   DirectorySuggestionsResponseSchema,
-  FdeWorktreeListResponseSchema,
-  FdeWorktreeArchiveResponseSchema,
-  CreateFdeWorktreeResponseSchema,
+  FroggWorktreeListResponseSchema,
+  FroggWorktreeArchiveResponseSchema,
+  CreateFroggWorktreeResponseSchema,
   FileExplorerResponseSchema,
   FileSubscribeResponseSchema,
   FileUnsubscribeResponseSchema,
@@ -7081,13 +7085,13 @@ export type GitHubSearchKind = z.infer<typeof GitHubSearchKindSchema>;
 export type GitHubSearchRequest = z.infer<typeof GitHubSearchRequestSchema>;
 export type GitHubSearchResponse = z.infer<typeof GitHubSearchResponseSchema>;
 export type ChangeRequestCheckoutSource = z.infer<typeof ChangeRequestCheckoutSourceSchema>;
-export type CreateFdeWorktreeRequest = z.infer<typeof CreateFdeWorktreeRequestSchema>;
+export type CreateFroggWorktreeRequest = z.infer<typeof CreateFroggWorktreeRequestSchema>;
 export type DirectorySuggestionsRequest = z.infer<typeof DirectorySuggestionsRequestSchema>;
 export type DirectorySuggestionsResponse = z.infer<typeof DirectorySuggestionsResponseSchema>;
-export type FdeWorktreeListRequest = z.infer<typeof FdeWorktreeListRequestSchema>;
-export type FdeWorktreeListResponse = z.infer<typeof FdeWorktreeListResponseSchema>;
-export type FdeWorktreeArchiveRequest = z.infer<typeof FdeWorktreeArchiveRequestSchema>;
-export type FdeWorktreeArchiveResponse = z.infer<typeof FdeWorktreeArchiveResponseSchema>;
+export type FroggWorktreeListRequest = z.infer<typeof FroggWorktreeListRequestSchema>;
+export type FroggWorktreeListResponse = z.infer<typeof FroggWorktreeListResponseSchema>;
+export type FroggWorktreeArchiveRequest = z.infer<typeof FroggWorktreeArchiveRequestSchema>;
+export type FroggWorktreeArchiveResponse = z.infer<typeof FroggWorktreeArchiveResponseSchema>;
 export type WorkspaceSetupStatusRequest = z.infer<typeof WorkspaceSetupStatusRequestSchema>;
 export type LegacyListAvailableEditorsRequest = z.infer<
   typeof LegacyListAvailableEditorsRequestSchema

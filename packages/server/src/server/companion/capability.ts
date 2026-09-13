@@ -1,4 +1,4 @@
-import type { ServerCapabilityState } from "@fde/protocol/messages";
+import type { ServerCapabilityState } from "@frogg/protocol/messages";
 
 import type { PersistedConfig } from "../persisted-config.js";
 import {

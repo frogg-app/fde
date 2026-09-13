@@ -1,5 +1,5 @@
-import type { DaemonClient } from "@fde/client/internal/daemon-client";
-import { getOpenAgentTabLabel } from "@fde/protocol/agent-labels";
+import type { DaemonClient } from "@frogg/client/internal/daemon-client";
+import { getOpenAgentTabLabel } from "@frogg/protocol/agent-labels";
 import { useEffect, useRef, useState } from "react";
 import { useSessionStore } from "@/stores/session-store";
 import { getOrCreateClientId } from "@/utils/client-id";

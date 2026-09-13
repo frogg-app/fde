@@ -1,7 +1,7 @@
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { loadPersistedConfig } from "@fde/server";
+import { loadPersistedConfig } from "@frogg/server";
 import { afterEach, describe, expect, test } from "vitest";
 
 import { describeClaimStatus } from "./claim.js";
@@ -10,7 +10,7 @@ import { parseTrustLanMode, setTrustLanInConfig, type TrustLanApplied } from "./
 const homes: string[] = [];
 
 function createHome(): string {
-  const home = mkdtempSync(path.join(os.tmpdir(), "fde-cli-trust-lan-"));
+  const home = mkdtempSync(path.join(os.tmpdir(), "frogg-cli-trust-lan-"));
   homes.push(home);
   return home;
 }
@@ -64,7 +64,7 @@ describe("daemon trust-lan", () => {
     const home = createHome();
     // This test process stands in for the daemon: the pid file makes the CLI treat it as running.
     writeFileSync(
-      path.join(home, "fde.pid"),
+      path.join(home, "frogg.pid"),
       JSON.stringify({ pid: process.pid, listen: "127.0.0.1:65001" }),
     );
     const reloads: string[] = [];
@@ -85,13 +85,13 @@ describe("daemon trust-lan", () => {
 
     const overridden = await setTrustLanInConfig("on", { home, reloadLive });
     expect(overridden.applied).toEqual({ status: "env_override" });
-    expect(overridden.message).toContain("FDE_TRUST_LAN");
+    expect(overridden.message).toContain("FROGG_TRUST_LAN");
 
     const failed = await setTrustLanInConfig("on", { home, reloadLive });
     expect(failed.applied).toEqual({
       status: "restart_required",
       reason: "config reload failed (boom)",
     });
-    expect(failed.message).toContain("fde daemon restart");
+    expect(failed.message).toContain("frogg daemon restart");
   });
 });

@@ -1,9 +1,9 @@
-import type { ProjectIcon } from "@fde/protocol/messages";
-import type { DaemonClient } from "@fde/client/internal/daemon-client";
+import type { ProjectIcon } from "@frogg/protocol/messages";
+import type { DaemonClient } from "@frogg/client/internal/daemon-client";
 import { projectIconCacheStorage } from "./icon-cache-storage";
 import type { ProjectIconTarget } from "./icon-target";
 
-const STORAGE_KEY = "@fde:project-icon-cache";
+const STORAGE_KEY = "@frogg:project-icon-cache";
 const CACHE_VERSION = 1;
 const PERSIST_DELAY_MS = 250;
 const MAX_ENTRIES = 512;

@@ -1,8 +1,8 @@
 ---
 import { Image } from "astro:assets";
-import logo from "../../assets/brand/fde-logo.png";
+import logo from "../../assets/brand/frogg-logo.png";
 
-const repo = "https://github.com/frogg-app/fde";
+const repo = "https://github.com/frogg-app/frogg";
 const columns = [
   {
     title: "Product",
@@ -38,11 +38,11 @@ const columns = [
     <div class="about">
       <a class="brand" href="/">
         <Image src={logo} alt="" width={32} height={25} densities={[1, 2]} />
-        <span>FDE</span>
+        <span>Frogg</span>
       </a>
-      <p>Frogg Development Environment. Run and monitor coding agents on hardware you control.</p>
+      <p>Frogg. Run and monitor coding agents on hardware you control.</p>
       <p class="fine">
-        Apache-2.0. FDE is a fork of <a href="https://github.com/getpaseo/paseo">Paseo</a>.
+        Apache-2.0. Frogg is a fork of <a href="https://github.com/getpaseo/paseo">Paseo</a>.
       </p>
     </div>
     {
@@ -64,8 +64,8 @@ const columns = [
 
 <style>
   .site-footer {
-    border-top: 1px solid var(--fde-border);
-    background: var(--fde-bg-elevated);
+    border-top: 1px solid var(--frogg-border);
+    background: var(--frogg-bg-elevated);
     margin-top: 4rem;
   }
   .inner {
@@ -93,7 +93,7 @@ const columns = [
     align-items: center;
     gap: 0.5rem;
     font-weight: 750;
-    color: var(--fde-text);
+    color: var(--frogg-text);
     text-decoration: none;
   }
   .brand img {
@@ -102,12 +102,12 @@ const columns = [
   }
   p {
     margin: 0.75rem 0 0;
-    color: var(--fde-text-muted);
+    color: var(--frogg-text-muted);
     font-size: 0.9rem;
   }
   .fine {
     font-size: 0.8rem;
-    color: var(--fde-text-faint);
+    color: var(--frogg-text-faint);
   }
   .fine a {
     color: inherit;
@@ -118,7 +118,7 @@ const columns = [
     font-weight: 650;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: var(--fde-text-faint);
+    color: var(--frogg-text-faint);
   }
   ul {
     list-style: none;
@@ -130,12 +130,12 @@ const columns = [
   ul a {
     display: inline-block;
     padding: 0.3rem 0;
-    color: var(--fde-text-muted);
+    color: var(--frogg-text-muted);
     text-decoration: none;
     font-size: 0.92rem;
-    transition: color var(--fde-fast) var(--fde-ease);
+    transition: color var(--frogg-fast) var(--frogg-ease);
   }
   ul a:hover {
-    color: var(--fde-accent-bright);
+    color: var(--frogg-accent-bright);
   }
 </style>

@@ -1,4 +1,4 @@
-import { brandIdentity } from "@fde/branding";
+import { brandIdentity } from "@frogg/branding";
 import { WebSocket, WebSocketServer } from "ws";
 import type { IncomingMessage, Server as HTTPServer } from "http";
 import { join } from "path";
@@ -31,8 +31,8 @@ import {
   type WSOutboundMessage,
   wrapSessionMessage,
 } from "./messages.js";
-import { asUint8Array, decodeBinaryFrame } from "@fde/protocol/binary-frames/index";
-import type { TerminalActivity } from "@fde/protocol/terminal-activity";
+import { asUint8Array, decodeBinaryFrame } from "@frogg/protocol/binary-frames/index";
+import type { TerminalActivity } from "@frogg/protocol/terminal-activity";
 import type { HostnamesConfig } from "./hostnames.js";
 import { isHostnameAllowed } from "./hostnames.js";
 import {
@@ -83,7 +83,7 @@ import {
   type AgentAttentionNotificationPayload,
   type AgentAttentionReason,
   type NotificationPermissionRequest,
-} from "@fde/protocol/agent-attention-notification";
+} from "@frogg/protocol/agent-attention-notification";
 import { createGitHubService } from "../services/github-service.js";
 import type { ForgeService } from "../services/forge-service.js";
 import {
@@ -104,12 +104,12 @@ import {
   CLIENT_SHUTDOWN_RPC_REASON,
   normalizeClientRestartRpcReason,
 } from "./lifecycle-reasons.js";
-import { CLIENT_CAPS } from "@fde/protocol/client-capabilities";
-import type { BrowserAutomationExecuteResponse } from "@fde/protocol/browser-automation/rpc-schemas";
+import { CLIENT_CAPS } from "@frogg/protocol/client-capabilities";
+import type { BrowserAutomationExecuteResponse } from "@frogg/protocol/browser-automation/rpc-schemas";
 import {
   BrowserAutomationHostCapabilitySchema,
   type BrowserAutomationHostCapability,
-} from "@fde/protocol/browser-automation/capabilities";
+} from "@frogg/protocol/browser-automation/capabilities";
 import type { BrowserToolsBroker } from "./browser-tools/broker.js";
 import type { DaemonRuntimeConfig } from "./session/daemon/daemon-session.js";
 import { DirectorySyncService } from "./directory-sync/index.js";
@@ -212,7 +212,7 @@ function createFallbackWorkspaceGitSnapshot(cwd: string): WorkspaceGitRuntimeSna
       mainRepoRoot: null,
       currentBranch: null,
       remoteUrl: null,
-      isFdeOwnedWorktree: false,
+      isFroggOwnedWorktree: false,
       isDirty: null,
       baseRef: null,
       aheadBehind: null,
@@ -246,7 +246,7 @@ function createFallbackWorkspaceGitService(): WorkspaceGitService {
       currentBranch: null,
       remoteUrl: null,
       worktreeRoot: null,
-      isFdeOwnedWorktree: false,
+      isFroggOwnedWorktree: false,
       mainRepoRoot: null,
     }),
     getSnapshot: async (cwd: string) => createFallbackWorkspaceGitSnapshot(cwd),
@@ -573,7 +573,7 @@ export class VoiceAssistantWebSocketServer {
   private readonly workspaceGitService: WorkspaceGitService;
   private readonly workspaceAutoName: WorkspaceAutoName;
   private readonly downloadTokenStore: DownloadTokenStore;
-  private readonly fdeHome: string;
+  private readonly froggHome: string;
   private readonly worktreesRoot: string | undefined;
   private readonly daemonConfigStore: DaemonConfigStore;
   private readonly pushNotifications: PushNotifications;
@@ -629,7 +629,7 @@ export class VoiceAssistantWebSocketServer {
     agentManager: AgentManager,
     agentStorage: AgentStorage,
     downloadTokenStore: DownloadTokenStore,
-    fdeHome: string,
+    froggHome: string,
     daemonConfigStore: DaemonConfigStore,
     mcpBaseUrl: string | null,
     wsConfig: WebSocketServerConfig,
@@ -701,7 +701,7 @@ export class VoiceAssistantWebSocketServer {
     this.workspaceGitService = workspaceGitService ?? createFallbackWorkspaceGitService();
     this.workspaceAutoName = workspaceAutoName;
     this.downloadTokenStore = downloadTokenStore;
-    this.fdeHome = fdeHome;
+    this.froggHome = froggHome;
     this.worktreesRoot = daemonRuntimeConfig?.worktreesRoot;
     this.daemonConfigStore = daemonConfigStore;
     this.mcpBaseUrl = mcpBaseUrl;
@@ -748,7 +748,7 @@ export class VoiceAssistantWebSocketServer {
     const pushLogger = this.logger.child({ module: "push" });
     this.pushNotifications = createPushNotifications({
       logger: pushLogger,
-      filePath: join(fdeHome, "push-tokens.json"),
+      filePath: join(froggHome, "push-tokens.json"),
     });
     this.pushNotificationSender = pushNotificationSender ?? this.pushNotifications;
 
@@ -1428,7 +1428,7 @@ export class VoiceAssistantWebSocketServer {
       downloadTokenStore: this.downloadTokenStore,
       pushNotifications: this.pushNotifications,
       spokenAlerts: this.spokenAlerts,
-      fdeHome: this.fdeHome,
+      froggHome: this.froggHome,
       worktreesRoot: this.worktreesRoot,
       agentManager: this.agentManager,
       agentStorage: this.agentStorage,
@@ -1724,7 +1724,7 @@ export class VoiceAssistantWebSocketServer {
         daemonSelfUpdate:
           this.daemonRuntimeConfig?.desktopManaged !== true &&
           !this.daemonRuntimeConfig?.update?.installInfo.runningRoot,
-        // COMPAT(daemonUpdateRuns): added in v0.1.14 (FDE), remove gate after 2027-03-03.
+        // COMPAT(daemonUpdateRuns): added in v0.1.14 (Frogg), remove gate after 2027-03-03.
         daemonUpdateRuns: this.daemonRuntimeConfig?.update !== undefined,
         // COMPAT(agentForkContext): added in v0.1.102, remove gate after 2026-12-28.
         agentForkContext: true,

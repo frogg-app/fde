@@ -5,7 +5,7 @@ import path from "node:path";
 import { test } from "node:test";
 import { isAppForeground, smokeAndroidApk } from "./smoke-android-apk.mjs";
 
-const appId = "app.frogg.fde";
+const appId = "app.frogg.frogg";
 const resumed = `mResumedActivity: ActivityRecord{abc u0 ${appId}/.MainActivity t1}`;
 function fakeAdb(overrides = {}) {
   const calls = [];
@@ -120,7 +120,7 @@ test("detects foreground loss during observation, not only after the final wait"
     },
   );
   assert.equal(
-    isAppForeground("mResumedActivity: app.frogg.fde.other/.MainActivity", appId),
+    isAppForeground("mResumedActivity: app.frogg.frogg.other/.MainActivity", appId),
     false,
   );
 });

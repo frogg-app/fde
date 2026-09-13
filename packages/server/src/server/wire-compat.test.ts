@@ -2,14 +2,14 @@ import pino from "pino";
 import { z } from "zod";
 import { describe, expect, test } from "vitest";
 
-import { CLIENT_CAPS } from "@fde/protocol/client-capabilities";
+import { CLIENT_CAPS } from "@frogg/protocol/client-capabilities";
 import {
   AgentTimelineItemPayloadSchema,
   FetchAgentTimelineResponseMessageSchema,
   SessionInboundMessageSchema,
   SessionOutboundMessageSchema,
   type SessionOutboundMessage,
-} from "@fde/protocol/messages";
+} from "@frogg/protocol/messages";
 import { Session, type SessionOptions } from "./session.js";
 import { OWNER_PERMISSIONS } from "./authorization/index.js";
 import { DirectorySyncService } from "./directory-sync/index.js";
@@ -17,7 +17,7 @@ import { createProviderSnapshotManagerStub } from "./test-utils/session-stubs.js
 import type { AgentTimelineRow } from "./agent/agent-manager.js";
 import { InMemoryAgentTimelineStore } from "./agent/agent-timeline-store.js";
 import type { AgentTimelineFetchOptions } from "./agent/agent-timeline-store-types.js";
-import { handleCreateFdeWorktreeRequest } from "./worktree-session.js";
+import { handleCreateFroggWorktreeRequest } from "./worktree-session.js";
 import { createPersistedProjectRecord } from "./workspace-registry.js";
 
 const LegacyTimelineEntryPayloadSchema = z.object({
@@ -213,7 +213,7 @@ function createSessionForWireCompatTest(options?: {
     logger: pino({ level: "silent" }),
     downloadTokenStore: {} as SessionOptions["downloadTokenStore"],
     pushNotifications: {} as SessionOptions["pushNotifications"],
-    fdeHome: "/tmp/fde-home",
+    froggHome: "/tmp/frogg-home",
     agentManager: new InMemoryAgentManager(
       options?.rows ?? rows,
     ) as unknown as SessionOptions["agentManager"],
@@ -450,7 +450,7 @@ describe("wire compatibility", () => {
     const workflow = new InMemoryWorktreeWorkflow();
 
     const dependencies = {
-      fdeHome: "/tmp/fde-home",
+      froggHome: "/tmp/frogg-home",
       describeWorkspaceRecord: async () =>
         ({
           id: "ws-1",
@@ -467,11 +467,11 @@ describe("wire compatibility", () => {
         }) as never,
       emit() {},
       sessionLogger: pino({ level: "silent" }),
-      createFdeWorktreeWorkflow: workflow.create.bind(workflow),
+      createFroggWorktreeWorkflow: workflow.create.bind(workflow),
     };
 
     const legacyRequest = SessionInboundMessageSchema.parse({
-      type: "create_fde_worktree_request",
+      type: "create_frogg_worktree_request",
       requestId: "req-legacy",
       cwd: "/tmp/repo",
       worktreeSlug: "legacy-worktree",
@@ -482,13 +482,13 @@ describe("wire compatibility", () => {
           mimeType: "application/github-issue",
           number: 55,
           title: "Improve startup error details",
-          url: "https://github.com/frogg-app/fde/issues/55",
+          url: "https://github.com/frogg-app/frogg/issues/55",
         },
       ],
     });
 
     const newRequest = SessionInboundMessageSchema.parse({
-      type: "create_fde_worktree_request",
+      type: "create_frogg_worktree_request",
       requestId: "req-new",
       cwd: "/tmp/repo",
       worktreeSlug: "legacy-worktree",
@@ -500,21 +500,21 @@ describe("wire compatibility", () => {
             mimeType: "application/github-issue",
             number: 55,
             title: "Improve startup error details",
-            url: "https://github.com/frogg-app/fde/issues/55",
+            url: "https://github.com/frogg-app/frogg/issues/55",
           },
         ],
       },
     });
 
-    if (legacyRequest.type !== "create_fde_worktree_request") {
+    if (legacyRequest.type !== "create_frogg_worktree_request") {
       throw new Error("Expected legacy worktree request");
     }
-    if (newRequest.type !== "create_fde_worktree_request") {
+    if (newRequest.type !== "create_frogg_worktree_request") {
       throw new Error("Expected new worktree request");
     }
 
-    await handleCreateFdeWorktreeRequest(dependencies, legacyRequest);
-    await handleCreateFdeWorktreeRequest(dependencies, newRequest);
+    await handleCreateFroggWorktreeRequest(dependencies, legacyRequest);
+    await handleCreateFroggWorktreeRequest(dependencies, newRequest);
 
     expect(workflow.capturedInputs).toHaveLength(2);
     expect(workflow.capturedInputs[0]).toEqual(workflow.capturedInputs[1]);
@@ -529,7 +529,7 @@ describe("wire compatibility", () => {
             mimeType: "application/github-issue",
             number: 55,
             title: "Improve startup error details",
-            url: "https://github.com/frogg-app/fde/issues/55",
+            url: "https://github.com/frogg-app/frogg/issues/55",
           },
         ],
       },
@@ -537,7 +537,7 @@ describe("wire compatibility", () => {
       action: undefined,
       githubPrNumber: undefined,
       runSetup: false,
-      fdeHome: "/tmp/fde-home",
+      froggHome: "/tmp/frogg-home",
     });
   });
 });

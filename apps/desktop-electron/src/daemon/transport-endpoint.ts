@@ -1,7 +1,7 @@
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { createServer, type Server, type Socket } from "node:net";
-import { buildSshTunnelArgs, validatePort, validateSshHost } from "@fde/protocol/ssh-transport";
-import { brand } from "@fde/branding";
+import { buildSshTunnelArgs, validatePort, validateSshHost } from "@frogg/protocol/ssh-transport";
+import { brand } from "@frogg/branding";
 import { createSshPasswordEnvironment } from "./ssh-password.js";
 import type { TransportEndpoint } from "./local-transport.js";
 
@@ -34,7 +34,7 @@ const SSH_STDERR_LIMIT = 8192;
  * named pipe.  The `ws` library supports these via the `ws+unix://` scheme:
  *
  *   ws+unix:///path/to/socket:/ws
- *   ws+unix://./pipe/fde:/ws        (Windows named pipe)
+ *   ws+unix://./pipe/frogg:/ws        (Windows named pipe)
  *
  * The part before `:` is the IPC path, the part after is the HTTP request
  * path used during the WebSocket upgrade handshake.

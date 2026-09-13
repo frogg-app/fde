@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { probeDaemon } from "./verify.js";
 
@@ -9,7 +9,7 @@ describe("update gateway verification", () => {
     "verifies installed gateway header %s while retaining backend version",
     async (gateway) => {
       const headers = new Headers();
-      if (gateway) headers.set("x-fde-gateway-version", gateway);
+      if (gateway) headers.set("x-frogg-gateway-version", gateway);
       vi.stubGlobal(
         "fetch",
         vi

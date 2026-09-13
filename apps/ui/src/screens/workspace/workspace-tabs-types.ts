@@ -5,5 +5,5 @@ export interface WorkspaceTabDescriptor {
   tabId: string;
   kind: WorkspaceTabTarget["kind"];
   target: WorkspaceTabTarget;
-  state?: import("@fde/protocol/agent-types").JsonValue;
+  state?: import("@frogg/protocol/agent-types").JsonValue;
 }

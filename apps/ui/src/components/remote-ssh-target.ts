@@ -2,7 +2,7 @@ import {
   DEFAULT_SSH_DAEMON_PORT,
   parseSshTransportUri,
   type SshTransportTarget,
-} from "@fde/protocol/ssh-transport";
+} from "@frogg/protocol/ssh-transport";
 import { buildSshConfigHostTarget } from "@/desktop/ssh-config/ssh-config-hosts";
 
 /** Which tab of the Remote SSH sheet the target comes from. */

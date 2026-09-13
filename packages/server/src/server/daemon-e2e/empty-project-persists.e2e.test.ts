@@ -6,11 +6,11 @@ import path from "node:path";
 import { afterEach, expect, test } from "vitest";
 
 import { DaemonClient } from "../test-utils/daemon-client.js";
-import { createTestFdeDaemon, type TestFdeDaemon } from "../test-utils/fde-daemon.js";
+import { createTestFroggDaemon, type TestFroggDaemon } from "../test-utils/frogg-daemon.js";
 import { type PersistedProjectRecord } from "../workspace-registry.js";
 
 const cleanupPaths = new Set<string>();
-const cleanupDaemons = new Set<TestFdeDaemon>();
+const cleanupDaemons = new Set<TestFroggDaemon>();
 const cleanupClients = new Set<DaemonClient>();
 
 function restoreEnv(name: string, previous: string | undefined): void {
@@ -33,22 +33,24 @@ afterEach(async () => {
 });
 
 test("project.add creates a project without creating a workspace", async () => {
-  const previousSupervised = process.env.FDE_SUPERVISED;
-  process.env.FDE_SUPERVISED = "0";
+  const previousSupervised = process.env.FROGG_SUPERVISED;
+  process.env.FROGG_SUPERVISED = "0";
   try {
-    const repoRoot = realpathSync(mkdtempSync(path.join(os.tmpdir(), "fde-add-project-repo-")));
-    const fdeHomeRoot = realpathSync(mkdtempSync(path.join(os.tmpdir(), "fde-add-project-home-")));
+    const repoRoot = realpathSync(mkdtempSync(path.join(os.tmpdir(), "frogg-add-project-repo-")));
+    const froggHomeRoot = realpathSync(
+      mkdtempSync(path.join(os.tmpdir(), "frogg-add-project-home-")),
+    );
     cleanupPaths.add(repoRoot);
-    cleanupPaths.add(fdeHomeRoot);
+    cleanupPaths.add(froggHomeRoot);
 
     execSync("git init -b main", { cwd: repoRoot, stdio: "pipe" });
-    execSync("git config user.email 'test@fde.dev'", { cwd: repoRoot, stdio: "pipe" });
-    execSync("git config user.name 'Fde Test'", { cwd: repoRoot, stdio: "pipe" });
+    execSync("git config user.email 'test@frogg.dev'", { cwd: repoRoot, stdio: "pipe" });
+    execSync("git config user.name 'Frogg Test'", { cwd: repoRoot, stdio: "pipe" });
     writeFileSync(path.join(repoRoot, "README.md"), "# repo\n", "utf8");
     execSync("git add README.md", { cwd: repoRoot, stdio: "pipe" });
     execSync("git -c commit.gpgSign=false commit -m 'initial'", { cwd: repoRoot, stdio: "pipe" });
 
-    const daemon = await createTestFdeDaemon({ fdeHomeRoot, cleanup: false });
+    const daemon = await createTestFroggDaemon({ froggHomeRoot, cleanup: false });
     cleanupDaemons.add(daemon);
     const client = new DaemonClient({ url: `ws://127.0.0.1:${daemon.port}/ws` });
     cleanupClients.add(client);
@@ -76,32 +78,32 @@ test("project.add creates a project without creating a workspace", async () => {
       }),
     ]);
   } finally {
-    restoreEnv("FDE_SUPERVISED", previousSupervised);
+    restoreEnv("FROGG_SUPERVISED", previousSupervised);
   }
 }, 30_000);
 
 test("archiving the last workspace leaves the project parent with no workspaces", async () => {
-  const previousSupervised = process.env.FDE_SUPERVISED;
-  process.env.FDE_SUPERVISED = "0";
+  const previousSupervised = process.env.FROGG_SUPERVISED;
+  process.env.FROGG_SUPERVISED = "0";
   try {
-    const repoRoot = realpathSync(mkdtempSync(path.join(os.tmpdir(), "fde-empty-project-repo-")));
-    const fdeHomeRoot = realpathSync(
-      mkdtempSync(path.join(os.tmpdir(), "fde-empty-project-home-")),
+    const repoRoot = realpathSync(mkdtempSync(path.join(os.tmpdir(), "frogg-empty-project-repo-")));
+    const froggHomeRoot = realpathSync(
+      mkdtempSync(path.join(os.tmpdir(), "frogg-empty-project-home-")),
     );
     cleanupPaths.add(repoRoot);
-    cleanupPaths.add(fdeHomeRoot);
+    cleanupPaths.add(froggHomeRoot);
 
     execSync("git init -b main", { cwd: repoRoot, stdio: "pipe" });
-    execSync("git config user.email 'test@fde.dev'", { cwd: repoRoot, stdio: "pipe" });
-    execSync("git config user.name 'Fde Test'", { cwd: repoRoot, stdio: "pipe" });
+    execSync("git config user.email 'test@frogg.dev'", { cwd: repoRoot, stdio: "pipe" });
+    execSync("git config user.name 'Frogg Test'", { cwd: repoRoot, stdio: "pipe" });
     writeFileSync(path.join(repoRoot, "README.md"), "# repo\n", "utf8");
     execSync("git add README.md", { cwd: repoRoot, stdio: "pipe" });
     execSync("git -c commit.gpgSign=false commit -m 'initial'", { cwd: repoRoot, stdio: "pipe" });
 
-    const fdeHome = path.join(fdeHomeRoot, ".fde");
-    const projectsPath = path.join(fdeHome, "projects", "projects.json");
+    const froggHome = path.join(froggHomeRoot, ".frogg");
+    const projectsPath = path.join(froggHome, "projects", "projects.json");
 
-    const daemon = await createTestFdeDaemon({ fdeHomeRoot, cleanup: false });
+    const daemon = await createTestFroggDaemon({ froggHomeRoot, cleanup: false });
     cleanupDaemons.add(daemon);
     const client = new DaemonClient({ url: `ws://127.0.0.1:${daemon.port}/ws` });
     cleanupClients.add(client);
@@ -135,6 +137,6 @@ test("archiving the last workspace leaves the project parent with no workspaces"
       persistedProjects.find((project) => project.projectId === projectId)?.archivedAt,
     ).toBeNull();
   } finally {
-    restoreEnv("FDE_SUPERVISED", previousSupervised);
+    restoreEnv("FROGG_SUPERVISED", previousSupervised);
   }
 }, 30_000);

@@ -20,7 +20,7 @@ afterEach(() => {
 });
 
 function makeTempDir(): string {
-  const dir = mkdtempSync(path.join(tmpdir(), "fde-diagnostic-path-"));
+  const dir = mkdtempSync(path.join(tmpdir(), "frogg-diagnostic-path-"));
   tempDirs.push(dir);
   return dir;
 }

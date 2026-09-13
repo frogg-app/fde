@@ -1,6 +1,6 @@
 # NOTE: Render through the workspace-create shell scripts before running when
-# using ${FDE_MAESTRO_*}. Maestro does not substitute environment vars.
-appId: ${FDE_MAESTRO_APP_ID}
+# using ${FROGG_MAESTRO_*}. Maestro does not substitute environment vars.
+appId: ${FROGG_MAESTRO_APP_ID}
 ---
 # Connect to the local daemon only when the app is on the welcome screen.
 
@@ -20,11 +20,11 @@ appId: ${FDE_MAESTRO_APP_ID}
       - tapOn:
           id: "direct-host-input"
       - eraseText
-      - inputText: ${FDE_MAESTRO_DIRECT_ENDPOINT}
+      - inputText: ${FROGG_MAESTRO_DIRECT_ENDPOINT}
 
       - assertVisible:
           id: "direct-host-input"
-          text: ${FDE_MAESTRO_DIRECT_ENDPOINT}
+          text: ${FROGG_MAESTRO_DIRECT_ENDPOINT}
 
       - tapOn:
           id: "direct-host-submit"

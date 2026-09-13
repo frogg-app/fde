@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createCli } from "./cli.js";
 
-/** Commands moved under `fde agent`; look them up there. */
+/** Commands moved under `frogg agent`; look them up there. */
 function agentCommand(name: string) {
   const agent = createCli().commands.find((command) => command.name() === "agent");
   return agent?.commands.find((command) => command.name() === name);
@@ -25,7 +25,7 @@ describe("canonical CLI surface", () => {
   it("keeps agent commands in one place instead of duplicating them at the root", () => {
     const cli = createCli();
     const rootNames = cli.commands.filter((c) => !("_hidden" in c)).map((c) => c.name());
-    // These used to exist at the root and under `fde agent` simultaneously.
+    // These used to exist at the root and under `frogg agent` simultaneously.
     for (const name of ["ls", "run", "send", "inspect", "wait", "archive", "attach", "logs"]) {
       expect(rootNames).not.toContain(name);
       expect(agentCommand(name), `agent ${name} should exist`).toBeDefined();

@@ -111,7 +111,7 @@ fn probe_runs_the_snippet_through_ssh_and_reports_this_machine() {
         assert_eq!(report["homeDir"], std::env::var("HOME").unwrap());
         assert!(report["hasDocker"].is_boolean());
         assert!(report["hasSystemdUser"].is_boolean());
-        assert!(report["hasFde"]["installed"].is_boolean());
+        assert!(report["hasFrogg"]["installed"].is_boolean());
 
         let error = manager.probe(&json!({ "host": "-bad" })).await.unwrap_err();
         assert_eq!(error, "SSH host is invalid");
@@ -135,8 +135,8 @@ fn deploy_job_streams_env_line_and_full_script_then_done() {
         let received = collect_until_final(&mut events, &job_id).await;
         let lines = logs(&received);
         assert!(lines.contains(
-            &"CMD: FDE_VERSION='1.2.3' FDE_LISTEN='127.0.0.1:7000' \
-              FDE_RELEASE_BASE='https://github.com/frogg-app/fde/releases' bash -s"
+            &"CMD: FROGG_VERSION='1.2.3' FROGG_LISTEN='127.0.0.1:7000' \
+              FROGG_RELEASE_BASE='https://github.com/frogg-app/frogg/releases' bash -s"
                 .to_string()
         ));
         assert!(lines.contains(&format!("STDIN: {}", INSTALL_SH.len())));
@@ -290,7 +290,7 @@ fn password_host_authenticates_through_the_askpass_helper() {
         let received = collect_until_final(&mut events, &job_id).await;
         assert!(logs(&received)
             .iter()
-            .any(|line| line.starts_with("CMD: FDE_VERSION='0.1.6' FDE_BIND=")));
+            .any(|line| line.starts_with("CMD: FROGG_VERSION='0.1.6' FROGG_BIND=")));
         assert_eq!(received.last().unwrap()["kind"], "done");
     });
 }

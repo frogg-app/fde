@@ -1,6 +1,6 @@
 //! Local daemon transports (Remote SSH, unix socket, named pipe) driven from
 //! Rust. A port of Electron's `daemon/local-transport.ts`: the webview opens a
-//! session, frames flow both ways over `fde:event:local-daemon-transport-event`,
+//! session, frames flow both ways over `frogg:event:local-daemon-transport-event`,
 //! and the session registry guarantees a closed session never emits again.
 
 pub mod session;

@@ -1,13 +1,13 @@
 import { toSpokenText } from "./spoken-text.js";
 import { createCompanionNativeVoice, type CompanionNativeVoice } from "./native-voice.js";
 import { randomUUID } from "node:crypto";
-import { CompanionConversationOptionsSchema } from "@fde/protocol/messages";
+import { CompanionConversationOptionsSchema } from "@frogg/protocol/messages";
 import { companionConversationInstructions } from "./conversation-options.js";
 import type { Logger } from "pino";
 import type {
   CompanionNotebook as CompanionNotebookPayload,
   ServerCapabilityState,
-} from "@fde/protocol/messages";
+} from "@frogg/protocol/messages";
 
 import { TTSManager } from "../agent/tts-manager.js";
 import type { SessionInboundMessage, SessionOutboundMessage } from "../messages.js";

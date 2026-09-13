@@ -14,7 +14,7 @@ import { performance } from "node:perf_hooks";
 
 import { startGitCommandMetrics, stopGitCommandMetrics } from "../src/utils/run-git-command.js";
 import { DaemonClient } from "../src/server/test-utils/daemon-client.js";
-import { createTestFdeDaemon } from "../src/server/test-utils/fde-daemon.js";
+import { createTestFroggDaemon } from "../src/server/test-utils/frogg-daemon.js";
 
 type Scenario = "snapshotOnly" | "legacyPrFanout";
 
@@ -40,9 +40,9 @@ interface BenchmarkResult {
 }
 
 function parseArgs(): { sourceHome: string; frozenHomeRoot: string | null; scenario: Scenario } {
-  let sourceHome = process.env.FDE_BENCHMARK_SOURCE_HOME ?? path.join(os.homedir(), ".fde");
-  let frozenHomeRoot = process.env.FDE_BENCHMARK_FROZEN_HOME_ROOT ?? null;
-  let scenario = (process.env.FDE_BENCHMARK_SCENARIO ?? "snapshotOnly") as Scenario;
+  let sourceHome = process.env.FROGG_BENCHMARK_SOURCE_HOME ?? path.join(os.homedir(), ".frogg");
+  let frozenHomeRoot = process.env.FROGG_BENCHMARK_FROZEN_HOME_ROOT ?? null;
+  let scenario = (process.env.FROGG_BENCHMARK_SCENARIO ?? "snapshotOnly") as Scenario;
 
   for (const arg of process.argv.slice(2)) {
     const [key, value] = arg.split("=", 2);
@@ -77,11 +77,11 @@ function copyJsonTree(sourceDir: string, targetDir: string): void {
 }
 
 async function freezeHome(sourceHome: string, requestedRoot: string | null): Promise<string> {
-  const frozenHomeRoot = requestedRoot ?? mkdtempSync(path.join(os.tmpdir(), "fde-real-home-"));
-  if (process.env.FDE_BENCHMARK_REUSE_FROZEN_HOME === "1") {
+  const frozenHomeRoot = requestedRoot ?? mkdtempSync(path.join(os.tmpdir(), "frogg-real-home-"));
+  if (process.env.FROGG_BENCHMARK_REUSE_FROZEN_HOME === "1") {
     return frozenHomeRoot;
   }
-  const frozenHome = path.join(frozenHomeRoot, ".fde");
+  const frozenHome = path.join(frozenHomeRoot, ".frogg");
   rmSync(frozenHome, { recursive: true, force: true });
   mkdirSync(frozenHome, { recursive: true });
 
@@ -128,7 +128,7 @@ async function main(): Promise<void> {
   const cpuBefore = process.cpuUsage();
   const memoryBefore = process.memoryUsage();
   const startedAt = performance.now();
-  const daemon = await createTestFdeDaemon({ fdeHomeRoot: frozenHomeRoot, cleanup: false });
+  const daemon = await createTestFroggDaemon({ froggHomeRoot: frozenHomeRoot, cleanup: false });
   const client = new DaemonClient({
     url: `ws://127.0.0.1:${daemon.port}/ws`,
     appVersion: "0.1.90",

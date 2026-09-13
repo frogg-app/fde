@@ -1,8 +1,8 @@
 //! End-to-end: install a real linux bundle from a `file://` URL, start the
-//! daemon on a spare port with a scratch `FDE_HOME`, check the status the
+//! daemon on a spare port with a scratch `FROGG_HOME`, check the status the
 //! UI would see, stop it. Needs `npm run build:daemon-bundle -- --target
-//! linux-x64` to have produced `dist/bundles/FDE-<version>-linux-x86_64-daemon.tar.gz`
-//! (or `FDE_TEST_DAEMON_BUNDLE=<path>`); skips otherwise.
+//! linux-x64` to have produced `dist/bundles/Frogg-<version>-linux-x86_64-daemon.tar.gz`
+//! (or `FROGG_TEST_DAEMON_BUNDLE=<path>`); skips otherwise.
 
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
@@ -13,19 +13,19 @@ use super::status::DaemonState;
 use super::Sidecar;
 
 fn bundle_path() -> Option<PathBuf> {
-    if let Ok(path) = std::env::var("FDE_TEST_DAEMON_BUNDLE") {
+    if let Ok(path) = std::env::var("FROGG_TEST_DAEMON_BUNDLE") {
         return Some(PathBuf::from(path));
     }
     let repo_root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../..");
     let candidate = repo_root.join("dist/bundles").join(format!(
-        "FDE-{}-linux-x86_64-daemon.tar.gz",
+        "Frogg-{}-linux-x86_64-daemon.tar.gz",
         env!("CARGO_PKG_VERSION")
     ));
     candidate.is_file().then_some(candidate)
 }
 
 fn test_port() -> u16 {
-    std::env::var("FDE_TEST_SIDECAR_PORT")
+    std::env::var("FROGG_TEST_SIDECAR_PORT")
         .ok()
         .and_then(|p| p.parse().ok())
         .unwrap_or(6799)

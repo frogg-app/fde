@@ -17,15 +17,15 @@ interface Supervisor {
 function startSupervisor(home: string, enable: boolean): Supervisor {
   const env: NodeJS.ProcessEnv = {
     ...process.env,
-    FDE_HOME: home,
-    FDE_LISTEN: "127.0.0.1:0",
-    FDE_NODE_ENV: "development",
-    FDE_NODE_INSPECT: "0",
-    FDE_RELAY_ENABLED: "false",
+    FROGG_HOME: home,
+    FROGG_LISTEN: "127.0.0.1:0",
+    FROGG_NODE_ENV: "development",
+    FROGG_NODE_INSPECT: "0",
+    FROGG_RELAY_ENABLED: "false",
   };
-  delete env.FDE_SUPERVISED;
-  delete env.FDE_EXECUTION_SERVICE;
-  if (enable) env.FDE_EXECUTION_SERVICE = "1";
+  delete env.FROGG_SUPERVISED;
+  delete env.FROGG_EXECUTION_SERVICE;
+  if (enable) env.FROGG_EXECUTION_SERVICE = "1";
   const child = spawn(
     process.execPath,
     [
@@ -58,7 +58,7 @@ async function connectSupervisor(home: string, supervisor: Supervisor): Promise<
         if (supervisor.process.exitCode !== null || supervisor.process.signalCode !== null) {
           throw new Error(`Supervisor exited before readiness: ${supervisor.output()}`);
         }
-        const raw = await readFile(path.join(home, "fde.pid"), "utf8").catch(() => "null");
+        const raw = await readFile(path.join(home, "frogg.pid"), "utf8").catch(() => "null");
         const parsed = pidLockInfoSchema.safeParse(JSON.parse(raw));
         listen =
           parsed.success && parsed.data.pid === supervisor.process.pid ? parsed.data.listen : null;
@@ -92,7 +92,7 @@ async function stopSupervisor(supervisor: Supervisor): Promise<void> {
 }
 
 test("supervisor shutdown preserves execution and a later launch attaches without the opt-in flag", async () => {
-  const home = await mkdtemp(path.join(tmpdir(), "fde-supervised-acceptance-"));
+  const home = await mkdtemp(path.join(tmpdir(), "frogg-supervised-acceptance-"));
   const supervisors: Supervisor[] = [];
   const clients: DaemonClient[] = [];
   try {

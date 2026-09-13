@@ -8,7 +8,7 @@ import { createClaimStore, hashCredential, PRINCIPALS_FILENAME } from "./claim-s
 const homes: string[] = [];
 
 function createHome(): string {
-  const home = mkdtempSync(path.join(os.tmpdir(), "fde-claim-store-"));
+  const home = mkdtempSync(path.join(os.tmpdir(), "frogg-claim-store-"));
   homes.push(home);
   return home;
 }
@@ -49,7 +49,7 @@ describe("claim store", () => {
     store.mintPrincipal({ label: "first" });
     const claimedAt = store.claimedAt();
 
-    // Another process (fde daemon reset-claim) removes the file while the daemon runs.
+    // Another process (frogg daemon reset-claim) removes the file while the daemon runs.
     const other = createClaimStore(home);
     expect(other.reset()).toBe(true);
     expect(store.isClaimed()).toBe(false);

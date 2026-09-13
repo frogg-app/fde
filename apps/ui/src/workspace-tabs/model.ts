@@ -1,5 +1,5 @@
-import type { AgentProvider } from "@fde/protocol/agent-types";
-import type { JsonValue } from "@fde/protocol/agent-types";
+import type { AgentProvider } from "@frogg/protocol/agent-types";
+import type { JsonValue } from "@frogg/protocol/agent-types";
 import type { WorkspaceFileTabTarget } from "@/workspace/file-open";
 
 export interface WorkspaceDraftTabSetup {

@@ -1,4 +1,4 @@
-import type { FileVersion, FileWriteResult } from "@fde/protocol/messages";
+import type { FileVersion, FileWriteResult } from "@frogg/protocol/messages";
 
 export type FileEditorStatus = "clean" | "dirty" | "saving" | "conflict" | "error";
 export type FileLineSeparator = "\n" | "\r\n" | "\r";

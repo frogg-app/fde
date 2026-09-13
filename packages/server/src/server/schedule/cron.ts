@@ -1,5 +1,5 @@
-import { parseCronExpression } from "@fde/protocol/schedule/cron-expression";
-import type { ScheduleCadence } from "@fde/protocol/schedule/types";
+import { parseCronExpression } from "@frogg/protocol/schedule/cron-expression";
+import type { ScheduleCadence } from "@frogg/protocol/schedule/types";
 
 interface CronDateParts {
   minute: number;

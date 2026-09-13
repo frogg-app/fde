@@ -6,12 +6,12 @@ import pino from "pino";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { WebSocket } from "ws";
 
-import { createFdeDaemon, parseListenString, type FdeDaemonConfig } from "./bootstrap.js";
+import { createFroggDaemon, parseListenString, type FroggDaemonConfig } from "./bootstrap.js";
 import { loadConfig } from "./config.js";
 import { AgentManagerShuttingDownError } from "./agent/agent-manager.js";
 import { hashDaemonPassword } from "./auth.js";
 import { generateLocalPairingOffer } from "./pairing-offer.js";
-import { createTestFdeDaemon } from "./test-utils/fde-daemon.js";
+import { createTestFroggDaemon } from "./test-utils/frogg-daemon.js";
 import { createTestAgentClients } from "./test-utils/fake-agent-client.js";
 import { DaemonClient } from "./test-utils/daemon-client.js";
 import { isPlatform } from "../test-utils/platform.js";
@@ -48,13 +48,13 @@ type WebSocketProbeResult =
   | { status: "connected" }
   | { status: "rejected"; statusCode: number | null };
 
-describe("fde daemon bootstrap", () => {
+describe("frogg daemon bootstrap", () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
   test("starts and serves health endpoint", async () => {
-    const daemonHandle = await createTestFdeDaemon({
+    const daemonHandle = await createTestFroggDaemon({
       openai: { stt: { apiKey: "test-openai-api-key" }, tts: { apiKey: "test-openai-api-key" } },
       speech: {
         providers: {
@@ -80,14 +80,14 @@ describe("fde daemon bootstrap", () => {
   });
 
   test("keeps timeline activity in memory and removes obsolete timeline files at startup", async () => {
-    const fdeHomeRoot = await mkdtemp(path.join(os.tmpdir(), "fde-timeline-cleanup-"));
-    const fdeHome = path.join(fdeHomeRoot, ".fde");
-    const obsoleteTimelineDirectory = path.join(fdeHome, "agent-timelines");
-    const agentCwd = await mkdtemp(path.join(os.tmpdir(), "fde-timeline-agent-"));
+    const froggHomeRoot = await mkdtemp(path.join(os.tmpdir(), "frogg-timeline-cleanup-"));
+    const froggHome = path.join(froggHomeRoot, ".frogg");
+    const obsoleteTimelineDirectory = path.join(froggHome, "agent-timelines");
+    const agentCwd = await mkdtemp(path.join(os.tmpdir(), "frogg-timeline-agent-"));
     await mkdir(obsoleteTimelineDirectory, { recursive: true });
     await writeFile(path.join(obsoleteTimelineDirectory, "obsolete.json"), "{}\n", "utf-8");
 
-    const daemonHandle = await createTestFdeDaemon({ fdeHomeRoot, cleanup: false });
+    const daemonHandle = await createTestFroggDaemon({ froggHomeRoot, cleanup: false });
     try {
       await expect(access(obsoleteTimelineDirectory)).rejects.toMatchObject({ code: "ENOENT" });
 
@@ -106,17 +106,17 @@ describe("fde daemon bootstrap", () => {
     } finally {
       await daemonHandle.close();
       await Promise.all([
-        rm(fdeHomeRoot, { recursive: true, force: true }),
+        rm(froggHomeRoot, { recursive: true, force: true }),
         rm(agentCwd, { recursive: true, force: true }),
       ]);
     }
   });
 
   test("does not create a timeline directory for live timeline activity", async () => {
-    const fdeHomeRoot = await mkdtemp(path.join(os.tmpdir(), "fde-timeline-memory-"));
-    const agentCwd = await mkdtemp(path.join(os.tmpdir(), "fde-timeline-agent-"));
-    const daemonHandle = await createTestFdeDaemon({ fdeHomeRoot, cleanup: false });
-    const timelineDirectory = path.join(daemonHandle.fdeHome, "agent-timelines");
+    const froggHomeRoot = await mkdtemp(path.join(os.tmpdir(), "frogg-timeline-memory-"));
+    const agentCwd = await mkdtemp(path.join(os.tmpdir(), "frogg-timeline-agent-"));
+    const daemonHandle = await createTestFroggDaemon({ froggHomeRoot, cleanup: false });
+    const timelineDirectory = path.join(daemonHandle.froggHome, "agent-timelines");
     try {
       const agent = await daemonHandle.daemon.agentManager.createAgent(
         { provider: "codex", cwd: agentCwd },
@@ -133,19 +133,19 @@ describe("fde daemon bootstrap", () => {
     } finally {
       await daemonHandle.close();
       await Promise.all([
-        rm(fdeHomeRoot, { recursive: true, force: true }),
+        rm(froggHomeRoot, { recursive: true, force: true }),
         rm(agentCwd, { recursive: true, force: true }),
       ]);
     }
   });
 
   test("reload applies live HTTP, MCP, Git, provider, relay, and app policies", async () => {
-    const fdeHomeRoot = await mkdtemp(path.join(os.tmpdir(), "fde-config-reload-runtime-"));
-    const fdeHome = path.join(fdeHomeRoot, ".fde");
-    const staticDir = await mkdtemp(path.join(os.tmpdir(), "fde-static-"));
-    const agentCwd = await mkdtemp(path.join(os.tmpdir(), "fde-config-reload-agent-"));
-    await mkdir(fdeHome, { recursive: true });
-    const configPath = path.join(fdeHome, "config.json");
+    const froggHomeRoot = await mkdtemp(path.join(os.tmpdir(), "frogg-config-reload-runtime-"));
+    const froggHome = path.join(froggHomeRoot, ".frogg");
+    const staticDir = await mkdtemp(path.join(os.tmpdir(), "frogg-static-"));
+    const agentCwd = await mkdtemp(path.join(os.tmpdir(), "frogg-config-reload-agent-"));
+    await mkdir(froggHome, { recursive: true });
+    const configPath = path.join(froggHome, "config.json");
     const initialPersisted = {
       version: 1 as const,
       daemon: {
@@ -166,10 +166,10 @@ describe("fde daemon bootstrap", () => {
       app: { baseUrl: "https://before.example.test" },
     };
     await writeFile(configPath, `${JSON.stringify(initialPersisted, null, 2)}\n`, "utf-8");
-    const config = loadConfig(fdeHome, { env: {} });
+    const config = loadConfig(froggHome, { env: {} });
     config.staticDir = staticDir;
     config.agentClients = createTestAgentClients();
-    config.agentStoragePath = path.join(fdeHome, "agents");
+    config.agentStoragePath = path.join(froggHome, "agents");
     config.isDev = true;
     config.speech = {
       providers: {
@@ -179,7 +179,7 @@ describe("fde daemon bootstrap", () => {
         voiceTts: { provider: "local", explicit: true, enabled: false },
       },
     };
-    const daemon = await createFdeDaemon(config, pino({ level: "silent" }));
+    const daemon = await createFroggDaemon(config, pino({ level: "silent" }));
     let client: DaemonClient | null = null;
     let proxyUpstream: http.Server | null = null;
 
@@ -325,7 +325,7 @@ describe("fde daemon bootstrap", () => {
         await new Promise<void>((resolve) => proxyUpstream?.close(() => resolve()));
       }
       await Promise.all([
-        rm(fdeHomeRoot, { recursive: true, force: true }),
+        rm(froggHomeRoot, { recursive: true, force: true }),
         rm(staticDir, { recursive: true, force: true }),
         rm(agentCwd, { recursive: true, force: true }),
       ]);
@@ -369,7 +369,7 @@ describe("fde daemon bootstrap", () => {
       throw new Error("Expected upstream TCP address");
     }
 
-    const daemonHandle = await createTestFdeDaemon({
+    const daemonHandle = await createTestFroggDaemon({
       auth: { password: hashDaemonPassword("secret") },
     });
     try {
@@ -402,7 +402,7 @@ describe("fde daemon bootstrap", () => {
   });
 
   test("configured public service namespace misses never reach daemon APIs", async () => {
-    const daemonHandle = await createTestFdeDaemon({
+    const daemonHandle = await createTestFroggDaemon({
       serviceProxy: {
         publicBaseUrl: "https://services.example.com",
         standaloneListen: null,
@@ -431,20 +431,20 @@ describe("fde daemon bootstrap", () => {
       throw new Error("Expected occupied TCP address");
     }
 
-    const fdeHomeRoot = await mkdtemp(path.join(os.tmpdir(), "fde-standalone-rollback-"));
-    const fdeHome = path.join(fdeHomeRoot, ".fde");
-    const staticDir = await mkdtemp(path.join(os.tmpdir(), "fde-static-"));
-    await mkdir(fdeHome, { recursive: true });
-    const config: FdeDaemonConfig = {
+    const froggHomeRoot = await mkdtemp(path.join(os.tmpdir(), "frogg-standalone-rollback-"));
+    const froggHome = path.join(froggHomeRoot, ".frogg");
+    const staticDir = await mkdtemp(path.join(os.tmpdir(), "frogg-static-"));
+    await mkdir(froggHome, { recursive: true });
+    const config: FroggDaemonConfig = {
       listen: "127.0.0.1:0",
-      fdeHome,
+      froggHome,
       corsAllowedOrigins: [],
       hostnames: true,
       mcpEnabled: false,
       staticDir,
       mcpDebug: false,
       agentClients: createTestAgentClients(),
-      agentStoragePath: path.join(fdeHome, "agents"),
+      agentStoragePath: path.join(froggHome, "agents"),
       relayEnabled: false,
       appBaseUrl: "https://app.example.test",
       openai: undefined,
@@ -453,7 +453,7 @@ describe("fde daemon bootstrap", () => {
         standaloneListen: `127.0.0.1:${address.port}`,
       },
     };
-    const daemon = await createFdeDaemon(config, pino({ level: "silent" }));
+    const daemon = await createFroggDaemon(config, pino({ level: "silent" }));
 
     try {
       await expect(daemon.start()).rejects.toThrow();
@@ -461,13 +461,13 @@ describe("fde daemon bootstrap", () => {
     } finally {
       await daemon.stop().catch(() => undefined);
       await new Promise<void>((resolve) => occupiedServer.close(() => resolve()));
-      await rm(fdeHomeRoot, { recursive: true, force: true });
+      await rm(froggHomeRoot, { recursive: true, force: true });
       await rm(staticDir, { recursive: true, force: true });
     }
   });
 
   test("local service namespace misses never reach daemon APIs", async () => {
-    const daemonHandle = await createTestFdeDaemon({
+    const daemonHandle = await createTestFroggDaemon({
       auth: { password: hashDaemonPassword("secret") },
     });
     try {
@@ -484,7 +484,7 @@ describe("fde daemon bootstrap", () => {
   });
 
   test("daemon websocket still upgrades when service proxy upgrade handler is mounted", async () => {
-    const daemonHandle = await createTestFdeDaemon();
+    const daemonHandle = await createTestFroggDaemon();
     const ws = new WebSocket(`ws://127.0.0.1:${daemonHandle.port}/ws`);
     try {
       await new Promise<void>((resolve, reject) => {
@@ -499,12 +499,12 @@ describe("fde daemon bootstrap", () => {
   });
 
   test("relay config changes during Hub enrollment reach the live runtime", async () => {
-    const fdeHomeRoot = await mkdtemp(path.join(os.tmpdir(), "fde-relay-startup-"));
-    const fdeHome = path.join(fdeHomeRoot, ".fde");
-    const staticDir = await mkdtemp(path.join(os.tmpdir(), "fde-static-"));
-    await mkdir(fdeHome, { recursive: true });
+    const froggHomeRoot = await mkdtemp(path.join(os.tmpdir(), "frogg-relay-startup-"));
+    const froggHome = path.join(froggHomeRoot, ".frogg");
+    const staticDir = await mkdtemp(path.join(os.tmpdir(), "frogg-static-"));
+    await mkdir(froggHome, { recursive: true });
     await writeFile(
-      path.join(fdeHome, "hub-relationship.json"),
+      path.join(froggHome, "hub-relationship.json"),
       `${JSON.stringify({
         version: 1,
         state: "pending",
@@ -548,16 +548,16 @@ describe("fde daemon bootstrap", () => {
         return { close: () => undefined };
       },
     };
-    const config: FdeDaemonConfig = {
+    const config: FroggDaemonConfig = {
       listen: "127.0.0.1:0",
-      fdeHome,
+      froggHome,
       corsAllowedOrigins: [],
       hostnames: true,
       mcpEnabled: false,
       staticDir,
       mcpDebug: false,
       agentClients: createTestAgentClients(),
-      agentStoragePath: path.join(fdeHome, "agents"),
+      agentStoragePath: path.join(froggHome, "agents"),
       relayEnabled: false,
       relayEndpoint: "127.0.0.1:9",
       relayUseTls: false,
@@ -565,7 +565,7 @@ describe("fde daemon bootstrap", () => {
       openai: undefined,
       speech: undefined,
     };
-    const daemon = await createFdeDaemon(config, pino({ level: "silent" }), {
+    const daemon = await createFroggDaemon(config, pino({ level: "silent" }), {
       hubRelationshipRemote: remote,
     });
     const starting = daemon.start();
@@ -593,7 +593,7 @@ describe("fde daemon bootstrap", () => {
       await starting.catch(() => undefined);
       await client?.close().catch(() => undefined);
       await daemon.stop().catch(() => undefined);
-      await rm(fdeHomeRoot, { recursive: true, force: true });
+      await rm(froggHomeRoot, { recursive: true, force: true });
       await rm(staticDir, { recursive: true, force: true });
     }
   });
@@ -620,7 +620,7 @@ describe("fde daemon bootstrap", () => {
       throw new Error("Expected upstream TCP address");
     }
 
-    const daemonHandle = await createTestFdeDaemon({
+    const daemonHandle = await createTestFroggDaemon({
       serviceProxy: { standaloneListen: `127.0.0.1:${standalonePort}` },
     });
     try {
@@ -662,27 +662,27 @@ describe("fde daemon bootstrap", () => {
     });
     await new Promise<void>((resolve) => occupiedMain.listen(mainPort, "127.0.0.1", resolve));
 
-    const fdeHomeRoot = await mkdtemp(path.join(os.tmpdir(), "fde-main-rollback-"));
-    const fdeHome = path.join(fdeHomeRoot, ".fde");
-    const staticDir = await mkdtemp(path.join(os.tmpdir(), "fde-static-"));
-    await mkdir(fdeHome, { recursive: true });
-    const config: FdeDaemonConfig = {
+    const froggHomeRoot = await mkdtemp(path.join(os.tmpdir(), "frogg-main-rollback-"));
+    const froggHome = path.join(froggHomeRoot, ".frogg");
+    const staticDir = await mkdtemp(path.join(os.tmpdir(), "frogg-static-"));
+    await mkdir(froggHome, { recursive: true });
+    const config: FroggDaemonConfig = {
       listen: `127.0.0.1:${mainPort}`,
-      fdeHome,
+      froggHome,
       corsAllowedOrigins: [],
       hostnames: true,
       mcpEnabled: false,
       staticDir,
       mcpDebug: false,
       agentClients: createTestAgentClients(),
-      agentStoragePath: path.join(fdeHome, "agents"),
+      agentStoragePath: path.join(froggHome, "agents"),
       relayEnabled: false,
       appBaseUrl: "https://app.example.test",
       openai: undefined,
       speech: undefined,
       serviceProxy: { standaloneListen: `127.0.0.1:${standalonePort}` },
     };
-    const daemon = await createFdeDaemon(config, pino({ level: "silent" }));
+    const daemon = await createFroggDaemon(config, pino({ level: "silent" }));
 
     try {
       await expect(daemon.start()).rejects.toThrow();
@@ -690,7 +690,7 @@ describe("fde daemon bootstrap", () => {
     } finally {
       await daemon.stop().catch(() => undefined);
       await new Promise<void>((resolve) => occupiedMain.close(() => resolve()));
-      await rm(fdeHomeRoot, { recursive: true, force: true });
+      await rm(froggHomeRoot, { recursive: true, force: true });
       await rm(staticDir, { recursive: true, force: true });
     }
   });
@@ -705,7 +705,7 @@ describe("fde daemon bootstrap", () => {
         },
       },
     );
-    const daemonHandle = await createTestFdeDaemon({
+    const daemonHandle = await createTestFroggDaemon({
       logger,
       mcpDebug: true,
     });
@@ -743,21 +743,21 @@ describe("fde daemon bootstrap", () => {
   });
 
   test("starts when OpenAI speech provider is configured without credentials", async () => {
-    const fdeHomeRoot = await mkdtemp(path.join(os.tmpdir(), "fde-openai-config-"));
-    const fdeHome = path.join(fdeHomeRoot, ".fde");
-    const staticDir = await mkdtemp(path.join(os.tmpdir(), "fde-static-"));
-    await mkdir(fdeHome, { recursive: true });
+    const froggHomeRoot = await mkdtemp(path.join(os.tmpdir(), "frogg-openai-config-"));
+    const froggHome = path.join(froggHomeRoot, ".frogg");
+    const staticDir = await mkdtemp(path.join(os.tmpdir(), "frogg-static-"));
+    await mkdir(froggHome, { recursive: true });
 
-    const config: FdeDaemonConfig = {
+    const config: FroggDaemonConfig = {
       listen: "127.0.0.1:0",
-      fdeHome,
+      froggHome,
       corsAllowedOrigins: [],
       hostnames: true,
       mcpEnabled: false,
       staticDir,
       mcpDebug: false,
       agentClients: createTestAgentClients(),
-      agentStoragePath: path.join(fdeHome, "agents"),
+      agentStoragePath: path.join(froggHome, "agents"),
       relayEnabled: false,
       appBaseUrl: "https://app.example.test",
       openai: undefined,
@@ -771,7 +771,7 @@ describe("fde daemon bootstrap", () => {
     };
 
     try {
-      const daemon = await createFdeDaemon(config, pino({ level: "silent" }));
+      const daemon = await createFroggDaemon(config, pino({ level: "silent" }));
       try {
         await daemon.start();
         expect(daemon.getListenTarget()).toBeDefined();
@@ -780,7 +780,7 @@ describe("fde daemon bootstrap", () => {
         await daemon.stop();
       }
     } finally {
-      await rm(fdeHomeRoot, { recursive: true, force: true });
+      await rm(froggHomeRoot, { recursive: true, force: true });
       await rm(staticDir, { recursive: true, force: true });
     }
   });
@@ -796,7 +796,7 @@ describe("fde daemon bootstrap", () => {
       vi.fn(() => fetchGate),
     );
 
-    const daemonHandle = await createTestFdeDaemon({
+    const daemonHandle = await createTestFroggDaemon({
       speech: {
         providers: {
           dictationStt: { provider: "local", explicit: true, enabled: true },
@@ -805,7 +805,7 @@ describe("fde daemon bootstrap", () => {
           voiceTts: { provider: "local", explicit: true, enabled: false },
         },
         local: {
-          modelsDir: path.join(os.tmpdir(), `fde-missing-models-${Date.now()}`),
+          modelsDir: path.join(os.tmpdir(), `frogg-missing-models-${Date.now()}`),
           models: {
             dictationStt: "parakeet-tdt-0.6b-v2-int8",
             voiceStt: "parakeet-tdt-0.6b-v2-int8",
@@ -856,19 +856,19 @@ describe("fde daemon bootstrap", () => {
     // A Windows drive path like C:\daemon must NOT be silently parsed as TCP
     // (split(":") would yield host="C" and port="\\daemon" which is nonsensical).
     expect(() => parseListenString(String.raw`C:\daemon`)).toThrow();
-    expect(() => parseListenString(String.raw`D:\Users\foo\.fde\daemon.sock`)).toThrow();
+    expect(() => parseListenString(String.raw`D:\Users\foo\.frogg\daemon.sock`)).toThrow();
     // Single-letter "host" with no valid port is not a valid listen string
     expect(() => parseListenString(String.raw`C:\some\path`)).toThrow();
   });
 
   test("parses Windows named pipes as managed IPC listen targets", () => {
-    expect(parseListenString(String.raw`\\.\pipe\fde-managed-test`)).toEqual({
+    expect(parseListenString(String.raw`\\.\pipe\frogg-managed-test`)).toEqual({
       type: "pipe",
-      path: String.raw`\\.\pipe\fde-managed-test`,
+      path: String.raw`\\.\pipe\frogg-managed-test`,
     });
-    expect(parseListenString(`pipe://${String.raw`\\.\pipe\fde-managed-test`}`)).toEqual({
+    expect(parseListenString(`pipe://${String.raw`\\.\pipe\frogg-managed-test`}`)).toEqual({
       type: "pipe",
-      path: String.raw`\\.\pipe\fde-managed-test`,
+      path: String.raw`\\.\pipe\frogg-managed-test`,
     });
   });
 
@@ -876,24 +876,24 @@ describe("fde daemon bootstrap", () => {
   test.skipIf(isPlatform("win32"))(
     "generates a relay pairing offer for unix socket listeners",
     async () => {
-      const fdeHomeRoot = await mkdtemp(path.join(os.tmpdir(), "fde-socket-relay-"));
-      const fdeHome = path.join(fdeHomeRoot, ".fde");
-      const staticDir = await mkdtemp(path.join(os.tmpdir(), "fde-static-"));
-      const socketPath = path.join(fdeHomeRoot, "run", "fde.sock");
+      const froggHomeRoot = await mkdtemp(path.join(os.tmpdir(), "frogg-socket-relay-"));
+      const froggHome = path.join(froggHomeRoot, ".frogg");
+      const staticDir = await mkdtemp(path.join(os.tmpdir(), "frogg-static-"));
+      const socketPath = path.join(froggHomeRoot, "run", "frogg.sock");
       await mkdir(path.dirname(socketPath), { recursive: true });
-      await mkdir(fdeHome, { recursive: true });
+      await mkdir(froggHome, { recursive: true });
       const logger = pino({ level: "silent" });
 
-      const config: FdeDaemonConfig = {
+      const config: FroggDaemonConfig = {
         listen: socketPath,
-        fdeHome,
+        froggHome,
         corsAllowedOrigins: [],
         hostnames: true,
         mcpEnabled: false,
         staticDir,
         mcpDebug: false,
         agentClients: createTestAgentClients(),
-        agentStoragePath: path.join(fdeHome, "agents"),
+        agentStoragePath: path.join(froggHome, "agents"),
         relayEnabled: true,
         relayEndpoint: "127.0.0.1:9",
         relayPublicEndpoint: "127.0.0.1:9",
@@ -902,12 +902,12 @@ describe("fde daemon bootstrap", () => {
         speech: undefined,
       };
 
-      const daemon = await createFdeDaemon(config, logger);
+      const daemon = await createFroggDaemon(config, logger);
 
       try {
         await daemon.start();
         const pairing = await generateLocalPairingOffer({
-          fdeHome,
+          froggHome,
           relayEnabled: true,
           relayEndpoint: "127.0.0.1:9",
           relayPublicEndpoint: "127.0.0.1:9",
@@ -919,7 +919,7 @@ describe("fde daemon bootstrap", () => {
       } finally {
         await daemon.stop().catch(() => undefined);
         await daemon.agentManager.flush().catch(() => undefined);
-        await rm(fdeHomeRoot, { recursive: true, force: true });
+        await rm(froggHomeRoot, { recursive: true, force: true });
         await rm(staticDir, { recursive: true, force: true });
       }
     },
@@ -954,11 +954,11 @@ function holdAgentClose(): HeldAgentClose {
 
 async function beginDaemonShutdownWithAgentClosing(): Promise<BlockedDaemonShutdown> {
   const heldAgentClose = holdAgentClose();
-  const daemonHandle = await createTestFdeDaemon({
+  const daemonHandle = await createTestFroggDaemon({
     cleanup: false,
     agentClients: createTestAgentClients({ closeSession: heldAgentClose.closeSession }),
   });
-  const agentCwd = await mkdtemp(path.join(os.tmpdir(), "fde-shutdown-agent-"));
+  const agentCwd = await mkdtemp(path.join(os.tmpdir(), "frogg-shutdown-agent-"));
   await daemonHandle.daemon.agentManager.createAgent(
     {
       provider: "codex",
@@ -997,7 +997,7 @@ async function beginDaemonShutdownWithAgentClosing(): Promise<BlockedDaemonShutd
       await stopPromise;
       await daemonHandle.daemon.agentManager.flush().catch(() => undefined);
       await Promise.all([
-        rm(path.dirname(daemonHandle.fdeHome), { recursive: true, force: true }),
+        rm(path.dirname(daemonHandle.froggHome), { recursive: true, force: true }),
         rm(daemonHandle.staticDir, { recursive: true, force: true }),
         rm(agentCwd, { recursive: true, force: true }),
       ]);

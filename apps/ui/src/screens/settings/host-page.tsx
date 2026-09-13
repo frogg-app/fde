@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import {
   ArrowDown,
   ArrowUp,
@@ -17,8 +17,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Alert, Pressable, Text, View } from "react-native";
 import { StyleSheet, useUnistyles, withUnistyles } from "react-native-unistyles";
-import type { TerminalProfile } from "@fde/protocol/messages";
-import { getTerminalProfileIcon, DEFAULT_TERMINAL_PROFILES } from "@fde/protocol/terminal-profiles";
+import type { TerminalProfile } from "@frogg/protocol/messages";
+import {
+  getTerminalProfileIcon,
+  DEFAULT_TERMINAL_PROFILES,
+} from "@frogg/protocol/terminal-profiles";
 import { AgentProfilesSection } from "@/agent-profiles";
 import { AgentSkillsSection } from "@/agent-skills";
 import { ProviderAgentDefinitionsSection } from "@/agent-definitions";
@@ -275,7 +278,7 @@ export function HostAgentsPage({ serverId }: { serverId: string }) {
       <ProviderAgentDefinitionsSection serverId={serverId} />
       {isConnected ? (
         <SettingsSection title={t("settings.hostSections.agents")}>
-          <InjectFdeToolsCard serverId={serverId} />
+          <InjectFroggToolsCard serverId={serverId} />
           <BrowserToolsOptInCard serverId={serverId} />
           <AppendSystemPromptCard serverId={serverId} />
         </SettingsSection>
@@ -973,7 +976,7 @@ function UpdateDaemonCard({ host }: { host: HostProfile }) {
   );
 }
 
-function InjectFdeToolsCard({ serverId }: { serverId: string }) {
+function InjectFroggToolsCard({ serverId }: { serverId: string }) {
   const { t } = useTranslation();
   const isConnected = useHostRuntimeIsConnected(serverId);
   const { config, patchConfig } = useDaemonConfig(serverId);

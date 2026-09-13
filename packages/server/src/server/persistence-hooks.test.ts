@@ -39,11 +39,11 @@ describe("persistence hooks", () => {
           sandbox_workspace_write: { writable_roots: ["/tmp/shared"] },
         },
         toolPolicy: {
-          preapproved: [{ kind: "mcp", server: "fde", tool: "report_status" }],
+          preapproved: [{ kind: "mcp", server: "frogg", tool: "report_status" }],
         },
         systemPrompt: "Use speak first.",
         mcpServers: {
-          fde: {
+          frogg: {
             type: "stdio",
             command: "node",
             args: ["/tmp/bridge.mjs", "--socket", "/tmp/agent.sock"],
@@ -62,11 +62,11 @@ describe("persistence hooks", () => {
         sandbox_workspace_write: { writable_roots: ["/tmp/shared"] },
       },
       toolPolicy: {
-        preapproved: [{ kind: "mcp", server: "fde", tool: "report_status" }],
+        preapproved: [{ kind: "mcp", server: "frogg", tool: "report_status" }],
       },
       systemPrompt: "Use speak first.",
       mcpServers: {
-        fde: {
+        frogg: {
           type: "stdio",
           command: "node",
           args: ["/tmp/bridge.mjs", "--socket", "/tmp/agent.sock"],
@@ -83,7 +83,7 @@ describe("persistence hooks", () => {
         model: "gpt-5.4-mini",
         systemPrompt: "Confirm and speak first.",
         mcpServers: {
-          fde: {
+          frogg: {
             type: "stdio",
             command: "node",
             args: ["/tmp/bridge.mjs", "--socket", "/tmp/agent.sock"],
@@ -99,7 +99,7 @@ describe("persistence hooks", () => {
       model: "gpt-5.4-mini",
       systemPrompt: "Confirm and speak first.",
       mcpServers: {
-        fde: {
+        frogg: {
           type: "stdio",
           command: "node",
           args: ["/tmp/bridge.mjs", "--socket", "/tmp/agent.sock"],
@@ -108,13 +108,13 @@ describe("persistence hooks", () => {
     });
   });
 
-  test("buildConfigOverrides drops persisted internal fde MCP server", () => {
+  test("buildConfigOverrides drops persisted internal frogg MCP server", () => {
     const record = createRecord({
       config: {
         modeId: "default",
         model: "gpt-5.4-mini",
         mcpServers: {
-          fde: {
+          frogg: {
             type: "http",
             url: "http://127.0.0.1:9999/mcp/agents?callerAgentId=stale-agent",
           },
@@ -134,24 +134,24 @@ describe("persistence hooks", () => {
     });
   });
 
-  test("buildConfigOverrides preserves user-provided fde MCP server", () => {
+  test("buildConfigOverrides preserves user-provided frogg MCP server", () => {
     const record = createRecord({
       config: {
         modeId: "default",
         model: "gpt-5.4-mini",
         mcpServers: {
-          fde: {
+          frogg: {
             type: "http",
-            url: "https://example.com/custom-fde",
+            url: "https://example.com/custom-frogg",
           },
         },
       },
     });
 
     expect(buildConfigOverrides(record).mcpServers).toEqual({
-      fde: {
+      frogg: {
         type: "http",
-        url: "https://example.com/custom-fde",
+        url: "https://example.com/custom-frogg",
       },
     });
   });

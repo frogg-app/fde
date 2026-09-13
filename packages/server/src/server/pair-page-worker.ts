@@ -15,8 +15,8 @@
  * code renders the hand-off page and none get the daemon-only "Pair this
  * browser" button.
  */
-import { brand } from "@fde/branding";
-import { brandEnv } from "@fde/branding/identity";
+import { brand } from "@frogg/branding";
+import { brandEnv } from "@frogg/branding/identity";
 import type { ClaimOfferStore } from "./claim-offer-store.js";
 import { CONTENT_SECURITY_POLICY, DEFAULT_PAIR_PAGE_ROOT_REDIRECT } from "./pairing-page-chrome.js";
 import { renderExpiredPairingPage, renderPairingCodePage } from "./pairing-code-page.js";
@@ -26,9 +26,9 @@ import { renderPairingQrSvg } from "./pairing-qr.js";
 export interface PairPageWorkerEnv {
   [key: string]: string | undefined;
   /** Public base URL the rendered QR encodes. Must be the host people reach. */
-  FDE_PAIRING_BASE_URL?: string;
+  FROGG_PAIRING_BASE_URL?: string;
   /** Where `GET /` sends a visitor who arrives without a code. */
-  FDE_PAIR_ROOT_REDIRECT?: string;
+  FROGG_PAIR_ROOT_REDIRECT?: string;
 }
 
 /**
@@ -97,7 +97,7 @@ export async function handlePairPageRequest(
   }
 
   if (path === "/healthz") {
-    return new Response(JSON.stringify({ ok: true, service: "fde-pair-page" }), {
+    return new Response(JSON.stringify({ ok: true, service: "frogg-pair-page" }), {
       status: 200,
       headers: { ...BASE_HEADERS, "Content-Type": "application/json", "Cache-Control": "no-store" },
     });

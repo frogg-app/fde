@@ -4,7 +4,7 @@
 //! Scope note: this owns the *stream* half of a terminal (input, resize,
 //! snapshot, output). The registry half - persistence, workspace binding,
 //! naming, restore modes - still lives in the Node daemon, so native terminals
-//! are opt-in via FDE_RS_NATIVE_TERMINALS until that is ported too.
+//! are opt-in via FROGG_RS_NATIVE_TERMINALS until that is ported too.
 
 use crate::frames::{self, TerminalOpcode};
 use crate::pty::{PtySession, Spawn};

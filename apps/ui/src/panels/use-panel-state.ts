@@ -1,4 +1,4 @@
-import type { JsonValue } from "@fde/protocol/agent-types";
+import type { JsonValue } from "@frogg/protocol/agent-types";
 import { useCallback, useMemo } from "react";
 import { z } from "zod";
 import { usePaneContext } from "@/panels/pane-context";

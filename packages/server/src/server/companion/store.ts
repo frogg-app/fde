@@ -17,8 +17,8 @@ export interface CompanionNotebookStoreOptions {
   write?: typeof writeJsonFileAtomic;
 }
 
-export function companionNotebookPath(fdeHome: string): string {
-  return path.join(fdeHome, "companion", "notebook.json");
+export function companionNotebookPath(froggHome: string): string {
+  return path.join(froggHome, "companion", "notebook.json");
 }
 
 /**

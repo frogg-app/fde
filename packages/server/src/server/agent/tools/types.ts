@@ -1,45 +1,45 @@
 import type { z } from "zod";
 
-export interface FdeToolExecutionContext {
+export interface FroggToolExecutionContext {
   signal?: AbortSignal;
-  sendUpdate?: (update: FdeToolResult) => void;
+  sendUpdate?: (update: FroggToolResult) => void;
 }
 
-export interface FdeToolResult {
+export interface FroggToolResult {
   content: Array<{ type: string; text?: string; [key: string]: unknown }>;
   structuredContent?: unknown;
   isError?: boolean;
 }
 
-export interface FdeToolConfig {
+export interface FroggToolConfig {
   title?: string;
   description?: string;
   inputSchema?: z.ZodRawShape | z.ZodType;
   outputSchema?: z.ZodRawShape;
 }
 
-export interface FdeToolDefinition extends FdeToolConfig {
+export interface FroggToolDefinition extends FroggToolConfig {
   name: string;
   description: string;
-  handler: (input: unknown, context: FdeToolExecutionContext) => Promise<FdeToolResult>;
+  handler: (input: unknown, context: FroggToolExecutionContext) => Promise<FroggToolResult>;
 }
 
-export interface FdeToolCatalog {
-  tools: ReadonlyMap<string, FdeToolDefinition>;
-  getTool(name: string): FdeToolDefinition | undefined;
+export interface FroggToolCatalog {
+  tools: ReadonlyMap<string, FroggToolDefinition>;
+  getTool(name: string): FroggToolDefinition | undefined;
   executeTool(
     name: string,
     input: unknown,
-    context?: FdeToolExecutionContext,
-  ): Promise<FdeToolResult>;
+    context?: FroggToolExecutionContext,
+  ): Promise<FroggToolResult>;
 }
 
-export interface FdeToolRuntimeContext {
+export interface FroggToolRuntimeContext {
   callerAgentId?: string;
   enableVoiceTools?: boolean;
   voiceOnly?: boolean;
 }
 
-export type FdeToolCatalogFactory = (
-  context: FdeToolRuntimeContext,
-) => FdeToolCatalog | Promise<FdeToolCatalog>;
+export type FroggToolCatalogFactory = (
+  context: FroggToolRuntimeContext,
+) => FroggToolCatalog | Promise<FroggToolCatalog>;

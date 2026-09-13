@@ -1,7 +1,7 @@
 import type { Dirent, Stats } from "node:fs";
 import { readdir, realpath, stat } from "node:fs/promises";
 import path from "node:path";
-import { scorePathMatch, type MatchScore } from "@fde/protocol/search/text-match";
+import { scorePathMatch, type MatchScore } from "@frogg/protocol/search/text-match";
 import { isPathInsideRoot } from "./path.js";
 import { runGitCommand } from "./run-git-command.js";
 
@@ -119,7 +119,7 @@ export const WORKSPACE_SEARCH_HIDDEN_DIRECTORIES = [
   ".codex",
   ".github",
   ".opencode",
-  ".fde",
+  ".frogg",
   ".vscode",
 ] as const;
 /**

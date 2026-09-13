@@ -1,7 +1,7 @@
-import type { WorkspaceLabelDefinition } from "@fde/protocol/workspace-labels";
-import { workspaceLabelKey } from "@fde/protocol/workspace-labels";
-import type { WorkspaceLabelListPayload } from "@fde/client/internal/daemon-client";
-import type { SessionOutboundMessage } from "@fde/protocol/messages";
+import type { WorkspaceLabelDefinition } from "@frogg/protocol/workspace-labels";
+import { workspaceLabelKey } from "@frogg/protocol/workspace-labels";
+import type { WorkspaceLabelListPayload } from "@frogg/client/internal/daemon-client";
+import type { SessionOutboundMessage } from "@frogg/protocol/messages";
 
 type WorkspaceLabelUpdate = Extract<SessionOutboundMessage, { type: "workspace.label.update" }>;
 

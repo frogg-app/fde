@@ -1,6 +1,7 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { Command, Option } from "commander";
 import chalk from "chalk";
+import { prepareFroggHome } from "@frogg/server";
 import {
   resolveLocalDaemonDiagnosticState,
   startLocalDaemonForeground,
@@ -48,6 +49,7 @@ export interface StartRuntime {
   }): Pick<ReturnType<typeof resolveLocalDaemonDiagnosticState>, "running" | "pidInfo">;
   startDetached: typeof startLocalDaemonDetached;
   startForeground: typeof startLocalDaemonForeground;
+  prepareHome?(options: { home?: string }): void;
   log(message: string): void;
   error(message: string): void;
   exit(code: number): never;
@@ -57,6 +59,9 @@ const defaultRuntime: StartRuntime = {
   resolveState: resolveLocalDaemonDiagnosticState,
   startDetached: startLocalDaemonDetached,
   startForeground: startLocalDaemonForeground,
+  prepareHome: (options) => {
+    if (!options.home) prepareFroggHome();
+  },
   log: console.log,
   error: console.error,
   exit: process.exit,
@@ -71,6 +76,7 @@ export async function runStart(
     runtime.exit(1);
   }
 
+  runtime.prepareHome?.({ home: options.home });
   if (reportAlreadyRunning(options, runtime)) return;
 
   if (!options.foreground) {

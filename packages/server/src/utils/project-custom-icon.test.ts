@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
-import type { ProjectIconSource } from "@fde/protocol/messages";
+import type { ProjectIconSource } from "@frogg/protocol/messages";
 import {
   createPersistedProjectRecord,
   type PersistedProjectRecord,
@@ -37,8 +37,8 @@ async function tempDir(prefix: string): Promise<string> {
 
 /** A project whose root holds no discoverable icon, over an in-memory registry. */
 async function project() {
-  const rootPath = await tempDir("fde-project-root-");
-  const fdeHome = await tempDir("fde-home-");
+  const rootPath = await tempDir("frogg-project-root-");
+  const froggHome = await tempDir("frogg-home-");
   let record = createPersistedProjectRecord({
     projectId: "project-a",
     rootPath,
@@ -54,19 +54,19 @@ async function project() {
       return record;
     },
   } as unknown as ProjectRegistry;
-  const reader = new ProjectIconReader(fdeHome);
+  const reader = new ProjectIconReader(froggHome);
 
   return {
-    fdeHome,
+    froggHome,
     rootPath,
     set: (source: ProjectIconSource) =>
-      setProjectCustomIcon({ fdeHome, projectId: "project-a", source, projects }),
-    read: () => readProjectIcon({ fdeHome, project: record }),
-    snapshot: () => readProjectIconSnapshot({ fdeHome, project: record }),
+      setProjectCustomIcon({ froggHome, projectId: "project-a", source, projects }),
+    read: () => readProjectIcon({ froggHome, project: record }),
+    snapshot: () => readProjectIconSnapshot({ froggHome, project: record }),
     advertisedSnapshot: () => reader.snapshot(record),
     readAdvertised: () => reader.read(record),
     revision: () => record.customIconRevision,
-    remove: () => removeProjectCustomIcon({ fdeHome, projectId: "project-a" }),
+    remove: () => removeProjectCustomIcon({ froggHome, projectId: "project-a" }),
   };
 }
 
@@ -144,7 +144,9 @@ describe("project custom icon", () => {
 
     await target.remove();
 
-    await expect(readProjectIcon({ fdeHome: target.fdeHome, project: stored })).resolves.toBeNull();
+    await expect(
+      readProjectIcon({ froggHome: target.froggHome, project: stored }),
+    ).resolves.toBeNull();
   });
 
   it.each([

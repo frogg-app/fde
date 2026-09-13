@@ -1,5 +1,5 @@
 import equal from "fast-deep-equal";
-import type { AgentUsage } from "@fde/protocol/agent-types";
+import type { AgentUsage } from "@frogg/protocol/agent-types";
 
 interface AgentUpdateValue {
   updatedAt: Date | string;

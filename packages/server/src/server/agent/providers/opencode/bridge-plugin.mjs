@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const INTERNAL_PREFIX = "/_internal/opencode";
 
-export default async function fdePlugin(input, options) {
+export default async function froggPlugin(input, options) {
   const request = async (pathname, init) => {
     const response = await fetch(new URL(pathname, options.baseUrl), {
       ...init,
@@ -13,7 +13,7 @@ export default async function fdePlugin(input, options) {
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
-      const error = new Error(payload.error ?? `Fde OpenCode bridge failed: ${response.status}`);
+      const error = new Error(payload.error ?? `Frogg OpenCode bridge failed: ${response.status}`);
       error.status = response.status;
       throw error;
     }
@@ -29,7 +29,7 @@ export default async function fdePlugin(input, options) {
   }
   const tools = {};
   for (const definition of manifest.tools ?? []) {
-    tools[`fde_${definition.name}`] = {
+    tools[`frogg_${definition.name}`] = {
       description: definition.description,
       args: jsonSchemaObjectToZodShape(definition.inputSchema),
       execute: async (args, context) => {
@@ -50,7 +50,7 @@ export default async function fdePlugin(input, options) {
         return {
           title: definition.title,
           output: formatToolResult(result),
-          metadata: { fdeTool: definition.name },
+          metadata: { froggTool: definition.name },
         };
       },
     };
@@ -73,7 +73,7 @@ export default async function fdePlugin(input, options) {
 }
 
 function logPluginError(stage, context, error) {
-  console.error(`[fde-opencode-plugin] ${stage} failed`, {
+  console.error(`[frogg-opencode-plugin] ${stage} failed`, {
     ...context,
     error: error instanceof Error ? error.message : String(error),
   });

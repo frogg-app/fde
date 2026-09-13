@@ -1,4 +1,4 @@
-import type { WorkspaceLabelColor } from "@fde/protocol/workspace-labels";
+import type { WorkspaceLabelColor } from "@frogg/protocol/workspace-labels";
 import type { CommandCenterIcon } from "@/command-center/contributions";
 import { WorkspaceLabelDot } from "./swatch";
 

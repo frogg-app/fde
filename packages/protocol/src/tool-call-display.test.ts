@@ -59,19 +59,19 @@ describe("shared tool-call display mapping", () => {
 
   it("builds display model for worktree setup detail", () => {
     const display = buildToolCallDisplayModel({
-      name: "fde_worktree_setup",
+      name: "frogg_worktree_setup",
       status: "running",
       error: null,
       detail: {
         type: "worktree_setup",
-        worktreePath: "/tmp/repo/.fde/worktrees/repo/branch",
+        worktreePath: "/tmp/repo/.frogg/worktrees/repo/branch",
         branchName: "feature-branch",
         log: "==> [1/1] Running: npm install\n",
         commands: [
           {
             index: 1,
             command: "npm install",
-            cwd: "/tmp/repo/.fde/worktrees/repo/branch",
+            cwd: "/tmp/repo/.frogg/worktrees/repo/branch",
             log: "==> [1/1] Running: npm install\n",
             status: "running",
             exitCode: null,
@@ -135,9 +135,9 @@ describe("shared tool-call display mapping", () => {
     });
   });
 
-  it("humanizes Fde MCP tool names (Claude Code format)", () => {
+  it("humanizes Frogg MCP tool names (Claude Code format)", () => {
     const display = buildToolCallDisplayModel({
-      name: "mcp__fde__create_agent",
+      name: "mcp__frogg__create_agent",
       status: "running",
       error: null,
       detail: { type: "unknown", input: null, output: null },
@@ -145,9 +145,9 @@ describe("shared tool-call display mapping", () => {
     expect(display.displayName).toBe("Create agent");
   });
 
-  it("humanizes Fde MCP tool names (Codex format)", () => {
+  it("humanizes Frogg MCP tool names (Codex format)", () => {
     const display = buildToolCallDisplayModel({
-      name: "fde.create_agent",
+      name: "frogg.create_agent",
       status: "running",
       error: null,
       detail: { type: "unknown", input: null, output: null },
@@ -155,9 +155,9 @@ describe("shared tool-call display mapping", () => {
     expect(display.displayName).toBe("Create agent");
   });
 
-  it("humanizes list_agents Fde tool", () => {
+  it("humanizes list_agents Frogg tool", () => {
     const display = buildToolCallDisplayModel({
-      name: "mcp__fde__list_agents",
+      name: "mcp__frogg__list_agents",
       status: "running",
       error: null,
       detail: { type: "unknown", input: null, output: null },

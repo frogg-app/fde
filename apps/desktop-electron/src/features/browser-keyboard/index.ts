@@ -1,6 +1,6 @@
 import { handleDesktopIpc } from "../../ipc-security.js";
 import { ipcMain } from "electron";
-import { FdeBrowserWebviewRegistry } from "../browser-webviews/registry.js";
+import { FroggBrowserWebviewRegistry } from "../browser-webviews/registry.js";
 import {
   type BrowserKeyboardPolicy,
   classifyBrowserReservedShortcut,
@@ -12,12 +12,12 @@ import {
 
 export type { BrowserKeyboardPolicy } from "./policy.js";
 
-const POLICY_INPUT_CHANNEL = "fde:browser:set-shortcut-policy";
-const POLICY_OUTPUT_CHANNEL = "fde:browser-keyboard-policy";
-const POLICY_REQUEST_CHANNEL = "fde:browser-keyboard-policy-request";
-const SHORTCUT_INPUT_CHANNEL = "fde:browser-shortcut-input";
-const SHORTCUT_OUTPUT_CHANNEL = "fde:event:browser-shortcut-input";
-const RESERVED_SHORTCUT_OUTPUT_CHANNEL = "fde:event:browser-shortcut";
+const POLICY_INPUT_CHANNEL = "frogg:browser:set-shortcut-policy";
+const POLICY_OUTPUT_CHANNEL = "frogg:browser-keyboard-policy";
+const POLICY_REQUEST_CHANNEL = "frogg:browser-keyboard-policy-request";
+const SHORTCUT_INPUT_CHANNEL = "frogg:browser-shortcut-input";
+const SHORTCUT_OUTPUT_CHANNEL = "frogg:event:browser-shortcut-input";
+const RESERVED_SHORTCUT_OUTPUT_CHANNEL = "frogg:event:browser-shortcut";
 
 interface BrowserKeyboardContentsIdentity {
   readonly id: number;
@@ -62,7 +62,7 @@ export class BrowserKeyboard {
   private readonly attachedGuestsByWebContentsId = new Map<number, BrowserKeyboardGuest>();
   private readonly policiesByHostWebContentsId = new Map<number, BrowserKeyboardPolicy>();
 
-  public constructor(private readonly browserRegistry: FdeBrowserWebviewRegistry) {}
+  public constructor(private readonly browserRegistry: FroggBrowserWebviewRegistry) {}
 
   public registerIpc(): void {
     handleDesktopIpc(POLICY_INPUT_CHANNEL, (event, rawPolicy: unknown) => {

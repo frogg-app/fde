@@ -1,28 +1,31 @@
 import { join } from "node:path";
 
-import { getFdeWorktreesRoot, isFdeOwnedWorktreeCwd } from "../../utils/worktree.js";
+import { getFroggWorktreesRoot, isFroggOwnedWorktreeCwd } from "../../utils/worktree.js";
 import {
   archiveByScope,
   resolveWorkspaceIdAtPath,
   type ArchiveDependencies,
   type ArchiveScope,
 } from "../workspace-archive-service.js";
-import type { CreateFdeWorktreeInput, CreateFdeWorktreeResult } from "../fde-worktree-service.js";
+import type {
+  CreateFroggWorktreeInput,
+  CreateFroggWorktreeResult,
+} from "../frogg-worktree-service.js";
 import { toWorktreeWireError, type WorktreeWireError } from "../worktree-errors.js";
 import type { WorkspaceGitService, WorkspaceGitWorktreeInfo } from "../workspace-git-service.js";
 
-export interface ListFdeWorktreesCommandDependencies {
+export interface ListFroggWorktreesCommandDependencies {
   workspaceGitService: Pick<WorkspaceGitService, "listWorktrees">;
 }
 
-export interface ListFdeWorktreesCommandInput {
+export interface ListFroggWorktreesCommandInput {
   cwd: string;
   reason?: string;
 }
 
-export async function listFdeWorktreesCommand(
-  dependencies: ListFdeWorktreesCommandDependencies,
-  input: ListFdeWorktreesCommandInput,
+export async function listFroggWorktreesCommand(
+  dependencies: ListFroggWorktreesCommandDependencies,
+  input: ListFroggWorktreesCommandInput,
 ): Promise<WorkspaceGitWorktreeInfo[]> {
   if (input.reason) {
     return dependencies.workspaceGitService.listWorktrees(input.cwd, { reason: input.reason });
@@ -30,24 +33,27 @@ export async function listFdeWorktreesCommand(
   return dependencies.workspaceGitService.listWorktrees(input.cwd);
 }
 
-type CreateFdeWorktreeWorkflow<Result extends CreateFdeWorktreeResult> = (
-  input: CreateFdeWorktreeInput,
+type CreateFroggWorktreeWorkflow<Result extends CreateFroggWorktreeResult> = (
+  input: CreateFroggWorktreeInput,
 ) => Promise<Result>;
 
-export interface CreateFdeWorktreeCommandDependencies<
-  Result extends CreateFdeWorktreeResult = CreateFdeWorktreeResult,
+export interface CreateFroggWorktreeCommandDependencies<
+  Result extends CreateFroggWorktreeResult = CreateFroggWorktreeResult,
 > {
-  fdeHome?: string;
+  froggHome?: string;
   worktreesRoot?: string;
-  createFdeWorktreeWorkflow?: CreateFdeWorktreeWorkflow<Result>;
+  createFroggWorktreeWorkflow?: CreateFroggWorktreeWorkflow<Result>;
 }
 
-export type CreateFdeWorktreeCommandInput = Omit<CreateFdeWorktreeInput, "fdeHome" | "runSetup"> & {
-  fdeHome?: string;
+export type CreateFroggWorktreeCommandInput = Omit<
+  CreateFroggWorktreeInput,
+  "froggHome" | "runSetup"
+> & {
+  froggHome?: string;
   worktreesRoot?: string;
 };
 
-export type CreateFdeWorktreeCommandResult<Result extends CreateFdeWorktreeResult> =
+export type CreateFroggWorktreeCommandResult<Result extends CreateFroggWorktreeResult> =
   | {
       ok: true;
       createdWorktree: Result;
@@ -58,19 +64,19 @@ export type CreateFdeWorktreeCommandResult<Result extends CreateFdeWorktreeResul
       cause: unknown;
     };
 
-export async function createFdeWorktreeCommand<Result extends CreateFdeWorktreeResult>(
-  dependencies: CreateFdeWorktreeCommandDependencies<Result>,
-  input: CreateFdeWorktreeCommandInput,
-): Promise<CreateFdeWorktreeCommandResult<Result>> {
+export async function createFroggWorktreeCommand<Result extends CreateFroggWorktreeResult>(
+  dependencies: CreateFroggWorktreeCommandDependencies<Result>,
+  input: CreateFroggWorktreeCommandInput,
+): Promise<CreateFroggWorktreeCommandResult<Result>> {
   try {
-    if (!dependencies.createFdeWorktreeWorkflow) {
-      throw new Error("FDE worktree service is not configured");
+    if (!dependencies.createFroggWorktreeWorkflow) {
+      throw new Error("Frogg worktree service is not configured");
     }
 
-    const createdWorktree = await dependencies.createFdeWorktreeWorkflow({
+    const createdWorktree = await dependencies.createFroggWorktreeWorkflow({
       ...input,
       runSetup: false,
-      fdeHome: input.fdeHome ?? dependencies.fdeHome,
+      froggHome: input.froggHome ?? dependencies.froggHome,
       worktreesRoot: input.worktreesRoot ?? dependencies.worktreesRoot,
     });
     return { ok: true, createdWorktree };
@@ -118,9 +124,9 @@ export async function archiveCommand(
 ): Promise<ArchiveCommandResult> {
   const targetPath = await resolveArchiveTarget(dependencies, input);
   const scope = input.scope ?? "workspace";
-  const ownership = await isFdeOwnedWorktreeCwd(targetPath, {
-    fdeHome: dependencies.fdeHome,
-    worktreesRoot: dependencies.fdeWorktreesBaseRoot,
+  const ownership = await isFroggOwnedWorktreeCwd(targetPath, {
+    froggHome: dependencies.froggHome,
+    worktreesRoot: dependencies.froggWorktreesBaseRoot,
   });
 
   if (scope === "worktree") {
@@ -128,7 +134,7 @@ export async function archiveCommand(
       return {
         ok: false,
         code: "NOT_ALLOWED",
-        message: "Worktree is not an FDE-owned worktree",
+        message: "Worktree is not a Frogg-owned worktree",
         removedAgents: [],
       };
     }
@@ -189,7 +195,7 @@ async function resolveArchiveTarget(
     const worktrees = await dependencies.workspaceGitService.listWorktrees(repoRoot);
     const match = worktrees.find((entry) => entry.branchName === input.branchName);
     if (!match) {
-      throw new Error(`FDE worktree not found for branch ${input.branchName}`);
+      throw new Error(`Frogg worktree not found for branch ${input.branchName}`);
     }
     return match.path;
   }
@@ -202,10 +208,10 @@ async function resolveWorktreeSlugPath(
   repoRoot: string,
   worktreeSlug: string,
 ): Promise<string> {
-  const worktreesRoot = await getFdeWorktreesRoot(
+  const worktreesRoot = await getFroggWorktreesRoot(
     repoRoot,
-    dependencies.fdeHome,
-    dependencies.fdeWorktreesBaseRoot,
+    dependencies.froggHome,
+    dependencies.froggWorktreesBaseRoot,
   );
   return join(worktreesRoot, worktreeSlug);
 }

@@ -8,7 +8,7 @@ describe("listProviderAgentDefinitions", () => {
   let root: string;
 
   beforeEach(async () => {
-    root = await mkdtemp(path.join(os.tmpdir(), "fde-agent-defs-"));
+    root = await mkdtemp(path.join(os.tmpdir(), "frogg-agent-defs-"));
   });
 
   afterEach(async () => {

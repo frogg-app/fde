@@ -10,7 +10,7 @@ import type { ServiceManager } from "./service.js";
 import { waitForDaemonVersion, type DaemonProbe, type VerifyResult } from "./verify.js";
 
 /**
- * The supervisor step, run by the detached `fde daemon self-update --apply`
+ * The supervisor step, run by the detached `frogg daemon self-update --apply`
  * process: flip `current`, restart, verify; on failure flip back to
  * `previous`, restart, verify again. Whatever happens ends in
  * `last-update.json` so the daemon and the CLI can report it afterwards.

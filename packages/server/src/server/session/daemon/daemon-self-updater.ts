@@ -1,10 +1,10 @@
-import { getErrorMessage } from "@fde/protocol/error-utils";
+import { getErrorMessage } from "@frogg/protocol/error-utils";
 import {
   daemonInstallOriginRuntime,
   validateDaemonInstallOrigin,
   type DaemonInstallOriginRuntime,
 } from "./install-origin.js";
-import { npmGlobalFdeCli, type NpmGlobalFdeCli } from "./npm-global-cli.js";
+import { npmGlobalFroggCli, type NpmGlobalFroggCli } from "./npm-global-cli.js";
 
 export type DaemonSelfUpdatePhase = "starting" | "downloading" | "installing" | "complete";
 
@@ -27,7 +27,7 @@ export interface DaemonSelfUpdateLogger {
 }
 
 export interface DaemonSelfUpdateRuntime {
-  npm: NpmGlobalFdeCli;
+  npm: NpmGlobalFroggCli;
   installOrigin: DaemonInstallOriginRuntime;
 }
 
@@ -39,12 +39,12 @@ export class DaemonSelfUpdateInProgressError extends Error {
 }
 
 const defaultRuntime: DaemonSelfUpdateRuntime = {
-  npm: npmGlobalFdeCli,
+  npm: npmGlobalFroggCli,
   installOrigin: daemonInstallOriginRuntime,
 };
 
 const DESKTOP_MANAGED_UPDATE_ERROR =
-  "This daemon is managed by FDE Desktop. Update FDE Desktop on the host.";
+  "This daemon is managed by Frogg Desktop. Update Frogg Desktop on the host.";
 
 export class DaemonSelfUpdater {
   private inProgress = false;

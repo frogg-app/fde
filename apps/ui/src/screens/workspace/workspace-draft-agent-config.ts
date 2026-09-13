@@ -1,4 +1,4 @@
-import type { AgentSessionConfig } from "@fde/protocol/agent-types";
+import type { AgentSessionConfig } from "@frogg/protocol/agent-types";
 
 export function buildWorkspaceDraftAgentConfig(input: {
   provider: AgentSessionConfig["provider"];

@@ -6,7 +6,7 @@ import {
   type BrowserAutomationCommandName,
   type BrowserAutomationExecuteRequest,
   type BrowserAutomationExecuteResponse,
-} from "@fde/protocol/browser-automation/rpc-schemas";
+} from "@frogg/protocol/browser-automation/rpc-schemas";
 import { browserToolsFailure, type BrowserToolsResponsePayload } from "./errors.js";
 
 export interface BrowserHostClient {

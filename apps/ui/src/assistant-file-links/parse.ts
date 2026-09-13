@@ -345,7 +345,7 @@ export function parseAssistantFileLink(
 
   let parsedUrl: URL;
   try {
-    parsedUrl = new URL(trimmed, "http://fde.invalid");
+    parsedUrl = new URL(trimmed, "http://frogg.invalid");
   } catch {
     return null;
   }

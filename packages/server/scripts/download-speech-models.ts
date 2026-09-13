@@ -1,4 +1,4 @@
-import { resolveFdeHome } from "../src/server/fde-home.js";
+import { resolveFroggHome } from "../src/server/frogg-home.js";
 import { createRootLogger } from "../src/server/logger.js";
 import {
   DEFAULT_LOCAL_STT_MODEL,
@@ -8,8 +8,8 @@ import {
 } from "../src/server/speech/providers/local/models.js";
 
 function parseArgs(argv: string[]): { modelsDir: string; modelIds: LocalSpeechModelId[] } {
-  const home = resolveFdeHome();
-  let modelsDir = process.env.FDE_LOCAL_MODELS_DIR || `${home}/models/local-speech`;
+  const home = resolveFroggHome();
+  let modelsDir = process.env.FROGG_LOCAL_MODELS_DIR || `${home}/models/local-speech`;
   const modelIds: LocalSpeechModelId[] = [];
 
   for (let i = 0; i < argv.length; i++) {

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-default_dev_fde_root() {
+default_dev_frogg_root() {
   git rev-parse --show-toplevel 2>/dev/null || pwd
 }
 
@@ -30,8 +30,8 @@ has_files() {
   [ -d "$1" ] && [ -n "$(find "$1" -mindepth 1 -maxdepth 1 -print -quit 2>/dev/null)" ]
 }
 
-seed_worktree_fde_home() {
-  local source_home="${FDE_DEV_SEED_HOME:-$HOME/.fde}"
+seed_worktree_frogg_home() {
+  local source_home="${FROGG_DEV_SEED_HOME:-$HOME/.frogg}"
   local target_home="$1"
 
   if [ ! -d "$source_home" ]; then
@@ -44,7 +44,7 @@ seed_worktree_fde_home() {
     return
   fi
 
-  if [ "${FDE_DEV_RESET_HOME:-0}" = "1" ]; then
+  if [ "${FROGG_DEV_RESET_HOME:-0}" = "1" ]; then
     rm -rf "$target_home"
   elif has_files "$target_home"; then
     echo "  Seed:    skipped (${target_home} already has data)"
@@ -63,11 +63,11 @@ seed_worktree_fde_home() {
 }
 
 configure_dev_daemon_config() {
-  if [ -z "${FDE_LISTEN:-}" ]; then
+  if [ -z "${FROGG_LISTEN:-}" ]; then
     return
   fi
 
-  mkdir -p "$FDE_HOME"
+  mkdir -p "$FROGG_HOME"
   node -e '
 const fs = require("fs");
 const [path, listen] = [process.argv[1], process.argv[2]];
@@ -79,77 +79,77 @@ cfg.daemon.listen = listen;
 cfg.daemon.cors = cfg.daemon.cors || {};
 cfg.daemon.cors.allowedOrigins = ["*"];
 fs.writeFileSync(path, JSON.stringify(cfg, null, 2));
-' "$FDE_HOME/config.json" "$FDE_LISTEN"
+' "$FROGG_HOME/config.json" "$FROGG_LISTEN"
 }
 
 resolve_dev_daemon_endpoint() {
-  if [ -n "${FDE_DEV_DAEMON_ENDPOINT:-}" ]; then
-    echo "$FDE_DEV_DAEMON_ENDPOINT"
+  if [ -n "${FROGG_DEV_DAEMON_ENDPOINT:-}" ]; then
+    echo "$FROGG_DEV_DAEMON_ENDPOINT"
     return
   fi
 
-  case "${FDE_LISTEN:-127.0.0.1:6768}" in
-    0.0.0.0:*) echo "localhost:${FDE_LISTEN#0.0.0.0:}" ;;
-    127.0.0.1:*) echo "localhost:${FDE_LISTEN#127.0.0.1:}" ;;
-    *) echo "$FDE_LISTEN" ;;
+  case "${FROGG_LISTEN:-127.0.0.1:6768}" in
+    0.0.0.0:*) echo "localhost:${FROGG_LISTEN#0.0.0.0:}" ;;
+    127.0.0.1:*) echo "localhost:${FROGG_LISTEN#127.0.0.1:}" ;;
+    *) echo "$FROGG_LISTEN" ;;
   esac
 }
 
-configure_dev_fde_home() {
+configure_dev_frogg_home() {
   local brand_root brand_prefix brand_id brand_home_var
-  brand_root="$(default_dev_fde_root)"
+  brand_root="$(default_dev_frogg_root)"
   node --import tsx "$brand_root/scripts/dev/brand.mts" prepare >/dev/null || return 1
   brand_prefix="$(node -p 'require(process.argv[1]).envPrefix' "$brand_root/.generated/branding/brand.json")"
   brand_id="$(node -p 'require(process.argv[1]).id' "$brand_root/.generated/branding/brand.json")"
   brand_home_var="${brand_prefix}_HOME"
   local brand_port metro_port
-  brand_port="$(node -p 'const b=require(process.argv[1]); b.legacyFde ? 6768 : b.daemonPort' "$brand_root/.generated/branding/brand.json")"
-  metro_port="$(node -p 'const b=require(process.argv[1]); b.legacyFde ? 8081 : (b.daemonPort === 65535 ? 65534 : b.daemonPort + 1)' "$brand_root/.generated/branding/brand.json")"
-  export FDE_LISTEN="${FDE_LISTEN:-0.0.0.0:$brand_port}"
+  brand_port="$(node -p 'const b=require(process.argv[1]); b.legacyFrogg ? 6768 : b.daemonPort' "$brand_root/.generated/branding/brand.json")"
+  metro_port="$(node -p 'const b=require(process.argv[1]); b.legacyFrogg ? 8081 : (b.daemonPort === 65535 ? 65534 : b.daemonPort + 1)' "$brand_root/.generated/branding/brand.json")"
+  export FROGG_LISTEN="${FROGG_LISTEN:-0.0.0.0:$brand_port}"
   export EXPO_PORT="${EXPO_PORT:-$metro_port}"
-  FDE_DEV_PRODUCT_NAME="$(node -p 'require(process.argv[1]).name' "$brand_root/.generated/branding/brand.json")"
-  export FDE_DEV_PRODUCT_NAME
-  if [ "$brand_id" != "fde" ]; then
-    export FDE_HOME="${!brand_home_var:-$brand_root/.dev/$brand_id-home}"
+  FROGG_DEV_PRODUCT_NAME="$(node -p 'require(process.argv[1]).name' "$brand_root/.generated/branding/brand.json")"
+  export FROGG_DEV_PRODUCT_NAME
+  if [ "$brand_id" != "frogg" ]; then
+    export FROGG_HOME="${!brand_home_var:-$brand_root/.dev/$brand_id-home}"
   else
-    export FDE_HOME="${FDE_HOME:-${FDE_HOME:-$brand_root/.dev/fde-home}}"
+    export FROGG_HOME="${FROGG_HOME:-${FROGG_HOME:-$brand_root/.dev/frogg-home}}"
   fi
-  export "$brand_home_var=$FDE_HOME"
+  export "$brand_home_var=$FROGG_HOME"
 
-  if [ -n "${FDE_HOME:-}" ]; then
-    export FDE_HOME
-    if [ -n "${FDE_DEV_SEED_HOME:-}" ]; then
-      seed_worktree_fde_home "$FDE_HOME"
+  if [ -n "${FROGG_HOME:-}" ]; then
+    export FROGG_HOME
+    if [ -n "${FROGG_DEV_SEED_HOME:-}" ]; then
+      seed_worktree_frogg_home "$FROGG_HOME"
     fi
-    mkdir -p "$FDE_HOME"
-    if [ "${FDE_DEV_MANAGED_HOME:-0}" = "1" ] || [ -n "${FDE_DEV_SEED_HOME:-}" ]; then
+    mkdir -p "$FROGG_HOME"
+    if [ "${FROGG_DEV_MANAGED_HOME:-0}" = "1" ] || [ -n "${FROGG_DEV_SEED_HOME:-}" ]; then
       configure_dev_daemon_config
     fi
     return
   fi
 
-  export FDE_HOME
+  export FROGG_HOME
   local dev_root
-  dev_root="${FDE_DEV_ROOT:-$(default_dev_fde_root)}"
-  FDE_HOME="$dev_root/.dev/fde-home"
-  export FDE_DEV_MANAGED_HOME=1
+  dev_root="${FROGG_DEV_ROOT:-$(default_dev_frogg_root)}"
+  FROGG_HOME="$dev_root/.dev/frogg-home"
+  export FROGG_DEV_MANAGED_HOME=1
 
-  if [ -n "${FDE_DEV_SEED_HOME:-}" ]; then
-    seed_worktree_fde_home "$FDE_HOME"
+  if [ -n "${FROGG_DEV_SEED_HOME:-}" ]; then
+    seed_worktree_frogg_home "$FROGG_HOME"
   fi
 
-  mkdir -p "$FDE_HOME"
+  mkdir -p "$FROGG_HOME"
   configure_dev_daemon_config
 }
 
 configure_dev_command_env() {
-  if [ -z "${FDE_LISTEN:-}" ]; then
-    if [ -n "${FDE_SERVICE_DAEMON_PORT:-}" ]; then
-      export FDE_LISTEN="0.0.0.0:${FDE_SERVICE_DAEMON_PORT}"
+  if [ -z "${FROGG_LISTEN:-}" ]; then
+    if [ -n "${FROGG_SERVICE_DAEMON_PORT:-}" ]; then
+      export FROGG_LISTEN="0.0.0.0:${FROGG_SERVICE_DAEMON_PORT}"
     fi
   fi
 
-  configure_dev_fde_home
+  configure_dev_frogg_home
 }
 
 if [ "${BASH_SOURCE[0]}" = "$0" ]; then
@@ -158,5 +158,5 @@ if [ "${BASH_SOURCE[0]}" = "$0" ]; then
     exec "$@"
   fi
 
-  configure_dev_fde_home
+  configure_dev_frogg_home
 fi

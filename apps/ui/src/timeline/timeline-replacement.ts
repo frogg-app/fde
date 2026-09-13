@@ -1,4 +1,4 @@
-import type { DaemonClient } from "@fde/client/internal/daemon-client";
+import type { DaemonClient } from "@frogg/client/internal/daemon-client";
 import { planTimelineTailFetch } from "./timeline-sync-plan";
 
 interface TimelineReplacementFetch {

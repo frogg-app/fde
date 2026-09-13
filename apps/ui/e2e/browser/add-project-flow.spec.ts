@@ -170,7 +170,7 @@ test.describe("Add Project command-center flow", () => {
     });
 
     test("New directory creates a Project on the selected remote host", async ({ page }) => {
-      const parentDirectory = await mkdtemp(path.join(tmpdir(), "fde-e2e-remote-project-"));
+      const parentDirectory = await mkdtemp(path.join(tmpdir(), "frogg-e2e-remote-project-"));
       const directoryName = `remote-${randomUUID().slice(0, 8)}`;
       const directoryPath = path.join(parentDirectory, directoryName);
 
@@ -245,7 +245,7 @@ test.describe("Add Project command-center flow", () => {
   test("directory browsing starts at home, navigates children, and recovers from a failed path", async ({
     page,
   }) => {
-    const root = await mkdtemp(path.join(tmpdir(), "fde-e2e-browse-"));
+    const root = await mkdtemp(path.join(tmpdir(), "frogg-e2e-browse-"));
     const child = path.join(root, "child");
     const missing = path.join(root, "missing");
     try {
@@ -311,7 +311,7 @@ test.describe("Add Project command-center flow", () => {
     const title = addProjectFlow(page).getByTestId("add-project-flow-title");
     await expect(title.getByText("Choose destination", { exact: true })).toBeVisible();
     await expect(title.getByText("localhost", { exact: true })).toBeVisible();
-    await expect(title).not.toContainText("Where should Fde create");
+    await expect(title).not.toContainText("Where should Frogg create");
     await addProjectFlowBack(page).click();
     await expect(addProjectFlowInput(page)).toHaveValue(remote);
   });
@@ -319,7 +319,7 @@ test.describe("Add Project command-center flow", () => {
   test("New directory validates the name, restores parent and name state, then creates a Project", async ({
     page,
   }) => {
-    const parentDirectory = await mkdtemp(path.join(tmpdir(), "fde-e2e-new-project-"));
+    const parentDirectory = await mkdtemp(path.join(tmpdir(), "frogg-e2e-new-project-"));
     const directoryName = `created-${randomUUID().slice(0, 8)}`;
     const directoryPath = path.join(parentDirectory, directoryName);
     let projectId: string | null = null;

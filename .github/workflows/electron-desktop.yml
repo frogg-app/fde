@@ -34,10 +34,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run install:electron --workspace=@fde/desktop-electron
+      - run: npm run install:electron --workspace=@frogg/desktop-electron
       - run: npm run build:app-deps
-      - run: npm run typecheck --workspace=@fde/desktop-electron
-      - run: npm run test --workspace=@fde/desktop-electron
+      - run: npm run typecheck --workspace=@frogg/desktop-electron
+      - run: npm run test --workspace=@frogg/desktop-electron
       - run: npm run build:desktop:electron -- --target ${{ matrix.target }}
       - uses: actions/upload-artifact@v4
         with:

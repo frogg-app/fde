@@ -26,7 +26,7 @@ function createFacts(cwd: string): CheckoutSnapshotFacts {
     remoteUrl: null,
     absoluteGitDir: path.join(cwd, ".git"),
     gitCommonDir: path.join(cwd, ".git"),
-    fdeWorktree: { isFdeOwnedWorktree: false },
+    froggWorktree: { isFroggOwnedWorktree: false },
     storedBaseRef: null,
     resolvedBaseRef: "main",
     mainRepoRoot: null,
@@ -50,7 +50,7 @@ function createStatus(cwd: string): CheckoutStatusGit {
     behindOfOrigin: null,
     hasRemote: false,
     remoteUrl: null,
-    isFdeOwnedWorktree: false,
+    isFroggOwnedWorktree: false,
   };
 }
 
@@ -63,7 +63,7 @@ afterEach(async () => {
 });
 
 test("recursive observation updates tracked state and prunes ignored storms", async () => {
-  const tempDir = realpathSync(mkdtempSync(path.join(tmpdir(), "fde-git-observation-")));
+  const tempDir = realpathSync(mkdtempSync(path.join(tmpdir(), "frogg-git-observation-")));
   const repoDir = path.join(tempDir, "repo");
   const trackedPath = path.join(repoDir, "src", "tracked.txt");
   const ignoredDir = path.join(repoDir, "build");
@@ -171,7 +171,7 @@ test("recursive observation updates tracked state and prunes ignored storms", as
   });
   const service = new WorkspaceGitServiceImpl({
     logger: createLogger(),
-    fdeHome: path.join(tempDir, "fde-home"),
+    froggHome: path.join(tempDir, "frogg-home"),
     fileObserver,
     deps: {
       getCheckoutSnapshotFacts,
@@ -184,7 +184,7 @@ test("recursive observation updates tracked state and prunes ignored storms", as
   });
   const diffManager = new CheckoutDiffManager({
     logger: createLogger(),
-    fdeHome: path.join(tempDir, "fde-home"),
+    froggHome: path.join(tempDir, "frogg-home"),
     workspaceGitService: service,
   });
   const summaryListener = vi.fn();

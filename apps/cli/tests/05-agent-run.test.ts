@@ -32,8 +32,8 @@ console.log("=== Run Command Tests ===\n");
 
 // Get random port that's definitely not in use (never 9999)
 const port = 10000 + Math.floor(Math.random() * 50000);
-const fdeHome = await mkdtemp(join(tmpdir(), "fde-test-home-"));
-const schemaPath = join(fdeHome, "run-output-schema.json");
+const froggHome = await mkdtemp(join(tmpdir(), "frogg-test-home-"));
+const schemaPath = join(froggHome, "run-output-schema.json");
 await writeFile(
   schemaPath,
   JSON.stringify({
@@ -50,7 +50,7 @@ try {
   // Test 1: run --help shows options
   {
     console.log("Test 1: run --help shows options");
-    const result = await $`npx fde run --help`.nothrow();
+    const result = await $`npx frogg run --help`.nothrow();
     assert.strictEqual(result.exitCode, 0, "run --help should exit 0");
     assert(result.stdout.includes("-d"), "help should mention -d flag");
     assert(result.stdout.includes("--background"), "help should mention --background flag");
@@ -71,7 +71,8 @@ try {
   // Test 2: run requires prompt argument
   {
     console.log("Test 2: run requires prompt argument");
-    const result = await $`FDE_HOST=localhost:${port} FDE_HOME=${fdeHome} npx fde run`.nothrow();
+    const result =
+      await $`FROGG_HOST=localhost:${port} FROGG_HOME=${froggHome} npx frogg run`.nothrow();
     assert.notStrictEqual(result.exitCode, 0, "should fail without prompt");
     const output = result.stdout + result.stderr;
     // Commander should complain about missing argument
@@ -87,7 +88,7 @@ try {
   {
     console.log("Test 3: run handles daemon not running");
     const result =
-      await $`FDE_HOST=localhost:${port} FDE_HOME=${fdeHome} npx fde run --provider claude "test prompt"`.nothrow();
+      await $`FROGG_HOST=localhost:${port} FROGG_HOME=${froggHome} npx frogg run --provider claude "test prompt"`.nothrow();
     // Should fail because daemon not running
     assert.notStrictEqual(result.exitCode, 0, "should fail when daemon not running");
     const output = result.stdout + result.stderr;
@@ -103,7 +104,7 @@ try {
   {
     console.log("Test 4: run -d flag is accepted");
     const result =
-      await $`FDE_HOST=localhost:${port} FDE_HOME=${fdeHome} npx fde run -d "test prompt"`.nothrow();
+      await $`FROGG_HOST=localhost:${port} FROGG_HOME=${froggHome} npx frogg run -d "test prompt"`.nothrow();
     const output = result.stdout + result.stderr;
     assert(!output.includes("unknown option"), "should accept -d flag");
     assert(!output.includes("error: option"), "should not have option parsing error");
@@ -114,7 +115,7 @@ try {
   {
     console.log("Test 5: run --name flag is accepted");
     const result =
-      await $`FDE_HOST=localhost:${port} FDE_HOME=${fdeHome} npx fde run --name "test-agent" "test prompt"`.nothrow();
+      await $`FROGG_HOST=localhost:${port} FROGG_HOME=${froggHome} npx frogg run --name "test-agent" "test prompt"`.nothrow();
     const output = result.stdout + result.stderr;
     assert(!output.includes("unknown option"), "should accept --name flag");
     assert(!output.includes("error: option"), "should not have option parsing error");
@@ -125,7 +126,7 @@ try {
   {
     console.log("Test 6: run --provider flag is accepted");
     const result =
-      await $`FDE_HOST=localhost:${port} FDE_HOME=${fdeHome} npx fde run --provider codex "test prompt"`.nothrow();
+      await $`FROGG_HOST=localhost:${port} FROGG_HOME=${froggHome} npx frogg run --provider codex "test prompt"`.nothrow();
     const output = result.stdout + result.stderr;
     assert(!output.includes("unknown option"), "should accept --provider flag");
     assert(!output.includes("error: option"), "should not have option parsing error");
@@ -136,7 +137,7 @@ try {
   {
     console.log("Test 6b: run --provider provider/model syntax is accepted");
     const result =
-      await $`FDE_HOST=localhost:${port} FDE_HOME=${fdeHome} npx fde run --provider codex/gpt-5.4 "test prompt"`.nothrow();
+      await $`FROGG_HOST=localhost:${port} FROGG_HOME=${froggHome} npx frogg run --provider codex/gpt-5.4 "test prompt"`.nothrow();
     const output = result.stdout + result.stderr;
     assert(!output.includes("unknown option"), "should accept provider/model syntax");
     assert(!output.includes("error: option"), "should not have option parsing error");
@@ -147,7 +148,7 @@ try {
   {
     console.log("Test 7: run --mode flag is accepted");
     const result =
-      await $`FDE_HOST=localhost:${port} FDE_HOME=${fdeHome} npx fde run --mode bypass "test prompt"`.nothrow();
+      await $`FROGG_HOST=localhost:${port} FROGG_HOME=${froggHome} npx frogg run --mode bypass "test prompt"`.nothrow();
     const output = result.stdout + result.stderr;
     assert(!output.includes("unknown option"), "should accept --mode flag");
     assert(!output.includes("error: option"), "should not have option parsing error");
@@ -158,7 +159,7 @@ try {
   {
     console.log("Test 8: run --cwd flag is accepted");
     const result =
-      await $`FDE_HOST=localhost:${port} FDE_HOME=${fdeHome} npx fde run --cwd /tmp "test prompt"`.nothrow();
+      await $`FROGG_HOST=localhost:${port} FROGG_HOME=${froggHome} npx frogg run --cwd /tmp "test prompt"`.nothrow();
     const output = result.stdout + result.stderr;
     assert(!output.includes("unknown option"), "should accept --cwd flag");
     assert(!output.includes("error: option"), "should not have option parsing error");
@@ -169,7 +170,7 @@ try {
   {
     console.log("Test 9: run --output-schema flag is accepted");
     const result =
-      await $`FDE_HOST=localhost:${port} FDE_HOME=${fdeHome} npx fde run --output-schema ${schemaPath} "test prompt"`.nothrow();
+      await $`FROGG_HOST=localhost:${port} FROGG_HOME=${froggHome} npx frogg run --output-schema ${schemaPath} "test prompt"`.nothrow();
     const output = result.stdout + result.stderr;
     assert(!output.includes("unknown option"), "should accept --output-schema flag");
     assert(!output.includes("error: option"), "should not have option parsing error");
@@ -180,7 +181,7 @@ try {
   {
     console.log("Test 10: run --output-schema cannot be used with --background");
     const result =
-      await $`FDE_HOST=localhost:${port} FDE_HOME=${fdeHome} npx fde run --background --output-schema ${schemaPath} "test prompt"`.nothrow();
+      await $`FROGG_HOST=localhost:${port} FROGG_HOME=${froggHome} npx frogg run --background --output-schema ${schemaPath} "test prompt"`.nothrow();
     assert.notStrictEqual(result.exitCode, 0, "should fail with --background and --output-schema");
     const output = result.stdout + result.stderr;
     assert(
@@ -194,7 +195,7 @@ try {
   {
     console.log("Test 11: -q (quiet) flag is accepted with run");
     const result =
-      await $`FDE_HOST=localhost:${port} FDE_HOME=${fdeHome} npx fde -q run -d "test prompt"`.nothrow();
+      await $`FROGG_HOST=localhost:${port} FROGG_HOME=${froggHome} npx frogg -q run -d "test prompt"`.nothrow();
     const output = result.stdout + result.stderr;
     assert(!output.includes("unknown option"), "should accept -q flag");
     assert(!output.includes("error: option"), "should not have option parsing error");
@@ -205,7 +206,7 @@ try {
   {
     console.log("Test 12: Combined flags work together");
     const result =
-      await $`FDE_HOST=localhost:${port} FDE_HOME=${fdeHome} npx fde -q run -d --name "test-fixer" --provider claude --mode bypass --cwd /tmp "Fix the tests"`.nothrow();
+      await $`FROGG_HOST=localhost:${port} FROGG_HOME=${froggHome} npx frogg -q run -d --name "test-fixer" --provider claude --mode bypass --cwd /tmp "Fix the tests"`.nothrow();
     const output = result.stdout + result.stderr;
     assert(!output.includes("unknown option"), "should accept all combined flags");
     assert(!output.includes("error: option"), "should not have option parsing error");
@@ -216,7 +217,7 @@ try {
   {
     console.log("Test 12b: conflicting provider/model syntax is rejected");
     const result =
-      await $`FDE_HOST=localhost:${port} FDE_HOME=${fdeHome} npx fde run --provider codex/gpt-5.4 --model gpt-5.5 "test prompt"`.nothrow();
+      await $`FROGG_HOST=localhost:${port} FROGG_HOME=${froggHome} npx frogg run --provider codex/gpt-5.4 --model gpt-5.5 "test prompt"`.nothrow();
     assert.notStrictEqual(result.exitCode, 0, "should fail for conflicting model inputs");
     const output = result.stdout + result.stderr;
     assert(
@@ -226,20 +227,20 @@ try {
     console.log("✓ conflicting provider/model syntax is rejected\n");
   }
 
-  // Test 13: fde --help shows run command
+  // Test 13: frogg --help shows run command
   {
-    console.log("Test 13: fde --help shows run command");
-    const result = await $`npx fde --help`.nothrow();
-    assert.strictEqual(result.exitCode, 0, "fde --help should exit 0");
+    console.log("Test 13: frogg --help shows run command");
+    const result = await $`npx frogg --help`.nothrow();
+    assert.strictEqual(result.exitCode, 0, "frogg --help should exit 0");
     assert(result.stdout.includes("run"), "help should mention run command");
-    console.log("✓ fde --help shows run command\n");
+    console.log("✓ frogg --help shows run command\n");
   }
 
   // Test 14: run --ui is rejected (flag removed)
   {
     console.log("Test 14: run --ui is rejected");
     const result =
-      await $`FDE_HOST=localhost:${port} FDE_HOME=${fdeHome} npx fde run --ui "test prompt"`.nothrow();
+      await $`FROGG_HOST=localhost:${port} FROGG_HOME=${froggHome} npx frogg run --ui "test prompt"`.nothrow();
     assert.notStrictEqual(result.exitCode, 0, "should fail for removed --ui flag");
     const output = result.stdout + result.stderr;
     assert(output.includes("unknown option"), "should report unknown option for --ui");
@@ -250,7 +251,7 @@ try {
   {
     console.log("Test 15: run --new-workspace is accepted");
     const result =
-      await $`FDE_HOST=localhost:${port} FDE_HOME=${fdeHome} npx fde run --new-workspace local "test prompt"`.nothrow();
+      await $`FROGG_HOST=localhost:${port} FROGG_HOME=${froggHome} npx frogg run --new-workspace local "test prompt"`.nothrow();
     const output = result.stdout + result.stderr;
     assert(!output.includes("unknown option"), "should accept --new-workspace");
     assert(!output.includes("error: option"), "should not have option parsing error");
@@ -261,7 +262,7 @@ try {
   {
     console.log("Test 16: run --isolation is rejected");
     const result =
-      await $`FDE_HOST=localhost:${port} FDE_HOME=${fdeHome} npx fde run --isolation local "test prompt"`.nothrow();
+      await $`FROGG_HOST=localhost:${port} FROGG_HOME=${froggHome} npx frogg run --isolation local "test prompt"`.nothrow();
     assert.notStrictEqual(result.exitCode, 0, "should fail for removed --isolation flag");
     const output = result.stdout + result.stderr;
     assert(output.includes("unknown option"), "should report unknown option for --isolation");
@@ -269,7 +270,7 @@ try {
   }
 } finally {
   // Clean up temp directory
-  await rm(fdeHome, { recursive: true, force: true });
+  await rm(froggHome, { recursive: true, force: true });
 }
 
 console.log("=== All run tests passed ===");

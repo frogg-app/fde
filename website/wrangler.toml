@@ -1,4 +1,4 @@
-# frogg.app: the FDE landing page and docs, served as Workers static assets.
+# frogg.app: the Frogg landing page and docs, served as Workers static assets.
 #
 # Build, then deploy from website/:
 #   npm run build
@@ -7,7 +7,7 @@
 #
 # Pure static assets: no Worker script, bindings, KV or secrets.
 
-name = "fde-website"
+name = "frogg-website"
 compatibility_date = "2025-09-01"
 workers_dev = true
 
@@ -34,7 +34,7 @@ html_handling = "auto-trailing-slash"
 # the route to receive traffic if none exists.
 # ---------------------------------------------------------------------------
 [env.production]
-name = "fde-website"
+name = "frogg-website"
 workers_dev = false
 
 [env.production.assets]

@@ -1,5 +1,8 @@
-import { readFdeConfigJson } from "./fde-config-file.js";
-import { FdeConfigSchema, type FdeMetadataGeneration } from "@fde/protocol/fde-config-schema";
+import { readFroggConfigJson } from "./frogg-config-file.js";
+import {
+  FroggConfigSchema,
+  type FroggMetadataGeneration,
+} from "@frogg/protocol/frogg-config-schema";
 
 export type MetadataConfigKey = "title" | "branchName" | "commitMessage" | "pullRequest";
 
@@ -8,7 +11,7 @@ export interface RepoRootResolver {
 }
 
 // A style section carries the default guidance for one artifact. The project
-// owner replaces it wholesale via fde.json metadataGeneration.<configKey>.instructions
+// owner replaces it wholesale via frogg.json metadataGeneration.<configKey>.instructions
 // — their text is used instead of the default, never appended alongside it, so the
 // two never conflict. The contract block (what to produce, the JSON shape, and any
 // correctness/safety rules) lives outside the sections and is never overridable.
@@ -43,14 +46,14 @@ function renderStyleSection(section: MetadataStyleSection, override: string | un
 
 async function readProjectMetadataOverrides(
   options: Pick<BuildMetadataPromptOptions, "cwd" | "workspaceGitService">,
-): Promise<FdeMetadataGeneration | undefined> {
+): Promise<FroggMetadataGeneration | undefined> {
   if (!options.workspaceGitService) {
     return undefined;
   }
   try {
     const repoRoot = await options.workspaceGitService.resolveRepoRoot(options.cwd);
-    const json = readFdeConfigJson(repoRoot);
-    return FdeConfigSchema.parse(json).metadataGeneration;
+    const json = readFroggConfigJson(repoRoot);
+    return FroggConfigSchema.parse(json).metadataGeneration;
   } catch {
     return undefined;
   }

@@ -1,7 +1,7 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import path from "path";
 import type { Command } from "commander";
-import type { DaemonClient } from "@fde/client/internal/daemon-client";
+import type { DaemonClient } from "@frogg/client/internal/daemon-client";
 import { connectToDaemon, getDaemonHost } from "../../utils/client.js";
 import type {
   CommandOptions,
@@ -76,7 +76,7 @@ export async function runArchiveCommandWithDeps(
 
   try {
     // Get the list of worktrees first to resolve the name
-    const listResponse = await client.getFdeWorktreeList({});
+    const listResponse = await client.getFroggWorktreeList({});
 
     if (listResponse.error) {
       const error: CommandError = {
@@ -102,8 +102,8 @@ export async function runArchiveCommandWithDeps(
     }
 
     // Archive the worktree. scope:"worktree" archives every active workspace on
-    // the directory and then removes the directory (Fde-owned gated).
-    const response = await client.archiveFdeWorktree({
+    // the directory and then removes the directory (Frogg-owned gated).
+    const response = await client.archiveFroggWorktree({
       worktreePath: worktree.worktreePath,
       scope: "worktree",
     });

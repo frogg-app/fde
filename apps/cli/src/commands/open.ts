@@ -1,18 +1,18 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
-import { spawnProcess } from "@fde/server";
-import { buildAgentDeepLink, type AgentDeepLinkTarget } from "@fde/protocol/agent-deep-link";
+import { spawnProcess } from "@frogg/server";
+import { buildAgentDeepLink, type AgentDeepLinkTarget } from "@frogg/protocol/agent-deep-link";
 
 function findDesktopApp(): string | null {
-  const installName = brand.legacyFde ? brand.name : brand.id;
+  const installName = brand.legacyFrogg ? brand.name : brand.id;
   if (process.platform === "darwin") {
     const candidates = [
       `/Applications/${installName}.app`,
       path.join(homedir(), "Applications", `${installName}.app`),
-      ...(brand.legacyFde
-        ? ["/Applications/Fde.app", path.join(homedir(), "Applications", "Fde.app")]
+      ...(brand.legacyFrogg
+        ? ["/Applications/Frogg.app", path.join(homedir(), "Applications", "Frogg.app")]
         : []),
     ];
 
@@ -29,8 +29,12 @@ function findDesktopApp(): string | null {
     const candidates = [
       `/usr/bin/${brand.desktopBinaryName}`,
       path.join(homedir(), "Applications", `${installName}.AppImage`),
-      ...(brand.legacyFde
-        ? ["/usr/bin/Fde", "/opt/Fde/Fde", path.join(homedir(), "Applications", "Fde.AppImage")]
+      ...(brand.legacyFrogg
+        ? [
+            "/usr/bin/Frogg",
+            "/opt/Frogg/Frogg",
+            path.join(homedir(), "Applications", "Frogg.AppImage"),
+          ]
         : []),
     ];
 
@@ -52,16 +56,16 @@ function findDesktopApp(): string | null {
     const candidates = [
       path.join(
         localAppData,
-        brand.legacyFde ? brand.name : brand.applicationId,
+        brand.legacyFrogg ? brand.name : brand.applicationId,
         `${brand.desktopBinaryName}.exe`,
       ),
       path.join(
         localAppData,
         "Programs",
-        brand.legacyFde ? brand.name : brand.applicationId,
+        brand.legacyFrogg ? brand.name : brand.applicationId,
         `${brand.desktopBinaryName}.exe`,
       ),
-      ...(brand.legacyFde ? [path.join(localAppData, "Programs", "Fde", "Fde.exe")] : []),
+      ...(brand.legacyFrogg ? [path.join(localAppData, "Programs", "Frogg", "Frogg.exe")] : []),
     ];
     return candidates.find((candidate) => existsSync(candidate)) ?? null;
   }
@@ -76,7 +80,7 @@ function cleanEnvForDesktopLaunch(): NodeJS.ProcessEnv {
   // desktop app would start as a bare Node process instead of Electron.
   delete env.ELECTRON_RUN_AS_NODE;
   delete env.ELECTRON_NO_ATTACH_CONSOLE;
-  delete env.FDE_NODE_ENV;
+  delete env.FROGG_NODE_ENV;
   return env;
 }
 
@@ -89,7 +93,7 @@ function spawnDetached(command: string, args: string[]): void {
 }
 
 function launchDesktop(args: string[]): void {
-  if (process.env.FDE_DESKTOP_CLI === "1") {
+  if (process.env.FROGG_DESKTOP_CLI === "1") {
     throw new Error(
       `Cannot open ${brand.name} Desktop while running in desktop CLI passthrough mode.`,
     );

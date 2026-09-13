@@ -1,7 +1,7 @@
-import { createFdeClient, type FdeClient } from "@fde/client";
+import { createFroggClient, type FroggClient } from "@frogg/client";
 
-export function createClient(url: string): FdeClient {
-  return createFdeClient({
+export function createClient(url: string): FroggClient {
+  return createFroggClient({
     url,
   });
 }

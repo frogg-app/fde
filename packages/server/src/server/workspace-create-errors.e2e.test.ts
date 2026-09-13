@@ -4,15 +4,15 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { DaemonClient } from "./test-utils/index.js";
-import { createTestFdeDaemon } from "./test-utils/fde-daemon.js";
+import { createTestFroggDaemon } from "./test-utils/frogg-daemon.js";
 
 // workspace.create has four reject branches before it ever touches the
 // registries; this pins each one's errorCode (or, for project-not-found, its
 // message) as seen by the daemon client, so the CLI/app contract on top of them
 // stays covered.
 test("workspace.create surfaces each early-reject error branch", async () => {
-  const daemon = await createTestFdeDaemon();
-  const missingDir = path.join(tmpdir(), `fde-workspace-create-missing-${Date.now()}`);
+  const daemon = await createTestFroggDaemon();
+  const missingDir = path.join(tmpdir(), `frogg-workspace-create-missing-${Date.now()}`);
   const client = new DaemonClient({
     url: `ws://127.0.0.1:${daemon.port}/ws`,
     appVersion: "0.1.82",

@@ -11,14 +11,14 @@ $.verbose = false;
 
 console.log("=== Onboarding Command ===\n");
 
-const fdeHome = await mkdtemp(join(tmpdir(), "fde-onboard-home-"));
+const froggHome = await mkdtemp(join(tmpdir(), "frogg-onboard-home-"));
 const port = await getAvailablePort();
 
 try {
-  console.log("Test 1: `fde` runs blocking onboarding without implicit relay pairing");
+  console.log("Test 1: `frogg` runs blocking onboarding without implicit relay pairing");
   // Voice is on by default (and would download speech models); opt out to keep the test hermetic.
   const onboard =
-    await $`FDE_HOME=${fdeHome} FDE_LISTEN=127.0.0.1:${port} FDE_VOICE=0 npx fde`.nothrow();
+    await $`FROGG_HOME=${froggHome} FROGG_LISTEN=127.0.0.1:${port} FROGG_VOICE=0 npx frogg`.nothrow();
 
   assert.strictEqual(
     onboard.exitCode,
@@ -49,15 +49,15 @@ try {
     onboard.stdout.includes("CLI quick reference"),
     "onboard output should include CLI quick reference",
   );
-  assert(onboard.stdout.includes("fde --help"), "onboard output should include --help shortcut");
-  assert(onboard.stdout.includes("fde ls"), "onboard output should include ls shortcut");
+  assert(onboard.stdout.includes("frogg --help"), "onboard output should include --help shortcut");
+  assert(onboard.stdout.includes("frogg ls"), "onboard output should include ls shortcut");
   assert(
-    onboard.stdout.includes('fde run "your prompt"'),
+    onboard.stdout.includes('frogg run "your prompt"'),
     "onboard output should include run shortcut",
   );
-  assert(onboard.stdout.includes("fde status"), "onboard output should include status shortcut");
+  assert(onboard.stdout.includes("frogg status"), "onboard output should include status shortcut");
   assert(
-    onboard.stdout.includes(join(fdeHome, "daemon.log")),
+    onboard.stdout.includes(join(froggHome, "daemon.log")),
     "onboard output should include daemon log path",
   );
   assert(
@@ -69,23 +69,24 @@ try {
     "onboard output should state who can connect right now",
   );
   assert(
-    onboard.stdout.includes(`FDE home: ${fdeHome}`),
-    "onboard output should print the FDE home in use",
+    onboard.stdout.includes(`Frogg home: ${froggHome}`),
+    "onboard output should print the Frogg home in use",
   );
 
-  const status = await $`FDE_HOME=${fdeHome} npx fde daemon status --home ${fdeHome}`.nothrow();
+  const status =
+    await $`FROGG_HOME=${froggHome} npx frogg daemon status --home ${froggHome}`.nothrow();
   assert.strictEqual(status.exitCode, 0, `daemon status should succeed: ${status.stderr}`);
   assert(status.stdout.includes("running"), "daemon should be running when onboarding exits");
   console.log("✓ onboarding keeps relay disabled and waits for daemon readiness\n");
 
   console.log("Test 2: --no-relay suppresses pairing for an already-running daemon");
   const enableRelay =
-    await $`FDE_HOME=${fdeHome} npx fde daemon pair --home ${fdeHome} --relay`.nothrow();
+    await $`FROGG_HOME=${froggHome} npx frogg daemon pair --home ${froggHome} --relay`.nothrow();
   assert.strictEqual(enableRelay.exitCode, 0, `relay enable should succeed: ${enableRelay.stderr}`);
   assert(enableRelay.stdout.includes("#offer="), "relay enable should produce a pairing offer");
 
   const noRelayOnboard =
-    await $`FDE_HOME=${fdeHome} FDE_LISTEN=127.0.0.1:${port} npx fde --no-relay`.nothrow();
+    await $`FROGG_HOME=${froggHome} FROGG_LISTEN=127.0.0.1:${port} npx frogg --no-relay`.nothrow();
   assert.strictEqual(
     noRelayOnboard.exitCode,
     0,
@@ -97,8 +98,8 @@ try {
   );
   console.log("✓ --no-relay suppresses pairing for an already-running daemon\n");
 
-  console.log("Test 3: FDE_VOICE=0 persists the voice opt-out in config");
-  const configRaw = await readFile(join(fdeHome, "config.json"), "utf-8");
+  console.log("Test 3: FROGG_VOICE=0 persists the voice opt-out in config");
+  const configRaw = await readFile(join(froggHome, "config.json"), "utf-8");
   const config = JSON.parse(configRaw) as {
     features?: {
       dictation?: { enabled?: boolean };
@@ -116,15 +117,15 @@ try {
     false,
     "voiceMode.enabled should be false",
   );
-  const daemonLog = await readFile(join(fdeHome, "daemon.log"), "utf-8");
+  const daemonLog = await readFile(join(froggHome, "daemon.log"), "utf-8");
   assert(
     !daemonLog.includes("Ensuring local speech models"),
     "daemon should not attempt local speech model setup when voice is disabled",
   );
-  console.log("✓ FDE_VOICE=0 persisted the voice opt-out\n");
+  console.log("✓ FROGG_VOICE=0 persisted the voice opt-out\n");
 } finally {
-  await $`FDE_HOME=${fdeHome} npx fde daemon stop --home ${fdeHome} --force`.nothrow();
-  await rm(fdeHome, { recursive: true, force: true });
+  await $`FROGG_HOME=${froggHome} npx frogg daemon stop --home ${froggHome} --force`.nothrow();
+  await rm(froggHome, { recursive: true, force: true });
 }
 
 console.log("=== Onboarding tests passed ===");

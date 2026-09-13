@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import {
   createWorktree as createWorktreePrimitive,
   deriveWorktreeProjectHash,
-  deleteFdeWorktree,
-  isFdeOwnedWorktreeCwd,
+  deleteFroggWorktree,
+  isFroggOwnedWorktreeCwd,
   mapWorkspaceCwdToWorktree,
   slugify,
   type CreateWorktreeOptions,
@@ -29,7 +29,7 @@ interface LegacyCreateWorktreeTestOptions {
   baseBranch: string;
   worktreeSlug: string;
   runSetup?: boolean;
-  fdeHome?: string;
+  froggHome?: string;
 }
 
 function createLegacyWorktreeForTest(
@@ -48,19 +48,19 @@ function createLegacyWorktreeForTest(
       branchName: options.branchName,
     },
     runSetup: options.runSetup ?? true,
-    fdeHome: options.fdeHome,
+    froggHome: options.froggHome,
   });
 }
 
-describe("fde worktree manager", () => {
+describe("frogg worktree manager", () => {
   let tempDir: string;
   let repoDir: string;
-  let fdeHome: string;
+  let froggHome: string;
 
   beforeEach(() => {
     tempDir = realpathSync(mkdtempSync(join(tmpdir(), "worktree-manager-test-")));
     repoDir = join(tempDir, "test-repo");
-    fdeHome = join(tempDir, "fde-home");
+    froggHome = join(tempDir, "frogg-home");
 
     mkdirSync(repoDir, { recursive: true });
     execFileSync("git", ["init", "-b", "main"], { cwd: repoDir });
@@ -77,13 +77,13 @@ describe("fde worktree manager", () => {
     rmSync(tempDir, { recursive: true, force: true });
   });
 
-  it("treats a worktree as fde-owned even when its .git admin is missing", async () => {
+  it("treats a worktree as frogg-owned even when its .git admin is missing", async () => {
     const created = await createLegacyWorktreeForTest({
       branchName: "orphan-admin-branch",
       cwd: repoDir,
       baseBranch: "main",
       worktreeSlug: "orphan-admin",
-      fdeHome,
+      froggHome,
     });
 
     // Simulate a previous archive attempt that removed git's admin dir but left
@@ -94,21 +94,21 @@ describe("fde worktree manager", () => {
     });
     expect(existsSync(created.worktreePath)).toBe(true);
 
-    const ownership = await isFdeOwnedWorktreeCwd(created.worktreePath, { fdeHome });
+    const ownership = await isFroggOwnedWorktreeCwd(created.worktreePath, { froggHome });
     expect(ownership.allowed).toBe(true);
     await expect(
-      isFdeOwnedWorktreeCwd(join(created.worktreePath, "packages", "app"), { fdeHome }),
+      isFroggOwnedWorktreeCwd(join(created.worktreePath, "packages", "app"), { froggHome }),
     ).resolves.toMatchObject({
       allowed: true,
       worktreePath: created.worktreePath,
     });
   });
 
-  it("rejects paths that are not under the fde worktrees root", async () => {
-    const outsidePath = join(tempDir, "outside-fde-home");
+  it("rejects paths that are not under the frogg worktrees root", async () => {
+    const outsidePath = join(tempDir, "outside-frogg-home");
     mkdirSync(outsidePath, { recursive: true });
 
-    const ownership = await isFdeOwnedWorktreeCwd(outsidePath, { fdeHome });
+    const ownership = await isFroggOwnedWorktreeCwd(outsidePath, { froggHome });
 
     expect(ownership.allowed).toBe(false);
   });
@@ -119,10 +119,10 @@ describe("fde worktree manager", () => {
       cwd: repoDir,
       baseBranch: "main",
       worktreeSlug: "placement-root",
-      fdeHome,
+      froggHome,
     });
 
-    const ownership = await isFdeOwnedWorktreeCwd(created.worktreePath, { fdeHome });
+    const ownership = await isFroggOwnedWorktreeCwd(created.worktreePath, { froggHome });
 
     expect(ownership.allowed).toBe(true);
     expect(createRealpathAwarePathMatcher(repoDir)(ownership.repoRoot ?? "")).toBe(true);
@@ -181,14 +181,14 @@ describe("fde worktree manager", () => {
 
   it("rejects the worktrees root itself and the per-repo hash dir", async () => {
     const projectHash = await deriveWorktreeProjectHash(repoDir);
-    const worktreesRoot = join(fdeHome, "worktrees");
+    const worktreesRoot = join(froggHome, "worktrees");
     const projectHashDir = join(worktreesRoot, projectHash);
     mkdirSync(projectHashDir, { recursive: true });
 
-    await expect(isFdeOwnedWorktreeCwd(worktreesRoot, { fdeHome })).resolves.toMatchObject({
+    await expect(isFroggOwnedWorktreeCwd(worktreesRoot, { froggHome })).resolves.toMatchObject({
       allowed: false,
     });
-    await expect(isFdeOwnedWorktreeCwd(projectHashDir, { fdeHome })).resolves.toMatchObject({
+    await expect(isFroggOwnedWorktreeCwd(projectHashDir, { froggHome })).resolves.toMatchObject({
       allowed: false,
     });
   });
@@ -199,7 +199,7 @@ describe("fde worktree manager", () => {
       cwd: repoDir,
       baseBranch: "main",
       worktreeSlug: "orphan-delete",
-      fdeHome,
+      froggHome,
     });
 
     rmSync(join(repoDir, ".git", "worktrees", "orphan-delete"), {
@@ -208,10 +208,10 @@ describe("fde worktree manager", () => {
     });
     expect(existsSync(created.worktreePath)).toBe(true);
 
-    await deleteFdeWorktree({
+    await deleteFroggWorktree({
       cwd: repoDir,
       worktreePath: created.worktreePath,
-      fdeHome,
+      froggHome,
     });
 
     expect(existsSync(created.worktreePath)).toBe(false);
@@ -223,19 +223,19 @@ describe("fde worktree manager", () => {
       cwd: repoDir,
       baseBranch: "main",
       worktreeSlug: "idempotent-delete",
-      fdeHome,
+      froggHome,
     });
 
-    await deleteFdeWorktree({
+    await deleteFroggWorktree({
       cwd: repoDir,
       worktreePath: created.worktreePath,
-      fdeHome,
+      froggHome,
     });
     expect(existsSync(created.worktreePath)).toBe(false);
 
     // Second call — nothing left on disk and no admin entry — must not throw.
     await expect(
-      deleteFdeWorktree({ cwd: repoDir, worktreePath: created.worktreePath, fdeHome }),
+      deleteFroggWorktree({ cwd: repoDir, worktreePath: created.worktreePath, froggHome }),
     ).resolves.toBeUndefined();
   });
 
@@ -245,20 +245,20 @@ describe("fde worktree manager", () => {
       cwd: repoDir,
       baseBranch: "main",
       worktreeSlug: "no-cwd",
-      fdeHome,
+      froggHome,
     });
 
-    const ownership = await isFdeOwnedWorktreeCwd(created.worktreePath, { fdeHome });
+    const ownership = await isFroggOwnedWorktreeCwd(created.worktreePath, { froggHome });
     expect(ownership.allowed).toBe(true);
     expect(ownership.worktreeRoot).toBeTruthy();
 
     // Simulate the handler path when git has forgotten about the worktree:
     // caller forwards the path-derived worktreesRoot from the ownership check.
-    await deleteFdeWorktree({
+    await deleteFroggWorktree({
       cwd: null,
       worktreePath: created.worktreePath,
       worktreesRoot: ownership.worktreeRoot,
-      fdeHome,
+      froggHome,
     });
 
     expect(existsSync(created.worktreePath)).toBe(false);

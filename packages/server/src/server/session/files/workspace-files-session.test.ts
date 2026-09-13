@@ -15,7 +15,7 @@ import {
   encodeFileTransferFrame,
   FileTransferOpcode,
   type FileTransferFrame,
-} from "@fde/protocol/binary-frames/index";
+} from "@frogg/protocol/binary-frames/index";
 import {
   WorkspaceFilesSession,
   type WorkspaceFilesSessionHost,
@@ -54,18 +54,18 @@ function makeSubsystem(
     },
     hasBinaryChannel: () => hasBinary,
   };
-  const fdeHome = makeDir("workspace-files-home-");
+  const froggHome = makeDir("workspace-files-home-");
   const subsystem = new WorkspaceFilesSession({
     host,
     downloadTokenStore: new DownloadTokenStore({ ttlMs: 60_000 }),
-    fdeHome,
+    froggHome,
     logger: pino({ level: "silent" }),
   });
   return {
     subsystem,
     emitted,
     binary,
-    fdeHome,
+    froggHome,
     setHasBinary: (value: boolean) => {
       hasBinary = value;
     },
@@ -553,7 +553,7 @@ describe("WorkspaceFilesSession", () => {
   });
 
   test("round-trips an upload through transfer frames", async () => {
-    const { subsystem, emitted, fdeHome } = makeSubsystem();
+    const { subsystem, emitted, froggHome } = makeSubsystem();
 
     subsystem.handleFileUploadRequest({
       type: "file.upload.request",
@@ -593,7 +593,7 @@ describe("WorkspaceFilesSession", () => {
     }
     expect(message.payload.error).toBeNull();
     expect(message.payload.file?.fileName).toBe("notes.txt");
-    expect(readFileSync(join(fdeHome, "uploads", "upload_req-upload", "notes.txt"), "utf8")).toBe(
+    expect(readFileSync(join(froggHome, "uploads", "upload_req-upload", "notes.txt"), "utf8")).toBe(
       "hello world",
     );
   });

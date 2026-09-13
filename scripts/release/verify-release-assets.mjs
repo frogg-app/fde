@@ -145,7 +145,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const releases = listReleases(gh, values.repo);
   const release = releases.find((candidate) => candidate.tag_name === values.tag);
   if (!release) throw new Error(`Release not found: ${values.tag}`);
-  const directory = await mkdtemp(path.join(os.tmpdir(), "fde-release-verify-"));
+  const directory = await mkdtemp(path.join(os.tmpdir(), "frogg-release-verify-"));
   try {
     gh([
       "release",

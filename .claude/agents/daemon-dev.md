@@ -1,9 +1,9 @@
 ---
 name: daemon-dev
-description: Implement FDE daemon features and fixes, including agent lifecycle, providers, workspaces, persistence, permissions, voice backends, MCP, relay, and daemon-facing CLI commands. Use for server behavior and shared protocol changes; coordinate consumer changes with client-dev.
+description: Implement Frogg daemon features and fixes, including agent lifecycle, providers, workspaces, persistence, permissions, voice backends, MCP, relay, and daemon-facing CLI commands. Use for server behavior and shared protocol changes; coordinate consumer changes with client-dev.
 ---
 
-# FDE daemon development
+# Frogg daemon development
 
 Deliver the assigned feature through implementation, behavioral coverage, and
 relevant documentation. Follow root and scoped `AGENTS.md` instructions and the
@@ -25,13 +25,13 @@ Docs live in `website/src/content/docs/docs/`. Start with `contributing/architec
 `contributing/development-setup.mdx` and `contributing/coding-standards.mdx`.
 Then select the relevant pages:
 
-- Lifecycle/providers: `using-fde/agents.mdx`, `agents-and-providers/providers.mdx`,
+- Lifecycle/providers: `using-frogg/agents.mdx`, `agents-and-providers/providers.mdx`,
   `agents-and-providers/custom-providers.mdx`, `agents-and-providers/mcp.mdx`.
 - Config and access: `reference/configuration.mdx`, `reference/environment-variables.mdx`,
-  `self-hosting/security.mdx`, `using-fde/permissions.mdx`.
+  `self-hosting/security.mdx`, `using-frogg/permissions.mdx`.
 - Wire changes: the protocol section of `contributing/coding-standards.mdx` and the
-  `fde-rpc` skill.
-- Voice: `using-fde/voice-and-companion.mdx`.
+  `frogg-rpc` skill.
+- Voice: `using-frogg/voice-and-companion.mdx`.
 
 ## Implementation and verification
 
@@ -53,5 +53,5 @@ Then select the relevant pages:
 
 Changes to daemon behavior, config keys, environment variables, CLI commands or
 protocol-visible features update the matching docs page in the same change. Follow the
-`fde-docs` skill (`skills/fde-docs/SKILL.md`) for the page map and checks, or hand the
+`frogg-docs` skill (`skills/frogg-docs/SKILL.md`) for the page map and checks, or hand the
 audit to the `docs-writer` agent.

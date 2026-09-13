@@ -8,7 +8,7 @@ import { Writable } from "node:stream";
 import { spawn } from "node:child_process";
 
 import { generateLocalPairingOffer } from "../pairing-offer.js";
-import { createTestFdeDaemon } from "../test-utils/fde-daemon.js";
+import { createTestFroggDaemon } from "../test-utils/frogg-daemon.js";
 
 function createCapturingLogger() {
   const lines: string[] = [];
@@ -23,14 +23,14 @@ function createCapturingLogger() {
 }
 
 async function getPairingOfferUrl(args: {
-  fdeHome: string;
+  froggHome: string;
   relayEnabled?: boolean;
   relayEndpoint?: string;
   relayPublicEndpoint?: string;
   appBaseUrl?: string;
 }): Promise<string> {
   const pairing = await generateLocalPairingOffer({
-    fdeHome: args.fdeHome,
+    froggHome: args.froggHome,
     relayEnabled: args.relayEnabled,
     relayEndpoint: args.relayEndpoint,
     relayPublicEndpoint: args.relayPublicEndpoint,
@@ -77,11 +77,11 @@ describe("ConnectionOfferV2 (daemon E2E)", () => {
   });
 
   test("emits relay-only offer URL with stable serverId", async () => {
-    process.env.FDE_PRIMARY_LAN_IP = "192.168.1.12";
+    process.env.FROGG_PRIMARY_LAN_IP = "192.168.1.12";
 
     const { logger } = createCapturingLogger();
 
-    const daemon = await createTestFdeDaemon({
+    const daemon = await createTestFroggDaemon({
       listen: "0.0.0.0",
       logger,
       relayEnabled: true,
@@ -89,7 +89,7 @@ describe("ConnectionOfferV2 (daemon E2E)", () => {
 
     try {
       const offerUrl = await getPairingOfferUrl({
-        fdeHome: daemon.fdeHome,
+        froggHome: daemon.froggHome,
         relayEnabled: daemon.config.relayEnabled,
         relayEndpoint: daemon.config.relayEndpoint,
         relayPublicEndpoint: daemon.config.relayPublicEndpoint,
@@ -120,16 +120,16 @@ describe("ConnectionOfferV2 (daemon E2E)", () => {
   });
 
   test("persists serverId and daemon keypair across daemon restarts", async () => {
-    process.env.FDE_PRIMARY_LAN_IP = "192.168.1.12";
+    process.env.FROGG_PRIMARY_LAN_IP = "192.168.1.12";
 
-    const tempHomeRoot = await mkdtemp(path.join(os.tmpdir(), "fde-offer-home-"));
+    const tempHomeRoot = await mkdtemp(path.join(os.tmpdir(), "frogg-offer-home-"));
 
     const { logger: logger1 } = createCapturingLogger();
-    const daemon1 = await createTestFdeDaemon({
+    const daemon1 = await createTestFroggDaemon({
       listen: "0.0.0.0",
       logger: logger1,
       relayEnabled: true,
-      fdeHomeRoot: tempHomeRoot,
+      froggHomeRoot: tempHomeRoot,
       cleanup: false,
     });
 
@@ -138,7 +138,7 @@ describe("ConnectionOfferV2 (daemon E2E)", () => {
 
     try {
       const offerUrl1 = await getPairingOfferUrl({
-        fdeHome: daemon1.fdeHome,
+        froggHome: daemon1.froggHome,
         relayEnabled: daemon1.config.relayEnabled,
         relayEndpoint: daemon1.config.relayEndpoint,
         relayPublicEndpoint: daemon1.config.relayPublicEndpoint,
@@ -153,18 +153,18 @@ describe("ConnectionOfferV2 (daemon E2E)", () => {
       await daemon1.close();
 
       const { logger: logger2 } = createCapturingLogger();
-      const daemon2 = await createTestFdeDaemon({
+      const daemon2 = await createTestFroggDaemon({
         listen: "0.0.0.0",
         logger: logger2,
         relayEnabled: true,
-        fdeHomeRoot: tempHomeRoot,
+        froggHomeRoot: tempHomeRoot,
         cleanup: false,
       });
       staticDir2 = daemon2.staticDir;
 
       try {
         const offerUrl2 = await getPairingOfferUrl({
-          fdeHome: daemon2.fdeHome,
+          froggHome: daemon2.froggHome,
           relayEnabled: daemon2.config.relayEnabled,
           relayEndpoint: daemon2.config.relayEndpoint,
           relayPublicEndpoint: daemon2.config.relayPublicEndpoint,
@@ -196,9 +196,9 @@ describe("ConnectionOfferV2 (daemon E2E)", () => {
   });
 
   test("respects --no-relay (CLI) by not emitting a pairing offer", async () => {
-    process.env.FDE_PRIMARY_LAN_IP = "192.168.1.12";
+    process.env.FROGG_PRIMARY_LAN_IP = "192.168.1.12";
 
-    const tempHome = await mkdtemp(path.join(os.tmpdir(), "fde-offer-e2e-"));
+    const tempHome = await mkdtemp(path.join(os.tmpdir(), "frogg-offer-e2e-"));
     const port = await getAvailablePort();
 
     const serverRoot = path.resolve(import.meta.dirname, "../../..");
@@ -207,12 +207,12 @@ describe("ConnectionOfferV2 (daemon E2E)", () => {
 
     const env = {
       ...process.env,
-      FDE_HOME: tempHome,
-      FDE_LISTEN: `0.0.0.0:${port}`,
+      FROGG_HOME: tempHome,
+      FROGG_LISTEN: `0.0.0.0:${port}`,
       OPENAI_API_KEY: "",
-      FDE_DICTATION_ENABLED: "0",
-      FDE_VOICE_MODE_ENABLED: "0",
-      FDE_LOG_FORMAT: "json",
+      FROGG_DICTATION_ENABLED: "0",
+      FROGG_VOICE_MODE_ENABLED: "0",
+      FROGG_LOG_FORMAT: "json",
     };
 
     const stdoutLines: string[] = [];

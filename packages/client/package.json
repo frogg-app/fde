@@ -1,7 +1,7 @@
 {
-  "name": "@fde/client",
+  "name": "@frogg/client",
   "version": "0.7.0",
-  "description": "Fde client SDK package",
+  "description": "Frogg client SDK package",
   "files": [
     "dist",
     "!dist/**/*.map",
@@ -31,7 +31,7 @@
   },
   "scripts": {
     "clean": "node ../../scripts/ci/clean-package-dist.mjs",
-    "build": "npm run build --workspace=@fde/protocol && tsc -p tsconfig.json --incremental false",
+    "build": "npm run build --workspace=@frogg/protocol && tsc -p tsconfig.json --incremental false",
     "build:clean": "npm run clean && npm run build",
     "prepack": "npm run build:clean",
     "typecheck": "tsgo --noEmit",
@@ -39,8 +39,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@fde/protocol": "0.7.0",
-    "@fde/relay": "0.7.0",
+    "@frogg/protocol": "0.7.0",
+    "@frogg/relay": "0.7.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {

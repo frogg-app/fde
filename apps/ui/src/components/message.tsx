@@ -63,8 +63,8 @@ import { CODE_SURFACE_DATASET } from "@/styles/code-surface";
 import { inlineUnistylesStyle } from "@/styles/unistyles-inline-style";
 import { MarkdownRenderer, type MarkdownStyles } from "@/components/markdown/renderer";
 import type { TaskActivity, TodoEntry, UserMessageImageAttachment } from "@/types/stream";
-import type { AgentAttachment } from "@fde/protocol/messages";
-import type { ToolCallDetail } from "@fde/protocol/agent-types";
+import type { AgentAttachment } from "@frogg/protocol/messages";
+import type { ToolCallDetail } from "@frogg/protocol/agent-types";
 import { buildToolCallPresentation } from "@/tool-calls/presentation";
 import { resolveToolCallIcon } from "@/utils/tool-call-icon";
 import { getMarkdownListMarker, getMarkdownListSpacing } from "@/utils/markdown-list";
@@ -106,9 +106,9 @@ import {
   AttachmentThumbnail,
 } from "@/components/attachment-pill";
 import { AttachmentLightbox, type ImageLightboxSource } from "@/components/attachment-lightbox";
-import type { DaemonClient } from "@fde/client/internal/daemon-client";
+import type { DaemonClient } from "@frogg/client/internal/daemon-client";
 import { isWeb, isNative } from "@/constants/platform";
-import type { AgentCapabilityFlags } from "@fde/protocol/agent-types";
+import type { AgentCapabilityFlags } from "@frogg/protocol/agent-types";
 import { RewindMenu, type RewindMode } from "@/components/rewind/rewind-menu";
 import { useRewindAgentMutation } from "@/components/rewind/use-rewind-agent-mutation";
 import { AssistantForkMenu, type AssistantForkTarget } from "@/components/assistant-fork-menu";
@@ -160,8 +160,8 @@ function useDisableOuterSpacing(disableOuterSpacing: boolean | undefined) {
   return disableOuterSpacing ?? contextValue;
 }
 
-const WEB_TOOLCALL_SHIMMER_KEYFRAME_ID = "fde-toolcall-shimmer-keyframes";
-const WEB_TOOLCALL_SHIMMER_ANIMATION_NAME = "fde-toolcall-shimmer";
+const WEB_TOOLCALL_SHIMMER_KEYFRAME_ID = "frogg-toolcall-shimmer-keyframes";
+const WEB_TOOLCALL_SHIMMER_ANIMATION_NAME = "frogg-toolcall-shimmer";
 // One parser for the whole app, like every other markdown surface
 // (rich-clipboard, plan-card, markdown/renderer). It holds no per-message state,
 // so building one per mounted message only cost construction time on every scroll
@@ -194,10 +194,10 @@ const destructiveColorMapping = (theme: Theme) => ({ color: theme.colors.destruc
 const WEB_TOOLCALL_SHIMMER_KEYFRAME_CSS = `
   @keyframes ${WEB_TOOLCALL_SHIMMER_ANIMATION_NAME} {
     0% {
-      background-position: var(--fde-shimmer-start, -200px) 0;
+      background-position: var(--frogg-shimmer-start, -200px) 0;
     }
     100% {
-      background-position: var(--fde-shimmer-end, 200px) 0;
+      background-position: var(--frogg-shimmer-end, 200px) 0;
     }
   }
 `;
@@ -2763,8 +2763,8 @@ function buildShimmerTextStyle(input: {
     WebkitBackgroundClip: "text",
     WebkitTextFillColor: "transparent",
     animation: `${WEB_TOOLCALL_SHIMMER_ANIMATION_NAME} ${input.shimmerDuration}s linear infinite`,
-    "--fde-shimmer-start": `${input.webShimmerTrackStart - input.offsetX}px`,
-    "--fde-shimmer-end": `${input.webShimmerTrackEnd - input.offsetX}px`,
+    "--frogg-shimmer-start": `${input.webShimmerTrackStart - input.offsetX}px`,
+    "--frogg-shimmer-end": `${input.webShimmerTrackEnd - input.offsetX}px`,
   });
 }
 

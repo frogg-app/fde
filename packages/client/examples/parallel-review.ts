@@ -1,7 +1,7 @@
-import type { FdeAgentHandle, FdeClient } from "@fde/client";
+import type { FroggAgentHandle, FroggClient } from "@frogg/client";
 
-export async function reviewInParallel(client: FdeClient, cwd: string): Promise<string[]> {
-  const agents: FdeAgentHandle[] = [];
+export async function reviewInParallel(client: FroggClient, cwd: string): Promise<string[]> {
+  const agents: FroggAgentHandle[] = [];
 
   try {
     agents.push(

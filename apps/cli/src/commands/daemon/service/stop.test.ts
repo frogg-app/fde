@@ -33,7 +33,7 @@ describe("stop service ownership", () => {
   test("stops matching systemd owner through supervision", () => {
     const runtime = new ServiceRuntime();
     expect(stopOwnedDaemonService({ pid: 123, preserveExecution: false }, runtime)).toBe(true);
-    expect(runtime.calls.at(-1)).toEqual(["systemctl", "--user", "stop", "fde-daemon.service"]);
+    expect(runtime.calls.at(-1)).toEqual(["systemctl", "--user", "stop", "frogg-daemon.service"]);
     expect(runtime.timeouts.at(-1)).toBe(35_000);
   });
   test("does not stop another home's service", () => {
@@ -45,7 +45,7 @@ describe("stop service ownership", () => {
     const runtime = new ServiceRuntime();
     runtime.parent = "123";
     expect(stopOwnedDaemonService({ pid: 456, preserveExecution: false }, runtime)).toBe(true);
-    expect(runtime.calls.at(-1)).toEqual(["systemctl", "--user", "stop", "fde-daemon.service"]);
+    expect(runtime.calls.at(-1)).toEqual(["systemctl", "--user", "stop", "frogg-daemon.service"]);
     expect(runtime.timeouts.at(-1)).toBe(35_000);
   });
   test("uses graceful owner shutdown for a mixed unit with retained execution", () => {
@@ -62,7 +62,7 @@ describe("stop service ownership", () => {
   });
   test("ExecStop does not recursively ask systemd to stop itself", () => {
     const runtime = new ServiceRuntime();
-    runtime.cgroup = "0::/user.slice/fde-daemon.service\n";
+    runtime.cgroup = "0::/user.slice/frogg-daemon.service\n";
     expect(stopOwnedDaemonService({ pid: 123, preserveExecution: false }, runtime)).toBe(false);
     expect(runtime.calls).toHaveLength(0);
   });

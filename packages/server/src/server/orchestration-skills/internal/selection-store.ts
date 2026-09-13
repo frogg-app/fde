@@ -1,4 +1,4 @@
-import type { AgentSkillSelection } from "@fde/protocol/messages";
+import type { AgentSkillSelection } from "@frogg/protocol/messages";
 
 import type { DaemonConfigStore } from "../../daemon-config-store.js";
 

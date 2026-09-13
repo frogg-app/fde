@@ -1,5 +1,5 @@
-import { brand, brandIdentity } from "@fde/branding";
-import { matchesBrand } from "@fde/branding/identity";
+import { brand, brandIdentity } from "@frogg/branding";
+import { matchesBrand } from "@frogg/branding/identity";
 import { open, readFile, stat, unlink, mkdir, utimes } from "node:fs/promises";
 import type { FileHandle } from "node:fs/promises";
 import { existsSync } from "node:fs";
@@ -54,8 +54,8 @@ function isPidRunning(pid: number): boolean {
   }
 }
 
-function getPidFilePath(fdeHome: string): string {
-  return join(fdeHome, "fde.pid");
+function getPidFilePath(froggHome: string): string {
+  return join(froggHome, "frogg.pid");
 }
 
 async function isPidLockFresh(pidPath: string): Promise<boolean> {
@@ -108,7 +108,7 @@ function isSamePidLock(left: PidLockInfo, right: PidLockInfo): boolean {
 
 function createLockHeldError(lock: PidLockInfo): PidLockError {
   return new PidLockError(
-    `Another FDE daemon is already running (PID ${lock.pid}, started ${lock.startedAt})`,
+    `Another Frogg daemon is already running (PID ${lock.pid}, started ${lock.startedAt})`,
     lock,
   );
 }
@@ -161,7 +161,7 @@ async function writeNewPidLock(pidPath: string, lockInfo: PidLockInfo): Promise<
     const raceLock = await readPidLock(pidPath);
     if (raceLock) {
       throw new PidLockError(
-        `Another FDE daemon is already running (PID ${raceLock.pid})`,
+        `Another Frogg daemon is already running (PID ${raceLock.pid})`,
         raceLock,
       );
     }
@@ -172,15 +172,15 @@ async function writeNewPidLock(pidPath: string, lockInfo: PidLockInfo): Promise<
 }
 
 export async function acquirePidLock(
-  fdeHome: string,
+  froggHome: string,
   listen: string | null,
   options?: AcquirePidLockOptions,
 ): Promise<void> {
-  const pidPath = getPidFilePath(fdeHome);
+  const pidPath = getPidFilePath(froggHome);
 
-  // Ensure fdeHome directory exists
-  if (!existsSync(fdeHome)) {
-    await mkdir(fdeHome, { recursive: true });
+  // Ensure froggHome directory exists
+  if (!existsSync(froggHome)) {
+    await mkdir(froggHome, { recursive: true });
   }
 
   // Try to read existing lock
@@ -204,17 +204,17 @@ export async function acquirePidLock(
     uid: process.getuid?.() ?? 0,
     listen,
     heartbeat: true,
-    ...(process.env.FDE_DESKTOP_MANAGED === "1" ? { desktopManaged: true } : {}),
+    ...(process.env.FROGG_DESKTOP_MANAGED === "1" ? { desktopManaged: true } : {}),
   };
 
   await writeNewPidLock(pidPath, lockInfo);
 }
 
 export async function refreshPidLock(
-  fdeHome: string,
+  froggHome: string,
   options?: { ownerPid?: number },
 ): Promise<void> {
-  const pidPath = getPidFilePath(fdeHome);
+  const pidPath = getPidFilePath(froggHome);
   const lockOwnerPid = resolveOwnerPid(options?.ownerPid);
   let fd;
   try {
@@ -269,7 +269,7 @@ async function readPidLockFromHandleWithRetry(fd: FileHandle): Promise<PidLockIn
 }
 
 export function startPidLockHeartbeat(
-  fdeHome: string,
+  froggHome: string,
   options?: {
     ownerPid?: number;
     intervalMs?: number;
@@ -284,7 +284,7 @@ export function startPidLockHeartbeat(
       return;
     }
     refreshing = true;
-    refreshPidLock(fdeHome, { ownerPid: options?.ownerPid })
+    refreshPidLock(froggHome, { ownerPid: options?.ownerPid })
       .catch((error) => {
         if (options?.onError) {
           options.onError(error);
@@ -303,11 +303,11 @@ export function startPidLockHeartbeat(
 }
 
 export async function updatePidLock(
-  fdeHome: string,
+  froggHome: string,
   patch: { listen: string },
   options?: { ownerPid?: number },
 ): Promise<void> {
-  const pidPath = getPidFilePath(fdeHome);
+  const pidPath = getPidFilePath(froggHome);
   const lockOwnerPid = resolveOwnerPid(options?.ownerPid);
   const fd = await open(pidPath, "r+");
   try {
@@ -334,10 +334,10 @@ export async function updatePidLock(
 }
 
 export async function releasePidLock(
-  fdeHome: string,
+  froggHome: string,
   options?: { ownerPid?: number },
 ): Promise<void> {
-  const pidPath = getPidFilePath(fdeHome);
+  const pidPath = getPidFilePath(froggHome);
   const lockOwnerPid = resolveOwnerPid(options?.ownerPid);
   try {
     // Only remove if it's our lock
@@ -351,13 +351,15 @@ export async function releasePidLock(
   }
 }
 
-export async function getPidLockInfo(fdeHome: string): Promise<PidLockInfo | null> {
-  const pidPath = getPidFilePath(fdeHome);
+export async function getPidLockInfo(froggHome: string): Promise<PidLockInfo | null> {
+  const pidPath = getPidFilePath(froggHome);
   return readPidLock(pidPath);
 }
 
-export async function isLocked(fdeHome: string): Promise<{ locked: boolean; info?: PidLockInfo }> {
-  const info = await getPidLockInfo(fdeHome);
+export async function isLocked(
+  froggHome: string,
+): Promise<{ locked: boolean; info?: PidLockInfo }> {
+  const info = await getPidLockInfo(froggHome);
   if (!info) {
     return { locked: false };
   }

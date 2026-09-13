@@ -4,7 +4,7 @@ import { Command } from "commander";
  * Triggers: external events (GitHub, Slack, Discord, Linear) that create a
  * workspace and run an agent on this daemon.
  *
- * Formerly `fde hub`. Renamed because "hub" named the server rather than the
+ * Formerly `frogg hub`. Renamed because "hub" named the server rather than the
  * feature - the domain vocabulary everywhere else is already "triggers".
  *
  * Every subcommand is disabled pending a rewrite. The previous implementation
@@ -16,7 +16,7 @@ import { Command } from "commander";
  * simply not wired up.
  */
 
-/** Named so `fde trigger --help` still documents the intended surface. */
+/** Named so `frogg trigger --help` still documents the intended surface. */
 const DISABLED_SUBCOMMANDS: ReadonlyArray<{ name: string; description: string }> = [
   { name: "login", description: "Log in to a trigger service for CLI access" },
   { name: "init", description: "Scaffold triggers-as-code configuration" },
@@ -37,7 +37,7 @@ export const TRIGGERS_DISABLED_MESSAGE =
   "service that could create workspaces and run agents\n" +
   "here. Nothing connects to it now.\n" +
   "\n" +
-  "Follow progress at https://github.com/frogg-app/fde/issues.";
+  "Follow progress at https://github.com/frogg-app/frogg/issues.";
 
 function addDisabledSubcommand(parent: Command, spec: { name: string; description: string }): void {
   parent

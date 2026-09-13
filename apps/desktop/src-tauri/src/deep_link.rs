@@ -1,7 +1,7 @@
-//! `fde://h/<serverId>/agent/<agentId>` links, mirroring
-//! `packages/protocol/src/agent-deep-link.ts`, and `fde://pair#offer=<payload>`
+//! `frogg://h/<serverId>/agent/<agentId>` links, mirroring
+//! `packages/protocol/src/agent-deep-link.ts`, and `frogg://pair#offer=<payload>`
 //! pairing links, mirroring `packages/protocol/src/connection-offer.ts`. The
-//! scheme stays `fde` because the daemon and CLI emit these links.
+//! scheme stays `frogg` because the daemon and CLI emit these links.
 
 use percent_encoding::percent_decode_str;
 use serde::Serialize;
@@ -19,7 +19,7 @@ pub struct PairingDeepLink {
     pub url: String,
 }
 
-/// `fde://pair#offer=<base64url>` (a `/` before the fragment is tolerated).
+/// `frogg://pair#offer=<base64url>` (a `/` before the fragment is tolerated).
 pub fn parse_pairing_deep_link(input: &str) -> Option<PairingDeepLink> {
     let trimmed = input.trim();
     let url = Url::parse(trimmed).ok()?;
@@ -98,14 +98,14 @@ mod tests {
 
     #[test]
     fn parses_canonical_link() {
-        let target = parse_agent_deep_link("fde://h/my-host/agent/agent-123").unwrap();
+        let target = parse_agent_deep_link("frogg://h/my-host/agent/agent-123").unwrap();
         assert_eq!(target.server_id, "my-host");
         assert_eq!(target.agent_id, "agent-123");
     }
 
     #[test]
     fn decodes_percent_encoded_segments() {
-        let target = parse_agent_deep_link("fde://h/host%20one/agent/a%2Fb").unwrap();
+        let target = parse_agent_deep_link("frogg://h/host%20one/agent/a%2Fb").unwrap();
         assert_eq!(target.server_id, "host one");
         assert_eq!(target.agent_id, "a/b");
     }
@@ -113,49 +113,49 @@ mod tests {
     #[test]
     fn rejects_other_shapes() {
         assert!(parse_agent_deep_link("https://h/x/agent/y").is_none());
-        assert!(parse_agent_deep_link("fde://h/x/agent").is_none());
-        assert!(parse_agent_deep_link("fde://h/x/thread/y").is_none());
-        assert!(parse_agent_deep_link("fde://h/x/agent/y?foo=1").is_none());
-        assert!(parse_agent_deep_link("fde://h/x/agent/y#frag").is_none());
-        assert!(parse_agent_deep_link("fde://other/x/agent/y").is_none());
+        assert!(parse_agent_deep_link("frogg://h/x/agent").is_none());
+        assert!(parse_agent_deep_link("frogg://h/x/thread/y").is_none());
+        assert!(parse_agent_deep_link("frogg://h/x/agent/y?foo=1").is_none());
+        assert!(parse_agent_deep_link("frogg://h/x/agent/y#frag").is_none());
+        assert!(parse_agent_deep_link("frogg://other/x/agent/y").is_none());
         assert!(parse_agent_deep_link("/home/user/project").is_none());
     }
 
     #[test]
     fn parses_pairing_links_and_keeps_the_raw_url() {
-        let raw = "fde://pair#offer=eyJ2IjozfQ";
+        let raw = "frogg://pair#offer=eyJ2IjozfQ";
         let link = parse_pairing_deep_link(raw).unwrap();
         assert_eq!(link.url, raw);
         assert_eq!(
-            parse_pairing_deep_link("  fde://pair/#offer=abc-_ \n")
+            parse_pairing_deep_link("  frogg://pair/#offer=abc-_ \n")
                 .unwrap()
                 .url,
-            "fde://pair/#offer=abc-_"
+            "frogg://pair/#offer=abc-_"
         );
     }
 
     #[test]
     fn rejects_non_pairing_shapes() {
         assert!(parse_pairing_deep_link("https://frogg.app/pair#offer=abc").is_none());
-        assert!(parse_pairing_deep_link("fde://pair").is_none());
-        assert!(parse_pairing_deep_link("fde://pair#offer=").is_none());
-        assert!(parse_pairing_deep_link("fde://pair#other=abc").is_none());
-        assert!(parse_pairing_deep_link("fde://pair?x=1#offer=abc").is_none());
-        assert!(parse_pairing_deep_link("fde://pair/extra#offer=abc").is_none());
-        assert!(parse_pairing_deep_link("fde://h/x/agent/y").is_none());
-        assert!(parse_agent_deep_link("fde://pair#offer=abc").is_none());
+        assert!(parse_pairing_deep_link("frogg://pair").is_none());
+        assert!(parse_pairing_deep_link("frogg://pair#offer=").is_none());
+        assert!(parse_pairing_deep_link("frogg://pair#other=abc").is_none());
+        assert!(parse_pairing_deep_link("frogg://pair?x=1#offer=abc").is_none());
+        assert!(parse_pairing_deep_link("frogg://pair/extra#offer=abc").is_none());
+        assert!(parse_pairing_deep_link("frogg://h/x/agent/y").is_none());
+        assert!(parse_agent_deep_link("frogg://pair#offer=abc").is_none());
     }
 
     #[test]
     fn picks_first_pairing_link_from_args() {
         let args = vec![
-            "fde".to_string(),
+            "frogg".to_string(),
             "/tmp".to_string(),
-            "fde://pair#offer=abc".to_string(),
+            "frogg://pair#offer=abc".to_string(),
         ];
         assert_eq!(
             parse_pairing_deep_link_from_args(&args).unwrap().url,
-            "fde://pair#offer=abc"
+            "frogg://pair#offer=abc"
         );
         assert!(parse_pairing_deep_link_from_args(&args[..2]).is_none());
     }
@@ -163,9 +163,9 @@ mod tests {
     #[test]
     fn picks_first_link_from_args() {
         let args = vec![
-            "fde".to_string(),
+            "frogg".to_string(),
             "--flag".to_string(),
-            "fde://h/s/agent/a".to_string(),
+            "frogg://h/s/agent/a".to_string(),
         ];
         assert_eq!(
             parse_agent_deep_link_from_args(&args).unwrap(),

@@ -83,7 +83,7 @@ const PATHS = [
   "apps/daemon-rs/src/search/text_match.rs",
   "docs/rust-daemon-plan.md",
   "~/projects/ade/README.md",
-  "/home/frogg/.fde/config.json",
+  "/home/frogg/.frogg/config.json",
   "café/naïve/日本語/emoji😀name.txt",
   "a-b_c.d/UPPER/MiXeD",
   "aaa/abab/aaa",

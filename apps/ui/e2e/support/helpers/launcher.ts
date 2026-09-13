@@ -168,9 +168,9 @@ export async function sampleTabsDuringTransition(
 ): Promise<Array<Array<{ id: string; width: number }>>> {
   await page.evaluate((duration) => {
     const scope = globalThis as typeof globalThis & {
-      __fdeTabTrackFrames?: Array<Array<{ id: string; width: number }>>;
+      __froggTabTrackFrames?: Array<Array<{ id: string; width: number }>>;
     };
-    scope.__fdeTabTrackFrames = [];
+    scope.__froggTabTrackFrames = [];
     const startedAt = performance.now();
     function sample() {
       const tabs = Array.from(
@@ -178,7 +178,7 @@ export async function sampleTabsDuringTransition(
           '[data-testid^="workspace-tab-"][role="button"][aria-selected]',
         ),
       ).filter((element) => element.getClientRects().length > 0);
-      scope.__fdeTabTrackFrames?.push(
+      scope.__froggTabTrackFrames?.push(
         tabs.map((element) => ({
           id: element.getAttribute("data-testid") ?? "",
           width: Math.round(element.getBoundingClientRect().width),
@@ -197,9 +197,9 @@ export async function sampleTabsDuringTransition(
   await page.waitForTimeout(durationMs + 100);
   return page.evaluate(() => {
     const scope = globalThis as typeof globalThis & {
-      __fdeTabTrackFrames?: Array<Array<{ id: string; width: number }>>;
+      __froggTabTrackFrames?: Array<Array<{ id: string; width: number }>>;
     };
-    return scope.__fdeTabTrackFrames ?? [];
+    return scope.__froggTabTrackFrames ?? [];
   });
 }
 

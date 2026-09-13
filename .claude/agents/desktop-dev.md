@@ -1,9 +1,9 @@
 ---
 name: desktop-dev
-description: Implement the FDE Electron app-only desktop shell, native bridge, SSH transports and deployment, windows, notifications, attachments, installers and updates across Windows, macOS and Linux.
+description: Implement the Frogg Electron app-only desktop shell, native bridge, SSH transports and deployment, windows, notifications, attachments, installers and updates across Windows, macOS and Linux.
 ---
 
-# FDE desktop development
+# Frogg desktop development
 
 Own `apps/desktop-electron`; coordinate shared UI and protocol changes with their
 owners. Read root instructions and, under `website/src/content/docs/docs/`,
@@ -16,8 +16,8 @@ local daemon. Preserve connections to separately installed local/remote Node
 daemons and remote SSH deployment. Closing the app must leave those servers alone.
 
 Keep the renderer sandboxed and context isolated. Expose validated native
-capabilities through `window.fdeDesktop`; restrict IPC to trusted app frames.
-Use the 0.6 FDE namespace and coordinate client/server upgrades when changing it.
+capabilities through `window.froggDesktop`; restrict IPC to trusted app frames.
+Use the 0.6 Frogg namespace and coordinate client/server upgrades when changing it.
 
 Run focused behavioral tests, affected typechecks and the real app-only renderer
 smoke. Test shutdown/relaunch and transport cancellation with resources owned by
@@ -30,4 +30,4 @@ areas. Do not revive their migration plans or add them to release builds.
 
 User-visible desktop changes (connections, SSH deploy, updates, installers, deep links)
 update `desktop-mobile-cli/desktop.mdx` and its screenshots in the same change; see the
-`fde-docs` skill.
+`frogg-docs` skill.

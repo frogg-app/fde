@@ -9,7 +9,7 @@ import { killProcessTree, spawnTsx } from "./spawn-node";
 export interface IsolatedHostDaemon {
   serverId: string;
   port: number;
-  fdeHome: string;
+  froggHome: string;
   getPid(): number | undefined;
   restart(): Promise<void>;
   close(): Promise<void>;
@@ -21,7 +21,7 @@ export interface IsolatedHostDaemonOptions {
     enabled: boolean;
     endpoint?: string;
   };
-  fdeHome?: string;
+  froggHome?: string;
   preserveHome?: boolean;
   publishedVersion?: string;
 }
@@ -88,11 +88,11 @@ export async function startIsolatedHostDaemon(
   const metroPort = process.env.E2E_METRO_PORT;
   if (!metroPort) throw new Error("E2E_METRO_PORT is required to start an isolated host daemon");
 
-  const fdeHome =
-    options.fdeHome ?? (await mkdtemp(path.join(tmpdir(), "fde-e2e-secondary-host-")));
+  const froggHome =
+    options.froggHome ?? (await mkdtemp(path.join(tmpdir(), "frogg-e2e-secondary-host-")));
   let publishedPackageRoot: string | null = null;
   if (options.publishedVersion) {
-    publishedPackageRoot = await mkdtemp(path.join(tmpdir(), "fde-e2e-published-server-"));
+    publishedPackageRoot = await mkdtemp(path.join(tmpdir(), "frogg-e2e-published-server-"));
     await writeFile(
       path.join(publishedPackageRoot, "package.json"),
       `${JSON.stringify({ private: true })}\n`,
@@ -112,13 +112,13 @@ export async function startIsolatedHostDaemon(
           "--no-audit",
           "--no-fund",
           "--no-package-lock",
-          `@fde/server@${options.publishedVersion}`,
+          `@frogg/server@${options.publishedVersion}`,
         ],
         { cwd: publishedPackageRoot, stdio: "ignore" },
       );
     } catch (error) {
       if (!options.preserveHome) {
-        await rm(fdeHome, { recursive: true, force: true });
+        await rm(froggHome, { recursive: true, force: true });
       }
       await rm(publishedPackageRoot, { recursive: true, force: true });
       throw error;
@@ -129,7 +129,7 @@ export async function startIsolatedHostDaemon(
       options.mutableRelay.endpoint ??
       (process.env.E2E_RELAY_PORT ? `127.0.0.1:${process.env.E2E_RELAY_PORT}` : "127.0.0.1:9");
     await writeFile(
-      path.join(fdeHome, "config.json"),
+      path.join(froggHome, "config.json"),
       `${JSON.stringify({
         version: 1,
         daemon: {
@@ -145,7 +145,7 @@ export async function startIsolatedHostDaemon(
     );
   }
   const serverDir = publishedPackageRoot
-    ? path.join(publishedPackageRoot, "node_modules", "@fde", "server")
+    ? path.join(publishedPackageRoot, "node_modules", "@frogg", "server")
     : path.resolve(__dirname, "../../../../../packages/server");
   const spawnDaemon = async (): Promise<ChildProcess> => {
     const spawnOptions: SpawnOptions = {
@@ -153,12 +153,12 @@ export async function startIsolatedHostDaemon(
       env: withDisabledE2ESpeechEnv({
         ...process.env,
         ...options.environment,
-        FDE_HOME: fdeHome,
-        FDE_SERVER_ID: serverId,
-        FDE_LISTEN: `127.0.0.1:${port}`,
-        FDE_CORS_ORIGINS: `http://localhost:${metroPort}`,
-        FDE_RELAY_ENABLED: options.mutableRelay ? undefined : "0",
-        FDE_NODE_ENV: "development",
+        FROGG_HOME: froggHome,
+        FROGG_SERVER_ID: serverId,
+        FROGG_LISTEN: `127.0.0.1:${port}`,
+        FROGG_CORS_ORIGINS: `http://localhost:${metroPort}`,
+        FROGG_RELAY_ENABLED: options.mutableRelay ? undefined : "0",
+        FROGG_NODE_ENV: "development",
         NODE_ENV: "development",
       }),
       stdio: ["ignore", "ignore", "pipe"],
@@ -191,7 +191,7 @@ export async function startIsolatedHostDaemon(
     child = await spawnDaemon();
   } catch (error) {
     if (!options.preserveHome) {
-      await rm(fdeHome, { recursive: true, force: true });
+      await rm(froggHome, { recursive: true, force: true });
     }
     if (publishedPackageRoot) {
       await rm(publishedPackageRoot, { recursive: true, force: true });
@@ -203,7 +203,7 @@ export async function startIsolatedHostDaemon(
   return {
     serverId,
     port,
-    fdeHome,
+    froggHome,
     getPid: () => child.pid,
     restart: async () => {
       if (closed) throw new Error(`Cannot restart closed isolated daemon ${serverId}`);
@@ -215,7 +215,7 @@ export async function startIsolatedHostDaemon(
       closed = true;
       await killProcessTree(child);
       if (!options.preserveHome) {
-        await rm(fdeHome, { recursive: true, force: true });
+        await rm(froggHome, { recursive: true, force: true });
       }
       if (publishedPackageRoot) {
         await rm(publishedPackageRoot, { recursive: true, force: true });

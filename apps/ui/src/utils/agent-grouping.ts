@@ -6,10 +6,10 @@ import type { AggregatedAgent } from "@/hooks/use-aggregated-agents";
  * For regular repos/directories, returns the cwd.
  */
 export function deriveProjectKey(cwd: string): string {
-  const worktreeMarker = ".fde/worktrees/";
+  const worktreeMarker = ".frogg/worktrees/";
   const idx = cwd.indexOf(worktreeMarker);
   if (idx !== -1) {
-    // Return parent repo path (before .fde/worktrees/)
+    // Return parent repo path (before .frogg/worktrees/)
     return cwd.slice(0, idx).replace(/\/$/, "");
   }
   return cwd;

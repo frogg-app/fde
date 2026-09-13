@@ -1,7 +1,7 @@
 import net from "node:net";
 import { execCommand } from "../utils/spawn.js";
 import { findFreePort } from "./service-proxy.js";
-import type { FdeServicePortAllocation } from "@fde/protocol/fde-config-schema";
+import type { FroggServicePortAllocation } from "@frogg/protocol/frogg-config-schema";
 
 const PORT_SCRIPT_TIMEOUT_MS = 10_000;
 const PORT_SCRIPT_MAX_OUTPUT_BYTES = 1024;
@@ -14,7 +14,7 @@ interface PortRange {
 }
 
 export interface AllocateWorkspaceServicePortOptions {
-  allocation: FdeServicePortAllocation | undefined;
+  allocation: FroggServicePortAllocation | undefined;
   cwd: string;
   scriptName: string;
   workspaceId: string;
@@ -60,10 +60,10 @@ async function allocatePortFromScript(options: {
       {
         cwd: options.cwd,
         envOverlay: {
-          FDE_SCRIPTNAME: options.scriptName,
-          FDE_WORKSPACE_ID: options.workspaceId,
-          FDE_BRANCH_NAME: options.branchName ?? "",
-          FDE_WORKTREE_PATH: options.cwd,
+          FROGG_SCRIPTNAME: options.scriptName,
+          FROGG_WORKSPACE_ID: options.workspaceId,
+          FROGG_BRANCH_NAME: options.branchName ?? "",
+          FROGG_WORKTREE_PATH: options.cwd,
         },
         timeout: PORT_SCRIPT_TIMEOUT_MS,
         maxBuffer: PORT_SCRIPT_MAX_OUTPUT_BYTES,

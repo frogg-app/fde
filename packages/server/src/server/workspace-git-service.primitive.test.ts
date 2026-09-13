@@ -72,7 +72,7 @@ function createCheckoutFacts(
     remoteUrl: "https://github.com/acme/repo.git",
     absoluteGitDir: join(cwd, ".git"),
     gitCommonDir: join(cwd, ".git"),
-    fdeWorktree: { isFdeOwnedWorktree: false },
+    froggWorktree: { isFroggOwnedWorktree: false },
     storedBaseRef: null,
     resolvedBaseRef: "main",
     mainRepoRoot: null,
@@ -100,7 +100,7 @@ function createCheckoutStatus(
     behindOfOrigin: 0,
     hasRemote: true,
     remoteUrl: "https://github.com/acme/repo.git",
-    isFdeOwnedWorktree: false,
+    isFroggOwnedWorktree: false,
     ...overrides,
   };
 }
@@ -170,7 +170,7 @@ function createBaseSnapshot(cwd: string): WorkspaceGitRuntimeSnapshot {
       mainRepoRoot: null,
       currentBranch: "main",
       remoteUrl: "https://github.com/acme/repo.git",
-      isFdeOwnedWorktree: false,
+      isFroggOwnedWorktree: false,
       isDirty: false,
       baseRef: "main",
       aheadBehind: { ahead: 0, behind: 0 },
@@ -325,7 +325,7 @@ interface CreateServiceOptions {
   resolveBranchCheckout?: ReturnType<typeof vi.fn>;
   resolveRepositoryDefaultBranch?: ReturnType<typeof vi.fn>;
   listBranchSuggestions?: ReturnType<typeof vi.fn>;
-  listFdeWorktrees?: ReturnType<typeof vi.fn>;
+  listFroggWorktrees?: ReturnType<typeof vi.fn>;
   github?: ForgeService;
   resolveAbsoluteGitDir?: ReturnType<typeof vi.fn>;
   hasOriginRemote?: ReturnType<typeof vi.fn>;
@@ -357,7 +357,7 @@ function buildDefaultServiceDeps() {
     resolveBranchCheckout: vi.fn(async () => ({ kind: "not-found" })),
     resolveRepositoryDefaultBranch: vi.fn(async () => "main"),
     listBranchSuggestions: vi.fn(async () => []),
-    listFdeWorktrees: vi.fn(async () => []),
+    listFroggWorktrees: vi.fn(async () => []),
     forgeOverrides: { github: createGitHubServiceStub() },
     resolveAbsoluteGitDir: vi.fn(async () => join(REPO_CWD, ".git")),
     hasOriginRemote: vi.fn(async () => false),
@@ -408,7 +408,7 @@ function buildServiceDeps(options?: CreateServiceOptions) {
 function createService(options?: CreateServiceOptions) {
   return new WorkspaceGitServiceImpl({
     logger: createLogger() as never,
-    fdeHome: "/tmp/fde-test",
+    froggHome: "/tmp/frogg-test",
     deps: buildServiceDeps(options),
   });
 }
@@ -464,9 +464,9 @@ describe("WorkspaceGitServiceImpl primitive refresh entrypoint", () => {
         "-c",
         "commit.gpgsign=false",
         "-c",
-        "user.name=Fde Test",
+        "user.name=Frogg Test",
         "-c",
-        "user.email=fde@example.test",
+        "user.email=frogg@example.test",
         "commit",
         "-m",
         "initial",
@@ -1142,7 +1142,7 @@ describe("WorkspaceGitServiceImpl primitive refresh entrypoint", () => {
     const getCheckoutSnapshotFacts = vi.fn(async (cwd: string) =>
       createCheckoutFacts(cwd, {
         currentBranch: "fork-owner/open-button-targets-active-file",
-        branchRemoteName: "fde-pr-1285",
+        branchRemoteName: "frogg-pr-1285",
         branchMergeRef: "refs/heads/open-button-targets-active-file",
         pullRequestLookupTarget: {
           headRef: "open-button-targets-active-file",
@@ -1153,7 +1153,7 @@ describe("WorkspaceGitServiceImpl primitive refresh entrypoint", () => {
     const getCheckoutStatus = vi.fn(async (cwd: string) =>
       createCheckoutStatus(cwd, {
         currentBranch: "fork-owner/open-button-targets-active-file",
-        remoteUrl: "git@github.com:frogg-app/fde.git",
+        remoteUrl: "git@github.com:frogg-app/frogg.git",
       }),
     );
     const service = createService({
@@ -1742,7 +1742,7 @@ describe("WorkspaceGitServiceImpl D2 read methods", () => {
 
   test("listStashes cold-loads, warms, forces, and coalesces per cwd", async () => {
     let nowMs = 0;
-    const stashOutput = "stash@{0}\u0000fde-auto-stash: feature\n";
+    const stashOutput = "stash@{0}\u0000frogg-auto-stash: feature\n";
     const stashDeferred = createDeferred<{
       stdout: string;
       stderr: string;
@@ -1765,8 +1765,8 @@ describe("WorkspaceGitServiceImpl D2 read methods", () => {
       now: () => new Date(nowMs),
     });
 
-    const first = service.listStashes(REPO_CWD, { fdeOnly: true });
-    const second = service.listStashes(join(REPO_CWD, "."), { fdeOnly: true });
+    const first = service.listStashes(REPO_CWD, { froggOnly: true });
+    const second = service.listStashes(join(REPO_CWD, "."), { froggOnly: true });
     await flushPromises();
 
     expect(runGitCommand).toHaveBeenCalledTimes(1);
@@ -1778,15 +1778,15 @@ describe("WorkspaceGitServiceImpl D2 read methods", () => {
       signal: null,
     });
     await expect(Promise.all([first, second])).resolves.toEqual([
-      [{ index: 0, message: "fde-auto-stash: feature", branch: "feature", isFde: true }],
-      [{ index: 0, message: "fde-auto-stash: feature", branch: "feature", isFde: true }],
+      [{ index: 0, message: "frogg-auto-stash: feature", branch: "feature", isFrogg: true }],
+      [{ index: 0, message: "frogg-auto-stash: feature", branch: "feature", isFrogg: true }],
     ]);
 
     nowMs = 1_000;
-    await service.listStashes(REPO_CWD, { fdeOnly: true });
+    await service.listStashes(REPO_CWD, { froggOnly: true });
     expect(runGitCommand).toHaveBeenCalledTimes(1);
 
-    await service.listStashes(REPO_CWD, { fdeOnly: true }, { force: true, reason: "test" });
+    await service.listStashes(REPO_CWD, { froggOnly: true }, { force: true, reason: "test" });
     expect(runGitCommand).toHaveBeenCalledTimes(2);
 
     service.dispose();
@@ -1796,28 +1796,28 @@ describe("WorkspaceGitServiceImpl D2 read methods", () => {
     let nowMs = 0;
     const worktrees = [
       {
-        path: "/tmp/fde-home/worktrees/repo/feature",
+        path: "/tmp/frogg-home/worktrees/repo/feature",
         createdAt: "2026-04-12T00:00:00.000Z",
         branchName: "feature",
       },
     ];
-    const listFdeWorktrees = vi.fn().mockResolvedValue(worktrees);
+    const listFroggWorktrees = vi.fn().mockResolvedValue(worktrees);
     const service = createService({
-      listFdeWorktrees,
+      listFroggWorktrees,
       now: () => new Date(nowMs),
     });
 
     const first = service.listWorktrees(REPO_CWD);
     const second = service.listWorktrees(join(REPO_CWD, "."));
     await expect(Promise.all([first, second])).resolves.toEqual([worktrees, worktrees]);
-    expect(listFdeWorktrees).toHaveBeenCalledTimes(1);
+    expect(listFroggWorktrees).toHaveBeenCalledTimes(1);
 
     nowMs = 1_000;
     await service.listWorktrees(REPO_CWD);
-    expect(listFdeWorktrees).toHaveBeenCalledTimes(1);
+    expect(listFroggWorktrees).toHaveBeenCalledTimes(1);
 
     await service.listWorktrees(REPO_CWD, { force: true, reason: "test" });
-    expect(listFdeWorktrees).toHaveBeenCalledTimes(2);
+    expect(listFroggWorktrees).toHaveBeenCalledTimes(2);
 
     service.dispose();
   });
@@ -1831,16 +1831,16 @@ describe("WorkspaceGitServiceImpl D2 read methods", () => {
 
     const worktrees = [
       {
-        path: join(tempDir, "fde-home", "worktrees", "repo", "feature"),
+        path: join(tempDir, "frogg-home", "worktrees", "repo", "feature"),
         createdAt: "2026-04-12T00:00:00.000Z",
         branchName: "feature",
       },
     ];
-    const listFdeWorktrees = vi.fn(async () => worktrees);
+    const listFroggWorktrees = vi.fn(async () => worktrees);
     const service = createService({
       getCheckoutSnapshotFacts: getCheckoutSnapshotFactsUncached as never,
       getCheckoutStatus: getCheckoutStatusUncached as never,
-      listFdeWorktrees,
+      listFroggWorktrees,
     });
 
     try {
@@ -1849,10 +1849,10 @@ describe("WorkspaceGitServiceImpl D2 read methods", () => {
       ).resolves.toEqual([worktrees, worktrees]);
       await expect(service.listWorktrees(nestedWorkspaceDir)).resolves.toEqual(worktrees);
 
-      expect(listFdeWorktrees).toHaveBeenCalledTimes(1);
-      expect(listFdeWorktrees).toHaveBeenCalledWith({
+      expect(listFroggWorktrees).toHaveBeenCalledTimes(1);
+      expect(listFroggWorktrees).toHaveBeenCalledWith({
         cwd: realpathSync.native(repoDir).replace(/\\/g, "/"),
-        fdeHome: "/tmp/fde-test",
+        froggHome: "/tmp/frogg-test",
       });
     } finally {
       service.dispose();
@@ -1926,7 +1926,7 @@ describe("WorkspaceGitServiceImpl D2 read methods", () => {
     let nowMs = 0;
     const getCheckoutStatus = vi.fn(async (cwd: string) =>
       createCheckoutStatus(cwd, {
-        remoteUrl: "https://github.com/frogg-app/fde.git",
+        remoteUrl: "https://github.com/frogg-app/frogg.git",
       }),
     );
     const service = createService({
@@ -1935,11 +1935,11 @@ describe("WorkspaceGitServiceImpl D2 read methods", () => {
     });
 
     await expect(service.resolveRepoRemoteUrl(REPO_CWD)).resolves.toBe(
-      "https://github.com/frogg-app/fde.git",
+      "https://github.com/frogg-app/frogg.git",
     );
     nowMs = 1_000;
     await expect(service.resolveRepoRemoteUrl(join(REPO_CWD, "."))).resolves.toBe(
-      "https://github.com/frogg-app/fde.git",
+      "https://github.com/frogg-app/frogg.git",
     );
 
     expect(getCheckoutStatus).toHaveBeenCalledTimes(1);
@@ -1952,7 +1952,7 @@ describe("WorkspaceGitServiceImpl D2 read methods", () => {
     const getCheckoutStatus = vi.fn(async (cwd: string) =>
       createCheckoutStatus(cwd, {
         currentBranch: "feature/service-metadata",
-        remoteUrl: "https://github.com/frogg-app/fde.git",
+        remoteUrl: "https://github.com/frogg-app/frogg.git",
         repoRoot: REPO_CWD,
       }),
     );
@@ -1961,7 +1961,7 @@ describe("WorkspaceGitServiceImpl D2 read methods", () => {
       now: () => new Date(nowMs),
     });
 
-    await expect(service.getProjectSlug(REPO_CWD)).resolves.toBe("fde");
+    await expect(service.getProjectSlug(REPO_CWD)).resolves.toBe("frogg");
 
     nowMs = 1_000;
     await service.getProjectSlug(join(REPO_CWD, "."));

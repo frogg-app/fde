@@ -1,5 +1,5 @@
 import { getSharedRuntime } from "./shared-runtime";
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { useSyncExternalStore, useMemo } from "react";
 import AsyncStorage from "@/storage/brand-storage";
 import equal from "fast-deep-equal/es6";
@@ -8,7 +8,7 @@ import {
   type DaemonClientConfig,
   type ConnectionState,
   type FetchAgentsOptions,
-} from "@fde/client/internal/daemon-client";
+} from "@frogg/client/internal/daemon-client";
 import {
   connectionFromListen,
   createRemoteSshHostConnection,
@@ -32,7 +32,7 @@ import {
   type AnyConnectionOffer,
   type ConnectionOffer,
   type ConnectionOfferV3,
-} from "@fde/protocol/connection-offer";
+} from "@frogg/protocol/connection-offer";
 import {
   claimDirectOffer as claimDirectOfferOverHttp,
   type ClaimOfferOptions,
@@ -57,8 +57,8 @@ import {
   createDesktopDaemonTransportFactory,
 } from "@/desktop/daemon/desktop-daemon-transport";
 import { getDesktopHost } from "@/desktop/host";
-import { CLIENT_CAPS } from "@fde/protocol/client-capabilities";
-import { BROWSER_AUTOMATION_COMMAND_NAMES } from "@fde/protocol/browser-automation/rpc-schemas";
+import { CLIENT_CAPS } from "@frogg/protocol/client-capabilities";
+import { BROWSER_AUTOMATION_COMMAND_NAMES } from "@frogg/protocol/browser-automation/rpc-schemas";
 import { useSessionStore } from "@/stores/session-store";
 import { useWorkspaceSetupStore } from "@/stores/workspace-setup-store";
 import { invalidateCheckoutGitQueriesForServer } from "@/git/query-keys";
@@ -1337,11 +1337,11 @@ export class HostRuntimeController {
   }
 }
 
-const REGISTRY_STORAGE_KEY = "@fde:daemon-registry";
+const REGISTRY_STORAGE_KEY = "@frogg:daemon-registry";
 const LOCALHOST_FALLBACK_ENDPOINT = `localhost:${DEFAULT_DAEMON_PORT}`;
 const DEFAULT_LOCALHOST_BOOTSTRAP_TIMEOUT_MS = 2500;
-const E2E_STORAGE_KEY = "@fde:e2e";
-const INITIAL_DAEMON_CONNECTION_HINT_GLOBAL_KEY = "__FDE_INITIAL_DAEMON_CONNECTION__";
+const E2E_STORAGE_KEY = "@frogg:e2e";
+const INITIAL_DAEMON_CONNECTION_HINT_GLOBAL_KEY = "__FROGG_INITIAL_DAEMON_CONNECTION__";
 
 export interface InitialDaemonConnectionHint {
   listen: string;
@@ -2430,7 +2430,7 @@ export class HostRuntimeStore {
 }
 
 let singletonHostRuntimeStore: HostRuntimeStore | null = null;
-const HOST_RUNTIME_STORE_GLOBAL_KEY = "__fdeHostRuntimeStore";
+const HOST_RUNTIME_STORE_GLOBAL_KEY = "__froggHostRuntimeStore";
 
 export function getHostRuntimeStore(): HostRuntimeStore {
   if (singletonHostRuntimeStore) {

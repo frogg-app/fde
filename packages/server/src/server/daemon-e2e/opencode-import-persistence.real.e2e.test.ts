@@ -7,7 +7,7 @@ import pino from "pino";
 
 import type { AgentPersistenceHandle, AgentTimelineItem } from "../agent/agent-sdk-types.js";
 import { DaemonClient } from "../test-utils/daemon-client.js";
-import { createTestFdeDaemon } from "../test-utils/fde-daemon.js";
+import { createTestFroggDaemon } from "../test-utils/frogg-daemon.js";
 import {
   canRunRealProvider,
   createRealProviderClients,
@@ -27,7 +27,7 @@ async function withConnectedOpenCodeDaemon(
   run: (context: { client: DaemonClient }) => Promise<void>,
 ): Promise<void> {
   const logger = pino({ level: "silent" });
-  const daemon = await createTestFdeDaemon({
+  const daemon = await createTestFroggDaemon({
     agentClients: createRealProviderClients(["opencode"], logger),
     logger,
   });

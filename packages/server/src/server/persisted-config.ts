@@ -1,4 +1,4 @@
-import { brand } from "@fde/branding";
+import { brand } from "@frogg/branding";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { z } from "zod";
@@ -15,8 +15,8 @@ import {
   AgentProfileSchema,
   AgentSkillSelectionSchema,
   TerminalProfileSchema,
-} from "@fde/protocol/messages";
-import { FdeServicePortAllocationSchema } from "@fde/protocol/fde-config-schema";
+} from "@frogg/protocol/messages";
+import { FroggServicePortAllocationSchema } from "@frogg/protocol/frogg-config-schema";
 
 export const LogLevelSchema = z.enum(["trace", "debug", "info", "warn", "error", "fatal"]);
 export const LogFormatSchema = z.enum(["pretty", "json"]);
@@ -92,7 +92,7 @@ const ProvidersSchema = z
 const WorktreesConfigSchema = z
   .object({
     root: z.string().min(1).optional(),
-    servicePorts: FdeServicePortAllocationSchema.optional(),
+    servicePorts: FroggServicePortAllocationSchema.optional(),
   })
   .strict();
 
@@ -424,8 +424,8 @@ interface LoggerLike {
   info(...args: unknown[]): void;
 }
 
-function getConfigPath(fdeHome: string): string {
-  return path.join(fdeHome, CONFIG_FILENAME);
+function getConfigPath(froggHome: string): string {
+  return path.join(froggHome, CONFIG_FILENAME);
 }
 
 function getLogger(logger: LoggerLike | undefined): LoggerLike | undefined {
@@ -511,9 +511,9 @@ function stripRemovedConfigFields(parsed: unknown): unknown {
   return root;
 }
 
-export function loadPersistedConfig(fdeHome: string, logger?: LoggerLike): PersistedConfig {
+export function loadPersistedConfig(froggHome: string, logger?: LoggerLike): PersistedConfig {
   const log = getLogger(logger);
-  const configPath = getConfigPath(fdeHome);
+  const configPath = getConfigPath(froggHome);
 
   if (!existsSync(configPath)) {
     try {
@@ -563,12 +563,12 @@ export function loadPersistedConfig(fdeHome: string, logger?: LoggerLike): Persi
 }
 
 export function savePersistedConfig(
-  fdeHome: string,
+  froggHome: string,
   config: PersistedConfig,
   logger?: LoggerLike,
 ): void {
   const log = getLogger(logger);
-  const configPath = getConfigPath(fdeHome);
+  const configPath = getConfigPath(froggHome);
 
   const result = PersistedConfigSchema.safeParse(config);
   if (!result.success) {
@@ -590,9 +590,9 @@ export function savePersistedConfig(
 }
 
 /** Explicit formatting keeps ordinary reads free of writes and preserves legacy values. */
-export function formatPersistedConfig(fdeHome: string): string {
-  const configPath = getConfigPath(fdeHome);
-  loadPersistedConfig(fdeHome);
+export function formatPersistedConfig(froggHome: string): string {
+  const configPath = getConfigPath(froggHome);
+  loadPersistedConfig(froggHome);
   const raw = readFileSync(configPath, "utf-8");
   const parsed: unknown = JSON.parse(raw);
   const result = PersistedConfigSchema.safeParse(stripRemovedConfigFields(parsed));

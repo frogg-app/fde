@@ -1,6 +1,6 @@
 import { expect, test, vi } from "vitest";
-import { brand } from "@fde/branding";
-import { installers } from "@fde/branding/installers";
+import { brand } from "@frogg/branding";
+import { installers } from "@frogg/branding/installers";
 import { handleInstallScriptRequest } from "./install-script-worker.js";
 
 test("serves embedded generated installers without requesting upstream templates", async () => {

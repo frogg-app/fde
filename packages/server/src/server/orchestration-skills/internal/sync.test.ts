@@ -13,7 +13,7 @@ interface Sandbox {
 }
 
 async function makeSandbox(): Promise<Sandbox> {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), "fde-skill-sync-"));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "frogg-skill-sync-"));
   const sourceDir = path.join(root, "bundle");
   const agentsDir = path.join(root, "home", ".agents", "skills");
   const claudeDir = path.join(root, "home", ".claude", "skills");
@@ -48,39 +48,42 @@ describe("syncSkills", () => {
   });
 
   it("overwrites on-disk skill content when the bundle differs", async () => {
-    await writeBundleSkill(sandbox.sourceDir, "fde", {
-      "SKILL.md": "new fde content",
+    await writeBundleSkill(sandbox.sourceDir, "frogg", {
+      "SKILL.md": "new frogg content",
     });
-    const onDiskSkill = path.join(sandbox.agentsDir, "fde");
+    const onDiskSkill = path.join(sandbox.agentsDir, "frogg");
     await fs.mkdir(onDiskSkill, { recursive: true });
-    await fs.writeFile(path.join(onDiskSkill, "SKILL.md"), "old fde content");
+    await fs.writeFile(path.join(onDiskSkill, "SKILL.md"), "old frogg content");
 
     const result = await syncSkills({
       sourceDir: sandbox.sourceDir,
       agentsDir: sandbox.agentsDir,
       claudeDir: sandbox.claudeDir,
       codexDir: sandbox.codexDir,
-      skillNames: ["fde"],
+      skillNames: ["frogg"],
     });
 
     expect(result.processedSkills).toBe(1);
     expect(result.changedFiles).toBeGreaterThan(0);
     const agentsContent = await fs.readFile(
-      path.join(sandbox.agentsDir, "fde", "SKILL.md"),
+      path.join(sandbox.agentsDir, "frogg", "SKILL.md"),
       "utf-8",
     );
-    expect(agentsContent).toBe("new fde content");
+    expect(agentsContent).toBe("new frogg content");
     const claudeContent = await fs.readFile(
-      path.join(sandbox.claudeDir, "fde", "SKILL.md"),
+      path.join(sandbox.claudeDir, "frogg", "SKILL.md"),
       "utf-8",
     );
-    expect(claudeContent).toBe("new fde content");
-    const codexContent = await fs.readFile(path.join(sandbox.codexDir, "fde", "SKILL.md"), "utf-8");
-    expect(codexContent).toBe("new fde content");
+    expect(claudeContent).toBe("new frogg content");
+    const codexContent = await fs.readFile(
+      path.join(sandbox.codexDir, "frogg", "SKILL.md"),
+      "utf-8",
+    );
+    expect(codexContent).toBe("new frogg content");
   });
 
   it("installs new bundled skills, including references/, when not present on disk", async () => {
-    await writeBundleSkill(sandbox.sourceDir, "fde-committee", {
+    await writeBundleSkill(sandbox.sourceDir, "frogg-committee", {
       "SKILL.md": "committee content",
       "references/roles.md": "roles content",
     });
@@ -90,26 +93,26 @@ describe("syncSkills", () => {
       agentsDir: sandbox.agentsDir,
       claudeDir: sandbox.claudeDir,
       codexDir: sandbox.codexDir,
-      skillNames: ["fde-committee"],
+      skillNames: ["frogg-committee"],
     });
 
     expect(
-      await fs.readFile(path.join(sandbox.agentsDir, "fde-committee", "SKILL.md"), "utf-8"),
+      await fs.readFile(path.join(sandbox.agentsDir, "frogg-committee", "SKILL.md"), "utf-8"),
     ).toBe("committee content");
     expect(
       await fs.readFile(
-        path.join(sandbox.agentsDir, "fde-committee", "references", "roles.md"),
+        path.join(sandbox.agentsDir, "frogg-committee", "references", "roles.md"),
         "utf-8",
       ),
     ).toBe("roles content");
     expect(
       await fs.readFile(
-        path.join(sandbox.codexDir, "fde-committee", "references", "roles.md"),
+        path.join(sandbox.codexDir, "frogg-committee", "references", "roles.md"),
         "utf-8",
       ),
     ).toBe("roles content");
 
-    const claudeSkillDir = path.join(sandbox.claudeDir, "fde-committee");
+    const claudeSkillDir = path.join(sandbox.claudeDir, "frogg-committee");
     expect((await fs.lstat(claudeSkillDir)).isDirectory()).toBe(true);
     expect(await fs.readFile(path.join(claudeSkillDir, "SKILL.md"), "utf-8")).toBe(
       "committee content",
@@ -120,7 +123,7 @@ describe("syncSkills", () => {
   });
 
   it("leaves on-disk skills not in the bundle untouched", async () => {
-    await writeBundleSkill(sandbox.sourceDir, "fde", { "SKILL.md": "new" });
+    await writeBundleSkill(sandbox.sourceDir, "frogg", { "SKILL.md": "new" });
     const customSkill = path.join(sandbox.agentsDir, "user-custom-skill");
     await fs.mkdir(customSkill, { recursive: true });
     await fs.writeFile(path.join(customSkill, "SKILL.md"), "user content");
@@ -130,36 +133,36 @@ describe("syncSkills", () => {
       agentsDir: sandbox.agentsDir,
       claudeDir: sandbox.claudeDir,
       codexDir: sandbox.codexDir,
-      skillNames: ["fde"],
+      skillNames: ["frogg"],
     });
 
     expect(await fs.readFile(path.join(customSkill, "SKILL.md"), "utf-8")).toBe("user content");
   });
 
   it("removes stale files previously written to managed skill dirs", async () => {
-    await writeBundleSkill(sandbox.sourceDir, "fde", {
+    await writeBundleSkill(sandbox.sourceDir, "frogg", {
       "SKILL.md": "old",
       "references/stale.md": "stale",
     });
-    const onDiskSkill = path.join(sandbox.agentsDir, "fde");
+    const onDiskSkill = path.join(sandbox.agentsDir, "frogg");
 
     await syncSkills({
       sourceDir: sandbox.sourceDir,
       agentsDir: sandbox.agentsDir,
       claudeDir: sandbox.claudeDir,
       codexDir: sandbox.codexDir,
-      skillNames: ["fde"],
+      skillNames: ["frogg"],
     });
 
-    await fs.rm(path.join(sandbox.sourceDir, "fde"), { recursive: true, force: true });
-    await writeBundleSkill(sandbox.sourceDir, "fde", { "SKILL.md": "new" });
+    await fs.rm(path.join(sandbox.sourceDir, "frogg"), { recursive: true, force: true });
+    await writeBundleSkill(sandbox.sourceDir, "frogg", { "SKILL.md": "new" });
 
     await syncSkills({
       sourceDir: sandbox.sourceDir,
       agentsDir: sandbox.agentsDir,
       claudeDir: sandbox.claudeDir,
       codexDir: sandbox.codexDir,
-      skillNames: ["fde"],
+      skillNames: ["frogg"],
     });
 
     expect(await fs.readFile(path.join(onDiskSkill, "SKILL.md"), "utf-8")).toBe("new");
@@ -168,8 +171,8 @@ describe("syncSkills", () => {
   });
 
   it("preserves user-added files in managed skill dirs", async () => {
-    await writeBundleSkill(sandbox.sourceDir, "fde", { "SKILL.md": "new" });
-    const onDiskSkill = path.join(sandbox.agentsDir, "fde");
+    await writeBundleSkill(sandbox.sourceDir, "frogg", { "SKILL.md": "new" });
+    const onDiskSkill = path.join(sandbox.agentsDir, "frogg");
     await fs.mkdir(path.join(onDiskSkill, "references"), { recursive: true });
     await fs.writeFile(path.join(onDiskSkill, "SKILL.md"), "old");
     await fs.writeFile(path.join(onDiskSkill, "my-context.md"), "user context");
@@ -180,7 +183,7 @@ describe("syncSkills", () => {
       agentsDir: sandbox.agentsDir,
       claudeDir: sandbox.claudeDir,
       codexDir: sandbox.codexDir,
-      skillNames: ["fde"],
+      skillNames: ["frogg"],
     });
 
     expect(await fs.readFile(path.join(onDiskSkill, "SKILL.md"), "utf-8")).toBe("new");
@@ -195,11 +198,11 @@ describe("syncSkills", () => {
   it.skipIf(process.platform === "win32")(
     "rejects managed paths that would write through a symlink",
     async () => {
-      await writeBundleSkill(sandbox.sourceDir, "fde", {
+      await writeBundleSkill(sandbox.sourceDir, "frogg", {
         "SKILL.md": "new skill",
         "references/guide.md": "new guide",
       });
-      const onDiskSkill = path.join(sandbox.agentsDir, "fde");
+      const onDiskSkill = path.join(sandbox.agentsDir, "frogg");
       const externalReferences = path.join(sandbox.root, "external-references");
       await fs.mkdir(onDiskSkill, { recursive: true });
       await fs.mkdir(externalReferences, { recursive: true });
@@ -213,7 +216,7 @@ describe("syncSkills", () => {
           agentsDir: sandbox.agentsDir,
           claudeDir: sandbox.claudeDir,
           codexDir: sandbox.codexDir,
-          skillNames: ["fde"],
+          skillNames: ["frogg"],
         }),
       ).rejects.toThrow("Cannot sync through symbolic link");
 
@@ -226,7 +229,7 @@ describe("syncSkills", () => {
   );
 
   it("reports zero changed files on a no-op resync", async () => {
-    await writeBundleSkill(sandbox.sourceDir, "fde", {
+    await writeBundleSkill(sandbox.sourceDir, "frogg", {
       "SKILL.md": "content",
       "references/extra.md": "ref",
     });
@@ -236,7 +239,7 @@ describe("syncSkills", () => {
       agentsDir: sandbox.agentsDir,
       claudeDir: sandbox.claudeDir,
       codexDir: sandbox.codexDir,
-      skillNames: ["fde"],
+      skillNames: ["frogg"],
     });
     expect(first.changedFiles).toBeGreaterThan(0);
 
@@ -245,14 +248,14 @@ describe("syncSkills", () => {
       agentsDir: sandbox.agentsDir,
       claudeDir: sandbox.claudeDir,
       codexDir: sandbox.codexDir,
-      skillNames: ["fde"],
+      skillNames: ["frogg"],
     });
     expect(second.changedFiles).toBe(0);
   });
 
   it("skips skills listed in skillNames that are missing from the bundle without raising", async () => {
-    await writeBundleSkill(sandbox.sourceDir, "fde", { "SKILL.md": "content" });
-    // "fde-removed" is in skillNames but not in the bundle on disk.
+    await writeBundleSkill(sandbox.sourceDir, "frogg", { "SKILL.md": "content" });
+    // "frogg-removed" is in skillNames but not in the bundle on disk.
 
     const errors: Array<{ name: string; error: unknown }> = [];
     const result = await syncSkills({
@@ -260,21 +263,21 @@ describe("syncSkills", () => {
       agentsDir: sandbox.agentsDir,
       claudeDir: sandbox.claudeDir,
       codexDir: sandbox.codexDir,
-      skillNames: ["fde", "fde-removed"],
+      skillNames: ["frogg", "frogg-removed"],
       onSkillError: (name, error) => errors.push({ name, error }),
     });
 
     expect(errors).toEqual([]);
     expect(result.processedSkills).toBe(1);
-    expect(await fs.readFile(path.join(sandbox.agentsDir, "fde", "SKILL.md"), "utf-8")).toBe(
+    expect(await fs.readFile(path.join(sandbox.agentsDir, "frogg", "SKILL.md"), "utf-8")).toBe(
       "content",
     );
-    await expect(fs.access(path.join(sandbox.agentsDir, "fde-removed"))).rejects.toThrow();
+    await expect(fs.access(path.join(sandbox.agentsDir, "frogg-removed"))).rejects.toThrow();
   });
 
   it("leaves on-disk skill content alone when the skill has been removed from the bundle", async () => {
-    await writeBundleSkill(sandbox.sourceDir, "fde", { "SKILL.md": "current" });
-    const deprecatedDir = path.join(sandbox.agentsDir, "fde-deprecated");
+    await writeBundleSkill(sandbox.sourceDir, "frogg", { "SKILL.md": "current" });
+    const deprecatedDir = path.join(sandbox.agentsDir, "frogg-deprecated");
     await fs.mkdir(deprecatedDir, { recursive: true });
     await fs.writeFile(path.join(deprecatedDir, "SKILL.md"), "old content");
 
@@ -283,7 +286,7 @@ describe("syncSkills", () => {
       agentsDir: sandbox.agentsDir,
       claudeDir: sandbox.claudeDir,
       codexDir: sandbox.codexDir,
-      skillNames: ["fde", "fde-deprecated"],
+      skillNames: ["frogg", "frogg-deprecated"],
     });
 
     expect(await fs.readFile(path.join(deprecatedDir, "SKILL.md"), "utf-8")).toBe("old content");
@@ -298,7 +301,7 @@ describe("syncSkills", () => {
       agentsDir: sandbox.agentsDir,
       claudeDir: sandbox.claudeDir,
       codexDir: sandbox.codexDir,
-      skillNames: ["fde"],
+      skillNames: ["frogg"],
       onSkillError: (skillName) => errors.push(skillName),
     });
 
@@ -307,10 +310,10 @@ describe("syncSkills", () => {
   });
 
   it("reports per-skill errors via onSkillError without throwing", async () => {
-    await writeBundleSkill(sandbox.sourceDir, "fde", { "SKILL.md": "content" });
+    await writeBundleSkill(sandbox.sourceDir, "frogg", { "SKILL.md": "content" });
     // Make agents skill path a file (not a directory) to force a write error
     await fs.mkdir(sandbox.agentsDir, { recursive: true });
-    await fs.writeFile(path.join(sandbox.agentsDir, "fde"), "blocking file");
+    await fs.writeFile(path.join(sandbox.agentsDir, "frogg"), "blocking file");
 
     const errors: string[] = [];
     const result = await syncSkills({
@@ -318,11 +321,11 @@ describe("syncSkills", () => {
       agentsDir: sandbox.agentsDir,
       claudeDir: sandbox.claudeDir,
       codexDir: sandbox.codexDir,
-      skillNames: ["fde"],
+      skillNames: ["frogg"],
       onSkillError: (skillName) => errors.push(skillName),
     });
 
-    expect(errors).toContain("fde");
+    expect(errors).toContain("frogg");
     expect(result.processedSkills).toBe(0);
   });
 });
@@ -339,24 +342,24 @@ describe("removeSkill", () => {
   });
 
   it("removes the skill from all three targets when present", async () => {
-    await writeBundleSkill(sandbox.sourceDir, "fde", { "SKILL.md": "content" });
+    await writeBundleSkill(sandbox.sourceDir, "frogg", { "SKILL.md": "content" });
     await syncSkills({
       sourceDir: sandbox.sourceDir,
       agentsDir: sandbox.agentsDir,
       claudeDir: sandbox.claudeDir,
       codexDir: sandbox.codexDir,
-      skillNames: ["fde"],
+      skillNames: ["frogg"],
     });
 
-    await removeSkill("fde", {
+    await removeSkill("frogg", {
       agentsDir: sandbox.agentsDir,
       claudeDir: sandbox.claudeDir,
       codexDir: sandbox.codexDir,
     });
 
-    await expect(fs.access(path.join(sandbox.agentsDir, "fde"))).rejects.toThrow();
-    await expect(fs.access(path.join(sandbox.claudeDir, "fde"))).rejects.toThrow();
-    await expect(fs.access(path.join(sandbox.codexDir, "fde"))).rejects.toThrow();
+    await expect(fs.access(path.join(sandbox.agentsDir, "frogg"))).rejects.toThrow();
+    await expect(fs.access(path.join(sandbox.claudeDir, "frogg"))).rejects.toThrow();
+    await expect(fs.access(path.join(sandbox.codexDir, "frogg"))).rejects.toThrow();
   });
 
   it("does not throw when targets are missing", async () => {

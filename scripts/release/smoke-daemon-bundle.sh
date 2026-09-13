@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Smoke-tests a daemon bundle tarball on the current host: extracts it into a
-# temp dir, starts the daemon through bin/fde, waits for `daemon status` to
+# temp dir, starts the daemon through bin/frogg, waits for `daemon status` to
 # report running, fetches the web UI over HTTP, then stops the daemon.
 #
 # Usage: scripts/release/smoke-daemon-bundle.sh <bundle.tar.gz> [port]
@@ -10,27 +10,27 @@ bundle="${1:?usage: $0 <bundle.tar.gz> [port]}"
 port="${2:-6798}"
 listen="0.0.0.0:${port}"
 
-work="$(mktemp -d "${TMPDIR:-/tmp}/fde-bundle-smoke.XXXXXX")"
+work="$(mktemp -d "${TMPDIR:-/tmp}/frogg-bundle-smoke.XXXXXX")"
 home="${work}/home"
 mkdir -p "${home}"
 
 cleanup() {
-  "${work}/bundle/bin/fde" daemon stop --home "${home}" --json >/dev/null 2>&1 || true
+  "${work}/bundle/bin/frogg" daemon stop --home "${home}" --json >/dev/null 2>&1 || true
   rm -rf "${work}"
 }
 trap cleanup EXIT
 
 mkdir -p "${work}/bundle"
 tar -xzf "${bundle}" --strip-components=1 -C "${work}/bundle"
-fde="${work}/bundle/bin/fde"
+frogg="${work}/bundle/bin/frogg"
 
 echo "manifest: $(tr -d '\n ' < "${work}/bundle/manifest.json")"
-echo "fde --version: $("${fde}" --version)"
+echo "frogg --version: $("${frogg}" --version)"
 
-"${fde}" daemon start --listen "${listen}" --no-relay --web-ui --home "${home}"
+"${frogg}" daemon start --listen "${listen}" --no-relay --web-ui --home "${home}"
 
 for _ in $(seq 1 60); do
-  status="$("${fde}" daemon status --home "${home}" --json 2>/dev/null || true)"
+  status="$("${frogg}" daemon status --home "${home}" --json 2>/dev/null || true)"
   if printf '%s' "${status}" | grep -q '"localDaemon": *"running"'; then
     break
   fi
@@ -52,5 +52,5 @@ if ! printf '%s' "${html}" | grep -qi '<html'; then
 fi
 echo "web UI: OK ($(printf '%s' "${html}" | wc -c) bytes of HTML)"
 
-"${fde}" daemon stop --home "${home}" --json
+"${frogg}" daemon stop --home "${home}" --json
 echo "smoke test passed"
