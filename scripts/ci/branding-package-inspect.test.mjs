@@ -1,16 +1,25 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, copyFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import { fileURLToPath } from "node:url";
+import { pathToFileURL } from "node:url";
 
-const repo = fileURLToPath(new URL("../../", import.meta.url));
-const script = new URL("./branding-package-inspect.mjs", import.meta.url).href;
+const source = new URL("./branding-package-inspect.mjs", import.meta.url);
 test("macOS inspection accepts stable bundle names and rejects missing executables or wrong identities", () => {
   const cwd = mkdtempSync(path.join(os.tmpdir(), "fde-package-inspect-"));
   try {
+    // Run the real inspector with a fixture-local brand loader. Preparing a brand
+    // in the source checkout races other script tests and changes their identity.
+    mkdirSync(path.join(cwd, "scripts/ci"), { recursive: true });
+    mkdirSync(path.join(cwd, "scripts/dev/branding"), { recursive: true });
+    const script = pathToFileURL(path.join(cwd, "scripts/ci/branding-package-inspect.mjs")).href;
+    copyFileSync(source, path.join(cwd, "scripts/ci/branding-package-inspect.mjs"));
+    writeFileSync(
+      path.join(cwd, "scripts/dev/branding/load.cjs"),
+      'exports.loadBrand = () => ({id:"acme", applicationId:"com.acme.studio", artifactPrefix:"acme", name:"Acme Studio"});',
+    );
     const output = path.join(cwd, "apps/desktop-electron/release");
     const contents = path.join(output, "mac-arm64/acme.app/Contents");
     mkdirSync(path.join(contents, "Resources/app-dist"), { recursive: true });
@@ -33,7 +42,6 @@ test("macOS inspection accepts stable bundle names and rejects missing executabl
     const env = {
       ...process.env,
       PATH: `${cwd}/bin:${process.env.PATH}`,
-      FDE_BRAND_DIR: path.join(repo, "brands/example"),
     };
     const args = [
       "--input-type=module",
