@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Check website deployment credentials from the runner workspace before checkout,
+  so an unset Cloudflare token skips deployment as intended.
+
 - Fix Nix installation collisions from redundant self-links and inspect macOS
   branded executables through their actual bundle metadata.
 - Restore unfinished workspace forms from the sidebar with their project, prompt,

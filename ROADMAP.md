@@ -231,6 +231,7 @@ The docs rewrite (2026-09-13) replaced `docs/` with the Astro/Starlight site in
       needed. Confirm `frogg.app/install.sh` and `pair.frogg.app` still resolve.
 - [ ] **Website CI deploy secret.** Add `CLOUDFLARE_API_TOKEN` (and optionally
       `CLOUDFLARE_ACCOUNT_ID`); `website.yml` skips deploys until then.
+      The credential check runs from the runner workspace before checkout.
 - [ ] **Re-capture the pairing screenshots.** `connect-and-pair.mdx` still shows
       the old "Enable relay?" choice; since `ebecf014` a daemon without an
       endpoint shows a warning instead. The new Relay endpoint card has no
