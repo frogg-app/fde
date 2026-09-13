@@ -46,7 +46,7 @@ describe("fde trigger", () => {
   it("names the upstream service it no longer connects to", () => {
     // The point of the message: say what stopped, and what it used to reach.
     expect(TRIGGERS_DISABLED_MESSAGE).toContain("upstream");
-    expect(TRIGGERS_DISABLED_MESSAGE).toContain("ROADMAP");
+    expect(TRIGGERS_DISABLED_MESSAGE).toContain("github.com/frogg-app/fde/issues");
   });
 });
 

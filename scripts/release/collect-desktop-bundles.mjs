@@ -4,7 +4,7 @@ import {
   legacyDesktopSuffix,
 } from "../../packages/branding/src/artifact-contract.mjs";
 // Copies the bundles `cargo tauri build` wrote under <release-dir>/bundle/ into one
-// flat directory with the release asset names documented in docs/ci.md:
+// flat directory with the release asset names in packages/branding/src/artifact-contract.mjs:
 //
 //   FDE-<version>-linux-x86_64.deb      FDE-<version>-linux-x86_64.AppImage
 //   FDE-<version>-win-x64-setup.zip     FDE-<version>-win-x64-portable.zip

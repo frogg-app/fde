@@ -394,7 +394,7 @@ export interface FdeDaemonConfig {
   allowedHosts?: HostnamesConfig;
   hostnames?: HostnamesConfig;
   trustedProxies?: true | string[];
-  /** Treat private-network clients like loopback (docs/permissions.md, "Trusted LAN"). */
+  /** Treat private-network clients like loopback (self-hosting/security.mdx, "Access policy"). */
   trustLan?: boolean;
   mcpEnabled?: boolean;
   mcpInjectIntoAgents?: boolean;
@@ -679,7 +679,7 @@ export async function createFdeDaemon(
 
   const serverId = getOrCreateServerId(config.fdeHome, { logger });
   const daemonKeyPair = await loadOrCreateDaemonKeyPair(config.fdeHome, logger);
-  // Paired principals/credentials and the first-run claim gate (docs/permissions.md).
+  // Paired principals/credentials and the first-run claim gate (getting-started/connect-and-pair.mdx).
   const claimStore = createClaimStore(config.fdeHome);
   const claimOffers = createClaimOfferStore();
   const authConfig: DaemonAuthConfig = {
@@ -1892,7 +1892,7 @@ export async function createFdeDaemon(
             }
 
             // Self-update lives next to the listener: the CLI verifies the restarted
-            // daemon on this exact address (docs/install.md "Updating").
+            // daemon on this exact address (self-hosting/updates.mdx).
             const updateService = new DaemonUpdateService({
               install: describeDaemonInstall({ desktopManaged: config.desktopManaged === true }),
               daemonVersion,

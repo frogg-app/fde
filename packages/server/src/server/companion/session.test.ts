@@ -567,7 +567,7 @@ describe("CompanionSession turns", () => {
     await turn;
 
     // Cut at the opening clause: the first segment is deliberately short so
-    // audio starts sooner. See docs/companion-voice-design.md.
+    // audio starts sooner.
     expect(harness.tts.synthesized).toEqual(["The push test only fails on Windows,"]);
     expect(harness.of("companion.reply").some((msg) => msg.payload.isFinal)).toBe(false);
     await harness.session.cleanup();

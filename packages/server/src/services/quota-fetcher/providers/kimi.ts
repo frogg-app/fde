@@ -276,7 +276,7 @@ export class KimiQuotaProvider implements ProviderUsageFetcher {
     const res = await this.callUsageApi(credentials.access_token);
 
     if (!res.ok) {
-      // Read-only on credentials; the Kimi CLI owns refresh. See docs/providers.md.
+      // Read-only on credentials; the Kimi CLI owns refresh. See agents-and-providers/providers.mdx.
       this.logger.debug({ status: res.status }, "Kimi usage fetch failed");
       return unavailableUsage(this);
     }
