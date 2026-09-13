@@ -1,6 +1,6 @@
 # FDE roadmap
 
-Release baseline: **0.6.0**. Electron is the production app-only desktop;
+Release baseline: **0.6.6**. Electron is the production app-only desktop;
 Node daemons remain separately installed. [Changelog](CHANGELOG.md) records
 completed work and [upgrade notes](docs/upgrade-0.6.md) describe the coordinated
 namespace migration. Unchecked items are validation/backlog work, not active tasks.
@@ -10,7 +10,9 @@ namespace migration. Unchecked items are validation/backlog work, not active tas
 - Companion visual/speech polish: opt-in device setting, flowing light presence,
   motion control and Kitten Rosie local voice. See the
   [design, measurements and remaining native gaps](docs/companion-polish-plan.md).
-  The reported Android startup crash is still unresolved.
+  Android startup now initializes runtime polyfills before router dependencies.
+  The repaired APK passed two emulator cold launches; physical-device startup
+  and Companion acceptance remain outstanding. See [Android validation](docs/android.md#checking-packaged-startup).
 
 - Opt-in independent execution service and restartable daemon gateway, with
   execution status, explicit stop-all, retained-version reporting, and isolated

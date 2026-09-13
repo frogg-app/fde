@@ -80,6 +80,11 @@
   for a standalone APK that can coexist with production. Preserve license and
   speech-model notices in standalone daemon bundles.
 
+## 0.6.6 - 2026-09-13
+
+- Correct the roadmap to record the Android launch repair and successful emulator
+  cold launches while retaining the physical-device validation gap.
+
 ## 0.6.5 - 2026-09-13
 
 - Keep Companion provider selection in its backend factory instead of generic
