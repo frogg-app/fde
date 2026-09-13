@@ -1,6 +1,6 @@
 {
   "name": "@frogg/protocol",
-  "version": "0.7.0",
+  "version": "1.0.0",
   "description": "Frogg shared protocol schemas and wire types",
   "files": [
     "dist",
