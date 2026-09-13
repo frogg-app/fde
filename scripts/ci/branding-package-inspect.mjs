@@ -11,10 +11,12 @@ const version = JSON.parse(await readFile("package.json", "utf8")).version;
 const platform = process.platform === "win32" ? "win" : process.platform;
 let folder = platform === "win" ? "win-unpacked" : "linux-unpacked";
 if (platform === "darwin") folder = process.arch === "arm64" ? "mac-arm64" : "mac";
-const application =
-  platform === "darwin"
-    ? path.join(root, folder, `${brand.name}.app`, "Contents")
-    : path.join(root, folder);
+let application = path.join(root, folder);
+if (platform === "darwin") {
+  const bundles = (await readdir(application)).filter((name) => name.endsWith(".app"));
+  assert.equal(bundles.length, 1, "exactly one desktop application bundle was produced");
+  application = path.join(application, bundles[0], "Contents");
+}
 const resources = path.join(application, platform === "darwin" ? "Resources" : "resources");
 const plist = path.join(application, "Info.plist");
 const executableName =
