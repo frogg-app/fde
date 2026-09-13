@@ -33,10 +33,10 @@ async function scratch() {
   return dir;
 }
 
-test("custom daemon defaults stay local without inherited FDE infrastructure", async () => {
+test("custom daemon defaults use the branded port without inherited FDE infrastructure", async () => {
   const home = await scratch();
   const config = loadConfig(home, { env: {} });
-  expect(config.listen).toBe("127.0.0.1:10099");
+  expect(config.listen).toBe("0.0.0.0:10099");
   expect(config.relayEnabled).toBe(false);
   expect(config.relayEndpoint).toBe("");
   expect(config.appBaseUrl).toBe("");

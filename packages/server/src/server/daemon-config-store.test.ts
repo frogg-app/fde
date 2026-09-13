@@ -239,6 +239,7 @@ describe("DaemonConfigStore", () => {
       enableTerminalAgentHooks: false,
       appendSystemPrompt: "",
     });
+    const persistedBeforePatch = loadPersistedConfig(fdeHome);
     let browserToolsEnabled = false;
     store.onApply((next, previous) => {
       browserToolsEnabled = next.browserTools.enabled;
@@ -255,7 +256,7 @@ describe("DaemonConfigStore", () => {
     );
     expect(browserToolsEnabled).toBe(false);
     expect(store.get().browserTools.enabled).toBe(false);
-    expect(loadPersistedConfig(fdeHome).daemon?.browserTools?.enabled).toBeUndefined();
+    expect(loadPersistedConfig(fdeHome)).toEqual(persistedBeforePatch);
   });
 
   test("rejects relay patches when a launch override owns the setting", () => {

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.6.15 — 2026-09-13
+
+- Align daemon configuration tests with all-interface listen defaults and explicit
+  generated settings; verify transactional rollback restores the full persisted config.
+
 ## 0.6.14 — 2026-09-13
 
 - Remove committed relay runtime databases and ignore Wrangler state. Audit the
