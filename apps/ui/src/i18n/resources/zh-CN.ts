@@ -2612,7 +2612,7 @@ export const zhCN: TranslationResources = {
         fields: {
           listen: "监听地址",
           listenHint:
-            "应用通过 SSH 隧道连接，因此使用回环地址是正确的。仅在需要将守护进程暴露到网络时才使用 0.0.0.0。",
+            "默认为 0.0.0.0，允许网络访问。如需仅通过 SSH 隧道或服务器本机访问，请使用 127.0.0.1。",
           version: "版本",
           versionHint:
             "要安装的发布版本。默认为此应用的版本；该发布必须包含主机平台对应的守护进程包。",

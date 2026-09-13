@@ -83,6 +83,22 @@
   for a standalone APK that can coexist with production. Preserve license and
   speech-model notices in standalone daemon bundles.
 
+## 0.6.11
+
+- Default daemon startup, port-only listen targets, service installation, Nix and
+  SSH deployment to `0.0.0.0`, preserving explicitly configured addresses.
+  Expand generated daemon configuration with editable defaults and provide
+  explicit formatting for existing `config.json` files.
+- Start directory browsing at the daemon home and list immediate subdirectories.
+  Keep directory selection and parent navigation pinned above the folder list,
+  distinguish navigation from adding a project, and fix `~` navigation.
+- Add network-scan cancellation, retain discovered servers when cancelled, and
+  simplify scan status and spacing. Remove per-address probe diagnostics from
+  the main connection flow.
+- Windows and Android client builds plus daemon bundles are requested for this
+  source revision. Build success, device validation and publication are separate
+  checks; this partial build does not replace the published update feed.
+
 ## 0.6.10 - 2026-09-13
 
 - Add the FDE release skill, versioned JSON update discovery, explicit runtime and

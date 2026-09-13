@@ -70,7 +70,7 @@ export function parseRequest(
   const method = parseMethod(args);
   const version = (text(args.version) || defaultVersion).replace(/^v+/u, "");
   if (!/^[A-Za-z0-9.+_-]{1,64}$/u.test(version)) throw new Error("Version is invalid");
-  const listen = text(args.listen) || `127.0.0.1:${brand.daemonPort}`;
+  const listen = text(args.listen) || `0.0.0.0:${brand.daemonPort}`;
   const split = listen.lastIndexOf(":");
   const host = listen.slice(0, split);
   const port = listen.slice(split + 1);

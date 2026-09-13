@@ -7,6 +7,12 @@ namespace migration. Unchecked items are validation/backlog work, not active tas
 
 ## Implemented baseline
 
+- Home-first immediate directory browsing with pinned selection/parent actions;
+  cancellable network discovery with concise status; configurable daemon network
+  defaults and readable configuration. See [configuration](docs/install.md#daemon-configuration).
+  Windows/Android client and daemon build validation is tracked separately from
+  physical-device acceptance and release publication.
+
 - Companion visual/speech polish: opt-in device setting, flowing light presence,
   motion control and Kitten Rosie local voice. See the
   [design, measurements and remaining native gaps](docs/companion-polish-plan.md).

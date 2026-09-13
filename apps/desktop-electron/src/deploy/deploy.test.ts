@@ -57,7 +57,10 @@ describe("SSH deployment validation and scripts", () => {
     ]) {
       expect(() => parseRequest({ host: "box", ...value }, "1", distribution)).toThrow();
     }
-    expect(parseRequest({ host: "box" }, "1", distribution).listen).toBe("127.0.0.1:9999");
+    expect(parseRequest({ host: "box" }, "1", distribution).listen).toBe("0.0.0.0:9999");
+    expect(parseRequest({ host: "box", listen: "127.0.0.1:9999" }, "1", distribution).listen).toBe(
+      "127.0.0.1:9999",
+    );
   });
   it("ships the same branded checksum and product-ownership installers", () => {
     for (const method of ["native", "docker"] as const) {

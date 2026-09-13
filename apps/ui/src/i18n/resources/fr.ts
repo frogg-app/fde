@@ -2717,7 +2717,7 @@ export const fr: TranslationResources = {
         fields: {
           listen: "Adresse d'écoute",
           listenHint:
-            "L'app se connecte via le tunnel SSH, le loopback est donc le bon choix. N'utilisez 0.0.0.0 que pour exposer le daemon sur le réseau.",
+            "Par défaut, 0.0.0.0 permet l’accès réseau. Utilisez 127.0.0.1 pour un accès uniquement par le tunnel SSH ou depuis le serveur.",
           version: "Version",
           versionHint:
             "Version à installer. Par défaut, celle de cette app ; la version doit fournir un bundle du daemon pour la plateforme de l'hôte.",

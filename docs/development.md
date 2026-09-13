@@ -25,7 +25,7 @@ The web dev launcher passes the current Git branch to Metro as
 `EXPO_PUBLIC_FDE_DEV_BUILD_LABEL`. The expanded sidebar shows it in the
 titlebar row. Production builds leave the variable unset and show no label.
 
-`npm run dev` is only a shorthand for `npm run dev:server`. Keep `127.0.0.1:9999` (the default daemon port since 0.1.11; the upstream project used 6767, and a `config.json` that still says `daemon.listen: "127.0.0.1:6767"` keeps working) for the packaged app and production-style `~/.fde` state.
+`npm run dev` is only a shorthand for `npm run dev:server`. Keep port `9999` (the default daemon port since 0.1.11; the upstream project used 6767, and a `config.json` that still says `daemon.listen: "127.0.0.1:6767"` keeps working) for the packaged app and production-style `~/.fde` state.
 
 ### FDE_HOME
 

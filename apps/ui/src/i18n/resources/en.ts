@@ -2754,7 +2754,7 @@ export const en = {
         fields: {
           listen: "Listen address",
           listenHint:
-            "The app connects through the SSH tunnel, so loopback is right. Use 0.0.0.0 only to expose the daemon on the network.",
+            "Defaults to 0.0.0.0 for network access. Use 127.0.0.1 for access only through the SSH tunnel or from the server itself.",
           version: "Version",
           versionHint:
             "Release to install. Defaults to this app's version; the release must carry a daemon bundle for the host's platform.",

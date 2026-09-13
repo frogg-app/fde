@@ -68,13 +68,26 @@ from is left alone until that daemon stops. Nothing inside the directory is rena
 `config.json`, `fde.pid`, `daemon.log`, `principals.json` keep their names.
 `fde daemon status` and onboarding both print the home in use.
 
+## Daemon configuration
+
+The daemon uses `$FDE_HOME/config.json` (normally `~/.fde/config.json`). New
+configurations bind to `0.0.0.0:9999`; explicit `daemon.listen` settings are
+preserved, including loopback settings written by an older release. Listen
+precedence is command-line `--listen`, `FDE_LISTEN`, `daemon.listen`, then the
+default. A port without a host also binds to `0.0.0.0`.
+
+To make an existing daemon reachable on the LAN, edit `daemon.listen` to
+`"0.0.0.0:9999"` in the existing JSON object and run `fde restart`. If a login
+service supplies an explicit listen address, update that service setting too.
+Connect clients using the server's LAN IP, not `0.0.0.0`.
+
 ## Start the daemon at login
 
 The installers register a service for you. To do it (or undo it) yourself, on any platform:
 
 ```bash
 fde daemon install-service                       # start FDE when I log in
-fde daemon install-service --listen 0.0.0.0:9999 # ... reachable from the network
+fde daemon install-service --listen 127.0.0.1:9999 # local or SSH-tunnel access only
 fde daemon uninstall-service                     # stop doing that
 ```
 
@@ -401,8 +414,8 @@ GitHub release itself (`FDE_RELEASE_BASE`, or an exact `FDE_BUNDLE_URL`), so
 the release tagged `v<version>` must carry
 `FDE-<version>-<platform>-<arch>-daemon.tar.gz` and its `.sha256` for the
 host's platform. The version defaults to the app's own. The listen address
-defaults to `127.0.0.1:9999` because the app reaches the daemon through the
-SSH tunnel; for Docker it becomes `FDE_BIND`/`FDE_PORT`. See
+defaults to `0.0.0.0:9999`. Set `127.0.0.1:9999` explicitly for local or
+SSH-tunnel access only; for Docker it becomes `FDE_BIND`/`FDE_PORT`. See
 [desktop-shell.md](desktop-shell.md), "SSH deploy".
 
 ## Independent execution (experimental opt-in)
