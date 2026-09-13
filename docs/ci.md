@@ -40,6 +40,31 @@ Follow [release](release.md), [building](building.md), and the
 client/daemon upgrades; old wire, storage, environment and plugin names are not a
 transparent compatibility contract.
 
+## Selected build artifacts
+
+`build-selected.yml` builds Windows x64 Electron clients, Android arm64-v8a,
+and a Linux x64 daemon bundle. Every job checks out the triggering commit and uses
+the root build wrappers in its own runner. Outputs are Actions artifacts retained
+for 14 days. The workflow has read-only repository permissions, creates no tags or
+GitHub releases, and does not publish Docker images or update feeds.
+
+Pushing the checked commit to the task branch `fde-daemon-listen-all` starts these
+three builds. The branch trigger allows the first run without merging the new
+workflow onto the default branch. Manual dispatch is available once the workflow
+exists on the default branch; it can then select the task branch:
+
+```bash
+gh workflow run build-selected.yml --repo frogg-app/fde --ref fde-daemon-listen-all
+gh run list --repo frogg-app/fde --workflow build-selected.yml --limit 5
+gh run download RUN_ID --repo frogg-app/fde --dir selected-builds
+```
+
+Artifact names include the exact source commit. No signing secrets are loaded:
+Windows packages are unsigned and Android APKs use the debug key with an
+`-unsigned` filename. These are test builds; they do not establish signing trust,
+installed-update compatibility, or device acceptance. External branding must be
+readable by the workflow's read-only token or use the in-repository brand selection.
+
 ## Preserved validation limits
 
 Independent execution from 0.5 remains opt-in. Isolated process and Linux systemd

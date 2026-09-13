@@ -1,0 +1,130 @@
+name: Build selected clients and daemon
+
+on:
+  push:
+    branches: [fde-daemon-listen-all]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  ONNXRUNTIME_NODE_INSTALL: skip
+  CI: "true"
+  LEFTHOOK: "0"
+
+jobs:
+  windows:
+    name: Windows x64 client
+    runs-on: windows-latest
+    timeout-minutes: 60
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: ./.github/actions/select-brand
+        with:
+          directory: ${{ vars.FDE_BRAND_DIR }}
+          repository: ${{ vars.FDE_BRAND_REPOSITORY }}
+          revision: ${{ vars.FDE_BRAND_REVISION }}
+          subdirectory: ${{ vars.FDE_BRAND_SUBDIR }}
+      - uses: ./.github/actions/setup-node-deps
+      - run: npm run install:electron --workspace=@fde/desktop-electron
+      - name: Build app-only client
+        run: npm run build:desktop -- --target win-x64
+      - uses: actions/upload-artifact@v7
+        with:
+          name: windows-x64-client-${{ github.sha }}
+          path: |
+            apps/desktop-electron/release/*.exe
+            apps/desktop-electron/release/*.zip
+            apps/desktop-electron/release/*.blockmap
+            apps/desktop-electron/release/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 14
+
+  daemon:
+    name: Linux x64 daemon
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: ./.github/actions/select-brand
+        with:
+          directory: ${{ vars.FDE_BRAND_DIR }}
+          repository: ${{ vars.FDE_BRAND_REPOSITORY }}
+          revision: ${{ vars.FDE_BRAND_REVISION }}
+          subdirectory: ${{ vars.FDE_BRAND_SUBDIR }}
+      - uses: ./.github/actions/setup-node-deps
+      - name: Build daemon and its web UI
+        run: npm run build:server && npm run build:daemon-web-ui
+      - name: Package daemon
+        run: npm run build:daemon-bundle -- --target linux-x64 --out-dir dist/bundles
+      - uses: actions/upload-artifact@v7
+        with:
+          name: linux-x64-daemon-${{ github.sha }}
+          path: |
+            dist/bundles/*.tar.gz
+            dist/bundles/*.sha256
+          if-no-files-found: error
+          retention-days: 14
+
+  android:
+    name: Android arm64 client (debug-signed)
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: ./.github/actions/select-brand
+        with:
+          directory: ${{ vars.FDE_BRAND_DIR }}
+          repository: ${{ vars.FDE_BRAND_REPOSITORY }}
+          revision: ${{ vars.FDE_BRAND_REVISION }}
+          subdirectory: ${{ vars.FDE_BRAND_SUBDIR }}
+      - name: Free runner disk space for Android
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: false
+          android: false
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: false
+      - name: Trim unused runner Android SDK components
+        run: sudo rm -rf /usr/local/lib/android/sdk/ndk /usr/local/lib/android/sdk/emulator /usr/local/lib/android/sdk/system-images
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: android-actions/setup-android@v4
+        with:
+          log-accepted-android-sdk-licenses: false
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Install dependencies
+        run: node scripts/ci/npm-retry.mjs ci
+      - name: Build test APK
+        run: node scripts/release/build-android-apk.mjs --abi arm64-v8a --serial --out-dir release-assets
+      - uses: actions/upload-artifact@v7
+        with:
+          name: android-arm64-debug-signed-${{ github.sha }}
+          path: release-assets/*-android-*.apk
+          if-no-files-found: error
+          retention-days: 14

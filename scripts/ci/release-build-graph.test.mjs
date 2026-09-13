@@ -51,3 +51,29 @@ test("all daemon workspace output is shared and bundle jobs never rebuild the we
   assert.match(bundle, /name: daemon-dist\n\s+path: \./);
   assert.doesNotMatch(bundle, /npm run build:server|npm run build:daemon-web-ui|npm run build:ui/);
 });
+
+const selectedWorkflow = readFileSync(
+  new URL("../../.github/workflows/build-selected.yml", import.meta.url),
+  "utf8",
+);
+
+test("selected builds cannot publish releases, tags, containers, or load signing secrets", () => {
+  assert.match(selectedWorkflow, /permissions:\n  contents: read\n/);
+  assert.doesNotMatch(
+    selectedWorkflow,
+    /contents: write|secrets\.|gh (?:release|api)|git push|docker\/build-push-action/,
+  );
+  assert.match(selectedWorkflow, /branches: \[fde-daemon-listen-all\]/);
+  assert.match(selectedWorkflow, /workflow_dispatch:/);
+  assert.equal((selectedWorkflow.match(/uses: actions\/upload-artifact@/g) ?? []).length, 3);
+  assert.equal((selectedWorkflow.match(/if-no-files-found: error/g) ?? []).length, 3);
+});
+
+test("selected builds use one immutable source and only the requested independent targets", () => {
+  assert.equal((selectedWorkflow.match(/ref: \$\{\{ github.sha \}\}/g) ?? []).length, 3);
+  assert.equal((selectedWorkflow.match(/persist-credentials: false/g) ?? []).length, 3);
+  assert.match(selectedWorkflow, /npm run build:desktop -- --target win-x64/);
+  assert.match(selectedWorkflow, /npm run build:daemon-bundle -- --target linux-x64/);
+  assert.match(selectedWorkflow, /build-android-apk.mjs --abi arm64-v8a --serial/);
+  assert.doesNotMatch(selectedWorkflow, /darwin|macos|linux-arm64|win-arm64|needs:/);
+});
