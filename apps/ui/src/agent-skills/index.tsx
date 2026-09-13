@@ -25,7 +25,7 @@ const ThemedBlocks = withUnistyles(Blocks);
 const ThemedCheck = withUnistyles(Check);
 const ThemedSettings = withUnistyles(Settings2);
 const ThemedArrowUpRight = withUnistyles(ArrowUpRight);
-const SKILLS_DOCS_URL = brandDocsUrl("skills");
+const SKILLS_DOCS_URL = brandDocsUrl("agents-and-providers/skills/");
 const foregroundMapping = (theme: Theme) => ({ color: theme.colors.foreground });
 const mutedMapping = (theme: Theme) => ({ color: theme.colors.foregroundMuted });
 

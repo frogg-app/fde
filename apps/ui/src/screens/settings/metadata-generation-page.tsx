@@ -14,7 +14,7 @@ import { buildSelectableProviderSelectorProviders } from "@/provider-selection/p
 import { SettingsSection } from "@/screens/settings/settings-section";
 import { settingsStyles } from "@/styles/settings";
 
-const METADATA_GENERATION_DOCS_URL = brandDocsUrl("metadata-generation");
+const METADATA_GENERATION_DOCS_URL = brandDocsUrl("reference/project-config/#metadatageneration");
 type SelectionMode = "automatic" | "preferred";
 
 export function MetadataGenerationPage({ serverId }: { serverId: string }) {

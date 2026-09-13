@@ -494,7 +494,7 @@ export function LocalDaemonSection() {
   );
 }
 
-const ADVANCED_DAEMON_SETTINGS_URL = brandDocsUrl("configuration");
+const ADVANCED_DAEMON_SETTINGS_URL = brandDocsUrl("reference/configuration/");
 
 const styles = StyleSheet.create((theme) => ({
   actionGroup: {
