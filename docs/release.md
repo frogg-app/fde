@@ -52,3 +52,42 @@ voice quality, sustained memory behavior or update acceptance. Independent
 execution stays opt-in and retains its documented platform and installed-update
 gaps. Publish evidence with those limits rather than inferring success from a
 successful artifact upload.
+
+## Development release requests
+
+The user's standing convention is: **development release** builds the Windows x64
+installer and Linux x64 daemon; **dev + Android** adds the Android arm64 client.
+Use the latest identified source version and matching tag. Publish the completed
+release, not a draft, and verify public daemon and client update discovery. These
+requests authorize publication for that release. They do not request other builds.
+
+Dispatch `build-selected.yml` at the pinned revision for the requested targets.
+Collect its artifacts, then prepare and verify the release before publishing.
+Keep Linux/macOS desktop compatibility feeds at their preceding published versions
+when only Windows is rebuilt: download those exact old payloads, preserve filenames,
+and pass `--retain-desktop-from PATH/TO/PREVIOUS/release.json` to
+`build-release-metadata.mjs`. Retained platform entries record their own version;
+the verifier requires their files and hashes to match the preceding release exactly.
+Never relabel an old binary as the new version. Windows metadata and the daemon
+bundle must identify the newly built version. Include daemon checksum sidecars,
+install scripts, and the requested APK; verify every uploaded payload against bytes.
+
+A tag push invokes the full release workflow; use the selected build/manual
+publication path for this scope and avoid a duplicate full-matrix tag build.
+Android APK signing identity must match an existing install for an in-place update.
+The current Android client has no native APK update-discovery UI; provide its public
+APK link and record this limitation rather than claiming automatic Android updates.
+
+## Update continuity across renames
+
+Every release must preserve scalable update paths. Product discovery stays at
+`release.json`; versioned protocol adapters own platform manifests and payload
+verification. Derive names, URLs, sizes and hashes from actual artifacts rather than
+assuming a product display name. Keep original filenames on immutable artifacts.
+
+Before changing product, repository, domain, installer, or runtime names, inventory
+the discovery URLs and compatibility manifests used by installed clients. Preserve
+those old entrypoints with verified aliases or redirects. New-build configuration
+alone cannot migrate installed clients. Verify old URLs through final downloads;
+retain protocol adapters or provide a tested migration path. Compare each release
+with the preceding published descriptor and never silently drop an update path.

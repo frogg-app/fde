@@ -145,3 +145,56 @@ test("rejects two Mac payloads for the same architecture", async () => {
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("selected releases retain exact preceding platform payloads and versions", async () => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), "fde-retained-platforms-"));
+  const out = path.join(dir, "metadata");
+  try {
+    for (const suffix of ["win-x64.exe", "linux-x86_64.AppImage", "mac-x64.zip", "mac-arm64.zip"])
+      await writeFile(path.join(dir, `FDE-0.6.13-${suffix}`), suffix);
+    const previousDescriptor = await buildReleaseMetadata({ version: "0.6.13", assets: dir, out });
+    await writeFile(path.join(dir, "FDE-0.6.19-win-x64.exe"), "new installer");
+    const descriptor = await buildReleaseMetadata({
+      version: "0.6.19",
+      assets: dir,
+      out,
+      platformVersions: { "-linux": "0.6.13", "-mac": "0.6.13" },
+    });
+    const manifests = {};
+    const assets = [{ name: "release.json" }];
+    for (const [key, platform] of Object.entries(
+      descriptor.updatePaths["electron-updater"].platforms,
+    )) {
+      const manifest = JSON.parse(await readFile(path.join(out, platform.manifest), "utf8"));
+      assert.equal(manifest.version, key === "-win" ? "0.6.19" : "0.6.13");
+      manifests[platform.manifest] = manifest;
+      assets.push({ name: platform.manifest });
+      for (const file of platform.files)
+        assets.push({ name: file.url, size: file.size, digest: `sha256:${file.sha256}` });
+    }
+    const release = { tag_name: "v0.6.19", assets };
+    verifyReleaseAssets({ descriptor, manifests, release, previousDescriptor });
+    await verifyReleasePayloads(descriptor, dir);
+    assert.throws(
+      () => verifyReleaseAssets({ descriptor, manifests, release }),
+      /Retained platform/,
+    );
+    const altered = structuredClone(previousDescriptor);
+    altered.updatePaths["electron-updater"].platforms["-linux"].files[0].sha256 = "0".repeat(64);
+    assert.throws(
+      () => verifyReleaseAssets({ descriptor, manifests, release, previousDescriptor: altered }),
+      /Retained platform/,
+    );
+    await assert.rejects(
+      buildReleaseMetadata({
+        version: "0.6.19",
+        assets: dir,
+        out,
+        platformVersions: { "-linux": "0.6.20" },
+      }),
+      /Invalid retained/,
+    );
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

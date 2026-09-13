@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Preserve exact prior Linux/macOS desktop update payloads in selected development
+  releases, with independent platform versions and strict continuity verification.
+- Record development release target defaults and rename-safe update requirements.
+
 ## 0.6.19 — 2026-09-13
 
 - Verify draft release assets through paginated release discovery, including on

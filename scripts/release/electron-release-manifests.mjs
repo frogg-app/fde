@@ -4,15 +4,40 @@ import { mkdir, readdir, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { pathToFileURL } from "node:url";
+import { valid, lte } from "semver";
 
-export async function buildElectronReleaseManifests({ version, assets, out }) {
+function resolvePlatformVersions(version, platformVersions) {
+  for (const [platform, retainedVersion] of Object.entries(platformVersions)) {
+    if (
+      !["-win", "-linux", "-mac"].includes(platform) ||
+      !valid(retainedVersion) ||
+      !lte(retainedVersion, version)
+    )
+      throw new Error("Invalid retained platform version");
+  }
+  const windowsVersion = platformVersions["-win"] ?? version;
+  const linuxVersion = platformVersions["-linux"] ?? version;
+  const macVersion = platformVersions["-mac"] ?? version;
+  return { windowsVersion, linuxVersion, macVersion };
+}
+
+export async function buildElectronReleaseManifests({
+  version,
+  assets,
+  out,
+  platformVersions = {},
+}) {
   if (!/^\d+\.\d+\.\d+(?:-[\w.-]+)?$/.test(version)) throw new Error("Invalid release version");
+  const { windowsVersion, linuxVersion, macVersion } = resolvePlatformVersions(
+    version,
+    platformVersions,
+  );
   const names = (await readdir(assets)).sort();
   const groups = {
-    "": names.filter((name) => name.endsWith(`-${version}-win-x64.exe`)),
-    "-linux": names.filter((name) => name.endsWith(`-${version}-linux-x86_64.AppImage`)),
+    "": names.filter((name) => name.endsWith(`-${windowsVersion}-win-x64.exe`)),
+    "-linux": names.filter((name) => name.endsWith(`-${linuxVersion}-linux-x86_64.AppImage`)),
     "-mac": names.filter((name) =>
-      new RegExp(`-${version.replaceAll(".", "\\.")}-mac-(x64|arm64)\\.zip$`).test(name),
+      new RegExp(`-${macVersion.replaceAll(".", "\\.")}-mac-(x64|arm64)\\.zip$`).test(name),
     ),
   };
   for (const [platform, files] of Object.entries(groups)) {
@@ -50,9 +75,20 @@ export async function buildElectronReleaseManifests({ version, assets, out }) {
       });
     }
     const manifestName = `${channel}${platform}.yml`;
-    platforms[platform || "-win"] = { manifest: manifestName, files };
+    const platformVersion = platformVersions[platform || "-win"] ?? version;
+    platforms[platform || "-win"] = {
+      manifest: manifestName,
+      files,
+      ...(platformVersion !== version ? { version: platformVersion } : {}),
+    };
     // JSON is valid YAML; the generic Electron provider reads these channel files.
-    const manifest = { version, files, path: files[0].url, sha512: files[0].sha512, releaseDate };
+    const manifest = {
+      version: platformVersion,
+      files,
+      path: files[0].url,
+      sha512: files[0].sha512,
+      releaseDate,
+    };
     await writeFile(
       path.join(out, `${channel}${platform}.yml`),
       `${JSON.stringify(manifest, null, 2)}\n`,

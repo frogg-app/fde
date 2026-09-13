@@ -1,4 +1,4 @@
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { pathToFileURL } from "node:url";
@@ -29,9 +29,23 @@ export async function buildReleaseMetadata(options) {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const { values } = parseArgs({
-    options: { version: { type: "string" }, assets: { type: "string" }, out: { type: "string" } },
+    options: {
+      version: { type: "string" },
+      assets: { type: "string" },
+      out: { type: "string" },
+      "retain-desktop-from": { type: "string" },
+    },
   });
   if (!values.version || !values.assets || !values.out)
     throw new Error("Required: --version --assets --out");
-  await buildReleaseMetadata(values);
+  const platformVersions = {};
+  if (values["retain-desktop-from"]) {
+    const previous = JSON.parse(await readFile(values["retain-desktop-from"], "utf8"));
+    for (const platform of ["-linux", "-mac"]) {
+      const entry = previous.updatePaths?.["electron-updater"]?.platforms?.[platform];
+      if (!entry) throw new Error(`Missing previous platform: ${platform}`);
+      platformVersions[platform] = entry.version ?? previous.version;
+    }
+  }
+  await buildReleaseMetadata({ ...values, platformVersions });
 }

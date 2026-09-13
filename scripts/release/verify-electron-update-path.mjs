@@ -1,7 +1,7 @@
 import { createReadStream } from "node:fs";
 import { createHash } from "node:crypto";
 import path from "node:path";
-import { valid, gte } from "semver";
+import { valid, gte, lte } from "semver";
 
 export function verifyElectronUpdatePath({ version, update, manifests, assets }) {
   const descriptor = { ...update, version };
@@ -25,13 +25,16 @@ export function verifyElectronUpdatePath({ version, update, manifests, assets })
 
 function verifyPlatform({ descriptor, manifests, assets, channel, platform, count }) {
   const entry = descriptor.platforms?.[platform];
+  const platformVersion = entry?.version ?? descriptor.version;
+  if (!valid(platformVersion) || !lte(platformVersion, descriptor.version))
+    throw new Error(`Invalid platform version for ${platform}`);
   const name = `${channel}${platform === "-win" ? "" : platform}.yml`;
   const manifest = manifests[name];
   if (
     entry?.manifest !== name ||
     !manifest ||
     !assets.has(name) ||
-    manifest.version !== descriptor.version ||
+    manifest.version !== platformVersion ||
     entry.files?.length !== count ||
     JSON.stringify(entry.files) !== JSON.stringify(manifest.files)
   ) {

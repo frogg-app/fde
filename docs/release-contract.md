@@ -64,7 +64,11 @@ protocol adapter. The current adapter checks all supported desktop architectures
 manifest/payload agreement, sizes and GitHub SHA-256 digests. The verifier also
 downloads the payloads and checks SHA-256 and SHA-512 against their actual bytes.
 For local validation with previously downloaded binaries, pass `--assets-dir`.
-Missing digests fail verification. These checks do not prove signing trust or
+Missing digests fail verification. Selected development releases may retain an
+unchanged platform from the preceding published release. Its platform entry and
+manifest carry the original version; payload names, sizes and hashes must exactly
+match that preceding release. This preserves existing feeds without rebuilding or
+relabeling unrelated platforms. These checks do not prove signing trust or
 installation/relaunch on a user's device.
 
 The gate reads the preceding published release's `release.json`, when available.

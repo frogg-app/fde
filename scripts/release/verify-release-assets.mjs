@@ -27,11 +27,28 @@ export function verifyReleaseAssets({ descriptor, manifests, release, previousDe
     if (!Object.hasOwn(descriptor.updatePaths, protocol))
       throw new Error(`Missing upgrade path for previously supported protocol: ${protocol}`);
   }
+  verifyRetainedPlatforms(descriptor, previousDescriptor);
   const assets = new Map(release.assets.map((asset) => [asset.name, asset]));
   for (const [protocol, update] of Object.entries(descriptor.updatePaths)) {
     verifyUpdateProtocol({ protocol, update, version: descriptor.version, manifests, assets });
   }
   if (!assets.has("release.json")) throw new Error("Release descriptor is not uploaded");
+}
+
+function verifyRetainedPlatforms(descriptor, previousDescriptor) {
+  const platforms = descriptor.updatePaths["electron-updater"]?.platforms ?? {};
+  for (const [platform, entry] of Object.entries(platforms)) {
+    if (!entry.version || entry.version === descriptor.version) continue;
+    const previous = previousDescriptor?.updatePaths?.["electron-updater"]?.platforms?.[platform];
+    const previousVersion = previous?.version ?? previousDescriptor?.version;
+    if (
+      !previous ||
+      entry.version !== previousVersion ||
+      entry.manifest !== previous.manifest ||
+      JSON.stringify(entry.files) !== JSON.stringify(previous.files)
+    )
+      throw new Error(`Retained platform differs from preceding release: ${platform}`);
+  }
 }
 
 function verifyUpdateProtocol({ protocol, update, version, manifests, assets }) {
