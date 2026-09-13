@@ -1405,7 +1405,7 @@ export const ja: TranslationResources = {
         versionReady: "{{version}}のインストール準備ができました。",
         newVersionReady: "新しいバージョンのインストール準備ができました。",
         restartWarning:
-          "アプリを更新すると、実行中のエージェントが停止しターミナルセッションが閉じられます。",
+          "アプリが再起動します。実行中のエージェントとターミナルはホスト上で動作し続けます。",
       },
     },
     settings: {
