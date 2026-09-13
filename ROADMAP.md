@@ -146,6 +146,18 @@ visible until device or deployment evidence closes them.
       not a claimed performance acceptance test.
 - [ ] **Dependency updates.** Review the seven open Dependabot PRs separately with
       compatibility checks. Major library updates are not baseline cleanup.
+- [ ] **Provider toggles re-enable after updates.** Disabled providers
+      (`agents.providers.<id>.enabled: false`) vanished from `~/.fde/config.json`
+      between 2026-09-12 12:30 and 2026-09-13 06:34 on the dev VM. Ruled out:
+      daemon start (0.6.7, 0.6.13), self-update 0.6.7→0.6.13, the server unit
+      suite, CLI config writers, Claude session edits. No daemon save logged in
+      the window, so the writer is external (unlogged 0.3.1→0.6.7 install, or a
+      Codex agent session). Next time: capture config + time before re-toggling.
+      Also confirm whether Windows desktop hosts show it.
+- [ ] **Relay endpoint setting: live verification.** Merged with unit tests
+      only (`ebecf014`). Check the host settings card and pair-device prompt in
+      the app against a real relay, then set the endpoint on the dev VM daemon
+      (relay stays off there until configured).
 
 ## Deferred deliberately
 
