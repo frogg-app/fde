@@ -100,12 +100,10 @@ import { createCompanionFillerBank } from "./companion/fillers.js";
 import { CompanionNotebookStore, companionNotebookPath } from "./companion/store.js";
 import { createCompanionTools } from "./companion/tools/index.js";
 import { createCompanionSubagentRunner } from "./companion/tools/thinking.js";
-import { createCompanionApiBackend, createCompanionModelClient } from "./companion/backends/api.js";
+import { createCompanionBackendFactory } from "./companion/backends/create-backend.js";
 import { CompanionMessageReceipts } from "./companion/message-receipts.js";
 import { CompanionDeferredJobs } from "./companion/deferred-jobs.js";
 import { watchCompanionAgent } from "./companion/watch-agent.js";
-import { createCompanionCodexBackend } from "./companion/backends/codex.js";
-import { createCompanionCliBackend } from "./companion/backends/cli.js";
 import type { CompanionRuntime } from "./companion/session.js";
 import { AgentManager } from "./agent/agent-manager.js";
 import { AgentStorage } from "./agent/agent-storage.js";
@@ -1734,21 +1732,7 @@ export async function createFdeDaemon(
     modelConfig: resolveCompanionModelConfig(companionModelInputs),
     notebook: new CompanionNotebookStore({ filePath: companionNotebookPath(config.fdeHome) }),
     fillers: companionFillers,
-    createBackend: ({ config: modelConfig, tools, logger: sessionLogger }) =>
-      modelConfig.backend === "api"
-        ? createCompanionApiBackend({
-            client: createCompanionModelClient(modelConfig),
-            tools,
-            model: modelConfig.model,
-          })
-        : (modelConfig.backend === "codex"
-            ? createCompanionCodexBackend
-            : createCompanionCliBackend)({
-            model: modelConfig.model,
-            tools,
-            cwd: config.fdeHome,
-            logger: sessionLogger,
-          }),
+    createBackend: createCompanionBackendFactory(config.fdeHome),
     createTools: ({ deferredJobs, logger: sessionLogger, endConversation, conversationId }) =>
       createCompanionTools({
         readTimeline: (agentId) => {

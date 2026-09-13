@@ -290,3 +290,7 @@ binaries reject Media selection with an update-required error.
 Muting crossfades the artwork's coloured layers to luminance-matched monochrome
 in 150 ms; unmuting reverses it. Ongoing output motion remains independent from
 microphone state. The minimized presence shares this behavior.
+
+Provider selection is wired through `backends/create-backend.ts` inside the
+Companion implementation. Generic server bootstrap supplies the working directory
+and uses the Companion backend contract without naming individual providers.

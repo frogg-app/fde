@@ -80,6 +80,12 @@
   for a standalone APK that can coexist with production. Preserve license and
   speech-model notices in standalone daemon bundles.
 
+## 0.6.5 - 2026-09-13
+
+- Keep Companion provider selection in its backend factory instead of generic
+  server startup, restoring the architecture check that was already failing on
+  main. Backend selection and the validated Android startup fix are unchanged.
+
 ## 0.6.4 - 2026-09-13
 
 - Integrate the latest main-branch Companion work with the Android startup fix,
