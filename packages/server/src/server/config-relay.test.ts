@@ -37,11 +37,29 @@ describe("daemon relay config", () => {
     expect(config.relayUseTls).toBe(true);
   });
 
-  test("rejects an explicit relay opt-in without an endpoint", async () => {
+  test("accepts a relay opt-in without an endpoint and leaves the endpoint empty", async () => {
+    const home = await createFdeHome({ version: 1, daemon: { relay: { enabled: true } } });
+    const config = loadConfig(home, { env: {} });
+    expect(config.relayEnabled).toBe(true);
+    expect(config.relayEndpoint).toBe("");
+    expect(config.relayEndpointMutable).toBe(true);
+    expect(() => loadConfig(home, { env: { FDE_RELAY_ENABLED: "true" } })).not.toThrow();
+  });
+
+  test("defaults relay TLS on for a configured endpoint unless explicitly disabled", async () => {
+    const home = await createFdeHome({
+      version: 1,
+      daemon: { relay: { enabled: true, endpoint: "relay.example.invalid:8080" } },
+    });
+    expect(loadConfig(home, { env: {} }).relayUseTls).toBe(true);
+    expect(loadConfig(home, { env: { FDE_RELAY_USE_TLS: "false" } }).relayUseTls).toBe(false);
+  });
+
+  test("marks the endpoint immutable under an endpoint launch override", async () => {
     const home = await createFdeHome({ version: 1 });
-    expect(() => loadConfig(home, { env: { FDE_RELAY_ENABLED: "true" } })).toThrow(
-      "Configure a relay endpoint before enabling relay",
-    );
+    const config = loadConfig(home, { env: { FDE_RELAY_ENDPOINT: "relay.example.invalid:443" } });
+    expect(config.relayEndpoint).toBe("relay.example.invalid:443");
+    expect(config.relayEndpointMutable).toBe(false);
   });
 
   test("keeps explicit persisted relay state and marks it mutable", async () => {

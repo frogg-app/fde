@@ -1887,6 +1887,8 @@ export const es: TranslationResources = {
       directConnectionHint:
         "Sin relé, conéctese directamente por TCP, Tailscale u otra VPN. No se crea ningún código QR.",
       updateRequired: "Actualice el host para habilitar el relé desde {{brandName}} Desktop.",
+      endpointRequired:
+        "Este host no tiene un endpoint de relay configurado. Configúralo en los ajustes del host, en Emparejar dispositivos, y luego activa el relay.",
       unavailable: "Oferta de maridaje no disponible.",
       hint: "Escanee este códigoQRcon {{brandName}} en su teléfono o copie el enlace a continuación.",
       securityWarning:
@@ -2776,6 +2778,19 @@ export const es: TranslationResources = {
         title: "Emparejar dispositivos",
         rowTitle: "Emparejar un dispositivo",
         rowHint: "Escanee un códigoQRo copie un enlace para conectar su teléfono a este host",
+      },
+      relayEndpoint: {
+        title: "Endpoint del relay",
+        hint: "Servidor relay por el que se conecta este host, como host:puerto. Déjalo vacío para mantener el relay desactivado.",
+        placeholder: "relay.example.com:443",
+        accessibilityLabel: "Endpoint del relay",
+        useTls: "Usar TLS",
+        useTlsHint: "Desactívalo solo para un relay local sin TLS.",
+        save: "Guardar",
+        saving: "Guardando...",
+        saveFailed: "No se pudo guardar el endpoint del relay.",
+        overridden:
+          "Definido por una opción de arranque del daemon (FDE_RELAY_ENDPOINT o FDE_RELAY_USE_TLS). Cámbialo donde se inicia el daemon.",
       },
       skills: {
         ...en.settings.host.skills,

@@ -1848,6 +1848,8 @@ export const en = {
       directConnectionHint:
         "Without relay, connect directly over TCP, Tailscale, or another VPN. No QR code is created.",
       updateRequired: "Update the host to enable relay from {{brandName}} Desktop.",
+      endpointRequired:
+        "No relay endpoint is configured for this host. Set one in host settings under Pair devices, then enable relay.",
       unavailable: "Pairing offer unavailable.",
       hint: "Scan this QR code with {{brandName}} on your phone, or copy the link below.",
       securityWarning:
@@ -2817,6 +2819,19 @@ export const en = {
         title: "Pair devices",
         rowTitle: "Pair a device",
         rowHint: "Scan a QR code or copy a link to connect your phone to this host",
+      },
+      relayEndpoint: {
+        title: "Relay endpoint",
+        hint: "Relay server this host connects through, as host:port. Leave empty to keep relay off.",
+        placeholder: "relay.example.com:443",
+        accessibilityLabel: "Relay endpoint",
+        useTls: "Use TLS",
+        useTlsHint: "Turn off only for a local relay without TLS.",
+        save: "Save",
+        saving: "Saving...",
+        saveFailed: "Could not save the relay endpoint.",
+        overridden:
+          "Set by a daemon launch override (FDE_RELAY_ENDPOINT or FDE_RELAY_USE_TLS). Change it where the daemon is started.",
       },
       skills: {
         sectionTitle: "Orchestration skills",

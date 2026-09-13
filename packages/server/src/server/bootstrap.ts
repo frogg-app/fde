@@ -419,6 +419,7 @@ export interface FdeDaemonConfig {
   agentStoragePath: string;
   relayEnabled?: boolean;
   relayEnabledMutable?: boolean;
+  relayEndpointMutable?: boolean;
   relayEndpoint?: string;
   relayPublicEndpoint?: string;
   relayUseTls?: boolean;
@@ -587,13 +588,23 @@ function resolveAutoUpdate(config: FdeDaemonConfig): DaemonAutoUpdateConfig {
 }
 
 const BRAND_PAIRING_URL = brand.services.pairingUrl ?? "";
-const BRAND_RELAY_ENDPOINT = brand.services.relayEndpoint ?? "";
+
+function createInitialMutableRelayConfig(
+  config: FdeDaemonConfig,
+): NonNullable<MutableDaemonConfig["relay"]> {
+  return {
+    enabled: config.relayEnabled ?? true,
+    endpoint: config.relayEndpoint ?? "",
+    useTls: config.relayUseTls ?? true,
+    endpointMutable: config.relayEndpointMutable ?? true,
+  };
+}
 
 function createInitialMutableDaemonConfig(config: FdeDaemonConfig): MutableDaemonConfig {
   const providers = config.providerOverrides ?? {};
 
   const initialConfig: MutableDaemonConfig = {
-    relay: { enabled: config.relayEnabled ?? true },
+    relay: createInitialMutableRelayConfig(config),
     mcp: {
       enabled: config.mcpEnabled ?? true,
       injectIntoAgents: config.mcpInjectIntoAgents ?? true,
@@ -652,6 +663,7 @@ export async function createFdeDaemon(
   const initialMutableConfig = createInitialMutableDaemonConfig(config);
   const daemonConfigStore = new DaemonConfigStore(config.fdeHome, initialMutableConfig, logger, {
     relayEnabledMutable: config.relayEnabledMutable ?? true,
+    relayEndpointMutable: config.relayEndpointMutable ?? true,
     startupPersisted: config.configReload?.startupPersisted,
     reloadSource: {
       resolve: (persisted) => {
@@ -890,9 +902,15 @@ export async function createFdeDaemon(
     listenTarget: publicListenTarget,
     relay: () => {
       const live = relayRuntime?.getConfig();
+      const publicEndpoint = live?.publicEndpoint ?? config.relayPublicEndpoint ?? "";
+      const endpoint = live?.endpoint ?? config.relayEndpoint ?? "";
       return {
-        enabled: live?.enabled ?? daemonConfigStore.get().relay?.enabled ?? false,
-        publicEndpoint: live?.publicEndpoint ?? config.relayPublicEndpoint ?? BRAND_RELAY_ENDPOINT,
+        // Enabled without a configured endpoint means relay is unavailable.
+        enabled:
+          (live?.enabled ?? daemonConfigStore.get().relay?.enabled ?? false) &&
+          endpoint.length > 0 &&
+          publicEndpoint.length > 0,
+        publicEndpoint,
         publicUseTls: live?.publicUseTls ?? config.relayPublicUseTls ?? false,
       };
     },
@@ -1863,9 +1881,9 @@ export async function createFdeDaemon(
               agentManager.setAppendSystemPrompt(typeof value === "string" ? value : "");
             });
             const relayEnabled = config.relayEnabled ?? true;
-            const relayEndpoint = config.relayEndpoint ?? BRAND_RELAY_ENDPOINT;
+            const relayEndpoint = config.relayEndpoint ?? "";
             const relayPublicEndpoint = config.relayPublicEndpoint ?? relayEndpoint;
-            const relayUseTls = config.relayUseTls ?? relayEndpoint === BRAND_RELAY_ENDPOINT;
+            const relayUseTls = config.relayUseTls ?? true;
             const relayPublicUseTls = config.relayPublicUseTls ?? relayUseTls;
             if (boundListenTarget.type === "tcp") {
               logger.info(
@@ -2017,6 +2035,15 @@ export async function createFdeDaemon(
             daemonConfigStore.onFieldChange("relay.enabled", (value) => {
               relayRuntime?.setEnabled(value === true);
             });
+            const applyRelayEndpoint = () => {
+              const relay = daemonConfigStore.get().relay;
+              relayRuntime?.setEndpoint({
+                endpoint: relay?.endpoint ?? "",
+                useTls: relay?.useTls ?? true,
+              });
+            };
+            daemonConfigStore.onFieldChange("relay.endpoint", applyRelayEndpoint);
+            daemonConfigStore.onFieldChange("relay.useTls", applyRelayEndpoint);
             await hubRelationships.start();
           };
 

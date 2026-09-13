@@ -170,9 +170,9 @@ Enables remote access when the daemon is behind a firewall.
 - Pairing via QR code transfers the daemon's public key to the client
 - New homes keep relay disabled until pairing consent. `DaemonConfigStore` persists the desired state, while the relay runtime starts or stops the outbound transport live; pairing reads that current state instead of a startup snapshot.
 - Optional E2EE capability negotiation preserves application frame kind: text plaintext uses base64 ciphertext text frames, while binary plaintext uses raw ciphertext binary frames; mixed-version peers remain base64-only
-- Self-hosted relays opt into TLS with `daemon.relay.useTls` or `FDE_RELAY_USE_TLS=true`; the public (client-facing) TLS setting can be overridden independently via `daemon.relay.publicUseTls` or `FDE_RELAY_PUBLIC_USE_TLS`
+- Relay TLS defaults on; a plaintext relay (local testing) sets `daemon.relay.useTls: false` or `FDE_RELAY_USE_TLS=false`; the public (client-facing) TLS setting can be overridden independently via `daemon.relay.publicUseTls` or `FDE_RELAY_PUBLIC_USE_TLS`
 
-No relay endpoint is configured by default. Operators may configure a self-hosted relay; otherwise use direct or SSH connections. Do not assume an upstream or hosted FDE relay is available.
+No relay endpoint is configured by default, and the brand manifest cannot supply one. The endpoint comes from `FDE_RELAY_ENDPOINT`, `daemon.relay.endpoint`, or the host's Pair devices settings in the app (live, via the `relayEndpointConfig` feature). Relay enabled without an endpoint is not an error: the daemon starts, logs a warning, starts no relay transport, and pairing reports relay unavailable. Operators may configure a self-hosted relay; otherwise use direct or SSH connections. Do not assume an upstream or hosted FDE relay is available.
 
 See [SECURITY.md](../SECURITY.md) for the full threat model.
 

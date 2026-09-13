@@ -1862,6 +1862,8 @@ export const ja: TranslationResources = {
       directConnectionHint:
         "リレーを使わない場合は、TCP、Tailscale、または別の VPN で直接接続してください。QR コードは作成されません。",
       updateRequired: "{{brandName}} Desktop からリレーを有効にするにはホストを更新してください。",
+      endpointRequired:
+        "このホストにはリレーエンドポイントが設定されていません。ホスト設定の「デバイスをペアリング」で設定してから、リレーを有効にしてください。",
       unavailable: "ペアリングオファーが利用できません。",
       hint: "スマートフォンの{{brandName}}でこのQRコードをスキャンするか、以下のリンクをコピーしてください。",
       securityWarning:
@@ -2745,6 +2747,19 @@ export const ja: TranslationResources = {
         title: "デバイスをペアリング",
         rowTitle: "デバイスをペアリング",
         rowHint: "QRコードをスキャンするかリンクをコピーしてスマートフォンをこのホストに接続",
+      },
+      relayEndpoint: {
+        title: "リレーエンドポイント",
+        hint: "このホストが接続に使うリレーサーバー（host:port 形式）。空欄にするとリレーは無効のままです。",
+        placeholder: "relay.example.com:443",
+        accessibilityLabel: "リレーエンドポイント",
+        useTls: "TLS を使用",
+        useTlsHint: "TLS なしのローカルリレーの場合のみオフにしてください。",
+        save: "保存",
+        saving: "保存中...",
+        saveFailed: "リレーエンドポイントを保存できませんでした。",
+        overridden:
+          "デーモンの起動時オーバーライド（FDE_RELAY_ENDPOINT または FDE_RELAY_USE_TLS）で設定されています。デーモンを起動している場所で変更してください。",
       },
       skills: {
         ...en.settings.host.skills,

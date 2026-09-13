@@ -37,11 +37,9 @@ Optional `assets` keys are `ios`, `foreground`, `notification`, `splash`, `favic
 `services` accepts:
 
 - `pairingUrl`: hosted pairing page origin/base URL.
-- `relayEndpoint`: explicit relay host and port.
-- `relayUseTls`: TLS selection for the configured relay.
 - `allowedOrigins`: trusted hosted application origins.
 
-A custom brand inherits none of FDE's pairing, relay, installer, or hosted-app endpoints. Configure infrastructure you operate. Direct connections and native deep links do not require hosted pairing.
+A brand never ships a relay endpoint: each daemon owner configures one (`daemon.relay.endpoint`, `FDE_RELAY_ENDPOINT`, or host settings in the app). A custom brand inherits none of FDE's pairing, relay, installer, or hosted-app endpoints. Configure infrastructure you operate. Direct connections and native deep links do not require hosted pairing.
 
 ## Distribution
 

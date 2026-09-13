@@ -24,7 +24,6 @@ test("custom defaults have independent identities and no upstream services", () 
   assert.equal(brand.distribution.updateMode, "disabled");
   assert.equal(brand.distribution.releaseBase, null);
   assert.equal(brand.services.pairingUrl, null);
-  assert.equal(brand.services.relayEndpoint, null);
   assert.equal(brand.distribution.iosStoreId, null);
   assert.equal(brand.links.docs, null);
   assert.equal(storageKey(brand, "settings"), "com.acme.studio:settings");

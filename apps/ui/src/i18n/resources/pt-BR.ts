@@ -1873,6 +1873,8 @@ export const ptBR: TranslationResources = {
       directConnectionHint:
         "Sem relay, conecte diretamente por TCP, Tailscale ou outra VPN. Nenhum código QR é criado.",
       updateRequired: "Atualize o host para ativar o relay pelo {{brandName}} Desktop.",
+      endpointRequired:
+        "Nenhum endpoint de relay está configurado para este host. Defina um nas configurações do host, em Parear dispositivos, e depois ative o relay.",
       unavailable: "Oferta de pareamento indisponível.",
       hint: "Escaneie este QR code com o {{brandName}} no seu celular ou copie o link abaixo.",
       securityWarning:
@@ -2759,6 +2761,19 @@ export const ptBR: TranslationResources = {
         title: "Parear dispositivos",
         rowTitle: "Parear um dispositivo",
         rowHint: "Escaneie um QR code ou copie um link para conectar seu celular a este host",
+      },
+      relayEndpoint: {
+        title: "Endpoint do relay",
+        hint: "Servidor relay pelo qual este host se conecta, no formato host:porta. Deixe vazio para manter o relay desligado.",
+        placeholder: "relay.example.com:443",
+        accessibilityLabel: "Endpoint do relay",
+        useTls: "Usar TLS",
+        useTlsHint: "Desative apenas para um relay local sem TLS.",
+        save: "Salvar",
+        saving: "Salvando...",
+        saveFailed: "Não foi possível salvar o endpoint do relay.",
+        overridden:
+          "Definido por uma opção de inicialização do daemon (FDE_RELAY_ENDPOINT ou FDE_RELAY_USE_TLS). Altere onde o daemon é iniciado.",
       },
       skills: {
         ...en.settings.host.skills,

@@ -23,7 +23,10 @@ export async function generateLocalPairingOffer(args: {
   includeQr?: boolean;
   logger?: Logger;
 }): Promise<LocalPairingOffer> {
-  const relayEnabled = args.relayEnabled ?? true;
+  const relayEndpoint = args.relayEndpoint?.trim() ?? "";
+  const relayPublicEndpoint = args.relayPublicEndpoint?.trim() || relayEndpoint;
+  // Enabled without an endpoint is relay unavailable, not an error.
+  const relayEnabled = (args.relayEnabled ?? true) && relayEndpoint.length > 0;
   if (!relayEnabled) {
     return {
       relayEnabled: false,
@@ -32,9 +35,7 @@ export async function generateLocalPairingOffer(args: {
     };
   }
 
-  const relayEndpoint = args.relayEndpoint ?? brand.services.relayEndpoint ?? "";
-  const relayPublicEndpoint = args.relayPublicEndpoint ?? relayEndpoint;
-  const relayUseTls = args.relayUseTls ?? relayEndpoint === (brand.services.relayEndpoint ?? "");
+  const relayUseTls = args.relayUseTls ?? true;
   const relayPublicUseTls = args.relayPublicUseTls ?? relayUseTls;
   const appBaseUrl = args.appBaseUrl ?? brand.services.pairingUrl ?? "";
   const serverId = getOrCreateServerId(args.fdeHome, { logger: args.logger });

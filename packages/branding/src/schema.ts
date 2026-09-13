@@ -78,11 +78,6 @@ export const BrandManifestSchema = z.strictObject({
   services: z
     .strictObject({
       pairingUrl: url.optional(),
-      relayEndpoint: z
-        .string()
-        .regex(/^[a-zA-Z0-9.[\]:-]+$/)
-        .optional(),
-      relayUseTls: z.boolean().optional(),
       allowedOrigins: z.array(url).optional(),
     })
     .optional(),
@@ -219,8 +214,6 @@ function resolveLinksAndServices(manifest: BrandManifest, repository: string | n
     },
     services: {
       pairingUrl: manifest.services?.pairingUrl ?? null,
-      relayEndpoint: manifest.services?.relayEndpoint ?? null,
-      relayUseTls: manifest.services?.relayUseTls ?? true,
       allowedOrigins: manifest.services?.allowedOrigins ?? [],
     },
   };

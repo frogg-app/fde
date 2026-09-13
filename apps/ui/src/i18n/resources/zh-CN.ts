@@ -1811,6 +1811,7 @@ export const zhCN: TranslationResources = {
       directConnectionHint:
         "不使用中继时，请通过 TCP、Tailscale 或其他 VPN 直接连接。不会生成二维码。",
       updateRequired: "请更新主机，以便从 {{brandName}} Desktop 启用中继。",
+      endpointRequired: "此主机尚未配置中继端点。请先在主机设置的“配对设备”中设置，然后启用中继。",
       unavailable: "配对 offer 不可用。",
       hint: "用手机上的 {{brandName}} 扫描此二维码，或复制下方链接。",
       securityWarning: "请像保管密码一样保管此配对链接。任何获得此链接的人都可以访问此守护进程。",
@@ -2674,6 +2675,19 @@ export const zhCN: TranslationResources = {
         title: "配对设备",
         rowTitle: "配对设备",
         rowHint: "扫描二维码或复制链接，将手机连接到这个 Host",
+      },
+      relayEndpoint: {
+        title: "中继端点",
+        hint: "此主机连接所用的中继服务器，格式为 host:port。留空则保持中继关闭。",
+        placeholder: "relay.example.com:443",
+        accessibilityLabel: "中继端点",
+        useTls: "使用 TLS",
+        useTlsHint: "仅在本地中继不支持 TLS 时关闭。",
+        save: "保存",
+        saving: "正在保存...",
+        saveFailed: "无法保存中继端点。",
+        overridden:
+          "由守护进程启动覆盖项（FDE_RELAY_ENDPOINT 或 FDE_RELAY_USE_TLS）设置。请在启动守护进程的位置修改。",
       },
       skills: {
         ...en.settings.host.skills,

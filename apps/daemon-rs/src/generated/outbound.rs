@@ -7182,6 +7182,12 @@ pub struct GetDaemonConfigResponsePayloadConfig {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct GetDaemonConfigResponsePayloadConfigRelay {
     pub enabled: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub endpoint: Option<String>,
+    #[serde(rename = "useTls", skip_serializing_if = "Option::is_none")]
+    pub use_tls: Option<bool>,
+    #[serde(rename = "endpointMutable", skip_serializing_if = "Option::is_none")]
+    pub endpoint_mutable: Option<bool>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -7347,6 +7353,12 @@ pub struct SetDaemonConfigResponsePayloadConfig {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SetDaemonConfigResponsePayloadConfigRelay {
     pub enabled: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub endpoint: Option<String>,
+    #[serde(rename = "useTls", skip_serializing_if = "Option::is_none")]
+    pub use_tls: Option<bool>,
+    #[serde(rename = "endpointMutable", skip_serializing_if = "Option::is_none")]
+    pub endpoint_mutable: Option<bool>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

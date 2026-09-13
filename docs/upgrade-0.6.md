@@ -22,10 +22,10 @@ relied on an old hosted relay need a real operator-configured relay or a direct/
 connection. Do not substitute an invented hosted endpoint.
 
 If an existing `config.json` has `daemon.relay.enabled: true` without an endpoint,
-startup fails with a configuration error. For direct or SSH access, set
-`daemon.relay.enabled` to `false` in `$FDE_HOME/config.json` (normally
-`~/.fde/config.json`) and rerun the installer. To retain relay access, configure
-`daemon.relay.endpoint` with your operator-provided endpoint instead. Installation
+the daemon starts normally with relay inactive and logs a warning. To use relay,
+set the endpoint in the app's host settings (Pair devices), or configure
+`daemon.relay.endpoint` with your operator-provided endpoint. Relay TLS defaults
+on; set `daemon.relay.useTls` to `false` only for a plaintext relay. Installation
 does not silently overwrite an explicit relay setting. `fde stop` does not require
 a valid startup configuration. `fde status` reports the process state alongside
 the configuration error and uses unknown values for settings it cannot resolve.
