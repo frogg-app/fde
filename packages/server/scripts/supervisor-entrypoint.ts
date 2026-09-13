@@ -8,7 +8,7 @@ import {
   startPidLockHeartbeat,
   updatePidLock,
 } from "../src/server/pid-lock.js";
-import { resolveFroggHome } from "../src/server/frogg-home.js";
+import { prepareFroggHome, resolveFroggHome } from "../src/server/frogg-home.js";
 import { loadPersistedConfig } from "../src/server/persisted-config.js";
 import { runSupervisor } from "./supervisor.js";
 import { resolveSupervisorLogFile } from "./supervisor-log-config.js";
@@ -108,6 +108,7 @@ async function main(): Promise<void> {
       : null;
 
   applySherpaLoaderEnv(workerEnv);
+  prepareFroggHome(workerEnv);
 
   const froggHome = resolveFroggHome(workerEnv);
   const persistedConfig = loadPersistedConfig(froggHome);

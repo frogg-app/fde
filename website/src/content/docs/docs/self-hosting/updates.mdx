@@ -64,6 +64,28 @@ Point at a mirror with `FROGG_RELEASE_BASE` (`<base>/download/v<version>/<asset>
 | Dev checkout or manual copy | `git pull` and rebuild, or re-run `install.sh` to switch to a versioned install |
 | Custom brand with updates disabled | Your distribution's own process |
 
+## Moving from FDE
+
+Frogg was called FDE before 0.8. The first time the daemon starts, it moves `~/.fde` to
+`~/.frogg`. It rewrites the stored workspace and agent paths, repairs the git worktrees it
+moved, and moves their Claude Code sessions so agents can resume. The move is skipped while an
+FDE daemon is still running, when `FROGG_HOME` is set, or when `~/.frogg` already has data.
+The startup output says why.
+
+`FDE_*` environment variables are no longer read. The daemon lists any it finds in its
+environment or in an old `fde-daemon` service, with the `FROGG_*` name to use instead.
+
+To move an `install.sh` install:
+
+```sh
+fde daemon stop
+systemctl --user disable --now fde-daemon   # macOS: launchctl bootout gui/$(id -u)/app.frogg.fde-daemon
+curl -fsSL https://frogg.app/install.sh | sh
+```
+
+Carry over any `Environment=FDE_...` lines as `FROGG_...`, then remove `~/.local/share/fde`.
+Desktop and mobile apps don't update in place across the rename; install them again.
+
 ## Desktop and mobile apps
 
 - **Desktop** checks GitHub releases and installs on quit; choose Stable or Beta. See

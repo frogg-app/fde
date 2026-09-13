@@ -1,7 +1,7 @@
 // CLI exports for @frogg/server
 export { createFroggDaemon, type FroggDaemon, type FroggDaemonConfig } from "./bootstrap.js";
 export { loadConfig, type CliConfigOverrides } from "./config.js";
-export { resolveConfiguredHome, resolveFroggHome } from "./frogg-home.js";
+export { prepareFroggHome, resolveConfiguredHome, resolveFroggHome } from "./frogg-home.js";
 export { getOrCreateServerId } from "./server-id.js";
 export { createRootLogger, type LogLevel, type LogFormat } from "./logger.js";
 export {

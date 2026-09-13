@@ -5,7 +5,10 @@
 - Rename the product from FDE to Frogg everywhere: the `frogg` binary and daemon commands,
   `@frogg/*` packages, `FROGG_*` environment variables, `~/.frogg` home, `frogg.json`,
   the `frogg://` scheme, the `app.frogg.frogg` application id and all artifact names.
-  Existing `~/.fde` data and `FDE_*` variables are not read; move or rename them.
+  On first start the daemon moves `~/.fde` to `~/.frogg`, rewriting stored paths, repairing
+  moved git worktrees and moving their Claude Code sessions. `FDE_*` variables are no longer
+  read; the daemon lists any it finds with their `FROGG_*` names. Desktop and mobile apps need
+  a fresh install.
 
 ## 0.7.0 — 2026-09-13
 
