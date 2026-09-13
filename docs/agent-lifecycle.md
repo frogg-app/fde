@@ -158,6 +158,9 @@ Workspaces with multiple root agents expose those agents through a workspace-lev
 chevron. Disclosure controls only appear when there are visible child rows; an unrequested,
 pending, or failed discovery query alone never adds a chevron. New children expand
 automatically until the user explicitly collapses their workspace or parent.
+Workspace and child disclosure chevrons sit on the right so workspace labels share one
+left alignment. Child rows use a compact single line, with secondary text inline and a
+small additional indent at each level.
 The chevron controls disclosure; clicking the label opens the existing session. Managed
 children open interactive agent tabs in their owning workspace. Provider-owned children
 open their dedicated live, read-only transcript, including reasoning and tool activity.

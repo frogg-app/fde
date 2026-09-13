@@ -33,7 +33,9 @@ import { useWorkspaceLabelDefinitions } from "@/workspace-labels";
 import { SidebarWorkspaceAgents } from "./agents/tree";
 import { WorkspaceAgentTreeScope, WorkspaceAgentDisclosure } from "./agents/workspace-tree";
 
-const foregroundMutedColorMapping = (theme: Theme) => ({ color: theme.colors.foregroundMuted });
+const foregroundMutedColorMapping = (theme: Theme) => ({
+  color: theme.colors.foregroundMuted,
+});
 const needsInputColorMapping = (theme: Theme) => ({
   color: theme.colors.surface0,
   fill: getStatusDotColor({ theme, bucket: "needs_input" }) ?? undefined,
@@ -69,7 +71,10 @@ export function SidebarWorkspaceRowFrame({
     if (open) setIsHovered(false);
   }, []);
   const hoverHandlers = useMemo(
-    () => ({ onPointerEnter: handlePointerEnter, onPointerLeave: handlePointerLeave }),
+    () => ({
+      onPointerEnter: handlePointerEnter,
+      onPointerLeave: handlePointerLeave,
+    }),
     [handlePointerEnter, handlePointerLeave],
   );
 
@@ -130,7 +135,10 @@ export const SidebarWorkspaceRowContent = memo(function SidebarWorkspaceRowConte
   const {
     settings: { workspaceTitleSource },
   } = useAppSettings();
-  const workspaceLabel = resolveSidebarWorkspacePrimaryLabel({ workspace, workspaceTitleSource });
+  const workspaceLabel = resolveSidebarWorkspacePrimaryLabel({
+    workspace,
+    workspaceTitleSource,
+  });
   // The workspace carries label names; their colors live in its host's catalog, so the row is
   // where the two meet — the meta line is handed finished definitions.
   const labels = useWorkspaceLabelDefinitions(workspace.serverId, workspace.labels);
@@ -146,7 +154,6 @@ export const SidebarWorkspaceRowContent = memo(function SidebarWorkspaceRowConte
   return (
     <View style={styles.workspaceRowContent}>
       <View style={styles.workspaceRowMain}>
-        <WorkspaceAgentDisclosure label={workspaceLabel} />
         {leadingProjectName ? (
           <ProjectStatusIndicator
             iconDataUri={leadingProjectIconDataUri}
@@ -170,7 +177,10 @@ export const SidebarWorkspaceRowContent = memo(function SidebarWorkspaceRowConte
             <Text style={workspaceBranchTextStyle} numberOfLines={1}>
               {workspaceLabel}
             </Text>
-            <View style={sidebarWorkspaceRowStyles.rowRight}>{children}</View>
+            <View style={sidebarWorkspaceRowStyles.rowRight}>
+              {children}
+              <WorkspaceAgentDisclosure label={workspaceLabel} />
+            </View>
           </View>
           <WorkspaceMetaRow
             currentBranch={workspace.currentBranch}

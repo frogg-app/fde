@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Align workspace cards consistently with disclosure chevrons on the right, and make
+  subagent cards compact single-line rows with a small additional indent.
+
 - Add mobile Companion Call/Media audio routing, preserving Call as the default.
   Media uses Android media volume/routing and iOS non-voice-processing capture;
   native rebuild and physical-device routing qualification are required.

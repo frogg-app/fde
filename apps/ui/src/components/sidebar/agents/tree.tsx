@@ -46,7 +46,10 @@ export function SidebarWorkspaceAgents({
 }) {
   const { discovery, connections } = useSidebarAgents();
   const { nodes, expanded, singleRootKey } = useWorkspaceAgentTree();
-  const workspaceKey = buildWorkspaceTabPersistenceKey({ serverId, workspaceId });
+  const workspaceKey = buildWorkspaceTabPersistenceKey({
+    serverId,
+    workspaceId,
+  });
   const selection = useActiveWorkspaceSelection();
   const isActiveWorkspace =
     selection?.serverId === serverId && selection.workspaceId === workspaceId;
@@ -156,21 +159,6 @@ export const SidebarAgentBranch = memo(function SidebarAgentBranch({
   return (
     <View>
       <View style={styles.row}>
-        {canExpand ? (
-          <Button
-            variant="ghost"
-            size="xs"
-            style={styles.disclosure}
-            accessibilityLabel={t(expanded ? "subagents.collapse" : "subagents.expand", { label })}
-            accessibilityState={disclosureState}
-            aria-expanded={expanded}
-            onPress={toggle}
-          >
-            <Chevron uniProps={chevronProps} />
-          </Button>
-        ) : (
-          <View style={styles.disclosure} />
-        )}
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={label}
@@ -189,13 +177,26 @@ export const SidebarAgentBranch = memo(function SidebarAgentBranch({
               {label}
             </Text>
             {data.subtitle ? (
-              <Text numberOfLines={1} style={styles.detail}>
+              <Text numberOfLines={1} style={[styles.detail, styles.subtitle]}>
                 {data.subtitle}
               </Text>
             ) : null}
           </View>
           {hasChildren ? <Text style={styles.detail}>{node.children.length}</Text> : null}
         </Pressable>
+        {canExpand ? (
+          <Button
+            variant="ghost"
+            size="xs"
+            style={styles.disclosure}
+            accessibilityLabel={t(expanded ? "subagents.collapse" : "subagents.expand", { label })}
+            accessibilityState={disclosureState}
+            aria-expanded={expanded}
+            onPress={toggle}
+          >
+            <Chevron uniProps={chevronProps} />
+          </Button>
+        ) : null}
       </View>
       {expanded && canExpand ? (
         <View style={styles.children}>
@@ -237,22 +238,33 @@ function ChildDiscoveryStatus({
 }
 
 const styles = StyleSheet.create((theme) => ({
-  tree: { paddingLeft: theme.spacing[2], marginBottom: theme.spacing[2] },
+  tree: { paddingLeft: theme.spacing[4], marginBottom: theme.spacing[2] },
   row: { flexDirection: "row", alignItems: "center" },
   disclosure: { width: 28, paddingHorizontal: 0, flexShrink: 0 },
   link: {
     flex: 1,
     minWidth: 0,
-    minHeight: 36,
+    minHeight: 28,
     flexDirection: "row",
     alignItems: "center",
     gap: theme.spacing[2],
     padding: theme.spacing[1],
     borderRadius: theme.borderRadius.md,
   },
-  labels: { flex: 1, minWidth: 0 },
-  label: { fontSize: theme.fontSize.base, color: theme.colors.foreground },
+  labels: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: theme.spacing[2],
+  },
+  label: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.foreground,
+    flexShrink: 1,
+  },
   detail: { fontSize: theme.fontSize.sm, color: theme.colors.foregroundMuted },
+  subtitle: { flexShrink: 2 },
   children: { paddingLeft: theme.spacing[4] },
   hovered: { backgroundColor: theme.colors.surfaceSidebarHover },
   selected: { backgroundColor: theme.colors.surfaceSidebarSelected },
