@@ -1,11 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ComponentType, ReactNode } from "react";
-import {
-  ScrollView,
-  Text,
-  View,
-  type PressableStateCallbackType,
-} from "react-native";
+import { ScrollView, Text, View, type PressableStateCallbackType } from "react-native";
 import { EditingTextInput as TextInput } from "@/components/ui/text-input";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StyleSheet, useUnistyles } from "react-native-unistyles";
@@ -38,11 +33,7 @@ import { EditorSection } from "@/screens/settings/editor-section";
 import { AboutSection } from "@/screens/settings/about-section";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { DesktopPermissionsSection } from "@/desktop/components/desktop-permissions-section";
 import { DesktopNotificationsSection } from "@/desktop/components/desktop-notifications-section";
 import { CompanionSection } from "@/screens/settings/companion-section";
@@ -85,10 +76,7 @@ import {
   type SettingsView,
 } from "@/navigation/settings-navigation";
 import { SettingsSidebar } from "@/screens/settings/settings-sidebar";
-import {
-  HOST_SECTION_ITEMS,
-  SIDEBAR_SECTION_ITEMS,
-} from "@/screens/settings/section-items";
+import { HOST_SECTION_ITEMS, SIDEBAR_SECTION_ITEMS } from "@/screens/settings/section-items";
 import { isNative, isWeb } from "@/constants/platform";
 
 // ---------------------------------------------------------------------------
@@ -97,7 +85,7 @@ import { isNative, isWeb } from "@/constants/platform";
 
 function renderHostSettingsContent(
   view: Extract<SettingsView, { kind: "host" }>,
-  onHostRemoved: () => void
+  onHostRemoved: () => void,
 ): ReactNode {
   switch (view.section) {
     case "projects":
@@ -113,12 +101,7 @@ function renderHostSettingsContent(
     case "terminals":
       return <HostTerminalsPage serverId={view.serverId} />;
     case "host":
-      return (
-        <HostSettingsPage
-          serverId={view.serverId}
-          onHostRemoved={onHostRemoved}
-        />
-      );
+      return <HostSettingsPage serverId={view.serverId} onHostRemoved={onHostRemoved} />;
   }
 }
 
@@ -147,10 +130,7 @@ function getSendBehaviorOptions(t: TFunction) {
   ];
 }
 
-function getServiceUrlBehaviorLabel(
-  t: TFunction,
-  value: ServiceUrlBehavior
-): string {
+function getServiceUrlBehaviorLabel(t: TFunction, value: ServiceUrlBehavior): string {
   const labels: Record<ServiceUrlBehavior, string> = {
     ask: t("settings.general.serviceUrls.options.ask"),
     "in-app": t("settings.general.serviceUrls.options.inApp"),
@@ -164,11 +144,7 @@ function getActiveLocale(language: string | undefined): SupportedLocale {
   return parsed && parsed !== "system" ? parsed : "en";
 }
 
-const SERVICE_URL_BEHAVIOR_VALUES: ServiceUrlBehavior[] = [
-  "ask",
-  "in-app",
-  "external",
-];
+const SERVICE_URL_BEHAVIOR_VALUES: ServiceUrlBehavior[] = ["ask", "in-app", "external"];
 
 // ---------------------------------------------------------------------------
 // Section components
@@ -197,12 +173,7 @@ interface SendBehaviorMenuItemProps {
   onChange: (value: SendBehavior) => void;
 }
 
-function SendBehaviorMenuItem({
-  value,
-  label,
-  selected,
-  onChange,
-}: SendBehaviorMenuItemProps) {
+function SendBehaviorMenuItem({ value, label, selected, onChange }: SendBehaviorMenuItemProps) {
   const handleSelect = useCallback(() => {
     onChange(value);
   }, [onChange, value]);
@@ -236,12 +207,7 @@ interface LanguageMenuItemProps {
   onChange: (value: AppLanguage) => void;
 }
 
-function LanguageMenuItem({
-  value,
-  activeLocale,
-  selected,
-  onChange,
-}: LanguageMenuItemProps) {
+function LanguageMenuItem({ value, activeLocale, selected, onChange }: LanguageMenuItemProps) {
   const { t } = useTranslation();
   const handleSelect = useCallback(() => {
     onChange(value);
@@ -270,21 +236,21 @@ function GeneralSection({
   const activeLocale = getActiveLocale(i18n.language);
   const sendBehaviorOptions = useMemo(() => getSendBehaviorOptions(t), [t]);
   const selectedSendBehaviorLabel =
-    sendBehaviorOptions.find((option) => option.value === settings.sendBehavior)
-      ?.label ?? settings.sendBehavior;
+    sendBehaviorOptions.find((option) => option.value === settings.sendBehavior)?.label ??
+    settings.sendBehavior;
   const sendBehaviorDescriptionKey = `settings.general.defaultSend.descriptions.${settings.sendBehavior}`;
   const selectedLanguageOption = LANGUAGE_OPTIONS.find(
-    (option) => option.value === settings.language
+    (option) => option.value === settings.language,
   );
   const selectedLanguageLabel = selectedLanguageOption
     ? formatLanguageOptionLabel(
         selectedLanguageOption,
         activeLocale,
-        t(selectedLanguageOption.labelKey)
+        t(selectedLanguageOption.labelKey),
       )
     : settings.language;
   const [terminalScrollbackValue, setTerminalScrollbackValue] = useState(
-    String(settings.terminalScrollbackLines)
+    String(settings.terminalScrollbackLines),
   );
 
   const handleTerminalScrollbackChangeText = useCallback((value: string) => {
@@ -313,24 +279,18 @@ function GeneralSection({
       <View style={settingsStyles.card}>
         <View style={settingsStyles.row}>
           <View style={settingsStyles.rowContent}>
-            <Text style={settingsStyles.rowTitle}>
-              {t("settings.general.defaultSend.label")}
-            </Text>
-            <Text style={settingsStyles.rowHint}>
-              {t(sendBehaviorDescriptionKey)}
-            </Text>
+            <Text style={settingsStyles.rowTitle}>{t("settings.general.defaultSend.label")}</Text>
+            <Text style={settingsStyles.rowHint}>{t(sendBehaviorDescriptionKey)}</Text>
           </View>
           <DropdownMenu>
             <DropdownTrigger
               accessibilityRole="button"
               accessibilityLabel={`${t(
-                "settings.general.defaultSend.label"
+                "settings.general.defaultSend.label",
               )}: ${selectedSendBehaviorLabel}`}
               style={themeTriggerStyle}
             >
-              <Text style={styles.themeTriggerText}>
-                {selectedSendBehaviorLabel}
-              </Text>
+              <Text style={styles.themeTriggerText}>{selectedSendBehaviorLabel}</Text>
             </DropdownTrigger>
             <DropdownMenuContent side="bottom" align="end" width={200}>
               {sendBehaviorOptions.map((option) => (
@@ -347,12 +307,8 @@ function GeneralSection({
         </View>
         <View style={[settingsStyles.row, settingsStyles.rowBorder]}>
           <View style={settingsStyles.rowContent}>
-            <Text style={settingsStyles.rowTitle}>
-              {t("settings.general.language.label")}
-            </Text>
-            <Text style={settingsStyles.rowHint}>
-              {t("settings.general.language.description")}
-            </Text>
+            <Text style={settingsStyles.rowTitle}>{t("settings.general.language.label")}</Text>
+            <Text style={settingsStyles.rowHint}>{t("settings.general.language.description")}</Text>
           </View>
           <DropdownMenu>
             <DropdownTrigger
@@ -360,9 +316,7 @@ function GeneralSection({
               accessibilityLabel={selectedLanguageLabel}
               style={themeTriggerStyle}
             >
-              <Text style={styles.themeTriggerText}>
-                {selectedLanguageLabel}
-              </Text>
+              <Text style={styles.themeTriggerText}>{selectedLanguageLabel}</Text>
             </DropdownTrigger>
             <DropdownMenuContent side="bottom" align="end" width={300}>
               {LANGUAGE_OPTIONS.map((option) => (
@@ -380,9 +334,7 @@ function GeneralSection({
         {isDesktopApp ? (
           <View style={[settingsStyles.row, settingsStyles.rowBorder]}>
             <View style={settingsStyles.rowContent}>
-              <Text style={settingsStyles.rowTitle}>
-                {t("settings.general.serviceUrls.label")}
-              </Text>
+              <Text style={settingsStyles.rowTitle}>{t("settings.general.serviceUrls.label")}</Text>
               <Text style={settingsStyles.rowHint}>
                 {t("settings.general.serviceUrls.description")}
               </Text>
@@ -425,9 +377,7 @@ function GeneralSection({
             inputMode="numeric"
             selectTextOnFocus
             style={styles.terminalScrollbackInput}
-            accessibilityLabel={t(
-              "settings.general.terminalScrollback.accessibilityLabel"
-            )}
+            accessibilityLabel={t("settings.general.terminalScrollback.accessibilityLabel")}
           />
         </View>
       </View>
@@ -461,10 +411,7 @@ function DiagnosticsSection({
     <SettingsSection title={t("settings.diagnostics.title")}>
       <View style={settingsStyles.card}>
         {isNative ? (
-          <View
-            style={settingsStyles.row}
-            testID="legacy-terminal-renderer-row"
-          >
+          <View style={settingsStyles.row} testID="legacy-terminal-renderer-row">
             <View style={settingsStyles.rowContent}>
               <Text style={settingsStyles.rowTitle}>
                 {t("settings.diagnostics.legacyTerminalRenderer.label")}
@@ -477,7 +424,7 @@ function DiagnosticsSection({
               value={useLegacyTerminalRenderer}
               onValueChange={onUseLegacyTerminalRendererChange}
               accessibilityLabel={t(
-                "settings.diagnostics.legacyTerminalRenderer.accessibilityLabel"
+                "settings.diagnostics.legacyTerminalRenderer.accessibilityLabel",
               )}
               testID="legacy-terminal-renderer-switch"
             />
@@ -485,12 +432,8 @@ function DiagnosticsSection({
         ) : null}
         <View style={settingsStyles.row} testID="app-diagnostic-row">
           <View style={settingsStyles.rowContent}>
-            <Text style={settingsStyles.rowTitle}>
-              {t("settings.diagnostics.app.rowTitle")}
-            </Text>
-            <Text style={settingsStyles.rowHint}>
-              {t("settings.diagnostics.app.rowHint")}
-            </Text>
+            <Text style={settingsStyles.rowTitle}>{t("settings.diagnostics.app.rowTitle")}</Text>
+            <Text style={settingsStyles.rowHint}>{t("settings.diagnostics.app.rowHint")}</Text>
           </View>
           <Button variant="secondary" size="sm" onPress={openAppDiagnostic}>
             {t("settings.diagnostics.app.run")}
@@ -498,9 +441,7 @@ function DiagnosticsSection({
         </View>
         <View style={settingsStyles.row}>
           <View style={settingsStyles.rowContent}>
-            <Text style={settingsStyles.rowTitle}>
-              {t("settings.diagnostics.testAudio")}
-            </Text>
+            <Text style={settingsStyles.rowTitle}>{t("settings.diagnostics.testAudio")}</Text>
             {playbackTestResult ? (
               <Text style={settingsStyles.rowHint}>{playbackTestResult}</Text>
             ) : null}
@@ -530,26 +471,17 @@ export interface SettingsScreenProps {
   openAddHostIntent?: string | null;
 }
 
-export default function SettingsScreen({
-  view,
-  openAddHostIntent = null,
-}: SettingsScreenProps) {
+export default function SettingsScreen({ view, openAddHostIntent = null }: SettingsScreenProps) {
   const { theme } = useUnistyles();
   const { t } = useTranslation();
   const voiceAudioEngine = useVoiceAudioEngineOptional();
-  const {
-    settings,
-    isLoading: settingsLoading,
-    updateSettings,
-  } = useAppSettings();
+  const { settings, isLoading: settingsLoading, updateSettings } = useAppSettings();
   const [isAddHostMethodVisible, setIsAddHostMethodVisible] = useState(false);
   const [isDirectHostVisible, setIsDirectHostVisible] = useState(false);
   const [isRemoteSshVisible, setIsRemoteSshVisible] = useState(false);
   const [isPasteLinkVisible, setIsPasteLinkVisible] = useState(false);
   const [isPlaybackTestRunning, setIsPlaybackTestRunning] = useState(false);
-  const [playbackTestResult, setPlaybackTestResult] = useState<string | null>(
-    null
-  );
+  const [playbackTestResult, setPlaybackTestResult] = useState<string | null>(null);
   const lastOpenedAddHostIntentRef = useRef<string | null>(null);
   const isDesktopApp = isElectronRuntime();
   const appVersion = resolveAppVersion();
@@ -557,10 +489,7 @@ export default function SettingsScreen({
   const isCompactLayout = useIsCompactFormFactor();
   const shortcutsAvailable = useKeyboardShortcutsAvailable();
   const insets = useSafeAreaInsets();
-  const insetBottomStyle = useMemo(
-    () => ({ paddingBottom: insets.bottom }),
-    [insets.bottom]
-  );
+  const insetBottomStyle = useMemo(() => ({ paddingBottom: insets.bottom }), [insets.bottom]);
   const hosts = useHosts();
   const scope = resolveSettingsScope(view);
   const scopedHostServerId = scope.kind === "host" ? scope.serverId : null;
@@ -574,35 +503,35 @@ export default function SettingsScreen({
     (behavior: SendBehavior) => {
       void updateSettings({ sendBehavior: behavior });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const handleServiceUrlBehaviorChange = useCallback(
     (behavior: ServiceUrlBehavior) => {
       void updateSettings({ serviceUrlBehavior: behavior });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const handleLanguageChange = useCallback(
     (language: AppLanguage) => {
       void updateSettings({ language });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const handleTerminalScrollbackLinesChange = useCallback(
     (terminalScrollbackLines: number) => {
       void updateSettings({ terminalScrollbackLines });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const handleUseLegacyTerminalRendererChange = useCallback(
     (useLegacyTerminalRenderer: boolean) => {
       void updateSettings({ useLegacyTerminalRenderer });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const handlePlaybackTest = useCallback(async () => {
@@ -628,9 +557,7 @@ export default function SettingsScreen({
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       console.error("[Settings] Playback test failed", error);
-      setPlaybackTestResult(
-        t("settings.diagnostics.playbackFailed", { message })
-      );
+      setPlaybackTestResult(t("settings.diagnostics.playbackFailed", { message }));
     } finally {
       setIsPlaybackTestRunning(false);
     }
@@ -655,10 +582,7 @@ export default function SettingsScreen({
   }, []);
 
   useEffect(() => {
-    if (
-      !openAddHostIntent ||
-      lastOpenedAddHostIntentRef.current === openAddHostIntent
-    ) {
+    if (!openAddHostIntent || lastOpenedAddHostIntentRef.current === openAddHostIntent) {
       return;
     }
     lastOpenedAddHostIntentRef.current = openAddHostIntent;
@@ -693,7 +617,7 @@ export default function SettingsScreen({
       if (!scopedHostServerId) return;
       navigateSettings({ kind: "host", serverId: scopedHostServerId, section });
     },
-    [scopedHostServerId]
+    [scopedHostServerId],
   );
 
   const handleScanQr = useCallback(() => {
@@ -770,13 +694,9 @@ export default function SettingsScreen({
                   settings={settings}
                   isDesktopApp={isDesktopApp}
                   handleSendBehaviorChange={handleSendBehaviorChange}
-                  handleServiceUrlBehaviorChange={
-                    handleServiceUrlBehaviorChange
-                  }
+                  handleServiceUrlBehaviorChange={handleServiceUrlBehaviorChange}
                   handleLanguageChange={handleLanguageChange}
-                  handleTerminalScrollbackLinesChange={
-                    handleTerminalScrollbackLinesChange
-                  }
+                  handleTerminalScrollbackLinesChange={handleTerminalScrollbackLinesChange}
                 />
                 <VoiceAlertsSection />
                 {isDesktopApp ? <BrowserDataSection /> : null}
@@ -800,9 +720,7 @@ export default function SettingsScreen({
             return (
               <DiagnosticsSection
                 useLegacyTerminalRenderer={settings.useLegacyTerminalRenderer}
-                onUseLegacyTerminalRendererChange={
-                  handleUseLegacyTerminalRendererChange
-                }
+                onUseLegacyTerminalRendererChange={handleUseLegacyTerminalRendererChange}
                 voiceAudioEngine={voiceAudioEngine}
                 isPlaybackTestRunning={isPlaybackTestRunning}
                 playbackTestResult={playbackTestResult}
@@ -834,14 +752,9 @@ export default function SettingsScreen({
   const desktopDetailHeaderLeft = detailHeader ? (
     <>
       <HeaderIconBadge>
-        <detailHeader.Icon
-          size={theme.iconSize.md}
-          color={theme.colors.foregroundMuted}
-        />
+        <detailHeader.Icon size={theme.iconSize.md} color={theme.colors.foregroundMuted} />
       </HeaderIconBadge>
-      <ScreenTitle testID="settings-detail-header-title">
-        {detailHeader.title}
-      </ScreenTitle>
+      <ScreenTitle testID="settings-detail-header-title">{detailHeader.title}</ScreenTitle>
       {detailHeader.titleAccessory}
     </>
   ) : null;
@@ -881,14 +794,8 @@ export default function SettingsScreen({
   if (isCompactLayout && (view.kind === "root" || view.kind === "hostRoot")) {
     return (
       <View style={styles.container}>
-        <BackHeader
-          title={scopedHostLabel ?? t("settings.title")}
-          onBack={handleBackToWorkspace}
-        />
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={insetBottomStyle}
-        >
+        <BackHeader title={scopedHostLabel ?? t("settings.title")} onBack={handleBackToWorkspace} />
+        <ScrollView style={styles.scrollView} contentContainerStyle={insetBottomStyle}>
           <SettingsSidebar
             view={view}
             onSelectSection={handleSelectSection}
@@ -909,10 +816,7 @@ export default function SettingsScreen({
           titleAccessory={detailHeader?.titleAccessory}
           onBack={handleBackFromDetail}
         />
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={insetBottomStyle}
-        >
+        <ScrollView style={styles.scrollView} contentContainerStyle={insetBottomStyle}>
           <View style={styles.content}>{content}</View>
         </ScrollView>
         {addHostModals}

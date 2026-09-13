@@ -62,6 +62,8 @@ other agent runners can read the same files as task instructions.
   build/test tooling, and CI.
 - [docs-writer](.claude/agents/docs-writer.md): audits a change against the docs and
   updates pages and screenshots.
+- [build-monitor](.claude/agents/build-monitor.md): watches CI after pushes, fixes
+  build failures, and retries or places individual target builds.
 
 For parallel feature work, give each agent a separate branch/worktree, a bounded
 outcome, owned paths, and acceptance checks. Agree shared protocol/bridge contracts
