@@ -16,9 +16,20 @@ const application =
     ? path.join(root, folder, `${brand.name}.app`, "Contents")
     : path.join(root, folder);
 const resources = path.join(application, platform === "darwin" ? "Resources" : "resources");
+const plist = path.join(application, "Info.plist");
+const executableName =
+  platform === "darwin"
+    ? execFileSync("plutil", ["-extract", "CFBundleExecutable", "raw", "-o", "-", plist], {
+        encoding: "utf8",
+      }).trim()
+    : brand.id;
+assert.ok(
+  executableName && path.basename(executableName) === executableName,
+  "selected desktop executable name is a basename",
+);
 const binary =
   platform === "darwin"
-    ? path.join(application, "MacOS", brand.id)
+    ? path.join(application, "MacOS", executableName)
     : path.join(application, `${brand.id}${platform === "win" ? ".exe" : ""}`);
 assert.ok(existsSync(binary), "selected desktop executable was produced");
 assert.ok(existsSync(path.join(resources, "app.asar")));
@@ -30,7 +41,6 @@ assert.equal(packaged.applicationId, brand.applicationId);
 const artifacts = await readdir(root);
 assert.ok(artifacts.some((name) => name.startsWith(`${brand.artifactPrefix}-${version}-`)));
 if (platform === "darwin") {
-  const plist = path.join(application, "Info.plist");
   const id = execFileSync("plutil", ["-extract", "CFBundleIdentifier", "raw", "-o", "-", plist], {
     encoding: "utf8",
   }).trim();
