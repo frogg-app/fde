@@ -29,14 +29,14 @@ The npm workspace graph is not resolved automatically. Packages consume each oth
 `dist/`, so order matters:
 
 ```
-protocol → client → server-deps (highlight, plugin, relay) → server → cli
+protocol → client → server-deps (highlight, relay) → server → cli
 ```
 
 ```bash
 npm run build:protocol      # packages/protocol
 npm run build:client        # implies protocol must be current
 npm run build:server        # server-deps + server + cli, the whole chain
-npm run build:app-deps      # highlight + client + plugin, what apps/ui needs
+npm run build:app-deps      # highlight + client, what apps/ui needs
 npm run build:ui            # Expo web build
 npm run build:desktop       # shared UI, then the Electron app-only shell
 ```
@@ -142,7 +142,7 @@ npx vitest run <path> --bail=1 > /tmp/t.log 2>&1   # broad sweep, then read the 
 ## Where things live
 
 - `apps/` holds deliverables: `desktop-electron` (Electron app-only), `ui` (Expo client, `@fde/app`), `cli`.
-- `packages/` holds libraries only: `protocol`, `client`, `server`, `relay`, `highlight`, `plugin`.
+- `packages/` holds libraries only: `protocol`, `client`, `server`, `relay`, `highlight`.
 - `scripts/` splits into `dev/`, `release/`, `ci/`. New scripts go in one of those, not the root.
 - Documentation lives in `website/src/content/docs/docs/` (published at https://frogg.app/docs/).
   Read the relevant page before non-trivial work; `contributing/development-setup.mdx` covers

@@ -24,7 +24,6 @@ import type {
   WorkspaceCreateRequest,
 } from "@fde/protocol/messages";
 import { DaemonClient } from "./daemon-client.js";
-import type { PluginTimelineItem } from "@fde/protocol/agent-types";
 import type {
   FetchAgentsEntry,
   FetchAgentsOptions,
@@ -246,7 +245,6 @@ export type FdeAgentStream = Extract<SessionOutboundMessage, { type: "agent_stre
 export type FdeAgentUpdateHandler = (update: FdeAgentUpdate) => void;
 
 export interface FdeAgentTimelineHandle {
-  append(item: Omit<PluginTimelineItem, "pluginId">): Promise<{ seq: number; epoch: string }>;
   /**
    * Fetches a fresh timeline page through the existing daemon RPC. If the daemon
    * includes an agent snapshot in the response, the parent handle is updated to
@@ -602,7 +600,6 @@ function createAgentHandleFactory(daemonClient: DaemonClient): AgentHandleFactor
     const handle: FdeAgentHandle = {
       id,
       timeline: {
-        append: (item) => daemonClient.appendAgentTimelineItem(id, item),
         refetch: async (options) => {
           const result = await daemonClient.fetchAgentTimeline(id, options);
           if (result.agent) {

@@ -23,8 +23,8 @@ import { timelineItemIdentity } from "@fde/protocol/timeline-identity";
 
 type CanonicalToolStatus = "running" | "completed" | "failed" | "canceled";
 
-describe("plugin timeline rows", () => {
-  it("uses the protocol identity format for stream tool and plugin rows", () => {
+describe("timeline row identity", () => {
+  it("uses the protocol identity format for stream tool rows", () => {
     const tool = {
       kind: "tool_call",
       id: "tool-row",
@@ -41,74 +41,10 @@ describe("plugin timeline rows", () => {
         },
       },
     } satisfies StreamItem;
-    const plugin = {
-      kind: "plugin",
-      id: "review/row-1",
-      pluginId: "review",
-      pluginItemId: "row-1",
-      itemKind: "review",
-      version: 1,
-      data: {},
-      timestamp: new Date(1),
-    } satisfies StreamItem;
 
     expect(streamTimelineItemIdentity(tool)).toBe(
       timelineItemIdentity({ type: "tool_call", ...tool.payload.data }),
     );
-    expect(streamTimelineItemIdentity(plugin)).toBe(
-      timelineItemIdentity({
-        type: "plugin",
-        id: plugin.pluginItemId,
-        pluginId: plugin.pluginId,
-        kind: plugin.itemKind,
-        version: plugin.version,
-        data: plugin.data,
-      }),
-    );
-  });
-
-  it("replaces a live row when the plugin-scoped identity repeats", () => {
-    const first = reduceStreamUpdate(
-      [],
-      {
-        type: "timeline",
-        provider: "codex",
-        item: {
-          type: "plugin",
-          id: "review-1",
-          pluginId: "review",
-          kind: "review",
-          version: 1,
-          data: { status: "running" },
-        },
-      },
-      new Date(1),
-    );
-    const second = reduceStreamUpdate(
-      first,
-      {
-        type: "timeline",
-        provider: "codex",
-        item: {
-          type: "plugin",
-          id: "review-1",
-          pluginId: "review",
-          kind: "review",
-          version: 1,
-          data: { status: "complete" },
-        },
-      },
-      new Date(2),
-    );
-
-    expect(second).toHaveLength(1);
-    expect(second[0]).toMatchObject({
-      kind: "plugin",
-      id: "review/review-1",
-      pluginId: "review",
-      pluginItemId: "review-1",
-      data: { status: "complete" },
-    });
   });
 });
 

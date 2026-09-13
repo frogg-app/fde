@@ -64,10 +64,17 @@ const LegacyReviewAttachmentSchema = z.strictObject({
     ),
   }),
 });
+// COMPAT(pluginsRemoved): drafts saved before plugin support was removed can hold plugin
+// resource attachments. They are accepted so the draft survives, then dropped. Remove after
+// 2027-09-13.
+const LegacyPluginResourceAttachmentSchema = z.looseObject({
+  kind: z.literal("plugin_resource"),
+});
 const PersistedComposerAttachmentSchema = z.union([
   UserComposerAttachmentSchema,
   LegacyGithubPrAttachmentSchema,
   LegacyReviewAttachmentSchema,
+  LegacyPluginResourceAttachmentSchema,
 ]);
 type PersistedComposerAttachment = z.infer<typeof PersistedComposerAttachmentSchema>;
 const LegacyAttachmentMetadataSchema = AttachmentMetadataSchema.extend({
@@ -130,7 +137,7 @@ function legacyImagesToAttachments(
 function normalizePersistedComposerAttachment(
   attachment: PersistedComposerAttachment,
 ): UserComposerAttachment | null {
-  if (attachment.kind === "review") {
+  if (attachment.kind === "review" || attachment.kind === "plugin_resource") {
     return null;
   }
   if (attachment.kind === "github_pr" && attachment.item.kind === "pr") {

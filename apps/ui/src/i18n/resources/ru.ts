@@ -1,6 +1,5 @@
 import { projectImportCopies } from "./project-import";
 import { en, type TranslationResources } from "./en";
-import { pluginSettings } from "./plugin-settings";
 
 export const ru: TranslationResources = {
   projectImport: projectImportCopies["ru"],
@@ -2299,10 +2298,8 @@ export const ru: TranslationResources = {
       providers: "Провайдеры",
       usage: "Использование",
       terminals: "Терминалы",
-      plugins: "Плагины",
       host: "Обзор",
     },
-    plugins: pluginSettings.ru,
     metadataGeneration: {
       title: "Генерация метаданных",
       description:
@@ -2849,6 +2846,20 @@ export const ru: TranslationResources = {
       },
       agents: {
         unavailable: "Подключитесь к этому хосту, чтобы управлять агентами",
+      },
+      agentDefinitions: {
+        title: "Определения агентов",
+        description:
+          "Агенты, которые ваши провайдеры загружают с этого хоста. FDE только показывает их список; чтобы изменить агента, отредактируйте файл.",
+        projectTitle: "Определения агентов проекта",
+        projectDescription: "Агенты, которые ваши провайдеры загружают из каталога этого проекта.",
+        empty: "Определения агентов не найдены",
+        loadFailed: "Не удалось загрузить определения агентов",
+        unsupported: "Обновите демон на этом хосте, чтобы увидеть определения агентов",
+        open: "Открыть в редакторе",
+        copyPath: "Копировать путь",
+        scopeUser: "Пользователь",
+        scopeProject: "Проект",
       },
       workspaces: {
         unavailable: "Подключитесь к этому хосту, чтобы управлять рабочими пространствами",

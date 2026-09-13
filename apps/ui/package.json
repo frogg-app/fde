@@ -58,7 +58,6 @@
     "@fde/client": "*",
     "@fde/expo-two-way-audio": "*",
     "@fde/highlight": "*",
-    "@fde/plugin": "*",
     "@fde/protocol": "*",
     "@floating-ui/react-native": "^0.10.7",
     "@gorhom/bottom-sheet": "^5.2.14",

@@ -1,6 +1,5 @@
 import { projectImportCopies } from "./project-import";
 import { en, type TranslationResources } from "./en";
-import { pluginSettings } from "./plugin-settings";
 
 export const ja: TranslationResources = {
   projectImport: projectImportCopies["ja"],
@@ -2289,10 +2288,8 @@ export const ja: TranslationResources = {
       providers: "プロバイダー",
       usage: "使用状況",
       terminals: "ターミナル",
-      plugins: "プラグイン",
       host: "概要",
     },
-    plugins: pluginSettings.ja,
     metadataGeneration: {
       title: "メタデータ生成",
       description:
@@ -2829,6 +2826,21 @@ export const ja: TranslationResources = {
       },
       agents: {
         unavailable: "エージェントを管理するにはこのホストに接続してください",
+      },
+      agentDefinitions: {
+        title: "エージェント定義",
+        description:
+          "プロバイダーがこのホストから読み込むエージェントです。FDE は一覧表示のみ行います。変更するにはファイルを編集してください。",
+        projectTitle: "プロジェクトのエージェント定義",
+        projectDescription:
+          "プロバイダーがこのプロジェクトのディレクトリから読み込むエージェントです。",
+        empty: "エージェント定義が見つかりません",
+        loadFailed: "エージェント定義を読み込めませんでした",
+        unsupported: "エージェント定義を表示するには、このホストのデーモンを更新してください",
+        open: "エディターで開く",
+        copyPath: "パスをコピー",
+        scopeUser: "ユーザー",
+        scopeProject: "プロジェクト",
       },
       workspaces: {
         unavailable: "ワークスペースを管理するにはこのホストに接続してください",

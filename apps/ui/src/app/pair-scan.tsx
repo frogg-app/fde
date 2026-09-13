@@ -135,7 +135,7 @@ export default function PairScanScreen() {
         router.replace(buildHostRootRoute(serverId));
         return;
       }
-      router.replace(buildSettingsHostSectionRoute(serverId, "connections"));
+      router.replace(buildSettingsHostSectionRoute(serverId, "host"));
     },
     [router, source],
   );

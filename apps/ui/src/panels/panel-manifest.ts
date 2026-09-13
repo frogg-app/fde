@@ -68,15 +68,6 @@ const manifests = {
     supportedHosts: ["main", "explorer"],
     resourceKey: () => "working_diff",
   },
-  plugin: {
-    kind: "plugin",
-    // Plugin targets are narrowed by the target-aware plugin panel capability resolver.
-    supportedHosts: ["main", "explorer"],
-    resourceKey: (target) =>
-      target.context === "agent"
-        ? `${target.pluginId}:${target.panelId}:agent:${target.agentId}`
-        : `${target.pluginId}:${target.panelId}:workspace`,
-  },
   setup: {
     kind: "setup",
     supportedHosts: ["main"],

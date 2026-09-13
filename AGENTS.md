@@ -42,7 +42,7 @@ The code is the source of truth. If a page disagrees with the code, fix the page
 - `apps/cli/`: command-line client and daemon launcher.
 - `packages/server/`: daemon, agent lifecycle, providers, WebSocket API, and MCP.
 - `packages/protocol/`, `packages/client/`: shared wire schemas and client library.
-- Other `packages/`: relay, highlighting, plugin SDK, and shared libraries.
+- Other `packages/`: relay, highlighting, and shared libraries.
 - `deploy/`: Docker/Nix packaging. `scripts/dev/`, `scripts/release/`,
   `scripts/ci/`, `scripts/docs/`: development, release, verification and docs helpers.
 - `website/`: the frogg.app site; docs pages in `website/src/content/docs/docs/`.

@@ -1,10 +1,4 @@
-import type {
-  AgentProvider,
-  AgentTimelineItem,
-  JsonValue,
-  ToolCallDetail,
-} from "@fde/protocol/agent-types";
-import { timelineItemIdentity } from "@fde/protocol/timeline-identity";
+import type { AgentProvider, ToolCallDetail } from "@fde/protocol/agent-types";
 import type { AgentAttachment, AgentStreamEventPayload } from "@fde/protocol/messages";
 import type { AttachmentMetadata } from "@/attachments/types";
 import { extractTaskEntriesFromToolCall } from "../utils/tool-call-parsers";
@@ -85,8 +79,7 @@ export type StreamItem =
   | ToolCallItem
   | TodoListItem
   | ActivityLogItem
-  | CompactionItem
-  | PluginTimelineStreamItem;
+  | CompactionItem;
 
 export type UserMessageImageAttachment = AttachmentMetadata;
 
@@ -442,9 +435,6 @@ function removeUserMessageAt(items: UserMessageItem[], index: number): UserMessa
 }
 
 function mergeRetainedLifecycleItem(tail: StreamItem[], retained: StreamItem): StreamItem[] | null {
-  if (retained.kind === "plugin") {
-    return replaceTimelineIdentityItem(tail, retained);
-  }
   if (!retained.timelineCursor) {
     return null;
   }
@@ -497,20 +487,6 @@ function mergeRetainedLifecycleItem(tail: StreamItem[], retained: StreamItem): S
     return next;
   }
   return null;
-}
-
-function replaceTimelineIdentityItem(
-  items: StreamItem[],
-  retained: PluginTimelineStreamItem,
-): StreamItem[] | null {
-  const identity = streamTimelineItemIdentity(retained);
-  if (identity === null) return null;
-  const index = findExistingTimelineIdentityIndex(items, identity);
-  const existing = items[index];
-  if (index < 0 || !existing || existing.kind !== "plugin") return null;
-  const next = [...items];
-  next[index] = retained;
-  return next;
 }
 
 function reconcileReplacementHeadAgainstTail(
@@ -795,19 +771,6 @@ export interface CompactionItem {
   preTokens?: number;
 }
 
-export interface PluginTimelineStreamItem {
-  kind: "plugin";
-  id: string;
-  timelineCursor?: TimelinePosition;
-  turnId?: string;
-  timestamp: Date;
-  pluginId: string;
-  pluginItemId: string;
-  itemKind: string;
-  version: number;
-  data: JsonValue;
-}
-
 export interface TodoEntry {
   text: string;
   completed: boolean;
@@ -1023,7 +986,6 @@ function finalizeActiveThoughts(state: StreamItem[]): StreamItem[] {
 
 export function streamTimelineItemIdentity(item: StreamItem): string | null {
   if (isAgentToolCallItem(item)) return item.payload.data.callId;
-  if (item.kind === "plugin") return `${item.pluginId}/${item.pluginItemId}`;
   return null;
 }
 
@@ -1213,34 +1175,6 @@ function appendAgentToolCall(
   };
 
   return [...state, item];
-}
-
-function appendPluginTimelineItem(
-  state: StreamItem[],
-  item: Extract<AgentTimelineItem, { type: "plugin" }>,
-  timestamp: Date,
-  timelineCursor?: TimelinePosition,
-): StreamItem[] {
-  const identity = timelineItemIdentity(item);
-  if (identity === null) return state;
-  const nextItem: PluginTimelineStreamItem = {
-    kind: "plugin",
-    id: identity,
-    pluginId: item.pluginId,
-    pluginItemId: item.id,
-    itemKind: item.kind,
-    version: item.version,
-    data: item.data,
-    timestamp,
-    ...(timelineCursor ? { timelineCursor } : {}),
-  };
-  const existingIndex = findExistingTimelineIdentityIndex(state, identity);
-  if (existingIndex < 0) return [...state, nextItem];
-  const existing = state[existingIndex];
-  if (!existing || existing.kind !== "plugin") return state;
-  const next = [...state];
-  next[existingIndex] = { ...nextItem, id: existing.id };
-  return next;
 }
 
 function appendActivityLog(state: StreamItem[], entry: ActivityLogItem): StreamItem[] {
@@ -1537,10 +1471,6 @@ function reduceTimelineEvent(
       return finalizeActiveThoughts(
         reduceTimelineCompaction(state, item, timestamp, timelineCursor),
       );
-    case "plugin":
-      return finalizeActiveThoughts(
-        appendPluginTimelineItem(state, item, timestamp, timelineCursor),
-      );
     default:
       return state;
   }
@@ -1694,8 +1624,6 @@ function getEventItemKind(event: AgentStreamEventPayload): StreamItem["kind"] | 
       return "todo_list";
     case "error":
       return "activity_log";
-    case "plugin":
-      return "plugin";
     default:
       return null;
   }

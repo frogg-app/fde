@@ -1,6 +1,5 @@
 import { projectImportCopies } from "./project-import";
 import { en, type TranslationResources } from "./en";
-import { pluginSettings } from "./plugin-settings";
 
 export const ko: TranslationResources = {
   projectImport: projectImportCopies["ko"],
@@ -2275,10 +2274,8 @@ export const ko: TranslationResources = {
       providers: "프로바이더",
       usage: "사용량",
       terminals: "터미널",
-      plugins: "플러그인",
       host: "개요",
     },
-    plugins: pluginSettings.ko,
     metadataGeneration: {
       title: "메타데이터 생성",
       description:
@@ -2812,6 +2809,20 @@ export const ko: TranslationResources = {
       },
       agents: {
         unavailable: "에이전트를 관리하려면 이 호스트에 연결하세요",
+      },
+      agentDefinitions: {
+        title: "에이전트 정의",
+        description:
+          "공급자가 이 호스트에서 불러오는 에이전트입니다. FDE는 목록만 표시하며, 변경하려면 파일을 편집하세요.",
+        projectTitle: "프로젝트 에이전트 정의",
+        projectDescription: "공급자가 이 프로젝트 디렉터리에서 불러오는 에이전트입니다.",
+        empty: "에이전트 정의를 찾을 수 없습니다",
+        loadFailed: "에이전트 정의를 불러오지 못했습니다",
+        unsupported: "에이전트 정의를 보려면 이 호스트의 데몬을 업데이트하세요",
+        open: "편집기에서 열기",
+        copyPath: "경로 복사",
+        scopeUser: "사용자",
+        scopeProject: "프로젝트",
       },
       workspaces: {
         unavailable: "워크스페이스를 관리하려면 이 호스트에 연결하세요",

@@ -149,13 +149,6 @@ function mergeIdentityEntries(existing: WorkingEntry, entry: WorkingEntry): Work
         seqEnd: Math.max(existing.seqEnd, entry.seqEnd),
         ...mergeIdentityMetadata(existing, entry, "tool_lifecycle"),
       };
-    case "plugin":
-      if (existing.item.type !== "plugin") return null;
-      return {
-        ...entry,
-        seqStart: existing.seqStart,
-        ...mergeIdentityMetadata(existing, entry, "identity"),
-      };
     default:
       return null;
   }

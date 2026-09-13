@@ -642,19 +642,20 @@ describe("saveAppSettings", () => {
     });
   });
 
-  it("persists a selected plugin theme", async () => {
-    const deps = makeDeps();
-    const queryClient = new QueryClient();
-
-    await saveAppSettings({
-      queryClient,
-      updates: { theme: "plugin", pluginThemeId: "catppuccin/theme/mocha" },
-      deps,
+  it("falls back to the default theme when a removed plugin theme was persisted", async () => {
+    const deps = makeDeps({
+      storage: createInMemoryKeyValueStorage({
+        "@fde:app-settings": JSON.stringify({
+          theme: "plugin",
+          pluginThemeId: "catppuccin/theme/mocha",
+          sendBehavior: "steer",
+        }),
+      }),
     });
 
     const loaded = await loadAppSettingsFromStorage(deps);
-    expect(loaded.theme).toBe("plugin");
-    expect(loaded.pluginThemeId).toBe("catppuccin/theme/mocha");
+    expect(loaded.theme).toBe("auto");
+    expect(loaded.sendBehavior).toBe("steer");
   });
 
   // The row items are written as one object through one strict schema, so an item the schema

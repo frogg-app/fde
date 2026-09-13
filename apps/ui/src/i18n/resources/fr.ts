@@ -1,6 +1,5 @@
 import { projectImportCopies } from "./project-import";
 import { en, type TranslationResources } from "./en";
-import { pluginSettings } from "./plugin-settings";
 
 export const fr: TranslationResources = {
   projectImport: projectImportCopies["fr"],
@@ -2319,10 +2318,8 @@ export const fr: TranslationResources = {
       providers: "Fournisseurs",
       usage: "Utilisation",
       terminals: "Terminals",
-      plugins: "Plugins",
       host: "Aperçu",
     },
-    plugins: pluginSettings.fr,
     metadataGeneration: {
       title: "Génération de métadonnées",
       description:
@@ -2865,6 +2862,20 @@ export const fr: TranslationResources = {
       },
       agents: {
         unavailable: "Connect to this host to manage agents",
+      },
+      agentDefinitions: {
+        title: "Définitions d'agents",
+        description:
+          "Agents chargés par vos fournisseurs depuis cet hôte. FDE se contente de les lister ; modifiez les fichiers pour les changer.",
+        projectTitle: "Définitions d'agents du projet",
+        projectDescription: "Agents chargés par vos fournisseurs depuis le dossier de ce projet.",
+        empty: "Aucune définition d'agent trouvée",
+        loadFailed: "Impossible de charger les définitions d'agents",
+        unsupported: "Mettez à jour le daemon de cet hôte pour lister les définitions d'agents",
+        open: "Ouvrir dans l'éditeur",
+        copyPath: "Copier le chemin",
+        scopeUser: "Utilisateur",
+        scopeProject: "Projet",
       },
       workspaces: {
         unavailable: "Connect to this host to manage workspaces",

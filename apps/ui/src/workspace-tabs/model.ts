@@ -17,21 +17,6 @@ export interface WorkspaceWorkingDiffTabTarget {
   focusRequestId?: number;
 }
 
-export type PluginWorkspaceTabTarget =
-  | {
-      kind: "plugin";
-      pluginId: string;
-      panelId: string;
-      context: "workspace";
-    }
-  | {
-      kind: "plugin";
-      pluginId: string;
-      panelId: string;
-      context: "agent";
-      agentId: string;
-    };
-
 export type WorkspaceTabTarget =
   | { kind: "new_tab" }
   | { kind: "draft"; draftId: string; setup?: WorkspaceDraftTabSetup }
@@ -44,7 +29,6 @@ export type WorkspaceTabTarget =
   | { kind: "pull_request" }
   | WorkspaceFileTabTarget
   | WorkspaceWorkingDiffTabTarget
-  | PluginWorkspaceTabTarget
   | { kind: "setup"; workspaceId: string }
   | { kind: "commit_diff"; sha: string };
 

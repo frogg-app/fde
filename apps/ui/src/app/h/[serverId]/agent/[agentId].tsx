@@ -123,7 +123,7 @@ function HostAgentReadyRouteContent() {
   }, [lookupQuery, resolution.kind, serverId]);
   const handleManageHost = useCallback(() => {
     if (serverId) {
-      router.push(buildSettingsHostSectionRoute(serverId, "connections"));
+      router.push(buildSettingsHostSectionRoute(serverId, "host"));
     }
   }, [router, serverId]);
   const handleBack = useCallback(() => {

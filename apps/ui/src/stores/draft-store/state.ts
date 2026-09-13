@@ -3,7 +3,6 @@ import {
   type AttachmentMetadata,
   type UserComposerAttachment,
 } from "@/attachments/types";
-import { PluginResourceComposerAttachmentSchema } from "@/plugins/attachments";
 import { z } from "zod";
 
 export const DRAFT_STORE_VERSION = 5;
@@ -96,7 +95,6 @@ export const UserComposerAttachmentSchema: z.ZodType<UserComposerAttachment> = z
     z.strictObject({ kind: z.literal("forge_issue"), item: IssueItemSchema }),
     z.strictObject({ kind: z.literal("forge_change_request"), item: ChangeRequestItemSchema }),
     z.strictObject({ kind: z.literal("github_issue"), item: IssueItemSchema }),
-    PluginResourceComposerAttachmentSchema,
     z.strictObject({
       kind: z.literal("github_pr"),
       item: ChangeRequestItemSchema,

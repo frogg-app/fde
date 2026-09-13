@@ -1,30 +1,15 @@
 import { describe, expect, it } from "vitest";
-import type { PluginSidebarGroup } from "@/plugins/sidebar-groups";
 import {
   builtinSidebarNavShortcutAction,
   moveSidebarNavItem,
-  pluginSidebarNavKey,
   resolveSidebarNavItems,
   setSidebarNavItemVisible,
   type SidebarNavItem,
   type SidebarNavPreference,
 } from "./model";
 
-function group(pluginId: string, contributionId: string): PluginSidebarGroup {
-  return {
-    key: `${pluginId}/sidebar/${contributionId}`,
-    pluginId,
-    contributionId,
-    title: contributionId,
-    icon: "puzzle",
-    targets: [],
-  };
-}
-
-const kanban = group("kanban", "board");
-const notes = group("notes", "inbox");
-const kanbanKey = pluginSidebarNavKey(kanban);
-const notesKey = pluginSidebarNavKey(notes);
+// A key left in settings by the removed plugin support; it is never resolved but must survive edits.
+const staleKey = "plugin:notes:inbox";
 
 function summarize(items: readonly SidebarNavItem[]): SidebarNavPreference[] {
   return items.map(({ key, visible }) => ({ key, visible }));
@@ -36,7 +21,7 @@ describe("resolveSidebarNavItems", () => {
     ["new-workspace", "companion", "history", "search"],
   ])("migrates a persisted default order %j", (...keys) => {
     const preferences = keys.map((key) => ({ key, visible: key !== "companion" }));
-    const items = resolveSidebarNavItems({ pluginGroups: [], preferences });
+    const items = resolveSidebarNavItems({ preferences });
     expect(items.map(({ key }) => key)).toEqual(["home", "search", "history", "companion"]);
     if (keys.includes("companion")) {
       expect(items.find(({ key }) => key === "companion")?.visible).toBe(false);
@@ -51,7 +36,7 @@ describe("resolveSidebarNavItems", () => {
       { key: "companion", visible: false },
     ];
 
-    expect(summarize(resolveSidebarNavItems({ pluginGroups: [], preferences }))).toEqual([
+    expect(summarize(resolveSidebarNavItems({ preferences }))).toEqual([
       { key: "home", visible: true },
       { key: "search", visible: true },
       { key: "history", visible: false },
@@ -59,18 +44,15 @@ describe("resolveSidebarNavItems", () => {
     ]);
   });
 
-  it("yields builtins then plugins, all visible, when nothing is stored", () => {
-    const items = resolveSidebarNavItems({ pluginGroups: [kanban, notes], preferences: [] });
+  it("yields builtins, all visible, when nothing is stored", () => {
+    const items = resolveSidebarNavItems({ preferences: [] });
 
     expect(summarize(items)).toEqual([
       { key: "home", visible: true },
       { key: "search", visible: true },
       { key: "history", visible: true },
       { key: "companion", visible: true },
-      { key: kanbanKey, visible: true },
-      { key: notesKey, visible: true },
     ]);
-    expect(items[4]).toEqual({ kind: "plugin", key: kanbanKey, group: kanban, visible: true });
     expect(items[0]).toEqual({
       kind: "builtin",
       key: "home",
@@ -81,29 +63,24 @@ describe("resolveSidebarNavItems", () => {
 
   it("keeps the stored order and appends newly available items as visible", () => {
     const items = resolveSidebarNavItems({
-      pluginGroups: [notes, kanban],
       preferences: [
-        { key: kanbanKey, visible: false },
         { key: "search", visible: true },
         { key: "home", visible: false },
       ],
     });
 
     expect(summarize(items)).toEqual([
-      { key: kanbanKey, visible: false },
       { key: "search", visible: true },
       { key: "home", visible: false },
       { key: "history", visible: true },
       { key: "companion", visible: true },
-      { key: notesKey, visible: true },
     ]);
   });
 
   it("skips keys that are unknown or not currently available", () => {
     const items = resolveSidebarNavItems({
-      pluginGroups: [],
       preferences: [
-        { key: notesKey, visible: false },
+        { key: staleKey, visible: false },
         { key: "bogus", visible: true },
         { key: "history", visible: true },
       ],
@@ -114,7 +91,6 @@ describe("resolveSidebarNavItems", () => {
 
   it("lets the first of duplicate keys win", () => {
     const items = resolveSidebarNavItems({
-      pluginGroups: [],
       preferences: [
         { key: "history", visible: false },
         { key: "history", visible: true },
@@ -132,7 +108,7 @@ describe("resolveSidebarNavItems", () => {
 
 describe("setSidebarNavItemVisible", () => {
   it("toggles one item and writes the full resolved order", () => {
-    const items = resolveSidebarNavItems({ pluginGroups: [kanban], preferences: [] });
+    const items = resolveSidebarNavItems({ preferences: [] });
 
     const next = setSidebarNavItemVisible({ items, key: "search", visible: false, previous: [] });
 
@@ -141,21 +117,20 @@ describe("setSidebarNavItemVisible", () => {
       { key: "search", visible: false },
       { key: "history", visible: true },
       { key: "companion", visible: true },
-      { key: kanbanKey, visible: true },
     ]);
   });
 
-  it("carries preferences for unavailable plugins through an unrelated edit", () => {
+  it("carries preferences for unavailable keys through an unrelated edit", () => {
     const previous: SidebarNavPreference[] = [
-      { key: notesKey, visible: false },
+      { key: staleKey, visible: false },
       { key: "history", visible: true },
     ];
-    const items = resolveSidebarNavItems({ pluginGroups: [], preferences: previous });
+    const items = resolveSidebarNavItems({ preferences: previous });
 
     const next = setSidebarNavItemVisible({ items, key: "history", visible: false, previous });
 
     expect(next).toEqual([
-      { key: notesKey, visible: false },
+      { key: staleKey, visible: false },
       { key: "home", visible: true },
       { key: "history", visible: false },
       { key: "search", visible: true },
@@ -163,31 +138,28 @@ describe("setSidebarNavItemVisible", () => {
     ]);
   });
 
-  it("keeps an unavailable plugin in its configured position", () => {
+  it("keeps an unavailable key in its configured position", () => {
     const previous: SidebarNavPreference[] = [
       { key: "home", visible: true },
-      { key: notesKey, visible: false },
+      { key: staleKey, visible: false },
       { key: "history", visible: true },
       { key: "search", visible: true },
     ];
-    const items = resolveSidebarNavItems({ pluginGroups: [], preferences: previous });
+    const items = resolveSidebarNavItems({ preferences: previous });
 
     const next = setSidebarNavItemVisible({ items, key: "history", visible: false, previous });
 
     expect(next).toEqual([
       { key: "home", visible: true },
-      { key: notesKey, visible: false },
+      { key: staleKey, visible: false },
       { key: "history", visible: false },
       { key: "search", visible: true },
       { key: "companion", visible: true },
     ]);
-    expect(summarize(resolveSidebarNavItems({ pluginGroups: [notes], preferences: next }))).toEqual(
-      next,
-    );
   });
 
   it("returns the normalized list unchanged for an unknown key", () => {
-    const items = resolveSidebarNavItems({ pluginGroups: [], preferences: [] });
+    const items = resolveSidebarNavItems({ preferences: [] });
 
     const next = setSidebarNavItemVisible({ items, key: "bogus", visible: false, previous: [] });
 
@@ -196,7 +168,7 @@ describe("setSidebarNavItemVisible", () => {
 });
 
 describe("moveSidebarNavItem", () => {
-  const items = resolveSidebarNavItems({ pluginGroups: [kanban], preferences: [] });
+  const items = resolveSidebarNavItems({ preferences: [] });
 
   it("moves an item up", () => {
     const next = moveSidebarNavItem({ items, key: "search", direction: "up", previous: [] });
@@ -206,7 +178,6 @@ describe("moveSidebarNavItem", () => {
       "home",
       "history",
       "companion",
-      kanbanKey,
     ]);
   });
 
@@ -218,7 +189,6 @@ describe("moveSidebarNavItem", () => {
       "history",
       "search",
       "companion",
-      kanbanKey,
     ]);
   });
 
@@ -229,7 +199,7 @@ describe("moveSidebarNavItem", () => {
       direction: "up",
       previous: [],
     });
-    const last = moveSidebarNavItem({ items, key: kanbanKey, direction: "down", previous: [] });
+    const last = moveSidebarNavItem({ items, key: "companion", direction: "down", previous: [] });
 
     expect(first).toEqual(summarize(items));
     expect(last).toEqual(summarize(items));
@@ -243,14 +213,14 @@ describe("moveSidebarNavItem", () => {
 
   it("drops duplicate carried-over keys", () => {
     const previous: SidebarNavPreference[] = [
-      { key: notesKey, visible: false },
-      { key: notesKey, visible: true },
+      { key: staleKey, visible: false },
+      { key: staleKey, visible: true },
     ];
 
     const next = moveSidebarNavItem({ items, key: "history", direction: "up", previous });
 
-    expect(next.filter((preference) => preference.key === notesKey)).toEqual([
-      { key: notesKey, visible: false },
+    expect(next.filter((preference) => preference.key === staleKey)).toEqual([
+      { key: staleKey, visible: false },
     ]);
   });
 });

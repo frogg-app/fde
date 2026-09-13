@@ -12,7 +12,6 @@ const sections = [
   ["desktop-mobile-cli", "Desktop, mobile & CLI"],
   ["self-hosting", "Self-hosting the daemon"],
   ["fork-and-rebrand", "Fork & rebrand"],
-  ["plugins", "Plugins"],
   ["contributing", "Contributing"],
   ["reference", "Reference"],
 ];

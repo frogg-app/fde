@@ -1,6 +1,5 @@
 import { projectImportCopies } from "./project-import";
 import { en, type TranslationResources } from "./en";
-import { pluginSettings } from "./plugin-settings";
 
 export const zhCN: TranslationResources = {
   projectImport: projectImportCopies["zh-CN"],
@@ -2228,10 +2227,8 @@ export const zhCN: TranslationResources = {
       providers: "Providers",
       usage: "使用情况",
       terminals: "Terminals",
-      plugins: "插件",
       host: "概览",
     },
-    plugins: pluginSettings["zh-CN"],
     metadataGeneration: {
       title: "元数据生成",
       description: "选择 {{brandName}} 用于工作区标题、分支名称、提交消息和拉取请求草稿的模型",
@@ -2756,6 +2753,19 @@ export const zhCN: TranslationResources = {
       },
       agents: {
         unavailable: "连接到这个 Host 以管理 Agent",
+      },
+      agentDefinitions: {
+        title: "智能体定义",
+        description: "你的提供方从此主机加载的智能体。FDE 仅列出它们；如需修改请编辑文件。",
+        projectTitle: "项目智能体定义",
+        projectDescription: "你的提供方从此项目目录加载的智能体。",
+        empty: "未找到智能体定义",
+        loadFailed: "无法加载智能体定义",
+        unsupported: "请更新此主机的守护进程以列出智能体定义",
+        open: "在编辑器中打开",
+        copyPath: "复制路径",
+        scopeUser: "用户",
+        scopeProject: "项目",
       },
       workspaces: {
         unavailable: "连接到这个 Host 以管理 Workspace",

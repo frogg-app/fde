@@ -317,4 +317,43 @@ describe("draft-store migration", () => {
     });
     expect(backing.values.has("fde-drafts")).toBe(true);
   });
+  it("drops a plugin resource attachment left from removed plugin support", async () => {
+    const backing = createMemoryStorage();
+    const persistedState = {
+      drafts: {
+        "agent:server:agent": {
+          input: {
+            text: "hello",
+            attachments: [
+              {
+                kind: "plugin_resource",
+                pluginId: "linear",
+                sourceId: "issues",
+                sourceTitle: "Linear issue",
+                sourceIcon: "CircleDot",
+                item: { id: "issue-uuid", title: "Issue", text: "Issue body" },
+              },
+            ],
+          },
+          lifecycle: "active",
+          updatedAt: 1700000000001,
+          version: 2,
+        },
+      },
+      createModalDraft: null,
+    };
+    backing.values.set("fde-drafts", JSON.stringify({ state: persistedState, version: 5 }));
+    const storage = createValidatedPersistStorage(backing, PersistedDraftStoreSchema);
+
+    const stored = await storage.getItem("fde-drafts");
+    const migrated = await migratePersistedState(stored?.state, {
+      migrateLegacyImages: passThroughMigrateLegacyImages,
+      nowMs: 1700000000002,
+    });
+
+    expect(migrated.drafts["agent:server:agent"]?.input).toEqual({
+      text: "hello",
+      attachments: [],
+    });
+  });
 });

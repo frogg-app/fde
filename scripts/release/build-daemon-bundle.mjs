@@ -83,7 +83,6 @@ export const DAEMON_WORKSPACES = [
   "packages/client",
   "packages/relay",
   "packages/highlight",
-  "packages/plugin",
   "packages/server",
   "apps/cli",
 ];

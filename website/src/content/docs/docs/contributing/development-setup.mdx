@@ -44,7 +44,7 @@ Workspaces import each other's built `dist/` output, not sibling `src/` files. n
 order the builds for you. The dependency chain is:
 
 ```
-protocol → client → highlight, plugin, relay → server → cli
+protocol → client → highlight, relay → server → cli
 ```
 
 Use the root scripts. They encode the order.
@@ -53,9 +53,9 @@ Use the root scripts. They encode the order.
 | ------------------------- | -------------------------------------------------------------- |
 | `npm run build:protocol`  | `@fde/protocol`                                                |
 | `npm run build:client`    | `@fde/protocol`, then `@fde/client`                            |
-| `npm run build:server-deps` | client chain, then highlight, plugin and relay in parallel  |
+| `npm run build:server-deps` | client chain, then highlight and relay in parallel          |
 | `npm run build:server`    | server deps, then `@fde/server` and `@fde/cli`                 |
-| `npm run build:app-deps`  | highlight, client, plugin and `@fde/expo-two-way-audio`        |
+| `npm run build:app-deps`  | highlight, client and `@fde/expo-two-way-audio`                |
 | `npm run build:ui`        | Expo web export of `apps/ui` (runs `build:app-deps` first)     |
 | `npm run build:desktop`   | web UI, then the Electron app-only shell                       |
 | `npm run build:daemon-web-ui` | copies the web export into `packages/server/dist/server/web-ui` |

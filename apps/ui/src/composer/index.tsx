@@ -87,11 +87,6 @@ import { useShortcutKeys } from "@/hooks/use-shortcut-keys";
 import { AutocompletePopover } from "@/components/ui/autocomplete-popover";
 import type { AutocompleteOption } from "@/components/ui/autocomplete";
 import { useAgentAutocomplete } from "@/hooks/use-agent-autocomplete";
-import { usePluginClientSlashCommands } from "@/plugins/client-slash-commands";
-import {
-  executePluginClientSlashCommand,
-  resolvePluginClientSlashCommand,
-} from "@/plugins/client-slash-commands/model";
 import {
   useHostRuntimeAgentDirectoryStatus,
   useHostRuntimeClient,
@@ -145,7 +140,6 @@ import { ForgeBrandIcon } from "@/git/forge-icon";
 import { useComposerForgeAutoAttach } from "./forge-auto-attach";
 import { readClipboardImage } from "./clipboard-image";
 import { normalizeNativePastedImages, type NativePastedFile } from "./native-pasted-image";
-import { PluginResourceAttachmentPill, usePluginAttachmentPicker } from "@/plugins";
 import { resolveClientSlashCommand, type ClientSlashCommand } from "@/client-slash-commands";
 import {
   appendWorkspaceFileAttachment,
@@ -473,20 +467,6 @@ function renderComposerAttachmentPill(args: RenderComposerAttachmentPillArgs): R
       onOpen,
       onRemove,
     });
-  }
-  if (attachment.kind === "plugin_resource") {
-    return (
-      <PluginResourceAttachmentPill
-        key={`${attachment.pluginId}:${attachment.sourceId}:${attachment.item.id}`}
-        attachment={attachment}
-        index={index}
-        disabled={disabled}
-        onOpen={onOpen}
-        onRemove={onRemove}
-        openLabel={labels.openGithub}
-        removeLabel={labels.removeGithub}
-      />
-    );
   }
   return (
     <GithubAttachmentPill
@@ -1263,19 +1243,6 @@ function ComposerContentImpl({
   const [lightboxMetadata, setLightboxMetadata] = useState<AttachmentMetadata | null>(null);
   const attachButtonRef = useRef<View | null>(null);
   const messageInputRef = useRef<MessageInputRef>(null);
-  const pluginAttachments = usePluginAttachmentPicker({
-    serverId,
-    client,
-    connected: isConnected,
-    attachments,
-    onChangeAttachments: setSelectedAttachments,
-    anchorRef: attachButtonRef,
-  });
-  const pluginClientSlashCommands = usePluginClientSlashCommands({
-    serverId,
-    workspaceId,
-    agentId,
-  });
   const isComposerLocked = resolveIsComposerLocked(submitBehavior, isSubmitLoading);
   const keyboardHandlerIdRef = useRef(
     `message-input:${serverId}:${agentId}:${Math.random().toString(36).slice(2)}`,
@@ -1327,27 +1294,6 @@ function ComposerContentImpl({
     ],
   );
 
-  const runPluginClientSlashCommand = useCallback(
-    (resolved: { command: (typeof pluginClientSlashCommands)[number]; args: string }): boolean => {
-      if (blurOnSubmit) messageInputRef.current?.blur();
-      clearDraft("sent");
-      replaceUserInput("");
-      setSelectedAttachments([]);
-      resetSuppression();
-      setSendError(null);
-      executePluginClientSlashCommand({
-        command: resolved.command,
-        args: resolved.args,
-        onError(error) {
-          console.error("[Composer] Failed to run plugin client slash command:", error);
-          toastErrorRef.current(error instanceof Error ? error.message : String(error));
-        },
-      });
-      return true;
-    },
-    [blurOnSubmit, clearDraft, replaceUserInput, resetSuppression, setSelectedAttachments],
-  );
-
   const autocomplete = useAgentAutocomplete({
     userInput,
     cursorIndex,
@@ -1357,7 +1303,6 @@ function ComposerContentImpl({
     draftConfig: commandDraftConfig,
     canExecuteClientSlashCommand: buildOutgoingAttachments(attachments).length === 0,
     onClientSlashCommand: runClientSlashCommand,
-    pluginClientSlashCommands,
     onAutocompleteApplied: () => {
       messageInputRef.current?.focus();
     },
@@ -1633,12 +1578,6 @@ function ComposerContentImpl({
       if (clientSlashCommand && runClientSlashCommand(clientSlashCommand)) {
         return;
       }
-      const pluginSlashCommand = resolvePluginClientSlashCommand({
-        text: payload.text,
-        hasAttachments: outgoingAttachments.length > 0,
-        commands: pluginClientSlashCommands,
-      });
-      if (pluginSlashCommand && runPluginClientSlashCommand(pluginSlashCommand)) return;
 
       if (blurOnSubmit) {
         messageInputRef.current?.blur();
@@ -1650,8 +1589,6 @@ function ComposerContentImpl({
       blurOnSubmit,
       buildOutgoingAttachments,
       runClientSlashCommand,
-      pluginClientSlashCommands,
-      runPluginClientSlashCommand,
       sendMessageWithContent,
     ],
   );
@@ -1903,22 +1840,9 @@ function ComposerContentImpl({
       if (clientSlashCommand && runClientSlashCommand(clientSlashCommand)) {
         return;
       }
-      const pluginSlashCommand = resolvePluginClientSlashCommand({
-        text: payload.text,
-        hasAttachments: outgoingAttachments.length > 0,
-        commands: pluginClientSlashCommands,
-      });
-      if (pluginSlashCommand && runPluginClientSlashCommand(pluginSlashCommand)) return;
       queueMessage(payload.text, outgoingAttachments);
     },
-    [
-      attachments,
-      buildOutgoingAttachments,
-      pluginClientSlashCommands,
-      queueMessage,
-      runClientSlashCommand,
-      runPluginClientSlashCommand,
-    ],
+    [attachments, buildOutgoingAttachments, queueMessage, runClientSlashCommand],
   );
 
   const hasSendableContent = userInput.trim().length > 0 || selectedAttachments.length > 0;
@@ -2109,7 +2033,6 @@ function ComposerContentImpl({
           setIsGithubPickerOpen(true);
         },
       },
-      ...pluginAttachments.menuItems,
       {
         id: "file",
         label: t("composer.attachments.addFile"),
@@ -2120,14 +2043,7 @@ function ComposerContentImpl({
       },
     );
     return items;
-  }, [
-    forgePresentation,
-    handlePasteImage,
-    handlePickFile,
-    handlePickImage,
-    pluginAttachments.menuItems,
-    t,
-  ]);
+  }, [forgePresentation, handlePasteImage, handlePickFile, handlePickImage, t]);
 
   const handleToggleGithubItem = useCallback(
     (item: ForgeSearchItem) => {
@@ -2419,7 +2335,6 @@ function ComposerContentImpl({
                 emptyText={githubEmptyText}
                 renderOption={renderGithubPickerOption}
               />
-              {pluginAttachments.picker}
             </View>
           </View>
         </View>

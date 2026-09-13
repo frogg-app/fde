@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Remove the plugin system: the `@fde/plugin` package, the `fde plugin` CLI, plugin
+  RPCs and all plugin UI. Existing plugin folders on disk are left untouched, and a
+  saved plugin theme falls back to auto.
+
 - Check website deployment credentials from the runner workspace before checkout,
   so an unset Cloudflare token skips deployment as intended.
 

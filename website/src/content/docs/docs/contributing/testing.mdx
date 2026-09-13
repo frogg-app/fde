@@ -51,7 +51,7 @@ small machine. Push and let CI run them.
 
 `apps/ui/vitest.config.ts` defines two Vitest projects:
 
-- **unit**: `src/**/*.{test,spec}.{ts,tsx}` and `plugins/**`, in Node, excluding
+- **unit**: `src/**/*.{test,spec}.{ts,tsx}`, in Node, excluding
   `*.browser.*` files. `apps/ui/vitest.setup.ts` stubs a few native-only modules.
 - **browser**: `src/**/*.browser.{test,spec}.{ts,tsx}` in headless Chromium through the
   Playwright provider, one file at a time.
@@ -144,7 +144,7 @@ Runs `node --test` over `scripts/ci/*.test.mjs`, `scripts/dev/*.test.mjs` and
 | Job                   | Steps                                                                              |
 | --------------------- | ---------------------------------------------------------------------------------- |
 | `checks`              | `oxfmt --check .`, `oxlint .`, `npm run test:scripts`, `build:server`, `@fde/expo-two-way-audio` build, `npm run typecheck` |
-| `tests`               | `build:server`, then `npm run test` for protocol, client, highlight, relay and plugin, and `test:unit` for cli |
+| `tests`               | `build:server`, then `npm run test` for protocol, client, highlight and relay, and `test:unit` for cli |
 | `ui-tests` (3 shards) | UI `unit` project                                                                  |
 | `ui-browser-tests`    | Installs Chromium, runs the UI `browser` project                                   |
 | `server-tests` (5 shards) | Server Vitest, excluding `*.e2e.test.ts`                                       |

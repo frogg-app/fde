@@ -395,9 +395,6 @@ function getFallbackTabOptionDescription(
   if (tab.target.kind === "pull_request") {
     return labels.pullRequest;
   }
-  if (tab.target.kind === "plugin") {
-    return tab.target.panelId;
-  }
   return tab.target.path;
 }
 
@@ -1217,7 +1214,7 @@ function useWorkspaceRouteActions(normalizedServerId: string): {
     if (!normalizedServerId) {
       return;
     }
-    router.push(buildSettingsHostSectionRoute(normalizedServerId, "connections") as Href);
+    router.push(buildSettingsHostSectionRoute(normalizedServerId, "host") as Href);
   }, [normalizedServerId, router]);
   const handleDismissMissingWorkspace = useCallback(() => {
     if (router.canGoBack()) {

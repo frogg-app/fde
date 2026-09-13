@@ -23,7 +23,7 @@ one or more daemons to watch and control those agents. Closing a client does not
           |  Daemon (@fde/server, Node)              |
           |  HTTP: /ws  /api/*  /mcp/agents  web UI  |
           |  agents, projects, workspaces, worktrees |
-          |  terminals, schedules, plugins           |
+          |  terminals, schedules                    |
           +---------------------+--------------------+
                                 |
              provider processes (Claude, Codex, ACP agents, ...)
@@ -93,12 +93,11 @@ Protocol rules for adding or changing messages are in
 | `packages/server`            | `@fde/server`             | The daemon                                                     |
 | `packages/relay`             | `@fde/relay`              | Relay transport and E2E encryption                             |
 | `packages/highlight`         | `@fde/highlight`          | Syntax highlighting                                            |
-| `packages/plugin`            | `@fde/plugin`             | Plugin SDK                                                     |
 | `packages/branding`          | `@fde/branding`           | Build-time product identity                                    |
 | `packages/expo-two-way-audio`| `@fde/expo-two-way-audio` | Native module for two-way audio streaming                      |
 
 Other top-level directories: `brands/` (brand manifests, `brands/fde` is official),
-`deploy/` (Docker, Nix, install scripts), `examples/plugins/`, `skills/` (agent skills), and
+`deploy/` (Docker, Nix, install scripts), `skills/` (agent skills), and
 `scripts/dev|ci|release|mobile`.
 
 ### Protocol and client
@@ -130,7 +129,6 @@ The daemon stores state as files under `$FDE_HOME`. It resolves `FDE_HOME` (the 
 | `agent-timelines/`| Agent timeline data                                     |
 | `projects/`       | `projects.json` and `workspaces.json`                   |
 | `worktrees/`      | Worktrees the daemon creates                            |
-| `plugins/`        | Managed plugin sources                                  |
 | `uploads/`        | Uploaded files                                          |
 | `daemon.log`      | Daemon log (rotated)                                    |
 | `runtime/`        | Runtime files such as managed-process state             |
@@ -145,10 +143,3 @@ this endpoint injected so they can use FDE tools: workspaces, agents, permission
 heartbeats. The tools come from a transport-neutral catalog in
 `packages/server/src/server/agent/tools/`; MCP is one adapter over it. The route authenticates
 its own requests rather than using the daemon bearer check.
-
-## Plugins
-
-Plugins are trusted local code. The daemon loads each plugin, runs its server side in a forked child
-process (`packages/server/src/server/plugins/runtime.ts`), and serves its client bundle to the app. Plugin
-code uses `@fde/plugin` to contribute UI surfaces, workspace panels, commands, timeline items,
-themes and plugin RPCs. Working examples live in `examples/plugins/`.

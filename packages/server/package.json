@@ -76,7 +76,6 @@
     "@fde/branding": "0.7.0",
     "@fde/client": "0.7.0",
     "@fde/highlight": "0.7.0",
-    "@fde/plugin": "0.7.0",
     "@fde/protocol": "0.7.0",
     "@fde/relay": "0.7.0",
     "@isaacs/ttlcache": "^2.1.4",
