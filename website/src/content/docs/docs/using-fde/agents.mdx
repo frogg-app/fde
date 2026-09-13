@@ -2,7 +2,7 @@
 title: Agents and the timeline
 description: Start, steer, queue, fork, stop and archive agents; read the timeline; work with subagents and attachments.
 sidebar:
-  order: 2
+  order: 3
 ---
 
 import { Screenshot } from "@/components/docs";
@@ -32,7 +32,8 @@ In a workspace, type in the composer and pick:
 - **Mode**, which decides what runs without asking (see [permissions](/docs/using-fde/permissions/)).
 
 Mention files with `@`, use `/` for provider commands and skills, and attach images or
-files with **+** or drag and drop.
+files with **+** or drag and drop. Each file can be at most 50 MB; larger files are
+rejected with an error before FDE reads them.
 
 From the CLI:
 

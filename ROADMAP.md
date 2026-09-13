@@ -235,6 +235,11 @@ The docs rewrite (2026-09-13) replaced `docs/` with the Astro/Starlight site in
       the old "Enable relay?" choice; since `ebecf014` a daemon without an
       endpoint shows a warning instead. The new Relay endpoint card has no
       screenshot. Use `scripts/docs/capture-screenshots.mjs`.
+- [ ] **0.7.0 docs screenshots.** Import dialog (source choice + preview) and the
+      sidebar draft row are documented without screenshots; add them to
+      `scripts/docs/capture-screenshots.mjs`.
+- [ ] **Unlocalized import copy.** Add Project method labels and import error
+      strings are hardcoded English.
 - [ ] **Custom-brand release run.** No full `release.yml` run for a non-FDE brand
       has happened; the fork-and-rebrand docs say so. Run one and update the docs.
 - [ ] **Docker Hub image is stale.** `froggapp/fde` only has 0.1.x tags (`latest`

@@ -21,6 +21,9 @@ sidebar:
 - CLI: `fde project create /path/to/repo`.
 
 Import existing Claude Code or Codex sessions with **Import session** on the home screen.
+To bring in a whole project with its conversations, from the daemon host or from your
+computer, use **Add project → Import project and conversations**; see
+[Import projects and conversations](/docs/using-fde/import-projects-and-conversations/).
 
 ## Workspaces and worktrees
 
@@ -47,6 +50,19 @@ fde agent run --new-workspace worktree --new-branch fix/flaky-test "Fix the flak
 Worktrees live under `~/.fde/worktrees/<project hash>/<slug>`. Change the root with
 `worktrees.root` in [config](/docs/reference/configuration/#worktrees). If you do not
 name a branch, FDE can generate one from the first prompt.
+
+### Unfinished new-workspace forms
+
+If you leave the new-workspace screen before launching, the sidebar shows a
+**New workspace (draft)** row, with the project name when one is selected. Selecting it
+reopens the form with its project, prompt, attachments, provider and model selections,
+isolation and starting ref.
+
+- A launch in progress stays locked while you navigate elsewhere, so returning to the draft
+  cannot submit it twice.
+- If the launch fails, the draft stays in the sidebar with its error so you can retry.
+- A successful launch removes the draft.
+- The draft rows are kept in memory only. Reloading or restarting the app clears them.
 
 Archiving a workspace removes its FDE-owned worktree once nothing else uses it:
 
