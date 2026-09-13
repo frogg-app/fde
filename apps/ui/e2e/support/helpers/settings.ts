@@ -29,11 +29,8 @@ export type SettingsSection = keyof typeof SECTION_LABELS;
 
 type HostSection =
   | "projects"
-  | "connections"
   | "pair-device"
   | "agents"
-  | "metadata"
-  | "workspaces"
   | "providers"
   | "usage"
   | "terminals"
@@ -51,7 +48,7 @@ export async function openSettingsSection(page: Page, section: SettingsSection):
 export async function openSettingsHost(page: Page): Promise<void> {
   // App settings list no host sections; host settings open from the sidebar Hosts menu.
   await ensureHostSettingsOpen(page, getServerId());
-  await page.getByTestId("settings-host-section-connections").click();
+  await page.getByTestId("settings-host-section-host").click();
   await expectHostSettingsView(page);
   await expect(page.getByTestId("host-page-connections-card")).toBeVisible();
 }
@@ -279,14 +276,14 @@ export async function clickSettingsBackToWorkspace(page: Page): Promise<void> {
  * the Connections row is selected beside the host picker instead.
  */
 export async function expectHostSettingsView(page: Page): Promise<void> {
-  await expectHostSettingsSectionSelected(page, "connections");
+  await expectHostSettingsSectionSelected(page, "host");
   await expect(page.locator('[data-testid^="settings-section-"]:visible')).toHaveCount(0);
   await expect(page.getByTestId("settings-detail-pane")).toBeVisible();
 }
 
 /** Compact layouts keep the full-screen settings routes, so the host URL is still the truth there. */
 export async function expectHostSettingsUrl(page: Page, serverId: string): Promise<void> {
-  await expectAppRoute(page, buildSettingsHostSectionRoute(serverId, "connections"));
+  await expectAppRoute(page, buildSettingsHostSectionRoute(serverId, "host"));
 }
 
 export async function verifyLegacyHostSettingsRedirect(page: Page): Promise<void> {
@@ -298,7 +295,7 @@ export async function verifyLegacyHostSettingsRedirect(page: Page): Promise<void
 export async function openCompactSettingsHost(page: Page): Promise<void> {
   const serverId = getServerId();
   await selectSettingsHost(page, serverId);
-  await page.locator('[data-testid="settings-host-section-connections"]:visible').click();
+  await page.locator('[data-testid="settings-host-section-host"]:visible').click();
   await expectHostSettingsUrl(page, serverId);
 }
 
@@ -470,10 +467,9 @@ export async function expectRetiredSidebarSectionsAbsent(page: Page): Promise<vo
   await expect(sidebar.getByRole("button", { name: "Daemon", exact: true })).toHaveCount(0);
 
   // Host group rows are now flat top-level sections (no drill-in).
-  await expect(sidebar.getByTestId("settings-host-section-connections")).toBeVisible();
+  await expect(sidebar.getByTestId("settings-host-section-host")).toBeVisible();
   await expect(sidebar.getByTestId("settings-host-section-projects")).toBeVisible();
   await expect(sidebar.getByTestId("settings-host-section-agents")).toBeVisible();
-  await expect(sidebar.getByTestId("settings-host-section-workspaces")).toBeVisible();
   await expect(sidebar.getByTestId("settings-host-section-providers")).toBeVisible();
   await expect(sidebar.getByTestId("settings-host-section-usage")).toBeVisible();
   await expect(sidebar.getByTestId("settings-host-section-host")).toBeVisible();

@@ -21,6 +21,8 @@ import type { TerminalProfile } from "@fde/protocol/messages";
 import { getTerminalProfileIcon, DEFAULT_TERMINAL_PROFILES } from "@fde/protocol/terminal-profiles";
 import { AgentProfilesSection } from "@/agent-profiles";
 import { AgentSkillsSection } from "@/agent-skills";
+import { ProviderAgentDefinitionsSection } from "@/agent-definitions";
+import { MetadataGenerationPage } from "@/screens/settings/metadata-generation-page";
 import { AdaptiveModalSheet, type SheetHeader } from "@/components/adaptive-modal-sheet";
 import { SettingsTextAreaCard } from "@/components/settings-textarea";
 import { Alert as InlineAlert } from "@/components/ui/alert";
@@ -96,8 +98,12 @@ function DynamicProviderIcon({ iconKey, size, color = "" }: DynamicProviderIconP
 
 const ThemedDynamicProviderIcon = withUnistyles(DynamicProviderIcon);
 
-const mutedColorMapping = (theme: Theme) => ({ color: theme.colors.foregroundMuted });
-const destructiveColorMapping = (theme: Theme) => ({ color: theme.colors.destructive });
+const mutedColorMapping = (theme: Theme) => ({
+  color: theme.colors.foregroundMuted,
+});
+const destructiveColorMapping = (theme: Theme) => ({
+  color: theme.colors.destructive,
+});
 
 const moveUpIcon = <ThemedArrowUp size={ICON_SIZE.sm} uniProps={mutedColorMapping} />;
 const moveDownIcon = <ThemedArrowDown size={ICON_SIZE.sm} uniProps={mutedColorMapping} />;
@@ -238,22 +244,6 @@ function HostConnectionError({ serverId }: { serverId: string }) {
   return <Text style={styles.errorText}>{connectionError}</Text>;
 }
 
-export function HostConnectionsPage({ serverId }: { serverId: string }) {
-  const host = useHostProfile(serverId);
-
-  if (!host) {
-    return <HostNotFound />;
-  }
-
-  return (
-    <View>
-      <HostConnectionError serverId={serverId} />
-      <DaemonConflictWarning serverId={serverId} />
-      <ConnectionsSection host={host} />
-    </View>
-  );
-}
-
 export function HostPairDevicePage({ serverId }: { serverId: string }) {
   const { t } = useTranslation();
   const host = useHostProfile(serverId);
@@ -280,6 +270,7 @@ export function HostAgentsPage({ serverId }: { serverId: string }) {
 
   return (
     <View>
+      <ProviderAgentDefinitionsSection serverId={serverId} />
       {isConnected ? (
         <SettingsSection title={t("settings.hostSections.agents")}>
           <InjectFdeToolsCard serverId={serverId} />
@@ -293,30 +284,6 @@ export function HostAgentsPage({ serverId }: { serverId: string }) {
       )}
       <AgentSkillsSection serverId={serverId} />
       <AgentProfilesSection serverId={serverId} />
-    </View>
-  );
-}
-
-export function HostWorkspacesPage({ serverId }: { serverId: string }) {
-  const { t } = useTranslation();
-  const host = useHostProfile(serverId);
-  const isConnected = useHostRuntimeIsConnected(serverId);
-
-  if (!host) {
-    return <HostNotFound />;
-  }
-
-  return (
-    <View>
-      {isConnected ? (
-        <SettingsSection title={t("settings.hostSections.workspaces")}>
-          <AutoArchiveMergedWorkspacesCard serverId={serverId} />
-        </SettingsSection>
-      ) : (
-        <View style={[settingsStyles.card, styles.emptyCard]}>
-          <Text style={styles.emptyText}>{t("settings.host.workspaces.unavailable")}</Text>
-        </View>
-      )}
     </View>
   );
 }
@@ -360,8 +327,10 @@ export function HostSettingsPage({
   serverId: string;
   onHostRemoved?: () => void;
 }) {
+  const { t } = useTranslation();
   const host = useHostProfile(serverId);
   const isLocalDaemon = useIsLocalDaemon(serverId);
+  const isConnected = useHostRuntimeIsConnected(serverId);
 
   if (!host) {
     return <HostNotFound />;
@@ -387,6 +356,18 @@ export function HostSettingsPage({
       <HostDaemonUpdateSection key={`self-update-${host.serverId}`} host={host} />
 
       {!isLocalDaemon ? <HostSshDeploySection key={`deploy-${host.serverId}`} host={host} /> : null}
+
+      <HostConnectionError serverId={serverId} />
+      <DaemonConflictWarning serverId={serverId} />
+      <ConnectionsSection host={host} />
+
+      {isConnected ? (
+        <SettingsSection title={t("settings.hostSections.workspaces")}>
+          <AutoArchiveMergedWorkspacesCard serverId={serverId} />
+        </SettingsSection>
+      ) : null}
+
+      {isConnected ? <MetadataGenerationPage serverId={serverId} /> : null}
 
       <RemoveHostSection host={host} isLocalDaemon={isLocalDaemon} onRemoved={onHostRemoved} />
     </View>
@@ -646,7 +627,9 @@ function RestartDaemonCard({ host }: { host: HostProfile }) {
         if (!reconnected) {
           Alert.alert(
             t("settings.host.daemon.restart.unableToReconnectTitle"),
-            t("settings.host.daemon.restart.unableToReconnectMessage", { name: host.label }),
+            t("settings.host.daemon.restart.unableToReconnectMessage", {
+              name: host.label,
+            }),
           );
         }
       }
@@ -671,7 +654,9 @@ function RestartDaemonCard({ host }: { host: HostProfile }) {
     }
 
     void confirmDialog({
-      title: t("settings.host.daemon.restart.confirmTitle", { name: host.label }),
+      title: t("settings.host.daemon.restart.confirmTitle", {
+        name: host.label,
+      }),
       message: t("settings.host.daemon.restart.confirmMessage"),
       confirmLabel: t("settings.host.daemon.restart.confirm"),
       cancelLabel: t("common.actions.cancel"),
@@ -743,7 +728,9 @@ function UpdateDaemonCard({ host }: { host: HostProfile }) {
   const daemonClient = useHostRuntimeClient(host.serverId);
   const isConnected = useHostRuntimeIsConnected(host.serverId);
   const runtime = getHostRuntimeStore();
-  const [updateState, setUpdateState] = useState<DaemonUpdateState>({ status: "idle" });
+  const [updateState, setUpdateState] = useState<DaemonUpdateState>({
+    status: "idle",
+  });
   const isMountedRef = useRef(true);
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
@@ -839,7 +826,9 @@ function UpdateDaemonCard({ host }: { host: HostProfile }) {
     }
 
     void confirmDialog({
-      title: t("settings.host.daemon.update.confirmTitle", { name: host.label }),
+      title: t("settings.host.daemon.update.confirmTitle", {
+        name: host.label,
+      }),
       message: t("settings.host.daemon.update.confirmMessage"),
       confirmLabel: t("settings.host.daemon.update.confirm"),
       cancelLabel: t("common.actions.cancel"),
@@ -1400,7 +1389,9 @@ function RemoveHostSection({
           <Text style={styles.confirmText}>
             {isLocalDaemon
               ? t("settings.host.daemon.remove.localConfirmMessage")
-              : t("settings.host.daemon.remove.confirmMessage", { name: host.label })}
+              : t("settings.host.daemon.remove.confirmMessage", {
+                  name: host.label,
+                })}
           </Text>
           <View style={styles.confirmActions}>
             <Button

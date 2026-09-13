@@ -55,17 +55,14 @@ import {
   type SupportedLocale,
 } from "@/i18n/locales";
 import {
-  HostConnectionsPage,
   HostPairDevicePage,
   HostAgentsPage,
   HostSettingsPage,
   HostProvidersPage,
   HostUsagePage,
-  HostWorkspacesPage,
   HostTerminalsPage,
 } from "@/screens/settings/host-page";
 import { HostPluginsPage } from "@/screens/settings/plugins-page";
-import { MetadataGenerationPage } from "@/screens/settings/metadata-generation-page";
 import ProjectsScreen from "@/screens/projects-screen";
 import ProjectSettingsScreen from "@/screens/project-settings-screen";
 import { useIsCompactFormFactor } from "@/constants/layout";
@@ -94,16 +91,10 @@ function renderHostSettingsContent(
   switch (view.section) {
     case "projects":
       return <ProjectsScreen serverId={view.serverId} />;
-    case "connections":
-      return <HostConnectionsPage serverId={view.serverId} />;
     case "pair-device":
       return <HostPairDevicePage serverId={view.serverId} />;
     case "agents":
       return <HostAgentsPage serverId={view.serverId} />;
-    case "metadata":
-      return <MetadataGenerationPage serverId={view.serverId} />;
-    case "workspaces":
-      return <HostWorkspacesPage serverId={view.serverId} />;
     case "providers":
       return <HostProvidersPage serverId={view.serverId} />;
     case "usage":
@@ -606,7 +597,7 @@ export default function SettingsScreen({ view, openAddHostIntent = null }: Setti
   }, []);
 
   const handleHostAdded = useCallback(({ serverId }: { serverId: string }) => {
-    navigateSettings({ kind: "host", serverId, section: "connections" });
+    navigateSettings({ kind: "host", serverId, section: "host" });
   }, []);
 
   const handleSelectSection = useCallback((section: SettingsSectionSlug) => {

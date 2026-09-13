@@ -288,7 +288,7 @@ test.describe("Settings — compact master-detail", () => {
     await expectSettingsSidebarVisible(page);
     await expectHostSettingsTitle(page, secondaryHostLabel);
 
-    await openSettingsHostSection(page, secondaryServerId, "connections");
+    await openSettingsHostSection(page, secondaryServerId, "host");
   });
 
   test("removing the last active host returns to welcome after settings closes", async ({

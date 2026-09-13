@@ -2776,6 +2776,20 @@ export const ar: TranslationResources = {
       agents: {
         unavailable: "Connect to this host to manage agents",
       },
+      agentDefinitions: {
+        title: "تعريفات الوكلاء",
+        description:
+          "الوكلاء الذين يحمّلهم مزوّدوك من هذا المضيف. يكتفي FDE بعرضهم؛ عدّل الملفات لتغييرهم.",
+        projectTitle: "تعريفات وكلاء المشروع",
+        projectDescription: "الوكلاء الذين يحمّلهم مزوّدوك من مجلد هذا المشروع.",
+        empty: "لم يتم العثور على تعريفات وكلاء",
+        loadFailed: "تعذّر تحميل تعريفات الوكلاء",
+        unsupported: "حدّث البرنامج الخفي لهذا المضيف لعرض تعريفات الوكلاء",
+        open: "فتح في المحرر",
+        copyPath: "نسخ المسار",
+        scopeUser: "المستخدم",
+        scopeProject: "المشروع",
+      },
       workspaces: {
         unavailable: "Connect to this host to manage workspaces",
       },

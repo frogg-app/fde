@@ -3,7 +3,6 @@ import {
   Settings,
   Palette,
   Server,
-  Network,
   Bot,
   Boxes,
   Gauge,
@@ -17,7 +16,6 @@ import {
   SquareTerminal,
   Code2,
   Smartphone,
-  Sparkles,
   Blocks,
   PanelsTopLeft,
 } from "lucide-react-native";
@@ -79,11 +77,8 @@ export interface HostSectionItem {
 export const HOST_SECTION_ITEMS: HostSectionItem[] = [
   { id: "host", labelKey: "settings.hostSections.host", icon: Server },
   { id: "projects", labelKey: "settings.hostSections.projects", icon: FolderGit2 },
-  { id: "connections", labelKey: "settings.hostSections.connections", icon: Network },
   { id: "pair-device", labelKey: "openProject.tiles.pairDevice.title", icon: Smartphone },
   { id: "agents", labelKey: "settings.hostSections.agents", icon: Bot },
-  { id: "metadata", labelKey: "settings.hostSections.metadata", icon: Sparkles },
-  { id: "workspaces", labelKey: "settings.hostSections.workspaces", icon: FolderGit2 },
   { id: "providers", labelKey: "settings.hostSections.providers", icon: Boxes },
   { id: "usage", labelKey: "settings.hostSections.usage", icon: Gauge },
   { id: "terminals", labelKey: "settings.hostSections.terminals", icon: SquareTerminal },

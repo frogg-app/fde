@@ -1217,7 +1217,7 @@ function useWorkspaceRouteActions(normalizedServerId: string): {
     if (!normalizedServerId) {
       return;
     }
-    router.push(buildSettingsHostSectionRoute(normalizedServerId, "connections") as Href);
+    router.push(buildSettingsHostSectionRoute(normalizedServerId, "host") as Href);
   }, [normalizedServerId, router]);
   const handleDismissMissingWorkspace = useCallback(() => {
     if (router.canGoBack()) {

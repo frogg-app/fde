@@ -414,6 +414,8 @@ pub enum SessionMessage {
     ProjectIconRequest(ProjectIconRequest),
     #[serde(rename = "project.icon.get.request")]
     ProjectIconGetRequest(ProjectIconGetRequest),
+    #[serde(rename = "agent.provider_definitions.list.request")]
+    AgentProviderDefinitionsListRequest(AgentProviderDefinitionsListRequest),
     #[serde(rename = "file_download_token_request")]
     FileDownloadTokenRequest(FileDownloadTokenRequest),
     #[serde(rename = "file.upload.request")]
@@ -3055,6 +3057,14 @@ pub struct ProjectIconRequest {
 pub struct ProjectIconGetRequest {
     #[serde(rename = "projectId")]
     pub project_id: String,
+    #[serde(rename = "requestId")]
+    pub request_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AgentProviderDefinitionsListRequest {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cwd: Option<String>,
     #[serde(rename = "requestId")]
     pub request_id: String,
 }

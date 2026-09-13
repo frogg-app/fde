@@ -2886,6 +2886,20 @@ export const en = {
       agents: {
         unavailable: "Connect to this host to manage agents",
       },
+      agentDefinitions: {
+        title: "Agent definitions",
+        description:
+          "Agents your providers load from this host. FDE only lists them; edit the files to change them.",
+        projectTitle: "Project agent definitions",
+        projectDescription: "Agents your providers load from this project's directory.",
+        empty: "No agent definitions found",
+        loadFailed: "Couldn't load agent definitions",
+        unsupported: "Update this host's daemon to list agent definitions",
+        open: "Open in editor",
+        copyPath: "Copy path",
+        scopeUser: "User",
+        scopeProject: "Project",
+      },
       workspaces: {
         unavailable: "Connect to this host to manage workspaces",
       },

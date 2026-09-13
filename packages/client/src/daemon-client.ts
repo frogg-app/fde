@@ -578,6 +578,11 @@ export type AgentTimelinePromptIndexPayload = Extract<
   { type: "agent.timeline.list_prompts.response" }
 >["payload"];
 
+export type ProviderAgentDefinitionsListPayload = Extract<
+  SessionOutboundMessage,
+  { type: "agent.provider_definitions.list.response" }
+>["payload"];
+
 export type ProviderSubagentListPayload = Extract<
   SessionOutboundMessage,
   { type: "agent.provider_subagents.list.response" }
@@ -1108,7 +1113,11 @@ export class DaemonClient {
     string,
     {
       cwd: string;
-      compare: { mode: "uncommitted" | "base"; baseRef?: string; ignoreWhitespace?: boolean };
+      compare: {
+        mode: "uncommitted" | "base";
+        baseRef?: string;
+        ignoreWhitespace?: boolean;
+      };
     }
   >();
   private terminalDirectorySubscriptions = new Map<string, { cwd: string; workspaceId?: string }>();
@@ -1589,7 +1598,10 @@ export class DaemonClient {
     }
     const payload = SessionInboundMessageSchema.parse(message);
     try {
-      this.sendJsonMessage("session", payload.type, { type: "session", message: payload });
+      this.sendJsonMessage("session", payload.type, {
+        type: "session",
+        message: payload,
+      });
     } catch (error) {
       if (this.config.suppressSendErrors) {
         return;
@@ -1631,7 +1643,10 @@ export class DaemonClient {
     // If connected, send immediately
     if (this.transport && status === "connected") {
       const payload = SessionInboundMessageSchema.parse(message);
-      this.sendJsonMessage("session", payload.type, { type: "session", message: payload });
+      this.sendJsonMessage("session", payload.type, {
+        type: "session",
+        message: payload,
+      });
       return Promise.resolve();
     }
 
@@ -1667,7 +1682,10 @@ export class DaemonClient {
       try {
         if (this.transport && this.connectionState.status === "connected") {
           const payload = SessionInboundMessageSchema.parse(pending.message);
-          this.sendJsonMessage("session", payload.type, { type: "session", message: payload });
+          this.sendJsonMessage("session", payload.type, {
+            type: "session",
+            message: payload,
+          });
           pending.resolve();
         } else {
           pending.reject(new Error("Connection lost before message could be sent"));
@@ -1801,10 +1819,9 @@ export class DaemonClient {
     TResult = CorrelatedResponsePayload<TResponseType>,
   >(params: {
     requestId?: string;
-    message: { type: Extract<SessionInboundMessage["type"], `${string}.request`> } & Record<
-      string,
-      unknown
-    >;
+    message: {
+      type: Extract<SessionInboundMessage["type"], `${string}.request`>;
+    } & Record<string, unknown>;
     timeout?: number;
     selectPayload?: (payload: CorrelatedResponsePayload<TResponseType>) => TResult | null;
   }): Promise<TResult> {
@@ -1821,7 +1838,10 @@ export class DaemonClient {
     }
     const payload = SessionInboundMessageSchema.parse(message);
     try {
-      this.sendJsonMessage("session", payload.type, { type: "session", message: payload });
+      this.sendJsonMessage("session", payload.type, {
+        type: "session",
+        message: payload,
+      });
     } catch (error) {
       throw error instanceof Error ? error : new Error(String(error));
     }
@@ -1961,7 +1981,10 @@ export class DaemonClient {
 
   measureLatency(params?: { timeoutMs?: number }): Promise<number> {
     const timeoutMs = Math.max(1, params?.timeoutMs ?? DEFAULT_LIVENESS_TIMEOUT_MS);
-    return this.sendPingAwaitRtt({ timeoutMs, drivesLivenessFailure: false }).catch((error) => {
+    return this.sendPingAwaitRtt({
+      timeoutMs,
+      drivesLivenessFailure: false,
+    }).catch((error) => {
       throw toTimeoutError(error, "Latency measurement", timeoutMs);
     });
   }
@@ -1969,7 +1992,10 @@ export class DaemonClient {
   private async livenessPing(params?: { timeoutMs?: number }): Promise<number> {
     const timeoutMs = Math.max(1, params?.timeoutMs ?? DEFAULT_LIVENESS_TIMEOUT_MS);
     try {
-      const rttMs = await this.sendPingAwaitRtt({ timeoutMs, drivesLivenessFailure: true });
+      const rttMs = await this.sendPingAwaitRtt({
+        timeoutMs,
+        drivesLivenessFailure: true,
+      });
       this.lastLivenessRttMs = rttMs;
       return rttMs;
     } catch (error) {
@@ -2323,7 +2349,11 @@ export class DaemonClient {
   }
 
   async cloneGithubProject(
-    input: { repo: string; targetDirectory: string; cloneProtocol?: ProjectGithubCloneProtocol },
+    input: {
+      repo: string;
+      targetDirectory: string;
+      cloneProtocol?: ProjectGithubCloneProtocol;
+    },
     requestId?: string,
   ): Promise<ProjectGithubClonePayload> {
     const message = {
@@ -2379,7 +2409,11 @@ export class DaemonClient {
   > {
     return this.sendCorrelatedSessionRequest({
       requestId,
-      message: { type: "workspace.script.start.request", workspaceId, scriptName },
+      message: {
+        type: "workspace.script.start.request",
+        workspaceId,
+        scriptName,
+      },
       responseType: "workspace.script.start.response",
     });
   }
@@ -2393,7 +2427,11 @@ export class DaemonClient {
   > {
     return this.sendCorrelatedSessionRequest({
       requestId,
-      message: { type: "workspace.script.stop.request", workspaceId, scriptName },
+      message: {
+        type: "workspace.script.stop.request",
+        workspaceId,
+        scriptName,
+      },
       responseType: "workspace.script.stop.response",
     });
   }
@@ -2819,7 +2857,10 @@ export class DaemonClient {
       type: "import_agent_request",
       requestId,
       ...("providerId" in input
-        ? { providerId: input.providerId, providerHandleId: input.providerHandleId }
+        ? {
+            providerId: input.providerId,
+            providerHandleId: input.providerHandleId,
+          }
         : { provider: input.provider, sessionId: input.sessionId }),
       ...(input.cwd ? { cwd: input.cwd } : {}),
       ...(input.workspaceId ? { workspaceId: input.workspaceId } : {}),
@@ -2925,7 +2966,12 @@ export class DaemonClient {
     const requestId = this.createRequestId();
     const payload = await this.sendCorrelatedSessionRequest({
       requestId,
-      message: { type: "agent.timeline.append.request", requestId, agentId, item },
+      message: {
+        type: "agent.timeline.append.request",
+        requestId,
+        agentId,
+        item,
+      },
       responseType: "agent.timeline.append.response",
     });
     return { seq: payload.seq, epoch: payload.epoch };
@@ -3451,7 +3497,12 @@ export class DaemonClient {
   }
 
   async sendVoiceAudioChunk(audio: string, format: string, isLast = false): Promise<void> {
-    this.sendSessionMessage({ type: "voice_audio_chunk", audio, format, isLast });
+    this.sendSessionMessage({
+      type: "voice_audio_chunk",
+      audio,
+      format,
+      isLast,
+    });
   }
 
   async startDictationStream(dictationId: string, format: string): Promise<void> {
@@ -3492,7 +3543,11 @@ export class DaemonClient {
 
     const cleanupError = new Error("Cancelled dictation start waiter");
     try {
-      this.sendSessionMessageStrict({ type: "dictation_stream_start", dictationId, format });
+      this.sendSessionMessageStrict({
+        type: "dictation_stream_start",
+        dictationId,
+        format,
+      });
       await Promise.race([ackPromise, errorPromise]);
     } finally {
       ack.cancel(cleanupError);
@@ -3628,7 +3683,11 @@ export class DaemonClient {
 
     const cleanupError = new Error("Cancelled dictation finish waiter");
     try {
-      this.sendSessionMessageStrict({ type: "dictation_stream_finish", dictationId, finalSeq });
+      this.sendSessionMessageStrict({
+        type: "dictation_stream_finish",
+        dictationId,
+        finalSeq,
+      });
       const firstOutcome = await Promise.race([
         finalOutcomePromise,
         errorOutcomePromise,
@@ -3660,7 +3719,10 @@ export class DaemonClient {
   }
 
   cancelDictationStream(dictationId: string): void {
-    this.sendSessionMessageStrict({ type: "dictation_stream_cancel", dictationId });
+    this.sendSessionMessageStrict({
+      type: "dictation_stream_cancel",
+      dictationId,
+    });
   }
 
   async abortRequest(): Promise<void> {
@@ -3685,7 +3747,12 @@ export class DaemonClient {
     const requestId = this.createRequestId();
     return this.sendRequest({
       requestId,
-      message: { type: "companion.session.start.request", requestId, voiceTransport, conversation },
+      message: {
+        type: "companion.session.start.request",
+        requestId,
+        voiceTransport,
+        conversation,
+      },
       select: (msg) => {
         if (msg.type !== "companion.session.start.response") return null;
         if (msg.payload.requestId !== requestId) return null;
@@ -3708,7 +3775,12 @@ export class DaemonClient {
   }
 
   async sendCompanionAudioChunk(audio: string, format: string, isLast = false): Promise<void> {
-    this.sendSessionMessage({ type: "companion.audio.chunk", audio, format, isLast });
+    this.sendSessionMessage({
+      type: "companion.audio.chunk",
+      audio,
+      format,
+      isLast,
+    });
   }
 
   async companionAudioPlayed(id: string): Promise<void> {
@@ -3726,7 +3798,9 @@ export class DaemonClient {
       },
     });
     if (!response.accepted) {
-      throw new CompanionMessageRejectedError({ reasonCode: response.reasonCode });
+      throw new CompanionMessageRejectedError({
+        reasonCode: response.reasonCode,
+      });
     }
   }
 
@@ -3801,7 +3875,11 @@ export class DaemonClient {
     mode: "uncommitted" | "base";
     baseRef?: string;
     ignoreWhitespace?: boolean;
-  }): { mode: "uncommitted" | "base"; baseRef?: string; ignoreWhitespace?: boolean } {
+  }): {
+    mode: "uncommitted" | "base";
+    baseRef?: string;
+    ignoreWhitespace?: boolean;
+  } {
     if (compare.mode === "uncommitted") {
       return compare.ignoreWhitespace === true
         ? { mode: "uncommitted", ignoreWhitespace: true }
@@ -3820,7 +3898,11 @@ export class DaemonClient {
 
   async getCheckoutDiff(
     cwd: string,
-    compare: { mode: "uncommitted" | "base"; baseRef?: string; ignoreWhitespace?: boolean },
+    compare: {
+      mode: "uncommitted" | "base";
+      baseRef?: string;
+      ignoreWhitespace?: boolean;
+    },
     requestId?: string,
   ): Promise<CheckoutDiffPayload> {
     const oneShotSubscriptionId = `oneshot-checkout-diff:${crypto.randomUUID()}`;
@@ -3847,7 +3929,11 @@ export class DaemonClient {
 
   async subscribeCheckoutDiff(
     cwd: string,
-    compare: { mode: "uncommitted" | "base"; baseRef?: string; ignoreWhitespace?: boolean },
+    compare: {
+      mode: "uncommitted" | "base";
+      baseRef?: string;
+      ignoreWhitespace?: boolean;
+    },
     options?: { subscriptionId?: string; requestId?: string },
   ): Promise<SubscribeCheckoutDiffPayload> {
     const subscriptionId = options?.subscriptionId ?? crypto.randomUUID();
@@ -3917,7 +4003,11 @@ export class DaemonClient {
 
   async checkoutMerge(
     cwd: string,
-    input: { baseRef?: string; strategy?: "merge" | "squash"; requireCleanTarget?: boolean },
+    input: {
+      baseRef?: string;
+      strategy?: "merge" | "squash";
+      requireCleanTarget?: boolean;
+    },
     requestId?: string,
   ): Promise<CheckoutMergePayload> {
     return this.sendCorrelatedSessionRequest({
@@ -4157,7 +4247,12 @@ export class DaemonClient {
   }
 
   async pullRequestTimeline(
-    input: { cwd: string; prNumber: number; repoOwner: string; repoName: string },
+    input: {
+      cwd: string;
+      prNumber: number;
+      repoOwner: string;
+      repoName: string;
+    },
     requestId?: string,
   ): Promise<PullRequestTimelinePayload> {
     return this.sendCorrelatedSessionRequest({
@@ -4361,7 +4456,12 @@ export class DaemonClient {
   }
 
   async searchForge(
-    options: { cwd: string; query: string; limit?: number; kinds?: ForgeSearchRequest["kinds"] },
+    options: {
+      cwd: string;
+      query: string;
+      limit?: number;
+      kinds?: ForgeSearchRequest["kinds"];
+    },
     requestId?: string,
   ): Promise<ForgeSearchPayload> {
     return this.sendCorrelatedSessionRequest({
@@ -4379,7 +4479,12 @@ export class DaemonClient {
   }
 
   async searchGitHub(
-    options: { cwd: string; query: string; limit?: number; kinds?: GitHubSearchRequest["kinds"] },
+    options: {
+      cwd: string;
+      query: string;
+      limit?: number;
+      kinds?: GitHubSearchRequest["kinds"];
+    },
     requestId?: string,
   ): Promise<GitHubSearchPayload> {
     return this.sendCorrelatedSessionRequest({
@@ -4594,7 +4699,11 @@ export class DaemonClient {
     input: { paths: string[] },
   ): Promise<CorrelatedResponsePayload<"checkout.discard_changes.response">> {
     return this.sendNamespacedCorrelatedSessionRequest<"checkout.discard_changes.response">({
-      message: { type: "checkout.discard_changes.request", cwd, paths: input.paths },
+      message: {
+        type: "checkout.discard_changes.request",
+        cwd,
+        paths: input.paths,
+      },
     });
   }
 
@@ -4681,6 +4790,20 @@ export class DaemonClient {
         cwd,
       },
       responseType: "project_icon_response",
+    });
+  }
+
+  /** Agent definitions providers load from disk: user-level, or project-level when `cwd` is set. */
+  async listProviderAgentDefinitions(
+    options: { cwd?: string } = {},
+    requestId?: string,
+  ): Promise<ProviderAgentDefinitionsListPayload> {
+    return this.sendNamespacedCorrelatedSessionRequest<"agent.provider_definitions.list.response">({
+      requestId,
+      message: {
+        type: "agent.provider_definitions.list.request",
+        ...(options.cwd ? { cwd: options.cwd } : {}),
+      },
     });
   }
 
@@ -4822,7 +4945,11 @@ export class DaemonClient {
   }
 
   async startDaemonUpdate(
-    options: { version?: string; channel?: DaemonUpdateChannel; requestId?: string } = {},
+    options: {
+      version?: string;
+      channel?: DaemonUpdateChannel;
+      requestId?: string;
+    } = {},
   ): Promise<DaemonUpdateStartResponse["payload"]> {
     this.requireDaemonUpdateRunsSupport();
     return this.sendNamespacedCorrelatedSessionRequest({
@@ -4855,7 +4982,12 @@ export class DaemonClient {
     this.requireHubRelationshipSupport();
     return this.sendCorrelatedSessionRequest({
       requestId,
-      message: { type: "hub.management.daemon.connect.request", hubUrl, token, permissions },
+      message: {
+        type: "hub.management.daemon.connect.request",
+        hubUrl,
+        token,
+        permissions,
+      },
       responseType: "hub.management.daemon.connect.response",
     });
   }
@@ -5127,7 +5259,12 @@ export class DaemonClient {
     const requestId = this.createRequestId();
     const payload = await this.sendCorrelatedSessionRequest({
       requestId,
-      message: { type: "plugin.directory.install.request", requestId, path, ...(id ? { id } : {}) },
+      message: {
+        type: "plugin.directory.install.request",
+        requestId,
+        path,
+        ...(id ? { id } : {}),
+      },
       responseType: "plugin.directory.install.response",
     });
     return payload.plugin;
@@ -6108,7 +6245,10 @@ export class DaemonClient {
   }
 
   setReconnectEnabled(enabled: boolean): void {
-    this.config = { ...this.config, reconnect: { ...this.config.reconnect, enabled } };
+    this.config = {
+      ...this.config,
+      reconnect: { ...this.config.reconnect, enabled },
+    };
   }
 
   private scheduleReconnect(input?: {

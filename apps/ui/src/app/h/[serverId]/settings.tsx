@@ -6,9 +6,7 @@ export default function LegacyHostSettingsRoute() {
   const params = useLocalSearchParams<{ serverId?: string }>();
   const serverId = typeof params.serverId === "string" ? params.serverId.trim() : "";
   const href =
-    serverId.length > 0
-      ? buildSettingsHostSectionRoute(serverId, "connections")
-      : buildSettingsRoute();
+    serverId.length > 0 ? buildSettingsHostSectionRoute(serverId, "host") : buildSettingsRoute();
 
   return (
     <HostRouteBootstrapBoundary>

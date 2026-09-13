@@ -374,6 +374,8 @@ pub enum SessionMessage {
     ProjectIconResponse(ProjectIconResponse),
     #[serde(rename = "project.icon.get.response")]
     ProjectIconGetResponse(ProjectIconGetResponse),
+    #[serde(rename = "agent.provider_definitions.list.response")]
+    AgentProviderDefinitionsListResponse(AgentProviderDefinitionsListResponse),
     #[serde(rename = "file_download_token_response")]
     FileDownloadTokenResponse(FileDownloadTokenResponse),
     #[serde(rename = "file.upload.response")]
@@ -9069,6 +9071,40 @@ pub struct ProjectIconGetResponsePayload {
     pub error: Option<String>,
     #[serde(rename = "requestId")]
     pub request_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AgentProviderDefinitionsListResponse {
+    pub payload: AgentProviderDefinitionsListResponsePayload,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AgentProviderDefinitionsListResponsePayload {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cwd: Option<String>,
+    pub definitions: Vec<AgentProviderDefinitionsListResponsePayloadDefinitionsItem>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+    #[serde(rename = "requestId")]
+    pub request_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AgentProviderDefinitionsListResponsePayloadDefinitionsItem {
+    pub provider: String,
+    pub scope: AgentProviderDefinitionsListResponsePayloadDefinitionsItemScope,
+    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    pub path: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum AgentProviderDefinitionsListResponsePayloadDefinitionsItemScope {
+    #[serde(rename = "user")]
+    User,
+    #[serde(rename = "project")]
+    Project,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

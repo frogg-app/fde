@@ -2795,6 +2795,20 @@ export const ko: TranslationResources = {
       agents: {
         unavailable: "에이전트를 관리하려면 이 호스트에 연결하세요",
       },
+      agentDefinitions: {
+        title: "에이전트 정의",
+        description:
+          "공급자가 이 호스트에서 불러오는 에이전트입니다. FDE는 목록만 표시하며, 변경하려면 파일을 편집하세요.",
+        projectTitle: "프로젝트 에이전트 정의",
+        projectDescription: "공급자가 이 프로젝트 디렉터리에서 불러오는 에이전트입니다.",
+        empty: "에이전트 정의를 찾을 수 없습니다",
+        loadFailed: "에이전트 정의를 불러오지 못했습니다",
+        unsupported: "에이전트 정의를 보려면 이 호스트의 데몬을 업데이트하세요",
+        open: "편집기에서 열기",
+        copyPath: "경로 복사",
+        scopeUser: "사용자",
+        scopeProject: "프로젝트",
+      },
       workspaces: {
         unavailable: "워크스페이스를 관리하려면 이 호스트에 연결하세요",
       },

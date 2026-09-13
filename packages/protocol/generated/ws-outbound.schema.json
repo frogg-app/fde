@@ -43450,6 +43450,85 @@
               "properties": {
                 "type": {
                   "type": "string",
+                  "const": "agent.provider_definitions.list.response"
+                },
+                "payload": {
+                  "type": "object",
+                  "properties": {
+                    "cwd": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "definitions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "provider": {
+                            "type": "string"
+                          },
+                          "scope": {
+                            "type": "string",
+                            "enum": [
+                              "user",
+                              "project"
+                            ]
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "path": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "provider",
+                          "scope",
+                          "name",
+                          "description",
+                          "path"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "error": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "cwd",
+                    "definitions",
+                    "error",
+                    "requestId"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "type",
+                "payload"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
                   "const": "file_download_token_response"
                 },
                 "payload": {

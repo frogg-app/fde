@@ -2,19 +2,15 @@ import { expect, test, type Page } from "../support/fixtures";
 import { gotoAppShell, openSettings } from "../support/helpers/app";
 import { getServerId } from "../support/helpers/server-id";
 import { connectNewWorkspaceDaemonClient } from "../support/helpers/new-workspace";
-import {
-  expectSettingsHeader,
-  openHostSection,
-  openSettingsHost,
-} from "../support/helpers/settings";
+import { openHostSection, openSettingsHost } from "../support/helpers/settings";
 
 async function openMetadataGenerationSettings(page: Page) {
   const serverId = getServerId();
   await gotoAppShell(page);
   await openSettings(page);
   await openSettingsHost(page);
-  await openHostSection(page, serverId, "metadata");
-  await expectSettingsHeader(page, "Metadata");
+  await openHostSection(page, serverId, "host");
+  await expect(page.getByText("Metadata generation").first()).toBeVisible();
 }
 
 async function openManualMetadataModelPicker(page: Page) {

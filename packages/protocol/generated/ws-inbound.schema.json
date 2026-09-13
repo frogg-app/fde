@@ -7031,6 +7031,25 @@
               "properties": {
                 "type": {
                   "type": "string",
+                  "const": "agent.provider_definitions.list.request"
+                },
+                "cwd": {
+                  "type": "string"
+                },
+                "requestId": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type",
+                "requestId"
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
                   "const": "file_download_token_request"
                 },
                 "cwd": {
