@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from "react";
+import { createContext, useContext, useMemo, type ReactNode } from "react";
 import {
   Text,
   View,
@@ -19,6 +19,33 @@ import {
   smallIconButtonChromeFrameSize,
 } from "@/components/ui/icon-button-chrome";
 import { WORKSPACE_PANE_TRAILING_GLYPH_RAIL } from "@/components/tree-primitives";
+
+const PaneToolbarAccessoryContext = createContext<ReactNode>(null);
+
+/**
+ * Lets a pane host (the open explorer sidebar) hand its close toggle to the
+ * primary toolbar of whatever panel it hosts, so the control sits in the
+ * panel instead of beside the window controls.
+ */
+export function PaneToolbarAccessoryProvider({
+  accessory,
+  children,
+}: {
+  accessory: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <PaneToolbarAccessoryContext.Provider value={accessory}>
+      {children}
+    </PaneToolbarAccessoryContext.Provider>
+  );
+}
+
+/** Renders the host accessory at the trailing end of a panel's primary toolbar. */
+export function PaneToolbarAccessory() {
+  const accessory = useContext(PaneToolbarAccessoryContext);
+  return accessory ?? null;
+}
 
 /** Shared chrome at the boundary between a workspace pane's tabs and content. */
 export function PaneContentToolbar({

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Keep window headers draggable with both sidebars open, exclude settings-modal
+  headers from dragging, and place the explorer close toggle in its panel toolbar.
+- Use Windows separators for generated NSIS includes and installer bitmap paths.
+
+- Enlarge the home-screen logo 2.5× and remove excess padding from desktop taskbar
+  and dock icons, keeping a small transparent margin to prevent clipping.
+
 - Rename the product from FDE to Frogg everywhere: the `frogg` binary and daemon commands,
   `@frogg/*` packages, `FROGG_*` environment variables, `~/.frogg` home, `frogg.json`,
   the `frogg://` scheme, the `app.frogg.frogg` application id and all artifact names.

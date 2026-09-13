@@ -91,7 +91,7 @@ export function OpenProjectScreen() {
       <View style={styles.content}>
         <TitlebarDragRegion />
         <View style={styles.logo}>
-          <BrandLogo size={52} />
+          <BrandLogo size={130} />
         </View>
         <View style={styles.tiles}>
           <HomeTile

@@ -16,7 +16,7 @@
 !ifndef BRAND_INSTALLER_NSH
 !define BRAND_INSTALLER_NSH
 !define BRAND_INSTALLER_DIR "${__FILEDIR__}"
-!include "${BRAND_INSTALLER_DIR}/brand.nsh"
+!include "${BRAND_INSTALLER_DIR}\brand.nsh"
 
 !ifndef BUILD_UNINSTALLER
 
@@ -105,10 +105,10 @@ Function brandInstallerGuiInit
     StrCpy $brandScale 200
   ${EndIf}
   InitPluginsDir
-  File "/oname=$PLUGINSDIR\brand-background-100.bmp" "${BRAND_INSTALLER_DIR}/background-100.bmp"
-  File "/oname=$PLUGINSDIR\brand-background-125.bmp" "${BRAND_INSTALLER_DIR}/background-125.bmp"
-  File "/oname=$PLUGINSDIR\brand-background-150.bmp" "${BRAND_INSTALLER_DIR}/background-150.bmp"
-  File "/oname=$PLUGINSDIR\brand-background-200.bmp" "${BRAND_INSTALLER_DIR}/background-200.bmp"
+  File "/oname=$PLUGINSDIR\brand-background-100.bmp" "${BRAND_INSTALLER_DIR}\background-100.bmp"
+  File "/oname=$PLUGINSDIR\brand-background-125.bmp" "${BRAND_INSTALLER_DIR}\background-125.bmp"
+  File "/oname=$PLUGINSDIR\brand-background-150.bmp" "${BRAND_INSTALLER_DIR}\background-150.bmp"
+  File "/oname=$PLUGINSDIR\brand-background-200.bmp" "${BRAND_INSTALLER_DIR}\background-200.bmp"
   !insertmacro brandFont "Segoe UI" 20 600 $brandFontTitle
   !insertmacro brandFont "Segoe UI" 10 400 $brandFontBody
   !insertmacro brandFont "Segoe UI" 9 400 $brandFontStatus

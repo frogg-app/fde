@@ -9,7 +9,7 @@ import { buildSettingsViewRoute, resolveSettingsScope } from "@/navigation/setti
 import { useHosts } from "@/runtime/host-runtime";
 import SettingsScreen from "@/screens/settings-screen";
 import { useSettingsModalStore } from "@/settings-modal/store";
-import { WindowChromeRegion } from "@/utils/desktop-window";
+import { NoWindowDragRegion, WindowChromeRegion } from "@/utils/desktop-window";
 
 const SETTINGS_MODAL_MAX_WIDTH = 1100;
 const SETTINGS_MODAL_MAX_HEIGHT = 760;
@@ -66,9 +66,11 @@ export function SettingsModalHost() {
       {view ? (
         // The modal floats clear of the window controls, so the section
         // header inside it must not reserve clearance for them.
-        <WindowChromeRegion corners="none">
-          <SettingsScreen view={view} openAddHostIntent={openAddHostIntent} />
-        </WindowChromeRegion>
+        <NoWindowDragRegion>
+          <WindowChromeRegion corners="none">
+            <SettingsScreen view={view} openAddHostIntent={openAddHostIntent} />
+          </WindowChromeRegion>
+        </NoWindowDragRegion>
       ) : null}
     </AdaptiveModalSheet>
   );

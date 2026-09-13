@@ -7,6 +7,9 @@ namespace migration. Unchecked items are validation/backlog work, not active tas
 
 ## Implemented baseline
 
+- Larger home-screen and desktop taskbar marks. Generated icon bounds are checked;
+  installed Windows/macOS/Linux visual acceptance remains separate.
+
 - Session-only sidebar entries resume unfinished new-workspace forms with their
   input and selections. Pending submissions survive navigation; failures can be
   retried and successful handoffs remove the entry. Browser/daemon coverage is

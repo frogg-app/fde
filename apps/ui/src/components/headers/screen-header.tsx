@@ -9,7 +9,7 @@ import {
   HEADER_TOP_PADDING_MOBILE,
   useIsCompactFormFactor,
 } from "@/constants/layout";
-import { WindowChromeSafeArea, useWindowChromeCorners } from "@/utils/desktop-window";
+import { WindowChromeSafeArea, useIsWindowDragSurface } from "@/utils/desktop-window";
 import {
   TITLEBAR_DRAG_SURFACE_DATASET,
   TitlebarDragRegion,
@@ -52,8 +52,10 @@ export function ScreenHeader({
   const rightCombinedStyle = useMemo(() => [styles.right, rightStyle], [rightStyle]);
   // A header that sits under the window's top edge stands in for the title bar,
   // so pressing anywhere on it (text included) drags the window. Headers inside
-  // a modal (`WindowChromeRegion corners="none"`) are not part of the chrome.
-  const isWindowChromeHeader = useWindowChromeCorners() !== "none";
+  // a modal (`NoWindowDragRegion`) are not part of the chrome. This must not key
+  // off corner ownership: with both sidebars open the header owns no corner but
+  // is still the top bar.
+  const isWindowChromeHeader = useIsWindowDragSurface();
 
   return (
     <View

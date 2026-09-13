@@ -64,7 +64,6 @@ export async function generateAssets(build: BrandBuild): Promise<void> {
   }
   await generateFavicons(build, assets);
   if (build.brand.legacyFrogg) {
-    await cp(path.join(root, "apps/desktop/src-tauri/icons"), icons, { recursive: true });
     for (const name of [
       "favicon.ico",
       "apple-touch-icon.png",
@@ -78,34 +77,14 @@ export async function generateAssets(build: BrandBuild): Promise<void> {
       path.join(assets, "favicon.png"),
     );
   } else {
-    for (const [name, size] of Object.entries({
-      "32x32.png": 32,
-      "64x64.png": 64,
-      "128x128.png": 128,
-      "128x128@2x.png": 256,
-      "icon.png": 1024,
-    })) {
-      await writeFile(path.join(icons, name), await resize(build.assetFiles.icon, size));
-    }
-    const icon = ico(
-      await Promise.all(
-        [16, 32, 48, 64, 128, 256].map((size) => resize(build.assetFiles.icon, size)),
+    await writeFile(
+      path.join(publicDir, "favicon.ico"),
+      ico(
+        await Promise.all(
+          [16, 32, 48, 64, 128, 256].map((size) => resize(build.assetFiles.icon, size)),
+        ),
       ),
     );
-    await writeFile(path.join(icons, "icon.ico"), icon);
-    await writeFile(path.join(publicDir, "favicon.ico"), icon);
-    const chunks = [];
-    for (const [type, size] of Object.entries({ ic07: 128, ic08: 256, ic09: 512, ic10: 1024 })) {
-      const png = await resize(build.assetFiles.icon, size);
-      const header = Buffer.alloc(8);
-      header.write(type);
-      header.writeUInt32BE(png.length + 8, 4);
-      chunks.push(header, png);
-    }
-    const header = Buffer.alloc(8);
-    header.write("icns");
-    header.writeUInt32BE(8 + chunks.reduce((total, chunk) => total + chunk.length, 0), 4);
-    await writeFile(path.join(icons, "icon.icns"), Buffer.concat([header, ...chunks]));
     for (const [name, size] of Object.entries({
       "apple-touch-icon.png": 180,
       "pwa-icon-192.png": 192,
@@ -126,6 +105,7 @@ export async function generateAssets(build: BrandBuild): Promise<void> {
     }
     await writeFile(path.join(assets, "favicon.png"), await resize(build.assetFiles.icon, 64));
   }
+  await generateDesktopIcons(build, icons);
   await mkdir(path.join(publicDir, "brand"), { recursive: true });
   for (const appearance of ["light", "dark"]) {
     for (const status of ["", "-running", "-attention"]) {
@@ -145,6 +125,46 @@ export async function generateAssets(build: BrandBuild): Promise<void> {
   );
   const template = await readFile(path.join(root, "apps/ui/public/index.html"), "utf8");
   await writeFile(path.join(publicDir, "index.html"), template);
+}
+
+async function generateDesktopIcons(build: BrandBuild, icons: string): Promise<void> {
+  // Mobile artwork includes a safe zone that makes the desktop taskbar mark too small.
+  // Ignore near-transparent source noise when finding the stock mark bounds.
+  // Custom brands retain their chosen artwork framing.
+  const source = build.brand.legacyFrogg
+    ? await sharp(build.assetFiles.icon).trim({ threshold: 1 }).png().toBuffer()
+    : build.assetFiles.icon;
+  const render = async (size: number): Promise<Buffer> => {
+    const inset = build.brand.legacyFrogg ? Math.max(1, Math.round(size * 0.01)) : 0;
+    return sharp(source)
+      .resize(size - inset * 2, size - inset * 2, { fit: "contain", background: "#00000000" })
+      .extend({ top: inset, bottom: inset, left: inset, right: inset, background: "#00000000" })
+      .png()
+      .toBuffer();
+  };
+  for (const [name, size] of Object.entries({
+    "32x32.png": 32,
+    "64x64.png": 64,
+    "128x128.png": 128,
+    "128x128@2x.png": 256,
+    "icon.png": 1024,
+  })) {
+    await writeFile(path.join(icons, name), await render(size));
+  }
+  const icon = ico(await Promise.all([16, 32, 48, 64, 128, 256].map((size) => render(size))));
+  await writeFile(path.join(icons, "icon.ico"), icon);
+  const chunks = [];
+  for (const [type, size] of Object.entries({ ic07: 128, ic08: 256, ic09: 512, ic10: 1024 })) {
+    const png = await render(size);
+    const header = Buffer.alloc(8);
+    header.write(type);
+    header.writeUInt32BE(png.length + 8, 4);
+    chunks.push(header, png);
+  }
+  const header = Buffer.alloc(8);
+  header.write("icns");
+  header.writeUInt32BE(8 + chunks.reduce((total, chunk) => total + chunk.length, 0), 4);
+  await writeFile(path.join(icons, "icon.icns"), Buffer.concat([header, ...chunks]));
 }
 
 export async function validateAssets(build: BrandBuild): Promise<void> {

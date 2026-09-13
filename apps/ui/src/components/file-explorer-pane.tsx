@@ -40,6 +40,7 @@ import {
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
   PaneContentToolbar,
+  PaneToolbarAccessory,
   paneContentToolbarIconSize,
   paneContentToolbarTrailingPadding,
   ToolbarButton,
@@ -1308,6 +1309,7 @@ function FileExplorerPaneContent(props: FileExplorerPaneContentProps) {
               )}
             </View>
           </ToolbarButton>
+          <PaneToolbarAccessory />
         </ToolbarControls>
       </PaneContentToolbar>
       <ContextMenu>

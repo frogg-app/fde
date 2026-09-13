@@ -78,6 +78,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Button } from "@/components/ui/button";
 import {
   PaneContentToolbar,
+  PaneToolbarAccessory,
   paneContentToolbarIconSize,
   paneContentToolbarIconButtonStyle,
   paneContentToolbarTrailingPadding,
@@ -572,6 +573,7 @@ function ChangesDiffOnlyToolbar({
       <ChangesToolbarLeading />
       <ChangesToolbarTrailing>
         <ChangesToolbarActions mode={mode} compact={compact} />
+        <PaneToolbarAccessory />
       </ChangesToolbarTrailing>
     </ChangesToolbarRow>
   );
@@ -644,6 +646,7 @@ function ChangesRepositoryToolbar({
           </>
         ) : null}
         {model.gitActions ? <GitActionsSplitButton gitActions={model.gitActions} menuOnly /> : null}
+        <PaneToolbarAccessory />
       </ChangesToolbarTrailing>
     </ChangesToolbarRow>
   );

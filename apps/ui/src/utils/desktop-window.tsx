@@ -33,6 +33,7 @@ type WindowChromeSafeAreaStyle = { height: number } | { paddingLeft: number; pad
 const EMPTY_OBSTRUCTION: WindowChromeObstruction = { topLeft: null, topRight: null };
 const WindowChromeContext = createContext<WindowChromeObstruction>(EMPTY_OBSTRUCTION);
 const WindowChromeCornersContext = createContext<WindowChromeCorners>("none");
+const WindowDragSurfaceContext = createContext(true);
 const DesktopWindowChromeContext = createContext<{
   mode: DesktopWindowChromeMode | null;
   isFullscreen: boolean;
@@ -276,6 +277,21 @@ export function WindowChromeRootRegion({
       {children}
     </WindowChromeCornersContext.Provider>
   );
+}
+
+/**
+ * Marks a subtree that floats above the window (e.g. a modal card) so headers
+ * inside it stop acting as a title bar. Corner ownership is a separate question:
+ * a header that owns no corner (both sidebars open) still drags the window.
+ */
+export function NoWindowDragRegion({ children }: { children: ReactNode }) {
+  return (
+    <WindowDragSurfaceContext.Provider value={false}>{children}</WindowDragSurfaceContext.Provider>
+  );
+}
+
+export function useIsWindowDragSurface(): boolean {
+  return useContext(WindowDragSurfaceContext);
 }
 
 export function useWindowChromeCorners(): WindowChromeCorners {

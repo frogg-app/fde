@@ -39,6 +39,7 @@ import { isNative } from "@/constants/platform";
 import { useIsCompactFormFactor } from "@/constants/layout";
 import {
   PaneContentToolbar,
+  PaneToolbarAccessory,
   paneContentToolbarIconSize,
   paneContentToolbarIconButtonStyle,
 } from "@/components/ui/pane-content-toolbar";
@@ -522,6 +523,7 @@ export function PullRequestPane({
               </View>
             </Pressable>
           ) : null}
+          <PaneToolbarAccessory />
         </PaneContentToolbar>
 
         <Pressable onPress={handleOpenPrUrl} style={styles.header}>

@@ -7,6 +7,7 @@ import {
   iconButtonChromeGlyphSize,
   mutedIconColorMapping,
 } from "@/components/ui/icon-button-chrome";
+import { paneContentToolbarIconSize, ToolbarButton } from "@/components/ui/pane-content-toolbar";
 import type { ShortcutKey } from "@/utils/format-shortcut";
 
 const ThemedPanelRight = withUnistyles(PanelRight);
@@ -114,19 +115,34 @@ export function WorkspaceHeaderExplorerToggle({
   );
 }
 
+/**
+ * The open sidebar's close toggle. It lives in the hosted panel's toolbar, so it
+ * uses toolbar chrome rather than the window-header button.
+ */
 export function WorkspaceExplorerSidebarToggle({
   owner,
+  onPress,
+  label,
+  tooltipLabel,
+  tooltipKeys,
   accessibilityState,
-  ...toggleProps
 }: DesktopWorkspaceExplorerToggleProps) {
   if (!shouldShowSidebarExplorerToggle({ owner, expanded: accessibilityState.expanded })) {
     return null;
   }
   return (
-    <WorkspaceExplorerToggle
-      {...toggleProps}
-      accessibilityState={accessibilityState}
-      mobile={false}
-    />
+    <ToolbarButton
+      testID="workspace-explorer-toggle"
+      label={tooltipLabel}
+      accessibilityHint={label}
+      shortcut={[tooltipKeys]}
+      onPress={onPress}
+    >
+      <ThemedPanelRight
+        size={paneContentToolbarIconSize(false)}
+        strokeWidth={1.5}
+        uniProps={extraMutedIconColorMapping}
+      />
+    </ToolbarButton>
   );
 }
