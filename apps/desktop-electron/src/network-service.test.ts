@@ -30,6 +30,14 @@ async function serve(handler: Parameters<typeof createServer>[0]): Promise<strin
 }
 
 describe("native network identity probes", () => {
+  it("aborts an active request when the scan is cancelled", async () => {
+    const controller = new AbortController();
+    const url = await serve(() => controller.abort());
+    await expect(probeIdentity(url, controller.signal)).rejects.toMatchObject({
+      name: "AbortError",
+    });
+  });
+
   it("returns JSON plus HTTP failure status without hiding the response", async () => {
     const url = await serve((_request, response) => {
       response.writeHead(503, { "content-type": "application/json" });

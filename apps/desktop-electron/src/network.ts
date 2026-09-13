@@ -4,5 +4,21 @@ import { localAddresses, probeIdentity, reverseLookup } from "./network-service.
 export function registerNetworkHandlers(): void {
   handleDesktopIpc("fde:network:localAddresses", () => localAddresses());
   handleDesktopIpc("fde:network:reverseLookup", (_event, ip: unknown) => reverseLookup(ip));
-  handleDesktopIpc("fde:network:probeIdentity", (_event, url: unknown) => probeIdentity(url));
+  const probes = new Map<string, AbortController>();
+  handleDesktopIpc("fde:network:probeIdentity", async (event, url: unknown, requestId: unknown) => {
+    if (requestId === undefined) return probeIdentity(url);
+    if (typeof requestId !== "string") throw new Error("Expected a probe request ID");
+    const key = `${event.sender.id}:${requestId}`;
+    const controller = new AbortController();
+    probes.set(key, controller);
+    try {
+      return await probeIdentity(url, controller.signal);
+    } finally {
+      probes.delete(key);
+    }
+  });
+  handleDesktopIpc("fde:network:cancelProbe", (event, requestId: unknown) => {
+    if (typeof requestId !== "string") throw new Error("Expected a probe request ID");
+    probes.get(`${event.sender.id}:${requestId}`)?.abort();
+  });
 }

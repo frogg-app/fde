@@ -1604,6 +1604,11 @@ export const zhCN: TranslationResources = {
       },
     },
     networkScan: {
+      searching: "正在扫描…",
+      empty: "未找到服务器。",
+      cancelled: "扫描已取消。",
+      failed: "无法扫描，请重试。",
+
       diagnostics:
         "已通过 {{transport}} 扫描 {{count}} 个地址。本地地址：{{addresses}}。首个错误：{{error}}",
       diagnosticsNone: "无",

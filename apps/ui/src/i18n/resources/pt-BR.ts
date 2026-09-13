@@ -1656,6 +1656,11 @@ export const ptBR: TranslationResources = {
       },
     },
     networkScan: {
+      searching: "Buscando…",
+      empty: "Nenhum servidor encontrado.",
+      cancelled: "Busca cancelada.",
+      failed: "Não foi possível buscar. Tente novamente.",
+
       diagnostics:
         "{{count}} endereços verificados via {{transport}}. Endereços locais: {{addresses}}. Primeiro erro: {{error}}",
       diagnosticsNone: "nenhum",

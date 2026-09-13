@@ -48,6 +48,7 @@ export function useNetworkScan(
   options: { enabled?: boolean; port?: number } = {},
 ): NetworkScanState & {
   rescan: () => void;
+  cancel: () => void;
 } {
   const enabled = options.enabled ?? true;
   const port = options.port ?? DEFAULT_DAEMON_PORT;
@@ -55,7 +56,16 @@ export function useNetworkScan(
   const [generation, setGeneration] = useState(0);
   const controllerRef = useRef<AbortController | null>(null);
 
-  const rescan = useCallback(() => setGeneration((value) => value + 1), []);
+  const rescan = useCallback(() => {
+    controllerRef.current?.abort();
+    setGeneration((value) => value + 1);
+  }, []);
+  const cancel = useCallback(() => {
+    controllerRef.current?.abort();
+    setState((current) =>
+      current.status === "scanning" ? { ...current, status: "cancelled" } : current,
+    );
+  }, []);
 
   useEffect(() => {
     if (!enabled) return;
@@ -78,8 +88,7 @@ export function useNetworkScan(
         transport: shellProbe ? "shell" : "fetch",
         firstErrorBySubnet: {},
       };
-      // The shell's fde.log does not carry console output, so this line is
-      // what a bug report can quote; the card shows the same summary.
+      // Keep detailed network diagnostics in the console for troubleshooting.
       console.info(
         `${LOG_PREFIX} local addresses: ${diagnostics.localAddresses.join(", ") || "(none)"}` +
           (diagnostics.localAddressesError ? ` (error: ${diagnostics.localAddressesError})` : "") +
@@ -142,7 +151,7 @@ export function useNetworkScan(
     };
 
     void run().catch(() => {
-      if (!signal.aborted) setState((current) => ({ ...current, status: "done" }));
+      if (!signal.aborted) setState((current) => ({ ...current, status: "failed" }));
     });
 
     return () => {
@@ -150,5 +159,5 @@ export function useNetworkScan(
     };
   }, [enabled, generation, port]);
 
-  return { ...state, rescan };
+  return { ...state, rescan, cancel };
 }

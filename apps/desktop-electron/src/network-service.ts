@@ -46,10 +46,13 @@ export function validateProbeUrl(input: unknown): URL {
   return url;
 }
 
-export async function probeIdentity(input: unknown): Promise<{ status: number; body: unknown }> {
+export async function probeIdentity(
+  input: unknown,
+  signal?: AbortSignal,
+): Promise<{ status: number; body: unknown }> {
   const url = validateProbeUrl(input);
   const response = await fetch(url, {
-    signal: AbortSignal.timeout(700),
+    signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(700)]) : AbortSignal.timeout(700),
     redirect: "error",
   });
   // Bound response memory independently of a potentially dishonest Content-Length.

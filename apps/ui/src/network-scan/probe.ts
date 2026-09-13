@@ -5,7 +5,10 @@ export const PROBE_TIMEOUT_MS = 700;
 export type FetchLike = (input: string, init?: { signal?: AbortSignal }) => Promise<Response>;
 
 /** The desktop shell's Rust-side GET: status plus parsed JSON, or a rejection. */
-export type ShellProbeLike = (url: string) => Promise<{ status: number; body: unknown }>;
+export type ShellProbeLike = (
+  url: string,
+  signal?: AbortSignal,
+) => Promise<{ status: number; body: unknown }>;
 
 export interface ProbeOptions {
   fetchImpl?: FetchLike;
@@ -64,9 +67,10 @@ type Transport = Required<Pick<ProbeOptions, "timeoutMs">> &
   Pick<ProbeOptions, "fetchImpl" | "shellProbe" | "signal">;
 
 async function fetchJson(url: string, transport: Transport): Promise<ProbeAnswer> {
+  if (transport.signal?.aborted) return { error: "cancelled" };
   if (transport.shellProbe) {
     try {
-      const answer = await transport.shellProbe(url);
+      const answer = await transport.shellProbe(url, transport.signal);
       return { status: answer.status, body: answer.body ?? null };
     } catch (error) {
       return { error: describeProbeError(error) };
@@ -117,6 +121,7 @@ export async function probeDaemon(
   const endpoint = `${target.ip}:${target.port}`;
 
   const identityResponse = await fetchJson(`${base}/api/identity`, transport);
+  if (options.signal?.aborted) return null;
   if ("error" in identityResponse) {
     // Nothing is listening (or the request timed out); no point asking again.
     options.onError?.(target, identityResponse.error);
@@ -139,6 +144,7 @@ export async function probeDaemon(
   }
 
   const healthResponse = await fetchJson(`${base}/api/health`, transport);
+  if (options.signal?.aborted) return null;
   if (
     !("error" in healthResponse) &&
     healthResponse.status === 200 &&

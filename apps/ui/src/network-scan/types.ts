@@ -26,7 +26,7 @@ export interface ScanProgress {
   total: number;
 }
 
-export type ScanStatus = "idle" | "scanning" | "done";
+export type ScanStatus = "idle" | "scanning" | "done" | "cancelled" | "failed";
 
 /** What a user can quote when a scan finds nothing. */
 export interface ScanDiagnostics {

@@ -33,7 +33,9 @@ contextBridge.exposeInMainWorld("fdeDesktop", {
   network: {
     localAddresses: () => ipcRenderer.invoke("fde:network:localAddresses"),
     reverseLookup: (ip: string) => ipcRenderer.invoke("fde:network:reverseLookup", ip),
-    probeIdentity: (url: string) => ipcRenderer.invoke("fde:network:probeIdentity", url),
+    probeIdentity: (url: string, requestId?: string) =>
+      ipcRenderer.invoke("fde:network:probeIdentity", url, requestId),
+    cancelProbe: (requestId: string) => ipcRenderer.invoke("fde:network:cancelProbe", requestId),
   },
   platform: process.platform,
   supportsLocalDaemon: false,

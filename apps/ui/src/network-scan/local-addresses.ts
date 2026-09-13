@@ -26,14 +26,26 @@ export async function readLocalNetworkHints(): Promise<SubnetHints> {
   return hints;
 }
 
-/**
- * The desktop shell's Rust-side GET for `/api/identity`, when the bridge offers
- * it. Preferred over `fetch` because WebView2 applies Chromium's local-network
- * rules to the app's `http://tauri.localhost` origin and fails LAN requests.
- */
+let nextProbeId = 0;
+
+/** Native probes avoid the webview's cross-origin and local-network restrictions. */
 export function readShellProbe(): ShellProbeLike | undefined {
-  const probe = getDesktopHost()?.network?.probeIdentity;
-  return typeof probe === "function" ? probe : undefined;
+  const network = getDesktopHost()?.network;
+  const probe = network?.probeIdentity;
+  if (!network || !probe) return undefined;
+  return async (url, signal) => {
+    if (signal?.aborted) throw new Error("Scan cancelled");
+    const requestId = `scan-${++nextProbeId}`;
+    const cancel = () => {
+      void network.cancelProbe?.(requestId).catch(() => undefined);
+    };
+    signal?.addEventListener("abort", cancel, { once: true });
+    try {
+      return await probe(url, requestId);
+    } finally {
+      signal?.removeEventListener("abort", cancel);
+    }
+  };
 }
 
 /** Reverse DNS through the desktop bridge when it offers one; null elsewhere. */

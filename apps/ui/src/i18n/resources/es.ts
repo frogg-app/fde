@@ -1670,6 +1670,11 @@ export const es: TranslationResources = {
       },
     },
     networkScan: {
+      searching: "Buscando…",
+      empty: "No se encontraron servidores.",
+      cancelled: "Búsqueda cancelada.",
+      failed: "No se pudo buscar. Inténtalo de nuevo.",
+
       diagnostics:
         "Se exploraron {{count}} direcciones mediante {{transport}}. Direcciones locales: {{addresses}}. Primer error: {{error}}",
       diagnosticsNone: "ninguno",

@@ -1673,6 +1673,11 @@ export const fr: TranslationResources = {
       },
     },
     networkScan: {
+      searching: "Recherche…",
+      empty: "Aucun serveur trouvé.",
+      cancelled: "Recherche annulée.",
+      failed: "Recherche impossible. Réessayez.",
+
       diagnostics:
         "{{count}} adresses analysées via {{transport}}. Adresses locales : {{addresses}}. Première erreur : {{error}}",
       diagnosticsNone: "aucune",

@@ -1654,6 +1654,11 @@ export const ru: TranslationResources = {
       },
     },
     networkScan: {
+      searching: "Поиск…",
+      empty: "Серверы не найдены.",
+      cancelled: "Поиск отменён.",
+      failed: "Не удалось выполнить поиск. Повторите попытку.",
+
       diagnostics:
         "Проверено {{count}} адресов через {{transport}}. Локальные адреса: {{addresses}}. Первая ошибка: {{error}}",
       diagnosticsNone: "нет",

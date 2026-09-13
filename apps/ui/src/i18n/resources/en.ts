@@ -1633,6 +1633,11 @@ export const en = {
       },
     },
     networkScan: {
+      searching: "Scanning…",
+      empty: "No servers found.",
+      cancelled: "Scan cancelled.",
+      failed: "Unable to scan. Try again.",
+
       diagnostics:
         "Scanned {{count}} addresses via {{transport}}. Local addresses: {{addresses}}. First error: {{error}}",
       diagnosticsNone: "none",

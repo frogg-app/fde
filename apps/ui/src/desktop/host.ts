@@ -187,7 +187,9 @@ export interface DesktopNetworkBridge {
    * HTTP status and the JSON body (null when not JSON); rejects with the transport
    * error when nothing answered within the shell's budget (~700 ms).
    */
-  probeIdentity?: (url: string) => Promise<{ status: number; body: unknown }>;
+  probeIdentity?: (url: string, requestId?: string) => Promise<{ status: number; body: unknown }>;
+  /** Abort a native probe started with this request ID. */
+  cancelProbe?: (requestId: string) => Promise<void>;
 }
 
 export interface DesktopInvokeBridge {

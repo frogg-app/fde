@@ -65,7 +65,7 @@ export function mergeScanResults(
 /**
  * Probe every target with a bounded pool of workers. Resolves with the
  * servers found (sorted by address). Aborting the signal stops new probes;
- * in-flight ones finish on their own timeout.
+ * the signal also reaches in-flight probes so cancellable transports stop immediately.
  */
 export async function scanNetwork(options: ScanNetworkOptions): Promise<DiscoveredServer[]> {
   const { targets, probe, signal } = options;

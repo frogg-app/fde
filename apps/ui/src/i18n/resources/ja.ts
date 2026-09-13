@@ -1645,6 +1645,11 @@ export const ja: TranslationResources = {
       },
     },
     networkScan: {
+      searching: "検索中…",
+      empty: "サーバーが見つかりません。",
+      cancelled: "検索をキャンセルしました。",
+      failed: "検索できません。再試行してください。",
+
       diagnostics:
         "{{transport}} 経由で {{count}} 件のアドレスをスキャンしました。ローカルアドレス: {{addresses}}。最初のエラー: {{error}}",
       diagnosticsNone: "なし",

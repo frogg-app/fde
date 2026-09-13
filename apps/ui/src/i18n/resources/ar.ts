@@ -1622,6 +1622,11 @@ export const ar: TranslationResources = {
       },
     },
     networkScan: {
+      searching: "جارٍ البحث…",
+      empty: "لم يتم العثور على خوادم.",
+      cancelled: "تم إلغاء البحث.",
+      failed: "تعذر البحث. حاول مرة أخرى.",
+
       diagnostics:
         "تم فحص {{count}} عنوانًا عبر {{transport}}. العناوين المحلية: {{addresses}}. أول خطأ: {{error}}",
       diagnosticsNone: "لا شيء",

@@ -1636,6 +1636,11 @@ export const ko: TranslationResources = {
       },
     },
     networkScan: {
+      searching: "검색 중…",
+      empty: "서버를 찾을 수 없습니다.",
+      cancelled: "검색이 취소되었습니다.",
+      failed: "검색할 수 없습니다. 다시 시도하세요.",
+
       diagnostics:
         "{{transport}}(으)로 주소 {{count}}개를 검색했습니다. 로컬 주소: {{addresses}}. 첫 번째 오류: {{error}}",
       diagnosticsNone: "없음",

@@ -1,11 +1,11 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 import { StyleSheet, withUnistyles } from "react-native-unistyles";
 import { RefreshCw } from "lucide-react-native";
 import type { HostProfile } from "@/types/host-connection";
 import { useHostMutations, useHosts } from "@/runtime/host-runtime";
-import { firstScanError, useNetworkScan } from "@/network-scan/use-network-scan";
+import { useNetworkScan } from "@/network-scan/use-network-scan";
 import type { DiscoveredServer } from "@/network-scan/types";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -30,7 +30,7 @@ export interface NetworkServersListProps {
 
 const styles = StyleSheet.create((theme) => ({
   section: {
-    gap: theme.spacing[2],
+    gap: theme.spacing[3],
   },
   header: {
     flexDirection: "row",
@@ -52,10 +52,6 @@ const styles = StyleSheet.create((theme) => ({
     color: theme.colors.foregroundMuted,
     fontSize: theme.fontSize.base,
     flexShrink: 1,
-  },
-  diagnosticsText: {
-    color: theme.colors.foregroundMuted,
-    fontSize: theme.fontSize.sm,
   },
   row: {
     flexDirection: "row",
@@ -210,57 +206,38 @@ function NetworkServerRow({
 export function NetworkServersList({ onConnected, testID }: NetworkServersListProps) {
   const { t } = useTranslation();
   const scan = useNetworkScan();
-  const scannedSubnets = useMemo(
-    () => scan.subnets.map((prefix) => `${prefix}.0/24`).join(", "),
-    [scan.subnets],
-  );
 
   return (
     <View style={styles.section} testID={testID ?? "network-servers"}>
       <View style={styles.header}>
         <Text style={styles.title}>{t("pairing.networkScan.title")}</Text>
-        {scan.status === "done" ? (
+        {scan.status === "scanning" ? (
+          <Button variant="ghost" size="sm" onPress={scan.cancel}>
+            {t("common.actions.cancel")}
+          </Button>
+        ) : (
           <Button variant="ghost" size="sm" leftIcon={RefreshCw} onPress={scan.rescan}>
             {t("pairing.networkScan.rescan")}
           </Button>
-        ) : null}
+        )}
       </View>
       {scan.status === "scanning" ? (
         <View style={styles.statusRow}>
           <ThemedSpinner uniProps={mutedSpinnerMapping} />
-          <Text style={styles.statusText}>
-            {t("pairing.networkScan.scanning", {
-              scanned: scan.progress.scanned,
-              total: scan.progress.total,
-            })}
-          </Text>
+          <Text style={styles.statusText}>{t("pairing.networkScan.searching")}</Text>
         </View>
       ) : null}
       {scan.status === "done" && scan.servers.length === 0 ? (
-        <Text style={styles.statusText}>
-          {t("pairing.networkScan.none", { subnets: scannedSubnets })}
-        </Text>
+        <Text style={styles.statusText}>{t("pairing.networkScan.empty")}</Text>
       ) : null}
       {scan.servers.map((server) => (
         <NetworkServerRow key={server.endpoint} server={server} onConnected={onConnected} />
       ))}
-      {scan.status === "done" && scan.servers.length > 0 ? (
-        <Text style={styles.statusText}>
-          {t("pairing.networkScan.scanned", { subnets: scannedSubnets })}
-        </Text>
+      {scan.status === "cancelled" ? (
+        <Text style={styles.statusText}>{t("pairing.networkScan.cancelled")}</Text>
       ) : null}
-      {scan.status === "done" ? (
-        <Text style={styles.diagnosticsText} testID="network-scan-diagnostics">
-          {t("pairing.networkScan.diagnostics", {
-            count: scan.progress.scanned,
-            transport: scan.diagnostics.transport,
-            addresses:
-              scan.diagnostics.localAddresses.join(", ") ||
-              scan.diagnostics.localAddressesError ||
-              t("pairing.networkScan.diagnosticsNone"),
-            error: firstScanError(scan.diagnostics) ?? t("pairing.networkScan.diagnosticsNone"),
-          })}
-        </Text>
+      {scan.status === "failed" ? (
+        <Text style={styles.rowError}>{t("pairing.networkScan.failed")}</Text>
       ) : null}
     </View>
   );
