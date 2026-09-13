@@ -1,3 +1,1776 @@
 ---
+import { Image } from "astro:assets";
+import SiteLayout from "../layouts/SiteLayout.astro";
+import AppWindow from "../components/site/AppWindow.astro";
+import InstallCommand from "../components/site/InstallCommand.astro";
+import ProviderIcon from "../components/site/ProviderIcon.astro";
+import logo from "../assets/brand/fde-logo.png";
+
+const repo = "https://github.com/frogg-app/fde";
+const releases = `${repo}/releases/latest`;
+
+const providers = [
+  { icon: "claude", name: "Claude Code" },
+  { icon: "codex", name: "Codex" },
+  { icon: "opencode", name: "OpenCode" },
+  { icon: "copilot", name: "GitHub Copilot" },
+  { icon: "pi", name: "Pi" },
+  { icon: "omp", name: "Oh My Pi" },
+  { icon: "acp", name: "Any ACP agent" },
+] as const;
+
+const features = [
+  {
+    title: "Every agent, one timeline",
+    body: "Start Claude Code, Codex, OpenCode and friends side by side. Follow each turn live: messages, tool calls, file edits and command output.",
+    icon: "M4 6h16M4 12h10M4 18h13",
+  },
+  {
+    title: "Isolated workspaces",
+    body: "Give each task its own git worktree so parallel agents never trip over each other, then review the branch when they are done.",
+    icon: "M6 3v12M18 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM18 9a9 9 0 0 1-9 9",
+  },
+  {
+    title: "Approve from anywhere",
+    body: "Permission prompts reach whichever device you have in hand. Allow, deny or answer a question without walking back to your desk.",
+    icon: "M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6l7-3Zm-3 9 2 2 4-4",
+  },
+  {
+    title: "Terminals built in",
+    body: "Open shells on the host right next to the agent working there, without a separate SSH session.",
+    icon: "m5 8 4 4-4 4M12 16h7",
+  },
+  {
+    title: "Schedules and heartbeats",
+    body: "Run agents on a schedule or keep a heartbeat going. The daemon carries on while every client is closed.",
+    icon: "M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z",
+  },
+  {
+    title: "Plugins and a CLI",
+    body: "Extend the app with trusted local plugins, and script agents, workspaces and schedules with the fde CLI.",
+    icon: "M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7",
+  },
+];
+
+const platforms = [
+  {
+    id: "windows",
+    name: "Windows",
+    detail: "Desktop app · x64 installer",
+    href: releases,
+    cta: "Download",
+    icon: "M3 5.5 10.5 4.5v7H3v-6Zm0 13 7.5 1v-7H3v6Zm8.5 1.1L21 21v-8.5h-9.5v7.1Zm0-15.2v7.1H21V3l-9.5 1.4Z",
+  },
+  {
+    id: "mac",
+    name: "macOS",
+    detail: "Desktop app · Apple silicon & Intel",
+    href: releases,
+    cta: "Download",
+    icon: "M16.4 12.6c0-2.4 2-3.5 2-3.6-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.2-2.8.8-3.5.8s-1.8-.8-3-.8c-1.5 0-3 .9-3.8 2.3-1.6 2.8-.4 7 1.2 9.3.8 1.1 1.7 2.4 2.9 2.3 1.2 0 1.6-.7 3-.7s1.8.7 3 .7c1.3 0 2.1-1.1 2.8-2.3.9-1.3 1.3-2.5 1.3-2.6-.1 0-2.5-1-2.5-3.6ZM14.1 5.6c.6-.8 1.1-1.8 1-2.9-.9 0-2.1.6-2.7 1.4-.6.7-1.100 1.8-1 2.8 1 .1 2.1-.5 2.7-1.3Z",
+  },
+  {
+    id: "linux",
+    name: "Linux",
+    detail: "Desktop app · AppImage",
+    href: releases,
+    cta: "Download",
+    icon: "M12 2c-2 0-3.2 1.7-3.2 4.1 0 1.4.3 2.3-.6 3.7C7 11.4 5.5 13.600 5.5 16c0 .8.2 1.5.5 2.1-.8.4-1.7.7-1.7 1.5 0 1.1 2 1 3.4 1.6 1.2.5 2 .8 2.8.3.5.3 1 .5 1.5.5s1-.2 1.5-.5c.8.5 1.6.2 2.8-.3 1.4-.6 3.4-.5 3.4-1.6 0-.8-.9-1.1-1.7-1.5.3-.6.5-1.3.5-2.1 0-2.4-1.5-4.6-2.7-6.2-.9-1.4-.6-2.3-.6-3.7C15.2 3.7 14 2 12 2Zm-1.3 4a.8.8 0 1 1 0 1.6.8.8 0 0 1 0-1.6Zm2.6 0a.8.8 0 1 1 0 1.6.8.8 0 0 1 0-1.6ZM12 8.4c.9 0 1.8.5 1.8.9s-.9 1-1.8 1-1.8-.6-1.8-1 .9-.9 1.8-.9Z",
+  },
+  {
+    id: "android",
+    name: "Android",
+    detail: "Phone app · APK",
+    href: releases,
+    cta: "Download",
+    icon: "M7 9h10a1 1 0 0 1 1 1v7a2 2 0 0 1-2 2h-1v2.5a1.5 1.5 0 0 1-3 0V19h0v2.5a1.5 1.5 0 0 1-3 0V19H8a2 2 0 0 1-2-2v-7a1 1 0 0 1 1-1Zm-3 .5a1.5 1.5 0 0 1 3 0v5a1.5 1.5 0 0 1-3 0v-5Zm13 0a1.5 1.5 0 0 1 3 0v5a1.5 1.5 0 0 1-3 0v-5ZM7.2 8a4.9 4.9 0 0 1 2.6-3.7l-.9-1.6a.4.4 0 1 1 .7-.4l.9 1.6a5.6 5.6 0 0 1 3 0l.9-1.6a.4.4 0 1 1 .7.4l-.9 1.6A4.9 4.9 0 0 1 16.8 8H7.2Zm2.8-2a.7.7 0 1 0 0 1.4.7.7 0 0 0 0-1.4Zm4 0a.7.7 0 1 0 0 1.4.7.7 0 0 0 0-1.4Z",
+  },
+  {
+    id: "web",
+    name: "Browser",
+    detail: "Web app served by your daemon",
+    href: "/docs/desktop-mobile-cli/",
+    cta: "How to open it",
+    icon: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0c2.5-2.5 3.5-5.5 3.5-9S14.5 5.5 12 3m0 18c-2.5-2.5-3.5-5.5-3.5-9S9.5 5.5 12 3M3.5 9h17M3.5 15h17",
+    stroke: true,
+  },
+  {
+    id: "daemon",
+    name: "Daemon & CLI",
+    detail: "Install script · Docker · Nix",
+    href: "/docs/self-hosting/",
+    cta: "Self-host",
+    icon: "M4 5h16v5H4V5Zm0 9h16v5H4v-5Zm3-6.5h.01M7 16.5h.01",
+    stroke: true,
+  },
+];
+
+// A deterministic pseudo-QR pattern with the three finder squares.
+const qrSize = 9;
+const finder = (x: number, y: number) => {
+  for (const [fx, fy] of [
+    [0, 0],
+    [qrSize - 3, 0],
+    [0, qrSize - 3],
+  ]) {
+    if (x >= fx && x < fx + 3 && y >= fy && y < fy + 3) return !(x === fx + 1 && y === fy + 1);
+  }
+  return null;
+};
+const qrCells = Array.from({ length: qrSize * qrSize }, (_, i) => {
+  const x = i % qrSize;
+  const y = Math.floor(i / qrSize);
+  const f = finder(x, y);
+  return f ?? (x * 7 + y * 13 + x * y) % 3 === 0;
+});
 ---
-<html><body>home</body></html>
+
+<SiteLayout
+  title="FDE: run and monitor coding agents from anywhere"
+  description="FDE (Frogg Development Environment) runs Claude Code, Codex, OpenCode and more on a daemon you host, and lets you watch, steer and approve them from desktop, phone, browser or CLI."
+>
+  <!-- ================= HERO ================= -->
+  <section class="hero">
+    <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
+    <div class="grid-bg" aria-hidden="true"></div>
+
+    <div class="container hero-inner">
+      <div class="logo-wrap">
+        <span class="logo-glow" aria-hidden="true"></span>
+        <Image
+          src={logo}
+          alt="FDE origami frog logo"
+          width={132}
+          height={103}
+          densities={[1, 2]}
+          loading="eager"
+          fetchpriority="high"
+          class="hero-logo"
+        />
+      </div>
+
+      <p class="badge">
+        <span class="badge-dot" aria-hidden="true"></span> Open source · Self-hosted · Apache-2.0
+      </p>
+
+      <h1>
+        Your coding agents,<br /><span class="gradient-text">wherever you are.</span>
+      </h1>
+      <p class="lead">
+        FDE runs Claude Code, Codex, OpenCode and more on a daemon you host. Watch them work, answer
+        their questions and approve their commands from your desktop, phone, browser or terminal.
+      </p>
+
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="/docs/getting-started/"
+          >Get started <span class="arrow" aria-hidden="true">→</span></a
+        >
+        <a class="btn" href="#download">Download</a>
+      </div>
+
+      <div class="hero-install">
+        <InstallCommand />
+        <p class="install-note">
+          Installs the daemon and <code>fde</code> CLI on Linux or macOS. <a href="/docs/self-hosting/"
+            >Other options</a
+          >
+        </p>
+      </div>
+    </div>
+
+    <div class="container stage">
+      <div class="window-tilt">
+        <AppWindow />
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PROVIDERS ================= -->
+  <section class="providers" aria-labelledby="providers-title">
+    <div class="container">
+      <h2 id="providers-title" class="providers-title">Bring the agents you already use</h2>
+      <ul class="provider-list">
+        {
+          providers.map((p, i) => (
+            <li data-reveal style={`--reveal-delay:${i * 50}`}>
+              <ProviderIcon name={p.icon} size={18} />
+              {p.name}
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <!-- ================= WHAT IT IS ================= -->
+  <section id="features" class="section">
+    <div class="container">
+      <div class="split-head" data-reveal>
+        <p class="eyebrow">What it is</p>
+        <h2 class="section-title">One daemon runs the agents.<br />Every screen can drive them.</h2>
+        <p class="section-lead">
+          The FDE daemon lives on your laptop, a build box or a container. It launches the agent CLIs
+          next to your code and keeps them going. The apps are windows onto it, so you can close the
+          laptop, pick up your phone and carry on.
+        </p>
+      </div>
+
+      <figure class="topology" data-reveal>
+        <div class="node daemon-node">
+          <span class="node-kicker">Your machine, server or container</span>
+          <strong>FDE daemon</strong>
+          <span class="chips">
+            <span>agents</span><span>worktrees</span><span>terminals</span><span>schedules</span>
+          </span>
+        </div>
+        <div class="links" aria-hidden="true">
+          <svg viewBox="0 0 400 60" preserveAspectRatio="none">
+            <path d="M200 0 C200 30 50 30 50 60"></path>
+            <path d="M200 0 C200 30 150 30 150 60"></path>
+            <path d="M200 0 C200 30 250 30 250 60"></path>
+            <path d="M200 0 C200 30 350 30 350 60"></path>
+          </svg>
+        </div>
+        <ul class="clients" aria-label="Clients">
+          <li>Desktop</li>
+          <li>Phone</li>
+          <li>Browser</li>
+          <li>CLI</li>
+        </ul>
+        <figcaption class="sr-only">
+          The FDE daemon runs on your hardware; desktop, phone, browser and CLI clients connect to it.
+        </figcaption>
+      </figure>
+
+      <div class="features">
+        {
+          features.map((f, i) => (
+            <article class="feature card" data-reveal style={`--reveal-delay:${(i % 3) * 80}`}>
+              <span class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="22" height="22">
+                  <path
+                    d={f.icon}
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <h3>{f.title}</h3>
+              <p>{f.body}</p>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DOWNLOAD ================= -->
+  <section id="download" class="section download">
+    <div class="container">
+      <div class="center-head" data-reveal>
+        <p class="eyebrow">Platforms</p>
+        <h2 class="section-title">Install the daemon once.<br />Connect from everything.</h2>
+        <p class="section-lead">
+          Put the daemon wherever your code lives, then open it from any client. Every app is a free
+          download from GitHub Releases.
+        </p>
+      </div>
+
+      <div class="install-panel card" data-reveal>
+        <div class="install-panel-text">
+          <span class="step-num" aria-hidden="true">1</span>
+          <div>
+            <h3>Run the daemon</h3>
+            <p>
+              One command on Linux or macOS installs the daemon as a user service and adds the <code
+                >fde</code
+              > CLI.
+            </p>
+          </div>
+        </div>
+        <InstallCommand label="Copy daemon install command" />
+      </div>
+
+      <div class="step-row" data-reveal>
+        <span class="step-num" aria-hidden="true">2</span>
+        <h3>Pick a client</h3>
+      </div>
+      <ul class="platforms">
+        {
+          platforms.map((p, i) => (
+            <li data-reveal style={`--reveal-delay:${(i % 3) * 70}`}>
+              <a class="platform card" href={p.href} data-platform={p.id}>
+                <span class="platform-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="26" height="26">
+                    {p.stroke ? (
+                      <path
+                        d={p.icon}
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    ) : (
+                      <path d={p.icon} fill="currentColor" />
+                    )}
+                  </svg>
+                </span>
+                <span class="platform-text">
+                  <strong>{p.name}</strong>
+                  <span>{p.detail}</span>
+                </span>
+                <span class="platform-cta">
+                  {p.cta} <span class="arrow" aria-hidden="true">→</span>
+                </span>
+                <span class="your-os" hidden>
+                  Your device
+                </span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <p class="fine-print" data-reveal>
+        Desktop apps connect to daemons rather than bundling one. Builds and checksums live on <a
+          href={`${repo}/releases`}>GitHub Releases</a
+        >.
+      </p>
+    </div>
+  </section>
+
+  <!-- ================= COMPANION ================= -->
+  <section id="companion" class="section companion">
+    <div class="container companion-grid">
+      <div data-reveal>
+        <p class="eyebrow">Companion · voice</p>
+        <h2 class="section-title">
+          Talk to your agents.<br /><span class="gradient-text">Hands free.</span>
+        </h2>
+        <p class="section-lead">
+          Companion is a real-time voice conversation that sits above your projects. It answers
+          straight away, hands real work to your coding agents, and tells you when they finish or
+          get stuck.
+        </p>
+        <ul class="ticks">
+          <li>Dispatches tasks to agents in the project you pick and follows them through</li>
+          <li>Announces completions and failures, and lets you answer permission requests by voice</li>
+          <li>Local speech recognition and synthesis by default</li>
+          <li>Orchestrates with your Claude or Codex subscription; off until you enable it</li>
+        </ul>
+        <a class="btn" href="/docs/using-fde/"
+          >Read about Companion <span class="arrow" aria-hidden="true">→</span></a
+        >
+      </div>
+
+      <div class="companion-visual" data-reveal aria-hidden="true">
+        <div class="orb">
+          <span class="ribbon r1"></span><span class="ribbon r2"></span><span class="ribbon r3"
+          ></span>
+          <span class="orb-core"></span>
+        </div>
+        <div class="bubbles">
+          <p class="bubble you">How's the upload rate limiting going?</p>
+          <p class="bubble fde">
+            Claude finished it a few minutes ago. Tests pass, and it's asking to push the branch.
+          </p>
+          <p class="bubble you">Let it push, then have Codex look at the flaky CI job.</p>
+          <p class="bubble fde status">
+            <span class="eq"><i></i><i></i><i></i><i></i></span> On it. I'll tell you when it's done.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PAIRING ================= -->
+  <section id="pairing" class="section pairing">
+    <div class="container pairing-grid">
+      <div class="phone-wrap" data-reveal aria-hidden="true">
+        <div class="phone">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <div class="ph-head">
+              <span class="ph-host"><i></i>build-box</span>
+              <span class="ph-title">Fix flaky CI job</span>
+              <span class="ph-sub">Codex · running 6m</span>
+            </div>
+            <div class="ph-line"><span class="ok">✓</span> Found the race in <code>queue.spec.ts</code></div>
+            <div class="ph-line"><span class="ok">✓</span> Patched retry timing</div>
+            <div class="ph-card">
+              <strong>Codex wants to run</strong>
+              <code>npm run test:ci -- --repeat 20</code>
+              <div class="ph-actions"><span>Deny</span><span class="allow">Allow</span></div>
+            </div>
+            <div class="ph-composer">Reply…</div>
+          </div>
+        </div>
+        <div class="qr-card">
+          <div class="qr">
+            {qrCells.map((on) => <i class:list={{ on }} />)}
+          </div>
+          <span>Scan to pair</span>
+        </div>
+      </div>
+
+      <div data-reveal>
+        <p class="eyebrow">Pair your phone</p>
+        <h2 class="section-title">Scan once.<br />Keep your agents in your pocket.</h2>
+        <p class="section-lead">
+          Run <code>fde daemon pair</code> on the host and scan the code with the FDE app. From then on
+          the phone sees the same agents, timelines and prompts as your desktop.
+        </p>
+        <ul class="pair-steps">
+          <li><strong>Direct</strong> over your LAN, Tailscale or another VPN.</li>
+          <li><strong>SSH</strong> from the desktop app to a remote host.</li>
+          <li><strong>Relay</strong> that you operate, end-to-end encrypted between app and daemon.</li>
+        </ul>
+        <p class="note">
+          The pairing page never contacts your daemon: the code carries the whole offer, and nothing
+          is stored.
+        </p>
+        <a class="btn" href="/docs/desktop-mobile-cli/"
+          >Pairing guide <span class="arrow" aria-hidden="true">→</span></a
+        >
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= MAKE IT YOURS ================= -->
+  <section id="make-it-yours" class="section yours">
+    <div class="container">
+      <div class="yours-panel" data-reveal>
+        <div class="yours-glow" aria-hidden="true"></div>
+        <div class="yours-copy">
+          <p class="eyebrow">Make it yours</p>
+          <h2 class="section-title">
+            Fork it. Rebrand it.<br /><span class="gradient-text">Ship your own build.</span>
+          </h2>
+          <p class="section-lead">
+            Branding is data, not a patch series. Describe your product in one <code>brand.json</code>
+            and the build carries your name, icon, colours, app IDs, installers and update feed, while
+            you keep pulling upstream FDE.
+          </p>
+          <ol class="yours-steps">
+            <li>
+              <span aria-hidden="true">1</span>
+              <div><strong>Fork</strong> <code>frogg-app/fde</code> on GitHub</div>
+            </li>
+            <li>
+              <span aria-hidden="true">2</span>
+              <div><strong>Describe</strong> your app in <code>brands/your-app/brand.json</code></div>
+            </li>
+            <li>
+              <span aria-hidden="true">3</span>
+              <div><strong>Ship</strong> desktop, Android and daemon builds from your own releases</div>
+            </li>
+            <li>
+              <span aria-hidden="true">4</span>
+              <div><strong>Keep pulling upstream</strong>: your brand lives in its own folder</div>
+            </li>
+          </ol>
+          <div class="yours-cta">
+            <a class="btn btn-primary" href="/docs/fork-and-rebrand/"
+              >Fork & rebrand guide <span class="arrow" aria-hidden="true">→</span></a
+            >
+            <a class="btn" href={`${repo}/fork`}>Fork on GitHub</a>
+          </div>
+        </div>
+
+        <div class="yours-demo" aria-hidden="true">
+          <div class="brand-json">
+            <div class="bj-bar"><span>brands/acme/brand.json</span></div>
+            <pre><code><span class="k">"name"</span>: <span class="s">"<span class="cycle-name">Acme Studio</span>"</span>,
+<span class="k">"applicationId"</span>: <span class="s">"com.acme.studio"</span>,
+<span class="k">"daemonPort"</span>: <span class="n">10099</span>,
+<span class="k">"colors"</span>: {"{"}
+  <span class="k">"dark"</span>: {"{"}
+    <span class="k">"accent"</span>: <span class="swatch-inline"></span><span class="s cycle-hex">"#c4b5fd"</span>,
+    <span class="k">"background"</span>: <span class="s">"#1b1621"</span>
+  {"}"}
+{"}"}</code></pre>
+          </div>
+          <div class="mini-app">
+            <div class="mini-bar"><i></i><i></i><i></i><span class="cycle-name">Acme Studio</span></div>
+            <div class="mini-body">
+              <div class="mini-side"><b></b><span></span><span class="on"></span><span></span></div>
+              <div class="mini-main">
+                <span class="mini-msg"></span><span class="mini-msg short"></span>
+                <span class="mini-btn">Allow</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FINAL CTA ================= -->
+  <section class="section final">
+    <div class="container final-inner" data-reveal>
+      <Image src={logo} alt="" width={72} height={56} densities={[1, 2]} class="final-logo" />
+      <h2 class="section-title">Put your agents to work.</h2>
+      <p class="section-lead">Install the daemon, connect a client, start an agent.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="/docs/getting-started/"
+          >Get started <span class="arrow" aria-hidden="true">→</span></a
+        >
+        <a class="btn" href={repo}>Star on GitHub</a>
+      </div>
+    </div>
+  </section>
+</SiteLayout>
+
+<script>
+  // Highlight the download card for the visitor's platform.
+  const ua = navigator.userAgent;
+  const platform = /android/i.test(ua)
+    ? "android"
+    : /iphone|ipad|ipod/i.test(ua)
+      ? "web"
+      : /mac/i.test(ua)
+        ? "mac"
+        : /win/i.test(ua)
+          ? "windows"
+          : /linux/i.test(ua)
+            ? "linux"
+            : null;
+  const card = platform && document.querySelector<HTMLElement>(`[data-platform="${platform}"]`);
+  if (card) {
+    card.classList.add("is-yours");
+    card.querySelector<HTMLElement>(".your-os")?.removeAttribute("hidden");
+  }
+
+  // Cycle the rebrand demo through a few palettes while it is on screen.
+  const demo = document.querySelector<HTMLElement>(".yours-demo");
+  const brands = [
+    { name: "Acme Studio", accent: "#c4b5fd" },
+    { name: "Ember Code", accent: "#fb923c" },
+    { name: "Moss Dev", accent: "#4ade80" },
+    { name: "FDE", accent: "#25b5c8" },
+  ];
+  if (demo && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    let i = 0;
+    let timer = 0;
+    const apply = () => {
+      const b = brands[i];
+      demo.style.setProperty("--demo-accent", b.accent);
+      demo.querySelectorAll(".cycle-name").forEach((el) => (el.textContent = b.name));
+      demo.querySelectorAll(".cycle-hex").forEach((el) => (el.textContent = `"${b.accent}"`));
+    };
+    new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !timer) {
+        timer = window.setInterval(() => {
+          i = (i + 1) % brands.length;
+          apply();
+        }, 2200);
+      } else if (!entry.isIntersecting) {
+        window.clearInterval(timer);
+        timer = 0;
+      }
+    }).observe(demo);
+  }
+</script>
+
+<style>
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    position: relative;
+    padding: clamp(2.5rem, 7vw, 5rem) 0 0;
+    isolation: isolate;
+    text-align: center;
+  }
+  .aurora {
+    position: absolute;
+    inset: -12rem 0 auto;
+    height: 58rem;
+    z-index: -2;
+    overflow: hidden;
+    pointer-events: none;
+    mask-image: linear-gradient(to bottom, #000 55%, transparent);
+  }
+  .aurora span {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.6;
+    will-change: transform;
+  }
+  .aurora span:nth-child(1) {
+    width: 46rem;
+    height: 30rem;
+    left: 50%;
+    top: 8rem;
+    margin-left: -32rem;
+    background: radial-gradient(closest-side, rgb(37 181 200 / 0.55), transparent);
+    animation: drift1 18s ease-in-out infinite alternate;
+  }
+  .aurora span:nth-child(2) {
+    width: 40rem;
+    height: 26rem;
+    left: 50%;
+    top: 12rem;
+    margin-left: -4rem;
+    background: radial-gradient(closest-side, rgb(4 91 157 / 0.7), transparent);
+    animation: drift2 22s ease-in-out infinite alternate;
+  }
+  .aurora span:nth-child(3) {
+    width: 30rem;
+    height: 22rem;
+    left: 50%;
+    top: 24rem;
+    margin-left: -14rem;
+    background: radial-gradient(closest-side, rgb(139 124 246 / 0.4), transparent);
+    animation: drift3 16s ease-in-out infinite alternate;
+  }
+  :global([data-theme="light"]) .aurora span {
+    opacity: 0.35;
+  }
+  @keyframes drift1 {
+    to {
+      transform: translate(6rem, 3rem) scale(1.1);
+    }
+  }
+  @keyframes drift2 {
+    to {
+      transform: translate(-7rem, -2rem) scale(0.9);
+    }
+  }
+  @keyframes drift3 {
+    to {
+      transform: translate(4rem, -4rem) scale(1.2);
+    }
+  }
+  .grid-bg {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image:
+      linear-gradient(var(--fde-border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--fde-border) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 70% 55% at 50% 30%, #000 20%, transparent 75%);
+    opacity: 0.6;
+    pointer-events: none;
+  }
+  .hero-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .logo-wrap {
+    position: relative;
+    margin-bottom: 1.25rem;
+    animation: float-in 900ms var(--fde-ease) both;
+  }
+  .hero-logo {
+    position: relative;
+    width: clamp(88px, 14vw, 132px);
+    height: auto;
+    filter: drop-shadow(0 12px 30px rgb(37 181 200 / 0.35));
+    animation: bob 6s ease-in-out 900ms infinite;
+  }
+  .logo-glow {
+    position: absolute;
+    inset: -30%;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgb(37 181 200 / 0.4), transparent 70%);
+    animation: glow 4s ease-in-out infinite alternate;
+  }
+  @keyframes float-in {
+    from {
+      opacity: 0;
+      transform: translateY(16px) scale(0.96);
+    }
+  }
+  @keyframes bob {
+    50% {
+      transform: translateY(-6px) rotate(-2deg);
+    }
+  }
+  @keyframes glow {
+    from {
+      opacity: 0.5;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1.08);
+    }
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 1.25rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    border: 1px solid var(--fde-border-strong);
+    background: color-mix(in srgb, var(--fde-bg-elevated) 70%, transparent);
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--fde-text-muted);
+    animation: float-in 700ms var(--fde-ease) 80ms both;
+  }
+  .badge-dot {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background: var(--fde-success);
+    box-shadow: 0 0 10px var(--fde-success);
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(2.2rem, 7.4vw, 5rem);
+    line-height: 1.04;
+    letter-spacing: -0.045em;
+    font-weight: 820;
+    text-wrap: balance;
+    animation: float-in 800ms var(--fde-ease) 140ms both;
+  }
+  .lead {
+    max-width: 42rem;
+    margin: 1.4rem auto 0;
+    font-size: clamp(1.08rem, 2vw, 1.3rem);
+    color: var(--fde-text-muted);
+    text-wrap: pretty;
+    animation: float-in 800ms var(--fde-ease) 220ms both;
+  }
+  .hero-cta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 2rem;
+    animation: float-in 800ms var(--fde-ease) 300ms both;
+  }
+  .hero-install {
+    width: min(100%, 34rem);
+    margin-top: 1.5rem;
+    animation: float-in 800ms var(--fde-ease) 380ms both;
+  }
+  .install-note {
+    margin: 0.6rem 0 0;
+    font-size: 0.85rem;
+    color: var(--fde-text-faint);
+  }
+  .install-note code {
+    font-size: 0.8rem;
+  }
+  .stage {
+    margin-top: clamp(3rem, 7vw, 4.5rem);
+    perspective: 1600px;
+    animation: float-in 1000ms var(--fde-ease) 450ms both;
+  }
+  .window-tilt {
+    max-width: 62rem;
+    margin: 0 auto;
+    transform-origin: 50% 0%;
+    transform: rotateX(12deg) scale(0.96);
+  }
+  @supports (animation-timeline: scroll()) {
+    .window-tilt {
+      animation: untilt linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 45vh;
+    }
+  }
+  @keyframes untilt {
+    to {
+      transform: none;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .window-tilt {
+      transform: none;
+      animation: none !important;
+    }
+    .aurora span,
+    .hero-logo,
+    .logo-glow {
+      animation: none !important;
+    }
+  }
+
+  /* ---------- Providers ---------- */
+  .providers {
+    padding: clamp(3rem, 7vw, 4.5rem) 0 0;
+    text-align: center;
+  }
+  .providers-title {
+    margin: 0 0 1.25rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--fde-text-faint);
+  }
+  .provider-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.6rem;
+  }
+  .provider-list li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.95rem;
+    border-radius: 999px;
+    border: 1px solid var(--fde-border);
+    background: var(--fde-bg-elevated);
+    font-size: 0.92rem;
+    font-weight: 550;
+    color: var(--fde-text);
+  }
+  .provider-list svg {
+    color: var(--fde-text-muted);
+  }
+
+  /* ---------- Features ---------- */
+  .split-head {
+    max-width: 60rem;
+  }
+  .topology {
+    display: grid;
+    justify-items: center;
+    margin: 3rem auto 3.5rem;
+    max-width: 40rem;
+  }
+  .daemon-node {
+    display: grid;
+    justify-items: center;
+    gap: 0.35rem;
+    width: 100%;
+    padding: 1.1rem 1.25rem;
+    border-radius: var(--fde-radius-lg);
+    border: 1px solid color-mix(in srgb, var(--fde-accent) 55%, transparent);
+    background:
+      radial-gradient(120% 140% at 50% 0%, var(--fde-accent-soft), transparent 60%),
+      var(--fde-bg-elevated);
+    box-shadow: 0 0 60px -20px var(--fde-accent-glow);
+    text-align: center;
+  }
+  .node-kicker {
+    font-size: 0.78rem;
+    color: var(--fde-text-faint);
+  }
+  .daemon-node strong {
+    font-size: 1.25rem;
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.35rem;
+    margin-top: 0.3rem;
+  }
+  .chips span {
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    background: var(--fde-surface-2);
+    color: var(--fde-text-muted);
+  }
+  .links {
+    width: 100%;
+    height: 3.25rem;
+  }
+  .links svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .links path {
+    fill: none;
+    stroke: var(--fde-accent);
+    stroke-width: 1.5;
+    vector-effect: non-scaling-stroke;
+    stroke-dasharray: 5 6;
+    animation: flow 1.2s linear infinite;
+    opacity: 0.7;
+  }
+  @keyframes flow {
+    to {
+      stroke-dashoffset: -11;
+    }
+  }
+  .clients {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+    width: 100%;
+  }
+  .clients li {
+    padding: 0.6rem 0.25rem;
+    border-radius: var(--fde-radius);
+    border: 1px solid var(--fde-border);
+    background: var(--fde-bg-elevated);
+    text-align: center;
+    font-size: 0.88rem;
+    font-weight: 600;
+  }
+  .features {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  }
+  .feature {
+    padding: 1.5rem;
+  }
+  .js .feature.is-visible {
+    transition:
+      transform var(--fde-med) var(--fde-ease),
+      border-color var(--fde-med) var(--fde-ease),
+      box-shadow var(--fde-med) var(--fde-ease);
+  }
+  .feature:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--fde-accent) 45%, transparent);
+    box-shadow: var(--fde-shadow-lg);
+  }
+  .feature-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: 0.75rem;
+    color: var(--fde-accent-bright);
+    background: var(--fde-accent-soft);
+    border: 1px solid color-mix(in srgb, var(--fde-accent) 30%, transparent);
+  }
+  :global([data-theme="light"]) .feature-icon {
+    color: var(--fde-accent);
+  }
+  .feature h3 {
+    margin: 1rem 0 0.4rem;
+    font-size: 1.1rem;
+    letter-spacing: -0.01em;
+  }
+  .feature p {
+    margin: 0;
+    color: var(--fde-text-muted);
+    font-size: 0.96rem;
+  }
+
+  /* ---------- Download ---------- */
+  .download {
+    background: radial-gradient(60rem 32rem at 50% 38%, var(--fde-accent-soft), transparent 70%);
+  }
+  .center-head {
+    text-align: center;
+    display: grid;
+    justify-items: center;
+  }
+  .install-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.1rem;
+    margin: 3rem auto 2.5rem;
+    max-width: 52rem;
+    padding: 1.4rem;
+  }
+  @media (min-width: 52rem) {
+    .install-panel {
+      padding: 1.5rem 1.75rem;
+    }
+  }
+  .install-panel-text {
+    display: flex;
+    gap: 0.9rem;
+  }
+  .install-panel h3,
+  .step-row h3 {
+    margin: 0;
+    font-size: 1.1rem;
+  }
+  .install-panel p {
+    margin: 0.25rem 0 0;
+    color: var(--fde-text-muted);
+    font-size: 0.93rem;
+  }
+  .step-num {
+    flex: none;
+    display: inline-grid;
+    place-items: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 50%;
+    background: var(--fde-accent);
+    color: var(--fde-accent-fg);
+    font-weight: 750;
+    font-size: 0.9rem;
+  }
+  .step-row {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    max-width: 52rem;
+    margin: 0 auto 1rem;
+  }
+  .platforms {
+    list-style: none;
+    margin: 0 auto;
+    padding: 0;
+    max-width: 52rem;
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  }
+  .platform {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 0.35rem 0.9rem;
+    height: 100%;
+    padding: 1rem 1.1rem;
+    color: var(--fde-text) !important;
+    text-decoration: none;
+    box-shadow: none;
+    transition:
+      transform var(--fde-med) var(--fde-ease),
+      border-color var(--fde-fast) var(--fde-ease),
+      box-shadow var(--fde-med) var(--fde-ease);
+  }
+  .platform:hover {
+    transform: translateY(-2px);
+    border-color: var(--fde-accent);
+    box-shadow: var(--fde-shadow);
+  }
+  .platform:active {
+    transform: scale(0.98);
+  }
+  .platform.is-yours {
+    border-color: var(--fde-accent);
+    background:
+      radial-gradient(120% 120% at 0% 0%, var(--fde-accent-soft), transparent 60%),
+      var(--fde-bg-elevated);
+  }
+  .platform-icon {
+    grid-row: span 2;
+    display: grid;
+    place-items: center;
+    width: 2.9rem;
+    height: 2.9rem;
+    border-radius: 0.8rem;
+    background: var(--fde-surface-2);
+    color: var(--fde-text);
+  }
+  .platform-text {
+    display: grid;
+  }
+  .platform-text strong {
+    font-size: 1.02rem;
+  }
+  .platform-text span {
+    font-size: 0.84rem;
+    color: var(--fde-text-muted);
+  }
+  .platform-cta {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--fde-accent-bright);
+  }
+  :global([data-theme="light"]) .platform-cta {
+    color: var(--fde-accent);
+  }
+  .platform .arrow {
+    display: inline-block;
+    transition: transform var(--fde-med) var(--fde-ease);
+  }
+  .platform:hover .arrow {
+    transform: translateX(3px);
+  }
+  .your-os {
+    position: absolute;
+    top: 0.7rem;
+    right: 0.8rem;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 650;
+    color: var(--fde-accent-fg);
+    background: var(--fde-accent);
+  }
+  .your-os[hidden] {
+    display: none;
+  }
+  .fine-print {
+    max-width: 52rem;
+    margin: 1.25rem auto 0;
+    text-align: center;
+    font-size: 0.88rem;
+    color: var(--fde-text-faint);
+  }
+
+  /* ---------- Companion ---------- */
+  :is(.companion, .pairing, .yours) .section-title {
+    font-size: clamp(2rem, 3.8vw, 2.8rem);
+  }
+  .companion-grid,
+  .pairing-grid {
+    display: grid;
+    gap: clamp(2.5rem, 6vw, 4.5rem);
+    align-items: center;
+  }
+  @media (min-width: 60rem) {
+    .companion-grid {
+      grid-template-columns: 1.05fr 1fr;
+    }
+    .pairing-grid {
+      grid-template-columns: 1fr 1.05fr;
+    }
+  }
+  .ticks {
+    list-style: none;
+    margin: 1.75rem 0 2rem;
+    padding: 0;
+    display: grid;
+    gap: 0.7rem;
+  }
+  .ticks li {
+    position: relative;
+    padding-left: 1.9rem;
+    color: var(--fde-text-muted);
+  }
+  .ticks li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.2rem;
+    width: 1.2rem;
+    height: 1.2rem;
+    border-radius: 50%;
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m6 12.5 4 4 8-9' fill='none' stroke='%2325b5c8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+        center / 70% no-repeat,
+      var(--fde-accent-soft);
+  }
+  .companion-visual {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: 1.5rem;
+  }
+  .orb {
+    position: relative;
+    width: clamp(12rem, 30vw, 16rem);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 30%, rgb(255 255 255 / 0.18), transparent 40%),
+      #06181c;
+    box-shadow:
+      inset 0 0 40px rgb(37 181 200 / 0.35),
+      0 0 80px -10px rgb(37 181 200 / 0.55),
+      0 0 140px -30px rgb(139 124 246 / 0.6);
+    overflow: hidden;
+  }
+  .ribbon {
+    position: absolute;
+    inset: -25%;
+    border-radius: 42%;
+    mix-blend-mode: screen;
+  }
+  .r1 {
+    background: conic-gradient(
+      from 0deg,
+      transparent 0 18%,
+      rgb(37 181 200 / 0.85) 30%,
+      transparent 46% 100%
+    );
+    animation: spin-slow 7s linear infinite;
+  }
+  .r2 {
+    background: conic-gradient(
+      from 120deg,
+      transparent 0 28%,
+      rgb(139 124 246 / 0.8) 42%,
+      transparent 56% 100%
+    );
+    animation: spin-slow 9s linear infinite reverse;
+  }
+  .r3 {
+    background: conic-gradient(
+      from 240deg,
+      transparent 0 33%,
+      rgb(127 217 230 / 0.75) 45%,
+      transparent 57% 100%
+    );
+    animation: spin-slow 12s linear infinite;
+  }
+  .orb::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    box-shadow: inset 0 0 30px 12px #06181c;
+  }
+  .orb-core {
+    position: absolute;
+    inset: 36%;
+    border-radius: 50%;
+    background: radial-gradient(
+      circle,
+      rgb(220 250 255 / 0.9),
+      rgb(37 181 200 / 0.25) 60%,
+      transparent 70%
+    );
+    animation: breathe 2.4s ease-in-out infinite;
+    z-index: 1;
+  }
+  @keyframes spin-slow {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @keyframes breathe {
+    50% {
+      transform: scale(1.2);
+      opacity: 0.75;
+    }
+  }
+  .bubbles {
+    display: grid;
+    gap: 0.55rem;
+    width: min(100%, 26rem);
+  }
+  .bubble {
+    margin: 0;
+    max-width: 88%;
+    padding: 0.6rem 0.9rem;
+    border-radius: 1rem;
+    font-size: 0.93rem;
+    line-height: 1.45;
+  }
+  .js .bubble {
+    opacity: 0;
+    transform: translateY(8px);
+    transition:
+      opacity 500ms var(--fde-ease),
+      transform 500ms var(--fde-ease);
+  }
+  .js .is-visible .bubble {
+    opacity: 1;
+    transform: none;
+  }
+  .is-visible .bubble:nth-child(2) {
+    transition-delay: 600ms;
+  }
+  .is-visible .bubble:nth-child(3) {
+    transition-delay: 1300ms;
+  }
+  .is-visible .bubble:nth-child(4) {
+    transition-delay: 1900ms;
+  }
+  .bubble.you {
+    justify-self: end;
+    background: var(--fde-surface-2);
+    border-bottom-right-radius: 0.3rem;
+  }
+  .bubble.fde {
+    justify-self: start;
+    background: var(--fde-accent-soft);
+    border: 1px solid color-mix(in srgb, var(--fde-accent) 30%, transparent);
+    border-bottom-left-radius: 0.3rem;
+  }
+  .bubble.status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+  }
+  .eq {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    height: 14px;
+  }
+  .eq i {
+    width: 3px;
+    height: 100%;
+    border-radius: 2px;
+    background: var(--fde-accent);
+    animation: eq 900ms ease-in-out infinite;
+  }
+  .eq i:nth-child(2) {
+    animation-delay: -300ms;
+  }
+  .eq i:nth-child(3) {
+    animation-delay: -600ms;
+  }
+  .eq i:nth-child(4) {
+    animation-delay: -150ms;
+  }
+  @keyframes eq {
+    0%,
+    100% {
+      transform: scaleY(0.3);
+    }
+    50% {
+      transform: scaleY(1);
+    }
+  }
+
+  /* ---------- Pairing ---------- */
+  .pairing-grid > div:last-child {
+    order: -1;
+  }
+  @media (min-width: 60rem) {
+    .pairing-grid > div:last-child {
+      order: 0;
+    }
+  }
+  .section-lead code,
+  .note code,
+  .install-panel code,
+  .yours-copy code {
+    font-family: var(--fde-font-mono);
+    font-size: 0.88em;
+    padding: 0.1rem 0.35rem;
+    border-radius: 0.35rem;
+    background: var(--fde-surface-2);
+    color: var(--fde-text);
+  }
+  .pair-steps {
+    list-style: none;
+    margin: 1.5rem 0 1rem;
+    padding: 0;
+    display: grid;
+    gap: 0.5rem;
+  }
+  .pair-steps li {
+    padding: 0.75rem 1rem;
+    border-radius: var(--fde-radius);
+    border: 1px solid var(--fde-border);
+    background: var(--fde-bg-elevated);
+    color: var(--fde-text-muted);
+  }
+  .pair-steps strong {
+    color: var(--fde-text);
+    margin-right: 0.25rem;
+  }
+  .note {
+    margin: 0 0 1.75rem;
+    font-size: 0.9rem;
+    color: var(--fde-text-faint);
+  }
+  .phone-wrap {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    padding: 1rem 0 2rem;
+  }
+  .phone {
+    position: relative;
+    width: min(18rem, 74vw);
+    aspect-ratio: 9 / 18.5;
+    padding: 0.7rem;
+    border-radius: 2.6rem;
+    background: linear-gradient(145deg, #2a3433, #0c1010);
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / 0.12) inset,
+      0 50px 100px -30px rgb(0 0 0 / 0.7),
+      0 0 90px -30px var(--fde-accent-glow);
+    transform: rotate(-4deg);
+  }
+  @supports (animation-timeline: view()) {
+    .phone {
+      animation: phone-parallax linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 100%;
+    }
+    .qr-card {
+      animation: qr-parallax linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 100%;
+    }
+  }
+  @keyframes phone-parallax {
+    from {
+      transform: translateY(40px) rotate(-7deg);
+    }
+    to {
+      transform: translateY(-30px) rotate(-1deg);
+    }
+  }
+  @keyframes qr-parallax {
+    from {
+      transform: translateY(80px) rotate(8deg);
+    }
+    to {
+      transform: translateY(-60px) rotate(2deg);
+    }
+  }
+  .phone-notch {
+    position: absolute;
+    top: 1.1rem;
+    left: 50%;
+    width: 5.5rem;
+    height: 1.4rem;
+    margin-left: -2.75rem;
+    border-radius: 999px;
+    background: #000;
+    z-index: 1;
+  }
+  .phone-screen {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    height: 100%;
+    padding: 2.6rem 0.85rem 0.85rem;
+    border-radius: 2rem;
+    background: #0f1413;
+    color: #e9efee;
+    font-size: 0.8rem;
+    overflow: hidden;
+    text-align: left;
+  }
+  .ph-head {
+    display: grid;
+    gap: 0.1rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid rgb(255 255 255 / 0.08);
+  }
+  .ph-host {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.7rem;
+    color: #8d9997;
+  }
+  .ph-host i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #3fcf8e;
+  }
+  .ph-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+  .ph-sub {
+    font-size: 0.72rem;
+    color: #8d9997;
+  }
+  .ph-line {
+    display: flex;
+    gap: 0.4rem;
+    color: #b7c2c0;
+  }
+  .ph-line code,
+  .ph-card code {
+    font-family: var(--fde-font-mono);
+    font-size: 0.7rem;
+    color: #e9efee;
+  }
+  .ok {
+    color: #3fcf8e;
+  }
+  .ph-card {
+    display: grid;
+    gap: 0.45rem;
+    margin-top: 0.3rem;
+    padding: 0.7rem;
+    border-radius: 0.9rem;
+    border: 1px solid rgb(245 184 74 / 0.5);
+    background: rgb(245 184 74 / 0.09);
+    animation: attention 2.4s ease-in-out infinite;
+  }
+  @keyframes attention {
+    50% {
+      box-shadow: 0 0 0 4px rgb(245 184 74 / 0.12);
+    }
+  }
+  .ph-card code {
+    padding: 0.3rem 0.4rem;
+    border-radius: 0.4rem;
+    background: rgb(0 0 0 / 0.35);
+  }
+  .ph-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+  }
+  .ph-actions span {
+    padding: 0.4rem;
+    border-radius: 0.6rem;
+    text-align: center;
+    font-weight: 650;
+    background: rgb(255 255 255 / 0.07);
+  }
+  .ph-actions .allow {
+    background: #25b5c8;
+    color: #07222b;
+  }
+  .ph-composer {
+    margin-top: auto;
+    padding: 0.55rem 0.75rem;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.06);
+    color: #8d9997;
+  }
+  .qr-card {
+    position: absolute;
+    right: max(0rem, calc(50% - 14rem));
+    bottom: 3rem;
+    display: grid;
+    justify-items: center;
+    gap: 0.4rem;
+    padding: 0.7rem;
+    border-radius: 1rem;
+    background: #fff;
+    color: #111;
+    font-size: 0.72rem;
+    font-weight: 650;
+    box-shadow: var(--fde-shadow-lg);
+    transform: rotate(4deg);
+  }
+  .qr {
+    display: grid;
+    grid-template-columns: repeat(9, 0.5rem);
+    gap: 1px;
+  }
+  .qr i {
+    aspect-ratio: 1;
+    border-radius: 1px;
+  }
+  .qr i.on {
+    background: #0b0f0f;
+  }
+
+  /* ---------- Make it yours ---------- */
+  .yours-panel {
+    position: relative;
+    display: grid;
+    gap: 2.5rem;
+    padding: clamp(1.5rem, 5vw, 3.5rem);
+    border-radius: 1.75rem;
+    background:
+      linear-gradient(var(--fde-bg-elevated), var(--fde-bg-elevated)) padding-box,
+      linear-gradient(120deg, var(--fde-accent-bright), var(--fde-accent) 40%, var(--fde-violet))
+        border-box;
+    border: 1.5px solid transparent;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  @media (min-width: 62rem) {
+    .yours-panel {
+      grid-template-columns: 1.1fr 1fr;
+      align-items: center;
+    }
+  }
+  .yours-glow {
+    position: absolute;
+    inset: -40% -20% auto auto;
+    width: 36rem;
+    height: 36rem;
+    z-index: -1;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, var(--fde-accent-glow), transparent);
+    opacity: 0.5;
+    animation: glow 6s ease-in-out infinite alternate;
+  }
+  .yours-steps {
+    list-style: none;
+    margin: 1.75rem 0 2rem;
+    padding: 0;
+    display: grid;
+    gap: 0.65rem;
+  }
+  .yours-steps li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.8rem;
+    color: var(--fde-text-muted);
+  }
+  .yours-steps li > span {
+    flex: none;
+    display: inline-grid;
+    place-items: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 50%;
+    font-size: 0.8rem;
+    font-weight: 750;
+    color: var(--fde-accent-fg);
+    background: var(--fde-accent);
+    transform: translateY(0.3rem);
+  }
+  .yours-steps strong {
+    color: var(--fde-text);
+  }
+  .yours-cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .yours-demo {
+    --demo-accent: #c4b5fd;
+    position: relative;
+    display: grid;
+    gap: 1rem;
+    min-width: 0;
+  }
+  .brand-json {
+    border-radius: var(--fde-radius);
+    background: #0b0f0f;
+    border: 1px solid rgb(255 255 255 / 0.1);
+    color: #d7e1df;
+    overflow: hidden;
+    box-shadow: var(--fde-shadow);
+  }
+  .bj-bar {
+    padding: 0.5rem 0.9rem;
+    font: 0.75rem var(--fde-font-mono);
+    color: #8d9997;
+    border-bottom: 1px solid rgb(255 255 255 / 0.07);
+  }
+  .brand-json pre {
+    margin: 0;
+    padding: 0.9rem 1rem;
+    overflow-x: auto;
+    font: 0.8rem/1.65 var(--fde-font-mono);
+  }
+  .k {
+    color: #7fd9e6;
+  }
+  .s {
+    color: #e8c07a;
+  }
+  .n {
+    color: #c4b5fd;
+  }
+  .swatch-inline {
+    display: inline-block;
+    width: 0.8rem;
+    height: 0.8rem;
+    margin-right: 0.35rem;
+    border-radius: 3px;
+    vertical-align: -0.1rem;
+    background: var(--demo-accent);
+    transition: background-color 500ms var(--fde-ease);
+  }
+  .mini-app {
+    border-radius: var(--fde-radius);
+    background: #1b1621;
+    border: 1px solid rgb(255 255 255 / 0.1);
+    overflow: hidden;
+    box-shadow: var(--fde-shadow-lg);
+    color: #f5f0fa;
+    margin-left: clamp(0rem, 6vw, 3rem);
+  }
+  .mini-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 650;
+    background: rgb(255 255 255 / 0.04);
+  }
+  .mini-bar i {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: rgb(255 255 255 / 0.15);
+  }
+  .mini-bar span {
+    margin-left: 0.5rem;
+  }
+  .mini-body {
+    display: grid;
+    grid-template-columns: 6rem 1fr;
+    height: 8.5rem;
+  }
+  .mini-side {
+    display: grid;
+    align-content: start;
+    gap: 0.4rem;
+    padding: 0.6rem;
+    background: rgb(255 255 255 / 0.03);
+  }
+  .mini-side b {
+    width: 1.3rem;
+    height: 1.3rem;
+    border-radius: 0.35rem;
+    background: var(--demo-accent);
+    transition: background-color 500ms var(--fde-ease);
+  }
+  .mini-side span {
+    height: 0.55rem;
+    border-radius: 4px;
+    background: rgb(255 255 255 / 0.1);
+  }
+  .mini-side span.on {
+    background: color-mix(in srgb, var(--demo-accent) 55%, transparent);
+    transition: background-color 500ms var(--fde-ease);
+  }
+  .mini-main {
+    display: grid;
+    align-content: start;
+    gap: 0.45rem;
+    padding: 0.7rem;
+  }
+  .mini-msg {
+    height: 0.6rem;
+    border-radius: 4px;
+    background: rgb(255 255 255 / 0.12);
+  }
+  .mini-msg.short {
+    width: 60%;
+  }
+  .mini-btn {
+    justify-self: end;
+    margin-top: 1.4rem;
+    padding: 0.25rem 0.8rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #111;
+    background: var(--demo-accent);
+    transition: background-color 500ms var(--fde-ease);
+  }
+
+  /* ---------- Final ---------- */
+  .final-inner {
+    display: grid;
+    justify-items: center;
+    text-align: center;
+  }
+  .final-logo {
+    width: 72px;
+    height: auto;
+    margin-bottom: 1rem;
+  }
+  .final .hero-cta {
+    animation: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .phone,
+    .qr-card {
+      animation: none !important;
+    }
+    .js .bubble {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
+</style>

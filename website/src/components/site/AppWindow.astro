@@ -1,0 +1,459 @@
+---
+/** Animated illustration of the FDE app: agents running across workspaces on one host. Decorative. */
+import ProviderIcon from "./ProviderIcon.astro";
+---
+
+<fde-app-window class="app-window" aria-hidden="true" data-step="0">
+  <div class="titlebar">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="tb-title">FDE</span>
+    <span class="tb-host"><i class="live"></i>build-box</span>
+  </div>
+  <div class="body">
+    <aside class="sidebar">
+      <div class="sb-label">api-server</div>
+      <div class="agent active">
+        <span class="status running"></span><ProviderIcon name="claude" size={13} /><span>Rate-limit uploads</span>
+      </div>
+      <div class="agent sub">
+        <span class="status done"></span><span>Write load test</span>
+      </div>
+      <div class="agent">
+        <span class="status attention"></span><ProviderIcon name="codex" size={13} /><span>Fix flaky CI job</span>
+      </div>
+      <div class="sb-label">web-app</div>
+      <div class="agent">
+        <span class="status running"></span><ProviderIcon name="opencode" size={13} /><span>Dark mode polish</span>
+      </div>
+      <div class="agent">
+        <span class="status idle"></span><ProviderIcon name="copilot" size={13} /><span>Upgrade router</span>
+      </div>
+      <div class="sb-label">docs</div>
+      <div class="agent">
+        <span class="status done"></span><ProviderIcon name="pi" size={13} /><span>Changelog draft</span>
+      </div>
+    </aside>
+
+    <section class="main">
+      <header class="main-head">
+        <div>
+          <strong>Rate-limit uploads</strong>
+          <span class="branch">worktree · feat/upload-limits</span>
+        </div>
+        <span class="pill"><ProviderIcon name="claude" size={12} /> Claude Code</span>
+      </header>
+
+      <div class="timeline">
+        <div class="msg user" data-at="1">Add rate limiting to the upload endpoint and cover it with tests.</div>
+        <div class="msg agent" data-at="2">
+          I'll add a token bucket middleware, wire it into <code>routes/upload.ts</code>, then run the suite.
+        </div>
+        <div class="tool" data-at="3">
+          <span class="ok">✓</span> Read <code>routes/upload.ts</code>, <code>middleware/</code>
+        </div>
+        <div class="tool" data-at="4">
+          <span class="ok">✓</span> Edited 3 files <span class="plus">+84</span><span class="minus">−6</span>
+        </div>
+        <div class="tool run" data-at="5">
+          <span class="spin"></span><span class="ok done-mark">✓</span> <code>npm test</code>
+          <span class="result">42 passed</span>
+        </div>
+        <div class="permission" data-at="7">
+          <div><strong>Permission</strong> · run <code>git push origin feat/upload-limits</code></div>
+          <div class="perm-actions"><span class="deny">Deny</span><span class="allow">Allow</span></div>
+        </div>
+      </div>
+
+      <div class="composer">
+        <span>Message Claude Code…</span>
+        <span class="send">↑</span>
+      </div>
+    </section>
+  </div>
+</fde-app-window>
+
+<script>
+  class FdeAppWindow extends HTMLElement {
+    private timer = 0;
+    private step = 0;
+    connectedCallback() {
+      const last = 9;
+      if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        this.dataset.step = String(last);
+        return;
+      }
+      const tick = () => {
+        this.step = this.step >= last + 3 ? 0 : this.step + 1;
+        this.dataset.step = String(Math.min(this.step, last));
+      };
+      const start = () => {
+        if (!this.timer) this.timer = window.setInterval(tick, 1100);
+      };
+      const stop = () => {
+        window.clearInterval(this.timer);
+        this.timer = 0;
+      };
+      new IntersectionObserver(([entry]) => (entry.isIntersecting ? start() : stop())).observe(this);
+      document.addEventListener("visibilitychange", () => (document.hidden ? stop() : start()));
+    }
+  }
+  if (!customElements.get("fde-app-window")) customElements.define("fde-app-window", FdeAppWindow);
+</script>
+
+<style>
+  .app-window {
+    --w-bg: #111615;
+    --w-side: #0d1110;
+    --w-surface: #182020;
+    --w-border: rgb(255 255 255 / 0.08);
+    --w-text: #e9efee;
+    --w-muted: #8d9997;
+    display: block;
+    overflow: hidden;
+    border-radius: 14px;
+    background: var(--w-bg);
+    color: var(--w-text);
+    border: 1px solid rgb(255 255 255 / 0.1);
+    box-shadow:
+      0 0 0 1px rgb(0 0 0 / 0.4),
+      0 40px 120px -30px rgb(0 0 0 / 0.8),
+      0 0 80px -20px rgb(37 181 200 / 0.35);
+    font-size: 13px;
+    line-height: 1.45;
+    text-align: left;
+    user-select: none;
+  }
+  :global([data-theme="light"]) .app-window {
+    --w-bg: #ffffff;
+    --w-side: #f5f8f9;
+    --w-surface: #eef3f5;
+    --w-border: rgb(15 30 40 / 0.09);
+    --w-text: #152022;
+    --w-muted: #607074;
+    border-color: rgb(15 30 40 / 0.12);
+    box-shadow:
+      0 40px 100px -30px rgb(15 40 60 / 0.35),
+      0 0 80px -30px rgb(10 120 201 / 0.35);
+  }
+  .titlebar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    height: 38px;
+    padding: 0 0.85rem;
+    background: var(--w-side);
+    border-bottom: 1px solid var(--w-border);
+  }
+  .dots {
+    display: inline-flex;
+    gap: 6px;
+  }
+  .dots i {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: var(--w-border);
+    box-shadow: inset 0 0 0 1px var(--w-border);
+  }
+  .tb-title {
+    flex: 1;
+    text-align: center;
+    font-weight: 600;
+    color: var(--w-muted);
+  }
+  .tb-host {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 12px;
+    color: var(--w-muted);
+  }
+  .live {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #3fcf8e;
+    box-shadow: 0 0 8px #3fcf8e;
+  }
+  .body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    height: 400px;
+  }
+  @media (min-width: 44rem) {
+    .body {
+      grid-template-columns: 220px minmax(0, 1fr);
+      height: 430px;
+    }
+  }
+  .sidebar {
+    display: none;
+    padding: 0.75rem 0.6rem;
+    background: var(--w-side);
+    border-right: 1px solid var(--w-border);
+    overflow: hidden;
+  }
+  @media (min-width: 44rem) {
+    .sidebar {
+      display: block;
+    }
+  }
+  .sb-label {
+    margin: 0.7rem 0.45rem 0.3rem;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--w-muted);
+  }
+  .sb-label:first-child {
+    margin-top: 0.1rem;
+  }
+  .agent {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.36rem 0.5rem;
+    border-radius: 7px;
+    white-space: nowrap;
+    overflow: hidden;
+    color: var(--w-text);
+  }
+  .agent span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .agent svg {
+    flex: none;
+    color: var(--w-muted);
+  }
+  .agent.sub {
+    padding-left: 1.6rem;
+    color: var(--w-muted);
+  }
+  .agent.active {
+    background: rgb(37 181 200 / 0.14);
+    box-shadow: inset 2px 0 0 #25b5c8;
+  }
+  .status {
+    flex: none;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--w-border);
+  }
+  .status.running {
+    background: #25b5c8;
+    animation: pulse 1.8s ease-out infinite;
+  }
+  .status.done {
+    background: #3fcf8e;
+  }
+  .status.attention {
+    background: #f5b84a;
+  }
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgb(37 181 200 / 0.6);
+    }
+    80%,
+    100% {
+      box-shadow: 0 0 0 6px rgb(37 181 200 / 0);
+    }
+  }
+  .main {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 0.8rem 1rem 0.9rem;
+  }
+  .main-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-bottom: 0.7rem;
+    border-bottom: 1px solid var(--w-border);
+  }
+  .main-head strong {
+    display: block;
+    font-size: 14px;
+  }
+  .branch {
+    font-size: 11.5px;
+    color: var(--w-muted);
+  }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex: none;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #d97757;
+    background: rgb(217 119 87 / 0.12);
+  }
+  .timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.8rem 0 0.6rem;
+    flex: 1;
+    overflow: hidden;
+  }
+  [data-at] {
+    opacity: 0;
+    transform: translateY(8px);
+    transition:
+      opacity 360ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      transform 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .app-window[data-step="1"] [data-at="1"],
+  .app-window[data-step="2"] :is([data-at="1"], [data-at="2"]),
+  .app-window[data-step="3"] :is([data-at="1"], [data-at="2"], [data-at="3"]),
+  .app-window[data-step="4"] :is([data-at="1"], [data-at="2"], [data-at="3"], [data-at="4"]),
+  .app-window:is([data-step="5"], [data-step="6"])
+    :is([data-at="1"], [data-at="2"], [data-at="3"], [data-at="4"], [data-at="5"]),
+  .app-window:is([data-step="7"], [data-step="8"], [data-step="9"]) [data-at] {
+    opacity: 1;
+    transform: none;
+  }
+  .msg {
+    max-width: 88%;
+    padding: 0.5rem 0.7rem;
+    border-radius: 10px;
+  }
+  .msg.user {
+    align-self: flex-end;
+    background: var(--w-surface);
+  }
+  .msg.agent {
+    padding-left: 0.1rem;
+  }
+  code {
+    font-family: var(--fde-font-mono);
+    font-size: 11.5px;
+    padding: 0.05rem 0.3rem;
+    border-radius: 4px;
+    background: var(--w-surface);
+  }
+  .tool {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.4rem 0.6rem;
+    border-radius: 8px;
+    border: 1px solid var(--w-border);
+    color: var(--w-muted);
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .ok {
+    color: #3fcf8e;
+  }
+  .plus {
+    color: #3fcf8e;
+  }
+  .minus {
+    color: #f87171;
+  }
+  .spin {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    border: 2px solid rgb(37 181 200 / 0.25);
+    border-top-color: #25b5c8;
+    animation: spin 0.8s linear infinite;
+  }
+  .done-mark,
+  .result {
+    display: none;
+  }
+  .result {
+    margin-left: auto;
+    color: #3fcf8e;
+    font-weight: 600;
+  }
+  .app-window:is([data-step="6"], [data-step="7"], [data-step="8"], [data-step="9"]) .run .spin {
+    display: none;
+  }
+  .app-window:is([data-step="6"], [data-step="7"], [data-step="8"], [data-step="9"]) .run :is(.done-mark, .result) {
+    display: inline;
+  }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  .permission {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.55rem 0.7rem;
+    border-radius: 10px;
+    border: 1px solid rgb(245 184 74 / 0.45);
+    background: rgb(245 184 74 / 0.08);
+    font-size: 12px;
+  }
+  .perm-actions {
+    display: flex;
+    gap: 0.4rem;
+  }
+  .perm-actions span {
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    font-weight: 600;
+    border: 1px solid var(--w-border);
+  }
+  .allow {
+    background: #25b5c8;
+    color: #07222b;
+    border-color: transparent !important;
+    transition: transform 200ms var(--fde-ease-spring);
+  }
+  .app-window[data-step="8"] .allow {
+    transform: scale(0.92);
+  }
+  .app-window[data-step="9"] .permission {
+    border-color: rgb(63 207 142 / 0.45);
+    background: rgb(63 207 142 / 0.08);
+  }
+  .app-window[data-step="9"] .deny {
+    display: none;
+  }
+  .app-window[data-step="9"] .allow {
+    background: transparent;
+    color: #3fcf8e;
+  }
+  .app-window[data-step="9"] .allow::before {
+    content: "✓ ";
+  }
+  .composer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.4rem 0.4rem 0.4rem 0.8rem;
+    border-radius: 12px;
+    border: 1px solid var(--w-border);
+    background: var(--w-surface);
+    color: var(--w-muted);
+  }
+  .send {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    background: #25b5c8;
+    color: #07222b;
+    font-weight: 700;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    [data-at] {
+      transition: none;
+    }
+  }
+</style>
