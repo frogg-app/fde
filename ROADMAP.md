@@ -262,7 +262,7 @@ The docs rewrite (2026-09-13) replaced `docs/` with the Astro/Starlight site in
       securable (2026-09-13); docs and website no longer mention them. Still in
       the code: `packages/plugin`, `packages/server/src/server/plugins/`, the
       host Plugins settings page, `fde plugin` CLI, `pluginsEnabled`/`plugins`
-      config, plugin RPCs and themes, `examples/plugins/`, `skills/fde-plugin`.
+      config, plugin RPCs and themes, `examples/plugins/` (the `fde-plugin` skill is already gone).
       Contributor build-order tables still list `@fde/plugin` until it is removed.
 - [ ] **`FDE_DEV_RESET_HOME`** does nothing on its own.
 - [ ] **Dangling design-doc references.** Comments in `apps/ui` and
