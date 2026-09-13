@@ -1047,6 +1047,7 @@ export const en = {
     },
   },
   sidebar: {
+    workspaceDraft: "New workspace (draft)",
     hostsMenu: {
       trigger: "Hosts",
       addHost: "Add a host",

@@ -1047,6 +1047,7 @@ export const ko: TranslationResources = {
     },
   },
   sidebar: {
+    workspaceDraft: "새 작업 공간 (초안)",
     hostsMenu: {
       trigger: "호스트",
       addHost: "호스트 추가",

@@ -1071,6 +1071,7 @@ export const fr: TranslationResources = {
     },
   },
   sidebar: {
+    workspaceDraft: "Nouvel espace de travail (brouillon)",
     hostsMenu: {
       trigger: "Hôtes",
       addHost: "Ajouter un hôte",

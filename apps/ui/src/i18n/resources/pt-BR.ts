@@ -1063,6 +1063,7 @@ export const ptBR: TranslationResources = {
     },
   },
   sidebar: {
+    workspaceDraft: "Novo espaço de trabalho (rascunho)",
     hostsMenu: {
       trigger: "Hosts",
       addHost: "Adicionar host",

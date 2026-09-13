@@ -7,6 +7,11 @@ namespace migration. Unchecked items are validation/backlog work, not active tas
 
 ## Implemented baseline
 
+- Session-only sidebar entries resume unfinished new-workspace forms with their
+  input and selections. Pending submissions survive navigation; failures can be
+  retried and successful handoffs remove the entry. Browser/daemon coverage is
+  automated; native device acceptance remains separate.
+
 - Home-first immediate directory browsing with pinned selection/parent actions;
   cancellable network discovery with concise status; configurable daemon network
   defaults and readable configuration. See [configuration](docs/install.md#daemon-configuration).

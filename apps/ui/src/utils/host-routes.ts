@@ -430,6 +430,8 @@ export function buildOpenProjectRoute() {
 
 interface NewWorkspaceRouteOptions {
   serverId?: string;
+  /** Sidebar intent: restore this session's draft selections rather than start in a new context. */
+  resumeDraft?: boolean;
   sourceDirectory?: string;
   displayName?: string;
   projectId?: string;
@@ -440,6 +442,7 @@ interface NewWorkspaceRouteOptions {
 
 function buildNewWorkspaceSearch(options: NewWorkspaceRouteOptions): string {
   const params = new URLSearchParams();
+  if (options.resumeDraft) params.set("resume", "1");
   const serverId = trimNonEmpty(options.serverId);
   if (serverId) {
     params.set("serverId", serverId);

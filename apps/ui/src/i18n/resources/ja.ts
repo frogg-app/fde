@@ -1052,6 +1052,7 @@ export const ja: TranslationResources = {
     },
   },
   sidebar: {
+    workspaceDraft: "新しいワークスペース（下書き）",
     hostsMenu: {
       trigger: "ホスト",
       addHost: "ホストを追加",

@@ -1072,6 +1072,7 @@ export const es: TranslationResources = {
     },
   },
   sidebar: {
+    workspaceDraft: "Nuevo espacio de trabajo (borrador)",
     hostsMenu: {
       trigger: "Anfitriones",
       addHost: "Agregar anfitrión",
