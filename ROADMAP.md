@@ -118,6 +118,18 @@ visible until device or deployment evidence closes them.
       macOS and Windows updater hand-off/rollback, SSH auth and reconnect, mobile
       claims and spoken alerts, and Android/Windows streaming on real hardware.
       Capture profiles before assigning a performance improvement percentage.
+- [ ] **Verify restart resume and connection feedback live (#61).** Unit-tested
+      only. Rebuild the daemon, restart it while agents are mid-Shell, and confirm
+      each continues within the hour window without duplicate prompts. On desktop
+      and web, confirm the bottom-right lost/reconnected card and the red composer
+      outline; compact layouts should still show the top toast. The transcript tail
+      hiding under the diff-stat pill was not reproduced; confirm the jump-to-bottom
+      button now appears instead.
+- [ ] **Verify workspace diff stats live (#65).** Confirm a squash-merged branch
+      reads 0, counts update at agent/subagent turn end, and the 30s safety refresh
+      costs little with many watched workspaces. Known approximations: a
+      conflicting merge falls back to the merge-base count, and uncommitted edits
+      on lines the branch already changed are counted twice.
 - [ ] **Signing and distribution.** Configure persistent Android release signing,
       Windows Authenticode, macOS Developer ID/notarization, and updater signing.
       Verify Electron feed metadata and signed update payloads for each target. See [CI](docs/ci.md) and
@@ -152,6 +164,9 @@ visible until device or deployment evidence closes them.
       settings modal; distinguish the Playwright E2E suite from passing Vitest
       browser component tests. Retain the idle memory probe as a diagnostic,
       not a claimed performance acceptance test.
+- [ ] **Hermetic UI tests.** `remote-ssh-target.test.ts` fails when the
+      environment injects a daemon port (FDE worktree services set 9999 and the test
+      expects 6767).
 - [ ] **Dependency updates.** Review the seven open Dependabot PRs separately with
       compatibility checks. Major library updates are not baseline cleanup.
 - [ ] **Provider toggles re-enable after updates.** Disabled providers
