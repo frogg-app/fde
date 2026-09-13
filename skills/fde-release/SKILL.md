@@ -50,16 +50,28 @@ Run manifest tests and the desktop update-discovery tests when packaging or feed
 change. Generate metadata from the actual collected binaries:
 
 ```bash
-node scripts/release/electron-release-manifests.mjs --version VERSION --assets ASSETS --out METADATA
+node scripts/release/build-release-metadata.mjs --version VERSION --assets ASSETS --out METADATA
 ```
 
-The command requires the complete supported desktop set. `electron-release.json`
-selects the schema, runtime, version and channel; its platform entries identify
-exact manifest and payload names. Electron channel manifests contain payload
-sizes and SHA-512 hashes. Verify these against the release asset inventory and
-bytes, including both Mac architectures. Never publish placeholder platform files.
+Keep product discovery at `release.json`; never put a framework, installer type,
+or current runtime in that endpoint's name or top-level identity. Represent
+supported update protocols as explicit paths inside the versioned product schema.
+Adding a runtime changes adapters and migration paths, not the discovery URL.
+Retain compatibility manifests consumed by already-shipped clients. A manual path
+in the new descriptor does not reach pre-descriptor clients; those versions need
+retained compatibility outputs or a tested migration bridge. Protocol adapters own
+manifest discovery, payload enumeration and verification; keep their payload
+formats out of the generic publication workflow.
 
-Test the previous published Electron client through check, download, install and
+The current packaging adapter requires the complete supported desktop set and
+emits exact manifest/payload names, sizes and hashes. New automatic protocols need
+a verifier before publication. Compare with the preceding published descriptor:
+each existing protocol needs either a supported automatic path or explicit manual
+migration instructions. Test a future-runtime transition in which the old client
+still reads the same product descriptor. Do not assume that a generic filename
+alone makes an incompatible installer safe.
+
+Test the previous published client through check, download, install and
 relaunch on each affected installation form. Distinguish source tests, successful
 packaging, emulator launch and physical-device/installed-update acceptance. Keep
 unavailable checks visible in release notes; do not report them as passed.

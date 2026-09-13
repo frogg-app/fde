@@ -1,6 +1,5 @@
-import { createReadStream } from "node:fs";
-import { createHash } from "node:crypto";
-import { valid, gte } from "semver";
+import { electronUpdateProtocol } from "./verify-electron-update-path.mjs";
+import { valid, lt, rcompare } from "semver";
 import { execFileSync } from "node:child_process";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
@@ -8,97 +7,94 @@ import path from "node:path";
 import { parseArgs } from "node:util";
 import { pathToFileURL } from "node:url";
 
-export function verifyReleaseAssets({ descriptor, manifests, release }) {
+export function verifyReleaseAssets({ descriptor, manifests, release, previousDescriptor }) {
   if (
     descriptor.schemaVersion !== 1 ||
-    descriptor.runtime !== "electron" ||
+    !valid(descriptor.version) ||
     release.tag_name !== `v${descriptor.version}`
   )
     throw new Error("Release identity mismatch");
+  if (descriptor.channel !== (descriptor.version.includes("-") ? "beta" : "stable"))
+    throw new Error("Release channel mismatch");
   if (
-    !valid(descriptor.version) ||
-    !valid(descriptor.minimumClientVersion) ||
-    !gte(descriptor.version, descriptor.minimumClientVersion)
+    !descriptor.updatePaths ||
+    typeof descriptor.updatePaths !== "object" ||
+    Array.isArray(descriptor.updatePaths) ||
+    !Object.keys(descriptor.updatePaths).length
   )
-    throw new Error("Invalid minimum client version");
-  const channel = descriptor.version.includes("-") ? "electron-beta" : "electron-latest";
-  if (descriptor.channel !== channel) throw new Error("Release channel mismatch");
+    throw new Error("Missing update paths");
+  for (const protocol of Object.keys(previousDescriptor?.updatePaths ?? {})) {
+    if (!Object.hasOwn(descriptor.updatePaths, protocol))
+      throw new Error(`Missing upgrade path for previously supported protocol: ${protocol}`);
+  }
   const assets = new Map(release.assets.map((asset) => [asset.name, asset]));
-  for (const [platform, count] of [
-    ["-win", 1],
-    ["-linux", 1],
-    ["-mac", 2],
-  ]) {
-    verifyPlatform({ descriptor, manifests, assets, channel, platform, count });
+  for (const [protocol, update] of Object.entries(descriptor.updatePaths)) {
+    verifyUpdateProtocol({ protocol, update, version: descriptor.version, manifests, assets });
   }
-  if (!assets.has("electron-release.json")) throw new Error("Release descriptor is not uploaded");
+  if (!assets.has("release.json")) throw new Error("Release descriptor is not uploaded");
 }
 
-function verifyPlatform({ descriptor, manifests, assets, channel, platform, count }) {
-  const entry = descriptor.platforms?.[platform];
-  const name = `${channel}${platform === "-win" ? "" : platform}.yml`;
-  const manifest = manifests[name];
-  if (
-    entry?.manifest !== name ||
-    !manifest ||
-    !assets.has(name) ||
-    manifest.version !== descriptor.version ||
-    entry.files?.length !== count ||
-    JSON.stringify(entry.files) !== JSON.stringify(manifest.files)
-  ) {
-    throw new Error(`Missing or inconsistent metadata for ${platform}`);
+function verifyUpdateProtocol({ protocol, update, version, manifests, assets }) {
+  if (!update || typeof update !== "object") throw new Error("Invalid update path");
+  if (update.mode === "manual") {
+    if (typeof update.message !== "string" || !update.message.trim())
+      throw new Error("Manual update path requires migration instructions");
+    return;
   }
-  if (manifest.path !== entry.files[0].url || manifest.sha512 !== entry.files[0].sha512) {
-    throw new Error(`Inconsistent primary payload for ${platform}`);
-  }
-  if (
-    platform === "-mac" &&
-    (!entry.files.some((file) => file.url.endsWith("-mac-x64.zip")) ||
-      !entry.files.some((file) => file.url.endsWith("-mac-arm64.zip")))
-  )
-    throw new Error("Missing Mac architecture");
-  verifyPayloadInventory(entry.files, assets);
+  if (update.mode !== "automatic") throw new Error("Unknown update mode");
+  const verify = Object.hasOwn(protocolVerifiers, protocol)
+    ? protocolVerifiers[protocol]
+    : undefined;
+  if (!verify) throw new Error(`No publication verifier registered for ${protocol}`);
+  verify.verifyMetadata({ version, update, manifests, assets });
 }
 
-function verifyPayloadInventory(files, assets) {
-  const seen = new Set();
-  for (const file of files) {
-    if (!file.url || path.basename(file.url) !== file.url || seen.has(file.url))
-      throw new Error("Invalid or duplicate payload name");
-    seen.add(file.url);
-    const remote = assets.get(file.url);
-    if (
-      !remote ||
-      remote.size !== file.size ||
-      !/^[a-f0-9]{64}$/.test(file.sha256 ?? "") ||
-      remote.digest !== `sha256:${file.sha256}` ||
-      !/^[A-Za-z0-9+/]{86}==$/.test(file.sha512 ?? "")
-    ) {
-      throw new Error(`Missing payload or size/hash mismatch: ${file.url}`);
-    }
-  }
+const protocolVerifiers = { "electron-updater": electronUpdateProtocol };
+
+function automaticUpdates(descriptor) {
+  return Object.entries(descriptor.updatePaths)
+    .filter(([, update]) => update.mode === "automatic")
+    .map(([protocol, update]) => {
+      const adapter = Object.hasOwn(protocolVerifiers, protocol)
+        ? protocolVerifiers[protocol]
+        : undefined;
+      if (!adapter) throw new Error(`No publication verifier registered for ${protocol}`);
+      return { adapter, update };
+    });
 }
 
 export async function verifyReleasePayloads(descriptor, directory) {
-  for (const platform of Object.values(descriptor.platforms)) {
-    for (const file of platform.files) {
-      if (path.basename(file.url) !== file.url) throw new Error("Invalid payload path");
-      const sha256 = createHash("sha256");
-      const sha512 = createHash("sha512");
-      let size = 0;
-      for await (const chunk of createReadStream(path.join(directory, file.url))) {
-        size += chunk.length;
-        sha256.update(chunk);
-        sha512.update(chunk);
-      }
-      if (
-        size !== file.size ||
-        sha256.digest("hex") !== file.sha256 ||
-        sha512.digest("base64") !== file.sha512
-      )
-        throw new Error(`Payload byte verification failed: ${file.url}`);
-    }
-  }
+  for (const { adapter, update } of automaticUpdates(descriptor))
+    await adapter.verifyPayloads(update, directory);
+}
+
+async function loadPreviousDescriptor(gh, repo, version, directory) {
+  const releases = JSON.parse(
+    gh(["api", "--paginate", "--slurp", `repos/${repo}/releases?per_page=100`]),
+  ).flat();
+  const previous = releases
+    .filter(
+      (release) =>
+        !release.draft &&
+        valid(release.tag_name) &&
+        lt(release.tag_name, version) &&
+        (version.includes("-") || !release.prerelease),
+    )
+    .sort((a, b) => rcompare(a.tag_name, b.tag_name))[0];
+  if (!previous?.assets.some((asset) => asset.name === "release.json")) return undefined;
+  const destination = path.join(directory, "previous");
+  gh([
+    "release",
+    "download",
+    previous.tag_name,
+    "--repo",
+    repo,
+    "--dir",
+    destination,
+    "--pattern",
+    "release.json",
+  ]);
+  return JSON.parse(await readFile(path.join(destination, "release.json"), "utf8"));
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
@@ -127,23 +123,43 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       "--dir",
       directory,
       "--pattern",
-      "electron-release.json",
-      "--pattern",
-      "electron-*.yml",
+      "release.json",
     ]);
-    const descriptor = JSON.parse(
-      await readFile(path.join(directory, "electron-release.json"), "utf8"),
-    );
+    const descriptor = JSON.parse(await readFile(path.join(directory, "release.json"), "utf8"));
     const manifests = {};
-    for (const channel of ["", "-linux", "-mac"]) {
-      const name = `${descriptor.channel}${channel}.yml`;
+    const names = automaticUpdates(descriptor).flatMap(({ adapter, update }) =>
+      adapter.manifestNames(update),
+    );
+    for (const name of new Set(names)) {
+      if (typeof name !== "string" || path.basename(name) !== name)
+        throw new Error("Invalid manifest filename");
+      gh([
+        "release",
+        "download",
+        values.tag,
+        "--repo",
+        values.repo,
+        "--dir",
+        directory,
+        "--pattern",
+        name,
+      ]);
       manifests[name] = JSON.parse(await readFile(path.join(directory, name), "utf8"));
     }
-    verifyReleaseAssets({ descriptor, manifests, release });
-    if (!values["assets-dir"]) {
-      const patterns = Object.values(descriptor.platforms).flatMap((platform) =>
-        platform.files.flatMap((file) => ["--pattern", file.url]),
+    const previousDescriptor = await loadPreviousDescriptor(
+      gh,
+      values.repo,
+      descriptor.version,
+      directory,
+    );
+    verifyReleaseAssets({ descriptor, manifests, release, previousDescriptor });
+    if (!values["assets-dir"] && automaticUpdates(descriptor).length) {
+      const payloadNames = automaticUpdates(descriptor).flatMap(({ adapter, update }) =>
+        adapter.payloadNames(update),
       );
+      if (payloadNames.some((name) => typeof name !== "string" || path.basename(name) !== name))
+        throw new Error("Invalid payload filename");
+      const patterns = payloadNames.flatMap((name) => ["--pattern", name]);
       gh([
         "release",
         "download",
