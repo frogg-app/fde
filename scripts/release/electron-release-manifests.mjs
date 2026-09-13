@@ -10,7 +10,7 @@ export async function buildElectronReleaseManifests({ version, assets, out }) {
   const names = (await readdir(assets)).sort();
   const groups = {
     "": names.filter((name) => name.endsWith(`-${version}-win-x64.exe`)),
-    "-linux": names.filter((name) => name.endsWith(`-${version}-linux-x64.AppImage`)),
+    "-linux": names.filter((name) => name.endsWith(`-${version}-linux-x86_64.AppImage`)),
     "-mac": names.filter((name) =>
       new RegExp(`-${version.replaceAll(".", "\\.")}-mac-(x64|arm64)\\.zip$`).test(name),
     ),

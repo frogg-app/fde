@@ -14,12 +14,15 @@ test("Electron manifests require every platform and carry real hashes for both M
       buildElectronReleaseManifests({ version: "0.6.0", assets: dir, out }),
       /Expected/,
     );
-    for (const suffix of ["win-x64.exe", "linux-x64.AppImage", "mac-x64.zip", "mac-arm64.zip"]) {
+    for (const suffix of ["win-x64.exe", "linux-x86_64.AppImage", "mac-x64.zip", "mac-arm64.zip"]) {
       await writeFile(path.join(dir, `FDE-0.6.0-${suffix}`), suffix);
     }
     await buildElectronReleaseManifests({ version: "0.6.0", assets: dir, out });
     const manifest = JSON.parse(await readFile(path.join(out, "electron-latest-mac.yml"), "utf8"));
     assert.equal(manifest.version, "0.6.0");
+    const linux = JSON.parse(await readFile(path.join(out, "electron-latest-linux.yml"), "utf8"));
+    assert.equal(linux.path, "FDE-0.6.0-linux-x86_64.AppImage");
+    assert.equal(linux.files[0].url, linux.path);
     assert.equal(manifest.files.length, 2);
     for (const file of manifest.files) {
       const bytes = await readFile(path.join(dir, file.url));

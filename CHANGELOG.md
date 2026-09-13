@@ -80,6 +80,11 @@
   for a standalone APK that can coexist with production. Preserve license and
   speech-model notices in standalone daemon bundles.
 
+## 0.6.8 - 2026-09-13
+
+- Match the actual Linux `x86_64.AppImage` filename when generating Electron
+  updater metadata, allowing complete releases to pass the publication gate.
+
 ## 0.6.7 - 2026-09-13
 
 - Continue Android process and foreground checks when the system activity-display
