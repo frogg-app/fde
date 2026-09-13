@@ -1,5 +1,9 @@
 import { gte, rcompare, valid } from "semver";
-import { fetchReleaseDescriptor, parseReleaseDescriptor } from "./release-descriptor.js";
+import {
+  fetchReleaseDescriptor,
+  parseReleaseDescriptor,
+  selectElectronUpdatePath,
+} from "./release-descriptor.js";
 import { mkdirSync, renameSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
@@ -101,26 +105,25 @@ export async function resolveElectronUpdateFeed(input: {
   const base = new URL(input.releaseBase!);
   if (base.hostname !== "github.com" || !/^\/[^/]+\/[^/]+\/releases\/?$/.test(base.pathname))
     return legacy;
-  const raw = await (input.fetchDescriptor ?? fetchReleaseDescriptor)(
-    `${legacy.url}/electron-release.json`,
-  );
+  const raw = await (input.fetchDescriptor ?? fetchReleaseDescriptor)(`${legacy.url}/release.json`);
   if (raw === null) return legacy;
   const descriptor = parseReleaseDescriptor(raw);
+  const update = selectElectronUpdatePath(descriptor);
   if (
     !input.currentVersion ||
     !valid(input.currentVersion) ||
-    !gte(input.currentVersion, descriptor.minimumClientVersion)
+    !gte(input.currentVersion, update.minimumClientVersion)
   ) {
     throw new Error(
-      `This release requires a manual upgrade from clients older than ${descriptor.minimumClientVersion}.`,
+      `This release requires a manual upgrade from clients older than ${update.minimumClientVersion}.`,
     );
   }
-  if (input.releaseChannel === "stable" && descriptor.channel !== "electron-latest") {
+  if (input.releaseChannel === "stable" && descriptor.channel !== "stable") {
     throw new Error("Stable update feed points to a prerelease.");
   }
   const url = `${input.releaseBase!.replace(/\/$/, "")}/download/v${descriptor.version}`;
   if (input.releaseChannel === "beta" && url !== legacy.url) {
     throw new Error("Release descriptor version does not match the selected release.");
   }
-  return { url, channel: descriptor.channel };
+  return { url, channel: update.channel };
 }

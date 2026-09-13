@@ -5,34 +5,32 @@ import path from "node:path";
 import { test } from "node:test";
 import { createHash } from "node:crypto";
 import { verifyReleaseAssets, verifyReleasePayloads } from "./verify-release-assets.mjs";
-import { buildElectronReleaseManifests } from "./electron-release-manifests.mjs";
+import { buildReleaseMetadata } from "./build-release-metadata.mjs";
 
 test("Electron manifests require every platform and carry real hashes for both Mac architectures", async () => {
   const dir = await mkdtemp(path.join(os.tmpdir(), "fde-update-manifest-"));
   const out = path.join(dir, "metadata");
   try {
-    await assert.rejects(
-      buildElectronReleaseManifests({ version: "0.6.0", assets: dir, out }),
-      /Expected/,
-    );
+    await assert.rejects(buildReleaseMetadata({ version: "0.6.0", assets: dir, out }), /Expected/);
     for (const suffix of ["win-x64.exe", "linux-x86_64.AppImage", "mac-x64.zip", "mac-arm64.zip"]) {
       await writeFile(path.join(dir, `FDE-0.6.0-${suffix}`), suffix);
     }
-    await buildElectronReleaseManifests({ version: "0.6.0", assets: dir, out });
-    const descriptor = JSON.parse(await readFile(path.join(out, "electron-release.json"), "utf8"));
+    await buildReleaseMetadata({ version: "0.6.0", assets: dir, out });
+    const descriptor = JSON.parse(await readFile(path.join(out, "release.json"), "utf8"));
     assert.equal(descriptor.schemaVersion, 1);
-    assert.equal(descriptor.runtime, "electron");
+    assert.equal(Object.hasOwn(descriptor, "runtime"), false);
+    assert.equal(descriptor.channel, "stable");
     assert.equal(descriptor.version, "0.6.0");
-    assert.equal(descriptor.migration.tauri, "manual-install");
-    for (const platform of Object.values(descriptor.platforms)) {
+    assert.equal(descriptor.updatePaths["tauri-updater"].mode, "manual");
+    for (const platform of Object.values(descriptor.updatePaths["electron-updater"].platforms)) {
       const channel = JSON.parse(await readFile(path.join(out, platform.manifest), "utf8"));
       assert.deepEqual(platform.files, channel.files);
       for (const file of platform.files)
         assert.equal((await readFile(path.join(dir, file.url))).length, file.size);
     }
     const manifests = {};
-    const assets = [{ name: "electron-release.json" }];
-    for (const platform of Object.values(descriptor.platforms)) {
+    const assets = [{ name: "release.json" }];
+    for (const platform of Object.values(descriptor.updatePaths["electron-updater"].platforms)) {
       manifests[platform.manifest] = JSON.parse(
         await readFile(path.join(out, platform.manifest), "utf8"),
       );
@@ -48,18 +46,46 @@ test("Electron manifests require every platform and carry real hashes for both M
     }
     const release = { tag_name: "v0.6.0", assets };
     verifyReleaseAssets({ descriptor, manifests, release });
+    const previousDescriptor = { updatePaths: { "future-updater": { mode: "automatic" } } };
+    assert.throws(
+      () => verifyReleaseAssets({ descriptor, manifests, release, previousDescriptor }),
+      /Missing upgrade path/,
+    );
+    const migrating = structuredClone(descriptor);
+    migrating.updatePaths["future-updater"] = {
+      mode: "manual",
+      message: "Install the replacement package manually.",
+    };
+    verifyReleaseAssets({ descriptor: migrating, manifests, release, previousDescriptor });
+    const unknownAutomatic = structuredClone(migrating);
+    unknownAutomatic.updatePaths["future-updater"] = { mode: "automatic" };
+    assert.throws(
+      () => verifyReleaseAssets({ descriptor: unknownAutomatic, manifests, release }),
+      /No publication verifier/,
+    );
+
     await verifyReleasePayloads(descriptor, dir);
     assert.throws(
       () =>
         verifyReleaseAssets({
-          descriptor: { ...descriptor, minimumClientVersion: "invalid" },
+          descriptor: {
+            ...descriptor,
+            updatePaths: {
+              ...descriptor.updatePaths,
+              "electron-updater": {
+                ...descriptor.updatePaths["electron-updater"],
+                minimumClientVersion: "invalid",
+              },
+            },
+          },
           manifests,
           release,
         }),
       /minimum/,
     );
     const wrongHash = structuredClone(descriptor);
-    wrongHash.platforms["-win"].files[0].sha512 = Buffer.alloc(64).toString("base64");
+    wrongHash.updatePaths["electron-updater"].platforms["-win"].files[0].sha512 =
+      Buffer.alloc(64).toString("base64");
     await assert.rejects(verifyReleasePayloads(wrongHash, dir), /byte verification/);
     for (const changes of [{ name: "renamed.exe" }, { size: 0 }, { digest: "sha256:incorrect" }]) {
       const broken = structuredClone(release);
@@ -108,7 +134,7 @@ test("rejects two Mac payloads for the same architecture", async () => {
       await writeFile(path.join(dir, name), name);
     }
     await assert.rejects(
-      buildElectronReleaseManifests({
+      buildReleaseMetadata({
         version: "0.6.0",
         assets: dir,
         out: path.join(dir, "metadata"),

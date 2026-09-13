@@ -58,26 +58,6 @@ export async function buildElectronReleaseManifests({ version, assets, out }) {
       `${JSON.stringify(manifest, null, 2)}\n`,
     );
   }
-  await writeFile(
-    path.join(out, "electron-release.json"),
-    `${JSON.stringify(
-      {
-        schemaVersion: 1,
-        version,
-        runtime: "electron",
-        channel,
-        minimumClientVersion: "0.6.0",
-        migration: {
-          tauri: "manual-install",
-          reason:
-            "Installer layout and portable runtime changed; do not alias old updater archives.",
-        },
-        platforms,
-      },
-      null,
-      2,
-    )}\n`,
-  );
   const sums = [];
   for (const name of names) {
     const file = path.join(assets, name);
@@ -87,6 +67,7 @@ export async function buildElectronReleaseManifests({ version, assets, out }) {
     sums.push(`${hash.digest("hex")}  ${name}`);
   }
   await writeFile(path.join(out, "SHA256SUMS-desktop"), `${sums.join("\n")}\n`);
+  return { mode: "automatic", minimumClientVersion: "0.6.0", channel, platforms };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

@@ -24,7 +24,7 @@ immutable versioned artifacts and the matching source tag. Follow
 npm/EAS release scripts or approval procedures as this project's release policy.
 
 Tags trigger builds into a draft release. The workflow publishes the release only
-after required platform builds and Electron updater manifests succeed; drafts are
+after required platform builds and update compatibility metadata succeeds; drafts are
 not visible to app update checks. If only metadata generation fails, it can be
 repaired against the exact existing binaries without rebuilding or moving the tag.
 Verify manifest filenames, sizes and hashes before publishing the completed release.

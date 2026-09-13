@@ -83,7 +83,7 @@
   for a standalone APK that can coexist with production. Preserve license and
   speech-model notices in standalone daemon bundles.
 
-## 0.6.11
+## 0.6.12
 
 - Default daemon startup, port-only listen targets, service installation, Nix and
   SSH deployment to `0.0.0.0`, preserving explicitly configured addresses.
@@ -99,6 +99,13 @@
   and real-browser directory navigation/selection/retry. Add an artifact-only
   workflow for Windows x64, Android arm64 and Linux x64 daemon builds. Installed
   client validation and release publication remain separate checks.
+
+## 0.6.11 - 2026-09-13
+
+- Replace the unpublished runtime-specific discovery proposal with product-level
+  `release.json`, protocol adapters, and explicit automatic/manual update paths.
+  Keep shipped compatibility manifests and block removal of previously declared
+  update protocols without a migration path. Correct the release skill accordingly.
 
 ## 0.6.10 - 2026-09-13
 
