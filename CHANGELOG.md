@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## 1.0.1 — 2026-09-14
+
+- Add a **Sort** option to the sidebar display menu: recent activity (the default), date
+  created, name, needs attention first, or manual drag order, with a reverse toggle. Dragging
+  while sorted keeps the on-screen order and switches to manual. Every sidebar starts on
+  recent activity after updating; the saved drag order is kept for manual.
+- Send workspace and project creation times from the daemon (`createdAt` and
+  `projectCreatedAt` on descriptors, advertised as `server_info.features.workspaceCreatedAt`).
+  **Date created** sorting stays unavailable until every connected host reports them.
+- Hide dot-prefixed folders in the folder browser and directory suggestions by default, with
+  a **Show hidden folders** setting under Settings > General. Typed paths into hidden folders
+  still open. Older daemons ignore the new `includeHiddenDirectories` request field.
+
+Installed-client upgrade and physical-device validation remain separate from artifact
+build checks. The Android APK is still debug-signed.
+
 ## 1.0.0 — 2026-09-13
 
 First major Frogg release, with independently installed Node daemons and an app-only
