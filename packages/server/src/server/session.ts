@@ -1,4 +1,5 @@
 import { createRealpathAwarePathMatcher } from "../utils/path.js";
+import { createdAtFields, projectCreatedAtField } from "./workspace-created-at.js";
 import { ProjectImportService } from "./project-import/service.js";
 import { dispatchProjectImport } from "./project-import/dispatch.js";
 import equal from "fast-deep-equal";
@@ -4892,6 +4893,7 @@ export class Session {
       status: "done",
       statusEnteredAt: null,
       activityAt: null,
+      ...createdAtFields(workspace.createdAt, resolvedProjectRecord?.createdAt),
       diffStat,
       scripts: this.buildWorkspaceScriptPayloadSnapshot(workspace, resolvedProjectRecord),
       ...(resolvedProjectRecord
@@ -4986,6 +4988,7 @@ export class Session {
       status: "done",
       statusEnteredAt: result.workspace.createdAt,
       activityAt: null,
+      ...createdAtFields(result.workspace.createdAt, projectRecord?.createdAt),
       diffStat: { additions: 0, deletions: 0 },
       scripts: [],
       gitRuntime: {
@@ -5148,6 +5151,7 @@ export class Session {
       projectIconRevision: icon.revision,
       projectRootPath: project.rootPath,
       projectKind: project.kind,
+      ...projectCreatedAtField(project.createdAt),
     };
   }
 

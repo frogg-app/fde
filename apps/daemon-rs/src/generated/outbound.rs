@@ -2861,6 +2861,8 @@ pub struct ProjectListResponsePayloadProjectsItem {
     pub project_root_path: String,
     #[serde(rename = "projectKind")]
     pub project_kind: ProjectListResponsePayloadProjectsItemProjectKind,
+    #[serde(rename = "projectCreatedAt", skip_serializing_if = "Option::is_none")]
+    pub project_created_at: Option<String>,
     #[serde(rename = "syncSeq", skip_serializing_if = "Option::is_none")]
     pub sync_seq: Option<i64>,
 }
@@ -5376,6 +5378,8 @@ pub struct FetchWorkspacesResponsePayloadEmptyProjectsItem {
     pub project_root_path: String,
     #[serde(rename = "projectKind")]
     pub project_kind: FetchWorkspacesResponsePayloadEmptyProjectsItemProjectKind,
+    #[serde(rename = "projectCreatedAt", skip_serializing_if = "Option::is_none")]
+    pub project_created_at: Option<String>,
     #[serde(rename = "syncSeq", skip_serializing_if = "Option::is_none")]
     pub sync_seq: Option<i64>,
 }

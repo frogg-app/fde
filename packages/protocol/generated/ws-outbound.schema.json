@@ -10253,6 +10253,9 @@
                                 "directory"
                               ]
                             },
+                            "projectCreatedAt": {
+                              "type": "string"
+                            },
                             "syncSeq": {
                               "type": "integer",
                               "exclusiveMinimum": 0,
@@ -10742,6 +10745,9 @@
                                 "directory"
                               ]
                             },
+                            "projectCreatedAt": {
+                              "type": "string"
+                            },
                             "syncSeq": {
                               "type": "integer",
                               "exclusiveMinimum": 0,
@@ -10857,6 +10863,9 @@
                               "non_git",
                               "directory"
                             ]
+                          },
+                          "projectCreatedAt": {
+                            "type": "string"
                           },
                           "syncSeq": {
                             "type": "integer",
@@ -18179,6 +18188,9 @@
                               "directory"
                             ]
                           },
+                          "projectCreatedAt": {
+                            "type": "string"
+                          },
                           "syncSeq": {
                             "type": "integer",
                             "exclusiveMinimum": 0,
@@ -18346,6 +18358,9 @@
                                 "directory"
                               ]
                             },
+                            "projectCreatedAt": {
+                              "type": "string"
+                            },
                             "syncSeq": {
                               "type": "integer",
                               "exclusiveMinimum": 0,
@@ -18458,6 +18473,9 @@
                                 "non_git",
                                 "directory"
                               ]
+                            },
+                            "projectCreatedAt": {
+                              "type": "string"
                             },
                             "syncSeq": {
                               "type": "integer",
@@ -18960,6 +18978,9 @@
                                 "non_git",
                                 "directory"
                               ]
+                            },
+                            "projectCreatedAt": {
+                              "type": "string"
                             },
                             "syncSeq": {
                               "type": "integer",

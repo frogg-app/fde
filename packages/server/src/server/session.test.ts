@@ -3930,6 +3930,33 @@ describe("session workspace descriptors", () => {
     expect(descriptor.diffStat).toEqual({ additions: 7, deletions: 2 });
   });
 
+  test("sends workspace and project creation times from the registry records", async () => {
+    const session = createSessionForTest({
+      workspaceGitService: { getSnapshot: vi.fn(), peekSnapshot: vi.fn(() => null) },
+    });
+
+    const descriptor = await asSessionInternals(session).describeWorkspaceRecord(
+      {
+        workspaceId: "workspace-1",
+        projectId: "project-1",
+        cwd: "/tmp/workspace",
+        kind: "checkout",
+        displayName: "Workspace",
+        createdAt: "2026-04-02T00:00:00.000Z",
+      },
+      {
+        projectId: "project-1",
+        rootPath: "/tmp/workspace",
+        displayName: "Project",
+        kind: "git",
+        createdAt: "2026-01-02T00:00:00.000Z",
+      },
+    );
+
+    expect(descriptor.createdAt).toBe("2026-04-02T00:00:00.000Z");
+    expect(descriptor.projectCreatedAt).toBe("2026-01-02T00:00:00.000Z");
+  });
+
   test("does not cold-load git data while describing a workspace", async () => {
     const workspaceGitService = {
       getSnapshot: vi.fn().mockResolvedValue(createWorkspaceGitSnapshot("/tmp/workspace")),

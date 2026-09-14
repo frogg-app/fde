@@ -1,4 +1,5 @@
 import { resolve } from "node:path";
+import { projectCreatedAtField } from "./workspace-created-at.js";
 import type pino from "pino";
 import type {
   AgentSnapshotPayload,
@@ -572,6 +573,7 @@ export class WorkspaceDirectory {
         projectCustomIconRevision: project.customIconRevision ?? null,
         projectRootPath: project.rootPath,
         projectKind: project.kind,
+        projectCreatedAt: projectCreatedAtField(project.createdAt).projectCreatedAt,
       }));
   }
 

@@ -1645,6 +1645,8 @@ export class VoiceAssistantWebSocketServer {
         providerAgentDefinitions: true,
         // COMPAT(workspaceLabels): added in v0.5.0, remove after 2027-08-14.
         ...(this.workspaceLabelService ? { workspaceLabels: true } : {}),
+        // COMPAT(workspaceCreatedAt): added in v1.1.0, remove after 2027-03-14.
+        workspaceCreatedAt: true,
         // COMPAT(spokenNotifications): added in v0.1.14, remove gate after 2027-09-03.
         ...(this.spokenAlerts?.isAvailable() ? { spokenNotifications: true } : {}),
         // COMPAT(providersSnapshot): keep optional until all clients rely on snapshot flow.
