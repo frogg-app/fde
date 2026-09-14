@@ -162,7 +162,7 @@
     "eslint-config-expo": "~10.0.0",
     "expo-gradle-jvmargs": "^1.1.2",
     "fake-indexeddb": "^6.2.5",
-    "jsdom": "^20.0.3",
+    "jsdom": "^30.0.1",
     "material-icon-theme": "^5.32.0",
     "playwright": "^1.63.0",
     "serve-sim": "^0.1.40",
