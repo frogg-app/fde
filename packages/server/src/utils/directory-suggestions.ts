@@ -22,6 +22,8 @@ export interface SearchDirectoryEntriesOptions {
   pathFormat: DirectorySuggestionPathFormat;
   includeFiles?: boolean;
   includeDirectories?: boolean;
+  /** Suggest dot-prefixed directories. Their contents are only walked when typed as a path. */
+  includeHiddenDirectories?: boolean;
   matchMode?: DirectorySuggestionMatchMode;
   pathQueryPolicy?: PathQueryPolicy;
   rootAliases?: string[];
@@ -209,6 +211,7 @@ function buildSearchInput(
     plan,
     includeDirectories,
     includeFiles,
+    includeHiddenDirectories: options.includeHiddenDirectories ?? false,
     matchMode: options.matchMode ?? "fuzzy",
     pathFormat: options.pathFormat,
     hiddenDirectoryNames: new Set(options.traversableHiddenDirectoryNames ?? []),
@@ -243,6 +246,7 @@ interface SearchInput {
   plan: QueryPlan;
   includeDirectories: boolean;
   includeFiles: boolean;
+  includeHiddenDirectories: boolean;
   matchMode: DirectorySuggestionMatchMode;
   pathFormat: DirectorySuggestionPathFormat;
   hiddenDirectoryNames: Set<string>;
@@ -314,7 +318,8 @@ async function* walkBranch(
   if (
     entry.kind !== "directory" ||
     visited.has(entry.resolvedPath) ||
-    entry.depth >= input.maxDepth
+    entry.depth >= input.maxDepth ||
+    isOptInHiddenDirectory(entry, input)
   )
     return;
   visited.add(entry.resolvedPath);
@@ -361,7 +366,12 @@ function shouldDiscover(entry: ChildEntry, input: SearchInput): boolean {
   }
   if (IGNORED_DIRECTORY_NAMES.has(entry.name)) return false;
   if (!entry.name.startsWith(".")) return true;
-  return input.hiddenDirectoryNames.has(entry.name);
+  return input.hiddenDirectoryNames.has(entry.name) || input.includeHiddenDirectories;
+}
+
+/** Hidden directories revealed by the opt-in are suggested but not walked, to keep scans cheap. */
+function isOptInHiddenDirectory(entry: ChildEntry, input: SearchInput): boolean {
+  return entry.name.startsWith(".") && !input.hiddenDirectoryNames.has(entry.name);
 }
 
 function isGitIgnoredPath(absolutePath: string, input: SearchInput): boolean {
@@ -374,7 +384,8 @@ function isGitIgnoredPath(absolutePath: string, input: SearchInput): boolean {
 }
 
 function shouldSuggest(entry: TraversedEntry, input: SearchInput): boolean {
-  if (entry.name.startsWith(".")) return false;
+  if (entry.name.startsWith(".") && !(entry.kind === "directory" && input.includeHiddenDirectories))
+    return false;
   if (entry.kind === "directory" && !input.includeDirectories) return false;
   if (entry.kind === "file" && !input.includeFiles) return false;
   if (!input.plan.normalizedQuery) return true;

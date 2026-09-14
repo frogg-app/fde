@@ -2423,6 +2423,9 @@ export const DirectorySuggestionsRequestSchema = z.object({
   cwd: z.string().optional(),
   includeFiles: z.boolean().optional(),
   includeDirectories: z.boolean().optional(),
+  // COMPAT(directorySuggestionsIncludeHidden): added in v1.0.1. Older daemons ignore it and keep
+  // hiding dot-prefixed directories, which is the default.
+  includeHiddenDirectories: z.boolean().optional(),
   matchMode: z.enum(["fuzzy", "suffix"]).optional(),
   limit: z.number().int().min(1).max(100).optional(),
   requestId: z.string(),

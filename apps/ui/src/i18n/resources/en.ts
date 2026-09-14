@@ -2349,6 +2349,10 @@ export const en = {
     },
     general: {
       title: "General",
+      hiddenFolders: {
+        label: "Show hidden folders",
+        description: "Include folders whose names start with a dot when browsing for a folder",
+      },
       browserData: {
         title: "Browser data",
         siteData: "Cookies and site data",

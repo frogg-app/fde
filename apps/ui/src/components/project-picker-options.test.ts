@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { buildProjectPickerOptions, isOpenableProjectPath } from "./project-picker-options";
 
+describe("hidden folder paths", () => {
+  it("offers a typed hidden path even when the daemon suggests nothing", () => {
+    expect(
+      buildProjectPickerOptions({ recommendedPaths: [], serverPaths: [], query: "~/.config" }),
+    ).toEqual([{ kind: "path", path: "~/.config" }]);
+  });
+});
+
 describe("isOpenableProjectPath", () => {
   it("accepts POSIX, tilde, Windows drive-letter, and UNC paths", () => {
     expect(isOpenableProjectPath("/repo")).toBe(true);

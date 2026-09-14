@@ -4318,7 +4318,16 @@ export class Session {
   }
 
   private async handleDirectorySuggestionsRequest(msg: DirectorySuggestionsRequest): Promise<void> {
-    const { query, limit, requestId, cwd, includeFiles, includeDirectories, matchMode } = msg;
+    const {
+      query,
+      limit,
+      requestId,
+      cwd,
+      includeFiles,
+      includeDirectories,
+      includeHiddenDirectories,
+      matchMode,
+    } = msg;
 
     try {
       const workspaceCwd = cwd?.trim();
@@ -4337,6 +4346,7 @@ export class Session {
         respectGitIgnore: searchesWorkspace,
         includeFiles,
         includeDirectories,
+        includeHiddenDirectories,
         matchMode,
         limit,
       });

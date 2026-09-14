@@ -2352,6 +2352,10 @@ export const es: TranslationResources = {
     },
     general: {
       title: "General",
+      hiddenFolders: {
+        label: "Mostrar carpetas ocultas",
+        description: "Incluir las carpetas cuyo nombre empieza por un punto al buscar una carpeta",
+      },
       browserData: {
         title: "Datos del navegador",
         siteData: "Cookies y datos de sitios",

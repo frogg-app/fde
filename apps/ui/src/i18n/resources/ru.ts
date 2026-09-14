@@ -2337,6 +2337,10 @@ export const ru: TranslationResources = {
     },
     general: {
       title: "Основные",
+      hiddenFolders: {
+        label: "Показывать скрытые папки",
+        description: "Показывать папки, имена которых начинаются с точки, при выборе папки",
+      },
       browserData: {
         title: "Данные браузера",
         siteData: "Файлы cookie и данные сайтов",

@@ -380,8 +380,34 @@ function GeneralSection({
             accessibilityLabel={t("settings.general.terminalScrollback.accessibilityLabel")}
           />
         </View>
+        <ShowHiddenFoldersRow />
       </View>
     </SettingsSection>
+  );
+}
+
+function ShowHiddenFoldersRow() {
+  const { t } = useTranslation();
+  const { settings, updateSettings } = useAppSettings();
+  const handleChange = useCallback(
+    (showHiddenFolders: boolean) => void updateSettings({ showHiddenFolders }),
+    [updateSettings],
+  );
+  return (
+    <View style={[settingsStyles.row, settingsStyles.rowBorder]}>
+      <View style={settingsStyles.rowContent}>
+        <Text style={settingsStyles.rowTitle}>{t("settings.general.hiddenFolders.label")}</Text>
+        <Text style={settingsStyles.rowHint}>
+          {t("settings.general.hiddenFolders.description")}
+        </Text>
+      </View>
+      <Switch
+        value={settings.showHiddenFolders}
+        onValueChange={handleChange}
+        accessibilityLabel={t("settings.general.hiddenFolders.label")}
+        testID="show-hidden-folders-toggle"
+      />
+    </View>
   );
 }
 

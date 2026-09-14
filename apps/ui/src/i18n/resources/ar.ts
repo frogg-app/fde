@@ -2295,6 +2295,10 @@ export const ar: TranslationResources = {
     },
     general: {
       title: "عام",
+      hiddenFolders: {
+        label: "إظهار المجلدات المخفية",
+        description: "تضمين المجلدات التي تبدأ أسماؤها بنقطة عند استعراض المجلدات",
+      },
       browserData: {
         title: "بيانات المتصفح",
         siteData: "ملفات تعريف الارتباط وبيانات المواقع",
