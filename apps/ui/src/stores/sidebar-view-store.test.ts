@@ -96,9 +96,8 @@ describe("sidebar view store", () => {
       hostFilters: [],
       projectFilters: [],
       labelFilter: { labels: [] },
-      sortMode: "manual",
+      sortMode: "recent",
       sortReversed: false,
-      sortMigrationPending: true,
     });
   });
 
@@ -113,9 +112,8 @@ describe("sidebar view store", () => {
       hostFilters: ["host-a"],
       projectFilters: [],
       labelFilter: { labels: [] },
-      sortMode: "manual",
+      sortMode: "recent",
       sortReversed: false,
-      sortMigrationPending: true,
     });
   });
 
@@ -130,9 +128,8 @@ describe("sidebar view store", () => {
       hostFilters: ["host-a", "host-b"],
       projectFilters: [],
       labelFilter: { labels: [] },
-      sortMode: "manual",
+      sortMode: "recent",
       sortReversed: false,
-      sortMigrationPending: true,
     });
   });
 
@@ -143,7 +140,6 @@ describe("sidebar view store", () => {
     });
     expect(migrateSidebarViewState({ sortMode: "created" })).toMatchObject({
       sortMode: "created",
-      sortMigrationPending: false,
     });
     expect(migrateSidebarViewState({ sortMode: "bogus" })).toMatchObject({
       sortMode: "recent",
@@ -158,34 +154,15 @@ describe("sidebar view store", () => {
     });
   });
 
-  it("starts state saved before sorting existed on a pending manual choice", () => {
+  it("starts state saved before sorting existed on recent activity", () => {
     expect(migrateSidebarViewState({ groupMode: "project", hostFilters: [] })).toMatchObject({
-      sortMode: "manual",
-      sortMigrationPending: true,
-    });
-    // A later explicit save is not re-migrated.
-    expect(
-      migrateSidebarViewState({ sortMode: "manual", sortMigrationPending: false }),
-    ).toMatchObject({ sortMode: "manual", sortMigrationPending: false });
-  });
-
-  it("applies the inferred sort only while the migration is pending", () => {
-    useSidebarViewStore.setState({ sortMode: "manual", sortMigrationPending: true });
-    useSidebarViewStore.getState().resolveSortMigration("recent");
-    expect(useSidebarViewStore.getState()).toMatchObject({
       sortMode: "recent",
-      sortMigrationPending: false,
+      sortReversed: false,
     });
-    useSidebarViewStore.getState().resolveSortMigration("manual");
-    expect(useSidebarViewStore.getState().sortMode).toBe("recent");
-
-    useSidebarViewStore.setState({ sortMode: "manual", sortMigrationPending: true });
-    useSidebarViewStore.getState().setSortMode("name");
-    useSidebarViewStore.getState().resolveSortMigration("recent");
-    expect(useSidebarViewStore.getState()).toMatchObject({
-      sortMode: "name",
-      sortMigrationPending: false,
-    });
+    // A key written by the removed upgrade heuristic is tolerated and dropped.
+    const migrated = migrateSidebarViewState({ sortMode: "manual", sortMigrationPending: true });
+    expect(migrated).toMatchObject({ sortMode: "manual" });
+    expect(migrated).not.toHaveProperty("sortMigrationPending");
   });
 
   it("clears only the label facet", () => {
@@ -295,9 +272,8 @@ describe("sidebar view store", () => {
       hostFilters: ["host-a"],
       projectFilters: ["project-a", "project-b"],
       labelFilter: { labels: [] },
-      sortMode: "manual",
+      sortMode: "recent",
       sortReversed: false,
-      sortMigrationPending: true,
     });
   });
 
@@ -309,7 +285,6 @@ describe("sidebar view store", () => {
       labelFilter: { labels: [] },
       sortMode: "recent",
       sortReversed: false,
-      sortMigrationPending: false,
     });
   });
 

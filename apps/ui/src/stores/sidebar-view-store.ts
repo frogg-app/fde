@@ -80,17 +80,8 @@ interface SidebarViewStoreState {
   sortMode: SidebarSortMode;
   /** Flips the primary sort key only; tiebreaks stay ascending so the order stays stable. */
   sortReversed: boolean;
-  /**
-   * True for state written before sorting existed, until the sidebar has looked at the saved drag
-   * order and picked Manual or Recent activity (`resolveSortMigration`). Meanwhile `sortMode` is
-   * `manual`, which is how that sidebar looked before.
-   */
-  sortMigrationPending: boolean;
   setGroupMode: (mode: SidebarGroupMode) => void;
-  /** An explicit choice; it also settles any pending migration. */
   setSortMode: (mode: SidebarSortMode) => void;
-  /** Applies the inferred mode, only while the migration is still pending. */
-  resolveSortMigration: (mode: SidebarSortMode) => void;
   toggleSortReversed: () => void;
   toggleHostFilter: (serverId: string) => void;
   clearHostFilters: () => void;
@@ -109,7 +100,6 @@ interface SidebarViewPersistedState {
   labelFilter: SidebarLabelFilter;
   sortMode: SidebarSortMode;
   sortReversed: boolean;
-  sortMigrationPending: boolean;
 }
 
 const PersistedSidebarSortModeSchema = z.enum(["recent", "created", "name", "status", "manual"]);
@@ -126,6 +116,7 @@ const SidebarViewPersistedStateSchema = z.strictObject({
   labelFilter: SidebarLabelFilterSchema.optional(),
   sortMode: PersistedSidebarSortModeSchema.optional(),
   sortReversed: z.boolean().optional(),
+  // Written by builds that briefly inferred a sort for upgraded state; read and ignored.
   sortMigrationPending: z.boolean().optional(),
 });
 
@@ -167,9 +158,6 @@ export function migrateSidebarViewState(persistedState: unknown): SidebarViewPer
     };
   }
   const state = result.data;
-  // State saved before sorting existed has no sortMode. That sidebar showed the drag order, so it
-  // keeps showing it until the saved order has been checked for real rearranging.
-  const legacySort = state.sortMode === undefined ? pendingLegacySort() : null;
 
   const legacyGroupMode = readLegacyGroupMode(state);
   if (legacyGroupMode) {
@@ -178,7 +166,7 @@ export function migrateSidebarViewState(persistedState: unknown): SidebarViewPer
       hostFilters: [],
       projectFilters: [],
       labelFilter: emptyLabelFilter(),
-      ...(legacySort ?? defaultSort()),
+      ...defaultSort(),
     };
   }
 
@@ -189,32 +177,18 @@ export function migrateSidebarViewState(persistedState: unknown): SidebarViewPer
     labelFilter: state.labelFilter
       ? normalizeSidebarLabelFilter(state.labelFilter)
       : emptyLabelFilter(),
-    ...(legacySort ?? {
-      sortMode: state.sortMode ?? DEFAULT_SIDEBAR_SORT_MODE,
-      sortReversed: state.sortReversed ?? false,
-      sortMigrationPending: state.sortMigrationPending ?? false,
-    }),
+    // State saved before sorting existed has no sortMode and starts on the default.
+    sortMode: state.sortMode ?? DEFAULT_SIDEBAR_SORT_MODE,
+    sortReversed: state.sortReversed ?? false,
   };
 }
 
-type PersistedSort = Pick<
-  SidebarViewPersistedState,
-  "sortMode" | "sortReversed" | "sortMigrationPending"
->;
+type PersistedSort = Pick<SidebarViewPersistedState, "sortMode" | "sortReversed">;
 
 function defaultSort(): PersistedSort {
   return {
     sortMode: DEFAULT_SIDEBAR_SORT_MODE,
     sortReversed: false,
-    sortMigrationPending: false,
-  };
-}
-
-function pendingLegacySort(): PersistedSort {
-  return {
-    sortMode: "manual",
-    sortReversed: false,
-    sortMigrationPending: true,
   };
 }
 
@@ -252,11 +226,7 @@ export const useSidebarViewStore = create<SidebarViewStoreState>()(
       labelFilter: emptyLabelFilter(),
       ...defaultSort(),
       setGroupMode: (mode) => set({ groupMode: mode }),
-      setSortMode: (mode) => set({ sortMode: mode, sortMigrationPending: false }),
-      resolveSortMigration: (mode) =>
-        set((state) =>
-          state.sortMigrationPending ? { sortMode: mode, sortMigrationPending: false } : state,
-        ),
+      setSortMode: (mode) => set({ sortMode: mode }),
       toggleSortReversed: () => set((state) => ({ sortReversed: !state.sortReversed })),
       toggleHostFilter: (serverId) =>
         set((state) => ({
@@ -313,7 +283,6 @@ export const useSidebarViewStore = create<SidebarViewStoreState>()(
         labelFilter: state.labelFilter,
         sortMode: state.sortMode,
         sortReversed: state.sortReversed,
-        sortMigrationPending: state.sortMigrationPending,
       }),
       migrate: migrateSidebarViewState,
     },

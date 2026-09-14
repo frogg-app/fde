@@ -2233,8 +2233,6 @@ function ProjectModeList({
           reorderedVisibleKeys: reorderedProjectKeys,
         }),
       );
-      // A drag is an explicit manual arrangement, which settles any pending upgrade choice.
-      useSidebarViewStore.getState().resolveSortMigration("manual");
     },
     [
       getProjectOrder,
@@ -2291,7 +2289,6 @@ function ProjectModeList({
           reorderedVisibleKeys: reorderedWorkspaceKeys,
         }),
       );
-      useSidebarViewStore.getState().resolveSortMigration("manual");
     },
     [
       getProjectOrder,
