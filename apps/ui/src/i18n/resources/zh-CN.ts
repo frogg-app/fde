@@ -2255,6 +2255,10 @@ export const zhCN: TranslationResources = {
     },
     general: {
       title: "通用",
+      hiddenFolders: {
+        label: "显示隐藏文件夹",
+        description: "浏览文件夹时包含名称以点开头的文件夹",
+      },
       browserData: {
         title: "浏览器数据",
         siteData: "Cookie 和网站数据",

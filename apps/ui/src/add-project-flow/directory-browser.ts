@@ -12,6 +12,7 @@ interface DirectoryBrowserInput {
   query: string;
   listing: DirectoryListing | undefined;
   pending: boolean;
+  showHiddenFolders: boolean;
   failed: boolean;
   navigate: (path: string) => void;
   choose: (path: string) => void;
@@ -37,6 +38,11 @@ export function directoryNavigationTarget(currentPath: string, query: string): s
     return joinDirectoryPath(currentPath, typed);
   }
   return null;
+}
+
+/** Dot-prefixed folders are hidden from listings unless the user opts in. */
+export function isVisibleDirectoryName(name: string, showHiddenFolders: boolean): boolean {
+  return showHiddenFolders || !name.startsWith(".");
 }
 
 export function buildDirectoryBrowserRows(input: DirectoryBrowserInput): DirectoryBrowserRow[] {
@@ -92,7 +98,10 @@ export function buildDirectoryBrowserRows(input: DirectoryBrowserInput): Directo
   if (!listing || pending || failed || target) return rows;
   const filter = input.query.trim().toLowerCase();
   const directories = listing.entries.filter(
-    (entry) => entry.kind === "directory" && entry.name.toLowerCase().includes(filter),
+    (entry) =>
+      entry.kind === "directory" &&
+      isVisibleDirectoryName(entry.name, input.showHiddenFolders) &&
+      entry.name.toLowerCase().includes(filter),
   );
   directories.sort((left, right) =>
     left.name.localeCompare(right.name, undefined, { numeric: true }),

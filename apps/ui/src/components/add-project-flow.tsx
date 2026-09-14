@@ -74,6 +74,7 @@ import { useKeyboardShortcutsAvailable } from "@/keyboard/availability";
 import { getIsElectronRuntime } from "@/constants/layout";
 import { isNative, isWeb } from "@/constants/platform";
 import { pickDirectory } from "@/desktop/pick-directory";
+import { useAppSettings } from "@/hooks/use-settings";
 import { useFetchQuery } from "@/data/query";
 import { getOpenProjectFailureReason, registerProjectDescriptor } from "@/hooks/open-project";
 import { useIsLocalDaemon, useLocalDaemonServerId } from "@/hooks/use-is-local-daemon";
@@ -371,6 +372,7 @@ export function AddProjectFlow({ request, onClose }: AddProjectFlowProps) {
   const client = useHostRuntimeClient(hostId ?? "");
   const isLocalDaemon = useIsLocalDaemon(hostId ?? "");
   const recommendedPaths = useRecommendedProjectPaths(hostId);
+  const showHiddenFolders = useAppSettings().settings.showHiddenFolders;
   const openProject = useOpenProject(hostId);
   const cloneGithubProject = useCloneGithubProject(hostId);
   const upsertProject = useSessionStore((store) => store.upsertProject);
@@ -645,6 +647,7 @@ export function AddProjectFlow({ request, onClose }: AddProjectFlowProps) {
         query: page.query,
         listing: directoryListing.data,
         pending: directoryListing.isFetching,
+        showHiddenFolders,
         failed: directoryListing.isError,
         navigate: browseDirectory,
         choose: (path) => void openAddedProject(path, "directory-search"),
@@ -721,6 +724,7 @@ export function AddProjectFlow({ request, onClose }: AddProjectFlowProps) {
     directoryListing.isError,
     directoryListing.isFetching,
     refetchDirectory,
+    showHiddenFolders,
     githubQuery.data,
     host,
     onClose,

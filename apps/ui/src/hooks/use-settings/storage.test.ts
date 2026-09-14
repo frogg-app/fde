@@ -177,6 +177,20 @@ describe("loadAppSettingsFromStorage", () => {
     expect(result.workspaceTitleSource).toBe("title");
   });
 
+  it("hides hidden folders by default", async () => {
+    const result = await loadAppSettingsFromStorage(makeDeps());
+    expect(result.showHiddenFolders).toBe(false);
+  });
+
+  it("loads an enabled hidden folders preference", async () => {
+    const deps = makeDeps({
+      storage: createInMemoryKeyValueStorage({
+        [APP_SETTINGS_KEY]: JSON.stringify({ showHiddenFolders: true }),
+      }),
+    });
+    expect((await loadAppSettingsFromStorage(deps)).showHiddenFolders).toBe(true);
+  });
+
   it("enables the chat outline by default", async () => {
     const deps = makeDeps();
 

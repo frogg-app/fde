@@ -2330,6 +2330,10 @@ export const ptBR: TranslationResources = {
     },
     general: {
       title: "Geral",
+      hiddenFolders: {
+        label: "Mostrar pastas ocultas",
+        description: "Incluir pastas cujo nome começa com um ponto ao procurar uma pasta",
+      },
       browserData: {
         title: "Dados do navegador",
         siteData: "Cookies e dados de sites",

@@ -2305,6 +2305,10 @@ export const ko: TranslationResources = {
     },
     general: {
       title: "일반",
+      hiddenFolders: {
+        label: "숨김 폴더 표시",
+        description: "폴더를 탐색할 때 이름이 점으로 시작하는 폴더를 포함합니다",
+      },
       browserData: {
         title: "브라우저 데이터",
         siteData: "쿠키 및 사이트 데이터",

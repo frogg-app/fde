@@ -2318,6 +2318,10 @@ export const ja: TranslationResources = {
     },
     general: {
       title: "一般",
+      hiddenFolders: {
+        label: "隠しフォルダを表示",
+        description: "フォルダを参照するときに、名前がドットで始まるフォルダを含めます",
+      },
       browserData: {
         title: "ブラウザーデータ",
         siteData: "Cookie とサイトデータ",

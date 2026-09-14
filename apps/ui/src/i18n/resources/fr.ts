@@ -2349,6 +2349,11 @@ export const fr: TranslationResources = {
     },
     general: {
       title: "Général",
+      hiddenFolders: {
+        label: "Afficher les dossiers masqués",
+        description:
+          "Inclure les dossiers dont le nom commence par un point lors de la sélection d’un dossier",
+      },
       browserData: {
         title: "Données du navigateur",
         siteData: "Cookies et données des sites",
