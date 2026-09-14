@@ -70,3 +70,24 @@ export function useHostFeatureAvailabilityMap(
     [flags, serverIds],
   );
 }
+
+/**
+ * Whether every host with a live handshake advertises the feature, and at least one does. For
+ * sidebar-wide behaviour that would be wrong for one host's rows (a sort key it never sends).
+ */
+export function selectAllConnectedHostsSupportFeature(
+  state: HostFeatureSessionState,
+  feature: HostFeatureName,
+): boolean {
+  let connected = 0;
+  for (const session of Object.values(state.sessions)) {
+    if (!session?.serverInfo) continue;
+    if (!hostSupportsFeature(session.serverInfo, feature)) return false;
+    connected += 1;
+  }
+  return connected > 0;
+}
+
+export function useAllConnectedHostsSupportFeature(feature: HostFeatureName): boolean {
+  return useSessionStore((state) => selectAllConnectedHostsSupportFeature(state, feature));
+}

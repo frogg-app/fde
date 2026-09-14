@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useEffect, useMemo, type ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   useSidebarWorkspacesList,
   type SidebarProjectEntry,
@@ -16,7 +23,9 @@ import {
 import { useSidebarOrderStore } from "@/stores/sidebar-order-store";
 import type { SidebarShortcutModel } from "@/utils/sidebar-shortcuts";
 import { buildSidebarProjection } from "./sidebar-projection";
-import { sidebarSortNeedsWorkspaceEntries } from "./sidebar-sort";
+import { resolveEffectiveSidebarSortMode, sidebarSortNeedsWorkspaceEntries } from "./sidebar-sort";
+import { inferLegacySidebarSortMode } from "./sidebar-sort-migration";
+import { useAllConnectedHostsSupportFeature } from "@/runtime/host-features";
 import type { SidebarProjectIconTarget } from "@/utils/sidebar-project-row-model";
 import { filterWorkspacesByLabels, type SidebarWorkspaceGroup } from "./sidebar-labels";
 import { filterWorkspacesByProjects, resolveActiveProjectFilters } from "./sidebar-project-filter";
@@ -57,8 +66,12 @@ export function SidebarModelProvider({
 }) {
   const list = useSidebarWorkspacesList({ enabled: active });
   const groupMode = useSidebarViewStore((state) => state.groupMode);
-  const sortMode = useSidebarViewStore((state) => state.sortMode);
+  const savedSortMode = useSidebarViewStore((state) => state.sortMode);
   const sortReversed = useSidebarViewStore((state) => state.sortReversed);
+  const sortMigrationPending = useSidebarViewStore((state) => state.sortMigrationPending);
+  const resolveSortMigration = useSidebarViewStore((state) => state.resolveSortMigration);
+  const createdSortSupported = useAllConnectedHostsSupportFeature("workspaceCreatedAt");
+  const sortMode = resolveEffectiveSidebarSortMode(savedSortMode, createdSortSupported);
   const sort = useMemo(
     () => ({ mode: sortMode, reversed: sortReversed }),
     [sortMode, sortReversed],
@@ -104,11 +117,48 @@ export function SidebarModelProvider({
   // for a filter that does not need it costs a retained-but-inactive sidebar real work.
   // Sorting by activity or status reads those off the entries too.
   const needsWorkspaceEntries =
-    groupMode !== "project" || hasActiveLabelFilter || sidebarSortNeedsWorkspaceEntries(sortMode);
+    groupMode !== "project" ||
+    hasActiveLabelFilter ||
+    sortMigrationPending ||
+    sidebarSortNeedsWorkspaceEntries(sortMode);
   const workspaceEntriesByKey = useSidebarWorkspaceEntries(
     list.workspacePlacements,
     active !== false || needsWorkspaceEntries,
   );
+  // One-time choice for people upgrading from a build without sorting: wait until the saved drag
+  // order and the host directories are loaded, then keep Manual only if the order was arranged by
+  // hand. See `inferLegacySidebarSortMode`.
+  const [orderHydrated, setOrderHydrated] = useState(
+    () => useSidebarOrderStore.persist?.hasHydrated?.() ?? true,
+  );
+  useEffect(() => {
+    if (orderHydrated) return;
+    const unsubscribe = useSidebarOrderStore.persist?.onFinishHydration?.(() =>
+      setOrderHydrated(true),
+    );
+    if (useSidebarOrderStore.persist?.hasHydrated?.()) setOrderHydrated(true);
+    return unsubscribe;
+  }, [orderHydrated]);
+  useEffect(() => {
+    if (!sortMigrationPending || !orderHydrated || list.isLoading) return;
+    if (list.projects.length === 0 || workspaceEntriesByKey.size === 0) return;
+    const orderState = useSidebarOrderStore.getState();
+    resolveSortMigration(
+      inferLegacySidebarSortMode({
+        projects: list.projects,
+        projectOrder: orderState.projectOrder,
+        workspaceOrderByProject: orderState.workspaceOrderByProject,
+        entriesByKey: workspaceEntriesByKey,
+      }),
+    );
+  }, [
+    list.isLoading,
+    list.projects,
+    orderHydrated,
+    resolveSortMigration,
+    sortMigrationPending,
+    workspaceEntriesByKey,
+  ]);
   const filteredWorkspaceEntriesByKey = useMemo(() => {
     const byProject = filterWorkspacesByProjects({
       workspaces: [...workspaceEntriesByKey.values()],

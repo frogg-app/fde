@@ -1056,6 +1056,8 @@ export const zhCN: TranslationResources = {
       sort: {
         label: "排序",
         recent: "最近活动",
+        created: "创建日期",
+        createdUnavailable: "需要所有已连接主机运行更新的守护进程",
         name: "名称",
         status: "需要处理的优先",
         manual: "手动（拖动排序）",

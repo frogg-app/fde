@@ -44,6 +44,10 @@ export interface SidebarWorkspaceEntry extends SidebarStatusWorkspacePlacement {
   pinnedAt?: string | null;
   /** Daemon last-activity timestamp (ISO), used by the "recent activity" sort. */
   activityAt?: string | null;
+  /** Workspace creation time (ISO), used by the "date created" sort. */
+  createdAt?: string;
+  /** The owning project's creation time (ISO), used to rank project groups by date created. */
+  projectCreatedAt?: string;
   labels?: string[];
   // Checkout branch (null when not a git checkout or detached HEAD).
   currentBranch: string | null;
@@ -170,6 +174,10 @@ export function createSidebarWorkspaceEntry(input: {
     title: input.workspace.title ?? null,
     pinnedAt: input.workspace.pinnedAt,
     activityAt: input.workspace.activityAt ?? null,
+    ...(input.workspace.createdAt ? { createdAt: input.workspace.createdAt } : {}),
+    ...(input.workspace.projectCreatedAt
+      ? { projectCreatedAt: input.workspace.projectCreatedAt }
+      : {}),
     labels: input.workspace.labels ?? EMPTY_WORKSPACE_LABELS,
     currentBranch: normalizeCurrentBranch(input.workspace.gitRuntime?.currentBranch),
     statusBucket: effectiveStatus.status,

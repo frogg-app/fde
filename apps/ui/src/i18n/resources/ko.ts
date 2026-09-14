@@ -1073,6 +1073,8 @@ export const ko: TranslationResources = {
       sort: {
         label: "정렬",
         recent: "최근 활동",
+        created: "생성일",
+        createdUnavailable: "연결된 모든 호스트에 최신 데몬이 필요합니다",
         name: "이름",
         status: "확인 필요 항목 먼저",
         manual: "수동(드래그하여 재정렬)",

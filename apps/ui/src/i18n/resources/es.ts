@@ -1098,6 +1098,8 @@ export const es: TranslationResources = {
       sort: {
         label: "Ordenar",
         recent: "Actividad reciente",
+        created: "Fecha de creación",
+        createdUnavailable: "Requiere un daemon más reciente en cada host conectado",
         name: "Nombre",
         status: "Primero lo que requiere atención",
         manual: "Manual (arrastrar para reordenar)",

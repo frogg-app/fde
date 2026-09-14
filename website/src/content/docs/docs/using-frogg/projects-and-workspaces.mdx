@@ -126,6 +126,12 @@ The display menu at the top of the sidebar controls how workspaces are arranged.
 - **Sort** orders workspaces within each group, and orders projects when grouped by project:
   - **Recent activity** (default): the most recently active workspace first. A project ranks by
     its most recently active workspace.
+  - **Date created**: the newest workspace first. A project ranks by when it was added, or by its
+    oldest workspace if the host does not report that. Creation times come from the daemon's
+    workspace and project records; workspaces carried over from before those records existed use
+    the time of their earliest agent. The option is greyed out until every connected host runs a
+    daemon that reports creation times. If it was chosen before, the sidebar sorts by recent
+    activity while such a host is connected and keeps the choice for later.
   - **Name**: A to Z.
   - **Needs attention first**: needs input, failed, ready to review, working, then done. Within
     one status, the most recent change comes first.
@@ -136,7 +142,9 @@ The display menu at the top of the sidebar controls how workspaces are arranged.
   the sort to **Manual**.
 - Pinned workspaces keep their own drag order.
 
-Grouping and sort are saved on the device.
+Grouping and sort are saved on the device. After updating from a version without sorting, the
+sidebar starts on **Manual** if your saved drag order looks arranged by hand, and on **Recent
+activity** otherwise.
 
 ## Labels and archiving
 

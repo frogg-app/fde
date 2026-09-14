@@ -1064,6 +1064,8 @@ export const ar: TranslationResources = {
       sort: {
         label: "الترتيب",
         recent: "النشاط الأخير",
+        created: "تاريخ الإنشاء",
+        createdUnavailable: "يتطلب إصدارًا أحدث من الخدمة على كل مضيف متصل",
         name: "الاسم",
         status: "ما يحتاج إلى انتباه أولًا",
         manual: "يدوي (اسحب لإعادة الترتيب)",

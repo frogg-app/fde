@@ -1082,6 +1082,8 @@ export const ru: TranslationResources = {
       sort: {
         label: "Сортировка",
         recent: "Недавняя активность",
+        created: "Дата создания",
+        createdUnavailable: "Требуется более новый демон на каждом подключённом хосте",
         name: "Название",
         status: "Сначала требующие внимания",
         manual: "Вручную (перетаскивание)",

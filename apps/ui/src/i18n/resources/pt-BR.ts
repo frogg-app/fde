@@ -1089,6 +1089,8 @@ export const ptBR: TranslationResources = {
       sort: {
         label: "Ordenar",
         recent: "Atividade recente",
+        created: "Data de criação",
+        createdUnavailable: "Requer um daemon mais recente em cada host conectado",
         name: "Nome",
         status: "Precisa de atenção primeiro",
         manual: "Manual (arraste para reordenar)",

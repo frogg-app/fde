@@ -6,6 +6,7 @@ import type {
 } from "@/hooks/use-sidebar-workspaces-list";
 import { buildSidebarProjection } from "./sidebar-projection";
 import {
+  resolveEffectiveSidebarSortMode,
   sidebarSortNeedsWorkspaceEntries,
   sidebarWorkspaceRecency,
   sortSidebarProjects,
@@ -21,6 +22,8 @@ function ws(
     status?: SidebarWorkspaceEntry["statusBucket"];
     at?: string | null;
     activityAt?: string | null;
+    createdAt?: string;
+    projectCreatedAt?: string;
   } = {},
 ): SidebarWorkspaceEntry {
   return {
@@ -39,6 +42,8 @@ function ws(
     statusBucket: options.status ?? "done",
     statusEnteredAt: options.at ? new Date(options.at) : null,
     activityAt: options.activityAt ?? null,
+    ...(options.createdAt ? { createdAt: options.createdAt } : {}),
+    ...(options.projectCreatedAt ? { projectCreatedAt: options.projectCreatedAt } : {}),
     archivingAt: null,
     diffStat: null,
     prHint: null,
@@ -229,7 +234,107 @@ describe("sort in the sidebar projection", () => {
   it("only hydrates entries for sorts that need them", () => {
     expect(sidebarSortNeedsWorkspaceEntries("recent")).toBe(true);
     expect(sidebarSortNeedsWorkspaceEntries("status")).toBe(true);
+    expect(sidebarSortNeedsWorkspaceEntries("created")).toBe(true);
     expect(sidebarSortNeedsWorkspaceEntries("name")).toBe(false);
     expect(sidebarSortNeedsWorkspaceEntries("manual")).toBe(false);
+  });
+});
+
+describe("date created sort", () => {
+  const created: SidebarSortOptions = { mode: "created", reversed: false };
+  const entries = [
+    ws("first", {
+      project: "old",
+      createdAt: "2026-01-01T00:00:00Z",
+      activityAt: "2026-09-01T00:00:00Z",
+    }),
+    ws("second", { project: "old", createdAt: "2026-02-01T00:00:00Z" }),
+    ws("undated", { project: "old" }),
+    ws("third", {
+      project: "new",
+      createdAt: "2026-03-01T00:00:00Z",
+      projectCreatedAt: "2025-12-01T00:00:00Z",
+    }),
+    ws("fourth", { project: "fresh", createdAt: "2026-04-01T00:00:00Z" }),
+  ];
+  const map = byKey(entries);
+
+  it("orders workspaces newest created first, ignores activity, and sinks undated rows", () => {
+    const rows = [entries[0]!, entries[1]!, entries[2]!];
+    expect(names(sortSidebarWorkspaces(rows, map, created))).toEqual([
+      "second",
+      "first",
+      "undated",
+    ]);
+    expect(names(sortSidebarWorkspaces(rows, map, { mode: "created", reversed: true }))).toEqual([
+      "first",
+      "second",
+      "undated",
+    ]);
+  });
+
+  it("ranks a project by its own creation time, else its earliest workspace", () => {
+    const projects = [
+      project("old", [entries[0]!, entries[1]!, entries[2]!]),
+      project("new", [entries[3]!]),
+      project("fresh", [entries[4]!]),
+      project("empty", []),
+    ];
+    // fresh: earliest workspace 2026-04; old: earliest workspace 2026-01; new: project 2025-12.
+    expect(sortSidebarProjects(projects, map, created).map((p) => p.viewKey)).toEqual([
+      "fresh",
+      "old",
+      "new",
+      "empty",
+    ]);
+  });
+
+  it("falls back to recent activity when a host cannot send creation times", () => {
+    expect(resolveEffectiveSidebarSortMode("created", false)).toBe("recent");
+    expect(resolveEffectiveSidebarSortMode("created", true)).toBe("created");
+    expect(resolveEffectiveSidebarSortMode("name", false)).toBe("name");
+  });
+});
+
+describe("grouping by project with recent activity", () => {
+  // The main complaint: project groups and the rows inside them must both follow activity, not
+  // the stored drag order or names.
+  const entries = [
+    ws("a-stale", { project: "a", activityAt: "2026-01-01T00:00:00Z" }),
+    ws("a-busy", { project: "a", activityAt: "2026-05-01T00:00:00Z" }),
+    ws("b-mid", { project: "b", at: "2026-03-01T00:00:00Z" }),
+    ws("c-latest", { project: "c", activityAt: "2026-06-01T00:00:00Z" }),
+    ws("c-old", { project: "c", at: "2026-02-01T00:00:00Z" }),
+  ];
+
+  it("orders project groups and their workspaces by recent activity", () => {
+    const projection = buildSidebarProjection({
+      // The stored order deliberately disagrees with activity.
+      projects: [
+        project("a", [entries[0]!, entries[1]!]),
+        project("b", [entries[2]!]),
+        project("c", [entries[4]!, entries[3]!]),
+      ],
+      pinnedKeys: { pinnedWorkspaceKeys: [], pinnedAtByKey: {} },
+      pinnedWorkspaceOrder: [],
+      workspaceEntriesByKey: byKey(entries),
+      projectNamesByViewKey: new Map([
+        ["a", "a"],
+        ["b", "b"],
+        ["c", "c"],
+      ]),
+      groupMode: "project",
+      sort: recent,
+      pinnedCollapsed: false,
+      collapsedProjectKeys: new Set<string>(),
+      collapsedWorkspaceGroupKeys: new Set<string>(),
+    });
+    const groups = projection.pinnedGroups.unpinnedProjects;
+    expect(groups.map((p) => p.viewKey)).toEqual(["c", "a", "b"]);
+    expect(groups.map((p) => names(p.workspaces))).toEqual([
+      ["c-latest", "c-old"],
+      ["a-busy", "a-stale"],
+      ["b-mid"],
+    ]);
   });
 });

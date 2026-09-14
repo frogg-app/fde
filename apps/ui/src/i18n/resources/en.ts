@@ -1074,6 +1074,8 @@ export const en = {
       sort: {
         label: "Sort",
         recent: "Recent activity",
+        created: "Date created",
+        createdUnavailable: "Needs a newer daemon on every connected host",
         name: "Name",
         status: "Needs attention first",
         manual: "Manual (drag to reorder)",

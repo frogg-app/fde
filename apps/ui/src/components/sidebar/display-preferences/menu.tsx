@@ -15,6 +15,7 @@ import {
   CircleAlert,
   GripVertical,
   History,
+  CalendarPlus,
   Captions,
   Circle,
   CircleCheck,
@@ -100,6 +101,7 @@ const GROUPING_ICONS: Record<SidebarGroupMode, OptionIcon> = {
 
 const SORT_ICONS: Record<SidebarSortMode, OptionIcon> = {
   recent: withUnistyles(History),
+  created: withUnistyles(CalendarPlus),
   name: withUnistyles(ArrowDownAZ),
   status: withUnistyles(CircleAlert),
   manual: withUnistyles(GripVertical),
@@ -149,6 +151,7 @@ const GROUPING_LABEL_KEYS: Record<SidebarGroupMode, string> = {
 
 const SORT_LABEL_KEYS: Record<SidebarSortMode, string> = {
   recent: "sidebar.display.sort.recent",
+  created: "sidebar.display.sort.created",
   name: "sidebar.display.sort.name",
   status: "sidebar.display.sort.status",
   manual: "sidebar.display.sort.manual",
@@ -517,6 +520,8 @@ function OptionItem<Value extends string>({
   label,
   selected,
   closeOnSelect = true,
+  disabled,
+  description,
   onSelect,
   testID,
 }: {
@@ -525,6 +530,8 @@ function OptionItem<Value extends string>({
   label: string;
   selected: boolean;
   closeOnSelect?: boolean;
+  disabled?: boolean;
+  description?: string;
   onSelect: (value: Value) => void;
   testID: string;
 }): ReactElement {
@@ -538,6 +545,8 @@ function OptionItem<Value extends string>({
       selected={selected}
       leading={leading}
       closeOnSelect={closeOnSelect}
+      disabled={disabled}
+      description={description}
       onSelect={handleSelect}
       testID={testID}
     >
@@ -554,6 +563,7 @@ function OptionList<Value extends string>({
   selectedValue,
   onSelect,
   testIDPrefix,
+  unavailable,
 }: {
   values: readonly Value[];
   icons: Record<Value, OptionIcon>;
@@ -561,6 +571,8 @@ function OptionList<Value extends string>({
   selectedValue: Value;
   onSelect: (value: Value) => void;
   testIDPrefix: string;
+  /** Options shown greyed out and unselectable, each with the hint explaining why. */
+  unavailable?: Partial<Record<Value, string>>;
 }): ReactNode {
   const { t } = useTranslation();
   return values.map((value) => (
@@ -570,6 +582,8 @@ function OptionList<Value extends string>({
       icon={icons[value]}
       label={t(labelKeys[value])}
       selected={value === selectedValue}
+      disabled={unavailable?.[value] !== undefined}
+      description={unavailable?.[value]}
       onSelect={onSelect}
       testID={`${testIDPrefix}-${value}`}
     />
@@ -584,9 +598,17 @@ function SortPage({ preferences }: { preferences: Preferences }): ReactElement {
   const { t } = useTranslation();
   const toggleReversed = preferences.toggleSortReversed;
   const handleReversed = useCallback(() => toggleReversed(), [toggleReversed]);
+  const unavailable = useMemo(
+    () =>
+      preferences.createdSortSupported
+        ? undefined
+        : { created: t("sidebar.display.sort.createdUnavailable") },
+    [preferences.createdSortSupported, t],
+  );
   return (
     <>
       <OptionList
+        unavailable={unavailable}
         values={SIDEBAR_SORT_MODES}
         icons={SORT_ICONS}
         labelKeys={SORT_LABEL_KEYS}

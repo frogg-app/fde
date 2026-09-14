@@ -14,7 +14,25 @@ export interface SidebarSortOptions {
 
 /** Whether the sort reads hydrated workspace entries (status, timestamps) rather than placements. */
 export function sidebarSortNeedsWorkspaceEntries(mode: SidebarSortMode): boolean {
-  return mode === "recent" || mode === "status";
+  return mode === "recent" || mode === "created" || mode === "status";
+}
+
+/**
+ * The mode the sidebar actually orders by. A saved "date created" choice is kept as-is in the
+ * store, but a daemon that does not send creation times has nothing to sort on, so the rows fall
+ * back to recent activity until every connected host supports it.
+ */
+export function resolveEffectiveSidebarSortMode(
+  mode: SidebarSortMode,
+  createdSortSupported: boolean,
+): SidebarSortMode {
+  return mode === "created" && !createdSortSupported ? "recent" : mode;
+}
+
+function parseIso(value: string | null | undefined): number | null {
+  if (!value) return null;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 const UNKNOWN_STATUS_RANK = STATUS_BUCKET_ORDER.length;
@@ -58,6 +76,7 @@ interface SortableItem {
   name: string;
   key: string;
   recency: number | null;
+  createdAt: number | null;
   statusRank: number;
 }
 
@@ -66,6 +85,9 @@ function compareSortable(a: SortableItem, b: SortableItem, options: SidebarSortO
   switch (options.mode) {
     case "recent":
       primary = compareRecency(a.recency, b.recency, options.reversed);
+      break;
+    case "created":
+      primary = compareRecency(a.createdAt, b.createdAt, options.reversed);
       break;
     case "name": {
       const cmp = compareText(a.name, b.name);
@@ -99,6 +121,7 @@ function sortableWorkspace(
     name: entry?.name ?? workspace.name,
     key: workspace.workspaceKey,
     recency: sidebarWorkspaceRecency(entry),
+    createdAt: parseIso(entry?.createdAt),
     statusRank: statusRank(entry),
   };
 }
@@ -126,8 +149,9 @@ export function sortSidebarWorkspaces<T extends SidebarWorkspacePlacement>(
 /**
  * Orders projects and the workspaces inside each one.
  *
- * A project ranks by its best workspace: the most recent activity, or the most urgent status. A
- * project with no workspaces has nothing to rank by and sinks below those that do (name order).
+ * A project ranks by its best workspace: the most recent activity, or the most urgent status. By
+ * date created it ranks by its own creation time, or its earliest workspace when the daemon did
+ * not send one. A project with nothing to rank by sinks below those that do (name order).
  */
 export function sortSidebarProjects(
   projects: readonly SidebarProjectEntry[],
@@ -143,8 +167,18 @@ export function sortSidebarProjects(
     if (next !== project) changed = true;
     let recency: number | null = null;
     let rank = UNKNOWN_STATUS_RANK;
+    let projectCreatedAt: number | null = null;
+    let earliestWorkspaceCreatedAt: number | null = null;
     for (const workspace of project.workspaces) {
       const entry = entriesByKey.get(workspace.workspaceKey);
+      projectCreatedAt ??= parseIso(entry?.projectCreatedAt);
+      const workspaceCreatedAt = parseIso(entry?.createdAt);
+      if (
+        workspaceCreatedAt !== null &&
+        (earliestWorkspaceCreatedAt === null || workspaceCreatedAt < earliestWorkspaceCreatedAt)
+      ) {
+        earliestWorkspaceCreatedAt = workspaceCreatedAt;
+      }
       const workspaceRecency = sidebarWorkspaceRecency(entry);
       if (workspaceRecency !== null && (recency === null || workspaceRecency > recency)) {
         recency = workspaceRecency;
@@ -153,7 +187,13 @@ export function sortSidebarProjects(
     }
     return {
       project: next,
-      sortable: { name: project.projectName, key: project.viewKey, recency, statusRank: rank },
+      sortable: {
+        name: project.projectName,
+        key: project.viewKey,
+        recency,
+        createdAt: projectCreatedAt ?? earliestWorkspaceCreatedAt,
+        statusRank: rank,
+      },
     };
   });
   decorated.sort((a, b) => compareSortable(a.sortable, b.sortable, options));

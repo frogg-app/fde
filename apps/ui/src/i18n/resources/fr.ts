@@ -1097,6 +1097,8 @@ export const fr: TranslationResources = {
       sort: {
         label: "Trier",
         recent: "Activité récente",
+        created: "Date de création",
+        createdUnavailable: "Nécessite un démon plus récent sur chaque hôte connecté",
         name: "Nom",
         status: "Action requise en premier",
         manual: "Manuel (glisser pour réorganiser)",
