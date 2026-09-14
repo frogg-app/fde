@@ -418,13 +418,14 @@ export function AddProjectFlow({ request, onClose }: AddProjectFlowProps) {
   });
   const refetchDirectory = directoryListing.refetch;
   const directoryQuery = useFetchQuery({
-    queryKey: ["add-project-flow-directories", hostId, debouncedQuery],
+    queryKey: ["add-project-flow-directories", hostId, debouncedQuery, showHiddenFolders],
     queryFn: async () => {
       if (!client) return { query: debouncedQuery, paths: [] as string[] };
       const payload = await client.getDirectorySuggestions({
         query: debouncedQuery,
         includeDirectories: true,
         includeFiles: false,
+        includeHiddenDirectories: showHiddenFolders,
         limit: 30,
       });
       return {

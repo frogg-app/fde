@@ -2676,6 +2676,11 @@ pub struct DirectorySuggestionsRequest {
     pub include_files: Option<bool>,
     #[serde(rename = "includeDirectories", skip_serializing_if = "Option::is_none")]
     pub include_directories: Option<bool>,
+    #[serde(
+        rename = "includeHiddenDirectories",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub include_hidden_directories: Option<bool>,
     #[serde(rename = "matchMode", skip_serializing_if = "Option::is_none")]
     pub match_mode: Option<DirectorySuggestionsRequestMatchMode>,
     #[serde(skip_serializing_if = "Option::is_none")]
