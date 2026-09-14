@@ -76,8 +76,6 @@ const styles = StyleSheet.create((theme) => ({
     alignItems: "center",
     paddingBottom: theme.spacing[4],
     borderRadius: 24,
-    backgroundColor: "#0b1020",
-    overflow: "hidden",
   },
   presence: {
     flexDirection: "row",

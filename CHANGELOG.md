@@ -3,6 +3,8 @@
 ## Unreleased
 
 - Restore the standard AudioLines Companion launcher icon in the composer.
+- Render the Companion Nebula with the transparent live shader used on frogg.app, replacing the layered static image and opaque background.
+- Keep the local speech preview stable while a user speaks; submit the final sentence after endpointing.
 
 ## 1.1.0 — 2026-09-14
 

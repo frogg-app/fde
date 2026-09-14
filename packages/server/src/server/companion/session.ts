@@ -684,7 +684,9 @@ export class CompanionSession {
       turnDetection,
       stt,
       sttLanguage: this.sttLanguage,
-      continuousTranscripts: true,
+      // Local realtime decoding repeatedly revises the whole utterance. Keep the
+      // Companion preview stable and emit the full authoritative sentence on endpoint.
+      continuousTranscripts: false,
       endpointing: { confirmMs: 120, silenceMs: this.conversation.pauseMs },
       callbacks: {
         // Barge-in hangs off VAD onset, not the first STT partial. A partial

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Animated, Easing, Platform, Pressable } from "react-native";
 import { useReducedMotion } from "react-native-reanimated";
 import { StyleSheet } from "react-native-unistyles";
+import { Nebula } from "./nebula";
 import type { CompanionMicState } from "./store";
 
 interface MicOrbProps {
@@ -180,32 +181,31 @@ export function MicOrb({
       style={[styles.pressable, { width: size, height: size }]}
       testID={testID}
     >
-      <Animated.Image
-        accessibilityIgnoresInvertColors
-        source={require("@/assets/images/companion-nebula.png")}
+      <Animated.View
         style={[styles.halo, { width: size, height: size }, motion.halo]}
         testID="companion-input-level"
+        pointerEvents="none"
       />
       <Animated.View
         style={[styles.sphere, { width: (size * 8) / 9, height: (size * 8) / 9 }, motion.sphere]}
         pointerEvents="none"
       >
-        <Animated.Image
-          accessibilityIgnoresInvertColors
-          source={require("@/assets/images/companion-nebula.png")}
-          style={[styles.layer, motion.cool]}
-          testID="companion-orb-flow"
-        />
-        <Animated.Image
-          accessibilityIgnoresInvertColors
-          source={require("@/assets/images/companion-nebula.png")}
-          style={[styles.layer, motion.warm]}
+        <Animated.View style={[styles.layer, motion.cool]} testID="companion-orb-flow">
+          <Nebula
+            size={(size * 8) / 9}
+            active={active}
+            muted={muted}
+            volume={volume}
+            speakingVolume={speakingVolume}
+            animated={!reducedMotion}
+          />
+        </Animated.View>
+        <Animated.View
+          style={[styles.telemetryLayer, motion.warm]}
           testID="companion-output-level"
         />
-        <Animated.Image
-          accessibilityIgnoresInvertColors
-          source={require("@/assets/images/companion-nebula.png")}
-          style={[styles.layer, motion.filaments]}
+        <Animated.View
+          style={[styles.telemetryLayer, motion.filaments]}
           testID="companion-orb-filaments"
         />
       </Animated.View>
@@ -231,5 +231,11 @@ const styles = StyleSheet.create({
     left: 0,
     width: "100%",
     height: "100%",
+  },
+  telemetryLayer: {
+    position: "absolute",
+    width: 1,
+    height: 1,
+    opacity: 0,
   },
 });
