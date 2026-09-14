@@ -117,6 +117,26 @@ frogg terminal send-keys <terminal-id> "npm run build" Enter
 frogg terminal capture <terminal-id> --scrollback
 ```
 
+## Organize the sidebar
+
+The display menu at the top of the sidebar controls how workspaces are arranged.
+
+- **Grouping** puts workspaces under their project or under their status.
+- **Sort** orders workspaces within each group, and orders projects when grouped by project:
+  - **Recent activity** (default): the most recently active workspace first. A project ranks by
+    its most recently active workspace.
+  - **Name**: A to Z.
+  - **Needs attention first**: needs input, failed, ready to review, working, then done. Within
+    one status, the most recent change comes first.
+  - **Manual**: the order you set by dragging.
+- **Reverse order** flips the chosen sort. It is not available for Manual.
+- Items that tie are ordered by name, so rows do not swap places as agents report activity.
+- Dragging a project or workspace while a sort is active keeps the order on screen and switches
+  the sort to **Manual**.
+- Pinned workspaces keep their own drag order.
+
+Grouping and sort are saved on the device.
+
 ## Labels and archiving
 
 - Workspaces can be renamed (`frogg workspace rename`) and labelled in the app.

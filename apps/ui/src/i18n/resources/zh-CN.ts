@@ -1053,6 +1053,14 @@ export const zhCN: TranslationResources = {
         status: "状态",
         labels: "标签",
       },
+      sort: {
+        label: "排序",
+        recent: "最近活动",
+        name: "名称",
+        status: "需要处理的优先",
+        manual: "手动（拖动排序）",
+        reversed: "倒序",
+      },
       titleSource: {
         label: "标题",
         title: "标题",

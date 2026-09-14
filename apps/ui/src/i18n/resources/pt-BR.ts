@@ -1086,6 +1086,14 @@ export const ptBR: TranslationResources = {
         status: "Status",
         labels: "Etiquetas",
       },
+      sort: {
+        label: "Ordenar",
+        recent: "Atividade recente",
+        name: "Nome",
+        status: "Precisa de atenção primeiro",
+        manual: "Manual (arraste para reordenar)",
+        reversed: "Inverter ordem",
+      },
       titleSource: {
         label: "Título",
         title: "Título",

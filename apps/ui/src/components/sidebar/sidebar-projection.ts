@@ -10,6 +10,11 @@ import type {
 } from "@/hooks/use-sidebar-workspaces-list";
 import type { SidebarGroupMode } from "@/stores/sidebar-view-store";
 import {
+  sortSidebarProjects,
+  sortSidebarWorkspaces,
+  type SidebarSortOptions,
+} from "./sidebar-sort";
+import {
   resolveSidebarProjectIconTargets,
   type SidebarProjectIconTarget,
 } from "@/utils/sidebar-project-row-model";
@@ -42,17 +47,30 @@ export interface SidebarProjectionInput {
   workspaceEntriesByKey: ReadonlyMap<string, SidebarWorkspaceEntry>;
   projectNamesByViewKey: Map<string, string>;
   groupMode: SidebarGroupMode;
+  /** Absent means manual: the stored drag order, as before sorting existed. */
+  sort?: SidebarSortOptions;
   pinnedCollapsed: boolean;
   collapsedProjectKeys: ReadonlySet<string>;
   collapsedWorkspaceGroupKeys: ReadonlySet<string>;
 }
 
 export function buildSidebarProjection(input: SidebarProjectionInput): SidebarProjection {
-  const pinnedGroups = splitPinnedSidebarGroups({
+  const sort = input.sort ?? MANUAL_SORT;
+  const splitGroups = splitPinnedSidebarGroups({
     projects: input.projects,
     keys: input.pinnedKeys,
     pinnedWorkspaceOrder: input.pinnedWorkspaceOrder,
   });
+  // Pinned rows keep their own hand-arranged order; only the unpinned projects are sorted.
+  const sortedProjects = sortSidebarProjects(
+    splitGroups.unpinnedProjects,
+    input.workspaceEntriesByKey,
+    sort,
+  );
+  const pinnedGroups: PinnedSidebarGroups =
+    sortedProjects === splitGroups.unpinnedProjects
+      ? splitGroups
+      : { ...splitGroups, unpinnedProjects: [...sortedProjects] };
   const pinnedWorkspaceKeys = new Set(input.pinnedKeys.pinnedWorkspaceKeys);
   const unpinnedWorkspaces = Array.from(input.workspaceEntriesByKey.values()).filter(
     (workspace) => !pinnedWorkspaceKeys.has(workspace.workspaceKey),
@@ -98,9 +116,20 @@ function buildWorkspaceGroups(
   switch (input.groupMode) {
     case "project":
       return [];
-    case "status":
-      return statusWorkspaceGroups(
+    case "status": {
+      // Status groups keep their fixed urgency order; the sort applies to the rows inside each.
+      const groups = statusWorkspaceGroups(
         buildStatusGroups(unpinnedWorkspaces, input.projectNamesByViewKey),
       );
+      const sort = input.sort ?? MANUAL_SORT;
+      // The groups are freshly built above, so replacing their rows in place is safe.
+      for (const group of groups) {
+        const rows = sortSidebarWorkspaces(group.rows, input.workspaceEntriesByKey, sort);
+        if (rows !== group.rows) group.rows = [...rows];
+      }
+      return groups;
+    }
   }
 }
+
+const MANUAL_SORT: SidebarSortOptions = { mode: "manual", reversed: false };

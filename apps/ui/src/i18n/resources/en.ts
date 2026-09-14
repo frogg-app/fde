@@ -1071,6 +1071,14 @@ export const en = {
         status: "Status",
         labels: "Labels",
       },
+      sort: {
+        label: "Sort",
+        recent: "Recent activity",
+        name: "Name",
+        status: "Needs attention first",
+        manual: "Manual (drag to reorder)",
+        reversed: "Reverse order",
+      },
       titleSource: {
         label: "Title",
         title: "Title",

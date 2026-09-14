@@ -1070,6 +1070,14 @@ export const ko: TranslationResources = {
         status: "상태",
         labels: "레이블",
       },
+      sort: {
+        label: "정렬",
+        recent: "최근 활동",
+        name: "이름",
+        status: "확인 필요 항목 먼저",
+        manual: "수동(드래그하여 재정렬)",
+        reversed: "역순",
+      },
       titleSource: {
         label: "제목",
         title: "제목",

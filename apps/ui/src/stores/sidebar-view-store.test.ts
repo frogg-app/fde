@@ -96,6 +96,8 @@ describe("sidebar view store", () => {
       hostFilters: [],
       projectFilters: [],
       labelFilter: { labels: [] },
+      sortMode: "recent",
+      sortReversed: false,
     });
   });
 
@@ -110,6 +112,8 @@ describe("sidebar view store", () => {
       hostFilters: ["host-a"],
       projectFilters: [],
       labelFilter: { labels: [] },
+      sortMode: "recent",
+      sortReversed: false,
     });
   });
 
@@ -124,6 +128,26 @@ describe("sidebar view store", () => {
       hostFilters: ["host-a", "host-b"],
       projectFilters: [],
       labelFilter: { labels: [] },
+      sortMode: "recent",
+      sortReversed: false,
+    });
+  });
+
+  it("persists sort mode and direction, defaulting to recent activity", () => {
+    expect(migrateSidebarViewState({ sortMode: "name", sortReversed: true })).toMatchObject({
+      sortMode: "name",
+      sortReversed: true,
+    });
+    expect(migrateSidebarViewState({ sortMode: "bogus" })).toMatchObject({
+      sortMode: "recent",
+      sortReversed: false,
+    });
+    const store = useSidebarViewStore.getState();
+    store.setSortMode("status");
+    store.toggleSortReversed();
+    expect(useSidebarViewStore.getState()).toMatchObject({
+      sortMode: "status",
+      sortReversed: true,
     });
   });
 
@@ -234,6 +258,8 @@ describe("sidebar view store", () => {
       hostFilters: ["host-a"],
       projectFilters: ["project-a", "project-b"],
       labelFilter: { labels: [] },
+      sortMode: "recent",
+      sortReversed: false,
     });
   });
 
@@ -243,6 +269,8 @@ describe("sidebar view store", () => {
       hostFilters: [],
       projectFilters: [],
       labelFilter: { labels: [] },
+      sortMode: "recent",
+      sortReversed: false,
     });
   });
 

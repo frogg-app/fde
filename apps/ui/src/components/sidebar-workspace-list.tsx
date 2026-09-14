@@ -2102,6 +2102,8 @@ function ProjectModeList({
     (state) => state.togglePinnedCollapsed,
   );
 
+  const isSorted = useSidebarViewStore((state) => state.sortMode !== "manual");
+  const setSortMode = useSidebarViewStore((state) => state.setSortMode);
   const getProjectOrder = useSidebarOrderStore((state) => state.getProjectOrder);
   const setProjectOrder = useSidebarOrderStore((state) => state.setProjectOrder);
   const getWorkspaceOrder = useSidebarOrderStore((state) => state.getWorkspaceOrder);
@@ -2180,9 +2182,41 @@ function ProjectModeList({
     });
   }, [creatingWorkspaceIds, projects]);
 
+  // Writes the on-screen (sorted) workspace order of each project into the manual order store, so
+  // switching to manual after a drag keeps every other row where the user just saw it.
+  const persistDisplayedWorkspaceOrders = useCallback(
+    (displayedProjects: readonly SidebarProjectEntry[]) => {
+      for (const project of displayedProjects) {
+        setWorkspaceOrder(
+          project.viewKey,
+          mergeWithRemainder({
+            currentOrder: getWorkspaceOrder(project.viewKey),
+            reorderedVisibleKeys: project.workspaces.map((workspace) => workspace.workspaceKey),
+          }),
+        );
+      }
+    },
+    [getWorkspaceOrder, setWorkspaceOrder],
+  );
+
   const handleProjectDragEnd = useCallback(
     (reorderedProjects: SidebarProjectEntry[]) => {
       const reorderedProjectKeys = reorderedProjects.map((project) => project.viewKey);
+      if (isSorted) {
+        // A sorted list shows a derived order, so a drag means "let me arrange these myself":
+        // keep exactly what is on screen and switch to manual so it stays put.
+        const displayedKeys = pinnedGroups.unpinnedProjects.map((project) => project.viewKey);
+        if (!reorderedProjectKeys.some((key, index) => displayedKeys[index] !== key)) return;
+        setProjectOrder(
+          mergeWithRemainder({
+            currentOrder: getProjectOrder(),
+            reorderedVisibleKeys: reorderedProjectKeys,
+          }),
+        );
+        persistDisplayedWorkspaceOrders(pinnedGroups.unpinnedProjects);
+        setSortMode("manual");
+        return;
+      }
       const currentProjectOrder = getProjectOrder();
       if (
         !hasVisibleOrderChanged({
@@ -2200,12 +2234,44 @@ function ProjectModeList({
         }),
       );
     },
-    [getProjectOrder, setProjectOrder],
+    [
+      getProjectOrder,
+      setProjectOrder,
+      persistDisplayedWorkspaceOrders,
+      isSorted,
+      pinnedGroups.unpinnedProjects,
+      setSortMode,
+    ],
   );
 
   const handleWorkspaceReorder = useCallback(
     (projectViewKey: string, reorderedWorkspaces: SidebarWorkspacePlacement[]) => {
       const reorderedWorkspaceKeys = reorderedWorkspaces.map((workspace) => workspace.workspaceKey);
+      if (isSorted) {
+        const displayed = pinnedGroups.unpinnedProjects.find(
+          (project) => project.viewKey === projectViewKey,
+        );
+        const displayedKeys = (displayed?.workspaces ?? []).map((w) => w.workspaceKey);
+        if (!reorderedWorkspaceKeys.some((key, index) => displayedKeys[index] !== key)) return;
+        setProjectOrder(
+          mergeWithRemainder({
+            currentOrder: getProjectOrder(),
+            reorderedVisibleKeys: pinnedGroups.unpinnedProjects.map((project) => project.viewKey),
+          }),
+        );
+        persistDisplayedWorkspaceOrders(
+          pinnedGroups.unpinnedProjects.filter((project) => project.viewKey !== projectViewKey),
+        );
+        setWorkspaceOrder(
+          projectViewKey,
+          mergeWithRemainder({
+            currentOrder: getWorkspaceOrder(projectViewKey),
+            reorderedVisibleKeys: reorderedWorkspaceKeys,
+          }),
+        );
+        setSortMode("manual");
+        return;
+      }
       const currentWorkspaceOrder = getWorkspaceOrder(projectViewKey);
       if (
         !hasVisibleOrderChanged({
@@ -2224,7 +2290,16 @@ function ProjectModeList({
         }),
       );
     },
-    [getWorkspaceOrder, setWorkspaceOrder],
+    [
+      getProjectOrder,
+      setProjectOrder,
+      getWorkspaceOrder,
+      setWorkspaceOrder,
+      persistDisplayedWorkspaceOrders,
+      isSorted,
+      pinnedGroups.unpinnedProjects,
+      setSortMode,
+    ],
   );
 
   const handleWorktreeCreated = useCallback((workspaceId: string) => {

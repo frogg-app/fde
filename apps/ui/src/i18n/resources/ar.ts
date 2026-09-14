@@ -1061,6 +1061,14 @@ export const ar: TranslationResources = {
         status: "الحالة",
         labels: "التسميات",
       },
+      sort: {
+        label: "الترتيب",
+        recent: "النشاط الأخير",
+        name: "الاسم",
+        status: "ما يحتاج إلى انتباه أولًا",
+        manual: "يدوي (اسحب لإعادة الترتيب)",
+        reversed: "عكس الترتيب",
+      },
       titleSource: {
         label: "العنوان",
         title: "العنوان",

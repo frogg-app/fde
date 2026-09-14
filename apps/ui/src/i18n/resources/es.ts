@@ -1095,6 +1095,14 @@ export const es: TranslationResources = {
         status: "Estado",
         labels: "Etiquetas",
       },
+      sort: {
+        label: "Ordenar",
+        recent: "Actividad reciente",
+        name: "Nombre",
+        status: "Primero lo que requiere atención",
+        manual: "Manual (arrastrar para reordenar)",
+        reversed: "Invertir orden",
+      },
       titleSource: {
         label: "Título",
         title: "Título",
