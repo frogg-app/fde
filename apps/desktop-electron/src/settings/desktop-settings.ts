@@ -16,13 +16,23 @@ export interface DesktopSettings {
     manageBuiltInDaemon: boolean;
     keepRunningAfterQuit: boolean;
   };
+  downloads: {
+    mode: DownloadMode;
+    /** Chosen folder; null means the platform default below. */
+    directory: string | null;
+    /** Resolved per platform by the shell, never persisted. */
+    defaultDirectory: string;
+  };
 }
+
+export type DownloadMode = "ask" | "directory";
 
 interface DesktopSettingsPatch {
   updates?: Partial<DesktopSettings["updates"]>;
   releaseChannel?: AppReleaseChannel;
   notifications?: Partial<DesktopSettings["notifications"]>;
   daemon?: Partial<DesktopSettings["daemon"]>;
+  downloads?: Partial<Pick<DesktopSettings["downloads"], "mode" | "directory">>;
 }
 
 export interface DesktopSettingsStore {
@@ -40,6 +50,11 @@ export const DEFAULT_DESKTOP_SETTINGS: DesktopSettings = {
   daemon: {
     manageBuiltInDaemon: false,
     keepRunningAfterQuit: false,
+  },
+  downloads: {
+    mode: "ask",
+    directory: null,
+    defaultDirectory: "",
   },
 };
 
@@ -60,12 +75,20 @@ const DaemonSchema = z
   })
   .catch(() => ({ ...DEFAULT_DESKTOP_SETTINGS.daemon }));
 
+const DownloadsSchema = z
+  .looseObject({
+    mode: z.enum(["ask", "directory"]).catch(DEFAULT_DESKTOP_SETTINGS.downloads.mode),
+    directory: z.string().min(1).nullable().catch(null),
+  })
+  .catch(() => ({ mode: DEFAULT_DESKTOP_SETTINGS.downloads.mode, directory: null }));
+
 const DesktopSettingsSchema = z
   .looseObject({
     updates: z.object({ autoCheck: z.boolean().catch(true) }).catch(() => ({ autoCheck: true })),
     releaseChannel: ReleaseChannelSchema.catch(DEFAULT_DESKTOP_SETTINGS.releaseChannel),
     notifications: NotificationsSchema,
     daemon: DaemonSchema,
+    downloads: DownloadsSchema,
   })
   .catch(() => buildDefaultSettings());
 
@@ -113,6 +136,7 @@ function buildDefaultSettings(): StoredDesktopSettings {
     releaseChannel: DEFAULT_DESKTOP_SETTINGS.releaseChannel,
     notifications: { ...DEFAULT_DESKTOP_SETTINGS.notifications },
     daemon: { ...DEFAULT_DESKTOP_SETTINGS.daemon },
+    downloads: { mode: DEFAULT_DESKTOP_SETTINGS.downloads.mode, directory: null },
   };
 }
 
@@ -127,7 +151,10 @@ function buildDefaultDocument(): PersistedDesktopSettingsDocument {
   };
 }
 
-function toDesktopSettings(stored: StoredDesktopSettings): DesktopSettings {
+function toDesktopSettings(
+  stored: StoredDesktopSettings,
+  defaultDownloadDirectory: string,
+): DesktopSettings {
   return {
     updates: { autoCheck: stored.updates.autoCheck },
     releaseChannel: stored.releaseChannel,
@@ -136,6 +163,11 @@ function toDesktopSettings(stored: StoredDesktopSettings): DesktopSettings {
     daemon: {
       manageBuiltInDaemon: false,
       keepRunningAfterQuit: false,
+    },
+    downloads: {
+      mode: stored.downloads.mode,
+      directory: stored.downloads.directory,
+      defaultDirectory: defaultDownloadDirectory,
     },
   };
 }
@@ -175,6 +207,21 @@ function coerceDesktopSettingsPatch(input: unknown): DesktopSettingsPatch {
     }
   }
 
+  if (isRecord(input.downloads)) {
+    const downloadsPatch: NonNullable<DesktopSettingsPatch["downloads"]> = {};
+    const mode = input.downloads.mode;
+    if (mode === "ask" || mode === "directory") {
+      downloadsPatch.mode = mode;
+    }
+    const directory = input.downloads.directory;
+    if (directory === null || (typeof directory === "string" && path.isAbsolute(directory))) {
+      downloadsPatch.directory = directory;
+    }
+    if (Object.keys(downloadsPatch).length > 0) {
+      patch.downloads = downloadsPatch;
+    }
+  }
+
   return patch;
 }
 
@@ -209,6 +256,7 @@ function mergeDesktopSettings(
     updates: { ...current.updates, ...patch.updates },
     notifications: { ...current.notifications, ...patch.notifications },
     daemon: { ...current.daemon, ...patch.daemon },
+    downloads: { ...current.downloads, ...patch.downloads },
   };
 }
 
@@ -240,8 +288,10 @@ function coerceDocument(input: unknown): PersistedDesktopSettingsDocument {
 
 export function createDesktopSettingsStore({
   userDataPath,
+  defaultDownloadDirectory = "",
 }: {
   userDataPath: string;
+  defaultDownloadDirectory?: string;
 }): DesktopSettingsStore {
   const filePath = path.join(userDataPath, DESKTOP_SETTINGS_FILENAME);
   let cachedDocument: PersistedDesktopSettingsDocument | null = null;
@@ -294,7 +344,7 @@ export function createDesktopSettingsStore({
   return {
     async get(): Promise<DesktopSettings> {
       const document = await loadDocument();
-      return toDesktopSettings(document.settings);
+      return toDesktopSettings(document.settings, defaultDownloadDirectory);
     },
 
     async patch(patch: unknown): Promise<DesktopSettings> {
@@ -311,13 +361,13 @@ export function createDesktopSettingsStore({
             hasLegacyRendererOwnedPatch(coercedPatch),
         },
       });
-      return toDesktopSettings(next);
+      return toDesktopSettings(next, defaultDownloadDirectory);
     },
 
     async migrateLegacyRendererSettings(legacySettings: unknown): Promise<DesktopSettings> {
       const current = await initializeLegacyRendererMigration();
       if (current.migrations.legacyRendererSettingsImported) {
-        return toDesktopSettings(current.settings);
+        return toDesktopSettings(current.settings, defaultDownloadDirectory);
       }
 
       const next = mergeDesktopSettings(
@@ -332,7 +382,7 @@ export function createDesktopSettingsStore({
           legacyRendererSettingsImported: true,
         },
       });
-      return toDesktopSettings(next);
+      return toDesktopSettings(next, defaultDownloadDirectory);
     },
   };
 }

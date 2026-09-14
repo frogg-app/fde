@@ -2269,6 +2269,22 @@ export const zhCN: TranslationResources = {
         label: "显示隐藏文件夹",
         description: "浏览文件夹时包含名称以点开头的文件夹",
       },
+      downloads: {
+        title: "下载",
+        mode: "下载时",
+        modes: {
+          ask: "每次询问",
+          directory: "保存到文件夹",
+        },
+        modeDescriptions: {
+          ask: "每个文件都选择保存位置。",
+          directory: "将文件直接保存到下方文件夹。",
+        },
+        directory: "下载文件夹",
+        choose: "选择...",
+        useDefault: "使用默认",
+        pickFailed: "无法打开文件夹选择器。",
+      },
       browserData: {
         title: "浏览器数据",
         siteData: "Cookie 和网站数据",

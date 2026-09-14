@@ -2332,6 +2332,22 @@ export const ja: TranslationResources = {
         label: "隠しフォルダを表示",
         description: "フォルダを参照するときに、名前がドットで始まるフォルダを含めます",
       },
+      downloads: {
+        title: "ダウンロード",
+        mode: "ダウンロード時",
+        modes: {
+          ask: "毎回確認する",
+          directory: "フォルダーに保存",
+        },
+        modeDescriptions: {
+          ask: "ファイルごとに保存先を選択します。",
+          directory: "下のフォルダーにファイルを直接保存します。",
+        },
+        directory: "ダウンロードフォルダー",
+        choose: "選択...",
+        useDefault: "デフォルトを使用",
+        pickFailed: "フォルダー選択を開けませんでした。",
+      },
       browserData: {
         title: "ブラウザーデータ",
         siteData: "Cookie とサイトデータ",

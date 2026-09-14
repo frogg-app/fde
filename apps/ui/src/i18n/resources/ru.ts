@@ -2343,6 +2343,22 @@ export const ru: TranslationResources = {
         label: "Показывать скрытые папки",
         description: "Показывать папки, имена которых начинаются с точки, при выборе папки",
       },
+      downloads: {
+        title: "Загрузки",
+        mode: "При загрузке",
+        modes: {
+          ask: "Всегда спрашивать",
+          directory: "Сохранять в папку",
+        },
+        modeDescriptions: {
+          ask: "Выбирать место для каждого файла.",
+          directory: "Сохранять файлы сразу в папку ниже.",
+        },
+        directory: "Папка загрузок",
+        choose: "Выбрать...",
+        useDefault: "По умолчанию",
+        pickFailed: "Не удалось открыть выбор папки.",
+      },
       browserData: {
         title: "Данные браузера",
         siteData: "Файлы cookie и данные сайтов",

@@ -2319,6 +2319,22 @@ export const ko: TranslationResources = {
         label: "숨김 폴더 표시",
         description: "폴더를 탐색할 때 이름이 점으로 시작하는 폴더를 포함합니다",
       },
+      downloads: {
+        title: "다운로드",
+        mode: "다운로드할 때",
+        modes: {
+          ask: "항상 묻기",
+          directory: "폴더에 저장",
+        },
+        modeDescriptions: {
+          ask: "파일마다 저장 위치를 선택합니다.",
+          directory: "아래 폴더에 파일을 바로 저장합니다.",
+        },
+        directory: "다운로드 폴더",
+        choose: "선택...",
+        useDefault: "기본값 사용",
+        pickFailed: "폴더 선택기를 열 수 없습니다.",
+      },
       browserData: {
         title: "브라우저 데이터",
         siteData: "쿠키 및 사이트 데이터",

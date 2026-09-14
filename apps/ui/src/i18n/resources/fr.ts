@@ -2364,6 +2364,22 @@ export const fr: TranslationResources = {
         description:
           "Inclure les dossiers dont le nom commence par un point lors de la sélection d’un dossier",
       },
+      downloads: {
+        title: "Téléchargements",
+        mode: "Lors d’un téléchargement",
+        modes: {
+          ask: "Toujours demander",
+          directory: "Enregistrer dans un dossier",
+        },
+        modeDescriptions: {
+          ask: "Choisir où enregistrer chaque fichier.",
+          directory: "Enregistre les fichiers directement dans le dossier ci-dessous.",
+        },
+        directory: "Dossier de téléchargement",
+        choose: "Choisir...",
+        useDefault: "Utiliser la valeur par défaut",
+        pickFailed: "Impossible d’ouvrir le sélecteur de dossier.",
+      },
       browserData: {
         title: "Données du navigateur",
         siteData: "Cookies et données des sites",

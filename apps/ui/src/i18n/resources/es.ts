@@ -2358,6 +2358,22 @@ export const es: TranslationResources = {
         label: "Mostrar carpetas ocultas",
         description: "Incluir las carpetas cuyo nombre empieza por un punto al buscar una carpeta",
       },
+      downloads: {
+        title: "Descargas",
+        mode: "Al descargar",
+        modes: {
+          ask: "Preguntar siempre",
+          directory: "Guardar en una carpeta",
+        },
+        modeDescriptions: {
+          ask: "Elige dónde guardar cada archivo.",
+          directory: "Guarda los archivos directamente en la carpeta de abajo.",
+        },
+        directory: "Carpeta de descargas",
+        choose: "Elegir...",
+        useDefault: "Usar predeterminada",
+        pickFailed: "No se pudo abrir el selector de carpetas.",
+      },
       browserData: {
         title: "Datos del navegador",
         siteData: "Cookies y datos de sitios",

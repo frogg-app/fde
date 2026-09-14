@@ -1,4 +1,6 @@
 import { shell, type BrowserWindow } from "electron";
+import { installDownloadLocation } from "./features/download-location.js";
+import { getDesktopSettingsStore } from "./settings/desktop-settings-electron.js";
 import { isTrustedDesktopFrame, isAllowedDesktopPermission } from "./ipc-policy.js";
 
 export function installWindowSecurity(window: BrowserWindow, origin: string): void {
@@ -29,6 +31,9 @@ export function installWindowSecurity(window: BrowserWindow, origin: string): vo
   // Permission policy is session-wide; verify each requesting webContents rather
   // than capturing a particular window so multiple app windows remain usable.
   const appSession = contents.session;
+  installDownloadLocation(appSession);
+  // Loading the store publishes the download preferences the handler reads.
+  getDesktopSettingsStore();
   appSession.setPermissionCheckHandler((requester, permission, requestingOrigin) => {
     if (!requester || requester.isDestroyed()) return false;
     return (

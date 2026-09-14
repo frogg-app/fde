@@ -35,6 +35,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { DesktopPermissionsSection } from "@/desktop/components/desktop-permissions-section";
+import { DesktopDownloadsSection } from "@/desktop/components/desktop-downloads-section";
 import { DesktopNotificationsSection } from "@/desktop/components/desktop-notifications-section";
 import { CompanionSection } from "@/screens/settings/companion-section";
 import { VoiceAlertsSection } from "@/screens/settings/voice-alerts-section";
@@ -725,7 +726,12 @@ export default function SettingsScreen({ view, openAddHostIntent = null }: Setti
                   handleTerminalScrollbackLinesChange={handleTerminalScrollbackLinesChange}
                 />
                 <VoiceAlertsSection />
-                {isDesktopApp ? <BrowserDataSection /> : null}
+                {isDesktopApp ? (
+                  <>
+                    <DesktopDownloadsSection />
+                    <BrowserDataSection />
+                  </>
+                ) : null}
               </>
             );
           case "companion":
