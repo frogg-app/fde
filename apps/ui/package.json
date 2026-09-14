@@ -158,7 +158,7 @@
     "dotenv": "^17.2.3",
     "eas-cli": "^23.2.0",
     "esbuild": "0.28.2",
-    "eslint": "^9.25.0",
+    "eslint": "^10.10.0",
     "eslint-config-expo": "~10.0.0",
     "expo-gradle-jvmargs": "^1.1.2",
     "fake-indexeddb": "^6.2.5",
