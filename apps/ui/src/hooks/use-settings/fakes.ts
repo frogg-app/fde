@@ -42,6 +42,11 @@ const DEFAULT_DESKTOP: DesktopSettings = {
   updates: {
     autoCheck: true,
   },
+  downloads: {
+    mode: "ask",
+    directory: null,
+    defaultDirectory: "",
+  },
 };
 
 export function createFakeDesktopBridge(

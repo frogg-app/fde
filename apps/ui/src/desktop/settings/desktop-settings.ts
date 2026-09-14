@@ -24,13 +24,23 @@ export interface DesktopSettings {
     /** Let the shell check GitHub releases every few hours while it runs. */
     autoCheck: boolean;
   };
+  downloads: {
+    mode: DownloadMode;
+    /** Chosen folder; null uses defaultDirectory. */
+    directory: string | null;
+    /** Downloads on Windows and macOS, home on Linux. Resolved by the shell. */
+    defaultDirectory: string;
+  };
 }
+
+export type DownloadMode = "ask" | "directory";
 
 export interface DesktopSettingsPatch {
   releaseChannel?: ReleaseChannel;
   notifications?: Partial<DesktopSettings["notifications"]>;
   daemon?: Partial<DesktopSettings["daemon"]>;
   updates?: Partial<DesktopSettings["updates"]>;
+  downloads?: Partial<Pick<DesktopSettings["downloads"], "mode" | "directory">>;
 }
 
 export const DEFAULT_DESKTOP_SETTINGS: DesktopSettings = {
@@ -44,6 +54,11 @@ export const DEFAULT_DESKTOP_SETTINGS: DesktopSettings = {
   },
   updates: {
     autoCheck: true,
+  },
+  downloads: {
+    mode: "ask",
+    directory: null,
+    defaultDirectory: "",
   },
 };
 
@@ -162,6 +177,7 @@ function parseDesktopSettings(raw: unknown): DesktopSettings {
   const notifications = isRecord(record.notifications) ? record.notifications : {};
   const daemon = isRecord(record.daemon) ? record.daemon : {};
   const updates = isRecord(record.updates) ? record.updates : {};
+  const downloads = isRecord(record.downloads) ? record.downloads : {};
 
   return {
     releaseChannel: record.releaseChannel === "beta" ? "beta" : "stable",
@@ -187,6 +203,13 @@ function parseDesktopSettings(raw: unknown): DesktopSettings {
           ? updates.autoCheck
           : DEFAULT_DESKTOP_SETTINGS.updates.autoCheck,
     },
+    downloads: {
+      mode: downloads.mode === "directory" ? "directory" : "ask",
+      directory:
+        typeof downloads.directory === "string" && downloads.directory ? downloads.directory : null,
+      defaultDirectory:
+        typeof downloads.defaultDirectory === "string" ? downloads.defaultDirectory : "",
+    },
   };
 }
 
@@ -208,6 +231,10 @@ function mergeDesktopSettings(
       ...current.updates,
       ...updates.updates,
     },
+    downloads: {
+      ...current.downloads,
+      ...updates.downloads,
+    },
   };
 }
 
@@ -217,6 +244,7 @@ function normalizePatch(updates: DesktopSettingsPatch): Record<string, unknown> 
     ...(updates.notifications ? { notifications: updates.notifications } : {}),
     ...(updates.daemon ? { daemon: updates.daemon } : {}),
     ...(updates.updates ? { updates: updates.updates } : {}),
+    ...(updates.downloads ? { downloads: updates.downloads } : {}),
   };
 }
 

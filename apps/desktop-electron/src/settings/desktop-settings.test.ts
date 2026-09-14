@@ -9,6 +9,13 @@ import {
   createDesktopSettingsStore,
 } from "./desktop-settings";
 
+const { defaultDirectory: _defaultDirectory, ...persistedDownloads } =
+  DEFAULT_DESKTOP_SETTINGS.downloads;
+const PERSISTED_DEFAULT_SETTINGS = {
+  ...DEFAULT_DESKTOP_SETTINGS,
+  downloads: persistedDownloads,
+};
+
 async function createTempUserDataDir(): Promise<string> {
   return await mkdtemp(path.join(os.tmpdir(), "frogg-desktop-settings-"));
 }
@@ -40,7 +47,7 @@ describe("desktop-settings", () => {
     };
 
     expect(settings).toEqual(DEFAULT_DESKTOP_SETTINGS);
-    expect(persisted.settings).toEqual(DEFAULT_DESKTOP_SETTINGS);
+    expect(persisted.settings).toEqual(PERSISTED_DEFAULT_SETTINGS);
   });
 
   it("handles concurrent first-launch reads without racing the settings write", async () => {
@@ -55,7 +62,7 @@ describe("desktop-settings", () => {
     const files = await readdir(userDataPath);
 
     expect(settings).toEqual(Array.from({ length: 20 }, () => DEFAULT_DESKTOP_SETTINGS));
-    expect(persisted.settings).toEqual(DEFAULT_DESKTOP_SETTINGS);
+    expect(persisted.settings).toEqual(PERSISTED_DEFAULT_SETTINGS);
     expect(files).toEqual(["desktop-settings.json"]);
   });
 
@@ -87,6 +94,7 @@ describe("desktop-settings", () => {
         manageBuiltInDaemon: false,
         keepRunningAfterQuit: false,
       },
+      downloads: DEFAULT_DESKTOP_SETTINGS.downloads,
     });
   });
 
@@ -110,8 +118,34 @@ describe("desktop-settings", () => {
         manageBuiltInDaemon: false,
         keepRunningAfterQuit: false,
       },
+      downloads: DEFAULT_DESKTOP_SETTINGS.downloads,
     });
     expect(files).toEqual(["desktop-settings.json"]);
+  });
+
+  it("asks where to save downloads until a directory is chosen", async () => {
+    const userDataPath = await createTempUserDataDir();
+    directories.add(userDataPath);
+    const store = createDesktopSettingsStore({
+      userDataPath,
+      defaultDownloadDirectory: "/home/user",
+    });
+
+    expect((await store.get()).downloads).toEqual({
+      mode: "ask",
+      directory: null,
+      defaultDirectory: "/home/user",
+    });
+
+    await store.patch({ downloads: { mode: "directory", directory: "relative/path" } });
+    await store.patch({ downloads: { directory: "/srv/downloads" } });
+    const reloaded = createDesktopSettingsStore({ userDataPath, defaultDownloadDirectory: "/x" });
+
+    expect((await reloaded.get()).downloads).toEqual({
+      mode: "directory",
+      directory: "/srv/downloads",
+      defaultDirectory: "/x",
+    });
   });
 
   it("defaults notification sounds on for existing settings documents", async () => {
@@ -278,6 +312,7 @@ describe("desktop-settings", () => {
         manageBuiltInDaemon: false,
         keepRunningAfterQuit: false,
       },
+      downloads: DEFAULT_DESKTOP_SETTINGS.downloads,
     });
     expect(ignoredSecondMigration).toEqual(migrated);
   });
@@ -329,6 +364,7 @@ describe("desktop-settings", () => {
       releaseChannel: "beta",
       notifications: { playSound: false },
       daemon: { manageBuiltInDaemon: false, keepRunningAfterQuit: false },
+      downloads: DEFAULT_DESKTOP_SETTINGS.downloads,
     });
   });
 

@@ -2355,6 +2355,22 @@ export const en = {
         label: "Show hidden folders",
         description: "Include folders whose names start with a dot when browsing for a folder",
       },
+      downloads: {
+        title: "Downloads",
+        mode: "When downloading",
+        modes: {
+          ask: "Ask every time",
+          directory: "Save to a folder",
+        },
+        modeDescriptions: {
+          ask: "Choose where to save each file.",
+          directory: "Save files straight to the folder below.",
+        },
+        directory: "Download folder",
+        choose: "Choose...",
+        useDefault: "Use default",
+        pickFailed: "Couldn't open the folder picker.",
+      },
       browserData: {
         title: "Browser data",
         siteData: "Cookies and site data",

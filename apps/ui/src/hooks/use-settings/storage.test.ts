@@ -534,6 +534,7 @@ describe("loadSettingsFromStorage", () => {
         notifications: { playSound: true },
         daemon: { manageBuiltInDaemon: false, keepRunningAfterQuit: true },
         updates: { autoCheck: true },
+        downloads: { mode: "ask", directory: null, defaultDirectory: "" },
       },
     });
     const deps = makeDeps({

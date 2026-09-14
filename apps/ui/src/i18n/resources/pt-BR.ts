@@ -2344,6 +2344,22 @@ export const ptBR: TranslationResources = {
         label: "Mostrar pastas ocultas",
         description: "Incluir pastas cujo nome começa com um ponto ao procurar uma pasta",
       },
+      downloads: {
+        title: "Downloads",
+        mode: "Ao baixar",
+        modes: {
+          ask: "Perguntar sempre",
+          directory: "Salvar em uma pasta",
+        },
+        modeDescriptions: {
+          ask: "Escolha onde salvar cada arquivo.",
+          directory: "Salva os arquivos direto na pasta abaixo.",
+        },
+        directory: "Pasta de downloads",
+        choose: "Escolher...",
+        useDefault: "Usar padrão",
+        pickFailed: "Não foi possível abrir o seletor de pastas.",
+      },
       browserData: {
         title: "Dados do navegador",
         siteData: "Cookies e dados de sites",

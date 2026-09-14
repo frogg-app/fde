@@ -2301,6 +2301,22 @@ export const ar: TranslationResources = {
         label: "إظهار المجلدات المخفية",
         description: "تضمين المجلدات التي تبدأ أسماؤها بنقطة عند استعراض المجلدات",
       },
+      downloads: {
+        title: "التنزيلات",
+        mode: "عند التنزيل",
+        modes: {
+          ask: "السؤال في كل مرة",
+          directory: "الحفظ في مجلد",
+        },
+        modeDescriptions: {
+          ask: "اختر مكان حفظ كل ملف.",
+          directory: "احفظ الملفات مباشرة في المجلد أدناه.",
+        },
+        directory: "مجلد التنزيلات",
+        choose: "اختيار...",
+        useDefault: "استخدام الافتراضي",
+        pickFailed: "تعذر فتح منتقي المجلدات.",
+      },
       browserData: {
         title: "بيانات المتصفح",
         siteData: "ملفات تعريف الارتباط وبيانات المواقع",
