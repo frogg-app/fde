@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.1.0 — 2026-09-14
+
+- Bring the approved purple/cyan Companion Nebula identity into the app. The composer launcher and Companion presence now use the same Nebula artwork instead of the legacy squiggle mark and layered blue orb.
+- Keep Companion available as an opt-in voice preview, with its existing local-speech readiness checks and conversation controls.
+
 ## 1.0.1 — 2026-09-14
 
 - Add a **Sort** option to the sidebar display menu: recent activity (the default), date

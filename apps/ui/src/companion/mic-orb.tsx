@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Animated, Easing, Platform, Pressable, View } from "react-native";
+import { Animated, Easing, Platform, Pressable } from "react-native";
 import { useReducedMotion } from "react-native-reanimated";
 import { StyleSheet } from "react-native-unistyles";
-import { ArtworkFade } from "./artwork-fade";
 import type { CompanionMicState } from "./store";
 
 interface MicOrbProps {
@@ -36,18 +35,6 @@ export function MicOrb({
   const systemReducedMotion = useReducedMotion();
   const reducedMotion = systemReducedMotion || !animated;
   const flowing = active || playbackActive;
-  const [muteBlend] = useState(() => new Animated.Value(muted ? 1 : 0));
-  useEffect(() => {
-    const fade = Animated.timing(muteBlend, {
-      toValue: muted ? 1 : 0,
-      duration: 150,
-      easing: Easing.inOut(Easing.quad),
-      isInteraction: false,
-      useNativeDriver: Platform.OS !== "web",
-    });
-    fade.start();
-    return () => fade.stop();
-  }, [muted, muteBlend]);
   const [phase] = useState(() => new Animated.Value(0));
   const [drift] = useState(() => new Animated.Value(0));
   const [capture] = useState(() => new Animated.Value(0));
@@ -193,29 +180,34 @@ export function MicOrb({
       style={[styles.pressable, { width: size, height: size }]}
       testID={testID}
     >
-      <Animated.View
+      <Animated.Image
+        accessibilityIgnoresInvertColors
+        source={require("@/assets/images/companion-nebula.png")}
         style={[styles.halo, { width: size, height: size }, motion.halo]}
-        pointerEvents="none"
         testID="companion-input-level"
-      >
-        <ArtworkFade muted={muteBlend} layer="halo" />
-      </Animated.View>
+      />
       <Animated.View
         style={[styles.sphere, { width: (size * 8) / 9, height: (size * 8) / 9 }, motion.sphere]}
         pointerEvents="none"
       >
-        <View style={styles.layer}>
-          <ArtworkFade muted={muteBlend} layer="surface" />
-        </View>
-        <Animated.View style={[styles.layer, motion.cool]} testID="companion-orb-flow">
-          <ArtworkFade muted={muteBlend} layer="cool" />
-        </Animated.View>
-        <Animated.View style={[styles.layer, motion.warm]} testID="companion-output-level">
-          <ArtworkFade muted={muteBlend} layer="warm" />
-        </Animated.View>
-        <Animated.View style={[styles.layer, motion.filaments]} testID="companion-orb-filaments">
-          <ArtworkFade muted={muteBlend} layer="glass" />
-        </Animated.View>
+        <Animated.Image
+          accessibilityIgnoresInvertColors
+          source={require("@/assets/images/companion-nebula.png")}
+          style={[styles.layer, motion.cool]}
+          testID="companion-orb-flow"
+        />
+        <Animated.Image
+          accessibilityIgnoresInvertColors
+          source={require("@/assets/images/companion-nebula.png")}
+          style={[styles.layer, motion.warm]}
+          testID="companion-output-level"
+        />
+        <Animated.Image
+          accessibilityIgnoresInvertColors
+          source={require("@/assets/images/companion-nebula.png")}
+          style={[styles.layer, motion.filaments]}
+          testID="companion-orb-filaments"
+        />
       </Animated.View>
     </Pressable>
   );
