@@ -1,6 +1,6 @@
 [package]
 name = "frogg-daemon"
-version = "1.0.0"
+version = "1.0.1"
 description = "Frogg daemon (Rust) — protocol-compatible front half of the Frogg daemon"
 edition = "2021"
 license = "Apache-2.0"

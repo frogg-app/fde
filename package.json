@@ -1,6 +1,6 @@
 {
   "name": "frogg",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Frogg: desktop client for local and remote AI coding agents (fork of Paseo)",
   "license": "Apache-2.0",
