@@ -1,5 +1,4 @@
 import { AttachmentSizeError, MAX_FILE_SIZE_BYTES } from "@/attachments/file-size";
-import { CompanionMark } from "@/companion/mark";
 import { useCompanionStore } from "@/companion/store";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { CONNECTION_NOTICE_SHOW_DELAY_MS } from "@/components/connection-notice-model";
@@ -36,6 +35,7 @@ import {
   Image as ImageIcon,
   ClipboardPaste,
   Paperclip,
+  AudioLines,
 } from "lucide-react-native";
 import * as Clipboard from "expo-clipboard";
 import Animated from "react-native-reanimated";
@@ -1073,7 +1073,13 @@ function ComposerVoiceModeButton({
       if (isVoiceSwitching) {
         return <LoadingSpinner size="small" color="white" />;
       }
-      return <CompanionMark size={buttonIconSize} />;
+      return (
+        <ThemedCompanion
+          size={buttonIconSize}
+          strokeWidth={2.2}
+          uniProps={iconForegroundMutedMapping}
+        />
+      );
     },
     [buttonIconSize, isVoiceSwitching],
   );
@@ -2490,6 +2496,7 @@ const ThemedPaperclip = withUnistyles(Paperclip);
 const ThemedImageIcon = withUnistyles(ImageIcon);
 const ThemedClipboardPaste = withUnistyles(ClipboardPaste);
 const ThemedFileText = withUnistyles(FileText);
+const ThemedCompanion = withUnistyles(AudioLines);
 const iconForegroundMapping = (theme: Theme) => ({
   color: theme.colors.foreground,
 });

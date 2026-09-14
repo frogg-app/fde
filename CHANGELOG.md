@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Restore the standard AudioLines Companion launcher icon in the composer.
+
 ## 1.1.0 — 2026-09-14
 
 - Bring the approved purple/cyan Companion Nebula identity into the app. The composer launcher and Companion presence now use the same Nebula artwork instead of the legacy squiggle mark and layered blue orb.
