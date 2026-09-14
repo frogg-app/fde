@@ -1070,6 +1070,16 @@ export const ko: TranslationResources = {
         status: "상태",
         labels: "레이블",
       },
+      sort: {
+        label: "정렬",
+        recent: "최근 활동",
+        created: "생성일",
+        createdUnavailable: "연결된 모든 호스트에 최신 데몬이 필요합니다",
+        name: "이름",
+        status: "확인 필요 항목 먼저",
+        manual: "수동(드래그하여 재정렬)",
+        reversed: "역순",
+      },
       titleSource: {
         label: "제목",
         title: "제목",
@@ -2305,6 +2315,10 @@ export const ko: TranslationResources = {
     },
     general: {
       title: "일반",
+      hiddenFolders: {
+        label: "숨김 폴더 표시",
+        description: "폴더를 탐색할 때 이름이 점으로 시작하는 폴더를 포함합니다",
+      },
       browserData: {
         title: "브라우저 데이터",
         siteData: "쿠키 및 사이트 데이터",

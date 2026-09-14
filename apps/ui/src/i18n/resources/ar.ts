@@ -1061,6 +1061,16 @@ export const ar: TranslationResources = {
         status: "الحالة",
         labels: "التسميات",
       },
+      sort: {
+        label: "الترتيب",
+        recent: "النشاط الأخير",
+        created: "تاريخ الإنشاء",
+        createdUnavailable: "يتطلب إصدارًا أحدث من الخدمة على كل مضيف متصل",
+        name: "الاسم",
+        status: "ما يحتاج إلى انتباه أولًا",
+        manual: "يدوي (اسحب لإعادة الترتيب)",
+        reversed: "عكس الترتيب",
+      },
       titleSource: {
         label: "العنوان",
         title: "العنوان",
@@ -2287,6 +2297,10 @@ export const ar: TranslationResources = {
     },
     general: {
       title: "عام",
+      hiddenFolders: {
+        label: "إظهار المجلدات المخفية",
+        description: "تضمين المجلدات التي تبدأ أسماؤها بنقطة عند استعراض المجلدات",
+      },
       browserData: {
         title: "بيانات المتصفح",
         siteData: "ملفات تعريف الارتباط وبيانات المواقع",

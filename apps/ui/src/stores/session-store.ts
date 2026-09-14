@@ -121,6 +121,12 @@ export interface WorkspaceDescriptor {
   labels?: string[];
   status: WorkspaceDescriptorPayload["status"];
   statusEnteredAt: Date | null;
+  /** Daemon's last-activity timestamp (ISO). Optional: cached replicas and fixtures omit it. */
+  activityAt?: string | null;
+  /** Workspace record creation time (ISO). Absent from daemons without `workspaceCreatedAt`. */
+  createdAt?: string;
+  /** Project record creation time (ISO). Absent from daemons without `workspaceCreatedAt`. */
+  projectCreatedAt?: string;
   archivingAt: string | null;
   diffStat: { additions: number; deletions: number } | null;
   scripts: WorkspaceDescriptorPayload["scripts"];
@@ -166,6 +172,9 @@ export function normalizeWorkspaceDescriptor(
     labels: payload.labels ?? [],
     status: payload.status,
     statusEnteredAt,
+    activityAt: payload.activityAt ?? null,
+    ...(payload.createdAt ? { createdAt: payload.createdAt } : {}),
+    ...(payload.projectCreatedAt ? { projectCreatedAt: payload.projectCreatedAt } : {}),
     archivingAt: payload.archivingAt ?? null,
     diffStat: payload.diffStat ?? null,
     scripts: (payload.scripts ?? []).map((s) => Object.assign({}, s)),
@@ -185,6 +194,7 @@ export interface ProjectDescriptor {
   projectIconRevision?: string;
   projectRootPath: string;
   projectKind: WorkspaceDescriptorPayload["projectKind"];
+  projectCreatedAt?: string;
 }
 
 export function normalizeProjectDescriptor(
@@ -199,6 +209,7 @@ export function normalizeProjectDescriptor(
     projectIconRevision: payload.projectIconRevision,
     projectRootPath: payload.projectRootPath,
     projectKind: payload.projectKind,
+    ...(payload.projectCreatedAt ? { projectCreatedAt: payload.projectCreatedAt } : {}),
   };
 }
 

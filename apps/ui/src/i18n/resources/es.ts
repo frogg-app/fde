@@ -1095,6 +1095,16 @@ export const es: TranslationResources = {
         status: "Estado",
         labels: "Etiquetas",
       },
+      sort: {
+        label: "Ordenar",
+        recent: "Actividad reciente",
+        created: "Fecha de creación",
+        createdUnavailable: "Requiere un daemon más reciente en cada host conectado",
+        name: "Nombre",
+        status: "Primero lo que requiere atención",
+        manual: "Manual (arrastrar para reordenar)",
+        reversed: "Invertir orden",
+      },
       titleSource: {
         label: "Título",
         title: "Título",
@@ -2344,6 +2354,10 @@ export const es: TranslationResources = {
     },
     general: {
       title: "General",
+      hiddenFolders: {
+        label: "Mostrar carpetas ocultas",
+        description: "Incluir las carpetas cuyo nombre empieza por un punto al buscar una carpeta",
+      },
       browserData: {
         title: "Datos del navegador",
         siteData: "Cookies y datos de sitios",

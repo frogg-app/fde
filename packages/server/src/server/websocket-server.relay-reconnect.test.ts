@@ -952,6 +952,7 @@ describe("relay external socket reconnect behavior", () => {
 
     expect(serverInfo.features?.stableProjectIdentity).toBe(true);
     expect(serverInfo.features?.canonicalSubmittedPrompts).toBe(true);
+    expect(serverInfo.features?.workspaceCreatedAt).toBe(true);
     expect(serverInfo.features?.providersSnapshotCwd).toBe(true);
     expect(serverInfo.features).not.toHaveProperty("plugins");
     expect(serverInfo.features?.["terminal-input-mode-replay"]).toBe(true);

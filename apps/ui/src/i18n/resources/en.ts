@@ -1071,6 +1071,16 @@ export const en = {
         status: "Status",
         labels: "Labels",
       },
+      sort: {
+        label: "Sort",
+        recent: "Recent activity",
+        created: "Date created",
+        createdUnavailable: "Needs a newer daemon on every connected host",
+        name: "Name",
+        status: "Needs attention first",
+        manual: "Manual (drag to reorder)",
+        reversed: "Reverse order",
+      },
       titleSource: {
         label: "Title",
         title: "Title",
@@ -2341,6 +2351,10 @@ export const en = {
     },
     general: {
       title: "General",
+      hiddenFolders: {
+        label: "Show hidden folders",
+        description: "Include folders whose names start with a dot when browsing for a folder",
+      },
       browserData: {
         title: "Browser data",
         siteData: "Cookies and site data",

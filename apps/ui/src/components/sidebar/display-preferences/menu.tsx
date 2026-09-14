@@ -10,6 +10,12 @@ import { useTranslation } from "react-i18next";
 import { View, type PressableStateCallbackType } from "react-native";
 import { StyleSheet, withUnistyles } from "react-native-unistyles";
 import {
+  ArrowDownAZ,
+  ArrowUpDown,
+  CircleAlert,
+  GripVertical,
+  History,
+  CalendarPlus,
   Captions,
   Circle,
   CircleCheck,
@@ -47,8 +53,10 @@ import type { SidebarProjectEntry } from "@/hooks/use-sidebar-workspaces-list";
 import type { Theme } from "@/styles/theme";
 import {
   hasActiveSidebarLabelFilter,
+  SIDEBAR_SORT_MODES,
   SIDEBAR_UNLABELLED_LABEL_KEY,
   type SidebarGroupMode,
+  type SidebarSortMode,
 } from "@/stores/sidebar-view-store";
 import { workspaceLabelKey, type WorkspaceLabelColor } from "@frogg/protocol/workspace-labels";
 import type { WorkspaceTitleSource } from "@/hooks/use-settings";
@@ -91,6 +99,18 @@ const GROUPING_ICONS: Record<SidebarGroupMode, OptionIcon> = {
   status: withUnistyles(CircleDashed),
 };
 
+const SORT_ICONS: Record<SidebarSortMode, OptionIcon> = {
+  recent: withUnistyles(History),
+  created: withUnistyles(CalendarPlus),
+  name: withUnistyles(ArrowDownAZ),
+  status: withUnistyles(CircleAlert),
+  manual: withUnistyles(GripVertical),
+};
+
+const SORT_REVERSED_ICONS: Record<"reversed", OptionIcon> = {
+  reversed: withUnistyles(ArrowUpDown),
+};
+
 const TITLE_SOURCE_ICONS: Record<WorkspaceTitleSource, OptionIcon> = {
   title: withUnistyles(Type),
   branch: withUnistyles(GitBranch),
@@ -127,6 +147,14 @@ const TRAILING_CHOICES: readonly SidebarTrailingChoice[] = ["diff", "timestamp"]
 const GROUPING_LABEL_KEYS: Record<SidebarGroupMode, string> = {
   project: "sidebar.display.grouping.project",
   status: "sidebar.display.grouping.status",
+};
+
+const SORT_LABEL_KEYS: Record<SidebarSortMode, string> = {
+  recent: "sidebar.display.sort.recent",
+  created: "sidebar.display.sort.created",
+  name: "sidebar.display.sort.name",
+  status: "sidebar.display.sort.status",
+  manual: "sidebar.display.sort.manual",
 };
 
 const TITLE_SOURCE_LABEL_KEYS: Record<WorkspaceTitleSource, string> = {
@@ -204,6 +232,11 @@ export function SidebarDisplayPreferencesMenu(): ReactElement {
             testIDPrefix="sidebar-grouping"
           />
         ),
+      },
+      {
+        id: "sort",
+        title: t("sidebar.display.sort.label"),
+        content: <SortPage preferences={preferences} />,
       },
       {
         id: "titleSource",
@@ -307,6 +340,13 @@ export function SidebarDisplayPreferencesMenu(): ReactElement {
             testID="sidebar-display-grouping"
           >
             {t("sidebar.display.grouping.label")}
+          </MenuSubTrigger>
+          <MenuSubTrigger
+            id="sort"
+            value={t(SORT_LABEL_KEYS[preferences.sortMode])}
+            testID="sidebar-display-sort"
+          >
+            {t("sidebar.display.sort.label")}
           </MenuSubTrigger>
           <MenuSubTrigger
             id="titleSource"
@@ -480,6 +520,8 @@ function OptionItem<Value extends string>({
   label,
   selected,
   closeOnSelect = true,
+  disabled,
+  description,
   onSelect,
   testID,
 }: {
@@ -488,6 +530,8 @@ function OptionItem<Value extends string>({
   label: string;
   selected: boolean;
   closeOnSelect?: boolean;
+  disabled?: boolean;
+  description?: string;
   onSelect: (value: Value) => void;
   testID: string;
 }): ReactElement {
@@ -501,6 +545,8 @@ function OptionItem<Value extends string>({
       selected={selected}
       leading={leading}
       closeOnSelect={closeOnSelect}
+      disabled={disabled}
+      description={description}
       onSelect={handleSelect}
       testID={testID}
     >
@@ -517,6 +563,7 @@ function OptionList<Value extends string>({
   selectedValue,
   onSelect,
   testIDPrefix,
+  unavailable,
 }: {
   values: readonly Value[];
   icons: Record<Value, OptionIcon>;
@@ -524,6 +571,8 @@ function OptionList<Value extends string>({
   selectedValue: Value;
   onSelect: (value: Value) => void;
   testIDPrefix: string;
+  /** Options shown greyed out and unselectable, each with the hint explaining why. */
+  unavailable?: Partial<Record<Value, string>>;
 }): ReactNode {
   const { t } = useTranslation();
   return values.map((value) => (
@@ -533,10 +582,56 @@ function OptionList<Value extends string>({
       icon={icons[value]}
       label={t(labelKeys[value])}
       selected={value === selectedValue}
+      disabled={unavailable?.[value] !== undefined}
+      description={unavailable?.[value]}
       onSelect={onSelect}
       testID={`${testIDPrefix}-${value}`}
     />
   ));
+}
+
+/**
+ * The sort modes, then a reverse toggle that flips whichever mode is chosen. Manual has no
+ * direction — it is the order you dragged — so the toggle is absent rather than inert there.
+ */
+function SortPage({ preferences }: { preferences: Preferences }): ReactElement {
+  const { t } = useTranslation();
+  const toggleReversed = preferences.toggleSortReversed;
+  const handleReversed = useCallback(() => toggleReversed(), [toggleReversed]);
+  const unavailable = useMemo(
+    () =>
+      preferences.createdSortSupported
+        ? undefined
+        : { created: t("sidebar.display.sort.createdUnavailable") },
+    [preferences.createdSortSupported, t],
+  );
+  return (
+    <>
+      <OptionList
+        unavailable={unavailable}
+        values={SIDEBAR_SORT_MODES}
+        icons={SORT_ICONS}
+        labelKeys={SORT_LABEL_KEYS}
+        selectedValue={preferences.sortMode}
+        onSelect={preferences.setSortMode}
+        testIDPrefix="sidebar-sort"
+      />
+      {preferences.sortMode === "manual" ? null : (
+        <>
+          <MenuSeparator />
+          <OptionItem
+            value="reversed"
+            icon={SORT_REVERSED_ICONS.reversed}
+            label={t("sidebar.display.sort.reversed")}
+            selected={preferences.sortReversed}
+            closeOnSelect={false}
+            onSelect={handleReversed}
+            testID="sidebar-sort-reversed"
+          />
+        </>
+      )}
+    </>
+  );
 }
 
 /**

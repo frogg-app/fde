@@ -15,6 +15,7 @@ const listing = {
   entries: [
     { name: "beta", kind: "directory" as const, path: "beta", size: 0, modifiedAt: "" },
     { name: "alpha", kind: "directory" as const, path: "alpha", size: 0, modifiedAt: "" },
+    { name: ".config", kind: "directory" as const, path: ".config", size: 0, modifiedAt: "" },
     { name: "alpha.txt", kind: "file" as const, path: "alpha.txt", size: 0, modifiedAt: "" },
   ],
 };
@@ -24,6 +25,7 @@ function input(overrides = {}) {
     query: "",
     listing,
     pending: false,
+    showHiddenFolders: false,
     failed: false,
     navigate: vi.fn(),
     choose: vi.fn(),
@@ -45,6 +47,27 @@ describe("directory browsing", () => {
     rows[2]!.select();
     expect(context.navigate).toHaveBeenCalledWith("/home/dev/alpha");
     expect(context.choose).not.toHaveBeenCalled();
+  });
+  it("hides dot-prefixed folders by default and shows them when enabled", () => {
+    expect(buildDirectoryBrowserRows(input({ query: "conf" })).map((row) => row.id)).toEqual([
+      "choose:/home/dev",
+      "parent:/home",
+    ]);
+    expect(
+      buildDirectoryBrowserRows(input({ showHiddenFolders: true })).map((row) => row.id),
+    ).toEqual([
+      "choose:/home/dev",
+      "parent:/home",
+      "/home/dev/.config",
+      "/home/dev/alpha",
+      "/home/dev/beta",
+    ]);
+  });
+  it("still navigates into an explicitly typed hidden path", () => {
+    const context = input({ query: "~/.config" });
+    const rows = buildDirectoryBrowserRows(context);
+    rows.at(-1)!.select();
+    expect(context.navigate).toHaveBeenCalledWith("~/.config");
   });
   it("filters child names without filtering pinned actions", () => {
     expect(buildDirectoryBrowserRows(input({ query: "ALP" })).map((row) => row.id)).toEqual([

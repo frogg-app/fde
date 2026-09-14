@@ -2423,6 +2423,9 @@ export const DirectorySuggestionsRequestSchema = z.object({
   cwd: z.string().optional(),
   includeFiles: z.boolean().optional(),
   includeDirectories: z.boolean().optional(),
+  // COMPAT(directorySuggestionsIncludeHidden): added in v1.0.1. Older daemons ignore it and keep
+  // hiding dot-prefixed directories, which is the default.
+  includeHiddenDirectories: z.boolean().optional(),
   matchMode: z.enum(["fuzzy", "suffix"]).optional(),
   limit: z.number().int().min(1).max(100).optional(),
   requestId: z.string(),
@@ -3587,6 +3590,9 @@ export const ServerInfoStatusPayloadSchema = z
         directorySync: z.boolean().optional(),
         // COMPAT(workspaceLabels): added in v0.5.0, remove after 2027-08-14.
         workspaceLabels: z.boolean().optional(),
+        // COMPAT(workspaceCreatedAt): added in v1.1.0, remove after 2027-03-14.
+        // Workspace and project descriptors carry createdAt / projectCreatedAt.
+        workspaceCreatedAt: z.boolean().optional(),
         // COMPAT(providerAgentDefinitions): added in v0.6.20, remove after 2027-09-13.
         providerAgentDefinitions: z.boolean().optional(),
         // COMPAT(spokenNotifications): added in v0.1.14, remove gate after 2027-09-03.
@@ -4020,6 +4026,11 @@ export const WorkspaceDescriptorPayloadSchema = z
       .nullish()
       .transform((value) => value ?? null),
     activityAt: z.string().nullable(),
+    // COMPAT(workspaceCreatedAt): added in v1.1.0, remove optional after 2027-03-14.
+    // ISO time the workspace record was created, and the time its project record
+    // was created. Old daemons omit both; gate on features.workspaceCreatedAt.
+    createdAt: z.string().optional(),
+    projectCreatedAt: z.string().optional(),
     diffStat: z
       .object({
         additions: z.number(),
@@ -4180,6 +4191,9 @@ export const WorkspaceProjectDescriptorPayloadSchema = z.object({
   projectIconRevision: z.string().optional(),
   projectRootPath: z.string(),
   projectKind: z.enum(["git", "non_git", "directory"]),
+  // COMPAT(workspaceCreatedAt): added in v1.1.0, remove optional after 2027-03-14.
+  // ISO time the project record was created.
+  projectCreatedAt: z.string().optional(),
   // COMPAT(directorySync): sequence of this latest directory projection.
   syncSeq: z.number().int().positive().optional(),
 });

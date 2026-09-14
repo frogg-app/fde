@@ -6070,6 +6070,9 @@
                 "includeDirectories": {
                   "type": "boolean"
                 },
+                "includeHiddenDirectories": {
+                  "type": "boolean"
+                },
                 "matchMode": {
                   "type": "string",
                   "enum": [

@@ -1075,6 +1075,16 @@ export const ja: TranslationResources = {
         status: "ステータス",
         labels: "ラベル",
       },
+      sort: {
+        label: "並べ替え",
+        recent: "最近のアクティビティ",
+        created: "作成日",
+        createdUnavailable: "接続中のすべてのホストで新しいデーモンが必要です",
+        name: "名前",
+        status: "対応が必要なものを先頭に",
+        manual: "手動（ドラッグで並べ替え）",
+        reversed: "逆順",
+      },
       titleSource: {
         label: "タイトル",
         title: "タイトル",
@@ -2318,6 +2328,10 @@ export const ja: TranslationResources = {
     },
     general: {
       title: "一般",
+      hiddenFolders: {
+        label: "隠しフォルダを表示",
+        description: "フォルダを参照するときに、名前がドットで始まるフォルダを含めます",
+      },
       browserData: {
         title: "ブラウザーデータ",
         siteData: "Cookie とサイトデータ",

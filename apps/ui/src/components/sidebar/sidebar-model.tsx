@@ -16,6 +16,8 @@ import {
 import { useSidebarOrderStore } from "@/stores/sidebar-order-store";
 import type { SidebarShortcutModel } from "@/utils/sidebar-shortcuts";
 import { buildSidebarProjection } from "./sidebar-projection";
+import { resolveEffectiveSidebarSortMode, sidebarSortNeedsWorkspaceEntries } from "./sidebar-sort";
+import { useAllConnectedHostsSupportFeature } from "@/runtime/host-features";
 import type { SidebarProjectIconTarget } from "@/utils/sidebar-project-row-model";
 import { filterWorkspacesByLabels, type SidebarWorkspaceGroup } from "./sidebar-labels";
 import { filterWorkspacesByProjects, resolveActiveProjectFilters } from "./sidebar-project-filter";
@@ -56,6 +58,14 @@ export function SidebarModelProvider({
 }) {
   const list = useSidebarWorkspacesList({ enabled: active });
   const groupMode = useSidebarViewStore((state) => state.groupMode);
+  const savedSortMode = useSidebarViewStore((state) => state.sortMode);
+  const sortReversed = useSidebarViewStore((state) => state.sortReversed);
+  const createdSortSupported = useAllConnectedHostsSupportFeature("workspaceCreatedAt");
+  const sortMode = resolveEffectiveSidebarSortMode(savedSortMode, createdSortSupported);
+  const sort = useMemo(
+    () => ({ mode: sortMode, reversed: sortReversed }),
+    [sortMode, sortReversed],
+  );
   const labelFilter = useSidebarViewStore((state) => state.labelFilter);
   const projectFilters = useSidebarViewStore((state) => state.projectFilters);
   const reconcileLabelFilter = useSidebarViewStore((state) => state.reconcileLabelFilter);
@@ -95,7 +105,9 @@ export function SidebarModelProvider({
   // anything; the label filter reads `labels`, which only exists on an entry. Hydration opens a
   // live session-store subscription over every workspace on every visible host, so widening this
   // for a filter that does not need it costs a retained-but-inactive sidebar real work.
-  const needsWorkspaceEntries = groupMode !== "project" || hasActiveLabelFilter;
+  // Sorting by activity or status reads those off the entries too.
+  const needsWorkspaceEntries =
+    groupMode !== "project" || hasActiveLabelFilter || sidebarSortNeedsWorkspaceEntries(sortMode);
   const workspaceEntriesByKey = useSidebarWorkspaceEntries(
     list.workspacePlacements,
     active !== false || needsWorkspaceEntries,
@@ -147,11 +159,13 @@ export function SidebarModelProvider({
       workspaceEntriesByKey: filteredWorkspaceEntriesByKey,
       projectNamesByViewKey: list.projectNamesByViewKey,
       groupMode,
+      sort,
       pinnedCollapsed,
       collapsedProjectKeys,
       collapsedWorkspaceGroupKeys,
     }),
     [
+      sort,
       collapsedProjectKeys,
       collapsedWorkspaceGroupKeys,
       groupMode,

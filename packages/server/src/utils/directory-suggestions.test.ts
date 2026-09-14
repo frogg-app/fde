@@ -26,6 +26,7 @@ async function searchAbsoluteDirectoryPaths(options: {
   limit?: number;
   maxDepth?: number;
   maxDirectoriesScanned?: number;
+  includeHiddenDirectories?: boolean;
 }): Promise<string[]> {
   const entries = await searchDirectoryEntries({
     root: options.homeDir,
@@ -40,6 +41,7 @@ async function searchAbsoluteDirectoryPaths(options: {
     maxDepth: options.maxDepth,
     maxEntriesScanned: options.maxDirectoriesScanned,
     confidentResultScanThreshold: 5_000,
+    includeHiddenDirectories: options.includeHiddenDirectories,
   });
   return entries.map((entry) => entry.path);
 }
@@ -617,6 +619,23 @@ describe("absolute directory-path configuration", () => {
     });
 
     expect(results).toEqual([{ path: exactMatchPath, kind: "directory" }]);
+  });
+
+  it("hides dot-prefixed directories unless hidden directories are requested", async () => {
+    const hiddenDir = realpathSync.native(path.join(homeDir, ".hidden"));
+    const hidden = await searchAbsoluteDirectoryPaths({ homeDir, query: "hidden", limit: 10 });
+    expect(hidden.map((entry) => realpathSync.native(entry))).not.toContain(hiddenDir);
+
+    const shown = await searchAbsoluteDirectoryPaths({
+      homeDir,
+      query: "hidden",
+      limit: 10,
+      includeHiddenDirectories: true,
+    });
+    const shownPaths = shown.map((entry) => realpathSync.native(entry));
+    expect(shownPaths).toContain(hiddenDir);
+    // Revealed hidden directories are suggested but not walked during a broad search.
+    expect(shownPaths).not.toContain(path.join(hiddenDir, "cache"));
   });
 
   it("supports home-relative path query syntax", async () => {

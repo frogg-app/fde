@@ -1079,6 +1079,16 @@ export const ru: TranslationResources = {
         status: "Статус",
         labels: "Метки",
       },
+      sort: {
+        label: "Сортировка",
+        recent: "Недавняя активность",
+        created: "Дата создания",
+        createdUnavailable: "Требуется более новый демон на каждом подключённом хосте",
+        name: "Название",
+        status: "Сначала требующие внимания",
+        manual: "Вручную (перетаскивание)",
+        reversed: "Обратный порядок",
+      },
       titleSource: {
         label: "Заголовок",
         title: "Заголовок",
@@ -2329,6 +2339,10 @@ export const ru: TranslationResources = {
     },
     general: {
       title: "Основные",
+      hiddenFolders: {
+        label: "Показывать скрытые папки",
+        description: "Показывать папки, имена которых начинаются с точки, при выборе папки",
+      },
       browserData: {
         title: "Данные браузера",
         siteData: "Файлы cookie и данные сайтов",

@@ -1053,6 +1053,16 @@ export const zhCN: TranslationResources = {
         status: "状态",
         labels: "标签",
       },
+      sort: {
+        label: "排序",
+        recent: "最近活动",
+        created: "创建日期",
+        createdUnavailable: "需要所有已连接主机运行更新的守护进程",
+        name: "名称",
+        status: "需要处理的优先",
+        manual: "手动（拖动排序）",
+        reversed: "倒序",
+      },
       titleSource: {
         label: "标题",
         title: "标题",
@@ -2255,6 +2265,10 @@ export const zhCN: TranslationResources = {
     },
     general: {
       title: "通用",
+      hiddenFolders: {
+        label: "显示隐藏文件夹",
+        description: "浏览文件夹时包含名称以点开头的文件夹",
+      },
       browserData: {
         title: "浏览器数据",
         siteData: "Cookie 和网站数据",

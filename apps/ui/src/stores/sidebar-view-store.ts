@@ -7,9 +7,25 @@ import { createValidatedPersistStorage } from "@/storage/validated-persist-stora
 
 export type SidebarGroupMode = "project" | "status";
 
+/**
+ * How rows (and project groups, where the grouping has no fixed order of its own) are ordered.
+ *
+ * `manual` is the drag order kept in `sidebar-order-store`; every other mode derives the order
+ * from workspace data. See `components/sidebar/sidebar-sort.ts`.
+ */
+export type SidebarSortMode = "recent" | "created" | "name" | "status" | "manual";
+export const SIDEBAR_SORT_MODES: readonly SidebarSortMode[] = [
+  "recent",
+  "created",
+  "name",
+  "status",
+  "manual",
+];
+export const DEFAULT_SIDEBAR_SORT_MODE: SidebarSortMode = "recent";
+
 const SIDEBAR_VIEW_STORAGE_KEY = "sidebar-view";
 const LEGACY_SIDEBAR_GROUP_MODE_STORAGE_KEY = "sidebar-group-mode";
-const SIDEBAR_VIEW_STORE_VERSION = 6;
+const SIDEBAR_VIEW_STORE_VERSION = 8;
 
 /**
  * The key standing for "this workspace carries no labels at all".
@@ -61,7 +77,12 @@ interface SidebarViewStoreState {
    */
   projectFilters: string[];
   labelFilter: SidebarLabelFilter;
+  sortMode: SidebarSortMode;
+  /** Flips the primary sort key only; tiebreaks stay ascending so the order stays stable. */
+  sortReversed: boolean;
   setGroupMode: (mode: SidebarGroupMode) => void;
+  setSortMode: (mode: SidebarSortMode) => void;
+  toggleSortReversed: () => void;
   toggleHostFilter: (serverId: string) => void;
   clearHostFilters: () => void;
   toggleProjectFilter: (viewKey: string) => void;
@@ -77,8 +98,11 @@ interface SidebarViewPersistedState {
   hostFilters: string[];
   projectFilters: string[];
   labelFilter: SidebarLabelFilter;
+  sortMode: SidebarSortMode;
+  sortReversed: boolean;
 }
 
+const PersistedSidebarSortModeSchema = z.enum(["recent", "created", "name", "status", "manual"]);
 const PersistedSidebarGroupModeSchema = z.enum(["project", "status", "label"]);
 const SidebarLabelFilterSchema = z.object({
   labels: z.array(z.string()),
@@ -90,6 +114,10 @@ const SidebarViewPersistedStateSchema = z.strictObject({
   projectFilters: z.array(z.string()).optional(),
   groupModeByServerId: z.record(z.string(), PersistedSidebarGroupModeSchema).optional(),
   labelFilter: SidebarLabelFilterSchema.optional(),
+  sortMode: PersistedSidebarSortModeSchema.optional(),
+  sortReversed: z.boolean().optional(),
+  // Written by builds that briefly inferred a sort for upgraded state; read and ignored.
+  sortMigrationPending: z.boolean().optional(),
 });
 
 type SidebarViewStorageState = z.infer<typeof SidebarViewPersistedStateSchema>;
@@ -126,6 +154,7 @@ export function migrateSidebarViewState(persistedState: unknown): SidebarViewPer
       hostFilters: [],
       projectFilters: [],
       labelFilter: emptyLabelFilter(),
+      ...defaultSort(),
     };
   }
   const state = result.data;
@@ -137,6 +166,7 @@ export function migrateSidebarViewState(persistedState: unknown): SidebarViewPer
       hostFilters: [],
       projectFilters: [],
       labelFilter: emptyLabelFilter(),
+      ...defaultSort(),
     };
   }
 
@@ -147,6 +177,18 @@ export function migrateSidebarViewState(persistedState: unknown): SidebarViewPer
     labelFilter: state.labelFilter
       ? normalizeSidebarLabelFilter(state.labelFilter)
       : emptyLabelFilter(),
+    // State saved before sorting existed has no sortMode and starts on the default.
+    sortMode: state.sortMode ?? DEFAULT_SIDEBAR_SORT_MODE,
+    sortReversed: state.sortReversed ?? false,
+  };
+}
+
+type PersistedSort = Pick<SidebarViewPersistedState, "sortMode" | "sortReversed">;
+
+function defaultSort(): PersistedSort {
+  return {
+    sortMode: DEFAULT_SIDEBAR_SORT_MODE,
+    sortReversed: false,
   };
 }
 
@@ -182,12 +224,19 @@ export const useSidebarViewStore = create<SidebarViewStoreState>()(
       hostFilters: [],
       projectFilters: [],
       labelFilter: emptyLabelFilter(),
+      ...defaultSort(),
       setGroupMode: (mode) => set({ groupMode: mode }),
+      setSortMode: (mode) => set({ sortMode: mode }),
+      toggleSortReversed: () => set((state) => ({ sortReversed: !state.sortReversed })),
       toggleHostFilter: (serverId) =>
-        set((state) => ({ hostFilters: toggleFilterEntry(state.hostFilters, serverId) })),
+        set((state) => ({
+          hostFilters: toggleFilterEntry(state.hostFilters, serverId),
+        })),
       clearHostFilters: () => set({ hostFilters: [] }),
       toggleProjectFilter: (viewKey) =>
-        set((state) => ({ projectFilters: toggleFilterEntry(state.projectFilters, viewKey) })),
+        set((state) => ({
+          projectFilters: toggleFilterEntry(state.projectFilters, viewKey),
+        })),
       clearProjectFilters: () => set({ projectFilters: [] }),
       toggleLabelFilter: (name) =>
         set((state) => {
@@ -232,6 +281,8 @@ export const useSidebarViewStore = create<SidebarViewStoreState>()(
         hostFilters: state.hostFilters,
         projectFilters: state.projectFilters,
         labelFilter: state.labelFilter,
+        sortMode: state.sortMode,
+        sortReversed: state.sortReversed,
       }),
       migrate: migrateSidebarViewState,
     },

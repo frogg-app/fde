@@ -247,6 +247,8 @@ const StoredWorkspaceSchema = z.strictObject({
   status: z.enum(["needs_input", "failed", "running", "attention", "done"]),
   statusEnteredAt: IsoDateSchema.nullable(),
   activityAt: z.null(),
+  createdAt: z.string().optional(),
+  projectCreatedAt: z.string().optional(),
   archivingAt: z.string().nullable(),
   diffStat: z.strictObject({ additions: z.number(), deletions: z.number() }).nullable(),
   scripts: z.array(WorkspaceScriptSchema),
@@ -264,6 +266,7 @@ const StoredProjectSchema = z.strictObject({
   projectIconRevision: z.string().optional(),
   projectRootPath: z.string(),
   projectKind: z.enum(["git", "non_git", "directory"]),
+  projectCreatedAt: z.string().optional(),
 });
 
 const StoredTimelineSchema = z.strictObject({
@@ -592,6 +595,8 @@ function serializeWorkspace(workspace: WorkspaceDescriptor): StoredWorkspace {
     status: workspace.status,
     statusEnteredAt: workspace.statusEnteredAt?.toISOString() ?? null,
     activityAt: null,
+    ...(workspace.createdAt ? { createdAt: workspace.createdAt } : {}),
+    ...(workspace.projectCreatedAt ? { projectCreatedAt: workspace.projectCreatedAt } : {}),
     archivingAt: workspace.archivingAt,
     diffStat: workspace.diffStat,
     scripts: workspace.scripts.map((script) => ({
@@ -623,6 +628,7 @@ function serializeProject(project: ProjectDescriptor): StoredProject {
     projectIconRevision: project.projectIconRevision,
     projectRootPath: project.projectRootPath,
     projectKind: project.projectKind,
+    ...(project.projectCreatedAt ? { projectCreatedAt: project.projectCreatedAt } : {}),
   };
 }
 

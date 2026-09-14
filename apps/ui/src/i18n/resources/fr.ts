@@ -1094,6 +1094,16 @@ export const fr: TranslationResources = {
         status: "Statut",
         labels: "Libellés",
       },
+      sort: {
+        label: "Trier",
+        recent: "Activité récente",
+        created: "Date de création",
+        createdUnavailable: "Nécessite un démon plus récent sur chaque hôte connecté",
+        name: "Nom",
+        status: "Action requise en premier",
+        manual: "Manuel (glisser pour réorganiser)",
+        reversed: "Inverser l'ordre",
+      },
       titleSource: {
         label: "Titre",
         title: "Titre",
@@ -2349,6 +2359,11 @@ export const fr: TranslationResources = {
     },
     general: {
       title: "Général",
+      hiddenFolders: {
+        label: "Afficher les dossiers masqués",
+        description:
+          "Inclure les dossiers dont le nom commence par un point lors de la sélection d’un dossier",
+      },
       browserData: {
         title: "Données du navigateur",
         siteData: "Cookies et données des sites",
