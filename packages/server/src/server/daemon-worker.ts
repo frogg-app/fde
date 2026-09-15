@@ -1,4 +1,5 @@
 import { brand } from "@frogg/branding";
+import { normalizeBrandEnvironment } from "@frogg/branding/identity";
 import { appendFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { createFroggDaemon } from "./bootstrap.js";
@@ -72,6 +73,7 @@ function writeWorkerLifecycleLog(
 
 function bootstrapFromEnvironment(): BootstrapResult {
   try {
+    normalizeBrandEnvironment(brand, process.env);
     const froggHome = resolveFroggHome();
     const config = loadConfig(froggHome, { cli: parseDaemonCliOverrides(process.argv.slice(2)) });
     const logger = createRootLogger({ log: config.log }, { froggHome, file: false });

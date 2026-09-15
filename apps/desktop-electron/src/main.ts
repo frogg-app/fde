@@ -3,6 +3,7 @@ import log from "electron-log/main";
 import { handleDesktopIpc } from "./ipc-security.js";
 import { registerNetworkHandlers } from "./network.js";
 import { pairingInbox } from "./pairing-inbox.js";
+import { brand } from "@frogg/branding";
 
 import { inheritLoginShellEnv } from "./login-shell-env.js";
 
@@ -46,7 +47,6 @@ import {
 } from "./window/desktop-window-owner.js";
 import { registerWindowManager } from "./window/window-manager.js";
 
-import { brand } from "@frogg/branding";
 import { createWindowRuntime } from "./window-runtime.js";
 
 const DEV_SERVER_URL =
@@ -172,7 +172,7 @@ desktopWindowOwner = createDesktopWindowOwner<AgentDeepLinkTarget>({
 // ---------------------------------------------------------------------------
 
 function receiveAgentDeepLink(input: string): void {
-  const target = parseAgentDeepLink(input);
+  const target = parseAgentDeepLink(input, brand.scheme) ?? parseAgentDeepLink(input, "frogg");
   if (!target) {
     return;
   }

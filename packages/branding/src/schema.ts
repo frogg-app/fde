@@ -272,7 +272,7 @@ function resolveIdentity(manifest: BrandManifest) {
     cliName,
     desktopBinaryName: manifest.desktopBinaryName ?? (id === "frogg" ? cliName : `${id}-desktop`),
     homeDir: manifest.homeDir ?? `.${id}`,
-    envPrefix: manifest.envPrefix ?? id.replaceAll("-", "_").toUpperCase(),
+    envPrefix: (manifest.envPrefix ?? id.replaceAll("-", "_").toUpperCase()).replace(/_+$/, ""),
     scheme: manifest.scheme ?? id,
     serviceName: manifest.serviceName ?? `${id}-daemon`,
     launchdLabel: manifest.launchdLabel ?? `${manifest.applicationId}-daemon`,

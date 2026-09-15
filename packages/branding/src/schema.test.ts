@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { BrandManifestSchema, resolveBrandManifest } from "./schema.js";
-import { brandEnv, matchesBrand, storageKey } from "./identity.js";
+import { brandEnv, matchesBrand, normalizeBrandEnvironment, storageKey } from "./identity.js";
 import { daemonArtifactName } from "./artifacts.js";
 
 const minimal = {
@@ -130,6 +130,23 @@ test("custom home selection ignores inherited Frogg homes", () => {
     envPrefix: "FROGG",
   });
   assert.equal(brandEnv(official, { FROGG_HOME: "/official" }, "HOME"), "/official");
+});
+
+test("normalizes branded environment variables to internal names", () => {
+  const brand = resolveBrandManifest(minimal);
+  const env: Record<string, string | undefined> = { ACME_LISTEN: "0.0.0.0:1234" };
+  normalizeBrandEnvironment(brand, env);
+  assert.equal(env.FROGG_LISTEN, "0.0.0.0:1234");
+});
+
+test("branded normalization rejects the legacy FROGG namespace", () => {
+  const brand = resolveBrandManifest(minimal);
+  const env: Record<string, string | undefined> = {
+    ACME_LISTEN: "0.0.0.0:1234",
+    FROGG_LISTEN: "127.0.0.1:1",
+  };
+  normalizeBrandEnvironment(brand, env);
+  assert.equal(env.FROGG_LISTEN, undefined);
 });
 test("management accepts legacy metadata only for Frogg and rejects other products", () => {
   const brand = resolveBrandManifest(minimal);

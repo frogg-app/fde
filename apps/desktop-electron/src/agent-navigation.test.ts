@@ -12,6 +12,13 @@ describe("desktop agent navigation", () => {
     ).toEqual({ serverId: "server-1", agentId: "agent-2" });
   });
 
+  it("accepts a branded scheme from the generated identity", () => {
+    expect(parseAgentDeepLinkFromArgv(["glade://h/server-1/agent/agent-2"], "glade")).toEqual({
+      serverId: "server-1",
+      agentId: "agent-2",
+    });
+  });
+
   it("holds navigation until the existing renderer is ready", () => {
     const inbox = new AgentNavigationInbox();
     const target = { serverId: "server-1", agentId: "agent-2" };

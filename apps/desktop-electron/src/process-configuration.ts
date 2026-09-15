@@ -2,6 +2,10 @@ import { app } from "electron";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 import log from "electron-log/main";
+import { brand } from "@frogg/branding";
+import { normalizeBrandEnvironment } from "@frogg/branding/identity";
+
+normalizeBrandEnvironment(brand, process.env);
 
 export function configureDesktopProcess(APP_NAME: string, profileName = APP_NAME): string | null {
   app.setName(APP_NAME);

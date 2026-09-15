@@ -1,8 +1,12 @@
 import { parseAgentDeepLink, type AgentDeepLinkTarget } from "@frogg/protocol/agent-deep-link";
+import { brand } from "@frogg/branding";
 
-export function parseAgentDeepLinkFromArgv(argv: string[]): AgentDeepLinkTarget | null {
+export function parseAgentDeepLinkFromArgv(
+  argv: string[],
+  scheme = brand.scheme,
+): AgentDeepLinkTarget | null {
   for (const arg of argv) {
-    const target = parseAgentDeepLink(arg);
+    const target = parseAgentDeepLink(arg, scheme) ?? parseAgentDeepLink(arg, "frogg");
     if (target) {
       return target;
     }
