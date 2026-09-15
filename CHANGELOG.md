@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 1.2.0 — 2026-09-15
+
+- **Custom-brand environment migration:** a branded daemon and desktop now use the
+  brand's `envPrefix` for all Frogg settings. Replace inherited `FROGG_*` entries
+  in branded service units and `.env` files with the equivalent `<BRAND>_*` entry
+  (for example, `ACME_LISTEN` and `ACME_HOME`). Branded builds deliberately ignore
+  `FROGG_*` settings to prevent an upstream deployment's configuration leaking into
+  the branded product. This affects custom brands only; official Frogg continues to
+  use `FROGG_*`.
+- Register and handle the configured brand deep-link scheme for desktop agent links;
+  branded desktop apps continue to accept existing `frogg://` agent links.
+
 ## 1.1.3 — 2026-09-15
 
 - Show the Electron updater's installer progress so the app continues to report what is happening after download and verification.

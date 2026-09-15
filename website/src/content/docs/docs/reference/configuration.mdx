@@ -6,7 +6,8 @@ sidebar:
 ---
 
 The daemon reads `$FROGG_HOME/config.json`. `FROGG_HOME` defaults to `~/.frogg`. A custom brand
-uses its own home and variable, for example `~/.acme` and `ACME_HOME`.
+uses its own home and variable, for example `~/.acme` and `ACME_HOME`. In a branded deployment,
+use that brand's prefix for every environment override; inherited `FROGG_*` values are ignored.
 
 ## Basics
 

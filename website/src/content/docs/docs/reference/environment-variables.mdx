@@ -9,9 +9,10 @@ Booleans accept `1`, `true`, `yes`, `on` and `0`, `false`, `no`, `off`. Environm
 variables override [`config.json`](/docs/reference/configuration/); CLI flags override both.
 
 :::note[Custom brands]
-Low-level daemon variables keep the `FROGG_` prefix in every brand. The home directory and
-installer variables use the brand's prefix: for Acme, `ACME_HOME`, `ACME_INSTALL_DIR`,
-`ACME_VERSION` and so on.
+Custom brands use their configured prefix for every Frogg setting. For Acme, use
+`ACME_LISTEN`, `ACME_HOME`, `ACME_PASSWORD` and so on. A branded daemon deliberately ignores
+`FROGG_*` values; replace those entries in its service unit and `.env` files before upgrading.
+Official Frogg continues to use `FROGG_*`.
 :::
 
 ## Daemon: core

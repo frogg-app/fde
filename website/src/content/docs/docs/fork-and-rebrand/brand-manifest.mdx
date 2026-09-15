@@ -52,9 +52,11 @@ Where they show up:
 - **`desktopBinaryName`**: used by the retired Tauri packaging inputs only. The Electron
   desktop app names its executable after `id` (`acme`).
 - **`homeDir`** and **`envPrefix`**: the daemon state directory (`~/.acme`) and the
-  variable that overrides it (`ACME_HOME`). Installer overrides also use the prefix:
-  `ACME_INSTALL_DIR`, `ACME_BIN_DIR`, `ACME_VERSION`, `ACME_BUNDLE_URL`, `ACME_LISTEN`
-  and so on. Low-level daemon settings such as `FROGG_LISTEN` keep the `FROGG_` name.
+  variable that overrides it (`ACME_HOME`). The prefix applies to every environment override:
+  `ACME_INSTALL_DIR`, `ACME_BIN_DIR`, `ACME_VERSION`, `ACME_BUNDLE_URL`, `ACME_LISTEN`,
+  `ACME_PASSWORD` and so on. A custom-brand process ignores `FROGG_*` values, so migrate
+  service units and `.env` files to the brand prefix before upgrading. Official Frogg keeps
+  the `FROGG_` prefix.
 - **`scheme`**: deep links (`acme://`) registered by the desktop app and mobile app.
 - **`serviceName`** / **`launchdLabel`**: the systemd user unit and launchd agent the
   installer creates, and the Docker container name.
