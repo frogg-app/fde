@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.1.2 — 2026-09-15
+
+- Keep the native Skia Companion Nebula out of web and Electron bundles, so the desktop renderer starts normally.
+- Restore Android CI and release setup with the supported SDK package, and remove the stale Companion artwork browser assertion.
+
 ## 1.1.1 — 2026-09-15
 
 - Restore the standard AudioLines Companion launcher icon in the composer.
