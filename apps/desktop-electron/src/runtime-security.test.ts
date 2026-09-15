@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { brand } from "@frogg/branding";
 import { isTrustedDesktopFrame, isAllowedDesktopPermission } from "./ipc-policy.js";
-import { PairingInbox } from "./pairing-inbox.js";
+import { isPairingOfferLink, PairingInbox } from "./pairing-inbox.js";
 import { validateProbeUrl } from "./network-service.js";
 
 describe("desktop IPC trust boundary", () => {
@@ -34,6 +35,12 @@ describe("desktop IPC trust boundary", () => {
 });
 
 describe("pairing launch inbox", () => {
+  it("accepts the active branded scheme and the legacy Frogg scheme", () => {
+    expect(isPairingOfferLink(`${brand.scheme}://pair#offer=secret`)).toBe(true);
+    expect(isPairingOfferLink("frogg://pair#offer=secret")).toBe(true);
+    expect(isPairingOfferLink("https://pair#offer=secret")).toBe(false);
+  });
+
   it("delivers a cold-start link once after the listener registers", () => {
     const inbox = new PairingInbox();
     const delivered: string[] = [];
