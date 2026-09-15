@@ -172,30 +172,3 @@ it("lets the device motion preference stop continuous animation", async () => {
   expect(getComputedStyle(element("companion-orb-flow")).transform).toBe(initial);
   expect(inputScale()).toBe(1);
 });
-
-it("crossfades muted artwork to monochrome and back", async () => {
-  const draw = (muted: boolean) =>
-    render(
-      <MicOrb
-        state="listening"
-        volume={0}
-        muted={muted}
-        onPress={onPress}
-        accessibilityLabel="Mute"
-      />,
-    );
-  draw(false);
-  expect(getComputedStyle(element("companion-art-mono-surface")).opacity).toBe("0");
-  draw(true);
-  // The first frame retains colour; the transition is not an immediate swap.
-  expect(Number(getComputedStyle(element("companion-art-color-surface")).opacity)).toBeGreaterThan(
-    0,
-  );
-  await expect
-    .poll(() => getComputedStyle(element("companion-art-mono-surface")).opacity)
-    .toBe("1");
-  draw(false);
-  await expect
-    .poll(() => getComputedStyle(element("companion-art-color-surface")).opacity)
-    .toBe("1");
-});

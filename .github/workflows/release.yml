@@ -525,6 +525,8 @@ jobs:
       # fetch any platform/build-tools/NDK version React Native asks for.
       - uses: android-actions/setup-android@v4
         with:
+          # sdkmanager no longer provides the obsolete tools package.
+          packages: platform-tools
           log-accepted-android-sdk-licenses: false
 
       - uses: gradle/actions/setup-gradle@v6
