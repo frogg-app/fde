@@ -1,4 +1,4 @@
-import { basename, resolve } from "node:path";
+import { basename, isAbsolute, relative, resolve, sep } from "node:path";
 import type { Logger } from "pino";
 import {
   generateWorkspaceId,
@@ -68,18 +68,17 @@ export interface WorkspaceProvisioningService {
   ): Promise<PersistedWorkspaceRecord>;
 }
 
-export type WorkspaceProvisioningErrorCode = "unknown_project" | "archived_project";
+export type WorkspaceProvisioningErrorCode =
+  | "unknown_project"
+  | "archived_project"
+  | "unregistered_project";
 
 export class WorkspaceProvisioningError extends Error {
   constructor(
     readonly code: WorkspaceProvisioningErrorCode,
     projectId: string,
   ) {
-    super(
-      code === "unknown_project"
-        ? `Unknown project: ${projectId}`
-        : `Archived project: ${projectId}`,
-    );
+    super(projectErrorMessage(code, projectId));
     this.name = "WorkspaceProvisioningError";
   }
 }
@@ -116,7 +115,12 @@ export function createWorkspaceProvisioningService(deps: {
     }
 
     const projectsBeforeImport = await projectRegistry.list();
-    const workspace = await createWorkspaceForDirectory(input.cwd);
+    const importedProject = await findOrCreateProjectForDirectory(input.cwd);
+    const workspace = await createWorkspaceForDirectory(
+      input.cwd,
+      undefined,
+      importedProject.projectId,
+    );
     const previousProject =
       projectsBeforeImport.find((project) => project.projectId === workspace.projectId) ?? null;
 
@@ -159,13 +163,18 @@ export function createWorkspaceProvisioningService(deps: {
   async function findOrCreateProjectForDirectory(cwd: string): Promise<PersistedProjectRecord> {
     const rootPath = resolve(cwd);
     const checkout = await workspaceGitService.getCheckout(rootPath);
+    // A worktree is a workspace, not a separate project. Its main checkout is
+    // the stable project root, including when an existing worktree is reopened
+    // after its workspace record was removed or was not yet known to this daemon.
+    const projectRootPath =
+      checkout.isGit && checkout.mainRepoRoot ? resolve(checkout.mainRepoRoot) : rootPath;
     const timestamp = new Date().toISOString();
     return projectRegistry.getOrCreateActiveByRoot({
-      rootPath,
+      rootPath: projectRootPath,
       kind: checkout.isGit ? "git" : "non_git",
-      displayName: basename(rootPath) || rootPath,
+      displayName: basename(projectRootPath) || projectRootPath,
       projectKey: deriveProjectKey({
-        rootPath,
+        rootPath: projectRootPath,
         remoteUrl: checkout.remoteUrl,
         worktreeRoot: checkout.worktreeRoot,
         mainRepoRoot: checkout.mainRepoRoot,
@@ -182,6 +191,29 @@ export function createWorkspaceProvisioningService(deps: {
     return project;
   }
 
+  async function requireRegisteredProjectForDirectory(
+    cwd: string,
+    checkout: Awaited<ReturnType<WorkspaceGitService["getCheckout"]>>,
+  ): Promise<PersistedProjectRecord> {
+    const projectRoots = [
+      ...(checkout.isGit && checkout.mainRepoRoot ? [resolve(checkout.mainRepoRoot)] : []),
+      resolve(cwd),
+    ];
+    const projects = (await projectRegistry.list()).filter((project) => !project.archivedAt);
+    for (const root of projectRoots) {
+      const project = projects.find((candidate) => areEquivalentPaths(candidate.rootPath, root));
+      if (project) return refreshProjectKind(project, cwd, checkout);
+    }
+
+    const directory = resolve(cwd);
+    const containingProject = projects
+      .filter((project) => isDirectoryWithinProject(project.rootPath, directory))
+      .sort((left, right) => right.rootPath.length - left.rootPath.length)[0];
+    if (containingProject) return refreshProjectKind(containingProject, cwd, checkout);
+
+    throw new WorkspaceProvisioningError("unregistered_project", directory);
+  }
+
   async function createWorkspaceForDirectory(
     cwd: string,
     title?: string | null,
@@ -192,8 +224,7 @@ export function createWorkspaceProvisioningService(deps: {
     const checkout = await workspaceGitService.getCheckout(normalizedCwd);
     const project = projectId
       ? await refreshProjectKind(await requireActiveProject(projectId), normalizedCwd, checkout)
-      : // COMPAT(workspaceCreateMissingProjectId): added in v0.1.107, remove after 2027-01-15.
-        await findOrCreateProjectForDirectory(normalizedCwd);
+      : await requireRegisteredProjectForDirectory(normalizedCwd, checkout);
     const timestamp = new Date().toISOString();
     const workspace = createPersistedWorkspaceRecord({
       workspaceId: generateWorkspaceId(),
@@ -447,4 +478,24 @@ export function createWorkspaceProvisioningService(deps: {
     findOrCreateProjectForDirectory,
     ensureWorkspaceRecordUnarchived,
   };
+}
+
+function isDirectoryWithinProject(projectRoot: string, directory: string): boolean {
+  if (createRealpathAwarePathMatcher(projectRoot)(directory)) return true;
+  const relativePath = relative(resolve(projectRoot), resolve(directory));
+  return (
+    relativePath.length === 0 ||
+    (relativePath !== ".." && !relativePath.startsWith(`..${sep}`) && !isAbsolute(relativePath))
+  );
+}
+
+function projectErrorMessage(code: WorkspaceProvisioningErrorCode, projectId: string): string {
+  switch (code) {
+    case "unknown_project":
+      return `Unknown project: ${projectId}`;
+    case "archived_project":
+      return `Archived project: ${projectId}`;
+    case "unregistered_project":
+      return `Project is not registered: ${projectId}`;
+  }
 }

@@ -34,7 +34,7 @@ import type {
   ProviderProfileModel,
   ProviderRuntimeSettings,
 } from "./provider-launch-config.js";
-import { ClaudeAgentClient } from "./providers/claude/agent.js";
+import { ClaudeAgentClient, resolveClaudeAccountProfile } from "./providers/claude/agent.js";
 import { CodexAppServerAgentClient } from "./providers/codex-app-server-agent.js";
 import { CopilotACPAgentClient } from "./providers/copilot-acp-agent.js";
 import { CursorACPAgentClient } from "./providers/cursor-acp-agent.js";
@@ -191,10 +191,11 @@ const HUB_E2E_PROVIDER_CONTRACT: ProviderContract = {
 };
 
 const PROVIDER_CLIENT_FACTORIES: Record<string, ProviderClientFactory> = {
-  claude: (logger, runtimeSettings) =>
+  claude: (logger, runtimeSettings, options) =>
     new ClaudeAgentClient({
       logger,
       runtimeSettings,
+      accountProfile: resolveClaudeAccountProfile(options?.providerParams),
     }),
   codex: (logger, runtimeSettings, options) =>
     new CodexAppServerAgentClient(logger, runtimeSettings, {

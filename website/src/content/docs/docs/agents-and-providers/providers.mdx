@@ -116,3 +116,42 @@ Agents inherit the daemon's environment plus anything you set per provider (`env
 config) or per run (`frogg agent run --env KEY=value`). Common variables:
 `ANTHROPIC_API_KEY`, `ANTHROPIC_BASE_URL`, `CLAUDE_CONFIG_DIR`, `CODEX_HOME`,
 `OPENAI_API_KEY`, `OPENAI_BASE_URL`.
+
+## Claude accounts
+
+Register each Claude account as a provider that extends `claude`. Frogg launches that
+provider with its own `CLAUDE_CONFIG_DIR`, equivalent to:
+
+```sh
+CLAUDE_CONFIG_DIR=~/.claude-account2 claude
+```
+
+The account directory keeps its authentication, settings, history and other account state
+private. To share selected non-account content from the normal Claude directory, add a
+`claudeAccount` profile in `params`. On first use, Frogg creates symlinks only for the
+directories selected in `sharedContent`; it never links credentials or settings.
+
+```json title="~/.frogg/config.json"
+{
+  "agents": {
+    "providers": {
+      "claude-account2": {
+        "extends": "claude",
+        "label": "Claude account 2",
+        "params": {
+          "claudeAccount": {
+            "configDir": "~/.claude-account2",
+            "sharedFrom": "~/.claude",
+            "sharedContent": ["skills", "commands", "plugins", "hooks", "projects", "plans", "todos"]
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+`sharedFrom` defaults to `~/.claude`. The supported shared directories are `skills`,
+`commands`, `plugins`, `hooks`, `projects` (Claude conversations), `plans`, and `todos`.
+If a selected directory does not exist in `sharedFrom`, Frogg skips it. Existing paths in
+the account directory are never replaced.

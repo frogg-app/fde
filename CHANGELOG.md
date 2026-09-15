@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Stop automatic project registration when agents, workspaces, terminals or scripts use a new
+  directory. Projects are added only through an explicit project action; worktrees stay under
+  their main checkout's project.
+- Add isolated Claude account provider profiles. Each profile launches with its own
+  `CLAUDE_CONFIG_DIR` and may share only selected content directories; credentials and settings
+  remain private to that account.
+
 ## 1.2.0 — 2026-09-15
 
 - **Custom-brand environment migration:** a branded daemon and desktop now use the

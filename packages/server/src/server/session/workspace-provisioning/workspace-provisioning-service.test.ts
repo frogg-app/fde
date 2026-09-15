@@ -108,34 +108,48 @@ beforeEach(async () => {
     workspaceGitService: gitService(),
     logger,
   });
+  await provisioning.findOrCreateProjectForDirectory(tmpDir);
 });
 
 afterEach(() => {
   rmSync(tmpDir, { recursive: true, force: true });
 });
 
-test("fresh git repo creates a workspace at the canonical worktree root", async () => {
+test("registered git repo creates a workspace at the canonical worktree root", async () => {
   const repo = path.join(tmpDir, "repo");
   gitRoots.add(repo);
+  await provisioning.findOrCreateProjectForDirectory(repo);
 
   const workspace = await provisioning.findOrCreateWorkspaceForDirectory(repo);
 
   expect(workspace.cwd).toBe(repo);
   expect(await workspaceRegistry.list()).toHaveLength(1);
-  expect(await projectRegistry.list()).toHaveLength(1);
+  expect(await projectRegistry.list()).toHaveLength(2);
 });
 
-test("fresh non-git directory creates a directory workspace at the exact path", async () => {
+test("registered non-git directory creates a workspace at the exact path", async () => {
   const dir = path.join(tmpDir, "plain");
+  await provisioning.findOrCreateProjectForDirectory(dir);
 
   const workspace = await provisioning.findOrCreateWorkspaceForDirectory(dir);
 
   expect(workspace.cwd).toBe(dir);
 });
 
+test("does not register a project while opening an unknown directory as a workspace", async () => {
+  const dir = "/unregistered-project";
+
+  await expect(provisioning.findOrCreateWorkspaceForDirectory(dir)).rejects.toMatchObject({
+    code: "unregistered_project",
+  } satisfies Partial<WorkspaceProvisioningError>);
+  expect(await projectRegistry.list()).toHaveLength(1);
+  expect(await workspaceRegistry.list()).toEqual([]);
+});
+
 test("re-opening an active workspace by exact path returns the same record without duplicating", async () => {
   const repo = path.join(tmpDir, "repo");
   gitRoots.add(repo);
+  await provisioning.findOrCreateProjectForDirectory(repo);
 
   const first = await provisioning.findOrCreateWorkspaceForDirectory(repo);
   const second = await provisioning.findOrCreateWorkspaceForDirectory(repo);
@@ -161,6 +175,7 @@ test("re-opening Windows-equivalent workspace cwd spellings reuses the active an
 
 test("re-opening refreshes mutable checkout metadata without renaming the workspace", async () => {
   const repo = path.join(tmpDir, "repo");
+  await provisioning.findOrCreateProjectForDirectory(repo);
   const first = await provisioning.findOrCreateWorkspaceForDirectory(repo);
   await workspaceRegistry.upsert({ ...first, title: "Pinned work" });
   gitRoots.add(repo);
@@ -200,6 +215,7 @@ test("persists manual worktree ownership separately from its workspace kind", as
       }),
     }),
   });
+  await manualWorktreeProvisioning.findOrCreateProjectForDirectory(mainRepoRoot);
 
   const workspace = await manualWorktreeProvisioning.findOrCreateWorkspaceForDirectory(cwd);
 
@@ -208,6 +224,7 @@ test("persists manual worktree ownership separately from its workspace kind", as
     isFroggOwnedWorktree: false,
     mainRepoRoot,
   });
+  expect((await projectRegistry.get(workspace.projectId))?.rootPath).toBe(mainRepoRoot);
 });
 
 test("re-opening an archived workspace by its exact path unarchives it and keeps the id", async () => {
@@ -582,7 +599,7 @@ test("findOrCreateProjectForDirectory keeps nested selected roots independent", 
   expect(second.projectId).not.toBe(first.projectId);
   expect(first.rootPath).toBe(repo);
   expect(second.rootPath).toBe(path.join(repo, "sub"));
-  expect(await projectRegistry.list()).toHaveLength(2);
+  expect(await projectRegistry.list()).toHaveLength(3);
 });
 
 test("runInImportWorkspace uses an active requested workspace without creating another", async () => {
@@ -715,6 +732,13 @@ test.each(["missing", "archived"] as const)(
     ).rejects.toThrow("provider session is unavailable");
 
     expect(await workspaceRegistry.list()).toEqual([]);
-    expect(await projectRegistry.list()).toEqual(previousProject ? [previousProject] : []);
+    const projects = await projectRegistry.list();
+    expect(projects).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ rootPath: tmpDir }),
+        ...(previousProject ? [previousProject] : []),
+      ]),
+    );
+    expect(projects).toHaveLength(previousProject ? 2 : 1);
   },
 );

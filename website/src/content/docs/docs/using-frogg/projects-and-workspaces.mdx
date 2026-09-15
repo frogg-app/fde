@@ -21,6 +21,9 @@ sidebar:
   Folders whose names start with `.` are hidden from folder lists and suggestions, including when choosing where to create or clone a project. Turn on **Settings > General > Show hidden folders** to list them, or type a path such as `~/.config` to open one directly.
 - CLI: `frogg project create /path/to/repo`.
 
+Starting an agent, workspace, terminal or script in a directory does not register it as a
+project. Add the directory first, then choose its project or workspace.
+
 Import existing Claude Code or Codex sessions with **Import session** on the home screen.
 To bring in a whole project with its conversations, from the daemon host or from your
 computer, use **Add project → Import project and conversations**; see
@@ -50,7 +53,9 @@ frogg agent run --new-workspace worktree --new-branch fix/flaky-test "Fix the fl
 
 Worktrees live under `~/.frogg/worktrees/<project hash>/<slug>`. Change the root with
 `worktrees.root` in [config](/docs/reference/configuration/#worktrees). If you do not
-name a branch, Frogg can generate one from the first prompt.
+name a branch, Frogg can generate one from the first prompt. A worktree stays grouped with its
+main checkout's project; opening or resuming it does not add its worktree directory as another
+project.
 
 ### Unfinished new-workspace forms
 

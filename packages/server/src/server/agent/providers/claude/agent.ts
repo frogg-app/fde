@@ -400,6 +400,71 @@ interface ClaudeAgentClientOptions {
   resolveBinary?: () => Promise<string>;
   resolveVersion?: (signal?: AbortSignal) => Promise<string>;
   configDir?: string;
+  accountProfile?: ClaudeAccountProfile | null;
+}
+
+export const CLAUDE_SHARED_CONTENT = [
+  "commands",
+  "hooks",
+  "plans",
+  "plugins",
+  "projects",
+  "skills",
+  "todos",
+] as const;
+
+export type ClaudeSharedContent = (typeof CLAUDE_SHARED_CONTENT)[number];
+
+export interface ClaudeAccountProfile {
+  configDir: string;
+  sharedFrom: string;
+  sharedContent: ClaudeSharedContent[];
+}
+
+export function resolveClaudeAccountProfile(value: unknown): ClaudeAccountProfile | null {
+  if (!isObjectRecord(value) || !isObjectRecord(value.claudeAccount)) return null;
+  const account = value.claudeAccount;
+  const configDir = readNonEmptyString(account.configDir);
+  if (!configDir) return null;
+  const sharedFrom = readNonEmptyString(account.sharedFrom) ?? path.join(os.homedir(), ".claude");
+  const sharedContent = Array.isArray(account.sharedContent)
+    ? account.sharedContent.filter(
+        (entry): entry is ClaudeSharedContent =>
+          typeof entry === "string" && (CLAUDE_SHARED_CONTENT as readonly string[]).includes(entry),
+      )
+    : [];
+  return {
+    configDir: resolveClaudeAccountDirectory(configDir),
+    sharedFrom: resolveClaudeAccountDirectory(sharedFrom),
+    sharedContent: [...new Set(sharedContent)],
+  };
+}
+
+function resolveClaudeAccountDirectory(input: string): string {
+  return input === "~" || input.startsWith("~/")
+    ? path.join(os.homedir(), input.slice(2))
+    : path.resolve(input);
+}
+
+export async function prepareClaudeAccountProfile(profile: ClaudeAccountProfile): Promise<void> {
+  await fsPromises.mkdir(profile.configDir, { recursive: true });
+  for (const entry of profile.sharedContent) {
+    const source = path.join(profile.sharedFrom, entry);
+    const target = path.join(profile.configDir, entry);
+    try {
+      await fsPromises.lstat(target);
+      continue;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    }
+    try {
+      await fsPromises.lstat(source);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") continue;
+      throw error;
+    }
+    await fsPromises.symlink(source, target, process.platform === "win32" ? "junction" : "dir");
+  }
 }
 
 interface ClaudeAgentSessionOptions {
@@ -935,7 +1000,9 @@ function assertClaudeModeCanRun(mode: PermissionMode, env: NodeJS.ProcessEnv): v
     return;
   }
   throw new Error(
-    `Claude Auto mode requires the Anthropic API and is not supported when Claude Code uses ${transport}. Select another permission mode or unset the ${transport === "Bedrock" ? "CLAUDE_CODE_USE_BEDROCK" : "CLAUDE_CODE_USE_VERTEX"} environment variable.`,
+    `Claude Auto mode requires the Anthropic API and is not supported when Claude Code uses ${transport}. Select another permission mode or unset the ${
+      transport === "Bedrock" ? "CLAUDE_CODE_USE_BEDROCK" : "CLAUDE_CODE_USE_VERTEX"
+    } environment variable.`,
   );
 }
 
@@ -944,7 +1011,10 @@ function claudeModeCatalog(env: NodeJS.ProcessEnv): {
   defaultModeId: PermissionMode;
 } {
   if (claudeAutoModeUnavailableOn(env)) {
-    return { modes: DEFAULT_MODES.filter((mode) => mode.id !== "auto"), defaultModeId: "default" };
+    return {
+      modes: DEFAULT_MODES.filter((mode) => mode.id !== "auto"),
+      defaultModeId: "default",
+    };
   }
   return { modes: DEFAULT_MODES, defaultModeId: "auto" };
 }
@@ -1296,7 +1366,11 @@ class TimelineAssembler {
       !isClaudeTranscriptNoiseText(nextAssistantText)
     ) {
       state.emittedAssistantLength = state.assistantText.length;
-      items.push({ type: "assistant_message", text: nextAssistantText, messageId: state.id });
+      items.push({
+        type: "assistant_message",
+        text: nextAssistantText,
+        messageId: state.id,
+      });
     }
 
     const nextReasoningText = state.reasoningText.slice(state.emittedReasoningLength);
@@ -1495,11 +1569,21 @@ export class ClaudeAgentClient implements AgentClient {
   private readonly resolveBinary: () => Promise<string>;
   private readonly resolveVersion: (signal?: AbortSignal) => Promise<string>;
   private readonly configDir?: string;
+  private readonly accountProfile: ClaudeAccountProfile | null;
 
   constructor(options: ClaudeAgentClientOptions) {
     this.defaults = options.defaults;
     this.logger = options.logger.child({ module: "agent", provider: "claude" });
-    this.runtimeSettings = options.runtimeSettings;
+    this.accountProfile = options.accountProfile ?? null;
+    this.runtimeSettings = this.accountProfile
+      ? {
+          ...options.runtimeSettings,
+          env: {
+            ...options.runtimeSettings?.env,
+            CLAUDE_CONFIG_DIR: this.accountProfile.configDir,
+          },
+        }
+      : options.runtimeSettings;
     this.queryFactory = options.queryFactory;
     this.resolveBinary = options.resolveBinary ?? (() => resolveClaudeBinary(this.runtimeSettings));
     this.resolveVersion =
@@ -1518,6 +1602,9 @@ export class ClaudeAgentClient implements AgentClient {
     options?: AgentCreateSessionOptions,
   ): Promise<AgentSession> {
     const claudeConfig = this.assertConfig(config);
+    if (this.accountProfile) {
+      await prepareClaudeAccountProfile(this.accountProfile);
+    }
     return new ClaudeAgentSession(claudeConfig, {
       defaults: this.defaults,
       runtimeSettings: this.runtimeSettings,
@@ -1546,6 +1633,9 @@ export class ClaudeAgentClient implements AgentClient {
       cwd: merged.cwd,
     };
     const claudeConfig = this.assertConfig(mergedConfig);
+    if (this.accountProfile) {
+      await prepareClaudeAccountProfile(this.accountProfile);
+    }
     return new ClaudeAgentSession(claudeConfig, {
       defaults: this.defaults,
       runtimeSettings: this.runtimeSettings,
@@ -1575,7 +1665,10 @@ export class ClaudeAgentClient implements AgentClient {
       getClaudeModelsWithSettings(this.logger, this.configDir, claudeCodeVersion),
     );
     const modeCatalog = claudeModeCatalog(
-      createProviderEnv({ baseEnv: process.env, runtimeSettings: this.runtimeSettings }),
+      createProviderEnv({
+        baseEnv: process.env,
+        runtimeSettings: this.runtimeSettings,
+      }),
     );
     return {
       models,
@@ -1603,7 +1696,11 @@ export class ClaudeAgentClient implements AgentClient {
   async listImportableSessions(
     options?: ListImportableSessionsOptions,
   ): Promise<ImportableProviderSession[]> {
-    const configDir = process.env.CLAUDE_CONFIG_DIR ?? path.join(os.homedir(), ".claude");
+    const configDir =
+      createProviderEnv({
+        baseEnv: process.env,
+        runtimeSettings: this.runtimeSettings,
+      }).CLAUDE_CONFIG_DIR ?? path.join(os.homedir(), ".claude");
     const sessionsRoot = options?.cwd
       ? claudeProjectDirSync(options.cwd, { configDir })
       : path.join(configDir, "projects");
@@ -3209,13 +3306,25 @@ class ClaudeAgentSession implements AgentSession {
         : undefined;
     assertClaudeThinkingOptionSupported(this.config.model, thinkingOptionId);
     if (thinkingOptionId === CLAUDE_DISABLED_THINKING_OPTION_ID) {
-      return { thinking: { type: "disabled" }, effort: undefined, ultracode: false };
+      return {
+        thinking: { type: "disabled" },
+        effort: undefined,
+        ultracode: false,
+      };
     }
     if (thinkingOptionId === CLAUDE_ULTRACODE_THINKING_OPTION_ID) {
-      return { thinking: { type: "adaptive" }, effort: "xhigh", ultracode: true };
+      return {
+        thinking: { type: "adaptive" },
+        effort: "xhigh",
+        ultracode: true,
+      };
     }
     if (thinkingOptionId && isClaudeThinkingEffort(thinkingOptionId)) {
-      return { thinking: { type: "adaptive" }, effort: thinkingOptionId, ultracode: false };
+      return {
+        thinking: { type: "adaptive" },
+        effort: thinkingOptionId,
+        ultracode: false,
+      };
     }
     return { thinking: undefined, effort: undefined, ultracode: false };
   }
@@ -3241,7 +3350,9 @@ class ClaudeAgentSession implements AgentSession {
       this.config.providerOptions,
       this.config.toolPolicy,
     );
-    const settingsOptions = this.buildSettingsOptions(providerOptions, { ultracode });
+    const settingsOptions = this.buildSettingsOptions(providerOptions, {
+      ultracode,
+    });
     const sdkEnv = this.buildSdkEnv();
     assertClaudeModeCanRun(this.currentMode, sdkEnv);
 
@@ -3383,7 +3494,10 @@ class ClaudeAgentSession implements AgentSession {
             });
           }
         } else {
-          content.push({ type: "text", text: renderPromptAttachmentAsText(chunk) });
+          content.push({
+            type: "text",
+            text: renderPromptAttachmentAsText(chunk),
+          });
         }
       }
     } else {
@@ -3659,7 +3773,9 @@ class ClaudeAgentSession implements AgentSession {
     this.input = null;
     this.dispatchEvents([
       this.buildTurnFailedEvent(
-        `Claude stopped unexpectedly (${signal ? `signal ${signal}` : `exit code ${code ?? "unknown"}`}). Any background shells, monitors or other work it had running were terminated with it.`,
+        `Claude stopped unexpectedly (${
+          signal ? `signal ${signal}` : `exit code ${code ?? "unknown"}`
+        }). Any background shells, monitors or other work it had running were terminated with it.`,
       ),
     ]);
   }
@@ -3667,7 +3783,11 @@ class ClaudeAgentSession implements AgentSession {
   private failRunningRuntimeTasks(): void {
     this.dispatchEvents(
       foldSubagentObservations(this.taskProtocolSource.failRunningTasks()).map(
-        (event): AgentStreamEvent => ({ type: "provider_subagent", provider: "claude", event }),
+        (event): AgentStreamEvent => ({
+          type: "provider_subagent",
+          provider: "claude",
+          event,
+        }),
       ),
     );
   }
@@ -4145,7 +4265,13 @@ class ClaudeAgentSession implements AgentSession {
         message,
         canonicalSubagentId ?? parentToolUseId,
       ),
-    ).map((event): AgentStreamEvent => ({ type: "provider_subagent", provider: "claude", event }));
+    ).map(
+      (event): AgentStreamEvent => ({
+        type: "provider_subagent",
+        provider: "claude",
+        event,
+      }),
+    );
     const routedId = canonicalSubagentId ?? parentToolUseId;
     return [...runtimeEvents, ...this.sidechainTracker.handleMessage(message, routedId)];
   }
@@ -4647,7 +4773,10 @@ class ClaudeAgentSession implements AgentSession {
           type: "permission_resolved",
           provider: "claude",
           requestId,
-          resolution: { behavior: "deny", message: "Permission request canceled" },
+          resolution: {
+            behavior: "deny",
+            message: "Permission request canceled",
+          },
         });
         reject(new Error("Permission request aborted"));
       };
@@ -4735,7 +4864,11 @@ class ClaudeAgentSession implements AgentSession {
         for (const event of foldSubagentObservations(
           this.taskProtocolSource.observeHook(input as ClaudeHookObservationInput),
         )) {
-          this.notifySubscribers({ type: "provider_subagent", provider: "claude", event });
+          this.notifySubscribers({
+            type: "provider_subagent",
+            provider: "claude",
+            event,
+          });
         }
       } catch (error) {
         this.logger.debug({ err: error }, "Failed to read subagent effort from hook");
@@ -5700,7 +5833,9 @@ function readClaudeReplayParentFacts(parentEntries: ClaudeHistoryEntry[]): Claud
       const block = toObjectRecord(value);
       if (block?.type !== "tool_result" || typeof block.tool_use_id !== "string") continue;
       if (!toolCalls.has(block.tool_use_id)) continue;
-      outcomesByToolCallId.set(block.tool_use_id, { failed: block.is_error === true });
+      outcomesByToolCallId.set(block.tool_use_id, {
+        failed: block.is_error === true,
+      });
     }
   }
 
@@ -5735,7 +5870,9 @@ function readClaudeSidechainHistory(historyPath: string): ClaudeSidechainHistory
   };
   const workflowDirectory = path.join(sessionDirectory, "workflows");
   if (fs.existsSync(workflowDirectory)) {
-    for (const entry of fs.readdirSync(workflowDirectory, { withFileTypes: true })) {
+    for (const entry of fs.readdirSync(workflowDirectory, {
+      withFileTypes: true,
+    })) {
       if (!entry.isFile() || !entry.name.endsWith(".json")) continue;
       try {
         history.workflowContents.push(
@@ -5845,7 +5982,10 @@ function readClaudeHistoricalSubagentToolResults(
       if (block?.type !== "tool_result" || typeof block.tool_use_id !== "string") continue;
       const match = /agentId:\s*([\w-]+)/.exec(JSON.stringify(block.content));
       if (!match?.[1]) continue;
-      results.set(match[1], { toolCallId: block.tool_use_id, failed: block.is_error === true });
+      results.set(match[1], {
+        toolCallId: block.tool_use_id,
+        failed: block.is_error === true,
+      });
     }
   }
   return results;

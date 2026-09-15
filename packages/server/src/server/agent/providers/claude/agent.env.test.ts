@@ -1,9 +1,16 @@
+import { promises as fs } from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import type { Query } from "@anthropic-ai/claude-agent-sdk";
 import { describe, expect, test, vi } from "vitest";
 
 import { createTestLogger } from "../../../../test-utils/test-logger.js";
 import type { AgentLaunchContext } from "../../agent-sdk-types.js";
-import { ClaudeAgentClient } from "./agent.js";
+import {
+  ClaudeAgentClient,
+  prepareClaudeAccountProfile,
+  resolveClaudeAccountProfile,
+} from "./agent.js";
 import type { ClaudeQueryInput } from "./query.js";
 
 function createQueryMock(events: unknown[]): Query {
@@ -29,6 +36,40 @@ function createQueryMock(events: unknown[]): Query {
 }
 
 describe("Claude SDK env", () => {
+  test("prepares only selected shared content for a separate Claude account", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "frogg-claude-profile-"));
+    const source = path.join(root, "source");
+    const target = path.join(root, "account-2");
+    await fs.mkdir(path.join(source, "skills"), { recursive: true });
+    await fs.mkdir(path.join(source, "projects"), { recursive: true });
+    await fs.writeFile(path.join(source, "skills", "shared.md"), "shared");
+    await fs.writeFile(path.join(source, "credentials.json"), "private");
+
+    try {
+      const profile = resolveClaudeAccountProfile({
+        claudeAccount: {
+          configDir: target,
+          sharedFrom: source,
+          sharedContent: ["skills", "projects", "credentials"],
+        },
+      });
+      expect(profile).toEqual({
+        configDir: target,
+        sharedFrom: source,
+        sharedContent: ["skills", "projects"],
+      });
+
+      await prepareClaudeAccountProfile(profile!);
+      expect((await fs.lstat(path.join(target, "skills"))).isSymbolicLink()).toBe(true);
+      expect((await fs.lstat(path.join(target, "projects"))).isSymbolicLink()).toBe(true);
+      await expect(fs.lstat(path.join(target, "credentials.json"))).rejects.toMatchObject({
+        code: "ENOENT",
+      });
+    } finally {
+      await fs.rm(root, { recursive: true, force: true });
+    }
+  });
+
   test("forwards launch-context env through Claude process env", async () => {
     let capturedEnv: Record<string, string | undefined> | undefined;
     const launchContext: AgentLaunchContext = {
