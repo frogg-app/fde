@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.1.3 — 2026-09-15
+
+- Show the Electron updater's installer progress so the app continues to report what is happening after download and verification.
+
 ## 1.1.2 — 2026-09-15
 
 - Keep the native Skia Companion Nebula out of web and Electron bundles, so the desktop renderer starts normally.
