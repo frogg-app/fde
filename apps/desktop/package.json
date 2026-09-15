@@ -1,6 +1,6 @@
 {
   "name": "@frogg/desktop",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "private": true,
   "description": "Frogg desktop shell (Tauri v2)",
   "license": "Apache-2.0",
