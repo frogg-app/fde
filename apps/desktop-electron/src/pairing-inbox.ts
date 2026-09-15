@@ -1,8 +1,10 @@
+import { brand } from "@frogg/branding";
+
 export function isPairingOfferLink(value: string): boolean {
   try {
     const url = new URL(value);
     return (
-      url.protocol === "frogg:" &&
+      (url.protocol === `${brand.scheme}:` || url.protocol === "frogg:") &&
       url.hostname === "pair" &&
       new URLSearchParams(url.hash.slice(1)).has("offer")
     );
