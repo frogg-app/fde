@@ -35,12 +35,12 @@
     "generate:text-match-fixtures": "node scripts/generate-text-match-fixtures.mjs"
   },
   "dependencies": {
-    "zod": "^4.4.3"
+    "zod": "^4.6.2"
   },
   "devDependencies": {
     "@types/node": "^20.9.0",
     "typescript": "^5.2.2",
     "vitest": "^4.1.6",
-    "zod-aot": "0.21.1"
+    "zod-aot": "0.21.2"
   }
 }
