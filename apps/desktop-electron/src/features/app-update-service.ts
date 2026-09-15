@@ -111,8 +111,9 @@ async function performQuitAndInstall(
   },
 ): Promise<void> {
   if (onBeforeQuit) await onBeforeQuit();
-  // Always silent: a non-silent NSIS run shows the whole setup wizard on every update.
-  runtime.quitAndInstall(/* isSilent */ true, /* isForceRunAfter */ restart);
+  // On Windows this opens our branded NSIS progress window after the app exits.
+  // Keeping it visible avoids a long, unexplained gap while files are replaced.
+  runtime.quitAndInstall(/* isSilent */ false, /* isForceRunAfter */ restart);
 }
 
 function getErrorMessage(error: unknown): string {
