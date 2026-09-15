@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.3.0 — 2026-09-15
+
 - Stop automatic project registration when agents, workspaces, terminals or scripts use a new
   directory. Projects are added only through an explicit project action; worktrees stay under
   their main checkout's project.
